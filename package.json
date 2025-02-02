@@ -1,0 +1,8 @@
+{
+    "scripts": {
+        "setup": "node scripts/setup.js",
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview"
+    }
+}
