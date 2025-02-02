@@ -39,9 +39,9 @@
   });
 </script>
 
-<div class="flex">
-  <!-- Table of Contents Sidebar -->
-  <nav class="w-64 h-screen overflow-y-auto p-4 border-r border-gray-200 shrink-0">
+<div class="flex h-screen">
+  <!-- Fixed Table of Contents Sidebar -->
+  <nav class="fixed top-0 left-0 w-64 h-screen overflow-y-auto p-4 border-r border-gray-200 bg-white">
     <h2 class="text-lg font-semibold mb-4">Table of Contents</h2>
     <ul class="space-y-2">
       {#each headings as heading}
@@ -57,9 +57,11 @@
     </ul>
   </nav>
 
-  <!-- Main Content -->
-  <div class="reader flex-grow overflow-y-auto">
-    {@html content}
+  <!-- Main Content with offset for sidebar -->
+  <div class="ml-64 flex-grow">
+    <div class="reader">
+      {@html content}
+    </div>
   </div>
 </div>
 
