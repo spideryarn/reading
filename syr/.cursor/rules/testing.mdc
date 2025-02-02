@@ -21,6 +21,7 @@ globs:
   ```bash
   npm run test:frontend
   ```
+- Results go in `test-results/`
 
 ### Running All Tests
 To run both unit and frontend tests:
