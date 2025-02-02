@@ -31,6 +31,8 @@
         "vitest": "^3.0.4"
     },
     "dependencies": {
+        "@types/nunjucks": "^3.2.6",
+        "nunjucks": "^3.2.4",
         "svelte-inview": "^4.0.4"
     }
 }

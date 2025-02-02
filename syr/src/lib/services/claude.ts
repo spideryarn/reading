@@ -1,5 +1,6 @@
 import { ANTHROPIC_API_KEY } from '$env/static/private'
 import type { ClaudeRequest, ClaudeResponse } from '$lib/types/claude'
+import { getSummarizePrompt } from '$lib/prompts/summarize'
 
 const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages'
 const MODEL = 'claude-3-5-sonnet-20241022'
@@ -53,7 +54,7 @@ export async function summarizeText(text: string): Promise<string> {
     const messages = [
         {
             role: 'user' as const,
-            content: `Please summarize the following text concisely:\n\n${text}`
+            content: getSummarizePrompt({ text })
         }
     ]
 
