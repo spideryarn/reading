@@ -1,17 +1,66 @@
-<script>
+<script lang="ts">
   import { onMount } from 'svelte';
   
+  interface Heading {
+    text: string;
+    level: number;
+    id: string;
+  }
+  
   let content = '';
+  let headings: Heading[] = [];
+  
+  function extractHeadings(htmlContent: string): Heading[] {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, 'text/html');
+    return Array.from(doc.querySelectorAll('h1, h2, h3, h4, h5, h6')).map(heading => ({
+      text: heading.textContent || '',
+      level: parseInt(heading.tagName.charAt(1)),
+      id: heading.id || (heading.textContent || '').toLowerCase().replace(/[^a-z0-9]+/g, '-')
+    }));
+  }
   
   onMount(async () => {
-    const response = await fetch('/examples/Rhizome - 1000 Plateaus introduction - Lambert says yes 231210.html');
+    // const response = await fetch('/examples/Rhizome - 1000 Plateaus introduction - Lambert says yes 231210.html');
+    const response = await fetch('/examples/Chalmers (1995) - Facing Up to the Problem of Consciousness.html');
     const text = await response.text();
     content = text;
+    headings = extractHeadings(text);
+    
+    // Add IDs to the actual content headings
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content, 'text/html');
+    doc.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(heading => {
+      if (!heading.id) {
+        heading.id = (heading.textContent || '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      }
+    });
+    content = doc.body.innerHTML;
   });
 </script>
 
-<div class="reader">
-  {@html content}
+<div class="flex">
+  <!-- Table of Contents Sidebar -->
+  <nav class="w-64 h-screen overflow-y-auto p-4 border-r border-gray-200 shrink-0">
+    <h2 class="text-lg font-semibold mb-4">Table of Contents</h2>
+    <ul class="space-y-2">
+      {#each headings as heading}
+        <li style="margin-left: {(heading.level - 1) * 1}rem">
+          <a 
+            href="#{heading.id}" 
+            class="text-gray-700 hover:text-gray-900 hover:underline block py-1"
+          >
+            {heading.text}
+          </a>
+        </li>
+      {/each}
+    </ul>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="reader flex-grow overflow-y-auto">
+    {@html content}
+  </div>
 </div>
 
 <style>
