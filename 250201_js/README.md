@@ -8,6 +8,15 @@ This project combines the simplicity of Svelte.js with the utility of Tailwind C
 
 ## Setup Instructions
 
+### Quick Start
+```bash
+npm run setup
+```
+
+This will handle all initial setup and installation steps safely and idempotently.
+
+### Manual Setup Steps
+
 ### Creating the Svelte Project
 
 You can quickly scaffold a minimal Svelte project using Vite:

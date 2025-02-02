@@ -1,5 +1,7 @@
 # Spideryarn Reading Architecture
 
+see README.md for more information
+
 ## Overview
 
 Spideryarn Reading is a web application for AI-assisted document reading and analysis. The initial implementation focuses on HTML documents with Claude AI integration.
@@ -10,7 +12,7 @@ Spideryarn Reading is a web application for AI-assisted document reading and ana
 
 [Source Diagram](architecture.mmd)
 
-Run scripts/generate-diagram.sh
+Run `scripts/generate-diagram.sh`
 
 ## Key Components
 
