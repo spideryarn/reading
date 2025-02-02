@@ -3,10 +3,30 @@ description: When writing tests
 globs: 
 ---
 # Test Commands
-- `npm test` - Run all tests
-- `npm run test:unit` - Run only unit tests
-- `npm run test:unit:watch` - Run unit tests in watch mode
-- `npm run test:frontend` - Run frontend tests
+
+### Unit Testing
+- Using Vitest for unit tests
+- Run tests with:
+  ```bash
+  # Run all unit tests
+  npm run test:unit
+  
+  # Run unit tests in watch mode
+  npm run test:unit:watch
+  ```
+
+### Frontend Testing
+- Using Playwright for frontend testing
+- Run tests with:
+  ```bash
+  npm run test:frontend
+  ```
+
+### Running All Tests
+To run both unit and frontend tests:
+```bash
+npm test
+```
 
 # Best Practices
 - Write tests before implementing new features (TDD when possible)
