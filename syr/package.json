@@ -29,5 +29,8 @@
         "typescript": "^5.0.0",
         "vite": "^6.0.0",
         "vitest": "^3.0.4"
+    },
+    "dependencies": {
+        "svelte-inview": "^4.0.4"
     }
 }
