@@ -2,83 +2,27 @@
 
 ## Quick Start
 
-1. First, create a new Svelte project using Vite:
+1. First, create a new SvelteKit project:
 ```bash
-npm create vite@latest spideryarn-reading -- --template svelte
-cd spideryarn-reading
+npm create svelte@latest
+cd your-project-name
 npm install
 ```
 
-2. Then run our custom setup script to add additional tooling (Tailwind, TypeScript config, testing, etc.):
+2. Install dependencies:
 ```bash
-npm run setup
+npm install
 ```
 
-This will handle all additional setup and installation steps safely and idempotently.
+## Development Setup
 
-## What the Setup Script Does
+The project uses:
+- SvelteKit with TypeScript
+- Vite for building and development
+- Playwright for frontend testing
+- Vitest for unit testing
 
-Our setup script (`scripts/setup.js`) enhances the base Svelte template by adding:
-- Tailwind CSS integration
-- Enhanced TypeScript configuration
-- ESLint and Prettier setup
-- Testing infrastructure (Vitest and Playwright)
-- Documentation tooling (Mermaid diagrams)
-- Project structure for scalability
-
-## Manual Setup Steps
-
-### Creating the Svelte Project
-
-You can quickly scaffold a minimal Svelte project using Vite:
-
-1. **Create a new project using Vite:**
-   ```
-   npm create vite@latest spideryarn-reading -- --template svelte
-   ```
-
-2. **Navigate into your project directory:**
-   ```
-   cd spideryarn-reading
-   ```
-
-3. **Install project dependencies:**
-   ```
-   npm install
-   ```
-
-### Setting Up Tailwind CSS
-
-To integrate Tailwind CSS into your Svelte project, follow these steps:
-
-1. **Install Tailwind and its dependencies:**
-   ```
-   npm install -D tailwindcss postcss autoprefixer
-   npx tailwindcss init -p
-   ```
-
-2. **Update your `tailwind.config.js` file to include Svelte files:**
-   ```js
-   module.exports = {
-     content: [
-       "./index.html",
-       "./src/**/*.{svelte,js,ts}",
-     ],
-     theme: {
-       extend: {},
-     },
-     plugins: [],
-   }
-   ```
-
-3. **Add Tailwind directives to your main CSS file (e.g., `src/app.css`):**
-   ```css
-   @tailwind base;
-   @tailwind components;
-   @tailwind utilities;
-   ```
-
-### Running the Application
+## Running the Application
 
 Start the development server with:
 
@@ -86,64 +30,33 @@ Start the development server with:
 npm run dev
 ```
 
-Then open your browser to the URL provided (typically [http://localhost:3000](http://localhost:3000)).
+Then open your browser to the URL provided.
 
-## Development Setup
+## Testing
 
-### TypeScript and Code Quality
+### Unit Testing
+- Using Vitest for unit tests
+- Run tests with:
+  ```bash
+  # Run all unit tests
+  npm run test:unit
+  
+  # Run unit tests in watch mode
+  npm run test:unit:watch
+  ```
 
-1. **Install TypeScript and related dependencies:**
-   ```bash
-   npm install -D typescript @tsconfig/svelte svelte-check
-   npm install -D eslint prettier eslint-config-prettier eslint-plugin-svelte
-   ```
+### Frontend Testing
+- Using Playwright for frontend testing
+- Run tests with:
+  ```bash
+  npm run test:frontend
+  ```
 
-2. **Initialize TypeScript configuration:**
-   ```bash
-   npx tsc --init
-   ```
-
-3. **Set up ESLint and Prettier:**
-   Create `.eslintrc.js`:
-   ```js
-   module.exports = {
-     extends: [
-       'eslint:recommended',
-       'plugin:svelte/recommended',
-       'prettier'
-     ],
-     parser: '@typescript-eslint/parser',
-     parserOptions: {
-       project: './tsconfig.json',
-       extraFileExtensions: ['.svelte']
-     },
-     rules: {
-       // Keep it simple with minimal custom rules at first
-     }
-   }
-   ```
-
-   Create `.prettierrc`:
-   ```json
-   {
-     "semi": true,
-     "singleQuote": true,
-     "trailingComma": "es5",
-     "printWidth": 100
-   }
-   ```
-
-### Diagram Generation
-
-1. **Install Mermaid CLI globally:**
-   ```bash
-   npm install -g @mermaid-js/mermaid-cli
-   ```
-
-2. **Generate architecture diagram:**
-   ```bash
-   ./scripts/generate-diagrams.sh
-   ```
+### Running All Tests
+To run both unit and frontend tests:
+```bash
+npm test
+```
 
 ## Project Structure
 
@@ -154,58 +67,8 @@ src/
 ├── lib/           # Reusable components and utilities
 │   ├── components/    # Svelte components
 │   └── utils/        # Helper functions and types
-├── routes/        # Page components
-├── stores/        # Svelte stores for state management
-├── types/         # TypeScript type definitions
-└── app.svelte     # Root component
-```
-
-## Testing Strategy
-
-### Unit Testing
-- Using Vitest for unit tests (Vite's native test runner)
-- Focus on testing pure functions and utility modules
-- Keep component tests simple and focused on business logic
-
-```bash
-npm install -D vitest @testing-library/svelte
-```
-
-Example test structure:
-```typescript
-// src/lib/utils/parser.test.ts
-import { describe, it, expect } from 'vitest';
-import { parseDocument } from './parser';
-
-describe('parseDocument', () => {
-  it('should correctly parse basic text', () => {
-    const result = parseDocument('Hello World');
-    expect(result).toBeDefined();
-  });
-});
-```
-
-### End-to-End Testing
-- Using Playwright for E2E testing
-- Focus on critical user journeys
-- Test across multiple browsers
-
-```bash
-npm install -D @playwright/test
-npx playwright install
-```
-
-Example E2E test:
-```typescript
-// e2e/basic.spec.ts
-import { test, expect } from '@playwright/test';
-
-test('basic document reading flow', async ({ page }) => {
-  await page.goto('/');
-  await page.fill('[data-testid="document-input"]', 'Test content');
-  await page.click('[data-testid="analyze-button"]');
-  await expect(page.locator('[data-testid="analysis-result"]')).toBeVisible();
-});
+├── routes/        # Page components and routing
+└── app.html       # Root HTML template
 ```
 
 ## Development Conventions
@@ -222,12 +85,5 @@ test('basic document reading flow', async ({ page }) => {
    - Functions: camelCase (e.g., `parseDocument`)
    - Types/Interfaces: PascalCase (e.g., `DocumentMetadata`)
 
-3. **State Management**
-   - Start with Svelte's built-in stores
-   - Keep state as local as possible
-   - Document store structure in comments
 
-4. **Testing**
-   - Write tests alongside new features
-   - Use meaningful test descriptions
-   - Follow AAA pattern (Arrange, Act, Assert)
+
