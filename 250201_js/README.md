@@ -115,6 +115,20 @@ Then open your browser to the URL provided (typically [http://localhost:3000](ht
    }
    ```
 
+### Diagram Generation
+
+1. **Install Mermaid CLI globally:**
+   ```bash
+   npm install -g @mermaid-js/mermaid-cli
+   ```
+
+2. **Generate architecture diagram:**
+   ```bash
+   ./scripts/generate-diagrams.sh
+   ```
+
+This will generate the architecture diagram as SVG in `docs/architecture.svg`.
+
 ## Project Structure
 
 We're keeping the structure minimal and intuitive:
