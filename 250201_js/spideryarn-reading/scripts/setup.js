@@ -90,8 +90,26 @@ try {
     execSync('mmdc --version', { stdio: 'ignore' });
 } catch (error) {
     console.log('Installing Mermaid CLI globally...');
-    exec('npm install @mermaid-js/mermaid-cli');
+    exec('npm install -g @mermaid-js/mermaid-cli');
 }
+
+// Create initial Mermaid diagram if it doesn't exist
+const mermaidDir = path.join(__dirname, '..', 'docs');
+const mermaidFile = path.join(mermaidDir, 'architecture.mmd');
+
+if (!fs.existsSync(mermaidDir)) {
+    fs.mkdirSync(mermaidDir, { recursive: true });
+}
+
+ensureFileExists(mermaidFile, `graph TD
+    A[Document Reader] --> B[AI Service]
+    B --> C[Document Parser]
+    C --> D[State Management]
+    D --> A`);
+
+// Generate initial diagram
+console.log('Generating architecture diagram...');
+exec('scripts/generate-diagrams.sh');
 
 console.log('Setup complete! You can now run:');
 console.log('  npm run dev    - Start development server');
