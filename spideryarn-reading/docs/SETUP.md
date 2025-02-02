@@ -1,11 +1,30 @@
 # Setup Instructions
 
 ## Quick Start
+
+1. First, create a new Svelte project using Vite:
+```bash
+npm create vite@latest spideryarn-reading -- --template svelte
+cd spideryarn-reading
+npm install
+```
+
+2. Then run our custom setup script to add additional tooling (Tailwind, TypeScript config, testing, etc.):
 ```bash
 npm run setup
 ```
 
-This will handle all initial setup and installation steps safely and idempotently.
+This will handle all additional setup and installation steps safely and idempotently.
+
+## What the Setup Script Does
+
+Our setup script (`scripts/setup.js`) enhances the base Svelte template by adding:
+- Tailwind CSS integration
+- Enhanced TypeScript configuration
+- ESLint and Prettier setup
+- Testing infrastructure (Vitest and Playwright)
+- Documentation tooling (Mermaid diagrams)
+- Project structure for scalability
 
 ## Manual Setup Steps
 
