@@ -1,10 +1,20 @@
 # Node modules
 node_modules/
 
-# Build outputs
+# Output
+.output
+.vercel
+.netlify
+.wrangler
+/.svelte-kit
+/build
 dist/
 build/
 dist-ssr
+
+# OS
+.DS_Store
+Thumbs.db
 
 # Vite cache directory
 .vite/
@@ -25,8 +35,10 @@ Thumbs.db
 coverage/
 
 # Playwright
-test-results/
-playwright-report/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
 
 # Editor directories and files
 .vscode/*
@@ -44,6 +56,5 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 logs
-*.log
 pnpm-debug.log*
 lerna-debug.log*
