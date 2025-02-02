@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+import { execSync } from 'child_process';
+import { promises as fs, existsSync, writeFileSync, mkdirSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 function exec(command) {
     try {
@@ -14,8 +18,8 @@ function exec(command) {
 }
 
 function ensureFileExists(filepath, content) {
-    if (!fs.existsSync(filepath)) {
-        fs.writeFileSync(filepath, content);
+    if (!existsSync(filepath)) {
+        writeFileSync(filepath, content);
         console.log(`Created ${filepath}`);
     }
 }
@@ -55,8 +59,8 @@ console.log('Installing dev dependencies...');
 exec(`npm install -D ${devDependencies.join(' ')}`);
 
 // Create src directory if it doesn't exist
-if (!fs.existsSync('src')) {
-    fs.mkdirSync('src');
+if (!existsSync('src')) {
+    mkdirSync('src');
     console.log('Created src directory');
 }
 
@@ -120,13 +124,13 @@ for (const [file, content] of Object.entries(basicFiles)) {
 }
 
 // Initialize Tailwind if not already done
-if (!fs.existsSync('tailwind.config.js')) {
+if (!existsSync('tailwind.config.js')) {
     console.log('Initializing Tailwind...');
     exec('npx tailwindcss init -p');
 }
 
 // Ensure config files exist
-ensureFileExists('.eslintrc.js', `module.exports = {
+ensureFileExists('.eslintrc.js', `export default {
   extends: [
     'eslint:recommended',
     'plugin:svelte/recommended',
@@ -187,11 +191,11 @@ try {
 }
 
 // Create initial Mermaid diagram if it doesn't exist
-const mermaidDir = path.join(__dirname, '..', 'docs');
-const mermaidFile = path.join(mermaidDir, 'architecture.mmd');
+const mermaidDir = join(__dirname, '..', 'docs');
+const mermaidFile = join(mermaidDir, 'architecture.mmd');
 
-if (!fs.existsSync(mermaidDir)) {
-    fs.mkdirSync(mermaidDir, { recursive: true });
+if (!existsSync(mermaidDir)) {
+    mkdirSync(mermaidDir, { recursive: true });
 }
 
 ensureFileExists(mermaidFile, `graph TD
