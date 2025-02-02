@@ -12,11 +12,5 @@ See [Setup Instructions](docs/SETUP.md) for detailed installation and developmen
 
 ## Running Tests
 
-The project includes both unit tests and frontend (end-to-end) tests:
-
-- Run all tests: `npm test`
-- Run only unit tests: `npm run test:unit`
-- Run unit tests in watch mode: `npm run test:unit:watch`
-- Run frontend tests: `npm run test:frontend`
-
+The project includes both unit tests and frontend (end-to-end) tests. see `.cursor/rules/testing.mdc`
 
