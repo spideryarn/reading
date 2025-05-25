@@ -52,3 +52,6 @@ Required environment variables:
 - `ANTHROPIC_API_KEY` - API key for Claude access
 
 
+## Style
+
+Use British spelling.
