@@ -3,8 +3,10 @@ import { readdirSync } from 'fs'
 import { join } from 'path'
 import { DocumentViewer } from '@/components/document-viewer'
 import { DocumentSummary } from '@/components/document-summary'
+import { TableOfContents } from '@/components/table-of-contents'
 import { DocumentParser } from '@/lib/services/document-parser'
 import { v4 as uuidv4 } from 'uuid'
+import DocumentPageClient from './page-client'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -53,12 +55,15 @@ export default async function DocumentPage({ params }: PageProps) {
   
 
   return (
-    <div className="h-screen">
+    <div className="h-screen flex flex-col">
       <div className="border-b px-4 py-2">
         <h1 className="text-xl font-semibold">{doc.title}</h1>
       </div>
-      <DocumentSummary content={markdownContent} />
-      <DocumentViewer elements={elements} />
+      <DocumentPageClient 
+        html={html}
+        markdownContent={markdownContent}
+        elements={elements}
+      />
     </div>
   )
 }

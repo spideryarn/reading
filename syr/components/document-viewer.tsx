@@ -5,10 +5,16 @@ import type { DocumentElement } from '@/lib/types/document'
 
 interface DocumentViewerProps {
   elements: DocumentElement[]
+  selectedElement?: DocumentElement | null
+  onElementSelect?: (element: DocumentElement | null) => void
 }
 
-export function DocumentViewer({ elements }: DocumentViewerProps) {
-  const [selectedElement, setSelectedElement] = useState<DocumentElement | null>(null)
+export function DocumentViewer({ elements, selectedElement, onElementSelect }: DocumentViewerProps) {
+  const [internalSelectedElement, setInternalSelectedElement] = useState<DocumentElement | null>(null)
+  
+  // Use external state if provided, otherwise use internal state
+  const currentSelectedElement = selectedElement !== undefined ? selectedElement : internalSelectedElement
+  const handleElementSelect = onElementSelect || setInternalSelectedElement
   const [elementTree, setElementTree] = useState<Map<string | null, DocumentElement[]>>(new Map())
 
   useEffect(() => {
@@ -28,10 +34,11 @@ export function DocumentViewer({ elements }: DocumentViewerProps) {
     return (
       <div key={element.id} className="border-l-2 border-gray-200 pl-4 ml-2">
         <div
+          data-element-id={element.id}
           className={`py-2 px-3 rounded cursor-pointer hover:bg-gray-100 ${
-            selectedElement?.id === element.id ? 'bg-blue-50 border-blue-500' : ''
+            currentSelectedElement?.id === element.id ? 'bg-blue-50 border-blue-500' : ''
           }`}
-          onClick={() => setSelectedElement(element)}
+          onClick={() => handleElementSelect(element)}
         >
           <div className="flex items-center gap-2">
             <span className="text-sm font-mono text-gray-500">{element.tag_name}</span>
@@ -63,21 +70,21 @@ export function DocumentViewer({ elements }: DocumentViewerProps) {
       </div>
       <div className="overflow-y-auto p-4">
         <h2 className="text-lg font-semibold mb-4">Element Details</h2>
-        {selectedElement ? (
+        {currentSelectedElement ? (
           <div className="space-y-4">
             <div>
               <h3 className="font-medium">Tag</h3>
-              <p className="text-sm text-gray-600">{selectedElement.tag_name}</p>
+              <p className="text-sm text-gray-600">{currentSelectedElement.tag_name}</p>
             </div>
             <div>
               <h3 className="font-medium">Content</h3>
-              <p className="text-sm text-gray-600">{selectedElement.content || '(no text content)'}</p>
+              <p className="text-sm text-gray-600">{currentSelectedElement.content || '(no text content)'}</p>
             </div>
-            {Object.keys(selectedElement.attributes).length > 0 && (
+            {Object.keys(currentSelectedElement.attributes).length > 0 && (
               <div>
                 <h3 className="font-medium">Attributes</h3>
                 <pre className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                  {JSON.stringify(selectedElement.attributes, null, 2)}
+                  {JSON.stringify(currentSelectedElement.attributes, null, 2)}
                 </pre>
               </div>
             )}
