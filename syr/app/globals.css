@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tippy.js/dist/tippy.css";
 
 :root {
   --background: #ffffff;
@@ -12,12 +13,15 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Dark mode disabled - see UI_CONFIG.FORCE_LIGHT_MODE in lib/config.ts */
+/* 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
 }
+*/
 
 body {
   background: var(--background);

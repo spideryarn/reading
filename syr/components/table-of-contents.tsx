@@ -4,6 +4,7 @@
 // See docs/TABLE_OF_CONTENTS_PANE.md for architecture and usage patterns
 
 import { useEffect, useState } from 'react'
+import Tippy from '@tippyjs/react'
 
 interface Heading {
   id: string
@@ -87,18 +88,24 @@ export function TableOfContents({ content, onHeadingClick }: TableOfContentsProp
       <h2 className="text-sm font-semibold text-gray-900 mb-3">Table of Contents</h2>
       <nav className="space-y-1">
         {headings.map((heading) => (
-          <div
+          <Tippy
             key={heading.id}
-            className={`${getIndentClass(heading.level)} cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors`}
-            onClick={() => handleHeadingClick(heading)}
+            content="Tooltip content placeholder"
+            placement="right-start"
+            delay={[500, 200]}
           >
-            <span className="text-xs text-gray-400 mr-2">
-              H{heading.level}
-            </span>
-            <span className="text-sm text-gray-700 hover:text-gray-900">
-              {heading.text}
-            </span>
-          </div>
+            <div
+              className={`${getIndentClass(heading.level)} cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors`}
+              onClick={() => handleHeadingClick(heading)}
+            >
+              <span className="text-xs text-gray-400 mr-2">
+                H{heading.level}
+              </span>
+              <span className="text-sm text-gray-700 hover:text-gray-900">
+                {heading.text}
+              </span>
+            </div>
+          </Tippy>
         ))}
       </nav>
     </div>
