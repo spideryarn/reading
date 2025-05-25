@@ -1,76 +1,48 @@
-# Spideryarn Reading Architecture
+# Architecture questions & decisions
 
-see README.md for more information
+- Web or mobile?
+  - Web for now.
 
-## Overview
+- Online or desktop?
+  - Start with a local dev webserver, then we can decide later whether to host (e.g. on Vercel serverless), or Tauri for a local app experience.
 
-Spideryarn Reading is a web application for AI-assisted document reading and analysis. The initial implementation focuses on HTML documents with Claude AI integration.
+- Open source vs paid?
+  - Eventually this will be a for-profit business in some way, though I haven't figured out any details.
 
-## System Architecture
+- AI
+  - We'll probably use Anthropic Claude Sonnet 4 for almost everything AI-related, including chat, searching the web, manipulating HTML, transcribing PDFs, etc.
+  - For voice recognition, we'll probably use OpenAI Whisper API.
 
-![Architecture Diagram](architecture.png)
+- Background processing
+  - Lots of what we'll want to do will involve slow calls to an LLM. And some of it can be done upfront or in the background. So we'll want to be able to call the LLMs in the background, update our storage, and for that to immediately update & be reflected in the frontend.
+  - Perhaps one day we'll use a backend message queue that somehow syncs to the frontend. But to start with, let's keep things simple - so perhaps the frontend will maintain a simple queue data structure of work that needs to be done, and orchestrate the backend via API calls.
+  - USER/AI AGREED: Frontend-driven queue to start - React component maintains task queue in state, calls Next.js API routes sequentially, updates UI as results arrive. Simple to implement and debug. We'll structure the queue manager as a clean abstraction to enable future migration to server-side queue if needed. Accept limitations (multi-tab conflicts, refresh loses queue) for prototype simplicity.
 
-[Source Diagram](architecture.mmd)
+- Programming languages/frameworks? 
+  - Python is my favourite language by far, and I have lots of utility code that I love to reuse. I'm tempted to use Python for the backend (e.g. with FastAPI, and SQLAlchemy). Or at least to begin with.
+  - But I want this app to be very interactive, and so probably most/all of the app will be TypeScript. In the past, I've used SvelteKit, but the community is much smaller, fewer components (e.g. Supabase realtime support), so I'm open to using React.
+  - I really hate writing CSS, so I'd like the LLM to do all of that work, and my preference would be for it to pick the framework that it knows best (presumably with the most pretraining data), and that works best with the frontend framework.
+  - In the past, I've built an app hosted on Vercel that had two separate environments - a Python serverless backend, and then a SvelteKit backend for server-side rendering, with Svelte on the frontend. It worked fairly well after a lot of tinkering. But I'm a bit wary about the complexity. So I'm at least considering doing everything in SvelteKit, or ditching server-side rendering, or any other ideas that would simplify things.
+  - USER/AI AGREED: Next.js with TypeScript and Tailwind CSS. The AI will handle all programming, and this stack enables fastest development because: (1) AI has most training data on React/Next.js patterns, (2) huge ecosystem of pre-built components for reading apps (react-markdown, PDF libraries, highlighting, etc.), (3) Next.js API routes with streaming support work well with LLM integration, (4) Tailwind CSS is what AI knows best for styling, (5) mature Supabase/realtime integrations if needed later.
 
-Run `scripts/generate-diagram.sh`
+- Storage
+  - I like Sqlite, Postgres, and Supabase as technologies.
+  - I'm tempted to start with Sqlite (or even just JSON flat files to start with), just to get things moving, and switch over to Supabase soon after.
+  - That said, I'm wondering about building everything from scratch using Supabase's realtime functionality...
+  - USER/AI AGREED: Start directly with Supabase from the beginning. This avoids migration complexity later and lets us architect around realtime capabilities from day one. Supabase provides Postgres database, realtime subscriptions, built-in auth, and good Next.js integration.
 
-## Key Components
+- Data structures
+  - We'll ultimately be displaying the document on the frontend as a webpage.
+  - But we'll be doing a lot of stuff to it, e.g. providing hover-able glossaries, providing hierarchical summaries and rewrites of sections at different granularities, providing alternative tables of contents, annotating sections with commentary, highlighting subsets/passages based on different criteria or searches, refactoring the document sometimes to provide alternative reading trajectories, different UI panes (e.g. with table of contents, index, glossary, chat interface).
+  - Sometimes we'll want to iterate through the document forwards like a list (get me the text in the order it will be displayed). Sometimes we'll want to walk it like a tree (e.g. represent the table of contents hierarchically with paragraphs nested inside). Sometimes we'll want to swap out components. Sometimes we'll want to create links between sections of the document. Sometimes we'll want to filter it, or (less often) reorder it.
+  - On the backend, should we store the document a single big row containing all the HTML? Or should we break all the elements of the HTML up into separate rows, using the SQL relational structure to represent the hierarchy & ordering so we can rebuild it dynamically into an HTML document (perhaps in different ways based on queries)?
+  - On the frontend, should we store all that in some core data structure that gets rendered into HTML? Or should we store all of that metadata on the HTML/DOM itself?
+  - USER/AI AGREED: Decompose HTML documents into individual elements stored as separate database rows with parent/child relationships. This enables flexible querying, reordering, and annotation. We'll implement HTML parsing/reconstruction in TypeScript using libraries like Cheerio or jsdom, keeping everything in one codebase without needing a separate Python service.
+  - USER/AI AGREED: Use Virtual DOM approach on frontend - maintain document structure as React state/context (array/tree of element objects) and render to JSX components. This is more idiomatic for React and makes complex interactions easier to implement (hoverable glossaries, dynamic highlights, alternative reading paths, etc.).
 
-### Frontend (Svelte + TypeScript)
+## MVP Features
 
-1. **Document Reader**
-   - Displays HTML content
-   - Handles text selection
-   - Manages reading position
+- USER/AI AGREED: Focus on basic document upload/display with hierarchical summaries as the core feature. This alone provides rich functionality - users can zoom in/out of content at different granularities. We'll add a few simple features early (auto-generated ToC, glossary) but the hierarchical summaries are the main value proposition for the MVP.
+- USER/AI AGREED: Start with separate pane for hierarchical summaries - shows only the summarized version in a dedicated panel. This is simplest to implement and allows easy experimentation with different summary interactions later. Can iterate on the UX as we learn what works best.
+- USER/AI AGREED: Start with sample HTML files stored in the repo - no upload functionality initially. This removes complexity around file handling, conversion, and user content management. Can focus on core reading/summary features first, then add upload capabilities later.
 
-2. **AI features**
-   - Automatically run parsing/summarisation when the document loads
-   - We need a simple MVP way of caching those parsing/summarisation results
-   - Basic UI controls for triggering specific AI analysis
-   - Display AI analysis results inline with the document
-
-3. **Annotation Layer**
-   - Overlays annotations on document
-   - Links AI responses to document sections
-
-### State Management
-
-1. **Document Store**
-   - Current document content
-   - Reading position
-   - Selection state
-
-2. **AI Chat Store**
-   - Conversation history
-   - Active queries
-   - Response status
-
-### Services
-
-1. **Document Parser**
-   - Processes HTML content
-   - Extracts structure and metadata
-
-2. **AI Service**
-   - Handles Claude API communication
-   - Manages prompt construction
-   - Processes AI responses
-
-## Initial MVP Scope
-
-- Single page application
-- Dark theme only
-- A single hard-coded HTML document
-- Basic Claude integration
-- Automatic document analysis on load
-- Essential reading features only
-
-## Future Considerations
-
-- AI chat interface
-- Supabase/Postgres integration
-- Multi-document support
-- User authentication
-- Persistent annotations
-- Advanced AI features
-- Light/dark theme toggle

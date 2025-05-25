@@ -58,3 +58,21 @@ yarn-error.log*
 logs
 pnpm-debug.log*
 lerna-debug.log*
+
+# Next.js specific
+.next/
+out/
+
+# Test output
+test-results/
+playwright-report/
+jest-html-reporters-attach/
+
+# Backup folder (temporary)
+backup/
+
+# Claude AI specific
+.claude/
+
+# Cursor IDE
+.cursor/
