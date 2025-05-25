@@ -1,6 +1,8 @@
 # Project Management Practices
 
-This is a guide for writing planning/project management `.md` files, e.g. `planning/yyMMdd_complex_project.md`.
+see also: `docs/WRITING_EVERGREEN_DOCS.md`
+
+This is a guide for writing planning/project management `.md` files, e.g. `planning/yyMMdd_complex_project.md`. These are for thinking through & documenting decisions, breaking down complex projects into multiple stages, and tracking progress.
 
 Aim to keep these concise, and only include stuff explicitly agreed with the user.
 
