@@ -1,0 +1,2 @@
+-- Seed data for testing
+-- This file is optional and will be run after migrations during `supabase db reset`

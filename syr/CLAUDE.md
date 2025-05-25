@@ -3,7 +3,7 @@
 This document provides essential context for Claude instances working on the Spideryarn Reading project.
 
 see:
-- `README.md`
+- `README.md` for goals/intents/features
 - `docs/CODING_PRINCIPLES.md`
 - `docs/ARCHITECTURE.md`
 
@@ -29,7 +29,9 @@ Based on README.md, the following architecture decisions have been made:
 
 ## Build and Test Commands
 
-TODO
+`npm run dev`
+
+http://localhost:3000/
 
 ## Project Structure
 
