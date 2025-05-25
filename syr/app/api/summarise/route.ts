@@ -11,9 +11,6 @@ export async function POST(request: NextRequest) {
   try {
     const { content, granularity } = await request.json()
     
-    console.log('API Route: Content preview (first 500 chars):', content?.substring(0, 500))
-    console.log('API Route: Content length:', content?.length)
-    console.log('API Route: Granularity:', granularity)
     
     if (!content || typeof content !== 'string') {
       return NextResponse.json(

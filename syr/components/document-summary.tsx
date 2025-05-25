@@ -17,8 +17,6 @@ export function DocumentSummary({ content }: DocumentSummaryProps) {
         setLoading(true)
         setError('')
         
-        console.log('DocumentSummary: Content preview (first 500 chars):', content.substring(0, 500))
-        console.log('DocumentSummary: Content length:', content.length)
         
         const response = await fetch('/api/summarise', {
           method: 'POST',

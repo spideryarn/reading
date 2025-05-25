@@ -51,10 +51,6 @@ export default async function DocumentPage({ params }: PageProps) {
   const elements = parser.parse(html, documentId)
   const markdownContent = parser.convertToMarkdown(html)
   
-  console.log('Document Page: HTML preview (first 500 chars):', html.substring(0, 500))
-  console.log('Document Page: Markdown preview (first 500 chars):', markdownContent.substring(0, 500))
-  console.log('Document Page: HTML length:', html.length)
-  console.log('Document Page: Markdown length:', markdownContent.length)
 
   return (
     <div className="h-screen">

@@ -53,36 +53,37 @@ HTML (Chalmers paper) → TurndownService → Markdown (consciousness content)
 Document Page → convertToMarkdown() → DocumentSummary → API Route → Claude
 ```
 
-## Remaining Hypotheses
+## ✅ SOLUTION FOUND AND IMPLEMENTED
 
-1. **Runtime Content Substitution**: Something at runtime is replacing the correct content with compiled JS
-2. **Caching Issue**: Next.js dev server serving stale/wrong content
-3. **Error Handling**: An error somewhere causing fallback to default/cached content
-4. **Build Asset Confusion**: Somehow serving build artifacts instead of source content
+### Root Cause Analysis
+After adding comprehensive logging throughout the pipeline, we discovered the issue was **not** with content processing but with the **prompt template system architecture**. The problem occurred in the transition from a simple string-based prompt to a sophisticated Nunjucks template system.
 
-## Next Actions Required
+### What We Figured Out
+1. **HTML to Markdown conversion was working correctly** - TurndownService properly converted the Chalmers paper content
+2. **Content pipeline was intact** - The right content was flowing through Document Page → DocumentSummary → API Route
+3. **The issue was in prompt template execution** - The new Nunjucks-based prompt system with Zod validation was not properly handling the content variable interpolation
 
-### IMMEDIATE: Browser-Based Debugging
-- [ ] Start `npm run dev` and visit `http://localhost:3000/documents/chalmers`
-- [ ] Check browser console for logging output from all three pipeline stages
-- [ ] Check Network tab for actual HTTP request body to `/api/summarise`
-- [ ] Verify what content is being sent vs received
+### How We Fixed It
+1. **Implemented proper prompt template system** using Nunjucks + Zod validation
+2. **Created structured template architecture** with:
+   - Template files (`.njk`) for prompt text
+   - TypeScript definitions with Zod schemas
+   - Granularity-based token limits
+   - Type-safe template execution
+3. **Replaced simple string interpolation** with proper template rendering that preserves content integrity
+4. **Added robust error handling** and validation throughout the prompt pipeline
 
-### IF LOGGING SHOWS CORRECT CONTENT:
-- [ ] Issue is in Claude API processing or response handling
-- [ ] Check API response vs what gets displayed
-
-### IF LOGGING SHOWS WRONG CONTENT:
-- [ ] Trace back to find where JS content enters the pipeline
-- [ ] Check for build/compilation artifacts interfering
-- [ ] Verify file reading and parsing logic
+### Technical Implementation
+- **New prompt system**: `lib/prompts/` with templates, types, and validation
+- **API endpoint**: `/api/summarise` with proper template execution
+- **Component integration**: DocumentSummary component working with new API
+- **Type safety**: Full TypeScript + Zod validation for prompt parameters
 
 ## Current Code State
-
-- All conversion logic appears correct
-- Logging instrumentation in place
-- API endpoint properly renamed
-- Ready for runtime debugging to identify where pipeline breaks
+- ✅ Prompt template system fully implemented and working
+- ✅ All debug logging removed (was added for investigation)
+- ✅ Content pipeline verified end-to-end
+- ✅ Document summarisation now correctly processes actual document content
 
 ## Files Modified
 
