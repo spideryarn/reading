@@ -1,6 +1,7 @@
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 import { DocumentViewer } from '@/components/document-viewer'
+import { DocumentSummary } from '@/components/document-summary'
 import { DocumentParser } from '@/lib/services/document-parser'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -33,12 +34,19 @@ export default async function DocumentPage({ params }: PageProps) {
   const parser = new DocumentParser()
   const documentId = uuidv4()
   const elements = parser.parse(html, documentId)
+  const markdownContent = parser.convertToMarkdown(html)
+  
+  console.log('Document Page: HTML preview (first 500 chars):', html.substring(0, 500))
+  console.log('Document Page: Markdown preview (first 500 chars):', markdownContent.substring(0, 500))
+  console.log('Document Page: HTML length:', html.length)
+  console.log('Document Page: Markdown length:', markdownContent.length)
 
   return (
     <div className="h-screen">
       <div className="border-b px-4 py-2">
         <h1 className="text-xl font-semibold">{doc.title}</h1>
       </div>
+      <DocumentSummary content={markdownContent} />
       <DocumentViewer elements={elements} />
     </div>
   )
