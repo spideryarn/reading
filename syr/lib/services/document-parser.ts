@@ -1,8 +1,32 @@
 import { load } from 'cheerio'
 import { v4 as uuidv4 } from 'uuid'
+import TurndownService from 'turndown'
 import type { DocumentElement } from '@/lib/types/document'
 
 export class DocumentParser {
+  /**
+   * Converts HTML to Markdown format for better structured text processing.
+   * 
+   * @param html - Raw HTML string
+   * @returns Markdown-formatted text with preserved structure
+   * 
+   * @example
+   * // Before:
+   * `<h1>Title</h1><p>First paragraph with <strong>bold text</strong>.</p><p>Second paragraph.</p>`
+   * 
+   * // After:
+   * `# Title\n\nFirst paragraph with **bold text**.\n\nSecond paragraph.`
+   */
+  convertToMarkdown(html: string): string {
+    const turndownService = new TurndownService({
+      headingStyle: 'atx',
+      bulletListMarker: '-',
+      codeBlockStyle: 'fenced'
+    })
+    
+    return turndownService.turndown(html)
+  }
+
   parse(html: string, documentId: string): DocumentElement[] {
     const $ = load(html)
     const elements: DocumentElement[] = []
