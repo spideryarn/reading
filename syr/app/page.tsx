@@ -1,6 +1,38 @@
 import Link from 'next/link'
+import { readdirSync } from 'fs'
+import { join } from 'path'
+
+interface Document {
+  filename: string
+  title: string
+  slug: string
+}
+
+function getDocuments(): Document[] {
+  const examplesDir = join(process.cwd(), 'static', 'examples')
+  const files = readdirSync(examplesDir)
+  
+  return files
+    .filter(file => file.endsWith('.html'))
+    .map(filename => {
+      // Remove .html extension and clean up title
+      const title = filename.replace('.html', '')
+      
+      // Create URL-friendly slug from filename
+      const slug = filename
+        .replace('.html', '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+      
+      return { filename, title, slug }
+    })
+    .sort((a, b) => a.title.localeCompare(b.title))
+}
 
 export default function Home() {
+  const documents = getDocuments()
+  
   return (
     <div className="min-h-screen p-8">
       <main className="max-w-4xl mx-auto">
@@ -12,20 +44,16 @@ export default function Home() {
         <div className="space-y-4">
           <h2 className="text-2xl font-semibold">Sample Documents</h2>
           <div className="grid gap-4">
-            <Link
-              href="/documents/chalmers"
-              className="block p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <h3 className="font-medium">Chalmers (1995) - Facing Up to the Problem of Consciousness</h3>
-              <p className="text-sm text-gray-600">Philosophy of mind paper on consciousness</p>
-            </Link>
-            <Link
-              href="/documents/rhizome"
-              className="block p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <h3 className="font-medium">Rhizome - 1000 Plateaus Introduction</h3>
-              <p className="text-sm text-gray-600">Deleuze and Guattari philosophical text</p>
-            </Link>
+            {documents.map(doc => (
+              <Link
+                key={doc.slug}
+                href={`/documents/${doc.slug}`}
+                className="block p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <h3 className="font-medium">{doc.title}</h3>
+                <p className="text-sm text-gray-500">Document: {doc.filename}</p>
+              </Link>
+            ))}
           </div>
         </div>
       </main>

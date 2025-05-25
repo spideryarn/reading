@@ -1,28 +1,43 @@
 import { readFile } from 'fs/promises'
+import { readdirSync } from 'fs'
 import { join } from 'path'
 import { DocumentViewer } from '@/components/document-viewer'
 import { DocumentSummary } from '@/components/document-summary'
 import { DocumentParser } from '@/lib/services/document-parser'
 import { v4 as uuidv4 } from 'uuid'
 
-const documents = {
-  chalmers: {
-    filename: 'Chalmers (1995) - Facing Up to the Problem of Consciousness.html',
-    title: 'Facing Up to the Problem of Consciousness'
-  },
-  rhizome: {
-    filename: 'Rhizome - 1000 Plateaus introduction - Lambert says yes 231210.html',
-    title: 'Rhizome - 1000 Plateaus Introduction'
-  }
-}
-
 interface PageProps {
   params: Promise<{ slug: string }>
 }
 
+function findDocumentBySlug(slug: string): { filename: string; title: string } | null {
+  const examplesDir = join(process.cwd(), 'static', 'examples')
+  const files = readdirSync(examplesDir)
+  
+  // Find the file that matches this slug
+  const matchingFile = files.find(file => {
+    if (!file.endsWith('.html')) return false
+    
+    const fileSlug = file
+      .replace('.html', '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+    
+    return fileSlug === slug
+  })
+  
+  if (!matchingFile) return null
+  
+  return {
+    filename: matchingFile,
+    title: matchingFile.replace('.html', '')
+  }
+}
+
 export default async function DocumentPage({ params }: PageProps) {
   const { slug } = await params
-  const doc = documents[slug as keyof typeof documents]
+  const doc = findDocumentBySlug(slug)
   
   if (!doc) {
     return <div className="p-8">Document not found</div>
