@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react'
 import Tippy from '@tippyjs/react'
 import TurndownService from 'turndown'
+import { Spinner, ExclamationMark } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import type { GranularityKey } from '@/lib/prompts/templates/summarise'
 
@@ -194,14 +195,28 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
       return (
         <div className="max-w-md p-3 text-sm bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
           <div className="flex items-center space-x-2">
-            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500"></div>
-            <span className="text-gray-700">Loading...</span>
+            <Spinner size={16} className="animate-spin text-blue-500" style={{ animationDuration: '2s' }} />
+            <span className="text-gray-700">Summarising contents of this heading...</span>
           </div>
         </div>
       )
     }
     
     if (cachedContent) {
+      // Check if this is an error message
+      const isError = cachedContent.startsWith('⚠️')
+      
+      if (isError) {
+        return (
+          <div className="max-w-md p-3 text-sm bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
+            <div className="flex items-center space-x-2">
+              <ExclamationMark size={16} className="text-amber-500 flex-shrink-0" />
+              <span className="text-gray-700">{cachedContent.replace('⚠️ ', '')}</span>
+            </div>
+          </div>
+        )
+      }
+      
       return (
         <div className="max-w-md p-3 text-sm bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
           <div className="prose prose-sm prose-gray max-w-none">
