@@ -5,6 +5,8 @@
 
 import { useEffect, useState } from 'react'
 import Tippy from '@tippyjs/react'
+import TurndownService from 'turndown'
+import type { DocumentElement } from '@/lib/types/document'
 
 interface Heading {
   id: string
@@ -14,10 +16,11 @@ interface Heading {
 
 interface TableOfContentsProps {
   content: string
+  elements?: DocumentElement[]
   onHeadingClick?: (headingText: string) => void
 }
 
-export function TableOfContents({ content, onHeadingClick }: TableOfContentsProps) {
+export function TableOfContents({ content, elements, onHeadingClick }: TableOfContentsProps) {
   const [headings, setHeadings] = useState<Heading[]>([])
 
   useEffect(() => {
@@ -71,6 +74,70 @@ export function TableOfContents({ content, onHeadingClick }: TableOfContentsProp
     return indents[level as keyof typeof indents] || 'pl-0'
   }
 
+  // Extract hierarchical content for a heading
+  const extractHierarchicalContent = (headingText: string): string => {
+    if (!elements || elements.length === 0) {
+      return "No content available"
+    }
+
+    // Find the heading element that matches this text
+    const headingElement = elements.find(element => 
+      element.tag_name.match(/^h[1-6]$/i) && 
+      element.content?.trim() === headingText.trim()
+    )
+
+    if (!headingElement) {
+      return "Heading not found in elements"
+    }
+
+    const headingLevel = parseInt(headingElement.tag_name.substring(1))
+    const headingPosition = headingElement.position
+
+    // Find all elements that belong to this heading's section
+    const sectionElements: DocumentElement[] = []
+    
+    for (let i = 0; i < elements.length; i++) {
+      const element = elements[i]
+      
+      // Skip elements before this heading
+      if (element.position <= headingPosition) continue
+      
+      // Stop at next heading of equal or higher level
+      if (element.tag_name.match(/^h[1-6]$/i)) {
+        const elementLevel = parseInt(element.tag_name.substring(1))
+        if (elementLevel <= headingLevel) {
+          break
+        }
+      }
+      
+      // Include this element if it has content
+      if (element.content?.trim()) {
+        sectionElements.push(element)
+      }
+    }
+
+    if (sectionElements.length === 0) {
+      return "No content found for this section"
+    }
+
+    // Convert elements to HTML, then to markdown
+    const htmlContent = sectionElements
+      .map(element => {
+        const truncatedContent = element.content.length > 50 
+          ? element.content.substring(0, 50) + '...'
+          : element.content
+        return `<${element.tag_name}>${truncatedContent}</${element.tag_name}>`
+      })
+      .join('')
+
+    const turndownService = new TurndownService({
+      headingStyle: 'atx',
+      bulletListMarker: '-'
+    })
+    
+    return turndownService.turndown(htmlContent)
+  }
+
   const handleHeadingClick = (heading: Heading) => {
     if (onHeadingClick) {
       onHeadingClick(heading.text)
@@ -90,9 +157,10 @@ export function TableOfContents({ content, onHeadingClick }: TableOfContentsProp
         {headings.map((heading) => (
           <Tippy
             key={heading.id}
-            content="Tooltip content placeholder"
+            content={<div className="max-w-md p-2 text-sm whitespace-pre-wrap">{extractHierarchicalContent(heading.text)}</div>}
             placement="right-start"
             delay={[500, 200]}
+            interactive={true}
           >
             <div
               className={`${getIndentClass(heading.level)} cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors`}

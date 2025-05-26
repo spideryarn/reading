@@ -39,7 +39,7 @@ export default function DocumentPageClient({ html, markdownContent, elements }: 
   return (
     <div className="flex flex-1 overflow-hidden">
       <div className="w-64 border-r bg-gray-50 overflow-y-auto">
-        <TableOfContents content={html} onHeadingClick={handleHeadingClick} />
+        <TableOfContents content={html} elements={elements} onHeadingClick={handleHeadingClick} />
       </div>
       <div className="flex-1 flex flex-col">
         <DocumentSummary content={markdownContent} />
