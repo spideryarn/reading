@@ -27,6 +27,8 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
   const [headings, setHeadings] = useState<Heading[]>([])
   const [loadingStates, setLoadingStates] = useState<Set<string>>(new Set())
   const [contentCache, setContentCache] = useState<Map<string, string>>(new Map())
+  const [activeTab, setActiveTab] = useState<'original' | 'ai-generated'>('original')
+  const [showPlaceholder, setShowPlaceholder] = useState(false)
 
   useEffect(() => {
     const extractHeadings = () => {
@@ -271,9 +273,16 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
     }
   }
 
-  return (
-    <div className="p-4">
-      <h2 className="text-sm font-semibold text-gray-900 mb-3">Table of Contents</h2>
+  const renderOriginalTab = () => {
+    if (headings.length === 0) {
+      return (
+        <div className="p-4 text-sm text-gray-500">
+          No headings found in document
+        </div>
+      )
+    }
+
+    return (
       <nav className="space-y-1">
         {headings.map((heading) => (
           <Tooltip.Provider key={heading.id} delayDuration={500}>
@@ -312,6 +321,75 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
           </Tooltip.Provider>
         ))}
       </nav>
+    )
+  }
+
+  const renderAiGeneratedTab = () => {
+    if (showPlaceholder) {
+      return (
+        <div className="p-4">
+          <div className="w-full px-4 py-8 text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-md text-center">
+            <div className="space-y-2">
+              <div className="text-gray-400">📄</div>
+              <div>Placeholder for AI-generated headings</div>
+              <div className="text-xs text-gray-400">
+                This will be replaced with actual generated headings in Stage 4
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="p-4">
+        <button 
+          className="w-full px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
+          onClick={() => {
+            setShowPlaceholder(true)
+            console.log('Generate new headings button clicked - showing placeholder')
+          }}
+        >
+          Generate new headings
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="p-4">
+      <h2 className="text-sm font-semibold text-gray-900 mb-3">Table of Contents</h2>
+      
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-200 mb-4">
+        <nav className="flex space-x-8" aria-label="Tabs">
+          <button
+            onClick={() => setActiveTab('original')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'original'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Original
+          </button>
+          <button
+            onClick={() => setActiveTab('ai-generated')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'ai-generated'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            AI-generated
+          </button>
+        </nav>
+      </div>
+
+      {/* Tab Content */}
+      <div className="min-h-32">
+        {activeTab === 'original' ? renderOriginalTab() : renderAiGeneratedTab()}
+      </div>
     </div>
   )
 }
