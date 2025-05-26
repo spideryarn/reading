@@ -25,7 +25,7 @@ Switching branches in a worktree modifies all tracked files, which causes:
 
 ## Proposed Solutions
 
-### Option 1: Two-Step Manual Process (Simple but Tedious)
+### Option 1: Two-Step Manual Process (Simple but Tedious - CHOSEN AS FALLBACK)
 
 Create a sync script that merges in one direction at a time:
 - Run from `experim` worktree: merge `main` → `experim`
@@ -41,7 +41,7 @@ Keep both worktrees on experimental branches (`experim1`, `experim2`), temporari
 **Pros**: Each worktree has a one-step sync process
 **Cons**: Temporarily checking out main disrupts the working directory and breaks running processes
 
-### Option 3: Temporary Worktree for Merging (Recommended)
+### Option 3: Temporary Worktree for Merging
 
 Use a temporary worktree to perform the two-way merge without disrupting the current working directory.
 
@@ -64,7 +64,7 @@ Use a temporary worktree to perform the two-way merge without disrupting the cur
 - Slightly more complex script
 - Creates temporary directories (automatically cleaned up)
 
-### Option 4: Fast-Forward Only Using Git Fetch
+### Option 4: Fast-Forward Only Using Git Fetch (CHOSEN FOR HAPPY PATH)
 
 For simple cases without conflicts:
 ```bash
