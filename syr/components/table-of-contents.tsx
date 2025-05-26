@@ -281,6 +281,10 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
             placement="right-start"
             delay={[500, 200]}
             interactive={true}
+            // Explicitly use document.body to prevent clipping issues in scrollable ToC pane.
+            // The tooltip content is read-only (AI summaries), so keyboard navigation into 
+            // the tooltip itself is not required for accessibility.
+            appendTo={() => document.body}
             onShow={() => handleTooltipShow(heading.text)}
           >
             <div
