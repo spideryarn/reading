@@ -44,6 +44,7 @@ see:
   - On the backend, should we store the document a single big row containing all the HTML? Or should we break all the elements of the HTML up into separate rows, using the SQL relational structure to represent the hierarchy & ordering so we can rebuild it dynamically into an HTML document (perhaps in different ways based on queries)?
   - On the frontend, should we store all that in some core data structure that gets rendered into HTML? Or should we store all of that metadata on the HTML/DOM itself?
   - USER/AI AGREED: Decompose HTML documents into individual elements stored as separate database rows with parent/child relationships. This enables flexible querying, reordering, and annotation. We'll implement HTML parsing/reconstruction in TypeScript using libraries like Cheerio or jsdom, keeping everything in one codebase without needing a separate Python service.
+    - UPDATE We changed our mind. We're going to store entire doc as a single row. see below
   - USER/AI AGREED: Use Virtual DOM approach on frontend - maintain document structure as React state/context (array/tree of element objects) and render to JSX components. This is more idiomatic for React and makes complex interactions easier to implement (hoverable glossaries, dynamic highlights, alternative reading paths, etc.).
 
 ## MVP Features
@@ -51,4 +52,32 @@ see:
 - USER/AI AGREED: Focus on basic document upload/display with hierarchical summaries as the core feature. This alone provides rich functionality - users can zoom in/out of content at different granularities. We'll add a few simple features early (auto-generated ToC, glossary) but the hierarchical summaries are the main value proposition for the MVP.
 - USER/AI AGREED: Start with separate pane for hierarchical summaries - shows only the summarized version in a dedicated panel. This is simplest to implement and allows easy experimentation with different summary interactions later. Can iterate on the UX as we learn what works best.
 - USER/AI AGREED: Start with sample HTML files stored in the repo - no upload functionality initially. This removes complexity around file handling, conversion, and user content management. Can focus on core reading/summary features first, then add upload capabilities later.
+
+## Document Storage Architecture
+
+- USER/AI AGREED: Store documents as single rows in the database with HTML content as text, rather than decomposing into element-level rows. This simplifies implementation and better supports our use case where:
+  - Document transformations (lenses) require full document context and are better done in-memory than through SQL
+  - AI operations need complete document understanding, not isolated elements
+  - Frontend will cache parsed documents in state anyway (Virtual DOM approach)
+  - Complex document restructuring is easier with in-memory transformations than SQL queries
+
+- Enhancement storage pattern:
+  - Original documents stored in `documents` table with full HTML content
+  - Document enhancements (better ToC, glossaries, summaries, etc.) stored in separate `document_enhancements` table:
+    ```
+    document_id | enhancement_type | data (JSONB)
+    ```
+  - Apply transformations during render pipeline:
+    1. Load original HTML from database
+    2. Load relevant enhancements
+    3. Parse HTML to virtual DOM structure
+    4. Apply enhancements (inject new headings, add glossary terms, etc.)
+    5. Render transformed document
+  
+  - Benefits:
+    - Clean separation between source content and AI-generated enhancements
+    - Easy versioning and history of enhancements
+    - Toggle lenses/enhancements on/off dynamically
+    - Simple rollback if AI generates poor content
+    - Multiple enhancement types can compose without conflicts
 
