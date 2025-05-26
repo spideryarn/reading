@@ -2,6 +2,7 @@ import { load } from 'cheerio'
 import { v4 as uuidv4 } from 'uuid'
 import TurndownService from 'turndown'
 import type { DocumentElement } from '@/lib/types/document'
+import { assignDeterministicIds, getBodyWithIds } from './deterministicId'
 
 export class DocumentParser {
   /**
@@ -28,7 +29,9 @@ export class DocumentParser {
   }
 
   parse(html: string, documentId: string): DocumentElement[] {
-    const $ = load(html)
+    // First, assign deterministic IDs to all elements
+    const htmlWithIds = assignDeterministicIds(html)
+    const $ = load(htmlWithIds)
     const elements: DocumentElement[] = []
     let position = 0
 
@@ -44,12 +47,16 @@ export class DocumentParser {
         return
       }
 
-      const id = uuidv4()
+      // Use the deterministic ID if present, otherwise generate a UUID
+      const id = $el.attr('id') || uuidv4()
       const attributes: Record<string, string> = {}
       
       if (element.attribs) {
         Object.entries(element.attribs).forEach(([key, value]) => {
-          attributes[key] = value as string
+          // Skip the ID attribute since we're using it as the element ID
+          if (key !== 'id') {
+            attributes[key] = value as string
+          }
         })
       }
 
