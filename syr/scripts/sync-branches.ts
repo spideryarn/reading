@@ -100,7 +100,7 @@ class SyncBranchesCommand extends Command {
     }
 
     // Check if branches exist
-    const branches = this.execGit('branch --list').split('\n').map(b => b.replace(/^\*?\s*/, ''));
+    const branches = this.execGit('branch --list').split('\n').map(b => b.replace(/^[\*\+]?\s*/, ''));
     
     if (!branches.includes(this.mainBranch)) {
       throw new Error(`Main branch '${this.mainBranch}' does not exist`);
