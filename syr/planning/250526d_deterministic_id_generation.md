@@ -19,14 +19,14 @@ We'll generate IDs once on initial document load, then store the document with t
 
 ## Key Decisions
 
-- **HTML Parser**: Use jsdom for robust handling of malformed HTML
+- **HTML Parser**: Use Cheerio for robust handling of malformed HTML (simpler than jsdom, already installed)
 - **ID Generation**: Hybrid approach using element position + content fingerprinting
 - **Simplicity First**: Keep implementation minimal, add complexity only if needed
-- **Tidy First**: Parse HTML through jsdom to normalize before ID generation
+- **Tidy First**: Parse HTML through Cheerio to normalize before ID generation
 
 ## Implementation Approach
 
-1. Load HTML into jsdom (automatically tidies malformed HTML)
+1. Load HTML into Cheerio (automatically tidies malformed HTML)
 2. Traverse all elements in body
 3. Generate ID using:
    - Element's position in DOM tree (path)
@@ -53,13 +53,13 @@ Changes that SHOULD affect IDs:
 ## Actions
 
 - [x] Write planning doc for deterministic HTML element ID generation
-- [ ] Implement HTML parsing with jsdom for tidying/normalization
-- [ ] Implement hybrid ID generation function
-- [ ] Write test for ID generation stability
+- [x] Implement HTML parsing with Cheerio for tidying/normalization
+- [x] Implement hybrid ID generation function
+- [x] Write test for ID generation stability
   - Load Chalmers example HTML
   - Generate IDs
   - Make non-body changes (meta tags, whitespace)
   - Verify IDs remain the same
   - Make body changes (add element, change class)
   - Verify relevant IDs change
-- [ ] Run test and verify ID stability behaviour
+- [x] Run test and verify ID stability behaviour - all tests pass!

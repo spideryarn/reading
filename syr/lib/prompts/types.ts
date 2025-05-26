@@ -73,18 +73,9 @@ export async function executePrompt<T extends z.ZodSchema>(
   // Validate variables against schema
   const validated = template.schema.parse(variables)
   
-  console.log('Template variables - content preview (first 500 chars):', validated.content?.substring(0, 500))
-  console.log('Template variables - content length:', validated.content?.length)
-  
   // Load and render template
-  console.log('Template path being used:', template.templatePath)
   const templateContent = readFileSync(template.templatePath, 'utf-8')
-  console.log('Template content preview (first 200 chars):', templateContent.substring(0, 200))
-  
   const prompt = env.renderString(templateContent, validated)
-  
-  console.log('Prompt sent to Claude (first 1000 chars):', prompt.substring(0, 1000))
-  console.log('Prompt length:', prompt.length)
   
   // Execute with Anthropic
   const response = await anthropic.messages.create({
@@ -95,8 +86,5 @@ export async function executePrompt<T extends z.ZodSchema>(
   })
   
   const result = response.content[0].type === 'text' ? response.content[0].text : ''
-  console.log('Claude response (first 500 chars):', result.substring(0, 500))
-  console.log('Claude response length:', result.length)
-  
   return result
 }
