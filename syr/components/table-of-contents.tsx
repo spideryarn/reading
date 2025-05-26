@@ -22,6 +22,8 @@ interface TableOfContentsProps {
 
 export function TableOfContents({ content, elements, onHeadingClick }: TableOfContentsProps) {
   const [headings, setHeadings] = useState<Heading[]>([])
+  const [loadingStates, setLoadingStates] = useState<Set<string>>(new Set())
+  const [contentCache, setContentCache] = useState<Map<string, string>>(new Map())
 
   useEffect(() => {
     const extractHeadings = () => {
@@ -74,8 +76,14 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
     return indents[level as keyof typeof indents] || 'pl-0'
   }
 
-  // Extract hierarchical content for a heading
-  const extractHierarchicalContent = (headingText: string): string => {
+  // Extract hierarchical content for a heading with loading simulation
+  const extractHierarchicalContent = async (headingText: string): Promise<string> => {
+    // Check cache first
+    const cacheKey = headingText
+    if (contentCache.has(cacheKey)) {
+      return contentCache.get(cacheKey)!
+    }
+
     if (!elements || elements.length === 0) {
       return "No content available"
     }
@@ -120,6 +128,9 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
       return "No content found for this section"
     }
 
+    // Simulate 1.5s loading delay
+    await new Promise(resolve => setTimeout(resolve, 1500))
+
     // Convert elements to HTML, then to markdown
     const htmlContent = sectionElements
       .map(element => {
@@ -135,7 +146,65 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
       bulletListMarker: '-'
     })
     
-    return turndownService.turndown(htmlContent)
+    const result = turndownService.turndown(htmlContent)
+    
+    // Cache the result
+    setContentCache(prev => new Map(prev).set(cacheKey, result))
+    
+    return result
+  }
+
+  // Get tooltip content with loading state management
+  const getTooltipContent = (headingText: string): JSX.Element => {
+    const isLoading = loadingStates.has(headingText)
+    const cachedContent = contentCache.get(headingText)
+    
+    if (isLoading) {
+      return (
+        <div className="max-w-md p-3 text-sm bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
+          <div className="flex items-center space-x-2">
+            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500"></div>
+            <span className="text-gray-700">Loading...</span>
+          </div>
+        </div>
+      )
+    }
+    
+    if (cachedContent) {
+      return (
+        <div className="max-w-md p-3 text-sm bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
+          <div className="prose prose-sm prose-gray max-w-none">
+            <div className="whitespace-pre-wrap leading-relaxed text-gray-800">
+              {cachedContent}
+            </div>
+          </div>
+        </div>
+      )
+    }
+    
+    return (
+      <div className="max-w-md p-3 text-sm text-gray-500 bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
+        Hover to load content...
+      </div>
+    )
+  }
+
+  // Handle tooltip show event to trigger content loading
+  const handleTooltipShow = (headingText: string) => {
+    if (!contentCache.has(headingText) && !loadingStates.has(headingText)) {
+      // Add to loading states
+      setLoadingStates(prev => new Set(prev).add(headingText))
+      
+      // Start async loading
+      extractHierarchicalContent(headingText).finally(() => {
+        // Remove from loading states
+        setLoadingStates(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(headingText)
+          return newSet
+        })
+      })
+    }
   }
 
   const handleHeadingClick = (heading: Heading) => {
@@ -157,10 +226,11 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
         {headings.map((heading) => (
           <Tippy
             key={heading.id}
-            content={<div className="max-w-md p-2 text-sm whitespace-pre-wrap">{extractHierarchicalContent(heading.text)}</div>}
+            content={getTooltipContent(heading.text)}
             placement="right-start"
             delay={[500, 200]}
             interactive={true}
+            onShow={() => handleTooltipShow(heading.text)}
           >
             <div
               className={`${getIndentClass(heading.level)} cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors`}
