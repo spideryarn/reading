@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import Tippy from '@tippyjs/react'
 import TurndownService from 'turndown'
 import type { DocumentElement } from '@/lib/types/document'
+import type { GranularityKey } from '@/lib/prompts/templates/summarise'
 
 interface Heading {
   id: string
@@ -76,7 +77,16 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
     return indents[level as keyof typeof indents] || 'pl-0'
   }
 
-  // Generate LLM summary for a heading's hierarchical content
+  // Tooltip granularity setting - TypeScript will enforce this is a valid option
+  const TOOLTIP_GRANULARITY: GranularityKey = 'single short paragraph'
+  
+  /**
+   * Generate LLM summary for a heading's hierarchical content.
+   * Extracts all content belonging to the specified heading section and sends it to the LLM for summarisation.
+   * 
+   * @param headingText - The text content of the heading to summarise
+   * @returns Promise resolving to the generated summary or error message
+   */
   const generateHeadingSummary = async (headingText: string): Promise<string> => {
     // Check cache first
     const cacheKey = headingText
@@ -142,7 +152,7 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
         },
         body: JSON.stringify({
           content: htmlContent,
-          granularity: 'brief' // Use brief granularity for tooltip summaries
+          granularity: TOOLTIP_GRANULARITY
         }),
       })
 
@@ -159,31 +169,23 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
     } catch (error) {
       console.error('Error generating summary:', error)
       
-      // Fallback to content extraction if LLM fails
-      const turndownService = new TurndownService({
-        headingStyle: 'atx',
-        bulletListMarker: '-'
-      })
+      // Return error message instead of fallback content
+      const errorMessage = "⚠️ Unable to generate summary. Please try again later."
       
-      const fallbackContent = sectionElements
-        .map(element => {
-          const truncatedContent = element.content.length > 100 
-            ? element.content.substring(0, 100) + '...'
-            : element.content
-          return `<${element.tag_name}>${truncatedContent}</${element.tag_name}>`
-        })
-        .join('')
+      // Cache the error message to avoid repeated failed attempts
+      setContentCache(prev => new Map(prev).set(cacheKey, errorMessage))
       
-      const result = turndownService.turndown(fallbackContent)
-      
-      // Cache the fallback result
-      setContentCache(prev => new Map(prev).set(cacheKey, result))
-      
-      return result
+      return errorMessage
     }
   }
 
-  // Get tooltip content with loading state management
+  /**
+   * Get tooltip content with loading state management.
+   * Returns appropriate JSX based on current loading state and cached content.
+   * 
+   * @param headingText - The heading text to get content for
+   * @returns JSX element containing loading spinner, cached content, or placeholder
+   */
   const getTooltipContent = (headingText: string): JSX.Element => {
     const isLoading = loadingStates.has(headingText)
     const cachedContent = contentCache.get(headingText)
@@ -218,7 +220,12 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
     )
   }
 
-  // Handle tooltip show event to trigger summary generation
+  /**
+   * Handle tooltip show event to trigger summary generation.
+   * Starts async summary generation when tooltip becomes visible.
+   * 
+   * @param headingText - The heading text to generate summary for
+   */
   const handleTooltipShow = (headingText: string) => {
     if (!contentCache.has(headingText) && !loadingStates.has(headingText)) {
       // Add to loading states

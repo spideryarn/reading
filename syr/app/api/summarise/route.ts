@@ -11,7 +11,6 @@ export async function POST(request: NextRequest) {
   try {
     const { content, granularity } = await request.json()
     
-    
     if (!content || typeof content !== 'string') {
       return NextResponse.json(
         { error: 'Content is required and must be a string' },

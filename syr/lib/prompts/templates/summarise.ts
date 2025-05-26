@@ -26,7 +26,7 @@ const GRANULARITY_OPTIONS = {
   'short phrase of just a few words': 10,
   'short title': 15,
   'short sentence': 25,
-  'at most a sentence': 30,
+  'sentence': 30,
   'sentence or two': 50,
   'few sentences': 100,
   'single short paragraph': 200,
@@ -34,7 +34,7 @@ const GRANULARITY_OPTIONS = {
   'page': 800,
 } as const
 
-type GranularityKey = keyof typeof GRANULARITY_OPTIONS
+export type GranularityKey = keyof typeof GRANULARITY_OPTIONS
 
 // Schema for summary prompt (granularity here is the transformed instruction text)
 const summariseSchema = z.object({
