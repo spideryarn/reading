@@ -35,3 +35,4 @@ Note: there may be other agents changing the code while you work.
 - If the code is in a partial/broken state, prioritise commits that leave the codebase working
 - If you encounter merge conflicts or ANY unexpected issues, stop and ask the user immediately
 - When in doubt, ask the user before proceeding
+- When adding files with special characters (like `[slug]`), quote the path: `git add "app/documents/[slug]/page.tsx"`
