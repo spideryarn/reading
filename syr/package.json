@@ -34,10 +34,12 @@
         "@types/react": "^19",
         "@types/react-dom": "^19",
         "@types/uuid": "^10.0.0",
+        "clipanion": "^4.0.0-rc.4",
         "dotenv-cli": "^8.0.0",
         "eslint": "^9",
         "eslint-config-next": "15.3.2",
         "tailwindcss": "^4",
+        "ts-node": "^10.9.2",
         "typescript": "^5"
     }
 }

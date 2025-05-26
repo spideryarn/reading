@@ -83,29 +83,54 @@ git merge main           # Update current branch
 4. **Provide clear feedback** about sync status and next steps
 5. **Keep operations local** - no automatic pushing to avoid surprising remote changes
 
+## Final Implementation Decision
+
+**Decision**: Hybrid approach combining Option 4 (fast-forward) with Option 3 (temporary worktree fallback).
+
+**Rationale**:
+- Try fast-forward first for the common case where branches haven't diverged
+- Fall back to temporary worktree approach for complex merges
+- User confirmation required before fallback to maintain control
+- TypeScript implementation with Clipanion for type safety and good UX
+
+**Technology Choices**:
+- **Language**: TypeScript for type safety and consistency with project
+- **CLI Framework**: Clipanion (similar to Python's Typer - type-safe, modern design)
+- **Execution**: Standalone executable script with shebang for direct execution
+
+**Safety Features**:
+- Requires clean working tree (no uncommitted changes)
+- Branch existence validation
+- Automatic cleanup of temporary worktrees
+- Clear error messages and user guidance
+
 ## Actions
 
-### Setup Phase
+### Setup Phase ✅
 
-- [ ] Create initial worktree structure
-  - [ ] Verify repo root location: `/Users/greg/Dropbox/dev/experim/reading`
-  - [ ] Create `experim` branch if it doesn't exist
-  - [ ] Add worktree at `/Users/greg/Dropbox/dev/experim/reading2` for `experim` branch
+- [x] Create initial worktree structure
+  - [x] Verify repo root location: `/Users/greg/Dropbox/dev/experim/reading`
+  - [x] Create `experim` branch if it doesn't exist
+  - [x] Add worktree at `/Users/greg/Dropbox/dev/experim/reading2` for `experim` branch
 
-### Script Development
+### Script Development ✅
 
-- [ ] Create `sync-branches.sh` script with temporary worktree approach
-  - [ ] Add precondition checks (branch validation, uncommitted changes)
-  - [ ] Implement temporary worktree creation with proper cleanup
-  - [ ] Add two-way merge logic with conflict handling
-  - [ ] Include informative status messages
+- [x] Create `scripts/sync-branches.ts` script with hybrid approach
+  - [x] Add precondition checks (branch validation, uncommitted changes)
+  - [x] Implement fast-forward attempt first
+  - [x] Implement temporary worktree fallback with proper cleanup
+  - [x] Add two-way merge logic with conflict handling
+  - [x] Include informative status messages
+  - [x] Install Clipanion dependency
+  - [x] Make script executable
   - [ ] Test script with various scenarios (clean merge, conflicts, uncommitted changes)
 
-### Documentation
+### Documentation ✅
 
-- [ ] Document the worktree setup process in project README or CLAUDE.md
-- [ ] Add usage instructions for the sync script
-- [ ] Document the branch strategy (main vs experim)
+- [x] Document the worktree setup process in docs/SETUP.md
+- [x] Add usage instructions for the sync script
+- [x] Document the branch strategy (main vs experim)
+- [x] Add safety warnings about user-only operation
 
 ### Future Enhancements (Optional)
 

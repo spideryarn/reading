@@ -68,6 +68,108 @@ https://github.com/spideryarn/reading/
 
    Navigate to e.g. http://localhost:3001/ (or your configured port)
 
+## Git Worktree Development Setup (Optional)
+
+For parallel development on experimental features, you can set up Git worktrees to maintain two separate working directories with different branches running simultaneously.
+
+### Initial Worktree Setup
+
+**Note: Only the user (not the AI) should set up and use the sync script.**
+
+1. **Navigate to parent directory:**
+   ```bash
+   cd ..  # Go to /Users/greg/Dropbox/dev/experim/reading/
+   ```
+
+2. **Create experimental branch (if it doesn't exist):**
+   ```bash
+   git checkout -b experim
+   git push -u origin experim  # Optional: push to remote
+   git checkout main
+   ```
+
+3. **Create second worktree, e.g. /Users/greg/Dropbox/dev/experim/reading2/ :**
+   ```bash
+   git worktree add ../reading2 experim
+   ```
+
+4. **Set up environment for second worktree:**
+   ```bash
+   cd reading2/syr
+   cp ../../reading/syr/.env.local .env.local
+   ```
+
+5. **Update PORT in second worktree's .env.local:**
+   ```bash
+   # Edit .env.local and change PORT=3001 to PORT=3002 (or next available port)
+   ```
+
+6. **Install dependencies in second worktree:**
+   ```bash
+   npm install
+   ```
+
+7. **Start development server in second worktree:**
+   ```bash
+   npm run dev
+   ```
+
+### Directory Structure After Setup
+
+```
+/Users/greg/Dropbox/dev/experim/reading/
+├── syr/          # Main worktree (main branch) - http://localhost:3001
+└── reading2/
+    └── syr/      # Experimental worktree (experim branch) - http://localhost:3002
+```
+
+### Syncing Branches
+
+Use the provided sync script to keep branches in sync:
+
+```bash
+# From either worktree directory
+./scripts/sync-branches.ts
+
+# Or with custom branch names
+./scripts/sync-branches.ts --main develop --experim feature
+```
+
+The sync script:
+- Attempts fast-forward merge first (ideal case)
+- Falls back to two-way merge if branches have diverged
+- Handles merge conflicts gracefully
+- Requires clean working tree before syncing
+
+### Supabase Considerations
+
+Both worktrees will use the same local Supabase instance (same ports and database). Be careful when making schema migrations - test them thoroughly in one worktree before syncing to the other.
+
+### Common Worktree Commands
+
+```bash
+# List all worktrees
+git worktree list
+
+# Remove a worktree (from main repository)
+git worktree remove reading2
+
+# Clean up stale worktree references
+git worktree prune
+```
+
+### Fixing Setup Mistakes
+
+If you accidentally created the worktree in the wrong location:
+
+```bash
+# Remove the incorrectly placed worktree
+git worktree remove reading2
+
+# Create it in the correct location (alongside, not inside)
+git worktree add ../reading2 experim
+```
+
 ## Project Understanding
 
 - **Goals & Vision**: See [README.md](../README.md) for the application's core objectives and target users
