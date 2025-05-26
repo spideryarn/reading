@@ -31,7 +31,14 @@ Based on README.md, the following architecture decisions have been made:
 
 `npm run dev`
 
-http://localhost:3000/
+The user is already running this in a separate terminal. If you need them to restart it, ask them.
+
+You can see the logs for it in `dev.log`.
+
+Visible at: http://localhost:3000/
+
+If you ever need access to the browser (e.g. console logs, network requests, screenshots, etc), use curl or Playwright MCP (this works well, but try to be sparing about letting it fill up the context window).
+
 
 ## Project Structure
 

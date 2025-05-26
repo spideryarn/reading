@@ -1,5 +1,11 @@
 # Architecture questions & decisions
 
+see:
+- `README.md`
+- `docs/TABLE_OF_CONTENTS_PANE.md`
+
+## High-level background & decisions
+
 - Web or mobile?
   - Web for now.
 
