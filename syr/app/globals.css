@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "tippy.js/dist/tippy.css";
 
 :root {
   --background: #ffffff;
@@ -29,17 +28,3 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Override Tippy.js default styling for light theme tooltips */
-.tippy-box {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.tippy-content {
-  padding: 0 !important;
-}
-
-.tippy-arrow {
-  display: none !important;
-}

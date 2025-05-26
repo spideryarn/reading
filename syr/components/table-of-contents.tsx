@@ -4,7 +4,7 @@
 // See docs/TABLE_OF_CONTENTS_PANE.md for architecture and usage patterns
 
 import { useEffect, useState } from 'react'
-import Tippy from '@tippyjs/react'
+import * as Tooltip from '@radix-ui/react-tooltip'
 import TurndownService from 'turndown'
 import { Spinner, ExclamationMark } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
@@ -275,30 +275,40 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
       <h2 className="text-sm font-semibold text-gray-900 mb-3">Table of Contents</h2>
       <nav className="space-y-1">
         {headings.map((heading) => (
-          <Tippy
-            key={heading.id}
-            content={getTooltipContent(heading.text)}
-            placement="right-start"
-            delay={[500, 200]}
-            interactive={true}
-            // Explicitly use document.body to prevent clipping issues in scrollable ToC pane.
-            // The tooltip content is read-only (AI summaries), so keyboard navigation into 
-            // the tooltip itself is not required for accessibility.
-            appendTo={() => document.body}
-            onShow={() => handleTooltipShow(heading.text)}
-          >
-            <div
-              className={`${getIndentClass(heading.level)} cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors`}
-              onClick={() => handleHeadingClick(heading)}
-            >
-              <span className="text-xs text-gray-400 mr-2">
-                H{heading.level}
-              </span>
-              <span className="text-sm text-gray-700 hover:text-gray-900">
-                {heading.text}
-              </span>
-            </div>
-          </Tippy>
+          <Tooltip.Provider key={heading.id} delayDuration={500}>
+            <Tooltip.Root onOpenChange={(open) => {
+              if (open) handleTooltipShow(heading.text)
+            }}>
+              <Tooltip.Trigger asChild>
+                <div
+                  className={`${getIndentClass(heading.level)} cursor-pointer hover:bg-blue-50 rounded px-2 py-1 transition-colors group`}
+                  onClick={() => handleHeadingClick(heading)}
+                >
+                  <span className="text-xs text-gray-400 mr-2 group-hover:text-blue-600">
+                    H{heading.level}
+                  </span>
+                  <span className="text-sm text-gray-700 group-hover:text-blue-900">
+                    {heading.text}
+                  </span>
+                </div>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  side="right"
+                  align="start"
+                  sideOffset={4}
+                  className="z-50 max-w-md"
+                >
+                  {getTooltipContent(heading.text)}
+                  <Tooltip.Arrow 
+                    className="fill-gray-300" 
+                    width={12} 
+                    height={6}
+                  />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </Tooltip.Provider>
         ))}
       </nav>
     </div>
