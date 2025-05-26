@@ -30,36 +30,39 @@ export default function DocumentPageClient({ html, markdownContent, elements }: 
   const [selectedElement, setSelectedElement] = useState<DocumentElement | null>(null)
   const [glossaryEntities, setGlossaryEntities] = useState<Entity[]>([])
   const [isLoadingGlossary, setIsLoadingGlossary] = useState(false)
+  const [showGlossary, setShowGlossary] = useState(false)
+  const [glossaryError, setGlossaryError] = useState<string | null>(null)
   const documentViewerRef = useRef<HTMLDivElement>(null)
 
-  // Fetch glossary entities when component mounts
-  useEffect(() => {
-    const fetchGlossary = async () => {
-      setIsLoadingGlossary(true)
-      try {
-        const response = await fetch('/api/glossary', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ content: html }),
-        })
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch glossary')
-        }
-        
-        const data = await response.json()
-        setGlossaryEntities(data.entities)
-      } catch (error) {
-        console.error('Error fetching glossary:', error)
-      } finally {
-        setIsLoadingGlossary(false)
+  // Fetch glossary entities when requested
+  const fetchGlossary = async () => {
+    setIsLoadingGlossary(true)
+    setGlossaryError(null)
+    try {
+      const response = await fetch('/api/glossary', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: html }),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
       }
+      
+      const data = await response.json()
+      setGlossaryEntities(data.entities)
+      setShowGlossary(true)
+    } catch (error) {
+      console.error('Error fetching glossary:', error)
+      setGlossaryError(error instanceof Error ? error.message : 'Failed to generate glossary')
+      setShowGlossary(true) // Show the pane even on error so user can see the error message
+    } finally {
+      setIsLoadingGlossary(false)
     }
-    
-    fetchGlossary()
-  }, [html])
+  }
 
   const handleHeadingClick = (headingText: string) => {
     // Find the element that corresponds to this heading
@@ -95,6 +98,9 @@ export default function DocumentPageClient({ html, markdownContent, elements }: 
             onElementSelect={setSelectedElement}
             glossaryEntities={glossaryEntities}
             isLoadingGlossary={isLoadingGlossary}
+            showGlossary={showGlossary}
+            onLoadGlossary={fetchGlossary}
+            glossaryError={glossaryError}
           />
         </div>
       </div>

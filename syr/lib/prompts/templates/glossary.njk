@@ -1,0 +1,78 @@
+You are helping the reader to understand this text. You must extract an exhaustive list of the most important entities in this text into a kind of glossary, which they can refer to if they need help as they are reading. They should be ordered according to which appears first in the text.
+
+- An entity is something important to understanding this text. It's anything that might merit a Wikipedia page, a dictionary entry, an entry in the index of a book, new terminology, central idea, or anything that might confuse the reader.
+
+- An entity could be a person, place, reference material, concept, etc (see full list of ontology types below).
+
+- A longer/complex text will have many entities. A shorter/simpler text will have fewer entities.
+
+- If you need to look up accurate information about an entity (e.g. dates, facts, definitions), you should search the web to ensure accuracy.
+
+- `name`: Each entity has a name, the canonical and unambiguous way to refer to it (usually the longest or official form, e.g. "United States of America" rather than "America").
+
+- `aliases`: Each entity may have multiple aliases, other ways the entity is referred to in the text. Try to make the aliases distinctive, so that a regex using the aliases finds all and only references to the entity (if possible).
+
+- `brief_explanation`: Each entity needs a brief, clear explanation in **Markdown format**, reworded simply but based on the text and without changing the meaning. The brief explanation should be a couple of sentences at most. If you need to draw on knowledge from outside the text, be very explicit about it, e.g. "_Although the text doesn't mention it, ..._" or "_As you may know, ..._".
+
+- `long_explanation`: If the entity is complex, unusual, or confusing, give it a much longer explanation with multiple, detailed paragraphs in **Markdown format**. As per the brief explanation, this should be clear, reworded but based on the text, and should be explicit if it makes use of any knowledge from outside the text. Explain or emphasise any important details, and help the reader to see the relevance of the entity to the text. Only include a `long_explanation` if the `brief_explanation` is insufficient for understanding the text.
+
+Return JSON in the following form, without any context or explanation, so that it can be directly parsed:
+
+```json
+{
+  "entities": [
+    {
+      "name": "string",
+      "ontology": "string", // One of the allowed ontology types
+      "aliases": ["string"], // Can be empty if there are no aliases
+      "brief_explanation": "string", // Markdown formatted
+      "long_explanation": "string", // Optional, Markdown formatted
+      "datetime": "string", // Optional
+      "url": "string", // Optional
+      "extra": {} // Optional
+    }
+  ]
+}
+```
+
+Ontology types:
+- person
+- place
+- date
+- theme
+- event
+- reference (e.g. book, url, movie, paper, magazine, etc)
+- object
+- organization
+- concept
+- definition
+- other
+
+For example, if the text is about the history of the United States, the response might include:
+
+```json
+{
+  "entities": [
+    {
+      "name": "War of Independence",
+      "ontology": "event",
+      "aliases": ["American Revolution", "Revolutionary War"],
+      "brief_explanation": "The War of Independence was a war fought between the United States and Great Britain from 1775 to 1783, resulting in American independence.",
+      "datetime": "1775-04-19"
+    }
+  ]
+}
+```
+
+{% if already_entities %}
+This text already has the following entities, so don't include any of these in your response:
+{% for entity in already_entities %}
+- {{ entity.name }}, aliases={{ entity.aliases }}
+{% endfor %}
+{% endif %}
+
+ONLY JSON IS ALLOWED IN YOUR RESPONSE.
+
+----
+
+{{ content }}
