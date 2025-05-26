@@ -2,6 +2,9 @@
 
 Spideryarn Reading uses a hierarchical, document-centric architecture built on Next.js with AI-powered features for enhanced document comprehension.
 
+(If you notice any ways in which this doc is incomplete/out-of-date, please update it.)
+
+
 ## See also
 
 - `README.md` - Project goals and high-level implementation approach
@@ -9,13 +12,6 @@ Spideryarn Reading uses a hierarchical, document-centric architecture built on N
 - `docs/PROJECT_STATUS.md` - Current development state and missing features
 - `docs/SETUP.md` - Development environment setup and Supabase configuration
 
-## Key Organisational Principles
-
-- **Document-centric routing**: Documents accessible via `/documents/[slug]` pattern
-- **Component-based UI**: Reusable React components for document viewing, summaries, and navigation
-- **AI-first design**: Core features (summaries, glossaries, ToC) powered by Anthropic Claude integration
-- **Hierarchical data structure**: HTML elements stored with parent/child relationships for flexible navigation
-- **Static-to-dynamic transition**: Currently using sample files, architected for database-driven content
 
 ## Site Structure
 
@@ -95,28 +91,3 @@ Spideryarn Reading uses a hierarchical, document-centric architecture built on N
 - Type-safe interfaces throughout (`lib/types/`)
 - Documentation-driven development with comprehensive docs
 
-## Planned Enhancements
-
-**Storage Migration**
-- Transition from static files to Supabase database storage
-- Implementation of document upload functionality
-- User authentication and personalised document libraries
-
-**AI Feature Expansion**
-- Background processing queue for AI operations
-- Multiple document comparison and analysis
-- Custom lens/filter functionality for different reading modes
-
-**User Experience**
-- Mobile-responsive design optimisation
-- Advanced search and filtering capabilities
-- Collaborative reading features
-
-## Architecture Benefits
-
-This organisation supports the core goal of AI-assisted document comprehension through:
-
-- **Scalable AI Integration**: Template-based prompts enable consistent, configurable AI interactions
-- **Flexible Document Structure**: Hierarchical storage allows multiple navigation modes and reading paths
-- **Component Modularity**: Feature isolation enables rapid experimentation and iteration
-- **Progressive Enhancement**: Static file foundation allows quick prototyping while architecting for dynamic functionality
