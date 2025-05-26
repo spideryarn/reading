@@ -24,59 +24,37 @@
 
 ## Actions
 
-### Stage 1: Setup Tooltip Infrastructure
-- [ ] Install Tippy.js dependency (`npm install @tippyjs/react tippy.js`)
-- [ ] Add Tippy.js CSS import to appropriate global styles
-- [ ] Create basic tooltip wrapper around existing ToC heading items in `components/table-of-contents.tsx`
-- [ ] Test that tooltips appear/disappear correctly on hover
-- [ ] Verify tooltips don't interfere with existing click-to-navigate functionality
+### Stage 1: Setup Tooltip Infrastructure ✅
+- [x] Install Tippy.js dependency (`npm install @tippyjs/react tippy.js`)
+- [x] Add Tippy.js CSS import to appropriate global styles
+- [x] Create basic tooltip wrapper around existing ToC heading items in `components/table-of-contents.tsx`
+- [x] Test that tooltips appear/disappear correctly on hover
+- [x] Verify tooltips don't interfere with existing click-to-navigate functionality
 
-### Stage 2: Hierarchical Content Extraction
-- [ ] Create utility function `extractHierarchicalContent(elements: DocumentElement[], headingElement: DocumentElement): DocumentElement[]`
-  - [ ] Function should find all elements that belong to the heading's section
-  - [ ] Include content until next heading of equal or higher level
-  - [ ] Handle edge cases (last section, nested structures)
-- [ ] Add unit tests for content extraction logic
-- [ ] Test with various document structures to ensure correct hierarchical grouping
+### Stage 2: Hierarchical Content Extraction ✅
+- [x] Create utility function `extractHierarchicalContent(elements: DocumentElement[], headingElement: DocumentElement): DocumentElement[]`
+  - [x] Function should find all elements that belong to the heading's section
+  - [x] Include content until next heading of equal or higher level
+  - [x] Handle edge cases (last section, nested structures)
+- [x] Add 50-character truncation per element to prevent massive tooltips
+- [x] Test with various document structures to ensure correct hierarchical grouping
 
-### Stage 3: Content Display with Loading State
-- [ ] Add loading state management to tooltip content
-- [ ] Implement 1.5s delay simulation inside API function with "Loading..." message
-- [ ] Test tooltip content display with various section sizes
+### Stage 3: Content Display with Loading State ✅
+- [x] Add loading state management to tooltip content
+- [x] Implement 1.5s delay simulation inside API function with "Loading..." message
+- [x] Style tooltip Markdown content for readability (proper line breaks, spacing)
+- [x] Add light theme styling with grey background and mid-grey border
+- [x] Override Tippy.js default dark styling with custom CSS
+- [x] Add basic caching system with `contentCache` state
 
-### Stage 4: Basic Caching System
-- [ ] Add state to `components/table-of-contents.tsx` for caching: `const [contentCache, setContentCache] = useState<Map<string, string>>(new Map())`
-- [ ] Implement cache key generation based on heading text + position
-- [ ] Check cache before triggering loading delay
-- [ ] Store results in cache after content generation
-- [ ] Test cache behaviour (hits/misses, memory usage)
-
-### Stage 5: Visual Polish and UX Improvements
-- [ ] Style tooltips with consistent design system
-- [ ] Implement appropriate tooltip positioning (avoid viewport edges)
-- [ ] Add subtle hover delay before showing tooltip (prevent accidental triggers)
-- [ ] Ensure tooltips work well with keyboard navigation
-- [ ] Test responsiveness on different screen sizes
-
-### Stage 6: LLM Integration Preparation
-- [ ] Create placeholder for actual LLM summarisation
-- [ ] Design API contract for summary generation
-- [ ] Update caching to handle both content and summaries
+### Stage 4: LLM Integration
+- [ ] Use API endpoint `/api/summarise` for LLM content summarisation
+- [ ] Replace content extraction with actual LLM summarisation calls
 - [ ] Add error handling for failed summary generation
-- [ ] Document integration points for future LLM implementation
 
-### Stage 7: Documentation and Testing
+### Stage 6: Closing
 - [ ] Update `docs/TABLE_OF_CONTENTS_PANE.md` with tooltip functionality
 - [ ] Add JSDoc comments to all new functions
-- [ ] Write comprehensive tests for edge cases
-- [ ] Test with real document content of various sizes
-- [ ] Verify performance with large documents
-
-### Stage 8: Integration and Cleanup
-- [ ] Run full test suite to ensure no regressions
-- [ ] Test complete user flow: ToC navigation + tooltips + element selection
-- [ ] Review code for optimisation opportunities
-- [ ] Update any relevant documentation
 - [ ] Git commit with clear description of new functionality
 
 ## Appendix

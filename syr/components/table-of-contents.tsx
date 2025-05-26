@@ -76,8 +76,8 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
     return indents[level as keyof typeof indents] || 'pl-0'
   }
 
-  // Extract hierarchical content for a heading with loading simulation
-  const extractHierarchicalContent = async (headingText: string): Promise<string> => {
+  // Generate LLM summary for a heading's hierarchical content
+  const generateHeadingSummary = async (headingText: string): Promise<string> => {
     // Check cache first
     const cacheKey = headingText
     if (contentCache.has(cacheKey)) {
@@ -128,30 +128,59 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
       return "No content found for this section"
     }
 
-    // Simulate 1.5s loading delay
-    await new Promise(resolve => setTimeout(resolve, 1500))
-
-    // Convert elements to HTML, then to markdown
+    // Convert elements to full content for LLM processing (no truncation)
     const htmlContent = sectionElements
-      .map(element => {
-        const truncatedContent = element.content.length > 50 
-          ? element.content.substring(0, 50) + '...'
-          : element.content
-        return `<${element.tag_name}>${truncatedContent}</${element.tag_name}>`
-      })
+      .map(element => `<${element.tag_name}>${element.content}</${element.tag_name}>`)
       .join('')
 
-    const turndownService = new TurndownService({
-      headingStyle: 'atx',
-      bulletListMarker: '-'
-    })
-    
-    const result = turndownService.turndown(htmlContent)
-    
-    // Cache the result
-    setContentCache(prev => new Map(prev).set(cacheKey, result))
-    
-    return result
+    try {
+      // Call LLM summarisation API
+      const response = await fetch('/api/summarise', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: htmlContent,
+          granularity: 'brief' // Use brief granularity for tooltip summaries
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Summary API failed: ${response.status}`)
+      }
+
+      const { summary } = await response.json()
+      
+      // Cache the result
+      setContentCache(prev => new Map(prev).set(cacheKey, summary))
+      
+      return summary
+    } catch (error) {
+      console.error('Error generating summary:', error)
+      
+      // Fallback to content extraction if LLM fails
+      const turndownService = new TurndownService({
+        headingStyle: 'atx',
+        bulletListMarker: '-'
+      })
+      
+      const fallbackContent = sectionElements
+        .map(element => {
+          const truncatedContent = element.content.length > 100 
+            ? element.content.substring(0, 100) + '...'
+            : element.content
+          return `<${element.tag_name}>${truncatedContent}</${element.tag_name}>`
+        })
+        .join('')
+      
+      const result = turndownService.turndown(fallbackContent)
+      
+      // Cache the fallback result
+      setContentCache(prev => new Map(prev).set(cacheKey, result))
+      
+      return result
+    }
   }
 
   // Get tooltip content with loading state management
@@ -189,14 +218,14 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
     )
   }
 
-  // Handle tooltip show event to trigger content loading
+  // Handle tooltip show event to trigger summary generation
   const handleTooltipShow = (headingText: string) => {
     if (!contentCache.has(headingText) && !loadingStates.has(headingText)) {
       // Add to loading states
       setLoadingStates(prev => new Set(prev).add(headingText))
       
-      // Start async loading
-      extractHierarchicalContent(headingText).finally(() => {
+      // Start async LLM summary generation
+      generateHeadingSummary(headingText).finally(() => {
         // Remove from loading states
         setLoadingStates(prev => {
           const newSet = new Set(prev)
