@@ -40,10 +40,8 @@
 - [ ] Test with various document structures to ensure correct hierarchical grouping
 
 ### Stage 3: Content Display with Loading State
-- [ ] Implement `formatSectionContent(elements: DocumentElement[]): string` to convert elements to readable text
 - [ ] Add loading state management to tooltip content
-- [ ] Implement 1.5s delay simulation with "Loading..." message
-- [ ] Style tooltip content for readability (proper line breaks, spacing)
+- [ ] Implement 1.5s delay simulation inside API function with "Loading..." message
 - [ ] Test tooltip content display with various section sizes
 
 ### Stage 4: Basic Caching System
