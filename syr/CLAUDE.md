@@ -27,17 +27,17 @@ Based on README.md, the following architecture decisions have been made:
 - **Background Processing**: Frontend-driven queue initially, with API calls to backend
 - **MVP Focus**: Basic document display with hierarchical summaries as the core feature
 
-## Build and Test Commands
+## Build, testing, and debugging
 
-`npm run dev`
+Next.js local dev server:
+- `npm run dev`
+- The user is already running this in a separate terminal. If you need them to restart it, ask them.
+- You can see the logs for it in `dev.log`.
+- Probably visible at: http://localhost:3001/ (though the port configurable via PORT environment variable in `.env.local`, loaded by dotenv-cli before running npm)
 
-The user is already running this in a separate terminal. If you need them to restart it, ask them.
-
-You can see the logs for it in `dev.log`.
-
-Visible at: http://localhost:3001/ (port configurable via PORT environment variable in `.env.local`, loaded by dotenv-cli before running npm)
-
-If you ever need access to the browser (e.g. console logs, network requests, screenshots, etc), use curl or Playwright MCP (this works well, but try to be sparing about letting it fill up the context window).
+Debugging:
+- Gather clues first: have a look at `dev.log` with `tail`, and use `curl` or `Playwright` MCP (for console logs, network requests, screenshots, etc) in a subagent (to avoid filling up the context window).
+- And have a look at the list of evergreen docs in `docs/`, and recent planning/decision docs in `planning/`, to see if there's anything relevant that might help you.
 
 
 ## Project Structure
@@ -48,17 +48,20 @@ The codebase currently has two main parts:
    - README.md contains architectural decisions and planning
    - Most code has been moved to backup/
 
-2. **IGNORE - Backup Folder** (previous prototype SvelteKit implementation)
+2. **IGNORE - `obsolete_alternative_version/`** (previous prototype Python implementation, with some nice prompts, e.g. glossary, generate headings)
+3. **IGNORE - `backup/`** (previous prototype SvelteKit implementation, almost nothing of value)
 
 
 ## Environment Variables
 
-see `.env`
-
-Required environment variables:
-- `ANTHROPIC_API_KEY` - API key for Claude access
+see `.env.local` (and `.env.example`, though it may not be up-to-date).
 
 
 ## Style
 
 Use British spelling.
+
+
+## Git
+
+Always follow the instructions in `docs/GIT_COMMITS.md`.
