@@ -54,7 +54,7 @@ export const myFeaturePrompt = loadPromptTemplate(
   {
     model: 'claude-3-5-sonnet-20241022',  // optional, defaults to this
     maxTokens: 1024,                       // optional, defaults to 1024
-    temperature: 0,                        // optional, defaults to 0
+    temperature: 0,                        // optional, defaults to 0 (we almost always want deterministic output)
   }
 )
 ```

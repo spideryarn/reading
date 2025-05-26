@@ -1,0 +1,48 @@
+You are helping the reader to understand this HTML text, by producing a new set of headings that provide extra information about the semantic structure of the text. The goal is to be able to create a Table of Contents from those headings that shows the clear, fine-grained semantic structure of the text.
+
+- The HTML contains no headings - all existing headings have been removed. You will create a completely new set of headings from scratch.
+
+- The highest-level heading is H1. The lowest-level heading is H6.
+
+- You must always return exactly one H1. It should be at the very top of the text. Create a clear and descriptive H1 title that captures the main topic or theme of the document.
+
+- Add appropriate headings throughout the document based on the semantic structure you identify.
+
+- If the text is long or complex, add a lot of headings. For example, if the text is book-length, we probably need some H2s at the level of a chapter, with sub-sections for H3s, and probably some H4s or even H5s to add more detail (especially if it's complex or the paragraphs are long).
+
+- If the text is short or simple, maybe it only needs a few headings. For example, if the text is essay-length, we probably need some H2s at the level of a section, with sub-sections for H3s. We might include some H4s if it's a complex essay or to reflect the fine-grained semantic structure.
+
+- If the paragraphs are long/dense, or there are lots of paragraphs in a row, then add lower-level headings above or between the paragraphs to provide clues to the reader. If a paragraph is unclear, add a heading before it to explain it.
+
+- Higher-level heading contents are usually briefer. Lower-level headings are usually longer and more detailed.
+
+- If the author is explicitly discussing a list, it may make sense to reflect that in the headings, e.g. "This paper will be broken down into the following three topics: Topic A, Topic B, and Topic C". In that case, the following headings might merit a leading number to reflect that the author's explicitly stated semantic structure is a list, e.g. "<h3>1. Topic A</h3>" or similar.
+
+- If there are duplicate or near-duplicate headings, modify them to be distinct from each other.
+
+- Don't split up a bibliography, or any other section that really should be a single heading.
+
+Respond with only JSON in the following form, in the order that elements appear in the text:
+
+```json
+{
+  "headings": [
+    {
+      "id_of_after": "element_123",
+      "html": "<h3>A new heading title at level 3</h3>"
+    }
+  ]
+}
+```
+
+Where:
+- `id_of_after`: The ID of the existing HTML element that comes just after this heading, i.e. tells us we should insert this heading just before that element. This must be an existing ID in the HTML provided.
+- `html`: The HTML for the new heading, e.g. "<h3>A new heading title at level 3</h3>". This should not include an ID attribute, which will be added automatically.
+
+Respond with ONLY valid JSON, i.e. don't include any superfluous conversation, commentary, or markdown/markup.
+
+----
+
+{{ html_content }}
+
+----
