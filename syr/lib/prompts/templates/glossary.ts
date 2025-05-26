@@ -47,7 +47,7 @@ export const glossaryPrompt = loadPromptTemplateFromCaller(
   'glossary.njk',
   glossaryPromptSchema, // Use input schema, not response schema
   {
-    maxTokens: 4000, // Enough for comprehensive entity extraction
+    maxTokens: 10000, // Large token limit for comprehensive entity extraction
     temperature: 0.3, // Lower temperature for more consistent extraction
   }
 )

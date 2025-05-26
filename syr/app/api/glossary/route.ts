@@ -1,3 +1,6 @@
+// AI Glossary API endpoint for entity extraction
+// See docs/AI_GLOSSARY.md for architecture and usage patterns
+
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { executePrompt } from '@/lib/prompts/types'

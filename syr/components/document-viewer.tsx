@@ -1,5 +1,8 @@
 'use client'
 
+// Document viewer with glossary pane for entity display
+// See docs/AI_GLOSSARY.md for glossary feature architecture
+
 import { useState, useEffect } from 'react'
 import { CircleNotch, Warning } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'

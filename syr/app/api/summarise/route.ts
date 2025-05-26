@@ -1,3 +1,6 @@
+// AI Summarisation API endpoint with configurable granularity
+// See docs/AI_SUMMARISE.md for architecture and usage patterns
+
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { executePrompt } from '@/lib/prompts/types'

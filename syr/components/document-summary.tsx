@@ -1,5 +1,8 @@
 'use client'
 
+// Document-level summary component using AI summarisation
+// See docs/AI_SUMMARISE.md for architecture and usage patterns
+
 import { useState } from 'react'
 
 interface DocumentSummaryProps {

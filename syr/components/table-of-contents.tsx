@@ -2,6 +2,7 @@
 
 // Table of Contents component that extracts headings and provides navigation
 // See docs/TABLE_OF_CONTENTS_PANE.md for architecture and usage patterns
+// See docs/AI_SUMMARISE.md for tooltip summarisation feature details
 
 import { useEffect, useState } from 'react'
 import * as Tooltip from '@radix-ui/react-tooltip'
