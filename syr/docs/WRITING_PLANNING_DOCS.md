@@ -8,6 +8,8 @@ Aim to keep these concise, and only include stuff explicitly agreed with the use
 
 If you're starting the doc from scratch, store it in `planning/`, and first ask the user questions about their project requirements to clarify key decisions. (Use MCP or run `date +"%y%m%d"` command first to get the current date for naming the file)
 
+Don't include a 'Date' section at the top.
+
 ## File naming conventions
 
 Planning docs should follow this naming format: `yyMMdd[letter]_description_in_normal_case.md`
