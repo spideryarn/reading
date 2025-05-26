@@ -62,7 +62,11 @@ https://github.com/spideryarn/reading/
    npm run dev
    ```
    
-   Navigate to http://localhost:3000/
+   This logs to `dev.log`, as defined in `package.json`.
+
+   By default, runs on port 3000, but if you define `PORT=3001` in `.env.local`, it'll use that instead. The `dotenv-cli` package is used to load environment variables from `.env.local` before starting the Next.js development server.
+
+   Navigate to e.g. http://localhost:3001/ (or your configured port)
 
 ## Project Understanding
 

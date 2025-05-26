@@ -35,7 +35,7 @@ The user is already running this in a separate terminal. If you need them to res
 
 You can see the logs for it in `dev.log`.
 
-Visible at: http://localhost:3000/
+Visible at: http://localhost:3001/ (port configurable via PORT environment variable in `.env.local`, loaded by dotenv-cli before running npm)
 
 If you ever need access to the browser (e.g. console logs, network requests, screenshots, etc), use curl or Playwright MCP (this works well, but try to be sparing about letting it fill up the context window).
 
