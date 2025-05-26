@@ -1,16 +1,16 @@
 # Git Commit Guidelines
 
 ## Initial Assessment
-Have a look at Git diff. Think about how to batch the changes into commits following atomic commit principles.
+Have a look at Git diff. Think about how to batch the changes into commits:
 - If you have been instructed to make the commits, then do so, one at a time.
 - If not, then just suggest what the batches would be.
 
 ## Commit Best Practices
 
-### Atomic Commits
-- Each commit should represent ONE logical change
-- The codebase should be in a working state after each commit
-- Don't mix unrelated changes (e.g. feature + formatting fixes)
+### Batching changes into commits
+- Each commit should represent a small/medium feature, or stage, or cluster of related changes (e.g. tweaking a bunch of docs).
+- The codebase should (ideally) be in a working state after each commit
+- Try not to mix unrelated changes
 
 ### Commit Message Format
 ```
