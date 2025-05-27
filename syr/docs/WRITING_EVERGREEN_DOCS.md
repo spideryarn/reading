@@ -32,6 +32,9 @@ Bullet-point list of other relevant docs, code, webpages, or other resources tha
 
 - `docs/WRITING_PLANNING_DOCS.md` - for information about writing *ephemeral* decision/planning/project management docs
 
+Add references to and from this new doc (e.g. in relevant code, planning docs in `planning/*.md`, etc) - use a subagent for tbis
+
+
 ### Principles, key decisions
 
 - Include any specific principles/approaches or decisions that have been explicitly agreed with the user (over and above existing Cursor rules, project examples, best practices, etc).
