@@ -9,13 +9,11 @@
  * This script provides a hybrid approach:
  * 1. Attempts fast-forward merge first (ideal case)
  * 2. Falls back to one-direction merge if branches have diverged
- * 3. Requires user confirmation before fallback operations
- * 4. Two-step process for complete sync when fast-forward fails
+ * 3. Two-step process for complete sync when fast-forward fails
  */
 
 import { Cli, Command, Option } from 'clipanion';
 import { execSync } from 'child_process';
-import * as readline from 'readline';
 
 class SyncBranchesCommand extends Command {
   static paths = [
@@ -62,16 +60,9 @@ class SyncBranchesCommand extends Command {
         return 0;
       }
 
-      // Fast-forward failed, ask user about fallback
+      // Fast-forward failed, use fallback automatically
       console.log('⚠️  Fast-forward sync failed (branches have diverged)');
-      const shouldUseFallback = await this.askUserConfirmation(
-        'Would you like to merge in one direction instead? (y/N)'
-      );
-
-      if (!shouldUseFallback) {
-        console.log('❌ Sync cancelled');
-        return 1;
-      }
+      console.log('🔄 Switching to one-direction merge...');
 
       // Use fallback: one-direction merge only
       await this.performOneDirectionMerge(sourceBranch, targetBranch);
@@ -178,19 +169,6 @@ class SyncBranchesCommand extends Command {
     }
   }
 
-  private async askUserConfirmation(question: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-      });
-
-      rl.question(`${question} `, (answer) => {
-        rl.close();
-        resolve(answer.toLowerCase().startsWith('y'));
-      });
-    });
-  }
 }
 
 // CLI setup
