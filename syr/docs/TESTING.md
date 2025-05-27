@@ -24,6 +24,11 @@ npx tsx tests/test-mutation-engine.ts
 
 This executes a simple command-line test runner that validates the mutation engine and related functionality.
 
+Prefer to use a subagent to run tests (to avoid overloading the context window).
+
+When iterating on a single test, you may find it useful to use the equivalent of Pytest's '-x --lf' (or similar) to focus on tests that had been previously failing.
+
+
 ## Why This Approach?
 
 During the rapid prototyping phase, we've opted for a lightweight testing solution that:

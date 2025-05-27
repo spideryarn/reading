@@ -72,7 +72,21 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId 
       } else {
         // Extract headings from document elements
         const extractedHeadings: Heading[] = elementsToUse
-          .filter(el => el.tag_name.match(/^h[1-6]$/i))
+          .filter(el => {
+            // Only include heading elements
+            if (!el.tag_name.match(/^h[1-6]$/i)) return false
+            
+            // Filter based on AI heading state
+            const isAiGenerated = el.attributes?.['data-ai-generated'] === 'true'
+            
+            if (activeMutationType === 'insert-headings') {
+              // When AI headings are active, show only AI-generated headings
+              return isAiGenerated
+            } else {
+              // When AI headings are NOT active, show only original headings
+              return !isAiGenerated
+            }
+          })
           .map((el, index) => ({
             id: el.id || `heading-${index}`,
             text: el.content || '',

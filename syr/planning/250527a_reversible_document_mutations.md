@@ -108,6 +108,7 @@ And then revert back to the original document or try different transformations.
   - [ ] Add third tab to table of contents for testing
 - [ ] Validate architecture scales to multiple mutation types
 - [ ] Consider UI for mutation selection (dropdown? tabs? command palette?)
+- [ ] Discuss more tradeoffs of current simple ID generation approach, potential alternatives/improvements/tradeoffs
 
 ### Stage 7: Advanced Features (Future)
 - [ ] Mutation composition
@@ -330,3 +331,191 @@ For future implementers:
    - Mutation format examples are invaluable
    - Edge cases and their solutions
    - Performance characteristics
+
+## Code Reference Guide
+
+This section provides a comprehensive reference to all key files, functions, and documentation for the mutation system.
+
+### 1. Core Files
+
+**Type Definitions & Interfaces:**
+- `lib/types/mutation.ts` - Core interfaces and type guards
+  - `Mutation` interface - Main mutation structure with id, type, forward/reverse transforms
+  - `DocumentTransform` interface - Individual transform operations (insert/replace/remove/modify)
+  - `MutationState` interface - Tracks active mutation and history
+  - Type guards: `isInsertTransform()`, `isReplaceTransform()`, `isRemoveTransform()`, `isModifyTransform()`
+
+**Mutation Engine:**
+- `lib/services/mutation-engine.ts` - Core mutation application logic
+  - `MutationEngine.applyMutation(document, mutation)` - Apply forward transforms to document
+  - `MutationEngine.revertMutation(document, mutation)` - Apply reverse transforms to undo changes
+  - `MutationEngine.validateMutation(mutation)` - Validate mutation structure before application
+  - `MutationEngine.findElementById(document, id)` - Helper to locate elements in document tree
+
+**State Management:**
+- `lib/context/mutation-context.tsx` - React context and hooks for mutation state
+  - `MutationProvider` - Context provider component wrapping document pages
+  - `useMutation()` - Main hook returning {document, applyMutation, revertMutation, activeMutation}
+  - `useDocument()` - Simplified hook for accessing just the mutated document
+  - `useActiveMutationType()` - Check which mutation type is currently active
+
+**Mutation Generators:**
+- `lib/services/heading-mutation-generator.ts` - Convert AI responses to mutations
+  - `generateHeadingMutation(headings, documentId)` - Create mutation from AI heading response
+  - `extractHeadingsFromMutation(mutation)` - Extract heading elements for ToC display
+
+**ID Generation:**
+- `lib/services/deterministicId.ts` - Utilities for generating consistent IDs
+  - `generateDeterministicId(type, baseId, index)` - Create predictable IDs for inserted elements
+
+### 2. Component Integration
+
+**Table of Contents:**
+- `components/table-of-contents.tsx` - Main UI for mutation control
+  - Uses `useMutation()` hook to access mutation context
+  - Implements tab switching between "Original" and "AI headings" views
+  - Calls `applyMutation()` and `revertMutation()` on tab changes
+  - Filters displayed headings based on active mutation type
+
+**Document Pages:**
+- `app/documents/[slug]/page.tsx` - Server component that fetches document
+  - Wraps client component with `MutationProvider`
+  - Passes initial document structure to provider
+  
+- `app/documents/[slug]/page-client.tsx` - Client component for document display
+  - Uses `useDocument()` hook to get mutated document
+  - Passes document to DocumentViewer for rendering
+
+**Document Viewer:**
+- `components/document-viewer.tsx` - Renders document structure
+  - Receives mutated document from parent component
+  - Recursively renders document elements with proper IDs for scrolling
+
+### 3. API Endpoints
+
+**Heading Generation:**
+- `app/api/headings/route.ts` - POST endpoint for AI heading generation
+  - Accepts document structure in request body
+  - Returns array of headings with `id_of_after` and `html` fields
+  - Uses Claude AI via prompt template
+
+**Prompt Configuration:**
+- `lib/prompts/templates/headings.ts` - Heading generation prompt
+  - Defines system prompt and user prompt templates
+  - Configures model parameters (temperature, max_tokens)
+  - Exports prompt template for use in API route
+
+### 4. Test Files
+
+**Unit Tests:**
+- `tests/test-mutation-engine.ts` - Core mutation logic tests (8 tests)
+  - Tests for applying insert, replace, remove, modify transforms
+  - Tests for reverting mutations
+  - Edge case handling (missing elements, invalid transforms)
+  
+- `tests/test-heading-mutation-generator.ts` - Heading generation tests (7 tests)
+  - Tests conversion of AI response to mutation format
+  - Tests ID generation and heading extraction
+  - Edge cases (empty responses, missing fields)
+
+- `tests/test-mutation-context.tsx` - React context tests
+  - Tests for mutation application through hooks
+  - Tests for state updates and re-renders
+  - Integration with React components
+
+**Edge Case Tests:**
+- `tests/test-edge-cases.ts` - Comprehensive edge case coverage
+  - Empty documents
+  - Missing target elements
+  - Circular references
+  - Performance with large documents
+
+### 5. Documentation
+
+**Main Documentation:**
+- `docs/MUTATIONS.md` - Primary mutation system documentation
+  - Architecture overview and design decisions
+  - Usage examples and code snippets
+  - Implementation guide for new mutation types
+
+**Testing Documentation:**
+- `docs/TESTING.md` - Test strategy and coverage
+  - How to run tests
+  - Test file organisation
+  - Adding new test cases
+
+**Related Planning Docs:**
+- `planning/250527a_reversible_document_mutations.md` - This document!
+- `planning/250526d_deterministic_id_generation.md` - ID generation strategy
+  - Rationale for deterministic vs random IDs
+  - Implementation details and tradeoffs
+
+### 6. Key Functions Reference
+
+**Apply Mutations:**
+```typescript
+// Apply a mutation to transform the document
+MutationEngine.applyMutation(
+  document: DocumentStructure,
+  mutation: Mutation
+): DocumentStructure
+```
+
+**Revert Mutations:**
+```typescript
+// Revert a mutation to restore original state
+MutationEngine.revertMutation(
+  document: DocumentStructure, 
+  mutation: Mutation
+): DocumentStructure
+```
+
+**Generate Heading Mutation:**
+```typescript
+// Convert AI heading response to mutation
+generateHeadingMutation(
+  headings: Array<{id_of_after: string, html: string}>,
+  documentId: string
+): Mutation
+```
+
+**Extract Headings:**
+```typescript
+// Get heading elements from a mutation for display
+extractHeadingsFromMutation(
+  mutation: Mutation
+): Array<{id: string, level: number, text: string}>
+```
+
+**React Hooks:**
+```typescript
+// Access full mutation context
+const {document, applyMutation, revertMutation, activeMutation} = useMutation()
+
+// Just get the document
+const document = useDocument()
+
+// Check active mutation type
+const mutationType = useActiveMutationType() // 'insert-headings' | null
+```
+
+### 7. Common Patterns
+
+**Creating a New Mutation Type:**
+1. Define the mutation type string in `lib/types/mutation.ts`
+2. Create a generator service in `lib/services/`
+3. Add API endpoint if needed in `app/api/`
+4. Update UI components to handle new type
+5. Add tests for all new functionality
+
+**Debugging Mutations:**
+1. Check mutation history in React DevTools (MutationContext)
+2. Use `console.log(JSON.stringify(mutation, null, 2))` to inspect structure
+3. Validate with `MutationEngine.validateMutation()` before applying
+4. Check element IDs match between transforms and document
+
+**Performance Considerations:**
+- Mutations are applied synchronously - keep transforms simple
+- For large documents, consider batching transforms
+- Use `React.memo()` on components receiving mutated documents
+- Profile with React DevTools to identify re-render issues

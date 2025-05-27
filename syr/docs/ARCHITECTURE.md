@@ -88,4 +88,5 @@ see:
 - Each mutation includes both forward transforms (apply changes) and reverse transforms (undo changes)
 - Document structure is actually modified (headings inserted, content replaced) rather than just changing navigation
 - See detailed design and implementation plan: `planning/250527a_reversible_document_mutations.md`
+- See implementation documentation: `docs/MUTATIONS.md`
 
