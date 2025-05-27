@@ -3,13 +3,16 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --spideryarn-orange: #DB8A45;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-spideryarn-orange: var(--spideryarn-orange);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-trebuchet: 'Trebuchet MS', sans-serif;
 }
 
 /* Dark mode disabled - see UI_CONFIG.FORCE_LIGHT_MODE in lib/config.ts */

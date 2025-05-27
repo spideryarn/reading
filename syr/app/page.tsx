@@ -34,12 +34,17 @@ export default function Home() {
   const documents = getDocuments()
   
   return (
-    <div className="min-h-screen p-8">
-      <main className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8">Spideryarn Reading</h1>
-        <p className="text-lg text-gray-600 mb-8">
-          AI-assisted document reading and analysis application
-        </p>
+    <div className="min-h-screen">
+      <div className="pt-24 pb-16 px-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-5xl font-bold mb-4 text-gray-900">Spideryarn Reading</h1>
+          <p className="text-xl text-gray-600">
+            AI-assisted document reading and analysis application
+          </p>
+        </div>
+      </div>
+      
+      <main className="max-w-4xl mx-auto px-8">
         
         <div className="space-y-4">
           <h2 className="text-2xl font-semibold">Sample Documents</h2>
