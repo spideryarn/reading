@@ -1,6 +1,6 @@
 # Table of Contents Pane
 
-The table of contents pane extracts headings from HTML documents and provides hierarchical navigation with interactive element selection and AI-powered tooltip summaries. This document covers the architecture and key patterns for the ToC system.
+The table of contents pane provides hierarchical document navigation with both original and AI-generated headings, interactive element selection, and AI-powered tooltip summaries. This document covers the architecture and features of the enhanced ToC system.
 
 ## See also
 
@@ -8,19 +8,36 @@ The table of contents pane extracts headings from HTML documents and provides hi
 - `app/documents/[slug]/page-client.tsx` - state management and coordination between panes
 - `components/document-viewer.tsx` - element display and selection functionality
 - `docs/ARCHITECTURE.md` - overall application architecture
+- `docs/LLM_PROMPT_TEMPLATES.md` - prompt template system for AI features
+- `planning/250526g_ai_generated_headings.md` - AI headings implementation details
+- `planning/250526a_ToC_hierarchical_summary_tooltips.md` - tooltip feature planning
 
 ## Key Architecture
 
 The ToC system uses a three-component coordination pattern:
 
-1. **TableOfContents** - extracts headings from HTML and renders hierarchical list
+1. **TableOfContents** - extracts headings from HTML and renders hierarchical list with tabs
 2. **DocumentPageClient** - manages shared state and coordinates between panes
 3. **DocumentViewer** - displays elements and accepts external selection state
 
 State flows unidirectionally: ToC click → client handler → element selection → viewer update.
 
+## Tabbed Interface
+
+The ToC now features a tabbed interface allowing users to switch between:
+
+- **Original** - Headings extracted directly from the HTML document
+- **AI-generated** - Semantically meaningful headings created by LLM analysis
+
+### Tab Implementation
+- Uses controlled component pattern with `activeTab` state
+- Visual styling: active tab (green underline), inactive tab (gray text)
+- Generate button appears in AI tab to trigger heading generation
+- Loading states during AI processing with spinner animation
+
 ## Heading Extraction
 
+### Original Headings
 Uses browser DOMParser to extract `h1-h6` elements from HTML content:
 
 ```typescript
@@ -29,14 +46,21 @@ const doc = parser.parseFromString(content, 'text/html')
 const headingElements = doc.querySelectorAll('h1, h2, h3, h4, h5, h6')
 ```
 
-Generates IDs for headings that lack them, ensuring reliable navigation targets.
+Generates deterministic IDs using UUID v5 for reliable navigation.
+
+### AI-Generated Headings
+- Calls `/api/headings` endpoint with full document content
+- LLM analyses document structure and generates semantic headings
+- Returns structured array with heading text and levels
+- Displayed with green theme to distinguish from original
 
 ## Visual Hierarchy
 
 - **Indentation**: Progressive left padding (`pl-0`, `pl-4`, `pl-8`, etc.) based on heading level
-- **Level labels**: Small `H1`, `H2` prefixes in gray text
+- **Level labels**: Small `H1`, `H2` prefixes in gray/green text
 - **Clickable items**: Hover states and smooth scrolling behaviour
 - **Tooltip summaries**: AI-generated summaries appear on hover with loading states
+- **Green theme**: AI-generated content uses green colour scheme
 
 ## Interactive Coordination
 
@@ -46,13 +70,6 @@ When a ToC heading is clicked:
 2. Sets `selectedElement` state in parent component
 3. DocumentViewer receives updated selection and highlights element
 4. Smooth scroll centers selected element in middle pane
-
-## Element Matching
-
-Matches ToC headings to document elements using:
-- Tag name pattern matching (`/^h[1-6]$/i`)
-- Exact text content comparison (trimmed)
-- First match wins approach
 
 ## Tooltip Summaries
 
@@ -92,6 +109,15 @@ const getTooltipContent = (headingText: string): JSX.Element
 - **Caching**: Prevents duplicate requests and provides instant display on subsequent hovers
 - **Positioning**: Uses Tippy.js for robust tooltip positioning and behaviour
 
+## Loading and Error States
+
+Follows standardised pattern documented in `docs/STYLING.md`:
+
+- **Generate Button**: Phosphor icons for consistent UI
+- **Loading**: Spinner animation with disabled state
+- **Success**: Updates tab content with generated headings
+- **Error**: User-friendly error messages with retry capability
+
 ## Common Patterns
 
 **State Management**: External state pattern allows DocumentViewer to work standalone or with shared state.
@@ -100,10 +126,11 @@ const getTooltipContent = (headingText: string): JSX.Element
 
 **Data Attributes**: Uses `data-element-id` for reliable scroll targeting.
 
-**Type Safety**: Uses exported `GranularityKey` type to prevent invalid summarisation parameters.
+**Type Safety**: Uses exported `GranularityKey` type and Zod validation for API responses.
 
 ## Limitations
 
 - Relies on exact text matching between HTML headings and parsed elements
-- No support for duplicate heading text
+- No support for duplicate heading text in original headings
 - Single-click selection only (no multi-select or ranges)
+- AI-generated headings are not yet persisted to database
