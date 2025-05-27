@@ -47,11 +47,15 @@ And then revert back to the original document or try different transformations.
   - [x] Created docs/TESTING.md for test documentation
 
 ### Stage 2: Single Mutation State Management  
-- [ ] Implement mutation application system
-  - [ ] Function to apply forward transforms to document structure
-  - [ ] Function to apply reverse transforms (undo)
-  - [ ] State management for active mutation (single mutation mode)
-  - [ ] Integration with existing document state/context
+- [x] Implement mutation application system
+  - [x] Function to apply forward transforms to document structure
+  - [x] Function to apply reverse transforms (undo)
+  - [x] State management for active mutation (single mutation mode)
+  - [x] Integration with existing document state/context
+  - [x] Created MutationProvider and useMutation hook
+  - [x] Hybrid approach: direct state updates with history tracking
+  - [x] Helper hooks: useDocument, useActiveMutationType
+  - [x] Test suite for mutation context logic
 
 ### Stage 3: Convert AI Headings to Mutation System
 - [ ] Refactor AI headings feature to use mutation framework
@@ -60,8 +64,7 @@ And then revert back to the original document or try different transformations.
   - [ ] Create reverse transforms to remove inserted headings
   - [ ] Update table of contents component to apply/unapply mutations on tab switch
 - [ ] Git commit, following `GIT_COMMITS.md`
-- [ ] Document in new `docs/MUTATIONS.md` - follow `docs/WRITING_EVERGREEN_DOCS.md` for this
-  - [ ] 
+- [x] Document in new `docs/MUTATIONS.md` - follow `docs/WRITING_EVERGREEN_DOCS.md` for this 
 
 ### Stage 4: Document Structure Integration
 - [ ] Ensure mutations properly modify document structure for navigation
