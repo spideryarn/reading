@@ -137,9 +137,30 @@ Use the provided sync script to keep branches in sync:
 
 The sync script:
 - Attempts fast-forward merge first (ideal case)
-- Falls back to two-way merge if branches have diverged
+- Falls back to one-direction merge if branches have diverged
 - Handles merge conflicts gracefully
 - Requires clean working tree before syncing
+- **Two-step process**: Run from both worktrees to complete full sync
+
+#### Manual Sync (if script isn't available in target worktree)
+
+If the sync script hasn't been synced to the target worktree yet, manually complete the sync:
+
+```bash
+# Go to the other worktree (e.g., reading2/syr)
+cd ../../reading2/syr
+
+# Check current branch and ensure it's experim
+git branch
+
+# Probably you've already got the latest version of Clipanion from when you set up the worktree, but if not
+npm install
+
+# Merge main into experim
+git merge main
+```
+
+This completes the two-way sync. The sync script will be available in both worktrees after this.
 
 ### Supabase Considerations
 
