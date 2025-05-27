@@ -320,13 +320,34 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId 
     setHeadingsError(null)
     
     try {
+      // Reconstruct HTML from elements with proper IDs
+      let htmlWithIds = ''
+      if (elements && elements.length > 0) {
+        // Build HTML from elements so it has the correct IDs
+        htmlWithIds = elements.map(el => {
+          const attrs = Object.entries(el.attributes)
+            .map(([key, value]) => `${key}="${value}"`)
+            .join(' ')
+          const attrString = attrs ? ` ${attrs}` : ''
+          
+          if (el.content) {
+            return `<${el.tag_name} id="${el.id}"${attrString}>${el.content}</${el.tag_name}>`
+          } else {
+            return `<${el.tag_name} id="${el.id}"${attrString} />`
+          }
+        }).join('\n')
+      } else {
+        // Fallback to original content if no elements
+        htmlWithIds = content
+      }
+      
       const response = await fetch('/api/headings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          html_content: content
+          html_content: htmlWithIds
         }),
       })
 
