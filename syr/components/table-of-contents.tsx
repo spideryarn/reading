@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import TurndownService from 'turndown'
-import { Spinner, ExclamationMark } from '@phosphor-icons/react'
+import { Spinner, ExclamationMark, CircleNotch, Warning } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import type { GranularityKey } from '@/lib/prompts/templates/summarise'
 
@@ -29,6 +29,9 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
   const [contentCache, setContentCache] = useState<Map<string, string>>(new Map())
   const [activeTab, setActiveTab] = useState<'original' | 'ai-generated'>('original')
   const [showPlaceholder, setShowPlaceholder] = useState(false)
+  const [isLoadingHeadings, setIsLoadingHeadings] = useState(false)
+  const [headingsError, setHeadingsError] = useState<string | null>(null)
+  const [showHeadings, setShowHeadings] = useState(false)
 
   useEffect(() => {
     const extractHeadings = () => {
@@ -273,6 +276,37 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
     }
   }
 
+  const handleGenerateHeadings = async () => {
+    setIsLoadingHeadings(true)
+    setHeadingsError(null)
+    
+    try {
+      const response = await fetch('/api/fake_success_delay', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error(`API failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+      console.log('Generate headings response:', data)
+      
+      // Show the placeholder after successful response
+      setShowPlaceholder(true)
+      setShowHeadings(true)
+    } catch (error) {
+      console.error('Error generating headings:', error)
+      setHeadingsError(error instanceof Error ? error.message : 'Failed to generate headings')
+      setShowHeadings(true)  // Show the error state instead of keeping the button
+    } finally {
+      setIsLoadingHeadings(false)
+    }
+  }
+
   const renderOriginalTab = () => {
     if (headings.length === 0) {
       return (
@@ -325,9 +359,43 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
   }
 
   const renderAiGeneratedTab = () => {
-    if (showPlaceholder) {
+    if (!showHeadings) {
       return (
         <div className="p-4">
+          <button
+            onClick={handleGenerateHeadings}
+            disabled={isLoadingHeadings}
+            className="w-full px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          >
+            {isLoadingHeadings ? (
+              <>
+                <CircleNotch className="animate-spin" size={16} />
+                Loading...
+              </>
+            ) : (
+              'Generate new headings'
+            )}
+          </button>
+        </div>
+      )
+    }
+
+    return (
+      <div className="p-4">
+        {isLoadingHeadings ? (
+          <div className="flex items-center gap-2 text-gray-500">
+            <CircleNotch className="animate-spin" size={20} />
+            <span>Generating headings...</span>
+          </div>
+        ) : headingsError ? (
+          <div className="bg-red-50 border border-red-200 rounded p-3 flex items-start gap-2">
+            <Warning className="text-red-600 mt-0.5" size={20} weight="bold" />
+            <div className="text-sm text-red-800">
+              <div className="font-medium mb-1">Failed to generate headings</div>
+              <div className="text-xs">{headingsError}</div>
+            </div>
+          </div>
+        ) : showPlaceholder ? (
           <div className="w-full px-4 py-8 text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-md text-center">
             <div className="space-y-2">
               <div className="text-gray-400">📄</div>
@@ -337,21 +405,9 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
               </div>
             </div>
           </div>
-        </div>
-      )
-    }
-
-    return (
-      <div className="p-4">
-        <button 
-          className="w-full px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
-          onClick={() => {
-            setShowPlaceholder(true)
-            console.log('Generate new headings button clicked - showing placeholder')
-          }}
-        >
-          Generate new headings
-        </button>
+        ) : (
+          <p className="text-gray-500">No headings generated</p>
+        )}
       </div>
     )
   }
