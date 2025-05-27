@@ -2,16 +2,16 @@
 
 ## Overview
 
-This document provides technical guidance for integrating the assistant-ui React library into the Spideryarn Reading application to create a chatbot interface within the Tools pane.
+This document provides comprehensive technical guidance for integrating the @assistant-ui/react library into the Spideryarn Reading application to create a chatbot interface within the Tools pane. This guide includes detailed code examples, best practices, common pitfalls, and Next.js-specific integration patterns.
 
 ## Library Overview
 
 - **Name**: assistant-ui
 - **GitHub**: https://github.com/assistant-ui/assistant-ui
-- **Documentation**: https://www.assistant-ui.com/docs/getting-started
+- **Official Documentation**: https://www.assistant-ui.com/docs/
 - **NPM Package**: @assistant-ui/react
 - **Monthly Downloads**: >100k
-- **Description**: TypeScript/React library for AI chat with primitive, customizable components
+- **Description**: Open source TypeScript/React library for building AI chat interfaces with composable, customizable primitive components
 
 ## Key Features
 
@@ -35,37 +35,181 @@ This document provides technical guidance for integrating the assistant-ui React
 
 ## Installation
 
+### Quick Start (Recommended)
 ```bash
-# For existing Next.js project
-npx assistant-ui@latest init
+# For new projects
+npx assistant-ui create
 
-# Or install manually
-npm install @assistant-ui/react
+# For existing Next.js projects
+npx assistant-ui init
 ```
 
-## Core Components
+### Manual Installation
+```bash
+npm install \
+  @assistant-ui/react \
+  @assistant-ui/react-markdown \
+  @assistant-ui/styles \
+  @radix-ui/react-tooltip \
+  @radix-ui/react-slot \
+  lucide-react \
+  remark-gfm \
+  class-variance-authority \
+  clsx
+```
 
-### 1. Thread
-Main conversation container that manages message flow and state.
+## Core Components and Primitives
 
-### 2. ThreadList
-Handles multiple conversation threads (for future multi-conversation support).
+### 1. ThreadPrimitive
+The main conversation container that provides viewport, messages, and composer structure.
 
-### 3. Composer
-Input interface for user messages with built-in submission handling.
+```jsx
+import { ThreadPrimitive } from "@assistant-ui/react";
 
-### 4. AssistantRuntimeProvider
-Context provider that manages the chat runtime and AI integration.
+const Thread = () => (
+  <ThreadPrimitive.Root>
+    <ThreadPrimitive.Viewport>
+      <ThreadPrimitive.Empty>
+        <p>No messages yet. Start a conversation!</p>
+      </ThreadPrimitive.Empty>
+      <ThreadPrimitive.Messages components={{
+        UserMessage,
+        AssistantMessage,
+        EditComposer
+      }} />
+    </ThreadPrimitive.Viewport>
+    <Composer />
+  </ThreadPrimitive.Root>
+);
+```
 
-## Basic Implementation Pattern
+### 2. ComposerPrimitive
+Provides input field and action buttons for message composition.
+
+```jsx
+import { ComposerPrimitive } from "@assistant-ui/react";
+
+const Composer = () => {
+  return (
+    <ComposerPrimitive.Root className="flex items-center gap-2 p-4 border-t">
+      <ComposerPrimitive.Input 
+        rows={1} 
+        autoFocus 
+        placeholder="Ask about this document..." 
+        className="flex-1 resize-none rounded-lg border p-2" 
+      />
+      <ComposerAction />
+    </ComposerPrimitive.Root>
+  );
+};
+
+const ComposerAction = () => {
+  return (
+    <>
+      <ThreadPrimitive.If running={false}>
+        <ComposerPrimitive.Send asChild>
+          <button className="p-2 rounded-lg bg-primary text-white">
+            <SendHorizontalIcon className="w-4 h-4" />
+          </button>
+        </ComposerPrimitive.Send>
+      </ThreadPrimitive.If>
+      <ThreadPrimitive.If running>
+        <ComposerPrimitive.Cancel asChild>
+          <button className="p-2 rounded-lg bg-destructive text-white">
+            <CircleStopIcon className="w-4 h-4" />
+          </button>
+        </ComposerPrimitive.Cancel>
+      </ThreadPrimitive.If>
+    </>
+  );
+};
+```
+
+### 3. MessagePrimitive
+Handles both user and assistant messages with content, branch picker, and action bar.
+
+```jsx
+import { MessagePrimitive } from "@assistant-ui/react";
+
+const UserMessage = () => (
+  <MessagePrimitive.Root className="flex gap-3 p-4">
+    <div className="flex-shrink-0">
+      <UserIcon className="w-6 h-6" />
+    </div>
+    <div className="flex-1">
+      <MessagePrimitive.Content className="prose prose-sm max-w-none" />
+      <MessageActions />
+    </div>
+  </MessagePrimitive.Root>
+);
+
+const AssistantMessage = () => (
+  <MessagePrimitive.Root className="flex gap-3 p-4 bg-muted/50">
+    <div className="flex-shrink-0">
+      <BotIcon className="w-6 h-6" />
+    </div>
+    <div className="flex-1">
+      <MessagePrimitive.Content className="prose prose-sm max-w-none" />
+      <MessageActions />
+    </div>
+  </MessagePrimitive.Root>
+);
+
+const MessageActions = () => (
+  <ActionBarPrimitive.Root className="flex gap-1 mt-2">
+    <ActionBarPrimitive.Copy asChild>
+      <button className="p-1 rounded hover:bg-muted">
+        <CopyIcon className="w-4 h-4" />
+      </button>
+    </ActionBarPrimitive.Copy>
+    <ActionBarPrimitive.Reload asChild>
+      <button className="p-1 rounded hover:bg-muted">
+        <RefreshIcon className="w-4 h-4" />
+      </button>
+    </ActionBarPrimitive.Reload>
+    <ActionBarPrimitive.Edit asChild>
+      <button className="p-1 rounded hover:bg-muted">
+        <EditIcon className="w-4 h-4" />
+      </button>
+    </ActionBarPrimitive.Edit>
+  </ActionBarPrimitive.Root>
+);
+```
+
+### 4. Runtime Providers
+Two main approaches for managing chat state and backend integration.
+
+## Runtime Configuration and API Integration
+
+### LocalRuntime (Recommended for Most Cases)
+Use when assistant-ui manages the chat history state. Provides built-in support for thread management, message editing, reloading, and branch switching.
 
 ```typescript
 import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import { useChatRuntime } from "@assistant-ui/react-ai-sdk";
+import { useLocalRuntime } from "@assistant-ui/react";
 
 const ChatInterface = () => {
-  const runtime = useChatRuntime({
-    api: "/api/chat",
+  const runtime = useLocalRuntime({
+    initialMessages: [],
+    onNew: async (message) => {
+      // Send message to your API
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          messages: [...runtime.messages, message],
+          // Include document context
+          context: {
+            documentId: currentDocument.id,
+            selectedText: getSelectedText()
+          }
+        }),
+      });
+      
+      // Handle streaming response
+      const stream = response.body;
+      // Process stream and update runtime
+    },
   });
 
   return (
@@ -76,93 +220,611 @@ const ChatInterface = () => {
 };
 ```
 
-## API Route Setup
+### ExternalStoreRuntime (For Full State Control)
+Use when you need complete control over the frontend message state.
 
-For our Claude Sonnet 4 integration:
+```typescript
+import { useExternalStoreRuntime } from "@assistant-ui/react";
 
+const ChatWithExternalStore = () => {
+  // Your own state management
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isRunning, setIsRunning] = useState(false);
+
+  const runtime = useExternalStoreRuntime({
+    messages,
+    isRunning,
+    convertMessage: (msg) => ({
+      id: msg.id,
+      role: msg.role,
+      content: msg.content,
+      // Custom message transformations
+    }),
+    onNew: async (message) => {
+      setIsRunning(true);
+      try {
+        // Your custom message handling
+        const response = await processMessage(message);
+        setMessages(prev => [...prev, response]);
+      } finally {
+        setIsRunning(false);
+      }
+    },
+    onEdit: async (messageId, newContent) => {
+      // Handle message editing
+    },
+    onReload: async (messageId) => {
+      // Handle message regeneration
+    },
+  });
+
+  return (
+    <AssistantRuntimeProvider runtime={runtime}>
+      <Thread />
+    </AssistantRuntimeProvider>
+  );
+};
+```
+
+## Next.js API Route Setup
+
+### Basic Claude Integration
 ```typescript
 // app/api/chat/route.ts
 import { anthropic } from "@ai-sdk/anthropic";
 import { streamText } from "ai";
+import { createClient } from '@/lib/supabase/server';
 
 export async function POST(req: Request) {
-  const { messages } = await req.json();
+  const { messages, context } = await req.json();
+  
+  // Get document context if provided
+  let documentContext = '';
+  if (context?.documentId) {
+    const supabase = createClient();
+    const { data: document } = await supabase
+      .from('documents')
+      .select('title, summary')
+      .eq('id', context.documentId)
+      .single();
+    
+    documentContext = document ? 
+      `Document: ${document.title}\nSummary: ${document.summary}\n\n` : '';
+  }
+  
+  // Add selected text context if provided
+  if (context?.selectedText) {
+    documentContext += `Selected text: "${context.selectedText}"\n\n`;
+  }
   
   const result = streamText({
-    model: anthropic("claude-3-5-sonnet-20241022"), // Update to Sonnet 4 when available
-    messages,
-    temperature: 0, // Match our config
+    model: anthropic("claude-3-5-sonnet-20241022"),
+    messages: [
+      {
+        role: 'system',
+        content: `You are an AI assistant helping users understand documents. 
+        ${documentContext}
+        Provide helpful, concise responses based on the document content.`
+      },
+      ...messages
+    ],
+    temperature: 0,
+    maxTokens: 2000,
   });
   
   return result.toDataStreamResponse();
 }
 ```
 
+### Advanced Streaming with Progress
+```typescript
+// app/api/chat/route.ts
+import { experimental_StreamData } from 'ai';
+
+export async function POST(req: Request) {
+  const { messages } = await req.json();
+  const data = new experimental_StreamData();
+  
+  const result = streamText({
+    model: anthropic("claude-3-5-sonnet-20241022"),
+    messages,
+    temperature: 0,
+    onFinish: async ({ text, usage }) => {
+      // Log usage for analytics
+      await logUsage({ 
+        tokens: usage.totalTokens,
+        model: 'claude-3-5-sonnet',
+        timestamp: new Date()
+      });
+      
+      // Send additional data
+      data.append({
+        tokens: usage.totalTokens,
+        finished: true
+      });
+      data.close();
+    },
+  });
+  
+  return result.toDataStreamResponse({ data });
+}
+```
+
+## Advanced Features and Patterns
+
+### Message Editing with Branch Management
+```jsx
+const EditableThread = () => {
+  return (
+    <ThreadPrimitive.Root>
+      <ThreadPrimitive.Viewport>
+        <ThreadPrimitive.Messages 
+          components={{ 
+            UserMessage: EditableUserMessage,
+            EditComposer: MessageEditComposer,
+          }} 
+        />
+      </ThreadPrimitive.Viewport>
+      <Composer />
+    </ThreadPrimitive.Root>
+  );
+};
+
+const EditableUserMessage = () => {
+  return (
+    <MessagePrimitive.Root>
+      <MessagePrimitive.If editing={false}>
+        <MessagePrimitive.Content />
+        <ActionBarPrimitive.Root>
+          <ActionBarPrimitive.Edit />
+        </ActionBarPrimitive.Root>
+      </MessagePrimitive.If>
+      <MessagePrimitive.If editing>
+        <MessageEditComposer />
+      </MessagePrimitive.If>
+      <BranchPicker />
+    </MessagePrimitive.Root>
+  );
+};
+
+const MessageEditComposer = () => {
+  return (
+    <ComposerPrimitive.Root>
+      <ComposerPrimitive.Input />
+      <ComposerPrimitive.Send>Save</ComposerPrimitive.Send>
+      <ComposerPrimitive.Cancel>Cancel</ComposerPrimitive.Cancel>
+    </ComposerPrimitive.Root>
+  );
+};
+
+const BranchPicker = () => {
+  return (
+    <BranchPickerPrimitive.Root className="flex items-center gap-2">
+      <BranchPickerPrimitive.Previous />
+      <span className="text-sm">
+        <BranchPickerPrimitive.Number /> / <BranchPickerPrimitive.Count />
+      </span>
+      <BranchPickerPrimitive.Next />
+    </BranchPickerPrimitive.Root>
+  );
+};
+```
+
+### Attachments Support
+```jsx
+const ComposerWithAttachments = () => {
+  return (
+    <ComposerPrimitive.Root>
+      <ComposerPrimitive.Attachments>
+        <ComposerAttachment />
+      </ComposerPrimitive.Attachments>
+      
+      <div className="flex items-center gap-2">
+        <ComposerPrimitive.AddAttachment asChild>
+          <button className="p-2">
+            <PaperclipIcon />
+          </button>
+        </ComposerPrimitive.AddAttachment>
+        
+        <ComposerPrimitive.Input className="flex-1" />
+        <ComposerPrimitive.Send />
+      </div>
+    </ComposerPrimitive.Root>
+  );
+};
+
+const ComposerAttachment = () => {
+  return (
+    <ComposerPrimitive.Attachment className="flex items-center gap-2 p-2 border rounded">
+      <ComposerPrimitive.AttachmentName />
+      <ComposerPrimitive.AttachmentRemove asChild>
+        <button className="p-1">
+          <XIcon className="w-4 h-4" />
+        </button>
+      </ComposerPrimitive.AttachmentRemove>
+    </ComposerPrimitive.Attachment>
+  );
+};
+```
+
+### Thread Suggestions
+```jsx
+const ThreadWithSuggestions = () => {
+  const suggestions = [
+    "Summarise this document",
+    "What are the key points?",
+    "Explain the main concepts",
+    "Find contradictions or unclear points"
+  ];
+
+  return (
+    <ThreadPrimitive.Root>
+      <ThreadPrimitive.Viewport>
+        <ThreadPrimitive.Empty>
+          <div className="p-4 space-y-2">
+            <p>Ask me about this document:</p>
+            <div className="flex flex-wrap gap-2">
+              {suggestions.map((prompt, i) => (
+                <ThreadPrimitive.Suggestion
+                  key={i}
+                  prompt={prompt}
+                  method="replace"
+                  autoSend
+                  asChild
+                >
+                  <button className="px-3 py-1 text-sm border rounded-lg hover:bg-muted">
+                    {prompt}
+                  </button>
+                </ThreadPrimitive.Suggestion>
+              ))}
+            </div>
+          </div>
+        </ThreadPrimitive.Empty>
+        <ThreadPrimitive.Messages />
+      </ThreadPrimitive.Viewport>
+      <Composer />
+    </ThreadPrimitive.Root>
+  );
+};
+```
+
+### Custom Message Content with Markdown
+```jsx
+import { MarkdownText } from "@assistant-ui/react-markdown";
+
+const CustomAssistantMessage = () => {
+  return (
+    <MessagePrimitive.Root>
+      <MessagePrimitive.Content 
+        components={{
+          Text: ({ text }) => (
+            <MarkdownText 
+              text={text} 
+              className="prose prose-sm max-w-none"
+            />
+          ),
+          // Support for custom content types
+          Fallback: ({ part }) => {
+            if (part.type === 'document-reference') {
+              return (
+                <DocumentReference 
+                  id={part.documentId} 
+                  title={part.title} 
+                />
+              );
+            }
+            return null;
+          }
+        }}
+      />
+    </MessagePrimitive.Root>
+  );
+};
+```
+
 ## Integration with Current Architecture
 
-### Styling Approach
-- **Tailwind CSS**: assistant-ui components are designed to work well with Tailwind
-- **Custom Styling**: Can override default styles using Tailwind classes
-- **Phosphor Icons**: Compatible with our existing icon system
+### Styling Best Practices
+```css
+/* globals.css - Assistant UI theme variables */
+.assistant-ui-thread {
+  --aui-primary: hsl(var(--primary));
+  --aui-primary-foreground: hsl(var(--primary-foreground));
+  --aui-muted: hsl(var(--muted));
+  --aui-muted-foreground: hsl(var(--muted-foreground));
+}
 
-### State Management
-- **Runtime Context**: Uses React Context for chat state management
-- **Document Context**: Can inject current document content into conversation
-- **Tab Integration**: Will work within our existing tab container system
+/* Custom component styles */
+.aui-composer-root {
+  @apply flex items-end gap-2 p-4 border-t bg-background;
+}
 
-### TypeScript Integration
-- **Type Safety**: Full TypeScript support with proper type definitions
-- **Custom Types**: Can extend interfaces for our specific document context needs
+.aui-composer-input {
+  @apply flex-1 min-h-[40px] max-h-[200px] resize-none rounded-lg border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring;
+}
 
-## Implementation Stages for Spideryarn
+.aui-message-root {
+  @apply flex gap-3 px-4 py-3 transition-colors hover:bg-muted/30;
+}
 
-### Stage 1: Basic Chat Setup
-1. Install assistant-ui dependencies
-2. Create basic chat API route with mock responses
-3. Set up Thread component in Tools pane
-4. Test basic message exchange
+.aui-message-content {
+  @apply prose prose-sm max-w-none prose-p:leading-relaxed prose-pre:my-0;
+}
+```
 
-### Stage 2: Document Context Integration
-1. Inject current document content into initial system message
-2. Configure chat to understand document structure
-3. Test document-aware responses
+### State Management Integration
+```typescript
+// contexts/ChatContext.tsx
+import { createContext, useContext } from 'react';
+import { useLocalRuntime } from '@assistant-ui/react';
 
-### Stage 3: Advanced Features
-1. Add conversation clearing functionality
-2. Implement message editing with thread branching
-3. Add web search toggle capability
-4. Integrate with actual Claude Sonnet 4 API
+interface ChatContextValue {
+  runtime: ReturnType<typeof useLocalRuntime>;
+  documentId: string | null;
+  selectedText: string | null;
+  setSelectedText: (text: string | null) => void;
+}
 
-## Performance Considerations
+const ChatContext = createContext<ChatContextValue | null>(null);
 
-- **Bundle Size**: assistant-ui is optimized for tree-shaking
-- **Streaming**: Built-in support for streaming responses reduces perceived latency
-- **Memory Management**: Efficient message history handling
+export const ChatProvider = ({ children, documentId }) => {
+  const [selectedText, setSelectedText] = useState<string | null>(null);
+  
+  const runtime = useLocalRuntime({
+    initialMessages: [],
+    onNew: async (message) => {
+      // Include document context in API calls
+      const context = {
+        documentId,
+        selectedText,
+      };
+      
+      // Process message with context
+      await processMessage(message, context);
+    },
+  });
+  
+  return (
+    <ChatContext.Provider value={{
+      runtime,
+      documentId,
+      selectedText,
+      setSelectedText,
+    }}>
+      <AssistantRuntimeProvider runtime={runtime}>
+        {children}
+      </AssistantRuntimeProvider>
+    </ChatContext.Provider>
+  );
+};
 
-## Customization Options
+export const useChat = () => {
+  const context = useContext(ChatContext);
+  if (!context) {
+    throw new Error('useChat must be used within ChatProvider');
+  }
+  return context;
+};
+```
 
-### Theme Integration
-- Compatible with our brand colours (Spideryarn Red, Black, Warm Grey)
-- Can customize message bubbles, input styling, and spacing
-- Supports dark/light mode if needed in future
+### TypeScript Types
+```typescript
+// types/chat.ts
+import type { Message } from '@assistant-ui/react';
 
-### Component Overrides
-- Can replace default components with custom implementations
-- Maintains accessibility while allowing full visual control
-- Easy to integrate with existing design system
+export interface DocumentContext {
+  documentId: string;
+  title: string;
+  selectedText?: string;
+  selectedElementId?: string;
+}
 
-## Future Roadmap Alignment
+export interface ChatMessage extends Message {
+  context?: DocumentContext;
+  metadata?: {
+    tokens?: number;
+    processingTime?: number;
+  };
+}
 
-assistant-ui's 2025 Q1 roadmap includes:
-- **Chat Persistence**: Will support our future conversation storage needs
-- **React 19 Support**: Keeps us compatible with latest React versions
-- **Performance Improvements**: Continued optimization for production use
+export interface ChatRuntime {
+  messages: ChatMessage[];
+  isRunning: boolean;
+  error: Error | null;
+  sendMessage: (content: string, context?: DocumentContext) => Promise<void>;
+  editMessage: (messageId: string, content: string) => Promise<void>;
+  regenerateMessage: (messageId: string) => Promise<void>;
+  clearMessages: () => void;
+}
+```
 
-## Migration Path
+## Common Pitfalls and Solutions
 
-1. **Phase 1**: Mock API integration for UI testing
-2. **Phase 2**: Real Claude API integration with document context
-3. **Phase 3**: Advanced features and conversation persistence
-4. **Phase 4**: Multi-conversation support when ThreadList is needed
+### 1. Hydration Mismatches in Next.js
+**Problem**: SSR/CSR mismatches when using dynamic content.
+**Solution**: 
+```jsx
+// Wrap dynamic components with ClientOnly
+import dynamic from 'next/dynamic';
 
-This phased approach allows for incremental testing and validation at each stage.
+const ChatInterface = dynamic(
+  () => import('./ChatInterface'),
+  { 
+    ssr: false,
+    loading: () => <div>Loading chat...</div>
+  }
+);
+```
+
+### 2. Streaming Response Handling
+**Problem**: Incomplete streaming or connection drops.
+**Solution**:
+```typescript
+// Implement proper error handling and reconnection
+const runtime = useLocalRuntime({
+  onNew: async (message) => {
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages }),
+          signal: AbortSignal.timeout(30000), // 30s timeout
+        });
+        
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        // Process stream
+        break;
+      } catch (error) {
+        retries--;
+        if (retries === 0) throw error;
+        await new Promise(r => setTimeout(r, 1000)); // Wait 1s before retry
+      }
+    }
+  },
+});
+```
+
+### 3. Memory Leaks with Large Conversations
+**Problem**: Performance degradation with long chat histories.
+**Solution**:
+```typescript
+// Implement message pagination or truncation
+const MAX_MESSAGES = 100;
+
+const runtime = useLocalRuntime({
+  maxMessages: MAX_MESSAGES,
+  onMessagesChange: (messages) => {
+    if (messages.length > MAX_MESSAGES) {
+      // Archive old messages to database
+      archiveMessages(messages.slice(0, -MAX_MESSAGES));
+    }
+  },
+});
+```
+
+### 4. Style Conflicts
+**Problem**: Tailwind classes conflicting with assistant-ui defaults.
+**Solution**:
+```jsx
+// Use cn utility for conditional classes
+import { cn } from '@/lib/utils';
+
+<MessagePrimitive.Root 
+  className={cn(
+    "aui-message-root", // Base assistant-ui class
+    "custom-message",   // Your custom class
+    isHighlighted && "bg-yellow-50" // Conditional styling
+  )}
+/>
+```
+
+### 5. Context Loss on Route Changes
+**Problem**: Chat state lost when navigating between pages.
+**Solution**:
+```typescript
+// Persist chat state in sessionStorage or database
+const usePersistentChat = () => {
+  const [messages, setMessages] = useState(() => {
+    const saved = sessionStorage.getItem('chat-messages');
+    return saved ? JSON.parse(saved) : [];
+  });
+  
+  useEffect(() => {
+    sessionStorage.setItem('chat-messages', JSON.stringify(messages));
+  }, [messages]);
+  
+  return { messages, setMessages };
+};
+```
+
+## Performance Optimizations
+
+### 1. Lazy Loading Components
+```typescript
+const Thread = lazy(() => import('./Thread'));
+const Composer = lazy(() => import('./Composer'));
+
+export const Chat = () => (
+  <Suspense fallback={<ChatSkeleton />}>
+    <Thread />
+    <Composer />
+  </Suspense>
+);
+```
+
+### 2. Memoizing Message Components
+```jsx
+import { memo } from 'react';
+
+const Message = memo(({ message }) => {
+  return (
+    <MessagePrimitive.Root>
+      <MessagePrimitive.Content />
+    </MessagePrimitive.Root>
+  );
+}, (prevProps, nextProps) => {
+  // Only re-render if message content changes
+  return prevProps.message.content === nextProps.message.content;
+});
+```
+
+### 3. Virtual Scrolling for Long Conversations
+```jsx
+import { useVirtualizer } from '@tanstack/react-virtual';
+
+const VirtualThread = ({ messages }) => {
+  const parentRef = useRef();
+  
+  const virtualizer = useVirtualizer({
+    count: messages.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 100,
+    overscan: 5,
+  });
+  
+  return (
+    <div ref={parentRef} className="h-full overflow-auto">
+      <div style={{ height: virtualizer.getTotalSize() }}>
+        {virtualizer.getVirtualItems().map((virtualItem) => (
+          <div
+            key={virtualItem.key}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              transform: `translateY(${virtualItem.start}px)`,
+            }}
+          >
+            <Message message={messages[virtualItem.index]} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+```
+
+## Useful Resources
+
+- **Official Documentation**: https://www.assistant-ui.com/docs/
+- **GitHub Repository**: https://github.com/assistant-ui/assistant-ui
+- **Examples**: https://github.com/assistant-ui/assistant-ui/tree/main/examples
+- **API Reference**: https://www.assistant-ui.com/docs/api-reference/overview
+- **Discord Community**: Available through their GitHub page
+- **npm Package**: https://www.npmjs.com/package/@assistant-ui/react
+
+## Tips for Next.js Integration
+
+1. **Use App Router**: Assistant-ui works best with Next.js App Router for streaming support
+2. **API Routes**: Place chat endpoints in `app/api/chat/route.ts` for proper streaming
+3. **Client Components**: Mark chat components with `'use client'` directive
+4. **Environment Variables**: Store API keys in `.env.local` and access via `process.env`
+5. **Error Boundaries**: Wrap chat components in error boundaries for graceful degradation
+6. **Loading States**: Implement proper loading indicators during message processing
+7. **Accessibility**: Test with screen readers as assistant-ui has built-in ARIA support
+
+

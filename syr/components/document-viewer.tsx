@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react'
 import { CircleNotch, Warning } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import { TabContainer, type Tab } from './tab-container'
-import { SimpleChat } from './simple-chat'
+import { AssistantChat } from './assistant-chat'
 
 // Define entity type (will be moved to a proper types file later)
 interface Entity {
@@ -262,7 +262,7 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
     
     return (
       <div className="h-full flex flex-col">
-        <SimpleChat documentContext={documentContext} />
+        <AssistantChat documentContext={documentContext} />
       </div>
     )
   }

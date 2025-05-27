@@ -4,6 +4,8 @@
 
 Implement a chatbot interface for document analysis using the assistant-ui React library. The chatbot will provide AI-powered assistance for reading and analyzing documents, with access to the currently active version of the document being read.
 
+## References
+
 ### Key Requirements
 - Integrate assistant-ui library for AI chat interface
 - Add chatbot as a new tab in the "Tools" pane (renamed from "Glossary" pane)
@@ -109,61 +111,105 @@ Implement a chatbot interface for document analysis using the assistant-ui React
   - [x] Implement error display with warning icon and retry functionality
   - [x] Use existing error patterns from glossary implementation as reference
 
-### Stage 4: Assistant-UI Integration
-- [ ] **Install and configure assistant-ui**
-  - [ ] Run `npm install @assistant-ui/react` or use their CLI setup
-  - [ ] Follow assistant-ui documentation for Next.js integration
-  - [ ] Configure Tailwind CSS integration for styling consistency
-  - [ ] Set up basic chat component with default configuration
+### Stage 4: Assistant-UI Integration ✅ **COMPLETED**
+- [x] **Install and configure assistant-ui**
+  - [x] Run `npm install @assistant-ui/react` (manual installation approach)
+  - [x] Follow assistant-ui documentation for Next.js integration
+  - [x] Configure Tailwind CSS integration for styling consistency
+  - [x] Set up basic chat component with default configuration
 
-- [ ] **Create Chat tab component**
-  - [ ] Create `components/chat-interface.tsx` using assistant-ui components
-  - [ ] Integrate with fake API endpoint from Stage 3
-  - [ ] Implement document context injection in first message (look to reuse existing code that either converts the current doc to Markdown or uses element.content - if you can't find it, ask the user)
-  - [ ] Add basic conversation display with user/assistant messages
-  - [ ] Include input field with send button functionality
+- [x] **Create Chat tab component**
+  - [x] Create `components/assistant-chat.tsx` using assistant-ui components
+  - [x] Integrate with fake API endpoint from Stage 3
+  - [x] Implement document context injection using existing `getDocumentContext()` function
+  - [x] Add conversation display with separate User/Assistant message components
+  - [x] Include composer with input field and send button functionality
 
-- [ ] **Integrate Chat tab into Tools pane**
-  - [ ] Add "Chat" tab to Tools pane alongside "Glossary" tab
-  - [ ] Use TabContainer from Stage 2 for consistent tab behaviour
-  - [ ] Set proper tab order and default selection
-  - [ ] Ensure smooth switching between Glossary and Chat tabs
+- [x] **Integrate Chat tab into Tools pane**
+  - [x] Add "Chat" tab to Tools pane alongside "Glossary" tab
+  - [x] Use TabContainer from Stage 2 for consistent tab behaviour
+  - [x] Set proper tab order and default selection (Glossary first, then Chat)
+  - [x] Ensure smooth switching between Glossary and Chat tabs
 
-- [ ] **Test complete integration**
-  - [ ] Verify chat interface works with fake responses
-  - [ ] Test document context is properly provided to chat
-  - [ ] Confirm loading and error states display correctly
-  - [ ] Test tab switching preserves chat state during session
+- [x] **Test complete integration**
+  - [x] Verify chat interface works with fake responses
+  - [x] Test document context is properly provided to chat
+  - [x] Confirm loading and error states display correctly
+  - [x] Test tab switching preserves chat state during session
+
+**Stage 4 Implementation Notes:**
+- Successfully integrated assistant-ui v0.10.13 using primitive components architecture
+- Created comprehensive `components/assistant-chat.tsx` with proper component composition:
+  - `UserMessage` component with User icon and blue avatar background
+  - `AssistantMessage` component with Robot icon and gray avatar background  
+  - `Composer` component with auto-resizing input and send button
+  - `ThreadSuggestions` component for empty state with clickable prompts
+- Used `useLocalRuntime` (recommended approach) instead of `useExternalStoreRuntime` for simpler state management
+- Implemented thread suggestions for common document questions that auto-send when clicked
+- Proper styling with Phosphor icons (User, Robot, PaperPlaneTilt) matching existing design language
+- Full integration with existing fake API including document context passing
+- Build succeeds with no compilation errors (only unrelated ESLint warnings)
+- Chat conversation state properly persists during tab switching within same session
+
+**Key Learnings and Gotchas:**
+- assistant-ui uses primitive component architecture (ThreadPrimitive, ComposerPrimitive, MessagePrimitive)
+- `ThreadPrimitive.Messages` requires `components` prop with UserMessage/AssistantMessage definitions
+- `useLocalRuntime` provides better built-in state management than `useExternalStoreRuntime`
+- Phosphor icon names differ from expected (Robot not Bot, PaperPlaneTilt not Send)
+- Document context automatically extracted via existing `getDocumentContext()` method (10k char limit)
+- assistant-ui handles complex chat interactions while maintaining full styling control
 
 ### Stage 5: Document Context Integration
 - [ ] **Implement document content injection**
-  - [ ] Modify chat API to accept document content parameter
-  - [ ] Extract document text from elements in document viewer
-  - [ ] Include document title, headings, and content in system prompt
-  - [ ] Format document context for optimal LLM understanding
-  - [ ] Test that AI responses reference document content appropriately
+  - [x] Document context already extracted via existing `getDocumentContext()` method (10k char limit)
+  - [x] Chat API already accepts `documentContext` parameter  
+  - [x] Document text automatically included in API calls
+  - [ ] **ENHANCEMENT**: Format document context for optimal LLM understanding
+    - [ ] Add document title and metadata to context
+    - [ ] Include hierarchical heading structure for better navigation
+    - [ ] Consider chunking strategy for very large documents (>10k chars)
+  - [ ] **TESTING**: Test that AI responses reference document content appropriately
+    - [ ] Verify fake API responses acknowledge document context
+    - [ ] Test with various document types and sizes
 
 - [ ] **Add context indicator in UI**
   - [ ] Display document title or indicator showing context is loaded
-  - [ ] Add tooltip or info section explaining AI has document access
+  - [ ] Add tooltip or info section explaining AI has document access  
   - [ ] Show character/token count of document context (optional)
+  
+**Stage 5 Implementation Notes:**
+- Document context integration is mostly complete from Stage 4 implementation
+- The `getDocumentContext()` function in `document-viewer.tsx:252-258` already extracts and limits content
+- Focus should be on enhancing context formatting and adding UI indicators
 
 ### Stage: update documentation
+- [ ] Update docs - this doc should point to `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md` and vice versa
+- [ ] Update that `CHATBOT_ASSISTANT_UI_INTEGRATION.md` - it may not be accurate/up-to-date
 - [ ] Update docs like `docs/ARCHITECTURE.md`, `SITE_ORGANISATION.md` etc any anywhere else that refers to the 'Glossary' pane to refer to the 'Tools' pane, and mention the new chatbot & APIs. Use a subagent
 
 ### Stage 6: Real LLM Integration
 - [ ] **Replace fake API with actual LLM calls**
-  - [ ] Integrate with existing LLM configuration from `lib/config.ts`
-  - [ ] Use Anthropic Claude Sonnet 4 with temperature 0 as configured
-  - [ ] Implement proper error handling for API failures
-  - [ ] Add retry logic for transient failures
-  - [ ] Test with various document types and conversation flows
+  - [ ] **EASY WIN**: Replace mock responses in `app/api/chat/route.ts` with real LLM calls
+  - [ ] **REUSE**: Integrate with existing LLM configuration from `lib/config.ts`
+  - [ ] **CONSISTENCY**: Use Anthropic Claude Sonnet 4 with temperature 0 as configured
+  - [ ] **ROBUSTNESS**: Implement proper error handling for API failures
+  - [ ] **RESILIENCE**: Add retry logic for transient failures  
+  - [ ] **TESTING**: Test with various document types and conversation flows
 
 - [ ] **Optimize prompt engineering**
-  - [ ] Create system prompt template for document analysis
-  - [ ] Include instructions for helpful, accurate responses
-  - [ ] Add guidelines for citing document sections
-  - [ ] Test prompt effectiveness with sample conversations
+  - [ ] **TEMPLATE**: Create system prompt template for document analysis
+    - [ ] Include document title, context, and analysis instructions
+    - [ ] Add guidelines for helpful, accurate responses about the document
+    - [ ] Include instructions for citing specific document sections
+  - [ ] **REUSE PATTERNS**: Look at existing prompts in `app/api/summarise/route.ts` and `app/api/glossary/route.ts`
+  - [ ] **ITERATIVE**: Test prompt effectiveness with sample conversations
+  
+**Stage 6 Implementation Guidance:**
+- Current fake API structure in `app/api/chat/route.ts` is ready for LLM integration
+- Just replace the mock response logic with real LLM calls using existing patterns
+- Document context is already being passed in `documentContext` parameter
+- Consider implementing streaming responses for better UX (assistant-ui supports this)
+- Look at `lib/prompts/templates/` for existing prompt template patterns
 
 ### Stage 7: Enhanced Features
 - [ ] **Add conversation management**
