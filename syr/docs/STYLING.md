@@ -25,8 +25,13 @@ The CSS variables in `app/globals.css` define the colour scheme:
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --spideryarn-orange: #DB8A45;
 }
 ```
+
+### Brand colours
+
+- **Spideryarn Orange**: `#DB8A45` - Available as `text-spideryarn-orange` class
 
 Dark mode CSS exists but is commented out until theming is properly implemented.
 
@@ -34,6 +39,7 @@ Dark mode CSS exists but is commented out until theming is properly implemented.
 
 - **Primary font**: Arial, Helvetica, sans-serif (set in `body` element)
 - **Geist fonts**: Available via CSS variables `--font-geist-sans` and `--font-geist-mono`
+- **Trebuchet MS**: Available as `font-trebuchet` class for logo/branding text
 
 ## Third-party styling
 
