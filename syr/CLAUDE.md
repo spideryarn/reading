@@ -6,7 +6,7 @@ see:
 - `README.md` for goals/intents/features
 - `docs/CODING_PRINCIPLES.md`
 - `docs/ARCHITECTURE.md`
-
+- `docs/GIT_COMMITS.md` for using Git
 
 ## Project Overview
 
