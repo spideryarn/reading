@@ -55,6 +55,9 @@ And then revert back to the original document or try different transformations.
   - [ ] Create transforms to insert AI headings at `id_of_after` positions
   - [ ] Create reverse transforms to remove inserted headings
   - [ ] Update table of contents component to apply/unapply mutations on tab switch
+- [ ] Git commit, following `GIT_COMMITS.md`
+- [ ] Document in new `docs/MUTATIONS.md` - follow `docs/WRITING_EVERGREEN_DOCS.md` for this
+  - [ ] 
 
 ### Stage 4: Document Structure Integration
 - [ ] Ensure mutations properly modify document structure for navigation
