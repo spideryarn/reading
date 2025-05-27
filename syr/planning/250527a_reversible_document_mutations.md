@@ -36,11 +36,15 @@ And then revert back to the original document or try different transformations.
 ## Actions
 
 ### Stage 1: Core Mutation Data Structure
-- [ ] Design and implement core mutation interfaces
-  - [ ] `Mutation` interface with id, type, forward/reverse transforms, metadata
-  - [ ] `DocumentTransform` interface with action types (insert, replace, remove, modify)
-  - [ ] Support for targetId, afterId, content, originalContent fields
-  - [ ] TypeScript types in `lib/types/` directory
+- [x] Design and implement core mutation interfaces
+  - [x] `Mutation` interface with id, type, forward/reverse transforms, metadata
+  - [x] `DocumentTransform` interface with action types (insert, replace, remove, modify)
+  - [x] Support for targetId, afterId, content, originalContent fields
+  - [x] TypeScript types in `lib/types/` directory
+  - [x] MutationEngine class with apply/revert/validate methods
+  - [x] Type guards for transform validation
+  - [x] Comprehensive test suite (8 tests, all passing)
+  - [x] Created docs/TESTING.md for test documentation
 
 ### Stage 2: Single Mutation State Management  
 - [ ] Implement mutation application system
