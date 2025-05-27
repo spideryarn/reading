@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react'
 import { CircleNotch, Warning } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import { TabContainer, type Tab } from './tab-container'
+import { SimpleChat } from './simple-chat'
 
 // Define entity type (will be moved to a proper types file later)
 interface Entity {
@@ -247,11 +248,21 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
     )
   }
 
+  // Extract document context for chat
+  const getDocumentContext = () => {
+    return elements
+      .filter(el => el.content.trim()) // Only include elements with content
+      .map(el => el.content.trim())
+      .join('\n\n')
+      .substring(0, 10000) // Limit context size for now
+  }
+
   const renderChatTab = () => {
+    const documentContext = getDocumentContext()
+    
     return (
-      <div className="text-gray-500 text-center py-8">
-        <p>Chat interface coming soon...</p>
-        <p className="text-sm mt-2">This will contain the AI chatbot interface.</p>
+      <div className="h-full flex flex-col">
+        <SimpleChat documentContext={documentContext} />
       </div>
     )
   }
