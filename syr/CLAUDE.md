@@ -4,7 +4,7 @@ This document provides essential context for Claude instances working on the Spi
 
 see:
 - `README.md` for goals/intents/features
-- `docs/CODING_PRINCIPLES.md`
+- IMPORTANT: `docs/CODING_PRINCIPLES.md`
 - `docs/ARCHITECTURE.md`
 
 
