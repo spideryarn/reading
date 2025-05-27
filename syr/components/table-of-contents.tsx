@@ -28,7 +28,7 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
   const [loadingStates, setLoadingStates] = useState<Set<string>>(new Set())
   const [contentCache, setContentCache] = useState<Map<string, string>>(new Map())
   const [activeTab, setActiveTab] = useState<'original' | 'ai-generated'>('original')
-  const [showPlaceholder, setShowPlaceholder] = useState(false)
+  const [aiHeadings, setAiHeadings] = useState<Heading[]>([])
   const [isLoadingHeadings, setIsLoadingHeadings] = useState(false)
   const [headingsError, setHeadingsError] = useState<string | null>(null)
   const [showHeadings, setShowHeadings] = useState(false)
@@ -281,11 +281,14 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
     setHeadingsError(null)
     
     try {
-      const response = await fetch('/api/fake_success_delay', {
+      const response = await fetch('/api/headings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          html_content: content
+        }),
       })
 
       if (!response.ok) {
@@ -295,8 +298,14 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
       const data = await response.json()
       console.log('Generate headings response:', data)
       
-      // Show the placeholder after successful response
-      setShowPlaceholder(true)
+      // Convert API response to Heading format
+      const generatedHeadings: Heading[] = data.headings.map((heading: any, index: number) => ({
+        id: heading.id_of_after || `ai-heading-${index}`,
+        text: heading.html.replace(/<\/?h[1-6][^>]*>/gi, ''), // Extract text from HTML
+        level: parseInt(heading.html.match(/<h([1-6])/i)?.[1] || '1') // Extract level from HTML
+      }))
+      
+      setAiHeadings(generatedHeadings)
       setShowHeadings(true)
     } catch (error) {
       console.error('Error generating headings:', error)
@@ -395,16 +404,23 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
               <div className="text-xs">{headingsError}</div>
             </div>
           </div>
-        ) : showPlaceholder ? (
-          <div className="w-full px-4 py-8 text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-md text-center">
-            <div className="space-y-2">
-              <div className="text-gray-400">📄</div>
-              <div>Placeholder for AI-generated headings</div>
-              <div className="text-xs text-gray-400">
-                This will be replaced with actual generated headings in Stage 4
+        ) : aiHeadings.length > 0 ? (
+          <nav className="space-y-1">
+            {aiHeadings.map((heading) => (
+              <div
+                key={heading.id}
+                className={`${getIndentClass(heading.level)} cursor-pointer hover:bg-green-50 rounded px-2 py-1 transition-colors group`}
+                onClick={() => handleHeadingClick(heading)}
+              >
+                <span className="text-xs text-gray-400 mr-2 group-hover:text-green-600">
+                  H{heading.level}
+                </span>
+                <span className="text-sm text-gray-700 group-hover:text-green-900">
+                  {heading.text}
+                </span>
               </div>
-            </div>
-          </div>
+            ))}
+          </nav>
         ) : (
           <p className="text-gray-500">No headings generated</p>
         )}
