@@ -2,7 +2,7 @@
 
 This is a guide for writing planning/project management `.md` files, e.g. `planning/yyMMdda_complex_project.md`. These are for thinking through & documenting decisions, breaking down complex projects into multiple stages, and tracking progress.
 
-Aim to keep these concise, and only include stuff explicitly agreed with the user.
+Aim to keep these concise, but emphasise & clearly capture all the decisions, responses, and requirements from the user.
 
 If you're starting the doc from scratch, store it in `planning/`, and first ask the user questions about their project requirements to clarify key decisions. (Use MCP or run `date +"%y%m%d"` command first to get the current date for naming the file)
 

@@ -7,6 +7,11 @@ Have a look at Git diff. Think about how to batch the changes into commits:
 
 ## Commit Best Practices
 
+### Don't every do anything destructive
+
+ABOVE ALL, don't do anything that could result in lost work or mess up yet-to-be-committed changes, unless EXPLICITLY instructed to by the user after warning them.
+
+
 ### Batching changes into commits
 - Each commit should represent a small/medium feature, or stage, or cluster of related changes (e.g. tweaking a bunch of docs).
 - The codebase should (ideally) be in a working state after each commit

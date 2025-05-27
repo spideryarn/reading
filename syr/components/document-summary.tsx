@@ -14,6 +14,7 @@ export function DocumentSummary({ content }: DocumentSummaryProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
   const [showButton, setShowButton] = useState(true)
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   const generateSummary = async () => {
     try {
@@ -85,8 +86,26 @@ export function DocumentSummary({ content }: DocumentSummaryProps) {
   if (summary) {
     return (
       <div className="mx-4 mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-        <h3 className="text-sm font-semibold text-orange-800 mb-2">Summary</h3>
-        <p className="text-sm text-orange-700 leading-relaxed">{summary}</p>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-semibold text-orange-800">Summary</h3>
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="text-orange-600 hover:text-orange-800 transition-colors"
+            aria-label={isCollapsed ? "Expand summary" : "Collapse summary"}
+          >
+            <svg 
+              className={`w-4 h-4 transition-transform ${isCollapsed ? '' : 'rotate-180'}`}
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+        {!isCollapsed && (
+          <p className="text-sm text-orange-700 leading-relaxed">{summary}</p>
+        )}
       </div>
     )
   }

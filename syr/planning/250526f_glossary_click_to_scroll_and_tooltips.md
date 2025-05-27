@@ -162,3 +162,85 @@ const entitySchema = z.object({
 4. Scroll document structure pane to element using `scrollIntoView()`
 5. Temporarily highlight target element for visual feedback
 6. Handle errors gracefully with fallback text search if needed
+
+### Multiple Occurrence Navigation - Design Options
+
+**Problem**: Current implementation only navigates to first occurrence. Users need visibility and navigation to all entity mentions.
+
+**Key user scenarios:**
+- Academic reading: "Show me all mentions of 'consciousness' to follow the argument"
+- Reference checking: "Is this 'Maxwell' referring to the person or the equations?"
+- Concept tracking: "How does the author's use of this term evolve through the document?"
+
+**Design constraints:**
+- Frequency expectations: Could be 3-5 occurrences vs 15-20
+- Context importance: Do users need surrounding text or just location?
+- Performance: Loading context snippets could be slow
+- UI complexity budget: Risk of feature creep
+
+#### Option A: Footnotes Approach
+- Add numbered footnotes next to entity names (¹ ² ³)
+- Each footnote links to different occurrence
+- Tooltip hover shows paragraph snippet
+- Main entity name preserves current first-occurrence behaviour
+
+**Pros:** Familiar footnote pattern, preserves main click behaviour
+**Cons:** Cluttered for high-frequency entities, footnote numbers break mental model (not citations)
+
+#### Option B: Filtered Results Tab
+- Click entity → opens new tab/pane showing search results
+- Each result shows context snippet: "...Maxwell's equations describe..."
+- Click snippet → navigate to that occurrence
+
+**Pros:** Rich context, familiar search results paradigm
+**Cons:** Significant UI complexity, unclear where tab appears/dismissed, breaks document structure model
+
+#### Option C: Progressive Disclosure (Recommended)
+- First click → first occurrence (preserves current simplicity)
+- Second click on same entity → shows occurrence picker overlay
+- Maintains simplicity while adding power
+
+**Pros:** Progressive complexity, preserves current UX, familiar interaction
+**Cons:** Requires state tracking, might be non-obvious to users
+
+#### Option D: Visual Frequency Indicators
+- Show occurrence count in glossary: "Maxwell (5)"
+- Hover shows mini-timeline of document positions
+- Click behaviour unchanged but users get visibility
+
+**Pros:** Non-intrusive, provides useful information, simple implementation
+**Cons:** Doesn't solve navigation problem, only awareness
+
+#### Option E: Document Highlighting + Navigation
+- Click entity → highlight ALL occurrences in document structure pane
+- Users click individual highlighted elements to navigate
+- Leverages existing document structure view
+
+**Pros:** Uses existing UI, clear visual feedback, simple implementation
+**Cons:** Requires scrolling through document structure to find occurrences
+
+#### Option F: Expandable Entity Cards
+- Click chevron next to entity name → expands to show occurrence list
+- Each with snippet: "Section 2.1: Maxwell's equations describe..."
+- Preserves space when not needed
+
+**Pros:** Space-efficient, clear information hierarchy, familiar UI pattern
+**Cons:** Additional UI complexity, unclear how many users need this feature
+
+#### Option G: Context Menu Approach
+- Left click → first occurrence (preserves current behaviour)
+- Right click → "Show all 5 occurrences" context menu
+- Familiar desktop interaction pattern
+
+**Pros:** Preserves current UX, familiar interaction, discoverable
+**Cons:** Right-click may not be obvious, mobile compatibility issues
+
+#### Recommended Hybrid Approach
+Combine **Visual Frequency Indicators** + **Progressive Disclosure**:
+
+1. Show occurrence count: "Maxwell (3)"
+2. First click → first occurrence (preserves current simplicity)  
+3. Second click → minimal overlay with occurrence list
+4. Each showing: "Section 2.1: Maxwell's equations..."
+
+**Rationale:** Adds power without cluttering default experience, fits existing interaction patterns, progressive complexity matches user needs.

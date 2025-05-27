@@ -52,23 +52,37 @@ We want to adapt this approach for the new Next.js implementation while keeping 
   - [x] Removed fallback to sample data
   - [x] Added proper error handling with Phosphor icons
 
-- [ ] **TODO** Create documentation
-  - [ ] Create `docs/GLOSSARY.md` following evergreen documentation guidelines
-  - [ ] Document feature behaviour, implementation details, and future enhancements
+- [x] **DONE** Create documentation
+  - [x] Created `docs/AI_GLOSSARY.md` following evergreen documentation guidelines
+  - [x] Documented feature behaviour, implementation details, and future enhancements
 
-### Phase 2: Future Enhancements
+### Phase 2: Navigation Features (Current Focus)
 
-- [ ] **TODO** Navigation features
-  - [ ] Track entity positions in document
-  - [ ] Click entity → scroll to first occurrence
+- [ ] **TODO** Click-to-scroll functionality
+  - [ ] Track entity positions in document elements
+  - [ ] Implement click handler for glossary entities
+  - [ ] Scroll to first occurrence of entity in document viewer
 
-- [ ] **TODO** Highlighting features  
+- [ ] **TODO** Enhanced entity tracking
+  - [ ] Modify LLM prompt to include position information
+  - [ ] Update entity schema to include `first_occurrence_element_id`
+  - [ ] Store entity-to-element mapping for navigation
+
+### Phase 3: Highlighting Features
+
+- [ ] **TODO** Document text highlighting
   - [ ] Highlight entity occurrences in document text
   - [ ] Show brief_explanation tooltips on hover
+  - [ ] Visual indication of clickable entities
+
+### Phase 4: Storage & Performance
 
 - [ ] **TODO** Storage optimisation
   - [ ] Store entities in Supabase
   - [ ] Enable incremental updates
+  - [ ] Cache entities per document
+
+### Phase 5: User Experience
 
 - [ ] **TODO** User preferences
   - [ ] Filter by entity type

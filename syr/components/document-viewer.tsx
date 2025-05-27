@@ -33,35 +33,85 @@ interface DocumentViewerProps {
 }
 
 // Component to display glossary entities ordered by first occurrence
-function GlossaryDisplay({ entities }: { entities: Entity[] }) {
-  // For now, entities are already in order of first occurrence (will be enforced by API later)
-  // In the future, the API will include a 'firstOccurrence' field to sort by
+function GlossaryDisplay({ entities, elements, onScrollToEntity }: { 
+  entities: Entity[]
+  elements: DocumentElement[]
+  onScrollToEntity?: (elementId: string) => void
+}) {
+  
+  /**
+   * Find the first occurrence of an entity in the document elements.
+   * Searches for entity name and aliases in element content.
+   * Returns the element ID where the entity first appears.
+   */
+  const findFirstOccurrence = (entity: Entity): string | null => {
+    const searchTerms = [entity.name, ...entity.aliases]
+    
+    // Sort elements by position to find the first occurrence
+    const sortedElements = [...elements].sort((a, b) => a.position - b.position)
+    
+    for (const element of sortedElements) {
+      if (!element.content) continue
+      
+      const content = element.content.toLowerCase()
+      
+      // Check if any of the search terms appear in this element's content
+      for (const term of searchTerms) {
+        if (content.includes(term.toLowerCase())) {
+          return element.id
+        }
+      }
+    }
+    
+    return null
+  }
+  
+  const handleEntityClick = (entity: Entity) => {
+    const elementId = findFirstOccurrence(entity)
+    if (elementId && onScrollToEntity) {
+      onScrollToEntity(elementId)
+    }
+  }
   
   return (
     <div className="space-y-3">
-      {entities.map((entity, index) => (
-        <div key={index} className="border-l-2 border-gray-200 pl-3">
-          <div className="flex items-baseline gap-2">
-            <div className="font-medium text-sm">{entity.name}</div>
-            <div className="text-xs text-gray-500 uppercase" style={{ fontSize: '0.7rem', letterSpacing: '0.05em' }}>
-              {entity.ontology}
+      {entities.map((entity, index) => {
+        const hasOccurrence = findFirstOccurrence(entity) !== null
+        
+        return (
+          <div key={index} className="border-l-2 border-gray-200 pl-3">
+            <div className="flex items-baseline gap-2">
+              <div 
+                className={`font-medium text-sm ${
+                  hasOccurrence 
+                    ? 'text-blue-600 cursor-pointer hover:text-blue-800 hover:underline' 
+                    : 'text-gray-900'
+                }`}
+                onClick={() => hasOccurrence && handleEntityClick(entity)}
+                title={hasOccurrence ? 'Click to scroll to first occurrence' : undefined}
+              >
+                {entity.name}
+              </div>
+              <div className="text-xs text-gray-500 uppercase" style={{ fontSize: '0.7rem', letterSpacing: '0.05em' }}>
+                {entity.ontology}
+              </div>
             </div>
+            {entity.aliases.length > 0 && (
+              <div className="text-xs text-gray-500 italic">
+                Also: {entity.aliases.join(', ')}
+              </div>
+            )}
+            <div className="text-sm text-gray-600 mt-1">
+              {entity.long_explanation || entity.brief_explanation}
+            </div>
+            {entity.datetime && (
+              <div className="text-xs text-gray-500 mt-1">
+                {entity.datetime}
+              </div>
+            )}
           </div>
-          {entity.aliases.length > 0 && (
-            <div className="text-xs text-gray-500 italic">
-              Also: {entity.aliases.join(', ')}
-            </div>
-          )}
-          <div className="text-sm text-gray-600 mt-1">
-            {entity.long_explanation || entity.brief_explanation}
-          </div>
-          {entity.datetime && (
-            <div className="text-xs text-gray-500 mt-1">
-              {entity.datetime}
-            </div>
-          )}
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
@@ -73,6 +123,34 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
   const currentSelectedElement = selectedElement !== undefined ? selectedElement : internalSelectedElement
   const handleElementSelect = onElementSelect || setInternalSelectedElement
   const [elementTree, setElementTree] = useState<Map<string | null, DocumentElement[]>>(new Map())
+
+  /**
+   * Scroll to a specific element in the document structure pane.
+   * Highlights the element and selects it for detailed view.
+   */
+  const handleScrollToEntity = (elementId: string) => {
+    // Find the element by ID
+    const targetElement = elements.find(el => el.id === elementId)
+    if (!targetElement) return
+
+    // Select the element to show its details
+    handleElementSelect(targetElement)
+
+    // Scroll to the element in the document structure pane
+    const elementDiv = document.querySelector(`[data-element-id="${elementId}"]`)
+    if (elementDiv) {
+      elementDiv.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      })
+      
+      // Add a brief highlight effect
+      elementDiv.classList.add('bg-yellow-100')
+      setTimeout(() => {
+        elementDiv.classList.remove('bg-yellow-100')
+      }, 2000)
+    }
+  }
 
   useEffect(() => {
     const tree = new Map<string | null, DocumentElement[]>()
@@ -186,7 +264,11 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
                 </div>
               </div>
             ) : glossaryEntities.length > 0 ? (
-              <GlossaryDisplay entities={glossaryEntities} />
+              <GlossaryDisplay 
+                entities={glossaryEntities} 
+                elements={elements}
+                onScrollToEntity={handleScrollToEntity}
+              />
             ) : (
               <p className="text-gray-500">No glossary entries found</p>
             )}
