@@ -96,6 +96,24 @@ And then revert back to the original document or try different transformations.
   - [ ] Handle API failures gracefully
   - [ ] Handle malformed mutation data
   - [ ] Ensure UI remains responsive during mutations
+  - [ ] Fix intermittent scroll-to-heading issues with AI-generated headings
+    - **Issue**: After switching between Original and AI-generated tabs multiple times, some AI-generated headings stop responding to clicks
+    - **Symptoms**: Initial heading clicks work, but after tab switching, only some headings remain clickable
+    - **Possible causes**:
+      - ID conflicts: The simplified ID generation (`ai-heading-${docId}-${index}`) might create conflicts when mutations are applied/reverted multiple times
+      - DOM element references: The scroll handler might be looking for elements that were removed/re-added during mutations
+      - Event handler binding: Click handlers might not be properly re-attached after DOM updates
+      - React re-rendering: The component might not be properly updating its internal state after mutations
+    - **Investigation needed**:
+      - Check if heading IDs are changing between mutation cycles
+      - Verify that all AI-generated heading elements exist in the DOM when clicked
+      - Test if the issue is related to React's virtual DOM reconciliation
+      - Consider if more robust ID generation (using content hash or hierarchical path) would help
+    - **Potential solutions**:
+      - Implement more deterministic ID generation that survives mutation cycles
+      - Use React refs or stable element selection instead of getElementById
+      - Force component re-render after mutations complete
+      - Add debugging to log which headings are clickable vs non-clickable
 - [ ] Update documentation
   - [x] Created docs/MUTATIONS.md
   - [ ] Update README with mutation system overview
@@ -108,7 +126,15 @@ And then revert back to the original document or try different transformations.
   - [ ] Add third tab to table of contents for testing
 - [ ] Validate architecture scales to multiple mutation types
 - [ ] Consider UI for mutation selection (dropdown? tabs? command palette?)
-- [ ] Discuss more tradeoffs of current simple ID generation approach, potential alternatives/improvements/tradeoffs
+- [ ] Improve ID generation strategy to fix scroll-to-heading reliability
+    - See Stage 5 "Fix intermittent scroll-to-heading issues" for detailed problem description
+    - Current approach: `ai-heading-${docId}-${index}` is too simple
+    - Consider alternatives:
+      - Content-based hashing for stability across mutation cycles
+      - Hierarchical path-based IDs that encode document structure
+      - UUID v5 with heading text + position as input
+      - Combination approach: `ai-heading-${contentHash}-${position}`
+    - Must balance: uniqueness, stability, debuggability, performance
 
 ### Stage 7: Advanced Features (Future)
 - [ ] Mutation composition
