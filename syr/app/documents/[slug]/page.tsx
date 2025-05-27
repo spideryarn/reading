@@ -55,9 +55,9 @@ export default async function DocumentPage({ params }: PageProps) {
   
 
   return (
-    <div className="h-screen flex flex-col">
-      <div className="border-b px-4 py-2 pl-16 flex items-center">
-        <h1 className="text-xl font-semibold">{doc.title}</h1>
+    <div className="h-screen flex flex-col pt-16">
+      <div className="border-b px-4 py-3 flex items-center min-h-[3rem] bg-white">
+        <h1 className="text-xl font-semibold leading-tight text-gray-900">{doc.title}</h1>
       </div>
       <DocumentPageClient 
         html={html}
