@@ -5,6 +5,7 @@ import { DocumentViewer } from '@/components/document-viewer'
 import { DocumentSummary } from '@/components/document-summary'
 import { TableOfContents } from '@/components/table-of-contents'
 import type { DocumentElement } from '@/lib/types/document'
+import { useDocument } from '@/lib/context/mutation-context'
 
 // Define entity type (will be moved to a proper types file later)
 interface Entity {
@@ -24,9 +25,11 @@ interface DocumentPageClientProps {
   html: string
   markdownContent: string
   elements: DocumentElement[]
+  documentId: string
 }
 
-export default function DocumentPageClient({ html, markdownContent, elements }: DocumentPageClientProps) {
+export default function DocumentPageClient({ html, markdownContent, elements, documentId }: DocumentPageClientProps) {
+  const mutatedDocument = useDocument() // Get mutated document from context
   const [selectedElement, setSelectedElement] = useState<DocumentElement | null>(null)
   const [glossaryEntities, setGlossaryEntities] = useState<Entity[]>([])
   const [isLoadingGlossary, setIsLoadingGlossary] = useState(false)
@@ -65,8 +68,11 @@ export default function DocumentPageClient({ html, markdownContent, elements }: 
   }
 
   const handleHeadingClick = (headingText: string) => {
+    // Use mutated document for finding headings
+    const documentsToSearch = mutatedDocument
+    
     // Find the element that corresponds to this heading
-    const headingElement = elements.find(element => 
+    const headingElement = documentsToSearch.find(element => 
       element.tag_name.match(/^h[1-6]$/i) && 
       element.content?.trim() === headingText.trim()
     )
@@ -87,13 +93,13 @@ export default function DocumentPageClient({ html, markdownContent, elements }: 
   return (
     <div className="flex flex-1 overflow-hidden">
       <div className="w-64 border-r bg-gray-50 overflow-y-auto">
-        <TableOfContents content={html} elements={elements} onHeadingClick={handleHeadingClick} />
+        <TableOfContents content={html} elements={mutatedDocument} onHeadingClick={handleHeadingClick} documentId={documentId} />
       </div>
       <div className="flex-1 flex flex-col">
         <DocumentSummary content={markdownContent} />
         <div className="flex-1 overflow-hidden" ref={documentViewerRef}>
           <DocumentViewer 
-            elements={elements} 
+            elements={mutatedDocument} 
             selectedElement={selectedElement}
             onElementSelect={setSelectedElement}
             glossaryEntities={glossaryEntities}

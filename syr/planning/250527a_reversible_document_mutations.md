@@ -58,12 +58,15 @@ And then revert back to the original document or try different transformations.
   - [x] Test suite for mutation context logic
 
 ### Stage 3: Convert AI Headings to Mutation System
-- [ ] Refactor AI headings feature to use mutation framework
-  - [ ] Generate mutation object from AI headings API response
-  - [ ] Create transforms to insert AI headings at `id_of_after` positions
-  - [ ] Create reverse transforms to remove inserted headings
-  - [ ] Update table of contents component to apply/unapply mutations on tab switch
-- [ ] Git commit, following `GIT_COMMITS.md`
+- [x] Refactor AI headings feature to use mutation framework
+  - [x] Generate mutation object from AI headings API response
+  - [x] Create transforms to insert AI headings at `id_of_after` positions
+  - [x] Create reverse transforms to remove inserted headings
+  - [x] Update table of contents component to apply/unapply mutations on tab switch
+  - [x] Created heading-mutation-generator service
+  - [x] Integrated with MutationProvider and context hooks
+  - [x] Test suite for heading mutation generation (7 tests passing)
+- [x] Git commit, following `GIT_COMMITS.md`
 - [x] Document in new `docs/MUTATIONS.md` - follow `docs/WRITING_EVERGREEN_DOCS.md` for this 
 
 ### Stage 4: Document Structure Integration

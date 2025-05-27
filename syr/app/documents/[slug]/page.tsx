@@ -7,6 +7,7 @@ import { TableOfContents } from '@/components/table-of-contents'
 import { DocumentParser } from '@/lib/services/document-parser'
 import { v4 as uuidv4 } from 'uuid'
 import DocumentPageClient from './page-client'
+import { MutationProvider } from '@/lib/context/mutation-context'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -59,11 +60,14 @@ export default async function DocumentPage({ params }: PageProps) {
       <div className="border-b px-4 py-3 flex items-center min-h-[3rem] bg-white">
         <h1 className="text-xl font-semibold leading-tight text-gray-900">{doc.title}</h1>
       </div>
-      <DocumentPageClient 
-        html={html}
-        markdownContent={markdownContent}
-        elements={elements}
-      />
+      <MutationProvider initialDocument={elements}>
+        <DocumentPageClient 
+          html={html}
+          markdownContent={markdownContent}
+          elements={elements}
+          documentId={documentId}
+        />
+      </MutationProvider>
     </div>
   )
 }
