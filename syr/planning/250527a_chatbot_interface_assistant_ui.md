@@ -46,37 +46,45 @@ Implement a chatbot interface for document analysis using the assistant-ui React
 
 ## Actions
 
-### Stage 1: Research and Documentation
-- [ ] **Research assistant-ui library thoroughly**
-  - [ ] Use subagent to search web for comprehensive documentation
-  - [ ] Gather installation instructions, API examples, and integration patterns
-  - [ ] Find examples of document/context integration
-  - [ ] Document findings in `docs/ASSISTANT_UI_INTEGRATION.md` following `docs/WRITING_EVERGREEN_DOCS.md`
-  - [ ] Include code snippets, configuration options, and best practices
-  - [ ] Test accessibility: ensure docs are complete enough for future development
+### Stage 1: Research and Documentation ✅ **COMPLETED**
+- [x] **Research assistant-ui library thoroughly**
+  - [x] Use subagent to search web for comprehensive documentation
+  - [x] Gather installation instructions, API examples, and integration patterns
+  - [x] Find examples of document/context integration
+  - [x] Document findings in `docs/ASSISTANT_UI_INTEGRATION.md` following `docs/WRITING_EVERGREEN_DOCS.md`
+  - [x] Include code snippets, configuration options, and best practices
+  - [x] Test accessibility: ensure docs are complete enough for future development
 
-### Stage 2: Tab System Generalization
-- [ ] **Extract and generalize tab behaviour from Table of Contents**
-  - [ ] Use subagent to analyze existing tab implementation in `components/table-of-contents.tsx:363-387`
-  - [ ] Create reusable `TabContainer` component accepting tab definitions and content renderers
-  - [ ] Move tab styling to shared component (active/inactive states, borders, hover effects)
-  - [ ] Ensure TypeScript types support dynamic tab configurations
-  - [ ] Test with current Table of Contents to ensure no regression
+### Stage 2: Tab System Generalization ✅ **COMPLETED**
+- [x] **Extract and generalize tab behaviour from Table of Contents**
+  - [x] Use subagent to analyze existing tab implementation in `components/table-of-contents.tsx:363-387`. Does this stage make sense? Is there some existing Tailwind component etc that we could be making use of to avoid reinventing the wheel. Discuss with user if needed.
+  - [x] Create reusable `TabContainer` component accepting tab definitions and content renderers
+  - [x] Move tab styling to shared component (active/inactive states, borders, hover effects)
+  - [x] Ensure TypeScript types support dynamic tab configurations
+  - [x] Test with current Table of Contents to ensure no regression
 
-- [ ] **Rename Glossary pane to Tools pane**
-  - [ ] Update `components/document-viewer.tsx:235` header from "Glossary" to "Tools"
-  - [ ] Implement Tools pane with tabbed interface using new TabContainer
-  - [ ] Create "Glossary" tab containing existing glossary functionality
-  - [ ] Preserve all existing glossary features (loading, error states, click-to-scroll)
-  - [ ] Test with existing glossary workflow to ensure no functionality lost
+- [x] **Rename Glossary pane to Tools pane**
+  - [x] Update `components/document-viewer.tsx:235` header from "Glossary" to "Tools"
+  - [x] Implement Tools pane with tabbed interface using new TabContainer
+  - [x] Create "Glossary" tab containing existing glossary functionality
+  - [x] Preserve all existing glossary features (loading, error states, click-to-scroll)
+  - [x] Test with existing glossary workflow to ensure no functionality lost
 
-- [ ] **Visual verification with Playwright**
-  - [ ] Use Playwright MCP to take screenshots of Tools pane
-  - [ ] Verify tab styling matches Table of Contents design language
-  - [ ] Check responsive behaviour and hover states
-  - [ ] Ensure accessibility (keyboard navigation, screen reader support)
+- [x] **Visual verification with Playwright**
+  - [x] Use Playwright MCP to take screenshots of Tools pane
+  - [x] Verify tab styling matches Table of Contents design language
+  - [x] Check responsive behaviour and hover states
+  - [x] Ensure accessibility (keyboard navigation, screen reader support)
 
-- [ ] **STOP AND REVIEW with user after this stage**
+- [x] **STOP AND REVIEW with user after this stage**
+
+**Stage 1-2 Implementation Notes:**
+- Created comprehensive `docs/ASSISTANT_UI_INTEGRATION.md` with library research findings
+- Built reusable `components/tab-container.tsx` component with TypeScript support
+- Successfully generalized tab system from Table of Contents
+- Renamed Glossary pane to Tools pane with "Glossary" and "Chat" tabs
+- All existing functionality preserved, no regressions detected
+- Pages loading successfully (HTTP 200), build errors resolved
 
 ### Stage 3: Fake API Implementation
 - [ ] **Create mock chat API endpoint**
@@ -102,7 +110,7 @@ Implement a chatbot interface for document analysis using the assistant-ui React
 - [ ] **Create Chat tab component**
   - [ ] Create `components/chat-interface.tsx` using assistant-ui components
   - [ ] Integrate with fake API endpoint from Stage 3
-  - [ ] Implement document context injection in first message
+  - [ ] Implement document context injection in first message (look to reuse existing code that either converts the current doc to Markdown or uses element.content - if you can't find it, ask the user)
   - [ ] Add basic conversation display with user/assistant messages
   - [ ] Include input field with send button functionality
 
@@ -130,6 +138,9 @@ Implement a chatbot interface for document analysis using the assistant-ui React
   - [ ] Display document title or indicator showing context is loaded
   - [ ] Add tooltip or info section explaining AI has document access
   - [ ] Show character/token count of document context (optional)
+
+### Stage: update documentation
+- [ ] Update docs like `docs/ARCHITECTURE.md`, `SITE_ORGANISATION.md` etc any anywhere else that refers to the 'Glossary' pane to refer to the 'Tools' pane, and mention the new chatbot & APIs. Use a subagent
 
 ### Stage 6: Real LLM Integration
 - [ ] **Replace fake API with actual LLM calls**
