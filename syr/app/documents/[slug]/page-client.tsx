@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { DocumentViewer } from '@/components/document-viewer'
-import { DocumentSummary } from '@/components/document-summary'
 import { TableOfContents } from '@/components/table-of-contents'
 import type { DocumentElement } from '@/lib/types/document'
 import { useDocument } from '@/lib/context/mutation-context'
@@ -109,10 +108,9 @@ export default function DocumentPageClient({ html, markdownContent, elements, do
   return (
     <div className="flex flex-1 overflow-hidden">
       <div className="w-64 border-r bg-gray-50 overflow-y-auto">
-        <TableOfContents content={html} elements={mutatedDocument} onHeadingClick={handleHeadingClick} documentId={documentId} />
+        <TableOfContents content={html} elements={mutatedDocument} onHeadingClick={handleHeadingClick} documentId={documentId} markdownContent={markdownContent} />
       </div>
       <div className="flex-1 flex flex-col">
-        <DocumentSummary content={markdownContent} />
         <div className="flex-1 overflow-hidden" ref={documentViewerRef}>
           <DocumentViewer 
             elements={mutatedDocument} 
