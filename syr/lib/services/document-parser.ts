@@ -5,6 +5,26 @@ import type { DocumentElement } from '@/lib/types/document'
 import { assignDeterministicIds, getBodyWithIds } from './deterministicId'
 
 export class DocumentParser {
+  // Define inline elements that should be kept within their parent's text content
+  // Based on HTML5 phrasing content and default CSS display values
+  // Reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Inline_elements
+  private static INLINE_ELEMENTS = new Set([
+    // Text-level semantic elements
+    'a', 'abbr', 'b', 'bdi', 'bdo', 'br', 'cite', 'code', 'data', 'dfn',
+    'em', 'i', 'kbd', 'mark', 'q', 'rp', 'rt', 'rtc', 'ruby', 's', 'samp',
+    'small', 'span', 'strong', 'sub', 'sup', 'time', 'u', 'var', 'wbr',
+    // Form elements (inline by default)
+    'button', 'input', 'label', 'meter', 'output', 'progress', 'select', 'textarea',
+    // Media elements (inline-block by default, but should be kept inline for text extraction)
+    'audio', 'canvas', 'embed', 'iframe', 'img', 'map', 'object', 'picture', 'svg', 'video',
+    // Deprecated but still encountered
+    'acronym', 'big', 'font', 'strike', 'tt',
+    // Script elements (included to skip them, handled separately)
+    'script', 'noscript', 'style',
+    // Other inline elements
+    'slot', 'template'
+  ])
+
   /**
    * Converts HTML to Markdown format for better structured text processing.
    * 
@@ -60,14 +80,27 @@ export class DocumentParser {
         })
       }
 
-      const textContent = $el.contents()
-        .filter(function() {
-          return this.type === 'text'
-        })
-        .text()
-        .trim()
+      // For block elements, extract all text content including inline elements
+      let textContent = ''
+      if (tagName === 'text' || DocumentParser.INLINE_ELEMENTS.has(tagName)) {
+        // For inline elements or text nodes, just get direct text
+        textContent = $el.contents()
+          .filter(function() {
+            return this.type === 'text'
+          })
+          .text()
+          .trim()
+      } else {
+        // For block elements, get all text including from inline children
+        textContent = $el.text().trim()
+      }
 
-      if (textContent || $el.children().length > 0) {
+      // Only get block-level children (skip inline elements as they're included in text)
+      const blockChildren = $el.children().filter((_, child) => {
+        return !DocumentParser.INLINE_ELEMENTS.has(child.name)
+      })
+
+      if (textContent || blockChildren.length > 0) {
         elements.push({
           id,
           document_id: documentId,
@@ -81,7 +114,8 @@ export class DocumentParser {
           updated_at: new Date().toISOString()
         })
 
-        $el.children().each((_, child) => {
+        // Only process block-level children as separate elements
+        blockChildren.each((_, child) => {
           processElement(child, id, level + 1)
         })
       }
