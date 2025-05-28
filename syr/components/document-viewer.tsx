@@ -8,6 +8,7 @@ import { CircleNotch, Warning } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import { TabContainer, type Tab } from './tab-container'
 import { AssistantChat } from './assistant-chat'
+import { MarkdownRenderer } from './markdown-renderer'
 
 // Define entity type (will be moved to a proper types file later)
 interface Entity {
@@ -218,7 +219,11 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
           {isOrdered ? `${index + 1}.` : '•'}
         </span>
         <div className="flex-1">
-          {element.content || <span className="text-gray-400 italic">(empty {element.tag_name})</span>}
+          {element.content ? (
+            <MarkdownRenderer content={element.content} />
+          ) : (
+            <span className="text-gray-400 italic">(empty {element.tag_name})</span>
+          )}
         </div>
       </div>
     )
@@ -255,8 +260,10 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
             <div className={`flex-1 ${typographyClasses}`}>
               {element.tag_name === 'li' ? (
                 renderListItem(element, listItemIndex)
+              ) : element.content ? (
+                <MarkdownRenderer content={element.content} />
               ) : (
-                element.content || <span className="text-gray-400 italic">(empty {element.tag_name})</span>
+                <span className="text-gray-400 italic">(empty {element.tag_name})</span>
               )}
             </div>
             {/* ID with tooltip showing full ID and tag - smaller and grey */}
@@ -350,21 +357,27 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
   const renderToolsPane = () => {
     const tabs: Tab[] = [
       {
-        id: 'glossary',
-        label: 'Glossary',
-        content: renderGlossaryTab()
-      },
-      {
         id: 'chat',
         label: 'Chat',
         content: renderChatTab()
+      },
+      {
+        id: 'glossary',
+        label: 'Glossary',
+        content: renderGlossaryTab(),
+        onActivate: () => {
+          // Auto-click "Load glossary" button when tab is activated
+          if (!showGlossary && !isLoadingGlossary && onLoadGlossary) {
+            onLoadGlossary()
+          }
+        }
       }
     ]
 
     return (
       <TabContainer 
         tabs={tabs}
-        defaultTab="glossary"
+        defaultTab="chat"
         title="Tools"
       />
     )

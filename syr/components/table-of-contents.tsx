@@ -637,12 +637,24 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
     {
       id: 'ai-generated', 
       label: 'AI-generated',
-      content: renderAiGeneratedTab()
+      content: renderAiGeneratedTab(),
+      onActivate: () => {
+        // Auto-click "Generate new headings" button when tab is activated
+        if (!showHeadings && !isLoadingHeadings) {
+          handleGenerateHeadings()
+        }
+      }
     },
     {
       id: 'summary',
       label: 'Summary', 
-      content: renderSummaryTab()
+      content: renderSummaryTab(),
+      onActivate: () => {
+        // Auto-click "Summary" button when tab is activated
+        if (showSummaryButton && !summaryLoading) {
+          generateSummary()
+        }
+      }
     }
   ]
 

@@ -6,6 +6,7 @@ export interface Tab {
   id: string
   label: string
   content: ReactNode
+  onActivate?: () => void
 }
 
 interface TabContainerProps {
@@ -23,6 +24,14 @@ export function TabContainer({ tabs, defaultTab, className = '', title, orientat
     : tabs[0]?.id || ''
   
   const [activeTab, setActiveTab] = useState<string>(initialTab)
+
+  const handleTabClick = (tab: Tab) => {
+    setActiveTab(tab.id)
+    // Call onActivate callback if provided
+    if (tab.onActivate) {
+      tab.onActivate()
+    }
+  }
 
   if (tabs.length === 0) {
     return null
@@ -44,7 +53,7 @@ export function TabContainer({ tabs, defaultTab, className = '', title, orientat
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabClick(tab)}
                   role="tab"
                   aria-selected={activeTab === tab.id}
                   className={`flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
@@ -83,7 +92,7 @@ export function TabContainer({ tabs, defaultTab, className = '', title, orientat
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabClick(tab)}
                   role="tab"
                   aria-selected={activeTab === tab.id}
                   className={`py-2 px-1 border-b-2 font-medium text-sm ${
