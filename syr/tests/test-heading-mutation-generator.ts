@@ -1,37 +1,4 @@
-#!/usr/bin/env node
-
 import { generateHeadingMutation, extractHeadingsFromMutation } from '../lib/services/heading-mutation-generator'
-
-// Test helpers
-const colours = {
-  green: '\x1b[32m',
-  red: '\x1b[31m',
-  blue: '\x1b[34m',
-  reset: '\x1b[0m'
-}
-
-let testCount = 0
-let passCount = 0
-
-function test(name: string, fn: () => void) {
-  testCount++
-  try {
-    fn()
-    console.log(`${colours.green}✓${colours.reset} ${name}`)
-    passCount++
-  } catch (error) {
-    console.log(`${colours.red}✗${colours.reset} ${name}`)
-    console.error(`  ${error}`)
-  }
-}
-
-function assertEqual<T>(actual: T, expected: T, message?: string) {
-  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
-    throw new Error(
-      message || `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`
-    )
-  }
-}
 
 // Test data
 const testHeadings = [
@@ -49,116 +16,100 @@ const testHeadings = [
   }
 ]
 
-console.log(`${colours.blue}Running Heading Mutation Generator Tests${colours.reset}\n`)
-
-test('Generate heading mutation creates valid forward transforms', () => {
-  const mutation = generateHeadingMutation({
-    headings: testHeadings,
-    documentId: 'test-doc-1'
-  })
-  
-  assertEqual(mutation.type, 'insert-headings')
-  assertEqual(mutation.forward.length, 3)
-  
-  // Check first transform
-  const firstTransform = mutation.forward[0]
-  assertEqual(firstTransform.action, 'insert')
-  assertEqual(firstTransform.afterId, 'para-123')
-  assertEqual(firstTransform.content?.tag_name, 'h2')
-  assertEqual(firstTransform.content?.content, 'Introduction to Testing')
-  assertEqual(firstTransform.content?.attributes?.['data-ai-generated'], 'true')
-})
-
-test('Generate heading mutation creates valid reverse transforms', () => {
-  const mutation = generateHeadingMutation({
-    headings: testHeadings,
-    documentId: 'test-doc-1'
-  })
-  
-  assertEqual(mutation.reverse.length, 3)
-  
-  // All reverse transforms should be removals
-  mutation.reverse.forEach(transform => {
-    assertEqual(transform.action, 'remove')
-    assertEqual(typeof transform.targetId, 'string')
-    assertEqual(transform.targetId?.length > 0, true)
-  })
-})
-
-test('Mutation includes proper metadata', () => {
-  const mutation = generateHeadingMutation({
-    headings: testHeadings,
-    documentId: 'test-doc-1'
-  })
-  
-  assertEqual(mutation.metadata?.description, 'AI-generated semantic headings')
-  assertEqual(mutation.metadata?.generatedHeadingCount, 3)
-  assertEqual(typeof mutation.metadata?.timestamp, 'number')
-})
-
-test('Extract headings from mutation returns correct format', () => {
-  const mutation = generateHeadingMutation({
-    headings: testHeadings,
-    documentId: 'test-doc-1'
-  })
-  
-  const extracted = extractHeadingsFromMutation(mutation)
-  
-  assertEqual(extracted.length, 3)
-  assertEqual(extracted[0].text, 'Introduction to Testing')
-  assertEqual(extracted[0].level, 2)
-  assertEqual(extracted[1].text, 'Unit Testing Basics')
-  assertEqual(extracted[1].level, 3)
-  assertEqual(extracted[2].text, 'Advanced Concepts')
-  assertEqual(extracted[2].level, 2)
-})
-
-test('Custom mutation ID is used when provided', () => {
-  const mutation = generateHeadingMutation({
-    headings: testHeadings,
-    documentId: 'test-doc-1',
-    mutationId: 'custom-mutation-123'
-  })
-  
-  assertEqual(mutation.id, 'custom-mutation-123')
-})
-
-test('Invalid heading HTML throws error', () => {
-  let errorThrown = false
-  
-  try {
-    generateHeadingMutation({
-      headings: [{
-        id_of_after: 'para-123',
-        html: '<p>Not a heading</p>'  // Invalid - not a heading tag
-      }],
+describe('HeadingMutationGenerator', () => {
+  it('should create valid forward transforms', () => {
+    const mutation = generateHeadingMutation({
+      headings: testHeadings,
       documentId: 'test-doc-1'
     })
-  } catch (error) {
-    errorThrown = true
-    assertEqual(error instanceof Error, true)
-    assertEqual(error.message.includes('Invalid heading HTML format'), true)
-  }
-  
-  assertEqual(errorThrown, true, 'Should throw error for invalid HTML')
+    
+    expect(mutation.type).toBe('insert-headings')
+    expect(mutation.forward.length).toBe(3)
+    
+    // Check first transform
+    const firstTransform = mutation.forward[0]
+    expect(firstTransform.action).toBe('insert')
+    expect(firstTransform.afterId).toBe('para-123')
+    expect(firstTransform.content?.tag_name).toBe('h2')
+    expect(firstTransform.content?.content).toBe('Introduction to Testing')
+    expect(firstTransform.content?.attributes?.['data-ai-generated']).toBe('true')
+  })
+
+  it('should create valid reverse transforms', () => {
+    const mutation = generateHeadingMutation({
+      headings: testHeadings,
+      documentId: 'test-doc-1'
+    })
+    
+    expect(mutation.reverse.length).toBe(3)
+    
+    // All reverse transforms should be removals
+    mutation.reverse.forEach(transform => {
+      expect(transform.action).toBe('remove')
+      expect(typeof transform.targetId).toBe('string')
+      expect(transform.targetId!.length).toBeGreaterThan(0)
+    })
+  })
+
+  it('should include proper metadata', () => {
+    const mutation = generateHeadingMutation({
+      headings: testHeadings,
+      documentId: 'test-doc-1'
+    })
+    
+    expect(mutation.metadata?.description).toBe('AI-generated semantic headings')
+    expect(mutation.metadata?.generatedHeadingCount).toBe(3)
+    expect(typeof mutation.metadata?.timestamp).toBe('number')
+  })
+
+  it('should extract headings in correct format', () => {
+    const mutation = generateHeadingMutation({
+      headings: testHeadings,
+      documentId: 'test-doc-1'
+    })
+    
+    const extracted = extractHeadingsFromMutation(mutation)
+    
+    expect(extracted.length).toBe(3)
+    expect(extracted[0].text).toBe('Introduction to Testing')
+    expect(extracted[0].level).toBe(2)
+    expect(extracted[1].text).toBe('Unit Testing Basics')
+    expect(extracted[1].level).toBe(3)
+    expect(extracted[2].text).toBe('Advanced Concepts')
+    expect(extracted[2].level).toBe(2)
+  })
+
+  it('should use custom mutation ID when provided', () => {
+    const mutation = generateHeadingMutation({
+      headings: testHeadings,
+      documentId: 'test-doc-1',
+      mutationId: 'custom-mutation-123'
+    })
+    
+    expect(mutation.id).toBe('custom-mutation-123')
+  })
+
+  it('should throw error for invalid heading HTML', () => {
+    expect(() => {
+      generateHeadingMutation({
+        headings: [{
+          id_of_after: 'para-123',
+          html: '<p>Not a heading</p>'  // Invalid - not a heading tag
+        }],
+        documentId: 'test-doc-1'
+      })
+    }).toThrow('Invalid heading HTML format')
+  })
+
+  it('should handle non-heading mutations gracefully', () => {
+    const nonHeadingMutation = {
+      id: 'test-1',
+      type: 'summarize-paragraphs',
+      forward: [],
+      reverse: []
+    }
+    
+    const extracted = extractHeadingsFromMutation(nonHeadingMutation)
+    expect(extracted.length).toBe(0)
+  })
 })
-
-test('Extract headings handles non-heading mutations gracefully', () => {
-  const nonHeadingMutation = {
-    id: 'test-1',
-    type: 'summarize-paragraphs',
-    forward: [],
-    reverse: []
-  }
-  
-  const extracted = extractHeadingsFromMutation(nonHeadingMutation)
-  assertEqual(extracted.length, 0)
-})
-
-// Summary
-console.log(`\n${colours.blue}Test Summary:${colours.reset}`)
-console.log(`Total tests: ${testCount}`)
-console.log(`Passed: ${colours.green}${passCount}${colours.reset}`)
-console.log(`Failed: ${colours.red}${testCount - passCount}${colours.reset}`)
-
-process.exit(testCount === passCount ? 0 : 1)

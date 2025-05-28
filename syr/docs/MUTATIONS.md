@@ -116,13 +116,20 @@ if (result.success) {
 
 ## Testing
 
-Tests use a standalone Node.js script for rapid development. Run with:
+All mutation tests now use Jest. Run with:
 
 ```bash
-npx tsx tests/test-mutation-engine.ts
+npm test
 ```
 
-see `docs/TESTING.md` for testing approach and future migration plans.
+Key test files:
+- `tests/test-mutation-engine.ts` - Comprehensive mutation engine tests
+- `tests/test-document-rendering.ts` - Document rendering with mutations
+- `tests/test-edge-cases.ts` - Edge case testing
+- `tests/test-heading-mutation-generator.ts` - Heading mutation generator tests
+- `tests/test-mutation-edge-cases.ts` - Additional edge cases
+
+See `docs/TESTING.md` for complete testing approach.
 
 ## Limitations
 

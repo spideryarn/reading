@@ -1,56 +1,6 @@
-#!/usr/bin/env node
-
 import { DocumentElement } from '../lib/types/document'
 import { Mutation } from '../lib/types/mutation'
 import { MutationEngine } from '../lib/services/mutation-engine'
-
-// ANSI colour codes for output
-const colours = {
-  green: '\x1b[32m',
-  red: '\x1b[31m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  reset: '\x1b[0m'
-}
-
-// Test helpers
-let testCount = 0
-let passCount = 0
-
-function test(name: string, fn: () => void) {
-  testCount++
-  try {
-    fn()
-    console.log(`${colours.green}✓${colours.reset} ${name}`)
-    passCount++
-  } catch (error) {
-    console.log(`${colours.red}✗${colours.reset} ${name}`)
-    console.error(`  ${error}`)
-  }
-}
-
-function assertEqual<T>(actual: T, expected: T, message?: string) {
-  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
-    throw new Error(
-      message || `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`
-    )
-  }
-}
-
-function assertThrows(fn: () => void, expectedError?: string) {
-  let thrown = false
-  try {
-    fn()
-  } catch (error) {
-    thrown = true
-    if (expectedError && error instanceof Error && !error.message.includes(expectedError)) {
-      throw new Error(`Expected error containing "${expectedError}", got "${error.message}"`)
-    }
-  }
-  if (!thrown) {
-    throw new Error('Expected function to throw')
-  }
-}
 
 // Sample document for testing
 const createTestDocument = (): DocumentElement[] => [
@@ -147,148 +97,131 @@ const replaceParagraphMutation: Mutation = {
   ]
 }
 
-// Run tests
-console.log(`${colours.blue}Running Mutation Engine Tests${colours.reset}\n`)
+describe('MutationEngine', () => {
+  it('should add element after specified ID with insert transform', () => {
+    const doc = createTestDocument()
+    const result = MutationEngine.applyMutation(doc, insertHeadingMutation)
+    
+    expect(result.success).toBe(true)
+    expect(result.document!.length).toBe(4)
+    expect(result.document![2].id).toBe('ai-heading-1')
+    expect(result.document![2].content).toBe('AI Generated Section')
+    expect(result.changes!.inserted).toBe(1)
+  })
 
-// Test insert transform
-test('Insert transform adds element after specified ID', () => {
-  const doc = createTestDocument()
-  const result = MutationEngine.applyMutation(doc, insertHeadingMutation)
-  
-  assertEqual(result.success, true)
-  assertEqual(result.document!.length, 4)
-  assertEqual(result.document![2].id, 'ai-heading-1')
-  assertEqual(result.document![2].content, 'AI Generated Section')
-  assertEqual(result.changes!.inserted, 1)
+  it('should fail insert transform with non-existent afterId', () => {
+    const doc = createTestDocument()
+    const badMutation: Mutation = {
+      ...insertHeadingMutation,
+      forward: [{
+        action: 'insert',
+        afterId: 'non-existent',
+        content: { id: 'test', content: 'Test' }
+      }]
+    }
+    
+    const result = MutationEngine.applyMutation(doc, badMutation)
+    expect(result.success).toBe(false)
+    expect(result.error!).toContain('element not found')
+  })
+
+  it('should update element content with replace transform', () => {
+    const doc = createTestDocument()
+    const result = MutationEngine.applyMutation(doc, replaceParagraphMutation)
+    
+    expect(result.success).toBe(true)
+    expect(result.document!.length).toBe(3)
+    expect(result.document![2].content).toBe('Summary: Second paragraph about highlights.')
+    expect(result.document![2].attributes.class).toBe('summary')
+    expect(result.changes!.replaced).toBe(1)
+  })
+
+  it('should delete element with remove transform', () => {
+    const doc = createTestDocument()
+    const removeMutation: Mutation = {
+      id: 'remove-1',
+      type: 'test',
+      forward: [{ action: 'remove', targetId: 'para-1' }],
+      reverse: []
+    }
+    
+    const result = MutationEngine.applyMutation(doc, removeMutation)
+    expect(result.success).toBe(true)
+    expect(result.document!.length).toBe(2)
+    expect(result.document!.find(el => el.id === 'para-1')).toBeUndefined()
+    expect(result.changes!.removed).toBe(1)
+  })
+
+  it('should update element attributes with modify transform', () => {
+    const doc = createTestDocument()
+    const modifyMutation: Mutation = {
+      id: 'modify-1',
+      type: 'test',
+      forward: [{
+        action: 'modify',
+        targetId: 'para-1',
+        attributes: { class: 'modified', 'data-test': 'value' }
+      }],
+      reverse: []
+    }
+    
+    const result = MutationEngine.applyMutation(doc, modifyMutation)
+    expect(result.success).toBe(true)
+    expect(result.document![1].attributes.class).toBe('modified')
+    expect(result.document![1].attributes['data-test']).toBe('value')
+    expect(result.changes!.modified).toBe(1)
+  })
+
+  it('should restore original state when mutation is reverted', () => {
+    const doc = createTestDocument()
+    
+    // Apply mutation
+    const applyResult = MutationEngine.applyMutation(doc, insertHeadingMutation)
+    expect(applyResult.success).toBe(true)
+    expect(applyResult.document!.length).toBe(4)
+    
+    // Revert mutation
+    const revertResult = MutationEngine.revertMutation(applyResult.document!, insertHeadingMutation)
+    expect(revertResult.success).toBe(true)
+    expect(revertResult.document!.length).toBe(3)
+    expect(revertResult.document!.map(el => el.id)).toEqual(['title-1', 'para-1', 'para-2'])
+  })
+
+  it('should detect invalid references during validation', () => {
+    const doc = createTestDocument()
+    const invalidMutation: Mutation = {
+      id: 'invalid-1',
+      type: 'test',
+      forward: [
+        { action: 'insert', afterId: 'non-existent', content: { content: 'Test' } },
+        { action: 'remove', targetId: 'also-non-existent' }
+      ],
+      reverse: []
+    }
+    
+    const validation = MutationEngine.validateMutation(doc, invalidMutation)
+    expect(validation.valid).toBe(false)
+    expect(validation.errors.length).toBe(2)
+  })
+
+  it('should apply complex mutation sequence correctly', () => {
+    const doc = createTestDocument()
+    const complexMutation: Mutation = {
+      id: 'complex-1',
+      type: 'test',
+      forward: [
+        { action: 'insert', afterId: 'title-1', content: { id: 'new-1', content: 'New paragraph' } },
+        { action: 'modify', targetId: 'para-1', attributes: { class: 'updated' } },
+        { action: 'replace', targetId: 'para-2', content: { content: 'Replaced content' } }
+      ],
+      reverse: []
+    }
+    
+    const result = MutationEngine.applyMutation(doc, complexMutation)
+    expect(result.success).toBe(true)
+    expect(result.document!.length).toBe(4)
+    expect(result.document![1].id).toBe('new-1')
+    expect(result.document![2].attributes.class).toBe('updated')
+    expect(result.document![3].content).toBe('Replaced content')
+  })
 })
-
-test('Insert transform fails with non-existent afterId', () => {
-  const doc = createTestDocument()
-  const badMutation: Mutation = {
-    ...insertHeadingMutation,
-    forward: [{
-      action: 'insert',
-      afterId: 'non-existent',
-      content: { id: 'test', content: 'Test' }
-    }]
-  }
-  
-  const result = MutationEngine.applyMutation(doc, badMutation)
-  assertEqual(result.success, false)
-  assertEqual(result.error!.includes('element not found'), true)
-})
-
-// Test replace transform
-test('Replace transform updates element content', () => {
-  const doc = createTestDocument()
-  const result = MutationEngine.applyMutation(doc, replaceParagraphMutation)
-  
-  assertEqual(result.success, true)
-  assertEqual(result.document!.length, 3)
-  assertEqual(result.document![2].content, 'Summary: Second paragraph about highlights.')
-  assertEqual(result.document![2].attributes.class, 'summary')
-  assertEqual(result.changes!.replaced, 1)
-})
-
-// Test remove transform
-test('Remove transform deletes element', () => {
-  const doc = createTestDocument()
-  const removeMutation: Mutation = {
-    id: 'remove-1',
-    type: 'test',
-    forward: [{ action: 'remove', targetId: 'para-1' }],
-    reverse: []
-  }
-  
-  const result = MutationEngine.applyMutation(doc, removeMutation)
-  assertEqual(result.success, true)
-  assertEqual(result.document!.length, 2)
-  assertEqual(result.document!.find(el => el.id === 'para-1'), undefined)
-  assertEqual(result.changes!.removed, 1)
-})
-
-// Test modify transform
-test('Modify transform updates element attributes', () => {
-  const doc = createTestDocument()
-  const modifyMutation: Mutation = {
-    id: 'modify-1',
-    type: 'test',
-    forward: [{
-      action: 'modify',
-      targetId: 'para-1',
-      attributes: { class: 'modified', 'data-test': 'value' }
-    }],
-    reverse: []
-  }
-  
-  const result = MutationEngine.applyMutation(doc, modifyMutation)
-  assertEqual(result.success, true)
-  assertEqual(result.document![1].attributes.class, 'modified')
-  assertEqual(result.document![1].attributes['data-test'], 'value')
-  assertEqual(result.changes!.modified, 1)
-})
-
-// Test mutation reversal
-test('Mutation reversal restores original state', () => {
-  const doc = createTestDocument()
-  
-  // Apply mutation
-  const applyResult = MutationEngine.applyMutation(doc, insertHeadingMutation)
-  assertEqual(applyResult.success, true)
-  assertEqual(applyResult.document!.length, 4)
-  
-  // Revert mutation
-  const revertResult = MutationEngine.revertMutation(applyResult.document!, insertHeadingMutation)
-  assertEqual(revertResult.success, true)
-  assertEqual(revertResult.document!.length, 3)
-  assertEqual(revertResult.document!.map(el => el.id), ['title-1', 'para-1', 'para-2'])
-})
-
-// Test mutation validation
-test('Mutation validation detects invalid references', () => {
-  const doc = createTestDocument()
-  const invalidMutation: Mutation = {
-    id: 'invalid-1',
-    type: 'test',
-    forward: [
-      { action: 'insert', afterId: 'non-existent', content: { content: 'Test' } },
-      { action: 'remove', targetId: 'also-non-existent' }
-    ],
-    reverse: []
-  }
-  
-  const validation = MutationEngine.validateMutation(doc, invalidMutation)
-  assertEqual(validation.valid, false)
-  assertEqual(validation.errors.length, 2)
-})
-
-// Test complex mutation sequence
-test('Complex mutation sequence applies correctly', () => {
-  const doc = createTestDocument()
-  const complexMutation: Mutation = {
-    id: 'complex-1',
-    type: 'test',
-    forward: [
-      { action: 'insert', afterId: 'title-1', content: { id: 'new-1', content: 'New paragraph' } },
-      { action: 'modify', targetId: 'para-1', attributes: { class: 'updated' } },
-      { action: 'replace', targetId: 'para-2', content: { content: 'Replaced content' } }
-    ],
-    reverse: []
-  }
-  
-  const result = MutationEngine.applyMutation(doc, complexMutation)
-  assertEqual(result.success, true)
-  assertEqual(result.document!.length, 4)
-  assertEqual(result.document![1].id, 'new-1')
-  assertEqual(result.document![2].attributes.class, 'updated')
-  assertEqual(result.document![3].content, 'Replaced content')
-})
-
-// Summary
-console.log(`\n${colours.blue}Test Summary:${colours.reset}`)
-console.log(`Total tests: ${testCount}`)
-console.log(`Passed: ${colours.green}${passCount}${colours.reset}`)
-console.log(`Failed: ${colours.red}${testCount - passCount}${colours.reset}`)
-
-// Exit with appropriate code
-process.exit(testCount === passCount ? 0 : 1)

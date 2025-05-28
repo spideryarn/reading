@@ -1,5 +1,3 @@
-#!/usr/bin/env npx tsx
-
 /**
  * Test document rendering with AI headings mutation
  * Tests that the document structure is properly modified when mutations are applied
@@ -59,53 +57,31 @@ const aiHeadingResponse = {
   ]
 }
 
-console.log('🧪 Testing Document Rendering with AI Headings\n')
+describe('Document Rendering with AI Headings', () => {
+  it('should properly modify document structure when mutations are applied', () => {
+    // Generate mutation from AI response
+    const mutation = generateHeadingMutation({
+      headings: aiHeadingResponse.headings,
+      documentId: 'test-doc-123'
+    })
 
-// Generate mutation from AI response
-const mutation = generateHeadingMutation({
-  headings: aiHeadingResponse.headings,
-  documentId: 'test-doc-123'
-})
+    // Apply mutation
+    const result = MutationEngine.applyMutation(testDocument, mutation)
 
-console.log('📄 Original document:')
-testDocument.forEach(el => {
-  console.log(`  ${el.position}: <${el.tag_name}${el.id ? ` id="${el.id}"` : ''}>${el.content}</${el.tag_name}>`)
-})
-
-// Apply mutation
-const result = MutationEngine.applyMutation(testDocument, mutation)
-
-if (result.success) {
-  console.log('\n✅ Mutation applied successfully!')
-  console.log('\n📄 Mutated document:')
-  
-  const mutatedDoc = result.document
-  
-  // Sort by position for display
-  const sorted = [...mutatedDoc].sort((a, b) => a.position - b.position)
-  
-  sorted.forEach(el => {
-    const aiGenerated = el.attributes?.['data-ai-generated'] ? ' [AI]' : ''
-    console.log(`  ${el.position}: <${el.tag_name} id="${el.id}"${aiGenerated}>${el.content}</${el.tag_name}>`)
-  })
-  
-  // Check if AI headings are properly marked
-  console.log('\n🔍 Checking AI heading attributes:')
-  const aiHeadings = mutatedDoc.filter(el => el.attributes?.['data-ai-generated'] === 'true')
-  console.log(`  Found ${aiHeadings.length} AI-generated headings`)
-  
-  aiHeadings.forEach(h => {
-    console.log(`  - ${h.id}: "${h.content}" (position: ${h.position})`)
-  })
-  
-  // Test reverting
-  console.log('\n🔄 Testing revert...')
-  const revertResult = MutationEngine.revertMutation(mutatedDoc, mutation)
-  
-  if (revertResult.success) {
-    console.log('✅ Revert successful!')
-    const revertedDoc = revertResult.document
-    console.log(`  Document now has ${revertedDoc.length} elements (original had ${testDocument.length})`)
+    expect(result.success).toBe(true)
+    
+    const mutatedDoc = result.document!
+    
+    // Check if AI headings are properly marked
+    const aiHeadings = mutatedDoc.filter(el => el.attributes?.['data-ai-generated'] === 'true')
+    expect(aiHeadings.length).toBe(2)
+    
+    // Test reverting
+    const revertResult = MutationEngine.revertMutation(mutatedDoc, mutation)
+    
+    expect(revertResult.success).toBe(true)
+    const revertedDoc = revertResult.document!
+    expect(revertedDoc.length).toBe(testDocument.length)
     
     // Check if back to original
     const isIdentical = revertedDoc.length === testDocument.length &&
@@ -113,17 +89,6 @@ if (result.success) {
         orig.id === el.id && orig.content === el.content
       ))
     
-    if (isIdentical) {
-      console.log('✅ Document successfully restored to original state!')
-    } else {
-      console.log('❌ Document differs from original after revert')
-    }
-  } else {
-    console.log('❌ Revert failed:', revertResult.error)
-  }
-  
-} else {
-  console.log('\n❌ Mutation failed:', result.error)
-}
-
-console.log('\n✨ Test complete!')
+    expect(isIdentical).toBe(true)
+  })
+})

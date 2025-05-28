@@ -32,11 +32,7 @@ npm run test:coverage
 
 Prefer to use a subagent to run tests (to avoid overloading the context window).
 
-For legacy standalone tests:
-
-```bash
-npx tsx tests/test-mutation-engine.ts
-```
+All tests now use Jest - no standalone test runners needed.
 
 ### Test Structure
 
@@ -99,6 +95,12 @@ Jest is configured in `jest.config.js` with:
 Current test coverage includes:
 - `src/lib/hooks/__tests__/useChatRuntime.test.ts` - Chat runtime hook testing
 - `src/lib/services/__tests__/deterministicId.test.ts` - Deterministic ID generation
-- `tests/test-mutation-engine.ts` - Legacy standalone mutation engine tests
+- `src/lib/services/__tests__/mutation-engine.test.ts` - Mutation engine tests
+- `src/lib/services/__tests__/heading-mutation-generator-simple.test.ts` - Heading mutation generator tests
+- `tests/test-mutation-engine.ts` - Comprehensive mutation engine tests
+- `tests/test-document-rendering.ts` - Document rendering with AI headings tests
+- `tests/test-edge-cases.ts` - Edge case testing for mutations
+- `tests/test-heading-mutation-generator.ts` - Heading mutation generator tests
+- `tests/test-mutation-edge-cases.ts` - Additional mutation edge case tests
 
 Additional tests should be added as new features are developed.
