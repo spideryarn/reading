@@ -57,29 +57,31 @@ const AssistantMessage = () => (
 );
 
 // Composer component with loading states
-const Composer = () => (
-  <ComposerPrimitive.Root className="flex items-center gap-2 p-4 border-t border-gray-200">
-    <ComposerPrimitive.Input 
-      className="flex-1 min-h-[40px] max-h-[120px] resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-      placeholder="Ask about this document..."
-      rows={1}
-    />
-    <ThreadPrimitive.If running={false}>
-      <ComposerPrimitive.Send asChild>
-        <button className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
-          <PaperPlaneTilt size={16} weight="bold" />
-        </button>
-      </ComposerPrimitive.Send>
-    </ThreadPrimitive.If>
-    <ThreadPrimitive.If running>
-      <ComposerPrimitive.Cancel asChild>
-        <button className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-500 text-white hover:bg-gray-600 transition-colors">
-          <CircleNotch size={16} weight="bold" className="animate-spin" />
-        </button>
-      </ComposerPrimitive.Cancel>
-    </ThreadPrimitive.If>
-  </ComposerPrimitive.Root>
-);
+const Composer = () => {
+  return (
+    <ComposerPrimitive.Root className="flex items-center gap-2 p-4 border-t border-gray-200 bg-white">
+      <ComposerPrimitive.Input 
+        className="flex-1 min-h-[40px] max-h-[120px] resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        placeholder="Ask about this document..."
+        rows={1}
+      />
+      <ThreadPrimitive.If running={false}>
+        <ComposerPrimitive.Send asChild>
+          <button className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
+            <PaperPlaneTilt size={16} weight="bold" />
+          </button>
+        </ComposerPrimitive.Send>
+      </ThreadPrimitive.If>
+      <ThreadPrimitive.If running>
+        <ComposerPrimitive.Cancel asChild>
+          <button className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-500 text-white hover:bg-gray-600 transition-colors">
+            <CircleNotch size={16} weight="bold" className="animate-spin" />
+          </button>
+        </ComposerPrimitive.Cancel>
+      </ThreadPrimitive.If>
+    </ComposerPrimitive.Root>
+  );
+};
 
 // Thread suggestions for empty state
 const ThreadSuggestions = () => {
@@ -116,7 +118,7 @@ const ThreadSuggestions = () => {
 function Thread() {
   return (
     <ThreadPrimitive.Root className="h-full flex flex-col">
-      <ThreadPrimitive.Viewport className="flex-1 overflow-y-auto">
+      <ThreadPrimitive.Viewport className="flex-1 min-h-0 overflow-y-auto">
         <ThreadPrimitive.Empty>
           <ThreadSuggestions />
         </ThreadPrimitive.Empty>
@@ -129,7 +131,9 @@ function Thread() {
           }}
         />
       </ThreadPrimitive.Viewport>
-      <Composer />
+      <div className="flex-shrink-0">
+        <Composer />
+      </div>
     </ThreadPrimitive.Root>
   );
 }
@@ -142,8 +146,10 @@ export function AssistantChat({ documentContext }: AssistantChatProps) {
   const runtime = useChatRuntime({ documentContext }); // Use the new hook
 
   return (
-    <AssistantRuntimeProvider runtime={runtime}>
-      <Thread />
-    </AssistantRuntimeProvider>
+    <div style={{ height: '500px' }} className="flex flex-col">
+      <AssistantRuntimeProvider runtime={runtime}>
+        <Thread />
+      </AssistantRuntimeProvider>
+    </div>
   );
 }

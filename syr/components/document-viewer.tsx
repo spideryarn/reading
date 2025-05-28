@@ -261,9 +261,7 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
     const documentContext = getDocumentContext()
     
     return (
-      <div className="h-full flex flex-col">
-        <AssistantChat documentContext={documentContext} />
-      </div>
+      <AssistantChat documentContext={documentContext} />
     )
   }
 
