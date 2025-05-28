@@ -4,6 +4,8 @@
 
 This document provides comprehensive technical guidance for integrating the @assistant-ui/react library into the Spideryarn Reading application to create a chatbot interface within the Tools pane. This guide includes detailed code examples, best practices, common pitfalls, and Next.js-specific integration patterns.
 
+> This document supports the implementation plan outlined in [planning/250527a_chatbot_interface_assistant_ui.md](/planning/250527a_chatbot_interface_assistant_ui.md).
+
 ## Library Overview
 
 - **Name**: assistant-ui
@@ -184,33 +186,47 @@ Two main approaches for managing chat state and backend integration.
 ### LocalRuntime (Recommended for Most Cases)
 Use when assistant-ui manages the chat history state. Provides built-in support for thread management, message editing, reloading, and branch switching.
 
+**IMPORTANT**: When using `useLocalRuntime`, you must provide a `ChatModelAdapter` with a `run` function. Without this, the runtime will throw a bind error when trying to send messages.
+
 ```typescript
 import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import { useLocalRuntime } from "@assistant-ui/react";
+import { useLocalRuntime, type ChatModelAdapter } from "@assistant-ui/react";
 
 const ChatInterface = () => {
-  const runtime = useLocalRuntime({
-    initialMessages: [],
-    onNew: async (message) => {
-      // Send message to your API
+  // CRITICAL: Define the chat model adapter
+  const chatModelAdapter: ChatModelAdapter = {
+    run: async ({ messages, abortSignal }) => {
+      const lastMessage = messages.at(-1);
+      const messageText = lastMessage?.content?.find(part => part.type === 'text')?.text || '';
+      
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          messages: [...runtime.messages, message],
-          // Include document context
-          context: {
-            documentId: currentDocument.id,
-            selectedText: getSelectedText()
-          }
+          message: messageText,
+          documentContext: getDocumentContext()
         }),
+        signal: abortSignal
       });
       
-      // Handle streaming response
-      const stream = response.body;
-      // Process stream and update runtime
-    },
-  });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: data.response,
+          },
+        ],
+      };
+    }
+  };
+
+  // Pass the adapter to useLocalRuntime
+  const runtime = useLocalRuntime(chatModelAdapter);
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
@@ -218,6 +234,33 @@ const ChatInterface = () => {
     </AssistantRuntimeProvider>
   );
 };
+```
+
+**Alternative**: Use a generator function for streaming support:
+
+```typescript
+const runtime = useLocalRuntime({
+  async *run({ messages }) {
+    const lastMessage = messages[messages.length - 1];
+    
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: lastMessage.content[0]?.text || '',
+        documentContext: documentContext
+      }),
+    });
+    
+    const data = await response.json();
+    
+    // Yield the response text (assistant-ui expects a generator)
+    yield {
+      type: "text" as const,
+      text: data.response
+    };
+  },
+});
 ```
 
 ### ExternalStoreRuntime (For Full State Control)
@@ -807,6 +850,55 @@ const VirtualThread = ({ messages }) => {
   );
 };
 ```
+
+## Current Implementation Status
+
+As of Stage 4 completion, the Spideryarn Reading application has successfully integrated assistant-ui with the following components:
+
+### Implemented Components
+
+1. **`components/assistant-chat.tsx`** - Main chat component using assistant-ui primitives
+   - Uses `ThreadPrimitive`, `ComposerPrimitive`, and `MessagePrimitive`
+   - Custom `UserMessage` and `AssistantMessage` components with Phosphor icons
+   - Thread suggestions for empty state with common document questions
+   - Integrated with `useChatRuntime` hook for state management
+
+2. **`src/lib/hooks/useChatRuntime.ts`** - Custom hook for chat runtime management
+   - Encapsulates the `useLocalRuntime` configuration
+   - Handles API communication with proper error handling
+   - Supports abort signals for request cancellation
+   - Returns typed content following assistant-ui's expected format
+
+3. **`components/chat-interface.tsx`** - Alternative implementation using high-level components
+   - Uses `Thread`, `ThreadWelcome`, `ThreadMessages`, `ThreadViewport`, and `Composer`
+   - Simpler API with generator function for streaming support
+   - Shows document context size indicator
+
+4. **`components/simple-chat.tsx`** - Temporary implementation for testing
+   - Basic chat UI without assistant-ui for comparison
+   - Will be removed once assistant-ui integration is finalized
+
+### Key Implementation Decisions
+
+1. **Runtime Approach**: Using `useLocalRuntime` instead of `useExternalStoreRuntime` for simpler state management
+2. **Component Architecture**: Primitive components approach for maximum customization
+3. **Error Handling**: Graceful error messages returned as assistant responses
+4. **Document Context**: Automatically passed with each message (10k character limit)
+5. **Testing**: Unit tests created for `useChatRuntime` hook with comprehensive coverage
+
+### Integration Points
+
+- **API Route**: `/api/chat` (currently fake implementation, ready for LLM integration)
+- **Tab System**: Chat integrated as second tab in Tools pane (after Glossary)
+- **Document Context**: Extracted via `getDocumentContext()` in `document-viewer.tsx`
+- **Styling**: Consistent with existing Tailwind design system
+
+### Next Steps
+
+See [planning/250527a_chatbot_interface_assistant_ui.md](/planning/250527a_chatbot_interface_assistant_ui.md) for:
+- Stage 5: Enhanced document context formatting
+- Stage 6: Real LLM integration
+- Stage 7+: Advanced features and persistence
 
 ## Useful Resources
 

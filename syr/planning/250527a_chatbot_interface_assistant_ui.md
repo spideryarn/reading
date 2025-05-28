@@ -183,9 +183,9 @@ Implement a chatbot interface for document analysis using the assistant-ui React
 - Focus should be on enhancing context formatting and adding UI indicators
 
 ### Stage: update documentation
-- [ ] Update docs - this doc should point to `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md` and vice versa
+- [x] Update docs - this doc should point to `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md` and vice versa
+  - See also: [Assistant-UI Integration Guide](/docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md)
 - [ ] Update that `CHATBOT_ASSISTANT_UI_INTEGRATION.md` - it may not be accurate/up-to-date
-- [ ] Update docs like `docs/ARCHITECTURE.md`, `SITE_ORGANISATION.md` etc any anywhere else that refers to the 'Glossary' pane to refer to the 'Tools' pane, and mention the new chatbot & APIs. Use a subagent
 
 ### Stage 6: Real LLM Integration
 - [ ] **Replace fake API with actual LLM calls**
@@ -315,3 +315,87 @@ Following existing patterns from:
 - `app/api/glossary/route.ts` for API structure
 - `app/api/summarise/route.ts` for LLM integration
 - `lib/config.ts` for AI model configuration
+
+
+## Appendix – recommendations from another AI (o3) - foundations focus
+
+> NOTE: The items below are immediately actionable.  They include exact file paths, code-diffs and test pointers so any team-member can land the fixes without further clarification.
+
+### 1 · Overall architecture
+• Recommend isolating assistant-ui runtime wiring ("controller" logic) from presentational components to keep UI testable/re-usable. E.g. a lightweight `useChatRuntime()` hook that returns `{runtime, sendMessage}` and is consumed by `AssistantChat`.
+
+### 2 · Runtime integration
+1. **Root-cause** – `useLocalRuntime` expects `adapters.chatModel.run`; without it `LocalThreadRuntimeCore.performRoundtrip()` throws the bind error.
+
+2. **Concrete patch**
+
+   File `components/assistant-chat.tsx` (add just before the `useLocalRuntime` call):
+
+   ```ts diff
+   +  // chatModel adapter satisfies assistant-ui runtime
+   +  const chatModelAdapter = useCallback(async ({ messages }) => {
+   +    const lastUserMessage = messages.at(-1);
+   +    const res = await fetch('/api/chat', {
+   +      method: 'POST',
+   +      headers: { 'Content-Type': 'application/json' },
+   +      body: JSON.stringify({
+   +        message: lastUserMessage.content,
+   +        documentContext,
+   +      }),
+   +    });
+   +    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+   +    const { response } = await res.json();
+   +    return { role: 'assistant' as const, content: response };
+   +  }, [documentContext]);
+
+   -  const runtime = useLocalRuntime({
+   -    initialMessages: [],
+   -    onNew: handleNewMessage
+   -  });
+   +  const runtime = useLocalRuntime({
+   +    initialMessages: [],
+   +    adapters: { chatModel: { run: chatModelAdapter } },
+   +  });
+   ```
+
+3. **Optional thin hook** – create `src/lib/hooks/useChatRuntime.ts` that encapsulates the adapter wiring and returns `{runtime}`.  UI then just consumes the hook.
+
+4. **After patch** – restart `npm run dev`, open the Chat tab, send a prompt → no console stack-trace.
+
+5. **Keep network logic outside render** to avoid adapter re-creation loops (the callback is memoised).
+
+### 3 · State & context
+• Good use of assistant-ui's built-in context providers; try to keep custom React context layers thin to avoid prop-drilling duplication.  
+• Current chat state lives entirely in memory—fine for MVP. Expose a `resetConversation()` method via runtime to allow other components (e.g. a "Clear" button) without reaching into internals.
+
+### 4 · Component boundaries
+• `TabContainer` abstraction looks solid; verify keyboard focus management with automated tests.  
+• Split `AssistantChat` into: `ChatThread`, `ChatComposer`, `ChatMessage` for clearer responsibilities and to ease future streaming work.
+
+### 5 · Type safety & API surfaces
+• Define a shared `ChatMessage` union type `{ role: 'user' | 'assistant' | 'system'; content: string }` in `lib/types` and use it across API route, runtime adapter, and UI.  
+• Add Zod (or similar) schema validation on the `/api/chat` request/response to catch shape mismatches early.
+
+### 6 · Error handling
+• Bubble lower-level errors (network, 5xx) up through runtime `status` so UI can show deterministic states instead of generic catch-all messages.  
+• Log unexpected errors with `console.error` **and** send to your monitoring (Sentry/Loki) for post-mortem.
+
+### 7 · Performance considerations
+• `getDocumentContext()` currently slices raw text at 10 k chars. Consider pre-tokenising to avoid mid-word truncation and keep token count predictable.  
+• Memoise expensive context construction per document slug to avoid recomputation on every message.
+
+### 8 · Testing strategy (foundations)
+• Unit: TabContainer tab switching, `useChatRuntime` hook, adapter error paths.  
+• Integration: RTL + MSW – render `AssistantChat`, mock `/api/chat`, type "ping", expect "pong" appears.  
+• E2E: Playwright test that opens Tools → Chat, sends a message, sees mocked reply.
+
+### 9 · Documentation hygiene
+• Cross-link this planning doc with `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md` and vice-versa.  
+• Ensure docs mention the required `chatModel` adapter so newcomers avoid the runtime error.
+
+### 10 · Next concrete steps
+1. Apply the patch above (runtime adapter).  
+2. Extract `useChatRuntime` hook (optional but recommended).  
+3. Add unit & integration tests as per §8.  
+4. Cross-link docs.
+

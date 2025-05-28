@@ -5,9 +5,12 @@ import {
   ComposerPrimitive, 
   MessagePrimitive,
   AssistantRuntimeProvider, 
-  useLocalRuntime 
+  // useLocalRuntime, // No longer used directly
+  // type ChatModelAdapter // No longer used directly
 } from "@assistant-ui/react";
+// import { useCallback } from 'react'; // No longer used directly
 import { User, Robot, PaperPlaneTilt } from '@phosphor-icons/react';
+import { useChatRuntime } from '@/src/lib/hooks/useChatRuntime'; // Import the new hook
 
 interface AssistantChatProps {
   documentContext: string;
@@ -15,24 +18,28 @@ interface AssistantChatProps {
 
 // User message component
 const UserMessage = () => (
-  <MessagePrimitive.Root className="flex gap-3 px-4 py-3">
+  <MessagePrimitive.Root>
     <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
       <User size={14} weight="bold" className="text-white" />
     </div>
     <div className="flex-1">
-      <MessagePrimitive.Content className="prose prose-sm max-w-none" />
+      <div className="prose prose-sm max-w-none">
+        <MessagePrimitive.Content />
+      </div>
     </div>
   </MessagePrimitive.Root>
 );
 
 // Assistant message component
 const AssistantMessage = () => (
-  <MessagePrimitive.Root className="flex gap-3 px-4 py-3 bg-gray-50">
+  <MessagePrimitive.Root>
     <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-600 flex items-center justify-center">
       <Robot size={14} weight="bold" className="text-white" />
     </div>
     <div className="flex-1">
-      <MessagePrimitive.Content className="prose prose-sm max-w-none" />
+      <div className="prose prose-sm max-w-none">
+        <MessagePrimitive.Content />
+      </div>
     </div>
   </MessagePrimitive.Root>
 );
@@ -105,42 +112,11 @@ function Thread() {
 }
 
 export function AssistantChat({ documentContext }: AssistantChatProps) {
-  const runtime = useLocalRuntime({
-    initialMessages: [],
-    onNew: async (message) => {
-      try {
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: message.content,
-            documentContext: documentContext
-          }),
-        });
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
+  // const chatModelAdapter: ChatModelAdapter = { ... }; // Removed
+  // const runtime = useLocalRuntime(chatModelAdapter); // Removed
 
-        const data = await response.json();
-        
-        // Add assistant response to thread
-        runtime.append({
-          role: "assistant",
-          content: data.response
-        });
-        
-      } catch (error) {
-        console.error('Chat API error:', error);
-        
-        // Add error message to thread
-        runtime.append({
-          role: "assistant", 
-          content: "Sorry, I encountered an error processing your request. Please try again."
-        });
-      }
-    }
-  });
+  const runtime = useChatRuntime({ documentContext }); // Use the new hook
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
