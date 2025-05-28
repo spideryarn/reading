@@ -28,6 +28,7 @@ The ToC now features a tabbed interface allowing users to switch between:
 
 - **Original** - Headings extracted directly from the HTML document
 - **AI-generated** - Semantically meaningful headings created by LLM analysis
+- **Summary** - AI-generated document summary with expandable content
 
 ### Tab Implementation
 - Uses controlled component pattern with `activeTab` state
@@ -53,6 +54,12 @@ Generates deterministic IDs using UUID v5 for reliable navigation.
 - LLM analyses document structure and generates semantic headings
 - Returns structured array with heading text and levels
 - Displayed with green theme to distinguish from original
+
+### Document Summary
+- Calls `/api/summarise` endpoint with full document content 
+- LLM generates comprehensive document summary using markdown content
+- Summary can be collapsed/expanded for better space utilisation
+- Provides "Show summary" button to trigger generation on demand
 
 ## Visual Hierarchy
 
