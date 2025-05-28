@@ -2,6 +2,15 @@
 
 This guide explains how to create new AI/LLM calls using our Nunjucks + Zod template system.
 
+## ⚠️ Standard Implementation Pattern
+
+**All new LLM functionality MUST use this template system.** This is not optional - it's the architectural standard for AI integration in Spideryarn Reading.
+
+See also:
+- [CHATBOT_ASSISTANT_UI_INTEGRATION.md](CHATBOT_ASSISTANT_UI_INTEGRATION.md) - For chat interface implementations
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Overall system architecture decisions
+- [AI_SUMMARISE.md](AI_SUMMARISE.md) and [AI_GLOSSARY.md](AI_GLOSSARY.md) - Examples of template system usage
+
 ## Overview
 
 We use a hybrid approach:
@@ -106,17 +115,31 @@ export async function POST(request: NextRequest) {
 
 ## Model Configuration
 
-AI model settings are centralised in `/lib/config.ts`:
+AI model settings are centralised in `/lib/config.ts` (see [ARCHITECTURE.md](ARCHITECTURE.md) for rationale):
 
 ```typescript
+// Override with AI_MODEL environment variable for development/testing
+// Example: AI_MODEL=claude-3-haiku-20240307 npm run dev (faster & cheaper for dev)
 export const AI_CONFIG = {
-  DEFAULT_MODEL: 'claude-sonnet-4-20250514',
+  DEFAULT_MODEL: process.env.AI_MODEL || 'claude-sonnet-4-20250514',
   DEFAULT_TEMPERATURE: 0,
   DEFAULT_MAX_TOKENS: 1024,
 } as const
 ```
 
+### Development vs Production Models
+
+- **Production default**: `claude-sonnet-4-20250514` (smart, high-quality)
+- **Development option**: Set `AI_MODEL=claude-3-haiku-20240307` in `.env.local` (faster, ~20x cheaper)
+- **Override for testing**: `AI_MODEL=claude-sonnet-4-20250514 npm run dev` when you need smart AI
+
 Templates use these defaults unless overridden in the `modelConfig` parameter. Most templates should omit model specification to use the global default.
+
+**This centralised approach ensures:**
+- Consistent AI behaviour across all features
+- Easy model upgrades when new versions are released
+- Clear cost and performance management
+- Simplified testing and debugging
 
 ## Benefits of This Approach
 
@@ -187,3 +210,17 @@ myFeatureSchema.parse(invalidInput) // Will throw ZodError
 ```
 
 Keep templates and their schemas together for easy maintenance.
+
+## Integration with Other Systems
+
+### Chat Interface Integration
+For interactive chat functionality, this template system integrates seamlessly with assistant-ui components. See [CHATBOT_ASSISTANT_UI_INTEGRATION.md](CHATBOT_ASSISTANT_UI_INTEGRATION.md) for detailed implementation patterns.
+
+### Existing Features
+Current implementations using this system:
+- **Summarisation**: `/api/summarise` (see [AI_SUMMARISE.md](AI_SUMMARISE.md))
+- **Glossary Generation**: `/api/glossary` (see [AI_GLOSSARY.md](AI_GLOSSARY.md))
+- **Heading Generation**: `/api/headings` 
+- **Chat Interface**: `/api/chat` (see [CHATBOT_ASSISTANT_UI_INTEGRATION.md](CHATBOT_ASSISTANT_UI_INTEGRATION.md))
+
+All new AI features should follow the same pattern established by these implementations.

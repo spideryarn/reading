@@ -3,8 +3,18 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { executePrompt } from '@/lib/prompts/types'
+import nunjucks from 'nunjucks'
+import { readFileSync } from 'fs'
+import { AI_CONFIG } from '@/lib/config'
 import { chatPrompt, chatPromptInputSchema } from '@/lib/prompts/templates/chat'
+
+// Configure Nunjucks for template rendering
+const env = nunjucks.configure({
+  autoescape: false,
+  throwOnUndefined: true,
+  trimBlocks: true,
+  lstripBlocks: true,
+})
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -33,24 +43,16 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     })
     
-    // Build Claude API messages with system message containing document context
+    // Generate system message using the chat template
+    const templateContent = readFileSync(chatPrompt.templatePath, 'utf-8')
+    const systemContent = env.renderString(templateContent, { 
+      documentContext: documentContext || 'No document context provided.'
+    })
+    
+    // Build system message
     const systemMessage = {
       role: 'user' as const,
-      content: `You are an AI assistant helping users understand and analyze documents. Your role is to provide insightful, accurate, and helpful analysis based on the document content provided.
-
-DOCUMENT CONTEXT:
-${documentContext || 'No document context provided.'}
-
-INSTRUCTIONS:
-1. Base your responses on the document content provided above
-2. Be specific and reference relevant parts of the document when applicable
-3. If the document doesn't contain information to fully answer a question, acknowledge this limitation
-4. Keep responses concise but comprehensive
-5. Use clear, accessible language
-6. When appropriate, suggest follow-up questions or areas for deeper exploration
-7. Remember the conversation context and refer back to previous questions/answers when relevant
-
-Please respond to the user's messages while considering the full conversation context.`
+      content: systemContent
     }
     
     // Convert conversation to Claude format (system + conversation history)
@@ -62,11 +64,11 @@ Please respond to the user's messages while considering the full conversation co
       }))
     ]
     
-    // Call Claude API directly with conversation history
+    // Call Claude API using centralized configuration
     const claudeResponse = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 2000,
-      temperature: 0,
+      model: chatPrompt.modelConfig?.model || AI_CONFIG.DEFAULT_MODEL,
+      max_tokens: chatPrompt.modelConfig?.maxTokens || AI_CONFIG.DEFAULT_MAX_TOKENS,
+      temperature: chatPrompt.modelConfig?.temperature ?? AI_CONFIG.DEFAULT_TEMPERATURE,
       messages: claudeMessages
     })
     

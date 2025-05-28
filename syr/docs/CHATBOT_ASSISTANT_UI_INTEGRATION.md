@@ -6,6 +6,11 @@ This document provides comprehensive technical guidance for integrating the @ass
 
 > This document supports the implementation plan outlined in [planning/250527a_chatbot_interface_assistant_ui.md](/planning/250527a_chatbot_interface_assistant_ui.md).
 
+**Related Documentation:**
+- [LLM_PROMPT_TEMPLATES.md](LLM_PROMPT_TEMPLATES.md) - **Required reading** for implementing any LLM functionality
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Overall system design decisions
+- [AI_SUMMARISE.md](AI_SUMMARISE.md) and [AI_GLOSSARY.md](AI_GLOSSARY.md) - Examples of AI feature implementation
+
 ## Library Overview
 
 - **Name**: assistant-ui
@@ -312,16 +317,35 @@ const ChatWithExternalStore = () => {
 ## Next.js API Route Setup
 
 ### Basic Claude Integration
+
+**IMPORTANT**: All LLM implementations must use our standardised prompt template system. See [LLM_PROMPT_TEMPLATES.md](LLM_PROMPT_TEMPLATES.md) for complete implementation guidance.
+
 ```typescript
 // app/api/chat/route.ts
 import { anthropic } from "@ai-sdk/anthropic";
 import { streamText } from "ai";
 import { createClient } from '@/lib/supabase/server';
+import { AI_CONFIG } from '@/lib/config';
 
 export async function POST(req: Request) {
   const { messages, context } = await req.json();
   
-  // Get document context if provided
+  // PREFERRED APPROACH: Use the prompt template system
+  // See LLM_PROMPT_TEMPLATES.md for complete implementation details
+  
+  // Example using template system (recommended):
+  /*
+  import { executePrompt } from '@/lib/prompts/types';
+  import { chatPrompt } from '@/lib/prompts/templates/chat';
+  
+  const result = await executePrompt(anthropic, chatPrompt, {
+    messages: messages,
+    documentContext: getDocumentContext(context),
+    selectedText: context?.selectedText
+  });
+  */
+  
+  // Legacy direct implementation (for reference only):
   let documentContext = '';
   if (context?.documentId) {
     const supabase = createClient();
@@ -335,13 +359,12 @@ export async function POST(req: Request) {
       `Document: ${document.title}\nSummary: ${document.summary}\n\n` : '';
   }
   
-  // Add selected text context if provided
   if (context?.selectedText) {
     documentContext += `Selected text: "${context.selectedText}"\n\n`;
   }
   
   const result = streamText({
-    model: anthropic("claude-3-5-sonnet-20241022"),
+    model: anthropic(AI_CONFIG.DEFAULT_MODEL),
     messages: [
       {
         role: 'system',
@@ -351,8 +374,8 @@ export async function POST(req: Request) {
       },
       ...messages
     ],
-    temperature: 0,
-    maxTokens: 2000,
+    temperature: AI_CONFIG.DEFAULT_TEMPERATURE,
+    maxTokens: AI_CONFIG.DEFAULT_MAX_TOKENS,
   });
   
   return result.toDataStreamResponse();
@@ -363,20 +386,21 @@ export async function POST(req: Request) {
 ```typescript
 // app/api/chat/route.ts
 import { experimental_StreamData } from 'ai';
+import { AI_CONFIG } from '@/lib/config';
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
   const data = new experimental_StreamData();
   
   const result = streamText({
-    model: anthropic("claude-3-5-sonnet-20241022"),
+    model: anthropic(AI_CONFIG.DEFAULT_MODEL),
     messages,
-    temperature: 0,
+    temperature: AI_CONFIG.DEFAULT_TEMPERATURE,
     onFinish: async ({ text, usage }) => {
       // Log usage for analytics
       await logUsage({ 
         tokens: usage.totalTokens,
-        model: 'claude-3-5-sonnet',
+        model: AI_CONFIG.DEFAULT_MODEL,
         timestamp: new Date()
       });
       
