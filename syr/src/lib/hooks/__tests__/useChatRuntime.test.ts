@@ -4,7 +4,6 @@ import { useLocalRuntime } from '@assistant-ui/react';
 
 // Mock @assistant-ui/react
 jest.mock('@assistant-ui/react', () => ({
-  ...jest.requireActual('@assistant-ui/react'), // Import and retain default behavior
   useLocalRuntime: jest.fn(),
 }));
 
@@ -108,7 +107,7 @@ describe('useChatRuntime', () => {
         content: [
           {
             type: "text" as const,
-            text: 'Sorry, an error occurred: HTTP error 500',
+            text: '❌ Error: Internal Server Error\n\nPlease try again or contact support if the issue persists.',
           },
         ],
       });
@@ -131,6 +130,122 @@ describe('useChatRuntime', () => {
       expect(mockFetch).toHaveBeenCalledWith('/api/chat', 
         expect.objectContaining({
           signal: signal,
+        })
+      );
+    });
+
+    it('should handle network errors gracefully', async () => {
+      const messages = [{ id: '1', role: 'user' as const, content: [{ type: 'text' as const, text: 'Network error test' }] }];
+      mockFetch.mockRejectedValueOnce(new Error('Network error'));
+
+      let result;
+      await act(async () => {
+        result = await adapterRun({ messages });
+      });
+
+      expect(result).toEqual({
+        content: [
+          {
+            type: "text" as const,
+            text: expect.stringContaining('Error:'),
+          },
+        ],
+      });
+    });
+
+    it('should handle API errors with details', async () => {
+      const messages = [{ id: '1', role: 'user' as const, content: [{ type: 'text' as const, text: 'Detailed error test' }] }];
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ 
+          error: 'Bad Request', 
+          details: 'Missing required parameters',
+          code: 'VALIDATION_ERROR'
+        }),
+      });
+
+      let result;
+      await act(async () => {
+        result = await adapterRun({ messages });
+      });
+
+      expect(result).toEqual({
+        content: [
+          {
+            type: "text" as const,
+            text: '❌ Error: Bad Request\n\nMissing required parameters\n\nPlease try again or contact support if the issue persists.',
+          },
+        ],
+      });
+    });
+
+    it('should handle rate limit errors', async () => {
+      const messages = [{ id: '1', role: 'user' as const, content: [{ type: 'text' as const, text: 'Rate limit test' }] }];
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        json: async () => ({ 
+          error: 'Rate limit exceeded',
+          code: 'RATE_LIMIT_ERROR'
+        }),
+      });
+
+      let result;
+      await act(async () => {
+        result = await adapterRun({ messages });
+      });
+
+      expect(result.content[0].text).toContain('Rate limit exceeded');
+    });
+
+    it('should handle empty messages gracefully', async () => {
+      const messages = [{ id: '1', role: 'user' as const, content: [] }];
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ response: 'Empty message handled' }),
+      });
+
+      await act(async () => {
+        await adapterRun({ messages });
+      });
+
+      expect(mockFetch).toHaveBeenCalledWith('/api/chat', 
+        expect.objectContaining({
+          body: JSON.stringify({
+            message: '',
+            documentContext: 'Test document context',
+          }),
+        })
+      );
+    });
+
+    it('should extract text from multiple content parts', async () => {
+      const messages = [{
+        id: '1',
+        role: 'user' as const,
+        content: [
+          { type: 'text' as const, text: 'Part 1' },
+          { type: 'image' as any, image: 'data:image/png;base64,abc' },
+          { type: 'text' as const, text: 'Part 2' }
+        ]
+      }];
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ response: 'Multi-part message' }),
+      });
+
+      await act(async () => {
+        await adapterRun({ messages });
+      });
+
+      // Should only extract the first text part
+      expect(mockFetch).toHaveBeenCalledWith('/api/chat', 
+        expect.objectContaining({
+          body: JSON.stringify({
+            message: 'Part 1',
+            documentContext: 'Test document context',
+          }),
         })
       );
     });

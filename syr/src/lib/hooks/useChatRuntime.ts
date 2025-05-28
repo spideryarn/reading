@@ -23,15 +23,32 @@ export function useChatRuntime({ documentContext }: UseChatRuntimeProps) {
         timestamp: new Date().toISOString()
       });
 
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: messageText,
-          documentContext,
-        }),
-        signal: abortSignal,
-      });
+      let res;
+      try {
+        res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: messageText,
+            documentContext,
+          }),
+          signal: abortSignal,
+        });
+      } catch (error) {
+        console.error('[Chat Runtime] Network Error:', {
+          error: error instanceof Error ? error.message : 'Unknown network error',
+          timestamp: new Date().toISOString()
+        });
+        
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `❌ Error: Network connection failed\n\nPlease check your internet connection and try again.`
+            }
+          ]
+        };
+      }
 
       if (!res.ok) {
         let errorMessage = `HTTP error ${res.status}`;
