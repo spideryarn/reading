@@ -6,11 +6,23 @@ import { assignDeterministicIds, getBodyWithIds } from './deterministicId'
 
 export class DocumentParser {
   // Define inline elements that should be kept within their parent's text content
+  // Based on HTML5 phrasing content and default CSS display values
+  // Reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Inline_elements
   private static INLINE_ELEMENTS = new Set([
-    'a', 'abbr', 'acronym', 'b', 'bdo', 'big', 'br', 'button', 'cite', 'code',
-    'dfn', 'em', 'i', 'img', 'input', 'kbd', 'label', 'map', 'object', 'q',
-    'samp', 'script', 'select', 'small', 'span', 'strong', 'sub', 'sup',
-    'textarea', 'tt', 'u', 'var'
+    // Text-level semantic elements
+    'a', 'abbr', 'b', 'bdi', 'bdo', 'br', 'cite', 'code', 'data', 'dfn',
+    'em', 'i', 'kbd', 'mark', 'q', 'rp', 'rt', 'rtc', 'ruby', 's', 'samp',
+    'small', 'span', 'strong', 'sub', 'sup', 'time', 'u', 'var', 'wbr',
+    // Form elements (inline by default)
+    'button', 'input', 'label', 'meter', 'output', 'progress', 'select', 'textarea',
+    // Media elements (inline-block by default, but should be kept inline for text extraction)
+    'audio', 'canvas', 'embed', 'iframe', 'img', 'map', 'object', 'picture', 'svg', 'video',
+    // Deprecated but still encountered
+    'acronym', 'big', 'font', 'strike', 'tt',
+    // Script elements (included to skip them, handled separately)
+    'script', 'noscript', 'style',
+    // Other inline elements
+    'slot', 'template'
   ])
 
   /**
