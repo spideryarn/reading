@@ -5,10 +5,10 @@
 ✅ **Stage 1-4**: Research, Tab System, Fake API, assistant-ui Integration - COMPLETED  
 ✅ **Stage 5A** (partial): Removed duplicate `chat-interface.tsx` implementation  
 ✅ **Stage 6**: Real LLM Integration - COMPLETED with enhanced error handling  
-✅ **Testing**: Comprehensive unit tests added for core components (21/23 passing)  
-🔄 **Next**: Manual testing with real documents, fix remaining test issues, then component refactoring (Stage 5A)
+✅ **Testing**: Comprehensive unit tests added for core components (37/38 passing)  
+🔄 **Next**: Manual testing with real documents, address Next.js build issues, then component refactoring (Stage 5A)
 
-### Recent Updates
+### Recent Updates (28 May 2025)
 - Removed automatic retry logic per user feedback
 - Added comprehensive error logging on both client and server
 - Enhanced error messages with specific codes and actionable details
@@ -17,6 +17,9 @@
 - Added comprehensive unit tests for chat components and hooks
 - Fixed Jest configuration issues for ESM module support
 - Enhanced useChatRuntime with network error handling
+- Fixed test suite issues: 37/38 tests now passing
+- Improved TabContainer to validate defaultTab properly
+- Identified Next.js build cache issues requiring attention
 
 ## Goal, context
 
@@ -256,6 +259,11 @@ Implement a chatbot interface for document analysis using the assistant-ui React
   - [ ] Run existing unit tests for `useChatRuntime`
 
 ### Stage 6: Real LLM Integration ✅ **COMPLETED**
+
+#### Immediate Action Required:
+1. **Restart dev server** - The Next.js build cache has been cleared to fix ENOENT errors
+2. **Manual testing** - Load a document and test the chat interface with real questions
+3. **Monitor for issues** - Check dev.log for any new errors during testing
 - [x] **Replace fake API with actual LLM calls** ✅ **COMPLETED**
   - [x] **EASY WIN**: Replace mock responses in `app/api/chat/route.ts` with real LLM calls
   - [x] **REUSE**: Integrate with existing LLM configuration from `lib/config.ts`
@@ -323,7 +331,61 @@ Implement a chatbot interface for document analysis using the assistant-ui React
 - Tab system working (Chat tab in Tools pane)
 - Conversation persists during tab switching (until page reload)
 
-### Stage 6A: Code Quality & Architecture Improvements
+### Stage 6A: Chat UI Fixes and Code Quality Improvements
+
+**URGENT** - [ ] **Fix Chat Height and Input Visibility Issue** 🐛
+  - **Problem**: 
+    1. Users cannot scroll to the bottom of long chat responses, preventing them from seeing the full response
+    2. Text input box is only visible when zooming out, not at normal zoom levels
+    3. Chat container doesn't dynamically use available vertical space
+  - **Root Cause**: Complex height constraint flow issue through multiple container layers
+    - **Height Chain**: Tools pane → TabContainer → Chat tab → AssistantChat → Thread → Viewport/Composer
+    - **Primary Issue**: `h-full` and flexbox constraints are not flowing correctly through the container hierarchy
+    - **Secondary Issue**: Fixed height (500px) works but doesn't scale with available space
+  - **Technical Analysis**:
+    1. **Tools pane**: `overflow-y-auto p-4 h-full` (document-viewer.tsx:326)
+    2. **TabContainer**: `flex flex-col h-full` with content using `flex-1 min-h-0 overflow-hidden` (tab-container.tsx:58)
+    3. **Chat tab wrapper**: No wrapper div (document-viewer.tsx:264)  
+    4. **AssistantChat**: Currently using `style={{ height: '500px' }}` (WORKING but not dynamic)
+    5. **Thread**: `h-full flex flex-col` with Viewport `flex-1 min-h-0 overflow-y-auto` and Composer `flex-shrink-0`
+  - **Investigation History**:
+    - ✅ **Fixed 500px**: Text input visible, scrolling works, but doesn't scale with monitor size
+    - ❌ **h-full approach**: Input box disappears, height constraints don't flow properly
+    - ❌ **CSS Grid approach**: `grid-rows-[1fr_auto]` - Input box disappears
+    - ❌ **max-h constraint**: `max-h-[600px]` - Input only visible when zoomed out
+  - **Current Working Solution**: Fixed 500px height
+    ```tsx
+    // In components/assistant-chat.tsx:149
+    <div style={{ height: '500px' }} className="flex flex-col">
+      <AssistantRuntimeProvider runtime={runtime}>
+        <Thread />
+      </AssistantRuntimeProvider>
+    </div>
+    ```
+  - **Attempted Solutions That Failed**:
+    1. **Pure h-full chain**: Height doesn't flow through TabContainer properly
+    2. **CSS Grid**: `grid-rows-[1fr_auto]` breaks assistant-ui's internal height expectations
+    3. **Flex with min-h-0**: Still results in height calculation issues
+    4. **Additional wrapper divs**: Adding height constraints at various levels
+  - **Potential Root Causes**:
+    1. **assistant-ui expectations**: ThreadPrimitive.Root may expect specific height behavior
+    2. **TabContainer constraints**: Content area may not be providing proper height flow
+    3. **Tools pane layout**: Complex interaction between `overflow-y-auto` and flex children
+    4. **CSS specificity**: Tailwind classes may be conflicting with assistant-ui's internal styles
+  - **Next Investigation Ideas**:
+    1. **Viewport height units**: Try `height: 'calc(100vh - 200px)'` or similar viewport-relative height
+    2. **CSS custom properties**: Use CSS variables to pass height constraints down the component tree
+    3. **ResizeObserver**: Dynamically measure available space and set height programmatically
+    4. **assistant-ui alternatives**: Check if different assistant-ui component configurations work better
+    5. **Simplified layout**: Remove intermediate wrapper divs and flatten the component hierarchy
+    6. **CSS-in-JS**: Use styled-components or emotion for more precise style control
+  - **Testing**: 
+    - Verify that text input is visible at normal zoom levels (100%)
+    - Test that chat container scales with different monitor sizes and browser window sizes  
+    - Confirm that long chat responses can be scrolled completely
+    - Ensure input field remains accessible after long conversations
+
+### Stage 6B: Code Quality & Architecture Improvements
 
 - [ ] **Type Safety Improvements**
   - [ ] Create `lib/types/chat.ts` with shared types:
