@@ -35,8 +35,7 @@ Create a `.ts` file next to your template:
 ```typescript
 // /lib/prompts/templates/my-feature.ts
 import { z } from 'zod'
-import { loadPromptTemplate } from '../types'
-import { join } from 'path'
+import { loadPromptTemplateFromCaller } from '@/lib/prompts/types'
 
 // Define what variables your prompt needs
 const myFeatureSchema = z.object({
@@ -48,23 +47,23 @@ const myFeatureSchema = z.object({
 })
 
 // Load the template with validation
-export const myFeaturePrompt = loadPromptTemplate(
-  join(__dirname, 'my-feature.njk'),
+export const myFeaturePrompt = loadPromptTemplateFromCaller(
+  'my-feature.njk',
   myFeatureSchema,
   {
-    model: 'claude-3-5-sonnet-20241022',  // optional, defaults to this
-    maxTokens: 1024,                       // optional, defaults to 1024
-    temperature: 0,                        // optional, defaults to 0 (we almost always want deterministic output)
+    // model: usually omitted to use global default from AI_CONFIG
+    maxTokens: 1024,                       // optional, defaults to AI_CONFIG.DEFAULT_MAX_TOKENS
+    temperature: 0,                        // optional, defaults to AI_CONFIG.DEFAULT_TEMPERATURE
   }
 )
 ```
 
-### 3. Create the Service Function
+### 3. Use in API Route
 
-Add to `/lib/services/anthropic.ts` or create a new service file:
+Most prompt execution happens directly in API routes. Create `/app/api/my-feature/route.ts`:
 
 ```typescript
-// /lib/services/my-feature.ts
+import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { executePrompt } from '@/lib/prompts/types'
 import { myFeaturePrompt } from '@/lib/prompts/templates/my-feature'
@@ -73,45 +72,18 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
 
-export async function analyzeContent(
-  content: string, 
-  contentType: 'text' | 'code' | 'data',
-  options?: {
-    outputFormat?: 'json' | 'markdown' | 'plain'
-    includeExamples?: boolean
-    examples?: string
-  }
-): Promise<string> {
-  return executePrompt(anthropic, myFeaturePrompt, {
-    content,
-    contentType,
-    ...options
-  })
-}
-```
-
-### 4. Create the API Route
-
-Create `/app/api/my-feature/route.ts`:
-
-```typescript
-import { NextRequest, NextResponse } from 'next/server'
-import { analyzeContent } from '@/lib/services/my-feature'
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
-    // The service function handles validation via Zod
-    const result = await analyzeContent(
-      body.content,
-      body.contentType,
-      {
-        outputFormat: body.outputFormat,
-        includeExamples: body.includeExamples,
-        examples: body.examples
-      }
-    )
+    // executePrompt handles Zod validation and template rendering
+    const result = await executePrompt(anthropic, myFeaturePrompt, {
+      content: body.content,
+      contentType: body.contentType,
+      outputFormat: body.outputFormat,
+      includeExamples: body.includeExamples,
+      examples: body.examples
+    })
     
     return NextResponse.json({ result })
   } catch (error) {
@@ -131,6 +103,20 @@ export async function POST(request: NextRequest) {
   }
 }
 ```
+
+## Model Configuration
+
+AI model settings are centralised in `/lib/config.ts`:
+
+```typescript
+export const AI_CONFIG = {
+  DEFAULT_MODEL: 'claude-sonnet-4-20250514',
+  DEFAULT_TEMPERATURE: 0,
+  DEFAULT_MAX_TOKENS: 1024,
+} as const
+```
+
+Templates use these defaults unless overridden in the `modelConfig` parameter. Most templates should omit model specification to use the global default.
 
 ## Benefits of This Approach
 

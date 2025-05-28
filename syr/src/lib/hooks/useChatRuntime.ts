@@ -13,12 +13,15 @@ interface UseChatRuntimeProps {
 export function useChatRuntime({ documentContext }: UseChatRuntimeProps) {
   const chatModelAdapter: ChatModelAdapter = {
     run: useCallback(async ({ messages, abortSignal, context }) => {
-      const lastUserMessage = messages.at(-1);
-      const messageText = lastUserMessage?.content?.find(part => part.type === 'text')?.text || '';
+      // Convert assistant-ui messages to API format
+      const conversationHistory = messages.map(msg => ({
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content.find(part => part.type === 'text')?.text || ''
+      }));
 
-      // Log message being sent
-      console.log('[Chat Runtime] Sending message:', {
-        messageLength: messageText.length,
+      // Log conversation being sent
+      console.log('[Chat Runtime] Sending conversation:', {
+        messageCount: conversationHistory.length,
         documentContextLength: documentContext?.length || 0,
         timestamp: new Date().toISOString()
       });
@@ -29,7 +32,7 @@ export function useChatRuntime({ documentContext }: UseChatRuntimeProps) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            message: messageText,
+            messages: conversationHistory,
             documentContext,
           }),
           signal: abortSignal,

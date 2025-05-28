@@ -24,19 +24,55 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const { message, documentContext } = validationResult.data
+    const { messages, documentContext } = validationResult.data
     
-    // Execute the chat prompt with real LLM (no automatic retry)
-    console.log('[Chat API] Processing message:', {
-      messageLength: message.length,
+    // Log conversation processing
+    console.log('[Chat API] Processing conversation:', {
+      messageCount: messages.length,
       documentContextLength: documentContext?.length || 0,
       timestamp: new Date().toISOString()
     })
     
-    const response = await executePrompt(anthropic, chatPrompt, {
-      message,
-      documentContext: documentContext || 'No document context provided.'
+    // Build Claude API messages with system message containing document context
+    const systemMessage = {
+      role: 'user' as const,
+      content: `You are an AI assistant helping users understand and analyze documents. Your role is to provide insightful, accurate, and helpful analysis based on the document content provided.
+
+DOCUMENT CONTEXT:
+${documentContext || 'No document context provided.'}
+
+INSTRUCTIONS:
+1. Base your responses on the document content provided above
+2. Be specific and reference relevant parts of the document when applicable
+3. If the document doesn't contain information to fully answer a question, acknowledge this limitation
+4. Keep responses concise but comprehensive
+5. Use clear, accessible language
+6. When appropriate, suggest follow-up questions or areas for deeper exploration
+7. Remember the conversation context and refer back to previous questions/answers when relevant
+
+Please respond to the user's messages while considering the full conversation context.`
+    }
+    
+    // Convert conversation to Claude format (system + conversation history)
+    const claudeMessages = [
+      systemMessage,
+      ...messages.map(msg => ({
+        role: msg.role === 'user' ? 'user' as const : 'assistant' as const,
+        content: msg.content
+      }))
+    ]
+    
+    // Call Claude API directly with conversation history
+    const claudeResponse = await anthropic.messages.create({
+      model: 'claude-3-5-sonnet-20241022',
+      max_tokens: 2000,
+      temperature: 0,
+      messages: claudeMessages
     })
+    
+    const response = claudeResponse.content[0].type === 'text' 
+      ? claudeResponse.content[0].text 
+      : 'Unable to generate response'
     
     console.log('[Chat API] Response generated successfully:', {
       responseLength: response.length,

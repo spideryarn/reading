@@ -502,6 +502,51 @@ Implement a chatbot interface for document analysis using the assistant-ui React
   - [ ] Export conversation transcripts
   - [ ] Integration with document annotation system
 
+### Stage 9: Dynamic Document Context (Future Enhancement)
+- [ ] **Implement real-time document state synchronisation**
+  - [ ] **Problem**: Currently document context is captured once at conversation start and doesn't update when user makes document changes (mutations, generated headings, etc.)
+  - [ ] **Goal**: Keep chat context synchronised with the current state of the document interface
+  - [ ] **Scope**: Include all document mutations, AI-generated content, and user modifications in chat context
+  
+- [ ] **Technical approach**
+  - [ ] **Context Updates**: Regenerate document context when document state changes
+    - Monitor mutation context for changes (new headings, glossary terms, etc.)
+    - Update chat runtime with fresh document content
+    - Preserve conversation history while updating system message
+  - [ ] **State Integration**: Connect chat system with document mutation pipeline
+    - Subscribe to document mutation events from `lib/context/mutation-context.tsx`
+    - Extract updated document content including AI-generated elements
+    - Handle incremental updates efficiently (avoid full document re-extraction)
+  - [ ] **API Strategy**: Design API to handle context updates mid-conversation
+    - Option A: Update system message in existing conversation thread
+    - Option B: Create new conversation branch when document changes significantly
+    - Option C: Include change deltas in subsequent messages
+  
+- [ ] **Implementation considerations**
+  - [ ] **Performance**: Avoid excessive context regeneration on minor changes
+    - Debounce context updates (e.g. 2-3 second delay after changes)
+    - Only update for significant mutations (new headings, major content changes)
+    - Consider context size limits and intelligent truncation
+  - [ ] **User Experience**: Provide visibility into context updates
+    - Show indicator when document context is updated
+    - Option to manually refresh context if needed
+    - Clear communication about what the AI can "see" in current document state
+  - [ ] **Edge Cases**: Handle complex scenarios gracefully
+    - Rapid successive document changes during conversation
+    - Large documents that exceed context limits after mutations
+    - Network errors during context update attempts
+    - Conversation state preservation during context refresh
+
+- [ ] **Future integrations**
+  - [ ] **Smart Context Selection**: Instead of full document, provide relevant sections
+    - Use conversation topic to determine relevant document sections
+    - Include recently modified parts of the document
+    - Maintain awareness of user's current reading position
+  - [ ] **Cross-Conversation Context**: Allow AI to reference changes made in previous sessions
+    - Store document evolution history
+    - Reference previous AI-generated content in new conversations
+    - Enable follow-up conversations about earlier document analysis
+
 ### Testing and Quality Assurance
 
 **Current Testing Status** (Updated: 28 May 2025)
