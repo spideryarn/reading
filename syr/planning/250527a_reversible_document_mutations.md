@@ -102,6 +102,13 @@ And then revert back to the original document or try different transformations.
   - [x] All 31 mutation tests passing with proper async handling
   - [ ] Integration tests for AI headings mutation with React components
   - [ ] E2E tests for tab switching and navigation
+- [x] Foundational improvements (2025-05-28)
+  - [x] Atomic mutation application - validate ALL transforms before applying any
+  - [x] Comprehensive transform validation with detailed error messages
+  - [x] Debug mode with localStorage control ('MUTATION_DEBUG')
+  - [x] Performance tracking and logging
+  - [x] Created mutation-debug.ts with developer tools
+  - [x] All tests passing after improvements
 - [ ] Error handling and edge cases
   - [ ] Handle API failures gracefully
   - [ ] Handle malformed mutation data
@@ -126,7 +133,7 @@ And then revert back to the original document or try different transformations.
       - Add debugging to log which headings are clickable vs non-clickable
 - [ ] Update documentation
   - [x] Created docs/MUTATIONS.md
-  - [ ] Update README with mutation system overview
+  - [ ] Update ARCHITECTURE.md with mutation system overview
   - [ ] Add mutation examples to docs
 
 ### Stage 6: Foundation for Future Mutations
@@ -833,3 +840,44 @@ This plan provides a pragmatic path forward that:
 - Can be implemented incrementally in 3-5 days
 
 The key insight is that element-level mutations are fundamentally simpler than character-level text editing, so we can achieve robustness without the full complexity of systems like ProseMirror.
+
+## Foundational Improvements Implemented - 2025-05-28
+
+Successfully implemented the core robustness improvements from the simplified approach:
+
+### 1. Atomic Mutation Application
+- Modified `applyMutation` and `revertMutation` to validate ALL transforms before applying any
+- Uses shallow copy (`map` with spread) instead of `structuredClone` for better performance
+- Ensures mutations either fully succeed or fully fail - no partial application
+
+### 2. Comprehensive Transform Validation
+- Added `validateTransform` method with detailed validation for each transform type
+- Checks for missing IDs, duplicate IDs, and non-existent references
+- Provides clear, specific error messages for debugging
+
+### 3. Debug Mode Implementation
+- Created `mutation-debug.ts` with full debugging utilities
+- Enable with: `localStorage.setItem('MUTATION_DEBUG', 'true')`
+- Features:
+  - Mutation history tracking (last 50 operations)
+  - Performance analysis
+  - Document consistency validation
+  - Export debug data for analysis
+- Console logging shows before/after states, timing, and changes
+
+### 4. Performance Optimizations
+- Replaced `structuredClone` with shallow copy for better performance
+- Added performance timing to all operations
+- Large document test (1000+ elements) completes in ~1ms
+
+### Results
+- All 31 mutation tests passing
+- Improved error messages for better debugging
+- Foundation ready for future enhancements
+- No breaking changes to existing API
+
+### Next Steps
+- Integration tests for React components
+- Handle API failures gracefully
+- Fix scroll-to-heading reliability issues
+- Consider UI improvements for mutation feedback
