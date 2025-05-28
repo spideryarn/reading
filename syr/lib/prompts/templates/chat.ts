@@ -1,9 +1,12 @@
 import { z } from 'zod'
 import { loadPromptTemplateFromCaller } from '@/lib/prompts/types'
 
-// Schema for chat prompt input
+// Schema for chat conversation input
 export const chatPromptInputSchema = z.object({
-  message: z.string().min(1).max(10000).describe('The user\'s message or question'),
+  messages: z.array(z.object({
+    role: z.enum(['user', 'assistant']),
+    content: z.string().min(1).max(10000)
+  })).min(1).describe('The conversation history'),
   documentContext: z.string().max(10000).describe('The document content for context'),
 })
 

@@ -18,6 +18,7 @@ see:
 - AI
   - We'll probably use Anthropic Claude Sonnet 4 for almost everything AI-related, including chat, searching the web, manipulating HTML, transcribing PDFs, etc.
   - For voice recognition, we'll probably use OpenAI Whisper API.
+  - **Implementation Standard**: All LLM functionality uses our standardised Nunjucks + Zod template system. See [LLM_PROMPT_TEMPLATES.md](LLM_PROMPT_TEMPLATES.md) for complete implementation guidance.
 
 - Background processing
   - Lots of what we'll want to do will involve slow calls to an LLM. And some of it can be done upfront or in the background. So we'll want to be able to call the LLMs in the background, update our storage, and for that to immediately update & be reflected in the frontend.

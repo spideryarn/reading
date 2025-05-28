@@ -3,8 +3,18 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { executePrompt } from '@/lib/prompts/types'
+import nunjucks from 'nunjucks'
+import { readFileSync } from 'fs'
+import { AI_CONFIG } from '@/lib/config'
 import { chatPrompt, chatPromptInputSchema } from '@/lib/prompts/templates/chat'
+
+// Configure Nunjucks for template rendering
+const env = nunjucks.configure({
+  autoescape: false,
+  throwOnUndefined: true,
+  trimBlocks: true,
+  lstripBlocks: true,
+})
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -24,19 +34,47 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const { message, documentContext } = validationResult.data
+    const { messages, documentContext } = validationResult.data
     
-    // Execute the chat prompt with real LLM (no automatic retry)
-    console.log('[Chat API] Processing message:', {
-      messageLength: message.length,
+    // Log conversation processing
+    console.log('[Chat API] Processing conversation:', {
+      messageCount: messages.length,
       documentContextLength: documentContext?.length || 0,
       timestamp: new Date().toISOString()
     })
     
-    const response = await executePrompt(anthropic, chatPrompt, {
-      message,
+    // Generate system message using the chat template
+    const templateContent = readFileSync(chatPrompt.templatePath, 'utf-8')
+    const systemContent = env.renderString(templateContent, { 
       documentContext: documentContext || 'No document context provided.'
     })
+    
+    // Build system message
+    const systemMessage = {
+      role: 'user' as const,
+      content: systemContent
+    }
+    
+    // Convert conversation to Claude format (system + conversation history)
+    const claudeMessages = [
+      systemMessage,
+      ...messages.map(msg => ({
+        role: msg.role === 'user' ? 'user' as const : 'assistant' as const,
+        content: msg.content
+      }))
+    ]
+    
+    // Call Claude API using centralized configuration
+    const claudeResponse = await anthropic.messages.create({
+      model: chatPrompt.modelConfig?.model || AI_CONFIG.DEFAULT_MODEL,
+      max_tokens: chatPrompt.modelConfig?.maxTokens || AI_CONFIG.DEFAULT_MAX_TOKENS,
+      temperature: chatPrompt.modelConfig?.temperature ?? AI_CONFIG.DEFAULT_TEMPERATURE,
+      messages: claudeMessages
+    })
+    
+    const response = claudeResponse.content[0].type === 'text' 
+      ? claudeResponse.content[0].text 
+      : 'Unable to generate response'
     
     console.log('[Chat API] Response generated successfully:', {
       responseLength: response.length,

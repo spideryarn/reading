@@ -1,8 +1,10 @@
 // Central configuration for the application
 
 // AI model configuration
+// Override with AI_MODEL environment variable for development/testing
+// Example: AI_MODEL=claude-3-haiku-20240307 npm run dev (faster & cheaper for dev)
 export const AI_CONFIG = {
-  DEFAULT_MODEL: 'claude-sonnet-4-20250514',
+  DEFAULT_MODEL: process.env.AI_MODEL || 'claude-sonnet-4-20250514',
   DEFAULT_TEMPERATURE: 0,
   DEFAULT_MAX_TOKENS: 1024,
 } as const
