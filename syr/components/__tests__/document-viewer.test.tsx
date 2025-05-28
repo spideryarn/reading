@@ -260,4 +260,66 @@ describe('DocumentViewer', () => {
     const toolsPane = screen.getByText('Tools').parentElement?.parentElement;
     expect(toolsPane).toHaveClass('overflow-y-auto');
   });
+
+  describe('Typography formatting', () => {
+    it('should apply correct styling to headings', () => {
+      const headingElements: DocumentElement[] = [
+        { id: 'syr-h1', tag_name: 'h1', content: 'Heading 1', position: 0, parent_id: null, attributes: {}, document_id: 'doc-1' },
+        { id: 'syr-h2', tag_name: 'h2', content: 'Heading 2', position: 1, parent_id: null, attributes: {}, document_id: 'doc-1' },
+        { id: 'syr-h3', tag_name: 'h3', content: 'Heading 3', position: 2, parent_id: null, attributes: {}, document_id: 'doc-1' },
+      ];
+      
+      render(<DocumentViewer elements={headingElements} />);
+      
+      const h1 = screen.getByText('Heading 1');
+      expect(h1).toHaveClass('text-3xl', 'font-bold');
+      
+      const h2 = screen.getByText('Heading 2');
+      expect(h2).toHaveClass('text-2xl', 'font-semibold');
+      
+      const h3 = screen.getByText('Heading 3');
+      expect(h3).toHaveClass('text-xl', 'font-semibold');
+    });
+
+    it('should apply correct styling to paragraphs', () => {
+      const paragraphElements: DocumentElement[] = [
+        { id: 'syr-p1', tag_name: 'p', content: 'This is a paragraph', position: 0, parent_id: null, attributes: {}, document_id: 'doc-1' },
+      ];
+      
+      render(<DocumentViewer elements={paragraphElements} />);
+      
+      const paragraph = screen.getByText('This is a paragraph');
+      expect(paragraph).toHaveClass('text-base', 'leading-relaxed');
+    });
+
+    it('should render list items with bullets and numbers', () => {
+      const listElements: DocumentElement[] = [
+        { id: 'syr-ul1', tag_name: 'ul', content: '', position: 0, parent_id: null, attributes: {}, document_id: 'doc-1' },
+        { id: 'syr-li1', tag_name: 'li', content: 'First unordered item', position: 0, parent_id: 'syr-ul1', attributes: {}, document_id: 'doc-1' },
+        { id: 'syr-li2', tag_name: 'li', content: 'Second unordered item', position: 1, parent_id: 'syr-ul1', attributes: {}, document_id: 'doc-1' },
+        { id: 'syr-ol1', tag_name: 'ol', content: '', position: 1, parent_id: null, attributes: {}, document_id: 'doc-1' },
+        { id: 'syr-li3', tag_name: 'li', content: 'First ordered item', position: 0, parent_id: 'syr-ol1', attributes: {}, document_id: 'doc-1' },
+        { id: 'syr-li4', tag_name: 'li', content: 'Second ordered item', position: 1, parent_id: 'syr-ol1', attributes: {}, document_id: 'doc-1' },
+      ];
+      
+      render(<DocumentViewer elements={listElements} />);
+      
+      // Check unordered list items have bullets
+      const bullets = screen.getAllByText('•');
+      expect(bullets).toHaveLength(2);
+      
+      // Check ordered list items have numbers
+      expect(screen.getByText('1.')).toBeInTheDocument();
+      expect(screen.getByText('2.')).toBeInTheDocument();
+    });
+
+    it('should display IDs in smaller grey text', () => {
+      render(<DocumentViewer elements={mockElements} />);
+      
+      // Find an ID span by its truncated ID text
+      const idSpan = screen.getByText('root-1');
+      expect(idSpan).toHaveClass('text-xs', 'font-mono', 'text-gray-500');
+      expect(idSpan).toHaveStyle({ fontSize: '0.65rem' });
+    });
+  });
 });

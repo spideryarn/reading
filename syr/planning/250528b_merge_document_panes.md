@@ -57,9 +57,9 @@ The goal is to merge these two panes into a single, double-wide **Document** pan
 
 - [x] DONE: Write tests for the merged pane
 
-- [ ] TODO: Commit: "refactor: merge Document Structure and Element Details into single Document pane"
+- [x] DONE: Commit: "refactor: merge Document Structure and Element Details into single Document pane"
 
-- [ ] Make the merged middle pane wider.
+- [x] DONE: Make the merged middle pane wider.
 
 
 ### Stage 2: Proper formatting (TODO)

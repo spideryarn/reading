@@ -164,14 +164,85 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
     setElementTree(tree)
   }, [elements])
 
-  const renderElement = (element: DocumentElement): JSX.Element => {
+  /**
+   * Get typography classes based on element tag name
+   */
+  const getTypographyClasses = (tagName: string): string => {
+    switch (tagName) {
+      case 'h1':
+        return 'text-3xl font-bold'
+      case 'h2':
+        return 'text-2xl font-semibold'
+      case 'h3':
+        return 'text-xl font-semibold'
+      case 'h4':
+        return 'text-lg font-medium'
+      case 'h5':
+        return 'text-base font-medium'
+      case 'h6':
+        return 'text-sm font-medium'
+      case 'p':
+        return 'text-base leading-relaxed'
+      case 'li':
+        return 'text-base leading-relaxed'
+      case 'ul':
+      case 'ol':
+        return 'space-y-1'
+      case 'blockquote':
+        return 'text-base leading-relaxed italic border-l-4 border-gray-300 pl-4'
+      case 'code':
+        return 'font-mono text-sm bg-gray-100 px-1 py-0.5 rounded'
+      case 'pre':
+        return 'font-mono text-sm bg-gray-100 p-3 rounded overflow-x-auto'
+      case 'em':
+      case 'i':
+        return 'italic'
+      case 'strong':
+      case 'b':
+        return 'font-semibold'
+      default:
+        return 'text-base'
+    }
+  }
+
+  /**
+   * Render list item with proper bullet or number
+   */
+  const renderListItem = (element: DocumentElement, index: number): JSX.Element => {
+    const isOrdered = element.parent_id && 
+      elements.find(e => e.id === element.parent_id)?.tag_name === 'ol'
+    
+    return (
+      <div className="flex items-start gap-2">
+        <span className="text-gray-500 mt-0.5">
+          {isOrdered ? `${index + 1}.` : '•'}
+        </span>
+        <div className="flex-1">
+          {element.content || <span className="text-gray-400 italic">(empty {element.tag_name})</span>}
+        </div>
+      </div>
+    )
+  }
+
+  const renderElement = (element: DocumentElement, depth: number = 0): JSX.Element => {
     const children = elementTree.get(element.id) || []
     const hasChildren = children.length > 0
     // Remove 'syr-' prefix and show only first 8 chars
     const truncatedId = element.id.replace('syr-', '').substring(0, 8)
+    const typographyClasses = getTypographyClasses(element.tag_name)
+
+    // Calculate list item index if this is a list item
+    let listItemIndex = 0
+    if (element.tag_name === 'li' && element.parent_id) {
+      const siblings = elementTree.get(element.parent_id) || []
+      listItemIndex = siblings
+        .filter(s => s.tag_name === 'li')
+        .sort((a, b) => a.position - b.position)
+        .findIndex(s => s.id === element.id)
+    }
 
     return (
-      <div key={element.id} className="border-l-2 border-gray-200 pl-4 ml-2">
+      <div key={element.id} className={depth > 0 ? "border-l-2 border-gray-200 pl-4 ml-2" : ""}>
         <div
           data-element-id={element.id}
           className={`py-2 px-3 rounded cursor-pointer hover:bg-gray-100 ${
@@ -180,13 +251,17 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
           onClick={() => handleElementSelect(element)}
         >
           <div className="flex items-start gap-2">
-            {/* Show full content instead of truncated */}
-            <div className="flex-1">
-              {element.content || <span className="text-gray-400 italic">(empty {element.tag_name})</span>}
+            {/* Show formatted content based on element type */}
+            <div className={`flex-1 ${typographyClasses}`}>
+              {element.tag_name === 'li' ? (
+                renderListItem(element, listItemIndex)
+              ) : (
+                element.content || <span className="text-gray-400 italic">(empty {element.tag_name})</span>
+              )}
             </div>
-            {/* ID with tooltip showing full ID and tag */}
+            {/* ID with tooltip showing full ID and tag - smaller and grey */}
             <span 
-              className="text-xs font-mono text-gray-400 shrink-0" 
+              className="text-xs font-mono text-gray-500 shrink-0" 
               style={{ fontSize: '0.65rem' }}
               title={`${element.id} (${element.tag_name})`}
             >
@@ -195,10 +270,10 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
           </div>
         </div>
         {hasChildren && (
-          <div className="ml-4">
+          <div className={element.tag_name === 'ul' || element.tag_name === 'ol' ? 'ml-6' : 'ml-4'}>
             {children
               .sort((a, b) => a.position - b.position)
-              .map(child => renderElement(child))}
+              .map((child, index) => renderElement(child, depth + 1))}
           </div>
         )}
       </div>
@@ -302,7 +377,7 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
         <h2 className="text-lg font-semibold mb-4">Document</h2>
         {rootElements
           .sort((a, b) => a.position - b.position)
-          .map(element => renderElement(element))}
+          .map(element => renderElement(element, 0))}
       </div>
       {/* Tools pane */}
       <div className="overflow-y-auto p-4 h-full">
