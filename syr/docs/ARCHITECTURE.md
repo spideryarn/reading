@@ -81,3 +81,11 @@ see:
     - Simple rollback if AI generates poor content
     - Multiple enhancement types can compose without conflicts
 
+## Document Mutations System
+
+- USER/AI AGREED: Implement reversible document transformation system for applying/reverting "lenses" like AI-generated headings, paragraph summarisation, content filtering, etc.
+- Start with single mutation mode - only one transformation active at a time, with later expansion to composable mutation stacks
+- Each mutation includes both forward transforms (apply changes) and reverse transforms (undo changes)
+- Document structure is actually modified (headings inserted, content replaced) rather than just changing navigation
+- See detailed design and implementation plan: `planning/250527a_reversible_document_mutations.md`
+

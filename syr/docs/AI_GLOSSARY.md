@@ -4,6 +4,7 @@ The glossary feature extracts key entities from documents using LLM analysis and
 
 ## See also
 
+- `docs/LLM_PROMPT_TEMPLATES.md` - Guide to creating and using LLM prompt templates
 - `planning/250526e_glossary_feature.md` - Implementation planning and progress tracking
 - `lib/prompts/templates/glossary.ts` - Entity schema and prompt configuration  
 - `lib/prompts/templates/glossary.njk` - LLM prompt template for entity extraction

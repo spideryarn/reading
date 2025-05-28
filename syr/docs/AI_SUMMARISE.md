@@ -4,6 +4,7 @@ The AI summarise feature generates hierarchical summaries of document content us
 
 ## See also
 
+- `docs/LLM_PROMPT_TEMPLATES.md` - Guide to creating and using LLM prompt templates
 - `planning/250526a_ToC_hierarchical_summary_tooltips.md` - Implementation of ToC tooltip summaries with hierarchical content extraction
 - `planning/250525b_debugging_summary.md` - Debugging and fixing the content pipeline from HTML to AI summarisation
 - `lib/prompts/templates/summarise.ts` - Schema configuration and granularity options for summarisation prompts

@@ -2,84 +2,88 @@
 
 ## Current State (Early Prototype)
 
-Spideryarn Reading is in very early development. The foundational document parsing and viewing infrastructure is implemented, but core AI features are not yet built.
+Spideryarn Reading is in active development with core AI features now implemented. The application provides AI-assisted document reading with hierarchical summaries, glossaries, and intelligent navigation.
 
 ### What's Working
 
 **Document Infrastructure**
 - HTML document parsing using Cheerio (`lib/services/document-parser.ts`)
-- Decomposition of HTML into structured `DocumentElement` objects with parent/child relationships
-- Two-pane document viewer (`components/document-viewer.tsx`):
-  - Left: Hierarchical tree view of document structure
-  - Right: Element details (tag, content, attributes)
-- Sample documents loaded from `static/examples/` (Chalmers consciousness paper, Rhizome text)
-- Next.js app with basic routing (`app/`, `app/documents/[slug]/`)
+- Document elements with deterministic ID generation using UUID v5
+- Three-column document viewer layout:
+  - Left: Table of Contents with tabs for Original/AI-generated headings
+  - Middle: Document content with element details
+  - Right: Glossary pane with entity extraction
+- Sample documents loaded from `static/examples/` (Chalmers consciousness paper, Rhizome text, The Bitter Lesson)
+- Next.js app with routing (`app/`, `app/documents/[slug]/`)
 
-**Data Model & Database Schema**
-- **3-table Supabase/PostgreSQL schema** (`supabase/migrations/`):
-  - `documents` - Document metadata (title, source_url)
-  - `document_elements` - **Core table** - each HTML element as separate row with parent/child relationships
-  - `summaries` - AI-generated summaries linked to elements at different granularities
-- **Document parsing pipeline**: HTML → Cheerio → `DocumentElement[]` objects
-  - Each HTML tag becomes database row with `parent_id`, `position`, `level`, `content`, `attributes`
-  - Preserves hierarchy and sequential order for reconstruction
-- **Virtual DOM approach**: Document structure as React state, rendered as interactive tree view
-- TypeScript interfaces for `DocumentElement`, `Document`, `Summary` (`lib/types/document.ts`)
+**AI Features (Implemented)**
+- **Hierarchical summaries** - AI-generated summaries at multiple granularities with hover tooltips
+- **Glossary generation** - Entity extraction with categorisation (person, concept, place, etc.)
+- **AI-generated headings** - Semantic document structure generation for better navigation
+- **Prompt template system** - Nunjucks templates with Zod validation (`lib/prompts/templates/`)
+- **Claude API integration** - Connected to Anthropic Claude Sonnet 4
 
-**Completed Architectural Decisions**
-- Next.js + TypeScript + Tailwind CSS
-- **Granular HTML decomposition**: Each element → separate database row with relational hierarchy
-- **3-table schema**: documents, document_elements (core), summaries
-- Virtual DOM approach for frontend state management
-- Supabase/PostgreSQL with Row Level Security policies
-- Frontend-driven queue for background processing (designed, not implemented)
+**Data Model & UI Components**
+- **Document parsing pipeline**: HTML → Cheerio → structured elements with hierarchical relationships
+- **Table of Contents** component with:
+  - Original headings extraction
+  - AI-generated headings in separate tab
+  - Hover tooltips showing AI summaries (using Tippy.js)
+  - Loading states and error handling
+- **Glossary component** with ordered entity display
+- **Loading/error button pattern** with Phosphor icons (documented in `docs/STYLING.md`)
 
+**API Endpoints**
+- `/api/summarise` - Text summarisation with configurable granularity
+- `/api/glossary` - Entity extraction from documents
+- `/api/headings` - AI-powered heading generation
+- `/api/fake_success_delay` & `/api/fake_error` - Test endpoints
 
 ### Development Status
 
 - **Environment**: Local development server (`npm run dev`)
-- **Dependencies**: Core packages installed (Next.js, Cheerio, Supabase client, UUID)
+- **Dependencies**: Core packages installed (Next.js, Cheerio, Supabase client, UUID, Tippy.js, Nunjucks, Zod)
 - **Static Assets**: Sample HTML documents in `static/examples/`
-- **Database**: Supabase project configured, schema migrations ready (`20240101000000_create_documents_schema.sql`), but not connected to app yet
+- **Database**: Supabase project configured with migrations, connection established
+- **Testing**: Console-first approach for new features
 
-The codebase is well-structured for the planned architecture but needs the core AI summarization features to become a functional MVP.
+## Architecture
 
+see `docs/ARCHITECTURE.md` for detailed system architecture
 
-## Future
+### Key Architectural Decisions (Implemented)
+- Next.js + TypeScript + Tailwind CSS
+- Single-row document storage (not decomposed elements) for MVP simplicity
+- Virtual DOM approach for frontend state management
+- On-demand AI processing with user-triggered buttons
+- Caching of AI responses to prevent duplicate API calls
+- Git worktree setup for parallel feature development
 
-### What's Missing (Priority Order)
+## Future Enhancements
 
-**Core MVP Features**
-1. **Hierarchical summaries** - The main value proposition, not yet implemented
-2. **AI integration** - No Claude API integration yet (`lib/services/anthropic.ts` exists but unused)
-3. **Summary generation workflow** - Backend processing queue for AI calls
-4. **Summary display UI** - Separate pane for hierarchical summaries
+### Planned Features (see `planning/*.md` for details)
+1. **Reversible document mutations** - Apply/revert transformations like filters, highlights
+2. **Enhanced glossary** - Click-to-scroll navigation and text highlighting
+3. **Persistent AI content** - Store generated summaries/headings in Supabase
+4. **Document upload** - Allow users to upload their own HTML documents
+5. **User authentication** - Personal document libraries
 
-**Infrastructure Gaps**
-1. **Supabase integration** - Schema ready, client/server setup exists, but no database operations wired up
-2. **Background processing** - Frontend queue for AI tasks not implemented
-3. **Error handling** - Minimal error handling throughout
-4. **Testing** - No tests for new Next.js codebase
-5. **Environment variables** - `.env` setup needed for Supabase connection
+### Infrastructure Improvements
+1. **Background processing** - Move from frontend-driven to proper job queue
+2. **Comprehensive testing** - Unit and integration tests
+3. **Performance optimisation** - Lazy loading for large documents
+4. **Enhanced error handling** - User-friendly error messages
 
-**Secondary Features**
-1. **Auto-generated table of contents**
-2. **Glossary generation**
-3. **Document upload functionality** (currently using static files)
-4. **User authentication**
+### Next Immediate Steps
 
-### Architecture pending
+1. **Complete glossary navigation** - Implement click-to-scroll functionality
+2. **Persist AI content** - Save generated summaries and headings to database
+3. **Implement mutations system** - For reversible document transformations
+4. **Add document upload** - Basic file upload functionality
+5. **Improve loading states** - Better UX for long-running AI operations
 
- **Pending Implementation**
-- AI integration with Claude Sonnet 4
-- Background processing queue
-- Database connectivity
-- Summary generation pipeline
-
-### Next Steps
-
-1. **Connect to Supabase** - Wire up database operations
-2. **Implement basic AI service** - Claude API integration for summaries
-3. **Build summary generation** - Core MVP feature
-4. **Add summary display UI** - Show hierarchical summaries in separate pane
-5. **Implement background queue** - For processing documents with AI
+see also:
+- `docs/ARCHITECTURE.md` - System architecture and design decisions
+- `planning/250527a_reversible_document_mutations.md` - Upcoming mutations system
+- `docs/TABLE_OF_CONTENTS_PANE.md` - ToC implementation details
+- `docs/AI_GLOSSARY.md` - Glossary feature documentation
