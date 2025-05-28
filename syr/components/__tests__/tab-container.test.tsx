@@ -1,6 +1,5 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { TabContainer, Tab } from '../tab-container';
 
 describe('TabContainer', () => {
@@ -51,22 +50,21 @@ describe('TabContainer', () => {
     expect(screen.queryByText('Content for third tab')).not.toBeInTheDocument();
   });
 
-  it('should switch tabs on click', async () => {
-    const user = userEvent.setup();
+  it('should switch tabs on click', () => {
     render(<TabContainer tabs={mockTabs} />);
     
     // Initially first tab is active
     expect(screen.getByText('Content for first tab')).toBeInTheDocument();
     
     // Click on second tab
-    await user.click(screen.getByText('Second Tab'));
+    fireEvent.click(screen.getByText('Second Tab'));
     
     // Second tab content should be visible
     expect(screen.queryByText('Content for first tab')).not.toBeInTheDocument();
     expect(screen.getByText('Content for second tab')).toBeInTheDocument();
     
     // Click on third tab
-    await user.click(screen.getByText('Third Tab'));
+    fireEvent.click(screen.getByText('Third Tab'));
     
     // Third tab content should be visible
     expect(screen.queryByText('Content for second tab')).not.toBeInTheDocument();
@@ -104,7 +102,7 @@ describe('TabContainer', () => {
   it('should handle keyboard navigation (arrow keys)', () => {
     render(<TabContainer tabs={mockTabs} />);
     
-    const tabButtons = screen.getAllByRole('button');
+    const tabButtons = screen.getAllByRole('tab');
     
     // Focus first tab
     tabButtons[0].focus();
@@ -141,8 +139,16 @@ describe('TabContainer', () => {
   it('should have proper ARIA attributes', () => {
     render(<TabContainer tabs={mockTabs} />);
     
-    const nav = screen.getByRole('navigation', { name: 'Tabs' });
-    expect(nav).toBeInTheDocument();
+    const tablist = screen.getByRole('tablist', { name: 'Tabs' });
+    expect(tablist).toBeInTheDocument();
+    
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs).toHaveLength(3);
+    
+    // Check aria-selected attributes
+    expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
+    expect(tabs[1]).toHaveAttribute('aria-selected', 'false');
+    expect(tabs[2]).toHaveAttribute('aria-selected', 'false');
   });
 
   it('should handle invalid defaultTab gracefully', () => {
@@ -179,5 +185,48 @@ describe('TabContainer', () => {
     expect(screen.getByText('Complex Content')).toBeInTheDocument();
     expect(screen.getByText('With multiple elements')).toBeInTheDocument();
     expect(screen.getByText('Interactive button')).toBeInTheDocument();
+  });
+
+  describe('Vertical orientation', () => {
+    it('should render vertical layout when orientation is vertical', () => {
+      const { container } = render(
+        <TabContainer tabs={mockTabs} orientation="vertical" />
+      );
+      
+      // Check for flex-col class on main container (vertical layout now uses flex-col with content below)
+      expect(container.firstChild).toHaveClass('flex', 'flex-col', 'h-full');
+    });
+
+    it('should render horizontal layout by default', () => {
+      const { container } = render(<TabContainer tabs={mockTabs} />);
+      
+      // Check for flex-col class on main container (horizontal layout uses flex-col)
+      expect(container.firstChild).toHaveClass('flex', 'flex-col', 'h-full');
+    });
+
+    it('should maintain tab functionality in vertical orientation', () => {
+      render(<TabContainer tabs={mockTabs} orientation="vertical" />);
+      
+      // Initially first tab is active
+      expect(screen.getByText('Content for first tab')).toBeInTheDocument();
+      
+      // Click on second tab
+      fireEvent.click(screen.getByText('Second Tab'));
+      
+      // Second tab content should be visible
+      expect(screen.queryByText('Content for first tab')).not.toBeInTheDocument();
+      expect(screen.getByText('Content for second tab')).toBeInTheDocument();
+    });
+
+    it('should apply correct styling for vertical tabs', () => {
+      render(<TabContainer tabs={mockTabs} orientation="vertical" />);
+      
+      const firstTabButton = screen.getByText('First Tab');
+      
+      // Vertical tabs should have different active styles (new compact design)
+      expect(firstTabButton.className).toContain('bg-blue-600');
+      expect(firstTabButton.className).toContain('text-white');
+      expect(firstTabButton.className).toContain('shadow-sm');
+    });
   });
 });

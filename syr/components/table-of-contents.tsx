@@ -647,13 +647,12 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
   ]
 
   return (
-    <div className="p-4">
-      <TabContainer 
-        tabs={tabs}
-        defaultTab="original"
-        title="Table of Contents"
-        className="text-sm"
-      />
-    </div>
+    <TabContainer 
+      tabs={tabs}
+      defaultTab="original"
+      title="Table of Contents"
+      orientation="vertical"
+      className="text-sm h-full"
+    />
   )
 }
