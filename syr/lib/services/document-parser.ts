@@ -5,6 +5,14 @@ import type { DocumentElement } from '@/lib/types/document'
 import { assignDeterministicIds, getBodyWithIds } from './deterministicId'
 
 export class DocumentParser {
+  // Define inline elements that should be kept within their parent's text content
+  private static INLINE_ELEMENTS = new Set([
+    'a', 'abbr', 'acronym', 'b', 'bdo', 'big', 'br', 'button', 'cite', 'code',
+    'dfn', 'em', 'i', 'img', 'input', 'kbd', 'label', 'map', 'object', 'q',
+    'samp', 'script', 'select', 'small', 'span', 'strong', 'sub', 'sup',
+    'textarea', 'tt', 'u', 'var'
+  ])
+
   /**
    * Converts HTML to Markdown format for better structured text processing.
    * 
@@ -60,14 +68,27 @@ export class DocumentParser {
         })
       }
 
-      const textContent = $el.contents()
-        .filter(function() {
-          return this.type === 'text'
-        })
-        .text()
-        .trim()
+      // For block elements, extract all text content including inline elements
+      let textContent = ''
+      if (tagName === 'text' || DocumentParser.INLINE_ELEMENTS.has(tagName)) {
+        // For inline elements or text nodes, just get direct text
+        textContent = $el.contents()
+          .filter(function() {
+            return this.type === 'text'
+          })
+          .text()
+          .trim()
+      } else {
+        // For block elements, get all text including from inline children
+        textContent = $el.text().trim()
+      }
 
-      if (textContent || $el.children().length > 0) {
+      // Only get block-level children (skip inline elements as they're included in text)
+      const blockChildren = $el.children().filter((_, child) => {
+        return !DocumentParser.INLINE_ELEMENTS.has(child.name)
+      })
+
+      if (textContent || blockChildren.length > 0) {
         elements.push({
           id,
           document_id: documentId,
@@ -81,7 +102,8 @@ export class DocumentParser {
           updated_at: new Date().toISOString()
         })
 
-        $el.children().each((_, child) => {
+        // Only process block-level children as separate elements
+        blockChildren.each((_, child) => {
           processElement(child, id, level + 1)
         })
       }
