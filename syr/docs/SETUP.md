@@ -68,6 +68,18 @@ https://github.com/spideryarn/reading/
 
    Navigate to e.g. http://localhost:3001/ (or your configured port)
 
+6. **Verify setup:**
+   ```bash
+   # Check for TypeScript errors
+   npm run build
+   
+   # Check for linting issues
+   npm run lint
+   
+   # Run tests
+   npm test
+   ```
+
 ## Git Worktree Development Setup (Optional)
 
 For parallel development on experimental features, you can set up Git worktrees to maintain two separate working directories with different branches running simultaneously.

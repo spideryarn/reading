@@ -10,9 +10,7 @@ see:
 
 ## Project Overview
 
-Spideryarn Reading is an AI-assisted document reading and analysis application, currently in early prototype phase. The main goal is to help humans digest written non-fiction material better through AI-powered features like hierarchical summaries, glossaries, and intelligent navigation.
-
-FYI: the `backup` folder contains the previous, deprecated SvelteKit implementation. You can mostly ignore this.
+Spideryarn Reading is an AI-assisted document reading and analysis application, currently in early prototype phase. The main goal is to help humans digest written non-fiction material better through AI-powered features like AI-generated granular table of contents, chatbot, summaries at multiple granularities, glossary, and intelligent navigation.
 
 
 ## Key Architectural Decisions
@@ -30,31 +28,89 @@ Based on README.md, the following architecture decisions have been made:
 ## Build, testing, and debugging
 
 Next.js local dev server:
-- `npm run dev`
-- The user is already running this in a separate terminal. If you need them to restart it, ask them.
-- You can see the logs for it in `dev.log`.
-- Probably visible at: http://localhost:3001/ (though the port configurable via PORT environment variable in `.env.local`, loaded by dotenv-cli before running npm)
+- `npm run dev` - User is already running this in a separate terminal. If you need them to restart it, ask them.
+- Logs: `dev.log` - Use `tail dev.log` to check recent output
+- URL: http://localhost:3001/ (configurable via PORT in `.env.local`)
 
-Debugging:
-- Gather clues first: have a look at `dev.log` with `tail`, and use `curl` or `Playwright` MCP (for console logs, network requests, screenshots, etc) in a subagent (to avoid filling up the context window).
-- And have a look at the list of evergreen docs in `docs/`, and recent planning/decision docs in `planning/`, to see if there's anything relevant that might help you.
+Type checking and linting:
+- `npm run build` - TypeScript compilation errors
+- `npm run lint` - ESLint code quality/style issues
+- `npm test` - Jest testing (`npm run test:coverage` for coverage)
+
+Debugging resources:
+- Current logs: `tail dev.log`
+- Browser debugging: Playwright MCP (console logs, network requests, screenshots)
+- Test files: `src/lib/*/tests/` and `components/__tests__/`
+- Database: `supabase/migrations/` and `docs/DATABASE_*.md`
+- Architecture: `docs/ARCHITECTURE.md`, `docs/TROUBLESHOOTING.md`
+- Recent decisions: `planning/*.md` docs
 
 
 ## Project Structure
 
-The codebase currently has two main parts:
+**Active Development** (root directory):
+- Core implementation: `app/`, `components/`, `lib/`
+- Documentation: `docs/` (evergreen) and `planning/` (decisions)
+- Database: `supabase/migrations/` and config
 
-1. **Active Development** (root directory):
-   - README.md contains architectural decisions and planning
-   - Most code has been moved to backup/
-
-2. **IGNORE - `obsolete_alternative_version/`** (previous prototype Python implementation, with some nice prompts, e.g. glossary, generate headings)
-3. **IGNORE - `backup/`** (previous prototype SvelteKit implementation, almost nothing of value)
+**IGNORE**:
+- `obsolete_alternative_version/` - deprecated Python version (occasionally useful for prompts)
+- `backup/` - deprecated SvelteKit implementation
 
 
 ## Environment Variables
 
-see `.env.local` (and `.env.example`, though it may not be up-to-date).
+Key variables in `.env.local`:
+- `ANTHROPIC_API_KEY` - Required for AI features
+- `PORT` - Dev server port (default 3001)
+- `AI_MODEL` - default is Claude Sonnet 4, but we usually override to Haiku for development
+- Supabase connection details (see `docs/SETUP.md`)
+
+Template: `.env.example` (may not be current - check `.env.local` for active config)
+
+
+## Context window
+
+Try to use tasks and subagents where appropriate (to avoid filling up the context window), e.g. for encapsulated tasks, curl/Playwright/Puppeteer/other verbose output, Git commits, etc.
+
+
+## Documentation Reference
+
+Available evergreen documentation in `docs/` - here are some of the most useful.
+
+Coding & infrastructure:
+- `docs/CODING_PRINCIPLES.md` - Outlines development principles prioritising simplicity, readability, debugging, and rapid prototyping for early-stage development
+- `docs/ARCHITECTURE.md` - Contains high-level architectural decisions including framework choices, data structures, storage approach, and MVP features
+- `docs/STYLING.md` - CSS and visual styling configuration including theme settings, Phosphor icons usage, and loading/error button patterns
+- `docs/SETUP.md` - Development environment setup guide including Node.js, Supabase, Git worktree configuration, and common commands
+- `docs/SITE_ORGANISATION.md` - Documents the hierarchical, document-centric architecture including application routes, component hierarchy, and navigation patterns. (May be out of date)
+- `docs/TESTING.md` - Testing approach documentation covering Jest with React Testing Library setup, test structure, and current test coverage
+- `docs/UI_INTERFACE.md` - Documents the multi-pane layout with tabbed navigation including four-pane structure, tab system architecture, and scrolling fixes. See related docs below in "AI, features, machinery, interface" section.
+
+Database:
+- `docs/DATABASE_OVERVIEW.md`
+- `docs/DATABASE_MIGRATIONS.md` - Guide for managing database schema changes through Supabase migrations with timestamped SQL files
+- `docs/DATABASE_SCHEMA.md` - Reference for both current (deprecated) schema and target schema showing the transition from element decomposition to single-row storage (VERY MUCH EVOLVING)
+
+AI, features, machinery, interface:
+- `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Comprehensive technical guide for integrating the @assistant-ui/react library into the chatbot interface within the Tools pane
+- `docs/LLM_PROMPT_TEMPLATES.md` - Guide for creating AI/LLM calls using the Nunjucks + Zod template system with type safety and validation
+- `docs/MUTATIONS.md` - Documents the reversible document transformation system for applying/reverting changes like AI-generated headings and content filtering
+- `docs/TABLE_OF_CONTENTS_PANE.md` - Architecture and features of the enhanced ToC system with tabbed interface, AI-generated headings, and tooltip summaries
+- `docs/AI_GLOSSARY.md` - Documents the glossary feature that extracts key entities from documents using LLM analysis and displays them in a dedicated pane
+- `docs/AI_SUMMARISE.md` - Documents the AI summarise feature that generates hierarchical summaries of document content using LLM analysis at multiple granularity levels
+
+Docs, modes, and admin:
+- `docs/GIT_COMMITS.md` - Guidelines for Git commit best practices including batching changes, message format, and handling concurrent changes
+- `docs/PROJECT_STATUS.md` - Current development state overview showing implemented features (AI summaries, glossary, headings) and planned enhancements
+- `docs/SOUNDING_BOARD.md` - Instructions for collaborative discussion mode emphasising asking questions and suggesting alternatives rather than immediate implementation
+- `docs/WRITING_EVERGREEN_DOCS.md` - Guidelines for writing evergreen documentation including structure, cross-references, status indicators, and maintenance practices
+- `docs/WRITING_PLANNING_DOCS.md` - Guide for writing planning/project management documents with file naming conventions, structure, and stage-based action plans
+- `docs/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` - Process for keeping project documentation up-to-date including review steps, update patterns, and quality checklist
+- `docs/UPDATING_CLAUDE_INSTRUCTIONS.md` - Guidelines for maintaining CLAUDE.md to help AI agents operate effectively on the Spideryarn Reading codebase
+
+
+Recent planning decisions & progress tracking of major features: `planning/*.md`
 
 
 ## Style
@@ -64,4 +120,4 @@ Use British spelling.
 
 ## Git
 
-Always follow the instructions in `docs/GIT_COMMITS.md`.
+Follow the instructions in `docs/GIT_COMMITS.md`.
