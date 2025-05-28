@@ -18,6 +18,7 @@ interface Heading {
   id: string
   text: string
   level: number
+  elementId: string  // The syr-* element ID for reliable lookup
 }
 
 interface TableOfContentsProps {
@@ -90,7 +91,12 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
           }
           
           if (text) {
-            extractedHeadings.push({ id, text, level })
+            extractedHeadings.push({ 
+              id, 
+              text, 
+              level,
+              elementId: id  // In fallback case, use the same ID
+            })
           }
         })
         
@@ -116,7 +122,8 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
           .map((el, index) => ({
             id: el.id || `heading-${index}`,
             text: el.content || '',
-            level: parseInt(el.tag_name.substring(1))
+            level: parseInt(el.tag_name.substring(1)),
+            elementId: el.id  // Add the element ID for reliable lookup
           }))
           .filter(h => h.text.length > 0)
         
@@ -161,27 +168,30 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
    * Generate LLM summary for a heading's hierarchical content.
    * Extracts all content belonging to the specified heading section and sends it to the LLM for summarisation.
    * 
-   * @param headingText - The text content of the heading to summarise
+   * @param elementId - The element ID of the heading to summarise
+   * @param headingText - The text content of the heading (for fallback and debugging)
    * @returns Promise resolving to the generated summary or error message
    */
-  const generateHeadingSummary = async (headingText: string): Promise<string> => {
-    // Check cache first
-    const cacheKey = headingText
-    if (contentCache.has(cacheKey)) {
-      return contentCache.get(cacheKey)!
+  const generateHeadingSummary = async (elementId: string, headingText: string): Promise<string> => {
+    // Check cache first - now using element ID as key
+    if (contentCache.has(elementId)) {
+      return contentCache.get(elementId)!
     }
 
-    if (!elements || elements.length === 0) {
+    // Determine which elements to search based on active mutation state
+    const elementsToSearch = (activeMutationType === 'insert-headings' && mutatedDocument) 
+      ? mutatedDocument 
+      : elements
+
+    if (!elementsToSearch || elementsToSearch.length === 0) {
       return "No content available"
     }
 
-    // Find the heading element that matches this text
-    const headingElement = elements.find(element => 
-      element.tag_name.match(/^h[1-6]$/i) && 
-      element.content?.trim() === headingText.trim()
-    )
+    // Find the heading element by ID - much more reliable than text matching
+    const headingElement = elementsToSearch.find(element => element.id === elementId)
 
     if (!headingElement) {
+      console.warn(`Heading element not found for ID: ${elementId}, text: "${headingText}"`)
       return "Heading not found in elements"
     }
 
@@ -191,8 +201,8 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
     // Find all elements that belong to this heading's section
     const sectionElements: DocumentElement[] = []
     
-    for (let i = 0; i < elements.length; i++) {
-      const element = elements[i]
+    for (let i = 0; i < elementsToSearch.length; i++) {
+      const element = elementsToSearch[i]
       
       // Skip elements before this heading
       if (element.position <= headingPosition) continue
@@ -239,8 +249,8 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
 
       const { summary } = await response.json()
       
-      // Cache the result
-      setContentCache(prev => new Map(prev).set(cacheKey, summary))
+      // Cache the result using element ID
+      setContentCache(prev => new Map(prev).set(elementId, summary))
       
       return summary
     } catch (error) {
@@ -250,7 +260,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
       const errorMessage = "⚠️ Unable to generate summary. Please try again later."
       
       // Cache the error message to avoid repeated failed attempts
-      setContentCache(prev => new Map(prev).set(cacheKey, errorMessage))
+      setContentCache(prev => new Map(prev).set(elementId, errorMessage))
       
       return errorMessage
     }
@@ -260,12 +270,12 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
    * Get tooltip content with loading state management.
    * Returns appropriate JSX based on current loading state and cached content.
    * 
-   * @param headingText - The heading text to get content for
+   * @param elementId - The element ID to get content for
    * @returns JSX element containing loading spinner, cached content, or placeholder
    */
-  const getTooltipContent = (headingText: string): JSX.Element => {
-    const isLoading = loadingStates.has(headingText)
-    const cachedContent = contentCache.get(headingText)
+  const getTooltipContent = (elementId: string): JSX.Element => {
+    const isLoading = loadingStates.has(elementId)
+    const cachedContent = contentCache.get(elementId)
     
     if (isLoading) {
       return (
@@ -315,19 +325,20 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
    * Handle tooltip show event to trigger summary generation.
    * Starts async summary generation when tooltip becomes visible.
    * 
-   * @param headingText - The heading text to generate summary for
+   * @param elementId - The element ID to generate summary for
+   * @param headingText - The heading text (kept for backward compatibility during transition)
    */
-  const handleTooltipShow = (headingText: string) => {
-    if (!contentCache.has(headingText) && !loadingStates.has(headingText)) {
+  const handleTooltipShow = (elementId: string, headingText: string) => {
+    if (!contentCache.has(elementId) && !loadingStates.has(elementId)) {
       // Add to loading states
-      setLoadingStates(prev => new Set(prev).add(headingText))
+      setLoadingStates(prev => new Set(prev).add(elementId))
       
       // Start async LLM summary generation
-      generateHeadingSummary(headingText).finally(() => {
+      generateHeadingSummary(elementId, headingText).finally(() => {
         // Remove from loading states
         setLoadingStates(prev => {
           const newSet = new Set(prev)
-          newSet.delete(headingText)
+          newSet.delete(elementId)
           return newSet
         })
       })
@@ -431,7 +442,10 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
       
       if (result.success) {
         // Extract headings from mutation for display
-        const generatedHeadings = extractHeadingsFromMutation(mutation)
+        const generatedHeadings = extractHeadingsFromMutation(mutation).map(h => ({
+          ...h,
+          elementId: h.id  // Ensure elementId is set for AI headings
+        }))
         setAiHeadings(generatedHeadings)
         setCurrentHeadingMutation(mutation)
         setShowHeadings(true)
@@ -461,7 +475,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
         {headings.map((heading) => (
           <Tooltip.Provider key={heading.id} delayDuration={500}>
             <Tooltip.Root onOpenChange={(open) => {
-              if (open) handleTooltipShow(heading.text)
+              if (open) handleTooltipShow(heading.elementId, heading.text)
             }}>
               <Tooltip.Trigger asChild>
                 <div
@@ -483,7 +497,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
                   sideOffset={4}
                   className="z-50 max-w-md"
                 >
-                  {getTooltipContent(heading.text)}
+                  {getTooltipContent(heading.elementId)}
                   <Tooltip.Arrow 
                     className="fill-gray-300" 
                     width={12} 
@@ -538,18 +552,40 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
         ) : aiHeadings.length > 0 ? (
           <nav className="space-y-1">
             {aiHeadings.map((heading) => (
-              <div
-                key={heading.id}
-                className={`${getIndentClass(heading.level)} cursor-pointer hover:bg-green-50 rounded px-2 py-1 transition-colors group`}
-                onClick={() => handleHeadingClick(heading)}
-              >
-                <span className="text-xs text-gray-400 mr-2 group-hover:text-green-600">
-                  H{heading.level}
-                </span>
-                <span className="text-sm text-gray-700 group-hover:text-green-900">
-                  {heading.text}
-                </span>
-              </div>
+              <Tooltip.Provider key={heading.id} delayDuration={500}>
+                <Tooltip.Root onOpenChange={(open) => {
+                  if (open) handleTooltipShow(heading.elementId, heading.text)
+                }}>
+                  <Tooltip.Trigger asChild>
+                    <div
+                      className={`${getIndentClass(heading.level)} cursor-pointer hover:bg-green-50 rounded px-2 py-1 transition-colors group`}
+                      onClick={() => handleHeadingClick(heading)}
+                    >
+                      <span className="text-xs text-gray-400 mr-2 group-hover:text-green-600">
+                        H{heading.level}
+                      </span>
+                      <span className="text-sm text-gray-700 group-hover:text-green-900">
+                        {heading.text}
+                      </span>
+                    </div>
+                  </Tooltip.Trigger>
+                  <Tooltip.Portal>
+                    <Tooltip.Content
+                      side="right"
+                      align="start"
+                      sideOffset={4}
+                      className="z-50 max-w-md"
+                    >
+                      {getTooltipContent(heading.elementId)}
+                      <Tooltip.Arrow 
+                        className="fill-gray-300" 
+                        width={12} 
+                        height={6}
+                      />
+                    </Tooltip.Content>
+                  </Tooltip.Portal>
+                </Tooltip.Root>
+              </Tooltip.Provider>
             ))}
           </nav>
         ) : (
