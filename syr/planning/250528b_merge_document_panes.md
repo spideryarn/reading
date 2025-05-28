@@ -62,31 +62,31 @@ The goal is to merge these two panes into a single, double-wide **Document** pan
 - [x] DONE: Make the merged middle pane wider.
 
 
-### Stage 2: Proper formatting (TODO)
+### Stage 2: Proper formatting (DONE)
 
 **Objective**: Apply appropriate visual formatting to different element types.
 
-- [ ] TODO: Style heading elements (`h1`-`h6`):
+- [x] DONE: Style heading elements (`h1`-`h6`):
   - Use Tailwind's typography scale
   - Apply appropriate font weights
   - Maintain visual hierarchy
 
-- [ ] TODO: Style list elements (`ul`, `ol`, `li`):
+- [x] DONE: Style list elements (`ul`, `ol`, `li`):
   - Proper indentation and bullets/numbers
   - Nested list support
 
-- [ ] TODO: Style paragraph elements:
+- [x] DONE: Style paragraph elements:
   - Appropriate line height and spacing
   - Distinguish from other element types
 
-- [ ] TODO: Update ID display:
+- [x] DONE: Update ID display:
   - Smaller, grey text (`text-xs text-gray-500`)
   - Right-aligned or inline with content
   - Only show suffix after `syr-` prefix
 
-- [ ] TODO: Test visual hierarchy and readability
+- [x] DONE: Test visual hierarchy and readability
 
-- [ ] TODO: Commit: "feat: add proper typography and formatting to Document pane"
+- [x] DONE: Commit: "feat: add proper typography and formatting to Document pane"
 
 ### Stage 3: Expand/collapse functionality (TODO)
 
