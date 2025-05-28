@@ -289,7 +289,7 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
   }
 
   return (
-    <div className="grid grid-cols-3 gap-4 h-screen">
+    <div className="grid grid-cols-3 gap-4 h-full">
       <div className="overflow-y-auto p-4 border-r">
         <h2 className="text-lg font-semibold mb-4">Document Structure</h2>
         {rootElements
@@ -321,7 +321,7 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
           <p className="text-gray-500">Select an element to view details</p>
         )}
       </div>
-      <div className="p-4 h-full">
+      <div className="overflow-y-auto p-4 h-full">
         {renderToolsPane()}
       </div>
     </div>

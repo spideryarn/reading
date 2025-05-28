@@ -25,6 +25,7 @@ interface TableOfContentsProps {
   elements?: DocumentElement[]
   onHeadingClick?: (headingText: string, headingId?: string) => void
   documentId: string
+  markdownContent: string
 }
 
 // Utility to toggle visibility of original (non-AI) headings depending on mutation state
@@ -46,7 +47,7 @@ function toggleOriginalHeadingsVisibility(hide: boolean) {
   })
 }
 
-export function TableOfContents({ content, elements, onHeadingClick, documentId }: TableOfContentsProps) {
+export function TableOfContents({ content, elements, onHeadingClick, documentId, markdownContent }: TableOfContentsProps) {
   const { applyMutation, revertMutation, mutationState, document: mutatedDocument } = useMutation()
   const activeMutationType = useActiveMutationType()
   const [headings, setHeadings] = useState<Heading[]>([])
@@ -57,6 +58,13 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId 
   const [headingsError, setHeadingsError] = useState<string | null>(null)
   const [showHeadings, setShowHeadings] = useState(false)
   const [currentHeadingMutation, setCurrentHeadingMutation] = useState<any>(null)
+  
+  // Summary state
+  const [summary, setSummary] = useState<string>('')
+  const [summaryLoading, setSummaryLoading] = useState(false)
+  const [summaryError, setSummaryError] = useState<string>('')
+  const [showSummaryButton, setShowSummaryButton] = useState(true)
+  const [isSummaryCollapsed, setIsSummaryCollapsed] = useState(false)
 
   useEffect(() => {
     const extractHeadings = () => {
@@ -326,6 +334,35 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId 
     }
   }
 
+  const generateSummary = async () => {
+    try {
+      setSummaryLoading(true)
+      setSummaryError('')
+      setShowSummaryButton(false)
+      
+      const response = await fetch('/api/summarise', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: markdownContent }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate summary')
+      }
+
+      const data = await response.json()
+      setSummary(data.summary)
+    } catch (err) {
+      setSummaryError('Failed to generate summary')
+      setShowSummaryButton(true)
+      console.error('Summary generation error:', err)
+    } finally {
+      setSummaryLoading(false)
+    }
+  }
+
   const handleHeadingClick = (heading: Heading) => {
     if (onHeadingClick) {
       onHeadingClick(heading.text, heading.id)
@@ -522,6 +559,75 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId 
     )
   }
 
+  const renderSummaryTab = () => {
+    if (showSummaryButton) {
+      return (
+        <div className="p-4">
+          <button
+            onClick={generateSummary}
+            className="w-full px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition-colors"
+          >
+            Show summary
+          </button>
+        </div>
+      )
+    }
+
+    if (summaryLoading) {
+      return (
+        <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+          <div className="text-sm text-orange-600">Generating summary...</div>
+        </div>
+      )
+    }
+
+    if (summaryError) {
+      return (
+        <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+          <div className="text-sm text-red-600">{summaryError}</div>
+          <button
+            onClick={() => {
+              setSummaryError('')
+              setShowSummaryButton(true)
+            }}
+            className="mt-2 px-3 py-1 bg-orange-600 text-white text-xs rounded hover:bg-orange-700 transition-colors"
+          >
+            Try again
+          </button>
+        </div>
+      )
+    }
+
+    if (summary) {
+      return (
+        <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-orange-800">Summary</h3>
+            <button
+              onClick={() => setIsSummaryCollapsed(!isSummaryCollapsed)}
+              className="text-orange-600 hover:text-orange-800 transition-colors"
+              aria-label={isSummaryCollapsed ? "Expand summary" : "Collapse summary"}
+            >
+              <svg 
+                className={`w-4 h-4 transition-transform ${isSummaryCollapsed ? '' : 'rotate-180'}`}
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+          {!isSummaryCollapsed && (
+            <p className="text-sm text-orange-700 leading-relaxed">{summary}</p>
+          )}
+        </div>
+      )
+    }
+
+    return null
+  }
+
   const tabs: Tab[] = [
     {
       id: 'original',
@@ -532,6 +638,11 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId 
       id: 'ai-generated', 
       label: 'AI-generated',
       content: renderAiGeneratedTab()
+    },
+    {
+      id: 'summary',
+      label: 'Summary', 
+      content: renderSummaryTab()
     }
   ]
 

@@ -146,7 +146,7 @@ export function AssistantChat({ documentContext }: AssistantChatProps) {
   const runtime = useChatRuntime({ documentContext }); // Use the new hook
 
   return (
-    <div style={{ height: '500px' }} className="flex flex-col">
+    <div className="h-full flex flex-col">
       <AssistantRuntimeProvider runtime={runtime}>
         <Thread />
       </AssistantRuntimeProvider>
