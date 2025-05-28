@@ -178,7 +178,11 @@ describe('AssistantChat', () => {
   it('should render send button with correct styling', () => {
     const { container } = render(<AssistantChat documentContext={mockDocumentContext} />);
     
-    const sendButton = container.querySelector('button');
+    // The send button is inside ComposerPrimitive.Send - it has the PaperPlaneTilt icon
+    // We need to find the button that is a child of the composer section
+    const composerSection = container.querySelector('[class*="border-t"]');
+    const sendButton = composerSection?.querySelector('button');
+    
     expect(sendButton).toBeInTheDocument();
     expect(sendButton?.className).toContain('rounded-lg');
     expect(sendButton?.className).toContain('bg-blue-500');

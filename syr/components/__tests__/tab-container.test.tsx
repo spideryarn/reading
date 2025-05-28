@@ -81,13 +81,13 @@ describe('TabContainer', () => {
     
     // First tab should be active by default
     expect(firstTabButton.className).toContain('border-blue-500 text-blue-600');
-    expect(secondTabButton.className).toContain('border-transparent text-gray-500');
+    expect(secondTabButton.className).toContain('border-transparent text-gray-700');
     
     // Click second tab
     fireEvent.click(secondTabButton);
     
     // Second tab should now be active
-    expect(firstTabButton.className).toContain('border-transparent text-gray-500');
+    expect(firstTabButton.className).toContain('border-transparent text-gray-700');
     expect(secondTabButton.className).toContain('border-blue-500 text-blue-600');
   });
 

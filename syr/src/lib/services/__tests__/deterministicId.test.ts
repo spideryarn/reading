@@ -16,7 +16,10 @@ jest.mock('cheerio', () => ({
       addClass: jest.fn(),
       replaceWith: jest.fn(),
     };
-    return jest.fn(() => mockCheerio);
+    // The loaded cheerio instance itself needs an html method
+    const cheerioInstance = jest.fn(() => mockCheerio);
+    cheerioInstance.html = () => html;
+    return cheerioInstance;
   }),
 }));
 
