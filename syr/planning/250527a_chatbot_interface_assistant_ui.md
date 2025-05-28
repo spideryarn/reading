@@ -160,6 +160,13 @@ Implement a chatbot interface for document analysis using the assistant-ui React
 - assistant-ui handles complex chat interactions while maintaining full styling control
 
 ### Stage 5: Document Context Integration
+
+**IMMEDIATE NEXT STEPS** (Updated after analysis):
+1. Remove `chat-interface.tsx` - single implementation reduces confusion
+2. Focus on real LLM integration (Stage 6) as highest priority
+3. Then refactor components (Stage 5A) for better architecture
+4. Add type safety and error handling improvements (Stage 6A)
+
 - [ ] **Implement document content injection**
   - [x] Document context already extracted via existing `getDocumentContext()` method (10k char limit)
   - [x] Chat API already accepts `documentContext` parameter  
@@ -185,7 +192,49 @@ Implement a chatbot interface for document analysis using the assistant-ui React
 ### Stage: update documentation
 - [x] Update docs - this doc should point to `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md` and vice versa
   - See also: [Assistant-UI Integration Guide](/docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md)
-- [ ] Update that `CHATBOT_ASSISTANT_UI_INTEGRATION.md` - it may not be accurate/up-to-date
+- [x] Update that `CHATBOT_ASSISTANT_UI_INTEGRATION.md` - it may not be accurate/up-to-date
+
+### Stage 5A: Component Architecture Refactoring (NEW)
+
+**Context**: We currently have two chat implementations:
+1. `components/assistant-chat.tsx` - Uses primitive components (ThreadPrimitive, ComposerPrimitive, etc.)
+2. `components/chat-interface.tsx` - Uses high-level components (Thread, Composer, etc.)
+
+**Analysis**:
+- assistant-ui documentation recommends primitive components for maximum customization
+- Primitives pattern aligns with modern React libraries (Radix UI, shadcn/ui)
+- Need to split components for better separation of concerns and testability
+- Web best practices emphasize separating view and non-view logic
+
+**Decision**: Keep primitive components approach and refactor
+- [x] **DECISION MADE**: Use `assistant-chat.tsx` with primitives as primary implementation
+- [ ] **Remove** `chat-interface.tsx` to avoid confusion and maintenance burden
+  - Delete the file from `components/`
+  - No import updates needed as it's not currently used
+
+- [ ] **Refactor** `assistant-chat.tsx` into separate components:
+  - [ ] Create `components/chat/ChatThread.tsx`
+    - Move `Thread` component logic
+    - Handle thread viewport and message display
+    - Include empty state with suggestions
+  - [ ] Create `components/chat/ChatComposer.tsx`
+    - Move `Composer` component logic
+    - Handle input field and send button
+    - Include keyboard event handling
+  - [ ] Create `components/chat/ChatMessage.tsx`
+    - Move `UserMessage` and `AssistantMessage` components
+    - Accept role prop to determine styling
+    - Keep Phosphor icon integration
+  - [ ] Update `components/assistant-chat.tsx`
+    - Import new split components
+    - Keep as main container with runtime provider
+    - Pass documentContext through to child components
+
+- [ ] **Testing**: Verify refactored components work identically
+  - [ ] Test tab switching preserves chat state
+  - [ ] Test message sending and display
+  - [ ] Test empty state suggestions
+  - [ ] Run existing unit tests for `useChatRuntime`
 
 ### Stage 6: Real LLM Integration
 - [ ] **Replace fake API with actual LLM calls**
@@ -211,9 +260,94 @@ Implement a chatbot interface for document analysis using the assistant-ui React
 - Consider implementing streaming responses for better UX (assistant-ui supports this)
 - Look at `lib/prompts/templates/` for existing prompt template patterns
 
+### Stage 6A: Code Quality & Architecture Improvements
+
+- [ ] **Type Safety Improvements**
+  - [ ] Create `lib/types/chat.ts` with shared types:
+    ```typescript
+    export interface ChatMessage {
+      role: 'user' | 'assistant' | 'system';
+      content: string;
+      timestamp?: string;
+      metadata?: Record<string, any>;
+    }
+    
+    export interface ChatRequest {
+      message: string;
+      documentContext: string;
+      conversationId?: string;
+    }
+    
+    export interface ChatResponse {
+      response: string;
+      timestamp: string;
+      error?: string;
+    }
+    ```
+  - [ ] Add Zod schema validation in `/api/chat/route.ts`:
+    ```typescript
+    import { z } from 'zod';
+    
+    const chatRequestSchema = z.object({
+      message: z.string().min(1).max(10000),
+      documentContext: z.string().max(10000),
+      conversationId: z.string().optional()
+    });
+    ```
+  - [ ] Update `useChatRuntime` hook to use shared types
+  - [ ] Ensure API route validates incoming requests
+
+- [ ] **Error Handling Enhancement**
+  - [ ] Update `useChatRuntime` to bubble errors properly:
+    ```typescript
+    // Instead of returning error as message content
+    // Use runtime status or throw for UI to catch
+    if (!res.ok) {
+      const error = new Error(`API Error: ${res.status}`);
+      error.cause = await res.json();
+      throw error;
+    }
+    ```
+  - [ ] Create error boundary component for chat interface
+  - [ ] Add specific error states in UI:
+    - Network errors: "Connection failed. Please check your internet."
+    - API errors: "Service unavailable. Please try again."
+    - Rate limit: "Too many requests. Please wait a moment."
+  - [ ] Add console.error logging with context:
+    ```typescript
+    console.error('[Chat Error]', {
+      error,
+      documentId: documentContext?.substring(0, 50),
+      timestamp: new Date().toISOString()
+    });
+    ```
+
+- [ ] **Performance Optimizations**
+  - [ ] Update `getDocumentContext()` to avoid mid-word truncation:
+    ```typescript
+    // Find last complete sentence within limit
+    const truncated = content.substring(0, 10000);
+    const lastPeriod = truncated.lastIndexOf('.');
+    return lastPeriod > 8000 ? truncated.substring(0, lastPeriod + 1) : truncated;
+    ```
+  - [ ] Add memoization to document context:
+    ```typescript
+    const documentContextCache = new Map<string, string>();
+    
+    const getMemoizedContext = (slug: string, elements: DocumentElement[]) => {
+      const cacheKey = `${slug}-${elements.length}`;
+      if (!documentContextCache.has(cacheKey)) {
+        documentContextCache.set(cacheKey, getDocumentContext(elements));
+      }
+      return documentContextCache.get(cacheKey)!;
+    };
+    ```
+  - [ ] Consider react-window for virtual scrolling if >100 messages
+
 ### Stage 7: Enhanced Features
 - [ ] **Add conversation management**
   - [ ] Implement "Clear conversation" button
+  - [ ] Expose `resetConversation()` method via runtime (per o3)
   - [ ] Add confirmation dialog for conversation reset
   - [ ] Preserve conversation state during tab switches
   - [ ] Test conversation clearing functionality
@@ -244,23 +378,93 @@ Implement a chatbot interface for document analysis using the assistant-ui React
   - [ ] Integration with document annotation system
 
 ### Testing and Quality Assurance
-- [ ] **Write automated tests**
-  - [ ] Create unit tests for TabContainer component
-  - [ ] Add integration tests for chat functionality
-  - [ ] Test document context injection
-  - [ ] Verify error handling scenarios
 
-- [ ] **Performance testing**
-  - [ ] Test with large documents (performance impact)
-  - [ ] Verify memory usage during long conversations
-  - [ ] Check tab switching performance
-  - [ ] Monitor API response times
+- [ ] **Unit Tests**
+  - [ ] Test `TabContainer` component:
+    ```typescript
+    // __tests__/TabContainer.test.tsx
+    describe('TabContainer', () => {
+      it('switches tabs on click');
+      it('maintains active tab state');
+      it('renders correct content for active tab');
+      it('handles keyboard navigation (arrow keys)');
+    });
+    ```
+  - [ ] Enhance `useChatRuntime` tests:
+    - Test abort signal handling
+    - Test error scenarios (network, API errors)
+    - Test message content extraction
+    - Test memoization of callbacks
+  - [ ] Test split chat components (after Stage 5A refactor):
+    - ChatThread: message display, empty state
+    - ChatComposer: input handling, submit
+    - ChatMessage: role-based styling
 
-- [ ] **Accessibility testing**
-  - [ ] Verify keyboard navigation works for tabs and chat
-  - [ ] Test screen reader compatibility
-  - [ ] Check color contrast ratios
-  - [ ] Ensure focus management is correct
+- [ ] **Integration Tests** (React Testing Library + MSW)
+  - [ ] Create `__tests__/assistant-chat.integration.test.tsx`:
+    ```typescript
+    import { render, screen, userEvent } from '@testing-library/react';
+    import { setupServer } from 'msw/node';
+    import { rest } from 'msw';
+    
+    const server = setupServer(
+      rest.post('/api/chat', (req, res, ctx) => {
+        return res(ctx.json({ response: 'Test response' }));
+      })
+    );
+    
+    test('sends message and displays response', async () => {
+      // Render AssistantChat
+      // Type message
+      // Click send
+      // Expect response to appear
+    });
+    ```
+  - [ ] Test error handling with MSW error responses
+  - [ ] Test loading states during API calls
+  - [ ] Test document context inclusion in requests
+
+- [ ] **E2E Tests** (Playwright)
+  - [ ] Create `e2e/chat-assistant.spec.ts`:
+    ```typescript
+    test('chat assistant workflow', async ({ page }) => {
+      // Navigate to document page
+      // Open Tools pane
+      // Switch to Chat tab
+      // Send message
+      // Verify response appears
+      // Test tab switching preserves conversation
+    });
+    ```
+  - [ ] Test conversation persistence during tab switches
+  - [ ] Test error recovery flows
+  - [ ] Test with different document sizes
+
+- [ ] **Performance Testing**
+  - [ ] Create performance benchmark suite:
+    - Measure render time with 0, 50, 100+ messages
+    - Profile memory usage during long conversations
+    - Test document context extraction speed
+  - [ ] Use React DevTools Profiler to identify bottlenecks
+  - [ ] Monitor bundle size impact of assistant-ui
+
+- [ ] **Accessibility Testing**
+  - [ ] Automated tests with jest-axe:
+    ```typescript
+    import { axe } from 'jest-axe';
+    
+    test('chat interface has no accessibility violations', async () => {
+      const { container } = render(<AssistantChat />);
+      const results = await axe(container);
+      expect(results).toHaveNoViolations();
+    });
+    ```
+  - [ ] Manual testing checklist:
+    - Tab navigation through all interactive elements
+    - Screen reader announces messages correctly
+    - Focus visible indicators present
+    - Keyboard shortcuts (Enter to send, Esc to cancel)
+  - [ ] Color contrast validation (WCAG AA compliance)
 
 ### Git Management
 - [ ] **Create feature branch**
@@ -316,86 +520,13 @@ Following existing patterns from:
 - `app/api/summarise/route.ts` for LLM integration
 - `lib/config.ts` for AI model configuration
 
+### Key Implementation Notes
 
-## Appendix – recommendations from another AI (o3) - foundations focus
+**Runtime Adapter Pattern**: The `useLocalRuntime` hook requires a `ChatModelAdapter` with a `run` function. This was the root cause of initial runtime errors. The solution was implemented in `src/lib/hooks/useChatRuntime.ts` which encapsulates the adapter logic.
 
-> NOTE: The items below are immediately actionable.  They include exact file paths, code-diffs and test pointers so any team-member can land the fixes without further clarification.
+**Component Architecture**: Following assistant-ui's composable primitives pattern provides maximum customization while the library handles complex features like auto-scrolling, streaming, and accessibility.
 
-### 1 · Overall architecture
-• Recommend isolating assistant-ui runtime wiring ("controller" logic) from presentational components to keep UI testable/re-usable. E.g. a lightweight `useChatRuntime()` hook that returns `{runtime, sendMessage}` and is consumed by `AssistantChat`.
+**Network Logic**: Keep API calls outside render functions using `useCallback` to prevent re-creation loops and unnecessary re-renders.
 
-### 2 · Runtime integration
-1. **Root-cause** – `useLocalRuntime` expects `adapters.chatModel.run`; without it `LocalThreadRuntimeCore.performRoundtrip()` throws the bind error.
-
-2. **Concrete patch**
-
-   File `components/assistant-chat.tsx` (add just before the `useLocalRuntime` call):
-
-   ```ts diff
-   +  // chatModel adapter satisfies assistant-ui runtime
-   +  const chatModelAdapter = useCallback(async ({ messages }) => {
-   +    const lastUserMessage = messages.at(-1);
-   +    const res = await fetch('/api/chat', {
-   +      method: 'POST',
-   +      headers: { 'Content-Type': 'application/json' },
-   +      body: JSON.stringify({
-   +        message: lastUserMessage.content,
-   +        documentContext,
-   +      }),
-   +    });
-   +    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-   +    const { response } = await res.json();
-   +    return { role: 'assistant' as const, content: response };
-   +  }, [documentContext]);
-
-   -  const runtime = useLocalRuntime({
-   -    initialMessages: [],
-   -    onNew: handleNewMessage
-   -  });
-   +  const runtime = useLocalRuntime({
-   +    initialMessages: [],
-   +    adapters: { chatModel: { run: chatModelAdapter } },
-   +  });
-   ```
-
-3. **Optional thin hook** – create `src/lib/hooks/useChatRuntime.ts` that encapsulates the adapter wiring and returns `{runtime}`.  UI then just consumes the hook.
-
-4. **After patch** – restart `npm run dev`, open the Chat tab, send a prompt → no console stack-trace.
-
-5. **Keep network logic outside render** to avoid adapter re-creation loops (the callback is memoised).
-
-### 3 · State & context
-• Good use of assistant-ui's built-in context providers; try to keep custom React context layers thin to avoid prop-drilling duplication.  
-• Current chat state lives entirely in memory—fine for MVP. Expose a `resetConversation()` method via runtime to allow other components (e.g. a "Clear" button) without reaching into internals.
-
-### 4 · Component boundaries
-• `TabContainer` abstraction looks solid; verify keyboard focus management with automated tests.  
-• Split `AssistantChat` into: `ChatThread`, `ChatComposer`, `ChatMessage` for clearer responsibilities and to ease future streaming work.
-
-### 5 · Type safety & API surfaces
-• Define a shared `ChatMessage` union type `{ role: 'user' | 'assistant' | 'system'; content: string }` in `lib/types` and use it across API route, runtime adapter, and UI.  
-• Add Zod (or similar) schema validation on the `/api/chat` request/response to catch shape mismatches early.
-
-### 6 · Error handling
-• Bubble lower-level errors (network, 5xx) up through runtime `status` so UI can show deterministic states instead of generic catch-all messages.  
-• Log unexpected errors with `console.error` **and** send to your monitoring (Sentry/Loki) for post-mortem.
-
-### 7 · Performance considerations
-• `getDocumentContext()` currently slices raw text at 10 k chars. Consider pre-tokenising to avoid mid-word truncation and keep token count predictable.  
-• Memoise expensive context construction per document slug to avoid recomputation on every message.
-
-### 8 · Testing strategy (foundations)
-• Unit: TabContainer tab switching, `useChatRuntime` hook, adapter error paths.  
-• Integration: RTL + MSW – render `AssistantChat`, mock `/api/chat`, type "ping", expect "pong" appears.  
-• E2E: Playwright test that opens Tools → Chat, sends a message, sees mocked reply.
-
-### 9 · Documentation hygiene
-• Cross-link this planning doc with `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md` and vice-versa.  
-• Ensure docs mention the required `chatModel` adapter so newcomers avoid the runtime error.
-
-### 10 · Next concrete steps
-1. Apply the patch above (runtime adapter).  
-2. Extract `useChatRuntime` hook (optional but recommended).  
-3. Add unit & integration tests as per §8.  
-4. Cross-link docs.
+**State Management**: Chat state lives in memory via assistant-ui's runtime. For conversation clearing, expose methods through the runtime rather than manipulating state directly.
 
