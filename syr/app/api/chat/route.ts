@@ -13,6 +13,7 @@ const anthropic = new Anthropic({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+    // Note: 'body' is only accessible within this try block scope
     
     // Validate input
     const validationResult = chatPromptInputSchema.safeParse(body)
@@ -49,17 +50,14 @@ export async function POST(request: NextRequest) {
     
   } catch (error) {
     // Enhanced error logging with full context
+    // Note: 'body' variable is not accessible here - it's scoped to the try block
     const errorDetails = {
       timestamp: new Date().toISOString(),
       error: error instanceof Error ? {
         name: error.name,
         message: error.message,
         stack: error.stack
-      } : error,
-      context: {
-        messageLength: body.message?.length,
-        hasDocumentContext: !!body.documentContext
-      }
+      } : error
     }
     
     console.error('[Chat API] Error occurred:', errorDetails)

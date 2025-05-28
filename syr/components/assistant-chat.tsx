@@ -9,7 +9,7 @@ import {
   // type ChatModelAdapter // No longer used directly
 } from "@assistant-ui/react";
 // import { useCallback } from 'react'; // No longer used directly
-import { User, Robot, PaperPlaneTilt } from '@phosphor-icons/react';
+import { User, Robot, PaperPlaneTilt, CircleNotch } from '@phosphor-icons/react';
 import { useChatRuntime } from '@/src/lib/hooks/useChatRuntime'; // Import the new hook
 
 interface AssistantChatProps {
@@ -44,7 +44,26 @@ const AssistantMessage = () => (
   </MessagePrimitive.Root>
 );
 
-// Composer component
+// Loading message component for when assistant is thinking
+const LoadingMessage = () => (
+  <MessagePrimitive.Root>
+    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-600 flex items-center justify-center">
+      <Robot size={14} weight="bold" className="text-white" />
+    </div>
+    <div className="flex-1">
+      <div className="flex items-center gap-2 text-gray-500 py-2">
+        <CircleNotch 
+          size={16} 
+          className="animate-spin" 
+          weight="bold"
+        />
+        <span className="text-sm">Thinking...</span>
+      </div>
+    </div>
+  </MessagePrimitive.Root>
+);
+
+// Composer component with loading states
 const Composer = () => (
   <ComposerPrimitive.Root className="flex items-center gap-2 p-4 border-t border-gray-200">
     <ComposerPrimitive.Input 
@@ -52,11 +71,20 @@ const Composer = () => (
       placeholder="Ask about this document..."
       rows={1}
     />
-    <ComposerPrimitive.Send asChild>
-      <button className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
-        <PaperPlaneTilt size={16} weight="bold" />
-      </button>
-    </ComposerPrimitive.Send>
+    <ThreadPrimitive.If running={false}>
+      <ComposerPrimitive.Send asChild>
+        <button className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
+          <PaperPlaneTilt size={16} weight="bold" />
+        </button>
+      </ComposerPrimitive.Send>
+    </ThreadPrimitive.If>
+    <ThreadPrimitive.If running>
+      <ComposerPrimitive.Cancel asChild>
+        <button className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-500 text-white hover:bg-gray-600 transition-colors">
+          <CircleNotch size={16} weight="bold" className="animate-spin" />
+        </button>
+      </ComposerPrimitive.Cancel>
+    </ThreadPrimitive.If>
   </ComposerPrimitive.Root>
 );
 
@@ -103,6 +131,8 @@ function Thread() {
           components={{
             UserMessage,
             AssistantMessage
+            // Note: Each component must be a React component function, not an object
+            // Avoid object spreading here as it can create invalid React elements
           }}
         />
       </ThreadPrimitive.Viewport>
