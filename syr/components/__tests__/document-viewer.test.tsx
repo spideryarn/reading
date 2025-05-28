@@ -240,11 +240,15 @@ describe('DocumentViewer', () => {
     });
   });
 
-  it('should maintain two-column layout', () => {
+  it('should maintain grid layout with wider document pane', () => {
     const { container } = render(<DocumentViewer elements={mockElements} />);
     
-    const gridContainer = container.querySelector('.grid.grid-cols-2');
+    const gridContainer = container.querySelector('.grid.grid-cols-3');
     expect(gridContainer).toBeInTheDocument();
+    
+    // Check that document pane spans 2 columns
+    const documentPane = screen.getByText('Document').parentElement;
+    expect(documentPane).toHaveClass('col-span-2');
   });
 
   it('should have scrollable panes', () => {
