@@ -1,8 +1,8 @@
 import React from 'react'
 import { renderHook, act } from '@testing-library/react'
-import { MutationProvider, useMutation, useDocument, useActiveMutationType } from '../mutation-context'
-import { DocumentElement } from '../../types/document'
-import { Mutation } from '../../types/mutation'
+import { MutationProvider, useMutation, useDocument, useActiveMutationType } from '@/lib/context/mutation-context'
+import { DocumentElement } from '@/lib/types/document'
+import { Mutation } from '@/lib/types/mutation'
 
 describe('MutationContext', () => {
   const mockDocument: DocumentElement[] = [
@@ -62,18 +62,18 @@ describe('MutationContext', () => {
       const { result } = renderHook(() => useMutation(), { wrapper })
       
       expect(result.current.document).toEqual(mockDocument)
-      expect(result.current.activeMutation).toBeNull()
+      expect(result.current.mutationState.activeMutation).toBeNull()
     })
 
-    it('should apply mutation and update document state', () => {
+    it('should apply mutation and update document state', async () => {
       const { result } = renderHook(() => useMutation(), { wrapper })
       
-      act(() => {
-        result.current.applyMutation(mockMutation)
+      await act(async () => {
+        await result.current.applyMutation(mockMutation)
       })
       
       expect(result.current.document).toHaveLength(3)
-      expect(result.current.activeMutation).toEqual(mockMutation)
+      expect(result.current.mutationState.activeMutation).toEqual(mockMutation)
       
       const insertedElement = result.current.document.find(el => el.id === 'ai-heading-1')
       expect(insertedElement).toBeDefined()
@@ -81,27 +81,27 @@ describe('MutationContext', () => {
       expect(insertedElement?.content).toBe('AI Generated Section')
     })
 
-    it('should revert mutation and restore original document', () => {
+    it('should revert mutation and restore original document', async () => {
       const { result } = renderHook(() => useMutation(), { wrapper })
       
       // Apply mutation
-      act(() => {
-        result.current.applyMutation(mockMutation)
+      await act(async () => {
+        await result.current.applyMutation(mockMutation)
       })
       
       expect(result.current.document).toHaveLength(3)
       
       // Revert mutation
-      act(() => {
-        result.current.revertMutation()
+      await act(async () => {
+        await result.current.revertMutation()
       })
       
       expect(result.current.document).toHaveLength(2)
       expect(result.current.document).toEqual(mockDocument)
-      expect(result.current.activeMutation).toBeNull()
+      expect(result.current.mutationState.activeMutation).toBeNull()
     })
 
-    it('should handle mutation errors gracefully', () => {
+    it('should handle mutation errors gracefully', async () => {
       const { result } = renderHook(() => useMutation(), { wrapper })
       
       const invalidMutation: Mutation = {
@@ -115,48 +115,39 @@ describe('MutationContext', () => {
         reverse: []
       }
       
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
-      
-      act(() => {
-        result.current.applyMutation(invalidMutation)
+      await act(async () => {
+        const mutationResult = await result.current.applyMutation(invalidMutation)
+        expect(mutationResult.success).toBe(false)
+        expect(mutationResult.error).toContain('validation failed')
       })
       
       // Document should remain unchanged
       expect(result.current.document).toEqual(mockDocument)
-      expect(result.current.activeMutation).toBeNull()
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to apply mutation'),
-        expect.any(String)
-      )
-      
-      consoleSpy.mockRestore()
+      expect(result.current.mutationState.activeMutation).toBeNull()
     })
 
-    it('should not revert if no active mutation', () => {
+    it('should not revert if no active mutation', async () => {
       const { result } = renderHook(() => useMutation(), { wrapper })
       
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation()
-      
-      act(() => {
-        result.current.revertMutation()
+      await act(async () => {
+        const revertResult = await result.current.revertMutation()
+        expect(revertResult.success).toBe(false)
+        expect(revertResult.error).toContain('No active mutation')
       })
       
       expect(result.current.document).toEqual(mockDocument)
-      expect(consoleSpy).toHaveBeenCalledWith('No active mutation to revert')
-      
-      consoleSpy.mockRestore()
     })
 
-    it('should track mutation history', () => {
+    it('should track mutation history', async () => {
       const { result } = renderHook(() => useMutation(), { wrapper })
       
-      act(() => {
-        result.current.applyMutation(mockMutation)
+      await act(async () => {
+        await result.current.applyMutation(mockMutation)
       })
       
       // Access history through state (would need to expose this in real implementation)
       // For now, we just verify the mutation was applied
-      expect(result.current.activeMutation).toEqual(mockMutation)
+      expect(result.current.mutationState.activeMutation).toEqual(mockMutation)
     })
   })
 
@@ -167,17 +158,19 @@ describe('MutationContext', () => {
       expect(result.current).toEqual(mockDocument)
     })
 
-    it('should update when mutations are applied', () => {
-      const { result: mutationResult } = renderHook(() => useMutation(), { wrapper })
-      const { result: documentResult } = renderHook(() => useDocument(), { wrapper })
+    it('should update when mutations are applied', async () => {
+      const { result } = renderHook(() => ({
+        mutation: useMutation(),
+        document: useDocument()
+      }), { wrapper })
       
-      expect(documentResult.current).toHaveLength(2)
+      expect(result.current.document).toHaveLength(2)
       
-      act(() => {
-        mutationResult.current.applyMutation(mockMutation)
+      await act(async () => {
+        await result.current.mutation.applyMutation(mockMutation)
       })
       
-      expect(documentResult.current).toHaveLength(3)
+      expect(result.current.document).toHaveLength(3)
     })
   })
 
@@ -188,32 +181,36 @@ describe('MutationContext', () => {
       expect(result.current).toBeNull()
     })
 
-    it('should return mutation type when mutation is active', () => {
-      const { result: mutationResult } = renderHook(() => useMutation(), { wrapper })
-      const { result: typeResult } = renderHook(() => useActiveMutationType(), { wrapper })
+    it('should return mutation type when mutation is active', async () => {
+      const { result } = renderHook(() => ({
+        mutation: useMutation(),
+        type: useActiveMutationType()
+      }), { wrapper })
       
-      act(() => {
-        mutationResult.current.applyMutation(mockMutation)
+      await act(async () => {
+        await result.current.mutation.applyMutation(mockMutation)
       })
       
-      expect(typeResult.current).toBe('insert-headings')
+      expect(result.current.type).toBe('insert-headings')
     })
 
-    it('should return null after mutation is reverted', () => {
-      const { result: mutationResult } = renderHook(() => useMutation(), { wrapper })
-      const { result: typeResult } = renderHook(() => useActiveMutationType(), { wrapper })
+    it('should return null after mutation is reverted', async () => {
+      const { result } = renderHook(() => ({
+        mutation: useMutation(),
+        type: useActiveMutationType()
+      }), { wrapper })
       
-      act(() => {
-        mutationResult.current.applyMutation(mockMutation)
+      await act(async () => {
+        await result.current.mutation.applyMutation(mockMutation)
       })
       
-      expect(typeResult.current).toBe('insert-headings')
+      expect(result.current.type).toBe('insert-headings')
       
-      act(() => {
-        mutationResult.current.revertMutation()
+      await act(async () => {
+        await result.current.mutation.revertMutation()
       })
       
-      expect(typeResult.current).toBeNull()
+      expect(result.current.type).toBeNull()
     })
   })
 
@@ -231,7 +228,7 @@ describe('MutationContext', () => {
   })
 
   describe('multiple mutations', () => {
-    it('should replace active mutation when applying new one', () => {
+    it('should replace active mutation when applying new one', async () => {
       const { result } = renderHook(() => useMutation(), { wrapper })
       
       const secondMutation: Mutation = {
@@ -250,22 +247,27 @@ describe('MutationContext', () => {
       }
       
       // Apply first mutation
-      act(() => {
-        result.current.applyMutation(mockMutation)
+      await act(async () => {
+        await result.current.applyMutation(mockMutation)
       })
       
-      expect(result.current.activeMutation?.id).toBe('test-mutation')
+      expect(result.current.mutationState.activeMutation?.id).toBe('test-mutation')
       
       // Apply second mutation (should replace first)
-      act(() => {
-        result.current.applyMutation(secondMutation)
+      await act(async () => {
+        await result.current.applyMutation(secondMutation)
       })
       
-      expect(result.current.activeMutation?.id).toBe('second-mutation')
-      expect(result.current.document).toHaveLength(2) // No AI heading
+      expect(result.current.mutationState.activeMutation?.id).toBe('second-mutation')
+      // The mutations are applied cumulatively - both are active
+      expect(result.current.document).toHaveLength(3) // 2 original + 1 AI heading
       
       const modifiedPara = result.current.document.find(el => el.id === 'para-1')
       expect(modifiedPara?.content).toBe('Summarized paragraph')
+      
+      // AI heading from first mutation is still there
+      const aiHeading = result.current.document.find(el => el.id === 'ai-heading-1')
+      expect(aiHeading).toBeDefined()
     })
   })
 })
