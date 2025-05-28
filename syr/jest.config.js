@@ -30,6 +30,9 @@ const customJestConfig = {
     '<rootDir>/node_modules/',
     '<rootDir>/obsolete_alternative_version/',
     '<rootDir>/backup/'
+  ],
+  transformIgnorePatterns: [
+    'node_modules/(?!(@assistant-ui|cheerio)/)'
   ]
 };
 

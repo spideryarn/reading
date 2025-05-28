@@ -869,12 +869,7 @@ As of Stage 4 completion, the Spideryarn Reading application has successfully in
    - Supports abort signals for request cancellation
    - Returns typed content following assistant-ui's expected format
 
-3. **`components/chat-interface.tsx`** - Alternative implementation using high-level components
-   - Uses `Thread`, `ThreadWelcome`, `ThreadMessages`, `ThreadViewport`, and `Composer`
-   - Simpler API with generator function for streaming support
-   - Shows document context size indicator
-
-4. **`components/simple-chat.tsx`** - Temporary implementation for testing
+3. **`components/simple-chat.tsx`** - Temporary implementation for testing
    - Basic chat UI without assistant-ui for comparison
    - Will be removed once assistant-ui integration is finalized
 
