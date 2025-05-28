@@ -6,6 +6,7 @@ This document describes the testing approach for the Spideryarn Reading project.
 
 - `src/lib/hooks/__tests__/` - Jest test files for React hooks
 - `src/lib/services/__tests__/` - Jest test files for services
+- `tests/test-mutation-engine.ts` - legacy standalone test runner
 - `docs/ARCHITECTURE.md` - for understanding the components being tested
 - `docs/CODING_PRINCIPLES.md` - for testing philosophy and approach
 
@@ -30,6 +31,12 @@ npm run test:coverage
 ```
 
 Prefer to use a subagent to run tests (to avoid overloading the context window).
+
+For legacy standalone tests:
+
+```bash
+npx tsx tests/test-mutation-engine.ts
+```
 
 ### Test Structure
 
@@ -92,5 +99,6 @@ Jest is configured in `jest.config.js` with:
 Current test coverage includes:
 - `src/lib/hooks/__tests__/useChatRuntime.test.ts` - Chat runtime hook testing
 - `src/lib/services/__tests__/deterministicId.test.ts` - Deterministic ID generation
+- `tests/test-mutation-engine.ts` - Legacy standalone mutation engine tests
 
 Additional tests should be added as new features are developed.

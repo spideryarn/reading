@@ -87,5 +87,7 @@ see:
 - Start with single mutation mode - only one transformation active at a time, with later expansion to composable mutation stacks
 - Each mutation includes both forward transforms (apply changes) and reverse transforms (undo changes)
 - Document structure is actually modified (headings inserted, content replaced) rather than just changing navigation
+- **Implementation Status**: Core mutation engine complete with atomic operations, comprehensive validation, and debug utilities. AI headings integration working with reliable scroll-to-heading functionality.
 - See detailed design and implementation plan: `planning/250527a_reversible_document_mutations.md`
+- See implementation documentation: `docs/MUTATIONS.md`
 

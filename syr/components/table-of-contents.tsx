@@ -3,12 +3,15 @@
 // Table of Contents component that extracts headings and provides navigation
 // See docs/TABLE_OF_CONTENTS_PANE.md for architecture and usage patterns
 // See docs/AI_SUMMARISE.md for tooltip summarisation feature details
+// See docs/MUTATIONS.md for document mutation system
 
 import { useEffect, useState } from 'react'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { Spinner, ExclamationMark, CircleNotch, Warning } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import type { GranularityKey } from '@/lib/prompts/templates/summarise'
+import { useMutation, useActiveMutationType } from '@/lib/context/mutation-context'
+import { generateHeadingMutation, extractHeadingsFromMutation } from '@/lib/services/heading-mutation-generator'
 import { TabContainer, type Tab } from './tab-container'
 
 interface Heading {
@@ -20,10 +23,32 @@ interface Heading {
 interface TableOfContentsProps {
   content: string
   elements?: DocumentElement[]
-  onHeadingClick?: (headingText: string) => void
+  onHeadingClick?: (headingText: string, headingId?: string) => void
+  documentId: string
 }
 
-export function TableOfContents({ content, elements, onHeadingClick }: TableOfContentsProps) {
+// Utility to toggle visibility of original (non-AI) headings depending on mutation state
+function toggleOriginalHeadingsVisibility(hide: boolean) {
+  if (typeof document === 'undefined') return
+
+  const selector = 'h1:not([data-ai-generated="true"]), h2:not([data-ai-generated="true"]), h3:not([data-ai-generated="true"]), h4:not([data-ai-generated="true"]), h5:not([data-ai-generated="true"]), h6:not([data-ai-generated="true"])'
+  const originalHeadings = Array.from(document.querySelectorAll(selector)) as HTMLElement[]
+
+  originalHeadings.forEach(el => {
+    if (hide) {
+      el.dataset.originalHeadingHidden = 'true'
+      el.style.display = 'none'
+    } else if (el.dataset.originalHeadingHidden === 'true') {
+      // Restore only if we previously hid it
+      el.style.display = ''
+      delete el.dataset.originalHeadingHidden
+    }
+  })
+}
+
+export function TableOfContents({ content, elements, onHeadingClick, documentId }: TableOfContentsProps) {
+  const { applyMutation, revertMutation, mutationState, document: mutatedDocument } = useMutation()
+  const activeMutationType = useActiveMutationType()
   const [headings, setHeadings] = useState<Heading[]>([])
   const [loadingStates, setLoadingStates] = useState<Set<string>>(new Set())
   const [contentCache, setContentCache] = useState<Map<string, string>>(new Map())
@@ -31,37 +56,75 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
   const [isLoadingHeadings, setIsLoadingHeadings] = useState(false)
   const [headingsError, setHeadingsError] = useState<string | null>(null)
   const [showHeadings, setShowHeadings] = useState(false)
+  const [currentHeadingMutation, setCurrentHeadingMutation] = useState<any>(null)
 
   useEffect(() => {
     const extractHeadings = () => {
-      const parser = new DOMParser()
-      const doc = parser.parseFromString(content, 'text/html')
-      const headingElements = doc.querySelectorAll('h1, h2, h3, h4, h5, h6')
+      // Use mutated document if available and AI headings are active
+      const elementsToUse = (activeMutationType === 'insert-headings' && mutatedDocument) ? mutatedDocument : elements
       
-      const extractedHeadings: Heading[] = []
-      
-      headingElements.forEach((element, index) => {
-        const level = parseInt(element.tagName.substring(1))
-        const text = element.textContent?.trim() || ''
+      if (!elementsToUse) {
+        // Fallback to parsing HTML content if no elements available
+        const parser = new DOMParser()
+        const doc = parser.parseFromString(content, 'text/html')
+        const headingElements = doc.querySelectorAll('h1, h2, h3, h4, h5, h6')
         
-        // Generate an id if the heading doesn't have one
-        let id = element.id
-        if (!id) {
-          id = `heading-${index}-${text.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
-        }
+        const extractedHeadings: Heading[] = []
         
-        if (text) {
-          extractedHeadings.push({ id, text, level })
-        }
-      })
-      
-      setHeadings(extractedHeadings)
+        headingElements.forEach((element, index) => {
+          const level = parseInt(element.tagName.substring(1))
+          const text = element.textContent?.trim() || ''
+          
+          // Generate an id if the heading doesn't have one
+          let id = element.id
+          if (!id) {
+            id = `heading-${index}-${text.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+          }
+          
+          if (text) {
+            extractedHeadings.push({ id, text, level })
+          }
+        })
+        
+        setHeadings(extractedHeadings)
+      } else {
+        // Extract headings from document elements
+        const extractedHeadings: Heading[] = elementsToUse
+          .filter(el => {
+            // Only include heading elements
+            if (!el.tag_name.match(/^h[1-6]$/i)) return false
+            
+            // Filter based on AI heading state
+            const isAiGenerated = el.attributes?.['data-ai-generated'] === 'true'
+            
+            if (activeMutationType === 'insert-headings') {
+              // When AI headings are active, show only AI-generated headings
+              return isAiGenerated
+            } else {
+              // When AI headings are NOT active, show only original headings
+              return !isAiGenerated
+            }
+          })
+          .map((el, index) => ({
+            id: el.id || `heading-${index}`,
+            text: el.content || '',
+            level: parseInt(el.tag_name.substring(1))
+          }))
+          .filter(h => h.text.length > 0)
+        
+        setHeadings(extractedHeadings)
+      }
     }
 
-    if (content) {
+    if (content || elements || mutatedDocument) {
       extractHeadings()
     }
-  }, [content])
+  }, [content, elements, mutatedDocument, activeMutationType])
+
+  // Effect: hide or show original headings depending on active mutation
+  useEffect(() => {
+    toggleOriginalHeadingsVisibility(activeMutationType === 'insert-headings')
+  }, [activeMutationType])
 
   if (headings.length === 0) {
     return (
@@ -265,12 +328,14 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
 
   const handleHeadingClick = (heading: Heading) => {
     if (onHeadingClick) {
-      onHeadingClick(heading.text)
+      onHeadingClick(heading.text, heading.id)
     } else {
       // Fallback to DOM scrolling if no callback provided
       const element = document.getElementById(heading.id)
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      } else {
+        console.warn(`Element with id "${heading.id}" not found in DOM`)
       }
     }
   }
@@ -280,13 +345,34 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
     setHeadingsError(null)
     
     try {
+      // Reconstruct HTML from elements with proper IDs
+      let htmlWithIds = ''
+      if (elements && elements.length > 0) {
+        // Build HTML from elements so it has the correct IDs
+        htmlWithIds = elements.map(el => {
+          const attrs = Object.entries(el.attributes)
+            .map(([key, value]) => `${key}="${value}"`)
+            .join(' ')
+          const attrString = attrs ? ` ${attrs}` : ''
+          
+          if (el.content) {
+            return `<${el.tag_name} id="${el.id}"${attrString}>${el.content}</${el.tag_name}>`
+          } else {
+            return `<${el.tag_name} id="${el.id}"${attrString} />`
+          }
+        }).join('\n')
+      } else {
+        // Fallback to original content if no elements
+        htmlWithIds = content
+      }
+      
       const response = await fetch('/api/headings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          html_content: content
+          html_content: htmlWithIds
         }),
       })
 
@@ -297,15 +383,24 @@ export function TableOfContents({ content, elements, onHeadingClick }: TableOfCo
       const data = await response.json()
       console.log('Generate headings response:', data)
       
-      // Convert API response to Heading format
-      const generatedHeadings: Heading[] = data.headings.map((heading: any, index: number) => ({
-        id: heading.id_of_after || `ai-heading-${index}`,
-        text: heading.html.replace(/<\/?h[1-6][^>]*>/gi, ''), // Extract text from HTML
-        level: parseInt(heading.html.match(/<h([1-6])/i)?.[1] || '1') // Extract level from HTML
-      }))
+      // Generate mutation from API response
+      const mutation = generateHeadingMutation({
+        headings: data.headings,
+        documentId: documentId
+      })
       
-      setAiHeadings(generatedHeadings)
-      setShowHeadings(true)
+      // Apply the mutation to insert headings into document
+      const result = await applyMutation(mutation)
+      
+      if (result.success) {
+        // Extract headings from mutation for display
+        const generatedHeadings = extractHeadingsFromMutation(mutation)
+        setAiHeadings(generatedHeadings)
+        setCurrentHeadingMutation(mutation)
+        setShowHeadings(true)
+      } else {
+        throw new Error(result.error || 'Failed to apply mutation')
+      }
     } catch (error) {
       console.error('Error generating headings:', error)
       setHeadingsError(error instanceof Error ? error.message : 'Failed to generate headings')

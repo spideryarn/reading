@@ -1,5 +1,6 @@
 import { v5 as uuidv5 } from 'uuid';
-import { load } from 'cheerio';
+import { load, type CheerioAPI } from 'cheerio';
+import type { Element } from 'domhandler';
 
 // Fixed namespace for Spideryarn Reading app
 const NAMESPACE = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
@@ -9,8 +10,8 @@ const NAMESPACE = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
  * based on its position, tag, attributes, and content
  */
 function generateElementId(
-  element: cheerio.Element,
-  $: cheerio.CheerioAPI,
+  element: Element,
+  $: CheerioAPI,
   index: number,
   parentPath: string = ''
 ): string {
@@ -51,15 +52,15 @@ function generateElementId(
  * assigning deterministic IDs
  */
 function processElement(
-  element: cheerio.Element,
-  $: cheerio.CheerioAPI,
+  element: Element,
+  $: CheerioAPI,
   parentPath: string = ''
 ): void {
   if (element.type !== 'tag') return;
   
   const children = $(element).children().toArray();
   
-  children.forEach((child, index) => {
+  children.forEach((child: Element, index: number) => {
     if (child.type !== 'tag') return;
     
     const id = generateElementId(child, $, index, parentPath);
@@ -80,7 +81,6 @@ export function assignDeterministicIds(html: string): string {
   // Load HTML with Cheerio (automatically handles malformed HTML)
   const $ = load(html, {
     xml: false, // Use HTML mode for better malformed HTML handling
-    decodeEntities: true
   });
   
   // Process all elements in body
@@ -98,8 +98,7 @@ export function assignDeterministicIds(html: string): string {
  */
 export function getBodyWithIds(html: string): string {
   const $ = load(html, {
-    xml: false,
-    decodeEntities: true
+    xml: false
   });
   
   const body = $('body')[0];
@@ -109,4 +108,18 @@ export function getBodyWithIds(html: string): string {
   }
   
   return '';
+}
+
+/**
+ * Generates a deterministic UUID v5 for a document element.
+ * The ID is derived from the document ID, the type of element, and its text content.
+ *
+ * @param docId - The ID of the document.
+ * @param elementType - The type of the element (e.g., 'heading', 'paragraph').
+ * @param textContent - The text content of the element.
+ * @returns A UUID v5 string.
+ */
+export function generateDeterministicId(docId: string, elementType: string, textContent: string): string {
+  const inputString = `${docId}:${elementType}:${textContent}`;
+  return uuidv5(inputString, NAMESPACE);
 }

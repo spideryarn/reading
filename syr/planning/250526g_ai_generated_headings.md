@@ -174,3 +174,33 @@ TableOfContents
 - **UI Integration**: State management for `aiHeadings[]` array
 - **Styling**: Green hover states (hover:bg-green-50, text-green-600/900)
 - **HTML Parsing**: Regex extraction of heading text and level from API response
+
+## Appendix – recommendations from another AI (o3) - foundations focus
+(Discuss with the user before adopting these recommendations)
+
+Stage A – Solidify Unit-Test Infrastructure
+- [ ] Replace custom test harness with Vitest (zero-config TS support, fast watch mode)
+  - [ ] Configure `vitest` with TypeScript support
+  - [ ] Port existing tests; ensure they pass
+  - [ ] Add coverage command and fail CI on <90 %
+- [ ] Snapshot-test API contracts
+  - [ ] Fixture HTML → `removeExistingHeadings()` → expect snapshot
+  - [ ] Call `generateHeadingMutation()` with fixture; snapshot forward/reverse arrays
+
+Stage B – Deterministic Mutation IDs
+- [ ] Generate one UUID v4 at mutation creation and reuse it for:
+  - mutation.id
+  - each heading's `data-mutation-id`
+- [ ] Update tests to assert determinism via a seedable UUID mock
+
+Stage C – HTML Serialisation Fix
+- [ ] In `handleGenerateHeadings()` skip adding a duplicate `id` when serialising `attributes`
+- [ ] Unit test: element with existing `id` results in exactly one `id` attribute in output HTML
+
+Stage D – Retain Original Heading IDs
+- [ ] Preserve the original heading `id` on the replacement `<p>` in `removeExistingHeadings()`
+- [ ] Unit test: anchor links to removed heading still resolve after cleaning
+
+Stage E – Harden LLM JSON Extraction
+- [ ] Parse response by slicing from the first `{` to the last `}` to extract JSON; tolerate missing ``` fences
+- [ ] Unit tests with varied Anthropic output shapes to ensure robustness
