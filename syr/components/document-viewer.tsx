@@ -167,6 +167,8 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
   const renderElement = (element: DocumentElement): JSX.Element => {
     const children = elementTree.get(element.id) || []
     const hasChildren = children.length > 0
+    // Remove 'syr-' prefix and show only first 8 chars
+    const truncatedId = element.id.replace('syr-', '').substring(0, 8)
 
     return (
       <div key={element.id} className="border-l-2 border-gray-200 pl-4 ml-2">
@@ -177,14 +179,19 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
           }`}
           onClick={() => handleElementSelect(element)}
         >
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-mono text-gray-400" style={{ fontSize: '0.65rem' }}>
-              {element.id.substring(0, 8)}
+          <div className="flex items-start gap-2">
+            {/* Show full content instead of truncated */}
+            <div className="flex-1">
+              {element.content || <span className="text-gray-400 italic">(empty {element.tag_name})</span>}
+            </div>
+            {/* ID with tooltip showing full ID and tag */}
+            <span 
+              className="text-xs font-mono text-gray-400 shrink-0" 
+              style={{ fontSize: '0.65rem' }}
+              title={`${element.id} (${element.tag_name})`}
+            >
+              {truncatedId}
             </span>
-            <span className="text-sm font-mono text-gray-500">{element.tag_name}</span>
-            {element.content && (
-              <span className="text-sm truncate flex-1">{element.content}</span>
-            )}
           </div>
         </div>
         {hasChildren && (
@@ -289,38 +296,15 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
   }
 
   return (
-    <div className="grid grid-cols-3 gap-4 h-full">
+    <div className="grid grid-cols-2 gap-4 h-full">
+      {/* Merged Document pane spanning 2/3 of the width */}
       <div className="overflow-y-auto p-4 border-r">
-        <h2 className="text-lg font-semibold mb-4">Document Structure</h2>
+        <h2 className="text-lg font-semibold mb-4">Document</h2>
         {rootElements
           .sort((a, b) => a.position - b.position)
           .map(element => renderElement(element))}
       </div>
-      <div className="overflow-y-auto p-4 border-r">
-        <h2 className="text-lg font-semibold mb-4">Element Details</h2>
-        {currentSelectedElement ? (
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-medium">Tag</h3>
-              <p className="text-sm text-gray-600">{currentSelectedElement.tag_name}</p>
-            </div>
-            <div>
-              <h3 className="font-medium">Content</h3>
-              <p className="text-sm text-gray-600">{currentSelectedElement.content || '(no text content)'}</p>
-            </div>
-            {Object.keys(currentSelectedElement.attributes).length > 0 && (
-              <div>
-                <h3 className="font-medium">Attributes</h3>
-                <pre className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                  {JSON.stringify(currentSelectedElement.attributes, null, 2)}
-                </pre>
-              </div>
-            )}
-          </div>
-        ) : (
-          <p className="text-gray-500">Select an element to view details</p>
-        )}
-      </div>
+      {/* Tools pane */}
       <div className="overflow-y-auto p-4 h-full">
         {renderToolsPane()}
       </div>
