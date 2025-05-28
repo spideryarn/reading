@@ -323,7 +323,7 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
           <p className="text-gray-500">Select an element to view details</p>
         )}
       </div>
-      <div className="overflow-y-auto p-4">
+      <div className="p-4 h-full">
         {renderToolsPane()}
       </div>
     </div>

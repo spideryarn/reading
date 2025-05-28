@@ -30,35 +30,28 @@ const UserMessage = () => (
   </MessagePrimitive.Root>
 );
 
-// Assistant message component
+// Assistant message component with loading state
 const AssistantMessage = () => (
   <MessagePrimitive.Root>
     <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-600 flex items-center justify-center">
       <Robot size={14} weight="bold" className="text-white" />
     </div>
     <div className="flex-1">
-      <div className="prose prose-sm max-w-none">
-        <MessagePrimitive.Content />
-      </div>
-    </div>
-  </MessagePrimitive.Root>
-);
-
-// Loading message component for when assistant is thinking
-const LoadingMessage = () => (
-  <MessagePrimitive.Root>
-    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-600 flex items-center justify-center">
-      <Robot size={14} weight="bold" className="text-white" />
-    </div>
-    <div className="flex-1">
-      <div className="flex items-center gap-2 text-gray-500 py-2">
-        <CircleNotch 
-          size={16} 
-          className="animate-spin" 
-          weight="bold"
-        />
-        <span className="text-sm">Thinking...</span>
-      </div>
+      <MessagePrimitive.If hasContent={false}>
+        <div className="flex items-center gap-2 text-gray-500 py-2">
+          <CircleNotch 
+            size={16} 
+            className="animate-spin" 
+            weight="bold"
+          />
+          <span className="text-sm">Thinking...</span>
+        </div>
+      </MessagePrimitive.If>
+      <MessagePrimitive.If hasContent>
+        <div className="prose prose-sm max-w-none">
+          <MessagePrimitive.Content />
+        </div>
+      </MessagePrimitive.If>
     </div>
   </MessagePrimitive.Root>
 );
