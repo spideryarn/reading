@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test AI Heading Scroll Functionality</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      line-height: 1.6;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #ddd;
+      background: #f5f5f5;
+    }
+    .heading {
+      color: #333;
+      margin: 10px 0;
+      cursor: pointer;
+    }
+    .heading:hover {
+      background: #e0e0e0;
+    }
+    .content {
+      margin: 10px 0;
+      padding: 10px;
+      background: white;
+    }
+    h1[data-ai-generated="true"],
+    h2[data-ai-generated="true"],
+    h3[data-ai-generated="true"],
+    h4[data-ai-generated="true"],
+    h5[data-ai-generated="true"],
+    h6[data-ai-generated="true"] {
+      color: green;
+      border-left: 4px solid green;
+      padding-left: 10px;
+    }
+    .hidden {
+      display: none !important;
+    }
+    #log {
+      position: fixed;
+      right: 20px;
+      top: 20px;
+      width: 300px;
+      max-height: 400px;
+      overflow-y: auto;
+      background: white;
+      border: 1px solid #333;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .log-entry {
+      margin: 2px 0;
+      padding: 2px;
+    }
+    .log-success {
+      color: green;
+    }
+    .log-error {
+      color: red;
+    }
+    .log-info {
+      color: blue;
+    }
+  </style>
+</head>
+<body>
+  <h1>Test AI Heading Scroll Functionality</h1>
+  
+  <div id="log">
+    <h3>Test Log</h3>
+  </div>
+
+  <div class="test-section">
+    <h2>Test Scenario: AI Headings with Mutation System</h2>
+    <p>This test simulates the document structure with original and AI-generated headings.</p>
+    
+    <button onclick="toggleHeadings('original')">Show Original Headings</button>
+    <button onclick="toggleHeadings('ai')">Show AI Headings</button>
+    <button onclick="testScrolling()">Test Scrolling</button>
+  </div>
+
+  <div id="document-content">
+    <!-- Original headings -->
+    <h2 id="orig-heading-1">1. Introduction</h2>
+    <p class="content">This is the introduction section content. Lorem ipsum dolor sit amet.</p>
+    
+    <h2 id="orig-heading-2">2. Methods</h2>
+    <p class="content">This is the methods section content. Lorem ipsum dolor sit amet.</p>
+    
+    <!-- AI-generated headings (initially hidden) -->
+    <h2 id="ai-heading-doc123-0" data-ai-generated="true" class="hidden">Background and Context</h2>
+    <p class="content">Content after AI heading 1.</p>
+    
+    <h3 id="ai-heading-doc123-1" data-ai-generated="true" class="hidden">Key Concepts</h3>
+    <p class="content">Content after AI heading 2.</p>
+    
+    <h2 id="orig-heading-3">3. Results</h2>
+    <p class="content">This is the results section content. Lorem ipsum dolor sit amet.</p>
+    
+    <h3 id="ai-heading-doc123-2" data-ai-generated="true" class="hidden">Experimental Findings</h3>
+    <p class="content">Content after AI heading 3.</p>
+    
+    <h2 id="orig-heading-4">4. Discussion</h2>
+    <p class="content">This is the discussion section content. Lorem ipsum dolor sit amet.</p>
+    
+    <h3 id="ai-heading-doc123-3" data-ai-generated="true" class="hidden">Implications</h3>
+    <p class="content">Content after AI heading 4.</p>
+    
+    <!-- Add more content to enable scrolling -->
+    <div style="height: 1000px; background: linear-gradient(to bottom, #f0f0f0, #e0e0e0);">
+      <p>Extra content to enable scrolling...</p>
+    </div>
+  </div>
+
+  <script>
+    const log = document.getElementById('log');
+    
+    function addLog(message, type = 'info') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      log.appendChild(entry);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function toggleHeadings(mode) {
+      const originalHeadings = document.querySelectorAll('h1:not([data-ai-generated="true"]), h2:not([data-ai-generated="true"]), h3:not([data-ai-generated="true"])');
+      const aiHeadings = document.querySelectorAll('[data-ai-generated="true"]');
+      
+      if (mode === 'original') {
+        addLog('Switching to Original headings', 'info');
+        originalHeadings.forEach(h => {
+          h.classList.remove('hidden');
+          h.dataset.originalHeadingHidden = 'false';
+        });
+        aiHeadings.forEach(h => h.classList.add('hidden'));
+      } else {
+        addLog('Switching to AI headings', 'info');
+        originalHeadings.forEach(h => {
+          h.classList.add('hidden');
+          h.dataset.originalHeadingHidden = 'true';
+        });
+        aiHeadings.forEach(h => h.classList.remove('hidden'));
+      }
+    }
+
+    function scrollToHeading(headingId) {
+      const element = document.getElementById(headingId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.style.backgroundColor = 'yellow';
+        setTimeout(() => {
+          element.style.backgroundColor = '';
+        }, 2000);
+        addLog(`Scrolled to: ${headingId}`, 'success');
+        return true;
+      } else {
+        addLog(`Failed to find element: ${headingId}`, 'error');
+        return false;
+      }
+    }
+
+    async function testScrolling() {
+      addLog('Starting scroll test...', 'info');
+      
+      // Test 1: Original headings
+      toggleHeadings('original');
+      await new Promise(r => setTimeout(r, 500));
+      
+      addLog('Testing original headings...', 'info');
+      scrollToHeading('orig-heading-1');
+      await new Promise(r => setTimeout(r, 1000));
+      scrollToHeading('orig-heading-3');
+      await new Promise(r => setTimeout(r, 1000));
+      
+      // Test 2: Switch to AI headings
+      toggleHeadings('ai');
+      await new Promise(r => setTimeout(r, 500));
+      
+      addLog('Testing AI headings...', 'info');
+      scrollToHeading('ai-heading-doc123-0');
+      await new Promise(r => setTimeout(r, 1000));
+      scrollToHeading('ai-heading-doc123-2');
+      await new Promise(r => setTimeout(r, 1000));
+      
+      // Test 3: Switch back and forth
+      addLog('Testing tab switching...', 'info');
+      toggleHeadings('original');
+      await new Promise(r => setTimeout(r, 500));
+      toggleHeadings('ai');
+      await new Promise(r => setTimeout(r, 500));
+      
+      // Test 4: Try scrolling again after switch
+      addLog('Testing AI headings after switch...', 'info');
+      const success1 = scrollToHeading('ai-heading-doc123-1');
+      await new Promise(r => setTimeout(r, 1000));
+      const success2 = scrollToHeading('ai-heading-doc123-3');
+      
+      if (success1 && success2) {
+        addLog('All tests passed!', 'success');
+      } else {
+        addLog('Some tests failed - check the log', 'error');
+      }
+    }
+
+    // Add click handlers to headings
+    document.addEventListener('DOMContentLoaded', () => {
+      const allHeadings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+      allHeadings.forEach(heading => {
+        heading.style.cursor = 'pointer';
+        heading.addEventListener('click', () => {
+          addLog(`Clicked: ${heading.id}`, 'info');
+          scrollToHeading(heading.id);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

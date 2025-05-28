@@ -1,4 +1,5 @@
 import { Mutation, DocumentTransform } from '../types/mutation'
+import { generateDeterministicId } from './deterministicId'
 
 interface AIHeading {
   id_of_after: string
@@ -32,9 +33,8 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
     const level = parseInt(match[1])
     const content = match[2]
     
-    // Generate ID for this heading
-    // Using simple ID generation for now - can be made deterministic later
-    const headingId = `ai-heading-${documentId.substring(0, 8)}-${index}`
+    // Generate deterministic ID for this heading using new utility
+    const headingId = generateDeterministicId(documentId, 'heading', content)
     
     headingIds.set(index, headingId)
     

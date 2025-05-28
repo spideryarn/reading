@@ -67,15 +67,23 @@ export default function DocumentPageClient({ html, markdownContent, elements, do
     }
   }
 
-  const handleHeadingClick = (headingText: string) => {
+  const handleHeadingClick = (headingText: string, headingId?: string) => {
     // Use mutated document for finding headings
     const documentsToSearch = mutatedDocument
     
     // Find the element that corresponds to this heading
-    const headingElement = documentsToSearch.find(element => 
-      element.tag_name.match(/^h[1-6]$/i) && 
-      element.content?.trim() === headingText.trim()
-    )
+    // First try by ID if provided (more reliable for AI headings)
+    let headingElement = headingId 
+      ? documentsToSearch.find(element => element.id === headingId)
+      : null
+    
+    // Fallback to text search if ID search fails or no ID provided
+    if (!headingElement) {
+      headingElement = documentsToSearch.find(element => 
+        element.tag_name.match(/^h[1-6]$/i) && 
+        element.content?.trim() === headingText.trim()
+      )
+    }
     
     if (headingElement) {
       setSelectedElement(headingElement)
@@ -85,8 +93,16 @@ export default function DocumentPageClient({ html, markdownContent, elements, do
         const elementDiv = documentViewerRef.current.querySelector(`[data-element-id="${headingElement.id}"]`)
         if (elementDiv) {
           elementDiv.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          
+          // Add visual feedback
+          elementDiv.classList.add('bg-yellow-100')
+          setTimeout(() => {
+            elementDiv.classList.remove('bg-yellow-100')
+          }, 2000)
         }
       }
+    } else {
+      console.warn(`Heading not found: "${headingText}" (ID: ${headingId})`)
     }
   }
 

@@ -23,8 +23,27 @@ interface Heading {
 interface TableOfContentsProps {
   content: string
   elements?: DocumentElement[]
-  onHeadingClick?: (headingText: string) => void
+  onHeadingClick?: (headingText: string, headingId?: string) => void
   documentId: string
+}
+
+// Utility to toggle visibility of original (non-AI) headings depending on mutation state
+function toggleOriginalHeadingsVisibility(hide: boolean) {
+  if (typeof document === 'undefined') return
+
+  const selector = 'h1:not([data-ai-generated="true"]), h2:not([data-ai-generated="true"]), h3:not([data-ai-generated="true"]), h4:not([data-ai-generated="true"]), h5:not([data-ai-generated="true"]), h6:not([data-ai-generated="true"])'
+  const originalHeadings = Array.from(document.querySelectorAll(selector)) as HTMLElement[]
+
+  originalHeadings.forEach(el => {
+    if (hide) {
+      el.dataset.originalHeadingHidden = 'true'
+      el.style.display = 'none'
+    } else if (el.dataset.originalHeadingHidden === 'true') {
+      // Restore only if we previously hid it
+      el.style.display = ''
+      delete el.dataset.originalHeadingHidden
+    }
+  })
 }
 
 export function TableOfContents({ content, elements, onHeadingClick, documentId }: TableOfContentsProps) {
@@ -102,6 +121,11 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId 
       extractHeadings()
     }
   }, [content, elements, mutatedDocument, activeMutationType])
+
+  // Effect: hide or show original headings depending on active mutation
+  useEffect(() => {
+    toggleOriginalHeadingsVisibility(activeMutationType === 'insert-headings')
+  }, [activeMutationType])
 
   if (headings.length === 0) {
     return (
@@ -305,12 +329,14 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId 
 
   const handleHeadingClick = (heading: Heading) => {
     if (onHeadingClick) {
-      onHeadingClick(heading.text)
+      onHeadingClick(heading.text, heading.id)
     } else {
       // Fallback to DOM scrolling if no callback provided
       const element = document.getElementById(heading.id)
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      } else {
+        console.warn(`Element with id "${heading.id}" not found in DOM`)
       }
     }
   }
