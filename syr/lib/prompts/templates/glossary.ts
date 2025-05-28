@@ -47,7 +47,7 @@ export const glossaryPrompt = loadPromptTemplateFromCaller(
   'glossary.njk',
   glossaryPromptSchema, // Use input schema, not response schema
   {
-    maxTokens: 10000, // Large token limit for comprehensive entity extraction
+    maxTokens: 8000, // Works with all Claude models (Haiku max is 8192)
     temperature: 0.3, // Lower temperature for more consistent extraction
   }
 )
