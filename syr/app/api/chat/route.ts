@@ -1,77 +1,127 @@
-// Mock Chat API endpoint for testing assistant-ui integration
-// This endpoint simulates AI responses with artificial delay before real LLM integration
+// Chat API endpoint for AI-powered document analysis
+// Integrates with Anthropic Claude for intelligent conversation about documents
 
 import { NextRequest, NextResponse } from 'next/server'
+import Anthropic from '@anthropic-ai/sdk'
+import { executePrompt } from '@/lib/prompts/types'
+import { chatPrompt, chatPromptInputSchema } from '@/lib/prompts/templates/chat'
 
-// Mock responses for common document analysis questions
-const mockResponses = [
-  "I can help you analyze this document. What specific aspects would you like me to explore?",
-  "Based on the document content, this appears to discuss key concepts around [topic]. Would you like me to summarize specific sections?",
-  "That's an interesting question about the document. Let me think through the relevant passages...",
-  "I notice this document covers several important themes. Which area would you like to focus on?",
-  "Looking at the document structure, I can provide insights on [concept]. What would be most helpful?",
-  "This document presents some complex ideas. I'd be happy to break down any particular section for you.",
-  "Based on my analysis of the text, here are the key points that stand out...",
-  "That's a thoughtful question. The document suggests several perspectives on this topic.",
-]
-
-// Simulate error conditions occasionally for testing error handling
-const shouldSimulateError = () => Math.random() < 0.1 // 10% chance of error
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+})
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { message, documentContext } = body
     
     // Validate input
-    if (!message || typeof message !== 'string') {
+    const validationResult = chatPromptInputSchema.safeParse(body)
+    if (!validationResult.success) {
       return NextResponse.json(
-        { error: 'Message is required and must be a string' },
+        { error: 'Invalid request', details: validationResult.error.format() },
         { status: 400 }
       )
     }
     
-    // Simulate processing delay (1.5 seconds)
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    const { message, documentContext } = validationResult.data
     
-    // Simulate occasional errors for testing error handling
-    if (shouldSimulateError()) {
-      return NextResponse.json(
-        { error: 'Simulated API error for testing' },
-        { status: 500 }
-      )
-    }
+    // Execute the chat prompt with real LLM (no automatic retry)
+    console.log('[Chat API] Processing message:', {
+      messageLength: message.length,
+      documentContextLength: documentContext?.length || 0,
+      timestamp: new Date().toISOString()
+    })
     
-    // Select a mock response based on message content or randomly
-    let response: string
-    const lowerMessage = message.toLowerCase()
+    const response = await executePrompt(anthropic, chatPrompt, {
+      message,
+      documentContext: documentContext || 'No document context provided.'
+    })
     
-    if (lowerMessage.includes('summarize') || lowerMessage.includes('summary')) {
-      response = "I can provide a summary of this document. The main themes appear to be [key concepts]. Would you like me to focus on any particular section?"
-    } else if (lowerMessage.includes('explain') || lowerMessage.includes('what')) {
-      response = "Let me explain that concept from the document. Based on the text, it refers to [explanation]. Does this help clarify things?"
-    } else if (lowerMessage.includes('question') || lowerMessage.includes('help')) {
-      response = "I'm here to help you understand this document better. You can ask me to summarize sections, explain concepts, or discuss the main arguments presented."
-    } else {
-      // Random response for other queries
-      response = mockResponses[Math.floor(Math.random() * mockResponses.length)]
-    }
-    
-    // Include document context acknowledgment if provided
-    if (documentContext) {
-      response = `I can see the document context has been loaded. ${response}`
-    }
+    console.log('[Chat API] Response generated successfully:', {
+      responseLength: response.length,
+      timestamp: new Date().toISOString()
+    })
     
     return NextResponse.json({ 
       response,
-      timestamp: new Date().toISOString(),
-      mockApi: true // Flag to indicate this is a mock response
+      timestamp: new Date().toISOString()
     })
     
   } catch (error) {
-    console.error('Error in chat API:', error)
+    // Enhanced error logging with full context
+    const errorDetails = {
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      } : error,
+      context: {
+        messageLength: body.message?.length,
+        hasDocumentContext: !!body.documentContext
+      }
+    }
+    
+    console.error('[Chat API] Error occurred:', errorDetails)
+    
+    // Provide detailed error information to the client
+    if (error instanceof Error) {
+      // API key errors
+      if (error.message.includes('API key') || error.message.includes('401')) {
+        return NextResponse.json(
+          { 
+            error: 'API configuration error',
+            details: 'The Anthropic API key is missing or invalid. Please check server configuration.',
+            code: 'API_KEY_ERROR'
+          },
+          { status: 500 }
+        )
+      }
+      
+      // Rate limit errors
+      if (error.message.includes('rate limit') || error.message.includes('429')) {
+        return NextResponse.json(
+          { 
+            error: 'Rate limit exceeded',
+            details: 'Too many requests to the AI service. Please wait a moment before trying again.',
+            code: 'RATE_LIMIT_ERROR'
+          },
+          { status: 429 }
+        )
+      }
+      
+      // Model errors
+      if (error.message.includes('model') || error.message.includes('claude')) {
+        return NextResponse.json(
+          { 
+            error: 'Model configuration error',
+            details: `AI model issue: ${error.message}`,
+            code: 'MODEL_ERROR'
+          },
+          { status: 500 }
+        )
+      }
+      
+      // Network errors
+      if (error.message.includes('fetch') || error.message.includes('network')) {
+        return NextResponse.json(
+          { 
+            error: 'Network error',
+            details: 'Failed to connect to AI service. Please check your internet connection.',
+            code: 'NETWORK_ERROR'
+          },
+          { status: 503 }
+        )
+      }
+    }
+    
+    // Generic error fallback with details
     return NextResponse.json(
-      { error: 'Failed to process chat message' },
+      { 
+        error: 'Failed to process chat message',
+        details: error instanceof Error ? error.message : 'An unexpected error occurred',
+        code: 'UNKNOWN_ERROR'
+      },
       { status: 500 }
     )
   }
