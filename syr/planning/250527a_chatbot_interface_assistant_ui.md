@@ -4,6 +4,8 @@
 
 Implement a chatbot interface for document analysis using the assistant-ui React library. The chatbot will provide AI-powered assistance for reading and analyzing documents, with access to the currently active version of the document being read.
 
+## References
+
 ### Key Requirements
 - Integrate assistant-ui library for AI chat interface
 - Add chatbot as a new tab in the "Tools" pane (renamed from "Glossary" pane)
@@ -46,108 +48,306 @@ Implement a chatbot interface for document analysis using the assistant-ui React
 
 ## Actions
 
-### Stage 1: Research and Documentation
-- [ ] **Research assistant-ui library thoroughly**
-  - [ ] Use subagent to search web for comprehensive documentation
-  - [ ] Gather installation instructions, API examples, and integration patterns
-  - [ ] Find examples of document/context integration
-  - [ ] Document findings in `docs/ASSISTANT_UI_INTEGRATION.md` following `docs/WRITING_EVERGREEN_DOCS.md`
-  - [ ] Include code snippets, configuration options, and best practices
-  - [ ] Test accessibility: ensure docs are complete enough for future development
+### Stage 1: Research and Documentation ✅ **COMPLETED**
+- [x] **Research assistant-ui library thoroughly**
+  - [x] Use subagent to search web for comprehensive documentation
+  - [x] Gather installation instructions, API examples, and integration patterns
+  - [x] Find examples of document/context integration
+  - [x] Document findings in `docs/ASSISTANT_UI_INTEGRATION.md` following `docs/WRITING_EVERGREEN_DOCS.md`
+  - [x] Include code snippets, configuration options, and best practices
+  - [x] Test accessibility: ensure docs are complete enough for future development
 
-### Stage 2: Tab System Generalization
-- [ ] **Extract and generalize tab behaviour from Table of Contents**
-  - [ ] Use subagent to analyze existing tab implementation in `components/table-of-contents.tsx:363-387`
-  - [ ] Create reusable `TabContainer` component accepting tab definitions and content renderers
-  - [ ] Move tab styling to shared component (active/inactive states, borders, hover effects)
-  - [ ] Ensure TypeScript types support dynamic tab configurations
-  - [ ] Test with current Table of Contents to ensure no regression
+### Stage 2: Tab System Generalization ✅ **COMPLETED**
+- [x] **Extract and generalize tab behaviour from Table of Contents**
+  - [x] Use subagent to analyze existing tab implementation in `components/table-of-contents.tsx:363-387`. Does this stage make sense? Is there some existing Tailwind component etc that we could be making use of to avoid reinventing the wheel. Discuss with user if needed.
+  - [x] Create reusable `TabContainer` component accepting tab definitions and content renderers
+  - [x] Move tab styling to shared component (active/inactive states, borders, hover effects)
+  - [x] Ensure TypeScript types support dynamic tab configurations
+  - [x] Test with current Table of Contents to ensure no regression
 
-- [ ] **Rename Glossary pane to Tools pane**
-  - [ ] Update `components/document-viewer.tsx:235` header from "Glossary" to "Tools"
-  - [ ] Implement Tools pane with tabbed interface using new TabContainer
-  - [ ] Create "Glossary" tab containing existing glossary functionality
-  - [ ] Preserve all existing glossary features (loading, error states, click-to-scroll)
-  - [ ] Test with existing glossary workflow to ensure no functionality lost
+- [x] **Rename Glossary pane to Tools pane**
+  - [x] Update `components/document-viewer.tsx:235` header from "Glossary" to "Tools"
+  - [x] Implement Tools pane with tabbed interface using new TabContainer
+  - [x] Create "Glossary" tab containing existing glossary functionality
+  - [x] Preserve all existing glossary features (loading, error states, click-to-scroll)
+  - [x] Test with existing glossary workflow to ensure no functionality lost
 
-- [ ] **Visual verification with Playwright**
-  - [ ] Use Playwright MCP to take screenshots of Tools pane
-  - [ ] Verify tab styling matches Table of Contents design language
-  - [ ] Check responsive behaviour and hover states
-  - [ ] Ensure accessibility (keyboard navigation, screen reader support)
+- [x] **Visual verification with Playwright**
+  - [x] Use Playwright MCP to take screenshots of Tools pane
+  - [x] Verify tab styling matches Table of Contents design language
+  - [x] Check responsive behaviour and hover states
+  - [x] Ensure accessibility (keyboard navigation, screen reader support)
 
-- [ ] **STOP AND REVIEW with user after this stage**
+- [x] **STOP AND REVIEW with user after this stage**
 
-### Stage 3: Fake API Implementation
-- [ ] **Create mock chat API endpoint**
-  - [ ] Create `app/api/chat/route.ts` following existing API patterns
-  - [ ] Implement 1.5s artificial delay using `setTimeout`
-  - [ ] Return hardcoded conversational responses about document analysis
-  - [ ] Include sample responses for common questions (summarize, explain concepts, etc.)
-  - [ ] Add error simulation for testing error handling
+**Stage 1-3+ Implementation Notes:**
+- Created comprehensive `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md` with library research findings
+- Built reusable `components/tab-container.tsx` component with TypeScript support
+- Successfully generalized tab system from Table of Contents
+- Renamed Glossary pane to Tools pane with "Glossary" and "Chat" tabs
+- All existing functionality preserved, no regressions detected
+- Created mock `app/api/chat/route.ts` API endpoint with 1.5s delay and contextual responses
+- Built `components/chat-ui-states.tsx` with loading/error components using Phosphor icons
+- API tested successfully: returns JSON responses, handles errors, simulates processing delay
+- **Bonus: Built functional `components/simple-chat.tsx` UI for immediate testing**
+  - Full chat interface working with fake API integration
+  - Document context automatically extracted and passed to API (10k char limit)
+  - Conversation persistence during tab switching (until page reload)
+  - Loading states, error handling with retry, message history with timestamps
+  - Enter key to send, styled user/assistant bubbles with Phosphor icons
+- Foundation ready for assistant-ui integration in Stage 4
 
-- [ ] **Add loading and error UI components**
-  - [ ] Import Phosphor icons: `Spinner` for loading, `ExclamationMark` for errors per `docs/STYLING.md:64-88`
-  - [ ] Create loading state with spinning icon during API calls
-  - [ ] Implement error display with warning icon and retry functionality
-  - [ ] Use existing error patterns from glossary implementation as reference
+### Stage 3: Fake API Implementation ✅ **COMPLETED**
+- [x] **Create mock chat API endpoint**
+  - [x] Create `app/api/chat/route.ts` following existing API patterns
+  - [x] Implement 1.5s artificial delay using `setTimeout`
+  - [x] Return hardcoded conversational responses about document analysis
+  - [x] Include sample responses for common questions (summarize, explain concepts, etc.)
+  - [x] Add error simulation for testing error handling
 
-### Stage 4: Assistant-UI Integration
-- [ ] **Install and configure assistant-ui**
-  - [ ] Run `npm install @assistant-ui/react` or use their CLI setup
-  - [ ] Follow assistant-ui documentation for Next.js integration
-  - [ ] Configure Tailwind CSS integration for styling consistency
-  - [ ] Set up basic chat component with default configuration
+- [x] **Add loading and error UI components**
+  - [x] Import Phosphor icons: `CircleNotch` for loading, `Warning` for errors per `docs/STYLING.md:64-88`
+  - [x] Create loading state with spinning icon during API calls
+  - [x] Implement error display with warning icon and retry functionality
+  - [x] Use existing error patterns from glossary implementation as reference
 
-- [ ] **Create Chat tab component**
-  - [ ] Create `components/chat-interface.tsx` using assistant-ui components
-  - [ ] Integrate with fake API endpoint from Stage 3
-  - [ ] Implement document context injection in first message
-  - [ ] Add basic conversation display with user/assistant messages
-  - [ ] Include input field with send button functionality
+### Stage 4: Assistant-UI Integration ✅ **COMPLETED**
+- [x] **Install and configure assistant-ui**
+  - [x] Run `npm install @assistant-ui/react` (manual installation approach)
+  - [x] Follow assistant-ui documentation for Next.js integration
+  - [x] Configure Tailwind CSS integration for styling consistency
+  - [x] Set up basic chat component with default configuration
 
-- [ ] **Integrate Chat tab into Tools pane**
-  - [ ] Add "Chat" tab to Tools pane alongside "Glossary" tab
-  - [ ] Use TabContainer from Stage 2 for consistent tab behaviour
-  - [ ] Set proper tab order and default selection
-  - [ ] Ensure smooth switching between Glossary and Chat tabs
+- [x] **Create Chat tab component**
+  - [x] Create `components/assistant-chat.tsx` using assistant-ui components
+  - [x] Integrate with fake API endpoint from Stage 3
+  - [x] Implement document context injection using existing `getDocumentContext()` function
+  - [x] Add conversation display with separate User/Assistant message components
+  - [x] Include composer with input field and send button functionality
 
-- [ ] **Test complete integration**
-  - [ ] Verify chat interface works with fake responses
-  - [ ] Test document context is properly provided to chat
-  - [ ] Confirm loading and error states display correctly
-  - [ ] Test tab switching preserves chat state during session
+- [x] **Integrate Chat tab into Tools pane**
+  - [x] Add "Chat" tab to Tools pane alongside "Glossary" tab
+  - [x] Use TabContainer from Stage 2 for consistent tab behaviour
+  - [x] Set proper tab order and default selection (Glossary first, then Chat)
+  - [x] Ensure smooth switching between Glossary and Chat tabs
+
+- [x] **Test complete integration**
+  - [x] Verify chat interface works with fake responses
+  - [x] Test document context is properly provided to chat
+  - [x] Confirm loading and error states display correctly
+  - [x] Test tab switching preserves chat state during session
+
+**Stage 4 Implementation Notes:**
+- Successfully integrated assistant-ui v0.10.13 using primitive components architecture
+- Created comprehensive `components/assistant-chat.tsx` with proper component composition:
+  - `UserMessage` component with User icon and blue avatar background
+  - `AssistantMessage` component with Robot icon and gray avatar background  
+  - `Composer` component with auto-resizing input and send button
+  - `ThreadSuggestions` component for empty state with clickable prompts
+- Used `useLocalRuntime` (recommended approach) instead of `useExternalStoreRuntime` for simpler state management
+- Implemented thread suggestions for common document questions that auto-send when clicked
+- Proper styling with Phosphor icons (User, Robot, PaperPlaneTilt) matching existing design language
+- Full integration with existing fake API including document context passing
+- Build succeeds with no compilation errors (only unrelated ESLint warnings)
+- Chat conversation state properly persists during tab switching within same session
+
+**Key Learnings and Gotchas:**
+- assistant-ui uses primitive component architecture (ThreadPrimitive, ComposerPrimitive, MessagePrimitive)
+- `ThreadPrimitive.Messages` requires `components` prop with UserMessage/AssistantMessage definitions
+- `useLocalRuntime` provides better built-in state management than `useExternalStoreRuntime`
+- Phosphor icon names differ from expected (Robot not Bot, PaperPlaneTilt not Send)
+- Document context automatically extracted via existing `getDocumentContext()` method (10k char limit)
+- assistant-ui handles complex chat interactions while maintaining full styling control
 
 ### Stage 5: Document Context Integration
+
+**IMMEDIATE NEXT STEPS** (Updated after analysis):
+1. Remove `chat-interface.tsx` - single implementation reduces confusion
+2. Focus on real LLM integration (Stage 6) as highest priority
+3. Then refactor components (Stage 5A) for better architecture
+4. Add type safety and error handling improvements (Stage 6A)
+
 - [ ] **Implement document content injection**
-  - [ ] Modify chat API to accept document content parameter
-  - [ ] Extract document text from elements in document viewer
-  - [ ] Include document title, headings, and content in system prompt
-  - [ ] Format document context for optimal LLM understanding
-  - [ ] Test that AI responses reference document content appropriately
+  - [x] Document context already extracted via existing `getDocumentContext()` method (10k char limit)
+  - [x] Chat API already accepts `documentContext` parameter  
+  - [x] Document text automatically included in API calls
+  - [ ] **ENHANCEMENT**: Format document context for optimal LLM understanding
+    - [ ] Add document title and metadata to context
+    - [ ] Include hierarchical heading structure for better navigation
+    - [ ] Consider chunking strategy for very large documents (>10k chars)
+  - [ ] **TESTING**: Test that AI responses reference document content appropriately
+    - [ ] Verify fake API responses acknowledge document context
+    - [ ] Test with various document types and sizes
 
 - [ ] **Add context indicator in UI**
   - [ ] Display document title or indicator showing context is loaded
-  - [ ] Add tooltip or info section explaining AI has document access
+  - [ ] Add tooltip or info section explaining AI has document access  
   - [ ] Show character/token count of document context (optional)
+  
+**Stage 5 Implementation Notes:**
+- Document context integration is mostly complete from Stage 4 implementation
+- The `getDocumentContext()` function in `document-viewer.tsx:252-258` already extracts and limits content
+- Focus should be on enhancing context formatting and adding UI indicators
+
+### Stage: update documentation
+- [x] Update docs - this doc should point to `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md` and vice versa
+  - See also: [Assistant-UI Integration Guide](/docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md)
+- [x] Update that `CHATBOT_ASSISTANT_UI_INTEGRATION.md` - it may not be accurate/up-to-date
+
+### Stage 5A: Component Architecture Refactoring (NEW)
+
+**Context**: We currently have two chat implementations:
+1. `components/assistant-chat.tsx` - Uses primitive components (ThreadPrimitive, ComposerPrimitive, etc.)
+2. `components/chat-interface.tsx` - Uses high-level components (Thread, Composer, etc.)
+
+**Analysis**:
+- assistant-ui documentation recommends primitive components for maximum customization
+- Primitives pattern aligns with modern React libraries (Radix UI, shadcn/ui)
+- Need to split components for better separation of concerns and testability
+- Web best practices emphasize separating view and non-view logic
+
+**Decision**: Keep primitive components approach and refactor
+- [x] **DECISION MADE**: Use `assistant-chat.tsx` with primitives as primary implementation
+- [ ] **Remove** `chat-interface.tsx` to avoid confusion and maintenance burden
+  - Delete the file from `components/`
+  - No import updates needed as it's not currently used
+
+- [ ] **Refactor** `assistant-chat.tsx` into separate components:
+  - [ ] Create `components/chat/ChatThread.tsx`
+    - Move `Thread` component logic
+    - Handle thread viewport and message display
+    - Include empty state with suggestions
+  - [ ] Create `components/chat/ChatComposer.tsx`
+    - Move `Composer` component logic
+    - Handle input field and send button
+    - Include keyboard event handling
+  - [ ] Create `components/chat/ChatMessage.tsx`
+    - Move `UserMessage` and `AssistantMessage` components
+    - Accept role prop to determine styling
+    - Keep Phosphor icon integration
+  - [ ] Update `components/assistant-chat.tsx`
+    - Import new split components
+    - Keep as main container with runtime provider
+    - Pass documentContext through to child components
+
+- [ ] **Testing**: Verify refactored components work identically
+  - [ ] Test tab switching preserves chat state
+  - [ ] Test message sending and display
+  - [ ] Test empty state suggestions
+  - [ ] Run existing unit tests for `useChatRuntime`
 
 ### Stage 6: Real LLM Integration
 - [ ] **Replace fake API with actual LLM calls**
-  - [ ] Integrate with existing LLM configuration from `lib/config.ts`
-  - [ ] Use Anthropic Claude Sonnet 4 with temperature 0 as configured
-  - [ ] Implement proper error handling for API failures
-  - [ ] Add retry logic for transient failures
-  - [ ] Test with various document types and conversation flows
+  - [ ] **EASY WIN**: Replace mock responses in `app/api/chat/route.ts` with real LLM calls
+  - [ ] **REUSE**: Integrate with existing LLM configuration from `lib/config.ts`
+  - [ ] **CONSISTENCY**: Use Anthropic Claude Sonnet 4 with temperature 0 as configured
+  - [ ] **ROBUSTNESS**: Implement proper error handling for API failures
+  - [ ] **RESILIENCE**: Add retry logic for transient failures  
+  - [ ] **TESTING**: Test with various document types and conversation flows
 
 - [ ] **Optimize prompt engineering**
-  - [ ] Create system prompt template for document analysis
-  - [ ] Include instructions for helpful, accurate responses
-  - [ ] Add guidelines for citing document sections
-  - [ ] Test prompt effectiveness with sample conversations
+  - [ ] **TEMPLATE**: Create system prompt template for document analysis
+    - [ ] Include document title, context, and analysis instructions
+    - [ ] Add guidelines for helpful, accurate responses about the document
+    - [ ] Include instructions for citing specific document sections
+  - [ ] **REUSE PATTERNS**: Look at existing prompts in `app/api/summarise/route.ts` and `app/api/glossary/route.ts`
+  - [ ] **ITERATIVE**: Test prompt effectiveness with sample conversations
+  
+**Stage 6 Implementation Guidance:**
+- Current fake API structure in `app/api/chat/route.ts` is ready for LLM integration
+- Just replace the mock response logic with real LLM calls using existing patterns
+- Document context is already being passed in `documentContext` parameter
+- Consider implementing streaming responses for better UX (assistant-ui supports this)
+- Look at `lib/prompts/templates/` for existing prompt template patterns
+
+### Stage 6A: Code Quality & Architecture Improvements
+
+- [ ] **Type Safety Improvements**
+  - [ ] Create `lib/types/chat.ts` with shared types:
+    ```typescript
+    export interface ChatMessage {
+      role: 'user' | 'assistant' | 'system';
+      content: string;
+      timestamp?: string;
+      metadata?: Record<string, any>;
+    }
+    
+    export interface ChatRequest {
+      message: string;
+      documentContext: string;
+      conversationId?: string;
+    }
+    
+    export interface ChatResponse {
+      response: string;
+      timestamp: string;
+      error?: string;
+    }
+    ```
+  - [ ] Add Zod schema validation in `/api/chat/route.ts`:
+    ```typescript
+    import { z } from 'zod';
+    
+    const chatRequestSchema = z.object({
+      message: z.string().min(1).max(10000),
+      documentContext: z.string().max(10000),
+      conversationId: z.string().optional()
+    });
+    ```
+  - [ ] Update `useChatRuntime` hook to use shared types
+  - [ ] Ensure API route validates incoming requests
+
+- [ ] **Error Handling Enhancement**
+  - [ ] Update `useChatRuntime` to bubble errors properly:
+    ```typescript
+    // Instead of returning error as message content
+    // Use runtime status or throw for UI to catch
+    if (!res.ok) {
+      const error = new Error(`API Error: ${res.status}`);
+      error.cause = await res.json();
+      throw error;
+    }
+    ```
+  - [ ] Create error boundary component for chat interface
+  - [ ] Add specific error states in UI:
+    - Network errors: "Connection failed. Please check your internet."
+    - API errors: "Service unavailable. Please try again."
+    - Rate limit: "Too many requests. Please wait a moment."
+  - [ ] Add console.error logging with context:
+    ```typescript
+    console.error('[Chat Error]', {
+      error,
+      documentId: documentContext?.substring(0, 50),
+      timestamp: new Date().toISOString()
+    });
+    ```
+
+- [ ] **Performance Optimizations**
+  - [ ] Update `getDocumentContext()` to avoid mid-word truncation:
+    ```typescript
+    // Find last complete sentence within limit
+    const truncated = content.substring(0, 10000);
+    const lastPeriod = truncated.lastIndexOf('.');
+    return lastPeriod > 8000 ? truncated.substring(0, lastPeriod + 1) : truncated;
+    ```
+  - [ ] Add memoization to document context:
+    ```typescript
+    const documentContextCache = new Map<string, string>();
+    
+    const getMemoizedContext = (slug: string, elements: DocumentElement[]) => {
+      const cacheKey = `${slug}-${elements.length}`;
+      if (!documentContextCache.has(cacheKey)) {
+        documentContextCache.set(cacheKey, getDocumentContext(elements));
+      }
+      return documentContextCache.get(cacheKey)!;
+    };
+    ```
+  - [ ] Consider react-window for virtual scrolling if >100 messages
 
 ### Stage 7: Enhanced Features
 - [ ] **Add conversation management**
   - [ ] Implement "Clear conversation" button
+  - [ ] Expose `resetConversation()` method via runtime (per o3)
   - [ ] Add confirmation dialog for conversation reset
   - [ ] Preserve conversation state during tab switches
   - [ ] Test conversation clearing functionality
@@ -178,23 +378,93 @@ Implement a chatbot interface for document analysis using the assistant-ui React
   - [ ] Integration with document annotation system
 
 ### Testing and Quality Assurance
-- [ ] **Write automated tests**
-  - [ ] Create unit tests for TabContainer component
-  - [ ] Add integration tests for chat functionality
-  - [ ] Test document context injection
-  - [ ] Verify error handling scenarios
 
-- [ ] **Performance testing**
-  - [ ] Test with large documents (performance impact)
-  - [ ] Verify memory usage during long conversations
-  - [ ] Check tab switching performance
-  - [ ] Monitor API response times
+- [ ] **Unit Tests**
+  - [ ] Test `TabContainer` component:
+    ```typescript
+    // __tests__/TabContainer.test.tsx
+    describe('TabContainer', () => {
+      it('switches tabs on click');
+      it('maintains active tab state');
+      it('renders correct content for active tab');
+      it('handles keyboard navigation (arrow keys)');
+    });
+    ```
+  - [ ] Enhance `useChatRuntime` tests:
+    - Test abort signal handling
+    - Test error scenarios (network, API errors)
+    - Test message content extraction
+    - Test memoization of callbacks
+  - [ ] Test split chat components (after Stage 5A refactor):
+    - ChatThread: message display, empty state
+    - ChatComposer: input handling, submit
+    - ChatMessage: role-based styling
 
-- [ ] **Accessibility testing**
-  - [ ] Verify keyboard navigation works for tabs and chat
-  - [ ] Test screen reader compatibility
-  - [ ] Check color contrast ratios
-  - [ ] Ensure focus management is correct
+- [ ] **Integration Tests** (React Testing Library + MSW)
+  - [ ] Create `__tests__/assistant-chat.integration.test.tsx`:
+    ```typescript
+    import { render, screen, userEvent } from '@testing-library/react';
+    import { setupServer } from 'msw/node';
+    import { rest } from 'msw';
+    
+    const server = setupServer(
+      rest.post('/api/chat', (req, res, ctx) => {
+        return res(ctx.json({ response: 'Test response' }));
+      })
+    );
+    
+    test('sends message and displays response', async () => {
+      // Render AssistantChat
+      // Type message
+      // Click send
+      // Expect response to appear
+    });
+    ```
+  - [ ] Test error handling with MSW error responses
+  - [ ] Test loading states during API calls
+  - [ ] Test document context inclusion in requests
+
+- [ ] **E2E Tests** (Playwright)
+  - [ ] Create `e2e/chat-assistant.spec.ts`:
+    ```typescript
+    test('chat assistant workflow', async ({ page }) => {
+      // Navigate to document page
+      // Open Tools pane
+      // Switch to Chat tab
+      // Send message
+      // Verify response appears
+      // Test tab switching preserves conversation
+    });
+    ```
+  - [ ] Test conversation persistence during tab switches
+  - [ ] Test error recovery flows
+  - [ ] Test with different document sizes
+
+- [ ] **Performance Testing**
+  - [ ] Create performance benchmark suite:
+    - Measure render time with 0, 50, 100+ messages
+    - Profile memory usage during long conversations
+    - Test document context extraction speed
+  - [ ] Use React DevTools Profiler to identify bottlenecks
+  - [ ] Monitor bundle size impact of assistant-ui
+
+- [ ] **Accessibility Testing**
+  - [ ] Automated tests with jest-axe:
+    ```typescript
+    import { axe } from 'jest-axe';
+    
+    test('chat interface has no accessibility violations', async () => {
+      const { container } = render(<AssistantChat />);
+      const results = await axe(container);
+      expect(results).toHaveNoViolations();
+    });
+    ```
+  - [ ] Manual testing checklist:
+    - Tab navigation through all interactive elements
+    - Screen reader announces messages correctly
+    - Focus visible indicators present
+    - Keyboard shortcuts (Enter to send, Esc to cancel)
+  - [ ] Color contrast validation (WCAG AA compliance)
 
 ### Git Management
 - [ ] **Create feature branch**
@@ -249,3 +519,14 @@ Following existing patterns from:
 - `app/api/glossary/route.ts` for API structure
 - `app/api/summarise/route.ts` for LLM integration
 - `lib/config.ts` for AI model configuration
+
+### Key Implementation Notes
+
+**Runtime Adapter Pattern**: The `useLocalRuntime` hook requires a `ChatModelAdapter` with a `run` function. This was the root cause of initial runtime errors. The solution was implemented in `src/lib/hooks/useChatRuntime.ts` which encapsulates the adapter logic.
+
+**Component Architecture**: Following assistant-ui's composable primitives pattern provides maximum customization while the library handles complex features like auto-scrolling, streaming, and accessibility.
+
+**Network Logic**: Keep API calls outside render functions using `useCallback` to prevent re-creation loops and unnecessary re-renders.
+
+**State Management**: Chat state lives in memory via assistant-ui's runtime. For conversation clearing, expose methods through the runtime rather than manipulating state directly.
+

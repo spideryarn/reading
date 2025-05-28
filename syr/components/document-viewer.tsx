@@ -6,6 +6,8 @@
 import { useState, useEffect } from 'react'
 import { CircleNotch, Warning } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
+import { TabContainer, type Tab } from './tab-container'
+import { AssistantChat } from './assistant-chat'
 
 // Define entity type (will be moved to a proper types file later)
 interface Entity {
@@ -198,6 +200,96 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
 
   const rootElements = elementTree.get(null) || []
 
+  const renderGlossaryTab = () => {
+    if (!showGlossary) {
+      return (
+        <button
+          onClick={onLoadGlossary}
+          disabled={isLoadingGlossary}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+        >
+          {isLoadingGlossary ? (
+            <>
+              <CircleNotch className="animate-spin" size={16} />
+              Loading...
+            </>
+          ) : (
+            'Load glossary'
+          )}
+        </button>
+      )
+    }
+
+    return (
+      <>
+        {isLoadingGlossary ? (
+          <div className="flex items-center gap-2 text-gray-500">
+            <CircleNotch className="animate-spin" size={20} />
+            <span>Loading glossary...</span>
+          </div>
+        ) : glossaryError ? (
+          <div className="bg-red-50 border border-red-200 rounded p-3 flex items-start gap-2">
+            <Warning className="text-red-600 mt-0.5" size={20} weight="bold" />
+            <div className="text-sm text-red-800">
+              <div className="font-medium mb-1">Failed to generate glossary</div>
+              <div className="text-xs">{glossaryError}</div>
+            </div>
+          </div>
+        ) : glossaryEntities.length > 0 ? (
+          <GlossaryDisplay 
+            entities={glossaryEntities} 
+            elements={elements}
+            onScrollToEntity={handleScrollToEntity}
+          />
+        ) : (
+          <p className="text-gray-500">No glossary entries found</p>
+        )}
+      </>
+    )
+  }
+
+  // Extract document context for chat
+  const getDocumentContext = () => {
+    return elements
+      .filter(el => el.content.trim()) // Only include elements with content
+      .map(el => el.content.trim())
+      .join('\n\n')
+      .substring(0, 10000) // Limit context size for now
+  }
+
+  const renderChatTab = () => {
+    const documentContext = getDocumentContext()
+    
+    return (
+      <div className="h-full flex flex-col">
+        <AssistantChat documentContext={documentContext} />
+      </div>
+    )
+  }
+
+  const renderToolsPane = () => {
+    const tabs: Tab[] = [
+      {
+        id: 'glossary',
+        label: 'Glossary',
+        content: renderGlossaryTab()
+      },
+      {
+        id: 'chat',
+        label: 'Chat',
+        content: renderChatTab()
+      }
+    ]
+
+    return (
+      <TabContainer 
+        tabs={tabs}
+        defaultTab="glossary"
+        title="Tools"
+      />
+    )
+  }
+
   return (
     <div className="grid grid-cols-3 gap-4 h-screen">
       <div className="overflow-y-auto p-4 border-r">
@@ -232,48 +324,7 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
         )}
       </div>
       <div className="overflow-y-auto p-4">
-        <h2 className="text-lg font-semibold mb-4">Glossary</h2>
-        {!showGlossary ? (
-          <button
-            onClick={onLoadGlossary}
-            disabled={isLoadingGlossary}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-          >
-            {isLoadingGlossary ? (
-              <>
-                <CircleNotch className="animate-spin" size={16} />
-                Loading...
-              </>
-            ) : (
-              'Load glossary'
-            )}
-          </button>
-        ) : (
-          <>
-            {isLoadingGlossary ? (
-              <div className="flex items-center gap-2 text-gray-500">
-                <CircleNotch className="animate-spin" size={20} />
-                <span>Loading glossary...</span>
-              </div>
-            ) : glossaryError ? (
-              <div className="bg-red-50 border border-red-200 rounded p-3 flex items-start gap-2">
-                <Warning className="text-red-600 mt-0.5" size={20} weight="bold" />
-                <div className="text-sm text-red-800">
-                  <div className="font-medium mb-1">Failed to generate glossary</div>
-                  <div className="text-xs">{glossaryError}</div>
-                </div>
-              </div>
-            ) : glossaryEntities.length > 0 ? (
-              <GlossaryDisplay 
-                entities={glossaryEntities} 
-                elements={elements}
-                onScrollToEntity={handleScrollToEntity}
-              />
-            ) : (
-              <p className="text-gray-500">No glossary entries found</p>
-            )}
-          </>
-        )}
+        {renderToolsPane()}
       </div>
     </div>
   )

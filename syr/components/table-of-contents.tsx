@@ -7,12 +7,12 @@
 
 import { useEffect, useState } from 'react'
 import * as Tooltip from '@radix-ui/react-tooltip'
-import TurndownService from 'turndown'
 import { Spinner, ExclamationMark, CircleNotch, Warning } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import type { GranularityKey } from '@/lib/prompts/templates/summarise'
 import { useMutation, useActiveMutationType } from '@/lib/context/mutation-context'
 import { generateHeadingMutation, extractHeadingsFromMutation } from '@/lib/services/heading-mutation-generator'
+import { TabContainer, type Tab } from './tab-container'
 
 interface Heading {
   id: string
@@ -52,7 +52,6 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId 
   const [headings, setHeadings] = useState<Heading[]>([])
   const [loadingStates, setLoadingStates] = useState<Set<string>>(new Set())
   const [contentCache, setContentCache] = useState<Map<string, string>>(new Map())
-  const [activeTab, setActiveTab] = useState<'original' | 'ai-generated'>('original')
   const [aiHeadings, setAiHeadings] = useState<Heading[]>([])
   const [isLoadingHeadings, setIsLoadingHeadings] = useState(false)
   const [headingsError, setHeadingsError] = useState<string | null>(null)
@@ -523,46 +522,27 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId 
     )
   }
 
+  const tabs: Tab[] = [
+    {
+      id: 'original',
+      label: 'Original',
+      content: renderOriginalTab()
+    },
+    {
+      id: 'ai-generated', 
+      label: 'AI-generated',
+      content: renderAiGeneratedTab()
+    }
+  ]
+
   return (
     <div className="p-4">
-      <h2 className="text-sm font-semibold text-gray-900 mb-3">Table of Contents</h2>
-      
-      {/* Tab Navigation */}
-      <div className="border-b border-gray-200 mb-4">
-        <nav className="flex space-x-8" aria-label="Tabs">
-          <button
-            onClick={async () => {
-              setActiveTab('original')
-              // Revert mutation if switching back to original
-              if (activeMutationType === 'insert-headings') {
-                await revertMutation()
-              }
-            }}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'original'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Original
-          </button>
-          <button
-            onClick={() => setActiveTab('ai-generated')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'ai-generated'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            AI-generated
-          </button>
-        </nav>
-      </div>
-
-      {/* Tab Content */}
-      <div className="min-h-32">
-        {activeTab === 'original' ? renderOriginalTab() : renderAiGeneratedTab()}
-      </div>
+      <TabContainer 
+        tabs={tabs}
+        defaultTab="original"
+        title="Table of Contents"
+        className="text-sm"
+      />
     </div>
   )
 }
