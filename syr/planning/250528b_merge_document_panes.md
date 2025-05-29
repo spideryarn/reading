@@ -94,6 +94,8 @@ The goal is to merge these two panes into a single, double-wide **Document** pan
 
 **Objective**: Add the ability to expand/collapse document sections for better navigation.
 
+In 'collapsed mode', only show the first line (or the first N characters/words), or something similar. In 'expanded mode', show the full block.
+
 - [ ] TODO: Add expand/collapse state management:
   - Track expanded/collapsed state per element
   - Default to all expanded
@@ -152,6 +154,12 @@ The goal is to merge these two panes into a single, double-wide **Document** pan
 - [ ] TODO: Update any integration tests
 
 - [ ] TODO: Commit: "docs: update documentation for merged Document pane"
+
+### Stage 6: AI-generated summaries for collapsed blocks (TODO)
+
+**Objective**: Replace simple collapsed/expanded blocks with AI-generated 1-sentence summaries.
+
+- [ ] TODO: See detailed planning doc: `planning/250529a_ai_collapse_expand_summaries.md`
 
 ## Appendix
 
@@ -348,3 +356,98 @@ DOMPurify.sanitize(html, {
   - Update parser to store both plain and rich content
   - Update renderer to use sanitized HTML
   - Add tests for security edge cases
+
+
+#### Reflections on "HTML Formatting Preservation" from o3 AI
+
+Below is a short-to-long evaluation of the four alternatives in “HTML Formatting Preservation: Analysis and Options”, measured against the code that is running today:
+
+1. Where we are right now  
+• The DB keeps one long HTML string per document (`documents.html`).  
+• On the client we immediately parse that string into an array/tree of `DocumentElement` objects.  
+• `DocumentElement.content` currently holds **plain text** only, so we lose `<em>`, `<strong>` … in the viewer.  
+• All mutation logic (insert, replace, remove…) works on that `DocumentElement[]` in memory. No mutation ever dives inside inline markup.
+
+1. What the different storage options would actually mean
+
+OPTION 1  “Store sanitised HTML only”  
+  – We would have to re-parse the entire document every time we want to:  
+    • run a mutation, or  
+    • feed the LLM with plain text.  
+  – Undo/redo becomes slower and harder to reason about because we lose the tidy element-level diff we have now.  
+  ➜ This cancels much of the value the mutation engine already gives us.
+
+OPTION 2  “Dual storage (plain + rich)”  ⭐ Recommended, minimal change  
+  Schema sketch (per element):  
+  ```ts
+  interface DocumentElement {
+    …existing fields…
+    plain_content : string   // <p>Text with emphasis and bold.</p> → "Text with emphasis and bold."
+    rich_content  : string   // the same fragment, sanitised HTML
+  }
+  ```  
+  Pipeline:  
+  1. Ingestion (server or Supabase edge-function)  
+      • Sanitise with `isomorphic-dompurify` → `rich_content`  
+      • Strip tags with a cheap regex / unified pipeline → `plain_content`  
+  2. Runtime  
+      • `DocumentViewer` renders `rich_content`.  
+      • Mutation engine keeps using the same array of elements; no code change needed except reading `rich_content` instead of `content` when printing.  
+  3. LLM / search / embeddings use `plain_content`.  
+
+  Pros  
+  • Keeps 100 % of inline markup for the reader.  
+  • Zero impact on existing mutation code.  
+  • Plain text stays trivial to consume for AI and Postgres full-text.  
+  • Implementation is “add two columns + adjust parser/renderer”, done in a day.  
+
+  Cons  
+  • ≈ 1.8 × space per element. Typically acceptable; if a 5 MB article grows to 9 MB it still fits comfortably in Postgres and in memory.  
+
+OPTION 3  “Persist HAST / JSON AST”  
+  • Great if we ever need **inline-level** mutation or collaborative editing.  
+  • In v1 it adds ~3-5 × size and a lot of query complexity we do not yet need.  
+
+OPTION 4  “Store a virtual-DOM-style object graph”  
+  • Same size explosion as option 3, plus the risk of the server copy and React copy diverging.  
+  • Hard passes YAGNI for now.  
+
+3. Concrete next steps if we agree on Option 2
+
+A. DB / Supabase  
+  • `ALTER TABLE document_elements ADD COLUMN rich_content TEXT;`  
+  • `ALTER TABLE document_elements ADD COLUMN plain_content TEXT;`  
+  • Write a migration/edge-function that back-fills both columns from the existing HTML blob.
+
+B. Ingestion script (where we already parse HTML → `DocumentElement[]`)  
+  • Drop-in `DOMPurify.sanitize(innerHTML, cfg)` to create `rich_content`.  
+  • `plain_content` = `cheerio(text()).trim()` or unified’s `rehype-raw` → `strip`.  
+
+C. Frontend  
+  • Change `renderElement()` to output `dangerouslySetInnerHTML={{__html: el.rich_content}}`.  
+  • Keep `el.content` around for legacy until everything compiles, then delete/rename.
+
+D. Security  
+  • Strict allow-list already described in the doc (p, em, strong, code … + id/class/href/title).  
+  • Ship CSP header (`script-src 'none'`) from API routes that hand out HTML.
+
+E. Tests  
+  • Add Jest unit covering sanitisation (XSS payload in → safe HTML out).  
+  • Happy-path render test to ensure `<em>` etc. appear.
+
+4. Open questions / input needed
+
+1. Per-element vs per-document dual fields  
+   – I assumed per-element because the mutation engine operates there.  
+   – If we would rather keep DB simple and only store `documents.rich_html`, we can still break it into elements at runtime – but then every paragraph render still needs to slice that big string. Per-element feels cleaner.
+
+2. Search granularity  
+   If we foresee section-level embeddings, having `plain_content` per-element will pay dividends.
+
+3. Long term  
+   Do we expect inline-level editing (e.g. “bold these words”)? If yes, we can promote a subset of elements to HAST on-the-fly as suggested (“ephemeral HAST” path) without persisting the whole AST.
+
+5. Bottom line  
+Option 2 (dual storage) gives us full visual fidelity tomorrow, keeps the mutation engine exactly as is, and leaves room to grow into richer models later. The extra storage is minor; the implementation effort is low; the security story is clear. Unless we know we will need inline-level mutations in the next couple of sprints, I’d adopt Option 2 and revisit later.
+
+Let me know what you think or if any of the open questions need deeper exploration.
