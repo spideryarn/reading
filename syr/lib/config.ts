@@ -10,7 +10,7 @@
 export const AI_CONFIG = {
   DEFAULT_MODEL: process.env.AI_MODEL || 'claude-sonnet-4-20250514',
   DEFAULT_TEMPERATURE: 0,
-  DEFAULT_MAX_TOKENS: 1024,
+  DEFAULT_MAX_TOKENS: parseInt(process.env.DEFAULT_MAX_TOKENS || '4096', 10),
 } as const
 
 // UI configuration

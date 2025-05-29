@@ -8,6 +8,9 @@ The Spideryarn Reading application features a multi-pane layout with tabbed navi
 - `components/table-of-contents.tsx` - left pane navigation with original/AI/summary tabs
 - `components/document-viewer.tsx` - middle and right pane structure with document display
 - `components/assistant-chat.tsx` - AI chat interface in right pane
+- `components/dialog.tsx` - reusable modal dialog component
+- `components/settings-dialog.tsx` - settings dialog showing LLM configuration
+- `components/document-header.tsx` - document header with title and action buttons
 - `app/documents/[slug]/page-client.tsx` - main layout coordination and state management
 - `docs/TABLE_OF_CONTENTS_PANE.md` - detailed documentation of left pane functionality
 - `docs/ARCHITECTURE.md` - overall application architecture
@@ -15,6 +18,15 @@ The Spideryarn Reading application features a multi-pane layout with tabbed navi
 ## Layout Structure
 
 The application uses a **four-pane layout** within a responsive grid system:
+
+### Document Header ✓
+- **Fixed height**: 3rem minimum (`min-h-[3rem]`)
+- **Background**: White with bottom border
+- **Content**: Document title (left) and action buttons (right)
+- **Action Buttons**:
+  - **Settings** - Shows configuration dialog with LLM parameters ✓
+  - **View Original** - Links to original HTML document
+- **Settings Dialog**: Modal overlay showing current AI model, temperature, max tokens, and UI configuration
 
 ### 1. Left Pane - Navigation (Table of Contents)
 - **Fixed width**: 256px (`w-64`)
@@ -120,6 +132,19 @@ const renderTabName = () => (
   </div>
 )
 ```
+
+**Dialog Implementation**: The Settings dialog demonstrates the reusable dialog pattern:
+```typescript
+<Dialog isOpen={isOpen} onClose={onClose} title="Settings">
+  {/* Dialog content */}
+</Dialog>
+```
+
+**Modal Dialog Features**:
+- **Escape key** closes dialog
+- **Click outside** closes dialog
+- **Overlay** prevents interaction with background
+- **Consistent styling** with header, content, and action areas
 
 **Consistent Loading States**: All AI-powered features use standardised loading spinners and error handling
 
