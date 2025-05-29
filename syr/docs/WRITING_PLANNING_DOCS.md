@@ -53,20 +53,20 @@ Don't include a `Date` section at the top since it's implicit from the filename.
 - Break into lots of stages. Start with a really simple working v1, and gradually layer in complexity, ending each stage with passing tests and working code.
 - List action in the order that they should be tackled
 - Don't number the stages, so that it's easier to move them around without having to renumber everything
-- Label the beginning of each action section with TODO, DONE, etc, updating task status as we go along
+- Use `[ ]` and `[x]` checkboxes to indicate todo/done.
 - Include subtasks with clear acceptance criteria
 - Refer to specific docs, files/functions, examples, links, etc, so it's clear exactly what needs to be done
 - Explicitly add tasks for writing automated tests, usually before writing code. (Perhaps one or two end-to-end tests first, then gradually adding more detailed tests as complexity grows). Explicitly add tasks for running the automated tests before ending each stage. see `docs/FRONTEND_TESTING.md`
 - If there are actions that the user needs to do, add those in too, so we can track progress and remind the user.
 - If this is a major piece of work, ask the user whether we should have an early action to create a `yyMMdd[letter]_complex_project` Git branch (and move over any changes). If so, then add a final action to merge that back into `main`.
-- Add actions to update planning doc every so often with progress so far (perhaps at the end of every stage)
+- Add actions to update the planning doc every so often with progress so far (perhaps at the end of every stage)
 - Add actions to Git commit (perhaps at the end of every stage, perhaps use a subagent) - follow instructions in `docs/GIT_COMMITS.md`
 - Add actions to stop & review with user where appropriate, e.g. when we get to a good stopping point, check changes to the user interface, etc
 - Add actions to search the web where appropriate, e.g. when debugging, determining best practices, making use of 3rd-party libraries, etc
 - Add actions to update relevant `docs/*.md` evergreen docs (see `docs/WRITING_EVERGREEN_DOCS`). If you think we need a new evergreen-doc, ask the user
 - Explicitly say to use subagents for encapsulated tasks or where the task will create a lot of verbose content, e.g. checking for errors or browser console output with Playwright MCP, doing research
 
-Example action:
+Example action (no need to include the words `TODO` or `DONE` explicitly, since the `[ ]` todo-checkboxes capture that):
 
 ```
 - [ ] This is a top-level action description line
