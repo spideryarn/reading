@@ -118,10 +118,10 @@ export async function POST(request: NextRequest) {
 AI model settings are centralised in `/lib/config.ts` (see [ARCHITECTURE.md](ARCHITECTURE.md) for rationale):
 
 ```typescript
-// Override with AI_MODEL environment variable for development/testing
-// Example: AI_MODEL=claude-3-haiku-20240307 npm run dev (faster & cheaper for dev)
+// Override with LLM_MODEL environment variable for development/testing
+// Example: LLM_MODEL=claude-3-haiku-20240307 npm run dev (faster & cheaper for dev)
 export const AI_CONFIG = {
-  DEFAULT_MODEL: process.env.AI_MODEL || 'claude-sonnet-4-20250514',
+  DEFAULT_MODEL: process.env.LLM_MODEL || 'claude-sonnet-4-20250514',
   DEFAULT_TEMPERATURE: 0,
   DEFAULT_MAX_TOKENS: 1024,
 } as const
@@ -130,8 +130,8 @@ export const AI_CONFIG = {
 ### Development vs Production Models
 
 - **Production default**: `claude-sonnet-4-20250514` (smart, high-quality)
-- **Development option**: Set `AI_MODEL=claude-3-haiku-20240307` in `.env.local` (faster, ~20x cheaper)
-- **Override for testing**: `AI_MODEL=claude-sonnet-4-20250514 npm run dev` when you need smart AI
+- **Development option**: Set `LLM_MODEL=claude-3-haiku-20240307` in `.env.local` (faster, ~20x cheaper)
+- **Override for testing**: `LLM_MODEL=claude-sonnet-4-20250514 npm run dev` when you need smart AI
 
 Templates use these defaults unless overridden in the `modelConfig` parameter. Most templates should omit model specification to use the global default.
 

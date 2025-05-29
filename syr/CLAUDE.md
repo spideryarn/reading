@@ -63,7 +63,7 @@ Debugging resources:
 Key variables in `.env.local`:
 - `ANTHROPIC_API_KEY` - Required for AI features
 - `PORT` - Dev server port
-- `AI_MODEL` - default is Claude Sonnet 4, but we usually override to Haiku for development
+- `LLM_MODEL` - default is Claude Sonnet 4, but we usually override to Haiku for development
 - Supabase connection details (see `docs/SETUP.md`)
 
 Template: `.env.example` (may not be current - check `.env.local` for active config)
