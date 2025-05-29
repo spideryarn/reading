@@ -42,6 +42,7 @@ Add references to and from this new doc (e.g. in relevant code, planning docs in
 
 #### Cross-Reference Best Practices
 
+- **Update `docs/DOCUMENTATION_ORGANISATION.md`
 - **Link to canonical source** for detailed information rather than duplicating
 - **Provide 1-sentence context** with each link explaining its relevance
 - **Use relative paths** for internal documentation links

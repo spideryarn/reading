@@ -5,6 +5,7 @@ Spideryarn Reading uses a hierarchical, document-centric architecture built on N
 ## See also
 
 - `README.md` - Project goals and high-level implementation approach
+- `docs/DOCUMENTATION_ORGANISATION.md` - Summarises the main evergreen docs
 - `docs/ARCHITECTURE.md` - Detailed architectural decisions and data structure choices
 - `docs/PROJECT_STATUS.md` - Current development state and missing features
 - `docs/SETUP.md` - Development environment setup and Supabase configuration

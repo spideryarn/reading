@@ -2,6 +2,7 @@
 
 see:
 - `README.md`
+- `docs/GOALS_AND_DREAMS.md`
 - `docs/TABLE_OF_CONTENTS_PANE.md`
 
 ## High-level background & decisions

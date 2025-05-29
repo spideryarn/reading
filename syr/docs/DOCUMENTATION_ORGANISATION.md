@@ -1,82 +1,14 @@
-# CLAUDE.md - Spideryarn Reading Codebase Guide
+# Documentation organsation
 
-This document provides essential context for Claude instances working on the Spideryarn Reading project.
+## References
 
-see:
-- `README.md` for goals/intents/features
-- IMPORTANT: `docs/CODING_PRINCIPLES.md`
-- `docs/ARCHITECTURE.md`
-- `docs/GIT_COMMITS.md` for using Git
-
-## Project Overview
-
-Spideryarn Reading is an AI-assisted document reading and analysis application, currently in early prototype phase. The main goal is to help humans digest written non-fiction material better through AI-powered features like AI-generated granular table of contents, chatbot, summaries at multiple granularities, glossary, and intelligent navigation.
+- `README.md`
+- `docs/SITE_ORGANISATION.md`
 
 
-## Key Architectural Decisions
+## Evergreen documentation Reference
 
-Based on README.md, the following architecture decisions have been made:
-
-- **Frontend Framework**: Next.js with TypeScript and Tailwind CSS (transitioning from SvelteKit)
-- **AI Integration**: Anthropic Claude Sonnet 4 for all AI-related features
-- **Storage**: Supabase (Postgres with realtime capabilities) from the start
-- **Data Structure**: Decompose HTML documents into individual elements stored as separate database rows with parent/child relationships
-- **Frontend State**: Virtual DOM approach - maintain document structure as React state/context
-- **Background Processing**: Frontend-driven queue initially, with API calls to backend
-- **MVP Focus**: Basic document display with hierarchical summaries as the core feature
-
-## Build, testing, and debugging
-
-Next.js local dev server:
-- `npm run dev` - User is already running this in a separate terminal. If you need them to restart it, ask them.
-- Logs: `dev.log` - Use `tail dev.log` to check recent output
-- URL: http://localhost:$PORT/ (configurable via PORT in `.env.local`)
-
-Type checking and linting:
-- `npm run build` - TypeScript compilation errors
-- `npm run lint` - ESLint code quality/style issues
-- `npm test` - Jest testing (`npm run test:coverage` for coverage)
-
-Debugging resources:
-- Current logs: `tail dev.log`
-- Browser debugging: Playwright MCP (console logs, network requests, screenshots)
-- Test files: `src/lib/*/tests/` and `components/__tests__/`
-- Database: `supabase/migrations/` and `docs/DATABASE_*.md`
-- Architecture: `docs/ARCHITECTURE.md`, `docs/TROUBLESHOOTING.md`
-- Recent decisions: `planning/*.md` docs
-
-
-## Project Structure
-
-**Active Development** (root directory):
-- Core implementation: `app/`, `components/`, `lib/`
-- Documentation: `docs/` (evergreen) and `planning/` (decisions)
-- Database: `supabase/migrations/` and config
-
-**IGNORE**:
-- `obsolete_alternative_version/` - deprecated Python version (occasionally useful for prompts)
-- `backup/` - deprecated SvelteKit implementation
-
-
-## Environment Variables
-
-Key variables in `.env.local`:
-- `ANTHROPIC_API_KEY` - Required for AI features
-- `PORT` - Dev server port
-- `AI_MODEL` - default is Claude Sonnet 4, but we usually override to Haiku for development
-- Supabase connection details (see `docs/SETUP.md`)
-
-Template: `.env.example` (may not be current - check `.env.local` for active config)
-
-
-## Context window
-
-Use tasks and subagents where appropriate (to avoid filling up the context window), e.g. for encapsulated tasks, curl/Playwright/Puppeteer/other verbose output, Git commits, etc.
-
-
-## Documentation Reference
-
-see `docs/DOCUMENTATION_ORGANISATION.md`
+(Written based on `docs/WRITING_EVERGREEN_DOCS.md`)
 
 Available evergreen documentation in `docs/` - here are some of the most useful.
 
@@ -112,14 +44,9 @@ Docs, modes, and admin:
 - `docs/UPDATING_CLAUDE_INSTRUCTIONS.md` - Guidelines for maintaining CLAUDE.md to help AI agents operate effectively on the Spideryarn Reading codebase
 
 
-Recent planning decisions & progress tracking of major features: `planning/*.md`
+## Planning docs
 
+(Written based on `docs/WRITING_PLANNING_DOCS.md`)
 
-## Style
+Recent planning decisions & progress-tracking of major features: `planning/*.md`
 
-Use British spelling.
-
-
-## Git
-
-Follow the instructions in `docs/GIT_COMMITS.md`.
