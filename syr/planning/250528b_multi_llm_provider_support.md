@@ -38,19 +38,20 @@ Use tasks and subagents where appropriate, especially for curl, tests, and Playw
 - Designed for React/Next.js applications with streaming support
 - Provider-agnostic interface with easy provider switching
 
-### Decision: Use Vercel AI SDK
+### Decision: Use Vercel AI SDK Core with Existing assistant-ui Frontend
 
 **Rationale:**
 - **TypeScript-native**: Perfect fit for our Next.js + TypeScript stack
 - **Provider abstraction**: Clean interface supporting Claude, Gemini, OpenAI with identical API
-- **Framework integration**: Built specifically for Next.js applications
+- **Minimal disruption**: Keep working assistant-ui frontend unchanged
 - **Streaming support**: Maintains compatibility with our existing streaming implementations
 - **Active development**: Vercel's flagship AI library with strong community support
-- **Migration path**: Can incrementally replace Anthropic SDK without rewriting prompt templates
+- **Migration path**: Can incrementally replace Anthropic SDK without rewriting prompt templates or UI
 
-### Architecture Approach
+### Architecture Approach (Option 1: AI SDK Core Backend Only)
 
-- **Incremental migration**: Replace direct Anthropic SDK usage with Vercel AI SDK provider abstraction
+- **Backend-only migration**: Replace direct Anthropic SDK usage with Vercel AI SDK Core in API routes
+- **Preserve frontend**: Keep existing assistant-ui components and `useChatRuntime` hook unchanged
 - **Preserve template system**: Keep existing Nunjucks + Zod validation system unchanged
 - **Environment configuration**: Add `LLM_PROVIDER` environment variable alongside existing `AI_MODEL`
 - **Backward compatibility**: Maintain Claude as default with seamless fallback
@@ -66,20 +67,20 @@ Use tasks and subagents where appropriate, especially for curl, tests, and Playw
 - [ ] Review Vercel AI SDK documentation for provider setup and migration patterns
 - [ ] Test Vercel AI SDK basic integration in isolated example to validate approach
 
-**Stage 2: Foundation - Install and Configure Vercel AI SDK**
-- [ ] Install Vercel AI SDK: `npm install ai @ai-sdk/anthropic @ai-sdk/google`
+**Stage 2: Foundation - Install and Configure Vercel AI SDK Core**
+- [ ] Install AI SDK Core and provider packages: `npm install ai @ai-sdk/anthropic @ai-sdk/google-generativeai`
 - [ ] Add environment variables for provider selection:
   - `LLM_PROVIDER=anthropic|google` (default: anthropic)
-  - `GOOGLE_AI_API_KEY` for Gemini support
+  - `GOOGLE_GENERATIVE_AI_API_KEY` for Gemini support
 - [ ] Update `lib/config.ts` to include provider configuration and model mapping
 - [ ] Create provider factory function to instantiate correct AI SDK provider based on config
 - [ ] Write unit tests for provider configuration and factory function
 
 **Stage 3: Update Core Abstraction Layer**
-- [ ] Create new `lib/services/llm-client.ts` with unified LLM interface
-- [ ] Update `executePrompt()` in `lib/prompts/types.ts` to use Vercel AI SDK instead of direct Anthropic client
+- [ ] Create new `lib/services/llm-provider.ts` with provider factory pattern
+- [ ] Update `executePrompt()` in `lib/prompts/types.ts` to use AI SDK Core instead of direct Anthropic client
 - [ ] Ensure response format normalisation between different providers
-- [ ] Update template loading to work with new client interface
+- [ ] Maintain backward compatibility with existing prompt template system
 - [ ] Write comprehensive tests for updated `executePrompt()` function with multiple providers
 
 **Stage 4: Migrate API Routes (Non-Chat)** - use subagents
@@ -90,10 +91,10 @@ Use tasks and subagents where appropriate, especially for curl, tests, and Playw
 - [ ] Verify response formats and error handling work correctly across providers
 
 **Stage 5: Migrate Chat API Route**
-- [ ] Update `/app/api/chat/route.ts` to use Vercel AI SDK streaming interface
-- [ ] Ensure chat message format compatibility across providers
+- [ ] Update `/app/api/chat/route.ts` to use AI SDK Core while maintaining assistant-ui compatibility
+- [ ] Ensure response format matches what `useChatRuntime` expects
 - [ ] Test conversation flow with both Claude and Gemini
-- [ ] Verify streaming responses work correctly with new provider abstraction
+- [ ] Verify existing assistant-ui frontend continues to work unchanged
 
 **Stage 6: Testing and Validation**
 - [ ] Run full test suite to ensure no regressions: `npm test`
@@ -115,11 +116,11 @@ Use tasks and subagents where appropriate, especially for curl, tests, and Playw
 - [ ] Optimise provider client instantiation (consider caching/singleton pattern)
 - [ ] Run linting and type checking: `npm run lint && npm run build`
 
-**Stage 9: User Experience Enhancements**
-- [ ] Consider adding UI provider selection option in settings/debug panel
+**Stage 9: Future Enhancements (Post-MVP)**
+- [ ] Consider migration to `@assistant-ui/react-ai-sdk` for tighter integration
 - [ ] Add provider information to API responses for debugging
 - [ ] Implement graceful degradation when preferred provider is unavailable
-- [ ] Add cost estimation display (different providers have different pricing)
+- [ ] Consider UI provider selection if users request it
 
 **Stage 10: Final Review and Deployment**
 - [ ] Full manual testing of all features with multiple providers
@@ -131,98 +132,122 @@ Use tasks and subagents where appropriate, especially for curl, tests, and Playw
 
 # Appendix
 
-## Vercel AI SDK Key Benefits for Our Use Case
+## Vercel AI SDK Integration Analysis with assistant-ui
 
-Based on web research, the Vercel AI SDK offers:
+### Executive Summary
 
-1. **Unified Provider API**: Single interface for Claude, Gemini, GPT-4, etc.
-2. **TypeScript Native**: Built specifically for TypeScript/Next.js applications
-3. **Streaming Support**: Native streaming responses compatible with our chat interface  
-4. **Framework Integration**: Designed for React/Next.js with built-in hooks and utilities
-5. **Provider Flexibility**: Switch providers with configuration change, no code rewrite
-6. **Active Development**: 1M+ weekly downloads, backed by Vercel
+After thorough research and analysis, we've decided to implement **Option 1: Keep assistant-ui frontend, use Vercel AI SDK Core backend**. This approach provides multi-provider support with minimal disruption to our working chat interface.
 
-## Current Integration Points Requiring Change
+### Integration Options Evaluated
 
-1. **Direct Anthropic imports** in 5 files:
-   - `/app/api/chat/route.ts`
-   - `/app/api/summarise/route.ts` 
-   - `/app/api/glossary/route.ts`
-   - `/app/api/headings/route.ts`
-   - `/lib/prompts/types.ts`
+#### Option 1: AI SDK Core Backend + assistant-ui Frontend (SELECTED)
+- **Approach**: Replace Anthropic SDK with AI SDK Core in API routes only
+- **Frontend**: Keep existing `useChatRuntime` and assistant-ui components unchanged
+- **Benefits**: 
+  - Minimal disruption to working code
+  - Incremental migration path
+  - Preserves existing tests and UI components
+  - Quick path to multi-provider support
+- **Trade-offs**: Two dependencies instead of one
 
-2. **Client instantiation pattern**:
-   ```typescript
-   const anthropic = new Anthropic({
-     apiKey: process.env.ANTHROPIC_API_KEY,
-   })
-   ```
+#### Option 2: Full Migration to Vercel AI SDK UI
+- **Approach**: Replace assistant-ui with Vercel's `useChat` hook
+- **Requires**: Complete rewrite of chat components
+- **Rejected because**: Current UI is working well, no clear benefit to rewriting
 
-3. **executePrompt() function** hardcoded to Anthropic client and response format
+#### Option 3: Hybrid with @assistant-ui/react-ai-sdk
+- **Approach**: Use official integration package for tighter coupling
+- **Benefits**: Official support, potentially better integration
+- **Deferred**: Can be considered after initial implementation is stable
 
-4. **Response parsing** expects Anthropic's specific response structure
+### Research Findings
 
-## Alternative Solutions Considered
+#### Vercel AI SDK Architecture
 
-- **OpenRouter**: Excellent abstraction but adds network latency and external dependency
-- **LiteLLM**: Python-focused, would require additional REST API layer for TypeScript integration
-- **Custom abstraction**: More work to maintain, less community support than established solutions
+The SDK consists of three modules:
 
-The Vercel AI SDK emerged as the best fit due to its TypeScript-first design, Next.js integration, and comprehensive provider support while maintaining the flexibility of our existing prompt template system.
+1. **AI SDK Core** (What we'll use)
+   - Unified API for 15+ LLM providers
+   - TypeScript-native design
+   - Backend-focused for Node.js environments
+   - Perfect for our API route integration
 
-## Vercel AI SDK Architecture Deep Dive
+2. **AI SDK UI** (Not needed)
+   - Frontend hooks like `useChat`
+   - Would duplicate assistant-ui functionality
+   - No benefit over our current implementation
 
-### Three-Module Architecture
+3. **AI SDK RSC** (Experimental)
+   - Generative UI capabilities
+   - Too experimental for production use
 
-The Vercel AI SDK consists of three distinct modules with different purposes:
+#### assistant-ui Compatibility
 
-**AI SDK Core** - LLM Integration Layer:
-- Unified API for calling 15+ LLM providers (Claude, GPT-4, Gemini, etc.)
-- Provider abstraction allowing model switching via configuration
-- Backend-focused, works in Node.js, Deno, Bun environments
-- Built-in streaming support for real-time responses
-- Structured output generation with schema validation
+**Key Discovery**: assistant-ui has first-class Vercel AI SDK support through `@assistant-ui/react-ai-sdk` package
+- Official integration maintained by assistant-ui team
+- Designed to work seamlessly with Vercel AI SDK
+- Our current implementation structure aligns well with this integration pattern
 
-**AI SDK UI** - Frontend Interface Components:
-- Ready-made React hooks: `useChat`, `useCompletion`, `useAssistant`
-- Framework support: React, Vue, Svelte, SolidJS
-- Built-in chat interface with automatic message state management
-- Real-time streaming to UI with status tracking (submitted, streaming, ready, error)
-- Message parts system for complex outputs (text, tools, results)
-- Event callbacks for onFinish, onError, onResponse
+### Implementation Strategy Updates
 
-**AI SDK RSC** - Generative UI (Experimental):
-- Stream React components directly from AI responses
-- Generative UI where AI generates actual UI components, not just text
-- Server-side streaming of rich interfaces using React Server Components
-- Currently experimental with known limitations - not recommended for production
+Based on our analysis, the implementation stages have been updated:
 
-### Implementation Strategy for Our Project
+**Stage 2**: Now focuses on AI SDK Core installation only
+**Stage 3**: Simplified to create minimal abstraction layer
+**Stage 4-5**: API route updates remain similar but clearer
+**Stage 9**: Removed UI provider selection (keeping it backend-only initially)
 
-**Recommended Approach - Incremental Adoption:**
+### Key Benefits of Our Approach
 
-1. **Phase 1: AI SDK Core Only**
-   - Replace direct Anthropic SDK usage with AI SDK Core
-   - Keep existing chat interface and prompt template system
-   - Gain multi-provider support with minimal disruption
-   - Maintain current UI/UX while adding provider flexibility
+1. **Minimal Risk**: Working code stays working
+2. **Incremental Progress**: Can test provider switching route by route
+3. **Preserve Investment**: Existing tests, UI components, and patterns remain valid
+4. **Future Flexibility**: Can adopt tighter integration later if needed
 
-2. **Phase 2: Consider AI SDK UI (Optional)**
-   - Evaluate if AI SDK UI hooks provide benefits over current chat implementation
-   - Could replace custom chat state management with `useChat` hook
-   - Offers built-in streaming status indicators and error handling
-   - Would require refactoring existing chat components
+### Technical Integration Details
 
-**Benefits vs Current Architecture:**
-- **AI SDK Core** provides exactly the provider abstraction needed
-- **Existing prompt template system** (Nunjucks + Zod) remains unchanged
-- **Streaming support** is built-in vs manual implementation
-- **TypeScript-native** design matches our tech stack
+The migration pattern will be:
+```typescript
+// Current implementation
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const response = await anthropic.messages.create({
+  model: AI_CONFIG.DEFAULT_MODEL,
+  messages: [{ role: 'user', content: prompt }]
+})
 
-**Trade-offs:**
-- **AI SDK UI** might be overkill given our working chat interface
-- **Additional dependency** vs current lightweight approach  
-- **Learning curve** for new hooks and patterns
-- **AI SDK RSC** too experimental for our production needs
+// New implementation
+import { anthropic } from '@ai-sdk/anthropic'
+import { google } from '@ai-sdk/google-generativeai'
+import { generateText } from 'ai'
 
-This analysis confirms that **AI SDK Core** is the right starting point, with **AI SDK UI** as a potential future enhancement once multi-provider support is stable.
+const provider = process.env.LLM_PROVIDER === 'google' ? google : anthropic
+const result = await generateText({
+  model: provider(AI_CONFIG.DEFAULT_MODEL),
+  prompt: renderedPrompt,
+})
+```
+
+### Links and References
+
+- [Vercel AI SDK Documentation](https://ai-sdk.dev/docs/introduction)
+- [assistant-ui Documentation](https://www.assistant-ui.com/docs/getting-started)
+- [@assistant-ui/react-ai-sdk npm package](https://www.npmjs.com/package/@assistant-ui/react-ai-sdk)
+- [AI SDK Core API Reference](https://ai-sdk.dev/docs/ai-sdk-core/overview)
+- [Multi-provider examples](https://github.com/vercel/ai/tree/main/examples)
+
+### Why Not Other Solutions?
+
+- **OpenRouter**: Adds network hop and external dependency
+- **LiteLLM**: Python-focused, requires REST wrapper
+- **Custom abstraction**: More maintenance burden
+- **Full Vercel AI SDK UI**: Would require rewriting working code
+
+### Future Considerations
+
+After stable multi-provider support is achieved, we could explore:
+1. Using `@assistant-ui/react-ai-sdk` for tighter integration
+2. Adding provider selection UI if users request it
+3. Implementing provider-specific optimizations
+4. Cost tracking across different providers
+
+This approach balances pragmatism with progress, allowing us to achieve multi-provider support while maintaining system stability.
