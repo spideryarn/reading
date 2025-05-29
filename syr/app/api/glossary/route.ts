@@ -25,9 +25,21 @@ export async function POST(request: NextRequest) {
     
     const { content, already_entities } = validationResult.data
     
+    // Debug: Log content length
+    console.log(`Processing glossary for content length: ${content.length} characters`)
+    
+    // Truncate content if it's too long (roughly estimate for token limits)
+    // Claude models have different context windows, but we'll be conservative
+    const MAX_CONTENT_LENGTH = 50000 // Roughly 12-15k tokens
+    let processedContent = content
+    if (content.length > MAX_CONTENT_LENGTH) {
+      console.log(`Content too long (${content.length} chars), truncating to ${MAX_CONTENT_LENGTH} chars`)
+      processedContent = content.substring(0, MAX_CONTENT_LENGTH) + '\n\n[Content truncated for processing...]'
+    }
+    
     // Use real LLM processing - no fallback
     const llmResponse = await executePrompt(anthropic, glossaryPrompt, { 
-      content,
+      content: processedContent,
       already_entities 
     })
     

@@ -272,13 +272,13 @@ describe('DocumentViewer', () => {
       render(<DocumentViewer elements={headingElements} />);
       
       const h1 = screen.getByText('Heading 1');
-      expect(h1).toHaveClass('text-3xl', 'font-bold');
+      expect(h1.parentElement).toHaveClass('text-3xl', 'font-bold');
       
       const h2 = screen.getByText('Heading 2');
-      expect(h2).toHaveClass('text-2xl', 'font-semibold');
+      expect(h2.parentElement).toHaveClass('text-2xl', 'font-semibold');
       
       const h3 = screen.getByText('Heading 3');
-      expect(h3).toHaveClass('text-xl', 'font-semibold');
+      expect(h3.parentElement).toHaveClass('text-xl', 'font-semibold');
     });
 
     it('should apply correct styling to paragraphs', () => {
@@ -289,7 +289,7 @@ describe('DocumentViewer', () => {
       render(<DocumentViewer elements={paragraphElements} />);
       
       const paragraph = screen.getByText('This is a paragraph');
-      expect(paragraph).toHaveClass('text-base', 'leading-relaxed');
+      expect(paragraph.parentElement).toHaveClass('text-base', 'leading-relaxed');
     });
 
     it('should render list items with bullets and numbers', () => {

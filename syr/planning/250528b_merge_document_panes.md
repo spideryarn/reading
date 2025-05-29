@@ -88,9 +88,13 @@ The goal is to merge these two panes into a single, double-wide **Document** pan
 
 - [x] DONE: Commit: "feat: add proper typography and formatting to Document pane"
 
+- [ ] 
+
 ### Stage 3: Expand/collapse functionality (TODO)
 
 **Objective**: Add the ability to expand/collapse document sections for better navigation.
+
+In 'collapsed mode', only show the first line (or the first N characters/words), or something similar. In 'expanded mode', show the full block.
 
 - [ ] TODO: Add expand/collapse state management:
   - Track expanded/collapsed state per element
@@ -150,6 +154,12 @@ The goal is to merge these two panes into a single, double-wide **Document** pan
 - [ ] TODO: Update any integration tests
 
 - [ ] TODO: Commit: "docs: update documentation for merged Document pane"
+
+### Stage 6: AI-generated summaries for collapsed blocks (TODO)
+
+**Objective**: Replace simple collapsed/expanded blocks with AI-generated 1-sentence summaries.
+
+- [ ] TODO: See detailed planning doc: `planning/250529a_ai_collapse_expand_summaries.md`
 
 ## Appendix
 
@@ -214,3 +224,230 @@ h4: text-lg font-medium
 h5: text-base font-medium
 h6: text-sm font-medium
 ```
+
+### HTML Formatting Preservation: Analysis and Options
+
+#### The Problem
+
+During implementation, we discovered that inline HTML elements (like `<em>`, `<strong>`, `<code>`) were being extracted as separate document elements instead of being kept within their parent text. This caused formatting to be lost when displaying documents.
+
+**Example:** 
+- Original HTML: `<p>Text with <em>emphasis</em> and <strong>bold</strong>.</p>`
+- Problem: Created 3 separate elements (p, em, strong) instead of 1 paragraph with formatted text
+- Result: Lost italics/bold formatting in display
+
+#### Initial Solution (Implemented but Suboptimal)
+
+We implemented a solution that:
+1. Converts HTML to Markdown during parsing (using TurndownService)
+2. Stores Markdown in the `content` field
+3. Renders Markdown back to HTML with a MarkdownRenderer component
+
+**Problems with this approach:**
+- Double conversion (HTML → Markdown → HTML) is inefficient and potentially lossy
+- Markdown can't represent all HTML inline elements accurately
+- Adds unnecessary complexity
+
+#### Why We Need Structure Beyond Plain HTML
+
+The mutations system requires structured data to:
+- Insert new elements at specific positions
+- Replace content while preserving structure  
+- Apply AI transformations to text
+- Track element IDs and relationships
+
+With raw HTML strings, every mutation would require: Parse HTML → Apply mutation → Serialize back
+
+#### Better Options to Consider
+
+**Option 1: Store Sanitized HTML**
+```typescript
+interface DocumentElement {
+  content: string;  // Sanitized HTML
+}
+```
+- Pro: Simple, preserves all formatting perfectly
+- Con: Security concerns, harder to process for mutations
+- Mitigation: Use DOMPurify for sanitization
+
+**Option 2: Dual Storage (Plain + Rich)**
+```typescript
+interface DocumentElement {
+  plain_content: string;     // For AI, search
+  rich_content: string;      // Sanitized HTML for display
+}
+```
+- Pro: Optimized for different use cases
+- Con: Data duplication, sync issues
+
+**Option 3: Structured AST Storage**
+```typescript
+interface DocumentElement {
+  content: string;          // Plain text
+  rich_content: HAST;       // HTML AST from Unified/Rehype
+}
+```
+- Pro: Best of both worlds, type-safe, mutation-friendly
+- Con: More complex, larger storage
+
+**Option 4: Virtual DOM Approach**
+```typescript
+interface RichContent {
+  type: 'text' | 'element';
+  value?: string;
+  tag?: string;
+  children?: RichContent[];
+}
+```
+- Pro: Full control, React-native
+- Con: Complex implementation, verbose
+
+#### Library Recommendations
+
+**For HTML parsing and AST manipulation:**
+- **Unified/Rehype ecosystem** (Recommended)
+  - `rehype-parse`: HTML → HAST
+  - `hast-util-to-jsx-runtime`: HAST → React elements
+  - Battle-tested, extensible, handles complex scientific HTML
+
+**For simpler use cases:**
+- **html-react-parser**: Direct HTML to React with AST access
+- **DOMPurify**: Industry standard for HTML sanitization
+
+#### Security Considerations
+
+Per security research:
+- DOMPurify + dangerouslySetInnerHTML is considered safe when properly configured
+- Must use latest version and configure allowed tags/attributes
+- Implement Content Security Policy as defense-in-depth
+- The Unified/HAST approach eliminates need for dangerouslySetInnerHTML entirely
+
+#### Recommended Approach
+
+**Short term (Stage 3):** Store sanitized HTML
+- Quick to implement
+- Use DOMPurify with strict configuration
+- Add `rich_content` field to complement existing `content`
+
+**Long term (Stage 4+):** Migrate to HAST
+- When mutations need more structure
+- Better for complex transformations
+- Type-safe and framework-aligned
+
+#### Implementation Notes
+
+**Sanitization configuration for scientific documents:**
+```javascript
+DOMPurify.sanitize(html, {
+  ALLOWED_TAGS: [
+    'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'em', 'strong', 'code', 'pre', 'blockquote',
+    'ul', 'ol', 'li', 'a', 'sub', 'sup',
+    'table', 'tr', 'td', 'th', 'caption'
+  ],
+  ALLOWED_ATTR: ['href', 'title', 'id', 'class']
+})
+```
+
+#### Stage 3 Addition: HTML Sanitization
+
+- [ ] TODO: Add HTML sanitization using DOMPurify
+  - Install and configure DOMPurify
+  - Update parser to store both plain and rich content
+  - Update renderer to use sanitized HTML
+  - Add tests for security edge cases
+
+
+#### Reflections on "HTML Formatting Preservation" from o3 AI
+
+Below is a short-to-long evaluation of the four alternatives in “HTML Formatting Preservation: Analysis and Options”, measured against the code that is running today:
+
+1. Where we are right now  
+• The DB keeps one long HTML string per document (`documents.html`).  
+• On the client we immediately parse that string into an array/tree of `DocumentElement` objects.  
+• `DocumentElement.content` currently holds **plain text** only, so we lose `<em>`, `<strong>` … in the viewer.  
+• All mutation logic (insert, replace, remove…) works on that `DocumentElement[]` in memory. No mutation ever dives inside inline markup.
+
+1. What the different storage options would actually mean
+
+OPTION 1  “Store sanitised HTML only”  
+  – We would have to re-parse the entire document every time we want to:  
+    • run a mutation, or  
+    • feed the LLM with plain text.  
+  – Undo/redo becomes slower and harder to reason about because we lose the tidy element-level diff we have now.  
+  ➜ This cancels much of the value the mutation engine already gives us.
+
+OPTION 2  “Dual storage (plain + rich)”  ⭐ Recommended, minimal change  
+  Schema sketch (per element):  
+  ```ts
+  interface DocumentElement {
+    …existing fields…
+    plain_content : string   // <p>Text with emphasis and bold.</p> → "Text with emphasis and bold."
+    rich_content  : string   // the same fragment, sanitised HTML
+  }
+  ```  
+  Pipeline:  
+  1. Ingestion (server or Supabase edge-function)  
+      • Sanitise with `isomorphic-dompurify` → `rich_content`  
+      • Strip tags with a cheap regex / unified pipeline → `plain_content`  
+  2. Runtime  
+      • `DocumentViewer` renders `rich_content`.  
+      • Mutation engine keeps using the same array of elements; no code change needed except reading `rich_content` instead of `content` when printing.  
+  3. LLM / search / embeddings use `plain_content`.  
+
+  Pros  
+  • Keeps 100 % of inline markup for the reader.  
+  • Zero impact on existing mutation code.  
+  • Plain text stays trivial to consume for AI and Postgres full-text.  
+  • Implementation is “add two columns + adjust parser/renderer”, done in a day.  
+
+  Cons  
+  • ≈ 1.8 × space per element. Typically acceptable; if a 5 MB article grows to 9 MB it still fits comfortably in Postgres and in memory.  
+
+OPTION 3  “Persist HAST / JSON AST”  
+  • Great if we ever need **inline-level** mutation or collaborative editing.  
+  • In v1 it adds ~3-5 × size and a lot of query complexity we do not yet need.  
+
+OPTION 4  “Store a virtual-DOM-style object graph”  
+  • Same size explosion as option 3, plus the risk of the server copy and React copy diverging.  
+  • Hard passes YAGNI for now.  
+
+3. Concrete next steps if we agree on Option 2
+
+A. DB / Supabase  
+  • `ALTER TABLE document_elements ADD COLUMN rich_content TEXT;`  
+  • `ALTER TABLE document_elements ADD COLUMN plain_content TEXT;`  
+  • Write a migration/edge-function that back-fills both columns from the existing HTML blob.
+
+B. Ingestion script (where we already parse HTML → `DocumentElement[]`)  
+  • Drop-in `DOMPurify.sanitize(innerHTML, cfg)` to create `rich_content`.  
+  • `plain_content` = `cheerio(text()).trim()` or unified’s `rehype-raw` → `strip`.  
+
+C. Frontend  
+  • Change `renderElement()` to output `dangerouslySetInnerHTML={{__html: el.rich_content}}`.  
+  • Keep `el.content` around for legacy until everything compiles, then delete/rename.
+
+D. Security  
+  • Strict allow-list already described in the doc (p, em, strong, code … + id/class/href/title).  
+  • Ship CSP header (`script-src 'none'`) from API routes that hand out HTML.
+
+E. Tests  
+  • Add Jest unit covering sanitisation (XSS payload in → safe HTML out).  
+  • Happy-path render test to ensure `<em>` etc. appear.
+
+4. Open questions / input needed
+
+1. Per-element vs per-document dual fields  
+   – I assumed per-element because the mutation engine operates there.  
+   – If we would rather keep DB simple and only store `documents.rich_html`, we can still break it into elements at runtime – but then every paragraph render still needs to slice that big string. Per-element feels cleaner.
+
+2. Search granularity  
+   If we foresee section-level embeddings, having `plain_content` per-element will pay dividends.
+
+3. Long term  
+   Do we expect inline-level editing (e.g. “bold these words”)? If yes, we can promote a subset of elements to HAST on-the-fly as suggested (“ephemeral HAST” path) without persisting the whole AST.
+
+5. Bottom line  
+Option 2 (dual storage) gives us full visual fidelity tomorrow, keeps the mutation engine exactly as is, and leaves room to grow into richer models later. The extra storage is minor; the implementation effort is low; the security story is clear. Unless we know we will need inline-level mutations in the next couple of sprints, I’d adopt Option 2 and revisit later.
+
+Let me know what you think or if any of the open questions need deeper exploration.
