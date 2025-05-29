@@ -30,7 +30,7 @@ Based on README.md, the following architecture decisions have been made:
 Next.js local dev server:
 - `npm run dev` - User is already running this in a separate terminal. If you need them to restart it, ask them.
 - Logs: `dev.log` - Use `tail dev.log` to check recent output
-- URL: http://localhost:3001/ (configurable via PORT in `.env.local`)
+- URL: http://localhost:$PORT/ (configurable via PORT in `.env.local`)
 
 Type checking and linting:
 - `npm run build` - TypeScript compilation errors
@@ -62,7 +62,7 @@ Debugging resources:
 
 Key variables in `.env.local`:
 - `ANTHROPIC_API_KEY` - Required for AI features
-- `PORT` - Dev server port (default 3001)
+- `PORT` - Dev server port
 - `AI_MODEL` - default is Claude Sonnet 4, but we usually override to Haiku for development
 - Supabase connection details (see `docs/SETUP.md`)
 
@@ -71,7 +71,7 @@ Template: `.env.example` (may not be current - check `.env.local` for active con
 
 ## Context window
 
-Try to use tasks and subagents where appropriate (to avoid filling up the context window), e.g. for encapsulated tasks, curl/Playwright/Puppeteer/other verbose output, Git commits, etc.
+Use tasks and subagents where appropriate (to avoid filling up the context window), e.g. for encapsulated tasks, curl/Playwright/Puppeteer/other verbose output, Git commits, etc.
 
 
 ## Documentation Reference

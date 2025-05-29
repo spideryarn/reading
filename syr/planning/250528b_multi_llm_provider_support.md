@@ -16,6 +16,8 @@ The current architecture has moderate coupling to Anthropic - while the prompt t
 
 ## Principles, key decisions
 
+Use tasks and subagents where appropriate, especially for curl, tests, and Playwright MCP.
+
 ### Standard Solution Research Findings
 
 **OpenRouter** - Unified API platform providing access to 300+ models through OpenAI-compatible endpoints:
@@ -55,6 +57,8 @@ The current architecture has moderate coupling to Anthropic - while the prompt t
 
 ## Actions
 
+**Stage 0** - Create a new Git branch
+
 **Stage 1: Research and Planning**
 - [x] Research standard solutions (OpenRouter, LiteLLM, Vercel AI SDK)
 - [x] Analyse current LLM integration coupling and identify change points
@@ -78,7 +82,7 @@ The current architecture has moderate coupling to Anthropic - while the prompt t
 - [ ] Update template loading to work with new client interface
 - [ ] Write comprehensive tests for updated `executePrompt()` function with multiple providers
 
-**Stage 4: Migrate API Routes (Non-Chat)**
+**Stage 4: Migrate API Routes (Non-Chat)** - use subagents
 - [ ] Update `/app/api/summarise/route.ts` to use new unified client
 - [ ] Update `/app/api/glossary/route.ts` to use new unified client  
 - [ ] Update `/app/api/headings/route.ts` to use new unified client
@@ -123,6 +127,7 @@ The current architecture has moderate coupling to Anthropic - while the prompt t
 - [ ] Update planning document with final implementation notes and lessons learned
 - [ ] Git commit all changes following `docs/GIT_COMMITS.md` guidelines
 - [ ] Update `docs/PROJECT_STATUS.md` to reflect multi-provider support
+- [ ] Merge back into main (check with the user first)
 
 # Appendix
 

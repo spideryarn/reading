@@ -1,6 +1,8 @@
 import { readFile } from 'fs/promises'
 import { readdirSync } from 'fs'
 import { join } from 'path'
+import Link from 'next/link'
+import { File } from '@phosphor-icons/react/dist/ssr'
 import { DocumentViewer } from '@/components/document-viewer'
 import { DocumentSummary } from '@/components/document-summary'
 import { TableOfContents } from '@/components/table-of-contents'
@@ -57,8 +59,16 @@ export default async function DocumentPage({ params }: PageProps) {
 
   return (
     <div className="h-screen flex flex-col pt-16">
-      <div className="border-b px-4 py-3 flex items-center min-h-[3rem] bg-white">
+      <div className="border-b px-4 py-3 flex items-center justify-between min-h-[3rem] bg-white">
         <h1 className="text-xl font-semibold leading-tight text-gray-900">{doc.title}</h1>
+        <Link 
+          href={`/api/documents/${slug}/original`}
+          className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+          title="View original HTML"
+        >
+          <File size={16} />
+          View Original
+        </Link>
       </div>
       <MutationProvider initialDocument={elements}>
         <DocumentPageClient 
