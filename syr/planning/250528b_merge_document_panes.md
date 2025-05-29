@@ -88,6 +88,8 @@ The goal is to merge these two panes into a single, double-wide **Document** pan
 
 - [x] DONE: Commit: "feat: add proper typography and formatting to Document pane"
 
+- [ ] 
+
 ### Stage 3: Expand/collapse functionality (TODO)
 
 **Objective**: Add the ability to expand/collapse document sections for better navigation.
@@ -214,3 +216,135 @@ h4: text-lg font-medium
 h5: text-base font-medium
 h6: text-sm font-medium
 ```
+
+### HTML Formatting Preservation: Analysis and Options
+
+#### The Problem
+
+During implementation, we discovered that inline HTML elements (like `<em>`, `<strong>`, `<code>`) were being extracted as separate document elements instead of being kept within their parent text. This caused formatting to be lost when displaying documents.
+
+**Example:** 
+- Original HTML: `<p>Text with <em>emphasis</em> and <strong>bold</strong>.</p>`
+- Problem: Created 3 separate elements (p, em, strong) instead of 1 paragraph with formatted text
+- Result: Lost italics/bold formatting in display
+
+#### Initial Solution (Implemented but Suboptimal)
+
+We implemented a solution that:
+1. Converts HTML to Markdown during parsing (using TurndownService)
+2. Stores Markdown in the `content` field
+3. Renders Markdown back to HTML with a MarkdownRenderer component
+
+**Problems with this approach:**
+- Double conversion (HTML → Markdown → HTML) is inefficient and potentially lossy
+- Markdown can't represent all HTML inline elements accurately
+- Adds unnecessary complexity
+
+#### Why We Need Structure Beyond Plain HTML
+
+The mutations system requires structured data to:
+- Insert new elements at specific positions
+- Replace content while preserving structure  
+- Apply AI transformations to text
+- Track element IDs and relationships
+
+With raw HTML strings, every mutation would require: Parse HTML → Apply mutation → Serialize back
+
+#### Better Options to Consider
+
+**Option 1: Store Sanitized HTML**
+```typescript
+interface DocumentElement {
+  content: string;  // Sanitized HTML
+}
+```
+- Pro: Simple, preserves all formatting perfectly
+- Con: Security concerns, harder to process for mutations
+- Mitigation: Use DOMPurify for sanitization
+
+**Option 2: Dual Storage (Plain + Rich)**
+```typescript
+interface DocumentElement {
+  plain_content: string;     // For AI, search
+  rich_content: string;      // Sanitized HTML for display
+}
+```
+- Pro: Optimized for different use cases
+- Con: Data duplication, sync issues
+
+**Option 3: Structured AST Storage**
+```typescript
+interface DocumentElement {
+  content: string;          // Plain text
+  rich_content: HAST;       // HTML AST from Unified/Rehype
+}
+```
+- Pro: Best of both worlds, type-safe, mutation-friendly
+- Con: More complex, larger storage
+
+**Option 4: Virtual DOM Approach**
+```typescript
+interface RichContent {
+  type: 'text' | 'element';
+  value?: string;
+  tag?: string;
+  children?: RichContent[];
+}
+```
+- Pro: Full control, React-native
+- Con: Complex implementation, verbose
+
+#### Library Recommendations
+
+**For HTML parsing and AST manipulation:**
+- **Unified/Rehype ecosystem** (Recommended)
+  - `rehype-parse`: HTML → HAST
+  - `hast-util-to-jsx-runtime`: HAST → React elements
+  - Battle-tested, extensible, handles complex scientific HTML
+
+**For simpler use cases:**
+- **html-react-parser**: Direct HTML to React with AST access
+- **DOMPurify**: Industry standard for HTML sanitization
+
+#### Security Considerations
+
+Per security research:
+- DOMPurify + dangerouslySetInnerHTML is considered safe when properly configured
+- Must use latest version and configure allowed tags/attributes
+- Implement Content Security Policy as defense-in-depth
+- The Unified/HAST approach eliminates need for dangerouslySetInnerHTML entirely
+
+#### Recommended Approach
+
+**Short term (Stage 3):** Store sanitized HTML
+- Quick to implement
+- Use DOMPurify with strict configuration
+- Add `rich_content` field to complement existing `content`
+
+**Long term (Stage 4+):** Migrate to HAST
+- When mutations need more structure
+- Better for complex transformations
+- Type-safe and framework-aligned
+
+#### Implementation Notes
+
+**Sanitization configuration for scientific documents:**
+```javascript
+DOMPurify.sanitize(html, {
+  ALLOWED_TAGS: [
+    'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'em', 'strong', 'code', 'pre', 'blockquote',
+    'ul', 'ol', 'li', 'a', 'sub', 'sup',
+    'table', 'tr', 'td', 'th', 'caption'
+  ],
+  ALLOWED_ATTR: ['href', 'title', 'id', 'class']
+})
+```
+
+#### Stage 3 Addition: HTML Sanitization
+
+- [ ] TODO: Add HTML sanitization using DOMPurify
+  - Install and configure DOMPurify
+  - Update parser to store both plain and rich content
+  - Update renderer to use sanitized HTML
+  - Add tests for security edge cases
