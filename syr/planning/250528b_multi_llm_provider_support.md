@@ -1,5 +1,7 @@
 # Multi-LLM Provider Support Implementation
 
+**Progress Update (29 May 2025)**: Stages 1 & 2 complete. Foundation laid with Vercel AI SDK Core installed, provider factory created, and tests passing. Ready to proceed with Stage 3 (updating executePrompt).
+
 ## Goal, context
 
 Implement support for multiple LLM providers (particularly Gemini alongside Claude) to give users choice and reduce vendor lock-in. Currently, the application is tightly coupled to Anthropic's Claude through the `@anthropic-ai/sdk`, with LLM calls in 5 API routes and the `executePrompt()` helper function.
@@ -9,7 +11,7 @@ The current architecture has moderate coupling to Anthropic - while the prompt t
 ## References
 
 - `docs/LLM_PROMPT_TEMPLATES.md` - Documents current Nunjucks + Zod template system that would remain unchanged
-- `lib/config.ts` - Central AI configuration that already supports model switching via `AI_MODEL` environment variable  
+- `lib/config.ts` - Central AI configuration that already supports model switching via `LLM_MODEL` environment variable  
 - `lib/prompts/types.ts` - Contains `executePrompt()` function that's currently Anthropic-specific
 - API routes: `/app/api/chat/route.ts`, `/app/api/summarise/route.ts`, `/app/api/glossary/route.ts`, `/app/api/headings/route.ts` - All directly instantiate Anthropic clients
 - Web search findings on standard solutions: OpenRouter, LiteLLM, Vercel AI SDK
@@ -53,31 +55,33 @@ Use tasks and subagents where appropriate, especially for curl, tests, and Playw
 - **Backend-only migration**: Replace direct Anthropic SDK usage with Vercel AI SDK Core in API routes
 - **Preserve frontend**: Keep existing assistant-ui components and `useChatRuntime` hook unchanged
 - **Preserve template system**: Keep existing Nunjucks + Zod validation system unchanged
-- **Environment configuration**: Add `LLM_PROVIDER` environment variable alongside existing `AI_MODEL`
+- **Environment configuration**: Add `LLM_PROVIDER` environment variable alongside existing `LLM_MODEL`
 - **Backward compatibility**: Maintain Claude as default with seamless fallback
 
 ## Actions
 
 **Stage 0** - Create a new Git branch
+- [x] We're in `feature/multi-llm-provider-support`
 
 **Stage 1: Research and Planning**
 - [x] Research standard solutions (OpenRouter, LiteLLM, Vercel AI SDK)
 - [x] Analyse current LLM integration coupling and identify change points
 - [x] Document findings and approach in planning document
-- [ ] Review Vercel AI SDK documentation for provider setup and migration patterns
-- [ ] Test Vercel AI SDK basic integration in isolated example to validate approach
+- [x] Review Vercel AI SDK documentation for provider setup and migration patterns
+- [x] Test Vercel AI SDK basic integration in isolated example to validate approach
 
 **Stage 2: Foundation - Install and Configure Vercel AI SDK Core**
-- [ ] Install AI SDK Core and provider packages: `npm install ai @ai-sdk/anthropic @ai-sdk/google-generativeai`
-- [ ] Add environment variables for provider selection:
+- [x] Install AI SDK Core and provider packages: `npm install ai @ai-sdk/anthropic @ai-sdk/google`
+- [x] Add environment variables for provider selection:
   - `LLM_PROVIDER=anthropic|google` (default: anthropic)
   - `GOOGLE_GENERATIVE_AI_API_KEY` for Gemini support
-- [ ] Update `lib/config.ts` to include provider configuration and model mapping
-- [ ] Create provider factory function to instantiate correct AI SDK provider based on config
-- [ ] Write unit tests for provider configuration and factory function
+- [x] Update `lib/config.ts` to include provider configuration and model mapping
+- [x] Create provider factory function (`lib/services/llm-provider.ts`) to instantiate correct AI SDK provider based on config
+- [x] Write unit tests for provider configuration and factory function
+- [x] Rename `AI_MODEL` to `LLM_MODEL` environment variable for consistency
 
 **Stage 3: Update Core Abstraction Layer**
-- [ ] Create new `lib/services/llm-provider.ts` with provider factory pattern
+- [x] Create new `lib/services/llm-provider.ts` with provider factory pattern
 - [ ] Update `executePrompt()` in `lib/prompts/types.ts` to use AI SDK Core instead of direct Anthropic client
 - [ ] Ensure response format normalisation between different providers
 - [ ] Maintain backward compatibility with existing prompt template system
@@ -87,7 +91,7 @@ Use tasks and subagents where appropriate, especially for curl, tests, and Playw
 - [ ] Update `/app/api/summarise/route.ts` to use new unified client
 - [ ] Update `/app/api/glossary/route.ts` to use new unified client  
 - [ ] Update `/app/api/headings/route.ts` to use new unified client
-- [ ] Test all three routes with both Claude and Gemini providers
+- [ ] Test all three routes with both Claude and Gemini providers - use subagents for curl or Playwright MCP
 - [ ] Verify response formats and error handling work correctly across providers
 
 **Stage 5: Migrate Chat API Route**
@@ -96,7 +100,7 @@ Use tasks and subagents where appropriate, especially for curl, tests, and Playw
 - [ ] Test conversation flow with both Claude and Gemini
 - [ ] Verify existing assistant-ui frontend continues to work unchanged
 
-**Stage 6: Testing and Validation**
+**Stage 6: Testing and Validation** - use subagents for running tests where appropriate
 - [ ] Run full test suite to ensure no regressions: `npm test`
 - [ ] Test provider switching via environment variables
 - [ ] Test fallback behaviour when API keys are missing/invalid
@@ -107,7 +111,7 @@ Use tasks and subagents where appropriate, especially for curl, tests, and Playw
 - [ ] Update `docs/LLM_PROMPT_TEMPLATES.md` to document multi-provider support
 - [ ] Update `docs/SETUP.md` with new environment variable requirements
 - [ ] Add provider switching instructions to `README.md`
-- [ ] Update `.env.example` with new Gemini configuration options
+- [x] Update `.env.example` with new Gemini configuration options
 - [ ] Create troubleshooting section for provider-specific issues
 
 **Stage 8: Cleanup and Optimisation**
