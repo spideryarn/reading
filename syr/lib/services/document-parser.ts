@@ -25,6 +25,13 @@ export class DocumentParser {
     'slot', 'template'
   ])
 
+  // Create a single TurndownService instance for performance
+  private turndownService = new TurndownService({
+    headingStyle: 'atx',
+    bulletListMarker: '-',
+    codeBlockStyle: 'fenced'
+  })
+
   /**
    * Converts HTML to Markdown format for better structured text processing.
    * 
@@ -39,13 +46,7 @@ export class DocumentParser {
    * `# Title\n\nFirst paragraph with **bold text**.\n\nSecond paragraph.`
    */
   convertToMarkdown(html: string): string {
-    const turndownService = new TurndownService({
-      headingStyle: 'atx',
-      bulletListMarker: '-',
-      codeBlockStyle: 'fenced'
-    })
-    
-    return turndownService.turndown(html)
+    return this.turndownService.turndown(html)
   }
 
   parse(html: string, documentId: string): DocumentElement[] {
@@ -80,7 +81,7 @@ export class DocumentParser {
         })
       }
 
-      // For block elements, extract all text content including inline elements
+      // For block elements, extract content while preserving inline formatting
       let textContent = ''
       if (tagName === 'text' || DocumentParser.INLINE_ELEMENTS.has(tagName)) {
         // For inline elements or text nodes, just get direct text
@@ -91,8 +92,12 @@ export class DocumentParser {
           .text()
           .trim()
       } else {
-        // For block elements, get all text including from inline children
-        textContent = $el.text().trim()
+        // For block elements, get HTML content and convert to Markdown to preserve formatting
+        // Get the inner HTML of the element
+        const innerHtml = $el.html() || ''
+        
+        // Convert to Markdown, which preserves emphasis and other formatting
+        textContent = this.turndownService.turndown(innerHtml).trim()
       }
 
       // Only get block-level children (skip inline elements as they're included in text)
