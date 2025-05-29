@@ -2,8 +2,9 @@ import { z } from 'zod'
 import nunjucks from 'nunjucks'
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import Anthropic from '@anthropic-ai/sdk'
+import { generateText } from 'ai'
 import { AI_CONFIG } from '@/lib/config'
+import { getModel } from '@/lib/services/llm-provider'
 
 // Configure Nunjucks with strict mode
 const env = nunjucks.configure({
@@ -64,9 +65,8 @@ export function loadPromptTemplateFromCaller<T extends z.ZodSchema>(
   return loadPromptTemplate(templatePath, schema, modelConfig)
 }
 
-// Execute a prompt with validation and rendering
-export async function executePrompt<T extends z.ZodSchema>(
-  anthropic: Anthropic,
+// Internal implementation using Vercel AI SDK Core
+async function executePromptInternal<T extends z.ZodSchema>(
   template: PromptTemplate<T>,
   variables: z.infer<T>
 ): Promise<string> {
@@ -77,14 +77,34 @@ export async function executePrompt<T extends z.ZodSchema>(
   const templateContent = readFileSync(template.templatePath, 'utf-8')
   const prompt = env.renderString(templateContent, validated)
   
-  // Execute with Anthropic
-  const response = await anthropic.messages.create({
-    model: template.modelConfig?.model || AI_CONFIG.DEFAULT_MODEL,
-    max_tokens: template.modelConfig?.maxTokens || AI_CONFIG.DEFAULT_MAX_TOKENS,
+  // Get the appropriate model based on configuration
+  const modelName = template.modelConfig?.model || AI_CONFIG.DEFAULT_MODEL
+  const model = getModel(modelName)
+  
+  // Execute with Vercel AI SDK Core
+  const result = await generateText({
+    model,
+    prompt,
+    maxTokens: template.modelConfig?.maxTokens || AI_CONFIG.DEFAULT_MAX_TOKENS,
     temperature: template.modelConfig?.temperature ?? AI_CONFIG.DEFAULT_TEMPERATURE,
-    messages: [{ role: 'user', content: prompt }]
   })
   
-  const result = response.content[0].type === 'text' ? response.content[0].text : ''
-  return result
+  return result.text
+}
+
+// Execute a prompt with validation and rendering
+// Supports both legacy (with Anthropic client) and new (without client) signatures
+export async function executePrompt<T extends z.ZodSchema>(
+  ...args: [any, PromptTemplate<T>, z.infer<T>] | [PromptTemplate<T>, z.infer<T>]
+): Promise<string> {
+  // Check if first argument is the deprecated Anthropic client
+  if (args.length === 3) {
+    // Legacy signature: executePrompt(anthropic, template, variables)
+    const [_, template, variables] = args
+    return executePromptInternal(template, variables)
+  } else {
+    // New signature: executePrompt(template, variables)
+    const [template, variables] = args as [PromptTemplate<T>, z.infer<T>]
+    return executePromptInternal(template, variables)
+  }
 }
