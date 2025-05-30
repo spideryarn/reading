@@ -1,5 +1,5 @@
 import * as React from "react"
-import { CircleNotch } from "@phosphor-icons/react"
+import { CircleNotch } from "@phosphor-icons/react/dist/ssr/CircleNotch"
 import { cn } from "@/lib/utils"
 
 interface SpinnerProps extends React.HTMLAttributes<HTMLDivElement> {

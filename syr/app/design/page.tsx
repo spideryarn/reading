@@ -12,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { AI_CONFIG } from '@/lib/config'
 import { 
   House, 
   Warning,
@@ -367,53 +366,18 @@ export default function DesignReference() {
         <section className="mb-12">
           <h3 className="text-2xl font-semibold text-gray-900 mb-6">Technical Configuration</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-gray-50 rounded-lg p-6">
-              <h4 className="text-lg font-medium text-gray-900 mb-4">AI Configuration</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Model:</span>
-                  <span className="font-mono text-gray-900">{AI_CONFIG.DEFAULT_MODEL}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Temperature:</span>
-                  <span className="font-mono text-gray-900">{AI_CONFIG.DEFAULT_TEMPERATURE}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Max Tokens:</span>
-                  <span className="font-mono text-gray-900">{AI_CONFIG.DEFAULT_MAX_TOKENS}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-gray-50 rounded-lg p-6">
-              <h4 className="text-lg font-medium text-gray-900 mb-4">Component Library</h4>
-              <div className="space-y-2 text-sm text-gray-600">
-                <p><strong>shadcn/ui</strong> - Component foundation</p>
-                <p><strong>Radix UI</strong> - Accessibility primitives</p>
-                <p><strong>Tailwind CSS</strong> - Utility-first styling</p>
-                <p><strong>Phosphor Icons</strong> - Icon library</p>
-                <p><strong>Next.js 15</strong> - React framework</p>
-              </div>
+          <div className="bg-gray-50 rounded-lg p-6">
+            <h4 className="text-lg font-medium text-gray-900 mb-4">Component Library</h4>
+            <div className="space-y-2 text-sm text-gray-600">
+              <p><strong>shadcn/ui</strong> - Component foundation</p>
+              <p><strong>Radix UI</strong> - Accessibility primitives</p>
+              <p><strong>Tailwind CSS</strong> - Utility-first styling</p>
+              <p><strong>Phosphor Icons</strong> - Icon library</p>
+              <p><strong>Next.js 15</strong> - React framework</p>
             </div>
           </div>
         </section>
 
-        {/* Usage Guidelines */}
-        <section>
-          <h3 className="text-2xl font-semibold text-gray-900 mb-6">Usage Guidelines</h3>
-          
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h4 className="text-lg font-medium text-blue-900 mb-4">For Developers & AI Agents</h4>
-            <ul className="space-y-2 text-sm text-blue-800">
-              <li>• Use shadcn/ui components for interactive elements (buttons, forms, dialogs)</li>
-              <li>• Use raw Tailwind for layouts, spacing, and simple styling</li>
-              <li>• Follow YAGNI principle - only install components when needed</li>
-              <li>• Customise components in <code>components/ui/</code> directory</li>
-              <li>• Reference <code>docs/UI_COMPONENTS.md</code> for detailed usage</li>
-            </ul>
-          </div>
-        </section>
       </div>
     </div>
   )

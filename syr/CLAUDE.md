@@ -152,6 +152,27 @@ printf "\n" | npx shadcn@latest add [component-name] --force
 - `docs/SHADCN_UI_REFERENCE.md` - Complete installation and usage guide
 - `docs/UI_COMPONENTS.md` - Available components and usage patterns
 
+### Phosphor Icons SSR Usage:
+For server components (without 'use client'), use SSR-compatible imports:
+```javascript
+// Server components - SSR imports
+import { Warning } from "@phosphor-icons/react/dist/ssr/Warning"
+import { Info } from "@phosphor-icons/react/dist/ssr/Info"
+```
+
+For client components (with 'use client'), use standard imports:
+```javascript
+// Client components - standard imports
+import { Warning, Info } from "@phosphor-icons/react"
+```
+
+Next.js optimization is configured in `next.config.ts`:
+```javascript
+experimental: {
+  optimizePackageImports: ["@phosphor-icons/react"],
+}
+```
+
 ## Style
 
 Use British spelling.

@@ -38,7 +38,7 @@ Research shows Phosphor Icons work well with shadcn/ui and provide better React 
 - [x] Research Phosphor Icons SSR support and shadcn/ui compatibility
 - [x] Identify all components with SSR-incompatible Phosphor imports
 - [x] Document current import patterns and required changes
-- [ ] Add Next.js bundle optimization configuration
+- [x] Add Next.js bundle optimization configuration
   - Add `optimizePackageImports: ["@phosphor-icons/react"]` to `next.config.ts`
   - Test that configuration reduces development compilation time
 
@@ -46,56 +46,55 @@ Research shows Phosphor Icons work well with shadcn/ui and provide better React 
 
 Components requiring SSR-compatible imports (used in server components):
 
-- [ ] `components/ui/alert.tsx`
+- [x] `components/ui/alert.tsx`
   - Change: `import { Warning, Info, CheckCircle } from "@phosphor-icons/react"`
   - To: Individual `/dist/ssr/` imports for each icon
   
-- [ ] `components/ui/spinner.tsx`
+- [x] `components/ui/spinner.tsx`
   - Change: `import { CircleNotch } from "@phosphor-icons/react"`
   - To: `import { CircleNotch } from "@phosphor-icons/react/dist/ssr/CircleNotch"`
   
-- [ ] `components/ui/dialog.tsx`
-  - Change: `import { X } from "@phosphor-icons/react"`
-  - To: `import { X } from "@phosphor-icons/react/dist/ssr/X"`
+- [x] `components/ui/dialog.tsx`
+  - Already has 'use client' directive - no SSR imports needed
 
 ### Stage 3: Verify Client Component Imports
 
 Components that can remain as client-side imports (already have 'use client'):
 
-- [ ] `components/footer.tsx` - Already has 'use client', no changes needed
-- [ ] `components/assistant-chat.tsx` - Client component, maintain current imports
-- [ ] `components/simple-chat.tsx` - Client component, maintain current imports
-- [ ] `components/chat-ui-states.tsx` - Client component, maintain current imports
+- [x] `components/footer.tsx` - Already has 'use client', no changes needed
+- [x] `components/assistant-chat.tsx` - Client component, maintain current imports
+- [x] `components/simple-chat.tsx` - Client component, maintain current imports
+- [x] `components/chat-ui-states.tsx` - Client component, maintain current imports
 
 Components to verify client directive status:
 
-- [ ] `components/heading-tree.tsx` - Check if needs 'use client' or SSR imports
-- [ ] `components/document-header.tsx` - Check if needs 'use client' or SSR imports  
-- [ ] `components/dialog.tsx` - Check if needs 'use client' or SSR imports
-- [ ] `components/table-of-contents.tsx` - Check if needs 'use client' or SSR imports
-- [ ] `components/document-viewer.tsx` - Check if needs 'use client' or SSR imports
+- [x] `components/heading-tree.tsx` - Has 'use client' directive
+- [x] `components/document-header.tsx` - Has 'use client' directive  
+- [x] `components/dialog.tsx` - Has 'use client' directive
+- [x] `components/table-of-contents.tsx` - Has 'use client' directive
+- [x] `components/document-viewer.tsx` - Has 'use client' directive
 
 ### Stage 4: Test SSR Functionality
 
-- [ ] Verify /design page loads without SSR errors
-- [ ] Test all UI components render correctly with SSR imports
-- [ ] Confirm icon styling and properties work with SSR imports
-- [ ] Check TypeScript compilation succeeds (ignore editor autocomplete issues)
-- [ ] Verify client-side hydration works properly
+- [x] Verify /design page loads without SSR errors
+- [x] Test all UI components render correctly with SSR imports
+- [x] Confirm icon styling and properties work with SSR imports
+- [x] Check TypeScript compilation succeeds (ignore editor autocomplete issues)
+- [x] Verify client-side hydration works properly
 
 ### Stage 5: Bundle Size Verification
 
-- [ ] Run development server and verify faster compilation times
-- [ ] Build production bundle and analyze icon module inclusion
-- [ ] Confirm only used icons are included in final bundle
-- [ ] Document bundle size improvements if measurable
+- [x] Run development server and verify faster compilation times
+- [x] Build production bundle and analyze icon module inclusion
+- [x] Confirm only used icons are included in final bundle
+- [x] Document bundle size improvements if measurable
 
 ### Stage 6: Update Documentation
 
-- [ ] Update `CLAUDE.md` with Phosphor SSR import patterns
-- [ ] Add note about `/dist/ssr/` imports for server components
-- [ ] Document Next.js optimization configuration
-- [ ] Update any icon usage examples in documentation
+- [x] Update `CLAUDE.md` with Phosphor SSR import patterns
+- [x] Add note about `/dist/ssr/` imports for server components
+- [x] Document Next.js optimization configuration
+- [x] Update any icon usage examples in documentation
 
 ## Technical Notes
 
