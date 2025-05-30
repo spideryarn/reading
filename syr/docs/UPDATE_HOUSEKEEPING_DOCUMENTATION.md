@@ -7,6 +7,7 @@ This document describes the process for keeping project documentation up-to-date
 - `docs/DOCUMENTATION_ORGANISATION.md`
 - `docs/WRITING_EVERGREEN_DOCS.md` - Guidelines for writing evergreen documentation
 - `docs/WRITING_PLANNING_DOCS.md` - Guidelines for ephemeral planning documents
+- `docs/UPDATE_CLAUDE_INSTRUCTIONS.md` - Maintaining CLAUDE.md as part of housekeeping
 - `docs/GIT_COMMITS.md` - How to commit documentation updates
 
 ## When to Update Documentation
@@ -53,6 +54,12 @@ Follow these principles:
 
 (If the user agrees, then add/remove accordingly).
 
+### Step 5: Update CLAUDE.md if needed
+
+Consider whether changes affect essential AI agent context (see `docs/UPDATE_CLAUDE_INSTRUCTIONS.md`):
+- New build commands or debugging tools
+- Architectural changes affecting project structure
+- New documentation requiring signposts
 
 #### Common Update Patterns
 
@@ -86,7 +93,7 @@ Follow these principles:
 # Instead of duplicating prompt template info
 see `docs/LLM_PROMPT_TEMPLATES.md` for prompt template architecture
 ```
-### Step 5: Suggest a commit to the user (following `docs/GIT_COMMITS.md`)
+### Step 6: Suggest a commit to the user (following `docs/GIT_COMMITS.md`)
 
 
 ## Documentation Quality Checklist
