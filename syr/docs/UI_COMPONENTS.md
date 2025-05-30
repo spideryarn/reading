@@ -217,9 +217,14 @@ Component tests are located in `components/__tests__/`:
 - Form validation components deferred
 - Complex layout components not needed yet
 
+## Design Reference
+
+Visit `/design` for a live, interactive design reference page showcasing all components, colours, typography, and usage guidelines in context.
+
 ## Related Documentation
 
 - `docs/SHADCN_UI_REFERENCE.md` - Installation and technical reference
 - `docs/STYLING.md` - Overall styling configuration and theme
 - `planning/250530a_shadcn_ui_adoption.md` - Implementation planning and decisions
 - `CLAUDE.md` - Quick reference for AI agents
+- `/design` - Live design reference and style guide

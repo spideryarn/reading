@@ -74,9 +74,11 @@ Example action (no need to include the words `TODO` or `DONE` explicitly, since 
 - [ ] This is a top-level action description line
   - [ ] It can have sub-points that get ticked off
     - You can add bulletpoint notes with extra detail/context to help plan & shape future actions
-  - ✅ This one has already been finished
+
+- ✅ This stage has already been completed
+  - ✅ This step has already been completed
     - 📔 You could journal about useful/unexpected discoveries when you update progress on completed tasks
-  - ❌ This one has been skipped
+  - ❌ This step has been skipped
 ```
 
 # Appendix

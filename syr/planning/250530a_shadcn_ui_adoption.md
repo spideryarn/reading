@@ -131,12 +131,44 @@ User priorities:
   - ✅ Cross-references with related documentation
 
 ### Stage: create a design reference/style guide page showing all components
-- [ ] Pick a sensible url, e.g. `/design` and create API
-- [ ] Add design reference/style guide content to the page, including colour guide, logo information, fonts, example components etc to show what they'll look like
-- [ ] Add anything else you think would be helpful to a designer
-- [ ] Make it attractive
-- [ ] Create a footer component, and add a link to the design reference in the footer
-- [ ] Reference it in relevant docs, e.g. `docs/STYLING.md`, `docs/UI_COMPONENTS.md`,e tc
+
+- [x] Pick a sensible url, e.g. `/design` and create API
+  - ✅ Created `/design` route with dedicated page component
+  - ✅ Accessible via `/design` URL for easy reference
+
+- [x] Add design reference/style guide content to the page, including colour guide, logo information, fonts, example components etc to show what they'll look like
+  - ✅ Comprehensive component showcase with all shadcn/ui components
+  - ✅ Brand colours and Spideryarn orange theme demonstration
+  - ✅ Typography scale with usage guidelines
+  - ✅ Button variants, sizes, and states examples
+  - ✅ Loading states and spinner components
+  - ✅ Alert and feedback components
+  - ✅ Form components (Select, Checkbox) 
+  - ✅ Icon library showcase with Phosphor Icons
+  - ✅ Technical configuration reference
+
+- [x] Add anything else you think would be helpful to a designer
+  - ✅ Usage guidelines for developers and AI agents
+  - ✅ "Back to App" navigation for easy return
+  - ✅ Responsive design for mobile and desktop viewing
+  - ✅ Code examples with component usage patterns
+  - ✅ YAGNI principle explanation for unused components
+
+- [x] Make it attractive
+  - ✅ Clean, professional layout with proper spacing
+  - ✅ Organised sections with clear hierarchy
+  - ✅ Interactive components demonstrating functionality
+  - ✅ Consistent branding and theme application
+
+- [x] Create a footer component, and add a link to the design reference in the footer
+  - ✅ Created `components/footer.tsx` with navigation links
+  - ✅ Added footer to client layout (conditional on `/design` page)
+  - ✅ Includes both Home and Design Reference navigation
+
+- [x] Reference it in relevant docs, e.g. `docs/STYLING.md`, `docs/UI_COMPONENTS.md`,e tc
+  - ✅ Added `/design` reference to `docs/STYLING.md` 
+  - ✅ Added design reference section to `docs/UI_COMPONENTS.md`
+  - ✅ Cross-linked with existing documentation
 
 ### Final Stage
 - [ ] Update all relevant documentation
