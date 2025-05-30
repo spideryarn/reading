@@ -20,6 +20,7 @@ interface TableOfContentsProps {
   onHeadingClick?: (headingText: string, headingId?: string) => void
   documentId: string
   markdownContent: string
+  headingVisibility?: Map<string, 'visible' | 'not-visible'>
 }
 
 // Utility to toggle visibility of original (non-AI) headings depending on mutation state
@@ -41,7 +42,7 @@ function toggleOriginalHeadingsVisibility(hide: boolean) {
   })
 }
 
-export function TableOfContents({ content, elements, onHeadingClick, documentId, markdownContent }: TableOfContentsProps) {
+export function TableOfContents({ content, elements, onHeadingClick, documentId, markdownContent, headingVisibility }: TableOfContentsProps) {
   const { applyMutation, revertMutation, mutationState, document: mutatedDocument } = useMutation()
   const activeMutationType = useActiveMutationType()
   const [headings, setHeadings] = useState<Heading[]>([])
@@ -521,6 +522,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
         onToggleExpanded={(headingId) => toggleExpanded('original', headingId)}
         granularityLevel={granularityLevels.original}
         onGranularityChange={(level) => setGranularityLevels(prev => ({ ...prev, 'original': level }))}
+        headingVisibility={headingVisibility}
       />
     )
   }
@@ -578,6 +580,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
             onToggleExpanded={(headingId) => toggleExpanded('ai-generated', headingId)}
             granularityLevel={granularityLevels['ai-generated']}
             onGranularityChange={(level) => setGranularityLevels(prev => ({ ...prev, 'ai-generated': level }))}
+            headingVisibility={headingVisibility}
           />
         ) : (
           <p className="text-gray-500">No headings generated</p>

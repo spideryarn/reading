@@ -33,6 +33,7 @@ interface HeadingTreeProps {
   onToggleExpanded: (headingId: string) => void
   granularityLevel: number
   onGranularityChange: (level: number) => void
+  headingVisibility?: Map<string, 'visible' | 'not-visible'>
 }
 
 /**
@@ -126,7 +127,8 @@ function HeadingNodeComponent({
   handleTooltipShow,
   collapsedIds,
   onToggleExpanded,
-  granularityLevel
+  granularityLevel,
+  headingVisibility
 }: {
   node: HeadingNode
   themeColors: ThemeColors
@@ -136,6 +138,7 @@ function HeadingNodeComponent({
   collapsedIds: Set<string>
   onToggleExpanded: (headingId: string) => void
   granularityLevel: number
+  headingVisibility?: Map<string, 'visible' | 'not-visible'>
 }) {
   const hasChildren = node.children.length > 0
   const isExpanded = !collapsedIds.has(node.id)
@@ -148,6 +151,10 @@ function HeadingNodeComponent({
   // Calculate hidden count for this node
   const hiddenCount = countHiddenDescendants(node, granularityLevel)
   const displayHiddenCount = hiddenCount > 0 ? (hiddenCount > 99 ? '99+' : hiddenCount.toString()) : null
+  
+  // Determine visibility state
+  const visibility = headingVisibility?.get(node.id) || 'not-visible'
+  const isVisible = visibility === 'visible'
   
   return (
     <>
@@ -186,7 +193,7 @@ function HeadingNodeComponent({
                 <span className={`text-xs mr-2 ${themeColors.levelText}`}>
                   H{node.level}
                 </span>
-                <span className={`text-sm text-gray-700 ${themeColors.text}`}>
+                <span className={`text-sm text-gray-700 ${themeColors.text} ${isVisible ? 'font-bold' : 'font-normal'}`}>
                   {node.text}
                 </span>
                 {displayHiddenCount && (
@@ -229,6 +236,7 @@ function HeadingNodeComponent({
               collapsedIds={collapsedIds}
               onToggleExpanded={onToggleExpanded}
               granularityLevel={granularityLevel}
+              headingVisibility={headingVisibility}
             />
           ))}
         </div>
@@ -250,7 +258,8 @@ export function HeadingTree({
   collapsedIds,
   onToggleExpanded,
   granularityLevel,
-  onGranularityChange
+  onGranularityChange,
+  headingVisibility
 }: HeadingTreeProps) {
   // Build tree structure from flat headings array
   const headingTree = useMemo(() => buildHeadingTree(headings), [headings])
@@ -310,6 +319,7 @@ export function HeadingTree({
           collapsedIds={collapsedIds}
           onToggleExpanded={onToggleExpanded}
           granularityLevel={granularityLevel}
+          headingVisibility={headingVisibility}
         />
       ))}
       </nav>

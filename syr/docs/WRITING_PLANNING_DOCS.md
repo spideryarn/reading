@@ -83,5 +83,8 @@ Example action (no need to include the words `TODO` or `DONE` explicitly, since 
 Add any other important context here, e.g.
 - Summary of web searching
 - Example data
-- Code snippets
-- Other information that should be capture but doesn't fit neatly in the above sections, e.g. if there was a lengthy conversation, include a lot of richness/context/background/quotes to make sure it gets captured
+- Code snippets & mentions
+- Relevant tests
+- Rich background, quotes, and context, especially from conversations/decisions from the user
+- Alternative approaches that were considered but discarded - describe them and their tradeoffs, emphasising the approach we did pick and the reasoning
+- Other information that should be captured but didn't fit neatly in the above sections

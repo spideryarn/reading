@@ -6,7 +6,7 @@ The Spideryarn Reading application features a multi-pane layout with tabbed navi
 
 - `components/tab-container.tsx` - reusable tab component implementation
 - `components/table-of-contents.tsx` - left pane navigation with original/AI/summary tabs
-- `components/document-viewer.tsx` - middle and right pane structure with document display
+- `components/document-viewer.tsx` - unified document pane with tools integration
 - `components/assistant-chat.tsx` - AI chat interface in right pane
 - `components/dialog.tsx` - reusable modal dialog component
 - `components/settings-dialog.tsx` - settings dialog showing LLM configuration
@@ -17,7 +17,7 @@ The Spideryarn Reading application features a multi-pane layout with tabbed navi
 
 ## Layout Structure
 
-The application uses a **four-pane layout** within a responsive grid system:
+The application uses a **three-pane layout** within a responsive flexbox system:
 
 ### Document Header ✓
 - **Fixed height**: 3rem minimum (`min-h-[3rem]`)
@@ -31,29 +31,26 @@ The application uses a **four-pane layout** within a responsive grid system:
 ### 1. Left Pane - Navigation (Table of Contents)
 - **Fixed width**: 256px (`w-64`)
 - **Scrollable**: `overflow-y-auto`
+- **Background**: Light grey (`bg-gray-50`)
 - **Tabs**:
   - **Original** - Document headings extracted from HTML
   - **AI-generated** - Semantically meaningful headings created by LLM analysis ✓
   - **Summary** - AI-generated document summary with collapsible content ✓
 
-### 2. Middle-Left Pane - Document Structure
-- **Grid column 1** of 3-column layout
+### 2. Middle Pane - Document Structure ✓
+- **Grid column span 2** of 3-column grid layout (taking up 2/3 of remaining space)
 - **Scrollable**: `overflow-y-auto`
-- Shows hierarchical document element tree
-- Interactive element selection for detailed inspection
+- **Border**: Right border separating from Tools pane
+- Shows hierarchical document element tree with interactive selection
+- **Typography-aware rendering**: Different heading styles, proper list formatting, markdown content support
+- **Visual feedback**: Hover states, selection highlighting, scroll-to-element with temporary highlighting
 
-### 3. Middle-Right Pane - Element Details
-- **Grid column 2** of 3-column layout  
-- **Scrollable**: `overflow-y-auto`
-- Displays selected element properties, content, and attributes
-- Updates based on element selection from structure pane
-
-### 4. Right Pane - Tools
-- **Grid column 3** of 3-column layout
+### 3. Right Pane - Tools
+- **Grid column span 1** of 3-column grid layout (taking up 1/3 of remaining space)
 - **Scrollable**: Fixed with `overflow-y-auto` (recent fix) ✓
 - **Tabs**:
-  - **Glossary** - AI-generated term definitions and explanations ✓
   - **Chat** - Interactive AI assistant for document discussion ✓
+  - **Glossary** - AI-generated term definitions and explanations with click-to-scroll functionality ✓
 
 ## Tab System Architecture
 
@@ -84,12 +81,13 @@ interface TabContainerProps {
 
 ### Tab Implementation Pattern
 
-Both left and right panes follow the same pattern:
+Both ToC (left) and Tools (right) panes follow the same tabbed pattern:
 
 1. **Define tab array** with `id`, `label`, and `content`
-2. **Render functions** for each tab's content
+2. **Render functions** for each tab's content  
 3. **Pass to TabContainer** with appropriate props
 4. **State management** handled within individual render functions
+5. **Auto-activation** support (e.g., glossary tab auto-loads when activated)
 
 ## Scrolling Architecture ✓
 
@@ -103,17 +101,19 @@ Both left and right panes follow the same pattern:
 
 ## Responsive Design Principles
 
-- **Fixed left pane** maintains navigation accessibility
-- **Flexible middle content** adapts to screen size via CSS Grid
-- **Proportional tools pane** balances content consumption with assistance features
+- **Fixed left pane** (256px) maintains navigation accessibility
+- **Flexible document pane** (2/3 of remaining space) provides ample reading area via CSS Grid
+- **Fixed tools pane** (1/3 of remaining space) balances content consumption with AI assistance features
 - **Consistent padding** and spacing throughout (`p-4`)
+- **Flexbox layout** ensures proper height distribution and overflow handling
 
 ## State Management Flow
 
-1. **DocumentPageClient** coordinates state between panes
+1. **DocumentPageClient** coordinates state between the three panes
 2. **Unidirectional data flow**: User interactions → state updates → UI re-renders
-3. **Shared selection state** enables cross-pane coordination
-4. **Independent tab states** allow separate functionality within each pane
+3. **Shared element selection state** enables coordination between ToC and Document panes
+4. **Independent tab states** within ToC and Tools panes allow separate functionality
+5. **Cross-pane scrolling**: ToC heading clicks scroll to document elements, glossary entries link to document locations
 
 ## Future Enhancements 📋
 
@@ -154,13 +154,15 @@ const renderTabName = () => (
 
 - **Framework**: Next.js with TypeScript
 - **Styling**: Tailwind CSS with consistent spacing system
-- **State**: React hooks for local component state
+- **Layout**: Flexbox for outer structure, CSS Grid (3-column) for document/tools area
+- **State**: React hooks for local component state, shared element selection
 - **Coordination**: Props and callbacks for cross-component communication
-- **Scrolling**: CSS `overflow-y-auto` with proper height constraints
+- **Scrolling**: CSS `overflow-y-auto` with proper height constraints across all panes
 
 ## Limitations
 
-- **Mobile responsiveness** not yet optimised for smaller screens
-- **Pane resizing** not currently supported (fixed widths)
+- **Mobile responsiveness** not yet optimised for smaller screens  
+- **Pane resizing** not currently supported (fixed left pane width, proportional document/tools split)
 - **Keyboard navigation** limited to basic tab functionality
 - **Screen reader support** could be enhanced with ARIA labels
+- **Fixed proportions** document pane always takes 2/3, tools pane 1/3 of remaining space

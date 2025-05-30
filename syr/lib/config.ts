@@ -91,3 +91,11 @@ export function getModelConfig(key: ProviderTierKey = AI_CONFIG.DEFAULT_MODEL) {
 export const UI_CONFIG = {
   FORCE_LIGHT_MODE: true,
 } as const
+
+// Visibility tracking configuration for Table of Contents
+export const VISIBILITY_CONFIG = {
+  UPDATE_INTERVAL: 100,    // ms - How often to batch visibility updates
+  DEBOUNCE_DELAY: 50,      // ms - Debounce delay for processing visibility changes
+  ROOT_MARGIN: '0px',      // For precise viewport detection
+  THRESHOLD: 0.01,         // Minimum visible ratio to count as visible (1%)
+} as const

@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { DocumentViewer } from '@/components/document-viewer'
 import { TableOfContents } from '@/components/table-of-contents'
 import type { DocumentElement } from '@/lib/types/document'
 import { useDocument } from '@/lib/context/mutation-context'
+import { getHeadingAndSectionElements, extractHeadingElements } from '@/lib/services/heading-section-detector'
 
 // Define entity type (will be moved to a proper types file later)
 interface Entity {
@@ -27,7 +28,7 @@ interface DocumentPageClientProps {
   documentId: string
 }
 
-export default function DocumentPageClient({ html, markdownContent, elements, documentId }: DocumentPageClientProps) {
+export default function DocumentPageClient({ html, markdownContent, documentId }: DocumentPageClientProps) {
   const mutatedDocument = useDocument() // Get mutated document from context
   const [selectedElement, setSelectedElement] = useState<DocumentElement | null>(null)
   const [glossaryEntities, setGlossaryEntities] = useState<Entity[]>([])
@@ -35,6 +36,46 @@ export default function DocumentPageClient({ html, markdownContent, elements, do
   const [showGlossary, setShowGlossary] = useState(false)
   const [glossaryError, setGlossaryError] = useState<string | null>(null)
   const documentViewerRef = useRef<HTMLDivElement>(null)
+  
+  // Heading visibility state
+  const [headingVisibility, setHeadingVisibility] = useState<Map<string, 'visible' | 'not-visible'>>(new Map())
+  const [elementVisibility, setElementVisibility] = useState<Map<string, boolean>>(new Map())
+  
+  // Extract all headings (both original and AI-generated)
+  const allHeadings = useMemo(() => {
+    return extractHeadingElements(mutatedDocument)
+  }, [mutatedDocument])
+  
+  // Handle element visibility changes from DocumentViewer
+  const handleElementVisibilityChange = useCallback((elementId: string, isVisible: boolean) => {
+    setElementVisibility(prev => {
+      const next = new Map(prev)
+      if (isVisible) {
+        next.set(elementId, true)
+      } else {
+        next.delete(elementId)
+      }
+      return next
+    })
+  }, [])
+  
+  // Calculate heading visibility based on element visibility
+  useEffect(() => {
+    const newHeadingVisibility = new Map<string, 'visible' | 'not-visible'>()
+    
+    // Check each heading
+    allHeadings.forEach(heading => {
+      // Get all elements that belong to this heading (heading + its section)
+      const headingElements = getHeadingAndSectionElements(heading, mutatedDocument)
+      
+      // Check if any element in the heading's section is visible
+      const isVisible = headingElements.some(element => elementVisibility.has(element.id))
+      
+      newHeadingVisibility.set(heading.id, isVisible ? 'visible' : 'not-visible')
+    })
+    
+    setHeadingVisibility(newHeadingVisibility)
+  }, [elementVisibility, allHeadings, mutatedDocument])
 
   // Fetch glossary entities when requested
   const fetchGlossary = async () => {
@@ -108,7 +149,14 @@ export default function DocumentPageClient({ html, markdownContent, elements, do
   return (
     <div className="flex flex-1 overflow-hidden">
       <div className="w-64 border-r bg-gray-50 overflow-y-auto">
-        <TableOfContents content={html} elements={mutatedDocument} onHeadingClick={handleHeadingClick} documentId={documentId} markdownContent={markdownContent} />
+        <TableOfContents 
+          content={html} 
+          elements={mutatedDocument} 
+          onHeadingClick={handleHeadingClick} 
+          documentId={documentId} 
+          markdownContent={markdownContent}
+          headingVisibility={headingVisibility}
+        />
       </div>
       <div className="flex-1 flex flex-col">
         <div className="flex-1 overflow-hidden" ref={documentViewerRef}>
@@ -121,6 +169,7 @@ export default function DocumentPageClient({ html, markdownContent, elements, do
             showGlossary={showGlossary}
             onLoadGlossary={fetchGlossary}
             glossaryError={glossaryError}
+            onElementVisibilityChange={handleElementVisibilityChange}
           />
         </div>
       </div>

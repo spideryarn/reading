@@ -3,12 +3,13 @@
 // Document viewer with glossary pane for entity display
 // See docs/AI_GLOSSARY.md for glossary feature architecture
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { CircleNotch, Warning } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import { TabContainer, type Tab } from './tab-container'
 import { AssistantChat } from './assistant-chat'
 import { MarkdownRenderer } from './markdown-renderer'
+import { useElementVisibility } from '@/lib/hooks/useElementVisibility'
 
 // Define entity type (will be moved to a proper types file later)
 interface Entity {
@@ -33,6 +34,7 @@ interface DocumentViewerProps {
   showGlossary?: boolean
   onLoadGlossary?: () => void
   glossaryError?: string | null
+  onElementVisibilityChange?: (elementId: string, isVisible: boolean) => void
 }
 
 // Component to display glossary entities ordered by first occurrence
@@ -119,13 +121,17 @@ function GlossaryDisplay({ entities, elements, onScrollToEntity }: {
   )
 }
 
-export function DocumentViewer({ elements, selectedElement, onElementSelect, glossaryEntities = [], isLoadingGlossary = false, showGlossary = false, onLoadGlossary, glossaryError }: DocumentViewerProps) {
+export function DocumentViewer({ elements, selectedElement, onElementSelect, glossaryEntities = [], isLoadingGlossary = false, showGlossary = false, onLoadGlossary, glossaryError, onElementVisibilityChange }: DocumentViewerProps) {
   const [internalSelectedElement, setInternalSelectedElement] = useState<DocumentElement | null>(null)
   
   // Use external state if provided, otherwise use internal state
   const currentSelectedElement = selectedElement !== undefined ? selectedElement : internalSelectedElement
   const handleElementSelect = onElementSelect || setInternalSelectedElement
   const [elementTree, setElementTree] = useState<Map<string | null, DocumentElement[]>>(new Map())
+  
+  // Element visibility tracking
+  const { observeElement, unobserveElement } = useElementVisibility(onElementVisibilityChange)
+  const observedElementsRef = useRef<Set<string>>(new Set())
 
   /**
    * Scroll to a specific element in the document structure pane.
@@ -164,6 +170,21 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
     })
     setElementTree(tree)
   }, [elements])
+  
+  // Clean up observed elements when elements change or component unmounts
+  useEffect(() => {
+    const observedElements = observedElementsRef.current
+    return () => {
+      // Unobserve all elements when elements change or component unmounts
+      observedElements.forEach(elementId => {
+        const element = document.querySelector(`[data-element-id="${elementId}"]`)
+        if (element) {
+          unobserveElement(element)
+        }
+      })
+      observedElements.clear()
+    }
+  }, [elements, unobserveElement])
 
   /**
    * Get typography classes based on element tag name
@@ -250,6 +271,12 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
       <div key={element.id} className={depth > 0 ? "border-l-2 border-gray-200 pl-4 ml-2" : ""}>
         <div
           data-element-id={element.id}
+          ref={(node) => {
+            if (node && !observedElementsRef.current.has(element.id)) {
+              observeElement(node)
+              observedElementsRef.current.add(element.id)
+            }
+          }}
           className={`py-2 px-3 rounded cursor-pointer hover:bg-gray-100 ${
             currentSelectedElement?.id === element.id ? 'bg-blue-50 border-blue-500' : ''
           }`}
