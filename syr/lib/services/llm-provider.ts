@@ -38,7 +38,13 @@ export function getModel(providerTierKey: ProviderTierKey = AI_CONFIG.DEFAULT_MO
   const modelConfig = getModelConfig(providerTierKey)
   const providerInstance = getProvider(modelConfig.provider)
   
-  return providerInstance(modelConfig.modelId)
+  // Configure thinking mode for Anthropic models if enabled
+  const modelOptions: Record<string, unknown> = {}
+  if (modelConfig.provider === 'anthropic' && modelConfig.thinking) {
+    modelOptions.thinking = true
+  }
+  
+  return providerInstance(modelConfig.modelId, modelOptions)
 }
 
 // Helper to get provider and model configuration together
@@ -53,6 +59,7 @@ export function getLLMConfig(providerTierKey: ProviderTierKey = AI_CONFIG.DEFAUL
     description: modelConfig.description,
     contextWindow: modelConfig.contextWindow,
     outputTokens: modelConfig.outputTokens,
+    thinking: modelConfig.thinking,
     providerInstance,
     modelInstance: getModel(providerTierKey),
   }

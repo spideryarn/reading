@@ -24,6 +24,7 @@ export interface PromptTemplate<T extends z.ZodSchema> {
     model?: ProviderTierKey
     temperature?: number
     maxTokens?: number
+    thinking?: boolean
   }
 }
 
@@ -35,6 +36,7 @@ export function loadPromptTemplate<T extends z.ZodSchema>(
     model?: ProviderTierKey
     temperature?: number
     maxTokens?: number
+    thinking?: boolean
   }
 ): PromptTemplate<T> {
   // Load template content at module load time for better performance
@@ -57,6 +59,7 @@ export function loadPromptTemplateFromCaller<T extends z.ZodSchema>(
     model?: ProviderTierKey
     temperature?: number
     maxTokens?: number
+    thinking?: boolean
   }
 ): PromptTemplate<T> {
   // Build absolute path using process.cwd() + relative path
@@ -78,7 +81,11 @@ async function executePromptInternal<T extends z.ZodSchema>(
   const prompt = env.renderString(templateContent, validated)
   
   // Get the appropriate model based on configuration
-  const providerTierKey = template.modelConfig?.model || AI_CONFIG.DEFAULT_MODEL
+  // If thinking mode is explicitly set in template config, use anthropic-balanced-thinking
+  let providerTierKey = template.modelConfig?.model || AI_CONFIG.DEFAULT_MODEL
+  if (template.modelConfig?.thinking && providerTierKey === 'anthropic-balanced') {
+    providerTierKey = 'anthropic-balanced-thinking'
+  }
   const model = getModel(providerTierKey)
   
   // Execute with Vercel AI SDK Core
