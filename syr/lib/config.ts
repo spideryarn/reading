@@ -19,7 +19,7 @@ export type ProviderTierKey =
 // - Haiku: 8,192 max output tokens
 // When setting maxTokens in prompt templates, stay under these limits!
 export const AI_CONFIG = {
-  DEFAULT_MODEL: (process.env.LLM_MODEL || 'google-cheap') as ProviderTierKey,
+  DEFAULT_MODEL: (process.env.LLM_MODEL || 'anthropic-balanced') as ProviderTierKey,
   DEFAULT_TEMPERATURE: 0,
   DEFAULT_MAX_TOKENS: parseInt(process.env.DEFAULT_MAX_TOKENS || '4096', 10),
 } as const
@@ -86,6 +86,13 @@ export function getModelConfig(key: ProviderTierKey = AI_CONFIG.DEFAULT_MODEL) {
   }
   return config
 }
+
+// Content summarisation configuration
+export const SUMMARY_CONFIG = {
+  // Minimum number of characters required to generate an AI summary
+  // Sections with fewer characters will show "[too little text to summarise]"
+  MIN_CONTENT_LENGTH_CHARS: 100,
+} as const
 
 // UI configuration
 export const UI_CONFIG = {

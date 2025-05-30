@@ -10,6 +10,7 @@ import { Spinner, ExclamationMark, CircleNotch } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import type { GranularityKey } from '@/lib/prompts/templates/summarise'
 import { useMutation, useActiveMutationType } from '@/lib/context/mutation-context'
+import { SUMMARY_CONFIG } from '@/lib/config'
 import { generateHeadingMutation, extractHeadingsFromMutation } from '@/lib/services/heading-mutation-generator'
 import { TabContainer, type Tab } from './tab-container'
 import { HeadingTree, type Heading } from './heading-tree'
@@ -202,6 +203,64 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
   const TOOLTIP_GRANULARITY: GranularityKey = 'single short paragraph'
   
   /**
+   * Check if a heading section has sufficient content to generate a meaningful summary.
+   * Extracts content for the section and checks if it meets the minimum length threshold.
+   * 
+   * @param elementId - The element ID of the heading to check
+   * @returns true if content is sufficient for summarisation, false otherwise
+   */
+  const hasSufficientContentForSummary = (elementId: string): boolean => {
+    // Determine which elements to search based on active mutation state
+    const elementsToSearch = (activeMutationType === 'insert-headings' && mutatedDocument) 
+      ? mutatedDocument 
+      : elements
+
+    if (!elementsToSearch || elementsToSearch.length === 0) {
+      return false
+    }
+
+    // Find the heading element by ID
+    const headingElement = elementsToSearch.find(element => element.id === elementId)
+    if (!headingElement) {
+      return false
+    }
+
+    const headingLevel = parseInt(headingElement.tag_name.substring(1))
+    const headingPosition = headingElement.position
+
+    // Find all elements that belong to this heading's section
+    const sectionElements: DocumentElement[] = []
+    
+    for (let i = 0; i < elementsToSearch.length; i++) {
+      const element = elementsToSearch[i]
+      
+      // Skip elements before this heading
+      if (element.position <= headingPosition) continue
+      
+      // Stop at next heading of equal or higher level
+      if (element.tag_name.match(/^h[1-6]$/i)) {
+        const elementLevel = parseInt(element.tag_name.substring(1))
+        if (elementLevel <= headingLevel) {
+          break
+        }
+      }
+      
+      // Include this element if it has content
+      if (element.content?.trim()) {
+        sectionElements.push(element)
+      }
+    }
+
+    // Calculate total text content length
+    const totalTextContent = sectionElements
+      .map(element => element.content)
+      .join(' ')
+      .trim()
+    
+    return totalTextContent.length >= SUMMARY_CONFIG.MIN_CONTENT_LENGTH_CHARS
+  }
+  
+  /**
    * Generate LLM summary for a heading's hierarchical content.
    * Extracts all content belonging to the specified heading section and sends it to the LLM for summarisation.
    * 
@@ -350,11 +409,20 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
       )
     }
     
-    return (
-      <div className="max-w-md p-3 text-sm text-gray-500 bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
-        Hover to load content...
-      </div>
-    )
+    // Check if section has enough content to be worth summarising
+    if (hasSufficientContentForSummary(elementId)) {
+      return (
+        <div className="max-w-md p-3 text-sm text-gray-500 bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
+          Hover to load content...
+        </div>
+      )
+    } else {
+      return (
+        <div className="max-w-md p-3 text-sm text-gray-500 bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
+          [too little text to summarise]
+        </div>
+      )
+    }
   }
 
   /**
@@ -365,18 +433,21 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
    */
   const handleTooltipShow = (elementId: string) => {
     if (!contentCache.has(elementId) && !loadingStates.has(elementId)) {
-      // Add to loading states
-      setLoadingStates(prev => new Set(prev).add(elementId))
-      
-      // Start async LLM summary generation
-      generateHeadingSummary(elementId).finally(() => {
-        // Remove from loading states
-        setLoadingStates(prev => {
-          const newSet = new Set(prev)
-          newSet.delete(elementId)
-          return newSet
+      // Only start summary generation if there's sufficient content
+      if (hasSufficientContentForSummary(elementId)) {
+        // Add to loading states
+        setLoadingStates(prev => new Set(prev).add(elementId))
+        
+        // Start async LLM summary generation
+        generateHeadingSummary(elementId).finally(() => {
+          // Remove from loading states
+          setLoadingStates(prev => {
+            const newSet = new Set(prev)
+            newSet.delete(elementId)
+            return newSet
+          })
         })
-      })
+      }
     }
   }
 
