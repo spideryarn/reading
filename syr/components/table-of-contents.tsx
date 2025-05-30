@@ -82,12 +82,21 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
     const currentHeadings = activeTab === 'ai-generated' ? aiHeadings : headings
     const visibleIds = new Set<string>()
     
+    console.debug('[TableOfContents] Calculating visible heading IDs:', {
+      activeTab,
+      currentHeadingsCount: currentHeadings.length,
+      headingVisibilitySize: headingVisibility?.size || 0
+    })
+    
     currentHeadings.forEach(heading => {
-      if (headingVisibility?.get(heading.id) === 'visible') {
+      const visibility = headingVisibility?.get(heading.id)
+      if (visibility === 'visible') {
         visibleIds.add(heading.id)
+        console.debug(`[TableOfContents] Adding visible heading: ${heading.id} (${heading.text})`)
       }
     })
     
+    console.debug('[TableOfContents] Final visible heading IDs:', Array.from(visibleIds))
     return visibleIds
   }, [headingVisibility, activeTab, headings, aiHeadings])
   
@@ -97,9 +106,22 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
   // Update content container ref when tab container mounts or changes
   useEffect(() => {
     if (tabContainerRef.current) {
-      contentContainerRef.current = tabContainerRef.current.getContentContainer()
+      const contentContainer = tabContainerRef.current.getContentContainer()
+      console.debug('[TableOfContents] Setting content container ref:', contentContainer)
+      contentContainerRef.current = contentContainer
+    } else {
+      console.debug('[TableOfContents] Tab container ref not yet available')
     }
-  }, [])
+  }, []) // Will run after initial render
+  
+  // Also update the ref when tabContainerRef changes (additional safety)
+  useEffect(() => {
+    if (tabContainerRef.current && !contentContainerRef.current) {
+      const contentContainer = tabContainerRef.current.getContentContainer()
+      console.debug('[TableOfContents] Updating content container ref (safety check):', contentContainer)
+      contentContainerRef.current = contentContainer
+    }
+  })
   
   // Use auto-scroll hook
   useTocAutoScroll(contentContainerRef, {
@@ -701,13 +723,15 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
   ]
 
   return (
-    <TabContainer 
-      ref={tabContainerRef}
-      tabs={tabs}
-      defaultTab="original"
-      title="Table of Contents"
-      orientation="vertical"
-      className="text-sm h-full"
-    />
+    <div data-testid="table-of-contents">
+      <TabContainer 
+        ref={tabContainerRef}
+        tabs={tabs}
+        defaultTab="original"
+        title="Table of Contents"
+        orientation="vertical"
+        className="text-sm h-full"
+      />
+    </div>
   )
 }

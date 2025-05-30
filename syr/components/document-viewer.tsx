@@ -38,6 +38,7 @@ interface DocumentViewerProps {
   onLoadGlossary?: () => void
   glossaryError?: string | null
   onElementVisibilityChange?: (elementId: string, isVisible: boolean) => void
+  onElementClick?: (element: DocumentElement) => void
 }
 
 // Component to display glossary entities ordered by first occurrence
@@ -124,7 +125,7 @@ function GlossaryDisplay({ entities, elements, onScrollToEntity }: {
   )
 }
 
-export function DocumentViewer({ elements, selectedElement, onElementSelect, glossaryEntities = [], isLoadingGlossary = false, showGlossary = false, onLoadGlossary, glossaryError, onElementVisibilityChange }: DocumentViewerProps) {
+export function DocumentViewer({ elements, selectedElement, onElementSelect, glossaryEntities = [], isLoadingGlossary = false, showGlossary = false, onLoadGlossary, glossaryError, onElementVisibilityChange, onElementClick }: DocumentViewerProps) {
   const [internalSelectedElement, setInternalSelectedElement] = useState<DocumentElement | null>(null)
   
   // Use external state if provided, otherwise use internal state
@@ -296,7 +297,10 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
           className={`py-2 px-3 rounded cursor-pointer hover:bg-gray-100 ${
             currentSelectedElement?.id === element.id ? 'bg-blue-50 border-blue-500' : ''
           }`}
-          onClick={() => handleElementSelect(element)}
+          onClick={() => {
+            handleElementSelect(element)
+            onElementClick?.(element)
+          }}
         >
           <div className="flex items-start gap-2">
             {/* Show formatted content based on element type */}
