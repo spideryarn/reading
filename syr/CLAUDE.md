@@ -36,6 +36,8 @@ Type checking and linting:
 - `npm run build` - TypeScript compilation errors
 - `npm run lint` - ESLint code quality/style issues
 - `npm test` - Jest testing (`npm run test:coverage` for coverage)
+  - When writing tests, use our Jest testing framework with React Testing Library
+  - Prefer using a subagent for running tests to avoid filling the context window
 
 Debugging resources:
 - Current logs: `tail dev.log`
