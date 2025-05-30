@@ -69,9 +69,12 @@ Don't include a `Date` section at the top since it's implicit from the filename.
 Example action (no need to include the words `TODO` or `DONE` explicitly, since the `[ ]` todo-checkboxes capture that):
 
 ```
+### Stage: High-level description of this stage
 - [ ] This is a top-level action description line
   - [ ] It can have sub-points that get ticked off
+    - You can add bulletpoint notes with extra detail/context to help plan & shape future actions
   - [x] This one has already been finished
+    - JOURNAL You could journal about useful/unexpected discoveries when you update progress on completed tasks
 ```
 
 # Appendix

@@ -1,6 +1,9 @@
 # ToC Expand/Collapse and Granularity Control
 
-**Progress**: Stage 1 completed (30/05/2025) - HeadingTree component created and integrated
+**Progress**: Stages 1-3 completed (30/05/2025)
+- Stage 1: HeadingTree component created and integrated
+- Stage 2: Expand/collapse functionality with persistent state
+- Stage 3: Granularity slider with hidden counts
 
 ## Goal, context
 
@@ -52,22 +55,22 @@ The ToC has two tabs (Original and AI-generated) that currently use duplicate re
 - [x] Use subagent to run browser tests with Playwright MCP
 - [x] Git commit: "refactor: extract shared HeadingTree component with tree structure"
 
-### Stage 2: Add Expand/Collapse Functionality
-- [ ] Lift expand/collapse state to `TableOfContents` component
-  - [ ] Add `expandedStates: Record<'original' | 'ai-generated', Set<string>>` to track per-tab state
-  - [ ] Pass expanded state and toggle function as props to `HeadingTree`
-  - [ ] Clear AI-generated expanded state when new headings are generated
-- [ ] Add expand/collapse UI controls in `HeadingTree`
-  - [ ] Add chevron buttons next to non-leaf nodes using real `<button>` elements
-  - [ ] Use Phosphor icons: ChevronDown (expanded) / ChevronRight (collapsed)
-  - [ ] Don't show expand/collapse controls for leaf nodes
-  - [ ] Render only visible nodes based on expanded state (skip rendering collapsed children)
-- [ ] Write unit tests in subagent
-  - [ ] Test tree building with example structure (H1:a -> H2:a_a, H2:a_b -> H3:a_b_a -> H4:a_b_a_a, H2:a_c)
-  - [ ] Test expand/collapse toggling
-  - [ ] Test that state persists when switching tabs
-- [ ] Use subagent to test in browser with Playwright MCP
-- [ ] Git commit: "feat: add expand/collapse controls with lifted state management"
+### Stage 2: Add Expand/Collapse Functionality ✓ COMPLETED
+- [x] Lift expand/collapse state to `TableOfContents` component
+  - [x] Add `collapsedStates: Record<'original' | 'ai-generated', Set<string>>` to track per-tab state
+  - [x] Pass collapsed state and toggle function as props to `HeadingTree`
+  - [x] Clear AI-generated collapsed state when new headings are generated
+- [x] Add expand/collapse UI controls in `HeadingTree`
+  - [x] Add chevron buttons next to non-leaf nodes using real `<button>` elements
+  - [x] Use Phosphor icons: CaretDown (expanded) / CaretRight (collapsed)
+  - [x] Don't show expand/collapse controls for leaf nodes
+  - [x] Render only visible nodes based on expanded state (skip rendering collapsed children)
+- [x] Write unit tests
+  - [x] Test tree building with example structure (H1:a -> H2:a_a, H2:a_b -> H3:a_b_a -> H4:a_b_a_a, H2:a_c)
+  - [x] Test expand/collapse toggling
+  - [x] Test that state persists when switching tabs
+- [x] Use subagent to test in browser with Playwright MCP
+- [x] Git commit: "feat: add expand/collapse controls with lifted state management"
 
 ### Stage 3: Add Granularity Slider Control
 - [ ] Add per-tab granularity state to `TableOfContents`
