@@ -40,47 +40,56 @@ Replace the current rigid global header system with a flexible approach where ea
 
 ## Actions
 
-### Stage: Foundation - Create AppHeader Component and CSS Variables
-- [ ] Add CSS custom property for header height to `app/globals.css`
-  - [ ] Add `--header-height: 4rem;` to `:root` section
-  - [ ] Add corresponding Tailwind configuration if needed
-- [ ] Create `components/app-header.tsx` component
-  - [ ] Support props for: title, backLink, actions, className
-  - [ ] Include Spideryarn logo and branding
-  - [ ] Use CSS custom property for height
-  - [ ] Default to standard styling but allow full customization
-- [ ] Write tests for AppHeader component
-  - [ ] Test with different prop combinations
-  - [ ] Test accessibility and responsive behaviour
-- [ ] Run tests to ensure new component works correctly
-- [ ] Git commit this foundational work
+### Stage: Foundation - Create AppHeader Component and CSS Variables ✅ COMPLETED
+- [x] Add CSS custom property for header height to `app/globals.css`
+  - [x] Add `--header-height: 4rem;` to `:root` section
+  - [x] Add corresponding Tailwind configuration if needed
+- [x] Create `components/app-header.tsx` component
+  - [x] Support props for: title, backLink, actions, className
+  - [x] Include Spideryarn logo and branding
+  - [x] Use CSS custom property for height
+  - [x] Default to standard styling but allow full customization
+- [x] Write tests for AppHeader component
+  - [x] Test with different prop combinations
+  - [x] Test accessibility and responsive behaviour
+- [x] Run tests to ensure new component works correctly
+- [x] Git commit this foundational work
 
-### Stage: Update Design Page
-- [ ] Remove current padding hack (`pt-16`) from design page
-- [ ] Replace existing dual header system with single AppHeader
-  - [ ] Use AppHeader with title="Design Reference" and backLink props
-  - [ ] Integrate the "Back to App" button into AppHeader actions
-- [ ] Update sticky secondary header positioning if needed
-- [ ] Test design page renders correctly without overlap
-- [ ] Git commit design page updates
+### Stage: Update Design Page ✅ COMPLETED
+- [x] Remove current padding hack (`pt-16`) from design page
+- [x] Replace existing dual header system with single AppHeader
+  - [x] Use AppHeader with title="Design Reference" and backLink props
+  - [x] Integrate the "Back to App" button into AppHeader actions
+- [x] Update sticky secondary header positioning if needed
+- [x] Test design page renders correctly without overlap
+- [x] Git commit design page updates
 
-### Stage: Update Tweet Thread Page  
-- [ ] Replace current header implementation in `app/documents/[slug]/tweets/page.tsx`
-- [ ] Use AppHeader with appropriate title and back navigation
-- [ ] Test that content no longer overlaps with header
-- [ ] Verify navigation between document and tweet thread works correctly
-- [ ] Git commit tweet thread page updates
+### Stage: Update Tweet Thread Page ✅ COMPLETED
+- [x] Replace current header implementation in `app/documents/[slug]/tweets/page.tsx`
+- [x] Use AppHeader with appropriate title and back navigation
+- [x] Test that content no longer overlaps with header
+- [x] Verify navigation between document and tweet thread works correctly
+- [x] Git commit tweet thread page updates
 
-### Stage: Remove Global Header from ClientLayout
-- [ ] Remove fixed header from `app/client-layout.tsx`
-- [ ] Update any pages that were relying on global header
-  - [ ] Check `app/page.tsx` (homepage)
-  - [ ] Check `app/documents/page.tsx` 
-  - [ ] Check `app/documents/[slug]/page.tsx`
-- [ ] Remove any remaining padding hacks (`pt-16`, `pt-24`)
-- [ ] Test all pages render correctly
-- [ ] Run full test suite to catch any regressions
-- [ ] Git commit global header removal
+### Stage: Remove Global Header from ClientLayout ✅ COMPLETED
+- [x] Remove fixed header from `app/client-layout.tsx`
+- [x] Update any pages that were relying on global header
+  - [x] Check `app/page.tsx` (homepage)
+  - [x] Check `app/documents/page.tsx` 
+  - [x] Check `app/documents/[slug]/page.tsx`
+- [x] Remove any remaining padding hacks (`pt-16`, `pt-24`)
+- [x] Test all pages render correctly
+- [x] Run full test suite to catch any regressions
+- [x] Git commit global header removal
+
+### Stage: Footer Implementation (Page-Level) ✅ COMPLETED
+- [x] Remove conditional Footer logic from `app/client-layout.tsx`
+- [x] Add Footer component directly to pages that need it
+  - [x] `app/design/page.tsx` (currently has Footer via ClientLayout)
+  - [x] `app/documents/page.tsx` (currently has Footer via ClientLayout)
+- [x] Test pages render correctly without hydration mismatch
+- [ ] Document Footer usage pattern in `docs/UI_COMPONENTS.md`
+- [ ] Git commit Footer migration to page-level
 
 ### Stage: Documentation and Cleanup
 - [ ] Update relevant documentation

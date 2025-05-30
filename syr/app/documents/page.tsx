@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { readdirSync } from 'fs'
 import { join } from 'path'
+import { AppHeader } from '@/components/app-header'
+import { Footer } from '@/components/footer'
 
 interface Document {
   filename: string
@@ -35,8 +37,10 @@ export default function DocumentsPage() {
   
   return (
     <div className="min-h-screen">
-      <div className="pt-24 pb-16 px-8">
-        <div className="max-w-4xl mx-auto text-center">
+      <AppHeader title="Documents" />
+      
+      <div className="pb-16 px-8">
+        <div className="max-w-4xl mx-auto text-center py-16">
           <h1 className="text-5xl font-bold mb-4 text-gray-900">Spideryarn Reading</h1>
           <p className="text-xl text-gray-600">
             AI-assisted document reading and analysis application
@@ -62,6 +66,8 @@ export default function DocumentsPage() {
           </div>
         </div>
       </main>
+      
+      <Footer />
     </div>
   )
 }

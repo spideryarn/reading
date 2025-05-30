@@ -5,7 +5,7 @@ import { House, Palette } from '@phosphor-icons/react'
 
 export function Footer() {
   return (
-    <footer className="border-t border-gray-200 bg-gray-50">
+    <footer className="mt-12 border-t border-gray-200 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-6">
@@ -41,11 +41,6 @@ export function Footer() {
           </nav>
         </div>
         
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <p className="text-xs text-gray-500 text-center">
-            Built with Next.js, shadcn/ui, and Claude AI • Prototype in development
-          </p>
-        </div>
       </div>
     </footer>
   )

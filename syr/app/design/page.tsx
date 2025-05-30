@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { AppHeader } from '@/components/app-header'
+import { Footer } from '@/components/footer'
 import { 
   House, 
   Warning,
@@ -371,6 +372,8 @@ export default function DesignReference() {
         </section>
 
       </div>
+      
+      <Footer />
     </div>
   )
 }

@@ -54,7 +54,7 @@ export default async function DocumentPage({ params }: PageProps) {
   
 
   return (
-    <div className="h-screen flex flex-col pt-16">
+    <div className="h-screen flex flex-col">
       <DocumentHeader title={doc.title} slug={slug} />
       <MutationProvider initialDocument={elements}>
         <DocumentPageClient 
