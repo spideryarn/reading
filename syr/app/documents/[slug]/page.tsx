@@ -58,6 +58,7 @@ export default async function DocumentPage({ params }: PageProps) {
     <div className="h-screen flex flex-col">
       <AppHeader 
         title={doc.title}
+        titleLink={`/documents/${slug}`}
         actions={<DocumentHeaderActions slug={slug} />}
       />
       <MutationProvider initialDocument={elements}>
