@@ -2,9 +2,11 @@
 
 // Provider-tier model keys for easy configuration
 // Format: {provider}-{tier} where tier is cheap/balanced/expensive
+// Special variant: anthropic-balanced-thinking for Sonnet 4 with thinking mode
 export type ProviderTierKey = 
   | 'anthropic-cheap' 
   | 'anthropic-balanced' 
+  | 'anthropic-balanced-thinking'
   | 'anthropic-expensive'
   | 'google-cheap' 
   | 'google-balanced' 
@@ -34,6 +36,7 @@ export const PROVIDER_TIER_MODELS = {
     description: 'Claude 3.5 Haiku - Fast and cost-effective',
     contextWindow: 200000,
     outputTokens: 8192,
+    thinking: false,
   },
   'anthropic-balanced': {
     provider: 'anthropic' as const,
@@ -41,6 +44,15 @@ export const PROVIDER_TIER_MODELS = {
     description: 'Claude Sonnet 4 - Balanced performance and cost',
     contextWindow: 200000,
     outputTokens: 8192,
+    thinking: false,
+  },
+  'anthropic-balanced-thinking': {
+    provider: 'anthropic' as const,
+    modelId: 'claude-sonnet-4-20250514',
+    description: 'Claude Sonnet 4 with Thinking Mode - Advanced reasoning',
+    contextWindow: 200000,
+    outputTokens: 8192,
+    thinking: true,
   },
   'anthropic-expensive': {
     provider: 'anthropic' as const,
@@ -48,6 +60,7 @@ export const PROVIDER_TIER_MODELS = {
     description: 'Claude Opus 4 - Highest capability',
     contextWindow: 200000,
     outputTokens: 8192,
+    thinking: false,
   },
   // Google models (Gemini 2.5)
   'google-cheap': {
@@ -56,6 +69,7 @@ export const PROVIDER_TIER_MODELS = {
     description: 'Gemini 2.0 Flash - Fast and cost-effective (stable)',
     contextWindow: 1000000,
     outputTokens: 8192,
+    thinking: false,
   },
   'google-balanced': {
     provider: 'google' as const,
@@ -63,6 +77,7 @@ export const PROVIDER_TIER_MODELS = {
     description: 'Gemini 2.5 Pro - Balanced performance',
     contextWindow: 1000000,
     outputTokens: 8192,
+    thinking: false,
   },
   'google-expensive': {
     provider: 'google' as const,
@@ -70,6 +85,7 @@ export const PROVIDER_TIER_MODELS = {
     description: 'Gemini 2.5 Pro - Same as balanced tier',
     contextWindow: 1000000,
     outputTokens: 8192,
+    thinking: false,
   },
 } as const
 
@@ -105,4 +121,23 @@ export const VISIBILITY_CONFIG = {
   DEBOUNCE_DELAY: 150,     // ms - Debounce delay for processing visibility changes (increased to reduce flickering)
   ROOT_MARGIN: '0px',      // For precise viewport detection
   THRESHOLD: 0.01,         // Minimum visible ratio to count as visible (1%)
+} as const
+
+// Site configuration
+export const SITE_CONFIG = {
+  // Base URL for the application
+  // In development: http://localhost:$PORT
+  // In production: https://www.spideryarn.com
+  get BASE_URL() {
+    if (typeof window !== 'undefined') {
+      // Client-side: use window.location
+      return window.location.origin
+    } else {
+      // Server-side: construct from environment
+      const port = process.env.PORT || '3000'
+      return process.env.NODE_ENV === 'production' 
+        ? 'https://www.spideryarn.com'
+        : `http://localhost:${port}`
+    }
+  }
 } as const

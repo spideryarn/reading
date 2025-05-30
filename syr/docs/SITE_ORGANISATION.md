@@ -37,6 +37,12 @@ Spideryarn Reading uses a hierarchical, document-centric architecture built on N
 /api/headings
 └── Semantic heading generation for documents
 
+/api/tweet-thread
+└── AI-powered Twitter thread generation
+
+/api/chat
+└── Chat interface with document context
+
 /api/fake_success_delay
 /api/fake_error
 └── Test endpoints for UI development
@@ -45,18 +51,27 @@ Spideryarn Reading uses a hierarchical, document-centric architecture built on N
 ### **Component Hierarchy**
 
 **Document Viewing**
-- `DocumentViewer` - Primary 3-column layout container
-  - Left: `TableOfContents` with Original/AI tabs
-  - Middle: Document content with element details
-  - Right: Glossary pane with extracted entities
-- `DocumentSummary` - Document-level AI summary display
-- `TableOfContents` - Interactive ToC with:
+- `document-viewer.tsx` - Document content display with element details
+- `document-header.tsx` - Document header with title and actions
+- `document-header-actions.tsx` - Action buttons and controls
+- `table-of-contents.tsx` - Interactive ToC with:
   - Tabbed interface (Original vs AI-generated headings)
   - Hover tooltips showing AI summaries (Tippy.js)
   - Loading states and error handling
+- `heading-tree.tsx` - Shared component for hierarchical heading display
+- `summary-pane.tsx` - Document-level AI summary display
+
+**Chat & Social Features**
+- `assistant-chat.tsx` - Advanced chat interface with @assistant-ui integration
+- `simple-chat.tsx` - Basic chat implementation
+- `chat-markdown.tsx` - Markdown rendering for chat
+- `chat-ui-states.tsx` - Chat UI state management
+- `tweet-thread-view.tsx` - Twitter thread generation and display
+- `tweet-card.tsx` - Individual tweet display component
 
 **Navigation & Structure**
-- Root layout with consistent header/branding
+- `app-header.tsx` - Consistent header with navigation
+- `tab-container.tsx` - Tabbed interface management
 - Dynamic slug-based routing for documents
 - Hierarchical element tree display with deterministic IDs
 
@@ -70,10 +85,13 @@ Spideryarn Reading uses a hierarchical, document-centric architecture built on N
 5. **Display**: Virtual DOM approach with React state management
 
 **AI Feature Integration**
+- Multi-provider LLM support (Anthropic Claude, Google Gemini)
 - Nunjucks template system with Zod validation (`lib/prompts/templates/`)
 - Configurable granularity levels (phrase → paragraph → section → page)
 - Caching to prevent duplicate API calls
-- Loading/error button pattern with Phosphor icons
+- shadcn/ui components for consistent UI (Button, Alert, Loading)
+- Phosphor Icons with SSR support
+- Document mutations system for reversible transformations
 
 ### **Asset Organisation**
 
