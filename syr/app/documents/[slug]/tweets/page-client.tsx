@@ -43,17 +43,14 @@ export function TweetThreadPageClient({
               </h1>
               <div className="flex items-center space-x-2">
                 <div className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-semibold">
-                  ✨ AI POWERED
-                </div>
-                <div className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-semibold">
-                  🧵 THREAD MAKER
+                  ✨ AI POWERED 🧵
                 </div>
               </div>
             </div>
           </div>
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-6">
             <p className="text-gray-700 leading-relaxed text-lg">
-              Transform your document into an <span className="font-semibold text-blue-600">engaging Twitter thread</span>. 
+              Transform your document into an <span className="font-semibold text-blue-600">engaging Twitter-style thread</span>. 
               Each tweet is carefully crafted to maintain engagement while preserving the core message.
             </p>
             {isLoading && (
@@ -61,7 +58,6 @@ export function TweetThreadPageClient({
                 <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
                 <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                 <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                <span className="text-sm font-medium ml-2">Generating your thread...</span>
               </div>
             )}
           </div>

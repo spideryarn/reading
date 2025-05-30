@@ -138,17 +138,6 @@ export function TweetThreadView({ documentContent, isActive = false, onStateChan
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
         </div>
-        <div className="text-center space-y-3">
-          <h3 className="text-xl font-semibold text-gray-900">Generating Tweet Thread</h3>
-          <p className="text-gray-600 max-w-md mx-auto">
-            Our AI is crafting an engaging thread from your document. This usually takes a few moments.
-          </p>
-          <div className="flex items-center justify-center space-x-1 mt-4">
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-          </div>
-        </div>
       </div>
     )
   }
@@ -179,9 +168,6 @@ export function TweetThreadView({ documentContent, isActive = false, onStateChan
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
             🧵 Tweet Thread
           </h1>
-          <p className="text-gray-600 text-sm">
-            AI-generated thread from the document
-          </p>
         </div>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           

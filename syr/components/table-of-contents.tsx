@@ -434,10 +434,10 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
     
     if (isLoading) {
       return (
-        <div className="max-w-md p-3 text-sm bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
-          <div className="flex items-center space-x-2">
+        <div className="max-w-md p-4 text-sm bg-white border border-gray-200 rounded-lg shadow-lg">
+          <div className="flex items-center space-x-3">
             <Spinner size={16} className="animate-spin text-blue-500" style={{ animationDuration: '2s' }} />
-            <span className="text-gray-700">Summarising contents of this heading...</span>
+            <span className="text-gray-700 font-medium">Summarising contents of this heading...</span>
           </div>
         </div>
       )
@@ -449,19 +449,19 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
       
       if (isError) {
         return (
-          <div className="max-w-md p-3 text-sm bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
-            <div className="flex items-center space-x-2">
-              <ExclamationMark size={16} className="text-amber-500 flex-shrink-0" />
-              <span className="text-gray-700">{cachedContent.replace('⚠️ ', '')}</span>
+          <div className="max-w-md p-4 text-sm bg-amber-50 border border-amber-200 rounded-lg shadow-lg">
+            <div className="flex items-center space-x-3">
+              <ExclamationMark size={16} className="text-amber-600 flex-shrink-0" />
+              <span className="text-amber-800 font-medium">{cachedContent.replace('⚠️ ', '')}</span>
             </div>
           </div>
         )
       }
       
       return (
-        <div className="max-w-md p-3 text-sm bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
+        <div className="max-w-md p-4 text-sm bg-white border border-gray-200 rounded-lg shadow-lg">
           <div className="prose prose-sm prose-gray max-w-none">
-            <div className="whitespace-pre-wrap leading-relaxed text-gray-800">
+            <div className="whitespace-pre-wrap leading-relaxed text-gray-800 font-medium">
               {cachedContent}
             </div>
           </div>
@@ -472,14 +472,20 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
     // Check if section has enough content to be worth summarising
     if (hasSufficientContentForSummary(elementId)) {
       return (
-        <div className="max-w-md p-3 text-sm text-gray-500 bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
-          Hover to load content...
+        <div className="max-w-md p-4 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg shadow-lg">
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+            <span className="font-medium">Hover to load content...</span>
+          </div>
         </div>
       )
     } else {
       return (
-        <div className="max-w-md p-3 text-sm text-gray-500 bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
-          [too little text to summarise]
+        <div className="max-w-md p-4 text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-lg shadow-lg">
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+            <span className="font-medium italic">Section too short to summarise</span>
+          </div>
         </div>
       )
     }

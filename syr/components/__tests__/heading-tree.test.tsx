@@ -166,9 +166,9 @@ describe('HeadingTree', () => {
     it('should show hidden count when descendants are filtered', () => {
       render(<HeadingTree {...defaultProps} granularityLevel={2} />)
       
-      // a_b should show "+2 hidden" (a_b_a and its child a_b_a_a are both hidden)
-      const a_b_element = screen.getByText('a_b').parentElement
-      expect(a_b_element).toHaveTextContent('(+2 hidden)')
+      // a_b should show "+2" (a_b_a and its child a_b_a_a are both hidden)
+      const a_b_element = screen.getByText('a_b').closest('[data-heading-id]')
+      expect(a_b_element).toHaveTextContent('+2')
     })
     
     it('should not show hidden count when zero', () => {
@@ -195,8 +195,8 @@ describe('HeadingTree', () => {
       
       render(<HeadingTree {...defaultProps} headings={deepHeadings} granularityLevel={1} />)
       
-      const rootElement = screen.getByText('Root').parentElement
-      expect(rootElement).toHaveTextContent('(+99+ hidden)')
+      const rootElement = screen.getByText('Root').closest('[data-heading-id]')
+      expect(rootElement).toHaveTextContent('+99+')
     })
     
     it('should render granularity slider', () => {

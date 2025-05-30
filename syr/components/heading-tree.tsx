@@ -71,18 +71,42 @@ export function buildHeadingTree(headings: Heading[]): HeadingNode[] {
 }
 
 /**
- * Get appropriate indentation class based on heading level
+ * Get appropriate indentation and styling based on heading level
  */
 function getIndentClass(level: number): string {
   const indents = {
-    1: 'pl-0',
-    2: 'pl-4',
-    3: 'pl-8',
-    4: 'pl-12',
-    5: 'pl-16',
-    6: 'pl-20'
+    1: 'pl-2',
+    2: 'pl-6', 
+    3: 'pl-10',
+    4: 'pl-14',
+    5: 'pl-18',
+    6: 'pl-22'
   }
-  return indents[level as keyof typeof indents] || 'pl-0'
+  return indents[level as keyof typeof indents] || 'pl-2'
+}
+
+function getTextSizeClass(level: number): string {
+  const sizes = {
+    1: 'text-base font-bold',
+    2: 'text-sm font-semibold', 
+    3: 'text-sm font-medium',
+    4: 'text-sm font-normal',
+    5: 'text-xs font-normal',
+    6: 'text-xs font-normal'
+  }
+  return sizes[level as keyof typeof sizes] || 'text-sm font-normal'
+}
+
+function getBorderClass(level: number): string {
+  const borders = {
+    1: 'border-l-4 border-blue-600',
+    2: 'border-l-3 border-blue-500',
+    3: 'border-l-2 border-blue-400', 
+    4: 'border-l border-gray-300',
+    5: 'border-l border-gray-300',
+    6: 'border-l border-gray-300'
+  }
+  return borders[level as keyof typeof borders] || 'border-l border-gray-300'
 }
 
 /**
@@ -159,27 +183,8 @@ function HeadingNodeComponent({
   return (
     <>
       <div className={`flex items-center ${getIndentClass(node.level)}`}>
-        {/* Expand/collapse button for non-leaf nodes */}
-        {hasChildren && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onToggleExpanded(node.id)
-            }}
-            className="mr-1 p-0.5 rounded hover:bg-gray-100 transition-colors"
-            aria-expanded={isExpanded}
-            aria-label={isExpanded ? 'Collapse section' : 'Expand section'}
-          >
-            {isExpanded ? (
-              <CaretDown size={16} className="text-gray-600" />
-            ) : (
-              <CaretRight size={16} className="text-gray-600" />
-            )}
-          </button>
-        )}
-        
-        {/* Spacer for leaf nodes to maintain alignment */}
-        {!hasChildren && <div className="w-6 mr-1" />}
+        {/* Left border for hierarchy indication */}
+        <div className={`${getBorderClass(node.level)} mr-3 h-12`} />
         
         <Tooltip.Provider delayDuration={500}>
           <Tooltip.Root onOpenChange={(open) => {
@@ -187,21 +192,51 @@ function HeadingNodeComponent({
           }}>
             <Tooltip.Trigger asChild>
               <div
-                className={`cursor-pointer rounded px-2 py-1 transition-colors group flex-1 ${themeColors.hover}`}
+                className={`cursor-pointer rounded-lg px-3 py-3 transition-all duration-150 group flex-1 ${
+                  themeColors.hover
+                } ${
+                  isVisible 
+                    ? 'ring-1 ring-blue-200 bg-blue-50/50 shadow-sm' 
+                    : 'hover:shadow-sm'
+                }`}
                 onClick={() => onHeadingClick(node)}
                 data-heading-id={node.id}
               >
-                <span className={`text-xs mr-2 ${themeColors.levelText}`}>
-                  H{node.level}
-                </span>
-                <span className={`text-sm text-gray-700 ${themeColors.text} ${isVisible ? 'font-bold' : 'font-normal'}`}>
-                  {node.text}
-                </span>
-                {displayHiddenCount && (
-                  <span className="ml-2 text-xs text-gray-500">
-                    (+{displayHiddenCount} hidden)
-                  </span>
-                )}
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <span className={`${getTextSizeClass(node.level)} leading-relaxed ${
+                      isVisible 
+                        ? 'text-blue-900' 
+                        : `text-gray-800 ${themeColors.text}`
+                    }`}>
+                      {node.text}
+                    </span>
+                    {displayHiddenCount && (
+                      <span className="ml-2 text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 font-medium">
+                        +{displayHiddenCount}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* Expand/collapse button for non-leaf nodes - moved to right */}
+                  {hasChildren && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onToggleExpanded(node.id)
+                      }}
+                      className="ml-2 p-1 rounded-md hover:bg-gray-100 transition-all duration-150 flex-shrink-0"
+                      aria-expanded={isExpanded}
+                      aria-label={isExpanded ? 'Collapse section' : 'Expand section'}
+                    >
+                      {isExpanded ? (
+                        <CaretDown size={16} className="text-gray-500 hover:text-gray-700" />
+                      ) : (
+                        <CaretRight size={16} className="text-gray-500 hover:text-gray-700" />
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
             </Tooltip.Trigger>
             <Tooltip.Portal>
@@ -225,7 +260,7 @@ function HeadingNodeComponent({
       
       {/* Render children only if expanded */}
       {hasChildren && isExpanded && (
-        <div className="ml-6">
+        <div className="mt-1 space-y-1">
           {node.children.map((child) => (
             <HeadingNodeComponent
               key={child.id}
@@ -283,7 +318,7 @@ export function HeadingTree({
     <div className="flex flex-col h-full">
       {/* Headings Navigation - takes remaining space */}
       <div className="flex-1 min-h-0">
-        <nav className="space-y-1 px-4 pt-4 pb-4 h-full overflow-y-auto">
+        <nav className="space-y-1 px-4 pt-3 pb-4 h-full overflow-y-auto">
         {headingTree.map((node) => (
           <HeadingNodeComponent
             key={node.id}
@@ -302,28 +337,59 @@ export function HeadingTree({
       </div>
       
       {/* Granularity Slider - fixed at bottom */}
-      <div className="flex-shrink-0 bg-white border-t border-gray-200 px-4 py-3">
+      <div className="flex-shrink-0 bg-gradient-to-r from-gray-50 to-gray-100/50 border-t border-gray-200 px-3 py-3">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-gray-600">
+          <span className="text-xs font-semibold text-gray-700">
             Showing levels 1-{Math.min(granularityLevel, maxDepth)}
           </span>
+          <span className="text-xs px-1.5 py-0.5 bg-white rounded text-gray-600 font-medium shadow-sm">
+            {headings.length}
+          </span>
         </div>
-        <input
-          type="range"
-          min="1"
-          max={maxDepth}
-          value={Math.min(granularityLevel, maxDepth)}
-          onChange={(e) => onGranularityChange(parseInt(e.target.value))}
-          className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-          style={{
-            background: maxDepth > 1 
-              ? `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${((Math.min(granularityLevel, maxDepth) - 1) / (maxDepth - 1)) * 100}%, #E5E7EB ${((Math.min(granularityLevel, maxDepth) - 1) / (maxDepth - 1)) * 100}%, #E5E7EB 100%)`
-              : '#3B82F6'
-          }}
-        />
-        <div className="flex justify-between mt-1">
-          <span className="text-xs text-gray-400">1</span>
-          <span className="text-xs text-gray-400">{maxDepth}</span>
+        <div className="relative">
+          <input
+            type="range"
+            min="1"
+            max={maxDepth}
+            value={Math.min(granularityLevel, maxDepth)}
+            onChange={(e) => onGranularityChange(parseInt(e.target.value))}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-modern"
+            style={{
+              background: maxDepth > 1 
+                ? `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${((Math.min(granularityLevel, maxDepth) - 1) / (maxDepth - 1)) * 100}%, #E5E7EB ${((Math.min(granularityLevel, maxDepth) - 1) / (maxDepth - 1)) * 100}%, #E5E7EB 100%)`
+                : '#3B82F6'
+            }}
+          />
+          {/* Custom slider thumb styling */}
+          <style jsx>{`
+            .slider-modern::-webkit-slider-thumb {
+              appearance: none;
+              height: 16px;
+              width: 16px;
+              border-radius: 50%;
+              background: #3B82F6;
+              cursor: pointer;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+              border: 2px solid white;
+            }
+            .slider-modern::-webkit-slider-thumb:hover {
+              transform: scale(1.1);
+              box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+            }
+            .slider-modern::-moz-range-thumb {
+              height: 16px;
+              width: 16px;
+              border-radius: 50%;
+              background: #3B82F6;
+              cursor: pointer;
+              border: 2px solid white;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+          `}</style>
+        </div>
+        <div className="flex justify-between mt-1.5">
+          <span className="text-xs text-gray-500 font-medium">1</span>
+          <span className="text-xs text-gray-500 font-medium">{maxDepth}</span>
         </div>
       </div>
     </div>
