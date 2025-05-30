@@ -115,26 +115,33 @@ User priorities:
 - [x] Git commit: "docs: update Stage 4 to reflect YAGNI principle for form components"
 
 ### Stage 5: Documentation & Guidelines
-- [ ] Update `CLAUDE.md` with shadcn/ui usage instructions
-  - How to add new components
-  - When to use shadcn/ui vs raw Tailwind
-  - Component customisation patterns
 
-- [ ] Create or update `docs/UI_COMPONENTS.md`
-  - List available shadcn/ui components
-  - Document any custom modifications
-  - Usage examples for common patterns
+- [x] Update `CLAUDE.md` with shadcn/ui usage instructions
+  - ✅ Added comprehensive UI Components & Styling section
+  - ✅ Guidelines for when to use shadcn/ui vs raw Tailwind
+  - ✅ Installation commands for non-interactive use
+  - ✅ Component customisation and theme information
 
-- [ ] Review with user
-  - Show before/after examples
-  - Get feedback on the new component system
-  - Identify any additional components needed
+- [x] Create or update `docs/UI_COMPONENTS.md`
+  - ✅ Created comprehensive component reference documentation
+  - ✅ Documented all available components with usage examples
+  - ✅ Included custom modifications and theme configuration
+  - ✅ Added best practices and migration status
+  - ✅ Covered testing approach and YAGNI principle application
+  - ✅ Cross-references with related documentation
+
+### Stage: create a design reference/style guide page showing all components
+- [ ] Pick a sensible url, e.g. `/design` and create API
+- [ ] Add design reference/style guide content to the page, including colour guide, logo information, fonts, example components etc to show what they'll look like
+- [ ] Add anything else you think would be helpful to a designer
+- [ ] Make it attractive
+- [ ] Create a footer component, and add a link to the design reference in the footer
+- [ ] Reference it in relevant docs, e.g. `docs/STYLING.md`, `docs/UI_COMPONENTS.md`,e tc
 
 ### Final Stage
 - [ ] Update all relevant documentation
 - [ ] Ensure all tests pass
 - [ ] Final review with user
-- [ ] Design refernce/style guide page showing all components
 
 ### Future Stage: Resizable Layout
 - [ ] Implement collapsible and resizable panes using shadcn/ui Resizable component

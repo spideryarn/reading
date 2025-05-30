@@ -119,6 +119,39 @@ Docs, modes, and admin:
 Recent planning decisions & progress tracking of major features: `planning/*.md`
 
 
+## UI Components & Styling
+
+The project uses **shadcn/ui** component library built on Radix UI primitives for consistent, accessible components.
+
+### When to use shadcn/ui vs raw Tailwind:
+- **Use shadcn/ui**: For interactive components (buttons, dialogs, forms, loading states)
+- **Use raw Tailwind**: For simple layouts, spacing, basic styling
+
+### Available Components:
+- `Button` - All variants with custom Spideryarn orange theme (`#DB8A45`)
+- `Dialog` - Accessible modals (custom dialog.tsx still used for compatibility)
+- `Alert` - Error and warning states
+- `Loading` - Standardised loading indicators with spinner
+- `Select`, `Checkbox` - Available but not currently used (YAGNI principle)
+
+### Adding New Components:
+```bash
+# Install new shadcn/ui component (non-interactive)
+printf "\n" | npx shadcn@latest add [component-name]
+
+# For React 19 compatibility, use --force if needed
+printf "\n" | npx shadcn@latest add [component-name] --force
+```
+
+### Component Customisation:
+- All components are copied to `components/ui/` and can be modified
+- Theme customisation in `app/globals.css` with OKLCH colour values
+- Primary colour set to Spideryarn orange: `hsl(30 62% 57%)`
+
+### Documentation:
+- `docs/SHADCN_UI_REFERENCE.md` - Complete installation and usage guide
+- `docs/UI_COMPONENTS.md` - Available components and usage patterns
+
 ## Style
 
 Use British spelling.
