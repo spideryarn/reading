@@ -8,7 +8,7 @@ import { CircleNotch } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import { TabContainer, type Tab } from './tab-container'
 import { AssistantChat } from './assistant-chat'
-import { MarkdownRenderer } from './markdown-renderer'
+import { MarkdownRenderer } from './markdown-renderer' // Lightweight markdown for document elements
 import { Button } from '@/components/ui/button'
 import { Loading } from '@/components/ui/loading'
 import { AlertWithIcon } from '@/components/ui/alert'
@@ -245,6 +245,7 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
         </span>
         <div className="flex-1">
           {element.content ? (
+            // Use lightweight MarkdownRenderer for document elements (basic formatting only)
             <MarkdownRenderer content={element.content} />
           ) : (
             <span className="text-gray-400 italic">(empty {element.tag_name})</span>
@@ -303,6 +304,7 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
               {element.tag_name === 'li' ? (
                 renderListItem(element, listItemIndex)
               ) : element.content ? (
+                // Use lightweight MarkdownRenderer for document elements (basic formatting only)
                 <MarkdownRenderer content={element.content} />
               ) : (
                 <span className="text-gray-400 italic">(empty {element.tag_name})</span>

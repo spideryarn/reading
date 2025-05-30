@@ -5,6 +5,18 @@ interface MarkdownRendererProps {
   className?: string
 }
 
+/**
+ * Lightweight markdown renderer for document elements.
+ * 
+ * DUAL MARKDOWN STRATEGY:
+ * This component handles basic formatting for document structure content.
+ * For full markdown support in chat messages, see chat-markdown.tsx which uses @assistant-ui/react-markdown.
+ * 
+ * This separation allows us to:
+ * - Keep document rendering lightweight (smaller bundle)
+ * - Use full markdown features only where needed (chat interface)
+ * - Maintain different performance/security profiles for each context
+ */
 export function MarkdownRenderer({ content, className = '' }: MarkdownRendererProps) {
   // Simple markdown to JSX converter for basic formatting
   // This handles the most common cases without needing a full markdown library

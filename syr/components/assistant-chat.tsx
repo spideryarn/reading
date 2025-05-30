@@ -12,6 +12,7 @@ import {
 import { User, Robot, PaperPlaneTilt, CircleNotch } from '@phosphor-icons/react';
 import { useChatRuntime } from '@/src/lib/hooks/useChatRuntime'; // Import the new hook
 import { Button } from '@/components/ui/button'
+import { MarkdownText } from './chat-markdown' // Full markdown support for AI responses
 
 interface AssistantChatProps {
   documentContext: string;
@@ -50,7 +51,8 @@ const AssistantMessage = () => (
       </MessagePrimitive.If>
       <MessagePrimitive.If hasContent>
         <div className="prose prose-sm max-w-none">
-          <MessagePrimitive.Content />
+          {/* Use @assistant-ui/react-markdown for full markdown support in AI responses */}
+          <MessagePrimitive.Content components={{ Text: MarkdownText }} />
         </div>
       </MessagePrimitive.If>
     </div>

@@ -556,6 +556,13 @@ const ThreadWithSuggestions = () => {
 ```
 
 ### Custom Message Content with Markdown
+
+**Note on Markdown Strategy**: Spideryarn uses two separate markdown rendering approaches:
+- **Chat messages**: `@assistant-ui/react-markdown` for full markdown support (code blocks, tables, lists, etc.)
+- **Document elements**: Custom `MarkdownRenderer` for lightweight basic formatting (bold, italic, inline code)
+
+This dual approach optimizes for the different content complexity and security requirements of each context.
+
 ```jsx
 import { MarkdownText } from "@assistant-ui/react-markdown";
 
