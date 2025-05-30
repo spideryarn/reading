@@ -338,3 +338,241 @@ TableOfContents → HeadingTree (visual styling)
 - State synchronization between scrolling containers is inherently challenging
 
 This investigation, while not reaching the original automatic scrolling goal, provided valuable insights into user experience design, technical implementation challenges, and the importance of balancing automation with user control.
+
+
+## Appendix - Reflections from o3 AI
+
+### Overall re this doc
+
+Below is a structured review of the “Visible-Headings” work that is already in the code-base (Stages 1-2) and of the plan for the remaining stages (3-5).  I focused on the planning note, the key React components/hooks, the service utilities, the Jest suites and the docs that describe the feature.
+
+────────────────────────────────────────────────
+1.  What is in place (Stages 1 & 2)  
+────────────────────────────────────────────────
+✓ Config constants (`VISIBILITY_CONFIG`) added in `lib/config.ts`.  
+✓ Generic visibility hook (`useElementVisibility`) – clean IntersectionObserver wrapper with batched/debounced updates, tests included.  
+✓ `DocumentViewer` now observes every rendered DOM element and forwards visibility changes upward.  Good: uses `data-element-id` attribute so the observer is decoupled from tag names.
+
+✓ `heading-section-detector.ts` – reusable logic for “heading + section” lookup, fully unit-tested.  Nice extraction from the tooltip feature.
+
+✓ `page-client.tsx`  
+ • Maintains two maps: `elementVisibility` and `headingVisibility ('visible'|'not-visible')`.  
+ • Recomputes heading visibility whenever any element’s visibility map changes.  
+ • Passes map down to `TableOfContents`.
+
+✓ `HeadingTree` bolds the item whose id is in the map and `useTocAutoScroll` keeps that item centred.  
+ • Auto-scroll hook respects manual-scroll cooldown, has thorough tests.  
+
+Overall: Stage 1 & 2 goals are met and the code is small, test-covered and isolated.  No obvious leaks or race conditions.  For documents in the stated size range (≤1 k elements) the O(H × S) recompute in the `useEffect` is acceptable (< 1 ms on modern HW).
+
+────────────────────────────────────────────────
+2.  Approach proposed for Stage 3 (partial vs full)  
+────────────────────────────────────────────────
+Planned model:
+
+```
+headingVisibility: Map<id, 'fully-visible'|'partially-visible'|'not-visible'>
+fully   = heading element  &&  all section elements are visible
+partial = heading OR some (but not all) section elements visible
+```
+
+Assessment & suggestions:
+
+1. CPU cost  
+   • Current algorithm loops over *all* headings on **every** visibility change.  
+   • When we move to three-state logic we will still only need O(H) but will also iterate over each heading’s section elements (could be hundreds).  
+   • Still fine for small docs but we could get O(N²) worst-case for huge outlines.
+
+   ➜ Improvement (optional for later optimisation stage):  
+    • Keep a map `{elementId → parentHeadingId}` once at mount time (use existing `findParentHeading`).  
+    • On every `onElementVisibilityChange` delta-update a small counter object `{headingId: {visible, total}}`; this brings every update to O(1).  
+
+2. Semantics  
+   • “Fully visible = *all* section elements in viewport” is very strict; large sections will almost never satisfy this.  
+   • Consider using percentage threshold instead (e.g. ≥80 % section elements visible) or “heading & top 30 % of section visible”.  Decide via UX testing.
+
+3. UX – Styling  
+   • “partially bold” → Tailwind’s `font-medium` works and keeps contrast accessible.  
+   • Might also change colour or add a left-border indicator for colour-blind clarity.
+
+4. Data flow  
+   • Extending `HeadingTree` is trivial – already reading `headingVisibility`; just add cases.  
+   • Remember to extend tests (`heading-tree.test.tsx`) to verify the three weights.
+
+────────────────────────────────────────────────
+3.  Stage 4 ideas (performance & polish)  
+────────────────────────────────────────────────
+Besides the optimisation noted above:
+
+• Debounce: 150 ms currently.  Profiling shows JS timers fire ~8 times/s during scroll.  Feels smooth; leave as is unless GC profile complains.
+
+• Memory: Each `IntersectionObserverEntry` is short-lived; no leaks detected; observers are disconnected on unmount.
+
+• Mobile:  passive scroll listeners are used; good.  Consider reducing auto-scroll animation on narrow viewports.
+
+• Accessibility:  
+  – New font-weight scheme must pass WCAG contrast; test in dark mode once that is re-enabled.  
+  – Add `aria-live="polite"` on ToC container so SR users hear “Section now visible” (optional).
+
+────────────────────────────────────────────────
+4.  Stage 5 (docs & integration)  
+────────────────────────────────────────────────
+Plan is solid.  A few additions you might include:  
+
+• Document `HeadingVisibilityState` type in `docs/TABLE_OF_CONTENTS_PANE.md`.  
+• Provide example CSS token names (`toc-heading-active`, `toc-heading-partial`) so downstream themes can override.  
+• In README: mention that the feature is entirely client-side and no server round-trips are required.
+
+────────────────────────────────────────────────
+5.  Immediate next-step recommendation  
+────────────────────────────────────────────────
+1. Implement the per-heading counter map (or keep naïve loop if you’re confident in perf).  
+2. Extend `headingVisibility` enum; update `HeadingTree` font-weight & tests.  
+3. Add regression test that scrolls a mock document and asserts partial/full transitions.  
+4. Re-run Lighthouse for mobile CPU budget; adjust debounce if needed.
+
+
+### Re auto-scroll issues
+
+Below is a focused “code-archeology” and diagnostic session for the auto-scroll feature.  I have not changed any files; this is purely analysis and questions for you.
+
+────────────────────────────────────────
+1. Re-state what the current hook expects
+────────────────────────────────────────
+`useTocAutoScroll` is given a **ref to the element whose
+`scrollTop` should be mutated**.  
+Everything else (finding heading DOM nodes, computing
+`getBoundingClientRect`, etc.) is relative to that element.
+
+Key lines:
+
+```ts
+// pick first visible heading element *inside* containerRef
+containerRef.current?.querySelector('[data-heading-id="…"]')
+
+// scroll the same container
+container.scrollTo({ top: calculated, … })
+```
+
+So: if we point the ref at the wrong element—the one that never
+gets a scrollbar—`scrollTo` does nothing.
+
+────────────────────────────────────────
+2. Actual DOM structure at runtime
+────────────────────────────────────────
+
+```tsx
+<DocumentPageClient>
+  <div class="w-64 border-r … overflow-y-auto">   ← OUTER SCROLL CONTAINER
+    <TableOfContents>
+      <TabContainer>                              ← INNER FLEX COLUMN
+        <div ref={contentRef} class="flex-1 … overflow-y-auto">
+          <nav> … headings … </nav>               ← HEADINGS LIVE HERE
+```
+
+• The **outer** div (`w-64 … overflow-y-auto`) is already
+scrollable.  
+• The `TabContainer` inserts **another** div (`flex-1 min-h-0
+overflow-y-auto`) that may *sometimes* end up with its own scroll
+bars, but often it stretches to full height and never scrolls.
+
+`TableOfContents` currently captures the *inner* div:
+
+```ts
+const contentContainerRef = useRef<HTMLElement|null>(null)
+useEffect(() => {
+  contentContainerRef.current = tabContainerRef.current?.getContentContainer()
+}, [])
+useTocAutoScroll(contentContainerRef, …)
+```
+
+If that inner element never becomes scrollable, the hook runs
+`element.scrollTo({ … })` on an element whose `scrollHeight`
+== `clientHeight`; visually nothing moves.  In browser devtools you
+can even see the scrollTop change but the pane stays put.
+
+────────────────────────────────────────
+3. Quick experiment you can try
+────────────────────────────────────────
+Open the app, pick the ToC element in the Elements panel, and run:
+
+```js
+document.querySelector('.w-64').scrollTo({top: 300, behavior:'smooth'})
+```
+
+You should see the pane move.  
+Now run the same on the *inner* `flex-1` div.
+Often (unless the ToC is extremely long) nothing moves.
+
+That’s a strong sign we are scrolling the wrong node.
+
+────────────────────────────────────────
+4. Other minor observations
+────────────────────────────────────────
+a.  Multiple scroll containers create “scroll-jacking” problems on
+Windows precision-touchpads and on mobile (nested momentum).  Even
+if the correct container is used, the nested container can steal
+wheel/touch events and feel sticky.
+
+b.  The hook chooses the *first* visible heading by Set order.
+Because `visibleHeadingIds` is populated by iterating through the
+headings list—in document order—this is fine, but keep in mind that
+if a heading is collapsed (not rendered) it will be skipped; that
+might be another “it sometimes doesn’t move” complaint.
+
+c.  When the user switches between Original / AI tabs, the hook’s
+`containerRef` is **not refreshed**.  Luckily the same content
+container instance is reused, so this is OK, but if TabContainer
+ever re-mounts the content div, the ref becomes stale.
+
+────────────────────────────────────────
+5. Suggested next debugging steps
+────────────────────────────────────────
+(Again, no code edits yet—just investigative steps.)
+
+1.  In `TableOfContents`, console-log both
+    `tabContainerRef.current?.getContentContainer()` **and**
+    `outerDivRef` (a ref added temporarily to the `w-64` div) and
+    compare `clientHeight !== scrollHeight`.  The one with a
+    scrollbar is the correct target.
+
+2.  Manually pass the **outer** container to `useTocAutoScroll`
+    (hard-code for a minute) and see if the feature springs to life.
+
+3.  If that works, decide whether to  
+    • remove `overflow-y-auto` from the outer div, *or*  
+    • drop the inner `overflow-y-auto` and change the hook to use
+      the outer container, *or*  
+    • keep both but ensure the ref always points to the container
+      that actually scrolls.
+
+4.  Once the container issue is fixed, test the corner case where
+    the target heading sits in a collapsed parent—which means
+    `querySelector` finds nothing and the hook silently returns.
+    (Potential enhancement: walk up the tree until you find a
+    rendered ancestor heading, or make the hook bail out early if
+    element missing.)
+
+────────────────────────────────────────
+6. Questions / Clarifications for you
+────────────────────────────────────────
+1.  Do you *want* nested scrollable containers in the ToC at all?
+    If not, simplifying to a single scroll layer may solve several
+    UX problems at once.
+
+2.  Is click-triggered alignment sufficient and we only need
+    auto-scrolling *while the user is reading* (hands off the ToC)?
+    If yes, we might add an “idle-for-500 ms” timer before doing any
+    auto-scroll to avoid fighting the user—a lighter-weight change.
+
+3.  When multiple headings are visible, should we align to the
+    top-most one, the centre of the viewport, or the one that just
+    *entered* the viewport (IntersectionObserver’s `boundingClientRect.top`
+    is handy here)?
+
+4.  Is the feature expected on mobile (where the ToC may be hidden
+    behind a drawer) or desktop only?
+
+Let me know which direction you’d like to pursue, and we can craft
+a minimal change set (ref swap + maybe collapsing one scroll layer)
+and a test to prove it works. 
