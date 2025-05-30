@@ -385,7 +385,6 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
     <div className="grid grid-cols-3 gap-4 h-full">
       {/* Merged Document pane spanning 2/3 of the width */}
       <div className="col-span-2 overflow-y-auto p-4 border-r">
-        <h2 className="text-lg font-semibold mb-4">Document</h2>
         {rootElements
           .sort((a, b) => a.position - b.position)
           .map(element => renderElement(element, 0))}
