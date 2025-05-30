@@ -3,7 +3,7 @@ import nunjucks from 'nunjucks'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import { generateText } from 'ai'
-import { AI_CONFIG } from '@/lib/config'
+import { AI_CONFIG, type ProviderTierKey } from '@/lib/config'
 import { getModel } from '@/lib/services/llm-provider'
 
 // Configure Nunjucks with strict mode
@@ -21,7 +21,7 @@ export interface PromptTemplate<T extends z.ZodSchema> {
   schema: T
   templatePath: string
   modelConfig?: {
-    model?: string
+    model?: ProviderTierKey
     temperature?: number
     maxTokens?: number
   }
@@ -32,7 +32,7 @@ export function loadPromptTemplate<T extends z.ZodSchema>(
   templatePath: string,
   schema: T,
   modelConfig?: {
-    model?: string
+    model?: ProviderTierKey
     temperature?: number
     maxTokens?: number
   }
@@ -54,7 +54,7 @@ export function loadPromptTemplateFromCaller<T extends z.ZodSchema>(
   templateName: string,
   schema: T,
   modelConfig?: {
-    model?: string
+    model?: ProviderTierKey
     temperature?: number
     maxTokens?: number
   }
@@ -78,8 +78,8 @@ async function executePromptInternal<T extends z.ZodSchema>(
   const prompt = env.renderString(templateContent, validated)
   
   // Get the appropriate model based on configuration
-  const modelName = template.modelConfig?.model || AI_CONFIG.DEFAULT_MODEL
-  const model = getModel(modelName)
+  const providerTierKey = template.modelConfig?.model || AI_CONFIG.DEFAULT_MODEL
+  const model = getModel(providerTierKey)
   
   // Execute with Vercel AI SDK Core
   const result = await generateText({

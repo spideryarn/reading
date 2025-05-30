@@ -3,7 +3,7 @@
 
 import { anthropic as anthropicProvider } from '@ai-sdk/anthropic'
 import { google as googleProvider } from '@ai-sdk/google'
-import { AI_CONFIG, getModelForProvider, type LLMProvider } from '@/lib/config'
+import { AI_CONFIG, getModelConfig, getProviderFromKey, type ProviderTierKey } from '@/lib/config'
 
 // Provider initialization with API key configuration
 const providers = {
@@ -23,8 +23,8 @@ const providers = {
   },
 }
 
-// Get the provider instance based on configuration
-export function getProvider(providerName: LLMProvider = AI_CONFIG.PROVIDER) {
+// Get the provider instance based on provider name
+export function getProvider(providerName: 'anthropic' | 'google') {
   const providerFactory = providers[providerName]
   if (!providerFactory) {
     throw new Error(`Unknown provider: ${providerName}. Supported providers: ${Object.keys(providers).join(', ')}`)
@@ -33,23 +33,27 @@ export function getProvider(providerName: LLMProvider = AI_CONFIG.PROVIDER) {
   return providerFactory()
 }
 
-// Get a model instance for the current provider
-export function getModel(modelName?: string, provider: LLMProvider = AI_CONFIG.PROVIDER) {
-  const providerInstance = getProvider(provider)
-  const model = modelName || getModelForProvider(provider)
+// Get a model instance using provider-tier key
+export function getModel(providerTierKey: ProviderTierKey = AI_CONFIG.DEFAULT_MODEL) {
+  const modelConfig = getModelConfig(providerTierKey)
+  const providerInstance = getProvider(modelConfig.provider)
   
-  return providerInstance(model)
+  return providerInstance(modelConfig.modelId)
 }
 
-// Helper to get provider and model together
-export function getLLMConfig() {
-  const provider = AI_CONFIG.PROVIDER
-  const model = getModelForProvider(provider)
+// Helper to get provider and model configuration together
+export function getLLMConfig(providerTierKey: ProviderTierKey = AI_CONFIG.DEFAULT_MODEL) {
+  const modelConfig = getModelConfig(providerTierKey)
+  const providerInstance = getProvider(modelConfig.provider)
   
   return {
-    provider,
-    model,
-    providerInstance: getProvider(provider),
-    modelInstance: getModel(model, provider),
+    providerTierKey,
+    provider: modelConfig.provider,
+    modelId: modelConfig.modelId,
+    description: modelConfig.description,
+    contextWindow: modelConfig.contextWindow,
+    outputTokens: modelConfig.outputTokens,
+    providerInstance,
+    modelInstance: getModel(providerTierKey),
   }
 }
