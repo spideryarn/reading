@@ -1,5 +1,7 @@
 # Database Schema Reference
 
+> ⚠️ **OUT OF DATE** - This documentation is very much in progress and may not reflect the current implementation. Database architecture is evolving rapidly during early development.
+
 ## Overview
 
 This document describes both the current (deprecated) schema and the target schema for Spideryarn Reading. The project is transitioning from a decomposed element storage approach to a simpler single-row document storage.

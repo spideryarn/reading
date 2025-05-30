@@ -1,5 +1,7 @@
 # Database Guide
 
+> ⚠️ **OUT OF DATE** - This documentation is very much in progress and may not reflect the current implementation. Database architecture is evolving rapidly during early development.
+
 ## Overview
 
 Spideryarn Reading's database is in transition. The current implementation uses a decomposed element storage approach (each HTML element as a row), but the architecture has been updated to use single-row document storage for the MVP.

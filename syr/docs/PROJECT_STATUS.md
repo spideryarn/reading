@@ -20,8 +20,10 @@ Spideryarn Reading is in active development with core AI features now implemente
 - **Hierarchical summaries** - AI-generated summaries at multiple granularities with hover tooltips
 - **Glossary generation** - Entity extraction with categorisation (person, concept, place, etc.)
 - **AI-generated headings** - Semantic document structure generation for better navigation
+- **Tweet thread generation** - AI-powered conversion of documents to Twitter thread format
+- **Multi-LLM provider support** - Anthropic Claude and Google Gemini via Vercel AI SDK
+- **Advanced chat interface** - Full @assistant-ui integration with document context
 - **Prompt template system** - Nunjucks templates with Zod validation (`lib/prompts/templates/`)
-- **Claude API integration** - Connected to Anthropic Claude Sonnet 4
 
 **Data Model & UI Components**
 - **Document parsing pipeline**: HTML → Cheerio → structured elements with hierarchical relationships
@@ -31,12 +33,17 @@ Spideryarn Reading is in active development with core AI features now implemente
   - Hover tooltips showing AI summaries (using Tippy.js)
   - Loading states and error handling
 - **Glossary component** with ordered entity display
-- **Loading/error button pattern** with Phosphor icons (documented in `docs/STYLING.md`)
+- **Tweet thread view** with copy-to-clipboard and social sharing (Bluesky integration planned)
+- **Chat interface** with assistant-ui primitives and document context integration
+- **shadcn/ui component library** - Standardized interactive components (Button, Dialog, Alert, Loading)
+- **Phosphor Icons SSR** - Server-side rendering compatible icon system
 
 **API Endpoints**
 - `/api/summarise` - Text summarisation with configurable granularity
 - `/api/glossary` - Entity extraction from documents
 - `/api/headings` - AI-powered heading generation
+- `/api/tweet-thread` - Convert documents to Twitter thread format
+- `/api/chat` - Chat interface with document context
 - `/api/fake_success_delay` & `/api/fake_error` - Test endpoints
 
 ### Development Status
@@ -53,20 +60,25 @@ see `docs/ARCHITECTURE.md` for detailed system architecture
 
 ### Key Architectural Decisions (Implemented)
 - Next.js + TypeScript + Tailwind CSS
+- shadcn/ui component library for interactive components
+- Multi-provider LLM support (Anthropic Claude, Google Gemini) via Vercel AI SDK
 - Single-row document storage (not decomposed elements) for MVP simplicity
 - Virtual DOM approach for frontend state management
 - On-demand AI processing with user-triggered buttons
-- Caching of AI responses to prevent duplicate API calls
+- Reversible document mutations system for AI transformations
+- Prompt template system with Nunjucks + Zod validation
 - Git worktree setup for parallel feature development
 
 ## Future Enhancements
 
 ### Planned Features (see `planning/*.md` for details)
-1. **Reversible document mutations** - Apply/revert transformations like filters, highlights
-2. **Enhanced glossary** - Click-to-scroll navigation and text highlighting
+1. **Enhanced glossary** - Click-to-scroll navigation and text highlighting
+2. **Social media integration** - Direct posting to Twitter/X and Bluesky
 3. **Persistent AI content** - Store generated summaries/headings in Supabase
 4. **Document upload** - Allow users to upload their own HTML documents
 5. **User authentication** - Personal document libraries
+6. **Collapsible/resizable panes** - Improved layout flexibility
+7. **Document expand/collapse** - Granular content visibility controls
 
 ### Infrastructure Improvements
 1. **Background processing** - Move from frontend-driven to proper job queue
@@ -77,10 +89,10 @@ see `docs/ARCHITECTURE.md` for detailed system architecture
 ### Next Immediate Steps
 
 1. **Complete glossary navigation** - Implement click-to-scroll functionality
-2. **Persist AI content** - Save generated summaries and headings to database
-3. **Implement mutations system** - For reversible document transformations
-4. **Add document upload** - Basic file upload functionality
-5. **Improve loading states** - Better UX for long-running AI operations
+2. **Social media posting** - Complete Bluesky integration for tweet threads
+3. **Collapsible panes** - Implement resizable and collapsible layout system
+4. **Document visibility controls** - Add expand/collapse functionality for sections
+5. **Persist AI content** - Save generated summaries and headings to database
 
 see also:
 - `docs/ARCHITECTURE.md` - System architecture and design decisions
