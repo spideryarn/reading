@@ -17,7 +17,8 @@ see:
   - Eventually this will be a for-profit business in some way, though I haven't figured out any details.
 
 - AI
-  - We'll probably use Anthropic Claude Sonnet 4 for almost everything AI-related, including chat, searching the web, manipulating HTML, transcribing PDFs, etc.
+  - **Multi-Provider LLM Support**: Uses Vercel AI SDK Core with support for Anthropic Claude and Google Gemini models. Provider selection via environment configuration with tier-based model mapping (anthropic-balanced, google-cheap, etc.)
+  - **Default Model**: Claude Sonnet 4 for production, but configurable per feature via LLM_MODEL environment variable
   - For voice recognition, we'll probably use OpenAI Whisper API.
   - **Implementation Standard**: All LLM functionality uses our standardised Nunjucks + Zod template system. See [LLM_PROMPT_TEMPLATES.md](LLM_PROMPT_TEMPLATES.md) for complete implementation guidance.
 
@@ -32,6 +33,8 @@ see:
   - I really hate writing CSS, so I'd like the LLM to do all of that work, and my preference would be for it to pick the framework that it knows best (presumably with the most pretraining data), and that works best with the frontend framework.
   - In the past, I've built an app hosted on Vercel that had two separate environments - a Python serverless backend, and then a SvelteKit backend for server-side rendering, with Svelte on the frontend. It worked fairly well after a lot of tinkering. But I'm a bit wary about the complexity. So I'm at least considering doing everything in SvelteKit, or ditching server-side rendering, or any other ideas that would simplify things.
   - USER/AI AGREED: Next.js with TypeScript and Tailwind CSS. The AI will handle all programming, and this stack enables fastest development because: (1) AI has most training data on React/Next.js patterns, (2) huge ecosystem of pre-built components for reading apps (react-markdown, PDF libraries, highlighting, etc.), (3) Next.js API routes with streaming support work well with LLM integration, (4) Tailwind CSS is what AI knows best for styling, (5) mature Supabase/realtime integrations if needed later.
+  - **Component Library**: shadcn/ui for interactive components (buttons, dialogs, alerts) built on Radix UI primitives, with raw Tailwind for layouts and basic styling. Provides consistency and accessibility while maintaining development speed.
+  - **Icon System**: Phosphor Icons with SSR-compatible imports for server components, standard imports for client components. Next.js optimization configured for efficient bundling.
 
 - Storage
   - I like Sqlite, Postgres, and Supabase as technologies.
@@ -92,4 +95,22 @@ see:
 - **Implementation Status**: Core mutation engine complete with atomic operations, comprehensive validation, and debug utilities. AI headings integration working with reliable scroll-to-heading functionality.
 - See detailed design and implementation plan: `planning/250527a_reversible_document_mutations.md`
 - See implementation documentation: `docs/MUTATIONS.md`
+
+## Chat Interface Architecture
+
+- **Framework**: @assistant-ui/react library for standardized chat UI primitives
+- **Integration**: Custom runtime adapter connects chat interface to document context
+- **Multi-Provider Support**: Chat functionality supports all configured LLM providers
+- **Document Context**: Chat sessions automatically include current document content for contextual conversations
+- **Implementation Status**: Full integration complete with 37/38 tests passing
+- See implementation documentation: `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md`
+
+## Tweet Thread Generation
+
+- **Purpose**: Convert academic documents to Twitter thread format for social media sharing
+- **AI Integration**: Uses prompt template system to maintain academic accuracy while improving accessibility
+- **UI Pattern**: Auto-generation when tab becomes active (consistent with glossary feature)
+- **Export Features**: Copy-to-clipboard with Markdown formatting and Spideryarn attribution
+- **Social Integration**: Bluesky posting integration planned (UI implemented, API pending)
+- See implementation documentation: `docs/TWEET_THREAD_VIEW.md`
 
