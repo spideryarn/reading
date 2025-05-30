@@ -116,6 +116,12 @@ User priorities:
 - [ ] Final review with user
 - [ ] Design refernce/style guide page showing all components
 
+### Future Stage: Resizable Layout
+- [ ] Implement collapsible and resizable panes using shadcn/ui Resizable component
+  - See `planning/250530b_collapsible_resizable_panes.md` for detailed implementation plan
+  - **Dependency**: Requires completion of Stages 2-3 above (Button, Dialog components working)
+  - **Benefit**: Better screen space utilisation and responsive layout for three-pane interface
+
 ## Appendix
 
 ### Current UI Patterns Analysis
