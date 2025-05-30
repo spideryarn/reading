@@ -34,29 +34,37 @@ User priorities:
 
 ### Stage 1: Research & Setup
 
-- [ ] Research shadcn/ui installation process for Next.js projects
-  - Use web search to find latest installation guide
-  - Check compatibility with Next.js 15 and React 19
-  - Understand the CLI tool and how it works
-  - Use a subagent to do a deep dive on relevant examples and best practices, and write up a very detailed reference/guide doc - follow `docs/WRITING_EVERGREEN_DOCS.md` and reference that in this planning doc
+- [x] Research shadcn/ui installation process for Next.js projects
+  - ✅ Used web search to find latest installation guide
+  - ✅ Confirmed compatibility with Next.js 15 and React 19 (requires canary version)
+  - ✅ Understood CLI tool and configuration options
+  - ✅ Created comprehensive reference guide: `docs/SHADCN_UI_REFERENCE.md`
 
-- [ ] Create a plan for which components to adopt first
-  - Analyse current component usage patterns
-  - Identify highest-impact components (most repeated/inconsistent)
-  - List components in priority order
-- [ ] Update this planning doc with findings
+- [x] Create a plan for which components to adopt first
+  - ✅ Analysed current component usage patterns across codebase
+  - ✅ Identified highest-impact components (Button, Dialog, Alert)
+  - ✅ Created priority order with migration strategy
+- [x] Update this planning doc with findings
 
 ### Stage 2: Initial Installation
 
-- [ ] Install shadcn/ui CLI and dependencies
-  - Follow official installation guide
-  - Configure for our project structure
-  - Set up theme configuration
+- [x] Install shadcn/ui CLI and dependencies
+  - ✅ Successfully ran `npx shadcn@latest init` with React 19 compatibility
+  - ✅ Configured project structure with components.json
+  - ✅ Set up theme configuration with Spideryarn orange (#DB8A45) as primary
 
-- [ ] Install first component: Button
-  - Use CLI to add Button component
-  - Customise theme colours to match Spideryarn orange
-  - Test all button variants
+- [x] Install first component: Button
+  - ✅ Created Button component at `components/ui/button.tsx`
+  - ✅ Installed required dependencies: @radix-ui/react-slot, clsx, tailwind-merge
+  - ✅ Customised primary theme colour to Spideryarn orange in OKLCH format
+  - ✅ Created comprehensive test suite with 5 passing tests for all variants
+
+- [x] Verification complete
+  - ✅ Button component imports and renders correctly
+  - ✅ All variants (default, destructive, outline, secondary, ghost) working
+  - ✅ All sizes (sm, default, lg, icon) functional  
+  - ✅ Event handling and disabled states working
+  - ✅ TypeScript compilation successful for shadcn/ui components
 
 - [ ] Git commit: "feat: add shadcn/ui setup with Button component"
 
@@ -135,34 +143,73 @@ User priorities:
 
 ## Appendix
 
-### Current UI Patterns Analysis
+### Stage 1 Research Findings
 
-Based on codebase analysis, here are the most common UI patterns that would benefit from standardisation:
+**shadcn/ui Compatibility Assessment**:
+- ✅ **Next.js 15**: Fully supported via canary release
+- ✅ **React 19**: Supported with `--legacy-peer-deps` flag for npm
+- ✅ **Tailwind v4**: Compatible, uses CSS variables and modern features
+- ✅ **Radix UI**: Perfect compatibility (already using `@radix-ui/react-tooltip`)
+
+**Installation Requirements**:
+```bash
+npx shadcn@canary init  # For Next.js 15 + React 19 support
+```
+
+**Component Priority Analysis** (based on codebase audit):
+
+**Tier 1 - Immediate Impact**:
+1. **Button** - 15+ variations across 12 files, highest standardisation benefit
+2. **Dialog** - Replace 75-line custom implementation in `components/dialog.tsx`
+3. **Alert** - Standardise error/loading states in 5 components
+
+**Tier 2 - High Impact**:
+4. **Input/Form** - Future-proof for settings and upload features
+5. **Card** - Content containers throughout app
+6. **Tabs** - Can replace custom `TabContainer` eventually
+
+**Current UI Patterns Analysis**:
 
 **Buttons** - Found across multiple components with variations:
-- Primary action buttons (blue backgrounds)
-- Secondary buttons (gray backgrounds)
-- Icon-only buttons (tooltips)
-- Disabled states
-- Loading states with spinners
+- Primary action buttons: `bg-blue-500 text-white rounded hover:bg-blue-600`
+- Secondary buttons: `bg-gray-100 text-gray-700 hover:bg-gray-200`
+- Loading buttons: Manual `CircleNotch` + `disabled:bg-gray-400`
+- Icon-only buttons with tooltips
 
-**Loading States** - Repeated pattern:
+**Loading States** - Repeated pattern in 5 files:
 ```tsx
 <CircleNotch className="animate-spin" size={16} />
 <span className="text-sm">Loading...</span>
 ```
 
-**Error States** - Common error display pattern:
+**Error States** - Common pattern in table-of-contents.tsx, document-viewer.tsx:
 ```tsx
-className="bg-red-50 border border-red-200 rounded p-3"
+<div className="bg-red-50 border border-red-200 rounded p-3 flex items-start gap-2">
+  <Warning className="text-red-600 mt-0.5" size={20} weight="bold" />
+  <div className="text-sm text-red-800">
+    <div className="font-medium mb-1">Operation failed</div>
+    <div className="text-xs">{error}</div>
+  </div>
+</div>
 ```
 
-**Benefits of shadcn/ui for AI Development**
+**Custom Components to Replace**:
+- `components/dialog.tsx` - 75 lines of modal logic → shadcn/ui Dialog
+- `components/tab-container.tsx` - Can migrate to shadcn/ui Tabs eventually
 
-Research findings show that component libraries with semantic APIs are more effective for AI code generation because:
-1. Higher-level abstractions reduce ambiguity
-2. Component props provide clear intent
-3. Pre-built accessibility and edge cases
-4. Consistent patterns across the codebase
+**Benefits of shadcn/ui for AI Development**:
 
-This aligns with the user's priority of development speed over pixel-perfect control.
+Research findings show component libraries with semantic APIs are more effective for AI code generation:
+1. **Higher-level abstractions** reduce ambiguity (`<Button variant="destructive">` vs class strings)
+2. **Component props** provide clear intent and type safety
+3. **Pre-built accessibility** and edge cases handled automatically
+4. **Consistent patterns** across the codebase improve AI pattern recognition
+5. **Copy-paste philosophy** allows full customisation while maintaining standards
+
+This aligns perfectly with the user's priority of development speed over pixel-perfect control.
+
+**Key Implementation Notes**:
+- Use `npx shadcn@canary init` for React 19 compatibility
+- Spideryarn orange (#DB8A45) will be configured as primary theme colour
+- Existing Phosphor Icons integrate seamlessly
+- Gradual migration path allows testing each component individually
