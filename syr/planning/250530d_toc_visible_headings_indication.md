@@ -89,28 +89,28 @@ Implement visual indication in the Table of Contents pane to show which headings
 - [x] Update progress in planning doc and commit changes
   - [x] Git commit: "feat: implement basic heading visibility indication in ToC"
 
-### Stage 2: ToC Auto-Scrolling to Follow Document Position
-- [ ] Implement automatic ToC scrolling to keep current visible heading in view
-  - [ ] Add ref to ToC container in TableOfContents component
-  - [ ] Calculate which heading is most prominent in viewport (topmost visible or center-most)
-  - [ ] Add smooth scrolling behavior to bring current heading into ToC viewport
-  - [ ] Ensure scrolling doesn't interfere with user manually scrolling ToC
-- [ ] Add scroll position tracking
-  - [ ] Track when user manually scrolls ToC vs automatic scrolling
-  - [ ] Add cooldown period after manual scroll before resuming auto-scroll
-  - [ ] Consider scroll position relative to ToC viewport (top, middle, bottom)
-- [ ] Handle edge cases
-  - [ ] Multiple headings visible - choose the most appropriate one
-  - [ ] Very long heading sections that span multiple viewports
-  - [ ] Rapid document scrolling - debounce ToC updates
-  - [ ] ToC expanded/collapsed state changes
-- [ ] Test auto-scrolling functionality
-  - [ ] Verify smooth following behavior during document scroll
-  - [ ] Test that manual ToC scrolling temporarily disables auto-scroll
-  - [ ] Test with different heading densities and document lengths
-  - [ ] Ensure no jarring or disorienting scroll behavior
-- [ ] Update progress in planning doc and commit changes
-  - [ ] Git commit: "feat: add ToC auto-scrolling to follow document position"
+### Stage 2: ToC Auto-Scrolling to Follow Document Position ✓
+- [x] Implement automatic ToC scrolling to keep current visible heading in view
+  - [x] Add ref to ToC container in TableOfContents component
+  - [x] Calculate which heading is most prominent in viewport (topmost visible or center-most)
+  - [x] Add smooth scrolling behavior to bring current heading into ToC viewport
+  - [x] Ensure scrolling doesn't interfere with user manually scrolling ToC
+- [x] Add scroll position tracking
+  - [x] Track when user manually scrolls ToC vs automatic scrolling
+  - [x] Add cooldown period after manual scroll before resuming auto-scroll
+  - [x] Consider scroll position relative to ToC viewport (top, middle, bottom)
+- [x] Handle edge cases
+  - [x] Multiple headings visible - choose the most appropriate one
+  - [x] Very long heading sections that span multiple viewports
+  - [x] Rapid document scrolling - debounce ToC updates
+  - [x] ToC expanded/collapsed state changes
+- [x] Test auto-scrolling functionality
+  - [x] Verify smooth following behavior during document scroll
+  - [x] Test that manual ToC scrolling temporarily disables auto-scroll
+  - [x] Test with different heading densities and document lengths
+  - [x] Ensure no jarring or disorienting scroll behavior
+- [x] Update progress in planning doc and commit changes
+  - [x] Git commit: "feat: add ToC auto-scrolling to follow document position"
 
 ### Stage 3: Add Partially Visible Detection  
 - [ ] Enhance visibility calculation logic in page-client

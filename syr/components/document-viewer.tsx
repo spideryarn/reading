@@ -22,7 +22,7 @@ interface Entity {
   long_explanation?: string
   datetime?: string
   url?: string
-  extra?: Record<string, any>
+  extra?: Record<string, unknown>
 }
 
 interface DocumentViewerProps {
@@ -319,7 +319,7 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
           <div className={element.tag_name === 'ul' || element.tag_name === 'ol' ? 'ml-6' : 'ml-4'}>
             {children
               .sort((a, b) => a.position - b.position)
-              .map((child, index) => renderElement(child, depth + 1))}
+              .map((child) => renderElement(child, depth + 1))}
           </div>
         )}
       </div>

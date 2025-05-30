@@ -18,7 +18,7 @@ interface Entity {
   long_explanation?: string
   datetime?: string
   url?: string
-  extra?: Record<string, any>
+  extra?: Record<string, unknown>
 }
 
 interface DocumentPageClientProps {

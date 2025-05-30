@@ -189,6 +189,7 @@ function HeadingNodeComponent({
               <div
                 className={`cursor-pointer rounded px-2 py-1 transition-colors group flex-1 ${themeColors.hover}`}
                 onClick={() => onHeadingClick(node)}
+                data-heading-id={node.id}
               >
                 <span className={`text-xs mr-2 ${themeColors.levelText}`}>
                   H{node.level}
