@@ -1,6 +1,6 @@
 # Multi-LLM Provider Support Implementation
 
-**Progress Update (29 May 2025)**: Stages 1-4 complete. All non-chat API routes migrated to use Vercel AI SDK Core with backward compatibility. Tests created and passing (22/27, with some test setup issues). Ready to proceed with Stage 5 (chat API migration).
+**Progress Update (30 May 2025)**: Stages 1-5 complete. All API routes including chat now use Vercel AI SDK Core with multi-provider support. Chat API handles conversation history properly with system prompts. All tests passing (38/38 including 16 new chat tests). Ready to proceed with Stage 5b (optional overrides).
 
 ## Goal, context
 
@@ -95,10 +95,11 @@ Use tasks and subagents where appropriate, especially for curl, tests, and Playw
 - [x] Verify response formats and error handling work correctly across providers
 
 **Stage 5: Migrate Chat API Route**
-- [ ] Update `/app/api/chat/route.ts` to use AI SDK Core while maintaining assistant-ui compatibility
-- [ ] Ensure response format matches what `useChatRuntime` expects
-- [ ] Test conversation flow with both Claude and Gemini
-- [ ] Verify existing assistant-ui frontend continues to work unchanged
+- [x] Update `/app/api/chat/route.ts` to use AI SDK Core while maintaining assistant-ui compatibility
+- [x] Ensure response format matches what `useChatRuntime` expects
+- [x] Test conversation flow with both Claude and Gemini
+- [x] Verify existing assistant-ui frontend continues to work unchanged
+- [x] Create comprehensive Jest tests for chat API route with multi-provider support
 
 **Stage 5b: Override optionally**
 - [ ] Make sure there's a way to override the model and parameters being used for a given call if we want to? i.e. it should default to the environment variables, but allow you to specify/override in the LLM execution function call if you want.
