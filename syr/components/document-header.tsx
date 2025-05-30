@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { File, Gear } from '@phosphor-icons/react'
+import { File, Gear, TwitterLogo } from '@phosphor-icons/react'
 import { SettingsDialog } from './settings-dialog'
 import { Button } from '@/components/ui/button'
 
@@ -27,6 +27,19 @@ export function DocumentHeader({ title, slug }: DocumentHeaderProps) {
           >
             <Gear size={16} />
             Settings
+          </Button>
+          <Button
+            asChild
+            variant="ghost"
+            className="text-gray-600 hover:text-gray-900"
+          >
+            <Link 
+              href={`/documents/${slug}/tweets`}
+              title="View as tweet thread"
+            >
+              <TwitterLogo size={16} />
+              Tweet thread
+            </Link>
           </Button>
           <Button
             asChild

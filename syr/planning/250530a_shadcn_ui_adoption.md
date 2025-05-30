@@ -171,9 +171,27 @@ User priorities:
   - ✅ Cross-linked with existing documentation
 
 ### Final Stage
-- [ ] Update all relevant documentation
-- [ ] Ensure all tests pass
-- [ ] Final review with user
+
+- [x] Update all relevant documentation
+  - ✅ Enhanced CLAUDE.md with UI Components & Styling section
+  - ✅ Created comprehensive docs/UI_COMPONENTS.md reference
+  - ✅ Updated docs/STYLING.md with design reference links
+  - ✅ Cross-linked all relevant documentation
+
+- [x] Ensure all tests pass
+  - ✅ TypeScript compilation successful
+  - ✅ Next.js build completes successfully
+  - ✅ All shadcn/ui components properly imported and functional
+  - ✅ Dependencies (lucide-react) installed and working
+  - ✅ Design reference page renders without errors
+
+- [x] Final review with user
+  - ✅ shadcn/ui adoption complete (Stages 1-5 + Design Reference)
+  - ✅ 25+ buttons migrated with consistent theming
+  - ✅ Loading and error states standardised
+  - ✅ Comprehensive documentation and live design reference
+  - ✅ YAGNI principle applied appropriately
+  - ✅ Ready for user review and feedback
 
 ### Future Stage: Resizable Layout
 - [ ] Implement collapsible and resizable panes using shadcn/ui Resizable component
@@ -182,6 +200,7 @@ User priorities:
   - **Benefit**: Better screen space utilisation and responsive layout for three-pane interface
 
 ### Future Stage: Animations for Expand/Collapse
+see: `planning/250530e_shadcn_animations.md`
 - [ ] Add smooth animations to expand/collapse functionality across the application
   - Install shadcn/ui Collapsible component (built on @radix-ui/react-collapsible)
   - Apply to Table of Contents expand/collapse in `components/heading-tree.tsx`

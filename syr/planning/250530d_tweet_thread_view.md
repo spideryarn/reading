@@ -34,7 +34,7 @@ Key requirements from user:
 4. **AI decides structure** - Let Claude determine optimal thread length and flow
 5. **280-char constraint** - Respect Twitter's character limit for authenticity
 6. **Academic focus** - Optimise for paper comprehension, not engagement
-7. **Tab-based UI** - Add as new tab in middle pane, replacing document view
+7. **Dedicated page** - Separate route for full-screen tweet thread experience (changed from tab-based)
 
 ## Actions
 
@@ -72,19 +72,31 @@ Key requirements from user:
 
 ### Stage 2: API Implementation
 
-- [ ] Create `/api/tweet-thread` endpoint
-  - Accept document HTML/content
-  - Use prompt template to generate thread
-  - Return array of tweet objects with text and metadata
+- [x] Create `/api/tweet-thread` endpoint
+  - ✅ Created `app/api/tweet-thread/route.ts` with full input validation
+  - ✅ Accept document HTML/content with Zod schema validation
+  - ✅ Use tweet-thread prompt template with LLM integration
+  - ✅ Return array of tweet objects with text and metadata
+  - ✅ Handle content truncation for large documents (50k+ chars)
+  - ✅ Include processing metadata (content length, truncation status, tweet count)
 
-- [ ] Write tests for API endpoint
-  - Test with sample academic paper
-  - Verify tweet length constraints
-  - Check thread coherence
+- [x] Write tests for API endpoint
+  - ✅ Created comprehensive test suite with 7 test cases
+  - ✅ Test with sample academic paper content
+  - ✅ Verify tweet length constraints (280 characters)
+  - ✅ Check thread coherence and structure validation
+  - ✅ Test input parameter validation and error handling
+  - ✅ Test LLM error scenarios and JSON parsing failures
 
-- [ ] Run tests and fix any issues
+- [x] Run tests and fix any issues
+  - ✅ All 7 tests passing successfully
+  - ✅ Fixed syntax errors and import issues
+  - ✅ Resolved schema naming conflicts
+  - ✅ Fixed TypeScript linting issues
 
-- [ ] Git commit: "feat: add tweet thread generation API endpoint"
+- [x] Git commit: "feat: add tweet thread generation API endpoint"
+  - ✅ Committed with hash `a31aae6`
+  - ✅ Follows established git commit message patterns
 
 ### Stage 3: UI Components
 
@@ -108,23 +120,22 @@ Key requirements from user:
 
 ### Stage 4: Integration
 
-- [ ] Add "Tweet thread" tab to document viewer
-  - Modify middle pane to support tabs
-  - Keep "Document" as default tab
-  - Add "Tweet thread" as second tab
+- [ ] Create tweet thread page route
+  - Add `/documents/[slug]/tweets` page
+  - Use existing TweetThreadView component
+  - Add navigation back to document
 
-- [ ] Connect tweet thread generation
-  - Trigger API call when tab selected
-  - Display loading state
-  - Render tweet cards when ready
-  - Handle errors gracefully
+- [ ] Add "Tweet thread" button to document header
+  - Place next to "View original" button
+  - Link to tweet thread page route
+  - Use consistent button styling
 
 - [ ] Test full integration
-  - Switch between Document/Tweet thread tabs
+  - Navigate to tweet thread page
   - Verify thread generation works
-  - Check UI responsiveness
+  - Test back navigation to document
 
-- [ ] Git commit: "feat: integrate tweet thread view into document viewer"
+- [ ] Git commit: "feat: add dedicated tweet thread page with navigation"
 
 ### Stage 5: Styling & Polish
 
@@ -153,7 +164,7 @@ Key requirements from user:
   - Explain design decisions
   - Note future enhancement ideas
 
-- [ ] Update `docs/UI_INTERFACE.md`
+- [ ] Update `docs/UI_INTERFACE.md`, `docs/UI_COMPONENTS.md`, `docs/STYLING.md` etc
   - Document new tab structure
   - Update component hierarchy
 
