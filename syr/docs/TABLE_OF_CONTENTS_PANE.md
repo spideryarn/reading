@@ -31,18 +31,41 @@ The ToC uses a shared `HeadingTree` component that eliminates code duplication b
 ### Tree Data Structure
 - Converts flat heading arrays to hierarchical tree structure using `buildHeadingTree()`
 - Each `HeadingNode` extends `Heading` with a `children` array
-- Tree structure enables efficient expand/collapse and granularity filtering (future features)
+- Tree structure enables efficient expand/collapse and granularity filtering
+- Uses `useMemo` for efficient tree building when headings change
 
 ### Shared Rendering Logic
 - Single component handles both Original and AI-generated heading display
 - Theme customization via `themeColors` prop (blue for Original, green for AI-generated)
 - Manages tooltip display, click handlers, and hierarchical indentation
-- Uses `useMemo` for efficient tree building when headings change
+- Supports expand/collapse controls and granularity filtering
+
+### Expand/Collapse Functionality
+- Individual sections can be collapsed to hide their child headings
+- Chevron buttons (CaretDown/CaretRight icons) indicate expandable sections
+- State is lifted to `TableOfContents` component and persists across tab switches
+- Separate expand/collapse state for Original and AI-generated tabs
+- Collapsed state automatically clears when new AI headings are generated
+- Only affects ToC display - document pane content remains unchanged
+
+### Granularity Control
+- Per-tab slider allows filtering by heading depth (e.g., show only levels 1-3)
+- Defaults to level 3 or document maximum depth, whichever is smaller
+- Shows count of hidden descendants: "+N hidden" badges on parent headings
+- Hidden counts capped at "99+" for deeply nested documents
+- Suppresses "+0 hidden" badges for cleaner interface
+- Independent granularity settings for Original and AI-generated tabs
+
+### State Management
+- All state is memory-only (not persisted to database or localStorage)
+- Expand/collapse state: `collapsedStates: Record<'original' | 'ai-generated', Set<string>>`
+- Granularity levels: `granularityLevels: Record<'original' | 'ai-generated', number>`
+- State updates trigger immediate re-renders without layout shifts
 
 ### Benefits
 - Eliminates ~100 lines of duplicate code between tabs
 - Simplifies maintenance and feature additions
-- Provides foundation for expand/collapse functionality
+- Provides intuitive navigation for complex documents
 - Maintains all existing features: tooltips, navigation, visual hierarchy
 
 ## Tabbed Interface
@@ -91,6 +114,9 @@ Generates deterministic IDs using UUID v5 for reliable navigation.
 - **Clickable items**: Hover states and smooth scrolling behaviour
 - **Tooltip summaries**: AI-generated summaries appear on hover with loading states
 - **Green theme**: AI-generated content uses green colour scheme
+- **Expand/collapse controls**: Chevron icons (CaretDown/CaretRight) for non-leaf headings
+- **Hidden count badges**: Gray "+N hidden" indicators when content is filtered by granularity
+- **Granularity slider**: Blue progress bar with level indicators (1 to max depth)
 
 ## Interactive Coordination
 
@@ -164,3 +190,7 @@ Follows standardised pattern documented in `docs/STYLING.md`:
 - No support for duplicate heading text in original headings
 - Single-click selection only (no multi-select or ranges)
 - AI-generated headings are not yet persisted to database
+- Expand/collapse and granularity state is memory-only (lost on page refresh)
+- No animation transitions for expand/collapse actions
+- No keyboard shortcuts for expand/collapse operations
+- Tooltip requests still fire for headings hidden by granularity filtering

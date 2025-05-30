@@ -95,15 +95,16 @@ The ToC has two tabs (Original and AI-generated) that currently use duplicate re
 - [x] Update this planning doc with progress
 - [x] Git commit: "feat: add per-tab granularity slider with hidden counts"
 
-### Stage 4: Documentation and Final Testing
-- [ ] Update `docs/TABLE_OF_CONTENTS_PANE.md` with new features
-  - [ ] Document HeadingTree component and tree structure
-  - [ ] Document expand/collapse functionality with lifted state
-  - [ ] Document per-tab granularity control and hidden indicators
-  - [ ] Note that state is memory-only (not persisted)
-- [ ] Use subagent to run full test suite
-- [ ] Use subagent for final browser testing with Playwright MCP
-- [ ] Git commit: "docs: update TABLE_OF_CONTENTS_PANE.md with expand/collapse features"
+### Stage 4: Documentation and Final Testing ✓ COMPLETED
+- [x] Update `docs/TABLE_OF_CONTENTS_PANE.md` with new features
+  - [x] Document HeadingTree component and tree structure
+  - [x] Document expand/collapse functionality with lifted state
+  - [x] Document per-tab granularity control and hidden indicators
+  - [x] Note that state is memory-only (not persisted)
+- [x] Use subagent to run full test suite
+- [x] Use subagent for final browser testing with Playwright MCP
+- [x] Rename this doc to `250529b_table_of_contents_expand_collapse_granularity.md`
+- [x] Git commit
 
 ### Future enhancements stage:
 - [ ] Animation transitions for expand/collapse actions
