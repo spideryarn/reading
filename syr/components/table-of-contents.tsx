@@ -6,7 +6,6 @@
 // See docs/MUTATIONS.md for document mutation system
 
 import { useEffect, useState } from 'react'
-import * as Tooltip from '@radix-ui/react-tooltip'
 import { Spinner, ExclamationMark, CircleNotch, Warning } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import type { GranularityKey } from '@/lib/prompts/templates/summarise'
@@ -60,6 +59,29 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
   const [summaryError, setSummaryError] = useState<string>('')
   const [showSummaryButton, setShowSummaryButton] = useState(true)
   const [isSummaryCollapsed, setIsSummaryCollapsed] = useState(false)
+  
+  // Expand/collapse state for each tab - track collapsed items (default is expanded)
+  const [collapsedStates, setCollapsedStates] = useState<Record<'original' | 'ai-generated', Set<string>>>({
+    'original': new Set<string>(),
+    'ai-generated': new Set<string>()
+  })
+
+  // Toggle expand/collapse state for a heading
+  const toggleExpanded = (tabId: 'original' | 'ai-generated', headingId: string) => {
+    setCollapsedStates(prev => {
+      const newStates = { ...prev }
+      const tabState = new Set(newStates[tabId])
+      
+      if (tabState.has(headingId)) {
+        tabState.delete(headingId)
+      } else {
+        tabState.add(headingId)
+      }
+      
+      newStates[tabId] = tabState
+      return newStates
+    })
+  }
 
   useEffect(() => {
     const extractHeadings = () => {
@@ -432,6 +454,12 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
         setAiHeadings(generatedHeadings)
         setCurrentHeadingMutation(mutation)
         setShowHeadings(true)
+        
+        // Clear AI-generated collapsed state when new headings are generated
+        setCollapsedStates(prev => ({
+          ...prev,
+          'ai-generated': new Set<string>()
+        }))
       } else {
         throw new Error(result.error || 'Failed to apply mutation')
       }
@@ -457,6 +485,8 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
         onHeadingClick={handleHeadingClick}
         getTooltipContent={getTooltipContent}
         handleTooltipShow={handleTooltipShow}
+        collapsedIds={collapsedStates.original}
+        onToggleExpanded={(headingId) => toggleExpanded('original', headingId)}
       />
     )
   }
@@ -510,6 +540,8 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
             onHeadingClick={handleHeadingClick}
             getTooltipContent={getTooltipContent}
             handleTooltipShow={handleTooltipShow}
+            collapsedIds={collapsedStates['ai-generated']}
+            onToggleExpanded={(headingId) => toggleExpanded('ai-generated', headingId)}
           />
         ) : (
           <p className="text-gray-500">No headings generated</p>

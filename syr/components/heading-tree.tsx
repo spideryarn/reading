@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react'
 import * as Tooltip from '@radix-ui/react-tooltip'
+import { CaretRight, CaretDown } from '@phosphor-icons/react'
 
 // Types
 export interface Heading {
@@ -28,6 +29,8 @@ interface HeadingTreeProps {
   onHeadingClick: (heading: Heading) => void
   getTooltipContent: (elementId: string) => JSX.Element
   handleTooltipShow: (elementId: string, headingText: string) => void
+  collapsedIds: Set<string>
+  onToggleExpanded: (headingId: string) => void
 }
 
 /**
@@ -87,62 +90,99 @@ function HeadingNodeComponent({
   themeColors,
   onHeadingClick,
   getTooltipContent,
-  handleTooltipShow
+  handleTooltipShow,
+  collapsedIds,
+  onToggleExpanded
 }: {
   node: HeadingNode
   themeColors: ThemeColors
   onHeadingClick: (heading: Heading) => void
   getTooltipContent: (elementId: string) => JSX.Element
   handleTooltipShow: (elementId: string, headingText: string) => void
+  collapsedIds: Set<string>
+  onToggleExpanded: (headingId: string) => void
 }) {
+  const hasChildren = node.children.length > 0
+  const isExpanded = !collapsedIds.has(node.id)
+  
   return (
     <>
-      <Tooltip.Provider delayDuration={500}>
-        <Tooltip.Root onOpenChange={(open) => {
-          if (open) handleTooltipShow(node.elementId, node.text)
-        }}>
-          <Tooltip.Trigger asChild>
-            <div
-              className={`${getIndentClass(node.level)} cursor-pointer rounded px-2 py-1 transition-colors group ${themeColors.hover}`}
-              onClick={() => onHeadingClick(node)}
-            >
-              <span className={`text-xs mr-2 ${themeColors.levelText}`}>
-                H{node.level}
-              </span>
-              <span className={`text-sm text-gray-700 ${themeColors.text}`}>
-                {node.text}
-              </span>
-            </div>
-          </Tooltip.Trigger>
-          <Tooltip.Portal>
-            <Tooltip.Content
-              side="right"
-              align="start"
-              sideOffset={4}
-              className="z-50 max-w-md"
-            >
-              {getTooltipContent(node.elementId)}
-              <Tooltip.Arrow 
-                className="fill-gray-300" 
-                width={12} 
-                height={6}
-              />
-            </Tooltip.Content>
-          </Tooltip.Portal>
-        </Tooltip.Root>
-      </Tooltip.Provider>
+      <div className={`flex items-center ${getIndentClass(node.level)}`}>
+        {/* Expand/collapse button for non-leaf nodes */}
+        {hasChildren && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggleExpanded(node.id)
+            }}
+            className="mr-1 p-0.5 rounded hover:bg-gray-100 transition-colors"
+            aria-expanded={isExpanded}
+            aria-label={isExpanded ? 'Collapse section' : 'Expand section'}
+          >
+            {isExpanded ? (
+              <CaretDown size={16} className="text-gray-600" />
+            ) : (
+              <CaretRight size={16} className="text-gray-600" />
+            )}
+          </button>
+        )}
+        
+        {/* Spacer for leaf nodes to maintain alignment */}
+        {!hasChildren && <div className="w-6 mr-1" />}
+        
+        <Tooltip.Provider delayDuration={500}>
+          <Tooltip.Root onOpenChange={(open) => {
+            if (open) handleTooltipShow(node.elementId, node.text)
+          }}>
+            <Tooltip.Trigger asChild>
+              <div
+                className={`cursor-pointer rounded px-2 py-1 transition-colors group flex-1 ${themeColors.hover}`}
+                onClick={() => onHeadingClick(node)}
+              >
+                <span className={`text-xs mr-2 ${themeColors.levelText}`}>
+                  H{node.level}
+                </span>
+                <span className={`text-sm text-gray-700 ${themeColors.text}`}>
+                  {node.text}
+                </span>
+              </div>
+            </Tooltip.Trigger>
+            <Tooltip.Portal>
+              <Tooltip.Content
+                side="right"
+                align="start"
+                sideOffset={4}
+                className="z-50 max-w-md"
+              >
+                {getTooltipContent(node.elementId)}
+                <Tooltip.Arrow 
+                  className="fill-gray-300" 
+                  width={12} 
+                  height={6}
+                />
+              </Tooltip.Content>
+            </Tooltip.Portal>
+          </Tooltip.Root>
+        </Tooltip.Provider>
+      </div>
       
-      {/* Render children */}
-      {node.children.map((child) => (
-        <HeadingNodeComponent
-          key={child.id}
-          node={child}
-          themeColors={themeColors}
-          onHeadingClick={onHeadingClick}
-          getTooltipContent={getTooltipContent}
-          handleTooltipShow={handleTooltipShow}
-        />
-      ))}
+      {/* Render children only if expanded */}
+      {hasChildren && isExpanded && (
+        <div className="ml-6">
+          {node.children.map((child) => (
+            <HeadingNodeComponent
+              key={child.id}
+              node={child}
+              themeColors={themeColors}
+              onHeadingClick={onHeadingClick}
+              getTooltipContent={getTooltipContent}
+              handleTooltipShow={handleTooltipShow}
+              collapsedIds={collapsedIds}
+              onToggleExpanded={onToggleExpanded}
+            />
+          ))}
+        </div>
+      )}
     </>
   )
 }
@@ -156,7 +196,9 @@ export function HeadingTree({
   themeColors,
   onHeadingClick,
   getTooltipContent,
-  handleTooltipShow
+  handleTooltipShow,
+  collapsedIds,
+  onToggleExpanded
 }: HeadingTreeProps) {
   // Build tree structure from flat headings array
   const headingTree = useMemo(() => buildHeadingTree(headings), [headings])
@@ -179,6 +221,8 @@ export function HeadingTree({
           onHeadingClick={onHeadingClick}
           getTooltipContent={getTooltipContent}
           handleTooltipShow={handleTooltipShow}
+          collapsedIds={collapsedIds}
+          onToggleExpanded={onToggleExpanded}
         />
       ))}
     </nav>

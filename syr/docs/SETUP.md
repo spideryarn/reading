@@ -126,6 +126,9 @@ For parallel development on experimental features, you can set up Git worktrees 
    npm run dev
    ```
 
+OPTIONAL Maybe we could also try and copy over the list of allowed tools etc from Claude configuration?
+
+
 ### Directory Structure After Setup
 
 ```
