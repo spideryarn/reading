@@ -1,5 +1,5 @@
 import { Mutation, DocumentTransform } from '../types/mutation'
-import { generateDeterministicId } from './deterministicId'
+import { generateContentBasedId } from './deterministicId'
 
 interface AIHeading {
   id_of_after: string
@@ -19,8 +19,9 @@ interface HeadingMutationOptions {
 export function generateHeadingMutation(options: HeadingMutationOptions): Mutation {
   const { headings, documentId, mutationId } = options
   
-  // Generate deterministic IDs for each heading
+  // Track generated IDs to ensure uniqueness
   const headingIds = new Map<number, string>()
+  const existingIds = new Set<string>()
   
   // Create forward transforms (insertions)
   const forward: DocumentTransform[] = headings.map((heading, index) => {
@@ -33,9 +34,24 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
     const level = parseInt(match[1])
     const content = match[2]
     
-    // Generate deterministic ID for this heading using new utility
-    const headingId = generateDeterministicId(documentId, 'heading', content)
+    // Generate deterministic ID for this heading including the insertion point
+    // This ensures unique IDs even when heading content is identical
+    const headingId = generateContentBasedId(
+      documentId, 
+      'heading', 
+      `${content}:after:${heading.id_of_after}`
+    )
     
+    // Check for ID collision
+    if (existingIds.has(headingId)) {
+      throw new Error(
+        `FATAL: ID collision detected! Generated ID "${headingId}" already exists. ` +
+        `This indicates a serious bug in the ID generation algorithm. ` +
+        `Context: AI heading "${content}" to be inserted after element "${heading.id_of_after}"`
+      )
+    }
+    
+    existingIds.add(headingId)
     headingIds.set(index, headingId)
     
     return {

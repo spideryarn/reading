@@ -1,8 +1,9 @@
 // Mock the deterministic ID function to avoid Cheerio dependency
 jest.mock('@/lib/services/deterministicId', () => ({
-  generateDeterministicId: jest.fn((docId: string, type: string, content: string) => {
-    // Simple mock that returns a predictable ID
-    return `mock-id-${docId}-${type}-${content.substring(0, 10)}`
+  generateContentBasedId: jest.fn((docId: string, type: string, content: string) => {
+    // Simple mock that returns a predictable ID with syr- prefix
+    // Now includes the full content string which will contain the insertion point
+    return `syr-mock-id-${docId}-${type}-${content.substring(0, 20).replace(/[:\s]/g, '-')}`
   })
 }))
 
@@ -33,7 +34,8 @@ describe('heading-mutation-generator (simplified)', () => {
       
       // Check reverse transforms
       expect(isRemoveTransform(mutation.reverse[0])).toBe(true)
-      expect(mutation.reverse[0].targetId).toBe('mock-id-test-doc-123-heading-First Head')
+      // The ID now includes the insertion point (truncated at 20 chars in mock) and syr- prefix
+      expect(mutation.reverse[0].targetId).toBe('syr-mock-id-test-doc-123-heading-First-Heading-after-')
     })
 
     it('should handle empty headings array', () => {
