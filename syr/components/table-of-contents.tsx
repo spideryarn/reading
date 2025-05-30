@@ -13,6 +13,7 @@ import { useMutation, useActiveMutationType } from '@/lib/context/mutation-conte
 import { generateHeadingMutation, extractHeadingsFromMutation } from '@/lib/services/heading-mutation-generator'
 import { TabContainer, type Tab } from './tab-container'
 import { HeadingTree, type Heading } from './heading-tree'
+import { SummaryPane } from './summary-pane'
 import { Button } from '@/components/ui/button'
 import { Loading } from '@/components/ui/loading'
 import { AlertWithIcon } from '@/components/ui/alert'
@@ -56,12 +57,6 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
   const [showHeadings, setShowHeadings] = useState(false)
   const [currentHeadingMutation, setCurrentHeadingMutation] = useState<any>(null)
   
-  // Summary state
-  const [summary, setSummary] = useState<string>('')
-  const [summaryLoading, setSummaryLoading] = useState(false)
-  const [summaryError, setSummaryError] = useState<string>('')
-  const [showSummaryButton, setShowSummaryButton] = useState(true)
-  const [isSummaryCollapsed, setIsSummaryCollapsed] = useState(false)
   
   // Expand/collapse state for each tab - track collapsed items (default is expanded)
   const [collapsedStates, setCollapsedStates] = useState<Record<'original' | 'ai-generated', Set<string>>>({
@@ -385,34 +380,6 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
     }
   }
 
-  const generateSummary = async () => {
-    try {
-      setSummaryLoading(true)
-      setSummaryError('')
-      setShowSummaryButton(false)
-      
-      const response = await fetch('/api/summarise', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content: markdownContent }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to generate summary')
-      }
-
-      const data = await response.json()
-      setSummary(data.summary)
-    } catch (err) {
-      setSummaryError('Failed to generate summary')
-      setShowSummaryButton(true)
-      console.error('Summary generation error:', err)
-    } finally {
-      setSummaryLoading(false)
-    }
-  }
 
   const handleHeadingClick = (heading: Heading) => {
     if (onHeadingClick) {
@@ -587,78 +554,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
   }
 
   const renderSummaryTab = () => {
-    if (showSummaryButton) {
-      return (
-        <div className="p-4">
-          <Button
-            onClick={generateSummary}
-            variant="outline"
-            size="full"
-            className="text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100"
-          >
-            Show summary
-          </Button>
-        </div>
-      )
-    }
-
-    if (summaryLoading) {
-      return (
-        <div className="p-4">
-          <Loading variant="blue" text="Generating summary..." />
-        </div>
-      )
-    }
-
-    if (summaryError) {
-      return (
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="text-sm text-red-600">{summaryError}</div>
-          <Button
-            onClick={() => {
-              setSummaryError('')
-              setShowSummaryButton(true)
-            }}
-            variant="outline"
-            size="sm"
-            className="mt-2 text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100"
-          >
-            Try again
-          </Button>
-        </div>
-      )
-    }
-
-    if (summary) {
-      return (
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-blue-800">Summary</h3>
-            <Button
-              onClick={() => setIsSummaryCollapsed(!isSummaryCollapsed)}
-              variant="ghost"
-              size="icon-xs"
-              className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
-              aria-label={isSummaryCollapsed ? "Expand summary" : "Collapse summary"}
-            >
-              <svg 
-                className={`w-4 h-4 transition-transform ${isSummaryCollapsed ? '' : 'rotate-180'}`}
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </Button>
-          </div>
-          {!isSummaryCollapsed && (
-            <p className="text-sm text-blue-700 leading-relaxed">{summary}</p>
-          )}
-        </div>
-      )
-    }
-
-    return null
+    return <SummaryPane content={markdownContent} autoActivate />
   }
 
   const tabs: Tab[] = [
@@ -681,13 +577,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
     {
       id: 'summary',
       label: 'Summary', 
-      content: renderSummaryTab(),
-      onActivate: () => {
-        // Auto-click "Summary" button when tab is activated
-        if (showSummaryButton && !summaryLoading) {
-          generateSummary()
-        }
-      }
+      content: renderSummaryTab()
     }
   ]
 

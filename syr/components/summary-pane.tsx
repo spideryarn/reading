@@ -1,28 +1,31 @@
 'use client'
 
-// Document-level summary component using AI summarisation
+// Reusable summary pane component using AI summarisation
+// Extracted from table-of-contents.tsx to eliminate code duplication
 // See docs/AI_SUMMARISE.md for architecture and usage patterns
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Loading } from '@/components/ui/loading'
 
-interface DocumentSummaryProps {
+interface SummaryPaneProps {
   content: string
+  autoActivate?: boolean
+  className?: string
 }
 
-export function DocumentSummary({ content }: DocumentSummaryProps) {
+export function SummaryPane({ content, autoActivate = false, className = "" }: SummaryPaneProps) {
   const [summary, setSummary] = useState<string>('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string>('')
-  const [showButton, setShowButton] = useState(true)
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [summaryLoading, setSummaryLoading] = useState(false)
+  const [summaryError, setSummaryError] = useState<string>('')
+  const [showSummaryButton, setShowSummaryButton] = useState(true)
+  const [isSummaryCollapsed, setIsSummaryCollapsed] = useState(false)
 
   const generateSummary = async () => {
     try {
-      setLoading(true)
-      setError('')
-      setShowButton(false)
+      setSummaryLoading(true)
+      setSummaryError('')
+      setShowSummaryButton(false)
       
       const response = await fetch('/api/summarise', {
         method: 'POST',
@@ -39,20 +42,28 @@ export function DocumentSummary({ content }: DocumentSummaryProps) {
       const data = await response.json()
       setSummary(data.summary)
     } catch (err) {
-      setError('Failed to generate summary')
-      setShowButton(true)
+      setSummaryError('Failed to generate summary')
+      setShowSummaryButton(true)
       console.error('Summary generation error:', err)
     } finally {
-      setLoading(false)
+      setSummaryLoading(false)
     }
   }
 
-  if (showButton) {
+  // Auto-activate summary generation if requested
+  useEffect(() => {
+    if (autoActivate && showSummaryButton && !summaryLoading) {
+      generateSummary()
+    }
+  }, [autoActivate, showSummaryButton, summaryLoading])
+
+  if (showSummaryButton) {
     return (
-      <div className="mx-4 mt-4">
+      <div className={`p-4 ${className}`}>
         <Button
           onClick={generateSummary}
           variant="outline"
+          size="full"
           className="text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100"
         >
           Show summary
@@ -61,22 +72,22 @@ export function DocumentSummary({ content }: DocumentSummaryProps) {
     )
   }
 
-  if (loading) {
+  if (summaryLoading) {
     return (
-      <div className="mx-4 mt-4">
+      <div className={`p-4 ${className}`}>
         <Loading variant="blue" text="Generating summary..." />
       </div>
     )
   }
 
-  if (error) {
+  if (summaryError) {
     return (
-      <div className="mx-4 mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <div className="text-sm text-red-600">{error}</div>
+      <div className={`p-4 bg-blue-50 border border-blue-200 rounded-lg ${className}`}>
+        <div className="text-sm text-red-600">{summaryError}</div>
         <Button
           onClick={() => {
-            setError('')
-            setShowButton(true)
+            setSummaryError('')
+            setShowSummaryButton(true)
           }}
           variant="outline"
           size="sm"
@@ -90,18 +101,18 @@ export function DocumentSummary({ content }: DocumentSummaryProps) {
 
   if (summary) {
     return (
-      <div className="mx-4 mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className={`p-4 bg-blue-50 border border-blue-200 rounded-lg ${className}`}>
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-semibold text-blue-800">Summary</h3>
           <Button
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={() => setIsSummaryCollapsed(!isSummaryCollapsed)}
             variant="ghost"
             size="icon-xs"
             className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
-            aria-label={isCollapsed ? "Expand summary" : "Collapse summary"}
+            aria-label={isSummaryCollapsed ? "Expand summary" : "Collapse summary"}
           >
             <svg 
-              className={`w-4 h-4 transition-transform ${isCollapsed ? '' : 'rotate-180'}`}
+              className={`w-4 h-4 transition-transform ${isSummaryCollapsed ? '' : 'rotate-180'}`}
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
@@ -110,7 +121,7 @@ export function DocumentSummary({ content }: DocumentSummaryProps) {
             </svg>
           </Button>
         </div>
-        {!isCollapsed && (
+        {!isSummaryCollapsed && (
           <p className="text-sm text-blue-700 leading-relaxed">{summary}</p>
         )}
       </div>
