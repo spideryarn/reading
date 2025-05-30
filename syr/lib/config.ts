@@ -52,8 +52,8 @@ export const PROVIDER_TIER_MODELS = {
   // Google models (Gemini 2.5)
   'google-cheap': {
     provider: 'google' as const,
-    modelId: 'gemini-2.5-flash',
-    description: 'Gemini 2.5 Flash - Fast and cost-effective',
+    modelId: 'gemini-2.0-flash',
+    description: 'Gemini 2.0 Flash - Fast and cost-effective (stable)',
     contextWindow: 1000000,
     outputTokens: 8192,
   },

@@ -77,6 +77,10 @@ export async function POST(request: NextRequest) {
       html_content: cleanedHtml
     })
     
+    console.log('Raw LLM response length:', llmResponse.length, 'characters')
+    console.log('Raw LLM response preview (first 200 chars):', JSON.stringify(llmResponse.substring(0, 200)))
+    console.log('Raw LLM response ending (last 200 chars):', JSON.stringify(llmResponse.substring(llmResponse.length - 200)))
+    
     // Parse the JSON response from LLM (strip markdown code blocks if present)
     let jsonString = llmResponse.trim()
     if (jsonString.startsWith('```json')) {
@@ -88,6 +92,12 @@ export async function POST(request: NextRequest) {
     if (jsonString.endsWith('```')) {
       jsonString = jsonString.slice(0, -3) // Remove ending ```
     }
+    
+    console.log('Cleaned JSON string length:', jsonString.trim().length, 'characters')
+    console.log('=== FULL JSON OUTPUT START ===')
+    console.log(JSON.stringify(jsonString.trim()))
+    console.log('=== FULL JSON OUTPUT END ===')
+    
     const parsedResponse = JSON.parse(jsonString.trim())
     
     // Validate the response matches our expected schema
