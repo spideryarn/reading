@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { AppHeader } from '@/components/app-header'
 import { 
   House, 
   Warning,
@@ -33,28 +34,19 @@ import {
 } from '@phosphor-icons/react'
 
 export default function DesignReference() {
+  const backToAppButton = (
+    <Button variant="outline" size="sm">
+      <ArrowLeft size={16} className="mr-2" />
+      Back to App
+    </Button>
+  )
+
   return (
-    <div className="min-h-screen bg-white pt-16">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white sticky top-16 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img 
-                src="/spideryarn-logo.png" 
-                alt="Spideryarn" 
-                className="h-8 w-auto"
-              />
-              <h1 className="text-xl font-semibold text-gray-900">Design Reference</h1>
-            </div>
-            <Button variant="outline" size="sm">
-              <ArrowLeft size={16} className="mr-2" />
-              Back to App
-            </Button>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-white">
+      <AppHeader 
+        title="Design Reference"
+        actions={backToAppButton}
+      />
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Introduction */}
