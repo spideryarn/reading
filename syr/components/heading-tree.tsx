@@ -28,7 +28,7 @@ interface HeadingTreeProps {
   themeColors: ThemeColors
   onHeadingClick: (heading: Heading) => void
   getTooltipContent: (elementId: string) => JSX.Element
-  handleTooltipShow: (elementId: string, headingText: string) => void
+  handleTooltipShow: (elementId: string) => void
   collapsedIds: Set<string>
   onToggleExpanded: (headingId: string) => void
   granularityLevel: number
@@ -132,7 +132,7 @@ function HeadingNodeComponent({
   themeColors: ThemeColors
   onHeadingClick: (heading: Heading) => void
   getTooltipContent: (elementId: string) => JSX.Element
-  handleTooltipShow: (elementId: string, headingText: string) => void
+  handleTooltipShow: (elementId: string) => void
   collapsedIds: Set<string>
   onToggleExpanded: (headingId: string) => void
   granularityLevel: number
@@ -176,7 +176,7 @@ function HeadingNodeComponent({
         
         <Tooltip.Provider delayDuration={500}>
           <Tooltip.Root onOpenChange={(open) => {
-            if (open) handleTooltipShow(node.elementId, node.text)
+            if (open) handleTooltipShow(node.elementId)
           }}>
             <Tooltip.Trigger asChild>
               <div

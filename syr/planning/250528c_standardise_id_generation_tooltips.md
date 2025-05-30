@@ -4,8 +4,6 @@ From the user: I am not *certain* this is a good idea.
   - One possible argument in favour of the existing purely content-based approach for generating IDs for new content is that it will be more robust if we apply/compose multiple mutations - in that case, the content-based approach might be more consistent.
   - That said, I worry about whether there might be a greater chance of collisions with the content-based approach.
 
-Also, we should add a stage early on that checks for collisions (i.e. when generating IDs, it should be a clear, immediate fatal error if we generate an ID that already exists in the DOM (so that we will notice if this ever happens).
-
 YOU MUST discuss these issues with the user before starting work on any of the stages.
 
 
@@ -97,27 +95,34 @@ The approach will be to calculate what the AI heading's path will be after inser
 
 ### Stage 2: Refactor Tooltip Implementation
 
-- [ ] **Add ID annotation to heading objects**
-  - [ ] Modify heading extraction in `TableOfContents` to include element IDs
-  - [ ] Update `Heading` interface to include `elementId` field
-  - [ ] Ensure both original and AI heading extraction populates this field
+- [x] **Add ID annotation to heading objects** ✅ DONE (commit e004746)
+  - [x] Modify heading extraction in `TableOfContents` to include element IDs
+  - [x] Update `Heading` interface to include `elementId` field
+  - [x] Ensure both original and AI heading extraction populates this field
 
-- [ ] **Update tooltip cache to use IDs**
-  - [ ] Change cache key from heading text to element ID
-  - [ ] Update `contentCache` Map to use ID-based keys
-  - [ ] Modify `loadingStates` Set to track by ID
-  - [ ] Update all cache access to use new keys
+- [x] **Update tooltip cache to use IDs** ✅ DONE (commit e004746)
+  - [x] Change cache key from heading text to element ID
+  - [x] Update `contentCache` Map to use ID-based keys
+  - [x] Modify `loadingStates` Set to track by ID
+  - [x] Update all cache access to use new keys
 
-- [ ] **Refactor generateHeadingSummary**
-  - [ ] Accept `elementId` parameter instead of `headingText`
-  - [ ] Add `elements` parameter to specify which document version to search
-  - [ ] Find heading by ID instead of text matching
-  - [ ] Keep hierarchical content extraction logic unchanged
+- [x] **Refactor generateHeadingSummary** ✅ DONE (commit e004746)
+  - [x] Accept `elementId` parameter instead of `headingText`
+  - [x] Add `elements` parameter to specify which document version to search
+  - [x] Find heading by ID instead of text matching
+  - [x] Keep hierarchical content extraction logic unchanged
 
-- [ ] **Update tooltip event handlers**
-  - [ ] Pass element ID to tooltip show handler
-  - [ ] Update loading state management to use IDs
-  - [ ] Ensure error messages still display properly
+- [x] **Update tooltip event handlers** ✅ DONE (commit e004746)
+  - [x] Pass element ID to tooltip show handler
+  - [x] Update loading state management to use IDs
+  - [x] Ensure error messages still display properly
+
+- [x] **Clean up legacy headingText parameter** ✅ DONE
+  - [x] Remove `headingText` parameter from `handleTooltipShow` function signature
+  - [x] Remove `headingText` parameter from `generateHeadingSummary` function signature
+  - [x] Update all call sites in `table-of-contents.tsx` 
+  - [x] Update call sites in `heading-tree.tsx`
+  - [x] Update console.warn message to use element ID only
 
 ### Stage 3: Add Tooltips to AI-Generated Headings
 

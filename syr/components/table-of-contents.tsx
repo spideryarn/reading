@@ -208,10 +208,9 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
    * Extracts all content belonging to the specified heading section and sends it to the LLM for summarisation.
    * 
    * @param elementId - The element ID of the heading to summarise
-   * @param headingText - The text content of the heading (for fallback and debugging)
    * @returns Promise resolving to the generated summary or error message
    */
-  const generateHeadingSummary = async (elementId: string, headingText: string): Promise<string> => {
+  const generateHeadingSummary = async (elementId: string): Promise<string> => {
     // Check cache first - now using element ID as key
     if (contentCache.has(elementId)) {
       return contentCache.get(elementId)!
@@ -230,7 +229,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
     const headingElement = elementsToSearch.find(element => element.id === elementId)
 
     if (!headingElement) {
-      console.warn(`Heading element not found for ID: ${elementId}, text: "${headingText}"`)
+      console.warn(`Heading element not found for ID: ${elementId}`)
       return "Heading not found in elements"
     }
 
@@ -365,15 +364,14 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
    * Starts async summary generation when tooltip becomes visible.
    * 
    * @param elementId - The element ID to generate summary for
-   * @param headingText - The heading text (kept for backward compatibility during transition)
    */
-  const handleTooltipShow = (elementId: string, headingText: string) => {
+  const handleTooltipShow = (elementId: string) => {
     if (!contentCache.has(elementId) && !loadingStates.has(elementId)) {
       // Add to loading states
       setLoadingStates(prev => new Set(prev).add(elementId))
       
       // Start async LLM summary generation
-      generateHeadingSummary(elementId, headingText).finally(() => {
+      generateHeadingSummary(elementId).finally(() => {
         // Remove from loading states
         setLoadingStates(prev => {
           const newSet = new Set(prev)
