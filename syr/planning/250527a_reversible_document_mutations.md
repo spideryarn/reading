@@ -881,3 +881,44 @@ Successfully implemented the core robustness improvements from the simplified ap
 - Handle API failures gracefully
 - Fix scroll-to-heading reliability issues
 - Consider UI improvements for mutation feedback
+
+### Stage 6: Fix Document Structure Corruption Bug
+**Issue Discovered**: Original heading hierarchy becomes corrupted after generating AI headings and switching back to Original tab.
+
+**Symptoms Observed**:
+- Initial page load shows correct hierarchy: H2 "Facing Up to the Problem of Consciousness" with H3 children
+- After generating AI headings (which show correct H1-H4 hierarchy)  
+- Switching back to Original tab shows corrupted order: H2 "Introduction to the Challenge of Consciousness" appears at top level with H1 "Facing Up to the Problem of Consciousness" nested underneath as child
+- This violates document structure logic (H1 should never be child of H2)
+
+**Root Cause Analysis**:
+The ToC component appears to be working correctly - it faithfully displays the data structure it receives. The corruption happens upstream in the document mutation system:
+
+1. **Tree Building is Order-Dependent**: The `buildHeadingTree` function uses a stack-based algorithm that assumes headings arrive in correct document order. When headings are provided out-of-order, the tree structure becomes invalid.
+
+2. **Data Source Corruption**: The heading extraction logic in `table-of-contents.tsx` (lines 99-165) switches between `mutatedDocument` and original `elements` based on active mutation type. After reverting from AI headings, the original `elements` array appears to have corrupted position/order data.
+
+3. **Mutation Immutability Concern**: The mutation engine may be modifying the original `elements` array in-place rather than creating proper immutable copies, causing permanent corruption of the source data.
+
+**Investigation Plan**:
+- [ ] Add debug logging to heading extraction process:
+  - Log raw `elementsToUse` array before filtering to check element order/positions
+  - Log extracted headings array to verify order preservation
+  - Log buildHeadingTree input to confirm order corruption point
+- [ ] Verify mutation engine immutability:
+  - Check if `applyMutation`/`revertMutation` properly create new arrays vs modifying in-place
+  - Ensure position field updates don't corrupt original element references
+  - Test if `elements` prop passed to TableOfContents is being mutated
+- [ ] Validate mutation state management:
+  - Confirm `activeMutationType` correctly switches to null when reverting
+  - Check if `mutatedDocument` is properly cleared on revert
+  - Verify no lingering DOM manipulation from `toggleOriginalHeadingsVisibility`
+
+**Expected Fix**:
+Ensure mutation operations create proper immutable copies of document structure, preserving original element order and position integrity. The ToC should receive clean, uncorrupted data regardless of previous mutation history.
+
+**Test Cases to Add**:
+- Apply AI headings → revert → verify original heading order unchanged
+- Multiple apply/revert cycles to test cumulative corruption
+- Property-based test with various document structures
+- Integration test covering full tab switching workflow
