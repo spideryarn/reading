@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { executePrompt } from '@/lib/prompts/types'
-import { tweetThreadPrompt, tweetThreadInputSchema, tweetThreadResponseSchema } from '@/lib/prompts/templates/tweet-thread'
+import { tweetThreadPrompt, tweetThreadPromptInputSchema, tweetThreadResponseSchema } from '@/lib/prompts/templates/tweet-thread'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
     // Validate input using Zod schema
-    const validationResult = tweetThreadInputSchema.safeParse(body)
+    const validationResult = tweetThreadPromptInputSchema.safeParse(body)
     if (!validationResult.success) {
       return NextResponse.json(
         { error: 'Invalid request body', details: validationResult.error },
