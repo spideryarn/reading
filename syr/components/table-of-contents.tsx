@@ -13,13 +13,7 @@ import type { GranularityKey } from '@/lib/prompts/templates/summarise'
 import { useMutation, useActiveMutationType } from '@/lib/context/mutation-context'
 import { generateHeadingMutation, extractHeadingsFromMutation } from '@/lib/services/heading-mutation-generator'
 import { TabContainer, type Tab } from './tab-container'
-
-interface Heading {
-  id: string
-  text: string
-  level: number
-  elementId: string  // The syr-* element ID for reliable lookup
-}
+import { HeadingTree, type Heading } from './heading-tree'
 
 interface TableOfContentsProps {
   content: string
@@ -149,17 +143,6 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
     )
   }
 
-  const getIndentClass = (level: number) => {
-    const indents = {
-      1: 'pl-0',
-      2: 'pl-4',
-      3: 'pl-8',
-      4: 'pl-12',
-      5: 'pl-16',
-      6: 'pl-20'
-    }
-    return indents[level as keyof typeof indents] || 'pl-0'
-  }
 
   // Tooltip granularity setting - TypeScript will enforce this is a valid option
   const TOOLTIP_GRANULARITY: GranularityKey = 'single short paragraph'
@@ -462,53 +445,19 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
   }
 
   const renderOriginalTab = () => {
-    if (headings.length === 0) {
-      return (
-        <div className="p-4 text-sm text-gray-500">
-          No headings found in document
-        </div>
-      )
-    }
-
     return (
-      <nav className="space-y-1">
-        {headings.map((heading) => (
-          <Tooltip.Provider key={heading.id} delayDuration={500}>
-            <Tooltip.Root onOpenChange={(open) => {
-              if (open) handleTooltipShow(heading.elementId, heading.text)
-            }}>
-              <Tooltip.Trigger asChild>
-                <div
-                  className={`${getIndentClass(heading.level)} cursor-pointer hover:bg-blue-50 rounded px-2 py-1 transition-colors group`}
-                  onClick={() => handleHeadingClick(heading)}
-                >
-                  <span className="text-xs text-gray-400 mr-2 group-hover:text-blue-600">
-                    H{heading.level}
-                  </span>
-                  <span className="text-sm text-gray-700 group-hover:text-blue-900">
-                    {heading.text}
-                  </span>
-                </div>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content
-                  side="right"
-                  align="start"
-                  sideOffset={4}
-                  className="z-50 max-w-md"
-                >
-                  {getTooltipContent(heading.elementId)}
-                  <Tooltip.Arrow 
-                    className="fill-gray-300" 
-                    width={12} 
-                    height={6}
-                  />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
-          </Tooltip.Provider>
-        ))}
-      </nav>
+      <HeadingTree
+        headings={headings}
+        themeColors={{
+          hover: 'hover:bg-blue-50',
+          text: 'group-hover:text-blue-900',
+          levelText: 'text-gray-400 group-hover:text-blue-600',
+          levelTextHover: 'group-hover:text-blue-600'
+        }}
+        onHeadingClick={handleHeadingClick}
+        getTooltipContent={getTooltipContent}
+        handleTooltipShow={handleTooltipShow}
+      />
     )
   }
 
@@ -550,44 +499,18 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
             </div>
           </div>
         ) : aiHeadings.length > 0 ? (
-          <nav className="space-y-1">
-            {aiHeadings.map((heading) => (
-              <Tooltip.Provider key={heading.id} delayDuration={500}>
-                <Tooltip.Root onOpenChange={(open) => {
-                  if (open) handleTooltipShow(heading.elementId, heading.text)
-                }}>
-                  <Tooltip.Trigger asChild>
-                    <div
-                      className={`${getIndentClass(heading.level)} cursor-pointer hover:bg-green-50 rounded px-2 py-1 transition-colors group`}
-                      onClick={() => handleHeadingClick(heading)}
-                    >
-                      <span className="text-xs text-gray-400 mr-2 group-hover:text-green-600">
-                        H{heading.level}
-                      </span>
-                      <span className="text-sm text-gray-700 group-hover:text-green-900">
-                        {heading.text}
-                      </span>
-                    </div>
-                  </Tooltip.Trigger>
-                  <Tooltip.Portal>
-                    <Tooltip.Content
-                      side="right"
-                      align="start"
-                      sideOffset={4}
-                      className="z-50 max-w-md"
-                    >
-                      {getTooltipContent(heading.elementId)}
-                      <Tooltip.Arrow 
-                        className="fill-gray-300" 
-                        width={12} 
-                        height={6}
-                      />
-                    </Tooltip.Content>
-                  </Tooltip.Portal>
-                </Tooltip.Root>
-              </Tooltip.Provider>
-            ))}
-          </nav>
+          <HeadingTree
+            headings={aiHeadings}
+            themeColors={{
+              hover: 'hover:bg-green-50',
+              text: 'group-hover:text-green-900',
+              levelText: 'text-gray-400 group-hover:text-green-600',
+              levelTextHover: 'group-hover:text-green-600'
+            }}
+            onHeadingClick={handleHeadingClick}
+            getTooltipContent={getTooltipContent}
+            handleTooltipShow={handleTooltipShow}
+          />
         ) : (
           <p className="text-gray-500">No headings generated</p>
         )}
