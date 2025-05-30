@@ -36,6 +36,8 @@ Type checking and linting:
 - `npm run build` - TypeScript compilation errors
 - `npm run lint` - ESLint code quality/style issues
 - `npm test` - Jest testing (`npm run test:coverage` for coverage)
+  - When writing tests, use our Jest testing framework with React Testing Library
+  - Prefer using a subagent for running tests to avoid filling the context window
 
 Debugging resources:
 - Current logs: `tail dev.log`
@@ -63,7 +65,7 @@ Debugging resources:
 Key variables in `.env.local`:
 - `ANTHROPIC_API_KEY` - Required for AI features
 - `PORT` - Dev server port
-- `AI_MODEL` - default is Claude Sonnet 4, but we usually override to Haiku for development
+- `LLM_MODEL` - default is Claude Sonnet 4, but we usually override to Haiku for development
 - Supabase connection details (see `docs/SETUP.md`)
 
 Template: `.env.example` (may not be current - check `.env.local` for active config)

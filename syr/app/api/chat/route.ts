@@ -1,24 +1,11 @@
 // Chat API endpoint for AI-powered document analysis
-// Integrates with Anthropic Claude for intelligent conversation about documents
+// Uses Vercel AI SDK Core for multi-provider support
 
 import { NextRequest, NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
-import nunjucks from 'nunjucks'
-import { readFileSync } from 'fs'
+import { generateText } from 'ai'
+import { getModel } from '@/lib/services/llm-provider'
 import { AI_CONFIG } from '@/lib/config'
-import { chatPrompt, chatPromptInputSchema } from '@/lib/prompts/templates/chat'
-
-// Configure Nunjucks for template rendering
-const env = nunjucks.configure({
-  autoescape: false,
-  throwOnUndefined: true,
-  trimBlocks: true,
-  lstripBlocks: true,
-})
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
+import { chatPromptInputSchema } from '@/lib/prompts/templates/chat'
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,38 +30,44 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     })
     
-    // Generate system message using the chat template
-    const templateContent = readFileSync(chatPrompt.templatePath, 'utf-8')
-    const systemContent = env.renderString(templateContent, { 
-      documentContext: documentContext || 'No document context provided.'
-    })
+    // Build the system prompt with document context
+    const systemPrompt = `You are an AI assistant helping users understand and analyze documents. Your role is to provide insightful, accurate, and helpful analysis based on the document content provided.
+
+DOCUMENT CONTEXT:
+${documentContext || 'No document context provided.'}
+
+INSTRUCTIONS:
+1. Base your responses on the document content provided above
+2. Be specific and reference relevant parts of the document when applicable
+3. If the document doesn't contain information to fully answer a question, acknowledge this limitation
+4. Keep responses concise but comprehensive
+5. Use clear, accessible language
+6. When appropriate, suggest follow-up questions or areas for deeper exploration
+7. Remember the conversation context and refer back to previous questions/answers when relevant
+
+Please respond to the user's latest message while considering the full conversation context.`
     
-    // Build system message
-    const systemMessage = {
-      role: 'user' as const,
-      content: systemContent
-    }
-    
-    // Convert conversation to Claude format (system + conversation history)
-    const claudeMessages = [
-      systemMessage,
+    // Convert messages to Vercel AI SDK format
+    const aiMessages = [
+      { role: 'system' as const, content: systemPrompt },
       ...messages.map(msg => ({
-        role: msg.role === 'user' ? 'user' as const : 'assistant' as const,
+        role: msg.role as 'user' | 'assistant',
         content: msg.content
       }))
     ]
     
-    // Call Claude API using centralized configuration
-    const claudeResponse = await anthropic.messages.create({
-      model: chatPrompt.modelConfig?.model || AI_CONFIG.DEFAULT_MODEL,
-      max_tokens: chatPrompt.modelConfig?.maxTokens || AI_CONFIG.DEFAULT_MAX_TOKENS,
-      temperature: chatPrompt.modelConfig?.temperature ?? AI_CONFIG.DEFAULT_TEMPERATURE,
-      messages: claudeMessages
+    // Get the appropriate model based on configuration
+    const model = getModel()
+    
+    // Generate response using Vercel AI SDK Core
+    const result = await generateText({
+      model,
+      messages: aiMessages,
+      maxTokens: AI_CONFIG.DEFAULT_MAX_TOKENS,
+      temperature: 0, // Keep deterministic for document analysis
     })
     
-    const response = claudeResponse.content[0].type === 'text' 
-      ? claudeResponse.content[0].text 
-      : 'Unable to generate response'
+    const response = result.text
     
     console.log('[Chat API] Response generated successfully:', {
       responseLength: response.length,

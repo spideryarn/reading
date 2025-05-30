@@ -2,8 +2,9 @@ import { z } from 'zod'
 import nunjucks from 'nunjucks'
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import Anthropic from '@anthropic-ai/sdk'
-import { AI_CONFIG } from '@/lib/config'
+import { generateText } from 'ai'
+import { AI_CONFIG, type ProviderTierKey } from '@/lib/config'
+import { getModel } from '@/lib/services/llm-provider'
 
 // Configure Nunjucks with strict mode
 const env = nunjucks.configure({
@@ -20,7 +21,7 @@ export interface PromptTemplate<T extends z.ZodSchema> {
   schema: T
   templatePath: string
   modelConfig?: {
-    model?: string
+    model?: ProviderTierKey
     temperature?: number
     maxTokens?: number
   }
@@ -31,13 +32,13 @@ export function loadPromptTemplate<T extends z.ZodSchema>(
   templatePath: string,
   schema: T,
   modelConfig?: {
-    model?: string
+    model?: ProviderTierKey
     temperature?: number
     maxTokens?: number
   }
 ): PromptTemplate<T> {
   // Load template content at module load time for better performance
-  const templateContent = readFileSync(templatePath, 'utf-8')
+  readFileSync(templatePath, 'utf-8')
   
   return {
     name: templatePath.split('/').pop()?.replace('.njk', '') || 'unnamed',
@@ -53,7 +54,7 @@ export function loadPromptTemplateFromCaller<T extends z.ZodSchema>(
   templateName: string,
   schema: T,
   modelConfig?: {
-    model?: string
+    model?: ProviderTierKey
     temperature?: number
     maxTokens?: number
   }
@@ -64,9 +65,8 @@ export function loadPromptTemplateFromCaller<T extends z.ZodSchema>(
   return loadPromptTemplate(templatePath, schema, modelConfig)
 }
 
-// Execute a prompt with validation and rendering
-export async function executePrompt<T extends z.ZodSchema>(
-  anthropic: Anthropic,
+// Internal implementation using Vercel AI SDK Core
+async function executePromptInternal<T extends z.ZodSchema>(
   template: PromptTemplate<T>,
   variables: z.infer<T>
 ): Promise<string> {
@@ -77,14 +77,25 @@ export async function executePrompt<T extends z.ZodSchema>(
   const templateContent = readFileSync(template.templatePath, 'utf-8')
   const prompt = env.renderString(templateContent, validated)
   
-  // Execute with Anthropic
-  const response = await anthropic.messages.create({
-    model: template.modelConfig?.model || AI_CONFIG.DEFAULT_MODEL,
-    max_tokens: template.modelConfig?.maxTokens || AI_CONFIG.DEFAULT_MAX_TOKENS,
+  // Get the appropriate model based on configuration
+  const providerTierKey = template.modelConfig?.model || AI_CONFIG.DEFAULT_MODEL
+  const model = getModel(providerTierKey)
+  
+  // Execute with Vercel AI SDK Core
+  const result = await generateText({
+    model,
+    prompt,
+    maxTokens: template.modelConfig?.maxTokens || AI_CONFIG.DEFAULT_MAX_TOKENS,
     temperature: template.modelConfig?.temperature ?? AI_CONFIG.DEFAULT_TEMPERATURE,
-    messages: [{ role: 'user', content: prompt }]
   })
   
-  const result = response.content[0].type === 'text' ? response.content[0].text : ''
-  return result
+  return result.text
+}
+
+// Execute a prompt with validation and rendering
+export async function executePrompt<T extends z.ZodSchema>(
+  template: PromptTemplate<T>,
+  variables: z.infer<T>
+): Promise<string> {
+  return executePromptInternal(template, variables)
 }
