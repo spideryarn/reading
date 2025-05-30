@@ -43,10 +43,10 @@ export function Dialog({ isOpen, onClose, title, children }: DialogProps) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
+    <div className="fixed inset-0 flex items-start justify-center z-[9999] p-4 pt-20">
       <div 
         ref={dialogRef}
-        className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100vh-2rem)] overflow-y-auto my-auto"
+        className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100vh-8rem)] overflow-y-auto relative z-10"
       >
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
