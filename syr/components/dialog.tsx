@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { X } from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
 
 interface DialogProps {
   isOpen: boolean
@@ -49,13 +50,14 @@ export function Dialog({ isOpen, onClose, title, children }: DialogProps) {
       >
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-          <button
+          <Button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            variant="ghost-gray"
+            size="icon-sm"
             aria-label="Close dialog"
           >
             <X size={20} />
-          </button>
+          </Button>
         </div>
         
         <div className="p-4">
@@ -63,12 +65,12 @@ export function Dialog({ isOpen, onClose, title, children }: DialogProps) {
         </div>
         
         <div className="flex justify-end p-4 border-t bg-gray-50">
-          <button
+          <Button
             onClick={onClose}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+            variant="blue"
           >
             OK
-          </button>
+          </Button>
         </div>
       </div>
     </div>

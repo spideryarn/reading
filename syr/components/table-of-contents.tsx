@@ -6,13 +6,16 @@
 // See docs/MUTATIONS.md for document mutation system
 
 import { useEffect, useState } from 'react'
-import { Spinner, ExclamationMark, CircleNotch, Warning } from '@phosphor-icons/react'
+import { Spinner, ExclamationMark, CircleNotch } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import type { GranularityKey } from '@/lib/prompts/templates/summarise'
 import { useMutation, useActiveMutationType } from '@/lib/context/mutation-context'
 import { generateHeadingMutation, extractHeadingsFromMutation } from '@/lib/services/heading-mutation-generator'
 import { TabContainer, type Tab } from './tab-container'
 import { HeadingTree, type Heading } from './heading-tree'
+import { Button } from '@/components/ui/button'
+import { Loading } from '@/components/ui/loading'
+import { AlertWithIcon } from '@/components/ui/alert'
 
 interface TableOfContentsProps {
   content: string
@@ -529,10 +532,12 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
     if (!showHeadings) {
       return (
         <div className="p-4">
-          <button
+          <Button
             onClick={handleGenerateHeadings}
             disabled={isLoadingHeadings}
-            className="w-full px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            variant="outline"
+            size="full"
+            className="text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100"
           >
             {isLoadingHeadings ? (
               <>
@@ -542,7 +547,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
             ) : (
               'Generate new headings'
             )}
-          </button>
+          </Button>
         </div>
       )
     }
@@ -550,18 +555,13 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
     return (
       <div className="p-4">
         {isLoadingHeadings ? (
-          <div className="flex items-center gap-2 text-gray-500">
-            <CircleNotch className="animate-spin" size={20} />
-            <span>Generating headings...</span>
-          </div>
+          <Loading text="Generating headings..." spinnerSize={20} />
         ) : headingsError ? (
-          <div className="bg-red-50 border border-red-200 rounded p-3 flex items-start gap-2">
-            <Warning className="text-red-600 mt-0.5" size={20} weight="bold" />
-            <div className="text-sm text-red-800">
-              <div className="font-medium mb-1">Failed to generate headings</div>
-              <div className="text-xs">{headingsError}</div>
-            </div>
-          </div>
+          <AlertWithIcon 
+            variant="warning"
+            title="Failed to generate headings"
+            description={headingsError}
+          />
         ) : aiHeadings.length > 0 ? (
           <HeadingTree
             headings={aiHeadings}
@@ -590,20 +590,21 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
     if (showSummaryButton) {
       return (
         <div className="p-4">
-          <button
+          <Button
             onClick={generateSummary}
-            className="w-full px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition-colors"
+            variant="orange"
+            size="full"
           >
             Show summary
-          </button>
+          </Button>
         </div>
       )
     }
 
     if (summaryLoading) {
       return (
-        <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-          <div className="text-sm text-orange-600">Generating summary...</div>
+        <div className="p-4">
+          <Loading variant="orange" text="Generating summary..." />
         </div>
       )
     }
@@ -612,15 +613,17 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
       return (
         <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
           <div className="text-sm text-red-600">{summaryError}</div>
-          <button
+          <Button
             onClick={() => {
               setSummaryError('')
               setShowSummaryButton(true)
             }}
-            className="mt-2 px-3 py-1 bg-orange-600 text-white text-xs rounded hover:bg-orange-700 transition-colors"
+            variant="orange"
+            size="sm"
+            className="mt-2"
           >
             Try again
-          </button>
+          </Button>
         </div>
       )
     }
@@ -630,9 +633,10 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
         <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-orange-800">Summary</h3>
-            <button
+            <Button
               onClick={() => setIsSummaryCollapsed(!isSummaryCollapsed)}
-              className="text-orange-600 hover:text-orange-800 transition-colors"
+              variant="ghost-orange"
+              size="icon-xs"
               aria-label={isSummaryCollapsed ? "Expand summary" : "Collapse summary"}
             >
               <svg 
@@ -643,7 +647,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
-            </button>
+            </Button>
           </div>
           {!isSummaryCollapsed && (
             <p className="text-sm text-orange-700 leading-relaxed">{summary}</p>

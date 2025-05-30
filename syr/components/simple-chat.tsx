@@ -6,6 +6,7 @@
 import { useState } from 'react'
 import { PaperPlaneRight } from '@phosphor-icons/react'
 import { ChatLoadingState, ChatErrorState } from './chat-ui-states'
+import { Button } from '@/components/ui/button'
 
 interface Message {
   id: string
@@ -157,14 +158,15 @@ export function SimpleChat({ documentContext }: SimpleChatProps) {
             disabled={isLoading}
             className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
           />
-          <button
+          <Button
             onClick={sendMessage}
             disabled={!input.trim() || isLoading}
-            className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white p-2 rounded-lg transition-colors"
+            variant="blue"
+            size="icon"
             aria-label="Send message"
           >
             <PaperPlaneRight size={16} weight="bold" />
-          </button>
+          </Button>
         </div>
         
         {documentContext && (

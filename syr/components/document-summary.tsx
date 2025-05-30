@@ -4,6 +4,8 @@
 // See docs/AI_SUMMARISE.md for architecture and usage patterns
 
 import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Loading } from '@/components/ui/loading'
 
 interface DocumentSummaryProps {
   content: string
@@ -48,20 +50,20 @@ export function DocumentSummary({ content }: DocumentSummaryProps) {
   if (showButton) {
     return (
       <div className="mx-4 mt-4">
-        <button
+        <Button
           onClick={generateSummary}
-          className="px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition-colors"
+          variant="orange"
         >
           Show summary
-        </button>
+        </Button>
       </div>
     )
   }
 
   if (loading) {
     return (
-      <div className="mx-4 mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-        <div className="text-sm text-orange-600">Generating summary...</div>
+      <div className="mx-4 mt-4">
+        <Loading variant="orange" text="Generating summary..." />
       </div>
     )
   }
@@ -70,15 +72,17 @@ export function DocumentSummary({ content }: DocumentSummaryProps) {
     return (
       <div className="mx-4 mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
         <div className="text-sm text-red-600">{error}</div>
-        <button
+        <Button
           onClick={() => {
             setError('')
             setShowButton(true)
           }}
-          className="mt-2 px-3 py-1 bg-orange-600 text-white text-xs rounded hover:bg-orange-700 transition-colors"
+          variant="orange"
+          size="sm"
+          className="mt-2"
         >
           Try again
-        </button>
+        </Button>
       </div>
     )
   }
@@ -88,9 +92,10 @@ export function DocumentSummary({ content }: DocumentSummaryProps) {
       <div className="mx-4 mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-semibold text-orange-800">Summary</h3>
-          <button
+          <Button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="text-orange-600 hover:text-orange-800 transition-colors"
+            variant="ghost-orange"
+            size="icon-xs"
             aria-label={isCollapsed ? "Expand summary" : "Collapse summary"}
           >
             <svg 
@@ -101,7 +106,7 @@ export function DocumentSummary({ content }: DocumentSummaryProps) {
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
-          </button>
+          </Button>
         </div>
         {!isCollapsed && (
           <p className="text-sm text-orange-700 leading-relaxed">{summary}</p>

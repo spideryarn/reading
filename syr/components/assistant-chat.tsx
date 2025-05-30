@@ -11,6 +11,7 @@ import {
 // import { useCallback } from 'react'; // No longer used directly
 import { User, Robot, PaperPlaneTilt, CircleNotch } from '@phosphor-icons/react';
 import { useChatRuntime } from '@/src/lib/hooks/useChatRuntime'; // Import the new hook
+import { Button } from '@/components/ui/button'
 
 interface AssistantChatProps {
   documentContext: string;
@@ -67,16 +68,16 @@ const Composer = () => {
       />
       <ThreadPrimitive.If running={false}>
         <ComposerPrimitive.Send asChild>
-          <button className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
+          <Button variant="blue" size="icon">
             <PaperPlaneTilt size={16} weight="bold" />
-          </button>
+          </Button>
         </ComposerPrimitive.Send>
       </ThreadPrimitive.If>
       <ThreadPrimitive.If running>
         <ComposerPrimitive.Cancel asChild>
-          <button className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-500 text-white hover:bg-gray-600 transition-colors">
+          <Button variant="secondary" size="icon">
             <CircleNotch size={16} weight="bold" className="animate-spin" />
-          </button>
+          </Button>
         </ComposerPrimitive.Cancel>
       </ThreadPrimitive.If>
     </ComposerPrimitive.Root>
@@ -104,9 +105,9 @@ const ThreadSuggestions = () => {
             autoSend
             asChild
           >
-            <button className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors">
+            <Button variant="outline" size="sm">
               {prompt}
-            </button>
+            </Button>
           </ThreadPrimitive.Suggestion>
         ))}
       </div>

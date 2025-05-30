@@ -2,6 +2,7 @@
 // Uses Phosphor icons per docs/STYLING.md patterns
 
 import { CircleNotch, Warning } from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
 
 interface LoadingStateProps {
   message?: string
@@ -43,12 +44,14 @@ export function ChatErrorState({
       />
       <span className="text-sm">{message}</span>
       {onRetry && (
-        <button
+        <Button
           onClick={onRetry}
-          className="ml-2 text-xs bg-red-50 hover:bg-red-100 text-red-700 px-2 py-1 rounded border border-red-200 transition-colors"
+          variant="warning"
+          size="sm"
+          className="ml-2"
         >
           Retry
-        </button>
+        </Button>
       )}
     </div>
   )

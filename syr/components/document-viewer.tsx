@@ -4,11 +4,14 @@
 // See docs/AI_GLOSSARY.md for glossary feature architecture
 
 import { useState, useEffect } from 'react'
-import { CircleNotch, Warning } from '@phosphor-icons/react'
+import { CircleNotch } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import { TabContainer, type Tab } from './tab-container'
 import { AssistantChat } from './assistant-chat'
 import { MarkdownRenderer } from './markdown-renderer'
+import { Button } from '@/components/ui/button'
+import { Loading } from '@/components/ui/loading'
+import { AlertWithIcon } from '@/components/ui/alert'
 
 // Define entity type (will be moved to a proper types file later)
 interface Entity {
@@ -292,10 +295,10 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
   const renderGlossaryTab = () => {
     if (!showGlossary) {
       return (
-        <button
+        <Button
           onClick={onLoadGlossary}
           disabled={isLoadingGlossary}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          variant="blue"
         >
           {isLoadingGlossary ? (
             <>
@@ -305,25 +308,20 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
           ) : (
             'Load glossary'
           )}
-        </button>
+        </Button>
       )
     }
 
     return (
       <>
         {isLoadingGlossary ? (
-          <div className="flex items-center gap-2 text-gray-500">
-            <CircleNotch className="animate-spin" size={20} />
-            <span>Loading glossary...</span>
-          </div>
+          <Loading text="Loading glossary..." spinnerSize={20} />
         ) : glossaryError ? (
-          <div className="bg-red-50 border border-red-200 rounded p-3 flex items-start gap-2">
-            <Warning className="text-red-600 mt-0.5" size={20} weight="bold" />
-            <div className="text-sm text-red-800">
-              <div className="font-medium mb-1">Failed to generate glossary</div>
-              <div className="text-xs">{glossaryError}</div>
-            </div>
-          </div>
+          <AlertWithIcon 
+            variant="warning"
+            title="Failed to generate glossary"
+            description={glossaryError}
+          />
         ) : glossaryEntities.length > 0 ? (
           <GlossaryDisplay 
             entities={glossaryEntities} 

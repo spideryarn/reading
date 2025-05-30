@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 
 export default function Home() {
   return (
@@ -8,12 +9,15 @@ export default function Home() {
         <p className="text-xl text-gray-600 mb-8">
           AI-assisted document reading and analysis application
         </p>
-        <Link
-          href="/documents"
-          className="inline-block px-6 py-3 text-lg font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+        <Button
+          asChild
+          variant="blue"
+          size="lg"
         >
-          Browse Documents
-        </Link>
+          <Link href="/documents">
+            Browse Documents
+          </Link>
+        </Button>
       </div>
     </div>
   )

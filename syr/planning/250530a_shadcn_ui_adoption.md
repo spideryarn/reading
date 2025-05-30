@@ -18,6 +18,7 @@ User priorities:
 ## References
 
 - `docs/CODING_PRINCIPLES.md` - Development principles prioritising simplicity and rapid prototyping
+- `docs/SHADCN_UI_REFERENCE.md`
 - `docs/STYLING.md` - Current CSS and visual styling configuration
 - `components/` - Existing components showing current Tailwind usage patterns
 - Already using `@radix-ui/react-tooltip` - shadcn/ui is built on Radix UI
@@ -29,6 +30,7 @@ User priorities:
 3. **Copy-paste approach** - Leverage shadcn/ui's philosophy of owning and customising component code
 4. **AI-optimised** - Higher-level component abstractions are better for AI code generation than utility classes
 5. **Theme consistency** - Customise components to match Spideryarn orange theme (`#DB8A45`)
+6. **Search the web if you are unsure about anything**
 
 ## Actions
 
@@ -66,7 +68,7 @@ User priorities:
   - ✅ Event handling and disabled states working
   - ✅ TypeScript compilation successful for shadcn/ui components
 
-- [ ] Git commit: "feat: add shadcn/ui setup with Button component"
+- [x] Git commit: "feat: add shadcn/ui foundation with Button component and theme setup" (420ab8a)
 
 ### Stage 3: Replace Core Components
 
