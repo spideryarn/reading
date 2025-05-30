@@ -592,8 +592,9 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
         <div className="p-4">
           <Button
             onClick={generateSummary}
-            variant="orange"
+            variant="outline"
             size="full"
+            className="text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100"
           >
             Show summary
           </Button>
@@ -604,23 +605,23 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
     if (summaryLoading) {
       return (
         <div className="p-4">
-          <Loading variant="orange" text="Generating summary..." />
+          <Loading variant="blue" text="Generating summary..." />
         </div>
       )
     }
 
     if (summaryError) {
       return (
-        <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="text-sm text-red-600">{summaryError}</div>
           <Button
             onClick={() => {
               setSummaryError('')
               setShowSummaryButton(true)
             }}
-            variant="orange"
+            variant="outline"
             size="sm"
-            className="mt-2"
+            className="mt-2 text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100"
           >
             Try again
           </Button>
@@ -630,13 +631,14 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
 
     if (summary) {
       return (
-        <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-orange-800">Summary</h3>
+            <h3 className="text-sm font-semibold text-blue-800">Summary</h3>
             <Button
               onClick={() => setIsSummaryCollapsed(!isSummaryCollapsed)}
-              variant="ghost-orange"
+              variant="ghost"
               size="icon-xs"
+              className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
               aria-label={isSummaryCollapsed ? "Expand summary" : "Collapse summary"}
             >
               <svg 
@@ -650,7 +652,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
             </Button>
           </div>
           {!isSummaryCollapsed && (
-            <p className="text-sm text-orange-700 leading-relaxed">{summary}</p>
+            <p className="text-sm text-blue-700 leading-relaxed">{summary}</p>
           )}
         </div>
       )
