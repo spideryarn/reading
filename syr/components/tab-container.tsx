@@ -54,36 +54,55 @@ export const TabContainer = forwardRef<TabContainerRef, TabContainerProps>(
       {orientation === 'vertical' ? (
         <>
           {title && (
-            <h2 className="text-sm font-semibold mb-3 text-gray-900">{title}</h2>
+            <h2 className="text-sm font-semibold mb-4 text-gray-900 px-1">{title}</h2>
           )}
           
-          {/* Compact Vertical Tab Navigation */}
-          <div className="mb-4">
-            <nav className="flex flex-col space-y-2" aria-label="Tabs" role="tablist">
+          {/* Modern Vertical Tab Navigation */}
+          <div className="mb-6">
+            <nav className="flex flex-col space-y-1" aria-label="Tabs" role="tablist">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => handleTabClick(tab)}
                   role="tab"
                   aria-selected={activeTab === tab.id}
-                  className={`flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                  className={`group relative flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
                     activeTab === tab.id
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-900 shadow-sm border border-blue-200'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-transparent hover:border-gray-200'
                   }`}
                 >
-                  {/* Radio button indicator */}
-                  <div className={`w-2 h-2 rounded-full mr-2 ${
-                    activeTab === tab.id ? 'bg-white' : 'bg-gray-400'
+                  {/* Active indicator bar */}
+                  <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-r-full transition-all duration-200 ${
+                    activeTab === tab.id 
+                      ? 'bg-gradient-to-b from-blue-500 to-blue-600' 
+                      : 'bg-transparent group-hover:bg-gray-300'
                   }`} />
-                  {tab.label}
+                  
+                  {/* Modern indicator dot */}
+                  <div className={`w-2 h-2 rounded-full mr-3 flex-shrink-0 transition-all duration-200 ${
+                    activeTab === tab.id 
+                      ? 'bg-blue-600 shadow-sm' 
+                      : 'bg-gray-300 group-hover:bg-gray-400'
+                  }`} />
+                  
+                  <span className="font-medium">{tab.label}</span>
+                  
+                  {/* Subtle highlight for active tab */}
+                  {activeTab === tab.id && (
+                    <div className="absolute inset-0 bg-blue-500 opacity-5 rounded-lg" />
+                  )}
                 </button>
               ))}
             </nav>
           </div>
 
-          {/* Divider between tabs and content */}
-          <hr className="border-gray-200 mb-4" />
+          {/* Elegant divider between tabs and content */}
+          <div className="relative mb-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+          </div>
 
           {/* Vertical Tab Content */}
           <div ref={contentRef} className="flex-1 min-h-0 overflow-y-auto">

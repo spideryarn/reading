@@ -221,12 +221,13 @@ describe('TabContainer', () => {
     it('should apply correct styling for vertical tabs', () => {
       render(<TabContainer tabs={mockTabs} orientation="vertical" />);
       
-      const firstTabButton = screen.getByText('First Tab');
+      const firstTabButton = screen.getByText('First Tab').parentElement!;
       
-      // Vertical tabs should have different active styles (new compact design)
-      expect(firstTabButton.className).toContain('bg-blue-600');
-      expect(firstTabButton.className).toContain('text-white');
-      expect(firstTabButton.className).toContain('shadow-sm');
+      // Vertical tabs should have different active styles (new modern design)
+      expect(firstTabButton.className).toContain('bg-gradient-to-r');
+      expect(firstTabButton.className).toContain('from-blue-50');
+      expect(firstTabButton.className).toContain('to-blue-100');
+      expect(firstTabButton.className).toContain('text-blue-900');
     });
   });
 });

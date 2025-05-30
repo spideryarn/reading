@@ -53,8 +53,6 @@ export default async function TweetThreadPage({ params }: PageProps) {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50">
       <AppHeader 
         title={`${doc.title} - Tweet Thread`}
-        backLink={`/documents/${slug}`}
-        backText="Back to document"
       />
 
       {/* Content */}
