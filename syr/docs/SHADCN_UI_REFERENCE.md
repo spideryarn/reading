@@ -37,6 +37,9 @@ Comprehensive guide to implementing shadcn/ui component library in the Spideryar
 ```bash
 # For React 19 compatibility, use canary version
 npx shadcn@canary init
+
+# For non-interactive installation with defaults
+npx shadcn@latest init -d -y
 ```
 
 **Configuration Options**:
@@ -151,6 +154,9 @@ shadcn/ui will automatically install required dependencies:
 **Button Component** - Highest priority for standardisation
 ```bash
 npx shadcn@latest add button
+
+# Non-interactive installation
+npx shadcn@latest add button -y
 ```
 
 **Current State**: 7+ button variations across codebase with inconsistent styling:
@@ -164,6 +170,9 @@ npx shadcn@latest add button
 **Dialog Component** - Replace custom modal implementation
 ```bash
 npx shadcn@latest add dialog
+
+# Non-interactive installation
+npx shadcn@latest add dialog -y
 ```
 
 **Current State**: Custom dialog in `components/dialog.tsx` with manual:
@@ -181,6 +190,10 @@ npx shadcn@latest add dialog
 npx shadcn@latest add alert
 npx shadcn@latest add skeleton
 npx shadcn@latest add spinner  # If available
+
+# Non-interactive installation
+npx shadcn@latest add alert -y
+npx shadcn@latest add skeleton -y
 ```
 
 **Current Patterns**: Repeated throughout codebase:
@@ -210,6 +223,13 @@ npx shadcn@latest add textarea
 npx shadcn@latest add label
 npx shadcn@latest add select
 npx shadcn@latest add form
+
+# Non-interactive installation
+npx shadcn@latest add input -y
+npx shadcn@latest add textarea -y
+npx shadcn@latest add label -y
+npx shadcn@latest add select -y
+npx shadcn@latest add form -y
 ```
 
 **Current Usage**: Limited form usage, mainly in:
@@ -225,6 +245,12 @@ npx shadcn@latest add card
 npx shadcn@latest add sheet
 npx shadcn@latest add tabs
 npx shadcn@latest add collapsible
+
+# Non-interactive installation
+npx shadcn@latest add card -y
+npx shadcn@latest add sheet -y
+npx shadcn@latest add tabs -y
+npx shadcn@latest add collapsible -y
 ```
 
 **Current State**: 

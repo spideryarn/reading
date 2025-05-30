@@ -12,6 +12,7 @@
 - Write code that's easy to test, i.e. prefer functional. Avoid object-oriented unless it's a particularly good fit.
 - Aim to keep changes minimal, and focused on the task at hand.
 - Try to keep things concise, don't over-engineer.
+- Remember YAGNI - but at the same time, it can be useful to understand the overall vision for the product, because that may inform the current design/architecture decisions.
 - Keep documentation etc up-to-date as you go.
 - When picking 3rd-party libraries, prefer ones with large communities (so there will be lots of pretraining data for LLMs).
 - If you notice other things that should be changed/updated, ask/suggest to the user.
