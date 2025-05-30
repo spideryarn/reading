@@ -12,11 +12,12 @@ interface Tweet {
 
 interface TweetThreadResponse {
   tweets: Tweet[]
-  summary: string
+  thread_summary: string
   metadata: {
-    contentLength: number
+    content_length: number
+    processed_length: number
     truncated: boolean
-    tweetCount: number
+    tweet_count: number
   }
 }
 
@@ -60,7 +61,7 @@ export function TweetThreadView({ documentContent, isActive = false }: TweetThre
 
       const data: TweetThreadResponse = await response.json()
       setTweets(data.tweets)
-      setSummary(data.summary)
+      setSummary(data.thread_summary)
       setMetadata(data.metadata)
       setHasGenerated(true)
     } catch (err) {
@@ -113,7 +114,7 @@ export function TweetThreadView({ documentContent, isActive = false }: TweetThre
       {/* Metadata */}
       {metadata && (
         <div className="text-xs text-gray-500 border-b border-gray-200 pb-2">
-          {metadata.tweetCount} tweets • {metadata.contentLength.toLocaleString()} characters
+          {metadata.tweet_count || 0} tweets • {(metadata.content_length || 0).toLocaleString()} characters
           {metadata.truncated && ' (content truncated)'}
         </div>
       )}
