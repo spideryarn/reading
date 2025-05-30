@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, useState } from 'react'
+import { ReactNode, useState, useRef, useImperativeHandle, forwardRef } from 'react'
 
 export interface Tab {
   id: string
@@ -17,7 +17,17 @@ interface TabContainerProps {
   orientation?: 'horizontal' | 'vertical'
 }
 
-export function TabContainer({ tabs, defaultTab, className = '', title, orientation = 'horizontal' }: TabContainerProps) {
+export interface TabContainerRef {
+  getContentContainer: () => HTMLDivElement | null
+}
+
+export const TabContainer = forwardRef<TabContainerRef, TabContainerProps>(
+  ({ tabs, defaultTab, className = '', title, orientation = 'horizontal' }, ref) => {
+    const contentRef = useRef<HTMLDivElement>(null)
+    
+    useImperativeHandle(ref, () => ({
+      getContentContainer: () => contentRef.current
+    }), [])
   // Validate defaultTab - if it's invalid or doesn't exist in tabs, use first tab
   const initialTab = defaultTab && tabs.some(tab => tab.id === defaultTab) 
     ? defaultTab 
@@ -76,7 +86,7 @@ export function TabContainer({ tabs, defaultTab, className = '', title, orientat
           <hr className="border-gray-200 mb-4" />
 
           {/* Vertical Tab Content */}
-          <div className="flex-1 min-h-0 overflow-y-auto">
+          <div ref={contentRef} className="flex-1 min-h-0 overflow-y-auto">
             {activeTabContent}
           </div>
         </>
@@ -108,11 +118,13 @@ export function TabContainer({ tabs, defaultTab, className = '', title, orientat
           </div>
 
           {/* Horizontal Tab Content */}
-          <div className="flex-1 min-h-0 overflow-y-auto">
+          <div ref={contentRef} className="flex-1 min-h-0 overflow-y-auto">
             {activeTabContent}
           </div>
         </>
       )}
     </div>
   )
-}
+})
+
+TabContainer.displayName = 'TabContainer'

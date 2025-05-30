@@ -98,3 +98,11 @@ export const SUMMARY_CONFIG = {
 export const UI_CONFIG = {
   FORCE_LIGHT_MODE: true,
 } as const
+
+// Visibility tracking configuration for Table of Contents
+export const VISIBILITY_CONFIG = {
+  UPDATE_INTERVAL: 100,    // ms - How often to batch visibility updates
+  DEBOUNCE_DELAY: 150,     // ms - Debounce delay for processing visibility changes (increased to reduce flickering)
+  ROOT_MARGIN: '0px',      // For precise viewport detection
+  THRESHOLD: 0.01,         // Minimum visible ratio to count as visible (1%)
+} as const

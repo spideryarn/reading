@@ -94,9 +94,6 @@ export async function POST(request: NextRequest) {
     }
     
     console.log('Cleaned JSON string length:', jsonString.trim().length, 'characters')
-    console.log('=== FULL JSON OUTPUT START ===')
-    console.log(JSON.stringify(jsonString.trim()))
-    console.log('=== FULL JSON OUTPUT END ===')
     
     const parsedResponse = JSON.parse(jsonString.trim())
     

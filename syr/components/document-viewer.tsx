@@ -3,7 +3,7 @@
 // Document viewer with glossary pane for entity display
 // See docs/AI_GLOSSARY.md for glossary feature architecture
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { CircleNotch } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import { TabContainer, type Tab } from './tab-container'
@@ -12,6 +12,7 @@ import { MarkdownRenderer } from './markdown-renderer'
 import { Button } from '@/components/ui/button'
 import { Loading } from '@/components/ui/loading'
 import { AlertWithIcon } from '@/components/ui/alert'
+import { useElementVisibility } from '@/lib/hooks/useElementVisibility'
 
 // Define entity type (will be moved to a proper types file later)
 interface Entity {
@@ -24,7 +25,7 @@ interface Entity {
   long_explanation?: string
   datetime?: string
   url?: string
-  extra?: Record<string, any>
+  extra?: Record<string, unknown>
 }
 
 interface DocumentViewerProps {
@@ -36,6 +37,7 @@ interface DocumentViewerProps {
   showGlossary?: boolean
   onLoadGlossary?: () => void
   glossaryError?: string | null
+  onElementVisibilityChange?: (elementId: string, isVisible: boolean) => void
 }
 
 // Component to display glossary entities ordered by first occurrence
@@ -122,13 +124,18 @@ function GlossaryDisplay({ entities, elements, onScrollToEntity }: {
   )
 }
 
-export function DocumentViewer({ elements, selectedElement, onElementSelect, glossaryEntities = [], isLoadingGlossary = false, showGlossary = false, onLoadGlossary, glossaryError }: DocumentViewerProps) {
+export function DocumentViewer({ elements, selectedElement, onElementSelect, glossaryEntities = [], isLoadingGlossary = false, showGlossary = false, onLoadGlossary, glossaryError, onElementVisibilityChange }: DocumentViewerProps) {
   const [internalSelectedElement, setInternalSelectedElement] = useState<DocumentElement | null>(null)
   
   // Use external state if provided, otherwise use internal state
   const currentSelectedElement = selectedElement !== undefined ? selectedElement : internalSelectedElement
   const handleElementSelect = onElementSelect || setInternalSelectedElement
   const [elementTree, setElementTree] = useState<Map<string | null, DocumentElement[]>>(new Map())
+  
+  // Element visibility tracking
+  const { observeElement, unobserveElement } = useElementVisibility(onElementVisibilityChange)
+  const observedElementsRef = useRef<Set<string>>(new Set())
+  const elementRefsRef = useRef<Map<string, Element>>(new Map())
 
   /**
    * Scroll to a specific element in the document structure pane.
@@ -167,6 +174,21 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
     })
     setElementTree(tree)
   }, [elements])
+  
+  // Clean up observed elements when elements change or component unmounts
+  useEffect(() => {
+    const observedElements = observedElementsRef.current
+    const elementRefs = elementRefsRef.current
+    
+    return () => {
+      // Unobserve all elements when elements change or component unmounts
+      elementRefs.forEach((element, elementId) => {
+        unobserveElement(element)
+        observedElements.delete(elementId)
+      })
+      elementRefs.clear()
+    }
+  }, [elements, unobserveElement])
 
   /**
    * Get typography classes based on element tag name
@@ -253,6 +275,23 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
       <div key={element.id} className={depth > 0 ? "border-l-2 border-gray-200 pl-4 ml-2" : ""}>
         <div
           data-element-id={element.id}
+          ref={(node) => {
+            const prevElement = elementRefsRef.current.get(element.id)
+            
+            // If we have a previous element and it's different, unobserve it
+            if (prevElement && prevElement !== node) {
+              unobserveElement(prevElement)
+              elementRefsRef.current.delete(element.id)
+              observedElementsRef.current.delete(element.id)
+            }
+            
+            // If we have a new node and haven't observed it yet, observe it
+            if (node && !observedElementsRef.current.has(element.id)) {
+              observeElement(node)
+              observedElementsRef.current.add(element.id)
+              elementRefsRef.current.set(element.id, node)
+            }
+          }}
           className={`py-2 px-3 rounded cursor-pointer hover:bg-gray-100 ${
             currentSelectedElement?.id === element.id ? 'bg-blue-50 border-blue-500' : ''
           }`}
@@ -283,7 +322,7 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
           <div className={element.tag_name === 'ul' || element.tag_name === 'ol' ? 'ml-6' : 'ml-4'}>
             {children
               .sort((a, b) => a.position - b.position)
-              .map((child, index) => renderElement(child, depth + 1))}
+              .map((child) => renderElement(child, depth + 1))}
           </div>
         )}
       </div>

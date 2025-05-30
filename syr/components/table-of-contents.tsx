@@ -5,19 +5,20 @@
 // See docs/AI_SUMMARISE.md for tooltip summarisation feature details
 // See docs/MUTATIONS.md for document mutation system
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { Spinner, ExclamationMark, CircleNotch } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import type { GranularityKey } from '@/lib/prompts/templates/summarise'
 import { useMutation, useActiveMutationType } from '@/lib/context/mutation-context'
 import { SUMMARY_CONFIG } from '@/lib/config'
 import { generateHeadingMutation, extractHeadingsFromMutation } from '@/lib/services/heading-mutation-generator'
-import { TabContainer, type Tab } from './tab-container'
+import { TabContainer, type Tab, type TabContainerRef } from './tab-container'
 import { HeadingTree, type Heading } from './heading-tree'
 import { SummaryPane } from './summary-pane'
 import { Button } from '@/components/ui/button'
 import { Loading } from '@/components/ui/loading'
 import { AlertWithIcon } from '@/components/ui/alert'
+import { useTocAutoScroll } from '@/lib/hooks/useTocAutoScroll'
 
 interface TableOfContentsProps {
   content: string
@@ -25,6 +26,7 @@ interface TableOfContentsProps {
   onHeadingClick?: (headingText: string, headingId?: string) => void
   documentId: string
   markdownContent: string
+  headingVisibility?: Map<string, 'visible' | 'not-visible'>
 }
 
 // Utility to toggle visibility of original (non-AI) headings depending on mutation state
@@ -46,8 +48,8 @@ function toggleOriginalHeadingsVisibility(hide: boolean) {
   })
 }
 
-export function TableOfContents({ content, elements, onHeadingClick, documentId, markdownContent }: TableOfContentsProps) {
-  const { applyMutation, revertMutation, mutationState, document: mutatedDocument } = useMutation()
+export function TableOfContents({ content, elements, onHeadingClick, documentId, markdownContent, headingVisibility }: TableOfContentsProps) {
+  const { applyMutation, document: mutatedDocument } = useMutation()
   const activeMutationType = useActiveMutationType()
   const [headings, setHeadings] = useState<Heading[]>([])
   const [loadingStates, setLoadingStates] = useState<Set<string>>(new Set())
@@ -56,7 +58,11 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
   const [isLoadingHeadings, setIsLoadingHeadings] = useState(false)
   const [headingsError, setHeadingsError] = useState<string | null>(null)
   const [showHeadings, setShowHeadings] = useState(false)
-  const [currentHeadingMutation, setCurrentHeadingMutation] = useState<any>(null)
+  // const [currentHeadingMutation, setCurrentHeadingMutation] = useState<unknown>(null)
+  
+  // Tab container ref for auto-scrolling
+  const tabContainerRef = useRef<TabContainerRef>(null)
+  const [activeTab, setActiveTab] = useState<string>('original')
   
   
   // Expand/collapse state for each tab - track collapsed items (default is expanded)
@@ -69,6 +75,38 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
   const [granularityLevels, setGranularityLevels] = useState<Record<'original' | 'ai-generated', number>>({
     'original': 3,
     'ai-generated': 3
+  })
+  
+  // Get current visible heading IDs based on active tab
+  const visibleHeadingIds = useMemo(() => {
+    const currentHeadings = activeTab === 'ai-generated' ? aiHeadings : headings
+    const visibleIds = new Set<string>()
+    
+    currentHeadings.forEach(heading => {
+      if (headingVisibility?.get(heading.id) === 'visible') {
+        visibleIds.add(heading.id)
+      }
+    })
+    
+    return visibleIds
+  }, [headingVisibility, activeTab, headings, aiHeadings])
+  
+  // Get content container ref
+  const contentContainerRef = useRef<HTMLElement | null>(null)
+  
+  // Update content container ref when tab container mounts or changes
+  useEffect(() => {
+    if (tabContainerRef.current) {
+      contentContainerRef.current = tabContainerRef.current.getContentContainer()
+    }
+  }, [])
+  
+  // Use auto-scroll hook
+  useTocAutoScroll(contentContainerRef, {
+    visibleHeadings: visibleHeadingIds,
+    enableAutoScroll: true,
+    scrollBehavior: 'smooth',
+    cooldownDuration: 2000
   })
 
   // Toggle expand/collapse state for a heading
@@ -525,7 +563,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
           elementId: h.id  // Ensure elementId is set for AI headings
         }))
         setAiHeadings(generatedHeadings)
-        setCurrentHeadingMutation(mutation)
+        // setCurrentHeadingMutation(mutation)
         setShowHeadings(true)
         
         // Clear AI-generated collapsed state when new headings are generated
@@ -562,6 +600,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
         onToggleExpanded={(headingId) => toggleExpanded('original', headingId)}
         granularityLevel={granularityLevels.original}
         onGranularityChange={(level) => setGranularityLevels(prev => ({ ...prev, 'original': level }))}
+        headingVisibility={headingVisibility}
       />
     )
   }
@@ -616,6 +655,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
             onToggleExpanded={(headingId) => toggleExpanded('ai-generated', headingId)}
             granularityLevel={granularityLevels['ai-generated']}
             onGranularityChange={(level) => setGranularityLevels(prev => ({ ...prev, 'ai-generated': level }))}
+            headingVisibility={headingVisibility}
           />
         ) : (
           <p className="text-gray-500">No headings generated</p>
@@ -632,13 +672,17 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
     {
       id: 'original',
       label: 'Original',
-      content: renderOriginalTab()
+      content: renderOriginalTab(),
+      onActivate: () => {
+        setActiveTab('original')
+      }
     },
     {
       id: 'ai-generated', 
       label: 'AI-generated',
       content: renderAiGeneratedTab(),
       onActivate: () => {
+        setActiveTab('ai-generated')
         // Auto-click "Generate new headings" button when tab is activated
         if (!showHeadings && !isLoadingHeadings) {
           handleGenerateHeadings()
@@ -648,12 +692,17 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
     {
       id: 'summary',
       label: 'Summary', 
-      content: renderSummaryTab()
+      content: renderSummaryTab(),
+      onActivate: () => {
+        setActiveTab('summary')
+        // SummaryPane handles auto-activation with autoActivate prop
+      }
     }
   ]
 
   return (
     <TabContainer 
+      ref={tabContainerRef}
       tabs={tabs}
       defaultTab="original"
       title="Table of Contents"
