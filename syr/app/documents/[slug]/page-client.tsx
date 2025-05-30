@@ -48,7 +48,6 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
   
   // Handle element visibility changes from DocumentViewer
   const handleElementVisibilityChange = useCallback((elementId: string, isVisible: boolean) => {
-    console.debug('[page-client] Element visibility change:', { elementId, isVisible })
     setElementVisibility(prev => {
       const next = new Map(prev)
       if (isVisible) {
@@ -62,11 +61,6 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
   
   // Calculate heading visibility based on element visibility
   useEffect(() => {
-    console.debug('[page-client] Calculating heading visibility:', {
-      elementVisibilityCount: elementVisibility.size,
-      visibleElements: Array.from(elementVisibility.keys()),
-      allHeadingsCount: allHeadings.length
-    })
     
     const newHeadingVisibility = new Map<string, 'visible' | 'not-visible'>()
     
@@ -78,38 +72,26 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
       // Check if any element in the heading's section is visible
       const isVisible = headingElements.some(element => elementVisibility.has(element.id))
       
-      console.debug(`[page-client] Heading ${heading.id} (${heading.content || 'no content'}) visibility:`, {
-        isVisible,
-        headingElementsCount: headingElements.length,
-        headingElementIds: headingElements.map(el => el.id)
-      })
       
       newHeadingVisibility.set(heading.id, isVisible ? 'visible' : 'not-visible')
     })
     
-    console.debug('[page-client] Final heading visibility map:', {
-      visibleHeadings: Array.from(newHeadingVisibility.entries()).filter(([_, visibility]) => visibility === 'visible').map(([id]) => id),
-      totalHeadings: newHeadingVisibility.size
-    })
     
     setHeadingVisibility(newHeadingVisibility)
   }, [elementVisibility, allHeadings, mutatedDocument])
   
   // ToC scroll trigger function
   const triggerTocScrollToHeading = useCallback((headingId: string) => {
-    console.debug('[page-client] Triggering ToC scroll to heading:', headingId)
     
     // Find the ToC container using a more reliable selector
     const tocContainer = document.querySelector('.table-of-contents, [data-testid="table-of-contents"]')
     if (!tocContainer) {
-      console.warn('[page-client] ToC container not found')
       return
     }
     
     // Find the heading element in the ToC
     const headingElement = tocContainer.querySelector(`[data-heading-id="${headingId}"]`)
     if (!headingElement) {
-      console.warn('[page-client] Heading element not found in ToC:', headingId)
       return
     }
     
@@ -119,7 +101,6 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
       block: 'center'
     })
     
-    console.debug('[page-client] Scrolled ToC to heading:', headingId)
   }, [])
   
   // Find the nearest heading for a clicked element
@@ -148,14 +129,12 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
   
   // Handle element clicks in the document viewer
   const handleElementClick = useCallback((element: DocumentElement) => {
-    console.debug('[page-client] Element clicked:', element.id, element.tag_name)
     
     // Find the nearest heading
     const nearestHeadingId = findNearestHeading(element)
     if (nearestHeadingId) {
       triggerTocScrollToHeading(nearestHeadingId)
     } else {
-      console.debug('[page-client] No heading found for clicked element')
     }
   }, [findNearestHeading, triggerTocScrollToHeading])
 
