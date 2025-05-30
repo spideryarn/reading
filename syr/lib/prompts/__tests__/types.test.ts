@@ -81,17 +81,6 @@ describe('Prompt Execution with Multi-Provider Support', () => {
       })
     })
     
-    it('should execute with legacy signature (with Anthropic client)', async () => {
-      const variables = { name: 'Legacy', value: 99 }
-      const fakeAnthropicClient = { messages: { create: jest.fn() } }
-      
-      const result = await executePrompt(fakeAnthropicClient as any, testTemplate, variables)
-      
-      expect(result).toBe('Generated response')
-      expect(mockGetModel).toHaveBeenCalledWith('test-model')
-      // Should ignore the Anthropic client and use AI SDK
-      expect(fakeAnthropicClient.messages.create).not.toHaveBeenCalled()
-    })
     
     it('should use default model configuration when not specified', async () => {
       const templateNoConfig: PromptTemplate<typeof testSchema> = {
@@ -186,21 +175,4 @@ describe('Prompt Execution with Multi-Provider Support', () => {
     })
   })
   
-  describe('Backward Compatibility', () => {
-    it('should work with all parameter combinations', async () => {
-      const variables = { name: 'Compat', value: 123 }
-      
-      // Test all valid signatures
-      const result1 = await executePrompt(testTemplate, variables)
-      const result2 = await executePrompt({} as any, testTemplate, variables)
-      const result3 = await executePrompt(null as any, testTemplate, variables)
-      
-      expect(result1).toBe('Generated response')
-      expect(result2).toBe('Generated response')
-      expect(result3).toBe('Generated response')
-      
-      // All should call the AI SDK the same way
-      expect(mockGenerateText).toHaveBeenCalledTimes(3)
-    })
-  })
 })

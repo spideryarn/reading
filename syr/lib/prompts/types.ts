@@ -93,18 +93,9 @@ async function executePromptInternal<T extends z.ZodSchema>(
 }
 
 // Execute a prompt with validation and rendering
-// Supports both legacy (with Anthropic client) and new (without client) signatures
 export async function executePrompt<T extends z.ZodSchema>(
-  ...args: [unknown, PromptTemplate<T>, z.infer<T>] | [PromptTemplate<T>, z.infer<T>]
+  template: PromptTemplate<T>,
+  variables: z.infer<T>
 ): Promise<string> {
-  // Check if first argument is the deprecated Anthropic client
-  if (args.length === 3) {
-    // Legacy signature: executePrompt(anthropic, template, variables)
-    const [, template, variables] = args
-    return executePromptInternal(template, variables)
-  } else {
-    // New signature: executePrompt(template, variables)
-    const [template, variables] = args as [PromptTemplate<T>, z.infer<T>]
-    return executePromptInternal(template, variables)
-  }
+  return executePromptInternal(template, variables)
 }
