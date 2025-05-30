@@ -1,9 +1,7 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { File, Gear, TwitterLogo } from '@phosphor-icons/react'
-import { SettingsDialog } from './settings-dialog'
 import { Button } from '@/components/ui/button'
 
 interface DocumentHeaderProps {
@@ -12,21 +10,25 @@ interface DocumentHeaderProps {
 }
 
 export function DocumentHeader({ title, slug }: DocumentHeaderProps) {
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-
   return (
     <>
       <div className="border-b px-4 py-3 flex items-center justify-between min-h-[3rem] bg-white">
         <h1 className="text-xl font-semibold leading-tight text-gray-900">{title}</h1>
         <div className="flex items-center gap-2">
           <Button
-            onClick={() => setIsSettingsOpen(true)}
+            asChild
             variant="ghost"
             className="text-gray-600 hover:text-gray-900"
-            title="Settings"
           >
-            <Gear size={16} />
-            Settings
+            <Link 
+              href="/settings"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Settings"
+            >
+              <Gear size={16} />
+              Settings
+            </Link>
           </Button>
           <Button
             asChild
@@ -56,11 +58,6 @@ export function DocumentHeader({ title, slug }: DocumentHeaderProps) {
           </Button>
         </div>
       </div>
-      
-      <SettingsDialog 
-        isOpen={isSettingsOpen} 
-        onClose={() => setIsSettingsOpen(false)} 
-      />
     </>
   )
 }

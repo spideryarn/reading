@@ -1,9 +1,7 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { File, Gear, TwitterLogo } from '@phosphor-icons/react'
-import { SettingsDialog } from './settings-dialog'
 import { Button } from '@/components/ui/button'
 
 interface DocumentHeaderActionsProps {
@@ -11,8 +9,6 @@ interface DocumentHeaderActionsProps {
 }
 
 export function DocumentHeaderActions({ slug }: DocumentHeaderActionsProps) {
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-
   return (
     <>
       <div className="flex items-center gap-2">
@@ -50,19 +46,20 @@ export function DocumentHeaderActions({ slug }: DocumentHeaderActionsProps) {
         
         {/* Settings */}
         <Button
-          onClick={() => setIsSettingsOpen(true)}
+          asChild
           variant="ghost"
           className="text-gray-600 hover:text-gray-900"
-          title="Settings"
         >
-          <Gear size={16} />
+          <Link 
+            href="/settings"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Settings"
+          >
+            <Gear size={16} />
+          </Link>
         </Button>
       </div>
-      
-      <SettingsDialog 
-        isOpen={isSettingsOpen} 
-        onClose={() => setIsSettingsOpen(false)} 
-      />
     </>
   )
 }
