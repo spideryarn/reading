@@ -63,6 +63,7 @@ describe('HeadingTree', () => {
     { id: 'h2-a_a', text: 'a_a', level: 2, elementId: 'syr-h2-a_a' },
     { id: 'h2-a_b', text: 'a_b', level: 2, elementId: 'syr-h2-a_b' },
     { id: 'h3-a_b_a', text: 'a_b_a', level: 3, elementId: 'syr-h3-a_b_a' },
+    { id: 'h4-a_b_a_a', text: 'a_b_a_a', level: 4, elementId: 'syr-h4-a_b_a_a' },
     { id: 'h2-a_c', text: 'a_c', level: 2, elementId: 'syr-h2-a_c' }
   ]
   
@@ -78,7 +79,9 @@ describe('HeadingTree', () => {
     getTooltipContent: jest.fn(() => <div>Tooltip</div>),
     handleTooltipShow: jest.fn(),
     collapsedIds: new Set<string>(),
-    onToggleExpanded: jest.fn()
+    onToggleExpanded: jest.fn(),
+    granularityLevel: 6,
+    onGranularityChange: jest.fn()
   }
   
   it('should render all headings when none are collapsed', () => {
@@ -88,15 +91,16 @@ describe('HeadingTree', () => {
     expect(screen.getByText('a_a')).toBeInTheDocument()
     expect(screen.getByText('a_b')).toBeInTheDocument()
     expect(screen.getByText('a_b_a')).toBeInTheDocument()
+    expect(screen.getByText('a_b_a_a')).toBeInTheDocument()
     expect(screen.getByText('a_c')).toBeInTheDocument()
   })
   
   it('should show chevron buttons for non-leaf nodes', () => {
     render(<HeadingTree {...defaultProps} />)
     
-    // Should have chevrons for 'a' and 'a_b' (they have children)
+    // Should have chevrons for 'a', 'a_b', and 'a_b_a' (they have children)
     const buttons = screen.getAllByRole('button', { name: /collapse section/i })
-    expect(buttons).toHaveLength(2)
+    expect(buttons).toHaveLength(3)
   })
   
   it('should toggle expand/collapse when chevron is clicked', () => {
@@ -142,6 +146,83 @@ describe('HeadingTree', () => {
       level: 2,
       elementId: 'syr-h2-a_a',
       children: []
+    })
+  })
+  
+  describe('granularity filtering', () => {
+    it('should hide headings beyond granularity level', () => {
+      render(<HeadingTree {...defaultProps} granularityLevel={2} />)
+      
+      // Should see level 1 and 2 headings
+      expect(screen.getByText('a')).toBeInTheDocument()
+      expect(screen.getByText('a_a')).toBeInTheDocument()
+      expect(screen.getByText('a_b')).toBeInTheDocument()
+      expect(screen.getByText('a_c')).toBeInTheDocument()
+      
+      // Should NOT see level 3 heading
+      expect(screen.queryByText('a_b_a')).not.toBeInTheDocument()
+    })
+    
+    it('should show hidden count when descendants are filtered', () => {
+      render(<HeadingTree {...defaultProps} granularityLevel={2} />)
+      
+      // a_b should show "+2 hidden" (a_b_a and its child a_b_a_a are both hidden)
+      const a_b_element = screen.getByText('a_b').parentElement
+      expect(a_b_element).toHaveTextContent('(+2 hidden)')
+    })
+    
+    it('should not show hidden count when zero', () => {
+      render(<HeadingTree {...defaultProps} granularityLevel={3} />)
+      
+      // a_b_a should NOT show hidden count (only a_b_a_a is hidden, but it shows "+1 hidden")
+      const a_b_a_parent = screen.getByText('a_b').parentElement
+      expect(a_b_a_parent).not.toHaveTextContent('(+0 hidden)')
+    })
+    
+    it('should cap hidden count at 99+', () => {
+      // Create a deep structure with 100+ descendants
+      const deepHeadings: Heading[] = [
+        { id: 'h1', text: 'Root', level: 1, elementId: 'syr-h1' }
+      ]
+      for (let i = 0; i < 100; i++) {
+        deepHeadings.push({
+          id: `h2-${i}`,
+          text: `Child ${i}`,
+          level: 2,
+          elementId: `syr-h2-${i}`
+        })
+      }
+      
+      render(<HeadingTree {...defaultProps} headings={deepHeadings} granularityLevel={1} />)
+      
+      const rootElement = screen.getByText('Root').parentElement
+      expect(rootElement).toHaveTextContent('(+99+ hidden)')
+    })
+    
+    it('should render granularity slider', () => {
+      render(<HeadingTree {...defaultProps} />)
+      
+      const slider = screen.getByRole('slider')
+      expect(slider).toBeInTheDocument()
+      expect(slider).toHaveAttribute('min', '1')
+      expect(slider).toHaveAttribute('max', '4') // max level in test data (h4-a_b_a_a)
+      expect(slider).toHaveValue('4') // granularity level clamped to max depth
+    })
+    
+    it('should call onGranularityChange when slider changes', () => {
+      const onGranularityChange = jest.fn()
+      render(<HeadingTree {...defaultProps} onGranularityChange={onGranularityChange} />)
+      
+      const slider = screen.getByRole('slider')
+      fireEvent.change(slider, { target: { value: '2' } })
+      
+      expect(onGranularityChange).toHaveBeenCalledWith(2)
+    })
+    
+    it('should display current granularity level', () => {
+      render(<HeadingTree {...defaultProps} granularityLevel={3} />)
+      
+      expect(screen.getByText('Showing levels 1-3')).toBeInTheDocument()
     })
   })
 })

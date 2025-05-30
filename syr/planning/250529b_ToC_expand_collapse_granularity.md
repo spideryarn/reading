@@ -89,6 +89,7 @@ The ToC has two tabs (Original and AI-generated) that currently use duplicate re
   - [ ] Test that "+0 hidden" is suppressed
   - [ ] Test "99+" capping for deep structures
 - [ ] Use subagent to test granularity controls in browser
+- [ ] Update this planning doc with progress
 - [ ] Git commit: "feat: add per-tab granularity slider with hidden counts"
 
 ### Stage 4: Documentation and Final Testing

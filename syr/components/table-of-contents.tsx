@@ -65,6 +65,12 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
     'original': new Set<string>(),
     'ai-generated': new Set<string>()
   })
+  
+  // Granularity levels for each tab
+  const [granularityLevels, setGranularityLevels] = useState<Record<'original' | 'ai-generated', number>>({
+    'original': 3,
+    'ai-generated': 3
+  })
 
   // Toggle expand/collapse state for a heading
   const toggleExpanded = (tabId: 'original' | 'ai-generated', headingId: string) => {
@@ -81,6 +87,12 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
       newStates[tabId] = tabState
       return newStates
     })
+  }
+  
+  // Calculate maximum heading depth from headings array
+  const getMaxDepth = (headingsList: Heading[]) => {
+    if (headingsList.length === 0) return 1
+    return Math.max(...headingsList.map(h => h.level))
   }
 
   useEffect(() => {
@@ -151,6 +163,28 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
       extractHeadings()
     }
   }, [content, elements, mutatedDocument, activeMutationType])
+  
+  // Update default granularity for original headings
+  useEffect(() => {
+    if (headings.length > 0) {
+      const maxDepth = getMaxDepth(headings)
+      setGranularityLevels(prev => ({
+        ...prev,
+        'original': Math.min(3, maxDepth)
+      }))
+    }
+  }, [headings])
+  
+  // Update default granularity for AI headings
+  useEffect(() => {
+    if (aiHeadings.length > 0) {
+      const maxDepth = getMaxDepth(aiHeadings)
+      setGranularityLevels(prev => ({
+        ...prev,
+        'ai-generated': Math.min(3, maxDepth)
+      }))
+    }
+  }, [aiHeadings])
 
   // Effect: hide or show original headings depending on active mutation
   useEffect(() => {
@@ -487,6 +521,8 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
         handleTooltipShow={handleTooltipShow}
         collapsedIds={collapsedStates.original}
         onToggleExpanded={(headingId) => toggleExpanded('original', headingId)}
+        granularityLevel={granularityLevels.original}
+        onGranularityChange={(level) => setGranularityLevels(prev => ({ ...prev, 'original': level }))}
       />
     )
   }
@@ -542,6 +578,8 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
             handleTooltipShow={handleTooltipShow}
             collapsedIds={collapsedStates['ai-generated']}
             onToggleExpanded={(headingId) => toggleExpanded('ai-generated', headingId)}
+            granularityLevel={granularityLevels['ai-generated']}
+            onGranularityChange={(level) => setGranularityLevels(prev => ({ ...prev, 'ai-generated': level }))}
           />
         ) : (
           <p className="text-gray-500">No headings generated</p>

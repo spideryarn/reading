@@ -31,6 +31,8 @@ interface HeadingTreeProps {
   handleTooltipShow: (elementId: string, headingText: string) => void
   collapsedIds: Set<string>
   onToggleExpanded: (headingId: string) => void
+  granularityLevel: number
+  onGranularityChange: (level: number) => void
 }
 
 /**
@@ -83,6 +85,37 @@ function getIndentClass(level: number): string {
 }
 
 /**
+ * Count total descendants that would be hidden by granularity filtering
+ */
+function countHiddenDescendants(node: HeadingNode, granularityLevel: number): number {
+  let count = 0
+  
+  // Count all descendants recursively
+  for (const child of node.children) {
+    if (child.level > granularityLevel) {
+      // This child and all its descendants are hidden
+      count += 1 + countTotalDescendants(child)
+    } else {
+      // This child is visible, but some of its descendants might be hidden
+      count += countHiddenDescendants(child, granularityLevel)
+    }
+  }
+  
+  return count
+}
+
+/**
+ * Count total number of descendants (all levels)
+ */
+function countTotalDescendants(node: HeadingNode): number {
+  let count = 0
+  for (const child of node.children) {
+    count += 1 + countTotalDescendants(child)
+  }
+  return count
+}
+
+/**
  * Render a single heading node and its children recursively
  */
 function HeadingNodeComponent({
@@ -92,7 +125,8 @@ function HeadingNodeComponent({
   getTooltipContent,
   handleTooltipShow,
   collapsedIds,
-  onToggleExpanded
+  onToggleExpanded,
+  granularityLevel
 }: {
   node: HeadingNode
   themeColors: ThemeColors
@@ -101,9 +135,19 @@ function HeadingNodeComponent({
   handleTooltipShow: (elementId: string, headingText: string) => void
   collapsedIds: Set<string>
   onToggleExpanded: (headingId: string) => void
+  granularityLevel: number
 }) {
   const hasChildren = node.children.length > 0
   const isExpanded = !collapsedIds.has(node.id)
+  
+  // Don't render if this node is beyond the granularity level
+  if (node.level > granularityLevel) {
+    return null
+  }
+  
+  // Calculate hidden count for this node
+  const hiddenCount = countHiddenDescendants(node, granularityLevel)
+  const displayHiddenCount = hiddenCount > 0 ? (hiddenCount > 99 ? '99+' : hiddenCount.toString()) : null
   
   return (
     <>
@@ -145,6 +189,11 @@ function HeadingNodeComponent({
                 <span className={`text-sm text-gray-700 ${themeColors.text}`}>
                   {node.text}
                 </span>
+                {displayHiddenCount && (
+                  <span className="ml-2 text-xs text-gray-500">
+                    (+{displayHiddenCount} hidden)
+                  </span>
+                )}
               </div>
             </Tooltip.Trigger>
             <Tooltip.Portal>
@@ -179,6 +228,7 @@ function HeadingNodeComponent({
               handleTooltipShow={handleTooltipShow}
               collapsedIds={collapsedIds}
               onToggleExpanded={onToggleExpanded}
+              granularityLevel={granularityLevel}
             />
           ))}
         </div>
@@ -198,10 +248,18 @@ export function HeadingTree({
   getTooltipContent,
   handleTooltipShow,
   collapsedIds,
-  onToggleExpanded
+  onToggleExpanded,
+  granularityLevel,
+  onGranularityChange
 }: HeadingTreeProps) {
   // Build tree structure from flat headings array
   const headingTree = useMemo(() => buildHeadingTree(headings), [headings])
+  
+  // Calculate max depth for slider
+  const maxDepth = useMemo(() => {
+    if (headings.length === 0) return 1
+    return Math.max(...headings.map(h => h.level))
+  }, [headings])
 
   if (headings.length === 0) {
     return (
@@ -212,7 +270,35 @@ export function HeadingTree({
   }
 
   return (
-    <nav className="space-y-1">
+    <div className="space-y-4">
+      {/* Granularity Slider */}
+      <div className="px-4 pt-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-medium text-gray-600">
+            Showing levels 1-{Math.min(granularityLevel, maxDepth)}
+          </span>
+        </div>
+        <input
+          type="range"
+          min="1"
+          max={maxDepth}
+          value={Math.min(granularityLevel, maxDepth)}
+          onChange={(e) => onGranularityChange(parseInt(e.target.value))}
+          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+          style={{
+            background: maxDepth > 1 
+              ? `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${((Math.min(granularityLevel, maxDepth) - 1) / (maxDepth - 1)) * 100}%, #E5E7EB ${((Math.min(granularityLevel, maxDepth) - 1) / (maxDepth - 1)) * 100}%, #E5E7EB 100%)`
+              : '#3B82F6'
+          }}
+        />
+        <div className="flex justify-between mt-1">
+          <span className="text-xs text-gray-400">1</span>
+          <span className="text-xs text-gray-400">{maxDepth}</span>
+        </div>
+      </div>
+      
+      {/* Headings Navigation */}
+      <nav className="space-y-1 px-4">
       {headingTree.map((node) => (
         <HeadingNodeComponent
           key={node.id}
@@ -223,8 +309,10 @@ export function HeadingTree({
           handleTooltipShow={handleTooltipShow}
           collapsedIds={collapsedIds}
           onToggleExpanded={onToggleExpanded}
+          granularityLevel={granularityLevel}
         />
       ))}
-    </nav>
+      </nav>
+    </div>
   )
 }

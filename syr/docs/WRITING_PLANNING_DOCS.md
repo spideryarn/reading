@@ -59,9 +59,9 @@ Don't include a `Date` section at the top since it's implicit from the filename.
 - Explicitly add tasks for writing automated tests, usually before writing code. (Perhaps one or two end-to-end tests first, then gradually adding more detailed tests as complexity grows). Explicitly add tasks for running the automated tests before ending each stage. see `docs/FRONTEND_TESTING.md`
 - If there are actions that the user needs to do, add those in too, so we can track progress and remind the user.
 - If this is a major piece of work, ask the user whether we should have an early action to create a `yyMMdd[letter]_complex_project` Git branch (and move over any changes). If so, then add a final action to merge that back into `main`.
-- Add actions to update the planning doc every so often with progress so far (perhaps at the end of every stage)
+- Add actions to update the planning doc with progress so far at the end of every stage
 - Add actions to Git commit (perhaps at the end of every stage, perhaps use a subagent) - follow instructions in `docs/GIT_COMMITS.md`
-- Add actions to stop & review with user where appropriate, e.g. when we get to a good stopping point, check changes to the user interface, etc
+- Add actions to stop & review with user where appropriate, e.g. when we get to a good stopping point, to manually check changes to the user interface, etc
 - Add actions to search the web where appropriate, e.g. when debugging, determining best practices, making use of 3rd-party libraries, etc
 - Add actions to update relevant `docs/*.md` evergreen docs (see `docs/WRITING_EVERGREEN_DOCS`). If you think we need a new evergreen-doc, ask the user
 - Explicitly say to use subagents for encapsulated tasks or where the task will create a lot of verbose content, e.g. checking for errors or browser console output with Playwright MCP, doing research
