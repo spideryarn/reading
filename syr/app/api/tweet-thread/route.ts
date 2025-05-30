@@ -58,8 +58,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate response structure
-    const validatedResponse = tweetThreadResponseSchema.parse(parsedResponse)
+    // Validate response structure with graceful degradation
+    let validatedResponse
+    try {
+      validatedResponse = tweetThreadResponseSchema.parse(parsedResponse)
+    } catch (validationError) {
+      console.warn('Tweet thread validation failed, applying graceful degradation:', validationError)
+      
+      // Apply graceful fixes to the response
+      const fixedResponse = {
+        ...parsedResponse,
+        tweets: parsedResponse.tweets?.map((tweet: { number?: number; text?: string }, index: number) => ({
+          number: tweet.number || index + 1,
+          text: typeof tweet.text === 'string' && tweet.text.length > 270 
+            ? tweet.text.substring(0, 267) + '...' 
+            : tweet.text || 'Error processing tweet'
+        })) || [],
+        thread_summary: parsedResponse.thread_summary || 'Generated tweet thread'
+      }
+      
+      // Try validation again with fixed response
+      validatedResponse = tweetThreadResponseSchema.parse(fixedResponse)
+    }
 
     // Add metadata about processing
     const response = {

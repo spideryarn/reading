@@ -21,7 +21,7 @@ import { loadPromptTemplateFromCaller } from '../types'
 // Define the tweet schema for individual tweets
 export const tweetSchema = z.object({
   number: z.number().positive(),
-  text: z.string().max(280, 'Tweet must be 280 characters or less')
+  text: z.string().max(270, 'Tweet must be 270 characters or less')
 })
 
 // Schema for the tweet thread response

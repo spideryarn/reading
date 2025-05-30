@@ -63,7 +63,8 @@ Don't include a `Date` section at the top since it's implicit from the filename.
 - Add actions to Git commit (perhaps at the end of every stage, perhaps use a subagent) - follow instructions in `docs/GIT_COMMITS.md`
 - Add actions to stop & review with user where appropriate, e.g. when we get to a good stopping point, to manually check changes to the user interface, etc
 - Add actions to search the web where appropriate, e.g. when debugging, determining best practices, making use of 3rd-party libraries, etc
-- Add actions to update relevant `docs/*.md` evergreen docs (see `docs/WRITING_EVERGREEN_DOCS`). If you think we need a new evergreen-doc, ask the user
+- Add actions to update relevant `docs/*.md` evergreen docs (see `docs/WRITING_EVERGREEN_DOCS`). 
+- If you think we need a new evergreen-doc, ask the user
 - Explicitly say to use subagents for encapsulated tasks or where the task will create a lot of verbose content, e.g. checking for errors or browser console output with Playwright MCP, doing research
 - Add a final action to move the doc to `planning/finished/` and commit.
 
@@ -87,4 +88,5 @@ Add any other important context here, e.g.
 - Summary of web searching
 - Example data
 - Code snippets
+- Alternative options that were considered but discarded, along with the desiderata/rationale for why
 - Other information that should be capture but doesn't fit neatly in the above sections, e.g. if there was a lengthy conversation, include a lot of richness/context/background/quotes to make sure it gets captured
