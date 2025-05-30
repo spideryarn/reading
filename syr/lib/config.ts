@@ -106,3 +106,22 @@ export const VISIBILITY_CONFIG = {
   ROOT_MARGIN: '0px',      // For precise viewport detection
   THRESHOLD: 0.01,         // Minimum visible ratio to count as visible (1%)
 } as const
+
+// Site configuration
+export const SITE_CONFIG = {
+  // Base URL for the application
+  // In development: http://localhost:$PORT
+  // In production: https://www.spideryarn.com
+  get BASE_URL() {
+    if (typeof window !== 'undefined') {
+      // Client-side: use window.location
+      return window.location.origin
+    } else {
+      // Server-side: construct from environment
+      const port = process.env.PORT || '3000'
+      return process.env.NODE_ENV === 'production' 
+        ? 'https://www.spideryarn.com'
+        : `http://localhost:${port}`
+    }
+  }
+} as const

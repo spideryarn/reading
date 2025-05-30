@@ -44,7 +44,7 @@ Debugging resources:
 - Browser debugging: Playwright MCP (console logs, network requests, screenshots)
 - Test files: `src/lib/*/tests/` and `components/__tests__/`
 - Database: `supabase/migrations/` and `docs/DATABASE_*.md`
-- Architecture: `docs/ARCHITECTURE.md`, `docs/TROUBLESHOOTING.md`
+- Architecture: `docs/ARCHITECTURE.md`
 - Recent decisions: `planning/*.md` docs
 
 

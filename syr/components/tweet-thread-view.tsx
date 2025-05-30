@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { usePathname } from 'next/navigation'
 import { TweetCard } from './tweet-card'
 import { Loading } from '@/components/ui/loading'
 import { AlertWithIcon } from '@/components/ui/alert'
-import { Copy, Check } from '@phosphor-icons/react'
+import { Copy, Check, Cloud } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
+import { SITE_CONFIG } from '@/lib/config'
 
 interface Tweet {
   text: string
@@ -26,9 +28,10 @@ interface TweetThreadResponse {
 interface TweetThreadViewProps {
   documentContent: string
   isActive?: boolean
+  onStateChange?: (isLoading: boolean, hasGenerated: boolean) => void
 }
 
-export function TweetThreadView({ documentContent, isActive = false }: TweetThreadViewProps) {
+export function TweetThreadView({ documentContent, isActive = false, onStateChange }: TweetThreadViewProps) {
   const [tweets, setTweets] = useState<Tweet[]>([])
   const [summary, setSummary] = useState<string>('')
   const [metadata, setMetadata] = useState<TweetThreadResponse['metadata'] | null>(null)
@@ -36,6 +39,7 @@ export function TweetThreadView({ documentContent, isActive = false }: TweetThre
   const [error, setError] = useState<string | null>(null)
   const [hasGenerated, setHasGenerated] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
+  const [isBlueskyPressed, setIsBlueskyPressed] = useState(false)
 
   const generateTweetThread = useCallback(async () => {
     if (!documentContent.trim()) {
@@ -75,10 +79,15 @@ export function TweetThreadView({ documentContent, isActive = false }: TweetThre
     }
   }, [documentContent])
 
+  const pathname = usePathname()
+  
   const copyToClipboard = useCallback(async () => {
     if (tweets.length === 0) return
 
     try {
+      // Create attribution header
+      const attribution = `Tweet thread provided by Spideryarn Reading - ${SITE_CONFIG.BASE_URL}${pathname}`
+      
       // Format tweets as Markdown
       const markdownContent = tweets.map((tweet, index) => {
         return `${index + 1}. ${tweet.text}`
@@ -86,8 +95,8 @@ export function TweetThreadView({ documentContent, isActive = false }: TweetThre
 
       // Add thread summary if available
       const fullContent = summary 
-        ? `# Tweet Thread Summary\n\n${summary}\n\n# Thread\n\n${markdownContent}`
-        : `# Tweet Thread\n\n${markdownContent}`
+        ? `${attribution}\n\n# Tweet Thread Summary\n\n${summary}\n\n# Thread\n\n${markdownContent}`
+        : `${attribution}\n\n# Tweet Thread\n\n${markdownContent}`
 
       await navigator.clipboard.writeText(fullContent)
       setIsCopied(true)
@@ -97,7 +106,17 @@ export function TweetThreadView({ documentContent, isActive = false }: TweetThre
     } catch (err) {
       console.error('Failed to copy to clipboard:', err)
     }
-  }, [tweets, summary])
+  }, [tweets, summary, pathname])
+
+  const handleBlueskyPost = useCallback(() => {
+    setIsBlueskyPressed(true)
+    
+    // Show a simple alert for now
+    alert('Coming soon! Bluesky integration is planned for a future release.')
+    
+    // Reset the pressed state after a brief delay
+    setTimeout(() => setIsBlueskyPressed(false), 1000)
+  }, [])
 
   // Auto-generate when tab becomes active (similar to glossary pattern)
   useEffect(() => {
@@ -105,6 +124,11 @@ export function TweetThreadView({ documentContent, isActive = false }: TweetThre
       generateTweetThread()
     }
   }, [isActive, hasGenerated, isLoading, generateTweetThread])
+
+  // Notify parent of state changes
+  useEffect(() => {
+    onStateChange?.(isLoading, hasGenerated)
+  }, [isLoading, hasGenerated, onStateChange])
 
   if (isLoading) {
     return <Loading text="Generating tweet thread..." spinnerSize={20} />
@@ -140,34 +164,62 @@ export function TweetThreadView({ documentContent, isActive = false }: TweetThre
             <span>🧵 Tweet Thread</span>
           </div>
           
-          <Button
-            onClick={copyToClipboard}
-            variant="outline"
-            size="sm"
-            className={`inline-flex items-center space-x-2 transition-all duration-200 ${
-              isCopied 
-                ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100' 
-                : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700'
-            }`}
-            disabled={tweets.length === 0}
-          >
-            {isCopied ? (
-              <>
-                <Check size={16} className="text-green-600" />
-                <span>Copied!</span>
-              </>
-            ) : (
-              <>
-                <Copy size={16} />
-                <span>Copy as Markdown</span>
-              </>
-            )}
-          </Button>
+          <div className="inline-flex items-center space-x-2">
+            <Button
+              onClick={copyToClipboard}
+              variant="outline"
+              size="sm"
+              className={`inline-flex items-center space-x-2 transition-all duration-200 ${
+                isCopied 
+                  ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100' 
+                  : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700'
+              }`}
+              disabled={tweets.length === 0}
+            >
+              {isCopied ? (
+                <>
+                  <Check size={16} className="text-green-600" />
+                  <span>Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy size={16} />
+                  <span>Copy as Markdown</span>
+                </>
+              )}
+            </Button>
+            
+            <Button
+              onClick={handleBlueskyPost}
+              variant="outline"
+              size="sm"
+              className={`inline-flex items-center space-x-2 transition-all duration-200 ${
+                isBlueskyPressed 
+                  ? 'bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100' 
+                  : 'bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 border-sky-400 text-white shadow-md'
+              }`}
+              disabled={tweets.length === 0}
+              title="Post thread to Bluesky (Coming soon!)"
+            >
+              <Cloud size={16} className={isBlueskyPressed ? 'text-sky-600' : 'text-white'} />
+              <span>Post to Bluesky</span>
+            </Button>
+          </div>
         </div>
         {metadata && (
-          <div className="text-sm text-gray-600 font-medium">
-            {metadata.tweet_count || 0} tweets • {(metadata.content_length || 0).toLocaleString()} characters
-            {metadata.truncated && ' (content was truncated)'}
+          <div className="text-sm text-gray-600 font-medium space-y-1">
+            <div className="flex items-center justify-center space-x-4">
+              <span>{metadata.tweet_count || 0} tweets</span>
+              <span>•</span>
+              <span>{tweets.reduce((total, tweet) => total + tweet.text.length, 0).toLocaleString()} chars in thread</span>
+              <span>•</span>
+              <span>{(metadata.content_length || 0).toLocaleString()} chars in document</span>
+            </div>
+            {metadata.truncated && (
+              <div className="text-xs text-amber-600">
+                Original document was truncated for processing
+              </div>
+            )}
           </div>
         )}
       </div>

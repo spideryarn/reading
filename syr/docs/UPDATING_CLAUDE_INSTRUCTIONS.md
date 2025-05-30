@@ -31,7 +31,6 @@ CLAUDE.md serves as the primary orientation document for AI agents working on th
 ### Navigation Signposts
 - **Architecture docs** - Link to `docs/ARCHITECTURE.md` for detailed decisions
 - **Planning docs** - Point to `planning/*.md` for recent decisions
-- **Troubleshooting** - Reference `docs/TROUBLESHOOTING.md`
 - **Specific domains** - Database, prompts, UI components documentation
 
 ### Operational Guidelines
