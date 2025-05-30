@@ -30,7 +30,7 @@ They might be organised into something like the following sections. Use your jud
 
 ### See also
 
-Bullet-point list of other relevant docs, code, webpages, or other resources that provide related information, or more detail. Provide a 1-sentence summary or explanation of how each one is relevant. 
+Bullet-point list of other relevant docs, code, urls, or other resources that provide related information, or more detail. Provide a 1-sentence summary or explanation of how each one is relevant. 
 
 Examples of good cross-references:
 - `docs/WRITING_PLANNING_DOCS.md` - for information about writing ephemeral decision/planning docs
@@ -43,7 +43,7 @@ Add references to and from this new doc (e.g. in relevant code, planning docs in
 #### Cross-Reference Best Practices
 
 - **Update `docs/DOCUMENTATION_ORGANISATION.md`
-- **Link to canonical source** for detailed information rather than duplicating
+- **Link to canonical source** (e.g. functions, files, docs, urls, etc) for detailed information rather than duplicating
 - **Provide 1-sentence context** with each link explaining its relevance
 - **Use relative paths** for internal documentation links
 - **Avoid content duplication** - if information exists elsewhere, link to it
