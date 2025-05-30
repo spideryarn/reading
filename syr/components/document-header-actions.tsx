@@ -16,28 +16,7 @@ export function DocumentHeaderActions({ slug }: DocumentHeaderActionsProps) {
   return (
     <>
       <div className="flex items-center gap-2">
-        <Button
-          onClick={() => setIsSettingsOpen(true)}
-          variant="ghost"
-          className="text-gray-600 hover:text-gray-900"
-          title="Settings"
-        >
-          <Gear size={16} />
-          Settings
-        </Button>
-        <Button
-          asChild
-          variant="ghost"
-          className="text-gray-600 hover:text-gray-900"
-        >
-          <Link 
-            href={`/documents/${slug}/tweets`}
-            title="View as tweet thread"
-          >
-            <TwitterLogo size={16} />
-            Tweet thread
-          </Link>
-        </Button>
+        {/* View original */}
         <Button
           asChild
           variant="ghost"
@@ -46,10 +25,37 @@ export function DocumentHeaderActions({ slug }: DocumentHeaderActionsProps) {
           <Link 
             href={`/api/documents/${slug}/original`}
             title="View original HTML"
+            target="_blank"
+            rel="noopener noreferrer"
           >
             <File size={16} />
-            View Original
           </Link>
+        </Button>
+        
+        {/* Tweet thread */}
+        <Button
+          asChild
+          variant="ghost"
+          className="text-gray-600 hover:text-gray-900"
+        >
+          <Link 
+            href={`/documents/${slug}/tweets`}
+            title="View as tweet thread"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <TwitterLogo size={16} />
+          </Link>
+        </Button>
+        
+        {/* Settings */}
+        <Button
+          onClick={() => setIsSettingsOpen(true)}
+          variant="ghost"
+          className="text-gray-600 hover:text-gray-900"
+          title="Settings"
+        >
+          <Gear size={16} />
         </Button>
       </div>
       
