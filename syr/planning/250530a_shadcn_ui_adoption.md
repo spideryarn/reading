@@ -122,6 +122,17 @@ User priorities:
   - **Dependency**: Requires completion of Stages 2-3 above (Button, Dialog components working)
   - **Benefit**: Better screen space utilisation and responsive layout for three-pane interface
 
+### Future Stage: Animations for Expand/Collapse
+- [ ] Add smooth animations to expand/collapse functionality across the application
+  - Install shadcn/ui Collapsible component (built on @radix-ui/react-collapsible)
+  - Apply to Table of Contents expand/collapse in `components/heading-tree.tsx`
+  - Apply to Document Summary expand/collapse in `components/document-summary.tsx`
+  - Apply to any other expand/collapse UI patterns in the codebase
+  - **Dependency**: Requires completion of Stage 2 (initial shadcn/ui setup)
+  - **Benefit**: Professional, smooth animations with zero custom animation code
+  - **Implementation**: Simple wrapper components with built-in height animations
+  - See `planning/250529b_table_of_contents_expand_collapse_granularity.md` for ToC context
+
 ## Appendix
 
 ### Current UI Patterns Analysis

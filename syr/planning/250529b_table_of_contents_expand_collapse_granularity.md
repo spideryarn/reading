@@ -1,9 +1,10 @@
 # ToC Expand/Collapse and Granularity Control
 
-**Progress**: Stages 1-3 completed (30/05/2025)
-- Stage 1: HeadingTree component created and integrated
-- Stage 2: Expand/collapse functionality with persistent state
-- Stage 3: Granularity slider with hidden counts
+**Progress**: All implementation stages completed (30/05/2025)
+- Stage 1: HeadingTree component created and integrated ✓
+- Stage 2: Expand/collapse functionality with persistent state ✓
+- Stage 3: Granularity slider with hidden counts ✓
+- Stage 4: Documentation and final testing ✓
 
 ## Goal, context
 
@@ -108,6 +109,9 @@ The ToC has two tabs (Original and AI-generated) that currently use duplicate re
 
 ### Future enhancements stage:
 - [ ] Animation transitions for expand/collapse actions
+  - See `planning/250530a_shadcn_ui_adoption.md` - "Future Stage: Animations for Expand/Collapse"
+  - Will use shadcn/ui Collapsible component for smooth height animations
+  - Zero custom animation code required
 
 ## Appendix
 
