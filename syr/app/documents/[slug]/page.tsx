@@ -1,11 +1,12 @@
 import { readFile } from 'fs/promises'
 import { readdirSync } from 'fs'
 import { join } from 'path'
-import { DocumentHeader } from '@/components/document-header'
+import { AppHeader } from '@/components/app-header'
 import { DocumentParser } from '@/lib/services/document-parser'
 import { v4 as uuidv4 } from 'uuid'
 import DocumentPageClient from './page-client'
 import { MutationProvider } from '@/lib/context/mutation-context'
+import { DocumentHeaderActions } from '@/components/document-header-actions'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -55,7 +56,10 @@ export default async function DocumentPage({ params }: PageProps) {
 
   return (
     <div className="h-screen flex flex-col">
-      <DocumentHeader title={doc.title} slug={slug} />
+      <AppHeader 
+        title={doc.title}
+        actions={<DocumentHeaderActions slug={slug} />}
+      />
       <MutationProvider initialDocument={elements}>
         <DocumentPageClient 
           html={html}

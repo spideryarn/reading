@@ -27,7 +27,7 @@ export function AppHeader({
     )} style={{ height: 'var(--header-height)' }}>
       <div className="px-4 h-full">
         <div className="flex items-center justify-between h-full">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <Link 
               href="/" 
               className="flex items-center space-x-2 transition-transform duration-200 hover:scale-105"

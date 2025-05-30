@@ -51,15 +51,10 @@ export default async function TweetThreadPage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       <AppHeader 
-        title="Tweet Thread"
+        title={`${doc.title} - Tweet Thread`}
         backLink={`/documents/${slug}`}
         backText="Back to document"
       />
-
-      {/* Document title */}
-      <div className="max-w-4xl mx-auto px-6 py-4 bg-white border-b">
-        <div className="text-sm text-gray-600">{doc.title}</div>
-      </div>
 
       {/* Content */}
       <div className="max-w-2xl mx-auto px-6 py-8">
