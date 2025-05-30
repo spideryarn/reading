@@ -19,13 +19,15 @@ The glossary feature extracts key entities from documents using LLM analysis and
 
 ## Entity extraction
 
-The system uses Claude Sonnet 4 to analyse document content and extract relevant entities. The LLM prompt instructs the model to:
+The system supports multiple LLM providers (Claude and Gemini) for analysing document content and extracting relevant entities. The LLM prompt instructs the model to:
 
 - Identify key terms worth including in a glossary
 - Categorise entities by ontology type (person, concept, place, etc.)
 - Provide brief and detailed explanations in Markdown format
 - Search the web if needed for accurate information
 - Return entities ordered by first occurrence in the document
+
+**Multi-Provider Support**: Uses the centralised provider-tier system from `lib/config.ts`. Switch models using the `LLM_MODEL` environment variable (e.g., `google-cheap` for development, `anthropic-balanced` for production). See [docs/LLM_MODELS_REFERENCE.md](LLM_MODELS_REFERENCE.md) for model comparison.
 
 ## Entity schema
 

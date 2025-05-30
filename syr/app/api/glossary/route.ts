@@ -2,13 +2,8 @@
 // See docs/AI_GLOSSARY.md for architecture and usage patterns
 
 import { NextRequest, NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
 import { executePrompt } from '@/lib/prompts/types'
 import { glossaryPrompt, glossaryPromptInputSchema, glossaryResponseSchema } from '@/lib/prompts/templates/glossary'
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Use real LLM processing - no fallback
-    const llmResponse = await executePrompt(anthropic, glossaryPrompt, { 
+    const llmResponse = await executePrompt(glossaryPrompt, { 
       content: processedContent,
       already_entities 
     })

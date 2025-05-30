@@ -73,20 +73,15 @@ Most prompt execution happens directly in API routes. Create `/app/api/my-featur
 
 ```typescript
 import { NextRequest, NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
 import { executePrompt } from '@/lib/prompts/types'
 import { myFeaturePrompt } from '@/lib/prompts/templates/my-feature'
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
-    // executePrompt handles Zod validation and template rendering
-    const result = await executePrompt(anthropic, myFeaturePrompt, {
+    // executePrompt handles Zod validation, template rendering, and multi-provider support
+    const result = await executePrompt(myFeaturePrompt, {
       content: body.content,
       contentType: body.contentType,
       outputFormat: body.outputFormat,
@@ -115,39 +110,77 @@ export async function POST(request: NextRequest) {
 
 ## Model Configuration
 
-AI model settings are centralised in `/lib/config.ts` (see [ARCHITECTURE.md](ARCHITECTURE.md) for rationale):
+AI model settings use a provider-tier system centralised in `/lib/config.ts` (see [ARCHITECTURE.md](ARCHITECTURE.md) for rationale):
 
 ```typescript
-// Override with AI_MODEL environment variable for development/testing
-// Example: AI_MODEL=claude-3-haiku-20240307 npm run dev (faster & cheaper for dev)
+// Provider-tier model keys for easy configuration
+// Format: {provider}-{tier} where tier is cheap/balanced/expensive
+export type ProviderTierKey = 
+  | 'anthropic-cheap' 
+  | 'anthropic-balanced' 
+  | 'anthropic-expensive'
+  | 'google-cheap' 
+  | 'google-balanced' 
+  | 'google-expensive'
+
 export const AI_CONFIG = {
-  DEFAULT_MODEL: process.env.AI_MODEL || 'claude-sonnet-4-20250514',
+  DEFAULT_MODEL: (process.env.LLM_MODEL || 'google-cheap') as ProviderTierKey,
   DEFAULT_TEMPERATURE: 0,
   DEFAULT_MAX_TOKENS: 1024,
 } as const
 ```
 
+### Multi-Provider Support
+
+The system automatically handles multiple LLM providers:
+
+- **Anthropic Claude**: `anthropic-cheap`, `anthropic-balanced`, `anthropic-expensive`
+- **Google Gemini**: `google-cheap`, `google-balanced`, `google-expensive`
+
+Set your preferred model using the `LLM_MODEL` environment variable:
+```bash
+LLM_MODEL=google-cheap npm run dev        # Fast and cost-effective for development
+LLM_MODEL=anthropic-balanced npm run build  # Proven reliability for production
+```
+
 ### Development vs Production Models
 
-- **Production default**: `claude-sonnet-4-20250514` (smart, high-quality)
-- **Development option**: Set `AI_MODEL=claude-3-haiku-20240307` in `.env.local` (faster, ~20x cheaper)
-- **Override for testing**: `AI_MODEL=claude-sonnet-4-20250514 npm run dev` when you need smart AI
+- **Development default**: `google-cheap` (Gemini 2.5 Flash - fast, large context window, cost-effective)
+- **Production option**: `anthropic-balanced` (Claude Sonnet 4 - proven reliability and quality)
+- **High-end option**: `anthropic-expensive` (Claude Opus 4 - maximum capability)
 
-Templates use these defaults unless overridden in the `modelConfig` parameter. Most templates should omit model specification to use the global default.
+Templates use these defaults unless overridden in the `modelConfig` parameter:
+
+```typescript
+export const myFeaturePrompt = loadPromptTemplateFromCaller(
+  'my-feature.njk',
+  myFeatureSchema,
+  {
+    model: 'anthropic-balanced',  // Override global default for this template
+    maxTokens: 1024,
+    temperature: 0,
+  }
+)
+```
+
+**For detailed model comparison, see [docs/LLM_MODELS_REFERENCE.md](LLM_MODELS_REFERENCE.md)**
 
 **This centralised approach ensures:**
 - Consistent AI behaviour across all features
-- Easy model upgrades when new versions are released
+- Easy provider/model switching via environment variables
 - Clear cost and performance management
 - Simplified testing and debugging
+- Seamless switching between Claude and Gemini models
 
 ## Benefits of This Approach
 
 1. **Type Safety**: Full TypeScript types from Zod schema
 2. **Validation**: Runtime validation with clear error messages
-3. **Separation**: Prompts separate from code for easy editing
-4. **Familiar Syntax**: Nunjucks is very similar to Jinja
-5. **IDE Support**: Autocomplete for all prompt variables
+3. **Multi-Provider Support**: Automatic handling of Claude and Gemini models
+4. **Separation**: Prompts separate from code for easy editing
+5. **Familiar Syntax**: Nunjucks is very similar to Jinja
+6. **IDE Support**: Autocomplete for all prompt variables
+7. **Cost Management**: Easy switching between cheap/balanced/expensive tiers
 
 ## Common Patterns
 

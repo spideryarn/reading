@@ -2,14 +2,9 @@
 // See planning/250526g_ai_generated_headings.md for implementation details
 
 import { NextRequest, NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
 import * as cheerio from 'cheerio'
 import { executePrompt } from '@/lib/prompts/types'
 import { headingsPrompt, headingsPromptInputSchema, headingsResponseSchema } from '@/lib/prompts/templates/headings'
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
 
 /**
  * Remove all existing headings (h1-h6) from HTML content
@@ -37,9 +32,9 @@ function removeExistingHeadings(htmlContent: string): string {
 /**
  * Log generated headings to console with visual hierarchy
  */
-function logHeadingsHierarchy(headings: any[]): void {
+function logHeadingsHierarchy(headings: Array<{ html: string }>): void {
   console.log('\n=== Generated Headings ===')
-  headings.forEach((heading, index) => {
+  headings.forEach((heading) => {
     const match = heading.html.match(/^<h(\d)[^>]*>(.*)<\/h\d>$/)
     if (match) {
       const level = parseInt(match[1])
@@ -78,9 +73,13 @@ export async function POST(request: NextRequest) {
     console.log(`Cleaned HTML length: ${cleanedHtml.length} characters`)
     
     // Generate headings using LLM
-    const llmResponse = await executePrompt(anthropic, headingsPrompt, { 
+    const llmResponse = await executePrompt(headingsPrompt, { 
       html_content: cleanedHtml
     })
+    
+    console.log('Raw LLM response length:', llmResponse.length, 'characters')
+    console.log('Raw LLM response preview (first 200 chars):', JSON.stringify(llmResponse.substring(0, 200)))
+    console.log('Raw LLM response ending (last 200 chars):', JSON.stringify(llmResponse.substring(llmResponse.length - 200)))
     
     // Parse the JSON response from LLM (strip markdown code blocks if present)
     let jsonString = llmResponse.trim()
@@ -93,6 +92,12 @@ export async function POST(request: NextRequest) {
     if (jsonString.endsWith('```')) {
       jsonString = jsonString.slice(0, -3) // Remove ending ```
     }
+    
+    console.log('Cleaned JSON string length:', jsonString.trim().length, 'characters')
+    console.log('=== FULL JSON OUTPUT START ===')
+    console.log(JSON.stringify(jsonString.trim()))
+    console.log('=== FULL JSON OUTPUT END ===')
+    
     const parsedResponse = JSON.parse(jsonString.trim())
     
     // Validate the response matches our expected schema
