@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 
 interface AppHeaderProps {
   title?: string
+  titleLink?: string
   backLink?: string
   backText?: string
   actions?: React.ReactNode
@@ -15,6 +16,7 @@ interface AppHeaderProps {
 
 export function AppHeader({ 
   title, 
+  titleLink,
   backLink, 
   backText = "Back",
   actions, 
@@ -60,9 +62,15 @@ export function AppHeader({
                     </Link>
                   )}
                   {title && (
-                    <h1 className="text-lg font-medium text-gray-800 truncate leading-tight">
-                      {title}
-                    </h1>
+                    titleLink ? (
+                      <Link href={titleLink} className="text-lg font-medium text-gray-800 hover:text-gray-600 transition-colors truncate leading-tight">
+                        {title}
+                      </Link>
+                    ) : (
+                      <h1 className="text-lg font-medium text-gray-800 truncate leading-tight">
+                        {title}
+                      </h1>
+                    )
                   )}
                 </div>
               </>
