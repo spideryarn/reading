@@ -100,6 +100,10 @@ Use tasks and subagents where appropriate, especially for curl, tests, and Playw
 - [ ] Test conversation flow with both Claude and Gemini
 - [ ] Verify existing assistant-ui frontend continues to work unchanged
 
+**Stage 5b: Override optionally**
+- [ ] Make sure there's a way to override the model and parameters being used for a given call if we want to? i.e. it should default to the environment variables, but allow you to specify/override in the LLM execution function call if you want.
+- [ ] Update LLM_PROMPT_TEMPLATES.md and this one, then commit
+
 **Stage 6: Testing and Validation** - use subagents for running tests where appropriate
 - [ ] Run full test suite to ensure no regressions: `npm test`
 - [ ] Test provider switching via environment variables

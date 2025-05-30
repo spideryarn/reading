@@ -2,13 +2,8 @@
 // See docs/AI_SUMMARISE.md for architecture and usage patterns
 
 import { NextRequest, NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
 import { executePrompt } from '@/lib/prompts/types'
 import { summarisePrompt, getMaxTokensForGranularity, getGranularityInstruction } from '@/lib/prompts/templates/summarise'
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,7 +25,7 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    const summary = await executePrompt(anthropic, templateWithTokens, { 
+    const summary = await executePrompt(templateWithTokens, { 
       content, 
       granularity: getGranularityInstruction(granularity)
     })

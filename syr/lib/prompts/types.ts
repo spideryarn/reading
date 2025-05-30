@@ -38,7 +38,7 @@ export function loadPromptTemplate<T extends z.ZodSchema>(
   }
 ): PromptTemplate<T> {
   // Load template content at module load time for better performance
-  const templateContent = readFileSync(templatePath, 'utf-8')
+  readFileSync(templatePath, 'utf-8')
   
   return {
     name: templatePath.split('/').pop()?.replace('.njk', '') || 'unnamed',
@@ -95,12 +95,12 @@ async function executePromptInternal<T extends z.ZodSchema>(
 // Execute a prompt with validation and rendering
 // Supports both legacy (with Anthropic client) and new (without client) signatures
 export async function executePrompt<T extends z.ZodSchema>(
-  ...args: [any, PromptTemplate<T>, z.infer<T>] | [PromptTemplate<T>, z.infer<T>]
+  ...args: [unknown, PromptTemplate<T>, z.infer<T>] | [PromptTemplate<T>, z.infer<T>]
 ): Promise<string> {
   // Check if first argument is the deprecated Anthropic client
   if (args.length === 3) {
     // Legacy signature: executePrompt(anthropic, template, variables)
-    const [_, template, variables] = args
+    const [, template, variables] = args
     return executePromptInternal(template, variables)
   } else {
     // New signature: executePrompt(template, variables)
