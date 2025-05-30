@@ -1,5 +1,7 @@
 # ToC Expand/Collapse and Granularity Control
 
+**Progress**: Stage 1 completed (30/05/2025) - HeadingTree component created and integrated
+
 ## Goal, context
 
 Improve the Table of Contents functionality with expand/collapse controls and granularity filtering to provide better navigation control for hierarchical document structures.
@@ -33,22 +35,22 @@ The ToC has two tabs (Original and AI-generated) that currently use duplicate re
 
 ## Actions
 
-### Stage 1: Create Shared HeadingTree Component
-- [ ] Build tree data structure utilities
-  - [ ] Create `HeadingNode` interface extending `Heading` with `children: HeadingNode[]`
-  - [ ] Create `buildHeadingTree(headings: Heading[]): HeadingNode[]` utility to convert flat array to tree
-  - [ ] Use `useMemo` to build tree only when headings change
-- [ ] Extract shared heading rendering logic into new `HeadingTree` component
-  - [ ] Component should accept props: `headings: Heading[]`, `themeColors`, `onHeadingClick`, `getTooltipContent`, `handleTooltipShow`
-  - [ ] Build tree structure internally from flat headings array
-  - [ ] Move all tooltip, indentation, and click handling logic to this component
-  - [ ] Support both blue (Original) and green (AI-generated) themes via props
-- [ ] Refactor `table-of-contents.tsx` to use `HeadingTree` component in both tabs
-  - [ ] Replace `renderOriginalTab()` with `<HeadingTree>` using blue theme colors
-  - [ ] Replace `renderAiGeneratedTab()` with `<HeadingTree>` using green theme colors
-  - [ ] Verify tooltips, clicking, and all existing functionality still works
-- [ ] Use subagent to run browser tests with Playwright MCP
-- [ ] Git commit: "refactor: extract shared HeadingTree component with tree structure"
+### Stage 1: Create Shared HeadingTree Component ✓ COMPLETED
+- [x] Build tree data structure utilities
+  - [x] Create `HeadingNode` interface extending `Heading` with `children: HeadingNode[]`
+  - [x] Create `buildHeadingTree(headings: Heading[]): HeadingNode[]` utility to convert flat array to tree
+  - [x] Use `useMemo` to build tree only when headings change
+- [x] Extract shared heading rendering logic into new `HeadingTree` component
+  - [x] Component should accept props: `headings: Heading[]`, `themeColors`, `onHeadingClick`, `getTooltipContent`, `handleTooltipShow`
+  - [x] Build tree structure internally from flat headings array
+  - [x] Move all tooltip, indentation, and click handling logic to this component
+  - [x] Support both blue (Original) and green (AI-generated) themes via props
+- [x] Refactor `table-of-contents.tsx` to use `HeadingTree` component in both tabs
+  - [x] Replace `renderOriginalTab()` with `<HeadingTree>` using blue theme colors
+  - [x] Replace `renderAiGeneratedTab()` with `<HeadingTree>` using green theme colors
+  - [x] Verify tooltips, clicking, and all existing functionality still works
+- [x] Use subagent to run browser tests with Playwright MCP
+- [x] Git commit: "refactor: extract shared HeadingTree component with tree structure"
 
 ### Stage 2: Add Expand/Collapse Functionality
 - [ ] Lift expand/collapse state to `TableOfContents` component

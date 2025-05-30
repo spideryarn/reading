@@ -5,12 +5,14 @@ The table of contents pane provides hierarchical document navigation with both o
 ## See also
 
 - `components/table-of-contents.tsx` - main ToC component implementation
+- `components/heading-tree.tsx` - shared tree component for rendering hierarchical headings
 - `app/documents/[slug]/page-client.tsx` - state management and coordination between panes
 - `components/document-viewer.tsx` - element display and selection functionality
 - `docs/ARCHITECTURE.md` - overall application architecture
 - `docs/LLM_PROMPT_TEMPLATES.md` - prompt template system for AI features
 - `planning/250526g_ai_generated_headings.md` - AI headings implementation details
 - `planning/250526a_ToC_hierarchical_summary_tooltips.md` - tooltip feature planning
+- `planning/250529b_ToC_expand_collapse_granularity.md` - expand/collapse and granularity control planning
 
 ## Key Architecture
 
@@ -21,6 +23,27 @@ The ToC system uses a three-component coordination pattern:
 3. **DocumentViewer** - displays elements and accepts external selection state
 
 State flows unidirectionally: ToC click → client handler → element selection → viewer update.
+
+## HeadingTree Component
+
+The ToC uses a shared `HeadingTree` component that eliminates code duplication between tabs:
+
+### Tree Data Structure
+- Converts flat heading arrays to hierarchical tree structure using `buildHeadingTree()`
+- Each `HeadingNode` extends `Heading` with a `children` array
+- Tree structure enables efficient expand/collapse and granularity filtering (future features)
+
+### Shared Rendering Logic
+- Single component handles both Original and AI-generated heading display
+- Theme customization via `themeColors` prop (blue for Original, green for AI-generated)
+- Manages tooltip display, click handlers, and hierarchical indentation
+- Uses `useMemo` for efficient tree building when headings change
+
+### Benefits
+- Eliminates ~100 lines of duplicate code between tabs
+- Simplifies maintenance and feature additions
+- Provides foundation for expand/collapse functionality
+- Maintains all existing features: tooltips, navigation, visual hierarchy
 
 ## Tabbed Interface
 
