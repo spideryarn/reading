@@ -235,3 +235,106 @@ TableOfContents → HeadingTree (visual styling)
 **Mutation System Integration**: When AI headings are applied/reverted, the document structure changes. The visibility tracking should reset and re-establish observers for the new document structure.
 
 **Granularity Slider Interaction**: Hidden headings (due to granularity filtering) should still be tracked for visibility, but not styled. This provides consistency and avoids complex observer management.
+
+### Automatic ToC Scrolling Investigation & Lessons Learned
+
+**Context**: Stage 2 originally aimed to implement automatic ToC scrolling that would follow the user's position as they scrolled through the Document pane. After extensive debugging and fixes, we discovered fundamental challenges and pivoted to a simpler click-triggered approach.
+
+#### 🔍 **Investigation Findings**
+
+**Infrastructure Assessment**:
+- ✅ **Element visibility tracking worked correctly** - Intersection Observer properly detected document elements entering/leaving viewport
+- ✅ **Heading visibility calculation worked correctly** - Page-client properly mapped element visibility to heading visibility using section detection
+- ✅ **Visual indication worked correctly** - Headings showed bold styling when their sections were visible
+- ✅ **Auto-scroll hook structure was sound** - Container refs, element finding, and scroll calculations were implemented correctly
+
+**Bugs Identified & Fixed**:
+1. **Container Ref Timing Issue**: `useTocAutoScroll` hook received container ref that was populated via `useEffect` after mount, causing initial null refs
+2. **Element Selection Logic**: Used first Set iteration order instead of topmost document position for selecting which heading to scroll to
+3. **Silent Failures**: No debugging output when elements weren't found or operations failed
+4. **Container Bounds**: Missing validation and clamping for scroll target calculations
+
+**Debugging Infrastructure Added**:
+- Comprehensive console logging throughout the pipeline
+- Element visibility changes tracked in page-client
+- Heading visibility calculation logged with detailed breakdown
+- Auto-scroll hook logs container status, element finding, target selection, and scroll execution
+- Periodic status checks every 5 seconds
+
+#### 🚧 **Fundamental Blockers Discovered**
+
+**User Experience Challenges**:
+- **Competing Scroll Intentions**: Auto-scroll fought with user's manual ToC scrolling, creating jarring experiences
+- **Unpredictable Behavior**: Users couldn't predict when ToC would auto-scroll, leading to disorientation
+- **False Triggers**: Rapid document scrolling caused excessive ToC movement
+- **Content Reading Interruption**: Auto-scroll moved ToC focus away from where users were looking
+
+**Technical Complexity**:
+- **Multiple Visible Headings**: Choosing which heading to prioritize when multiple sections are visible simultaneously
+- **Heading Section Granularity**: Different heading levels created ambiguity about which level should drive scrolling
+- **Performance Impact**: Continuous scroll listening and calculations added overhead
+- **State Synchronization**: Keeping ToC scroll position in sync with document scroll without feedback loops
+
+**Real-World Usage Patterns**:
+- Users often scan document content without wanting ToC to move
+- Manual ToC navigation is often intentional and shouldn't be overridden
+- Different users have different preferences for how aggressive auto-scroll should be
+- Mobile devices have different scrolling behaviors and constraints
+
+#### 💡 **Hypotheses & Ideas for Future**
+
+**Alternative Approaches Considered**:
+1. **Scroll Position Indicators**: Visual markers showing document scroll position relative to ToC instead of moving ToC
+2. **Minimap View**: Small document overview showing current viewport position
+3. **Delayed Auto-Scroll**: Only auto-scroll after user stops scrolling for a configurable delay
+4. **User-Configurable**: Allow users to enable/disable and configure auto-scroll behavior
+5. **Contextual Auto-Scroll**: Only auto-scroll when users aren't actively using ToC
+
+**Potential Technical Solutions**:
+- **Intersection Observer Root**: Use Document pane as root instead of viewport for more precise control
+- **Visibility Thresholds**: Implement more sophisticated visibility detection (e.g., 50% visible, center of viewport)
+- **Momentum Detection**: Detect user scroll momentum and only auto-scroll during natural pauses
+- **Focus Tracking**: Track user's focus/attention to avoid interrupting reading flow
+
+#### ✅ **Pivot to Click-Triggered Approach**
+
+**Decision Rationale**:
+- **User Control**: Users explicitly choose when ToC should update position
+- **Predictable Behavior**: Clear cause-and-effect relationship between action and result
+- **No Conflicts**: Doesn't interfere with manual scrolling or reading flow
+- **Simple Implementation**: Much less complex state management and edge case handling
+- **Immediate Value**: Provides core navigation benefit without UX downsides
+
+**Implementation Benefits**:
+- **Reliable**: Works consistently regardless of document structure or user behavior
+- **Performant**: Only executes on user action, no continuous monitoring
+- **Debuggable**: Clear execution path and simple state management
+- **Extensible**: Easy to enhance with additional features if needed
+
+**User Experience**:
+- **Intuitive**: Natural gesture (click element → see related heading)
+- **Non-intrusive**: Doesn't interfere with normal reading or navigation
+- **Immediate Feedback**: Instant visual confirmation of action
+- **Works Everywhere**: Functions on all devices and document types
+
+#### 📚 **Lessons for Future Development**
+
+**Architecture Lessons**:
+- Start with user-controlled interactions before attempting automatic behaviors
+- Build comprehensive debugging infrastructure early in complex features
+- Test with real usage patterns, not just technical correctness
+- Consider competing user intentions when designing automatic features
+
+**UX Design Lessons**:
+- User agency and predictability often trump automation convenience
+- Automatic behaviors should enhance, not replace, user control
+- Complex interactions need extensive user testing before implementation
+- Simple solutions often provide better user experience than clever ones
+
+**Technical Lessons**:
+- Component ref timing in React requires careful dependency management
+- Intersection Observer provides excellent performance but requires thoughtful implementation
+- Comprehensive logging is essential for debugging complex, asynchronous interactions
+- State synchronization between scrolling containers is inherently challenging
+
+This investigation, while not reaching the original automatic scrolling goal, provided valuable insights into user experience design, technical implementation challenges, and the importance of balancing automation with user control.
