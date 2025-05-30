@@ -1,10 +1,9 @@
 import { readFile } from 'fs/promises'
 import { readdirSync } from 'fs'
 import { join } from 'path'
-import Link from 'next/link'
-import { ArrowLeft } from '@phosphor-icons/react/dist/ssr'
 import { DocumentParser } from '@/lib/services/document-parser'
 import { TweetThreadView } from '@/components/tweet-thread-view'
+import { AppHeader } from '@/components/app-header'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -51,24 +50,15 @@ export default async function TweetThreadPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link 
-                href={`/documents/${slug}`}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <ArrowLeft size={20} />
-                Back to document
-              </Link>
-              <div className="h-6 w-px bg-gray-300" />
-              <h1 className="text-lg font-semibold text-gray-900">Tweet Thread</h1>
-            </div>
-          </div>
-          <div className="mt-2 text-sm text-gray-600">{doc.title}</div>
-        </div>
+      <AppHeader 
+        title="Tweet Thread"
+        backLink={`/documents/${slug}`}
+        backText="Back to document"
+      />
+
+      {/* Document title */}
+      <div className="max-w-4xl mx-auto px-6 py-4 bg-white border-b">
+        <div className="text-sm text-gray-600">{doc.title}</div>
       </div>
 
       {/* Content */}
