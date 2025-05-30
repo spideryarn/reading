@@ -21,7 +21,7 @@ import { loadPromptTemplateFromCaller } from '../types'
 // Define the tweet schema for individual tweets
 export const tweetSchema = z.object({
   number: z.number().positive(),
-  text: z.string().max(270, 'Tweet must be 270 characters or less')
+  text: z.string().max(280, 'Tweet must be 280 characters or less')
 })
 
 // Schema for the tweet thread response
@@ -35,7 +35,7 @@ const tweetThreadPromptSchema = z.object({
   content: z.string().min(100, 'Content must be substantial enough for thread generation'),
   target_length: z.number()
     .min(3, 'Thread should be at least 3 tweets')
-    .max(20, 'Thread should not exceed 20 tweets')
+    .max(20, 'Thread should not exceed 25 tweets')
     .default(12) // Based on research: 10-15 tweets optimal for academic content
 })
 
@@ -46,8 +46,14 @@ export const tweetThreadPrompt = loadPromptTemplateFromCaller(
   {
     maxTokens: 4000, // Generous limit for thread generation
     temperature: 0.4, // Balanced creativity and consistency for engaging but accurate content
+    model: 'anthropic-balanced-thinking', // Use thinking mode for better tweet thread structure and narrative flow
   }
 )
+// Alternative: Use all defaults (including model)
+// export const tweetThreadPrompt = loadPromptTemplateFromCaller(
+//   'tweet-thread.njk',
+//   tweetThreadPromptSchema
+// )
 
 // Export schemas for use in the API
 export const tweetThreadPromptInputSchema = tweetThreadPromptSchema
