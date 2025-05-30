@@ -132,6 +132,7 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
   // Element visibility tracking
   const { observeElement, unobserveElement } = useElementVisibility(onElementVisibilityChange)
   const observedElementsRef = useRef<Set<string>>(new Set())
+  const elementRefsRef = useRef<Map<string, Element>>(new Map())
 
   /**
    * Scroll to a specific element in the document structure pane.
@@ -174,15 +175,15 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
   // Clean up observed elements when elements change or component unmounts
   useEffect(() => {
     const observedElements = observedElementsRef.current
+    const elementRefs = elementRefsRef.current
+    
     return () => {
       // Unobserve all elements when elements change or component unmounts
-      observedElements.forEach(elementId => {
-        const element = document.querySelector(`[data-element-id="${elementId}"]`)
-        if (element) {
-          unobserveElement(element)
-        }
+      elementRefs.forEach((element, elementId) => {
+        unobserveElement(element)
+        observedElements.delete(elementId)
       })
-      observedElements.clear()
+      elementRefs.clear()
     }
   }, [elements, unobserveElement])
 
@@ -272,9 +273,20 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
         <div
           data-element-id={element.id}
           ref={(node) => {
+            const prevElement = elementRefsRef.current.get(element.id)
+            
+            // If we have a previous element and it's different, unobserve it
+            if (prevElement && prevElement !== node) {
+              unobserveElement(prevElement)
+              elementRefsRef.current.delete(element.id)
+              observedElementsRef.current.delete(element.id)
+            }
+            
+            // If we have a new node and haven't observed it yet, observe it
             if (node && !observedElementsRef.current.has(element.id)) {
               observeElement(node)
               observedElementsRef.current.add(element.id)
+              elementRefsRef.current.set(element.id, node)
             }
           }}
           className={`py-2 px-3 rounded cursor-pointer hover:bg-gray-100 ${

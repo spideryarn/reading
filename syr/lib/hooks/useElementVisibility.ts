@@ -42,12 +42,14 @@ export function useElementVisibility(
         } else {
           next.delete(elementId)
         }
-        
-        // Call the callback for each change
-        onVisibilityChange?.(elementId, isVisible)
       })
       
       return next
+    })
+    
+    // Call callbacks separately to avoid setState during render
+    updates.forEach((isVisible, elementId) => {
+      onVisibilityChange?.(elementId, isVisible)
     })
   }, [onVisibilityChange])
 
@@ -109,17 +111,13 @@ export function useElementVisibility(
   const unobserveElement = useCallback((element: Element) => {
     observerRef.current?.unobserve(element)
     
-    // Remove from visible set if it was visible
+    // Remove from visible set through the debounced update mechanism
     const elementId = element.getAttribute('data-element-id')
-    if (elementId && visibleElements.has(elementId)) {
-      setVisibleElements(prev => {
-        const next = new Set(prev)
-        next.delete(elementId)
-        return next
-      })
-      onVisibilityChange?.(elementId, false)
+    if (elementId) {
+      pendingUpdatesRef.current.set(elementId, false)
+      scheduleUpdate()
     }
-  }, [visibleElements, onVisibilityChange])
+  }, [scheduleUpdate])
 
   return {
     visibleElements,

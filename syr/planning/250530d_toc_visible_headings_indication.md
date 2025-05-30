@@ -44,9 +44,10 @@ Implement visual indication in the Table of Contents pane to show which headings
 
 **Incremental Development**: Start simple, layer complexity gradually
 - Stage 1: Basic visible/not-visible (bold vs normal text)
-- Stage 2: Add partially visible indication  
-- Stage 3: Performance optimizations if needed
-- Stage 4: Advanced features (nested visibility, etc.)
+- Stage 2: ToC auto-scrolling to follow document position
+- Stage 3: Add partially visible indication  
+- Stage 4: Performance optimizations if needed
+- Stage 5: Advanced features (nested visibility, etc.)
 
 ## Actions
 
@@ -80,15 +81,38 @@ Implement visual indication in the Table of Contents pane to show which headings
   - [x] Accept `headingVisibility` prop from TableOfContents
   - [x] Apply bold styling for visible headings: `font-bold` vs `font-normal`
   - [x] Work for both Original and AI-generated headings
-- [ ] Test end-to-end functionality
-  - [ ] Verify visibility updates during scroll in Document pane
-  - [ ] Test with both Original and AI-generated headings
-  - [ ] Test granularity slider interaction
-  - [ ] Test expand/collapse interaction
-- [ ] Update progress in planning doc and commit changes
-  - [ ] Git commit: "feat: implement basic heading visibility indication in ToC"
+- [x] Test end-to-end functionality
+  - [x] Verify visibility updates during scroll in Document pane
+  - [x] Test with both Original and AI-generated headings
+  - [x] Test granularity slider interaction
+  - [x] Test expand/collapse interaction
+- [x] Update progress in planning doc and commit changes
+  - [x] Git commit: "feat: implement basic heading visibility indication in ToC"
 
-### Stage 2: Add Partially Visible Detection  
+### Stage 2: ToC Auto-Scrolling to Follow Document Position
+- [ ] Implement automatic ToC scrolling to keep current visible heading in view
+  - [ ] Add ref to ToC container in TableOfContents component
+  - [ ] Calculate which heading is most prominent in viewport (topmost visible or center-most)
+  - [ ] Add smooth scrolling behavior to bring current heading into ToC viewport
+  - [ ] Ensure scrolling doesn't interfere with user manually scrolling ToC
+- [ ] Add scroll position tracking
+  - [ ] Track when user manually scrolls ToC vs automatic scrolling
+  - [ ] Add cooldown period after manual scroll before resuming auto-scroll
+  - [ ] Consider scroll position relative to ToC viewport (top, middle, bottom)
+- [ ] Handle edge cases
+  - [ ] Multiple headings visible - choose the most appropriate one
+  - [ ] Very long heading sections that span multiple viewports
+  - [ ] Rapid document scrolling - debounce ToC updates
+  - [ ] ToC expanded/collapsed state changes
+- [ ] Test auto-scrolling functionality
+  - [ ] Verify smooth following behavior during document scroll
+  - [ ] Test that manual ToC scrolling temporarily disables auto-scroll
+  - [ ] Test with different heading densities and document lengths
+  - [ ] Ensure no jarring or disorienting scroll behavior
+- [ ] Update progress in planning doc and commit changes
+  - [ ] Git commit: "feat: add ToC auto-scrolling to follow document position"
+
+### Stage 3: Add Partially Visible Detection  
 - [ ] Enhance visibility calculation logic in page-client
   - [ ] Update state: `headingVisibility: Map<string, 'fully-visible' | 'partially-visible' | 'not-visible'>`
   - [ ] Implement "partially visible" detection: heading OR some section elements visible
@@ -105,7 +129,7 @@ Implement visual indication in the Table of Contents pane to show which headings
 - [ ] Update progress in planning doc and commit changes
   - [ ] Git commit: "feat: add partially visible heading detection to ToC"
 
-### Stage 3: Performance Optimization & Polish
+### Stage 4: Performance Optimization & Polish
 - [ ] Performance testing and optimization
   - [ ] Test with larger documents (simulated 100+ page document)
   - [ ] Measure intersection observer performance impact
@@ -123,7 +147,7 @@ Implement visual indication in the Table of Contents pane to show which headings
 - [ ] Update progress in planning doc and commit changes
   - [ ] Git commit: "refactor: optimize heading visibility performance and accessibility"
 
-### Stage 4: Documentation & Integration
+### Stage 5: Documentation & Integration
 - [ ] Update documentation
   - [ ] Update `docs/TABLE_OF_CONTENTS_PANE.md` with visibility tracking feature
   - [ ] Update `docs/UI_INTERFACE.md` with new ToC behavior

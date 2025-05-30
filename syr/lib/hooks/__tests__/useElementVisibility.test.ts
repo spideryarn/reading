@@ -62,7 +62,8 @@ describe('useElementVisibility', () => {
     })
 
     expect(result.current.visibleElements.has('element-1')).toBe(false)
-    expect(onVisibilityChange).toHaveBeenCalledWith('element-1', false)
+    expect(onVisibilityChange).toHaveBeenCalledTimes(2)
+    expect(onVisibilityChange).toHaveBeenLastCalledWith('element-1', false)
 
     document.body.removeChild(element)
   })
