@@ -72,28 +72,28 @@ The ToC has two tabs (Original and AI-generated) that currently use duplicate re
 - [x] Use subagent to test in browser with Playwright MCP
 - [x] Git commit: "feat: add expand/collapse controls with lifted state management"
 
-### Stage 3: Add Granularity Slider Control
-- [ ] Add per-tab granularity state to `TableOfContents`
-  - [ ] Add `granularityLevels: Record<'original' | 'ai-generated', number>` state
-  - [ ] Calculate maximum heading depth from current headings
-  - [ ] Set default granularity to `Math.min(3, maxDepth)`
-- [ ] Create granularity slider UI within each tab
-  - [ ] Add slider component inside `HeadingTree` (receives granularity as prop)
-  - [ ] Range from 1 to maximum depth found in document
-  - [ ] Show current level label (e.g., "Showing levels 1-3")
-- [ ] Implement granularity filtering with hidden counts
-  - [ ] Filter nodes where `level > granularityLevel` but keep for counting
-  - [ ] Calculate hidden descendant count for each visible node
-  - [ ] Show "+N hidden" badge only when count > 0, cap at "99+"
-  - [ ] Ensure tooltips don't trigger for hidden headings
-- [ ] Write unit tests in subagent
-  - [ ] Test granularity filtering at different levels
-  - [ ] Test hidden count calculation including edge cases
-  - [ ] Test that "+0 hidden" is suppressed
-  - [ ] Test "99+" capping for deep structures
-- [ ] Use subagent to test granularity controls in browser
-- [ ] Update this planning doc with progress
-- [ ] Git commit: "feat: add per-tab granularity slider with hidden counts"
+### Stage 3: Add Granularity Slider Control ✓ COMPLETED
+- [x] Add per-tab granularity state to `TableOfContents`
+  - [x] Add `granularityLevels: Record<'original' | 'ai-generated', number>` state
+  - [x] Calculate maximum heading depth from current headings
+  - [x] Set default granularity to `Math.min(3, maxDepth)`
+- [x] Create granularity slider UI within each tab
+  - [x] Add slider component inside `HeadingTree` (receives granularity as prop)
+  - [x] Range from 1 to maximum depth found in document
+  - [x] Show current level label (e.g., "Showing levels 1-3")
+- [x] Implement granularity filtering with hidden counts
+  - [x] Filter nodes where `level > granularityLevel` but keep for counting
+  - [x] Calculate hidden descendant count for each visible node
+  - [x] Show "+N hidden" badge only when count > 0, cap at "99+"
+  - [x] Ensure tooltips don't trigger for hidden headings
+- [x] Write unit tests in subagent
+  - [x] Test granularity filtering at different levels
+  - [x] Test hidden count calculation including edge cases
+  - [x] Test that "+0 hidden" is suppressed
+  - [x] Test "99+" capping for deep structures
+- [x] Use subagent to test granularity controls in browser
+- [x] Update this planning doc with progress
+- [x] Git commit: "feat: add per-tab granularity slider with hidden counts"
 
 ### Stage 4: Documentation and Final Testing
 - [ ] Update `docs/TABLE_OF_CONTENTS_PANE.md` with new features
@@ -105,10 +105,7 @@ The ToC has two tabs (Original and AI-generated) that currently use duplicate re
 - [ ] Use subagent for final browser testing with Playwright MCP
 - [ ] Git commit: "docs: update TABLE_OF_CONTENTS_PANE.md with expand/collapse features"
 
-### Future Enhancements (Not Implemented)
-- [ ] Real-time scroll position tracking for bold formatting of visible headings
-- [ ] Persistence of expand/collapse and granularity state to Supabase database
-- [ ] Keyboard navigation support for expand/collapse controls
+### Future enhancements stage:
 - [ ] Animation transitions for expand/collapse actions
 
 ## Appendix
