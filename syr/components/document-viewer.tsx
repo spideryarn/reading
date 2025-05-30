@@ -4,7 +4,7 @@
 // See docs/AI_GLOSSARY.md for glossary feature architecture
 
 import { useState, useEffect, useRef } from 'react'
-import { CircleNotch } from '@phosphor-icons/react'
+import { CircleNotch, User, MapPin, Calendar, Lightbulb, Star, Article, Cube, Buildings, Book, Info, Question } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import { TabContainer, type Tab } from './tab-container'
 import { AssistantChat } from './assistant-chat'
@@ -39,6 +39,60 @@ interface DocumentViewerProps {
   glossaryError?: string | null
   onElementVisibilityChange?: (elementId: string, isVisible: boolean) => void
   onElementClick?: (element: DocumentElement) => void
+}
+
+// Get icon component for entity type
+function getEntityIcon(ontology: string) {
+  switch (ontology) {
+    case 'person':
+      return <User size={14} weight="bold" />
+    case 'place':
+      return <MapPin size={14} weight="bold" />
+    case 'date':
+      return <Calendar size={14} weight="bold" />
+    case 'theme':
+    case 'concept':
+      return <Lightbulb size={14} weight="bold" />
+    case 'event':
+      return <Star size={14} weight="bold" />
+    case 'reference':
+      return <Article size={14} weight="bold" />
+    case 'object':
+      return <Cube size={14} weight="bold" />
+    case 'organization':
+      return <Buildings size={14} weight="bold" />
+    case 'definition':
+      return <Book size={14} weight="bold" />
+    default:
+      return <Info size={14} weight="bold" />
+  }
+}
+
+// Get color scheme for entity type
+function getEntityColor(ontology: string) {
+  switch (ontology) {
+    case 'person':
+      return 'bg-blue-100 text-blue-800'
+    case 'place':
+      return 'bg-green-100 text-green-800'
+    case 'date':
+      return 'bg-purple-100 text-purple-800'
+    case 'theme':
+    case 'concept':
+      return 'bg-yellow-100 text-yellow-800'
+    case 'event':
+      return 'bg-red-100 text-red-800'
+    case 'reference':
+      return 'bg-indigo-100 text-indigo-800'
+    case 'object':
+      return 'bg-gray-100 text-gray-800'
+    case 'organization':
+      return 'bg-orange-100 text-orange-800'
+    case 'definition':
+      return 'bg-teal-100 text-teal-800'
+    default:
+      return 'bg-gray-100 text-gray-700'
+  }
 }
 
 // Component to display glossary entities ordered by first occurrence
@@ -83,38 +137,49 @@ function GlossaryDisplay({ entities, elements, onScrollToEntity }: {
   }
   
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {entities.map((entity, index) => {
         const hasOccurrence = findFirstOccurrence(entity) !== null
         
         return (
-          <div key={index} className="border-l-2 border-gray-200 pl-3">
-            <div className="flex items-baseline gap-2">
-              <div 
-                className={`font-medium text-sm ${
+          <div 
+            key={index} 
+            className={`bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-lg transition-all duration-300 ${
+              hasOccurrence ? 'hover:border-blue-300 cursor-pointer' : ''
+            }`}
+            onClick={() => hasOccurrence && handleEntityClick(entity)}
+          >
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <h3 
+                className={`font-semibold text-lg leading-tight ${
                   hasOccurrence 
-                    ? 'text-blue-600 cursor-pointer hover:text-blue-800 hover:underline' 
+                    ? 'text-blue-700 hover:text-blue-900 transition-colors' 
                     : 'text-gray-900'
                 }`}
-                onClick={() => hasOccurrence && handleEntityClick(entity)}
                 title={hasOccurrence ? 'Click to scroll to first occurrence' : undefined}
               >
                 {entity.name}
-              </div>
-              <div className="text-xs text-gray-500 uppercase" style={{ fontSize: '0.7rem', letterSpacing: '0.05em' }}>
+              </h3>
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 shadow-sm ${getEntityColor(entity.ontology)}`}>
+                {getEntityIcon(entity.ontology)}
                 {entity.ontology}
-              </div>
+              </span>
             </div>
+            
             {entity.aliases.length > 0 && (
-              <div className="text-xs text-gray-500 italic">
-                Also: {entity.aliases.join(', ')}
+              <div className="text-xs text-gray-600 mb-3 p-2 bg-gray-50 rounded-lg">
+                <span className="text-gray-500 font-medium">Also known as:</span>{' '}
+                <span className="font-medium text-gray-700">{entity.aliases.join(', ')}</span>
               </div>
             )}
-            <div className="text-sm text-gray-600 mt-1">
+            
+            <div className="text-sm text-gray-700 leading-relaxed mb-3 font-medium">
               {entity.long_explanation || entity.brief_explanation}
             </div>
+            
             {entity.datetime && (
-              <div className="text-xs text-gray-500 mt-1">
+              <div className="flex items-center gap-1.5 text-xs text-gray-600 font-medium bg-gray-50 px-2 py-1 rounded-md w-fit">
+                <Calendar size={12} weight="bold" />
                 {entity.datetime}
               </div>
             )}
@@ -340,27 +405,48 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
   const renderGlossaryTab = () => {
     if (!showGlossary) {
       return (
-        <Button
-          onClick={onLoadGlossary}
-          disabled={isLoadingGlossary}
-          variant="blue"
-        >
-          {isLoadingGlossary ? (
-            <>
-              <CircleNotch className="animate-spin" size={16} />
-              Loading...
-            </>
-          ) : (
-            'Load glossary'
-          )}
-        </Button>
+        <div className="flex flex-col items-center justify-center p-8 text-center">
+          <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mb-4">
+            <Book size={24} weight="bold" className="text-blue-600" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Generate Glossary</h3>
+          <p className="text-sm text-gray-600 mb-6 max-w-sm">
+            Create an interactive glossary of key terms, concepts, and entities from this document.
+          </p>
+          <Button
+            onClick={onLoadGlossary}
+            disabled={isLoadingGlossary}
+            variant="default"
+            className="px-6 py-2"
+          >
+            {isLoadingGlossary ? (
+              <>
+                <CircleNotch className="animate-spin mr-2" size={16} />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Book className="mr-2" size={16} weight="bold" />
+                Generate Glossary
+              </>
+            )}
+          </Button>
+        </div>
       )
     }
 
     return (
       <>
         {isLoadingGlossary ? (
-          <Loading text="Loading glossary..." spinnerSize={20} />
+          <div className="flex flex-col items-center justify-center p-8 text-center">
+            <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mb-4">
+              <CircleNotch className="animate-spin text-blue-600" size={24} weight="bold" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Analyzing Document</h3>
+            <p className="text-sm text-gray-600">
+              Extracting key terms and concepts...
+            </p>
+          </div>
         ) : glossaryError ? (
           <AlertWithIcon 
             variant="warning"
@@ -368,13 +454,29 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
             description={glossaryError}
           />
         ) : glossaryEntities.length > 0 ? (
-          <GlossaryDisplay 
-            entities={glossaryEntities} 
-            elements={elements}
-            onScrollToEntity={handleScrollToEntity}
-          />
+          <div>
+            <div className="mb-4 pb-3 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Document Glossary</h3>
+              <p className="text-sm text-gray-600 mt-1">
+                {glossaryEntities.length} {glossaryEntities.length === 1 ? 'entry' : 'entries'} found
+              </p>
+            </div>
+            <GlossaryDisplay 
+              entities={glossaryEntities} 
+              elements={elements}
+              onScrollToEntity={handleScrollToEntity}
+            />
+          </div>
         ) : (
-          <p className="text-gray-500">No glossary entries found</p>
+          <div className="flex flex-col items-center justify-center p-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mb-4">
+              <Question size={24} weight="bold" className="text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Entries Found</h3>
+            <p className="text-sm text-gray-600">
+              No glossary entries were identified in this document.
+            </p>
+          </div>
         )}
       </>
     )

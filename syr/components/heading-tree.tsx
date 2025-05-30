@@ -280,9 +280,29 @@ export function HeadingTree({
   }
 
   return (
-    <div className="space-y-4">
-      {/* Granularity Slider */}
-      <div className="px-4 pt-4">
+    <div className="flex flex-col h-full">
+      {/* Headings Navigation - takes remaining space */}
+      <div className="flex-1 min-h-0">
+        <nav className="space-y-1 px-4 pt-4 pb-4 h-full overflow-y-auto">
+        {headingTree.map((node) => (
+          <HeadingNodeComponent
+            key={node.id}
+            node={node}
+            themeColors={themeColors}
+            onHeadingClick={onHeadingClick}
+            getTooltipContent={getTooltipContent}
+            handleTooltipShow={handleTooltipShow}
+            collapsedIds={collapsedIds}
+            onToggleExpanded={onToggleExpanded}
+            granularityLevel={granularityLevel}
+            headingVisibility={headingVisibility}
+          />
+        ))}
+        </nav>
+      </div>
+      
+      {/* Granularity Slider - fixed at bottom */}
+      <div className="flex-shrink-0 bg-white border-t border-gray-200 px-4 py-3">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium text-gray-600">
             Showing levels 1-{Math.min(granularityLevel, maxDepth)}
@@ -294,7 +314,7 @@ export function HeadingTree({
           max={maxDepth}
           value={Math.min(granularityLevel, maxDepth)}
           onChange={(e) => onGranularityChange(parseInt(e.target.value))}
-          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+          className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
           style={{
             background: maxDepth > 1 
               ? `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${((Math.min(granularityLevel, maxDepth) - 1) / (maxDepth - 1)) * 100}%, #E5E7EB ${((Math.min(granularityLevel, maxDepth) - 1) / (maxDepth - 1)) * 100}%, #E5E7EB 100%)`
@@ -306,24 +326,6 @@ export function HeadingTree({
           <span className="text-xs text-gray-400">{maxDepth}</span>
         </div>
       </div>
-      
-      {/* Headings Navigation */}
-      <nav className="space-y-1 px-4">
-      {headingTree.map((node) => (
-        <HeadingNodeComponent
-          key={node.id}
-          node={node}
-          themeColors={themeColors}
-          onHeadingClick={onHeadingClick}
-          getTooltipContent={getTooltipContent}
-          handleTooltipShow={handleTooltipShow}
-          collapsedIds={collapsedIds}
-          onToggleExpanded={onToggleExpanded}
-          granularityLevel={granularityLevel}
-          headingVisibility={headingVisibility}
-        />
-      ))}
-      </nav>
     </div>
   )
 }

@@ -607,23 +607,25 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
 
   const renderOriginalTab = () => {
     return (
-      <HeadingTree
-        headings={headings}
-        themeColors={{
-          hover: 'hover:bg-blue-50',
-          text: 'group-hover:text-blue-900',
-          levelText: 'text-gray-400 group-hover:text-blue-600',
-          levelTextHover: 'group-hover:text-blue-600'
-        }}
-        onHeadingClick={handleHeadingClick}
-        getTooltipContent={getTooltipContent}
-        handleTooltipShow={handleTooltipShow}
-        collapsedIds={collapsedStates.original}
-        onToggleExpanded={(headingId) => toggleExpanded('original', headingId)}
-        granularityLevel={granularityLevels.original}
-        onGranularityChange={(level) => setGranularityLevels(prev => ({ ...prev, 'original': level }))}
-        headingVisibility={headingVisibility}
-      />
+      <div className="h-full flex flex-col">
+        <HeadingTree
+          headings={headings}
+          themeColors={{
+            hover: 'hover:bg-blue-50',
+            text: 'group-hover:text-blue-900',
+            levelText: 'text-gray-400 group-hover:text-blue-600',
+            levelTextHover: 'group-hover:text-blue-600'
+          }}
+          onHeadingClick={handleHeadingClick}
+          getTooltipContent={getTooltipContent}
+          handleTooltipShow={handleTooltipShow}
+          collapsedIds={collapsedStates.original}
+          onToggleExpanded={(headingId) => toggleExpanded('original', headingId)}
+          granularityLevel={granularityLevels.original}
+          onGranularityChange={(level) => setGranularityLevels(prev => ({ ...prev, 'original': level }))}
+          headingVisibility={headingVisibility}
+        />
+      </div>
     )
   }
 
@@ -652,7 +654,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
     }
 
     return (
-      <div className="p-4">
+      <div className="p-4 h-full flex flex-col">
         {isLoadingHeadings ? (
           <Loading text="Generating headings..." spinnerSize={20} />
         ) : headingsError ? (
