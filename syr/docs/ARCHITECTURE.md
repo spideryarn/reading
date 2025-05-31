@@ -4,6 +4,8 @@ see:
 - `README.md`
 - `docs/GOALS_AND_DREAMS.md`
 - `docs/TABLE_OF_CONTENTS_PANE.md`
+- `docs/CODING_PRINCIPLES.md` - Development philosophy and approach
+- `docs/CODING_GUIDELINES.md` - Code quality standards and patterns
 
 ## High-level background & decisions
 
