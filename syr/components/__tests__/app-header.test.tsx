@@ -1,15 +1,18 @@
 import { render, screen } from '@testing-library/react'
 import { AppHeader } from '../app-header'
+import type { LinkProps } from 'next/link'
+import type { ImageProps } from 'next/image'
 
 // Mock Next.js components
 jest.mock('next/link', () => {
-  return function MockLink({ children, href, ...props }: any) {
-    return <a href={href} {...props}>{children}</a>
+  return function MockLink({ children, href, ...props }: LinkProps & { children: React.ReactNode }) {
+    return <a href={href as string} {...props}>{children}</a>
   }
 })
 
 jest.mock('next/image', () => {
-  return function MockImage({ alt, ...props }: any) {
+  return function MockImage({ alt, ...props }: ImageProps) {
+    // eslint-disable-next-line @next/next/no-img-element
     return <img alt={alt} {...props} />
   }
 })
