@@ -217,7 +217,6 @@ export function UnifiedLeftPane({
   documentContext
 }: UnifiedLeftPaneProps) {
   const tabContainerRef = useRef<TabContainerRef>(null)
-  const [activeTab, setActiveTab] = useState<string>('original')
 
   // Render Original headings tab
   const renderOriginalTab = () => {
@@ -347,33 +346,28 @@ export function UnifiedLeftPane({
     {
       id: 'original',
       label: 'Original',
-      content: renderOriginalTab(),
-      onActivate: () => setActiveTab('original')
+      content: renderOriginalTab()
     },
     {
       id: 'ai-generated',
       label: 'AI-generated',
-      content: renderAIGeneratedTab(),
-      onActivate: () => setActiveTab('ai-generated')
+      content: renderAIGeneratedTab()
     },
     {
       id: 'summary',
       label: 'Summary',
-      content: renderSummaryTab(),
-      onActivate: () => setActiveTab('summary')
+      content: renderSummaryTab()
     },
     {
       id: 'chat',
       label: 'Chat',
-      content: renderChatTab(),
-      onActivate: () => setActiveTab('chat')
+      content: renderChatTab()
     },
     {
       id: 'glossary',
       label: 'Glossary',
       content: renderGlossaryTab(),
       onActivate: () => {
-        setActiveTab('glossary')
         // Auto-load glossary when tab is activated
         if (!showGlossary && !isLoadingGlossary) {
           onLoadGlossary()

@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { DocumentViewer } from '@/components/document-viewer'
-import { TableOfContents } from '@/components/table-of-contents'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { ResizableDocumentLayout } from '@/components/resizable-document-layout'
 import type { DocumentElement } from '@/lib/types/document'
 import { useDocument } from '@/lib/context/mutation-context'
 import { getHeadingAndSectionElements, extractHeadingElements } from '@/lib/services/heading-section-detector'
@@ -35,7 +34,6 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
   const [isLoadingGlossary, setIsLoadingGlossary] = useState(false)
   const [showGlossary, setShowGlossary] = useState(false)
   const [glossaryError, setGlossaryError] = useState<string | null>(null)
-  const documentViewerRef = useRef<HTMLDivElement>(null)
   
   // Heading visibility state
   const [headingVisibility, setHeadingVisibility] = useState<Map<string, 'visible' | 'not-visible'>>(new Map())
@@ -80,7 +78,7 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
     setHeadingVisibility(newHeadingVisibility)
   }, [elementVisibility, allHeadings, mutatedDocument])
   
-  // ToC scroll trigger function
+  // ToC scroll trigger function (may not be needed in new layout but keeping for now)
   const triggerTocScrollToHeading = useCallback((headingId: string) => {
     
     // Find the ToC container using a more reliable selector
@@ -168,73 +166,24 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
     }
   }
 
-  const handleHeadingClick = (headingText: string, headingId?: string) => {
-    // Use mutated document for finding headings
-    const documentsToSearch = mutatedDocument
-    
-    // Find the element that corresponds to this heading
-    // First try by ID if provided (more reliable for AI headings)
-    let headingElement = headingId 
-      ? documentsToSearch.find(element => element.id === headingId)
-      : null
-    
-    // Fallback to text search if ID search fails or no ID provided
-    if (!headingElement) {
-      headingElement = documentsToSearch.find(element => 
-        element.tag_name.match(/^h[1-6]$/i) && 
-        element.content?.trim() === headingText.trim()
-      )
-    }
-    
-    if (headingElement) {
-      setSelectedElement(headingElement)
-      
-      // Scroll to the element in the middle pane
-      if (documentViewerRef.current) {
-        const elementDiv = documentViewerRef.current.querySelector(`[data-element-id="${headingElement.id}"]`)
-        if (elementDiv) {
-          elementDiv.scrollIntoView({ behavior: 'smooth', block: 'center' })
-          
-          // Add visual feedback
-          elementDiv.classList.add('bg-yellow-100')
-          setTimeout(() => {
-            elementDiv.classList.remove('bg-yellow-100')
-          }, 2000)
-        }
-      }
-    } else {
-      console.warn(`Heading not found: "${headingText}" (ID: ${headingId})`)
-    }
-  }
+  // This function is no longer used - the ResizableDocumentLayout handles heading clicks directly
 
   return (
-    <div className="flex flex-1 overflow-hidden">
-      <div className="w-64 border-r bg-gray-50 flex flex-col overflow-y-auto h-screen">
-        <TableOfContents 
-          content={html} 
-          elements={mutatedDocument} 
-          onHeadingClick={handleHeadingClick} 
-          documentId={documentId} 
-          markdownContent={markdownContent}
-          headingVisibility={headingVisibility}
-        />
-      </div>
-      <div className="flex-1 flex flex-col">
-        <div className="flex-1 overflow-hidden" ref={documentViewerRef}>
-          <DocumentViewer 
-            elements={mutatedDocument} 
-            selectedElement={selectedElement}
-            onElementSelect={setSelectedElement}
-            glossaryEntities={glossaryEntities}
-            isLoadingGlossary={isLoadingGlossary}
-            showGlossary={showGlossary}
-            onLoadGlossary={fetchGlossary}
-            glossaryError={glossaryError}
-            onElementVisibilityChange={handleElementVisibilityChange}
-            onElementClick={handleElementClick}
-          />
-        </div>
-      </div>
-    </div>
+    <ResizableDocumentLayout
+      html={html}
+      elements={mutatedDocument}
+      documentId={documentId}
+      markdownContent={markdownContent}
+      selectedElement={selectedElement}
+      onElementSelect={setSelectedElement}
+      glossaryEntities={glossaryEntities}
+      isLoadingGlossary={isLoadingGlossary}
+      showGlossary={showGlossary}
+      glossaryError={glossaryError}
+      onLoadGlossary={fetchGlossary}
+      headingVisibility={headingVisibility}
+      onElementVisibilityChange={handleElementVisibilityChange}
+      onElementClick={handleElementClick}
+    />
   )
 }
