@@ -4,7 +4,7 @@
 import { POST } from '../summarise/route'
 import { executePrompt } from '@/lib/prompts/types'
 import { getMaxTokensForGranularity, getGranularityInstruction } from '@/lib/prompts/templates/summarise'
-const { createMockRequest } = require('./test-helpers.js')
+import { createMockRequest } from './test-helpers'
 
 // Mock the dependencies
 jest.mock('@/lib/prompts/types')

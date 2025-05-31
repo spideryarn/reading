@@ -1,8 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 import { AssistantChat } from '../assistant-chat';
-import { useLocalRuntime } from '@assistant-ui/react';
 
 // Mock phosphor icons
 jest.mock('@phosphor-icons/react', () => ({

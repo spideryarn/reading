@@ -3,9 +3,8 @@
  */
 import { POST } from '../headings/route'
 import { executePrompt } from '@/lib/prompts/types'
-import { headingsPrompt } from '@/lib/prompts/templates/headings'
 import * as cheerio from 'cheerio'
-const { createMockRequest } = require('./test-helpers.js')
+import { createMockRequest } from './test-helpers'
 
 // Mock the dependencies
 jest.mock('@/lib/prompts/types')

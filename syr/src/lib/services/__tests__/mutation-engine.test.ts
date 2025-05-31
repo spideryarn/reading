@@ -1,5 +1,5 @@
 import { MutationEngine } from '@/lib/services/mutation-engine'
-import { Mutation, DocumentTransform } from '@/lib/types/mutation'
+import { Mutation } from '@/lib/types/mutation'
 import { DocumentElement } from '@/lib/types/document'
 
 describe('MutationEngine', () => {

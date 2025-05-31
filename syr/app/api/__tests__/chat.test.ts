@@ -5,7 +5,7 @@ import { POST } from '../chat/route'
 import { generateText } from 'ai'
 import { getModel } from '@/lib/services/llm-provider'
 import { chatPromptInputSchema } from '@/lib/prompts/templates/chat'
-const { createMockRequest } = require('./test-helpers.js')
+import { createMockRequest } from './test-helpers'
 
 // Mock the dependencies
 jest.mock('ai')

@@ -1,5 +1,3 @@
-import { readFileSync } from 'fs';
-import { load } from 'cheerio';
 import { assignDeterministicIds, getBodyWithIds } from '@/lib/services/deterministicId';
 
 // Mock cheerio to avoid the ESM import issue

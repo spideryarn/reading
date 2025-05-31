@@ -70,7 +70,7 @@ Spideryarn Reading uses a hierarchical, document-centric architecture built on N
 - `tweet-card.tsx` - Individual tweet display component
 
 **Navigation & Structure**
-- `app-header.tsx` - Consistent header with navigation
+- `app-header.tsx` - Page-level header component with flexible content (see `docs/UI_COMPONENTS.md`)
 - `tab-container.tsx` - Tabbed interface management
 - Dynamic slug-based routing for documents
 - Hierarchical element tree display with deterministic IDs

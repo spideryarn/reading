@@ -1,8 +1,13 @@
-// @ts-nocheck
-const { NextRequest } = require('next/server');
+import { NextRequest } from 'next/server';
+
+interface MockRequestOptions {
+  method?: string;
+  headers?: Record<string, string>;
+  body?: unknown;
+}
 
 // Helper to create NextRequest instances for testing
-function createMockRequest(url, options = {}) {
+function createMockRequest(url: string, options: MockRequestOptions = {}): NextRequest {
   let body = options.body;
   
   // Convert body to proper format if it's not already a string
@@ -17,11 +22,11 @@ function createMockRequest(url, options = {}) {
       'content-type': 'application/json',
       ...options.headers
     },
-    body: body
+    body: body as string
   });
   
   // Return as NextRequest
   return new NextRequest(request);
 }
 
-module.exports = { createMockRequest };
+export { createMockRequest };

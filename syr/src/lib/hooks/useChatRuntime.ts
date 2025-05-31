@@ -12,7 +12,7 @@ interface UseChatRuntimeProps {
 
 export function useChatRuntime({ documentContext }: UseChatRuntimeProps) {
   const chatModelAdapter: ChatModelAdapter = {
-    run: useCallback(async ({ messages, abortSignal, context }) => {
+    run: useCallback(async ({ messages, abortSignal }) => {
       // Convert assistant-ui messages to API format
       const conversationHistory = messages.map(msg => ({
         role: msg.role as 'user' | 'assistant',

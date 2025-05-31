@@ -127,6 +127,102 @@ Dropdown selection component based on Radix UI Select primitive.
 
 Checkbox input component with proper accessibility.
 
+## Page-Level Components
+
+### AppHeader (`components/app-header.tsx`)
+
+**Status:** Standard page header component for flexible page-level header system
+
+Replaces the old fixed global header approach with page-controlled headers for maximum flexibility.
+
+**Props:**
+- `title?` - Page title displayed in header
+- `titleLink?` - Makes title clickable (link destination)
+- `backLink?` - URL for back navigation
+- `backText?` - Text for back button (default: "Back")
+- `actions?` - React node for header action buttons
+- `className?` - Additional CSS classes
+
+**Features:**
+- Spideryarn branding with logo and orange styling
+- Sticky positioning with backdrop blur
+- Responsive design with truncation
+- Uses CSS custom property `--header-height` for consistent sizing
+- Accessible navigation and aria labels
+
+**Usage:**
+```tsx
+import { AppHeader } from '@/components/app-header'
+
+// Basic usage
+<AppHeader title="Document Title" />
+
+// With navigation
+<AppHeader 
+  title="Tweet Thread" 
+  backLink="/documents/example"
+  backText="Back to Document"
+/>
+
+// With actions
+<AppHeader 
+  title="Design Reference"
+  actions={
+    <Button variant="outline" size="sm">
+      Export
+    </Button>
+  }
+/>
+
+// Custom styling
+<AppHeader 
+  title="Settings"
+  className="bg-gray-100"
+/>
+```
+
+**Design Principles:**
+- **Page Responsibility**: Each page controls its own header content
+- **Consistency**: Standard Spideryarn branding and styling
+- **Flexibility**: Fully customisable while maintaining visual consistency
+- **No Overlap**: Eliminates content overlap issues from fixed headers
+
+### Footer (`components/footer.tsx`)
+
+**Status:** Standard page footer component for page-level footer implementation
+
+Simple footer component that pages can include to provide consistent branding and navigation.
+
+**Features:**
+- Spideryarn branding and description
+- Navigation links to Home and Design Reference
+- Responsive layout (stacked on mobile, horizontal on desktop)
+- Subtle styling with gray background and borders
+
+**Usage:**
+```tsx
+import { Footer } from '@/components/footer'
+
+// Add to any page that needs a footer
+export default function MyPage() {
+  return (
+    <div>
+      <AppHeader title="Page Title" />
+      <main>
+        {/* Page content */}
+      </main>
+      <Footer />
+    </div>
+  )
+}
+```
+
+**Implementation Notes:**
+- Moved from conditional rendering in ClientLayout to page-level inclusion
+- Prevents hydration mismatch errors
+- Pages can choose whether to include footer or not
+- Consistent spacing with `mt-12` top margin
+
 ## Custom Components
 
 ### Dialog (`components/dialog.tsx`)
