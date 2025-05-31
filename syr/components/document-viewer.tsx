@@ -324,8 +324,8 @@ export function DocumentViewer({ elements, selectedElement, onElementSelect, glo
   const renderElement = (element: DocumentElement, depth: number = 0): JSX.Element => {
     const children = elementTree.get(element.id) || []
     const hasChildren = children.length > 0
-    // Remove 'syr-' prefix and show only first 8 chars
-    const truncatedId = element.id.replace('syr-', '').substring(0, 8)
+    // Remove 'syr-' prefix and show only first 4 chars
+    const truncatedId = element.id.replace('syr-', '').substring(0, 4)
     const typographyClasses = getTypographyClasses(element.tag_name)
 
     // Calculate list item index if this is a list item
