@@ -147,8 +147,11 @@ export function ResizableDocumentLayout({
         />
       </ResizablePanel>
       
-      {/* Resize handle */}
-      <ResizableHandle className="w-1 bg-gray-200 hover:bg-gray-300 transition-colors" />
+      {/* Resize handle with enhanced visibility */}
+      <ResizableHandle 
+        withHandle 
+        className="w-1 bg-gray-200 hover:bg-gray-300 active:bg-blue-300 transition-colors" 
+      />
       
       {/* Right pane - Document viewer */}
       <ResizablePanel 

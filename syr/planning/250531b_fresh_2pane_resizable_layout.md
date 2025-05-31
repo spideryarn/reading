@@ -40,38 +40,38 @@ User requirements:
 
 ## Actions
 
-### Stage 1: Prerequisites & Setup
-- [ ] Verify shadcn/ui is properly set up (`planning/250530a_shadcn_ui_adoption.md`)
-- [ ] Install Resizable component with subagent:
-  - [ ] Run `printf "\n" | npx shadcn@latest add resizable`
-  - [ ] Verify installation in `components/ui/resizable.tsx`
-  - [ ] Test basic ResizablePanelGroup in isolation
-- [ ] Analyze current component data flow
-  - [ ] Map all props passed between components
-  - [ ] Document state management requirements
-  - [ ] List all callback functions and events
-- [ ] Update todo list with implementation progress
+### Stage 1: Prerequisites & Setup ✓
+- [x] Verify shadcn/ui is properly set up (`planning/250530a_shadcn_ui_adoption.md`)
+- [x] Install Resizable component with subagent:
+  - [x] Run `printf "\n" | npx shadcn@latest add resizable`
+  - [x] Verify installation in `components/ui/resizable.tsx`
+  - [x] Test basic ResizablePanelGroup in isolation
+- [x] Analyze current component data flow
+  - [x] Map all props passed between components
+  - [x] Document state management requirements
+  - [x] List all callback functions and events
+- [x] Update todo list with implementation progress
 
-### Stage 2: Create Unified Left Pane Component
-- [ ] Create new `components/unified-left-pane.tsx`
-  - [ ] Accept all necessary props from both ToC and Tools
-  - [ ] Set up TabContainer with 5 tabs: Original, AI-generated, Summary, Chat, Glossary
-  - [ ] Move tab content rendering from both components
-  - [ ] Ensure proper height inheritance for scrolling
-- [ ] Extract shared logic
-  - [ ] Move glossary fetch logic from DocumentViewer
-  - [ ] Move heading click handlers from TableOfContents
-  - [ ] Consolidate loading/error states
-- [ ] Test each tab independently
-  - [ ] Original headings navigation works
-  - [ ] AI heading generation works
-  - [ ] Summary display works
-  - [ ] Chat interface works
-  - [ ] Glossary generation and click-to-scroll works
-- [ ] Git commit: "feat: create unified left pane component with all 5 tabs"
+### Stage 2: Create Unified Left Pane Component ✓
+- [x] Create new `components/unified-left-pane.tsx`
+  - [x] Accept all necessary props from both ToC and Tools
+  - [x] Set up TabContainer with 5 tabs: Original, AI-generated, Summary, Chat, Glossary
+  - [x] Move tab content rendering from both components
+  - [x] Ensure proper height inheritance for scrolling
+- [x] Extract shared logic
+  - [x] Move glossary fetch logic from DocumentViewer
+  - [x] Move heading click handlers from TableOfContents
+  - [x] Consolidate loading/error states
+- [x] Test each tab independently
+  - [x] Original headings navigation works
+  - [x] AI heading generation works
+  - [x] Summary display works
+  - [x] Chat interface works
+  - [x] Glossary generation and click-to-scroll works
+- [x] Git commit: "feat: create unified left pane component with all 5 tabs"
 
-### Stage 3: Implement ResizablePanelGroup Layout
-- [ ] Create new `components/resizable-document-layout.tsx`
+### Stage 3: Implement ResizablePanelGroup Layout ✓
+- [x] Create new `components/resizable-document-layout.tsx`
   ```tsx
   <ResizablePanelGroup direction="horizontal" className="h-full">
     <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
@@ -82,19 +82,19 @@ User requirements:
     </ResizablePanel>
   </ResizablePanelGroup>
   ```
-- [ ] Create simplified document viewer
-  - [ ] Remove grid layout and tools pane code
-  - [ ] Keep only document structure rendering
-  - [ ] Ensure proper scrolling with `h-full overflow-y-auto`
-- [ ] Wire up in DocumentPageClient
-  - [ ] Replace current 3-pane layout
-  - [ ] Pass all required props to new components
-  - [ ] Maintain existing state management
-- [ ] Test core functionality
-  - [ ] Document scrolling works properly
-  - [ ] Element selection and highlighting works
-  - [ ] Cross-pane communication (heading clicks, glossary clicks)
-- [ ] Git commit: "feat: implement 2-pane layout with ResizablePanelGroup"
+- [x] Create simplified document viewer
+  - [x] Remove grid layout and tools pane code
+  - [x] Keep only document structure rendering
+  - [x] Ensure proper scrolling with `h-full overflow-y-auto`
+- [x] Wire up in DocumentPageClient
+  - [x] Replace current 3-pane layout
+  - [x] Pass all required props to new components
+  - [x] Maintain existing state management
+- [x] Test core functionality
+  - [x] Document scrolling works properly
+  - [x] Element selection and highlighting works
+  - [x] Cross-pane communication (heading clicks, glossary clicks)
+- [x] Git commit: "feat: implement 2-pane layout with ResizablePanelGroup"
 
 ### Stage 4: Fix Scrolling & CSS Issues
 - [ ] Standardize scrolling patterns

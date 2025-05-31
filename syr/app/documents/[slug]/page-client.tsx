@@ -169,7 +169,8 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
   // This function is no longer used - the ResizableDocumentLayout handles heading clicks directly
 
   return (
-    <ResizableDocumentLayout
+    <div className="flex-1 overflow-hidden">
+      <ResizableDocumentLayout
       html={html}
       elements={mutatedDocument}
       documentId={documentId}
@@ -185,5 +186,6 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
       onElementVisibilityChange={handleElementVisibilityChange}
       onElementClick={handleElementClick}
     />
+    </div>
   )
 }
