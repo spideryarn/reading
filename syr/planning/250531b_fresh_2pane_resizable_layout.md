@@ -118,24 +118,24 @@ User requirements:
   - [x] Check for layout shifts or jumps
 - [x] Git commit: "fix: resolve scrolling issues with proper height constraints"
 
-### Stage 5: Add Basic Collapsible Functionality
-- [ ] Add collapse button to left pane
-  - [ ] Use Phosphor `SidebarSimple` icon in top-right
-  - [ ] Tooltip: "Toggle sidebar (Ctrl+B)"
-  - [ ] Consistent with shadcn/ui button styling
-- [ ] Implement collapse state
-  - [ ] Add `collapsedPanels` state to track which panels are collapsed
-  - [ ] Use ResizablePanel's `onCollapse` and `onExpand` callbacks
-  - [ ] Add keyboard shortcut handler for Ctrl+B
-- [ ] Handle collapsed state
-  - [ ] ResizablePanel handles sizing automatically when collapsed
-  - [ ] Show floating expand button when collapsed
-  - [ ] Smooth transitions using ResizablePanel's built-in animations
-- [ ] Test collapsible behavior
-  - [ ] Collapse/expand works smoothly
-  - [ ] Keyboard shortcut functions correctly
-  - [ ] Document viewer expands to full width when left pane collapsed
-- [ ] Git commit: "feat: add collapsible left pane with keyboard shortcut"
+### Stage 5: Add Basic Collapsible Functionality ✓
+- [x] Add collapse button to left pane
+  - [x] Use Phosphor `SidebarSimple` icon in top-right
+  - [x] Tooltip: "Toggle sidebar (Ctrl+B)"
+  - [x] Consistent with shadcn/ui button styling
+- [x] Implement collapse state
+  - [x] Add `isLeftPaneCollapsed` state to track collapse status
+  - [x] Conditional rendering of ResizablePanel when collapsed
+  - [x] Add keyboard shortcut handler for Ctrl+B
+- [x] Handle collapsed state
+  - [x] ResizablePanel handles sizing automatically when collapsed
+  - [x] Show floating expand button when collapsed
+  - [x] Smooth transitions using ResizablePanelGroup's built-in animations
+- [x] Test collapsible behavior
+  - [x] Collapse/expand works smoothly
+  - [x] Keyboard shortcut functions correctly
+  - [x] Document viewer expands to full width when left pane collapsed
+- [x] Git commit: "feat: add collapsible left pane with keyboard shortcut"
 
 ### Stage 6: Testing & Documentation
 - [ ] Write automated tests with subagent

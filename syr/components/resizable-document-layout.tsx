@@ -146,43 +146,50 @@ export function ResizableDocumentLayout({
         className="h-full w-full"
       >
         {/* Left pane - Unified navigation and tools */}
-        {!isLeftPaneCollapsed && (
-          <>
-            <ResizablePanel 
-              defaultSize={30} 
-              minSize={20} 
-              maxSize={50}
-              className="h-full"
-            >
-              <UnifiedLeftPane
-                content={html}
-                elements={elements}
-                documentId={documentId}
-                markdownContent={markdownContent}
-                headingVisibility={headingVisibility}
-                glossaryEntities={glossaryEntities}
-                isLoadingGlossary={isLoadingGlossary}
-                showGlossary={showGlossary}
-                glossaryError={glossaryError}
-                onHeadingClick={handleHeadingClick}
-                onLoadGlossary={onLoadGlossary}
-                onScrollToEntity={handleScrollToEntity}
-                documentContext={documentContext}
-                onToggleCollapse={handleToggleCollapse}
-              />
-            </ResizablePanel>
-            
-            {/* Resize handle with enhanced visibility */}
-            <ResizableHandle 
-              withHandle 
-              className="w-1 bg-gray-200 hover:bg-gray-300 active:bg-blue-300 transition-colors" 
+        <ResizablePanel 
+          defaultSize={30} 
+          minSize={isLeftPaneCollapsed ? 0 : 20} 
+          maxSize={isLeftPaneCollapsed ? 0 : 50}
+          className="h-full"
+          style={{ 
+            overflow: 'hidden',
+            width: isLeftPaneCollapsed ? '0px' : undefined 
+          }}
+        >
+          {!isLeftPaneCollapsed && (
+            <UnifiedLeftPane
+              content={html}
+              elements={elements}
+              documentId={documentId}
+              markdownContent={markdownContent}
+              headingVisibility={headingVisibility}
+              glossaryEntities={glossaryEntities}
+              isLoadingGlossary={isLoadingGlossary}
+              showGlossary={showGlossary}
+              glossaryError={glossaryError}
+              onHeadingClick={handleHeadingClick}
+              onLoadGlossary={onLoadGlossary}
+              onScrollToEntity={handleScrollToEntity}
+              documentContext={documentContext}
+              onToggleCollapse={handleToggleCollapse}
             />
-          </>
-        )}
+          )}
+        </ResizablePanel>
+        
+        {/* Resize handle - always present but hidden when collapsed */}
+        <ResizableHandle 
+          withHandle={!isLeftPaneCollapsed}
+          className={`w-1 transition-colors ${
+            isLeftPaneCollapsed 
+              ? 'w-0 opacity-0' 
+              : 'bg-gray-200 hover:bg-gray-300 active:bg-blue-300'
+          }`}
+          style={{ display: isLeftPaneCollapsed ? 'none' : undefined }}
+        />
         
         {/* Right pane - Document viewer */}
         <ResizablePanel 
-          defaultSize={isLeftPaneCollapsed ? 100 : 70}
+          defaultSize={70}
           className="h-full"
         >
           <SimpleDocumentViewer
