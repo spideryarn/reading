@@ -20,6 +20,9 @@ Based on README.md, the following architecture decisions have been made:
 
 - **Frontend Framework**: Next.js with TypeScript and Tailwind CSS (transitioning from SvelteKit)
 - **AI Integration**: Anthropic Claude Sonnet 4 for all AI-related features
+  - Vercel AI SDK Core for multi-provider support (Claude, Gemini)
+  - @assistant-ui/react for chat UI primitives
+  - All LLM calls use Nunjucks + Zod prompt templates
 - **Storage**: Supabase (Postgres with realtime capabilities) from the start
 - **Data Structure**: Decompose HTML documents into individual elements stored as separate database rows with parent/child relationships
 - **Frontend State**: Virtual DOM approach - maintain document structure as React state/context

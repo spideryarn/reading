@@ -8,6 +8,8 @@ This document defines code quality standards and patterns to maintain consistenc
 - `docs/ARCHITECTURE.md` - System architecture and technical decisions
 - `docs/TESTING.md` - Testing approach and patterns
 - `docs/GIT_COMMITS.md` - Git workflow and commit guidelines
+- `docs/VERCEL_AI_SDK_REFERENCE.md` - Vercel AI SDK patterns and multi-provider support
+- `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Chat UI implementation with @assistant-ui/react
 - `.eslintrc.json` and `tsconfig.json` - Linting and TypeScript configuration
 
 ## Code Quality Checks
@@ -161,6 +163,16 @@ import { Info } from "@phosphor-icons/react/dist/ssr/Info"
 'use client'
 import { Warning, Info } from "@phosphor-icons/react"
 ```
+
+### AI Integration
+- Use Vercel AI SDK Core (`generateText`, `streamText`) for LLM calls
+- Follow multi-provider pattern in `lib/services/llm-provider.ts`
+- See `docs/VERCEL_AI_SDK_REFERENCE.md` for detailed patterns
+
+### Chat UI
+- Use @assistant-ui/react primitives for chat interfaces
+- Follow implementation patterns in `components/assistant-chat.tsx`
+- See `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md` for integration guide
 
 ## Client/Server Components
 
@@ -375,25 +387,44 @@ We use Tailwind CSS v4 beta, which has breaking changes from v3:
 - Typography plugin: `@plugin "@tailwindcss/typography"`
 - Theme customization in `app/globals.css`
 
+## Web Search Notes
+
+**Last updated: 31/05/2025**
+
+### Next.js 15 & React 19 (Searched 31/05/2025)
+- App Router requires React 19 RC (not 18)
+- Use Server Components by default
+- Enable `bundlePagesRouterDependencies` for optimization
+- Sources: augustinfotech.com/blogs/nextjs-best-practices-in-2025, nextjs.org/blog/next-15
+
+### Tailwind CSS v4 Beta (Searched 31/05/2025)
+- 100x faster with Vite plugin
+- Native CSS features: cascade layers, container queries
+- Most projects ship <10kB CSS
+- Source: tailwindcss.com/blog/tailwindcss-v4-beta
+
+### Vercel AI SDK (Searched 31/05/2025)
+- Use streaming-first for chat UIs
+- Set proper headers: `x-vercel-ai-data-stream: v1`
+- Edge Runtime recommended for performance
+- Sources: ai-sdk.dev, vercel.com/blog/introducing-the-vercel-ai-sdk
+
+### Supabase Security (Searched 31/05/2025)
+- Always enable Row Level Security (RLS)
+- Use `supabase-ssr` for cookie-based auth
+- Never expose service role key client-side
+- Source: supabase.com/docs/guides/auth/server-side/nextjs
+
 ## Appendix: Future Considerations
 
-### Error Boundaries
-- React error boundary components for graceful failures
-- Sentry/error tracking integration
-
-### State Management
-- When to adopt Zustand/Redux for complex state
-- Optimistic UI update patterns
-
 ### Performance
-- Web Vitals monitoring
 - React Server Components optimization
-- Bundle splitting strategies
+- Web Vitals monitoring  
+- Virtual scrolling for long documents
 
 ### Accessibility
 - ARIA patterns for custom components
 - Keyboard navigation testing
-- Screen reader compatibility
 
 ### Security (Post-MVP)
 - Input sanitization
