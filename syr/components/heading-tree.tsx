@@ -75,14 +75,14 @@ export function buildHeadingTree(headings: Heading[]): HeadingNode[] {
  */
 function getIndentClass(level: number): string {
   const indents = {
-    1: 'pl-2',
-    2: 'pl-6', 
-    3: 'pl-10',
-    4: 'pl-14',
-    5: 'pl-18',
-    6: 'pl-22'
+    1: 'pl-0',
+    2: 'pl-3', 
+    3: 'pl-6',
+    4: 'pl-9',
+    5: 'pl-12',
+    6: 'pl-15'
   }
-  return indents[level as keyof typeof indents] || 'pl-2'
+  return indents[level as keyof typeof indents] || 'pl-0'
 }
 
 function getTextSizeClass(level: number): string {
@@ -98,15 +98,8 @@ function getTextSizeClass(level: number): string {
 }
 
 function getBorderClass(level: number): string {
-  const borders = {
-    1: 'border-l-4 border-blue-600',
-    2: 'border-l-3 border-blue-500',
-    3: 'border-l-2 border-blue-400', 
-    4: 'border-l border-gray-300',
-    5: 'border-l border-gray-300',
-    6: 'border-l border-gray-300'
-  }
-  return borders[level as keyof typeof borders] || 'border-l border-gray-300'
+  // Removed vertical border lines for cleaner appearance
+  return ''
 }
 
 /**
@@ -183,8 +176,6 @@ function HeadingNodeComponent({
   return (
     <>
       <div className={`flex items-center ${getIndentClass(node.level)}`}>
-        {/* Left border for hierarchy indication */}
-        <div className={`${getBorderClass(node.level)} mr-3 h-12`} />
         
         <Tooltip.Provider delayDuration={500}>
           <Tooltip.Root onOpenChange={(open) => {
