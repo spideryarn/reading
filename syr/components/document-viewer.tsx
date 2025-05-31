@@ -10,7 +10,6 @@ import { TabContainer, type Tab } from './tab-container'
 import { AssistantChat } from './assistant-chat'
 import { MarkdownRenderer } from './markdown-renderer' // Lightweight markdown for document elements
 import { Button } from '@/components/ui/button'
-import { Loading } from '@/components/ui/loading'
 import { AlertWithIcon } from '@/components/ui/alert'
 import { useElementVisibility } from '@/lib/hooks/useElementVisibility'
 

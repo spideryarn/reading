@@ -180,5 +180,9 @@ export const mutationDebugger = new MutationDebugger()
 
 // Attach to window for easy console access in development
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-  (window as any).mutationDebugger = mutationDebugger
+  // Extend the Window interface for development debugging
+  interface WindowWithDebugger extends Window {
+    mutationDebugger?: MutationDebugger
+  }
+  (window as WindowWithDebugger).mutationDebugger = mutationDebugger
 }

@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import { useChatRuntime } from '../useChatRuntime';
-import { useLocalRuntime } from '@assistant-ui/react';
+import { useLocalRuntime, type ChatModelRunOptions, type ChatModelRunResult, type ImageContentPart } from '@assistant-ui/react';
 
 // Mock @assistant-ui/react
 jest.mock('@assistant-ui/react', () => ({
@@ -33,7 +33,7 @@ describe('useChatRuntime', () => {
   });
 
   describe('chatModelAdapter', () => {
-    let adapterRun: Function;
+    let adapterRun: (options: Pick<ChatModelRunOptions, 'messages' | 'abortSignal'>) => Promise<ChatModelRunResult>;
     const documentContext = 'Test document context';
 
     beforeEach(() => {
@@ -60,7 +60,7 @@ describe('useChatRuntime', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: 'Hello',
+          messages: [{ role: 'user', content: 'Hello' }],
           documentContext,
         }),
         signal: undefined, // AbortSignal is undefined if not passed
@@ -213,7 +213,7 @@ describe('useChatRuntime', () => {
       expect(mockFetch).toHaveBeenCalledWith('/api/chat', 
         expect.objectContaining({
           body: JSON.stringify({
-            message: '',
+            messages: [{ role: 'user', content: '' }],
             documentContext: 'Test document context',
           }),
         })
@@ -226,7 +226,7 @@ describe('useChatRuntime', () => {
         role: 'user' as const,
         content: [
           { type: 'text' as const, text: 'Part 1' },
-          { type: 'image' as any, image: 'data:image/png;base64,abc' },
+          { type: 'image' as const, image: 'data:image/png;base64,abc' } as ImageContentPart,
           { type: 'text' as const, text: 'Part 2' }
         ]
       }];
@@ -243,7 +243,7 @@ describe('useChatRuntime', () => {
       expect(mockFetch).toHaveBeenCalledWith('/api/chat', 
         expect.objectContaining({
           body: JSON.stringify({
-            message: 'Part 1',
+            messages: [{ role: 'user', content: 'Part 1' }],
             documentContext: 'Test document context',
           }),
         })

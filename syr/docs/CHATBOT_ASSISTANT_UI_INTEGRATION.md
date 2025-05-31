@@ -8,8 +8,12 @@ This document provides comprehensive technical guidance for integrating the @ass
 
 **Related Documentation:**
 - [LLM_PROMPT_TEMPLATES.md](LLM_PROMPT_TEMPLATES.md) - **Required reading** for implementing any LLM functionality
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Overall system design decisions
-- [AI_SUMMARISE.md](AI_SUMMARISE.md) and [AI_GLOSSARY.md](AI_GLOSSARY.md) - Examples of AI feature implementation
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Overall system design decisions and framework choices
+- [AI_SUMMARISE.md](AI_SUMMARISE.md) and [AI_GLOSSARY.md](AI_GLOSSARY.md) - Examples of AI feature implementation patterns
+- [TESTING.md](TESTING.md) - Testing approach for Jest with React Testing Library
+- [SHADCN_UI_REFERENCE.md](SHADCN_UI_REFERENCE.md) - UI component library integration patterns
+- [UI_INTERFACE.md](UI_INTERFACE.md) - Multi-pane layout and tabbed navigation architecture
+- [SITE_ORGANISATION.md](SITE_ORGANISATION.md) - Application routes and component hierarchy
 
 ## Library Overview
 
@@ -343,6 +347,9 @@ export async function POST(req: Request) {
     documentContext: getDocumentContext(context),
     selectedText: context?.selectedText
   });
+  
+  // Template definitions in lib/prompts/templates/chat.njk and chat.ts
+  // Configuration via lib/config.ts for AI_CONFIG settings
   */
   
   // Legacy direct implementation (for reference only):
@@ -915,9 +922,11 @@ As of Stage 4 completion, the Spideryarn Reading application has successfully in
 ### Integration Points
 
 - **API Route**: `/api/chat` (currently fake implementation, ready for LLM integration)
-- **Tab System**: Chat integrated as second tab in Tools pane (after Glossary)
-- **Document Context**: Extracted via `getDocumentContext()` in `document-viewer.tsx`
-- **Styling**: Consistent with existing Tailwind design system
+- **Tab System**: Chat integrated as second tab in Tools pane (after Glossary) - see `components/tab-container.tsx`
+- **Document Context**: Extracted via `getDocumentContext()` in `components/document-viewer.tsx`
+- **Styling**: Consistent with existing Tailwind design system and shadcn/ui components
+- **State Management**: Uses `components/assistant-chat.tsx` and `src/lib/hooks/useChatRuntime.ts`
+- **Testing**: Unit tests in `src/lib/hooks/__tests__/useChatRuntime.test.ts`
 
 ### Next Steps
 
@@ -928,12 +937,20 @@ See [planning/250527a_chatbot_interface_assistant_ui.md](/planning/250527a_chatb
 
 ## Useful Resources
 
+### External Documentation
 - **Official Documentation**: https://www.assistant-ui.com/docs/
 - **GitHub Repository**: https://github.com/assistant-ui/assistant-ui
 - **Examples**: https://github.com/assistant-ui/assistant-ui/tree/main/examples
 - **API Reference**: https://www.assistant-ui.com/docs/api-reference/overview
 - **Discord Community**: Available through their GitHub page
 - **npm Package**: https://www.npmjs.com/package/@assistant-ui/react
+
+### Internal Code References
+- **Implementation**: `components/assistant-chat.tsx` - Main chat component
+- **Hook**: `src/lib/hooks/useChatRuntime.ts` - Runtime management
+- **API Route**: `app/api/chat/route.ts` - Backend integration point
+- **Tests**: `src/lib/hooks/__tests__/useChatRuntime.test.ts` - Runtime testing
+- **Legacy Component**: `components/simple-chat.tsx` - Temporary comparison implementation
 
 ## Tips for Next.js Integration
 

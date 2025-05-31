@@ -97,10 +97,6 @@ function getTextSizeClass(level: number): string {
   return sizes[level as keyof typeof sizes] || 'text-sm font-normal'
 }
 
-function getBorderClass(level: number): string {
-  // Removed vertical border lines for cleaner appearance
-  return ''
-}
 
 /**
  * Count total descendants that would be hidden by granularity filtering

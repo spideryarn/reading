@@ -5,6 +5,7 @@ This document provides essential context for Claude instances working on the Spi
 see:
 - `README.md` for goals/intents/features
 - IMPORTANT: `docs/CODING_PRINCIPLES.md`
+- IMPORTANT: `docs/CODING_GUIDELINES.md` for code quality standards
 - `docs/ARCHITECTURE.md`
 - `docs/GIT_COMMITS.md` for using Git
 
@@ -86,6 +87,7 @@ Available evergreen documentation in `docs/` - here are some of the most useful.
 
 Coding & infrastructure:
 - `docs/CODING_PRINCIPLES.md` - Outlines development principles prioritising simplicity, readability, debugging, and rapid prototyping for early-stage development
+- `docs/CODING_GUIDELINES.md` - Code quality standards including linting, TypeScript patterns, React best practices, and import conventions
 - `docs/ARCHITECTURE.md` - Contains high-level architectural decisions including framework choices, data structures, storage approach, and MVP features
 - `docs/STYLING.md` - CSS and visual styling configuration including theme settings, Phosphor icons usage, and loading/error button patterns
 - `docs/SETUP.md` - Development environment setup guide including Node.js, Supabase, Git worktree configuration, and common commands

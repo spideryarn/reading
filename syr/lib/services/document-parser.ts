@@ -1,8 +1,9 @@
 import { load } from 'cheerio'
 import { v4 as uuidv4 } from 'uuid'
 import TurndownService from 'turndown'
+import type { Element } from 'domhandler'
 import type { DocumentElement } from '@/lib/types/document'
-import { assignDeterministicIds, getBodyWithIds } from './deterministicId'
+import { assignDeterministicIds } from './deterministicId'
 
 export class DocumentParser {
   // Define inline elements that should be kept within their parent's text content
@@ -57,7 +58,7 @@ export class DocumentParser {
     let position = 0
 
     const processElement = (
-      element: any,
+      element: Element,
       parentId: string | null,
       level: number
     ) => {

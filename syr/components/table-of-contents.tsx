@@ -137,6 +137,29 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
       return newStates
     })
   }
+
+  // Auto expand/collapse headings based on granularity level
+  const autoExpandCollapseToGranularity = (tabId: 'original' | 'ai-generated', granularityLevel: number) => {
+    const headingsForTab = tabId === 'ai-generated' ? aiHeadings : headings
+    
+    setCollapsedStates(prev => {
+      const newStates = { ...prev }
+      const newTabState = new Set<string>()
+      
+      // For each heading, determine if it should be collapsed based on granularity
+      headingsForTab.forEach(heading => {
+        // Collapse headings that are at or beyond the granularity level
+        // This means if granularity is 3, collapse H3 and deeper (H4, H5, H6)
+        if (heading.level >= granularityLevel) {
+          newTabState.add(heading.id)
+        }
+        // Headings above the granularity level (H1, H2 when granularity is 3) remain expanded
+      })
+      
+      newStates[tabId] = newTabState
+      return newStates
+    })
+  }
   
   // Calculate maximum heading depth from headings array
   const getMaxDepth = (headingsList: Heading[]) => {
@@ -618,7 +641,10 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
           collapsedIds={collapsedStates.original}
           onToggleExpanded={(headingId) => toggleExpanded('original', headingId)}
           granularityLevel={granularityLevels.original}
-          onGranularityChange={(level) => setGranularityLevels(prev => ({ ...prev, 'original': level }))}
+          onGranularityChange={(level) => {
+            setGranularityLevels(prev => ({ ...prev, 'original': level }))
+            autoExpandCollapseToGranularity('original', level)
+          }}
           headingVisibility={headingVisibility}
         />
       </div>
@@ -674,7 +700,10 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
             collapsedIds={collapsedStates['ai-generated']}
             onToggleExpanded={(headingId) => toggleExpanded('ai-generated', headingId)}
             granularityLevel={granularityLevels['ai-generated']}
-            onGranularityChange={(level) => setGranularityLevels(prev => ({ ...prev, 'ai-generated': level }))}
+            onGranularityChange={(level) => {
+            setGranularityLevels(prev => ({ ...prev, 'ai-generated': level }))
+            autoExpandCollapseToGranularity('ai-generated', level)
+          }}
             headingVisibility={headingVisibility}
           />
         ) : (

@@ -1,5 +1,10 @@
 # Coding principles
 
+see also:
+- `docs/CODING_GUIDELINES.md` - Specific code quality standards and patterns
+- `docs/ARCHITECTURE.md` - Technical architecture decisions
+- `docs/TESTING.md` - Testing approach and patterns
+
 - Prioritise code that's simple, easy-to-understand, debuggable, and readable.
 - This is a prototype with no users yet. We want to develop fast and experiment, so we can figure out which features are most valuable.
 - Fix the root cause rather than putting on a band-aid. Avoid fallbacks & defaults - better to fail if input assumptions aren't being met.
