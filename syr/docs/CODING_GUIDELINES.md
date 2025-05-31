@@ -162,77 +162,195 @@ import { Info } from "@phosphor-icons/react/dist/ssr/Info"
 import { Warning, Info } from "@phosphor-icons/react"
 ```
 
-## Component Testing
+## Client/Server Components
 
-### Mocking Next.js Components
-When testing components that use Next.js features:
+Use `'use client'` directive for components with:
+- React hooks (useState, useEffect, etc.)
+- Event handlers
+- Browser-only APIs
+
 ```typescript
-// Mock Next.js Link
-jest.mock('next/link', () => {
-  return function MockLink({ children, href, ...props }: LinkProps & { children: React.ReactNode }) {
-    return <a href={href as string} {...props}>{children}</a>
+// Client component
+'use client'
+import { useState } from 'react'
+
+// Server component (default - no directive)
+import { headers } from 'next/headers'
+```
+
+## API Route Patterns
+
+### Structure
+```typescript
+export async function POST(request: Request) {
+  try {
+    const body = await request.json()
+    const result = schema.safeParse(body)
+    
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'Invalid request', details: result.error.format() },
+        { status: 400 }
+      )
+    }
+    
+    // Process valid data
+    console.log('[API Name] Processing:', result.data)
+    
+  } catch (error) {
+    console.error('[API Name] Error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
   }
+}
+```
+
+## Type-First Development
+
+### Zod Schemas
+Define validation schemas for all API inputs/outputs:
+```typescript
+export const requestSchema = z.object({
+  content: z.string().min(1),
+  options: z.object({
+    temperature: z.number().optional(),
+  })
 })
 
-// Mock Next.js Image with ESLint disable
-jest.mock('next/image', () => {
-  return function MockImage({ alt, ...props }: ImageProps) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img alt={alt} {...props} />
-  }
+type RequestData = z.infer<typeof requestSchema>
+```
+
+### Strict TypeScript
+- Define explicit return types for complex functions
+- Use discriminated unions for variants
+- Prefer `type` for unions, `interface` for objects
+
+## Component Patterns
+
+### File Structure
+```typescript
+'use client' // If needed
+
+import React from 'react'
+// Other imports...
+
+interface ComponentProps {
+  isLoading?: boolean  // Boolean prefix: is/has/should
+  onSubmit?: () => void  // Callback prefix: on
+  children: React.ReactNode
+}
+
+export function ComponentName({ isLoading, onSubmit, children }: ComponentProps) {
+  // Component logic
+}
+```
+
+### Hooks
+- Always prefix with `use`
+- Return objects with clear property names
+- Include cleanup in useEffect
+
+```typescript
+export function useFeatureName(): {
+  data: Data | null
+  isLoading: boolean
+  error: Error | null
+} {
+  // Hook implementation
+}
+```
+
+## File Naming
+
+- Components: `kebab-case.tsx`
+- Hooks: `camelCase.ts` (useElementVisibility.ts)
+- Types: `kebab-case.ts`
+- Tests: `component-name.test.tsx`
+
+## Import Paths
+
+Always use absolute imports with `@/` prefix:
+```typescript
+// ❌ Bad
+import { Button } from '../../../components/ui/button'
+
+// ✅ Good
+import { Button } from '@/components/ui/button'
+```
+
+## Testing Patterns
+
+### Structure
+```typescript
+describe('ComponentName', () => {
+  it('should handle specific behavior', () => {
+    // Test implementation
+  })
 })
 ```
 
-### Type-Safe Test Helpers
-Convert test helpers to TypeScript for better type safety:
+### Mock Next.js Components
 ```typescript
-// ✅ Good - TypeScript test helper
-interface MockRequestOptions {
-  method?: string
-  headers?: Record<string, string>
-  body?: unknown
+jest.mock('next/link', () => ({
+  __esModule: true,
+  default: ({ children, href, ...props }: any) => 
+    <a href={href} {...props}>{children}</a>
+}))
+```
+
+## Logging Patterns
+
+```typescript
+// API/Service logs with context
+console.log('[ComponentName] Action:', { data, timestamp: new Date().toISOString() })
+console.error('[ComponentName] Error:', error)
+
+// Remove debug logs before committing
+// console.log('DEBUG:', temporaryValue)  // ❌ Don't commit
+```
+
+## Async Patterns
+
+Always use async/await over promises:
+```typescript
+// ❌ Bad
+fetch('/api/data').then(res => res.json()).then(data => ...)
+
+// ✅ Good
+const response = await fetch('/api/data')
+const data = await response.json()
+```
+
+Use early returns to reduce nesting:
+```typescript
+if (!data) {
+  return null  // Early return
 }
 
-export function createMockRequest(options: MockRequestOptions = {}) {
-  return new Request('http://localhost:3000/api/test', {
-    method: options.method || 'GET',
-    headers: options.headers || {},
-    body: options.body ? JSON.stringify(options.body) : undefined,
-  })
+if (error) {
+  return <ErrorComponent error={error} />
 }
+
+// Main logic here
 ```
 
 ## ESLint Disable Comments
 
-Use ESLint disable comments sparingly and only when truly necessary:
+Only use with specific reason:
 ```typescript
-// ✅ Good - specific disable with explanation
 // eslint-disable-next-line @next/next/no-img-element -- Mock component for testing
-<img src="..." alt="..." />
-
-// ❌ Bad - disabling entire file or broad rules
-/* eslint-disable */
 ```
 
-## Common Patterns to Avoid
+## Common Anti-Patterns
 
-1. **Dead Code**: Remove unused functions, variables, and imports immediately
-2. **Console Logs**: Remove debugging console.log statements before committing (except intentional logging)
-3. **TODO Comments**: Create issues or planning docs instead of leaving TODOs in code
-4. **Magic Numbers**: Use named constants for repeated values
-5. **Inline Styles**: Use Tailwind classes or CSS modules instead
-
-## Performance Considerations
-
-### Bundle Size
-- Remove unused imports and dead code
-- Use dynamic imports for large libraries used in specific routes
-- Check bundle analyzer output periodically
-
-### React Optimization
-- Use `useCallback` and `useMemo` for expensive computations
-- Avoid creating new objects/arrays in render unless necessary
-- Use React.memo for pure components with expensive renders
+- Dead code and unused imports
+- Debug console.logs in production code
+- TODO comments (use planning docs instead)
+- Magic numbers (use named constants)
+- Relative imports beyond siblings
+- Promise chains instead of async/await
 
 ## Tailwind CSS v4 Considerations
 
@@ -243,61 +361,43 @@ We use Tailwind CSS v4 beta, which has breaking changes from v3:
 /* ❌ v3 syntax - causes errors */
 @import "@tailwindcss/typography";
 
-/* ✅ v4 alternatives */
-@plugin "@tailwindcss/typography";  // Option 1: Plugin directive
-.prose { /* styles */ }              // Option 2: Manual CSS (we use this)
+/* Current implementation - using plugin directive */
+@plugin "@tailwindcss/typography";
 ```
 
-### Library Selection
-- Verify v4 compatibility before adding Tailwind plugins
-- Many v3 plugins don't work with v4's new architecture
-- Manual CSS often more reliable than incompatible plugins
+### Key Differences from v3
+- Plugin system uses `@plugin` directive instead of JavaScript config
+- CSS-first configuration with `@theme` directives
+- Some v3 plugins need updates for v4 compatibility
 
-### Current Implementation
-- Manual prose styles in `app/globals.css:287-473`
-- CSS-first config with `@theme` directives
+### Current Setup
 - PostCSS via `@tailwindcss/postcss` v4
+- Typography plugin: `@plugin "@tailwindcss/typography"`
+- Theme customization in `app/globals.css`
 
-## Appendix: Possible other ideas that maybe should be part of our coding guidelines - needs further discussion
+## Appendix: Future Considerations
 
-### Error Handling Patterns
-- Standardised error boundary components
-- Consistent error message formatting
-- Logging strategy for production vs development
-
-### API Response Patterns
-- Standardised response format across all API routes
-- Consistent error response structure
-- Rate limiting implementation
+### Error Boundaries
+- React error boundary components for graceful failures
+- Sentry/error tracking integration
 
 ### State Management
-- When to use React Context vs props
-- Patterns for complex form state
-- Optimistic UI updates
+- When to adopt Zustand/Redux for complex state
+- Optimistic UI update patterns
 
-### Documentation in Code
-- JSDoc standards for public APIs
-- When to add inline comments
-- Component documentation requirements
+### Performance
+- Web Vitals monitoring
+- React Server Components optimization
+- Bundle splitting strategies
 
-### Accessibility Standards
-- ARIA label requirements
-- Keyboard navigation patterns
-- Screen reader testing approach
+### Accessibility
+- ARIA patterns for custom components
+- Keyboard navigation testing
+- Screen reader compatibility
 
-### Performance Monitoring
-- Web Vitals tracking
-- Performance budgets
-- Lighthouse CI integration
+### Security (Post-MVP)
+- Input sanitization
+- Rate limiting
+- CSP headers
 
-### Security Practices
-- Input validation patterns
-- CSRF protection
-- Content Security Policy headers
-
-### Database Query Patterns
-- Query optimization guidelines
-- Connection pooling best practices
-- Migration testing requirements
-
-These topics may warrant their own documentation or inclusion in existing docs as the project matures.
+These topics will be addressed as the project matures beyond prototype phase.
