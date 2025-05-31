@@ -78,63 +78,19 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
     setHeadingVisibility(newHeadingVisibility)
   }, [elementVisibility, allHeadings, mutatedDocument])
   
-  // ToC scroll trigger function (may not be needed in new layout but keeping for now)
-  const triggerTocScrollToHeading = useCallback((headingId: string) => {
-    
-    // Find the ToC container using a more reliable selector
-    const tocContainer = document.querySelector('.table-of-contents, [data-testid="table-of-contents"]')
-    if (!tocContainer) {
-      return
-    }
-    
-    // Find the heading element in the ToC
-    const headingElement = tocContainer.querySelector(`[data-heading-id="${headingId}"]`)
-    if (!headingElement) {
-      return
-    }
-    
-    // Scroll the heading into view
-    headingElement.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center'
-    })
-    
-  }, [])
+  // ToC scroll is now handled automatically by the useTocAutoScroll hook in the tab components
+  // This manual trigger is no longer needed with the new architecture
   
-  // Find the nearest heading for a clicked element
-  const findNearestHeading = useCallback((clickedElement: DocumentElement): string | null => {
-    // If the clicked element is already a heading, use it
-    if (clickedElement.tag_name.match(/^h[1-6]$/i)) {
-      return clickedElement.id
-    }
-    
-    // Otherwise, find the nearest preceding heading
-    const sortedElements = mutatedDocument.slice().sort((a, b) => a.position - b.position)
-    const clickedIndex = sortedElements.findIndex(el => el.id === clickedElement.id)
-    
-    if (clickedIndex === -1) return null
-    
-    // Look backwards for the nearest heading
-    for (let i = clickedIndex - 1; i >= 0; i--) {
-      const element = sortedElements[i]
-      if (element.tag_name.match(/^h[1-6]$/i)) {
-        return element.id
-      }
-    }
-    
-    return null
-  }, [mutatedDocument])
+  // Auto-scroll functionality for clicked elements is now handled by the useTocAutoScroll hook
+  // based on element visibility changes, so no manual heading lookup is needed
   
   // Handle element clicks in the document viewer
-  const handleElementClick = useCallback((element: DocumentElement) => {
-    
-    // Find the nearest heading
-    const nearestHeadingId = findNearestHeading(element)
-    if (nearestHeadingId) {
-      triggerTocScrollToHeading(nearestHeadingId)
-    } else {
-    }
-  }, [findNearestHeading, triggerTocScrollToHeading])
+  // Auto-scroll is now handled by the useTocAutoScroll hook in the ToC tab components
+  // based on element visibility changes, so no manual triggering needed
+  const handleElementClick = useCallback((_element: DocumentElement) => {
+    // Element click handling for selection etc. can be added here if needed
+    // The auto-scroll will be triggered automatically via visibility changes
+  }, [])
 
   // Fetch glossary entities when requested
   const fetchGlossary = async () => {

@@ -137,29 +137,109 @@ User requirements:
   - [x] Document viewer expands to full width when left pane collapsed
 - [x] Git commit: "feat: add collapsible left pane with keyboard shortcut"
 
+### Stage 5.1: Fix ToC Auto-Scroll Regression ⚠️ (ATTEMPTED - UNSUCCESSFUL)
+
+**Problem Identified**: After consolidating from 3-pane to 2-pane layout, the bidirectional navigation between Document and ToC was broken. Previously, clicking on document elements would automatically scroll the ToC to highlight the corresponding heading. This functionality was lost during the migration.
+
+**Root Cause**: In the old 3-pane layout, there were separate components (`TableOfContents` and `DocumentViewer`) that had direct communication. The new unified layout breaks this connection because:
+- `SimpleDocumentViewer` passes `onElementClick` to `ResizableDocumentLayout`
+- But there's no direct path from document clicks to ToC scrolling
+- The ToC is now inside `UnifiedLeftPane` and not directly accessible
+
+**Attempted Solution** (in `components/resizable-document-layout.tsx`):
+- [x] Added `handleElementClick` function to intercept document element clicks
+- [x] Implemented smart heading detection logic:
+  - First checks if clicked element is itself a heading (h1-h6)
+  - Falls back to finding nearest preceding heading by document position
+  - Uses element position comparison to walk backwards through sorted headings
+- [x] Added ToC scroll functionality:
+  - Uses existing `data-heading-id` attribute from `HeadingTree` component
+  - Implemented `document.querySelector` to find ToC item
+  - Added smooth scroll with `scrollIntoView({ behavior: 'smooth', block: 'center' })`
+  - Added 100ms timeout to ensure ToC rendering
+- [x] Wired up in `SimpleDocumentViewer` props: `onElementClick={handleElementClick}`
+
+**Code Changes Made**:
+
+```tsx
+// Added to ResizableDocumentLayout component:
+const handleElementClick = useCallback((element: DocumentElement) => {
+  // Call original callback if provided
+  if (onElementClick) {
+    onElementClick(element)
+  }
+  
+  // Find corresponding heading in ToC and scroll to it
+  const findNearestHeading = (targetElement: DocumentElement): DocumentElement | null => {
+    // First check if clicked element itself is a heading
+    if (targetElement.tag && ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(targetElement.tag.toLowerCase())) {
+      return targetElement
+    }
+    
+    // Find nearest heading by position (look backwards)
+    const sortedElements = [...elements]
+      .filter(el => el.tag && ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(el.tag.toLowerCase()))
+      .sort((a, b) => a.position - b.position)
+    
+    let nearestHeading: DocumentElement | null = null
+    for (const headingEl of sortedElements) {
+      if (headingEl.position <= targetElement.position) {
+        nearestHeading = headingEl
+      } else {
+        break
+      }
+    }
+    
+    return nearestHeading
+  }
+  
+  const nearestHeading = findNearestHeading(element)
+  if (nearestHeading && nearestHeading.id) {
+    // Scroll the ToC to show this heading
+    setTimeout(() => {
+      const tocElement = document.querySelector(`[data-heading-id="${nearestHeading.id}"]`)
+      if (tocElement) {
+        tocElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }, 100)
+  }
+}, [elements, onElementClick])
+```
+
+**Issues with Attempted Solution**:
+- The fix didn't work as expected when tested
+- Possible issues:
+  - Timing problems with DOM queries across component boundaries
+  - Incorrect element ID mapping between document elements and ToC items
+  - Scrolling container conflicts (ToC is inside scrollable tab content)
+  - Missing state synchronization between document viewer and left pane
+
+**Alternative Approaches to Consider**:
+1. **Ref-based solution**: Pass refs between components instead of DOM queries
+2. **State-based solution**: Lift scroll state to parent and pass as props
+3. **Custom hook**: Create `useToCSyncScroll` hook for bidirectional communication
+4. **Event-based solution**: Use custom events or context for cross-component communication
+
+**Status**: ⚠️ Problem identified and solution attempted, but fix unsuccessful. Requires further investigation and alternative approach.
+
 ### Stage 6: Testing & Documentation
 - [ ] Write automated tests with subagent
   - [ ] Test unified left pane component
   - [ ] Test ResizablePanelGroup integration
   - [ ] Test collapsible functionality
   - [ ] Test all tab content rendering
+  - [ ] Run tests in subagents
 - [ ] Update documentation
   - [ ] Rewrite `docs/UI_INTERFACE.md` for new 2-pane architecture
+  - [ ] Use a subagent to look for any other docs that might also need updating (e.g. still mentioning the 3 panes)
   - [ ] Document ResizablePanelGroup usage patterns
-  - [ ] Add keyboard shortcuts to user-facing docs
+  - [ ] Add keyboard shortcuts to `docs/KEYBOARD_SHORTCUTS.md` following instructions in `docs/WRITING_EVERGREEN_DOCS.md`
 - [ ] Performance testing
   - [ ] Check for unnecessary re-renders
-  - [ ] Test with large documents
-  - [ ] Verify smooth resize animations
-- [ ] Final user testing
-  - [ ] Demo all functionality in new layout
-  - [ ] Verify improved reading experience
-  - [ ] Confirm all features work as before
-- [ ] Git commit: "docs: update documentation for new 2-pane layout"
+- [ ] Git commit in a subagent provided with context
 
 ### Stage 7: Cleanup & Future Preparation
 - [ ] Remove old components with subagent
-  - [ ] Archive original TableOfContents (keep for reference)
   - [ ] Remove tools pane code from DocumentViewer
   - [ ] Clean up unused CSS classes
   - [ ] Remove redundant state management

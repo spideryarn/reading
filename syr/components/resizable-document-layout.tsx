@@ -114,6 +114,51 @@ export function ResizableDocumentLayout({
     }
   }, [elements, onElementSelect])
   
+  // Handle element clicks from document viewer to scroll ToC
+  const handleElementClick = useCallback((element: DocumentElement) => {
+    // Call original callback if provided
+    if (onElementClick) {
+      onElementClick(element)
+    }
+    
+    // Find corresponding heading in ToC and scroll to it
+    // Look for the nearest parent heading element
+    const findNearestHeading = (targetElement: DocumentElement): DocumentElement | null => {
+      // First check if the clicked element itself is a heading
+      if (targetElement.tag && ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(targetElement.tag.toLowerCase())) {
+        return targetElement
+      }
+      
+      // Find the nearest heading by position (look backwards)
+      const sortedElements = [...elements]
+        .filter(el => el.tag && ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(el.tag.toLowerCase()))
+        .sort((a, b) => a.position - b.position)
+      
+      let nearestHeading: DocumentElement | null = null
+      for (const headingEl of sortedElements) {
+        if (headingEl.position <= targetElement.position) {
+          nearestHeading = headingEl
+        } else {
+          break
+        }
+      }
+      
+      return nearestHeading
+    }
+    
+    const nearestHeading = findNearestHeading(element)
+    if (nearestHeading && nearestHeading.id) {
+      // Scroll the ToC to show this heading
+      // We'll use a small delay to ensure the ToC is rendered
+      setTimeout(() => {
+        const tocElement = document.querySelector(`[data-heading-id="${nearestHeading.id}"]`)
+        if (tocElement) {
+          tocElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      }, 100)
+    }
+  }, [elements, onElementClick])
+  
   // Handle left pane collapse toggle
   const handleToggleCollapse = useCallback(() => {
     setIsLeftPaneCollapsed(prev => !prev)
@@ -197,7 +242,7 @@ export function ResizableDocumentLayout({
             selectedElement={selectedElement}
             onElementSelect={onElementSelect}
             onElementVisibilityChange={onElementVisibilityChange}
-            onElementClick={onElementClick}
+            onElementClick={handleElementClick}
           />
         </ResizablePanel>
       </ResizablePanelGroup>
