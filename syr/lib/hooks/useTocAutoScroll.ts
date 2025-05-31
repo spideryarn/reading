@@ -91,7 +91,6 @@ export function useTocAutoScroll(
     // Calculate if element is already reasonably visible
     const elementTop = elementRect.top - containerRect.top
     const containerHeight = containerRect.height
-    const elementBottom = elementTop + elementRect.height
     
     
     // If element is already in a good position (top third of container), don't scroll
@@ -128,7 +127,7 @@ export function useTocAutoScroll(
     return () => {
       container.removeEventListener('scroll', handleManualScroll)
     }
-  }, [containerRef.current, handleManualScroll])
+  }, [containerRef.current, handleManualScroll]) // eslint-disable-line react-hooks/exhaustive-deps
   
   // Perform auto-scroll when visible headings change
   useEffect(() => {

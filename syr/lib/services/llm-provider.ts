@@ -3,7 +3,7 @@
 
 import { anthropic as anthropicProvider } from '@ai-sdk/anthropic'
 import { google as googleProvider } from '@ai-sdk/google'
-import { AI_CONFIG, getModelConfig, getProviderFromKey, type ProviderTierKey } from '@/lib/config'
+import { AI_CONFIG, getModelConfig, type ProviderTierKey } from '@/lib/config'
 
 // Provider initialization with API key configuration
 const providers = {

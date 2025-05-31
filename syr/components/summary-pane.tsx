@@ -4,7 +4,7 @@
 // Extracted from table-of-contents.tsx to eliminate code duplication
 // See docs/AI_SUMMARISE.md for architecture and usage patterns
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Loading } from '@/components/ui/loading'
 
@@ -21,7 +21,7 @@ export function SummaryPane({ content, autoActivate = false, className = "" }: S
   const [showSummaryButton, setShowSummaryButton] = useState(true)
   const [isSummaryCollapsed, setIsSummaryCollapsed] = useState(false)
 
-  const generateSummary = async () => {
+  const generateSummary = useCallback(async () => {
     try {
       setSummaryLoading(true)
       setSummaryError('')
@@ -48,14 +48,14 @@ export function SummaryPane({ content, autoActivate = false, className = "" }: S
     } finally {
       setSummaryLoading(false)
     }
-  }
+  }, [content])
 
   // Auto-activate summary generation if requested
   useEffect(() => {
     if (autoActivate && showSummaryButton && !summaryLoading) {
       generateSummary()
     }
-  }, [autoActivate, showSummaryButton, summaryLoading])
+  }, [autoActivate, showSummaryButton, summaryLoading, generateSummary])
 
   if (showSummaryButton) {
     return (
