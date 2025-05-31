@@ -236,43 +236,27 @@ Use ESLint disable comments sparingly and only when truly necessary:
 
 ## Tailwind CSS v4 Considerations
 
-We use **Tailwind CSS v4** (currently in beta), which has significant architectural changes from v3. This affects library choices and patterns:
+We use Tailwind CSS v4 beta, which has breaking changes from v3:
 
-### Version-Specific Patterns
-
-#### Typography/Prose Classes
-Tailwind v4 changed how plugins work. For typography styles, we use manual CSS definitions instead of the traditional plugin approach:
-
+### Typography/Prose Classes
 ```css
-/* ❌ Bad - v3 syntax that causes errors in v4 */
+/* ❌ v3 syntax - causes errors */
 @import "@tailwindcss/typography";
 
-/* ✅ Good - v4 compatible approaches */
-// Option 1: Use plugin directive (if you want the plugin)
-@plugin "@tailwindcss/typography";
-
-// Option 2: Manual prose styles (what we use - see app/globals.css)
-.prose { /* typography styles */ }
+/* ✅ v4 alternatives */
+@plugin "@tailwindcss/typography";  // Option 1: Plugin directive
+.prose { /* styles */ }              // Option 2: Manual CSS (we use this)
 ```
 
-#### Library Selection Guidelines
-When choosing Tailwind-related libraries:
-1. **Check v4 compatibility** - Many v3 plugins don't work with v4's new architecture
-2. **Prefer CSS-based solutions** over JavaScript configuration (aligns with v4's CSS-first approach)
-3. **Manual implementations** are often better than incompatible plugins
-4. **Check official Tailwind v4 docs** - The beta docs have different guidance than v3
+### Library Selection
+- Verify v4 compatibility before adding Tailwind plugins
+- Many v3 plugins don't work with v4's new architecture
+- Manual CSS often more reliable than incompatible plugins
 
-### Current v4 Patterns in Use
-- **Manual prose styles** in `app/globals.css` for typography (lines 287-473)
-- **CSS-first configuration** using `@theme` and `@custom-variant` directives
-- **PostCSS integration** via `@tailwindcss/postcss` v4
-
-### Migration Considerations
-If upgrading Tailwind plugins or adding new ones:
-1. Verify v4 compatibility in the package documentation
-2. Test thoroughly - v4 has breaking changes in utility generation
-3. Consider manual CSS implementations for complex features
-4. Document any v4-specific workarounds in relevant files
+### Current Implementation
+- Manual prose styles in `app/globals.css:287-473`
+- CSS-first config with `@theme` directives
+- PostCSS via `@tailwindcss/postcss` v4
 
 ## Appendix: Possible other ideas that maybe should be part of our coding guidelines - needs further discussion
 
