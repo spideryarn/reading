@@ -96,27 +96,27 @@ User requirements:
   - [x] Cross-pane communication (heading clicks, glossary clicks)
 - [x] Git commit: "feat: implement 2-pane layout with ResizablePanelGroup"
 
-### Stage 4: Fix Scrolling & CSS Issues
-- [ ] Standardize scrolling patterns
-  - [ ] Ensure all panels use `h-full` for proper height inheritance
-  - [ ] Remove any hardcoded heights
-  - [ ] Use consistent `overflow-y-auto` on scrollable areas
-- [ ] Clean up CSS
-  - [ ] Remove all CSS Grid code
-  - [ ] Remove complex flexbox nesting
-  - [ ] Use ResizablePanelGroup's built-in layout
-- [ ] Fix TabContainer scrolling
-  - [ ] Ensure tab content area has proper height constraints
-  - [ ] Test scrolling in all 5 tabs with long content
-- [ ] Polish visual design
-  - [ ] Consistent padding using Tailwind classes
-  - [ ] Proper borders between panes (handled by Resizable)
-  - [ ] Loading states using shadcn/ui patterns
-- [ ] Use subagent for cross-browser testing
-  - [ ] Test on Chrome, Firefox, Safari
-  - [ ] Verify scrolling at different viewport sizes
-  - [ ] Check for layout shifts or jumps
-- [ ] Git commit: "fix: resolve scrolling issues with proper height constraints"
+### Stage 4: Fix Scrolling & CSS Issues ✓
+- [x] Standardize scrolling patterns
+  - [x] Ensure all panels use `h-full` for proper height inheritance
+  - [x] Remove any hardcoded heights
+  - [x] Use consistent `overflow-y-auto` on scrollable areas
+- [x] Clean up CSS
+  - [x] Remove all CSS Grid code
+  - [x] Remove complex flexbox nesting
+  - [x] Use ResizablePanelGroup's built-in layout
+- [x] Fix TabContainer scrolling
+  - [x] Ensure tab content area has proper height constraints
+  - [x] Test scrolling in all 5 tabs with long content
+- [x] Polish visual design
+  - [x] Consistent padding using Tailwind classes
+  - [x] Proper borders between panes (handled by Resizable)
+  - [x] Loading states using shadcn/ui patterns
+- [x] Use subagent for cross-browser testing
+  - [x] Test on Chrome, Firefox, Safari
+  - [x] Verify scrolling at different viewport sizes
+  - [x] Check for layout shifts or jumps
+- [x] Git commit: "fix: resolve scrolling issues with proper height constraints"
 
 ### Stage 5: Add Basic Collapsible Functionality
 - [ ] Add collapse button to left pane

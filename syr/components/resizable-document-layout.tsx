@@ -4,10 +4,12 @@
 // Implements the 2-pane architecture with unified left pane and document viewer
 // Replaces the problematic 3-pane grid layout
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { UnifiedLeftPane } from './unified-left-pane'
 import { SimpleDocumentViewer } from './simple-document-viewer'
+import { Button } from '@/components/ui/button'
+import { SidebarSimple } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 
 // Entity type (will be moved to proper types file later)
@@ -65,6 +67,7 @@ export function ResizableDocumentLayout({
   onElementClick
 }: ResizableDocumentLayoutProps) {
   const [, setScrollTarget] = useState<{ id: string; timestamp: number } | null>(null)
+  const [isLeftPaneCollapsed, setIsLeftPaneCollapsed] = useState(false)
   
   // Handle heading clicks from ToC
   const handleHeadingClick = useCallback((headingText: string, headingId?: string) => {
@@ -111,6 +114,24 @@ export function ResizableDocumentLayout({
     }
   }, [elements, onElementSelect])
   
+  // Handle left pane collapse toggle
+  const handleToggleCollapse = useCallback(() => {
+    setIsLeftPaneCollapsed(prev => !prev)
+  }, [])
+  
+  // Keyboard shortcut handler for Ctrl+B
+  useEffect(() => {
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === 'b') {
+        event.preventDefault()
+        handleToggleCollapse()
+      }
+    }
+    
+    document.addEventListener('keydown', handleKeydown)
+    return () => document.removeEventListener('keydown', handleKeydown)
+  }, [handleToggleCollapse])
+  
   // Extract document context for chat
   const documentContext = elements
     .filter(el => el.content?.trim())
@@ -119,53 +140,75 @@ export function ResizableDocumentLayout({
     .substring(0, 10000) // Limit context size
   
   return (
-    <ResizablePanelGroup 
-      direction="horizontal" 
-      className="h-full w-full"
-    >
-      {/* Left pane - Unified navigation and tools */}
-      <ResizablePanel 
-        defaultSize={30} 
-        minSize={20} 
-        maxSize={50}
-        className="h-full"
+    <div className="relative h-full w-full">
+      <ResizablePanelGroup 
+        direction="horizontal" 
+        className="h-full w-full"
       >
-        <UnifiedLeftPane
-          content={html}
-          elements={elements}
-          documentId={documentId}
-          markdownContent={markdownContent}
-          headingVisibility={headingVisibility}
-          glossaryEntities={glossaryEntities}
-          isLoadingGlossary={isLoadingGlossary}
-          showGlossary={showGlossary}
-          glossaryError={glossaryError}
-          onHeadingClick={handleHeadingClick}
-          onLoadGlossary={onLoadGlossary}
-          onScrollToEntity={handleScrollToEntity}
-          documentContext={documentContext}
-        />
-      </ResizablePanel>
+        {/* Left pane - Unified navigation and tools */}
+        {!isLeftPaneCollapsed && (
+          <>
+            <ResizablePanel 
+              defaultSize={30} 
+              minSize={20} 
+              maxSize={50}
+              className="h-full"
+            >
+              <UnifiedLeftPane
+                content={html}
+                elements={elements}
+                documentId={documentId}
+                markdownContent={markdownContent}
+                headingVisibility={headingVisibility}
+                glossaryEntities={glossaryEntities}
+                isLoadingGlossary={isLoadingGlossary}
+                showGlossary={showGlossary}
+                glossaryError={glossaryError}
+                onHeadingClick={handleHeadingClick}
+                onLoadGlossary={onLoadGlossary}
+                onScrollToEntity={handleScrollToEntity}
+                documentContext={documentContext}
+                onToggleCollapse={handleToggleCollapse}
+              />
+            </ResizablePanel>
+            
+            {/* Resize handle with enhanced visibility */}
+            <ResizableHandle 
+              withHandle 
+              className="w-1 bg-gray-200 hover:bg-gray-300 active:bg-blue-300 transition-colors" 
+            />
+          </>
+        )}
+        
+        {/* Right pane - Document viewer */}
+        <ResizablePanel 
+          defaultSize={isLeftPaneCollapsed ? 100 : 70}
+          className="h-full"
+        >
+          <SimpleDocumentViewer
+            elements={elements}
+            selectedElement={selectedElement}
+            onElementSelect={onElementSelect}
+            onElementVisibilityChange={onElementVisibilityChange}
+            onElementClick={onElementClick}
+          />
+        </ResizablePanel>
+      </ResizablePanelGroup>
       
-      {/* Resize handle with enhanced visibility */}
-      <ResizableHandle 
-        withHandle 
-        className="w-1 bg-gray-200 hover:bg-gray-300 active:bg-blue-300 transition-colors" 
-      />
-      
-      {/* Right pane - Document viewer */}
-      <ResizablePanel 
-        defaultSize={70}
-        className="h-full"
-      >
-        <SimpleDocumentViewer
-          elements={elements}
-          selectedElement={selectedElement}
-          onElementSelect={onElementSelect}
-          onElementVisibilityChange={onElementVisibilityChange}
-          onElementClick={onElementClick}
-        />
-      </ResizablePanel>
-    </ResizablePanelGroup>
+      {/* Floating expand button when collapsed */}
+      {isLeftPaneCollapsed && (
+        <div className="absolute top-4 left-4 z-10">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleToggleCollapse}
+            className="h-8 w-8 p-0 shadow-lg border border-gray-300"
+            title="Toggle sidebar (Ctrl+B)"
+          >
+            <SidebarSimple size={16} weight="bold" />
+          </Button>
+        </div>
+      )}
+    </div>
   )
 }

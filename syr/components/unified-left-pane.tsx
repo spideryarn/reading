@@ -4,10 +4,10 @@
 // Part of the 2-pane layout architecture using ResizablePanelGroup
 // All 5 tabs are at the same level as requested by the user
 
-import { useState, useRef } from 'react'
+import { useRef } from 'react'
 import { AssistantChat } from './assistant-chat'
 import { TabContainer, type Tab, type TabContainerRef } from './tab-container'
-import { CircleNotch, Book, Question, Calendar } from '@phosphor-icons/react'
+import { CircleNotch, Book, Question, Calendar, SidebarSimple } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { AlertWithIcon } from '@/components/ui/alert'
 import type { DocumentElement } from '@/lib/types/document'
@@ -56,6 +56,9 @@ interface UnifiedLeftPaneProps {
   
   // For chat context
   documentContext: string
+  
+  // Collapse functionality
+  onToggleCollapse?: () => void
 }
 
 // Get icon component for entity type
@@ -214,7 +217,8 @@ export function UnifiedLeftPane({
   onHeadingClick,
   onLoadGlossary,
   onScrollToEntity,
-  documentContext
+  documentContext,
+  onToggleCollapse
 }: UnifiedLeftPaneProps) {
   const tabContainerRef = useRef<TabContainerRef>(null)
 
@@ -378,13 +382,29 @@ export function UnifiedLeftPane({
 
   return (
     <div className="h-full flex flex-col">
+      {/* Header with collapse button */}
+      <div className="flex items-center justify-between p-3 border-b border-gray-200">
+        <h2 className="text-sm font-medium text-gray-900">Navigation & Tools</h2>
+        {onToggleCollapse && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleCollapse}
+            className="h-8 w-8 p-0 hover:bg-gray-100"
+            title="Toggle sidebar (Ctrl+B)"
+          >
+            <SidebarSimple size={16} weight="bold" />
+          </Button>
+        )}
+      </div>
+      
+      {/* Tab container without its own title since we have the header */}
       <TabContainer 
         ref={tabContainerRef}
         tabs={tabs}
         defaultTab="original"
-        title="Navigation & Tools"
         orientation="vertical"
-        className="text-sm h-full"
+        className="text-sm flex-1"
       />
     </div>
   )
