@@ -134,21 +134,32 @@ export function SimpleDocumentViewer({
         data-element-id={element.id}
         data-element-tag={element.tag_name}
       >
-        {element.content && (
-          <div className={textStyles}>
-            {/* Use MarkdownRenderer for markdown content */}
-            {element.attributes?.['data-markdown'] === 'true' ? (
-              <MarkdownRenderer content={element.content} />
-            ) : isListItem ? (
-              <span className="flex items-start">
-                <span className="mr-2">{element.parent_id && elements.find(e => e.id === element.parent_id)?.tag_name === 'ol' ? `${depth + 1}.` : '•'}</span>
-                <span>{element.content}</span>
-              </span>
-            ) : (
-              element.content
-            )}
-          </div>
-        )}
+        <div className="flex items-start justify-between gap-4">
+          {element.content && (
+            <div className={textStyles}>
+              {/* Use MarkdownRenderer for markdown content */}
+              {element.attributes?.['data-markdown'] === 'true' ? (
+                <MarkdownRenderer content={element.content} />
+              ) : isListItem ? (
+                <span className="flex items-start">
+                  <span className="mr-2">{element.parent_id && elements.find(e => e.id === element.parent_id)?.tag_name === 'ol' ? `${depth + 1}.` : '•'}</span>
+                  <span>{element.content}</span>
+                </span>
+              ) : (
+                element.content
+              )}
+            </div>
+          )}
+          {/* Display element ID suffix */}
+          {element.id && (
+            <span 
+              className="text-xs font-mono text-gray-400 flex-shrink-0 ml-2"
+              title={element.id}
+            >
+              {element.id.startsWith('syr-') ? element.id.slice(4, 12) : element.id.slice(0, 8)}
+            </span>
+          )}
+        </div>
         
         {/* Render children */}
         {elements
