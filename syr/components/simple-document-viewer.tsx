@@ -154,9 +154,9 @@ export function SimpleDocumentViewer({
           {element.id && (
             <span 
               className="text-xs font-mono text-gray-400 flex-shrink-0 ml-2"
-              title={element.id}
+              title={`${element.tag_name.toUpperCase()}: ${element.id}`}
             >
-              {element.id.startsWith('syr-') ? element.id.slice(4, 12) : element.id.slice(0, 8)}
+              {element.id.startsWith('syr-') ? element.id.slice(4, 8) : element.id.slice(0, 4)}
             </span>
           )}
         </div>
