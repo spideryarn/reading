@@ -7,6 +7,7 @@ export interface Tab {
   label: string
   content: ReactNode
   onActivate?: () => void
+  managedScroll?: boolean  // If true, tab content manages its own scrolling
 }
 
 interface TabContainerProps {
@@ -51,7 +52,9 @@ export const TabContainer = forwardRef<TabContainerRef, TabContainerProps>(
     return null
   }
 
-  const activeTabContent = tabs.find(tab => tab.id === activeTab)?.content
+  const activeTabData = tabs.find(tab => tab.id === activeTab)
+  const activeTabContent = activeTabData?.content
+  const hasManagedScroll = activeTabData?.managedScroll ?? false
 
   return (
     <div className={`${orientation === 'vertical' ? 'flex flex-col h-full' : 'flex flex-col h-full'} ${className}`}>
@@ -109,7 +112,7 @@ export const TabContainer = forwardRef<TabContainerRef, TabContainerProps>(
           </div>
 
           {/* Vertical Tab Content */}
-          <div ref={contentRef} className="flex-1 min-h-0 overflow-y-auto">
+          <div ref={contentRef} className={`flex-1 min-h-0 ${hasManagedScroll ? '' : 'overflow-y-auto'}`}>
             {activeTabContent}
           </div>
         </>
@@ -141,7 +144,7 @@ export const TabContainer = forwardRef<TabContainerRef, TabContainerProps>(
           </div>
 
           {/* Horizontal Tab Content */}
-          <div ref={contentRef} className="flex-1 min-h-0 overflow-y-auto">
+          <div ref={contentRef} className={`flex-1 min-h-0 ${hasManagedScroll ? '' : 'overflow-y-auto'}`}>
             {activeTabContent}
           </div>
         </>

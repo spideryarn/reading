@@ -1,8 +1,8 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import * as Tooltip from '@radix-ui/react-tooltip'
-import { CaretRight, CaretDown } from '@phosphor-icons/react'
+import { CaretRight, CaretDown, CaretUp } from '@phosphor-icons/react'
 
 // Types
 export interface Heading {
@@ -295,6 +295,9 @@ export function HeadingTree({
   
   // Only show granularity control if there are multiple levels
   const showGranularityControl = maxDepth > 1
+  
+  // State for expanding/collapsing the granularity control
+  const [isGranularityExpanded, setIsGranularityExpanded] = useState(true)
 
   if (headings.length === 0) {
     return (
@@ -306,6 +309,80 @@ export function HeadingTree({
 
   return (
     <div className="h-full flex flex-col">
+      {/* Granularity Slider - at top with expand/collapse, only show if multiple levels */}
+      {showGranularityControl && (
+        <div className="flex-shrink-0 bg-gradient-to-r from-gray-50 to-gray-100/50 border-b border-gray-200">
+          <div className="px-3 py-2">
+            <button
+              onClick={() => setIsGranularityExpanded(!isGranularityExpanded)}
+              className="w-full flex items-center justify-between hover:bg-gray-100 rounded-md px-2 py-1 transition-colors"
+            >
+              <span className="text-xs font-semibold text-gray-700">
+                Showing levels 1-{Math.min(granularityLevel, maxDepth)}
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs px-1.5 py-0.5 bg-white rounded text-gray-600 font-medium shadow-sm">
+                  {headings.length}
+                </span>
+                {isGranularityExpanded ? (
+                  <CaretUp size={16} className="text-gray-500" />
+                ) : (
+                  <CaretDown size={16} className="text-gray-500" />
+                )}
+              </div>
+            </button>
+          </div>
+          
+          {isGranularityExpanded && (
+            <div className="px-3 pb-3">
+              <div className="relative">
+                <input
+                  type="range"
+                  min="1"
+                  max={maxDepth}
+                  value={Math.min(granularityLevel, maxDepth)}
+                  onChange={(e) => onGranularityChange(parseInt(e.target.value))}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-modern"
+                  style={{
+                    background: `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${((Math.min(granularityLevel, maxDepth) - 1) / (maxDepth - 1)) * 100}%, #E5E7EB ${((Math.min(granularityLevel, maxDepth) - 1) / (maxDepth - 1)) * 100}%, #E5E7EB 100%)`
+                  }}
+                />
+                {/* Custom slider thumb styling */}
+                <style jsx>{`
+                  .slider-modern::-webkit-slider-thumb {
+                    appearance: none;
+                    height: 16px;
+                    width: 16px;
+                    border-radius: 50%;
+                    background: #3B82F6;
+                    cursor: pointer;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                    border: 2px solid white;
+                  }
+                  .slider-modern::-webkit-slider-thumb:hover {
+                    transform: scale(1.1);
+                    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+                  }
+                  .slider-modern::-moz-range-thumb {
+                    height: 16px;
+                    width: 16px;
+                    border-radius: 50%;
+                    background: #3B82F6;
+                    cursor: pointer;
+                    border: 2px solid white;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                  }
+                `}</style>
+              </div>
+              <div className="flex justify-between mt-1.5">
+                <span className="text-xs text-gray-500 font-medium">1</span>
+                <span className="text-xs text-gray-500 font-medium">{maxDepth}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      
       {/* Headings Navigation - takes remaining space */}
       <div className="flex-1 min-h-0 overflow-y-auto">
         <nav className="space-y-1 px-4 pt-3 pb-4">
@@ -325,63 +402,6 @@ export function HeadingTree({
         ))}
         </nav>
       </div>
-      
-      {/* Granularity Slider - fixed height at bottom, only show if multiple levels */}
-      {showGranularityControl && (
-        <div className="flex-shrink-0 bg-gradient-to-r from-gray-50 to-gray-100/50 border-t border-gray-200 px-3 py-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-gray-700">
-              Showing levels 1-{Math.min(granularityLevel, maxDepth)}
-            </span>
-            <span className="text-xs px-1.5 py-0.5 bg-white rounded text-gray-600 font-medium shadow-sm">
-              {headings.length}
-            </span>
-          </div>
-          <div className="relative">
-            <input
-              type="range"
-              min="1"
-              max={maxDepth}
-              value={Math.min(granularityLevel, maxDepth)}
-              onChange={(e) => onGranularityChange(parseInt(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-modern"
-              style={{
-                background: `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${((Math.min(granularityLevel, maxDepth) - 1) / (maxDepth - 1)) * 100}%, #E5E7EB ${((Math.min(granularityLevel, maxDepth) - 1) / (maxDepth - 1)) * 100}%, #E5E7EB 100%)`
-              }}
-            />
-            {/* Custom slider thumb styling */}
-            <style jsx>{`
-              .slider-modern::-webkit-slider-thumb {
-                appearance: none;
-                height: 16px;
-                width: 16px;
-                border-radius: 50%;
-                background: #3B82F6;
-                cursor: pointer;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                border: 2px solid white;
-              }
-              .slider-modern::-webkit-slider-thumb:hover {
-                transform: scale(1.1);
-                box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
-              }
-              .slider-modern::-moz-range-thumb {
-                height: 16px;
-                width: 16px;
-                border-radius: 50%;
-                background: #3B82F6;
-                cursor: pointer;
-                border: 2px solid white;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-              }
-            `}</style>
-          </div>
-          <div className="flex justify-between mt-1.5">
-            <span className="text-xs text-gray-500 font-medium">1</span>
-            <span className="text-xs text-gray-500 font-medium">{maxDepth}</span>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
