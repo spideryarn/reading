@@ -25,8 +25,8 @@ Spideryarn Reading uses a hierarchical, document-centric architecture built on N
 /documents/[slug]
 ├── Server-side HTML parsing and preparation
 ├── Client-side interactive document viewer
-├── Three-column layout: ToC, content, glossary
-└── AI-powered features (summaries, headings, glossary)
+├── Two-pane resizable layout: unified navigation/tools, document viewer
+└── AI-powered features (summaries, headings, glossary, chat)
 
 /api/summarise
 └── Anthropic Claude integration for hierarchical summaries
@@ -50,16 +50,22 @@ Spideryarn Reading uses a hierarchical, document-centric architecture built on N
 
 ### **Component Hierarchy**
 
-**Document Viewing**
-- `document-viewer.tsx` - Document content display with element details
+**2-Pane Layout Architecture**
+- `resizable-document-layout.tsx` - Main layout coordinator with ResizablePanelGroup
+- `unified-left-pane.tsx` - Consolidated navigation and tools pane (5 tabs)
+- `simple-document-viewer.tsx` - Streamlined document content display
 - `document-header.tsx` - Document header with title and actions
 - `document-header-actions.tsx` - Action buttons and controls
-- `table-of-contents.tsx` - Interactive ToC with:
-  - Tabbed interface (Original vs AI-generated headings)
-  - Hover tooltips showing AI summaries (Tippy.js)
-  - Loading states and error handling
+
+**Navigation & Tools (Unified Left Pane)**
 - `heading-tree.tsx` - Shared component for hierarchical heading display
 - `summary-pane.tsx` - Document-level AI summary display
+- `tab-container.tsx` - Tabbed interface management with 5 tabs:
+  - Original headings with ToC functionality
+  - AI-generated headings with semantic navigation
+  - AI summaries with expandable content
+  - Interactive chat interface
+  - Glossary with categorized entities
 
 **Chat & Social Features**
 - `assistant-chat.tsx` - Advanced chat interface with @assistant-ui integration
@@ -114,14 +120,16 @@ Spideryarn Reading uses a hierarchical, document-centric architecture built on N
 ### **User Journey**
 1. **Homepage**: Browse available documents via auto-generated listing
 2. **Document Selection**: Click through to individual document viewer
-3. **Reading Experience**: Three-column interface with:
-   - Left: Table of Contents with tabs for Original/AI headings
-   - Centre: Document content (currently shows element structure)
-   - Right: Glossary with categorised entities
+3. **Reading Experience**: Two-pane resizable interface with:
+   - Left: Unified pane with 5 tabs (Original ToC, AI headings, Summary, Chat, Glossary)
+   - Right: Document viewer with element structure and highlighting
+   - Collapsible left pane (Ctrl+B) for full-screen reading
 4. **AI Features**: 
    - Generate buttons for on-demand processing
    - Hover tooltips for section summaries
-   - Tabbed views for different perspectives
+   - Unified tabbed interface for all AI tools
+   - Bidirectional navigation between ToC and document
+   - Interactive chat with document context
 
 ### **Developer Navigation**
 - Component-based architecture enables feature isolation

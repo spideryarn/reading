@@ -1,23 +1,24 @@
 # User Interface Architecture
 
-The Spideryarn Reading application features a multi-pane layout with tabbed navigation for document analysis and AI-powered reading assistance.
+The Spideryarn Reading application features a **2-pane resizable layout** with tabbed navigation for document analysis and AI-powered reading assistance.
 
 ## See also
 
+- `components/resizable-document-layout.tsx` - main 2-pane layout with ResizablePanelGroup
+- `components/unified-left-pane.tsx` - consolidated navigation and tools pane
+- `components/simple-document-viewer.tsx` - streamlined document viewer
 - `components/tab-container.tsx` - reusable tab component implementation
-- `components/table-of-contents.tsx` - left pane navigation with original/AI/summary tabs
-- `components/document-viewer.tsx` - unified document pane with tools integration
-- `components/assistant-chat.tsx` - AI chat interface in right pane
+- `components/assistant-chat.tsx` - AI chat interface
 - `components/dialog.tsx` - reusable modal dialog component
-- `components/settings-dialog.tsx` - settings dialog showing LLM configuration
 - `components/document-header.tsx` - document header with title and action buttons
 - `app/documents/[slug]/page-client.tsx` - main layout coordination and state management
 - `docs/TABLE_OF_CONTENTS_PANE.md` - detailed documentation of left pane functionality
+- `docs/SHADCN_UI_REFERENCE.md` - shadcn/ui component usage patterns
 - `docs/ARCHITECTURE.md` - overall application architecture
 
 ## Layout Structure
 
-The application uses a **three-pane layout** within a responsive flexbox system:
+The application uses a **two-pane resizable layout** built with shadcn/ui ResizablePanelGroup:
 
 ### Document Header ✓
 - **Fixed height**: 3rem minimum (`min-h-[3rem]`)
@@ -28,35 +29,56 @@ The application uses a **three-pane layout** within a responsive flexbox system:
   - **View Original** - Links to original HTML document
 - **Settings Dialog**: Modal overlay showing current AI model, temperature, max tokens, and UI configuration
 
-### 1. Left Pane - Navigation (Table of Contents)
-- **Fixed width**: 256px (`w-64`)
-- **Scrollable**: `overflow-y-auto`
-- **Background**: Light grey (`bg-gray-50`)
-- **Tabs**:
+### 1. Left Pane - Unified Navigation & Tools ✓
+- **Resizable width**: 30% default (20-50% range)
+- **Collapsible**: Ctrl+B keyboard shortcut, floating expand button when collapsed
+- **Scrollable**: `overflow-y-auto` with proper height constraints
+- **Component**: `UnifiedLeftPane` with consolidated functionality
+- **Tabs** (5 total):
   - **Original** - Document headings extracted from HTML
   - **AI-generated** - Semantically meaningful headings created by LLM analysis ✓
   - **Summary** - AI-generated document summary with collapsible content ✓
-
-### 2. Middle Pane - Document Structure ✓
-- **Grid column span 2** of 3-column grid layout (taking up 2/3 of remaining space)
-- **Scrollable**: `overflow-y-auto`
-- **Border**: Right border separating from Tools pane
-- Shows hierarchical document element tree with interactive selection
-- **Typography-aware rendering**: Different heading styles, proper list formatting, markdown content support
-- **Visual feedback**: Hover states, selection highlighting, scroll-to-element with temporary highlighting
-
-### 3. Right Pane - Tools
-- **Grid column span 1** of 3-column grid layout (taking up 1/3 of remaining space)
-- **Scrollable**: Fixed with `overflow-y-auto` (recent fix) ✓
-- **Tabs**:
   - **Chat** - Interactive AI assistant for document discussion ✓
   - **Glossary** - AI-generated term definitions and explanations with click-to-scroll functionality ✓
 
-## Tab System Architecture
+### 2. Right Pane - Document Viewer ✓
+- **Resizable width**: 70% default, expands to full width when left pane collapsed
+- **Scrollable**: `overflow-y-auto` with smooth scrolling
+- **Component**: `SimpleDocumentViewer` (streamlined from DocumentViewer)
+- **Features**:
+  - Hierarchical document element tree with interactive selection
+  - Typography-aware rendering: Different heading styles, proper list formatting, markdown content support
+  - Visual feedback: Hover states, selection highlighting, scroll-to-element with temporary highlighting
+  - Bidirectional navigation: Element clicks trigger ToC auto-scroll
 
-### Reusable TabContainer Component ✓
+## Resizable Layout Architecture
 
-The application uses a standardised `TabContainer` component for all tabbed interfaces:
+### ResizablePanelGroup Implementation ✓
+
+The application uses shadcn/ui ResizablePanelGroup for the core layout:
+
+```typescript
+<ResizablePanelGroup direction="horizontal" className="h-full w-full">
+  <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
+    <UnifiedLeftPane {...leftPaneProps} />
+  </ResizablePanel>
+  <ResizableHandle withHandle={!isLeftPaneCollapsed} />
+  <ResizablePanel defaultSize={70}>
+    <SimpleDocumentViewer {...documentProps} />
+  </ResizablePanel>
+</ResizablePanelGroup>
+```
+
+**Key Features**:
+- **Horizontal resizing**: Drag handles between panes
+- **Collapsible left pane**: Keyboard shortcut (Ctrl+B) and button toggle
+- **Smooth animations**: Built-in transitions for resize and collapse
+- **Responsive sizing**: Percentage-based with min/max constraints
+- **Floating controls**: Expand button appears when collapsed
+
+### Unified Tab System ✓
+
+All navigation and tools are consolidated into a single TabContainer:
 
 ```typescript
 interface Tab {
@@ -64,63 +86,55 @@ interface Tab {
   label: string  
   content: ReactNode
 }
-
-interface TabContainerProps {
-  tabs: Tab[]
-  defaultTab?: string
-  className?: string
-  title?: string
-}
 ```
 
-**Key Features**:
-- Controlled component pattern with active tab state
-- Visual styling with active/inactive states
-- Flexible content rendering via React nodes
-- Consistent navigation experience across panes
-
-### Tab Implementation Pattern
-
-Both ToC (left) and Tools (right) panes follow the same tabbed pattern:
-
-1. **Define tab array** with `id`, `label`, and `content`
-2. **Render functions** for each tab's content  
-3. **Pass to TabContainer** with appropriate props
-4. **State management** handled within individual render functions
-5. **Auto-activation** support (e.g., glossary tab auto-loads when activated)
+**Consolidation Benefits**:
+- **Single source of truth**: All 5 tabs in one component
+- **Consistent behavior**: Unified scrolling and height management
+- **Simplified state**: One TabContainer instead of two separate ones
+- **Better UX**: All tools accessible in one location
+- **Code reduction**: Eliminated duplicate tab logic
 
 ## Scrolling Architecture ✓
 
-**Issue Resolution**: Fixed scrolling problems across all panes by:
+**ResizablePanelGroup Solution**: Completely resolved scrolling issues by:
 
-1. **TabContainer Fix**: Changed from `overflow-hidden` to `overflow-y-auto` in tab content areas
-2. **Chat Component Fix**: Removed hard-coded 500px height constraint
-3. **Consistent Height Management**: Ensured proper height inheritance through flex layouts
+1. **Native height handling**: ResizablePanelGroup provides proper height constraints
+2. **Eliminated CSS Grid**: Removed problematic grid layouts causing height conflicts
+3. **Consistent overflow patterns**: All scrollable areas use `overflow-y-auto`
+4. **Height inheritance**: Proper `h-full` cascading through component tree
+5. **Tab content scrolling**: TabContainer properly manages content overflow
 
-**Current State**: All panes and tabs now scroll properly with natural height constraints.
+**Current State**: Perfect scrolling behavior across all panes and tabs with no layout conflicts.
 
 ## Responsive Design Principles
 
-- **Fixed left pane** (256px) maintains navigation accessibility
-- **Flexible document pane** (2/3 of remaining space) provides ample reading area via CSS Grid
-- **Fixed tools pane** (1/3 of remaining space) balances content consumption with AI assistance features
+- **Resizable left pane** (30% default, 20-50% range) for flexible navigation space
+- **Collapsible left pane** maximizes document reading area when needed
+- **Dynamic document pane** (70% default, 100% when collapsed) adapts to user preference
 - **Consistent padding** and spacing throughout (`p-4`)
-- **Flexbox layout** ensures proper height distribution and overflow handling
+- **ResizablePanelGroup layout** ensures proper height distribution and overflow handling
+- **Keyboard accessibility** with Ctrl+B shortcut for quick pane toggling
 
 ## State Management Flow
 
-1. **DocumentPageClient** coordinates state between the three panes
-2. **Unidirectional data flow**: User interactions → state updates → UI re-renders
-3. **Shared element selection state** enables coordination between ToC and Document panes
-4. **Independent tab states** within ToC and Tools panes allow separate functionality
-5. **Cross-pane scrolling**: ToC heading clicks scroll to document elements, glossary entries link to document locations
+1. **DocumentPageClient** coordinates state between the two panes
+2. **ResizableDocumentLayout** manages layout state and cross-pane communication
+3. **Unidirectional data flow**: User interactions → state updates → UI re-renders
+4. **Shared element selection state** enables coordination between UnifiedLeftPane and SimpleDocumentViewer
+5. **Collapse state management**: `isLeftPaneCollapsed` controls layout and visibility
+6. **Bidirectional navigation**: 
+   - ToC heading clicks → document element highlighting and scrolling
+   - Document element clicks → ToC auto-scroll to corresponding heading
+7. **Unified tab state** within single TabContainer simplifies state management
 
 ## Future Enhancements 📋
 
-- **Collapsible panes** for better screen space utilisation
+- **Vertical icon navigation** on far left (3-pane approach: icons | content | document)
 - **Responsive breakpoints** for mobile and tablet viewing
-- **Keyboard navigation** for accessibility improvements
-- **Pane component abstraction** if layout patterns stabilise
+- **Enhanced keyboard navigation** beyond Ctrl+B shortcut
+- **Pane memory**: Restore size preferences across sessions
+- **Mobile-optimized layout** with different responsive patterns
 
 ## Common Patterns
 
@@ -154,15 +168,17 @@ const renderTabName = () => (
 
 - **Framework**: Next.js with TypeScript
 - **Styling**: Tailwind CSS with consistent spacing system
-- **Layout**: Flexbox for outer structure, CSS Grid (3-column) for document/tools area
-- **State**: React hooks for local component state, shared element selection
-- **Coordination**: Props and callbacks for cross-component communication
-- **Scrolling**: CSS `overflow-y-auto` with proper height constraints across all panes
+- **Layout**: shadcn/ui ResizablePanelGroup with ResizablePanel components
+- **State**: React hooks for layout state (collapse), shared element selection
+- **Components**: Unified architecture with consolidated functionality
+- **Scrolling**: ResizablePanelGroup native height management with `overflow-y-auto`
+- **Interactions**: DOM manipulation for highlighting, smooth scrolling behaviors
+- **Keyboard**: Event listeners for Ctrl+B shortcut with proper cleanup
 
 ## Limitations
 
-- **Mobile responsiveness** not yet optimised for smaller screens  
-- **Pane resizing** not currently supported (fixed left pane width, proportional document/tools split)
-- **Keyboard navigation** limited to basic tab functionality
+- **Mobile responsiveness** not yet optimized for smaller screens
+- **ToC auto-scroll regression** needs fixing (Stage 5.1 unsuccessful attempt)
+- **Keyboard navigation** limited to Ctrl+B and basic tab functionality
 - **Screen reader support** could be enhanced with ARIA labels
-- **Fixed proportions** document pane always takes 2/3, tools pane 1/3 of remaining space
+- **Resize handle styling** could be more prominent for discoverability

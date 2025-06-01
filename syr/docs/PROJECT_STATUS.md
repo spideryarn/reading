@@ -9,10 +9,10 @@ Spideryarn Reading is in active development with core AI features now implemente
 **Document Infrastructure**
 - HTML document parsing using Cheerio (`lib/services/document-parser.ts`)
 - Document elements with deterministic ID generation using UUID v5
-- Three-column document viewer layout:
-  - Left: Table of Contents with tabs for Original/AI-generated headings
-  - Middle: Document content with element details
-  - Right: Glossary pane with entity extraction
+- Two-pane resizable document viewer layout:
+  - Left: Unified pane with 5 tabs (Original ToC, AI headings, Summary, Chat, Glossary)
+  - Right: Document viewer with element details and highlighting
+  - Collapsible left pane with keyboard shortcuts (Ctrl+B)
 - Sample documents loaded from `static/examples/` (Chalmers consciousness paper, Rhizome text, The Bitter Lesson)
 - Next.js app with routing (`app/`, `app/documents/[slug]/`)
 
@@ -72,12 +72,12 @@ see `docs/ARCHITECTURE.md` for detailed system architecture
 ## Future Enhancements
 
 ### Planned Features (see `planning/*.md` for details)
-1. **Enhanced glossary** - Click-to-scroll navigation and text highlighting
-2. **Social media integration** - Direct posting to Twitter/X and Bluesky
-3. **Persistent AI content** - Store generated summaries/headings in Supabase
-4. **Document upload** - Allow users to upload their own HTML documents
-5. **User authentication** - Personal document libraries
-6. **Collapsible/resizable panes** - Improved layout flexibility
+1. **Fix ToC auto-scroll regression** - Restore bidirectional navigation between document and ToC
+2. **Enhanced vertical icon navigation** - 3-pane approach with icons on far left
+3. **Social media integration** - Direct posting to Twitter/X and Bluesky
+4. **Persistent AI content** - Store generated summaries/headings in Supabase
+5. **Document upload** - Allow users to upload their own HTML documents
+6. **User authentication** - Personal document libraries
 7. **Document expand/collapse** - Granular content visibility controls
 
 ### Infrastructure Improvements
@@ -88,9 +88,9 @@ see `docs/ARCHITECTURE.md` for detailed system architecture
 
 ### Next Immediate Steps
 
-1. **Complete glossary navigation** - Implement click-to-scroll functionality
+1. **Fix ToC auto-scroll regression** - Resolve issue where document element clicks don't scroll ToC
 2. **Social media posting** - Complete Bluesky integration for tweet threads
-3. **Collapsible panes** - Implement resizable and collapsible layout system
+3. **Vertical icon navigation** - Add far-left icon strip for 3-pane approach
 4. **Document visibility controls** - Add expand/collapse functionality for sections
 5. **Persist AI content** - Save generated summaries and headings to database
 

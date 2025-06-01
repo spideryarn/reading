@@ -20,7 +20,7 @@ Coding & infrastructure:
 - `docs/SETUP.md` - Development environment setup guide including Node.js, Supabase, Git worktree configuration, and common commands
 - `docs/SITE_ORGANISATION.md` - Documents the hierarchical, document-centric architecture including application routes, component hierarchy, and navigation patterns. (May be out of date)
 - `docs/TESTING.md` - Testing approach documentation covering Jest with React Testing Library setup, test structure, and current test coverage
-- `docs/UI_INTERFACE.md` - Documents the multi-pane layout with tabbed navigation including four-pane structure, tab system architecture, and scrolling fixes. See related docs below in "AI, features, machinery, interface" section.
+- `docs/UI_INTERFACE.md` - Documents the 2-pane resizable layout with unified tabbed navigation including ResizablePanelGroup architecture, collapsible functionality, and scrolling fixes. See related docs below in "AI, features, machinery, interface" section.
 
 Database:
 - `docs/DATABASE_OVERVIEW.md`

@@ -1,14 +1,16 @@
 # Table of Contents Pane
 
-The table of contents pane provides hierarchical document navigation with both original and AI-generated headings, interactive element selection, and AI-powered tooltip summaries. This document covers the architecture and features of the enhanced ToC system.
+The table of contents pane provides hierarchical document navigation with both original and AI-generated headings, interactive element selection, and AI-powered tooltip summaries. Now integrated as part of the unified left pane in the 2-pane resizable layout. This document covers the architecture and features of the enhanced ToC system.
 
 ## See also
 
-- `components/table-of-contents.tsx` - main ToC component implementation
+- `components/unified-left-pane.tsx` - consolidated navigation and tools pane containing ToC
 - `components/heading-tree.tsx` - shared tree component for rendering hierarchical headings
+- `components/resizable-document-layout.tsx` - main 2-pane layout coordinator
 - `app/documents/[slug]/page-client.tsx` - state management and coordination between panes
-- `components/document-viewer.tsx` - element display and selection functionality
+- `components/simple-document-viewer.tsx` - streamlined document viewer
 - `docs/ARCHITECTURE.md` - overall application architecture
+- `docs/UI_INTERFACE.md` - 2-pane resizable layout documentation
 - `docs/LLM_PROMPT_TEMPLATES.md` - prompt template system for AI features
 - `planning/250526g_ai_generated_headings.md` - AI headings implementation details
 - `planning/250526a_ToC_hierarchical_summary_tooltips.md` - tooltip feature planning
@@ -16,13 +18,13 @@ The table of contents pane provides hierarchical document navigation with both o
 
 ## Key Architecture
 
-The ToC system uses a three-component coordination pattern:
+The ToC system is now integrated into the 2-pane architecture with simplified coordination:
 
-1. **TableOfContents** - extracts headings from HTML and renders hierarchical list with tabs
-2. **DocumentPageClient** - manages shared state and coordinates between panes
-3. **DocumentViewer** - displays elements and accepts external selection state
+1. **UnifiedLeftPane** - contains ToC as tabs (Original, AI-generated) alongside Summary, Chat, and Glossary
+2. **ResizableDocumentLayout** - manages cross-pane communication and scroll coordination
+3. **SimpleDocumentViewer** - displays elements and accepts external selection state
 
-State flows unidirectionally: ToC click → client handler → element selection → viewer update.
+State flows unidirectionally: ToC click → layout handler → element highlighting → document scroll.
 
 ## HeadingTree Component
 
@@ -68,18 +70,21 @@ The ToC uses a shared `HeadingTree` component that eliminates code duplication b
 - Provides intuitive navigation for complex documents
 - Maintains all existing features: tooltips, navigation, visual hierarchy
 
-## Tabbed Interface
+## Unified Tabbed Interface
 
-The ToC now features a tabbed interface allowing users to switch between:
+The ToC is now part of a 5-tab unified interface in the left pane:
 
 - **Original** - Headings extracted directly from the HTML document
 - **AI-generated** - Semantically meaningful headings created by LLM analysis
 - **Summary** - AI-generated document summary with expandable content
+- **Chat** - Interactive AI assistant for document discussion
+- **Glossary** - AI-generated term definitions with click-to-scroll
 
 ### Tab Implementation
+- Consolidated into single `TabContainer` within `UnifiedLeftPane`
 - Uses controlled component pattern with `activeTab` state
-- Visual styling: active tab (green underline), inactive tab (gray text)
-- Generate button appears in AI tab to trigger heading generation
+- Visual styling: active tab (blue theme), inactive tab (gray text)
+- Generate buttons appear in AI tabs to trigger content generation
 - Loading states during AI processing with spinner animation
 
 ## Heading Extraction
@@ -123,9 +128,9 @@ Generates deterministic IDs using UUID v5 for reliable navigation.
 When a ToC heading is clicked:
 
 1. `handleHeadingClick` finds corresponding `DocumentElement` by matching heading text
-2. Sets `selectedElement` state in parent component
-3. DocumentViewer receives updated selection and highlights element
-4. Smooth scroll centers selected element in middle pane
+2. `ResizableDocumentLayout` coordinates between panes
+3. `SimpleDocumentViewer` receives updated selection and highlights element
+4. Smooth scroll centers selected element in document pane with highlight animation
 
 ## Tooltip Summaries
 
@@ -176,11 +181,11 @@ Follows standardised pattern documented in `docs/STYLING.md`:
 
 ## Common Patterns
 
-**State Management**: External state pattern allows DocumentViewer to work standalone or with shared state.
+**State Management**: Unified state management through `ResizableDocumentLayout` simplifies coordination.
 
-**Fallback Behaviour**: ToC provides DOM scrolling fallback when no callback is provided.
+**Bidirectional Navigation**: ToC heading clicks scroll document, document element clicks auto-scroll ToC.
 
-**Data Attributes**: Uses `data-element-id` for reliable scroll targeting.
+**Data Attributes**: Uses `data-element-id` and `data-heading-id` for reliable targeting.
 
 **Type Safety**: Uses exported `GranularityKey` type and Zod validation for API responses.
 
