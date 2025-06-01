@@ -163,6 +163,10 @@ const [showContent, setShowContent] = useState(false)
 - `/api/fake_success_delay` - Returns success after 1.5s delay
 - `/api/fake_error` - Returns 500 error immediately
 
+### Expand/Collapse Buttons
+
+Use Phosphor `CaretDown`/`CaretUp` icons for expand/collapse functionality. See `components/summary-pane.tsx` (Summary button) and `components/heading-tree.tsx` (ToC headings) for examples.
+
 ## Static assets
 
 ### Favicon

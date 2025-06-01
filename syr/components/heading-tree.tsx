@@ -305,7 +305,7 @@ export function HeadingTree({
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="h-full flex flex-col">
       {/* Headings Navigation - takes remaining space */}
       <div className="flex-1 min-h-0 overflow-y-auto">
         <nav className="space-y-1 px-4 pt-3 pb-4">
@@ -326,7 +326,7 @@ export function HeadingTree({
         </nav>
       </div>
       
-      {/* Granularity Slider - fixed at bottom, only show if multiple levels */}
+      {/* Granularity Slider - fixed height at bottom, only show if multiple levels */}
       {showGranularityControl && (
         <div className="flex-shrink-0 bg-gradient-to-r from-gray-50 to-gray-100/50 border-t border-gray-200 px-3 py-3">
           <div className="flex items-center justify-between mb-2">

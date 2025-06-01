@@ -583,8 +583,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
 
   const renderOriginalTab = () => {
     return (
-      <div className="h-full flex flex-col">
-        <HeadingTree
+      <HeadingTree
           headings={headings}
           themeColors={{
             hover: 'hover:bg-blue-50',
@@ -604,7 +603,6 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
           }}
           headingVisibility={headingVisibility}
         />
-      </div>
     )
   }
 
@@ -632,18 +630,20 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
       )
     }
 
-    return (
-      <div className="p-4 h-full flex flex-col">
-        {isLoadingHeadings ? (
-          <Loading text="Generating headings..." spinnerSize={20} />
-        ) : headingsError ? (
-          <AlertWithIcon 
-            variant="warning"
-            title="Failed to generate headings"
-            description={headingsError}
-          />
-        ) : aiHeadings.length > 0 ? (
-          <HeadingTree
+    return isLoadingHeadings ? (
+      <div className="p-4">
+        <Loading text="Generating headings..." spinnerSize={20} />
+      </div>
+    ) : headingsError ? (
+      <div className="p-4">
+        <AlertWithIcon 
+          variant="warning"
+          title="Failed to generate headings"
+          description={headingsError}
+        />
+      </div>
+    ) : aiHeadings.length > 0 ? (
+      <HeadingTree
             headings={aiHeadings}
             themeColors={{
               hover: 'hover:bg-green-50',
@@ -663,9 +663,9 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
           }}
             headingVisibility={headingVisibility}
           />
-        ) : (
-          <p className="text-gray-500">No headings generated</p>
-        )}
+    ) : (
+      <div className="p-4">
+        <p className="text-gray-500">No headings generated</p>
       </div>
     )
   }
@@ -679,6 +679,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
       id: 'original',
       label: 'Original',
       content: renderOriginalTab(),
+      managedScroll: true,  // HeadingTree manages its own scrolling
       onActivate: () => {
         setActiveTab('original')
       }
@@ -687,6 +688,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
       id: 'ai-generated', 
       label: 'AI-generated',
       content: renderAiGeneratedTab(),
+      managedScroll: true,  // HeadingTree manages its own scrolling
       onActivate: () => {
         setActiveTab('ai-generated')
         // Auto-click "Generate new headings" button when tab is activated
@@ -699,6 +701,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
       id: 'summary',
       label: 'Summary', 
       content: renderSummaryTab(),
+      managedScroll: false,  // Summary tab uses default scrolling
       onActivate: () => {
         setActiveTab('summary')
         // SummaryPane handles auto-activation with autoActivate prop
