@@ -26,7 +26,7 @@ jest.mock('nunjucks', () => ({
 }))
 
 describe('Prompt Execution with Multi-Provider Support', () => {
-  const mockFs = require('fs')
+  const mockFs = await import('fs')
   const mockGenerateText = generateText as jest.MockedFunction<typeof generateText>
   const mockGetModel = llmProvider.getModel as jest.MockedFunction<typeof llmProvider.getModel>
   

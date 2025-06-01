@@ -4,7 +4,7 @@
 import { POST } from '../glossary/route'
 import { executePrompt } from '@/lib/prompts/types'
 import { glossaryPrompt } from '@/lib/prompts/templates/glossary'
-const { createMockRequest } = require('./test-helpers.js')
+import { createMockRequest } from './test-helpers'
 
 // Mock the dependencies
 jest.mock('@/lib/prompts/types')

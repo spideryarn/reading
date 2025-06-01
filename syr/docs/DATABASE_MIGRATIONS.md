@@ -34,15 +34,23 @@ npx supabase status
 
 # Generate migration from schema diff (if making changes via Studio)
 npx supabase db diff -f my_schema_changes
+
+# Generate TypeScript types from current schema
+npm run db:types
+
+# Reset database and regenerate types in one command
+npm run db:reset
 ```
 
 ## Migration Workflow
 
 1. **Create migration**: `npx supabase migration new feature_name`
 2. **Edit SQL file**: Add your schema changes in `supabase/migrations/[timestamp]_feature_name.sql`
-3. **Apply locally**: `npx supabase db reset` (resets DB and applies all migrations)
-4. **Test**: Verify changes work as expected
-5. **Deploy**: Push to production (future step)
+3. **Apply locally**: `npm run db:reset` (resets DB, applies all migrations, and regenerates types)
+4. **Verify types**: Check that `lib/types/database.ts` has been updated with your changes
+5. **Test**: Verify changes work as expected in code with proper type safety
+6. **Commit**: Include both the migration file and updated types in your git commit
+7. **Deploy**: Push to production (future step)
 
 
 ## Migration File Format
@@ -69,11 +77,41 @@ CREATE INDEX idx_user_preferences_user_id ON user_preferences(user_id);
 - Do not try and apply to production, only operate in dev.
 
 
+## TypeScript Type Generation
+
+The project uses Supabase's type generation to create TypeScript types from the database schema. This ensures type safety when working with database queries.
+
+### Type Generation Commands
+
+```bash
+# Generate types only (manual)
+npm run db:types
+
+# Reset database and generate types (recommended for testing schema changes)
+npm run db:reset
+```
+
+### Generated Types Location
+
+- **File**: `lib/types/database.ts`
+- **Auto-generated**: This file is completely regenerated each time
+- **Git tracking**: The types file should be committed to git
+- **Helper types**: The file includes custom helper types and enums for easier usage
+
+### When to Regenerate Types
+
+- **Always after migrations**: Any schema change requires type regeneration
+- **Before committing**: Ensure types match your schema changes
+- **When types seem outdated**: If TypeScript errors suggest schema mismatches
+- **After pulling changes**: If other developers have made schema changes
+
 ## Best Practices
 
 ### Essential Practices
 - **Descriptive names**: `add_summaries_level_index` not `fix_stuff`
 - **One feature per migration**: Keep changes focused and atomic
+- **Always regenerate types**: Use `npm run db:reset` or `npm run db:types` after schema changes
+- **Commit types with migrations**: Include both migration files and updated types in the same commit
 
 ### File Naming Requirements
 - **Precise format**: `YYYYMMDDHHmmss_description.sql` (note casing)

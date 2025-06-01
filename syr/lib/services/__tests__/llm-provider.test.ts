@@ -1,7 +1,7 @@
 // Tests for LLM provider configuration and factory with provider-tier model system
 
 import { getProvider, getModel, getLLMConfig } from '../llm-provider'
-import { AI_CONFIG, getModelConfig, getProviderFromKey } from '@/lib/config'
+import { getModelConfig, getProviderFromKey } from '@/lib/config'
 
 // Mock the provider modules
 jest.mock('@ai-sdk/anthropic', () => ({
@@ -132,7 +132,7 @@ describe('LLM Provider Factory', () => {
       process.env.LLM_MODEL = 'anthropic-expensive'
       // Re-import to pick up new env var
       jest.resetModules()
-      const { getLLMConfig: getLLMConfigFresh } = require('../llm-provider')
+      const { getLLMConfig: getLLMConfigFresh } = await import('../llm-provider')
       
       const config = getLLMConfigFresh()
       expect(config.providerTierKey).toBe('anthropic-expensive')

@@ -1,0 +1,287 @@
+import { SupabaseClient } from '@supabase/supabase-js'
+import type { 
+  Database, 
+  AiCall, 
+  AiCallInsert, 
+  CallStatus,
+  PromptType
+} from '@/lib/types/database'
+
+export interface AiCallMetrics {
+  promptTokens: number
+  completionTokens: number
+  totalTokens: number
+  reasoningTokens?: number
+  latencyMs: number
+}
+
+export interface CreateAiCallOptions {
+  documentId?: string
+  modelId: string
+  promptType: PromptType
+  promptInput: string
+  promptTemplate?: string
+  extra?: Record<string, any>
+}
+
+export class AiCallService {
+  constructor(private supabase: SupabaseClient<Database>) {}
+
+  /**
+   * Start tracking an AI call
+   */
+  async startCall(options: CreateAiCallOptions): Promise<AiCall | null> {
+    const aiCall: Omit<AiCallInsert, 'id' | 'created_at' | 'updated_at'> = {
+      document_id: options.documentId || null,
+      model_id: options.modelId,
+      prompt_type: options.promptType,
+      prompt_input: options.promptInput,
+      prompt_template: options.promptTemplate || null,
+      status: 'pending',
+      extra: options.extra || {},
+    }
+
+    const { data, error } = await this.supabase
+      .from('ai_calls')
+      .insert(aiCall)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error creating AI call:', error)
+      return null
+    }
+
+    return data
+  }
+
+  /**
+   * Complete an AI call with success
+   */
+  async completeCall(
+    id: string,
+    responseText: string,
+    metrics: AiCallMetrics,
+    extra?: Record<string, any>
+  ): Promise<AiCall | null> {
+    const completedAt = new Date().toISOString()
+    
+    const { data, error } = await this.supabase
+      .from('ai_calls')
+      .update({
+        status: 'success',
+        response_text: responseText,
+        prompt_tokens: metrics.promptTokens,
+        completion_tokens: metrics.completionTokens,
+        total_tokens: metrics.totalTokens,
+        reasoning_tokens: metrics.reasoningTokens || null,
+        latency_ms: metrics.latencyMs,
+        completed_at: completedAt,
+        extra: extra || {},
+      })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error completing AI call:', error)
+      return null
+    }
+
+    return data
+  }
+
+  /**
+   * Mark an AI call as failed
+   */
+  async failCall(
+    id: string,
+    errorMessage: string,
+    errorCode?: string,
+    extra?: Record<string, any>
+  ): Promise<AiCall | null> {
+    const { data, error } = await this.supabase
+      .from('ai_calls')
+      .update({
+        status: 'failed',
+        error_message: errorMessage,
+        error_code: errorCode || null,
+        completed_at: new Date().toISOString(),
+        extra: extra || {},
+      })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error failing AI call:', error)
+      return null
+    }
+
+    return data
+  }
+
+  /**
+   * Get AI call by ID
+   */
+  async getById(id: string): Promise<AiCall | null> {
+    const { data, error } = await this.supabase
+      .from('ai_calls')
+      .select('*, ai_models(*)')
+      .eq('id', id)
+      .single()
+
+    if (error) {
+      console.error('Error fetching AI call:', error)
+      return null
+    }
+
+    return data
+  }
+
+  /**
+   * List AI calls with filters
+   */
+  async list(options?: {
+    documentId?: string
+    aiModelId?: string
+    promptType?: PromptType
+    status?: CallStatus
+    limit?: number
+    offset?: number
+  }): Promise<AiCall[]> {
+    let query = this.supabase.from('ai_calls').select('*, ai_models(*)')
+
+    if (options?.documentId) {
+      query = query.eq('document_id', options.documentId)
+    }
+
+    if (options?.aiModelId) {
+      query = query.eq('model_id', options.aiModelId)
+    }
+
+    if (options?.promptType) {
+      query = query.eq('prompt_type', options.promptType)
+    }
+
+    if (options?.status) {
+      query = query.eq('status', options.status)
+    }
+
+    if (options?.limit) {
+      query = query.limit(options.limit)
+    }
+
+    if (options?.offset) {
+      query = query.range(options.offset, options.offset + (options.limit || 10) - 1)
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error listing AI calls:', error)
+      return []
+    }
+
+    return data || []
+  }
+
+  /**
+   * Get usage statistics for a document
+   */
+  async getDocumentUsageStats(documentId: string): Promise<{
+    totalCalls: number
+    totalTokens: number
+    totalCost: number
+    byPromptType: Record<PromptType, { calls: number; tokens: number }>
+  }> {
+    const { data, error } = await this.supabase
+      .from('ai_calls')
+      .select('*, ai_models(*)')
+      .eq('document_id', documentId)
+      .eq('status', 'success')
+
+    if (error || !data) {
+      console.error('Error fetching usage stats:', error)
+      return {
+        totalCalls: 0,
+        totalTokens: 0,
+        totalCost: 0,
+        byPromptType: {} as any,
+      }
+    }
+
+    const stats = data.reduce(
+      (acc, call) => {
+        const tokens = call.total_tokens || 0
+        const model = call.ai_models as any
+
+        // Calculate cost if model has pricing info
+        let cost = 0
+        if (model && call.prompt_tokens && call.completion_tokens) {
+          cost = 
+            (call.prompt_tokens * (model.input_cost_per_1k || 0) / 1000) +
+            (call.completion_tokens * (model.output_cost_per_1k || 0) / 1000)
+        }
+
+        acc.totalCalls++
+        acc.totalTokens += tokens
+        acc.totalCost += cost
+
+        const promptType = call.prompt_type as PromptType
+        if (!acc.byPromptType[promptType]) {
+          acc.byPromptType[promptType] = { calls: 0, tokens: 0 }
+        }
+        acc.byPromptType[promptType].calls++
+        acc.byPromptType[promptType].tokens += tokens
+
+        return acc
+      },
+      {
+        totalCalls: 0,
+        totalTokens: 0,
+        totalCost: 0,
+        byPromptType: {} as Record<PromptType, { calls: number; tokens: number }>,
+      }
+    )
+
+    return stats
+  }
+
+  /**
+   * Get recent AI calls across all documents
+   */
+  async getRecentCalls(limit: number = 10): Promise<AiCall[]> {
+    const { data, error } = await this.supabase
+      .from('ai_calls')
+      .select('*, ai_models(*), documents(title)')
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    if (error) {
+      console.error('Error fetching recent calls:', error)
+      return []
+    }
+
+    return data || []
+  }
+
+  /**
+   * Helper to extract metrics from Vercel AI SDK response
+   */
+  extractMetricsFromAiResponse(response: any): AiCallMetrics {
+    // Based on Vercel AI SDK structure
+    const usage = response.usage || {}
+    const latency = response.experimental_providerMetadata?.latency || 
+                    (response.finishTimestamp - response.startTimestamp) || 
+                    0
+
+    return {
+      promptTokens: usage.promptTokens || 0,
+      completionTokens: usage.completionTokens || 0,
+      totalTokens: usage.totalTokens || 0,
+      reasoningTokens: usage.reasoningTokens,
+      latencyMs: latency,
+    }
+  }
+}

@@ -14,7 +14,7 @@ CSS and visual styling configuration for the Spideryarn Reading application.
 
 - **Light mode only**: Dark mode is currently disabled via `UI_CONFIG.FORCE_LIGHT_MODE` to avoid visual inconsistencies
 - **CSS custom properties**: Use CSS variables for consistent theming
-- **Tailwind CSS**: Primary styling framework
+- **Tailwind CSS v4**: Primary styling framework (using v4 beta - see important notes below)
 - **Component-scoped styles**: Prefer component-level styling over global CSS where possible
 
 ## Theme configuration
@@ -43,6 +43,20 @@ Dark mode CSS exists but is commented out until theming is properly implemented.
 - **Geist fonts**: Available via CSS variables `--font-geist-sans` and `--font-geist-mono`
 - **Trebuchet MS**: Available as `font-trebuchet` class for logo/branding text
 - **Monospace**: Use `font-mono` class for technical data like model IDs, API responses, and configuration values
+
+## Tailwind CSS v4 (Beta)
+
+We use Tailwind CSS v4 beta, which has significant differences from v3:
+
+### Key Differences
+- **CSS-first configuration**: Uses `@theme` and `@custom-variant` directives in CSS
+- **Plugin system changed**: Traditional JavaScript plugins may not work
+- **Typography/Prose classes**: We use manual CSS definitions (see `app/globals.css` lines 287-473) instead of the typography plugin due to v4 compatibility
+
+### Important Notes
+- When adding Tailwind-related libraries, verify v4 compatibility first
+- See `docs/CODING_GUIDELINES.md` for detailed v4 patterns and migration notes
+- Manual CSS implementations are often more reliable than v3 plugins in v4
 
 ## Third-party styling
 

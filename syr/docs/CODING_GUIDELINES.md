@@ -8,6 +8,8 @@ This document defines code quality standards and patterns to maintain consistenc
 - `docs/ARCHITECTURE.md` - System architecture and technical decisions
 - `docs/TESTING.md` - Testing approach and patterns
 - `docs/GIT_COMMITS.md` - Git workflow and commit guidelines
+- `docs/VERCEL_AI_SDK_REFERENCE.md` - Vercel AI SDK patterns and multi-provider support
+- `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Chat UI implementation with @assistant-ui/react
 - `.eslintrc.json` and `tsconfig.json` - Linting and TypeScript configuration
 
 ## Code Quality Checks
@@ -162,118 +164,271 @@ import { Info } from "@phosphor-icons/react/dist/ssr/Info"
 import { Warning, Info } from "@phosphor-icons/react"
 ```
 
-## Component Testing
+### AI Integration
+- Use Vercel AI SDK Core (`generateText`, `streamText`) for LLM calls
+- Follow multi-provider pattern in `lib/services/llm-provider.ts`
+- See `docs/VERCEL_AI_SDK_REFERENCE.md` for detailed patterns
 
-### Mocking Next.js Components
-When testing components that use Next.js features:
+### Chat UI
+- Use @assistant-ui/react primitives for chat interfaces
+- Follow implementation patterns in `components/assistant-chat.tsx`
+- See `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md` for integration guide
+
+## Client/Server Components
+
+Use `'use client'` directive for components with:
+- React hooks (useState, useEffect, etc.)
+- Event handlers
+- Browser-only APIs
+
 ```typescript
-// Mock Next.js Link
-jest.mock('next/link', () => {
-  return function MockLink({ children, href, ...props }: LinkProps & { children: React.ReactNode }) {
-    return <a href={href as string} {...props}>{children}</a>
+// Client component
+'use client'
+import { useState } from 'react'
+
+// Server component (default - no directive)
+import { headers } from 'next/headers'
+```
+
+## API Route Patterns
+
+### Structure
+```typescript
+export async function POST(request: Request) {
+  try {
+    const body = await request.json()
+    const result = schema.safeParse(body)
+    
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'Invalid request', details: result.error.format() },
+        { status: 400 }
+      )
+    }
+    
+    // Process valid data
+    console.log('[API Name] Processing:', result.data)
+    
+  } catch (error) {
+    console.error('[API Name] Error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
   }
+}
+```
+
+## Type-First Development
+
+### Zod Schemas
+Define validation schemas for all API inputs/outputs:
+```typescript
+export const requestSchema = z.object({
+  content: z.string().min(1),
+  options: z.object({
+    temperature: z.number().optional(),
+  })
 })
 
-// Mock Next.js Image with ESLint disable
-jest.mock('next/image', () => {
-  return function MockImage({ alt, ...props }: ImageProps) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img alt={alt} {...props} />
-  }
+type RequestData = z.infer<typeof requestSchema>
+```
+
+### Strict TypeScript
+- Define explicit return types for complex functions
+- Use discriminated unions for variants
+- Prefer `type` for unions, `interface` for objects
+
+## Component Patterns
+
+### File Structure
+```typescript
+'use client' // If needed
+
+import React from 'react'
+// Other imports...
+
+interface ComponentProps {
+  isLoading?: boolean  // Boolean prefix: is/has/should
+  onSubmit?: () => void  // Callback prefix: on
+  children: React.ReactNode
+}
+
+export function ComponentName({ isLoading, onSubmit, children }: ComponentProps) {
+  // Component logic
+}
+```
+
+### Hooks
+- Always prefix with `use`
+- Return objects with clear property names
+- Include cleanup in useEffect
+
+```typescript
+export function useFeatureName(): {
+  data: Data | null
+  isLoading: boolean
+  error: Error | null
+} {
+  // Hook implementation
+}
+```
+
+## File Naming
+
+- Components: `kebab-case.tsx`
+- Hooks: `camelCase.ts` (useElementVisibility.ts)
+- Types: `kebab-case.ts`
+- Tests: `component-name.test.tsx`
+
+## Import Paths
+
+Always use absolute imports with `@/` prefix:
+```typescript
+// ❌ Bad
+import { Button } from '../../../components/ui/button'
+
+// ✅ Good
+import { Button } from '@/components/ui/button'
+```
+
+## Testing Patterns
+
+### Structure
+```typescript
+describe('ComponentName', () => {
+  it('should handle specific behavior', () => {
+    // Test implementation
+  })
 })
 ```
 
-### Type-Safe Test Helpers
-Convert test helpers to TypeScript for better type safety:
+### Mock Next.js Components
 ```typescript
-// ✅ Good - TypeScript test helper
-interface MockRequestOptions {
-  method?: string
-  headers?: Record<string, string>
-  body?: unknown
+jest.mock('next/link', () => ({
+  __esModule: true,
+  default: ({ children, href, ...props }: any) => 
+    <a href={href} {...props}>{children}</a>
+}))
+```
+
+## Logging Patterns
+
+```typescript
+// API/Service logs with context
+console.log('[ComponentName] Action:', { data, timestamp: new Date().toISOString() })
+console.error('[ComponentName] Error:', error)
+
+// Remove debug logs before committing
+// console.log('DEBUG:', temporaryValue)  // ❌ Don't commit
+```
+
+## Async Patterns
+
+Always use async/await over promises:
+```typescript
+// ❌ Bad
+fetch('/api/data').then(res => res.json()).then(data => ...)
+
+// ✅ Good
+const response = await fetch('/api/data')
+const data = await response.json()
+```
+
+Use early returns to reduce nesting:
+```typescript
+if (!data) {
+  return null  // Early return
 }
 
-export function createMockRequest(options: MockRequestOptions = {}) {
-  return new Request('http://localhost:3000/api/test', {
-    method: options.method || 'GET',
-    headers: options.headers || {},
-    body: options.body ? JSON.stringify(options.body) : undefined,
-  })
+if (error) {
+  return <ErrorComponent error={error} />
 }
+
+// Main logic here
 ```
 
 ## ESLint Disable Comments
 
-Use ESLint disable comments sparingly and only when truly necessary:
+Only use with specific reason:
 ```typescript
-// ✅ Good - specific disable with explanation
 // eslint-disable-next-line @next/next/no-img-element -- Mock component for testing
-<img src="..." alt="..." />
-
-// ❌ Bad - disabling entire file or broad rules
-/* eslint-disable */
 ```
 
-## Common Patterns to Avoid
+## Common Anti-Patterns
 
-1. **Dead Code**: Remove unused functions, variables, and imports immediately
-2. **Console Logs**: Remove debugging console.log statements before committing (except intentional logging)
-3. **TODO Comments**: Create issues or planning docs instead of leaving TODOs in code
-4. **Magic Numbers**: Use named constants for repeated values
-5. **Inline Styles**: Use Tailwind classes or CSS modules instead
+- Dead code and unused imports
+- Debug console.logs in production code
+- TODO comments (use planning docs instead)
+- Magic numbers (use named constants)
+- Relative imports beyond siblings
+- Promise chains instead of async/await
 
-## Performance Considerations
+## Tailwind CSS v4 Considerations
 
-### Bundle Size
-- Remove unused imports and dead code
-- Use dynamic imports for large libraries used in specific routes
-- Check bundle analyzer output periodically
+We use Tailwind CSS v4 beta, which has breaking changes from v3:
 
-### React Optimization
-- Use `useCallback` and `useMemo` for expensive computations
-- Avoid creating new objects/arrays in render unless necessary
-- Use React.memo for pure components with expensive renders
+### Typography/Prose Classes
+```css
+/* ❌ v3 syntax - causes errors */
+@import "@tailwindcss/typography";
 
-## Appendix: Possible other ideas that maybe should be part of our coding guidelines - needs further discussion
+/* Current implementation - using plugin directive */
+@plugin "@tailwindcss/typography";
+```
 
-### Error Handling Patterns
-- Standardised error boundary components
-- Consistent error message formatting
-- Logging strategy for production vs development
+### Key Differences from v3
+- Plugin system uses `@plugin` directive instead of JavaScript config
+- CSS-first configuration with `@theme` directives
+- Some v3 plugins need updates for v4 compatibility
 
-### API Response Patterns
-- Standardised response format across all API routes
-- Consistent error response structure
-- Rate limiting implementation
+### Current Setup
+- PostCSS via `@tailwindcss/postcss` v4
+- Typography plugin: `@plugin "@tailwindcss/typography"`
+- Theme customization in `app/globals.css`
 
-### State Management
-- When to use React Context vs props
-- Patterns for complex form state
-- Optimistic UI updates
+## Web Search Notes
 
-### Documentation in Code
-- JSDoc standards for public APIs
-- When to add inline comments
-- Component documentation requirements
+**Last updated: 31/05/2025**
 
-### Accessibility Standards
-- ARIA label requirements
-- Keyboard navigation patterns
-- Screen reader testing approach
+### Next.js 15 & React 19 (Searched 31/05/2025)
+- App Router requires React 19 RC (not 18)
+- Use Server Components by default
+- Enable `bundlePagesRouterDependencies` for optimization
+- Sources: augustinfotech.com/blogs/nextjs-best-practices-in-2025, nextjs.org/blog/next-15
 
-### Performance Monitoring
-- Web Vitals tracking
-- Performance budgets
-- Lighthouse CI integration
+### Tailwind CSS v4 Beta (Searched 31/05/2025)
+- 100x faster with Vite plugin
+- Native CSS features: cascade layers, container queries
+- Most projects ship <10kB CSS
+- Source: tailwindcss.com/blog/tailwindcss-v4-beta
 
-### Security Practices
-- Input validation patterns
-- CSRF protection
-- Content Security Policy headers
+### Vercel AI SDK (Searched 31/05/2025)
+- Use streaming-first for chat UIs
+- Set proper headers: `x-vercel-ai-data-stream: v1`
+- Edge Runtime recommended for performance
+- Sources: ai-sdk.dev, vercel.com/blog/introducing-the-vercel-ai-sdk
 
-### Database Query Patterns
-- Query optimization guidelines
-- Connection pooling best practices
-- Migration testing requirements
+### Supabase Security (Searched 31/05/2025)
+- Always enable Row Level Security (RLS)
+- Use `supabase-ssr` for cookie-based auth
+- Never expose service role key client-side
+- Source: supabase.com/docs/guides/auth/server-side/nextjs
 
-These topics may warrant their own documentation or inclusion in existing docs as the project matures.
+## Appendix: Future Considerations
+
+### Performance
+- React Server Components optimization
+- Web Vitals monitoring  
+- Virtual scrolling for long documents
+
+### Accessibility
+- ARIA patterns for custom components
+- Keyboard navigation testing
+
+### Security (Post-MVP)
+- Input sanitization
+- Rate limiting
+- CSP headers
+
+These topics will be addressed as the project matures beyond prototype phase.

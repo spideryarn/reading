@@ -14,7 +14,7 @@ Spideryarn Reading's database is in transition. The current implementation uses 
 - [SETUP.md](SETUP.md) - How to start Supabase locally
 - [PROJECT_STATUS.md](PROJECT_STATUS.md) - Current implementation status
 - [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) - Schema details (needs updating)
-- [DATABASE_MIGRATIONS.md](DATABASE_MIGRATIONS.md) - Migration workflow and commands
+- [DATABASE_MIGRATIONS.md](DATABASE_MIGRATIONS.md) - Migration workflow and type generation commands
 
 ## Current Schema (To Be Updated)
 
@@ -42,6 +42,20 @@ psql postgres://postgres:postgres@localhost:54342/postgres
 # Alternative: use Supabase CLI
 npx supabase db shell
 ```
+
+### **TypeScript Integration**
+
+The project includes generated TypeScript types for database operations:
+
+```bash
+# Generate/update types from current schema
+npm run db:types
+
+# Reset database and regenerate types
+npm run db:reset
+```
+
+**Type Safety**: All database queries use generated types from `lib/types/database.ts`, providing compile-time validation and autocomplete for table schemas, column types, and relationships.
 
 ### **Useful Commands**
 
@@ -97,6 +111,26 @@ UI components with enhanced content
 **Current Status**: Development mode
 - **RLS enabled** but with permissive policies for anonymous access
 - **Future**: User-scoped policies when authentication is added
+
+## Development Workflow
+
+### **Type-Safe Database Operations**
+
+1. **Make schema changes**: Create migrations using `npx supabase migration new feature_name`
+2. **Apply and generate types**: Run `npm run db:reset` to apply migrations and update TypeScript types
+3. **Use generated types**: Import and use types from `lib/types/database.ts` in your code
+4. **Commit both**: Include migration files and updated types in git commits
+
+### **Available Helper Types**
+
+The generated types include convenient helper types:
+
+```typescript
+import type { Document, DocumentInsert, AiCall, EnhancementType } from '@/lib/types/database'
+
+// Use for database queries, inserts, and type-safe operations
+const doc: Document = await supabase.from('documents').select('*').single()
+```
 
 ## Migration Status
 

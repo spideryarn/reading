@@ -19,7 +19,7 @@ export class MockIntersectionObserver {
   
   static instances: MockIntersectionObserver[] = []
 
-  constructor(callback: IntersectionObserverCallback, _options?: IntersectionObserverInit) {
+  constructor(callback: IntersectionObserverCallback) {
     this.callback = callback
     MockIntersectionObserver.instances.push(this)
   }

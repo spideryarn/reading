@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { HeadingTree, buildHeadingTree, type Heading, type HeadingNode } from '../heading-tree'
+import { HeadingTree, buildHeadingTree, type Heading } from '../heading-tree'
 
 describe('buildHeadingTree', () => {
   it('should build a hierarchical tree from flat headings', () => {

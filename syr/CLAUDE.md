@@ -20,6 +20,9 @@ Based on README.md, the following architecture decisions have been made:
 
 - **Frontend Framework**: Next.js with TypeScript and Tailwind CSS (transitioning from SvelteKit)
 - **AI Integration**: Anthropic Claude Sonnet 4 for all AI-related features
+  - Vercel AI SDK Core for multi-provider support (Claude, Gemini)
+  - @assistant-ui/react for chat UI primitives
+  - All LLM calls use Nunjucks + Zod prompt templates
 - **Storage**: Supabase (Postgres with realtime capabilities) from the start
 - **Data Structure**: Decompose HTML documents into individual elements stored as separate database rows with parent/child relationships
 - **Frontend State**: Virtual DOM approach - maintain document structure as React state/context
@@ -29,9 +32,14 @@ Based on README.md, the following architecture decisions have been made:
 ## Build, testing, and debugging
 
 Next.js local dev server:
-- `npm run dev` - User is already running this in a separate terminal. If you need them to restart it, ask them.
+- `npm run dev` - Regenerates DB types then starts dev server. User is already running this in a separate terminal. If you need them to restart it, ask them.
+- `npm run dev:safe` - Starts dev server without type generation (fallback if DB is unavailable)
 - Logs: `dev.log` - Use `tail dev.log` to check recent output
 - URL: http://localhost:$PORT/ (configurable via PORT in `.env.local`)
+
+Database operations:
+- `npm run db:types` - Regenerate TypeScript types from Supabase schema
+- `npm run db:reset` - Reset database and regenerate types
 
 Type checking and linting:
 - `npm run build` - TypeScript compilation errors
@@ -72,11 +80,13 @@ Key variables in `.env.local`:
 Template: `.env.example` (may not be current - check `.env.local` for active config)
 
 
-## Context window and subagents
+## Context window, tasks, and subagents
 
-Use tasks and subagents where appropriate (to avoid filling up the context window), e.g. for encapsulated tasks, curl/Playwright/Puppeteer/other verbose output, Git commits, etc.
+Use tasks whenever there's more than a couple of things to keep track of.
 
-Give them lots of background so that they can make good decisions, e.g. about goals, what we've been changing, gotchas & things to avoid, warnings to abort and provide feedback on what happened if there are surprises, relevant environment variables like $PORT for Playwright, and anything else that will help them to be effective but careful).
+Use subagents where appropriate (to avoid filling up the context window), e.g. for tests, curl, Playwright/Puppeteer MCP, other verbose output, Git commits, and any other encapsulated tasks.
+
+Give them lots of background so that they can make good decisions, e.g. about goals, what we've been changing, gotchas & things to avoid, warnings to abort and provide feedback on what happened if there are surprises, relevant environment variables like $PORT for Playwright, using Jest for testing, and anything else that will help them to be effective but careful).
 
 
 ## Documentation Reference

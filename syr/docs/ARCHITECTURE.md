@@ -116,3 +116,38 @@ see:
 - **Social Integration**: Bluesky posting integration planned (UI implemented, API pending)
 - See implementation documentation: `docs/TWEET_THREAD_VIEW.md`
 
+## Technology Stack
+
+### Frontend Framework
+- **Next.js 15**: App Router, React Server Components, API routes with streaming support
+- **React 19 RC**: Required by App Router, automatic batching, new JSX Transform
+- **TypeScript 5**: Strict mode enabled, comprehensive type safety across codebase
+
+### Styling & UI
+- **Tailwind CSS v4 Beta**: CSS-first config, native cascade layers, <10kB production CSS
+- **shadcn/ui**: Component library built on Radix UI primitives (buttons, dialogs, alerts)
+- **Phosphor Icons**: SSR-compatible icon system with Next.js optimization
+
+### AI Integration
+- **Vercel AI SDK Core**: Multi-provider LLM support (Anthropic Claude, Google Gemini)
+- **@assistant-ui/react**: Chat UI primitives with streaming support
+- **Prompt Templates**: Nunjucks + Zod for type-safe, validated prompts
+
+### Backend & Data
+- **Supabase**: PostgreSQL database with realtime subscriptions and auth
+- **Database Schema**: Single-row document storage with JSONB enhancements
+- **API Routes**: Next.js API routes with Zod validation and structured error handling
+
+### Development & Testing
+- **Jest + React Testing Library**: Unit and integration testing
+- **ESLint**: Code quality enforcement with Next.js rules
+- **Git Worktrees**: Parallel development on experimental branches
+
+### Environment & Deployment
+- **Node.js**: Latest LTS version
+- **npm**: Package management with lockfile
+- **Vercel**: Deployment platform (planned for production)
+
+For detailed setup instructions, see `docs/SETUP.md`
+For code quality standards, see `docs/CODING_GUIDELINES.md`
+
