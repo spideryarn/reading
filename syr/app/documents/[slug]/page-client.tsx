@@ -64,12 +64,20 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
     
     // Check each heading
     allHeadings.forEach(heading => {
+      // Find the actual DocumentElement that corresponds to this heading
+      const headingElement = mutatedDocument.find(el => el.id === heading.elementId)
+      
+      if (!headingElement) {
+        // If we can't find the heading element, mark as not visible
+        newHeadingVisibility.set(heading.id, 'not-visible')
+        return
+      }
+      
       // Get all elements that belong to this heading (heading + its section)
-      const headingElements = getHeadingAndSectionElements(heading, mutatedDocument)
+      const headingElements = getHeadingAndSectionElements(headingElement, mutatedDocument)
       
       // Check if any element in the heading's section is visible
       const isVisible = headingElements.some(element => elementVisibility.has(element.id))
-      
       
       newHeadingVisibility.set(heading.id, isVisible ? 'visible' : 'not-visible')
     })
