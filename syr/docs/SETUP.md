@@ -77,7 +77,7 @@ https://github.com/spideryarn/reading/
 
    Navigate to e.g. http://localhost:3001/ (or your configured port)
 
-7. **Verify setup:
+7. **Verify setup:**
    ```bash
    # Check for TypeScript errors
    npm run build
@@ -88,6 +88,17 @@ https://github.com/spideryarn/reading/
    # Run tests
    npm test
    ```
+
+## Test Environment Setup
+
+For running tests that require environment variables (like database tests), you need to create `.env.test`:
+
+```bash
+# Copy your local environment to test environment
+cp .env.local .env.test
+```
+
+This follows Next.js conventions where `.env.local` is not loaded during tests. The `.env.test` file is automatically loaded when running `npm test`.
 
 ## Git Worktree Development Setup (Optional)
 
