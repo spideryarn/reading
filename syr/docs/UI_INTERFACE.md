@@ -14,6 +14,8 @@ The Spideryarn Reading application features a multi-pane layout with tabbed navi
 - `app/documents/[slug]/page-client.tsx` - main layout coordination and state management
 - `docs/TABLE_OF_CONTENTS_PANE.md` - detailed documentation of left pane functionality
 - `docs/ARCHITECTURE.md` - overall application architecture
+- `docs/UI_COMPONENTS.md`
+- `docs/SHADCN_UI_REFERENCE.md`
 
 ## Layout Structure
 

@@ -75,11 +75,13 @@ Key variables in `.env.local`:
 Template: `.env.example` (may not be current - check `.env.local` for active config)
 
 
-## Context window and subagents
+## Context window, tasks, and subagents
 
-Use tasks and subagents where appropriate (to avoid filling up the context window), e.g. for encapsulated tasks, curl/Playwright/Puppeteer/other verbose output, Git commits, etc.
+Use tasks whenever there's more than a couple of things to keep track of.
 
-Give them lots of background so that they can make good decisions, e.g. about goals, what we've been changing, gotchas & things to avoid, warnings to abort and provide feedback on what happened if there are surprises, relevant environment variables like $PORT for Playwright, and anything else that will help them to be effective but careful).
+Use subagents where appropriate (to avoid filling up the context window), e.g. for tests, curl, Playwright/Puppeteer MCP, other verbose output, Git commits, and any other encapsulated tasks.
+
+Give them lots of background so that they can make good decisions, e.g. about goals, what we've been changing, gotchas & things to avoid, warnings to abort and provide feedback on what happened if there are surprises, relevant environment variables like $PORT for Playwright, using Jest for testing, and anything else that will help them to be effective but careful).
 
 
 ## Documentation Reference

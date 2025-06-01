@@ -9,6 +9,12 @@ The project uses a hybrid approach combining:
 - **Raw Tailwind CSS** for simple layouts and spacing
 - **Custom components** for domain-specific functionality
 
+## References
+
+- `docs/UI_INTERFACE.md`
+- `docs/SHADCN_UI_REFERENCE.md`
+
+
 ## Component Library: shadcn/ui
 
 Built on Radix UI primitives with copy-paste philosophy. Components are copied to `components/ui/` and can be fully customised.
