@@ -57,7 +57,16 @@ https://github.com/spideryarn/reading/
    
    To see the actual running URLs and keys: `npx supabase status`
 
-5. **Start development server:**
+5. **Generate TypeScript types:**
+   ```bash
+   npm run db:types
+   ```
+   
+   This generates TypeScript types from your database schema into `lib/types/database.ts`. The types provide compile-time safety and autocomplete for database operations.
+   
+   **Alternative**: Use `npm run db:reset` to reset the database and generate types in one command.
+
+6. **Start development server:
    ```bash
    npm run dev
    ```
@@ -68,7 +77,7 @@ https://github.com/spideryarn/reading/
 
    Navigate to e.g. http://localhost:3001/ (or your configured port)
 
-6. **Verify setup:**
+7. **Verify setup:
    ```bash
    # Check for TypeScript errors
    npm run build
@@ -245,6 +254,12 @@ npx supabase stop
 
 # Reset database (reapplies migrations and seeds)
 npx supabase db reset
+
+# Reset database and regenerate TypeScript types
+npm run db:reset
+
+# Generate TypeScript types only
+npm run db:types
 
 # Check status
 npx supabase status

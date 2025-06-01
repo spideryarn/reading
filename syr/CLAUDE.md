@@ -32,9 +32,14 @@ Based on README.md, the following architecture decisions have been made:
 ## Build, testing, and debugging
 
 Next.js local dev server:
-- `npm run dev` - User is already running this in a separate terminal. If you need them to restart it, ask them.
+- `npm run dev` - Regenerates DB types then starts dev server. User is already running this in a separate terminal. If you need them to restart it, ask them.
+- `npm run dev:safe` - Starts dev server without type generation (fallback if DB is unavailable)
 - Logs: `dev.log` - Use `tail dev.log` to check recent output
 - URL: http://localhost:$PORT/ (configurable via PORT in `.env.local`)
+
+Database operations:
+- `npm run db:types` - Regenerate TypeScript types from Supabase schema
+- `npm run db:reset` - Reset database and regenerate types
 
 Type checking and linting:
 - `npm run build` - TypeScript compilation errors

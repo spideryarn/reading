@@ -8,7 +8,7 @@ This document describes both the current (deprecated) schema and the target sche
 
 📖 **Related Documentation:**
 - [DATABASE_OVERVIEW.md](DATABASE_OVERVIEW.md) - High-level database guide
-- [DATABASE_MIGRATIONS.md](DATABASE_MIGRATIONS.md) - Migration workflow
+- [DATABASE_MIGRATIONS.md](DATABASE_MIGRATIONS.md) - Migration workflow and type generation
 - [ARCHITECTURE.md](ARCHITECTURE.md) - Design decisions explaining the schema change
 
 ## Current Schema (To Be Deprecated)
@@ -84,12 +84,41 @@ CREATE TABLE document_enhancements (
 
 **Purpose**: Store all AI-generated enhancements in a flexible JSONB format
 
+## TypeScript Types
+
+All database schemas are automatically converted to TypeScript types for type-safe database operations:
+
+**Generated Types**: `lib/types/database.ts` (auto-generated, do not edit manually)
+
+```bash
+# Regenerate types after schema changes
+npm run db:types
+
+# Reset database and regenerate types
+npm run db:reset
+```
+
+**Helper Types**: The generated file includes convenient helper types:
+
+```typescript
+// Table types
+export type Document = Tables<'documents'>
+export type DocumentInsert = TablesInsert<'documents'>
+export type DocumentEnhancement = Tables<'document_enhancements'>
+
+// Enums for type safety
+export type PromptType = 'chat' | 'summarise' | 'glossary' | 'headings' | 'tweet-thread'
+export type EnhancementType = 'summary' | 'glossary' | 'headings' | 'tweet-thread'
+```
+
 ## Schema Transition Plan
 
 1. **Phase 1** (Current): Both schemas exist, code uses old approach
 2. **Phase 2**: Add new fields/tables, update code to use new approach
 3. **Phase 3**: Migrate existing data (if any) to new format
 4. **Phase 4**: Drop deprecated tables
+
+**Important**: Run `npm run db:types` after each phase to ensure TypeScript types stay synchronized with schema changes.
 
 ## Indexes
 

@@ -3,7 +3,8 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "dev": "dotenv -e .env.local -- next dev --turbopack > dev.log 2>&1",
+        "dev": "npm run db:types --silent && dotenv -e .env.local -- next dev --turbopack > dev.log 2>&1",
+        "dev:safe": "dotenv -e .env.local -- next dev --turbopack > dev.log 2>&1",
         "build": "next build",
         "start": "next start",
         "lint": "next lint",
