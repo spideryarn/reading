@@ -17,7 +17,6 @@ import { SummaryPane } from './summary-pane'
 import { Button } from '@/components/ui/button'
 import { Loading } from '@/components/ui/loading'
 import { AlertWithIcon } from '@/components/ui/alert'
-import { useTocAutoScroll } from '@/lib/hooks/useTocAutoScroll'
 
 // Shared types
 interface BaseTabProps {
@@ -213,30 +212,6 @@ export function OriginalHeadingsTab({
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
   const [granularityLevel, setGranularityLevel] = useState(3)
   
-  // Auto-scroll functionality
-  const containerRef = useRef<HTMLDivElement>(null)
-  
-  // Convert headingVisibility Map to visible heading IDs Set for the auto-scroll hook
-  const visibleHeadingIds = useMemo(() => {
-    const visibleIds = new Set<string>()
-    if (headingVisibility) {
-      headings.forEach(heading => {
-        const visibility = headingVisibility.get(heading.id)
-        if (visibility === 'visible') {
-          visibleIds.add(heading.id)
-        }
-      })
-    }
-    return visibleIds
-  }, [headingVisibility, headings])
-  
-  // Use auto-scroll hook
-  useTocAutoScroll(containerRef, {
-    visibleHeadings: visibleHeadingIds,
-    enableAutoScroll: true,
-    scrollBehavior: 'smooth',
-    cooldownDuration: 2000
-  })
 
   // Extract headings from content/elements
   useEffect(() => {
@@ -434,7 +409,7 @@ export function OriginalHeadingsTab({
   }
 
   return (
-    <div ref={containerRef} className="h-full flex flex-col overflow-y-auto">
+    <div className="h-full flex flex-col overflow-y-auto">
       <HeadingTree
         headings={headings}
         themeColors={{
@@ -478,30 +453,6 @@ export function AIGeneratedHeadingsTab({
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
   const [granularityLevel, setGranularityLevel] = useState(3)
   
-  // Auto-scroll functionality
-  const containerRef = useRef<HTMLDivElement>(null)
-  
-  // Convert headingVisibility Map to visible heading IDs Set for the auto-scroll hook
-  const visibleHeadingIds = useMemo(() => {
-    const visibleIds = new Set<string>()
-    if (headingVisibility) {
-      aiHeadings.forEach(heading => {
-        const visibility = headingVisibility.get(heading.id)
-        if (visibility === 'visible') {
-          visibleIds.add(heading.id)
-        }
-      })
-    }
-    return visibleIds
-  }, [headingVisibility, aiHeadings])
-  
-  // Use auto-scroll hook
-  useTocAutoScroll(containerRef, {
-    visibleHeadings: visibleHeadingIds,
-    enableAutoScroll: true,
-    scrollBehavior: 'smooth',
-    cooldownDuration: 2000
-  })
 
   // Update default granularity for AI headings
   useEffect(() => {
@@ -727,7 +678,7 @@ export function AIGeneratedHeadingsTab({
   }
 
   return (
-    <div ref={containerRef} className="p-4 h-full flex flex-col overflow-y-auto">
+    <div className="p-4 h-full flex flex-col overflow-y-auto">
       {isLoadingHeadings ? (
         <Loading text="Generating headings..." spinnerSize={20} />
       ) : headingsError ? (
