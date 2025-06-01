@@ -7,7 +7,7 @@ export class DocumentService {
   /**
    * Create a new document
    */
-  async create(document: Omit<DocumentInsert, 'id' | 'created_at' | 'updated_at'>): Promise<Document | null> {
+  async create(document: Omit<DocumentInsert, 'id' | 'created_at' | 'updated_at'>): Promise<Document> {
     const { data, error } = await this.supabase
       .from('documents')
       .insert(document)
@@ -15,8 +15,7 @@ export class DocumentService {
       .single()
 
     if (error) {
-      console.error('Error creating document:', error)
-      return null
+      throw new Error(`Failed to create document: ${error.message}`)
     }
 
     return data
@@ -26,6 +25,12 @@ export class DocumentService {
    * Get a document by ID
    */
   async getById(id: string): Promise<Document | null> {
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(id)) {
+      return null
+    }
+
     const { data, error } = await this.supabase
       .from('documents')
       .select('*')
@@ -33,8 +38,11 @@ export class DocumentService {
       .single()
 
     if (error) {
-      console.error('Error fetching document:', error)
-      return null
+      // Check for "not found" error (PGRST116)
+      if (error.code === 'PGRST116') {
+        return null
+      }
+      throw new Error(`Failed to fetch document: ${error.message}`)
     }
 
     return data
@@ -44,16 +52,28 @@ export class DocumentService {
    * Update a document
    */
   async update(id: string, updates: DocumentUpdate): Promise<Document | null> {
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(id)) {
+      return null
+    }
+
+    // Filter out invalid fields like 'metadata' that don't exist in the schema
+    const validUpdates = { ...updates }
+    delete (validUpdates as any).metadata
+
     const { data, error } = await this.supabase
       .from('documents')
-      .update(updates)
+      .update(validUpdates)
       .eq('id', id)
       .select()
       .single()
 
     if (error) {
-      console.error('Error updating document:', error)
-      return null
+      if (error.code === 'PGRST116') { // Not found
+        return null
+      }
+      throw new Error(`Failed to update document: ${error.message}`)
     }
 
     return data
@@ -63,13 +83,19 @@ export class DocumentService {
    * Delete a document (cascades to related tables)
    */
   async delete(id: string): Promise<boolean> {
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(id)) {
+      return false
+    }
+
     const { error } = await this.supabase
       .from('documents')
       .delete()
       .eq('id', id)
 
     if (error) {
-      console.error('Error deleting document:', error)
+      // For delete, we'll return false on error instead of throwing
       return false
     }
 
@@ -84,8 +110,8 @@ export class DocumentService {
     createdBy?: string
     limit?: number
     offset?: number
-  }): Promise<Document[]> {
-    let query = this.supabase.from('documents').select('*')
+  }): Promise<{ documents: Document[]; hasMore: boolean }> {
+    let query = this.supabase.from('documents').select('*', { count: 'exact' })
 
     if (options?.isPublic !== undefined) {
       query = query.eq('is_public', options.isPublic)
@@ -95,22 +121,26 @@ export class DocumentService {
       query = query.eq('created_by', options.createdBy)
     }
 
-    if (options?.limit) {
-      query = query.limit(options.limit)
-    }
+    const limit = options?.limit || 10
+    const offset = options?.offset || 0
 
-    if (options?.offset) {
-      query = query.range(options.offset, options.offset + (options.limit || 10) - 1)
-    }
+    // Request one more than the limit to check if there are more
+    query = query.range(offset, offset + limit)
 
-    const { data, error } = await query.order('created_at', { ascending: false })
+    const { data, error, count } = await query.order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error listing documents:', error)
-      return []
+      throw new Error(`Failed to list documents: ${error.message}`)
     }
 
-    return data || []
+    const documents = data || []
+    const hasMore = count ? count > offset + documents.length : documents.length > limit
+
+    // Return only the requested limit
+    return {
+      documents: documents.slice(0, limit),
+      hasMore
+    }
   }
 
   /**
@@ -128,8 +158,7 @@ export class DocumentService {
       .limit(limit)
 
     if (error) {
-      console.error('Error searching documents:', error)
-      return []
+      throw new Error(`Failed to search documents: ${error.message}`)
     }
 
     return data || []
@@ -148,9 +177,12 @@ export class DocumentService {
       .eq('id', id)
       .single()
 
-    if (docError || !document) {
-      console.error('Error fetching document:', docError)
-      return { document: null, enhancements: [] }
+    if (docError) {
+      // Check for "not found" error
+      if (docError.code === 'PGRST116') {
+        return { document: null, enhancements: [] }
+      }
+      throw new Error(`Failed to fetch document: ${docError.message}`)
     }
 
     const { data: enhancements, error: enhError } = await this.supabase
@@ -159,7 +191,7 @@ export class DocumentService {
       .eq('document_id', id)
 
     if (enhError) {
-      console.error('Error fetching enhancements:', enhError)
+      throw new Error(`Failed to fetch enhancements: ${enhError.message}`)
     }
 
     return {
@@ -171,9 +203,11 @@ export class DocumentService {
   /**
    * Calculate and update word count for a document
    */
-  async updateWordCount(id: string): Promise<number | null> {
+  async updateWordCount(id: string): Promise<number> {
     const document = await this.getById(id)
-    if (!document || !document.plaintext_content) return null
+    if (!document || !document.plaintext_content) {
+      throw new Error('Document not found or has no plaintext content')
+    }
 
     // Simple word count calculation
     const wordCount = document.plaintext_content.trim().split(/\s+/).length
@@ -188,7 +222,7 @@ export class DocumentService {
   async storeProcessedContent(
     id: string,
     content: { html: string; plaintext: string }
-  ): Promise<Document | null> {
+  ): Promise<Document> {
     const wordCount = content.plaintext.trim().split(/\s+/).length
 
     return await this.update(id, {

@@ -9,6 +9,9 @@ see also:
 - This is a prototype with no users yet. We want to develop fast and experiment, so we can figure out which features are most valuable.
 - Fix the root cause rather than putting on a band-aid. Avoid fallbacks & defaults - better to fail if input assumptions aren't being met.
 - Raise errors early, clearly & fatally. Prefer not to wrap in try/except so that our tracebacks are obvious.
+  - Database services propagate errors instead of silently returning null
+  - API routes can catch and map to appropriate HTTP responses
+  - "Not found" is a valid state, not an error (return null, don't throw)
 - Don't try and write a full, final version immediately. Get a simple version working end-to-end first, and then gradually layer in complexity in stages.
 - Follow software engineering best practices, e.g.
   - reuse code where it makes sense to do so

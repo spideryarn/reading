@@ -30,7 +30,7 @@ export class ChatService {
   /**
    * Create a new chat thread
    */
-  async createThread(options: CreateThreadOptions): Promise<ChatThread | null> {
+  async createThread(options: CreateThreadOptions): Promise<ChatThread> {
     const thread: Omit<ChatThreadInsert, 'id' | 'created_at' | 'updated_at'> = {
       document_id: options.documentId,
       model_id: options.modelId,
@@ -46,8 +46,7 @@ export class ChatService {
       .single()
 
     if (error) {
-      console.error('Error creating chat thread:', error)
-      return null
+      throw new Error(`Failed to create chat thread: ${error.message}`)
     }
 
     return data
@@ -57,6 +56,12 @@ export class ChatService {
    * Get a chat thread by ID
    */
   async getThread(id: string): Promise<ChatThread | null> {
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(id)) {
+      return null
+    }
+
     const { data, error } = await this.supabase
       .from('chat_threads')
       .select('*, ai_models(*), documents(title)')
@@ -64,8 +69,10 @@ export class ChatService {
       .single()
 
     if (error) {
-      console.error('Error fetching chat thread:', error)
-      return null
+      if (error.code === 'PGRST116') { // Not found
+        return null
+      }
+      throw new Error(`Failed to fetch chat thread: ${error.message}`)
     }
 
     return data
@@ -77,7 +84,7 @@ export class ChatService {
   async updateThread(
     id: string,
     updates: { title?: string; extra?: Record<string, any> }
-  ): Promise<ChatThread | null> {
+  ): Promise<ChatThread> {
     const { data, error } = await this.supabase
       .from('chat_threads')
       .update(updates)
@@ -86,8 +93,7 @@ export class ChatService {
       .single()
 
     if (error) {
-      console.error('Error updating chat thread:', error)
-      return null
+      throw new Error(`Failed to update chat thread: ${error.message}`)
     }
 
     return data
@@ -108,8 +114,7 @@ export class ChatService {
       .limit(limit)
 
     if (error) {
-      console.error('Error listing chat threads:', error)
-      return []
+      throw new Error(`Failed to list chat threads: ${error.message}`)
     }
 
     return data || []
@@ -118,14 +123,18 @@ export class ChatService {
   /**
    * Add a message to a thread
    */
-  async addMessage(options: CreateMessageOptions): Promise<ChatMessage | null> {
+  async addMessage(options: CreateMessageOptions): Promise<ChatMessage> {
     // Get current max sequence number
-    const { data: existingMessages } = await this.supabase
+    const { data: existingMessages, error: seqError } = await this.supabase
       .from('chat_messages')
       .select('sequence_number')
       .eq('thread_id', options.threadId)
       .order('sequence_number', { ascending: false })
       .limit(1)
+
+    if (seqError && seqError.code !== 'PGRST116') {
+      throw new Error(`Failed to get message sequence: ${seqError.message}`)
+    }
 
     const nextSequence = existingMessages?.[0]?.sequence_number 
       ? existingMessages[0].sequence_number + 1 
@@ -147,8 +156,7 @@ export class ChatService {
       .single()
 
     if (error) {
-      console.error('Error adding chat message:', error)
-      return null
+      throw new Error(`Failed to add chat message: ${error.message}`)
     }
 
     return data
@@ -158,6 +166,12 @@ export class ChatService {
    * Get all messages in a thread
    */
   async getThreadMessages(threadId: string): Promise<ChatMessage[]> {
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(threadId)) {
+      return []
+    }
+
     const { data, error } = await this.supabase
       .from('chat_messages')
       .select('*, ai_calls(*, ai_models(*))')
@@ -165,8 +179,7 @@ export class ChatService {
       .order('sequence_number', { ascending: true })
 
     if (error) {
-      console.error('Error fetching chat messages:', error)
-      return []
+      throw new Error(`Failed to fetch chat messages: ${error.message}`)
     }
 
     return data || []
@@ -188,18 +201,22 @@ export class ChatService {
   /**
    * Delete a thread (cascades to messages)
    */
-  async deleteThread(id: string): Promise<boolean> {
+  async deleteThread(id: string): Promise<void> {
+    // Validate UUID format - for delete, we'll still throw on invalid UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(id)) {
+      // For delete, we don't throw error on invalid UUID, just return
+      return
+    }
+
     const { error } = await this.supabase
       .from('chat_threads')
       .delete()
       .eq('id', id)
 
     if (error) {
-      console.error('Error deleting chat thread:', error)
-      return false
+      throw new Error(`Failed to delete chat thread: ${error.message}`)
     }
-
-    return true
   }
 
   /**
@@ -221,8 +238,7 @@ export class ChatService {
       .limit(options?.limit || 10)
 
     if (error) {
-      console.error('Error fetching recent threads:', error)
-      return []
+      throw new Error(`Failed to fetch recent threads: ${error.message}`)
     }
 
     return data || []
@@ -248,7 +264,7 @@ export class ChatService {
   /**
    * Auto-update thread title based on first user message
    */
-  async autoUpdateThreadTitle(threadId: string): Promise<ChatThread | null> {
+  async autoUpdateThreadTitle(threadId: string): Promise<ChatThread> {
     const title = await this.generateThreadTitle(threadId)
     return await this.updateThread(threadId, { title })
   }
