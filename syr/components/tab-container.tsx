@@ -19,6 +19,7 @@ interface TabContainerProps {
 
 export interface TabContainerRef {
   getContentContainer: () => HTMLDivElement | null
+  setActiveTab: (tabId: string) => void
 }
 
 export const TabContainer = forwardRef<TabContainerRef, TabContainerProps>(
@@ -26,8 +27,11 @@ export const TabContainer = forwardRef<TabContainerRef, TabContainerProps>(
     const contentRef = useRef<HTMLDivElement>(null)
     
     useImperativeHandle(ref, () => ({
-      getContentContainer: () => contentRef.current
-    }), [])
+      getContentContainer: () => contentRef.current,
+      setActiveTab: (tabId: string) => {
+        setActiveTab(prev => (tabs.some(t => t.id === tabId) ? tabId : prev))
+      }
+    }), [tabs])
   // Validate defaultTab - if it's invalid or doesn't exist in tabs, use first tab
   const initialTab = defaultTab && tabs.some(tab => tab.id === defaultTab) 
     ? defaultTab 

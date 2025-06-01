@@ -18,7 +18,6 @@ import { SummaryPane } from './summary-pane'
 import { Button } from '@/components/ui/button'
 import { Loading } from '@/components/ui/loading'
 import { AlertWithIcon } from '@/components/ui/alert'
-import { useTocAutoScroll } from '@/lib/hooks/useTocAutoScroll'
 
 interface TableOfContentsProps {
   content: string
@@ -77,49 +76,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
     'ai-generated': 3
   })
   
-  // Get current visible heading IDs based on active tab
-  const visibleHeadingIds = useMemo(() => {
-    const currentHeadings = activeTab === 'ai-generated' ? aiHeadings : headings
-    const visibleIds = new Set<string>()
-    
-    
-    currentHeadings.forEach(heading => {
-      const visibility = headingVisibility?.get(heading.id)
-      if (visibility === 'visible') {
-        visibleIds.add(heading.id)
-      }
-    })
-    
-    return visibleIds
-  }, [headingVisibility, activeTab, headings, aiHeadings])
   
-  // Get content container ref
-  const contentContainerRef = useRef<HTMLElement | null>(null)
-  
-  // Update content container ref when tab container mounts or changes
-  useEffect(() => {
-    if (tabContainerRef.current) {
-      const contentContainer = tabContainerRef.current.getContentContainer()
-      contentContainerRef.current = contentContainer
-    } else {
-    }
-  }, []) // Will run after initial render
-  
-  // Also update the ref when tabContainerRef changes (additional safety)
-  useEffect(() => {
-    if (tabContainerRef.current && !contentContainerRef.current) {
-      const contentContainer = tabContainerRef.current.getContentContainer()
-      contentContainerRef.current = contentContainer
-    }
-  })
-  
-  // Use auto-scroll hook
-  useTocAutoScroll(contentContainerRef, {
-    visibleHeadings: visibleHeadingIds,
-    enableAutoScroll: true,
-    scrollBehavior: 'smooth',
-    cooldownDuration: 2000
-  })
 
   // Toggle expand/collapse state for a heading
   const toggleExpanded = (tabId: 'original' | 'ai-generated', headingId: string) => {

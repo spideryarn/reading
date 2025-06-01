@@ -4,7 +4,7 @@
 // Part of the 2-pane layout architecture using ResizablePanelGroup
 // All 5 tabs are at the same level as requested by the user
 
-import { useRef } from 'react'
+import { useRef, useEffect } from 'react'
 import { AssistantChat } from './assistant-chat'
 import { TabContainer, type Tab, type TabContainerRef } from './tab-container'
 import { CircleNotch, Book, Question, Calendar, SidebarSimple } from '@phosphor-icons/react'
@@ -222,6 +222,31 @@ export function UnifiedLeftPane({
 }: UnifiedLeftPaneProps) {
   const tabContainerRef = useRef<TabContainerRef>(null)
 
+  // NEW: Listen for document clicks (from ResizableDocumentLayout) to scroll ToC
+  useEffect(() => {
+    const handleDocHeadingClick = (event: Event) => {
+      const customEvent = event as CustomEvent<{ headingId: string }>
+      const headingId = customEvent.detail?.headingId
+      if (!headingId) return
+
+      // Activate the "Original" tab so the ToC is rendered
+      tabContainerRef.current?.setActiveTab('original')
+
+      // Wait for the tab content to render then scroll
+      setTimeout(() => {
+        const container = tabContainerRef.current?.getContentContainer()
+        if (!container) return
+        const tocElement = container.querySelector(`[data-heading-id="${headingId}"]`)
+        if (tocElement) {
+          ;(tocElement as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      }, 100)
+    }
+
+    window.addEventListener('doc-heading-click', handleDocHeadingClick)
+    return () => window.removeEventListener('doc-heading-click', handleDocHeadingClick)
+  }, [])
+
   // Render Original headings tab
   const renderOriginalTab = () => {
     return (
@@ -250,7 +275,13 @@ export function UnifiedLeftPane({
 
   // Render Summary tab
   const renderSummaryTab = () => {
-    return <DocumentSummaryTab markdownContent={markdownContent} />
+    return (
+      <DocumentSummaryTab 
+        content={content}
+        documentId={documentId}
+        markdownContent={markdownContent}
+      />
+    )
   }
 
   // Render Chat tab

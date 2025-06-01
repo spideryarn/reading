@@ -125,13 +125,13 @@ export function ResizableDocumentLayout({
     // Look for the nearest parent heading element
     const findNearestHeading = (targetElement: DocumentElement): DocumentElement | null => {
       // First check if the clicked element itself is a heading
-      if (targetElement.tag && ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(targetElement.tag.toLowerCase())) {
+      if (targetElement.tag_name && ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(targetElement.tag_name.toLowerCase())) {
         return targetElement
       }
       
       // Find the nearest heading by position (look backwards)
       const sortedElements = [...elements]
-        .filter(el => el.tag && ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(el.tag.toLowerCase()))
+        .filter(el => el.tag_name && ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(el.tag_name.toLowerCase()))
         .sort((a, b) => a.position - b.position)
       
       let nearestHeading: DocumentElement | null = null
@@ -148,14 +148,14 @@ export function ResizableDocumentLayout({
     
     const nearestHeading = findNearestHeading(element)
     if (nearestHeading && nearestHeading.id) {
-      // Scroll the ToC to show this heading
-      // We'll use a small delay to ensure the ToC is rendered
-      setTimeout(() => {
-        const tocElement = document.querySelector(`[data-heading-id="${nearestHeading.id}"]`)
-        if (tocElement) {
-          tocElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        }
-      }, 100)
+      // Dispatch a custom event so the UnifiedLeftPane can respond
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('doc-heading-click', {
+            detail: { headingId: nearestHeading.id }
+          })
+        )
+      }
     }
   }, [elements, onElementClick])
   
