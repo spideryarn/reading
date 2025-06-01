@@ -1,32 +1,59 @@
 # Database Guide
 
-> ⚠️ **OUT OF DATE** - This documentation is very much in progress and may not reflect the current implementation. Database architecture is evolving rapidly during early development.
+> ✅ **UPDATED** - This documentation reflects the current database implementation as of January 2025.
 
 ## Overview
 
-Spideryarn Reading's database is in transition. The current implementation uses a decomposed element storage approach (each HTML element as a row), but the architecture has been updated to use single-row document storage for the MVP.
+Spideryarn Reading uses PostgreSQL via Supabase for persistent storage. The database stores documents, AI model usage, document enhancements, chat conversations, and user profiles.
 
-**Current State**: Code still implements decomposed elements approach
-**Target State**: Single-row document storage per `ARCHITECTURE.md`
+**Architecture**: Single-row document storage with AI enhancements stored separately  
+**Real-time**: Supports live updates via Supabase Realtime subscriptions  
+**Type Safety**: Full TypeScript type generation from database schema
 
 📖 **Related Documentation:**
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Updated database design decisions (single-row approach)
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Database design decisions
+- [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) - Detailed table descriptions
+- [DATABASE_MIGRATIONS.md](DATABASE_MIGRATIONS.md) - Migration workflow
 - [SETUP.md](SETUP.md) - How to start Supabase locally
-- [PROJECT_STATUS.md](PROJECT_STATUS.md) - Current implementation status
-- [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) - Schema details (needs updating)
-- [DATABASE_MIGRATIONS.md](DATABASE_MIGRATIONS.md) - Migration workflow and type generation commands
+- [planning/250531a_database_storage_implementation.md](../planning/250531a_database_storage_implementation.md) - Implementation details
 
-## Current Schema (To Be Updated)
+## Current Schema
 
-### **Existing Table Structure**
-- **`documents`** - Document metadata (`title`, `source_url`)
-- **`document_elements`** - Each HTML element as separate row (deprecated approach)
-- **`summaries`** - AI-generated summaries linked to elements
+### **Core Tables**
 
-### **Target Schema (Per ARCHITECTURE.md)**
-- **`documents`** - Document metadata + full HTML content
-- **`document_enhancements`** - AI-generated content (summaries, glossaries, headings) as JSONB
-- No element decomposition - transformations done in-memory
+1. **`ai_models`** - Pre-seeded AI provider models (Anthropic, Google)
+   - Tracks model versions, context windows, pricing
+   - Referenced by AI calls and chat threads
+
+2. **`documents`** - Document storage with full HTML and plaintext
+   - Stores content inline (not decomposed into elements)
+   - Includes metadata: title, URL, language, word count
+   - Full-text search enabled on plaintext content
+
+3. **`ai_calls`** - Comprehensive AI API call tracking
+   - Links to model and document
+   - Tracks token usage: prompt, completion, reasoning
+   - Performance metrics: latency, status, errors
+
+4. **`document_enhancements`** - AI-generated content storage
+   - Types: summary, glossary, headings, tweet-thread
+   - JSONB content field for flexible structure
+   - Unique per (document_id, type, subtype)
+
+5. **`chat_threads`** and **`chat_messages`** - Conversation management
+   - Threads link to documents and AI models
+   - Messages have sequential numbering
+   - Supports user/assistant/system roles
+
+6. **`profiles`** - User preferences (future expansion)
+   - Placeholder for multi-user support
+   - JSONB preferences field
+
+### **Key Features**
+- **MODDATETIME triggers**: Automatic updated_at timestamps
+- **Foreign key cascades**: Proper cleanup on deletion
+- **Row Level Security**: Enabled with development policies
+- **Indexes**: Optimised for common queries and full-text search
 
 ## Command-Line Access
 
@@ -89,21 +116,28 @@ SELECT title, source_url FROM documents LIMIT 5;
 ### **Current Implementation**
 ```
 HTML Document
-    ↓ (DocumentParser + Cheerio)
-DocumentElement[] objects  
-    ↓ (Not yet connected to DB)
-In-memory element tree for UI
+    ↓ (Store as single row)
+documents table (with full HTML/plaintext)
+    ↓ (AI processing via API routes)
+ai_calls table (token tracking)
+    ↓ (Store results)
+document_enhancements table (JSONB content)
+    ↓ (Real-time updates)
+UI components with live enhancements
 ```
 
-### **Target Implementation**
-```
-HTML Document
-    ↓ (Store as single row)
-documents table (with HTML content)
-    ↓ (AI processing)
-document_enhancements table (JSONB)
-    ↓ (In-memory transformation)
-UI components with enhanced content
+### **Service Layer Architecture**
+```typescript
+// Database services provide clean API
+DocumentService     → documents table
+AiCallService      → ai_calls table
+EnhancementService → document_enhancements table
+ChatService        → chat_threads/messages tables
+
+// Real-time subscriptions
+subscribeToDocumentEnhancements()
+subscribeToDocuments()
+subscribeToChatMessages()
 ```
 
 ## Security Summary
@@ -132,11 +166,62 @@ import type { Document, DocumentInsert, AiCall, EnhancementType } from '@/lib/ty
 const doc: Document = await supabase.from('documents').select('*').single()
 ```
 
-## Migration Status
+## Database Services
 
-The database schema needs to be migrated from the decomposed elements approach to the single-row storage approach. This involves:
-1. Adding `content` field to `documents` table
-2. Creating `document_enhancements` table
-3. Eventually removing `document_elements` and `summaries` tables
+### **Available Services**
 
-see `docs/ARCHITECTURE.md` for the rationale behind this change
+The codebase provides type-safe database services in `lib/services/database/`:
+
+```typescript
+import { DocumentService, AiCallService, EnhancementService, ChatService } from '@/lib/services/database'
+
+// Example usage
+const documentService = new DocumentService(supabase)
+const doc = await documentService.create({
+  title: 'My Document',
+  html_content: '<p>Content</p>',
+  plaintext_content: 'Content'
+})
+
+// Track AI usage
+const aiCallService = new AiCallService(supabase)
+const call = await aiCallService.startCall({
+  documentId: doc.id,
+  modelId: 'model-id',
+  promptType: 'summarise',
+  promptInput: 'Summarise this...'
+})
+
+// Store enhancements
+const enhancementService = new EnhancementService(supabase)
+await enhancementService.storeSummary(doc.id, call.id, {
+  text: 'Document summary',
+  keyPoints: ['Point 1', 'Point 2']
+})
+```
+
+### **Real-time Subscriptions**
+
+Enable live updates in your components:
+
+```typescript
+import { subscribeToDocumentEnhancements } from '@/lib/supabase/realtime'
+
+// Subscribe to enhancement updates
+const subscription = subscribeToDocumentEnhancements(
+  supabase,
+  documentId,
+  (payload) => {
+    console.log('Enhancement updated:', payload)
+  }
+)
+
+// Clean up when done
+subscription.unsubscribe()
+```
+
+## Migration History
+
+**January 2025**: Completed migration from decomposed element storage to single-row document storage with separate enhancements table. Added comprehensive tracking for AI usage, chat conversations, and real-time updates.
+
+see `planning/250531a_database_storage_implementation.md` for implementation details

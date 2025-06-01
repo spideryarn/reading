@@ -1,0 +1,211 @@
+/**
+ * Real-time Subscription POC
+ * 
+ * This endpoint demonstrates real-time document enhancement updates.
+ * It simulates AI processing that generates enhancements over time,
+ * which can be observed in real-time via Supabase subscriptions.
+ */
+
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { DocumentService } from '@/lib/services/database/documents'
+import { AiCallService } from '@/lib/services/database/ai-calls'
+import { EnhancementService } from '@/lib/services/database/enhancements'
+
+export async function POST(request: NextRequest) {
+  try {
+    const { documentId } = await request.json()
+    
+    if (!documentId) {
+      return NextResponse.json({ error: 'Document ID required' }, { status: 400 })
+    }
+
+    const supabase = await createClient()
+    const documentService = new DocumentService(supabase)
+    const aiCallService = new AiCallService(supabase)
+    const enhancementService = new EnhancementService(supabase)
+
+    // Get document
+    const document = await documentService.getById(documentId)
+    if (!document) {
+      return NextResponse.json({ error: 'Document not found' }, { status: 404 })
+    }
+
+    // Get a test model ID
+    const { data: model } = await supabase
+      .from('ai_models')
+      .select('id')
+      .eq('model_id', 'claude-3-5-haiku-20241022')
+      .single()
+
+    if (!model) {
+      return NextResponse.json({ error: 'AI model not found' }, { status: 500 })
+    }
+
+    // Simulate generating multiple enhancements over time
+    const simulateEnhancements = async () => {
+      // 1. Start with a summary (immediate)
+      const summaryCall = await aiCallService.startCall({
+        documentId,
+        modelId: model.id,
+        promptType: 'summarise',
+        promptInput: document.plaintext_content
+      })
+
+      await enhancementService.storeSummary(
+        documentId,
+        summaryCall!.id,
+        {
+          text: 'Initial summary being generated...',
+          keyPoints: [],
+          metadata: { status: 'processing' }
+        },
+        'sentence'
+      )
+
+      // 2. Update summary after 2 seconds
+      setTimeout(async () => {
+        await aiCallService.completeCall(
+          summaryCall!.id,
+          'This document contains important content that is being analysed.',
+          {
+            promptTokens: 50,
+            completionTokens: 15,
+            totalTokens: 65,
+            latencyMs: 2000
+          }
+        )
+
+        await enhancementService.storeSummary(
+          documentId,
+          summaryCall!.id,
+          {
+            text: 'This document contains important content that is being analysed.',
+            keyPoints: ['Important content', 'Being analysed'],
+            metadata: { status: 'complete', confidence: 0.92 }
+          },
+          'sentence'
+        )
+      }, 2000)
+
+      // 3. Generate glossary after 4 seconds
+      setTimeout(async () => {
+        const glossaryCall = await aiCallService.startCall({
+          documentId,
+          modelId: model.id,
+          promptType: 'glossary',
+          promptInput: document.plaintext_content
+        })
+
+        await enhancementService.storeGlossary(
+          documentId,
+          glossaryCall!.id,
+          {
+            entries: [
+              {
+                term: 'Document',
+                definition: 'A written or digital record containing information',
+                category: 'General'
+              },
+              {
+                term: 'Enhancement',
+                definition: 'An improvement or addition to existing content',
+                category: 'Technical'
+              }
+            ],
+            metadata: { extractedTerms: 2 }
+          }
+        )
+
+        await aiCallService.completeCall(
+          glossaryCall!.id,
+          'Glossary extracted successfully',
+          {
+            promptTokens: 100,
+            completionTokens: 50,
+            totalTokens: 150,
+            latencyMs: 1500
+          }
+        )
+      }, 4000)
+
+      // 4. Generate headings after 6 seconds
+      setTimeout(async () => {
+        const headingsCall = await aiCallService.startCall({
+          documentId,
+          modelId: model.id,
+          promptType: 'headings',
+          promptInput: document.plaintext_content
+        })
+
+        await enhancementService.storeHeadings(
+          documentId,
+          headingsCall!.id,
+          {
+            items: [
+              {
+                id: 'ai-h1',
+                text: 'Document Overview',
+                level: 1
+              },
+              {
+                id: 'ai-h2',
+                text: 'Key Concepts',
+                level: 2,
+                parentId: 'ai-h1'
+              },
+              {
+                id: 'ai-h3',
+                text: 'Technical Details',
+                level: 2,
+                parentId: 'ai-h1'
+              }
+            ],
+            metadata: { algorithm: 'semantic-analysis' }
+          }
+        )
+
+        await aiCallService.completeCall(
+          headingsCall!.id,
+          'Headings generated',
+          {
+            promptTokens: 80,
+            completionTokens: 40,
+            totalTokens: 120,
+            latencyMs: 1200
+          }
+        )
+      }, 6000)
+    }
+
+    // Start the simulation
+    simulateEnhancements()
+
+    return NextResponse.json({
+      message: 'Real-time enhancement simulation started',
+      documentId,
+      instructions: [
+        'Subscribe to document enhancements using the real-time helper:',
+        '',
+        'import { subscribeToDocumentEnhancements } from "@/lib/supabase/realtime"',
+        '',
+        `const subscription = subscribeToDocumentEnhancements(supabase, "${documentId}", (payload) => {`,
+        '  console.log("Enhancement updated:", payload)',
+        '})',
+        '',
+        'Enhancements will be generated over the next 6 seconds:',
+        '- 0s: Initial summary (processing)',
+        '- 2s: Summary complete',
+        '- 4s: Glossary generated',
+        '- 6s: AI headings generated'
+      ]
+    })
+
+  } catch (error) {
+    console.error('Realtime demo error:', error)
+    return NextResponse.json(
+      { error: 'Failed to start realtime demo' },
+      { status: 500 }
+    )
+  }
+}
