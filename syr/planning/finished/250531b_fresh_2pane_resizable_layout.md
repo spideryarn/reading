@@ -137,9 +137,9 @@ User requirements:
   - [x] Document viewer expands to full width when left pane collapsed
 - [x] Git commit: "feat: add collapsible left pane with keyboard shortcut"
 
-### Stage 5.1: Fix ToC Auto-Scroll Regression ⚠️ (ATTEMPTED - UNSUCCESSFUL)
+### Stage 5.1: Fix ToC Scroll-on-Document-click Regression ⚠️ (ATTEMPTED - UNSUCCESSFUL)
 
-**Problem Identified**: After consolidating from 3-pane to 2-pane layout, the bidirectional navigation between Document and ToC was broken. Previously, clicking on document elements would automatically scroll the ToC to highlight the corresponding heading. This functionality was lost during the migration.
+**Problem Identified**: After consolidating from 3-pane to 2-pane layout, the bidirectional navigation between Document and ToC was broken. Previously, clicking on document elements would cause the ToC to scroll to highlight the corresponding heading. This functionality was lost during the migration.
 
 **Root Cause**: In the old 3-pane layout, there were separate components (`TableOfContents` and `DocumentViewer`) that had direct communication. The new unified layout breaks this connection because:
 - `SimpleDocumentViewer` passes `onElementClick` to `ResizableDocumentLayout`
