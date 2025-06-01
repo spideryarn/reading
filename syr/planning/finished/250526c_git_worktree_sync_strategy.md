@@ -1,5 +1,7 @@
 # Git Worktree Synchronisation Strategy
 
+**Note**: This planning document led to the implementation of worktree support. For current documentation, see `docs/WORKTREES.md`.
+
 ## Goal & Context
 
 **Goal**: Set up a Git worktree configuration that allows working on experimental features in parallel with the main branch, with an efficient one-step synchronisation process.
