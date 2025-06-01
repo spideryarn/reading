@@ -78,18 +78,10 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
     setHeadingVisibility(newHeadingVisibility)
   }, [elementVisibility, allHeadings, mutatedDocument])
   
-  // ToC scroll is now handled automatically by the useTocAutoScroll hook in the tab components
-  // This manual trigger is no longer needed with the new architecture
-  
-  // Auto-scroll functionality for clicked elements is now handled by the useTocAutoScroll hook
-  // based on element visibility changes, so no manual heading lookup is needed
-  
   // Handle element clicks in the document viewer
-  // Auto-scroll is now handled by the useTocAutoScroll hook in the ToC tab components
-  // based on element visibility changes, so no manual triggering needed
-  const handleElementClick = useCallback((_element: DocumentElement) => {
+  const handleElementClick = useCallback((element: DocumentElement) => {
     // Element click handling for selection etc. can be added here if needed
-    // The auto-scroll will be triggered automatically via visibility changes
+    console.log('Element clicked:', element.id)
   }, [])
 
   // Fetch glossary entities when requested
@@ -121,8 +113,6 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
       setIsLoadingGlossary(false)
     }
   }
-
-  // This function is no longer used - the ResizableDocumentLayout handles heading clicks directly
 
   return (
     <div className="flex-1 overflow-hidden">

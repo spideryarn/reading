@@ -305,7 +305,7 @@ export function HeadingTree({
     <div className="flex flex-col h-full">
       {/* Headings Navigation - takes remaining space */}
       <div className="flex-1 min-h-0">
-        <nav className="space-y-1 px-4 pt-3 pb-4 h-full overflow-y-auto">
+        <nav className="space-y-1 px-4 pt-3 pb-4 h-full">
         {headingTree.map((node) => (
           <HeadingNodeComponent
             key={node.id}

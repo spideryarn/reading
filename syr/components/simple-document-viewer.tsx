@@ -27,13 +27,32 @@ export function SimpleDocumentViewer({
   const containerRef = useRef<HTMLDivElement>(null)
   const elementRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   
-  // Use element visibility hook
-  useElementVisibility({
-    elements,
-    containerRef,
-    elementRefs,
-    onVisibilityChange: onElementVisibilityChange
-  })
+  // Element visibility tracking
+  const { observeElement, unobserveElement } = useElementVisibility(onElementVisibilityChange)
+  const observedElementsRef = useRef<Set<string>>(new Set())
+  
+  // Setup element observation when elements change
+  useEffect(() => {
+    elements.forEach(element => {
+      const domElement = elementRefs.current.get(element.id)
+      if (domElement && !observedElementsRef.current.has(element.id)) {
+        observeElement(domElement)
+        observedElementsRef.current.add(element.id)
+      }
+    })
+    
+    // Clean up observations for elements no longer in the list
+    observedElementsRef.current.forEach(elementId => {
+      if (!elements.find(el => el.id === elementId)) {
+        const domElement = elementRefs.current.get(elementId)
+        if (domElement) {
+          unobserveElement(domElement)
+        }
+        observedElementsRef.current.delete(elementId)
+        elementRefs.current.delete(elementId)
+      }
+    })
+  }, [elements, observeElement, unobserveElement])
   
   // Render an individual element based on its type
   const renderElement = (element: DocumentElement, depth: number = 0) => {
