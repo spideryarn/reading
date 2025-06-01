@@ -45,6 +45,7 @@ Type checking and linting:
 - `npm run build` - TypeScript compilation errors
 - `npm run lint` - ESLint code quality/style issues
 - `npm test` - Jest testing (`npm run test:coverage` for coverage)
+  - Tests use `.env.test` for environment variables (copy from `.env.local`: `cp .env.local .env.test`)
   - When writing tests, use our Jest testing framework with React Testing Library
   - Prefer using a subagent for running tests to avoid filling the context window
 
@@ -87,6 +88,11 @@ Key variables in `.env.local`:
 - `PORT` - Dev server port
 - `LLM_MODEL` - default is Claude Sonnet 4, but we usually override to Haiku for development
 - Supabase connection details (see `docs/SETUP.md`)
+
+Test environment (`.env.test`):
+- Currently mirrors `.env.local` for simplicity
+- Best practice: Use cheaper LLM models (Haiku) and separate test database in future
+- See `docs/TESTING.md` for setup instructions
 
 Template: `.env.example` (may not be current - check `.env.local` for active config)
 
