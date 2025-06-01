@@ -230,7 +230,7 @@ export default function DesignReference() {
                   <code className="text-sm text-gray-500">size=&quot;lg&quot;</code>
                 </div>
                 <div className="p-4 bg-gray-50 rounded">
-                  <Loading variant="inline" text="Generating summary..." />
+                  <Loading variant="default" text="Generating summary..." />
                 </div>
               </div>
             </div>

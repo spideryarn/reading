@@ -85,10 +85,10 @@
 
   The grep didn't work as expected. Let me list the DATABASE files directly.
 
-⏺ Bash(ls /Users/greg/Dropbox/dev/experim/reading/syr/docs/DATABASE_*.md)…
-  ⎿  /Users/greg/Dropbox/dev/experim/reading/syr/docs/DATABASE_MIGRATIONS.md
-     /Users/greg/Dropbox/dev/experim/reading/syr/docs/DATABASE_OVERVIEW.md
-     /Users/greg/Dropbox/dev/experim/reading/syr/docs/DATABASE_SCHEMA.md
+⏺ Bash(ls /Users/greg/Dropbox/dev/experim/reading/docs/DATABASE_*.md)…
+  ⎿  /Users/greg/Dropbox/dev/experim/reading/docs/DATABASE_MIGRATIONS.md
+     /Users/greg/Dropbox/dev/experim/reading/docs/DATABASE_OVERVIEW.md
+     /Users/greg/Dropbox/dev/experim/reading/docs/DATABASE_SCHEMA.md
 
 ✻ Thinking…
 
@@ -326,7 +326,7 @@
 │                                                     │
 │   /help for help, /status for your current setup    │
 │                                                     │
-│   cwd: /Users/greg/Dropbox/dev/experim/reading/syr  │
+│   cwd: /Users/greg/Dropbox/dev/experim/reading  │
 │                                                     │
 │   ───────────────────────────────────────────────── │
 │                                                     │
@@ -428,10 +428,10 @@
 
   The grep didn't work as expected. Let me list the DATABASE files directly.
 
-⏺ Bash(ls /Users/greg/Dropbox/dev/experim/reading/syr/docs/DATABASE_*.md)…
-  ⎿  /Users/greg/Dropbox/dev/experim/reading/syr/docs/DATABASE_MIGRATIONS.md
-     /Users/greg/Dropbox/dev/experim/reading/syr/docs/DATABASE_OVERVIEW.md
-     /Users/greg/Dropbox/dev/experim/reading/syr/docs/DATABASE_SCHEMA.md
+⏺ Bash(ls /Users/greg/Dropbox/dev/experim/reading/docs/DATABASE_*.md)…
+  ⎿  /Users/greg/Dropbox/dev/experim/reading/docs/DATABASE_MIGRATIONS.md
+     /Users/greg/Dropbox/dev/experim/reading/docs/DATABASE_OVERVIEW.md
+     /Users/greg/Dropbox/dev/experim/reading/docs/DATABASE_SCHEMA.md
 
 ✻ Thinking…
 

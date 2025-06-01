@@ -23,21 +23,21 @@ If you're currently using the main/experim two-worktree setup, follow these step
 ### 1. Complete Current Work
 Ensure all work is committed in both worktrees:
 ```bash
-# In both reading/syr and reading2/syr
+# In both reading and reading2
 git status  # Should show clean working tree
 ```
 
 ### 2. Sync Branches Bidirectionally
 ```bash
-# From reading/syr (main branch)
+# From reading (main branch)
 ./scripts/sync-branches.ts
-# From reading2/syr (experim branch)
+# From reading2 (experim branch)
 ./scripts/sync-branches.ts
 ```
 
 ### 3. Merge experim into main
 ```bash
-# In reading/syr (main branch)
+# In reading (main branch)
 git merge experim
 git push origin main  # Push the updated main
 ```
@@ -93,8 +93,8 @@ git push origin --delete experim  # If it was pushed
 4. **Set up each worktree environment**:
    ```bash
    # For each worktree (example for worktree1)
-   cd reading-worktree1/syr
-   cp ../../reading/syr/.env.local .env.local
+   cd reading-worktree1
+   cp ../reading/.env.local .env.local
    # Edit .env.local and set unique PORT (e.g., 3002, 3003, 3004)
    npm install
    ```
@@ -111,7 +111,7 @@ git push origin --delete experim  # If it was pushed
 1. Choose an available worktree for your task
 2. Start the development server:
    ```bash
-   cd reading-worktree1/syr
+   cd reading-worktree1
    npm run dev
    ```
 3. Development server runs on the configured port (e.g., http://localhost:3002)
@@ -171,7 +171,7 @@ git branch -d feature/complex-feature
 Only push the main branch to origin:
 ```bash
 # After syncing to main
-cd reading/syr
+cd reading
 git push origin main
 ```
 

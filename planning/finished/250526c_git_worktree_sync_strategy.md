@@ -8,7 +8,7 @@
 
 **Context**: 
 - The repository root is at `/Users/greg/Dropbox/dev/experim/reading`
-- Current working directory is `/Users/greg/Dropbox/dev/experim/reading/syr`
+- Current working directory is `/Users/greg/Dropbox/dev/experim/reading`
 - Need to maintain two long-running development environments (terminals with `npm run dev`)
 - Want to avoid multi-step manual synchronisation processes
 - Git worktrees can't have the same branch checked out simultaneously
@@ -146,9 +146,7 @@ git merge main           # Update current branch
 ```
 /Users/greg/Dropbox/dev/experim/
 ├── reading/          # Main worktree (main or experim branch)
-│   └── syr/         # Project files
 └── reading2/        # Secondary worktree (experim branch)
-    └── syr/         # Same project structure
 ```
 
 ### Git Worktree Commands Reference
