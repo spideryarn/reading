@@ -18,6 +18,7 @@ Coding & infrastructure:
 - `docs/ARCHITECTURE.md` - Contains high-level architectural decisions including framework choices, data structures, storage approach, and MVP features
 - `docs/STYLING.md` - CSS and visual styling configuration including theme settings, Phosphor icons usage, and loading/error button patterns
 - `docs/SETUP.md` - Development environment setup guide including Node.js, Supabase, Git worktree configuration, and common commands
+- `docs/WORKTREES.md` - Comprehensive guide for multi-worktree development setup using a hub-and-spoke model with protected main branch and sync-branches.ts tool
 - `docs/SITE_ORGANISATION.md` - Documents the hierarchical, document-centric architecture including application routes, component hierarchy, and navigation patterns. (May be out of date)
 - `docs/TESTING.md` - Testing approach documentation covering Jest with React Testing Library setup, test structure, and current test coverage
 - `docs/UI_INTERFACE.md` - Documents the 2-pane resizable layout with unified tabbed navigation including ResizablePanelGroup architecture, collapsible functionality, and scrolling fixes. See related docs below in "AI, features, machinery, interface" section.

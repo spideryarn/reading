@@ -77,7 +77,7 @@ https://github.com/spideryarn/reading/
 
    Navigate to e.g. http://localhost:3001/ (or your configured port)
 
-7. **Verify setup:
+7. **Verify setup:**
    ```bash
    # Check for TypeScript errors
    npm run build
@@ -89,131 +89,25 @@ https://github.com/spideryarn/reading/
    npm test
    ```
 
+## Test Environment Setup
+
+For running tests that require environment variables (like database tests), you need to create `.env.test`:
+
+```bash
+# Copy your local environment to test environment
+cp .env.local .env.test
+```
+
+This follows Next.js conventions where `.env.local` is not loaded during tests. The `.env.test` file is automatically loaded when running `npm test`.
+
 ## Git Worktree Development Setup (Optional)
 
-For parallel development on experimental features, you can set up Git worktrees to maintain two separate working directories with different branches running simultaneously.
+For parallel development using multiple worktrees with a protected main branch, see [WORKTREES.md](WORKTREES.md).
 
-### Initial Worktree Setup
-
-**Note: Only the user (not the AI) should set up and use the sync script.**
-
-1. **Navigate to parent directory:**
-   ```bash
-   cd ..  # Go to /Users/greg/Dropbox/dev/experim/reading/
-   ```
-
-2. **Create experimental branch (if it doesn't exist):**
-   ```bash
-   git checkout -b experim
-   git push -u origin experim  # Optional: push to remote
-   git checkout main
-   ```
-
-3. **Create second worktree, e.g. /Users/greg/Dropbox/dev/experim/reading2/ :**
-   ```bash
-   git worktree add ../reading2 experim
-   ```
-
-4. **Set up environment for second worktree:**
-   ```bash
-   cd reading2/syr
-   cp ../../reading/syr/.env.local .env.local
-   ```
-
-5. **Update PORT in second worktree's .env.local:**
-   ```bash
-   # Edit .env.local and change PORT=3001 to PORT=3002 (or next available port)
-   ```
-
-6. **Install dependencies in second worktree:**
-   ```bash
-   npm install
-   ```
-
-7. **Start development server in second worktree:**
-   ```bash
-   npm run dev
-   ```
-
-OPTIONAL Maybe we could also try and copy over the list of allowed tools etc from Claude configuration?
-
-
-### Directory Structure After Setup
-
-```
-/Users/greg/Dropbox/dev/experim/reading/
-├── syr/          # Main worktree (main branch) - http://localhost:3001
-└── reading2/
-    └── syr/      # Experimental worktree (experim branch) - http://localhost:3002
-```
-
-### Syncing Branches
-
-Use the provided sync script to keep branches in sync:
-
-```bash
-# From either worktree directory
-./scripts/sync-branches.ts
-
-# Or with custom branch names
-./scripts/sync-branches.ts --main develop --experim feature
-```
-
-The sync script:
-- Attempts fast-forward merge first (ideal case)
-- Falls back to one-direction merge if branches have diverged
-- Handles merge conflicts gracefully
-- Requires clean working tree before syncing
-- **Two-step process**: Run from both worktrees to complete full sync
-
-#### Manual Sync (if script isn't available in target worktree)
-
-If the sync script hasn't been synced to the target worktree yet, manually complete the sync:
-
-```bash
-# Go to the other worktree (e.g., reading2/syr)
-cd ../../reading2/syr
-
-# Check current branch and ensure it's experim
-git branch
-
-# Probably you've already got the latest version of Clipanion from when you set up the worktree, but if not
-npm install
-
-# Merge main into experim
-git merge main
-```
-
-This completes the two-way sync. The sync script will be available in both worktrees after this.
-
-### Supabase Considerations
-
-Both worktrees will use the same local Supabase instance (same ports and database). Be careful when making schema migrations - test them thoroughly in one worktree before syncing to the other.
-
-### Common Worktree Commands
-
-```bash
-# List all worktrees
-git worktree list
-
-# Remove a worktree (from main repository)
-git worktree remove reading2
-
-# Clean up stale worktree references
-git worktree prune
-```
-
-### Fixing Setup Mistakes
-
-If you accidentally created the worktree in the wrong location:
-
-```bash
-# Remove the incorrectly placed worktree
-git worktree remove reading2
-
-# Create it in the correct location (alongside, not inside)
-git worktree add ../reading2 experim
-```
+This includes:
+- Setting up a hub-and-spoke model with 3 development worktrees
+- Branch synchronisation workflow
+- Migration from the two-worktree (main/experim) setup
 
 ## Project Understanding
 

@@ -6,6 +6,23 @@
 
 This document provides detailed descriptions of all tables in the Spideryarn Reading database. The schema supports document storage, AI model tracking, enhancement storage, chat conversations, and user profiles.
 
+## Schema Locations
+
+The database schema is defined and represented in several places:
+
+1. **SQL Migration** (Source of Truth):
+   - `supabase/migrations/20250531235026_comprehensive_storage_schema.sql`
+   - Contains CREATE TABLE statements, indexes, triggers, and initial data
+
+2. **TypeScript Types** (Auto-generated):
+   - `lib/types/database.ts`
+   - Generated from Supabase schema using `npm run db:types`
+   - Provides type-safe interfaces for all tables
+
+3. **Service Layer** (Database API):
+   - `lib/services/database/` - Clean API for database operations
+   - Each table has a corresponding service class with CRUD methods
+
 📖 **Related Documentation:**
 - [DATABASE_OVERVIEW.md](DATABASE_OVERVIEW.md) - High-level database guide
 - [DATABASE_MIGRATIONS.md](DATABASE_MIGRATIONS.md) - Migration workflow

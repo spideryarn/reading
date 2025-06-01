@@ -34,6 +34,20 @@ Prefer to use a subagent to run tests (to avoid overloading the context window).
 
 All tests now use Jest - no standalone test runners needed.
 
+### Database Tests
+
+Database integration tests require a running Supabase instance and environment variables. The project uses Next.js best practices for loading environment variables in tests.
+
+```bash
+# Run all tests including database tests
+npm test
+
+# Run database tests specifically
+npm test -- --testPathPattern=database-schema
+```
+
+**Environment Setup**: Tests use `.env.test` for environment variables (following Next.js conventions). See the "Environment Variables in Tests" section below for setup instructions.
+
 ### Test Structure
 
 Tests are organised in `__tests__` directories alongside the code they test:
@@ -89,6 +103,38 @@ Jest is configured in `jest.config.js` with:
 - Module path mapping for project imports
 - Coverage collection from TypeScript files
 - Setup file at `jest.setup.js` for global test configuration
+- Global setup at `test/setupEnv.js` for loading environment variables
+
+## Environment Variables in Tests
+
+The project follows Next.js best practices for loading environment variables during testing:
+
+### Setup Instructions
+
+1. **Create `.env.test`**: Copy your `.env.local` file to `.env.test`:
+   ```bash
+   cp .env.local .env.test
+   ```
+
+2. **Run tests**: Environment variables will be loaded automatically:
+   ```bash
+   npm test
+   ```
+
+### How It Works
+
+- **Next.js Convention**: When `NODE_ENV=test`, Next.js loads `.env.test` instead of `.env.local`
+- **Automatic Loading**: The `test/setupEnv.js` file uses `@next/env` to load environment variables before tests run
+- **No Manual Commands**: No need for special dotenv commands or workarounds
+
+### Environment Loading Order
+
+When running tests, Next.js loads environment files in this order:
+1. `.env.test.local` (not committed, local overrides)
+2. `.env.test` (committed test defaults - though we gitignore it for sensitive data)
+3. `.env` (committed shared defaults)
+
+Note: `.env.local` is explicitly NOT loaded during tests to ensure reproducible test environments.
 
 ## Existing Tests
 

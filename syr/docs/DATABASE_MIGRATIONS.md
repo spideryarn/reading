@@ -158,3 +158,35 @@ FOR SELECT USING (true);  -- Adjust condition as needed
 - **Public schema only**: CLI user can only modify public schema
 - **No managed flow**: Non-public schemas require manual migration management
 - **Avoid `supabase db commit`**: The auto-diffing tool is unreliable and can break schemas
+- **RLS policies affect tests**: When testing with anon keys, ensure appropriate policies exist
+- **Environment variables in tests**: Use `@next/env` loadEnvConfig for proper Next.js integration
+
+## Migration History
+
+### 20250531235026_comprehensive_storage_schema.sql
+
+**Purpose**: Complete database schema implementation for document storage, AI tracking, and chat functionality
+
+**Major Changes**:
+- Created 7 core tables: `ai_models`, `documents`, `ai_calls`, `document_enhancements`, `chat_threads`, `chat_messages`, `profiles`
+- Enabled MODDATETIME extension for automatic `updated_at` timestamps
+- Implemented comprehensive indexes for performance
+- Added Row Level Security (RLS) on all tables
+- Pre-seeded AI models data (Claude and Gemini models)
+
+**Key Features**:
+- **Document storage**: Full HTML and plaintext in database (not Supabase Storage)
+- **AI tracking**: Comprehensive token usage, costs, and response metadata
+- **Enhancement types**: Summaries, headings, glossaries, tweet threads
+- **Chat support**: Thread-based conversations linked to documents
+- **Real-time ready**: All tables configured for Supabase Realtime
+
+**Testing Notes**:
+- 13/16 tests passing
+- Known issues with RLS policies affecting certain operations
+- Requires service role key for some administrative operations
+- Run tests with: `node -r dotenv/config ./node_modules/.bin/jest --testPathPattern=database-schema -- dotenv_config_path=.env.local`
+
+**References**:
+- Planning: `planning/finished/250531a_database_storage_implementation.md`
+- Conversation: `docs/DATABASE_SCHEMA_CONVERSATION_250531.md`

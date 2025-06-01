@@ -21,7 +21,7 @@ export class EnhancementService {
   /**
    * Create or update an enhancement
    */
-  async upsert(options: CreateEnhancementOptions): Promise<DocumentEnhancement | null> {
+  async upsert(options: CreateEnhancementOptions): Promise<DocumentEnhancement> {
     const enhancement: Omit<DocumentEnhancementInsert, 'id' | 'created_at' | 'updated_at'> = {
       document_id: options.documentId,
       ai_call_id: options.aiCallId,
@@ -40,8 +40,7 @@ export class EnhancementService {
       .single()
 
     if (error) {
-      console.error('Error upserting enhancement:', error)
-      return null
+      throw new Error(`Failed to upsert enhancement: ${error.message}`)
     }
 
     return data
@@ -55,6 +54,12 @@ export class EnhancementService {
     type: EnhancementType,
     subtype?: string
   ): Promise<DocumentEnhancement | null> {
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(documentId)) {
+      return null
+    }
+
     let query = this.supabase
       .from('document_enhancements')
       .select('*, ai_calls(*, ai_models(*))')
@@ -70,10 +75,10 @@ export class EnhancementService {
     const { data, error } = await query.single()
 
     if (error) {
-      if (error.code !== 'PGRST116') { // Not found is ok
-        console.error('Error fetching enhancement:', error)
+      if (error.code === 'PGRST116') { // Not found
+        return null
       }
-      return null
+      throw new Error(`Failed to fetch enhancement: ${error.message}`)
     }
 
     return data
@@ -90,8 +95,7 @@ export class EnhancementService {
       .order('created_at', { ascending: true })
 
     if (error) {
-      console.error('Error fetching enhancements:', error)
-      return []
+      throw new Error(`Failed to fetch document enhancements: ${error.message}`)
     }
 
     return data || []
@@ -112,8 +116,7 @@ export class EnhancementService {
       .limit(limit)
 
     if (error) {
-      console.error('Error fetching enhancements by type:', error)
-      return []
+      throw new Error(`Failed to fetch enhancements by type: ${error.message}`)
     }
 
     return data || []
@@ -126,7 +129,7 @@ export class EnhancementService {
     documentId: string,
     type: EnhancementType,
     subtype?: string
-  ): Promise<boolean> {
+  ): Promise<void> {
     let query = this.supabase
       .from('document_enhancements')
       .delete()
@@ -142,11 +145,8 @@ export class EnhancementService {
     const { error } = await query
 
     if (error) {
-      console.error('Error deleting enhancement:', error)
-      return false
+      throw new Error(`Failed to delete enhancement: ${error.message}`)
     }
-
-    return true
   }
 
   /**
@@ -161,7 +161,7 @@ export class EnhancementService {
       metadata?: Record<string, any>
     },
     granularity?: string
-  ): Promise<DocumentEnhancement | null> {
+  ): Promise<DocumentEnhancement> {
     return await this.upsert({
       documentId,
       aiCallId,
@@ -186,7 +186,7 @@ export class EnhancementService {
       }>
       metadata?: Record<string, any>
     }
-  ): Promise<DocumentEnhancement | null> {
+  ): Promise<DocumentEnhancement> {
     return await this.upsert({
       documentId,
       aiCallId,
@@ -211,7 +211,7 @@ export class EnhancementService {
       }>
       metadata?: Record<string, any>
     }
-  ): Promise<DocumentEnhancement | null> {
+  ): Promise<DocumentEnhancement> {
     return await this.upsert({
       documentId,
       aiCallId,
@@ -234,7 +234,7 @@ export class EnhancementService {
       }>
       metadata?: Record<string, any>
     }
-  ): Promise<DocumentEnhancement | null> {
+  ): Promise<DocumentEnhancement> {
     return await this.upsert({
       documentId,
       aiCallId,

@@ -30,7 +30,7 @@ export class AiCallService {
   /**
    * Start tracking an AI call
    */
-  async startCall(options: CreateAiCallOptions): Promise<AiCall | null> {
+  async startCall(options: CreateAiCallOptions): Promise<AiCall> {
     const aiCall: Omit<AiCallInsert, 'id' | 'created_at' | 'updated_at'> = {
       document_id: options.documentId || null,
       model_id: options.modelId,
@@ -48,8 +48,7 @@ export class AiCallService {
       .single()
 
     if (error) {
-      console.error('Error creating AI call:', error)
-      return null
+      throw new Error(`Failed to create AI call: ${error.message}`)
     }
 
     return data
@@ -64,6 +63,12 @@ export class AiCallService {
     metrics: AiCallMetrics,
     extra?: Record<string, any>
   ): Promise<AiCall | null> {
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(id)) {
+      return null
+    }
+
     const completedAt = new Date().toISOString()
     
     const { data, error } = await this.supabase
@@ -84,8 +89,10 @@ export class AiCallService {
       .single()
 
     if (error) {
-      console.error('Error completing AI call:', error)
-      return null
+      if (error.code === 'PGRST116') { // Not found
+        return null
+      }
+      throw new Error(`Failed to complete AI call: ${error.message}`)
     }
 
     return data
@@ -99,7 +106,7 @@ export class AiCallService {
     errorMessage: string,
     errorCode?: string,
     extra?: Record<string, any>
-  ): Promise<AiCall | null> {
+  ): Promise<AiCall> {
     const { data, error } = await this.supabase
       .from('ai_calls')
       .update({
@@ -114,8 +121,7 @@ export class AiCallService {
       .single()
 
     if (error) {
-      console.error('Error failing AI call:', error)
-      return null
+      throw new Error(`Failed to update AI call as failed: ${error.message}`)
     }
 
     return data
@@ -132,8 +138,10 @@ export class AiCallService {
       .single()
 
     if (error) {
-      console.error('Error fetching AI call:', error)
-      return null
+      if (error.code === 'PGRST116') { // Not found
+        return null
+      }
+      throw new Error(`Failed to fetch AI call: ${error.message}`)
     }
 
     return data
@@ -179,8 +187,7 @@ export class AiCallService {
     const { data, error } = await query.order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error listing AI calls:', error)
-      return []
+      throw new Error(`Failed to list AI calls: ${error.message}`)
     }
 
     return data || []
@@ -201,8 +208,11 @@ export class AiCallService {
       .eq('document_id', documentId)
       .eq('status', 'success')
 
-    if (error || !data) {
-      console.error('Error fetching usage stats:', error)
+    if (error) {
+      throw new Error(`Failed to fetch usage stats: ${error.message}`)
+    }
+
+    if (!data) {
       return {
         totalCalls: 0,
         totalTokens: 0,
@@ -259,8 +269,7 @@ export class AiCallService {
       .limit(limit)
 
     if (error) {
-      console.error('Error fetching recent calls:', error)
-      return []
+      throw new Error(`Failed to fetch recent calls: ${error.message}`)
     }
 
     return data || []

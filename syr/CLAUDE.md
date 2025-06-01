@@ -24,7 +24,7 @@ Based on README.md, the following architecture decisions have been made:
   - @assistant-ui/react for chat UI primitives
   - All LLM calls use Nunjucks + Zod prompt templates
 - **Storage**: Supabase (Postgres with realtime capabilities) from the start
-- **Data Structure**: Decompose HTML documents into individual elements stored as separate database rows with parent/child relationships
+- **Data Structure**: Single-row document storage (moved away from element decomposition)
 - **Frontend State**: Virtual DOM approach - maintain document structure as React state/context
 - **Background Processing**: Frontend-driven queue initially, with API calls to backend
 - **MVP Focus**: Basic document display with hierarchical summaries as the core feature
@@ -45,6 +45,7 @@ Type checking and linting:
 - `npm run build` - TypeScript compilation errors
 - `npm run lint` - ESLint code quality/style issues
 - `npm test` - Jest testing (`npm run test:coverage` for coverage)
+  - Tests use `.env.test` for environment variables (copy from `.env.local`: `cp .env.local .env.test`)
   - When writing tests, use our Jest testing framework with React Testing Library
   - Prefer using a subagent for running tests to avoid filling the context window
 
@@ -55,6 +56,17 @@ Debugging resources:
 - Database: `supabase/migrations/` and `docs/DATABASE_*.md`
 - Architecture: `docs/ARCHITECTURE.md`
 - Recent decisions: `planning/*.md` docs
+
+
+## Error Handling
+
+**Database Service Layer**: The database services now propagate errors instead of silently failing. This helps with debugging and ensures problems are noticed early:
+- Methods throw descriptive errors with context
+- "Not found" cases (error code PGRST116) return null instead of throwing
+- No more `console.error` + `return null` patterns
+- API routes should catch database errors and map to appropriate HTTP responses
+
+This follows our principle: "Raise errors early, clearly & fatally" (see `docs/CODING_PRINCIPLES.md`)
 
 
 ## Project Structure
@@ -76,6 +88,11 @@ Key variables in `.env.local`:
 - `PORT` - Dev server port
 - `LLM_MODEL` - default is Claude Sonnet 4, but we usually override to Haiku for development
 - Supabase connection details (see `docs/SETUP.md`)
+
+Test environment (`.env.test`):
+- Currently mirrors `.env.local` for simplicity
+- Best practice: Use cheaper LLM models (Haiku) and separate test database in future
+- See `docs/TESTING.md` for setup instructions
 
 Template: `.env.example` (may not be current - check `.env.local` for active config)
 

@@ -3,13 +3,12 @@
 /**
  * Git Worktree Branch Synchronisation Tool
  * 
- * See planning/250526c_git_worktree_sync_strategy.md for implementation decisions and rationale.
- * See docs/SETUP.md for worktree setup instructions and usage.
+ * See docs/WORKTREES.md for complete worktree setup and workflow documentation.
  * 
- * This script provides a hybrid approach:
- * 1. Attempts fast-forward merge first (ideal case)
- * 2. Falls back to one-direction merge if branches have diverged
- * 3. Two-step process for complete sync when fast-forward fails
+ * This script provides one-direction merge synchronisation between the current
+ * branch and main branch. Always requires a two-step process for complete sync:
+ * 1. From feature branch: merge main → current
+ * 2. From main branch: merge specified branch → main
  */
 
 import { Cli, Command, Option } from 'clipanion';
@@ -22,10 +21,12 @@ class SyncBranchesCommand extends Command {
   ];
 
   static usage = Command.Usage({
-    description: 'Sync between main and experim branches using git worktrees',
+    description: 'Sync current branch with main branch using one-direction merge',
     examples: [
-      ['Sync with default branches', 'sync-branches'],
-      ['Sync with custom branches', 'sync-branches --main develop --experim feature'],
+      ['Sync current branch with main', 'sync-branches'],
+      ['Sync with custom main branch name', 'sync-branches --main develop'],
+      ['Sync specific branch with main (from main)', 'sync-branches --branch worktree1'],
+      ['Sync all worktrees with main (from main)', 'sync-branches'],
     ],
   });
 
@@ -33,8 +34,8 @@ class SyncBranchesCommand extends Command {
     description: 'Name of the main branch (default: main)',
   });
 
-  experimBranch = Option.String('--experim', 'experim', {
-    description: 'Name of the experimental branch (default: experim)',
+  targetBranch = Option.String('--branch', {
+    description: 'Specific branch to sync with main (when on main). If not specified, syncs all worktree branches.',
   });
 
   async execute(): Promise<number> {
@@ -48,26 +49,26 @@ class SyncBranchesCommand extends Command {
       const currentBranch = this.getCurrentBranch();
       console.log(`📍 Current branch: ${currentBranch}`);
 
-      // Determine sync direction
-      const { sourceBranch, targetBranch } = this.determineSyncDirection(currentBranch);
-      console.log(`🔀 Syncing: ${sourceBranch} → ${targetBranch}\n`);
+      if (currentBranch === this.mainBranch && !this.targetBranch) {
+        // From main without specific branch: sync all worktrees
+        await this.syncAllWorktrees();
+      } else {
+        // Normal single-branch sync
+        const { sourceBranch, targetBranch } = this.determineSyncDirection(currentBranch);
+        console.log(`🔀 Syncing: ${sourceBranch} → ${targetBranch}\n`);
 
-      // Try fast-forward approach first
-      const fastForwardSuccess = await this.tryFastForward(sourceBranch, targetBranch);
+        await this.performOneDirectionMerge(sourceBranch, targetBranch);
 
-      if (fastForwardSuccess) {
-        console.log('✅ Fast-forward sync completed successfully!');
-        return 0;
+        console.log('✅ One-direction merge completed successfully!');
+        
+        // Provide next step guidance
+        if (currentBranch === this.mainBranch) {
+          console.log(`\n📋 Next step: Run this script from the ${sourceBranch} worktree to pull these changes.`);
+        } else {
+          console.log(`\n📋 Next step: Run this script from the main worktree to merge ${currentBranch} → main.`);
+        }
       }
-
-      // Fast-forward failed, use fallback automatically
-      console.log('⚠️  Fast-forward sync failed (branches have diverged)');
-      console.log('🔄 Switching to one-direction merge...');
-
-      // Use fallback: one-direction merge only
-      await this.performOneDirectionMerge(sourceBranch, targetBranch);
-
-      console.log('✅ One-direction merge completed successfully!');
+      
       return 0;
 
     } catch (error) {
@@ -90,16 +91,15 @@ class SyncBranchesCommand extends Command {
       throw new Error('Working tree is not clean. Please commit or stash your changes first.');
     }
 
-    // Check if branches exist
+    // Check if main branch exists
     const branches = this.execGit('branch --list').split('\n').map(b => b.replace(/^[\*\+]?\s*/, ''));
     
     if (!branches.includes(this.mainBranch)) {
       throw new Error(`Main branch '${this.mainBranch}' does not exist`);
     }
-    
-    if (!branches.includes(this.experimBranch)) {
-      throw new Error(`Experimental branch '${this.experimBranch}' does not exist`);
-    }
+
+    // Validate worktree structure
+    await this.validateWorktreeStructure();
 
     console.log('✅ Safety checks passed');
   }
@@ -108,36 +108,116 @@ class SyncBranchesCommand extends Command {
     return this.execGit('branch --show-current').trim();
   }
 
+  private async validateWorktreeStructure(): Promise<void> {
+    const fs = require('fs');
+    const path = require('path');
+    
+    // Get the parent directory (where worktrees should be)
+    const repoRoot = this.execGit('rev-parse --show-toplevel').trim();
+    const parentDir = path.dirname(repoRoot);
+    
+    try {
+      const entries = fs.readdirSync(parentDir, { withFileTypes: true });
+      const readingDirs = entries
+        .filter((entry: any) => entry.isDirectory() && entry.name.startsWith('reading'))
+        .map((entry: any) => entry.name);
+      
+      const expectedDirs = ['reading', 'reading-worktree1', 'reading-worktree2', 'reading-worktree3'];
+      const unexpectedDirs = readingDirs.filter(dir => !expectedDirs.includes(dir));
+      const missingDirs = expectedDirs.filter(dir => !readingDirs.includes(dir));
+      
+      if (unexpectedDirs.length > 0) {
+        throw new Error(
+          `Unexpected reading-* directories found: ${unexpectedDirs.join(', ')}\n` +
+          `Expected only: ${expectedDirs.join(', ')}\n` +
+          `Please remove unexpected directories or rename them to match the expected structure.`
+        );
+      }
+      
+      // Check if worktree branches exist for directories that exist
+      const branches = this.execGit('branch --list').split('\n').map(b => b.replace(/^[\*\+]?\s*/, ''));
+      const worktreeBranches = ['worktree1', 'worktree2', 'worktree3'];
+      const existingWorktreeDirs = readingDirs.filter(dir => dir.startsWith('reading-worktree'));
+      
+      for (const dir of existingWorktreeDirs) {
+        const branchName = dir.replace('reading-', '');
+        if (!branches.includes(branchName)) {
+          throw new Error(
+            `Directory '${dir}' exists but branch '${branchName}' does not exist.\n` +
+            `Either create the branch or remove the directory.`
+          );
+        }
+      }
+      
+      // For sync-all operations, ensure all worktree branches exist
+      const currentBranch = this.getCurrentBranch();
+      if (currentBranch === this.mainBranch && !this.targetBranch) {
+        const missingBranches = worktreeBranches.filter(branch => !branches.includes(branch));
+        if (missingBranches.length > 0) {
+          throw new Error(
+            `Cannot sync all worktrees: missing branches ${missingBranches.join(', ')}\n` +
+            `Create these branches or use --branch to sync specific worktrees.`
+          );
+        }
+      }
+      
+    } catch (error: any) {
+      if (error.code === 'ENOENT') {
+        throw new Error(`Parent directory '${parentDir}' does not exist`);
+      }
+      throw error;
+    }
+  }
+
   private determineSyncDirection(currentBranch: string): { sourceBranch: string; targetBranch: string } {
     if (currentBranch === this.mainBranch) {
-      // From main: sync experim → main
-      return { sourceBranch: this.experimBranch, targetBranch: this.mainBranch };
-    } else if (currentBranch === this.experimBranch) {
-      // From experim: sync main → experim (preferred order)
-      return { sourceBranch: this.mainBranch, targetBranch: this.experimBranch };
-    } else {
-      throw new Error(`Must be on either '${this.mainBranch}' or '${this.experimBranch}' branch`);
-    }
-  }
-
-  private async tryFastForward(sourceBranch: string, targetBranch: string): Promise<boolean> {
-    try {
-      console.log(`🚀 Attempting fast-forward sync...`);
-      
-      // Try to fast-forward target branch to source branch
-      this.execGit(`fetch . ${sourceBranch}:${targetBranch}`);
-      
-      // Merge the updated target into current branch (if different)
-      const currentBranch = this.getCurrentBranch();
-      if (currentBranch !== targetBranch) {
-        this.execGit(`merge ${targetBranch}`);
+      // From main: need to specify which branch to sync
+      if (!this.targetBranch) {
+        throw new Error(`When on main branch, you must specify which branch to sync using --branch <branch-name>`);
       }
-
-      return true;
-    } catch {
-      return false;
+      // Verify target branch exists
+      const branches = this.execGit('branch --list').split('\n').map(b => b.replace(/^[\*\+]?\s*/, ''));
+      if (!branches.includes(this.targetBranch)) {
+        throw new Error(`Target branch '${this.targetBranch}' does not exist`);
+      }
+      return { sourceBranch: this.targetBranch, targetBranch: this.mainBranch };
+    } else {
+      // From feature branch: sync main → current
+      return { sourceBranch: this.mainBranch, targetBranch: currentBranch };
     }
   }
+
+  private async syncAllWorktrees(): Promise<void> {
+    console.log('🔄 Syncing all worktree branches with main...\n');
+    
+    const worktreeBranches = ['worktree1', 'worktree2', 'worktree3'];
+    // Note: validateWorktreeStructure() already ensures all branches exist
+    
+    let syncedCount = 0;
+    let failedBranches: string[] = [];
+    
+    for (const branch of worktreeBranches) {
+      try {
+        console.log(`\n🔀 Syncing: ${branch} → main`);
+        await this.performOneDirectionMerge(branch, this.mainBranch);
+        syncedCount++;
+      } catch (error) {
+        console.error(`❌ Failed to sync ${branch}: ${error instanceof Error ? error.message : error}`);
+        failedBranches.push(branch);
+      }
+    }
+    
+    console.log('\n' + '='.repeat(50));
+    console.log(`✅ Synced ${syncedCount} worktree(s) to main`);
+    
+    if (failedBranches.length > 0) {
+      console.log(`⚠️  Failed to sync: ${failedBranches.join(', ')}`);
+      console.log('📋 To recover: resolve conflicts in main branch, commit, then re-run this script.');
+    } else {
+      console.log(`\n📋 Next step: Run this script from each worktree to pull the latest changes from main.`);
+    }
+  }
+
 
   private async performOneDirectionMerge(sourceBranch: string, targetBranch: string): Promise<void> {
     const currentBranch = this.getCurrentBranch();
@@ -145,11 +225,10 @@ class SyncBranchesCommand extends Command {
     if (currentBranch === targetBranch) {
       console.log(`🔄 Merging ${sourceBranch} → ${targetBranch}...`);
       this.execGit(`merge ${sourceBranch}`, {
-        errorMessage: `Merge conflicts in ${targetBranch}. Please resolve, commit, and re-run this script.`
+        errorMessage: `Merge conflicts in ${targetBranch}. Please resolve conflicts, commit, and re-run this script.`
       });
       
       console.log(`✅ Merged ${sourceBranch} → ${targetBranch}`);
-      console.log(`\n📋 Next step: Run this script from the other worktree (${sourceBranch}) to complete the sync.`);
     } else {
       throw new Error(`Expected to be on ${targetBranch} branch, but currently on ${currentBranch}`);
     }
