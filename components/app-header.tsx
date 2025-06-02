@@ -4,6 +4,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowLeft } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/lib/context/auth-context'
+import { Button } from '@/components/ui/button'
 
 interface AppHeaderProps {
   title?: string
@@ -22,6 +24,17 @@ export function AppHeader({
   actions, 
   className 
 }: AppHeaderProps) {
+  const { user, loading, signOut } = useAuth()
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+      window.location.href = '/'
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
+  }
+
   return (
     <header className={cn(
       "bg-white/90 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50",
@@ -77,11 +90,47 @@ export function AppHeader({
             )}
           </div>
           
-          {actions && (
-            <div className="flex items-center gap-2">
-              {actions}
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {actions}
+            
+            {!loading && (
+              user ? (
+                <div className="flex items-center gap-3 ml-4">
+                  <span className="text-sm text-gray-600">
+                    {user.email}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSignOut}
+                  >
+                    Sign out
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 ml-4">
+                  <Button
+                    asChild
+                    variant="ghost"
+                    size="sm"
+                  >
+                    <Link href="/auth/login">
+                      Sign in
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="orange"
+                    size="sm"
+                  >
+                    <Link href="/auth/signup">
+                      Sign up
+                    </Link>
+                  </Button>
+                </div>
+              )
+            )}
+          </div>
         </div>
       </div>
     </header>
