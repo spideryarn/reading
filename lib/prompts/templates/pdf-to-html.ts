@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { loadMultimodalPromptTemplate, multimodalMessageSchema } from '@/lib/prompts/types'
+import { loadMultimodalPromptTemplateFromCaller, multimodalMessageSchema } from '@/lib/prompts/types'
 
 // Schema for PDF to HTML conversion input
 export const pdfToHtmlPromptInputSchema = z.object({
@@ -10,7 +10,7 @@ export const pdfToHtmlPromptInputSchema = z.object({
 export const pdfToHtmlOutputSchema = z.string().min(1).describe('Clean semantic HTML converted from PDF')
 
 // Load the PDF to HTML prompt template
-export const pdfToHtmlPrompt = loadMultimodalPromptTemplate(
+export const pdfToHtmlPrompt = loadMultimodalPromptTemplateFromCaller(
   'pdf-to-html.njk',
   pdfToHtmlPromptInputSchema,
   {
