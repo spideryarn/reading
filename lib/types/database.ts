@@ -329,6 +329,7 @@ export type Database = {
           language_code: string | null
           original_file_type: string | null
           plaintext_content: string
+          slug: string
           source_url: string | null
           storage_path: string | null
           title: string
@@ -344,6 +345,7 @@ export type Database = {
           language_code?: string | null
           original_file_type?: string | null
           plaintext_content: string
+          slug: string
           source_url?: string | null
           storage_path?: string | null
           title: string
@@ -359,6 +361,7 @@ export type Database = {
           language_code?: string | null
           original_file_type?: string | null
           plaintext_content?: string
+          slug?: string
           source_url?: string | null
           storage_path?: string | null
           title?: string

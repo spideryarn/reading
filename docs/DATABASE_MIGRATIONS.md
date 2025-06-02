@@ -190,3 +190,34 @@ FOR SELECT USING (true);  -- Adjust condition as needed
 **References**:
 - Planning: `planning/finished/250531a_database_storage_implementation.md`
 - Conversation: `docs/DATABASE_SCHEMA_CONVERSATION_250531.md`
+
+### 20250602005754_add_documents_slug_column.sql
+
+**Purpose**: Add slug column to documents table for improved routing performance
+
+**Major Changes**:
+- Added `slug` column to `documents` table (TEXT, NOT NULL, UNIQUE)
+- Pre-populated slug values for existing example documents
+- Added unique constraint `documents_slug_unique` to prevent duplicates
+- Created performance index `idx_documents_slug` for fast lookups
+- Added column documentation comment
+
+**Performance Impact**:
+- Enables direct database lookups by slug instead of fetching all documents and filtering in memory
+- Significantly improves routing performance for document access
+- Scales much better with increasing document count
+
+**Code Changes Required**:
+- Updated `DocumentService.getBySlug()` method for direct slug lookups
+- Modified document page routes to use new slug-based database queries
+- Application still generates slugs client-side when creating documents
+
+**Migration Strategy**:
+- Non-destructive: only adds new column and constraints
+- Backward compatible: existing code continues to work
+- Pre-populated known documents with appropriate slug values
+
+**Future Enhancements**:
+- Could add database triggers for automatic slug generation
+- Could implement slug conflict resolution for duplicate titles
+- Could add slug validation rules at database level

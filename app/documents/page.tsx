@@ -1,39 +1,30 @@
 import Link from 'next/link'
-import { readdirSync } from 'fs'
-import { join } from 'path'
 import { AppHeader } from '@/components/app-header'
 import { Footer } from '@/components/footer'
+import { createClient } from '@/lib/supabase/server'
+import { DocumentService } from '@/lib/services/database/documents'
+import { generateSlug } from '@/lib/utils/slug'
+import type { Document } from '@/lib/types/database'
 
-interface Document {
-  filename: string
-  title: string
-  slug: string
-}
-
-function getDocuments(): Document[] {
-  const examplesDir = join(process.cwd(), 'static', 'examples')
-  const files = readdirSync(examplesDir)
+async function getDocuments(): Promise<Document[]> {
+  const supabase = await createClient()
+  const documentService = new DocumentService(supabase)
   
-  return files
-    .filter(file => file.endsWith('.html'))
-    .map(filename => {
-      // Remove .html extension and clean up title
-      const title = filename.replace('.html', '')
-      
-      // Create URL-friendly slug from filename
-      const slug = filename
-        .replace('.html', '')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '')
-      
-      return { filename, title, slug }
+  try {
+    const { documents } = await documentService.list({
+      isPublic: true,
+      limit: 50 // Get all public documents
     })
-    .sort((a, b) => a.title.localeCompare(b.title))
+    
+    return documents.sort((a, b) => a.title.localeCompare(b.title))
+  } catch (error) {
+    console.error('Failed to fetch documents:', error)
+    return []
+  }
 }
 
-export default function DocumentsPage() {
-  const documents = getDocuments()
+export default async function DocumentsPage() {
+  const documents = await getDocuments()
   
   return (
     <div className="min-h-screen">
@@ -53,16 +44,24 @@ export default function DocumentsPage() {
         <div className="space-y-4">
           <h2 className="text-2xl font-semibold">Sample Documents</h2>
           <div className="grid gap-4">
-            {documents.map(doc => (
-              <Link
-                key={doc.slug}
-                href={`/documents/${doc.slug}`}
-                className="block p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <h3 className="font-medium">{doc.title}</h3>
-                <p className="text-sm text-gray-500">Document: {doc.filename}</p>
-              </Link>
-            ))}
+            {documents.map(doc => {
+              // Generate slug from title to maintain URL compatibility
+              const slug = generateSlug(doc.title)
+                
+              return (
+                <Link
+                  key={doc.id}
+                  href={`/documents/${slug}`}
+                  className="block p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <h3 className="font-medium">{doc.title}</h3>
+                  <p className="text-sm text-gray-500">
+                    {doc.word_count ? `${doc.word_count.toLocaleString()} words` : 'No word count'}
+                    {doc.language_code && doc.language_code !== 'en' && ` • ${doc.language_code.toUpperCase()}`}
+                  </p>
+                </Link>
+              )
+            })}
           </div>
         </div>
       </main>

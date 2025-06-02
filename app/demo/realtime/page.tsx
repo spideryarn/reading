@@ -7,7 +7,7 @@ export default async function RealtimeDemoPage() {
   const documentService = new DocumentService(supabase)
   
   // Get or create a demo document
-  let demoDoc = await documentService.list({ limit: 1 })
+  const demoDoc = await documentService.list({ limit: 1 })
   
   if (demoDoc.documents.length === 0) {
     // Create a demo document if none exist
