@@ -20,9 +20,11 @@
         "@anthropic-ai/sdk": "^0.52.0",
         "@assistant-ui/react": "^0.10.13",
         "@assistant-ui/react-markdown": "^0.10.4",
+        "@hookform/resolvers": "^5.0.1",
         "@phosphor-icons/react": "^2.1.10",
         "@radix-ui/react-checkbox": "^1.3.2",
         "@radix-ui/react-dialog": "^1.1.14",
+        "@radix-ui/react-label": "^2.1.7",
         "@radix-ui/react-select": "^2.2.5",
         "@radix-ui/react-slot": "^1.2.3",
         "@radix-ui/react-tooltip": "^1.2.7",
@@ -40,6 +42,7 @@
         "pdf-to-png-converter": "^3.6.5",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
+        "react-hook-form": "^7.57.0",
         "react-resizable-panels": "^3.0.2",
         "rehype-parse": "^9.0.1",
         "remark-gfm": "^4.0.1",
@@ -48,7 +51,7 @@
         "tw-animate-css": "^1.3.2",
         "unified": "^11.0.5",
         "uuid": "^11.1.0",
-        "zod": "^3.25.28"
+        "zod": "^3.25.46"
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3",

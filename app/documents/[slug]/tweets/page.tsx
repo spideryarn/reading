@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { DocumentParser } from '@/lib/services/document-parser'
 import { TweetThreadPageClient } from './page-client'
 import { AppHeader } from '@/components/app-header'
+import { requireAuth } from '@/lib/auth/route-protection'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -37,6 +38,12 @@ function findDocumentBySlug(slug: string): { filename: string; title: string } |
 
 export default async function TweetThreadPage({ params }: PageProps) {
   const { slug } = await params
+  
+  // Require authentication for tweet thread access
+  await requireAuth({
+    returnTo: `/documents/${slug}/tweets`
+  })
+  
   const doc = findDocumentBySlug(slug)
   
   if (!doc) {
