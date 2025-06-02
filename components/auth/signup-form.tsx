@@ -25,11 +25,7 @@ const signupSchema = z.object({
     .email('Please enter a valid email address'),
   password: z
     .string()
-    .min(6, 'Password must be at least 6 characters')
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      'Password must contain at least one uppercase letter, one lowercase letter, and one number'
-    ),
+    .min(6, 'Password must be at least 6 characters'),
   confirmPassword: z
     .string()
     .min(1, 'Please confirm your password'),
@@ -46,7 +42,6 @@ type SignupFormData = z.infer<typeof signupSchema>
 export function SignupForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
   const router = useRouter()
 
   const form = useForm<SignupFormData>({
@@ -61,7 +56,6 @@ export function SignupForm() {
   const onSubmit = async (data: SignupFormData) => {
     setIsLoading(true)
     setError(null)
-    setSuccess(false)
 
     try {
       const supabase = createClient()
@@ -79,52 +73,15 @@ export function SignupForm() {
         return
       }
 
-      setSuccess(true)
-      form.reset()
+      // Redirect to home page after successful signup
+      router.push('/')
+      router.refresh()
     } catch (err) {
       setError('An unexpected error occurred. Please try again.')
       console.error('Signup error:', err)
     } finally {
       setIsLoading(false)
     }
-  }
-
-  if (success) {
-    return (
-      <div className="mt-8 bg-white py-8 px-6 shadow rounded-lg sm:px-10">
-        <div className="text-center">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
-            <svg
-              className="h-6 w-6 text-green-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          </div>
-          <h3 className="mt-2 text-lg font-medium text-gray-900">
-            Check your email
-          </h3>
-          <p className="mt-1 text-sm text-gray-500">
-            We&apos;ve sent you a confirmation link. Please check your email and click the link to activate your account.
-          </p>
-          <div className="mt-6">
-            <Button
-              variant="outline"
-              onClick={() => router.push('/auth/login')}
-            >
-              Go to Login
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   return (
