@@ -106,3 +106,107 @@ export async function executePrompt<T extends z.ZodSchema>(
 ): Promise<string> {
   return executePromptInternal(template, variables)
 }
+
+// Multimodal content schemas for vision capabilities
+export const multimodalTextContentSchema = z.object({
+  type: z.literal('text'),
+  text: z.string()
+})
+
+export const multimodalImageContentSchema = z.object({
+  type: z.literal('image'),
+  image: z.string().describe('Base64-encoded image data')
+})
+
+export const multimodalContentSchema = z.union([
+  multimodalTextContentSchema,
+  multimodalImageContentSchema
+])
+
+export const multimodalMessageSchema = z.object({
+  role: z.enum(['user', 'assistant', 'system']),
+  content: z.union([
+    z.string(),
+    z.array(multimodalContentSchema)
+  ])
+})
+
+// Multimodal prompt template type
+export interface MultimodalPromptTemplate<T extends z.ZodSchema> {
+  name: string
+  description: string
+  schema: T
+  templatePath: string
+  modelConfig?: {
+    model?: ProviderTierKey
+    temperature?: number
+    maxTokens?: number
+    thinking?: boolean
+  }
+}
+
+// Execute a multimodal prompt with support for images and messages
+export async function executeMultimodalPrompt<T extends z.ZodSchema>(
+  template: MultimodalPromptTemplate<T>,
+  variables: z.infer<T>
+): Promise<string> {
+  // Validate variables against schema
+  const validated = template.schema.parse(variables)
+  
+  // Get the appropriate model based on configuration
+  let providerTierKey = template.modelConfig?.model || AI_CONFIG.DEFAULT_MODEL
+  if (template.modelConfig?.thinking && providerTierKey === 'anthropic-balanced') {
+    providerTierKey = 'anthropic-balanced-thinking'
+  }
+  const model = getModel(providerTierKey)
+  
+  // Check if variables contain messages (multimodal) or just need prompt rendering
+  let messages: Array<{ role: string; content: string | Array<{ type: string; text?: string; image?: string }> }> = []
+  
+  if ('messages' in validated && Array.isArray(validated.messages)) {
+    // Use messages directly for multimodal content
+    messages = validated.messages
+  } else {
+    // Render template and create a text-only message
+    const templateContent = readFileSync(template.templatePath, 'utf-8')
+    const prompt = env.renderString(templateContent, validated)
+    
+    messages = [{
+      role: 'user',
+      content: prompt
+    }]
+  }
+  
+  // Execute with Vercel AI SDK Core using messages format
+  const result = await generateText({
+    model,
+    messages,
+    maxTokens: template.modelConfig?.maxTokens || AI_CONFIG.DEFAULT_MAX_TOKENS,
+    temperature: template.modelConfig?.temperature ?? AI_CONFIG.DEFAULT_TEMPERATURE,
+  })
+  
+  return result.text
+}
+
+// Helper to create a multimodal template
+export function loadMultimodalPromptTemplate<T extends z.ZodSchema>(
+  templatePath: string,
+  schema: T,
+  modelConfig?: {
+    model?: ProviderTierKey
+    temperature?: number
+    maxTokens?: number
+    thinking?: boolean
+  }
+): MultimodalPromptTemplate<T> {
+  // Load template content at module load time for better performance
+  readFileSync(templatePath, 'utf-8')
+  
+  return {
+    name: templatePath.split('/').pop()?.replace('.njk', '') || 'unnamed',
+    description: `Multimodal prompt template from ${templatePath}`,
+    schema,
+    templatePath,
+    modelConfig
+  }
+}
