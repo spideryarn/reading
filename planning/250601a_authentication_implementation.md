@@ -126,37 +126,38 @@ This builds on the completed database implementation and leverages the existing 
 
 - [x] Git commit progress following `docs/GIT_COMMITS.md` using subagent
 
-### Stage: Route Protection System
-- [ ] Create route protection utilities
-  - [ ] Create `lib/auth/route-protection.ts` with helper functions for protecting routes
-  - [ ] Implement server-side auth guards using `getUser()` validation
-  - [ ] Add redirect logic for `/auth/login?next=` pattern
-  - [ ] Create utility for returning 401 responses to bots
+### Stage: Route Protection System ✅
+- [x] Create route protection utilities
+  - [x] Create `lib/auth/route-protection.ts` with helper functions for protecting routes
+  - [x] Implement server-side auth guards using `getUser()` validation
+  - [x] Add redirect logic for `/auth/login?next=` pattern
+  - [x] Create utility for returning 401 responses to bots
 
-- [ ] Implement authentication guards for server components
-  - [ ] Create `lib/auth/server-auth.ts` with server-side authentication helpers
-  - [ ] Add user session retrieval utilities for server components
-  - [ ] Implement proper error handling for unauthorized access
+- [x] Implement authentication guards for server components
+  - [x] Create `lib/auth/server-auth.ts` with server-side authentication helpers
+  - [x] Add user session retrieval utilities for server components
+  - [x] Implement proper error handling for unauthorized access
 
-- [ ] Configure route protection for document routes
-  - [ ] Protect `/documents/[slug]` routes requiring authentication
-  - [ ] Keep `/documents/[slug]/share` routes public for sharing
-  - [ ] Add authentication checks to relevant page components
-  - [ ] Test route protection with authenticated and unauthenticated access
+- [x] Configure route protection for document routes
+  - [x] Protect `/documents/[slug]` routes requiring authentication
+  - [x] Keep `/documents/[slug]/share` routes public for sharing
+  - [x] Add authentication checks to relevant page components
+  - [x] Test route protection with authenticated and unauthenticated access
 
-- [ ] Create authentication redirect system
-  - [ ] Implement `next` parameter handling in login page
-  - [ ] Add post-login redirect to originally requested page
-  - [ ] Test redirect flow with various protected routes
+- [x] Create authentication redirect system
+  - [x] Implement `next` parameter handling in login page
+  - [x] Add post-login redirect to originally requested page
+  - [x] Test redirect flow with various protected routes
 
-- [ ] Write tests for route protection using subagent
-  - [ ] Test protected route access patterns
-  - [ ] Test redirect flows and next parameter handling
-  - [ ] Test bot detection and 401 response generation
+- [x] Write tests for route protection using subagent
+  - [x] Test protected route access patterns
+  - [x] Test redirect flows and next parameter handling
+  - [x] Test bot detection and 401 response generation
+  - [x] Test security edge cases including open redirect prevention
 
-- [ ] Update documentation with route protection patterns
-  - [ ] Document how to protect new routes
-  - [ ] Add examples of public vs protected route configuration
+- [x] Update documentation with route protection patterns
+  - [x] Document how to protect new routes
+  - [x] Add examples of public vs protected route configuration
 
 ### Stage: Database Profile Integration
 - [ ] Create database trigger for automatic profile creation

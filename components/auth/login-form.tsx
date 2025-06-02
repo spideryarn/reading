@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { getRedirectUrl } from '@/lib/auth/client-utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Alert } from '@/components/ui/alert'
@@ -36,7 +37,7 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const next = searchParams.get('next') ?? '/'
+  const redirectUrl = getRedirectUrl(searchParams, '/')
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -63,8 +64,8 @@ export function LoginForm() {
         return
       }
 
-      // Redirect to the next page or home
-      router.push(next)
+      // Redirect to the requested page or home
+      router.push(redirectUrl)
       router.refresh()
     } catch (err) {
       setError('An unexpected error occurred. Please try again.')
