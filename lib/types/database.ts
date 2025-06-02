@@ -329,6 +329,7 @@ export type Database = {
           language_code: string | null
           original_file_type: string | null
           plaintext_content: string
+          slug: string
           source_url: string | null
           storage_path: string | null
           title: string
@@ -344,6 +345,7 @@ export type Database = {
           language_code?: string | null
           original_file_type?: string | null
           plaintext_content: string
+          slug: string
           source_url?: string | null
           storage_path?: string | null
           title: string
@@ -359,6 +361,7 @@ export type Database = {
           language_code?: string | null
           original_file_type?: string | null
           plaintext_content?: string
+          slug?: string
           source_url?: string | null
           storage_path?: string | null
           title?: string
@@ -520,4 +523,20 @@ export const Constants = {
     Enums: {},
   },
 } as const
+
+// Helper types for easier usage
+export type Document = Database['public']['Tables']['documents']['Row']
+export type DocumentInsert = Database['public']['Tables']['documents']['Insert']
+export type DocumentUpdate = Database['public']['Tables']['documents']['Update']
+
+export type DocumentEnhancement = Database['public']['Tables']['document_enhancements']['Row']
+export type DocumentEnhancementInsert = Database['public']['Tables']['document_enhancements']['Insert']
+export type DocumentEnhancementUpdate = Database['public']['Tables']['document_enhancements']['Update']
+
+export type AiCall = Database['public']['Tables']['ai_calls']['Row']
+export type AiCallInsert = Database['public']['Tables']['ai_calls']['Insert']
+export type AiCallUpdate = Database['public']['Tables']['ai_calls']['Update']
+
+export type ChatThread = Database['public']['Tables']['chat_threads']['Row']
+export type ChatMessage = Database['public']['Tables']['chat_messages']['Row']
 

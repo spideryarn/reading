@@ -231,4 +231,30 @@ export class DocumentService {
       word_count: wordCount,
     })
   }
+
+  /**
+   * Get a document by slug (direct database lookup)
+   */
+  async getBySlug(slug: string): Promise<Document | null> {
+    // Validate slug format (basic validation)
+    if (!slug || typeof slug !== 'string' || slug.trim() === '') {
+      return null
+    }
+
+    const { data, error } = await this.supabase
+      .from('documents')
+      .select('*')
+      .eq('slug', slug.trim())
+      .single()
+
+    if (error) {
+      // Check for "not found" error (PGRST116)
+      if (error.code === 'PGRST116') {
+        return null
+      }
+      throw new Error(`Failed to fetch document by slug: ${error.message}`)
+    }
+
+    return data
+  }
 }

@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
-import { findDocumentBySlug } from '@/lib/utils/slug'
 import type { Document } from '@/lib/types/database'
 
 /**
@@ -20,14 +19,8 @@ async function getDocumentBySlug(slug: string): Promise<Document | null> {
   const documentService = new DocumentService(supabase)
   
   try {
-    // Get all public documents and find the one that matches the slug
-    const { documents } = await documentService.list({
-      isPublic: true,
-      limit: 100
-    })
-    
-    // Use utility function to find document by slug
-    return findDocumentBySlug(documents, slug)
+    // Direct database lookup by slug (performance improvement)
+    return await documentService.getBySlug(slug)
   } catch (error) {
     console.error('Failed to find document by slug:', error)
     return null
