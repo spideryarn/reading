@@ -71,7 +71,7 @@ export default async function DocumentSharePage({ params }: PageProps) {
               href={`/documents/${slug}`}
               className="text-orange-600 hover:text-orange-700 font-medium"
             >
-              Sign in to access full features
+              Log in to access full features
             </a>
           </div>
         }

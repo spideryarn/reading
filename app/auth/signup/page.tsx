@@ -17,7 +17,7 @@ export default function SignupPage() {
                 href="/auth/login"
                 className="font-medium text-spideryarn-orange hover:text-orange-500"
               >
-                sign in to your existing account
+                log in to your existing account
               </a>
             </p>
           </div>

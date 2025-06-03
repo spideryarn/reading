@@ -129,7 +129,7 @@ export function LoginForm() {
             variant="orange"
             disabled={isLoading}
           >
-            {isLoading ? 'Signing in...' : 'Sign in'}
+            {isLoading ? 'Logging in...' : 'Log in'}
           </Button>
         </form>
       </Form>

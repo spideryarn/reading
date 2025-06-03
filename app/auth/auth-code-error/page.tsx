@@ -52,7 +52,7 @@ export default function AuthCodeErrorPage() {
                 
                 <Button asChild size="full" variant="outline">
                   <Link href="/auth/login">
-                    Sign in to existing account
+                    Log in to existing account
                   </Link>
                 </Button>
                 
