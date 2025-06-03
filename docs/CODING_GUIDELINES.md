@@ -22,6 +22,20 @@ npm run build   # Check for TypeScript compilation errors
 npm test        # Run test suite
 ```
 
+## Database Operations Safety
+
+**CRITICAL**: Never run destructive database commands without explicit user permission:
+
+```bash
+# DESTRUCTIVE COMMANDS - require explicit user permission:
+npm run db:reset     # Deletes all local database data
+npx supabase db reset # Deletes all local database data
+
+# SAFE COMMANDS - can be run as needed:
+npm run db:types     # Only regenerates TypeScript types
+npx supabase status  # Read-only status check
+```
+
 ## Import Standards
 
 ### Import Hygiene

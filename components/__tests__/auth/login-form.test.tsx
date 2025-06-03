@@ -88,7 +88,7 @@ describe('LoginForm', () => {
       
       expect(screen.getByLabelText(/email address/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument()
     })
 
     test('renders email field with correct attributes', () => {
@@ -115,7 +115,7 @@ describe('LoginForm', () => {
       const user = userEvent.setup()
       render(<LoginForm />)
       
-      const submitButton = screen.getByRole('button', { name: /sign in/i })
+      const submitButton = screen.getByRole('button', { name: /log in/i })
       await user.click(submitButton)
       
       // The form validation should prevent submission
@@ -127,7 +127,7 @@ describe('LoginForm', () => {
       render(<LoginForm />)
       
       const emailInput = screen.getByLabelText(/email address/i)
-      const submitButton = screen.getByRole('button', { name: /sign in/i })
+      const submitButton = screen.getByRole('button', { name: /log in/i })
       
       await user.type(emailInput, 'invalid-email')
       await user.click(submitButton)
@@ -141,7 +141,7 @@ describe('LoginForm', () => {
       render(<LoginForm />)
       
       const emailInput = screen.getByLabelText(/email address/i)
-      const submitButton = screen.getByRole('button', { name: /sign in/i })
+      const submitButton = screen.getByRole('button', { name: /log in/i })
       
       await user.type(emailInput, 'test@example.com')
       await user.click(submitButton)
@@ -156,7 +156,7 @@ describe('LoginForm', () => {
       
       const emailInput = screen.getByLabelText(/email address/i)
       const passwordInput = screen.getByLabelText(/password/i)
-      const submitButton = screen.getByRole('button', { name: /sign in/i })
+      const submitButton = screen.getByRole('button', { name: /log in/i })
       
       await user.type(emailInput, 'test@example.com')
       await user.type(passwordInput, '12345') // Less than 6 characters
@@ -176,7 +176,7 @@ describe('LoginForm', () => {
       
       const emailInput = screen.getByLabelText(/email address/i)
       const passwordInput = screen.getByLabelText(/password/i)
-      const submitButton = screen.getByRole('button', { name: /sign in/i })
+      const submitButton = screen.getByRole('button', { name: /log in/i })
       
       await user.type(emailInput, 'test@example.com')
       await user.type(passwordInput, 'password123')
@@ -202,21 +202,21 @@ describe('LoginForm', () => {
       
       const emailInput = screen.getByLabelText(/email address/i)
       const passwordInput = screen.getByLabelText(/password/i)
-      const submitButton = screen.getByRole('button', { name: /sign in/i })
+      const submitButton = screen.getByRole('button', { name: /log in/i })
       
       await user.type(emailInput, 'test@example.com')
       await user.type(passwordInput, 'password123')
       await user.click(submitButton)
       
       // Check loading state
-      expect(screen.getByRole('button', { name: /signing in/i })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /signing in/i })).toBeDisabled()
+      expect(screen.getByRole('button', { name: /logging in/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /logging in/i })).toBeDisabled()
       
       // Resolve the promise
       resolvePromise!()
       
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument()
       })
     })
 
@@ -228,7 +228,7 @@ describe('LoginForm', () => {
       
       const emailInput = screen.getByLabelText(/email address/i)
       const passwordInput = screen.getByLabelText(/password/i)
-      const submitButton = screen.getByRole('button', { name: /sign in/i })
+      const submitButton = screen.getByRole('button', { name: /log in/i })
       
       await user.type(emailInput, 'test@example.com')
       await user.type(passwordInput, 'password123')
@@ -249,7 +249,7 @@ describe('LoginForm', () => {
       
       const emailInput = screen.getByLabelText(/email address/i)
       const passwordInput = screen.getByLabelText(/password/i)
-      const submitButton = screen.getByRole('button', { name: /sign in/i })
+      const submitButton = screen.getByRole('button', { name: /log in/i })
       
       await user.type(emailInput, 'test@example.com')
       await user.type(passwordInput, 'password123')
@@ -274,7 +274,7 @@ describe('LoginForm', () => {
       
       const emailInput = screen.getByLabelText(/email address/i)
       const passwordInput = screen.getByLabelText(/password/i)
-      const submitButton = screen.getByRole('button', { name: /sign in/i })
+      const submitButton = screen.getByRole('button', { name: /log in/i })
       
       await user.type(emailInput, 'test@example.com')
       await user.type(passwordInput, 'wrongpassword')
@@ -296,7 +296,7 @@ describe('LoginForm', () => {
       
       const emailInput = screen.getByLabelText(/email address/i)
       const passwordInput = screen.getByLabelText(/password/i)
-      const submitButton = screen.getByRole('button', { name: /sign in/i })
+      const submitButton = screen.getByRole('button', { name: /log in/i })
       
       await user.type(emailInput, 'test@example.com')
       await user.type(passwordInput, 'password123')
@@ -322,7 +322,7 @@ describe('LoginForm', () => {
       
       const emailInput = screen.getByLabelText(/email address/i)
       const passwordInput = screen.getByLabelText(/password/i)
-      const submitButton = screen.getByRole('button', { name: /sign in/i })
+      const submitButton = screen.getByRole('button', { name: /log in/i })
       
       // First attempt - should show error
       await user.type(emailInput, 'test@example.com')

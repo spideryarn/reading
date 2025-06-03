@@ -27,13 +27,13 @@ function TestComponent() {
       <div data-testid="user">{user ? user.email : 'No user'}</div>
       <div data-testid="session">{session ? 'Has session' : 'No session'}</div>
       <button data-testid="sign-in" onClick={() => signIn('test@example.com', 'password')}>
-        Sign In
+        Log in
       </button>
       <button data-testid="sign-up" onClick={() => signUp('test@example.com', 'password')}>
-        Sign Up
+        Register
       </button>
       <button data-testid="sign-out" onClick={() => signOut()}>
-        Sign Out
+        Log out
       </button>
     </div>
   )
