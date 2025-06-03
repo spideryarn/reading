@@ -8,7 +8,8 @@ see also:
 - Prioritise code that's simple, easy-to-understand, debuggable, and readable.
 - This is a prototype with no users yet. We want to develop fast and experiment, so we can figure out which features are most valuable.
 - Fix the root cause rather than putting on a band-aid. Avoid fallbacks & defaults - better to fail if input assumptions aren't being met.
-- Be cautious about irreversible changes, e.g. deleting files, dropping/truncating tables, throwing away data, etc.
+- **Always err on the side of caution**: Be especially careful about any operations that could affect databases, production systems, or user data. When in doubt, ask for explicit permission first.
+- Be cautious about irreversible changes, e.g. deleting files, dropping/truncating tables, throwing away data, running database migrations, etc.
 - Raise errors early, clearly & fatally. Prefer not to wrap in try/except so that our tracebacks are obvious.
   - Database services propagate errors instead of silently returning null
   - API routes can catch and map to appropriate HTTP responses

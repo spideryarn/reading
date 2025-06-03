@@ -24,17 +24,21 @@ npm test        # Run test suite
 
 ## Database Operations Safety
 
-**CRITICAL**: Never run destructive database commands without explicit user permission:
+**CRITICAL**: Never run ANY database commands without explicit user permission:
 
 ```bash
 # DESTRUCTIVE COMMANDS - require explicit user permission:
 npm run db:reset     # Deletes all local database data
 npx supabase db reset # Deletes all local database data
+npx supabase db push # Applies migrations to database
+npx supabase migration new # Creates new migration files
 
-# SAFE COMMANDS - can be run as needed:
+# SAFE READ-ONLY COMMANDS - can be run as needed:
 npm run db:types     # Only regenerates TypeScript types
 npx supabase status  # Read-only status check
 ```
+
+⚠️ **ALWAYS ERR ON THE SIDE OF CAUTION**: When working with databases, production systems, or any operations that could affect data or functionality, always ask for explicit user permission first. If unsure whether something requires permission, ask!
 
 ## Import Standards
 
