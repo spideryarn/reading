@@ -39,7 +39,7 @@ Next.js local dev server:
 
 Database operations:
 - `npm run db:types` - Regenerate TypeScript types from Supabase schema
-- `npm run db:reset` - Reset database and regenerate types
+- `npm run db:reset` - **DESTRUCTIVE**: Reset database and regenerate types (NEVER run without explicit user permission - this deletes all local data!)
 
 Type checking and linting:
 - `npm run build` - TypeScript compilation errors
@@ -139,8 +139,8 @@ Docs, modes, and admin:
 - `docs/GIT_COMMITS.md` - Guidelines for Git commit best practices including batching changes, message format, and handling concurrent changes
 - `docs/PROJECT_STATUS.md` - Current development state overview showing implemented features (AI summaries, glossary, headings) and planned enhancements
 - `docs/SOUNDING_BOARD.md` - Instructions for collaborative discussion mode emphasising asking questions and suggesting alternatives rather than immediate implementation
-- `docs/WRITING_EVERGREEN_DOCS.md` - Guidelines for writing evergreen documentation including structure, cross-references, status indicators, and maintenance practices
-- `docs/WRITING_PLANNING_DOCS.md` - Guide for writing planning/project management documents with file naming conventions, structure, and stage-based action plans
+- `docs/WRITE_EVERGREEN_DOC.md` - Guidelines for writing evergreen documentation including structure, cross-references, status indicators, and maintenance practices
+- `docs/WRITE_PLANNING_DOC.md` - Guide for writing planning/project management documents with file naming conventions, structure, and stage-based action plans
 - `docs/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` - Process for keeping project documentation up-to-date including review steps, update patterns, and quality checklist
 - `docs/UPDATING_CLAUDE_INSTRUCTIONS.md` - Guidelines for maintaining CLAUDE.md to help AI agents operate effectively on the Spideryarn Reading codebase
 

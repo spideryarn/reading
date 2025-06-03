@@ -68,7 +68,7 @@ describe('Authentication Pages', () => {
       
       // Check heading and content
       expect(screen.getByRole('heading', { 
-        name: /sign in to your account/i 
+        name: /log in to your account/i 
       })).toBeInTheDocument()
       
       // Check signup link
@@ -118,10 +118,10 @@ describe('Authentication Pages', () => {
       
       // Check login link
       expect(screen.getByRole('link', { 
-        name: /sign in to your existing account/i 
+        name: /log in to your existing account/i 
       })).toBeInTheDocument()
       expect(screen.getByRole('link', { 
-        name: /sign in to your existing account/i 
+        name: /log in to your existing account/i 
       })).toHaveAttribute('href', '/auth/login')
     })
 
@@ -186,7 +186,7 @@ describe('Authentication Pages', () => {
       
       // Check login button
       const loginLink = screen.getByRole('link', { 
-        name: /sign in to existing account/i 
+        name: /log in to existing account/i 
       })
       expect(loginLink).toBeInTheDocument()
       expect(loginLink).toHaveAttribute('href', '/auth/login')
@@ -247,7 +247,7 @@ describe('Authentication Pages', () => {
       
       // Test that buttons are clickable (they're rendered as links wrapped in Button components)
       const signupLink = screen.getByRole('link', { name: /create a new account/i })
-      const loginLink = screen.getByRole('link', { name: /sign in to existing account/i })
+      const loginLink = screen.getByRole('link', { name: /log in to existing account/i })
       const homeLink = screen.getByRole('link', { name: /return to homepage/i })
       
       // These should be clickable without throwing errors
@@ -291,7 +291,7 @@ describe('Authentication Pages', () => {
 
     test('all auth pages have proper heading structure', () => {
       const pages = [
-        { component: LoginPage, expectedHeading: /sign in to your account/i },
+        { component: LoginPage, expectedHeading: /log in to your account/i },
         { component: SignupPage, expectedHeading: /create your account/i },
         { component: AuthCodeErrorPage, expectedHeading: /authentication error/i },
       ]

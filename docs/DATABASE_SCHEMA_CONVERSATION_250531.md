@@ -861,12 +861,12 @@
 
   Chat thread lifecycle. Keep things simple - permanent
 
-  We're now ready to create a very, very detailed planning doc, following the instructions in @docs/WRITING_PLANNING_DOCS.md - 
+  We're now ready to create a very, very detailed planning doc, following the instructions in @docs/WRITE_PLANNING_DOC.md - 
   make sure to capture as much richness from this conversation as possible. You could even quote the whole thing in the 
   Appendix (or at least much of it)! Or at the very least, in the set of decisions, include a lot of context.
 
   Ultrathink
-  ⎿  Read docs/WRITING_PLANNING_DOCS.md (96 lines)
+  ⎿  Read docs/WRITE_PLANNING_DOC.md (96 lines)
 
 ✽ Collaborating… (0s · ↑ 0 tokens · esc to interrupt)
 

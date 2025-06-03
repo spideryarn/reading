@@ -74,7 +74,7 @@ Implement a chatbot interface for document analysis using the assistant-ui React
   - [x] Use subagent to search web for comprehensive documentation
   - [x] Gather installation instructions, API examples, and integration patterns
   - [x] Find examples of document/context integration
-  - [x] Document findings in `docs/ASSISTANT_UI_INTEGRATION.md` following `docs/WRITING_EVERGREEN_DOCS.md`
+  - [x] Document findings in `docs/ASSISTANT_UI_INTEGRATION.md` following `docs/WRITE_EVERGREEN_DOC.md`
   - [x] Include code snippets, configuration options, and best practices
   - [x] Test accessibility: ensure docs are complete enough for future development
 

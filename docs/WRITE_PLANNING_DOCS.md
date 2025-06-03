@@ -4,9 +4,12 @@ This is a guide for writing planning/project management `.md` files, e.g. `plann
 
 Aim to keep these concise, but emphasise & clearly capture all the decisions, responses, and requirements from the user.
 
-If you're starting the doc from scratch, store it in `planning/`, and first ask the user questions about their project requirements to clarify key decisions. (Use MCP or run `date +"%y%m%d"` command first to get the current date for naming the file)
+If you're starting the doc from scratch:
+- (Use MCP or run `date +"%y%m%d"` command first to get the current date for naming the file)
+- Store it in `planning/`, and first ask the user questions about their project requirements to clarify key decisions.
+- See `docs/SOUNDING_BOARD_MODE.md`
 
-see also: `docs/WRITING_EVERGREEN_DOCS.md` for instructions on writing evergreen docs
+see also: `docs/WRITE_EVERGREEN_DOC.md` for instructions on writing evergreen docs
 
 
 ## File naming conventions
@@ -46,10 +49,12 @@ Don't include a `Date` section at the top since it's implicit from the filename.
 
 - Include any specific principles/approaches or decisions that have been explicitly agreed with the user (over and above existing Cursor rules, project examples, best practices, etc).
 - As you get new information from the user, update this doc so it's always up-to-date.
+- If there are any surprises/issues, stop immediately, and discuss with the user before proceeding.
 
 
 ### Actions
 
+Overall approach:
 - Break into lots of stages. Start with a really simple working v1, and gradually layer in complexity, ending each stage with passing tests and working code.
 - List action in the order that they should be tackled
 - Don't number the stages, so that it's easier to move them around without having to renumber everything
@@ -59,14 +64,21 @@ Don't include a `Date` section at the top since it's implicit from the filename.
 - Explicitly add tasks for writing automated tests, usually before writing code. (Perhaps one or two end-to-end tests first, then gradually adding more detailed tests as complexity grows). Explicitly add tasks for running the automated tests before ending each stage. see `docs/FRONTEND_TESTING.md`
 - If there are actions that the user needs to do, add those in too, so we can track progress and remind the user.
 - If this is a major piece of work, ask the user whether we should have an early action to create a `yyMMdd[letter]_complex_project` Git branch (and move over any changes). If so, then add a final action to merge that back into `main`.
-- Add actions to update the planning doc with progress so far at the end of every stage
-- Add actions to Git commit (perhaps at the end of every stage, perhaps use a subagent) - follow instructions in `docs/GIT_COMMITS.md`
 - Add actions to stop & review with user where appropriate, e.g. when we get to a good stopping point, to manually check changes to the user interface, etc
 - Add actions to search the web where appropriate, e.g. when debugging, determining best practices, making use of 3rd-party libraries, etc
 - Add actions to update relevant `docs/*.md` evergreen docs (see `docs/WRITING_EVERGREEN_DOCS`). 
 - If you think we need a new evergreen-doc, ask the user
 - Explicitly say to use subagents for encapsulated tasks or where the task will create a lot of verbose content, e.g. checking for errors or browser console output with Playwright MCP, doing research
-- Add a final action to move the doc to `planning/finished/` and commit.
+- Try to surface potential risks early. For example, if the whole plan rests on the library being able to do X, let's do a quick trial to make sure that works).
+- Try to organise the stages so that we frontload the business value, so that we could stop partway. For example, get it working for the primary/most valuable use-case first.
+
+At the end of every stage:
+- Add actions to update the planning doc with progress so far.
+- Follow instructions in `docs/DEBRIEF_PROGRESS.md` to output a summary of where things stand.
+- Add actions to commit, following instructions in `docs/GIT_COMMITS.md` (i.e. use a subagent)
+
+As a very final action:
+- Move the doc to `planning/finished/` and commit.
 
 Example action (no need to include the words `TODO` or `DONE` explicitly, since the `[ ]` todo-checkboxes capture that):
 
