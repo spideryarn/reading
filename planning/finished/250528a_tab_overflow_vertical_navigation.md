@@ -17,7 +17,7 @@
 
 - `components/tab-container.tsx` - Current horizontal tab implementation using flex layout
 - `components/table-of-contents.tsx` - Usage context, shows 3 tabs that will grow
-- `docs/WRITING_PLANNING_DOCS.md` - Planning document format guidelines
+- `docs/WRITE_PLANNING_DOC.md` - Planning document format guidelines
 - Screenshot showing overflow issue on narrow windows
 
 

@@ -76,7 +76,7 @@ And then revert back to the original document or try different transformations.
   - [x] Integrated with MutationProvider and context hooks
   - [x] Test suite for heading mutation generation (7 tests passing)
 - [x] Git commit, following `GIT_COMMITS.md`
-- [x] Document in new `docs/MUTATIONS.md` - follow `docs/WRITING_EVERGREEN_DOCS.md` for this 
+- [x] Document in new `docs/MUTATIONS.md` - follow `docs/WRITE_EVERGREEN_DOC.md` for this 
 
 ### Stage 4: Document Structure Integration
 - [x] Ensure mutations properly modify document structure for navigation

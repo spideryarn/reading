@@ -188,6 +188,23 @@ export async function executeMultimodalPrompt<T extends z.ZodSchema>(
   return result.text
 }
 
+// Helper function to auto-resolve template path for multimodal templates
+export function loadMultimodalPromptTemplateFromCaller<T extends z.ZodSchema>(
+  templateName: string,
+  schema: T,
+  modelConfig?: {
+    model?: ProviderTierKey
+    temperature?: number
+    maxTokens?: number
+    thinking?: boolean
+  }
+): MultimodalPromptTemplate<T> {
+  // Build absolute path using process.cwd() + relative path
+  const templatePath = join(process.cwd(), 'lib/prompts/templates', templateName)
+  
+  return loadMultimodalPromptTemplate(templatePath, schema, modelConfig)
+}
+
 // Helper to create a multimodal template
 export function loadMultimodalPromptTemplate<T extends z.ZodSchema>(
   templatePath: string,
