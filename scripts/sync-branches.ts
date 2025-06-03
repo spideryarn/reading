@@ -203,28 +203,14 @@ class SyncBranchesCommand extends Command {
     const worktreeBranches = ['worktree1', 'worktree2', 'worktree3'];
     // Note: validateWorktreeStructure() already ensures all branches exist
     
-    let syncedCount = 0;
-    let failedBranches: string[] = [];
-    
     for (const branch of worktreeBranches) {
-      try {
-        console.log(`🔀 ${branch} → main`);
-        await this.performOneDirectionMerge(branch, this.mainBranch);
-        syncedCount++;
-      } catch (error) {
-        console.error(`❌ Failed to sync ${branch}: ${error instanceof Error ? error.message : error}`);
-        failedBranches.push(branch);
-      }
+      console.log(`🔀 ${branch} → main`);
+    // will abort if there are conflicts
+      await this.performOneDirectionMerge(branch, this.mainBranch);
     }
     
-    console.log(`\n✅ Synced ${syncedCount}/${worktreeBranches.length} worktrees to main`);
-    
-    if (failedBranches.length > 0) {
-      console.log(`⚠️  Failed: ${failedBranches.join(', ')}`);
-      console.log('📋 Next: resolve conflicts in main, commit, then re-run this script');
-    } else {
-      console.log('Next: run this script from each worktree to pull latest main');
-    }
+    console.log(`\n✅ Synced all ${worktreeBranches.length} worktrees to main`);
+    console.log('Next: run this script from each worktree to pull latest main');
   }
 
 
