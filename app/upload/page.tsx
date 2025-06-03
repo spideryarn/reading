@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { AppHeader } from '@/components/app-header'
 import { Footer } from '@/components/footer'
-import { Upload, FilePdf, X } from '@phosphor-icons/react'
+import { Upload, FilePdf, X, Check, Warning } from '@phosphor-icons/react'
 
 export default function UploadPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -12,6 +12,47 @@ export default function UploadPage() {
   const [error, setError] = useState<string>('')
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  // Quality test state
+  const [qualityTestLoading, setQualityTestLoading] = useState(true)
+  const [qualityTestResult, setQualityTestResult] = useState<{
+    success: boolean;
+    image?: string;
+    error?: string;
+    config?: string;
+  } | null>(null)
+
+  // Load quality test on component mount
+  useEffect(() => {
+    const runQualityTest = async () => {
+      try {
+        const response = await fetch('/api/test-pdf-converter')
+        const result = await response.json()
+        
+        if (result.pdfToPngConverter?.success && result.pdfToPngConverter.images?.[0]) {
+          setQualityTestResult({
+            success: true,
+            image: result.pdfToPngConverter.images[0],
+            config: result.pdfToPngConverter.config || 'default'
+          })
+        } else {
+          setQualityTestResult({
+            success: false,
+            error: result.pdfToPngConverter?.error || 'Unknown test failure'
+          })
+        }
+      } catch (error) {
+        setQualityTestResult({
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to run quality test'
+        })
+      } finally {
+        setQualityTestLoading(false)
+      }
+    }
+    
+    runQualityTest()
+  }, [])
 
   const handleFile = (file: File) => {
     // Reset previous results
@@ -133,6 +174,66 @@ export default function UploadPage() {
       
       <main className="max-w-4xl mx-auto px-8 py-8">
         <div className="space-y-8">
+          {/* PDF Conversion Quality Test */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 shadow-sm">
+            <h2 className="text-xl font-semibold mb-4 text-blue-900 flex items-center gap-2">
+              <Warning size={24} className="text-blue-600" />
+              PDF Conversion Quality Test
+            </h2>
+            
+            <p className="text-sm text-blue-800 mb-4">
+              Testing <strong>pdf-to-png-converter</strong> (serverless-compatible) vs current GraphicsMagick dependency.
+              This test auto-converts <code>static/examples/2105.10461v2_cropped.pdf</code> for visual quality assessment.
+            </p>
+            
+            {qualityTestLoading ? (
+              <div className="flex items-center gap-2 text-blue-700">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                Running quality test...
+              </div>
+            ) : qualityTestResult?.success ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-green-700">
+                  <Check size={20} />
+                  <span className="font-medium">Test conversion successful</span>
+                </div>
+                
+                <div className="bg-white border border-blue-200 rounded p-4">
+                  <p className="text-sm text-gray-600 mb-2">
+                    Converted academic PDF using pdf-to-png-converter ({qualityTestResult.config || 'default config'}):
+                  </p>
+                  <img 
+                    src={`data:image/png;base64,${qualityTestResult.image}`}
+                    alt="Test PDF conversion result"
+                    className="max-w-full h-auto border border-gray-300 rounded shadow-sm"
+                    style={{ maxHeight: '400px' }}
+                  />
+                </div>
+                
+                <div className="text-sm text-blue-800 bg-blue-100 p-3 rounded">
+                  <strong>Quality Assessment:</strong> Please manually inspect the image above for:
+                  <ul className="mt-1 ml-4 list-disc">
+                    <li>Text clarity and readability</li>
+                    <li>Table structure preservation</li>
+                    <li>Mathematical equations rendering</li>
+                    <li>Overall academic content quality</li>
+                  </ul>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-red-700">
+                  <X size={20} />
+                  <span className="font-medium">Test conversion failed</span>
+                </div>
+                <div className="text-sm text-red-700 bg-red-100 p-3 rounded">
+                  <strong>Error:</strong> {qualityTestResult?.error}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <hr className="border-gray-300" />
           {/* Upload Section */}
           <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
             <h2 className="text-xl font-semibold mb-6 text-gray-900 border-b border-gray-100 pb-2">
