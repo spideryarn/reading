@@ -73,15 +73,22 @@ CREATE INDEX idx_user_preferences_user_id ON user_preferences(user_id);
 
 ## ⚠️ CRITICAL SAFETY WARNING
 
-**NEVER run `npm run db:reset` or `npx supabase db reset` without explicit user permission!**
+**Only run migrations with explicit user permission (or as part of a planning document)**
 
-These commands are DESTRUCTIVE and will permanently delete all local database data.
+This includes but is not limited to:
+- `npm run db:reset` / `npx supabase db reset` - DESTRUCTIVE: deletes all local database data
+- `npx supabase db push` - Applies migrations to database
+- `npx supabase migration new` - Creates new migration files
+- Any SQL operations that modify data or schema
 
 
 ## IMPORTANT RULES - always err on the side of caution
 
-- DO NOT MAKE large-scale, irreversible, destructive changes, e.g. dropping/truncating tables or deleting rows, UNLESS EXPLICITLY AGREED WITH THE USER.
-- Do not try and apply to production, only operate in dev.
+- **NEVER run database operations without explicit user permission** - this includes migrations, resets, pushes, or any schema changes
+- **PRODUCTION AWARENESS**: Any operation that could affect production data or systems requires extra caution and explicit permission
+- DO NOT MAKE large-scale, irreversible, destructive changes, e.g. dropping/truncating tables or deleting rows, UNLESS EXPLICITLY AGREED WITH THE USER
+- Do not try and apply to production, only operate in dev
+- **When in doubt, ask first** - if you're unsure whether an operation requires permission, always ask the user
 
 
 ## TypeScript Type Generation
