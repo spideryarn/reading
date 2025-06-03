@@ -113,3 +113,14 @@ Before committing, ensure:
 2. **Under-referencing** - Always add "see also" links for related topics
 3. **Duplication** - Resist copying content; link to canonical source
 4. **Vague Status** - Be specific about what's implemented vs planned
+
+
+## Typos and tightening
+
+If you notice typos, fix them.
+
+If you notice places where the doc could be a bit more concise, or more tightly worded, without changing the meaning, then make the changes.
+
+If you notice ways in which you think the doc should be improved, which *would* change the meaning, discuss them with the user. Don't make changes that will change the meaning without explicit permission.
+
+

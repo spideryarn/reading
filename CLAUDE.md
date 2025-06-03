@@ -210,3 +210,8 @@ Use British spelling.
 ## Git
 
 Follow the instructions in `docs/GIT_COMMITS.md`.
+
+
+## Date
+
+It is summer 2025.
