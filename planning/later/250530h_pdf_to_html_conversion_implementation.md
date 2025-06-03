@@ -18,7 +18,7 @@ Key requirements:
 
 - `docs/PDF_TO_HTML_CONVERSION.md` - Comprehensive research on PDF conversion approaches, LLM capabilities, and implementation guidance
 - `docs/ARCHITECTURE.md` - Multi-provider LLM support and document storage architecture
-- `docs/MUTATIONS.md` - Document transformation system for integrating PDF imports
+- `docs/MUTATIONS.md` - Document transformation system for integrating PDF imports (DISCUSS WITH USER BEFORE STARTING whether to make use of mutations)
 - `docs/LLM_PROMPT_TEMPLATES.md` - Standardized Nunjucks + Zod template system for LLM calls
 - `docs/CODING_PRINCIPLES.md` - Development principles prioritizing simplicity and rapid prototyping
 - `lib/services/llm-provider.ts` - Existing multi-provider LLM infrastructure
@@ -38,40 +38,72 @@ Based on research findings and user priorities (accuracy and simplicity over cos
 
 ## Actions
 
-### Stage: Minimal PDF to PNG Setup
-- [ ] Install and configure `pdf-to-png-converter` library
-  - [ ] Add to package.json: `npm install pdf-to-png-converter`
-  - [ ] Test basic single-page PDF to PNG conversion with sample academic document
-  - [ ] Verify zero-dependency operation (no GraphicsMagick/Ghostscript needed)
+### Stage: Minimal PDF to PNG Setup ✅
+- [x] ~~Install and configure `pdf-to-png-converter` library~~ → **Switched to pdf2pic for better compatibility**
+  - [x] Add to package.json: `npm install pdf2pic` (with GraphicsMagick system dependency)
+  - [x] Test basic single-page PDF to PNG conversion with sample academic document
+  - [x] Install GraphicsMagick via homebrew and configure PATH
 
-- [ ] Create simple PDF converter utility
-  - [ ] Implement `lib/utils/pdf-converter.ts` with single function: `convertPdfToBase64Image(pdfBuffer: Buffer)`
-  - [ ] Use viewportScale: 2.0 for high-resolution academic content
-  - [ ] Add basic error handling for invalid PDFs or conversion failures
+- [x] Create simple PDF converter utility
+  - [x] Implement `lib/utils/pdf-converter.ts` with single function: `convertPdfToBase64Image(pdfBuffer: Buffer)`
+  - [x] Use high resolution (density: 200, width: 1600, height: 2400) for academic content clarity
+  - [x] Add comprehensive error handling for invalid PDFs, conversion failures, and cleanup
 
-### Stage: LLM Vision Support for PDF Processing
-- [ ] Extend existing LLM infrastructure for image inputs
-  - [ ] Update Zod schemas in `lib/prompts/types.ts` to support multimodal content: `text | { type: 'text', text: string } | { type: 'image', image: string }`
-  - [ ] Test Claude 4 Sonnet with base64 image input using existing `generateText()` function
-  - [ ] Verify message format: `{ role: 'user', content: [{ type: 'text', text: '...' }, { type: 'image', image: base64 }] }`
+### Stage: LLM Vision Support for PDF Processing ✅  
+- [x] Extend existing LLM infrastructure for image inputs
+  - [x] Update Zod schemas in `lib/prompts/types.ts` to support multimodal content: `text | { type: 'text', text: string } | { type: 'image', image: string }`
+  - [x] Test Claude 4 Sonnet with base64 image input using existing `generateText()` function
+  - [x] Verify message format: `{ role: 'user', content: [{ type: 'text', text: '...' }, { type: 'image', image: base64 }] }`
+  - [x] **Added**: Create `loadMultimodalPromptTemplateFromCaller()` helper for path resolution
 
-- [ ] Create PDF to HTML prompt template
-  - [ ] Implement `lib/prompts/templates/pdf-to-html.njk` with academic-focused prompts
-  - [ ] Zod schema for PDF conversion responses (just expecting HTML string output)
-  - [ ] Prompt engineering for Claude 4: "Convert this academic PDF to clean semantic HTML. Preserve table structure, maintain multi-column reading order, convert equations to HTML/MathML, ignore page numbers."
+- [x] Create PDF to HTML prompt template
+  - [x] Implement `lib/prompts/templates/pdf-to-html.njk` with academic-focused prompts
+  - [x] Zod schema for PDF conversion responses (just expecting HTML string output)  
+  - [x] Prompt engineering for Claude 4: "Convert this academic PDF to clean semantic HTML. Preserve table structure, maintain multi-column reading order, convert equations to HTML/MathML, ignore page numbers."
 
 ### Stage: Super-Simple /upload Page
-- [ ] Create basic upload page at `/app/upload/page.tsx`
-  - [ ] File input limited to PDF files only (accept=".pdf")
-  - [ ] Single page constraint: max file size 2MB to ensure single-page PDFs
-  - [ ] Simple upload button with loading state
-  - [ ] Display converted HTML output directly on the page (raw HTML visible to user)
+- [x] Create basic upload page at `/app/upload/page.tsx`
+  - [x] File input limited to PDF files only (accept=".pdf")
+  - [x] Drag and drop support with dedicated landing zone for PDFs
+  - [x] Single page constraint: max file size 2MB to ensure single-page PDFs
+  - [x] Simple upload button with loading state
+  - [x] Display converted HTML output directly on the page (raw HTML visible to user)
+  - [x] Find way to display what the HTML document looks like when viewed (rendered preview)
 
-- [ ] Create PDF processing API endpoint
-  - [ ] Implement `/app/api/upload-pdf/route.ts` for direct PDF→HTML conversion
-  - [ ] Accept PDF file upload, convert to base64, call Claude 4 Sonnet
-  - [ ] Return raw HTML string (no storage, no integration - just conversion)
-  - [ ] Basic error handling for file size, invalid PDFs, LLM failures
+### Stage: Enhanced UX Features (Current)
+- [x] Add drag and drop functionality to existing upload page
+  - [x] Replace file input with drag and drop zone using HTML5 drag/drop API
+  - [x] Maintain existing file validation (PDF type, 2MB size limit)
+  - [x] Add visual feedback for drag states (border/background changes)
+  - [x] Ensure keyboard accessibility (Enter/Space to trigger file picker)
+  - [x] Use Phosphor icons (Upload, FilePdf) for consistent styling
+  - [x] Apply Spideryarn orange theme for active/hover states
+  - [x] Show selected file preview with option to remove/replace
+
+**Implementation Notes**:
+- Excellent visual implementation with proper Spideryarn branding and Tailwind CSS styling
+- Full accessibility support with keyboard navigation and ARIA labels
+- Clean user experience with visual feedback for drag states
+- File validation and error handling maintained from previous implementation
+- HTML preview: Raw HTML display in textarea + rendered preview using iframe with `srcDoc` for complete HTML documents
+- **HTML Preview Fix**: Replaced `dangerouslySetInnerHTML` with iframe approach to properly render complete HTML documents from Claude
+
+**Current Status (2025-02-06)**:
+- ✅ Drag and drop functionality: Complete and working excellently  
+- ✅ HTML preview: Fixed to use iframe for proper rendering of complete HTML documents
+- ✅ Backend PDF conversion: Successfully switched from pdf-to-png-converter to pdf2pic
+- ✅ GraphicsMagick dependencies: Installed and configured properly
+- ✅ Template system: Fixed multimodal prompt template path resolution
+- ✅ End-to-end functionality: PDF upload → PNG conversion → Claude 4 vision → HTML output working
+- ✅ PDF processing API: `/api/upload-pdf` route fully functional with proper error handling
+- 🎉 **FULLY FUNCTIONAL**: Complete PDF to HTML conversion pipeline working end-to-end
+- ⚠️ **DEPLOYMENT CONCERN**: Current GraphicsMagick dependency incompatible with Vercel serverless - requires future refactoring for production
+
+- [x] Create PDF processing API endpoint
+  - [x] Implement `/app/api/upload-pdf/route.ts` for direct PDF→HTML conversion
+  - [x] Accept PDF file upload, convert to base64, call Claude 4 Sonnet - (use our existing LLMs machinery)
+  - [x] Return raw HTML string (no storage, no integration - just conversion)
+  - [x] Basic error handling for file size, invalid PDFs, LLM failures
 
 - [ ] Basic academic content handling
   - [ ] Prompt Claude 4 to preserve table markup (`<table>`, `<th>`, `<td>`)
@@ -95,6 +127,16 @@ Based on research findings and user priorities (accuracy and simplicity over cos
   - [ ] Display processing time and status to user
   - [ ] Add simple validation that output is valid HTML
 
+### Stage: Serverless Deployment Compatibility
+- [ ] **CRITICAL**: Address GraphicsMagick dependency for Vercel deployment
+  - [ ] Current `pdf2pic` + GraphicsMagick approach will NOT work on Vercel serverless
+  - [ ] System dependencies (GraphicsMagick) not available in Vercel runtime
+  - [ ] Consider switching back to `pdf-to-png-converter` with proper bundling configuration
+  - [ ] Alternative: Investigate PDF-lib + canvas approach for zero-dependency conversion
+  - [ ] Alternative: Browser-based PDF.js conversion in headless context
+  - [ ] Test deployment to Vercel to confirm dependency issues
+  - [ ] Update webpack/turbopack configuration for serverless compatibility
+
 ### Stage: Documentation and Completion
 - [ ] Write basic tests
   - [ ] Unit test for PDF→PNG conversion utility
@@ -105,6 +147,7 @@ Based on research findings and user priorities (accuracy and simplicity over cos
   - [ ] Add implementation notes to `docs/PDF_TO_HTML_CONVERSION.md`
   - [ ] Document the /upload page functionality and limitations
   - [ ] Note single-page constraint and future expansion possibilities
+  - [ ] Document serverless deployment considerations and dependency requirements
 
 - [ ] Git commit and completion
   - [ ] Commit simple PDF upload functionality following `docs/GIT_COMMITS.md`

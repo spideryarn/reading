@@ -1,4 +1,7 @@
-import { pdfToPng } from 'pdf-to-png-converter';
+import pdf2pic from 'pdf2pic';
+import { writeFileSync, unlinkSync, mkdirSync, readFileSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
 
 export interface PdfConversionResult {
   success: boolean;
@@ -12,31 +15,56 @@ export interface PdfConversionResult {
  * Optimized for academic documents with high resolution
  */
 export async function convertPdfToBase64Image(pdfBuffer: Buffer): Promise<PdfConversionResult> {
+  let tempPdfPath: string | null = null;
+  let tempOutputDir: string | null = null;
+
   try {
-    // Convert PDF to PNG with high resolution for academic content
-    const pngPages = await pdfToPng(pdfBuffer, {
-      viewportScale: 2.0, // High resolution for academic content clarity
-      outputType: 'base64'
+    // Create temporary file for PDF input
+    const tempDir = tmpdir();
+    const timestamp = Date.now();
+    tempPdfPath = join(tempDir, `temp-pdf-${timestamp}.pdf`);
+    tempOutputDir = join(tempDir, `temp-output-${timestamp}`);
+    
+    // Write PDF buffer to temporary file
+    writeFileSync(tempPdfPath, pdfBuffer);
+    mkdirSync(tempOutputDir, { recursive: true });
+
+    // Configure pdf2pic with high resolution for academic content
+    const convert = pdf2pic.fromPath(tempPdfPath, {
+      density: 200, // High resolution (DPI)
+      saveFilename: 'page',
+      savePath: tempOutputDir,
+      format: 'png',
+      width: 1600, // High width for academic content clarity
+      height: 2400 // Proportional height for A4-like documents
     });
 
-    if (!pngPages || pngPages.length === 0) {
+    // Convert all pages
+    const results = await convert.bulk(-1, { responseType: 'image' });
+
+    if (!results || results.length === 0) {
       return {
         success: false,
         error: 'PDF conversion resulted in no pages'
       };
     }
 
-    // Extract base64 strings from the conversion result
-    const base64Images = pngPages.map((page) => {
-      if (typeof page === 'string') {
-        return page;
+    // Convert image files to base64
+    const base64Images: string[] = [];
+    for (const result of results) {
+      if (result && result.path) {
+        const imageBuffer = readFileSync(result.path);
+        const base64String = imageBuffer.toString('base64');
+        base64Images.push(base64String);
+        
+        // Clean up individual image file
+        try {
+          unlinkSync(result.path);
+        } catch (e) {
+          // Ignore cleanup errors
+        }
       }
-      // Handle different possible return types from the library
-      if (page && typeof page === 'object' && 'content' in page) {
-        return (page as { content: string }).content;
-      }
-      throw new Error('Unexpected page format from PDF conversion');
-    });
+    }
 
     return {
       success: true,
@@ -67,6 +95,23 @@ export async function convertPdfToBase64Image(pdfBuffer: Buffer): Promise<PdfCon
       success: false,
       error: `PDF conversion failed: ${errorMessage}`
     };
+  } finally {
+    // Clean up temporary files
+    if (tempPdfPath) {
+      try {
+        unlinkSync(tempPdfPath);
+      } catch (e) {
+        // Ignore cleanup errors
+      }
+    }
+    
+    if (tempOutputDir) {
+      try {
+        unlinkSync(tempOutputDir);
+      } catch (e) {
+        // Ignore cleanup errors (directory might not be empty)
+      }
+    }
   }
 }
 
