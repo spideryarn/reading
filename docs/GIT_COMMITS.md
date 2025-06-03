@@ -1,9 +1,8 @@
 # Git Commit Guidelines
 
 ## Initial Assessment
-Have a look at Git diff. Think about how to batch the changes into commits:
-- If you have been instructed to make the commits, then do so, one at a time.
-- If not, then just suggest what the batches would be.
+Have a look at Git diff. Batch the changes into commits, and make them one at a time.
+
 
 ## Commit Best Practices
 
