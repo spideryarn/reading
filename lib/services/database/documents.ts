@@ -22,6 +22,25 @@ export class DocumentService {
   }
 
   /**
+   * Create a new document with explicit user ownership
+   */
+  async createForUser(
+    userId: string, 
+    document: Omit<DocumentInsert, 'id' | 'created_at' | 'updated_at' | 'created_by'>
+  ): Promise<Document> {
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(userId)) {
+      throw new Error('Invalid user ID format')
+    }
+
+    return this.create({
+      ...document,
+      created_by: userId
+    })
+  }
+
+  /**
    * Get a document by ID
    */
   async getById(id: string): Promise<Document | null> {
@@ -141,6 +160,63 @@ export class DocumentService {
       documents: documents.slice(0, limit),
       hasMore
     }
+  }
+
+  /**
+   * Get all documents owned by a specific user
+   */
+  async getByUserId(userId: string, options?: {
+    includePublic?: boolean
+    limit?: number
+    offset?: number
+  }): Promise<{ documents: Document[]; hasMore: boolean }> {
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(userId)) {
+      return { documents: [], hasMore: false }
+    }
+
+    return this.list({
+      createdBy: userId,
+      limit: options?.limit,
+      offset: options?.offset
+    })
+  }
+
+  /**
+   * Check if a user owns a specific document
+   */
+  async isOwnedByUser(documentId: string, userId: string): Promise<boolean> {
+    // Validate UUID formats
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(documentId) || !uuidRegex.test(userId)) {
+      return false
+    }
+
+    const { data, error } = await this.supabase
+      .from('documents')
+      .select('created_by')
+      .eq('id', documentId)
+      .single()
+
+    if (error || !data) {
+      return false
+    }
+
+    return data.created_by === userId
+  }
+
+  /**
+   * Update document ownership (admin function)
+   */
+  async updateOwnership(documentId: string, newOwnerId: string): Promise<Document | null> {
+    // Validate UUID formats
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(documentId) || !uuidRegex.test(newOwnerId)) {
+      throw new Error('Invalid ID format')
+    }
+
+    return this.update(documentId, { created_by: newOwnerId })
   }
 
   /**
