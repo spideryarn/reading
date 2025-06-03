@@ -415,6 +415,57 @@ We use Tailwind CSS v4 beta, which has breaking changes from v3:
 - Never expose service role key client-side
 - Source: supabase.com/docs/guides/auth/server-side/nextjs
 
+## URL Slugification
+
+### Library Choice: `slug`
+
+Use the `slug` library for all URL-friendly slug generation throughout the application:
+
+```typescript
+import slug from 'slug'
+import { generateSlug, findDocumentBySlug } from '@/lib/utils/slug'
+
+// ❌ Bad - manual implementation
+const badSlug = title
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/^-|-$/g, '')
+
+// ✅ Good - use utility functions
+const goodSlug = generateSlug(title)
+const document = findDocumentBySlug(documents, targetSlug)
+```
+
+### Why `slug` Library?
+
+1. **Active maintenance** - Updated regularly (as of 2024)
+2. **Native TypeScript support** - No need for separate type packages
+3. **Unicode handling** - Properly handles international characters
+4. **Small bundle size** - Lightweight and performant
+5. **Robust edge cases** - Handles special characters, spacing, etc.
+
+### Usage Patterns
+
+```typescript
+// Document URL generation
+const documentSlug = generateSlug(document.title)
+const url = `/documents/${documentSlug}`
+
+// Slug-to-document mapping
+const foundDoc = findDocumentBySlug(allDocuments, urlSlug)
+```
+
+### Utility Functions
+
+All slug-related operations should use these centralized functions:
+
+- `generateSlug(text)` - Convert text to URL-friendly slug
+- `findDocumentBySlug(documents, slug)` - Find document by matching title to slug
+
+**Location**: `@/lib/utils/slug.ts`
+
+This ensures consistent slug generation across document listing, routing, and API endpoints.
+
 ## Appendix: Future Considerations
 
 ### Performance

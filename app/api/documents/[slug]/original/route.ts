@@ -1,7 +1,7 @@
-import { readFile } from 'fs/promises'
-import { readdirSync } from 'fs'
-import { join } from 'path'
 import { NextRequest } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { DocumentService } from '@/lib/services/database/documents'
+import type { Document } from '@/lib/types/database'
 
 /**
  * API route to serve original HTML documents without any Spideryarn modifications.
@@ -14,28 +14,16 @@ import { NextRequest } from 'next/server'
  * as it would appear when opened directly in a browser.
  */
 
-function findDocumentBySlug(slug: string): { filename: string; title: string } | null {
-  const examplesDir = join(process.cwd(), 'static', 'examples')
-  const files = readdirSync(examplesDir)
+async function getDocumentBySlug(slug: string): Promise<Document | null> {
+  const supabase = await createClient()
+  const documentService = new DocumentService(supabase)
   
-  // Find the file that matches this slug
-  const matchingFile = files.find(file => {
-    if (!file.endsWith('.html')) return false
-    
-    const fileSlug = file
-      .replace('.html', '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-    
-    return fileSlug === slug
-  })
-  
-  if (!matchingFile) return null
-  
-  return {
-    filename: matchingFile,
-    title: matchingFile.replace('.html', '')
+  try {
+    // Direct database lookup by slug (performance improvement)
+    return await documentService.getBySlug(slug)
+  } catch (error) {
+    console.error('Failed to find document by slug:', error)
+    return null
   }
 }
 
@@ -44,14 +32,14 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params
-  const doc = findDocumentBySlug(slug)
+  const doc = await getDocumentBySlug(slug)
   
   if (!doc) {
     return new Response('Document not found', { status: 404 })
   }
 
-  const filePath = join(process.cwd(), 'static', 'examples', doc.filename)
-  const html = await readFile(filePath, 'utf-8')
+  // Get HTML content from database
+  const html = doc.html_content
   
   return new Response(html, {
     headers: {

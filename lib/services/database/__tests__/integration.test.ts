@@ -37,9 +37,9 @@ describeIfEnv('Database Service Integration Tests', () => {
   let chatService: ChatService
   
   let testModelId: string
-  let createdDocIds: string[] = []
-  let createdAiCallIds: string[] = []
-  let createdThreadIds: string[] = []
+  const createdDocIds: string[] = []
+  const createdAiCallIds: string[] = []
+  const createdThreadIds: string[] = []
 
   beforeAll(async () => {
     supabase = createClient()
@@ -651,6 +651,79 @@ describeIfEnv('Database Service Integration Tests', () => {
 
       // deleteThread returns void, so we just verify it doesn't throw
       await expect(chatService.deleteThread('non-existent-thread')).resolves.not.toThrow()
+    })
+  })
+
+  describe('Slug Functionality', () => {
+    let testDocId: string
+
+    beforeEach(async () => {
+      // Create a test document for slug testing
+      const doc = await documentService.create({
+        title: 'Test Document for Slug Testing',
+        html_content: '<h1>Test Document</h1><p>This is a test document.</p>',
+        plaintext_content: 'Test Document\n\nThis is a test document.',
+        is_public: true
+      })
+
+      testDocId = doc.id
+      createdDocIds.push(testDocId)
+    })
+
+    it('should retrieve document by slug', async () => {
+      // The document should have a slug auto-generated from its title
+      const document = await documentService.getById(testDocId)
+      expect(document?.slug).toBe('test-document-for-slug-testing')
+
+      // Test getBySlug method
+      const documentBySlug = await documentService.getBySlug('test-document-for-slug-testing')
+      expect(documentBySlug).toBeTruthy()
+      expect(documentBySlug?.id).toBe(testDocId)
+      expect(documentBySlug?.title).toBe('Test Document for Slug Testing')
+    })
+
+    it('should return null for non-existent slug', async () => {
+      const document = await documentService.getBySlug('non-existent-slug')
+      expect(document).toBeNull()
+    })
+
+    it('should handle empty or invalid slug input', async () => {
+      const testCases = ['', '   ', null as any, undefined as any]
+      
+      for (const testCase of testCases) {
+        const document = await documentService.getBySlug(testCase)
+        expect(document).toBeNull()
+      }
+    })
+
+    it('should auto-generate unique slugs for documents', async () => {
+      // Create multiple documents with similar titles
+      const doc1 = await documentService.create({
+        title: 'Similar Title Document',
+        html_content: '<h1>Doc 1</h1>',
+        plaintext_content: 'Doc 1',
+        is_public: true
+      })
+      createdDocIds.push(doc1.id)
+
+      const doc2 = await documentService.create({
+        title: 'Similar Title Document', // Same title
+        html_content: '<h1>Doc 2</h1>',
+        plaintext_content: 'Doc 2',
+        is_public: true
+      })
+      createdDocIds.push(doc2.id)
+
+      // Both should have valid slugs (though the second one might need unique handling)
+      expect(doc1.slug).toBeTruthy()
+      expect(doc2.slug).toBeTruthy()
+      
+      // They should be retrievable by their respective slugs
+      const retrieved1 = await documentService.getBySlug(doc1.slug)
+      const retrieved2 = await documentService.getBySlug(doc2.slug)
+      
+      expect(retrieved1?.id).toBe(doc1.id)
+      expect(retrieved2?.id).toBe(doc2.id)
     })
   })
 })
