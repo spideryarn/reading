@@ -168,6 +168,14 @@ const doc: Document = await supabase.from('documents').select('*').single()
 
 ## Database Services
 
+### **Error Handling**
+
+The database service layer propagates errors instead of silently failing to improve debugging:
+- Methods throw descriptive errors with context
+- "Not found" cases (error code PGRST116) return null instead of throwing
+- Invalid UUIDs are validated before database calls
+- No more `console.error` + `return null` patterns
+
 ### **Available Services**
 
 The codebase provides type-safe database services in `lib/services/database/`:

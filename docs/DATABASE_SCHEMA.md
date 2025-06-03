@@ -4,7 +4,13 @@
 
 ## Overview
 
-This document provides detailed descriptions of all tables in the Spideryarn Reading database. The schema supports document storage, AI model tracking, enhancement storage, chat conversations, and user profiles.
+This document provides concise descriptions of all tables in the Spideryarn Reading database. The schema evolved from an element-decomposition approach to single-row document storage with separate AI enhancements, based on practical considerations about data complexity and query patterns.
+
+**Key Design Decisions:**
+- **Single-row documents**: Store full HTML + plaintext rather than decomposing into elements
+- **Comprehensive AI tracking**: Full token usage, latency, and response metadata
+- **Flexible enhancements**: JSONB storage for AI-generated content with type-specific structures
+- **Real-time ready**: Optimised for live updates on document enhancements and chat
 
 ## Schema Locations
 
@@ -32,310 +38,204 @@ The database schema is defined and represented in several places:
 ## Table Schemas
 
 ### **`ai_models`** - AI Provider Models
-```sql
-CREATE TABLE ai_models (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  provider TEXT NOT NULL CHECK (provider IN ('anthropic', 'google', 'openai')),
-  model_id TEXT NOT NULL,
-  version TEXT NOT NULL,
-  display_name TEXT NOT NULL,
-  context_window INT NOT NULL,
-  max_output_tokens INT NOT NULL,
-  supports_images BOOLEAN DEFAULT false,
-  supports_tools BOOLEAN DEFAULT false,
-  supports_thinking BOOLEAN DEFAULT false,
-  input_cost_per_1k DECIMAL(10,6),
-  output_cost_per_1k DECIMAL(10,6),
-  extra JSONB DEFAULT '{}',
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(provider, model_id, version)
-);
-```
 
-**Purpose**: Pre-seeded reference table for AI models with capabilities and pricing  
+**Purpose**: Reference table for AI models with capabilities and pricing
+
 **Key Fields**:
 - `provider`: AI provider (anthropic, google, openai)
-- `model_id`: Provider's model identifier
-- `context_window`: Maximum tokens the model can process
-- `supports_thinking`: Whether model supports thinking/reasoning tokens
-- `extra`: Provider-specific metadata
+- `model_id` + `version`: Unique model identifier and release version
+- `context_window`, `max_output_tokens`: Token limits
+- `supports_thinking`: Whether model supports reasoning tokens
+- Cost fields: `input_cost_per_1k`, `output_cost_per_1k` (basic pricing only)
+- `extra`: JSONB for provider-specific metadata
+
+**Design Notes**: 
+- Pre-seeded with known models, unique on (provider, model_id, version)
+- Pricing intentionally simplified - complex caching/reasoning costs handled elsewhere
+- Designed to be extended rather than comprehensive
 
 ### **`documents`** - Document Storage
-```sql
-CREATE TABLE documents (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title TEXT NOT NULL,
-  html_content TEXT NOT NULL,
-  plaintext_content TEXT NOT NULL,
-  source_url TEXT,
-  language_code TEXT DEFAULT 'en',
-  word_count INT DEFAULT 0,
-  metadata JSONB DEFAULT '{}',
-  is_public BOOLEAN DEFAULT false,
-  created_by UUID REFERENCES auth.users(id),
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
 
--- Full-text search on plaintext content
-CREATE INDEX idx_documents_plaintext_fts ON documents 
-  USING gin(to_tsvector('english', plaintext_content));
-```
+**Purpose**: Single-row document storage with full HTML and searchable plaintext
 
-**Purpose**: Store documents with full HTML and plaintext versions  
 **Key Fields**:
-- `html_content`: Original HTML content
+- `title`: Document title
+- `html_content`: Full HTML for display
 - `plaintext_content`: Extracted text for search and AI processing
-- `metadata`: Flexible storage for document properties
-- `is_public`: Privacy flag for future multi-user support
+- `source_url`: Original URL if imported from web
+- `language_code`: 2-letter language code (default 'en')
+- `word_count`: Calculated word count
+- `is_public`: Privacy flag for multi-user support
+- `created_by`: Links to auth.users
+- `metadata`: JSONB for flexible document properties
+
+**Indexes**: GIN index on plaintext_content for full-text search
+
+**Design Notes**: 
+- Moved from element-decomposition to single-row for simplicity
+- HTML stored in database rather than Supabase Storage for easier querying
+- Plaintext extraction enables both search and AI processing
 
 ### **`ai_calls`** - AI API Call Tracking
-```sql
-CREATE TABLE ai_calls (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  model_id UUID NOT NULL REFERENCES ai_models(id) ON DELETE RESTRICT,
-  document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
-  prompt_type TEXT NOT NULL CHECK (prompt_type IN (
-    'chat', 'summarise', 'glossary', 'headings', 'tweet-thread', 'other'
-  )),
-  prompt_template TEXT,
-  prompt_input TEXT NOT NULL,
-  response_text TEXT,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN (
-    'pending', 'success', 'failed', 'timeout'
-  )),
-  prompt_tokens INT,
-  completion_tokens INT,
-  total_tokens INT,
-  reasoning_tokens INT,
-  latency_ms INT,
-  finish_reason TEXT,
-  error_message TEXT,
-  error_code TEXT,
-  extra JSONB DEFAULT '{}',
-  started_at TIMESTAMPTZ DEFAULT NOW(),
-  completed_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
 
--- Indexes for common queries
-CREATE INDEX idx_ai_calls_document_id ON ai_calls(document_id);
-CREATE INDEX idx_ai_calls_model_id ON ai_calls(model_id);
-CREATE INDEX idx_ai_calls_prompt_type_status ON ai_calls(prompt_type, status);
-CREATE INDEX idx_ai_calls_created_at ON ai_calls(created_at DESC);
-```
+**Purpose**: Comprehensive tracking of all AI API calls with usage analytics
 
-**Purpose**: Comprehensive tracking of all AI API calls with token usage  
 **Key Fields**:
-- `prompt_type`: Type of AI operation
+- `model_id`: References ai_models table
+- `document_id`: Optional document context
+- `prompt_type`: Operation type (chat, summarise, glossary, headings, tweet-thread, other)
+- `prompt_template`: Template name (e.g., 'summarise')
+- `prompt_input`: Full input text sent to AI
+- `response_text`: AI response content
 - `status`: Call status (pending, success, failed, timeout)
-- Token tracking: `prompt_tokens`, `completion_tokens`, `reasoning_tokens`
-- `latency_ms`: Performance metrics
-- `extra`: Provider-specific response metadata
+
+**Token Tracking** (based on Vercel AI SDK):
+- `prompt_tokens`: Input tokens
+- `completion_tokens`: Output tokens  
+- `total_tokens`: Combined total
+- `reasoning_tokens`: Thinking mode tokens (nullable)
+
+**Performance & Debugging**:
+- `latency_ms`: Call duration
+- `finish_reason`: How the call completed
+- `error_message`, `error_code`: Failure details
+- `extra`: JSONB for provider-specific metadata
+
+**Indexes**: Optimised for document lookups, model analysis, and time-series queries
+
+**Design Notes**: 
+- Stores extracted fields rather than raw API response (avoids serialisation issues)
+- Token fields align with Vercel AI SDK structure
+- Real-time updates for call status tracking
 
 ### **`document_enhancements`** - AI-Generated Content
-```sql
-CREATE TABLE document_enhancements (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-  ai_call_id UUID REFERENCES ai_calls(id) ON DELETE SET NULL,
-  type TEXT NOT NULL CHECK (type IN (
-    'summary', 'glossary', 'headings', 'tweet-thread', 'other'
-  )),
-  subtype TEXT,
-  content JSONB NOT NULL,
-  extra JSONB DEFAULT '{}',
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(document_id, type, subtype)
-);
 
--- Indexes
-CREATE INDEX idx_document_enhancements_document_id ON document_enhancements(document_id);
-CREATE INDEX idx_document_enhancements_type ON document_enhancements(type);
-CREATE INDEX idx_document_enhancements_created_at ON document_enhancements(created_at DESC);
-```
+**Purpose**: Flexible storage for all AI-generated document enhancements
 
-**Purpose**: Store all AI-generated enhancements with flexible JSONB structure  
 **Key Fields**:
-- `type`: Enhancement type (summary, glossary, etc.)
-- `subtype`: Further classification (e.g., 'paragraph', 'sentence' for summaries)
-- `content`: JSONB field with type-specific structure
-- `ai_call_id`: Links to the AI call that generated this content
+- `document_id`: Parent document
+- `ai_call_id`: Links to generating AI call (and thus model)
+- `type`: Enhancement category (summary, glossary, headings, tweet-thread, other)
+- `subtype`: Further classification (e.g., 'paragraph' vs 'sentence' summaries)
+- `content`: JSONB with type-specific structure
+- `extra`: Additional metadata
 
-**Content Examples**:
-```jsonb
--- Summary
-{
-  "text": "Document summary text",
-  "keyPoints": ["Point 1", "Point 2"],
-  "metadata": { "confidence": 0.95 }
-}
+**Unique Constraint**: (document_id, type, subtype) - one enhancement per type/subtype per document
 
--- Glossary
-{
-  "entries": [
-    {
-      "term": "API",
-      "definition": "Application Programming Interface",
-      "category": "Technical",
-      "aliases": ["Application Interface"]
-    }
-  ]
-}
+**Content Structure Examples**:
 
--- Headings
-{
-  "items": [
-    {
-      "id": "h1",
-      "text": "Introduction",
-      "level": 1,
-      "parentId": null,
-      "elementId": "intro"
-    }
-  ]
-}
-```
+**Summary**: `{ text, keyPoints, metadata }`  
+**Glossary**: `{ entries: [{ term, definition, category, aliases }] }`  
+**Headings**: `{ items: [{ id, text, level, parentId, elementId }] }`  
+**Tweet Thread**: `{ tweets: [{ text, order }] }`
+
+**Design Notes**: 
+- JSONB enables type-specific structures without schema changes
+- No versioning/history - overwrites on regeneration
+- Real-time subscriptions enable live enhancement updates
+- Links to ai_call provide full traceability to generating model
 
 ### **`chat_threads`** - Conversation Threads
-```sql
-CREATE TABLE chat_threads (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-  model_id UUID NOT NULL REFERENCES ai_models(id) ON DELETE RESTRICT,
-  title TEXT DEFAULT 'New Chat',
-  created_by UUID REFERENCES auth.users(id),
-  extra JSONB DEFAULT '{}',
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
 
--- Indexes
-CREATE INDEX idx_chat_threads_document_id ON chat_threads(document_id);
-CREATE INDEX idx_chat_threads_created_by ON chat_threads(created_by);
-CREATE INDEX idx_chat_threads_updated_at ON chat_threads(updated_at DESC);
-```
+**Purpose**: Organise conversations about specific documents
 
-**Purpose**: Manage conversation threads linked to documents
+**Key Fields**:
+- `document_id`: Document being discussed
+- `model_id`: AI model for this conversation
+- `title`: Thread title (default 'New Chat')
+- `created_by`: Thread creator
+- `extra`: JSONB for thread metadata
+
+**Design Notes**: 
+- Each thread tied to one document and one AI model
+- Permanent lifecycle (no auto-expiry)
+- Real-time updates for multi-tab chat sync
 
 ### **`chat_messages`** - Individual Messages
-```sql
-CREATE TABLE chat_messages (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  thread_id UUID NOT NULL REFERENCES chat_threads(id) ON DELETE CASCADE,
-  ai_call_id UUID REFERENCES ai_calls(id) ON DELETE SET NULL,
-  role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
-  content TEXT NOT NULL,
-  sequence_number INT NOT NULL,
-  extra JSONB DEFAULT '{}',
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(thread_id, sequence_number)
-);
 
--- Indexes
-CREATE INDEX idx_chat_messages_thread_id ON chat_messages(thread_id);
-CREATE INDEX idx_chat_messages_sequence ON chat_messages(thread_id, sequence_number);
-```
+**Purpose**: Store chronological messages within chat threads
 
-**Purpose**: Store individual messages within chat threads  
 **Key Fields**:
-- `sequence_number`: Ensures correct message ordering
-- `ai_call_id`: Links assistant messages to their AI calls
+- `thread_id`: Parent conversation thread
+- `ai_call_id`: Links assistant messages to generating AI call
 - `role`: Message sender (user, assistant, system)
+- `content`: Message text
+- `sequence_number`: Ordering within thread
+- `extra`: JSONB for message metadata
+
+**Unique Constraint**: (thread_id, sequence_number) - ensures correct ordering
+
+**Design Notes**: 
+- Assistant messages link to ai_calls for full traceability
+- Sequence numbering prevents race conditions
+- Real-time subscriptions for live chat updates
 
 ### **`profiles`** - User Profiles
-```sql
-CREATE TABLE profiles (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  preferences JSONB DEFAULT '{}',
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
 
--- Indexes
-CREATE INDEX idx_profiles_user_id ON profiles(user_id);
-```
+**Purpose**: Future expansion for user preferences and settings
 
-**Purpose**: Store user preferences and settings (future expansion)
+**Key Fields**:
+- `user_id`: 1:1 relationship with auth.users
+- `preferences`: JSONB for flexible user settings
 
-## TypeScript Types
+**Design Notes**: 
+- Minimal implementation for future user features
+- JSONB preferences enable schema-free expansion
+- Unique constraint on user_id ensures 1:1 relationship
 
-All schemas are automatically converted to TypeScript types:
+## TypeScript Integration
+
+All schemas are automatically converted to TypeScript types via Supabase CLI:
 
 ```bash
-# Regenerate types after schema changes
-npm run db:types
-
-# Types are available in:
-lib/types/database.ts
+npm run db:types    # Generate types from current schema
+npm run db:reset    # Reset DB and regenerate types
 ```
 
-**Key Types**:
-```typescript
-// Table types
-export type Document = Database['public']['Tables']['documents']['Row']
-export type DocumentInsert = Database['public']['Tables']['documents']['Insert']
-export type AiCall = Database['public']['Tables']['ai_calls']['Row']
-export type DocumentEnhancement = Database['public']['Tables']['document_enhancements']['Row']
+**Generated Types**: `lib/types/database.ts` provides full type safety for all tables, including helper types for inserts, updates, and enums.
 
-// Enums
-export type PromptType = 'chat' | 'summarise' | 'glossary' | 'headings' | 'tweet-thread' | 'other'
-export type EnhancementType = 'summary' | 'glossary' | 'headings' | 'tweet-thread' | 'other'
-export type CallStatus = 'pending' | 'success' | 'failed' | 'timeout'
-export type MessageRole = 'user' | 'assistant' | 'system'
-```
+## Automatic Timestamps & Metadata
 
-## Automatic Timestamps
+**Timestamps**: All tables include `created_at` and `updated_at` fields with automatic updates via MODDATETIME triggers
 
-All tables use the MODDATETIME extension for automatic `updated_at` timestamps:
+**UUIDs**: All primary keys use `gen_random_uuid()` for globally unique identifiers
 
-```sql
-CREATE TRIGGER handle_updated_at BEFORE UPDATE ON [table_name]
-  FOR EACH ROW EXECUTE FUNCTION moddatetime(updated_at);
-```
+**JSONB Fields**: `extra` and `metadata` fields provide schema-free expansion without migrations
 
-## Row Level Security
+## Security & Permissions
 
-All tables have RLS enabled with development policies:
+**Row Level Security**: Enabled on all tables with development policies (currently permissive for anonymous access)
 
-```sql
--- Example for documents table
-ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
+**Future Authentication**: Schema ready for user-scoped policies via `created_by` fields linking to `auth.users`
 
-CREATE POLICY "Allow anonymous read" ON documents 
-  FOR SELECT USING (true);
-  
-CREATE POLICY "Allow anonymous insert" ON documents 
-  FOR INSERT WITH CHECK (true);
-```
+## Real-time Features
 
-Future: User-scoped policies when authentication is implemented
+**Optimised Tables**: 
+- `document_enhancements` - Live AI generation progress
+- `chat_messages` - Multi-tab conversation sync  
+- `documents` - Live title/metadata updates
 
-## Real-time Subscriptions
+**Subscription Patterns**: By document_id for scoped updates
 
-Tables optimised for real-time updates:
-- `document_enhancements` - Live AI generation updates
-- `documents` - Title/metadata changes
-- `chat_messages` - Multi-tab conversation sync
+## Performance & Scaling Notes
 
-## Performance Considerations
+**Indexes**: Comprehensive indexing on foreign keys, timestamps, and search patterns
 
-1. **Indexes**: All foreign keys and common query patterns are indexed
-2. **Full-text Search**: GIN index on `documents.plaintext_content`
-3. **JSONB Indexing**: Can be added for specific JSONB queries if needed
-4. **Cascade Deletes**: Proper cleanup when parent records are deleted
-5. **Archival**: No auto-deletion; consider archival strategy for old AI calls
+**Full-text Search**: GIN index on plaintext_content for document search
 
-## Migration History
+**JSONB**: Flexible storage with option for specific indexes as needed
 
-**January 2025**: Initial comprehensive schema implementation
-- Migrated from decomposed element storage to single-row documents
-- Added AI call tracking with token usage
-- Implemented flexible enhancement storage
-- Added chat functionality
-- Prepared for multi-user support
+**Cleanup**: Cascade deletes ensure referential integrity; no automated archival (manual cleanup for old ai_calls if needed)
+
+## Schema Evolution
+
+**Design Philosophy**: Moved from element-decomposition to single-row documents based on practical experience - simpler queries, better performance, easier maintenance.
+
+**Key Decisions**: 
+- Store HTML in database rather than Supabase Storage (enables SQL queries)
+- Extract AI response fields rather than store raw responses (avoid serialisation issues)
+- JSONB for flexible enhancement content (no schema changes for new AI features)
+- Comprehensive token tracking for cost analysis and debugging
+- Real-time ready architecture for live updates
+
+**Implementation**: January 2025 - comprehensive schema with AI tracking, chat, and enhancement storage

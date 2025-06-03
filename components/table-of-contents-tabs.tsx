@@ -97,6 +97,7 @@ function hasSufficientContentForSummary(
  */
 async function generateHeadingSummary(
   elementId: string,
+  documentId: string,
   elements?: DocumentElement[],
   mutatedDocument?: DocumentElement[],
   activeMutationType?: string | null,
@@ -163,7 +164,9 @@ async function generateHeadingSummary(
       },
       body: JSON.stringify({
         content: htmlContent,
-        granularity: TOOLTIP_GRANULARITY
+        granularity: TOOLTIP_GRANULARITY,
+        documentId: documentId, // Keep proper UUID for database
+        sectionId: elementId    // Use element ID for section-specific caching
       }),
     })
 
@@ -202,6 +205,7 @@ export function OriginalHeadingsTab({
   content, 
   elements, 
   onHeadingClick, 
+  documentId,
   headingVisibility 
 }: BaseTabProps) {
   const { document: mutatedDocument } = useMutation()
@@ -376,7 +380,7 @@ export function OriginalHeadingsTab({
         setLoadingStates(prev => new Set(prev).add(elementId))
         
         // Start async LLM summary generation
-        generateHeadingSummary(elementId, elements, mutatedDocument, activeMutationType, setContentCache).finally(() => {
+        generateHeadingSummary(elementId, documentId, elements, mutatedDocument, activeMutationType, setContentCache).finally(() => {
           // Remove from loading states
           setLoadingStates(prev => {
             const newSet = new Set(prev)
@@ -630,7 +634,7 @@ export function AIGeneratedHeadingsTab({
         setLoadingStates(prev => new Set(prev).add(elementId))
         
         // Start async LLM summary generation
-        generateHeadingSummary(elementId, elements, mutatedDocument, activeMutationType, setContentCache).finally(() => {
+        generateHeadingSummary(elementId, documentId, elements, mutatedDocument, activeMutationType, setContentCache).finally(() => {
           // Remove from loading states
           setLoadingStates(prev => {
             const newSet = new Set(prev)
@@ -716,6 +720,6 @@ export function AIGeneratedHeadingsTab({
  * Document Summary Tab Component
  * Displays an AI-generated summary of the entire document
  */
-export function DocumentSummaryTab({ markdownContent }: BaseTabProps) {
-  return <SummaryPane content={markdownContent} autoActivate />
+export function DocumentSummaryTab({ markdownContent, documentId }: BaseTabProps) {
+  return <SummaryPane content={markdownContent || ""} documentId={documentId} autoActivate />
 }

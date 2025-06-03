@@ -116,11 +116,15 @@ class DocumentImporter {
         return result
       }
 
+      // Generate slug from title
+      const slug = this.generateSlug(filename)
+
       // Insert new document
       const { data: newDoc, error } = await this.supabase
         .from('documents')
         .insert({
           title,
+          slug,
           html_content: htmlContent,
           plaintext_content: plaintextContent,
           word_count: wordCount,
