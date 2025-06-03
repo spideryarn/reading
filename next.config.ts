@@ -13,6 +13,12 @@ const nextConfig: NextConfig = {
       config.externals.push({
         'pdf2pic': 'commonjs pdf2pic'
       })
+      
+      // Exclude pdf-to-png-converter and its native dependencies from webpack bundling
+      config.externals.push({
+        'pdf-to-png-converter': 'commonjs pdf-to-png-converter',
+        '@napi-rs/canvas': 'commonjs @napi-rs/canvas'
+      })
     }
     return config
   },
