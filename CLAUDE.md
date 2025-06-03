@@ -39,7 +39,7 @@ Next.js local dev server:
 
 Database operations:
 - `npm run db:types` - Regenerate TypeScript types from Supabase schema
-- `npm run db:reset` - Reset database and regenerate types
+- `npm run db:reset` - **DESTRUCTIVE**: Reset database and regenerate types (NEVER run without explicit user permission - this deletes all local data!)
 
 Type checking and linting:
 - `npm run build` - TypeScript compilation errors

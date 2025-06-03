@@ -26,7 +26,7 @@ supabase/
 # Create new migration (generates timestamped file)
 npx supabase migration new add_user_preferences
 
-# Apply all pending migrations
+# Apply all pending migrations (DESTRUCTIVE - requires explicit user permission)
 npx supabase db reset
 
 # Check current migration status
@@ -38,7 +38,7 @@ npx supabase db diff -f my_schema_changes
 # Generate TypeScript types from current schema
 npm run db:types
 
-# Reset database and regenerate types in one command
+# NEVER RUN WITHOUT USER PERMISSION - Reset database and regenerate types
 npm run db:reset
 ```
 
@@ -46,8 +46,9 @@ npm run db:reset
 
 1. **Create migration**: `npx supabase migration new feature_name`
 2. **Edit SQL file**: Add your schema changes in `supabase/migrations/[timestamp]_feature_name.sql`
-3. **Apply locally**: `npm run db:reset` (resets DB, applies all migrations, and regenerates types)
-4. **Verify types**: Check that `lib/types/database.ts` has been updated with your changes
+3. **IMPORTANT**: Ask user for explicit permission before applying migrations with `npm run db:reset`
+4. **Apply locally** (with permission): `npm run db:reset` (resets DB, applies all migrations, and regenerates types)
+5. **Verify types**: Check that `lib/types/database.ts` has been updated with your changes
 5. **Test**: Verify changes work as expected in code with proper type safety
 6. **Commit**: Include both the migration file and updated types in your git commit
 7. **Deploy**: Push to production (future step)
@@ -69,6 +70,12 @@ CREATE TABLE user_preferences (
 -- Always include indexes
 CREATE INDEX idx_user_preferences_user_id ON user_preferences(user_id);
 ```
+
+## ⚠️ CRITICAL SAFETY WARNING
+
+**NEVER run `npm run db:reset` or `npx supabase db reset` without explicit user permission!**
+
+These commands are DESTRUCTIVE and will permanently delete all local database data.
 
 
 ## IMPORTANT RULES - always err on the side of caution
