@@ -115,7 +115,7 @@ export function AppHeader({
                     size="sm"
                   >
                     <Link href="/auth/login">
-                      Sign in
+                      Log in
                     </Link>
                   </Button>
                   <Button
@@ -124,7 +124,7 @@ export function AppHeader({
                     size="sm"
                   >
                     <Link href="/auth/signup">
-                      Sign up
+                      Register
                     </Link>
                   </Button>
                 </div>

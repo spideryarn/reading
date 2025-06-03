@@ -7,7 +7,7 @@ export default function Home() {
       <div className="text-center">
         <h1 className="text-5xl font-bold mb-4 text-gray-900">Spideryarn Reading</h1>
         <p className="text-xl text-gray-600 mb-8">
-          AI-assisted document reading and analysis application
+          AI-assisted reading and analysis application
         </p>
         <Button
           asChild
