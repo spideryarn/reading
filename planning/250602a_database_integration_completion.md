@@ -99,19 +99,27 @@ Complete the database integration for Spideryarn Reading by connecting existing 
     - 📔 Migration `20250602005754_add_documents_slug_column.sql` applied successfully. Added getBySlug() method to DocumentService and updated all routing code for direct database lookups.
 
 ### Stage: Authentication Mock User Setup
-- [ ] Create mock authentication user via migration, using subagent with lots of context
-  - [ ] Add system user creation to existing migration or create new one
-  - [ ] Use Supabase auth.admin functions to create "system@spideryarn.internal" user
-  - [ ] Update DocumentService to assign created_by to system user for new documents
-  - [ ] Test that foreign key constraints are satisfied
-  - [ ] If auth user creation fails, fall back to making created_by nullable temporarily
+- ✅ Create mock authentication user via migration, using subagent with lots of context
+  - ✅ Add system user creation to existing migration or create new one
+  - ✅ Use Supabase auth.admin functions to create "system@spideryarn.internal" user
+  - ✅ Update DocumentService to assign created_by to system user for new documents
+  - ✅ Test that foreign key constraints are satisfied
+  - ✅ If auth user creation fails, fall back to making created_by nullable temporarily
+    - 📔 Migration `20250603211615_add_mock_system_user.sql` created system user with ID `00000000-0000-0000-0000-000000000001`. All database operations now use this mock user to satisfy foreign key constraints.
 
 ### Stage: AI Enhancements Database Integration
-- [ ] Connect AI summarise feature to database storage
-  - [ ] Update `app/api/summarise/route.ts` to use EnhancementService
-  - [ ] Modify response to store results in document_enhancements table with type='summary'
-  - [ ] Update UI components to load existing summaries from database on page load
-  - [ ] Test that summaries persist across page reloads
+- ✅ Connect AI summarise feature to database storage
+  - ✅ Update `app/api/summarise/route.ts` to use EnhancementService
+  - ✅ Modify response to store results in document_enhancements table with type='summary'
+  - ✅ Update UI components to load existing summaries from database on page load
+  - ✅ Test that summaries persist across page reloads
+  - ✅ **Critical Fix**: Resolved UUID validation error in tooltip summarization
+    - 📔 **Issue**: Tooltip functionality was concatenating documentId + elementId (e.g., `"uuid-syr-elementid"`), creating invalid UUIDs that failed foreign key constraints
+    - 📔 **Solution**: Modified API to accept separate `documentId` (proper UUID) and `sectionId` (element ID) parameters
+    - 📔 **Files Updated**: 
+      - `app/api/summarise/route.ts:13,36,81,127` - Added sectionId parameter and section-specific caching logic
+      - `components/table-of-contents-tabs.tsx:168-169` - Updated API call to pass documentId and sectionId separately
+    - 📔 **Testing**: Verified section-specific caching works (different sections get separate cache entries), performance improvement (cached: 82ms vs new: 514ms), and database persistence across sessions
 
 - [ ] Connect AI glossary feature to database storage  
   - [ ] Update `app/api/glossary/route.ts` to use EnhancementService
@@ -165,6 +173,18 @@ Complete the database integration for Spideryarn Reading by connecting existing 
   - [ ] Test chat conversations across multiple sessions
   - [ ] Test real-time document updates using Supabase Studio
 
+### Stage: Configuration Simplification Discussion
+- [ ] **Discuss with user**: Now that ai_models table contains all model configurations, should we simplify `lib/config.ts`?
+  - [ ] Current state: `PROVIDER_TIER_MODELS` object duplicates information now stored in database
+  - [ ] Options:
+    - **Option A**: Keep `lib/config.ts` as single source of truth, remove ai_models table
+    - **Option B**: Use database as source of truth, simplify config.ts to just DEFAULT_MODEL and basic settings
+    - **Option C**: Hybrid approach - config.ts for development defaults, database for runtime model selection
+  - [ ] Benefits of simplification: Eliminates duplication, enables dynamic model configuration
+  - [ ] Considerations: Impact on environment variable overrides (LLM_MODEL), development workflow
+  - [ ] **Action**: Schedule discussion after core database integration is complete
+
+
 ### Stage: Documentation and Cleanup
 - [ ] Update relevant documentation
   - [ ] Update `docs/DATABASE_OVERVIEW.md` with integration completion status
@@ -186,6 +206,7 @@ Complete the database integration for Spideryarn Reading by connecting existing 
 
 - [ ] Move this planning document to `planning/finished/`
 - [ ] Final commit with planning doc move
+
 
 ## Appendix
 
