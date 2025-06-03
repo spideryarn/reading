@@ -30,7 +30,7 @@ npm test        # Run test suite
 # DESTRUCTIVE COMMANDS - require explicit user permission:
 npm run db:reset     # Deletes all local database data
 npx supabase db reset # Deletes all local database data
-npx supabase db push # Applies migrations to remote production database
+npx supabase db push # Applies migrations to database
 npx supabase migration new # Creates new migration files
 
 # SAFE READ-ONLY COMMANDS - can be run as needed:

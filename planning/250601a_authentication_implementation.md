@@ -159,28 +159,28 @@ This builds on the completed database implementation and leverages the existing 
   - [x] Document how to protect new routes
   - [x] Add examples of public vs protected route configuration
 
-### Stage: Database Profile Integration
-- [ ] Create database trigger for automatic profile creation
-  - [ ] Create Supabase migration for auth.users -> public.profiles trigger
-  - [ ] Test trigger fires correctly when new users register
-  - [ ] Verify profile creation includes proper user_id reference
+### Stage: Database Profile Integration ✅
+- [x] Create database trigger for automatic profile creation
+  - [x] Create Supabase migration for auth.users -> public.profiles trigger
+  - [x] Test trigger fires correctly when new users register
+  - [x] Verify profile creation includes proper user_id reference
 
-- [ ] Implement profile management utilities
-  - [ ] Create `lib/services/profile.ts` with profile CRUD operations
-  - [ ] Add profile retrieval and update functions
-  - [ ] Include proper error handling and type safety
+- [x] Implement profile management utilities
+  - [x] Create `lib/services/database/profiles.ts` with ProfileService CRUD operations
+  - [x] Add profile retrieval and update functions with UUID validation
+  - [x] Include proper error handling and type safety
 
-- [ ] Connect document ownership to user profiles
-  - [ ] Update document creation to set `created_by` field
-  - [ ] Add user-scoped document queries
-  - [ ] Test document ownership assignment and retrieval
+- [x] Connect document ownership to user profiles
+  - [x] Update DocumentService with user-scoped methods (createForUser, getByUserId, isOwnedByUser)
+  - [x] Add user-scoped document queries
+  - [x] Test document ownership assignment and retrieval
 
-- [ ] Write tests for profile integration using subagent
-  - [ ] Test automatic profile creation on user registration
-  - [ ] Test profile data retrieval and updates
-  - [ ] Test document ownership assignment
+- [x] Write tests for profile integration using subagent
+  - [x] Test automatic profile creation on user registration (30+ unit tests)
+  - [x] Test profile data retrieval and updates (comprehensive test coverage)
+  - [x] Test document ownership assignment (integration tests)
 
-- [ ] Git commit database integration following `docs/GIT_COMMITS.md` using subagent
+- [x] Git commit database integration following `docs/GIT_COMMITS.md` using subagent
 
 ### Stage: Google OAuth Implementation
 - [ ] Configure Google OAuth in Supabase
