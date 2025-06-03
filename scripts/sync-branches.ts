@@ -3,12 +3,18 @@
 /**
  * Git Worktree Branch Synchronisation Tool
  * 
- * See docs/WORKTREES.md for complete worktree setup and workflow documentation.
+ * See docs/GIT_WORKTREES.md for complete worktree setup and workflow documentation.
  * 
  * This script provides one-direction merge synchronisation between the current
  * branch and main branch. Always requires a two-step process for complete sync:
  * 1. From feature branch: merge main → current
  * 2. From main branch: merge specified branch → main
+ * 
+ * AUTOSTASH SUPPORT:
+ * This script uses Git's built-in --autostash functionality to safely handle
+ * uncommitted changes during merges. Local changes are automatically stashed
+ * before the merge and reapplied afterward. If conflicts occur during stash
+ * reapplication, Git provides clear recovery instructions.
  */
 
 import { Cli, Command, Option } from 'clipanion';
@@ -40,14 +46,10 @@ class SyncBranchesCommand extends Command {
 
   async execute(): Promise<number> {
     try {
-      console.log('🔄 Spideryarn Branch Sync Tool');
-      console.log('==============================\n');
-
-      // Safety checks
+      // Safety checks (quiet unless issues)
       await this.runSafetyChecks();
 
       const currentBranch = this.getCurrentBranch();
-      console.log(`📍 Current branch: ${currentBranch}`);
 
       if (currentBranch === this.mainBranch && !this.targetBranch) {
         // From main without specific branch: sync all worktrees
@@ -55,24 +57,29 @@ class SyncBranchesCommand extends Command {
       } else {
         // Normal single-branch sync
         const { sourceBranch, targetBranch } = this.determineSyncDirection(currentBranch);
-        console.log(`🔀 Syncing: ${sourceBranch} → ${targetBranch}\n`);
+        console.log(`🔀 ${sourceBranch} → ${targetBranch}`);
 
         await this.performOneDirectionMerge(sourceBranch, targetBranch);
 
-        console.log('✅ One-direction merge completed successfully!');
+        console.log('✅ Synced');
         
-        // Provide next step guidance
+        // Provide next step guidance only for complex scenarios
         if (currentBranch === this.mainBranch) {
-          console.log(`\n📋 Next step: Run this script from the ${sourceBranch} worktree to pull these changes.`);
+          console.log(`Next: sync from ${sourceBranch} worktree to pull changes`);
         } else {
-          console.log(`\n📋 Next step: Run this script from the main worktree to merge ${currentBranch} → main.`);
+          console.log(`Next: sync from main to merge ${currentBranch} → main`);
         }
       }
       
       return 0;
 
     } catch (error) {
-      console.error('❌ Error:', error instanceof Error ? error.message : error);
+      console.error('\n❌ Sync failed:', error instanceof Error ? error.message : error);
+      console.error('\n🔧 Recovery options:');
+      console.error('   • If merge conflicts: resolve conflicts, git add <files>, git commit');
+      console.error('   • If autostash conflicts: run "git stash show -p" to see changes, then "git stash drop" or resolve manually');
+      console.error('   • If worktree issues: see docs/GIT_WORKTREES.md for troubleshooting');
+      console.error('   • If persistent issues: git status and git log --oneline -5 for diagnostics\n');
       return 1;
     }
   }
@@ -82,26 +89,29 @@ class SyncBranchesCommand extends Command {
     try {
       this.execGit('rev-parse --git-dir');
     } catch {
-      throw new Error('Not in a git repository');
+      throw new Error('Not in a git repository. Run this script from within a git repository.');
     }
 
-    // Check for uncommitted changes
+    // Check for uncommitted changes and inform user about autostash
     const status = this.execGit('status --porcelain').trim();
     if (status) {
-      throw new Error('Working tree is not clean. Please commit or stash your changes first.');
+      console.log('📦 Uncommitted changes detected - using autostash');
     }
 
     // Check if main branch exists
     const branches = this.execGit('branch --list').split('\n').map(b => b.replace(/^[\*\+]?\s*/, ''));
     
     if (!branches.includes(this.mainBranch)) {
-      throw new Error(`Main branch '${this.mainBranch}' does not exist`);
+      throw new Error(`Main branch '${this.mainBranch}' does not exist. Create it or specify correct branch with --main <branch>`);
     }
 
     // Validate worktree structure
     await this.validateWorktreeStructure();
 
-    console.log('✅ Safety checks passed');
+    // Only show success message if there were warnings
+    if (status) {
+      console.log('✅ Ready to sync');
+    }
   }
 
   private getCurrentBranch(): string {
@@ -128,9 +138,9 @@ class SyncBranchesCommand extends Command {
       
       if (unexpectedDirs.length > 0) {
         throw new Error(
-          `Unexpected reading-* directories found: ${unexpectedDirs.join(', ')}\n` +
-          `Expected only: ${expectedDirs.join(', ')}\n` +
-          `Please remove unexpected directories or rename them to match the expected structure.`
+          `Unexpected reading-* directories: ${unexpectedDirs.join(', ')}. ` +
+          `Expected only: ${expectedDirs.join(', ')}. ` +
+          `See docs/GIT_WORKTREES.md for proper setup.`
         );
       }
       
@@ -143,8 +153,8 @@ class SyncBranchesCommand extends Command {
         const branchName = dir.replace('reading-', '');
         if (!branches.includes(branchName)) {
           throw new Error(
-            `Directory '${dir}' exists but branch '${branchName}' does not exist.\n` +
-            `Either create the branch or remove the directory.`
+            `Directory '${dir}' exists but branch '${branchName}' missing. ` +
+            `Create branch: git checkout -b ${branchName}, or remove directory.`
           );
         }
       }
@@ -155,8 +165,8 @@ class SyncBranchesCommand extends Command {
         const missingBranches = worktreeBranches.filter(branch => !branches.includes(branch));
         if (missingBranches.length > 0) {
           throw new Error(
-            `Cannot sync all worktrees: missing branches ${missingBranches.join(', ')}\n` +
-            `Create these branches or use --branch to sync specific worktrees.`
+            `Cannot sync all worktrees: missing branches ${missingBranches.join(', ')}. ` +
+            `Create them: git checkout -b <branch>, or use --branch to sync specific worktrees.`
           );
         }
       }
@@ -173,12 +183,12 @@ class SyncBranchesCommand extends Command {
     if (currentBranch === this.mainBranch) {
       // From main: need to specify which branch to sync
       if (!this.targetBranch) {
-        throw new Error(`When on main branch, you must specify which branch to sync using --branch <branch-name>`);
+        throw new Error(`When on main branch, specify which branch to sync: --branch <branch-name>`);
       }
       // Verify target branch exists
       const branches = this.execGit('branch --list').split('\n').map(b => b.replace(/^[\*\+]?\s*/, ''));
       if (!branches.includes(this.targetBranch)) {
-        throw new Error(`Target branch '${this.targetBranch}' does not exist`);
+        throw new Error(`Target branch '${this.targetBranch}' does not exist. Create it: git checkout -b ${this.targetBranch}`);
       }
       return { sourceBranch: this.targetBranch, targetBranch: this.mainBranch };
     } else {
@@ -198,7 +208,7 @@ class SyncBranchesCommand extends Command {
     
     for (const branch of worktreeBranches) {
       try {
-        console.log(`\n🔀 Syncing: ${branch} → main`);
+        console.log(`🔀 ${branch} → main`);
         await this.performOneDirectionMerge(branch, this.mainBranch);
         syncedCount++;
       } catch (error) {
@@ -207,14 +217,13 @@ class SyncBranchesCommand extends Command {
       }
     }
     
-    console.log('\n' + '='.repeat(50));
-    console.log(`✅ Synced ${syncedCount} worktree(s) to main`);
+    console.log(`\n✅ Synced ${syncedCount}/${worktreeBranches.length} worktrees to main`);
     
     if (failedBranches.length > 0) {
-      console.log(`⚠️  Failed to sync: ${failedBranches.join(', ')}`);
-      console.log('📋 To recover: resolve conflicts in main branch, commit, then re-run this script.');
+      console.log(`⚠️  Failed: ${failedBranches.join(', ')}`);
+      console.log('📋 Next: resolve conflicts in main, commit, then re-run this script');
     } else {
-      console.log(`\n📋 Next step: Run this script from each worktree to pull the latest changes from main.`);
+      console.log('Next: run this script from each worktree to pull latest main');
     }
   }
 
@@ -223,12 +232,11 @@ class SyncBranchesCommand extends Command {
     const currentBranch = this.getCurrentBranch();
     
     if (currentBranch === targetBranch) {
-      console.log(`🔄 Merging ${sourceBranch} → ${targetBranch}...`);
-      this.execGit(`merge ${sourceBranch}`, {
-        errorMessage: `Merge conflicts in ${targetBranch}. Please resolve conflicts, commit, and re-run this script.`
+      // Use Git's built-in autostash to safely handle uncommitted changes
+      // Git will stash changes before merge and reapply them afterward
+      this.execGit(`merge --autostash ${sourceBranch}`, {
+        errorMessage: `Merge conflicts during ${sourceBranch} → ${targetBranch}.`
       });
-      
-      console.log(`✅ Merged ${sourceBranch} → ${targetBranch}`);
     } else {
       throw new Error(`Expected to be on ${targetBranch} branch, but currently on ${currentBranch}`);
     }

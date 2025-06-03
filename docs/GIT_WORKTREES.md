@@ -9,6 +9,22 @@ Multi-worktree development setup for parallel feature development using a hub-an
 - `docs/GIT_COMMITS.md` - Git commit best practices for the project
 - `planning/finished/250526c_git_worktree_sync_strategy.md` - Historical decisions about worktree synchronisation (out of date)
 
+## Quick Start
+
+**Basic sync commands:**
+```bash
+# From any worktree: pull latest from main
+./scripts/sync-branches.ts
+
+# From main: merge a specific worktree
+./scripts/sync-branches.ts --branch worktree1
+
+# From main: merge all worktrees
+./scripts/sync-branches.ts
+```
+
+**Autostash support:** The script automatically handles uncommitted changes using Git's `--autostash` feature. Your changes are safely stashed before merge and reapplied afterward.
+
 ## Principles
 
 - **Protected main branch**: Never work directly on main; all changes go through feature branches
@@ -203,49 +219,51 @@ git log worktree1..main --oneline
 
 ### Conflict Resolution
 
-#### Single Branch Conflicts
-When merge conflicts occur during individual branch sync:
-1. Resolve conflicts in the affected files
-2. Stage resolved files: `git add <files>`
-3. Complete merge: `git commit`
-4. Re-run sync script to continue
+#### Merge Conflicts
+When merge conflicts occur:
+1. **Resolve conflicts** in the affected files
+2. **Stage resolved files**: `git add <files>`
+3. **Complete merge**: `git commit`
+4. **Continue**: Re-run sync script
+
+#### Autostash Conflicts
+If Git reports "Applying autostash resulted in conflicts":
+1. **Check stashed changes**: `git stash show -p`
+2. **Options**:
+   - Resolve manually: `git stash pop` then fix conflicts
+   - Discard stash: `git stash drop` (if changes no longer needed)
+   - Keep stash: Leave it and continue working
 
 #### Sync-All Partial Failures
-When `sync-branches.ts` (without `--branch`) partially fails:
+When syncing all worktrees partially fails:
 
-1. **The script reports which branches failed**, e.g.:
+1. **Script reports status**:
    ```
-   ✅ Synced 2 worktree(s) to main
-   ⚠️  Failed to sync: worktree2
-   📋 To recover: resolve conflicts in main branch, commit, then re-run this script.
+   ✅ Synced 2/3 worktrees to main
+   ⚠️  Failed: worktree2
+   📋 Next: resolve conflicts in main, commit, then re-run this script
    ```
 
-2. **Fix conflicts in main branch**:
+2. **Fix conflicts in main**:
    ```bash
-   # You're still in main branch where conflicts occurred
-   git status                    # See conflicted files
+   git status               # See conflicted files
    # Edit files to resolve conflicts
    git add <resolved-files>
    git commit
    ```
 
-3. **Re-run the sync-all command**:
+3. **Re-run sync-all**:
    ```bash
-   ./scripts/sync-branches.ts    # Runs sync-all again
+   ./scripts/sync-branches.ts    # Retries failed branches
    ```
-   
-   The script will:
-   - Skip already-synced branches (Git says "Already up to date")
-   - Retry the previously failed branch
-   - Continue with any remaining branches
 
-4. **Complete the process**: Once all worktrees are synced to main, go to each worktree and pull the latest changes:
+4. **Pull to worktrees**:
    ```bash
    # In each worktree directory
-   ./scripts/sync-branches.ts    # Pulls main → worktree
+   ./scripts/sync-branches.ts    # Gets latest main
    ```
 
-**Why this works**: Git merges are idempotent - running the same merge twice has no effect if it already succeeded.
+**Recovery tip**: Git merges are idempotent - re-running skips already-synced branches.
 
 ## Troubleshooting
 
