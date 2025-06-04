@@ -82,3 +82,6 @@ screenshots/
 
 # gjdutils repository
 gjdutils/
+
+# credentials
+secrets/
