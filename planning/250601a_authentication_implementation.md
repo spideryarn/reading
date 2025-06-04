@@ -17,7 +17,7 @@ This builds on the completed database implementation and leverages the existing 
 
 ## References
 
-- `docs/AUTHENTICATION_SUPABASE.md` - Comprehensive technical guide with implementation patterns, security best practices, and component architecture
+- `docs/AUTHENTICATION_OVERVIEW.md` - High-level authentication system architecture and implementation status
 - `planning/250531a_database_storage_implementation.md` - Completed database schema with profiles table and auth.users integration
 - `lib/supabase/client.ts` and `lib/supabase/server.ts` - Existing Supabase client configuration using @supabase/ssr
 - `supabase/config.toml` - Local Supabase configuration with auth settings enabled
@@ -85,7 +85,7 @@ This builds on the completed database implementation and leverages the existing 
   - [ ] Test route handler responses and redirects
   - [ ] Verify error handling in auth flows
 
-- [ ] Update `docs/AUTHENTICATION_SUPABASE.md` with foundation implementation details
+- [ ] Update `docs/AUTHENTICATION_OVERVIEW.md` with foundation implementation details
 
 ### Stage: Basic Authentication UI ✅
 - [x] Create authentication page layouts
@@ -283,17 +283,7 @@ This builds on the completed database implementation and leverages the existing 
   - [ ] Create password reset confirmation page
   - [ ] Test complete password reset user journey
 
-- [ ] Implement advanced session management
-  - [ ] Add session timeout warnings for long-running sessions
-  - [ ] Implement automatic session refresh in background
-  - [ ] Add security notifications for login from new devices
-
-- [ ] Add user preferences and settings
-  - [ ] Extend profile page with user preference options
-  - [ ] Add settings for notification preferences
-  - [ ] Implement preference persistence in database
-
-- [ ] Write comprehensive end-to-end tests using subagent
+- [ ] Write comprehensive end-to-end tests
   - [ ] Test complete user registration and onboarding flow
   - [ ] Test authentication edge cases and error conditions
   - [ ] Test security features and unauthorized access attempts
@@ -305,16 +295,6 @@ This builds on the completed database implementation and leverages the existing 
   - [ ] Test route protection against various attack vectors
   - [ ] Review error messages for information disclosure
 
-- [ ] Performance testing for authentication flows
-  - [ ] Test authentication performance under load
-  - [ ] Optimize database queries for user profile operations
-  - [ ] Test middleware performance impact on all routes
-
-- [ ] Cross-browser and device testing using Playwright MCP subagent
-  - [ ] Test authentication on various browsers and devices
-  - [ ] Verify responsive design works across screen sizes
-  - [ ] Test accessibility features with screen readers
-
 - [ ] Final code review and cleanup
   - [ ] Review all authentication code for consistency and best practices
   - [ ] Remove any temporary code or debug statements
@@ -323,12 +303,13 @@ This builds on the completed database implementation and leverages the existing 
 
 ### Stage: Documentation and Finalization
 - [ ] Update all relevant documentation
-  - [ ] Update `docs/AUTHENTICATION_SUPABASE.md` with final implementation details
+  - [x] Update authentication documentation with final implementation details
+  - [x] Split authentication documentation into focused sub-documents (OVERVIEW, SETUP, UI, DATABASE, SECURITY)
   - [ ] Update `docs/UI_COMPONENTS.md` with authentication components
   - [ ] Update `docs/SITE_ORGANISATION.md` with new authentication routes
   - [ ] Add troubleshooting guide for common authentication issues
   - [ ] Update `docs/CODING_GUIDELINES.md`
-  - [ ] Add very concise bullet points to `CLAUDE.md`, and a reference to `docs/AUTHENTICATION_SUPABASE.md`
+  - [x] Add very concise bullet points to `CLAUDE.md`, and references to authentication documentation
 
 - [ ] Create user-facing documentation
   - [ ] Document authentication requirements for end users
@@ -430,143 +411,14 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 4. **Advanced Security**: Enhanced rate limiting, audit logging, session management
 5. **User Analytics**: Authentication event tracking and user behavior analysis
 
-## Production Configuration Steps
+## Production Configuration
 
-### Supabase Dashboard Configuration
+Production configuration details have been moved to `docs/AUTHENTICATION_SETUP.md` which includes:
+- Supabase Dashboard configuration steps
+- Google Cloud Console OAuth setup
+- Environment variable configuration
+- Database migration procedures
+- Domain configuration strategy
+- Testing and troubleshooting guides
 
-#### 1. URL Configuration Settings
-**Location:** Supabase Dashboard → Authentication → URL Configuration
-
-**Site URL:** `https://www.spideryarn.com`
-
-**Additional Redirect URLs:**
-```
-http://localhost:3002/**
-https://www.spideryarn.com/**
-https://spideryarn.com/**
-https://*.vercel.app/**
-```
-
-**Notes:**
-- Site URL should point to the canonical domain (www.spideryarn.com)
-- Include both apex and www domains for flexibility
-- Use wildcards (**) for development and preview environments
-- Set exact URLs for production security
-
-#### 2. Google OAuth Provider Configuration
-**Location:** Supabase Dashboard → Authentication → Providers → Google
-
-**Settings:**
-- **Enable:** Toggle ON
-- **Client ID:** `815353440959-ov99gpv5ijma8vmvs639cvq6ej746vej.apps.googleusercontent.com`
-- **Client Secret:** `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`
-
-### Google Cloud Console Configuration
-
-#### 1. OAuth Credentials Settings
-**Location:** [Google Cloud Console - API Credentials](https://console.cloud.google.com/apis/credentials)
-
-**Edit existing OAuth 2.0 Client ID:**
-
-**Authorized JavaScript Origins:**
-```
-http://localhost:3002
-https://www.spideryarn.com
-https://spideryarn.com
-https://[your-project-id].supabase.co
-```
-
-**Authorized Redirect URIs:**
-```
-http://127.0.0.1:54341/auth/v1/callback
-https://[your-project-id].supabase.co/auth/v1/callback
-```
-
-#### 2. OAuth Consent Screen Configuration
-**Location:** [Google Cloud Console - OAuth Consent Screen](https://console.cloud.google.com/apis/credentials/consent)
-
-**Authorized Domains:**
-- Add: `[your-project-id].supabase.co`
-- Add: `spideryarn.com` (if using custom domain)
-
-**Required Scopes:**
-- `.../auth/userinfo.email`
-- `.../auth/userinfo.profile`
-- `openid`
-
-### Environment Variables for Production
-
-**Production Environment (.env.production or deployment platform):**
-```bash
-# Production Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://[your-project-id].supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=[your-production-anon-key]
-
-# Google OAuth (same for local and production)
-GOOGLE_OAUTH_CLIENT_ID=815353440959-ov99gpv5ijma8vmvs639cvq6ej746vej.apps.googleusercontent.com
-GOOGLE_OAUTH_CLIENT_SECRET=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
-
-# Other production variables
-ANTHROPIC_API_KEY=[your-production-key]
-GOOGLE_GENERATIVE_AI_API_KEY=[your-production-key]
-```
-
-### Database Migration to Production
-
-**Link local project to remote:**
-```bash
-npx supabase link --project-ref [your-project-id]
-```
-
-**Push migrations to production:**
-```bash
-npx supabase db push
-```
-
-**Verify migration status:**
-```bash
-npx supabase migration list
-```
-
-### Domain Configuration Strategy
-
-**Apex Domain Redirect:** `spideryarn.com` → `www.spideryarn.com`
-
-**Rationale:**
-- Site URL points to canonical www domain
-- Include both domains in redirect URLs for flexibility
-- Prevents double redirects in OAuth flow
-- Provides redundancy during domain setup
-
-### Testing Production Configuration
-
-**Pre-deployment Checklist:**
-1. Verify all redirect URLs are configured
-2. Test OAuth flow in local development
-3. Confirm Google Cloud Console settings
-4. Validate Supabase provider configuration
-5. Check environment variables are set correctly
-
-**Post-deployment Verification:**
-1. Test Google OAuth login on production domain
-2. Verify profile creation and user flows
-3. Check redirect behaviour from apex domain
-4. Validate session persistence across domains
-5. Test logout functionality
-
-### Troubleshooting Common Issues
-
-**OAuth Redirect Mismatch:**
-- Verify redirect URLs in both Google Console and Supabase
-- Check for exact URL matching (no trailing slashes difference)
-- Ensure protocol (http/https) matches exactly
-
-**Domain Configuration Issues:**
-- Confirm apex domain redirect is working
-- Verify DNS settings for both apex and www domains
-- Check SSL certificates are valid for both domains
-
-**Session Management:**
-- Ensure consistent domain usage in cookie settings
-- Verify CORS configuration for cross-domain requests
-- Check that middleware handles both domain variants
+This consolidation eliminates duplication and provides a single source of truth for deployment procedures.

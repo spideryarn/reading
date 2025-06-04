@@ -124,6 +124,15 @@ export function LoginForm() {
             )}
           />
 
+          <div className="text-right">
+            <Link 
+              href="/auth/reset-password" 
+              className="text-sm text-orange-600 hover:text-orange-700 transition-colors"
+            >
+              Forgot password?
+            </Link>
+          </div>
+
           <Button
             type="submit"
             size="full"
