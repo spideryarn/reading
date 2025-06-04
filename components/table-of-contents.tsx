@@ -534,7 +534,8 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          html_content: htmlWithIds
+          html_content: htmlWithIds,
+          documentId: documentId
         }),
       })
 

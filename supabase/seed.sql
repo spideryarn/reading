@@ -12,16 +12,16 @@ INSERT INTO public.profiles (id, user_id, preferences, created_at, updated_at) V
 ('1cecbe4f-8eb7-4007-bb89-f2c37a761dbe', '7bfcabea-690c-4754-936d-1a194f4244c2', '{}', '2025-06-03T23:18:01.590Z', '2025-06-03T23:18:01.590Z');
 
 -- Insert AI models (based on lib/config.ts)
+-- Tier keys are now managed in lib/config.ts, not stored in database
 INSERT INTO public.ai_models (provider, model_id, version, display_name, description, context_window, max_output_tokens, supports_thinking, extra) VALUES
 -- Anthropic models
-('anthropic', 'claude-3-5-haiku-20241022', '3.5', 'Claude 3.5 Haiku', 'Fast and cost-effective', 200000, 8192, false, '{"tier": "cheap", "provider_tier_key": "anthropic-cheap"}'),
-('anthropic', 'claude-sonnet-4-20250514', '4.0', 'Claude Sonnet 4', 'Balanced performance and cost', 200000, 8192, false, '{"tier": "balanced", "provider_tier_key": "anthropic-balanced"}'),
-('anthropic', 'claude-sonnet-4-20250514', '4.0-thinking', 'Claude Sonnet 4 (Thinking)', 'Advanced reasoning with thinking mode', 200000, 8192, true, '{"tier": "balanced", "provider_tier_key": "anthropic-balanced-thinking", "thinking_mode": true}'),
-('anthropic', 'claude-opus-4-20250514', '4.0', 'Claude Opus 4', 'Highest capability', 200000, 8192, false, '{"tier": "expensive", "provider_tier_key": "anthropic-expensive"}'),
+('anthropic', 'claude-3-5-haiku-20241022', '20241022', 'Claude 3.5 Haiku', 'Fast and cost-effective', 200000, 8192, false, '{}'),
+('anthropic', 'claude-sonnet-4-20250514', '20250514', 'Claude Sonnet 4', 'Balanced performance and cost', 200000, 8192, false, '{}'),
+('anthropic', 'claude-sonnet-4-20250514', '20250514-thinking', 'Claude Sonnet 4 (Thinking)', 'Advanced reasoning mode', 200000, 8192, true, '{}'),
+('anthropic', 'claude-opus-4-20250514', '20250514', 'Claude Opus 4', 'Highest capability', 200000, 8192, false, '{}'),
 -- Google models
-('google', 'gemini-2.0-flash', '2.0', 'Gemini 2.0 Flash', 'Fast and cost-effective (stable)', 1000000, 8192, false, '{"tier": "cheap", "provider_tier_key": "google-cheap"}'),
-('google', 'gemini-2.5-pro', '2.5', 'Gemini 2.5 Pro', 'Balanced performance', 1000000, 8192, false, '{"tier": "balanced", "provider_tier_key": "google-balanced"}'),
-('google', 'gemini-2.5-pro', '2.5', 'Gemini 2.5 Pro (Expensive)', 'Same as balanced tier', 1000000, 8192, false, '{"tier": "expensive", "provider_tier_key": "google-expensive"}');
+('google', 'gemini-2.0-flash', 'latest', 'Gemini 2.0 Flash', 'Fast and cost-effective (stable)', 1000000, 8192, false, '{}'),
+('google', 'gemini-2.5-pro', 'latest', 'Gemini 2.5 Pro', 'Balanced performance', 1000000, 8192, false, '{}');
 
 -- Insert test document for database integration testing
 INSERT INTO documents (title, slug, html_content, plaintext_content, created_by, is_public) VALUES (

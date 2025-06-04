@@ -42,7 +42,9 @@ interface ResizableDocumentLayoutProps {
   isLoadingGlossary: boolean
   showGlossary: boolean
   glossaryError: string | null
+  glossaryCached: boolean
   onLoadGlossary: () => void
+  onResetGlossary?: () => void
   
   // Visibility tracking
   headingVisibility?: Map<string, 'visible' | 'not-visible'>
@@ -61,7 +63,9 @@ export function ResizableDocumentLayout({
   isLoadingGlossary,
   showGlossary,
   glossaryError,
+  glossaryCached,
   onLoadGlossary,
+  onResetGlossary,
   headingVisibility,
   onElementVisibilityChange,
   onElementClick
@@ -212,8 +216,10 @@ export function ResizableDocumentLayout({
               isLoadingGlossary={isLoadingGlossary}
               showGlossary={showGlossary}
               glossaryError={glossaryError}
+              glossaryCached={glossaryCached}
               onHeadingClick={handleHeadingClick}
               onLoadGlossary={onLoadGlossary}
+              onResetGlossary={onResetGlossary}
               onScrollToEntity={handleScrollToEntity}
               documentContext={documentContext}
               onToggleCollapse={handleToggleCollapse}
