@@ -62,7 +62,7 @@ export const PROVIDER_TIER_MODELS = {
     outputTokens: 8192,
     thinking: false,
   },
-  // Google models (Gemini 2.5)
+  // Google models (Gemini)
   'google-cheap': {
     provider: 'google' as const,
     modelId: 'gemini-2.0-flash',
@@ -73,8 +73,8 @@ export const PROVIDER_TIER_MODELS = {
   },
   'google-balanced': {
     provider: 'google' as const,
-    modelId: 'gemini-2.5-pro',
-    description: 'Gemini 2.5 Pro - Balanced performance',
+    modelId: 'gemini-1.5-pro',
+    description: 'Gemini 1.5 Pro - Latest available model, balanced performance',
     contextWindow: 1000000,
     outputTokens: 8192,
     thinking: false,

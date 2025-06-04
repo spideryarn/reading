@@ -17,10 +17,10 @@ export interface AiCallMetrics {
 
 export interface CreateAiCallOptions {
   documentId?: string
+  provider: 'anthropic' | 'google'
   modelId: string
-  promptType: PromptType
-  promptInput: string
-  promptTemplate?: string
+  prompt_type: PromptType
+  input_data?: Record<string, any>
   extra?: Record<string, any>
 }
 
@@ -28,15 +28,36 @@ export class AiCallService {
   constructor(private supabase: SupabaseClient<Database>) {}
 
   /**
+   * Look up model UUID by provider and model ID
+   */
+  async getModelUuidByProviderAndId(provider: string, modelId: string): Promise<string> {
+    const { data, error } = await this.supabase
+      .from('ai_models')
+      .select('id')
+      .eq('provider', provider)
+      .eq('model_id', modelId)
+      .single()
+    
+    if (error || !data) {
+      throw new Error(`Model not found: provider='${provider}', model_id='${modelId}'. Check that the model exists in the ai_models table.`)
+    }
+    
+    return data.id
+  }
+
+  /**
    * Start tracking an AI call
    */
   async startCall(options: CreateAiCallOptions): Promise<AiCall> {
+    // Look up model UUID by provider and model ID
+    const modelUuid = await this.getModelUuidByProviderAndId(options.provider, options.modelId)
+
     const aiCall: Omit<AiCallInsert, 'id' | 'created_at' | 'updated_at'> = {
       document_id: options.documentId || null,
-      model_id: options.modelId,
-      prompt_type: options.promptType,
-      prompt_input: options.promptInput,
-      prompt_template: options.promptTemplate || null,
+      model_id: modelUuid,
+      prompt_type: options.prompt_type,
+      prompt_input: JSON.stringify(options.input_data || {}),
+      prompt_template: null,
       status: 'pending',
       extra: options.extra || {},
     }
@@ -59,30 +80,22 @@ export class AiCallService {
    */
   async completeCall(
     id: string,
-    responseText: string,
-    metrics: AiCallMetrics,
-    extra?: Record<string, any>
+    data: { output_data?: Record<string, any> }
   ): Promise<AiCall | null> {
     // Validate UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     if (!uuidRegex.test(id)) {
-      return null
+      throw new Error(`Invalid UUID format: ${id}`)
     }
 
     const completedAt = new Date().toISOString()
     
-    const { data, error } = await this.supabase
+    const { data: result, error } = await this.supabase
       .from('ai_calls')
       .update({
         status: 'success',
-        response_text: responseText,
-        prompt_tokens: metrics.promptTokens,
-        completion_tokens: metrics.completionTokens,
-        total_tokens: metrics.totalTokens,
-        reasoning_tokens: metrics.reasoningTokens || null,
-        latency_ms: metrics.latencyMs,
         completed_at: completedAt,
-        extra: extra || {},
+        extra: data.output_data || {},
       })
       .eq('id', id)
       .select()
@@ -95,7 +108,7 @@ export class AiCallService {
       throw new Error(`Failed to complete AI call: ${error.message}`)
     }
 
-    return data
+    return result
   }
 
   /**

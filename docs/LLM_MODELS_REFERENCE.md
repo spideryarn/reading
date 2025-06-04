@@ -1,5 +1,11 @@
 # LLM Models Reference
 
+## Architecture
+
+**Tier Management**: Model tiers are defined in `lib/config.ts` as the single source of truth
+**Database Storage**: Models are stored in `ai_models` table for tracking metadata only
+**Resolution**: API routes resolve tier keys to provider+modelId using config, then look up model UUID for tracking
+
 ## Available Models
 
 | Key | Model | Input Price* | Output Price* | Context | Use Case |
@@ -39,6 +45,37 @@ LLM_MODEL=anthropic-balanced-thinking npm run dev
 ```
 
 The application automatically handles provider selection, authentication, and request formatting.
+
+## Implementation Details
+
+### Config-Based Resolution
+```typescript
+// In API routes (e.g., app/api/glossary/route.ts)
+import { getModelConfig, AI_CONFIG } from '@/lib/config'
+
+const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as any
+const modelConfig = getModelConfig(tierKey)
+
+const aiCall = await aiCallService.startCall({
+  documentId,
+  provider: modelConfig.provider,    // 'anthropic' | 'google'
+  modelId: modelConfig.modelId,      // 'claude-sonnet-4-20250514'
+  prompt_type: 'glossary',
+  input_data: { /* ... */ }
+})
+```
+
+### Database Lookup
+```typescript
+// In AiCallService.startCall()
+const modelUuid = await this.getModelUuidByProviderAndId(
+  options.provider, 
+  options.modelId
+)
+// Uses: WHERE provider = 'anthropic' AND model_id = 'claude-sonnet-4-20250514'
+```
+
+This architecture eliminates redundancy between config and database, follows the principle that configuration belongs in code, and makes tier management much simpler.
 
 ## Thinking Mode
 

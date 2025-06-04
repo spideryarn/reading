@@ -7,7 +7,7 @@
 import { useRef, useEffect } from 'react'
 import { AssistantChat } from './assistant-chat'
 import { TabContainer, type Tab, type TabContainerRef } from './tab-container'
-import { CircleNotch, Book, Question, Calendar, SidebarSimple } from '@phosphor-icons/react'
+import { CircleNotch, Book, Question, Calendar, SidebarSimple, ArrowCounterClockwise } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { AlertWithIcon } from '@/components/ui/alert'
 import type { DocumentElement } from '@/lib/types/document'
@@ -48,10 +48,12 @@ interface UnifiedLeftPaneProps {
   isLoadingGlossary: boolean
   showGlossary: boolean
   glossaryError: string | null
+  glossaryCached: boolean
   
   // Callbacks
   onHeadingClick: (headingText: string, headingId?: string) => void
   onLoadGlossary: () => void
+  onResetGlossary?: () => void
   onScrollToEntity: (elementId: string) => void
   
   // For chat context
@@ -214,8 +216,10 @@ export function UnifiedLeftPane({
   isLoadingGlossary,
   showGlossary,
   glossaryError,
+  glossaryCached,
   onHeadingClick,
   onLoadGlossary,
+  onResetGlossary,
   onScrollToEntity,
   documentContext,
   onToggleCollapse
@@ -346,17 +350,51 @@ export function UnifiedLeftPane({
               title="Failed to generate glossary"
               description={glossaryError}
             />
+            {onResetGlossary && glossaryCached && (
+              <div className="mt-4 flex justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onResetGlossary}
+                  className="text-xs"
+                  title="Reset and clear cached glossary data"
+                >
+                  <ArrowCounterClockwise size={14} weight="bold" className="mr-1" />
+                  Reset Glossary
+                </Button>
+              </div>
+            )}
           </div>
-        ) : glossaryEntities.length > 0 ? (
+        ) : glossaryEntities && glossaryEntities.length > 0 ? (
           <div>
             <div className="p-4 pb-3 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Document Glossary</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Document Glossary</h3>
+                <div className="flex items-center gap-2">
+                  {glossaryCached && (
+                    <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full font-medium">
+                      Loaded
+                    </span>
+                  )}
+                  {onResetGlossary && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onResetGlossary}
+                      className="h-7 px-2 text-xs hover:bg-gray-100"
+                      title="Reset and regenerate glossary"
+                    >
+                      <ArrowCounterClockwise size={14} weight="bold" />
+                    </Button>
+                  )}
+                </div>
+              </div>
               <p className="text-sm text-gray-600 mt-1">
-                {glossaryEntities.length} {glossaryEntities.length === 1 ? 'entry' : 'entries'} found
+                {glossaryEntities?.length || 0} {(glossaryEntities?.length || 0) === 1 ? 'entry' : 'entries'} found
               </p>
             </div>
             <GlossaryDisplay 
-              entities={glossaryEntities} 
+              entities={glossaryEntities || []} 
               elements={elements}
               onScrollToEntity={onScrollToEntity}
             />

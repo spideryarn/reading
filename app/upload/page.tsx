@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { AppHeader } from '@/components/app-header'
 import { Footer } from '@/components/footer'
-import { Upload, FilePdf, X, Check, Warning } from '@phosphor-icons/react'
+import { Upload, FilePdf, X } from '@phosphor-icons/react'
 
 export default function UploadPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -11,48 +11,9 @@ export default function UploadPage() {
   const [convertedHtml, setConvertedHtml] = useState<string>('')
   const [error, setError] = useState<string>('')
   const [isDragging, setIsDragging] = useState(false)
+  const [selectedProvider, setSelectedProvider] = useState<'claude' | 'gemini'>('claude')
   const fileInputRef = useRef<HTMLInputElement>(null)
   
-  // Quality test state
-  const [qualityTestLoading, setQualityTestLoading] = useState(true)
-  const [qualityTestResult, setQualityTestResult] = useState<{
-    success: boolean;
-    image?: string;
-    error?: string;
-    config?: string;
-  } | null>(null)
-
-  // Load quality test on component mount
-  useEffect(() => {
-    const runQualityTest = async () => {
-      try {
-        const response = await fetch('/api/test-pdf-converter')
-        const result = await response.json()
-        
-        if (result.pdfToPngConverter?.success && result.pdfToPngConverter.images?.[0]) {
-          setQualityTestResult({
-            success: true,
-            image: result.pdfToPngConverter.images[0],
-            config: result.pdfToPngConverter.config || 'default'
-          })
-        } else {
-          setQualityTestResult({
-            success: false,
-            error: result.pdfToPngConverter?.error || 'Unknown test failure'
-          })
-        }
-      } catch (error) {
-        setQualityTestResult({
-          success: false,
-          error: error instanceof Error ? error.message : 'Failed to run quality test'
-        })
-      } finally {
-        setQualityTestLoading(false)
-      }
-    }
-    
-    runQualityTest()
-  }, [])
 
   const handleFile = (file: File) => {
     // Reset previous results
@@ -65,10 +26,10 @@ export default function UploadPage() {
       return
     }
 
-    // Validate file size (2MB limit for single-page PDFs)
-    const maxSize = 2 * 1024 * 1024 // 2MB
+    // Validate file size (32MB limit for Claude API)
+    const maxSize = 32 * 1024 * 1024 // 32MB
     if (file.size > maxSize) {
-      setError('PDF file too large (max 2MB for single-page PDFs)')
+      setError('PDF file too large (max 32MB for Claude direct processing)')
       return
     }
 
@@ -148,6 +109,7 @@ export default function UploadPage() {
     try {
       const formData = new FormData()
       formData.append('pdf', selectedFile)
+      formData.append('provider', selectedProvider)
 
       const response = await fetch('/api/upload-pdf', {
         method: 'POST',
@@ -174,66 +136,6 @@ export default function UploadPage() {
       
       <main className="max-w-4xl mx-auto px-8 py-8">
         <div className="space-y-8">
-          {/* PDF Conversion Quality Test */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4 text-blue-900 flex items-center gap-2">
-              <Warning size={24} className="text-blue-600" />
-              PDF Conversion Quality Test
-            </h2>
-            
-            <p className="text-sm text-blue-800 mb-4">
-              Testing <strong>pdf-to-png-converter</strong> (serverless-compatible) vs current GraphicsMagick dependency.
-              This test auto-converts <code>static/examples/2105.10461v2_cropped.pdf</code> for visual quality assessment.
-            </p>
-            
-            {qualityTestLoading ? (
-              <div className="flex items-center gap-2 text-blue-700">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
-                Running quality test...
-              </div>
-            ) : qualityTestResult?.success ? (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-green-700">
-                  <Check size={20} />
-                  <span className="font-medium">Test conversion successful</span>
-                </div>
-                
-                <div className="bg-white border border-blue-200 rounded p-4">
-                  <p className="text-sm text-gray-600 mb-2">
-                    Converted academic PDF using pdf-to-png-converter ({qualityTestResult.config || 'default config'}):
-                  </p>
-                  <img 
-                    src={`data:image/png;base64,${qualityTestResult.image}`}
-                    alt="Test PDF conversion result"
-                    className="max-w-full h-auto border border-gray-300 rounded shadow-sm"
-                    style={{ maxHeight: '400px' }}
-                  />
-                </div>
-                
-                <div className="text-sm text-blue-800 bg-blue-100 p-3 rounded">
-                  <strong>Quality Assessment:</strong> Please manually inspect the image above for:
-                  <ul className="mt-1 ml-4 list-disc">
-                    <li>Text clarity and readability</li>
-                    <li>Table structure preservation</li>
-                    <li>Mathematical equations rendering</li>
-                    <li>Overall academic content quality</li>
-                  </ul>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-red-700">
-                  <X size={20} />
-                  <span className="font-medium">Test conversion failed</span>
-                </div>
-                <div className="text-sm text-red-700 bg-red-100 p-3 rounded">
-                  <strong>Error:</strong> {qualityTestResult?.error}
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <hr className="border-gray-300" />
           {/* Upload Section */}
           <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
             <h2 className="text-xl font-semibold mb-6 text-gray-900 border-b border-gray-100 pb-2">
@@ -283,7 +185,7 @@ export default function UploadPage() {
                         {isDragging ? 'Drop your PDF here' : 'Drag and drop your PDF here'}
                       </p>
                       <p id="upload-help" className="text-sm text-gray-500 mt-1">
-                        or click to browse (max 2MB, single-page recommended)
+                        or click to browse (max 32MB, multi-page supported)
                       </p>
                     </div>
                   </div>
@@ -310,12 +212,47 @@ export default function UploadPage() {
                 )}
               </div>
 
+              {/* Provider Selection */}
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-700">
+                  AI Provider
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedProvider('claude')}
+                    disabled={isUploading}
+                    className={`p-3 border rounded-lg text-sm font-medium transition-colors ${
+                      selectedProvider === 'claude'
+                        ? 'border-orange-500 bg-orange-50 text-orange-700'
+                        : 'border-gray-300 bg-white text-gray-700 hover:border-orange-300'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <div className="font-semibold">Anthropic Claude</div>
+                    <div className="text-xs text-gray-500 mt-1">Try this first</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedProvider('gemini')}
+                    disabled={isUploading}
+                    className={`p-3 border rounded-lg text-sm font-medium transition-colors ${
+                      selectedProvider === 'gemini'
+                        ? 'border-orange-500 bg-orange-50 text-orange-700'
+                        : 'border-gray-300 bg-white text-gray-700 hover:border-orange-300'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <div className="font-semibold">Google Gemini</div>
+                    <div className="text-xs text-gray-500 mt-1">Better for longer docs</div>
+                  </button>
+                </div>
+              </div>
+
               <button
                 onClick={handleUpload}
                 disabled={!selectedFile || isUploading}
                 className="w-full px-4 py-3 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
               >
-                {isUploading ? 'Converting...' : 'Convert to HTML'}
+                {isUploading ? `Converting with ${selectedProvider === 'claude' ? 'Claude' : 'Gemini'}...` : 'Convert to HTML'}
               </button>
 
               {error && (

@@ -39,7 +39,8 @@ const glossaryPromptSchema = z.object({
   already_entities: z.array(z.object({
     name: z.string(),
     aliases: z.array(z.string())
-  })).optional()
+  })).optional(),
+  documentId: z.string().uuid().optional() // Optional for backward compatibility
 })
 
 // Load the glossary prompt template

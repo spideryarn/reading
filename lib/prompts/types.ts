@@ -160,12 +160,31 @@ export async function executeMultimodalPrompt<T extends z.ZodSchema>(
   }
   const model = getModel(providerTierKey)
   
-  // Check if variables contain messages (multimodal) or just need prompt rendering
-  let messages: Array<{ role: string; content: string | Array<{ type: string; text?: string; image?: string }> }> = []
+  // Check if variables contain messages (multimodal), PDF buffer, or just need prompt rendering
+  let messages: Array<{ role: string; content: string | Array<{ type: string; text?: string; image?: string; data?: Buffer; mimeType?: string }> }> = []
   
   if ('messages' in validated && Array.isArray(validated.messages)) {
     // Use messages directly for multimodal content
     messages = validated.messages
+  } else if ('pdfBuffer' in validated && Buffer.isBuffer(validated.pdfBuffer)) {
+    // Handle PDF file with rendered template
+    const templateContent = readFileSync(template.templatePath, 'utf-8')
+    const prompt = env.renderString(templateContent, validated)
+    
+    messages = [{
+      role: 'user',
+      content: [
+        {
+          type: 'file',
+          data: validated.pdfBuffer as Buffer,
+          mimeType: 'application/pdf'
+        },
+        {
+          type: 'text',
+          text: prompt
+        }
+      ]
+    }]
   } else {
     // Render template and create a text-only message
     const templateContent = readFileSync(template.templatePath, 'utf-8')

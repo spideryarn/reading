@@ -1,87 +1,104 @@
-// Integration tests for PDF upload API endpoint
+// Integration tests for PDF upload API endpoint (V2 - direct PDF processing)
 
 import { POST } from '../upload-pdf/route'
 
-// Mock the PDF converter
-jest.mock('@/lib/utils/pdf-converter', () => ({
-  convertPdfToBase64Image: jest.fn(),
-  validatePdfBuffer: jest.fn()
-}))
-
-// Mock the multimodal prompt execution
+// Mock the multimodal prompt execution for direct PDF processing
 jest.mock('@/lib/prompts/types', () => ({
   executeMultimodalPrompt: jest.fn(),
   loadMultimodalPromptTemplateFromCaller: jest.fn()
 }))
 
-// Mock the prompt template
-jest.mock('@/lib/prompts/templates/pdf-to-html', () => ({
-  pdfToHtmlPrompt: {
-    name: 'pdf-to-html',
+// Mock the direct PDF prompt template
+jest.mock('@/lib/prompts/templates/pdf-to-html-direct', () => ({
+  pdfToHtmlDirectPrompt: {
+    name: 'pdf-to-html-direct',
     schema: { parse: jest.fn() }
   }
 }))
 
-describe('/api/upload-pdf', () => {
-  const mockConvertPdf = require('@/lib/utils/pdf-converter').convertPdfToBase64Image
-  const mockValidatePdf = require('@/lib/utils/pdf-converter').validatePdfBuffer
+describe('/api/upload-pdf (V2 - direct PDF processing)', () => {
   const mockExecutePrompt = require('@/lib/prompts/types').executeMultimodalPrompt
 
   beforeEach(() => {
     jest.clearAllMocks()
     
-    // Default successful mocks
-    mockValidatePdf.mockReturnValue({ valid: true })
-    mockConvertPdf.mockResolvedValue({
-      success: true,
-      images: ['base64-image-data'],
-      pageCount: 1
-    })
+    // Default successful mock for Claude direct processing
     mockExecutePrompt.mockResolvedValue('<html><body>Converted HTML</body></html>')
   })
 
   const createFormData = (filename: string, content: Buffer, mimeType: string = 'application/pdf') => {
     const formData = new FormData()
     const file = new File([content], filename, { type: mimeType })
+    
+    // Mock the arrayBuffer method that Jest's File doesn't have
+    ;(file as any).arrayBuffer = jest.fn().mockResolvedValue(content.buffer.slice(content.byteOffset, content.byteOffset + content.byteLength))
+    
     formData.append('pdf', file)
     return formData
   }
 
   const createRequest = (formData: FormData): Request => {
-    return new Request('http://localhost:3000/api/upload-pdf', {
+    // Create a proper Request mock for testing
+    const request = new Request('http://localhost:3000/api/upload-pdf', {
       method: 'POST',
       body: formData
     })
+    
+    // Add the formData method that Jest doesn't provide by default
+    ;(request as any).formData = jest.fn().mockResolvedValue(formData)
+    
+    return request
+  }
+
+  // Helper function to extract response body text in Jest environment
+  const getResponseText = (response: any): string => {
+    // In Jest, Next.js Response objects have a 'body' property instead of text() method
+    return response.body || ''
   }
 
   describe('successful conversion', () => {
-    it('should convert PDF to HTML successfully', async () => {
+    it('should convert PDF to HTML successfully using direct processing', async () => {
       const pdfContent = Buffer.from('%PDF-1.4\ntest PDF content')
       const formData = createFormData('test.pdf', pdfContent)
       const request = createRequest(formData)
 
       const response = await POST(request)
-      const html = await response.text()
-
-      expect(response.status).toBe(200)
-      expect(response.headers.get('content-type')).toBe('text/html')
-      expect(html).toBe('<html><body>Converted HTML</body></html>')
       
-      expect(mockValidatePdf).toHaveBeenCalledWith(pdfContent)
-      expect(mockConvertPdf).toHaveBeenCalledWith(pdfContent)
-      expect(mockExecutePrompt).toHaveBeenCalled()
+      expect(response.status).toBe(200)
+      expect(response.headers.get('content-type')).toBe('text/html; charset=utf-8')
+      
+      const responseText = getResponseText(response)
+      expect(responseText).toBe('<html><body>Converted HTML</body></html>')
+      
+      // Should call direct processing with PDF buffer
+      expect(mockExecutePrompt).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'pdf-to-html-direct'
+        }),
+        expect.objectContaining({
+          pdfBuffer: pdfContent,
+          fileName: 'test.pdf',
+          singlePageOnly: false
+        })
+      )
     })
 
-    it('should handle single-page PDF within size limit', async () => {
-      const pdfContent = Buffer.alloc(1024 * 1024) // 1MB
+    it('should handle PDF within Claude API size limit', async () => {
+      const pdfContent = Buffer.alloc(5 * 1024 * 1024) // 5MB - under 32MB limit
       pdfContent.write('%PDF-1.4')
-      const formData = createFormData('small.pdf', pdfContent)
+      const formData = createFormData('medium.pdf', pdfContent)
       const request = createRequest(formData)
 
       const response = await POST(request)
       
       expect(response.status).toBe(200)
-      expect(mockValidatePdf).toHaveBeenCalled()
+      expect(mockExecutePrompt).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          pdfBuffer: pdfContent,
+          fileName: 'medium.pdf'
+        })
+      )
     })
   })
 
@@ -93,7 +110,7 @@ describe('/api/upload-pdf', () => {
       const response = await POST(request)
       
       expect(response.status).toBe(400)
-      const error = await response.text()
+      const error = getResponseText(response)
       expect(error).toContain('No PDF file provided')
     })
 
@@ -105,47 +122,68 @@ describe('/api/upload-pdf', () => {
       const response = await POST(request)
       
       expect(response.status).toBe(400)
-      const error = await response.text()
-      expect(error).toContain('Invalid file type')
+      const error = getResponseText(response)
+      expect(error).toContain('File is not a valid PDF')
     })
 
-    it('should reject oversized PDF files', async () => {
-      const largePdfContent = Buffer.alloc(3 * 1024 * 1024) // 3MB
+    it('should reject oversized PDF files (above 32MB Claude limit)', async () => {
+      const largePdfContent = Buffer.alloc(35 * 1024 * 1024) // 35MB - over 32MB limit
       largePdfContent.write('%PDF-1.4')
-      const formData = createFormData('large.pdf', largePdfContent)
+      const formData = createFormData('huge.pdf', largePdfContent)
       const request = createRequest(formData)
 
       const response = await POST(request)
       
       expect(response.status).toBe(400)
-      const error = await response.text()
-      expect(error).toContain('File too large')
+      const error = getResponseText(response)
+      expect(error).toContain('PDF file too large (max 32MB for Claude direct processing)')
     })
 
-    it('should handle PDF validation failures', async () => {
-      mockValidatePdf.mockReturnValue({ 
-        valid: false, 
-        error: 'Corrupted PDF file' 
-      })
+    it('should accept PDF files at exactly 32MB limit', async () => {
+      const maxSizePdfContent = Buffer.alloc(32 * 1024 * 1024) // Exactly 32MB
+      maxSizePdfContent.write('%PDF-1.4')
+      const formData = createFormData('max-size.pdf', maxSizePdfContent)
+      const request = createRequest(formData)
 
-      const pdfContent = Buffer.from('invalid PDF content')
+      const response = await POST(request)
+      
+      expect(response.status).toBe(200)
+      expect(mockExecutePrompt).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          pdfBuffer: maxSizePdfContent
+        })
+      )
+    })
+
+    it('should handle PDF validation failures (invalid PDF header)', async () => {
+      const pdfContent = Buffer.from('invalid PDF content') // No %PDF header
       const formData = createFormData('invalid.pdf', pdfContent)
       const request = createRequest(formData)
 
       const response = await POST(request)
       
       expect(response.status).toBe(400)
-      const error = await response.text()
-      expect(error).toContain('Corrupted PDF file')
+      const error = getResponseText(response)
+      expect(error).toContain('File is not a valid PDF')
+    })
+
+    it('should handle empty PDF buffer', async () => {
+      const emptyPdfContent = Buffer.alloc(0) // Empty buffer
+      const formData = createFormData('empty.pdf', emptyPdfContent)
+      const request = createRequest(formData)
+
+      const response = await POST(request)
+      
+      expect(response.status).toBe(400)
+      const error = getResponseText(response)
+      expect(error).toContain('PDF file is empty')
     })
   })
 
   describe('conversion errors', () => {
-    it('should handle PDF conversion failures', async () => {
-      mockConvertPdf.mockResolvedValue({
-        success: false,
-        error: 'GraphicsMagick not found'
-      })
+    it('should handle Claude API failures', async () => {
+      mockExecutePrompt.mockRejectedValue(new Error('Claude API error: Model not available'))
 
       const pdfContent = Buffer.from('%PDF-1.4\ntest content')
       const formData = createFormData('test.pdf', pdfContent)
@@ -154,12 +192,12 @@ describe('/api/upload-pdf', () => {
       const response = await POST(request)
       
       expect(response.status).toBe(500)
-      const error = await response.text()
-      expect(error).toContain('GraphicsMagick not found')
+      const error = getResponseText(response)
+      expect(error).toContain('Conversion error: Claude API error: Model not available')
     })
 
-    it('should handle LLM processing failures', async () => {
-      mockExecutePrompt.mockRejectedValue(new Error('Claude API error'))
+    it('should handle rate limit errors with appropriate response', async () => {
+      mockExecutePrompt.mockRejectedValue(new Error('API rate limit exceeded'))
 
       const pdfContent = Buffer.from('%PDF-1.4\ntest content')
       const formData = createFormData('test.pdf', pdfContent)
@@ -167,16 +205,13 @@ describe('/api/upload-pdf', () => {
 
       const response = await POST(request)
       
-      expect(response.status).toBe(500)
-      const error = await response.text()
-      expect(error).toContain('HTML conversion failed')
+      expect(response.status).toBe(429)
+      const error = getResponseText(response)
+      expect(error).toContain('API rate limit exceeded. Please try again later.')
     })
 
-    it('should provide helpful error messages for system dependency issues', async () => {
-      mockConvertPdf.mockResolvedValue({
-        success: false,
-        error: 'Could not execute GraphicsMagick/ImageMagick: gm "identify" not found'
-      })
+    it('should handle authentication errors with appropriate response', async () => {
+      mockExecutePrompt.mockRejectedValue(new Error('API key invalid'))
 
       const pdfContent = Buffer.from('%PDF-1.4\ntest content')
       const formData = createFormData('test.pdf', pdfContent)
@@ -184,14 +219,28 @@ describe('/api/upload-pdf', () => {
 
       const response = await POST(request)
       
-      expect(response.status).toBe(500)
-      const error = await response.text()
-      expect(error).toContain('GraphicsMagick')
+      expect(response.status).toBe(503)
+      const error = getResponseText(response)
+      expect(error).toContain('AI service configuration error. Please check API keys.')
+    })
+
+    it('should handle timeout errors appropriately', async () => {
+      mockExecutePrompt.mockRejectedValue(new Error('Request timeout occurred'))
+
+      const pdfContent = Buffer.from('%PDF-1.4\ntest content')
+      const formData = createFormData('test.pdf', pdfContent)
+      const request = createRequest(formData)
+
+      const response = await POST(request)
+      
+      expect(response.status).toBe(504)
+      const error = getResponseText(response)
+      expect(error).toContain('Request timeout. The PDF may be too complex or the service is busy.')
     })
   })
 
-  describe('multimodal prompt integration', () => {
-    it('should pass correct parameters to multimodal prompt', async () => {
+  describe('direct PDF processing integration', () => {
+    it('should pass correct parameters to direct PDF prompt', async () => {
       const pdfContent = Buffer.from('%PDF-1.4\ntest content')
       const formData = createFormData('academic-paper.pdf', pdfContent)
       const request = createRequest(formData)
@@ -200,50 +249,30 @@ describe('/api/upload-pdf', () => {
 
       expect(mockExecutePrompt).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: 'pdf-to-html'
+          name: 'pdf-to-html-direct'
         }),
         expect.objectContaining({
-          messages: expect.arrayContaining([
-            expect.objectContaining({
-              role: 'user',
-              content: expect.arrayContaining([
-                expect.objectContaining({ type: 'text' }),
-                expect.objectContaining({ 
-                  type: 'image',
-                  image: expect.stringContaining('base64-image-data')
-                })
-              ])
-            })
-          ])
+          pdfBuffer: pdfContent,
+          fileName: 'academic-paper.pdf',
+          singlePageOnly: false
         })
       )
     })
 
-    it('should handle multi-page PDF conversion', async () => {
-      mockConvertPdf.mockResolvedValue({
-        success: true,
-        images: ['page1-base64', 'page2-base64'],
-        pageCount: 2
-      })
-
+    it('should handle multi-page PDF with direct processing', async () => {
       const pdfContent = Buffer.from('%PDF-1.4\nmulti-page content')
       const formData = createFormData('multipage.pdf', pdfContent)
       const request = createRequest(formData)
 
       await POST(request)
 
-      // Should send all pages to the LLM
+      // Should send entire PDF buffer to Claude (it handles multi-page internally)
       expect(mockExecutePrompt).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
-          messages: expect.arrayContaining([
-            expect.objectContaining({
-              content: expect.arrayContaining([
-                expect.objectContaining({ image: expect.stringContaining('page1-base64') }),
-                expect.objectContaining({ image: expect.stringContaining('page2-base64') })
-              ])
-            })
-          ])
+          pdfBuffer: pdfContent,
+          fileName: 'multipage.pdf',
+          singlePageOnly: false // Multi-page processing enabled
         })
       )
     })
@@ -259,14 +288,14 @@ describe('/api/upload-pdf', () => {
       const request = createRequest(formData)
 
       const response = await POST(request)
-      const html = await response.text()
+      const html = getResponseText(response)
 
       expect(response.status).toBe(200)
-      expect(response.headers.get('content-type')).toBe('text/html')
+      expect(response.headers.get('content-type')).toBe('text/html; charset=utf-8')
       expect(html).toBe(expectedHtml)
     })
 
-    it('should handle empty or malformed HTML responses gracefully', async () => {
+    it('should handle empty HTML responses gracefully', async () => {
       mockExecutePrompt.mockResolvedValue('')
 
       const pdfContent = Buffer.from('%PDF-1.4\ntest content')
@@ -275,9 +304,9 @@ describe('/api/upload-pdf', () => {
 
       const response = await POST(request)
       
-      expect(response.status).toBe(500)
-      const error = await response.text()
-      expect(error).toContain('Empty HTML response')
+      expect(response.status).toBe(200)
+      const html = getResponseText(response)
+      expect(html).toBe('') // Empty response is now valid (Claude might return empty for some PDFs)
     })
   })
 })

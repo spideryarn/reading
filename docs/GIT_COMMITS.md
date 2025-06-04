@@ -21,10 +21,11 @@ ABOVE ALL, don't do anything that could result in lost work or mess up yet-to-be
 <type>: <subject> (50 chars max)
 
 <body> (optional, wrap at 72 chars)
-- IMPORTANT: if there's a `planning/.md` document for this piece of work, include a reference to that
+- Reference to current planning doc (if there is one)
 - More detailed explanation
 - Bullet points for multiple changes
 ```
+
 
 Types: feat, fix, docs, style, refactor, test, chore
 

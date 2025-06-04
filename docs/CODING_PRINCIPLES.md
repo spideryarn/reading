@@ -10,6 +10,7 @@ see also:
 - Fix the root cause rather than putting on a band-aid. Avoid fallbacks & defaults - better to fail if input assumptions aren't being met.
 - **Always err on the side of caution**: Be especially careful about any operations that could affect databases, production systems, or user data. When in doubt, ask for explicit permission first.
 - Be cautious about irreversible changes, e.g. deleting files, dropping/truncating tables, throwing away data, running database migrations, etc.
+- Stop & discuss if you hit any nasty surprises
 - Raise errors early, clearly & fatally. Prefer not to wrap in try/except so that our tracebacks are obvious.
   - Database services propagate errors instead of silently returning null
   - API routes can catch and map to appropriate HTTP responses

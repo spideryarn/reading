@@ -35,7 +35,8 @@ export const headingsResponseSchema = z.object({
 
 // Schema for headings prompt input
 const headingsPromptSchema = z.object({
-  html_content: z.string().min(1, 'HTML content cannot be empty')
+  html_content: z.string().min(1, 'HTML content cannot be empty'),
+  documentId: z.string().uuid().optional() // Optional for backward compatibility
 })
 
 // Load the headings prompt template
