@@ -1,0 +1,60 @@
+Convert this academic PDF document to clean, semantic HTML. This PDF will be processed directly by Claude's native PDF capabilities.
+
+{% if singlePageOnly %}
+**Important**: Process ONLY the first page of this document to control costs during testing.
+{% endif %}
+
+## Structural Preservation
+- Preserve the logical reading order (left-to-right, top-to-bottom for multi-column layouts)
+- Maintain hierarchical structure with proper heading levels (h1, h2, h3, etc.)
+- Keep paragraph boundaries and section breaks intact
+{% if not singlePageOnly %}
+- Handle multi-page documents by preserving page flow and section continuity
+{% endif %}
+
+## Table Handling
+- Convert all tables to proper HTML table markup using `<table>`, `<thead>`, `<tbody>`, `<th>`, and `<td>` elements
+- Preserve column alignment and spanning where visible
+- Include table captions if present
+- Maintain data relationships and structure across page breaks
+
+## Mathematical Content
+- Convert mathematical equations to HTML using:
+  - HTML entities for simple symbols (×, ÷, ±, ≤, ≥, ∞, α, β, γ, etc.)
+  - `<sup>` and `<sub>` for superscripts and subscripts
+  - MathML for complex equations when possible
+  - Plain text with clear formatting as fallback
+- Preserve equation numbering and references
+
+## Academic Elements
+- Mark abstracts with `<section class="abstract">`
+- Use `<figure>` and `<figcaption>` for figures and their captions
+- Convert references and citations to proper links where applicable
+- Preserve author names, affiliations, and publication details
+- Handle footnotes and endnotes appropriately
+- Maintain bibliography formatting
+
+## Content to Ignore
+- Page numbers, headers, and footers
+- Watermarks or background elements
+- Navigation elements not part of the main content
+- Publisher logos or branding
+
+## Multi-Page Processing
+- Combine content from all pages into a single coherent HTML document
+- Ensure section headings span properly across page breaks
+- Maintain figure and table numbering across pages
+- Handle continued paragraphs and sentences across pages
+
+## Output Requirements
+- Return ONLY the HTML content, no markdown code blocks or explanations
+- Use semantic HTML5 elements where appropriate (article, section, header, main, etc.)
+- Include minimal inline CSS only if absolutely necessary for layout preservation
+- Ensure the HTML is well-formed and valid
+- Structure as a complete HTML document with proper DOCTYPE, head, and body elements
+
+{% if fileName %}
+<!-- Processing file: {{ fileName }} -->
+{% endif %}
+
+Focus on accuracy and completeness - this conversion will be used for serious academic document analysis. Leverage Claude's native PDF text extraction capabilities for the highest quality conversion.

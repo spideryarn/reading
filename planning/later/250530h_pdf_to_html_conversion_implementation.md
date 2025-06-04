@@ -57,26 +57,28 @@ Based on research findings and user priorities (accuracy and simplicity over cos
     
   **Step 2: Update PDF Processing Pipeline**:
   - [ ] Remove pdf2pic and GraphicsMagick dependencies
-  - [ ] Update API routes to send PDFs directly to Claude/Gemini (optional argument, default to Claude)
+  - [ ] Update API routes to send PDFs directly to Claude (optional argument, default to Claude, we'll do Gemini later)
   - [ ] Modify prompt templates for direct PDF analysis
   - [ ] Implement Claude PDF upload with proper headers (`anthropic-beta: pdfs-2024-09-25`)
-  - [ ] Add Gemini PDF support as cost-effective alternative
   - [ ] Update error handling for API-specific limitations
   - [ ] Test end-to-end pipeline with academic content (use `static/examples/2105.10461v2_cropped.pdf`, and see `TESTING.md`)
   
   **Step 3: Storage**:
-  - [ ] Set up Supabase Storage (search the web with a subagent)
+  - [ ] Set up Supabase Storage if it hasn't been already (search the web with a subagent)
+  - [ ] Discuss Supabase Storage questions with user, e.g. how should the Document row reference the Supabase Storage row (so that the document knows about where its original file is stored)
   - [ ] Write & run tests (use a subagent)
   - [ ] Update the PDF pipeline to store the original PDF in Supabase Storage
 
-  **Step 5: Update Test Suite**:
+  - [x] Remove single-page constraint to enable multi-page PDF processing ✅
+  - [ ] Add Gemini support (following the Claude implementation approach as an example)
+
   - [ ] Modify existing tests to mock Claude/Gemini APIs instead of pdf2pic
   - [ ] Add integration tests for direct PDF processing
   - [ ] Test error scenarios (file size limits, API failures)
   - [ ] Validate output quality against previous image-based approach
   
 ### Stage: Final Polish & Documentation
-- [ ] **IMMEDIATE NEXT STEPS**:
+- [ ] Tidying:
   - [ ] Clean up deprecated pdf2pic and pdf-to-png-converter code
   - [ ] Remove temporary quality test components from upload page  
   - [ ] Update test suite for direct PDF processing approach
@@ -88,7 +90,7 @@ Based on research findings and user priorities (accuracy and simplicity over cos
   - [ ] Note cost optimization strategies and API routing
   - [x] Document research findings and deprecated approaches ✅
 
-- [ ] Git commits following `docs/GIT_COMMITS.md`
+- [ ] Git commits, following `docs/GIT_COMMITS.md`
   - [ ] Direct PDF API integration commit
   - [ ] Remove deprecated PDF conversion dependencies  
   - [ ] Update documentation and planning docs
