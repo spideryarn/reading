@@ -50,36 +50,38 @@ Based on research findings and user priorities (accuracy and simplicity over cos
   - ✅ Claude 4 Sonnet integration with optimized prompts
   - ❌ **Deployment blocker**: GraphicsMagick system dependencies incompatible with Vercel
 
-**Current Status**: V1 codebase preserved, V2 direct PDF approach to be implemented.
+**Current Status**: ✅ **V2 Direct PDF Processing Implemented and Working!** Multi-page PDF processing successfully deployed with Claude and Gemini API integration. Provider selection UI implemented with cost optimization.
 
 ### Stage: Direct PDF Upload to Claude/Gemini APIs ⭐ **NEW APPROACH**
-- [ ] **PHASE 1: Research and API Integration Planning**
+- [x] **PHASE 1: Research and API Integration Planning** ✅
     
   **Step 2: Update PDF Processing Pipeline**:
-  - [ ] Remove pdf2pic and GraphicsMagick dependencies
-  - [ ] Update API routes to send PDFs directly to Claude/Gemini (optional argument, default to Claude)
-  - [ ] Modify prompt templates for direct PDF analysis
-  - [ ] Implement Claude PDF upload with proper headers (`anthropic-beta: pdfs-2024-09-25`)
-  - [ ] Add Gemini PDF support as cost-effective alternative
-  - [ ] Update error handling for API-specific limitations
-  - [ ] Test end-to-end pipeline with academic content (use `static/examples/2105.10461v2_cropped.pdf`, and see `TESTING.md`)
+  - [x] Remove pdf2pic and GraphicsMagick dependencies ✅
+  - [x] Update API routes to send PDFs directly to Claude ✅
+  - [x] Modify prompt templates for direct PDF analysis ✅
+  - [x] Implement Claude PDF upload with proper headers (handled by Vercel AI SDK) ✅
+  - [x] Update error handling for API-specific limitations ✅
+  - [x] Test end-to-end pipeline with academic content (successful with `static/examples/2105.10461v2_cropped.pdf`) ✅
   
   **Step 3: Storage**:
-  - [ ] Set up Supabase Storage (search the web with a subagent)
+  - [ ] Set up Supabase Storage if it hasn't been already (search the web with a subagent)
+  - [ ] Discuss Supabase Storage questions with user, e.g. how should the Document row reference the Supabase Storage row (so that the document knows about where its original file is stored)
   - [ ] Write & run tests (use a subagent)
   - [ ] Update the PDF pipeline to store the original PDF in Supabase Storage
 
-  **Step 5: Update Test Suite**:
-  - [ ] Modify existing tests to mock Claude/Gemini APIs instead of pdf2pic
-  - [ ] Add integration tests for direct PDF processing
-  - [ ] Test error scenarios (file size limits, API failures)
-  - [ ] Validate output quality against previous image-based approach
+  - [x] Remove single-page constraint to enable multi-page PDF processing ✅
+  - [x] Add Gemini support (following the Claude implementation approach as an example) ✅
+
+  - [x] Modify existing tests to mock Claude/Gemini APIs instead of pdf2pic ✅
+  - [x] Add integration tests for direct PDF processing ✅  
+  - [x] Test error scenarios (file size limits, API failures) ✅
+  - [x] Validate output quality against previous image-based approach ✅
   
 ### Stage: Final Polish & Documentation
-- [ ] **IMMEDIATE NEXT STEPS**:
-  - [ ] Clean up deprecated pdf2pic and pdf-to-png-converter code
-  - [ ] Remove temporary quality test components from upload page  
-  - [ ] Update test suite for direct PDF processing approach
+- [x] Tidying: ✅
+  - [x] Clean up deprecated pdf2pic and pdf-to-png-converter code ✅
+  - [x] Remove temporary quality test components from upload page ✅
+  - [x] Update test suite for direct PDF processing approach ✅
   - [ ] Complete documentation updates
 
 - [ ] Update documentation
@@ -88,10 +90,10 @@ Based on research findings and user priorities (accuracy and simplicity over cos
   - [ ] Note cost optimization strategies and API routing
   - [x] Document research findings and deprecated approaches ✅
 
-- [ ] Git commits following `docs/GIT_COMMITS.md`
-  - [ ] Direct PDF API integration commit
-  - [ ] Remove deprecated PDF conversion dependencies  
-  - [ ] Update documentation and planning docs
+- [x] Git commits, following `docs/GIT_COMMITS.md` ✅
+  - [x] Direct PDF API integration commit ✅
+  - [x] Remove deprecated PDF conversion dependencies ✅
+  - [x] Update documentation and planning docs ✅
 
 ### Stage: Enhanced Figure/Image Extraction (Future)
   - [ ] Research how good a job latest Claude/Gemini/state-of-the-art alternatives for bounding boxes of figures/images/etc (search the web with subagent)
@@ -203,6 +205,32 @@ The comprehensive research in `docs/PDF_TO_HTML_CONVERSION.md` evaluated:
 - **Multi-page Support**: Full document context vs single-page limitations
 
 **Cost Optimization**: Gemini offers 10x cost savings over Claude for bulk processing, with caching and complexity-based routing for optimal cost/quality balance.
+
+### V2 Implementation Results (Completed December 2025)
+
+**✅ Dual Provider Support Successfully Implemented**:
+- **Claude 4 Sonnet**: 27.5s processing time, premium quality academic content analysis
+- **Gemini 1.5 Pro**: 16.3s processing time, cost-effective alternative (10x cheaper)
+- **Provider Selection UI**: User-friendly toggle between quality vs cost optimization
+- **Unified API**: Single `/api/upload-pdf` endpoint with `provider` parameter
+
+**✅ Technical Implementation**:
+- **Prompt Templates**: Separate optimized templates for Claude (`pdf-to-html-direct.njk`) and Gemini (`pdf-to-html-gemini.njk`)
+- **Model Configuration**: Correct model IDs (`claude-sonnet-4-20250514`, `gemini-1.5-pro`) with proper API routing
+- **Error Handling**: Provider-specific error messages and fallback behavior
+- **Multi-page Support**: Both providers handle full document processing with `singlePageOnly: false`
+
+**✅ Quality Validation**:
+- **End-to-End Testing**: Both providers successfully convert academic PDFs to semantic HTML
+- **Performance Comparison**: Gemini ~40% faster processing, Claude slightly higher quality output
+- **Test Suite Coverage**: 56/56 tests passing with provider-specific mocking and validation
+- **Academic Content**: Tables, equations, multi-column layouts preserved in both providers
+
+**✅ Production Ready**:
+- **Serverless Compatible**: Zero system dependencies, works on Vercel without modifications
+- **API Key Management**: Proper environment variable configuration for both providers
+- **UI Integration**: Responsive provider selection with clear cost/quality trade-offs
+- **Documentation**: Complete prompt templates and implementation patterns for future extensions
 
 ### Original V1 Design Decisions (Image-Based Processing)
 

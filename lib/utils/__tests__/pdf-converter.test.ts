@@ -1,4 +1,6 @@
-// Tests for PDF conversion utility functions
+// Tests for PDF conversion utility functions (V1 Legacy - image-based conversion)
+// NOTE: V2 implementation uses direct PDF processing via Claude API
+// This utility is maintained for compatibility but not used in current implementation
 
 import { convertPdfToBase64Image, validatePdfBuffer } from '../pdf-converter'
 import fs from 'fs'
@@ -16,7 +18,7 @@ jest.mock('pdf2pic', () => {
   }
 })
 
-describe('PDF Converter', () => {
+describe('PDF Converter (V1 Legacy - Image-based)', () => {
   const mockPdf2pic = require('pdf2pic').default
   
   beforeEach(() => {
@@ -32,7 +34,7 @@ describe('PDF Converter', () => {
     jest.restoreAllMocks()
   })
 
-  describe('validatePdfBuffer', () => {
+  describe('validatePdfBuffer (still used in V2)', () => {
     it('should validate a proper PDF buffer', () => {
       const validPdfBuffer = Buffer.from('%PDF-1.4\n1 0 obj\n<<\n/Type /Catalog')
       const result = validatePdfBuffer(validPdfBuffer)
@@ -57,7 +59,8 @@ describe('PDF Converter', () => {
       expect(result.error).toBe('File is not a valid PDF')
     })
 
-    it('should reject oversized PDF buffer', () => {
+    it('should reject oversized PDF buffer (legacy 2MB limit)', () => {
+      // NOTE: V2 uses 32MB limit, but this function keeps 2MB for backward compatibility
       const largePdfBuffer = Buffer.alloc(3 * 1024 * 1024) // 3MB
       largePdfBuffer.write('%PDF-1.4')
       const result = validatePdfBuffer(largePdfBuffer)
@@ -67,7 +70,7 @@ describe('PDF Converter', () => {
     })
   })
 
-  describe('convertPdfToBase64Image', () => {
+  describe('convertPdfToBase64Image (V1 legacy - not used in V2)', () => {
     it('should successfully convert PDF to base64 images', async () => {
       const mockResults = [
         { path: '/tmp/test-page-1.png', pageNumber: 1 }
