@@ -10,6 +10,7 @@ interface HeadingMutationOptions {
   headings: AIHeading[]
   documentId: string
   mutationId?: string
+  isRegeneration?: boolean  // Flag to indicate this is a regeneration, not initial generation
 }
 
 /**
@@ -17,7 +18,7 @@ interface HeadingMutationOptions {
  * Creates both forward transforms (insertions) and reverse transforms (removals).
  */
 export function generateHeadingMutation(options: HeadingMutationOptions): Mutation {
-  const { headings, documentId, mutationId } = options
+  const { headings, documentId, mutationId, isRegeneration = false } = options
   
   // Track generated IDs to ensure uniqueness
   const headingIds = new Map<number, string>()
@@ -36,10 +37,15 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
     
     // Generate deterministic ID for this heading including the insertion point
     // This ensures unique IDs even when heading content is identical
+    // For regenerations, add a timestamp to ensure different IDs from previous generations
+    const idContent = isRegeneration 
+      ? `${content}:after:${heading.id_of_after}:${Date.now()}`
+      : `${content}:after:${heading.id_of_after}`
+    
     const headingId = generateContentBasedId(
       documentId, 
       'heading', 
-      `${content}:after:${heading.id_of_after}`
+      idContent
     )
     
     // Check for ID collision

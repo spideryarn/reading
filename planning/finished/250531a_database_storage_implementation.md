@@ -422,3 +422,4 @@ This is not Next.js best practice. The recommended approach is to use `@next/env
    - Create proper test fixtures with auth.users
    - Separate admin vs user operation test suites
    - Consider Supabase's testing utilities
+
