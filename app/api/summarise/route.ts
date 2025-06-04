@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
               granularity,
               sectionId,
               generatedAt: new Date().toISOString(),
-              modelUsed: modelName
+              modelUsed: modelConfig.modelId
             }
           },
           cacheKey

@@ -142,6 +142,7 @@ Complete the database integration for Spideryarn Reading by connecting existing 
   - [ ] Update `app/api/headings/route.ts` to use EnhancementService  
   - [ ] Store AI-generated headings with type='headings' in document_enhancements table
   - [ ] Update mutation system to work with database-stored headings
+  - [ ] Add a 'reset' button (like with Glossary) to clear the document-enhancement database row and give the user a way to fix things if we get into a broken state
   - [ ] Test that heading mutations persist across sessions
 
 - [ ] Write integration tests for AI enhancement persistence
