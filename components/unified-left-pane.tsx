@@ -238,41 +238,62 @@ export function UnifiedLeftPane({
   // Search state
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  
+  // Store timeout ID to cancel pending searches
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Search function that searches through document elements
   const performSearch = useCallback((query: string) => {
+    // Cancel any pending search
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+      searchTimeoutRef.current = null
+    }
+    
+    // Handle whitespace-only queries
     if (!query.trim()) {
       setSearchResults([])
+      setIsSearching(false)
       return
     }
     
-    const lowerQuery = query.toLowerCase()
-    const results: SearchResult[] = []
+    // Set loading state
+    setIsSearching(true)
     
-    // Search through all elements
-    elements.forEach(element => {
-      if (!element.content) return
+    // Add a small delay to show loading state for better UX
+    searchTimeoutRef.current = setTimeout(() => {
+      const lowerQuery = query.toLowerCase()
+      const results: SearchResult[] = []
       
-      const lowerContent = element.content.toLowerCase()
-      if (lowerContent.includes(lowerQuery)) {
-        // Count matches
-        const matches = lowerContent.split(lowerQuery).length - 1
+      // Search through all elements
+      elements.forEach(element => {
+        // Skip elements without content or with only whitespace
+        if (!element.content || !element.content.trim()) return
         
-        // Create text excerpt (first 100 chars)
-        const textExcerpt = element.content.length > 100 
-          ? element.content.substring(0, 100) + '...'
-          : element.content
-        
-        results.push({
-          elementId: element.id,
-          elementType: element.tag_name,
-          textExcerpt,
-          matchCount: matches
-        })
-      }
-    })
-    
-    setSearchResults(results)
+        const lowerContent = element.content.toLowerCase()
+        if (lowerContent.includes(lowerQuery)) {
+          // Count matches
+          const matches = lowerContent.split(lowerQuery).length - 1
+          
+          // Create text excerpt (first 100 chars)
+          const textExcerpt = element.content.length > 100 
+            ? element.content.substring(0, 100) + '...'
+            : element.content
+          
+          results.push({
+            elementId: element.id,
+            elementType: element.tag_name,
+            textExcerpt,
+            matchCount: matches
+          })
+        }
+      })
+      
+      setSearchResults(results)
+      setIsSearching(false)
+      searchTimeoutRef.current = null
+    }, 150) // Small delay to show loading state
   }, [elements])
   
   // Debounced search function (300ms delay)
@@ -286,6 +307,15 @@ export function UnifiedLeftPane({
     setSearchQuery(value)
     debouncedSearch(value)
   }, [debouncedSearch])
+
+  // Cleanup search timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
+    }
+  }, [])
 
   // NEW: Listen for document clicks (from ResizableDocumentLayout) to scroll ToC
   useEffect(() => {
@@ -497,8 +527,14 @@ export function UnifiedLeftPane({
             {searchQuery && (
               <button
                 onClick={() => {
+                  // Cancel any pending search
+                  if (searchTimeoutRef.current) {
+                    clearTimeout(searchTimeoutRef.current)
+                    searchTimeoutRef.current = null
+                  }
                   setSearchQuery('')
                   setSearchResults([])
+                  setIsSearching(false)
                 }}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
@@ -509,7 +545,12 @@ export function UnifiedLeftPane({
         </div>
 
         {/* Search results */}
-        {searchQuery && searchResults.length === 0 ? (
+        {isSearching ? (
+          <div className="flex flex-col items-center justify-center py-8">
+            <CircleNotch className="animate-spin text-gray-400 mb-2" size={24} weight="bold" />
+            <div className="text-sm text-gray-500">Searching...</div>
+          </div>
+        ) : searchQuery.trim() && searchResults.length === 0 ? (
           <div className="text-sm text-gray-500 text-center py-8">
             No results found
           </div>

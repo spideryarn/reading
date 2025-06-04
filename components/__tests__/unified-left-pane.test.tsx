@@ -958,6 +958,52 @@ describe('UnifiedLeftPane', () => {
         expect(screen.queryByText(/\d+ results? found/)).not.toBeInTheDocument();
       });
     });
+
+    it('should navigate to element when clicking on search result', async () => {
+      const onHeadingClick = jest.fn();
+      render(<UnifiedLeftPane {...defaultProps} onHeadingClick={onHeadingClick} />);
+      
+      // Switch to search tab
+      fireEvent.click(screen.getByTestId('tab-button-search'));
+      
+      const searchInput = screen.getByPlaceholderText('Search document...');
+      fireEvent.change(searchInput, { target: { value: 'Document Title' } });
+      
+      // Wait for search results
+      await waitFor(() => {
+        expect(screen.getByText('1 result found')).toBeInTheDocument();
+      });
+      
+      // Click on the search result
+      const searchResult = screen.getByText(/Document Title/);
+      fireEvent.click(searchResult.closest('div[class*="cursor-pointer"]')!);
+      
+      // Verify onHeadingClick was called with correct parameters
+      expect(onHeadingClick).toHaveBeenCalledWith('Document Title', 'syr-root-1');
+    });
+
+    it('should navigate when clicking on search results with multiple matches', async () => {
+      const onHeadingClick = jest.fn();
+      render(<UnifiedLeftPane {...defaultProps} onHeadingClick={onHeadingClick} />);
+      
+      // Switch to search tab
+      fireEvent.click(screen.getByTestId('tab-button-search'));
+      
+      const searchInput = screen.getByPlaceholderText('Search document...');
+      fireEvent.change(searchInput, { target: { value: 'content' } });
+      
+      // Wait for search results
+      await waitFor(() => {
+        expect(screen.getByText(/First paragraph content/)).toBeInTheDocument();
+      });
+      
+      // Click on the search result
+      const searchResult = screen.getByText(/First paragraph content/);
+      fireEvent.click(searchResult.closest('div[class*="cursor-pointer"]')!);
+      
+      // Verify onHeadingClick was called
+      expect(onHeadingClick).toHaveBeenCalledWith('First paragraph content with John Doe mentioned', 'syr-para-1');
+    });
   });
 
   describe('Accessibility', () => {
