@@ -15,7 +15,7 @@ export default async function ProfilePage() {
     redirect('/auth/login?next=/auth/profile')
   }
 
-  const supabase = createClient()
+  const supabase = await createClient()
   const profileService = new ProfileService(supabase)
   const documentService = new DocumentService(supabase)
 
