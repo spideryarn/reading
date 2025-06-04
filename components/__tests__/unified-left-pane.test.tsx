@@ -3,6 +3,11 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { UnifiedLeftPane } from '../unified-left-pane';
 import type { DocumentElement } from '@/lib/types/document';
 
+// Mock the debounce utility
+jest.mock('@/lib/utils/debounce', () => ({
+  debounce: (fn: any) => fn // No delay in tests
+}));
+
 // Mock external dependencies
 jest.mock('../tab-container', () => {
   const TabContainerComponent = React.forwardRef<any, any>(({ tabs, title, defaultTab, onTabChange, className }: any, ref) => {
@@ -868,7 +873,7 @@ describe('UnifiedLeftPane', () => {
       expect(searchInput).toHaveValue('');
     });
 
-    it('should show no results message when search has no matches', () => {
+    it('should show no results message when search has no matches', async () => {
       render(<UnifiedLeftPane {...defaultProps} />);
       
       // Switch to search tab
@@ -877,7 +882,81 @@ describe('UnifiedLeftPane', () => {
       const searchInput = screen.getByPlaceholderText('Search document...');
       fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
       
-      expect(screen.getByText('No results found')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('No results found')).toBeInTheDocument();
+      });
+    });
+
+    it('should perform case-insensitive search', async () => {
+      render(<UnifiedLeftPane {...defaultProps} />);
+      
+      // Switch to search tab
+      fireEvent.click(screen.getByTestId('tab-button-search'));
+      
+      const searchInput = screen.getByPlaceholderText('Search document...');
+      fireEvent.change(searchInput, { target: { value: 'DOCUMENT' } });
+      
+      // Wait for search results
+      await waitFor(() => {
+        expect(screen.getByText(/Document Title/)).toBeInTheDocument();
+        expect(screen.getByText('1 result found')).toBeInTheDocument();
+      });
+    });
+
+    it('should find multiple matches in elements', async () => {
+      render(<UnifiedLeftPane {...defaultProps} />);
+      
+      // Switch to search tab
+      fireEvent.click(screen.getByTestId('tab-button-search'));
+      
+      const searchInput = screen.getByPlaceholderText('Search document...');
+      fireEvent.change(searchInput, { target: { value: 'content' } });
+      
+      // Wait for search results
+      await waitFor(() => {
+        // Should find match in paragraph element
+        expect(screen.getByText(/First paragraph content/)).toBeInTheDocument();
+        expect(screen.getByText('1 result found')).toBeInTheDocument();
+      });
+    });
+
+    it('should show element type in search results', async () => {
+      render(<UnifiedLeftPane {...defaultProps} />);
+      
+      // Switch to search tab
+      fireEvent.click(screen.getByTestId('tab-button-search'));
+      
+      const searchInput = screen.getByPlaceholderText('Search document...');
+      fireEvent.change(searchInput, { target: { value: 'Document Title' } });
+      
+      // Wait for search results
+      await waitFor(() => {
+        expect(screen.getByText('h1')).toBeInTheDocument();
+      });
+    });
+
+    it('should handle empty search query', async () => {
+      render(<UnifiedLeftPane {...defaultProps} />);
+      
+      // Switch to search tab
+      fireEvent.click(screen.getByTestId('tab-button-search'));
+      
+      const searchInput = screen.getByPlaceholderText('Search document...');
+      
+      // Type something that exists in our test data
+      fireEvent.change(searchInput, { target: { value: 'Document' } });
+      await waitFor(() => {
+        expect(screen.getByText(/\d+ results? found/)).toBeInTheDocument();
+      });
+      
+      // Clear the search
+      fireEvent.change(searchInput, { target: { value: '' } });
+      
+      // Should not show "No results found" or count for empty query
+      await waitFor(() => {
+        expect(screen.queryByText('No results found')).not.toBeInTheDocument();
+        expect(screen.queryByText(/\d+ results? found/)).not.toBeInTheDocument();
+      });
     });
   });
 

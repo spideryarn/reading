@@ -4,7 +4,7 @@
 // Part of the 2-pane layout architecture using ResizablePanelGroup
 // All 5 tabs are at the same level as requested by the user
 
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { AssistantChat } from './assistant-chat'
 import { TabContainer, type Tab, type TabContainerRef } from './tab-container'
 import { CircleNotch, Book, Question, Calendar, SidebarSimple, ArrowCounterClockwise, MagnifyingGlass, X } from '@phosphor-icons/react'
@@ -20,6 +20,7 @@ import {
   AIGeneratedHeadingsTab, 
   DocumentSummaryTab 
 } from './table-of-contents-tabs'
+import { debounce } from '@/lib/utils/debounce'
 
 // Entity type (will be moved to proper types file later)
 interface Entity {
@@ -237,6 +238,54 @@ export function UnifiedLeftPane({
   // Search state
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+  
+  // Search function that searches through document elements
+  const performSearch = useCallback((query: string) => {
+    if (!query.trim()) {
+      setSearchResults([])
+      return
+    }
+    
+    const lowerQuery = query.toLowerCase()
+    const results: SearchResult[] = []
+    
+    // Search through all elements
+    elements.forEach(element => {
+      if (!element.content) return
+      
+      const lowerContent = element.content.toLowerCase()
+      if (lowerContent.includes(lowerQuery)) {
+        // Count matches
+        const matches = lowerContent.split(lowerQuery).length - 1
+        
+        // Create text excerpt (first 100 chars)
+        const textExcerpt = element.content.length > 100 
+          ? element.content.substring(0, 100) + '...'
+          : element.content
+        
+        results.push({
+          elementId: element.id,
+          elementType: element.tag_name,
+          textExcerpt,
+          matchCount: matches
+        })
+      }
+    })
+    
+    setSearchResults(results)
+  }, [elements])
+  
+  // Debounced search function (300ms delay)
+  const debouncedSearch = useMemo(
+    () => debounce(performSearch, 300),
+    [performSearch]
+  )
+  
+  // Handle search input changes
+  const handleSearchInputChange = useCallback((value: string) => {
+    setSearchQuery(value)
+    debouncedSearch(value)
+  }, [debouncedSearch])
 
   // NEW: Listen for document clicks (from ResizableDocumentLayout) to scroll ToC
   useEffect(() => {
@@ -436,7 +485,7 @@ export function UnifiedLeftPane({
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchInputChange(e.target.value)}
               placeholder="Search document..."
               className="w-full px-4 py-2 pl-10 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
