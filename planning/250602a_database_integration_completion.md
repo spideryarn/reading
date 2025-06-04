@@ -138,12 +138,29 @@ Complete the database integration for Spideryarn Reading by connecting existing 
     - 📔 **Benefits**: Eliminates redundancy, config is single source of truth, simpler tier management, easier to add new models
     - 📔 **Testing**: Verified glossary generation working correctly with entities extracted and properly stored in database
 
-- [ ] Connect AI headings feature to database storage
-  - [ ] Update `app/api/headings/route.ts` to use EnhancementService  
-  - [ ] Store AI-generated headings with type='headings' in document_enhancements table
-  - [ ] Update mutation system to work with database-stored headings
-  - [ ] Add a 'reset' button (like with Glossary) to clear the document-enhancement database row and give the user a way to fix things if we get into a broken state
-  - [ ] Test that heading mutations persist across sessions
+- ✅ Connect AI headings feature to database storage
+  - ✅ **Comprehensive Auto-Loading Implementation**: Complete headings database integration with auto-loading on page refresh
+    - 📔 **Current Status**: Headings feature was already well-integrated with database storage but missing auto-loading on page load
+    - 📔 **Issue**: Cached headings in database weren't automatically loaded and applied on page refresh, requiring manual regeneration
+    - 📔 **Solution**: Implemented complete auto-loading workflow with GET endpoint and component-level caching logic
+    - 📔 **Files Updated**:
+      - `app/api/headings/route.ts:57-108` - Added GET endpoint to fetch cached headings from `document_enhancements` table
+      - `app/api/headings/route.ts:110-140` - Added DELETE endpoint for reset/regenerate functionality  
+      - `components/table-of-contents-tabs.tsx:473-486` - Added `fetchCachedHeadings()` helper function
+      - `components/table-of-contents-tabs.tsx:489-524` - Added `applyCachedHeadings()` function for loading existing headings
+      - `components/table-of-contents-tabs.tsx:667-698` - Implemented auto-loading logic in useEffect hook
+      - `components/table-of-contents-tabs.tsx:615-665` - Added complete reset/regenerate functionality
+    - 📔 **Database Service Fix**: Resolved duplicate entries issue in `EnhancementService.get()` method by changing `.single()` to `.maybeSingle()` with ordering
+    - 📔 **UI Enhancements**: 
+      - Changed "Cached" label to "Loaded" badge for consistency (line 849)
+      - Added reset button with regenerate functionality (lines 852-868)
+      - Auto-loading works for both cached and fresh headings generation
+    - 📔 **Testing Verified**: 
+      - Headings automatically appear when navigating to AI-Generated tab
+      - Persistence works correctly across page refreshes and browser sessions
+      - Clean separation between cached loading (instant) and fresh generation (API call)
+      - Reset functionality properly clears database cache and regenerates headings
+    - 📔 **User Experience**: Eliminated need for manual "Generate AI headings" clicks on every page visit
 
 - [ ] Write integration tests for AI enhancement persistence
   - [ ] Test that each enhancement type stores and retrieves correctly
