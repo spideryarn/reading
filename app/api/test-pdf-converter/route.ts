@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { testPdfToPngConverter } from '@/lib/utils/pdf-converter-comparison';
 import { join } from 'path';
 

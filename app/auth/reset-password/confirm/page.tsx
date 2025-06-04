@@ -33,7 +33,7 @@ export default function ResetPasswordConfirmPage() {
   const [error, setError] = useState<string | null>(null)
   const [isValidSession, setIsValidSession] = useState<boolean | null>(null)
   const router = useRouter()
-  const searchParams = useSearchParams()
+  const _searchParams = useSearchParams()
 
   const form = useForm<NewPasswordForm>({
     resolver: zodResolver(newPasswordSchema),
@@ -76,7 +76,7 @@ export default function ResetPasswordConfirmPage() {
         // Redirect to home page after successful password reset
         router.push('/')
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred. Please try again.')
     } finally {
       setIsLoading(false)
