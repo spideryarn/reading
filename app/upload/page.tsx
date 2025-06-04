@@ -11,6 +11,7 @@ export default function UploadPage() {
   const [convertedHtml, setConvertedHtml] = useState<string>('')
   const [error, setError] = useState<string>('')
   const [isDragging, setIsDragging] = useState(false)
+  const [selectedProvider, setSelectedProvider] = useState<'claude' | 'gemini'>('claude')
   const fileInputRef = useRef<HTMLInputElement>(null)
   
 
@@ -108,6 +109,7 @@ export default function UploadPage() {
     try {
       const formData = new FormData()
       formData.append('pdf', selectedFile)
+      formData.append('provider', selectedProvider)
 
       const response = await fetch('/api/upload-pdf', {
         method: 'POST',
@@ -210,12 +212,47 @@ export default function UploadPage() {
                 )}
               </div>
 
+              {/* Provider Selection */}
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-700">
+                  AI Provider
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedProvider('claude')}
+                    disabled={isUploading}
+                    className={`p-3 border rounded-lg text-sm font-medium transition-colors ${
+                      selectedProvider === 'claude'
+                        ? 'border-orange-500 bg-orange-50 text-orange-700'
+                        : 'border-gray-300 bg-white text-gray-700 hover:border-orange-300'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <div className="font-semibold">Anthropic Claude</div>
+                    <div className="text-xs text-gray-500 mt-1">Try this first</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedProvider('gemini')}
+                    disabled={isUploading}
+                    className={`p-3 border rounded-lg text-sm font-medium transition-colors ${
+                      selectedProvider === 'gemini'
+                        ? 'border-orange-500 bg-orange-50 text-orange-700'
+                        : 'border-gray-300 bg-white text-gray-700 hover:border-orange-300'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <div className="font-semibold">Google Gemini</div>
+                    <div className="text-xs text-gray-500 mt-1">Better for longer docs</div>
+                  </button>
+                </div>
+              </div>
+
               <button
                 onClick={handleUpload}
                 disabled={!selectedFile || isUploading}
                 className="w-full px-4 py-3 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
               >
-                {isUploading ? 'Converting...' : 'Convert to HTML'}
+                {isUploading ? `Converting with ${selectedProvider === 'claude' ? 'Claude' : 'Gemini'}...` : 'Convert to HTML'}
               </button>
 
               {error && (

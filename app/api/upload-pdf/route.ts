@@ -1,19 +1,26 @@
 // PDF to HTML Conversion API endpoint
-// Accepts PDF file uploads and converts them to HTML using Claude 4 Sonnet
-// Uses direct PDF processing via Anthropic API (no image conversion)
+// Accepts PDF file uploads and converts them to HTML using Claude or Gemini APIs
+// Uses direct PDF processing via Anthropic/Google APIs (no image conversion)
 
 import { NextRequest, NextResponse } from 'next/server'
 import { executeMultimodalPrompt } from '@/lib/prompts/types'
 import { pdfToHtmlDirectPrompt } from '@/lib/prompts/templates/pdf-to-html-direct'
+import { pdfToHtmlGeminiPrompt } from '@/lib/prompts/templates/pdf-to-html-gemini'
 
 export async function POST(request: NextRequest) {
   try {
     // Parse multipart form data
     const formData = await request.formData()
     const pdfFile = formData.get('pdf') as File
+    const provider = (formData.get('provider') as string) || 'claude' // Default to Claude
 
     if (!pdfFile) {
       return new NextResponse('No PDF file provided', { status: 400 })
+    }
+
+    // Validate provider selection
+    if (!['claude', 'gemini'].includes(provider)) {
+      return new NextResponse('Invalid provider. Must be "claude" or "gemini"', { status: 400 })
     }
 
     // Convert file to buffer
@@ -36,12 +43,16 @@ export async function POST(request: NextRequest) {
       return new NextResponse('File is not a valid PDF', { status: 400 })
     }
 
-    console.log(`Processing PDF directly: ${pdfFile.name} (${(pdfBuffer.length / 1024).toFixed(1)} KB)`)
+    console.log(`Processing PDF directly: ${pdfFile.name} (${(pdfBuffer.length / 1024).toFixed(1)} KB) using ${provider}`)
 
-    console.log('Sending PDF directly to Claude 4 Sonnet for HTML conversion...')
+    // Select the appropriate prompt template based on provider
+    const promptTemplate = provider === 'gemini' ? pdfToHtmlGeminiPrompt : pdfToHtmlDirectPrompt
+    const providerDisplayName = provider === 'gemini' ? 'Gemini 1.5 Pro' : 'Claude 4 Sonnet'
+    
+    console.log(`Sending PDF directly to ${providerDisplayName} for HTML conversion...`)
 
     // Execute the direct PDF prompt (multi-page support enabled)
-    const htmlOutput = await executeMultimodalPrompt(pdfToHtmlDirectPrompt, {
+    const htmlOutput = await executeMultimodalPrompt(promptTemplate, {
       pdfBuffer,
       fileName: pdfFile.name,
       singlePageOnly: false // Multi-page processing enabled
