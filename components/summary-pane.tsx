@@ -134,7 +134,7 @@ export function SummaryPane({
             <h3 className="text-sm font-semibold text-blue-800">Summary</h3>
             {isCached && (
               <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
-                Cached
+                Loaded
               </span>
             )}
           </div>
