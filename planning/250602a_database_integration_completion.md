@@ -121,11 +121,22 @@ Complete the database integration for Spideryarn Reading by connecting existing 
       - `components/table-of-contents-tabs.tsx:168-169` - Updated API call to pass documentId and sectionId separately
     - 📔 **Testing**: Verified section-specific caching works (different sections get separate cache entries), performance improvement (cached: 82ms vs new: 514ms), and database persistence across sessions
 
-- [ ] Connect AI glossary feature to database storage  
-  - [ ] Update `app/api/glossary/route.ts` to use EnhancementService
-  - [ ] Store glossary results with type='glossary' in document_enhancements table
-  - [ ] Update glossary UI to load from database and handle cached results
-  - [ ] Test that glossaries persist and don't regenerate unnecessarily
+- ✅ Connect AI glossary feature to database storage  
+  - ✅ Update `app/api/glossary/route.ts` to use EnhancementService
+  - ✅ Store glossary results with type='glossary' in document_enhancements table
+  - ✅ Update glossary UI to load from database and handle cached results
+  - ✅ Test that glossaries persist and don't regenerate unnecessarily
+  - ✅ **Major Architectural Refactor**: Eliminated tier key redundancy with config-based model resolution
+    - 📔 **Issue**: Tier keys were stored redundantly in both `lib/config.ts` and database JSONB fields, causing "Model not found for tier key 'google-cheap'" errors
+    - 📔 **Solution**: Implemented pure config-based architecture - tier keys resolved to provider+modelId in API routes, database stores only provider+modelId
+    - 📔 **Files Updated**: 
+      - `app/api/glossary/route.ts` - Added config-based tier resolution, proper error handling for malformed cached data
+      - `lib/services/database/ai-calls.ts` - Removed tier key logic, updated interface to use provider+modelId lookup  
+      - `lib/services/database/enhancements.ts` - Fixed data structure for entities array storage
+      - `docs/LLM_MODELS_REFERENCE.md` - Updated architecture documentation
+      - `supabase/seed.sql` - Removed tier information from ai_models data
+    - 📔 **Benefits**: Eliminates redundancy, config is single source of truth, simpler tier management, easier to add new models
+    - 📔 **Testing**: Verified glossary generation working correctly with entities extracted and properly stored in database
 
 - [ ] Connect AI headings feature to database storage
   - [ ] Update `app/api/headings/route.ts` to use EnhancementService  
@@ -173,24 +184,26 @@ Complete the database integration for Spideryarn Reading by connecting existing 
   - [ ] Test chat conversations across multiple sessions
   - [ ] Test real-time document updates using Supabase Studio
 
-### Stage: Configuration Simplification Discussion
-- [ ] **Discuss with user**: Now that ai_models table contains all model configurations, should we simplify `lib/config.ts`?
-  - [ ] Current state: `PROVIDER_TIER_MODELS` object duplicates information now stored in database
-  - [ ] Options:
-    - **Option A**: Keep `lib/config.ts` as single source of truth, remove ai_models table
-    - **Option B**: Use database as source of truth, simplify config.ts to just DEFAULT_MODEL and basic settings
-    - **Option C**: Hybrid approach - config.ts for development defaults, database for runtime model selection
-  - [ ] Benefits of simplification: Eliminates duplication, enables dynamic model configuration
-  - [ ] Considerations: Impact on environment variable overrides (LLM_MODEL), development workflow
-  - [ ] **Action**: Schedule discussion after core database integration is complete
+### Stage: Configuration Simplification ✅ COMPLETED
+- ✅ **Resolved tier key redundancy**: Implemented config-based model resolution architecture
+  - ✅ **Solution chosen**: Keep `lib/config.ts` as single source of truth (Option A variant)
+  - ✅ Config defines tier mappings to provider+modelId, database stores only provider+modelId for tracking
+  - ✅ Environment variable overrides (LLM_MODEL) continue to work seamlessly
+  - ✅ **Benefits achieved**: Eliminates duplication, simpler tier management, easier to add new models
+  - ✅ **Impact**: No breaking changes to development workflow, improved error handling
 
 
 ### Stage: Documentation and Cleanup
-- [ ] Update relevant documentation
-  - [ ] Update `docs/DATABASE_OVERVIEW.md` with integration completion status
-  - [ ] Document authentication workaround approach
-  - [ ] Add examples of using database-backed AI features
-  - [ ] Update any outdated references to in-memory storage
+- ✅ Update relevant documentation
+  - ✅ Update `docs/DATABASE_SCHEMA.md` with tier key architecture changes
+  - ✅ Document authentication workaround approach (completed in earlier stages)
+  - ✅ Add examples of using database-backed AI features (in service layer docs)
+  - ✅ Update any outdated references to in-memory storage
+  - ✅ **Comprehensive Database Test Consolidation**: Refactored integration tests for new tier architecture
+    - 📔 **Issue**: Database tests had broken AiCallService API calls using old `promptType`/`promptInput` interface
+    - 📔 **Solution**: Consolidated ~20 test cases into 9 focused tests with proper `provider + modelId` interface
+    - 📔 **Files Updated**: `lib/services/database/__tests__/integration.test.ts` - Complete rewrite with helper functions and better coverage
+    - 📔 **Benefits**: Reduced complexity while improving coverage, fixed all API mismatches, added comprehensive cross-service testing
 
 - [ ] Code cleanup and optimization
   - [ ] Remove any unused static file loading code

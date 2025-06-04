@@ -49,8 +49,15 @@ The database schema is defined and represented in several places:
 - Cost fields: `input_cost_per_1k`, `output_cost_per_1k` (basic pricing only)
 - `extra`: JSONB for provider-specific metadata
 
+**Tier Key Architecture**:
+- **Config-based resolution**: Tier keys (e.g., 'google-cheap', 'anthropic-balanced') are managed in `lib/config.ts`
+- **Database storage**: Only stores provider+model_id combinations for tracking and metadata
+- **API flow**: Routes resolve tier keys to provider+model_id using config, then look up model UUID in database
+- **Benefits**: Single source of truth for tier management, eliminates redundancy, easier model configuration
+
 **Design Notes**: 
 - Pre-seeded with known models, unique on (provider, model_id, version)
+- Tier information removed from database - now managed purely in config
 - Pricing intentionally simplified - complex caching/reasoning costs handled elsewhere
 - Designed to be extended rather than comprehensive
 
