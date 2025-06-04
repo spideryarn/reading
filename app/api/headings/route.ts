@@ -107,6 +107,38 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const documentId = searchParams.get('documentId')
+    
+    if (!documentId) {
+      return NextResponse.json(
+        { error: 'documentId is required' },
+        { status: 400 }
+      )
+    }
+    
+    // Initialize database services
+    const supabase = await createClient()
+    const enhancementService = new EnhancementService(supabase)
+    
+    // Delete headings enhancement for this document
+    await enhancementService.delete(documentId, 'headings')
+    
+    return NextResponse.json({ 
+      success: true,
+      message: 'Headings enhancement deleted successfully'
+    })
+  } catch (error) {
+    console.error('Error deleting headings enhancement:', error)
+    return NextResponse.json(
+      { error: 'Failed to delete headings enhancement' },
+      { status: 500 }
+    )
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()

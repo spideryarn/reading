@@ -9,6 +9,7 @@ import { useState, useEffect, useRef, useMemo, type JSX } from 'react'
 import { CircleNotch } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import type { GranularityKey } from '@/lib/prompts/templates/summarise'
+import type { Mutation } from '@/lib/types/mutation'
 import { useMutation, useActiveMutationType } from '@/lib/context/mutation-context'
 import { SUMMARY_CONFIG } from '@/lib/config'
 import { generateHeadingMutation, extractHeadingsFromMutation } from '@/lib/services/heading-mutation-generator'
@@ -446,7 +447,7 @@ export function AIGeneratedHeadingsTab({
   documentId,
   headingVisibility 
 }: BaseTabProps) {
-  const { applyMutation, document: mutatedDocument } = useMutation()
+  const { applyMutation, revertMutation, mutationState, document: mutatedDocument } = useMutation()
   const activeMutationType = useActiveMutationType()
   const [aiHeadings, setAiHeadings] = useState<Heading[]>([])
   const [loadingStates, setLoadingStates] = useState<Set<string>>(new Set())
@@ -456,6 +457,8 @@ export function AIGeneratedHeadingsTab({
   const [showHeadings, setShowHeadings] = useState(false)
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
   const [granularityLevel, setGranularityLevel] = useState(3)
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [enhancementId, setEnhancementId] = useState<string | null>(null)
   
 
   // Update default granularity for AI headings
@@ -504,6 +507,7 @@ export function AIGeneratedHeadingsTab({
         }))
         setAiHeadings(generatedHeadings)
         setShowHeadings(true)
+        setIsLoaded(true)
         
         // Clear AI-generated collapsed state when cached headings are loaded
         setCollapsedIds(new Set())
@@ -520,7 +524,11 @@ export function AIGeneratedHeadingsTab({
   }
 
   // Core headings generation logic without state management
-  const generateHeadingsFromAPI = async () => {
+  const generateHeadingsFromAPI = async (isRegeneration = false) => {
+      // Note: We don't need to manually remove AI headings here anymore
+      // The mutation system should handle this when we revert the active mutation
+      // in handleResetHeadings before calling this function
+      
       // Reconstruct HTML from elements with proper IDs
       let htmlWithIds = ''
       if (elements && elements.length > 0) {
@@ -563,7 +571,8 @@ export function AIGeneratedHeadingsTab({
       // Generate mutation from API response
       const mutation = generateHeadingMutation({
         headings: data.headings,
-        documentId: documentId
+        documentId: documentId,
+        isRegeneration: isRegeneration
       })
       
       // Apply the mutation to insert headings into document
@@ -577,6 +586,7 @@ export function AIGeneratedHeadingsTab({
         }))
         setAiHeadings(generatedHeadings)
         setShowHeadings(true)
+        setIsLoaded(false)
         
         // Clear AI-generated collapsed state when new headings are generated
         setCollapsedIds(new Set())
@@ -601,6 +611,59 @@ export function AIGeneratedHeadingsTab({
     }
   }
 
+  // Reset/regenerate headings functionality
+  const handleResetHeadings = async () => {
+    console.log('Resetting headings...')
+    setIsLoadingHeadings(true)
+    setHeadingsError(null)
+    setIsLoaded(false)
+    
+    try {
+      // First revert any existing AI headings mutation
+      const activeMutationType = mutationState.activeMutation?.type
+      if (activeMutationType === 'insert-headings') {
+        console.log('Reverting existing AI headings mutation...')
+        const revertResult = await revertMutation()
+        if (!revertResult.success) {
+          console.warn('Failed to revert existing mutation:', revertResult.error)
+        }
+        
+        // Wait a bit for the DOM to update after reverting
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+      
+      // Clear the AI headings from state to ensure clean slate
+      setAiHeadings([])
+      setShowHeadings(false)
+      
+      // Then delete the cached enhancement if it exists
+      if (enhancementId) {
+        console.log('Deleting cached headings enhancement...')
+        const deleteResponse = await fetch(`/api/headings?documentId=${documentId}`, {
+          method: 'DELETE'
+        })
+        
+        if (!deleteResponse.ok) {
+          console.warn('Failed to delete cached headings, continuing with regeneration')
+        }
+      }
+      
+      setEnhancementId(null)
+      
+      // Wait a bit before generating new headings to ensure clean state
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // Force regeneration by calling the API directly with regeneration flag
+      await generateHeadingsFromAPI(true)
+    } catch (error) {
+      console.error('Error regenerating headings:', error)
+      setHeadingsError(error instanceof Error ? error.message : 'Failed to regenerate headings')
+      setShowHeadings(true)
+    } finally {
+      setIsLoadingHeadings(false)
+    }
+  }
+
   // Auto-load cached headings or generate new ones on mount
   useEffect(() => {
     const loadHeadings = async () => {
@@ -612,6 +675,7 @@ export function AIGeneratedHeadingsTab({
         const cached = await fetchCachedHeadings(documentId)
         if (cached && cached.headings) {
           console.log('Found cached headings, applying them...')
+          setEnhancementId(cached.enhancementId || null)
           await applyCachedHeadings(cached.headings)
         } else {
           // Generate new headings if none cached
@@ -776,7 +840,35 @@ export function AIGeneratedHeadingsTab({
           description={headingsError}
         />
       ) : aiHeadings.length > 0 ? (
-        <HeadingTree
+        <>
+          {isLoaded && (
+            <div className="flex items-center justify-between mb-3 pb-2 border-b border-green-200">
+              <div className="flex items-center space-x-2">
+                <h3 className="text-sm font-semibold text-green-800">AI Headings</h3>
+                <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                  Loaded
+                </span>
+              </div>
+              <Button
+                onClick={handleResetHeadings}
+                variant="ghost"
+                size="icon-xs"
+                className="text-green-600 hover:text-green-800 hover:bg-green-100"
+                title="Regenerate headings"
+                disabled={isLoadingHeadings}
+              >
+                <svg 
+                  className="w-4 h-4" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </Button>
+            </div>
+          )}
+          <HeadingTree
           headings={aiHeadings}
           themeColors={{
             hover: 'hover:bg-green-50',
@@ -793,6 +885,7 @@ export function AIGeneratedHeadingsTab({
           onGranularityChange={setGranularityLevel}
           headingVisibility={headingVisibility}
         />
+        </>
       ) : (
         <p className="text-gray-500">No headings generated</p>
       )}
