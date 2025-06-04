@@ -76,11 +76,18 @@ export function AppHeader({
                   )}
                   {title && (
                     titleLink ? (
-                      <Link href={titleLink} className="text-lg font-medium text-gray-800 hover:text-gray-600 transition-colors truncate leading-tight">
+                      <Link 
+                        href={titleLink} 
+                        className="text-lg font-medium text-gray-800 hover:text-gray-600 transition-colors truncate leading-tight cursor-help"
+                        title={title}
+                      >
                         {title}
                       </Link>
                     ) : (
-                      <h1 className="text-lg font-medium text-gray-800 truncate leading-tight">
+                      <h1 
+                        className="text-lg font-medium text-gray-800 truncate leading-tight cursor-help"
+                        title={title}
+                      >
                         {title}
                       </h1>
                     )

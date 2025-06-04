@@ -13,7 +13,12 @@ export function DocumentHeader({ title, slug }: DocumentHeaderProps) {
   return (
     <>
       <div className="border-b px-4 py-3 flex items-center justify-between min-h-[3rem] bg-white">
-        <h1 className="text-xl font-semibold leading-tight text-gray-900">{title}</h1>
+        <h1 
+          className="text-xl font-semibold leading-tight text-gray-900 truncate cursor-help" 
+          title={title}
+        >
+          {title}
+        </h1>
         <div className="flex items-center gap-2">
           <Button
             asChild
