@@ -183,22 +183,23 @@ This builds on the completed database implementation and leverages the existing 
 - [x] Git commit database integration following `docs/GIT_COMMITS.md` using subagent
 
 ### Stage: Google OAuth Implementation
-- [ ] Configure Google OAuth in Supabase
-  - [ ] Set up Google OAuth provider in Supabase dashboard
-  - [ ] Configure OAuth redirect URLs for development and production
-  - [ ] Add Google client ID and secret to environment configuration
+- [x] Configure Google OAuth in Supabase
+  - [x] Added Google OAuth provider configuration to `supabase/config.toml` with environment variables
+  - [x] Set OAuth redirect URLs for development (http://127.0.0.1:54341/auth/v1/callback)
+  - [x] Added Google client ID and secret placeholders to `.env.local` with setup instructions
 
-- [ ] Add Google OAuth to authentication forms
-  - [ ] Add "Sign in with Google" button to login form
-  - [ ] Add "Sign up with Google" button to signup form
-  - [ ] Implement Supabase `signInWithOAuth` integration
-  - [ ] Style OAuth buttons consistently with existing design
+- [x] Add Google OAuth to authentication forms
+  - [x] Created reusable `OAuthButton` component with Google icon integration
+  - [x] Added "Sign in with Google" button to login form with visual separator
+  - [x] Added "Sign up with Google" button to signup form with matching design
+  - [x] Implemented Supabase `signInWithOAuth` integration with proper redirects
+  - [x] Updated auth callback route to handle OAuth flow with `next` parameter support
 
-- [ ] Test Google OAuth flow
-  - [ ] Test complete OAuth registration flow
-  - [ ] Test OAuth login for existing users
-  - [ ] Verify profile creation works with OAuth users
-  - [ ] Test OAuth error handling and edge cases
+- [x] Test Google OAuth flow
+  - [x] Test complete OAuth registration flow with Google account selection
+  - [x] Test OAuth login for existing users (successful authentication)
+  - [x] Verify profile creation works with OAuth users (automatic trigger confirmed)
+  - [x] Fixed OAuth redirect loop prevention by filtering auth pages from next parameter
 
 - [ ] Write tests for OAuth integration using subagent
   - [ ] Test OAuth button rendering and interaction
@@ -207,35 +208,42 @@ This builds on the completed database implementation and leverages the existing 
 
 - [ ] Update authentication documentation with OAuth patterns
 
-### Stage: User Profile Management
-- [ ] Create user profile page
-  - [ ] Create `app/auth/profile/page.tsx` with user information display
-  - [ ] List documents created by the user with proper filtering
-  - [ ] Add basic profile editing capabilities (display name, preferences)
-  - [ ] Include navigation back to main application
+### Stage: User Profile Management ✅
+- [x] Create user profile page
+  - [x] Create `app/auth/profile/page.tsx` with user information display
+  - [x] List documents created by the user with proper filtering
+  - [x] Add basic profile editing capabilities (display name, preferences)
+  - [x] Include navigation back to main application
 
-- [ ] Implement profile dropdown in header
-  - [ ] Create `components/auth/profile-dropdown.tsx` with account menu
-  - [ ] Add dropdown trigger with user initials or avatar
-  - [ ] Include "Logged in as [email]", "Profile", and "Log out" options
-  - [ ] Style dropdown to match application design system
+- [x] Implement profile dropdown in header
+  - [x] Create `components/auth/profile-dropdown.tsx` with account menu
+  - [x] Add dropdown trigger with user initials or avatar
+  - [x] Include "Logged in as [email]", "Profile", and "Log out" options
+  - [x] Style dropdown to match application design system
 
-- [ ] Update header component with profile dropdown
-  - [ ] Replace simple email display with profile dropdown
-  - [ ] Add proper keyboard navigation and accessibility
-  - [ ] Test dropdown behavior across different screen sizes
+- [x] Update header component with profile dropdown
+  - [x] Replace simple email display with profile dropdown
+  - [x] Add proper keyboard navigation and accessibility
+  - [x] Test dropdown behavior across different screen sizes
 
-- [ ] Implement logout functionality
-  - [ ] Create logout route handler in `app/auth/logout/route.ts`
-  - [ ] Clear authentication state and redirect to home page
-  - [ ] Test logout from various application states
+- [x] Implement logout functionality
+  - [x] Create logout route handler in `app/auth/logout/route.ts`
+  - [x] Clear authentication state and redirect to home page
+  - [x] Test logout from various application states
 
-- [ ] Write tests for profile management using subagent
+- [x] Test User Profile Management implementation
+  - [x] Verified profile page displays user information and documents correctly
+  - [x] Confirmed profile dropdown functionality with proper authentication state
+  - [x] Tested logout flow clears authentication state correctly
+  - [x] Validated automatic profile creation via database trigger
+  - [x] Confirmed email authentication and Google OAuth configuration working
+
+- [ ] Write comprehensive tests for profile management using subagent
   - [ ] Test profile page rendering and data display
-  - [ ] Test profile dropdown functionality
+  - [ ] Test profile dropdown functionality  
   - [ ] Test logout flow and state clearing
 
-- [ ] Git commit profile management features following `docs/GIT_COMMITS.md` using subagent
+- [x] Git commit profile management features following `docs/GIT_COMMITS.md` using subagent
 
 ### Stage: Visual Polish and Aesthetics
 - [ ] Enhance authentication form styling
@@ -421,3 +429,144 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 3. **API Authentication**: Service-to-service authentication for future API endpoints
 4. **Advanced Security**: Enhanced rate limiting, audit logging, session management
 5. **User Analytics**: Authentication event tracking and user behavior analysis
+
+## Production Configuration Steps
+
+### Supabase Dashboard Configuration
+
+#### 1. URL Configuration Settings
+**Location:** Supabase Dashboard → Authentication → URL Configuration
+
+**Site URL:** `https://www.spideryarn.com`
+
+**Additional Redirect URLs:**
+```
+http://localhost:3002/**
+https://www.spideryarn.com/**
+https://spideryarn.com/**
+https://*.vercel.app/**
+```
+
+**Notes:**
+- Site URL should point to the canonical domain (www.spideryarn.com)
+- Include both apex and www domains for flexibility
+- Use wildcards (**) for development and preview environments
+- Set exact URLs for production security
+
+#### 2. Google OAuth Provider Configuration
+**Location:** Supabase Dashboard → Authentication → Providers → Google
+
+**Settings:**
+- **Enable:** Toggle ON
+- **Client ID:** `815353440959-ov99gpv5ijma8vmvs639cvq6ej746vej.apps.googleusercontent.com`
+- **Client Secret:** `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`
+
+### Google Cloud Console Configuration
+
+#### 1. OAuth Credentials Settings
+**Location:** [Google Cloud Console - API Credentials](https://console.cloud.google.com/apis/credentials)
+
+**Edit existing OAuth 2.0 Client ID:**
+
+**Authorized JavaScript Origins:**
+```
+http://localhost:3002
+https://www.spideryarn.com
+https://spideryarn.com
+https://[your-project-id].supabase.co
+```
+
+**Authorized Redirect URIs:**
+```
+http://127.0.0.1:54341/auth/v1/callback
+https://[your-project-id].supabase.co/auth/v1/callback
+```
+
+#### 2. OAuth Consent Screen Configuration
+**Location:** [Google Cloud Console - OAuth Consent Screen](https://console.cloud.google.com/apis/credentials/consent)
+
+**Authorized Domains:**
+- Add: `[your-project-id].supabase.co`
+- Add: `spideryarn.com` (if using custom domain)
+
+**Required Scopes:**
+- `.../auth/userinfo.email`
+- `.../auth/userinfo.profile`
+- `openid`
+
+### Environment Variables for Production
+
+**Production Environment (.env.production or deployment platform):**
+```bash
+# Production Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://[your-project-id].supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=[your-production-anon-key]
+
+# Google OAuth (same for local and production)
+GOOGLE_OAUTH_CLIENT_ID=815353440959-ov99gpv5ijma8vmvs639cvq6ej746vej.apps.googleusercontent.com
+GOOGLE_OAUTH_CLIENT_SECRET=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
+
+# Other production variables
+ANTHROPIC_API_KEY=[your-production-key]
+GOOGLE_GENERATIVE_AI_API_KEY=[your-production-key]
+```
+
+### Database Migration to Production
+
+**Link local project to remote:**
+```bash
+npx supabase link --project-ref [your-project-id]
+```
+
+**Push migrations to production:**
+```bash
+npx supabase db push
+```
+
+**Verify migration status:**
+```bash
+npx supabase migration list
+```
+
+### Domain Configuration Strategy
+
+**Apex Domain Redirect:** `spideryarn.com` → `www.spideryarn.com`
+
+**Rationale:**
+- Site URL points to canonical www domain
+- Include both domains in redirect URLs for flexibility
+- Prevents double redirects in OAuth flow
+- Provides redundancy during domain setup
+
+### Testing Production Configuration
+
+**Pre-deployment Checklist:**
+1. Verify all redirect URLs are configured
+2. Test OAuth flow in local development
+3. Confirm Google Cloud Console settings
+4. Validate Supabase provider configuration
+5. Check environment variables are set correctly
+
+**Post-deployment Verification:**
+1. Test Google OAuth login on production domain
+2. Verify profile creation and user flows
+3. Check redirect behaviour from apex domain
+4. Validate session persistence across domains
+5. Test logout functionality
+
+### Troubleshooting Common Issues
+
+**OAuth Redirect Mismatch:**
+- Verify redirect URLs in both Google Console and Supabase
+- Check for exact URL matching (no trailing slashes difference)
+- Ensure protocol (http/https) matches exactly
+
+**Domain Configuration Issues:**
+- Confirm apex domain redirect is working
+- Verify DNS settings for both apex and www domains
+- Check SSL certificates are valid for both domains
+
+**Session Management:**
+- Ensure consistent domain usage in cookie settings
+- Verify CORS configuration for cross-domain requests
+- Check that middleware handles both domain variants
