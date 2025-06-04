@@ -7,6 +7,7 @@ import { summarisePrompt, getMaxTokensForGranularity, getGranularityInstruction 
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
+import { getModelConfig, AI_CONFIG } from '@/lib/config'
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,28 +58,24 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Look up model ID from the database
-    const modelName = templateWithTokens.modelConfig?.model || 'claude-3-5-haiku-20241022'
-    const { data: modelData, error: modelError } = await supabase
-      .from('ai_models')
-      .select('id')
-      .eq('model_id', modelName)
-      .single()
-    
-    if (modelError || !modelData) {
-      throw new Error(`Model ${modelName} not found in database`)
-    }
+    // Resolve tier key to actual model details using config
+    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as any
+    const modelConfig = getModelConfig(tierKey)
     
     // Start tracking AI call for metrics
     let aiCall
     try {
       aiCall = await aiCallService.startCall({
         documentId,
-        modelId: modelData.id,
-        promptType: 'summarise',
-        promptInput: content,
-        promptTemplate: JSON.stringify(templateWithTokens),
-        extra: { granularity, sectionId }
+        provider: modelConfig.provider,
+        modelId: modelConfig.modelId,
+        prompt_type: 'summarise',
+        input_data: { 
+          content_length: content.length,
+          granularity,
+          section_id: sectionId,
+          tier_used: tierKey
+        }
       })
     } catch (aiCallError) {
       console.error('Failed to create AI call:', aiCallError)

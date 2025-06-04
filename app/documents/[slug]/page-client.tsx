@@ -34,6 +34,7 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
   const [isLoadingGlossary, setIsLoadingGlossary] = useState(false)
   const [showGlossary, setShowGlossary] = useState(false)
   const [glossaryError, setGlossaryError] = useState<string | null>(null)
+  const [glossaryCached, setGlossaryCached] = useState(false)
   
   // Heading visibility state
   const [headingVisibility, setHeadingVisibility] = useState<Map<string, 'visible' | 'not-visible'>>(new Map())
@@ -92,6 +93,34 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
     console.log('Element clicked:', element.id)
   }, [])
 
+  // Reset glossary (delete from database and clear UI)
+  const resetGlossary = async () => {
+    try {
+      const response = await fetch('/api/glossary', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ documentId }),
+      })
+      
+      if (!response.ok) {
+        throw new Error(`Failed to reset glossary: ${response.status}`)
+      }
+      
+      // Clear UI state
+      setGlossaryEntities([])
+      setGlossaryCached(false)
+      setShowGlossary(false)
+      setGlossaryError(null)
+      
+      console.log('Glossary reset successfully')
+    } catch (error) {
+      console.error('Error resetting glossary:', error)
+      setGlossaryError('Failed to reset glossary')
+    }
+  }
+
   // Fetch glossary entities when requested
   const fetchGlossary = async () => {
     setIsLoadingGlossary(true)
@@ -102,7 +131,10 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content: html }),
+        body: JSON.stringify({ 
+          content: html,
+          documentId: documentId
+        }),
       })
       
       if (!response.ok) {
@@ -111,12 +143,18 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
       }
       
       const data = await response.json()
-      setGlossaryEntities(data.entities)
+      console.log('Glossary API response:', data)
+      setGlossaryEntities(data.entities || [])
+      setGlossaryCached(data.cached || false)
       setShowGlossary(true)
     } catch (error) {
       console.error('Error fetching glossary:', error)
-      setGlossaryError(error instanceof Error ? error.message : 'Failed to generate glossary')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate glossary'
+      setGlossaryError(errorMessage)
       setShowGlossary(true) // Show the pane even on error so user can see the error message
+      
+      // Always show reset button on any error - user should be able to clear cache and retry
+      setGlossaryCached(true)
     } finally {
       setIsLoadingGlossary(false)
     }
@@ -135,7 +173,9 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
       isLoadingGlossary={isLoadingGlossary}
       showGlossary={showGlossary}
       glossaryError={glossaryError}
+      glossaryCached={glossaryCached}
       onLoadGlossary={fetchGlossary}
+      onResetGlossary={resetGlossary}
       headingVisibility={headingVisibility}
       onElementVisibilityChange={handleElementVisibilityChange}
       onElementClick={handleElementClick}

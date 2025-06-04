@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { EnhancementService } from '@/lib/services/database/enhancements'
+import { getModelConfig } from '@/lib/config'
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,25 +32,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Document not found' }, { status: 404 })
     }
 
-    // Get a test model ID
-    const { data: model } = await supabase
-      .from('ai_models')
-      .select('id')
-      .eq('model_id', 'claude-3-5-haiku-20241022')
-      .single()
-
-    if (!model) {
-      return NextResponse.json({ error: 'AI model not found' }, { status: 500 })
-    }
+    // Get model config for demo (use anthropic-cheap)
+    const modelConfig = getModelConfig('anthropic-cheap')
 
     // Simulate generating multiple enhancements over time
     const simulateEnhancements = async () => {
       // 1. Start with a summary (immediate)
       const summaryCall = await aiCallService.startCall({
         documentId,
-        modelId: model.id,
-        promptType: 'summarise',
-        promptInput: document.plaintext_content
+        provider: modelConfig.provider,
+        modelId: modelConfig.modelId,
+        prompt_type: 'summarise',
+        input_data: { content_length: document.plaintext_content?.length || 0 }
       })
 
       await enhancementService.storeSummary(
@@ -92,25 +86,28 @@ export async function POST(request: NextRequest) {
       setTimeout(async () => {
         const glossaryCall = await aiCallService.startCall({
           documentId,
-          modelId: model.id,
-          promptType: 'glossary',
-          promptInput: document.plaintext_content
+          provider: modelConfig.provider,
+          modelId: modelConfig.modelId,
+          prompt_type: 'glossary',
+          input_data: { content_length: document.plaintext_content?.length || 0 }
         })
 
         await enhancementService.storeGlossary(
           documentId,
           glossaryCall!.id,
           {
-            entries: [
+            entities: [
               {
-                term: 'Document',
-                definition: 'A written or digital record containing information',
-                category: 'General'
+                name: 'Document',
+                ontology: 'concept',
+                aliases: [],
+                brief_explanation: 'A written or digital record containing information'
               },
               {
-                term: 'Enhancement',
-                definition: 'An improvement or addition to existing content',
-                category: 'Technical'
+                name: 'Enhancement',
+                ontology: 'concept', 
+                aliases: [],
+                brief_explanation: 'An improvement or addition to existing content'
               }
             ],
             metadata: { extractedTerms: 2 }
@@ -133,9 +130,10 @@ export async function POST(request: NextRequest) {
       setTimeout(async () => {
         const headingsCall = await aiCallService.startCall({
           documentId,
-          modelId: model.id,
-          promptType: 'headings',
-          promptInput: document.plaintext_content
+          provider: modelConfig.provider,
+          modelId: modelConfig.modelId,
+          prompt_type: 'headings',
+          input_data: { content_length: document.plaintext_content?.length || 0 }
         })
 
         await enhancementService.storeHeadings(

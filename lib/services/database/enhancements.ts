@@ -178,11 +178,15 @@ export class EnhancementService {
     documentId: string,
     aiCallId: string,
     glossary: {
-      entries: Array<{
-        term: string
-        definition: string
-        category?: string
-        aliases?: string[]
+      entities: Array<{
+        name: string
+        ontology: string
+        aliases: string[]
+        brief_explanation: string
+        long_explanation?: string
+        datetime?: string
+        url?: string
+        extra?: Record<string, unknown>
       }>
       metadata?: Record<string, any>
     }

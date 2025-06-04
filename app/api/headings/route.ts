@@ -5,6 +5,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import * as cheerio from 'cheerio'
 import { executePrompt } from '@/lib/prompts/types'
 import { headingsPrompt, headingsPromptInputSchema, headingsResponseSchema } from '@/lib/prompts/templates/headings'
+import { createClient } from '@/lib/supabase/server'
+import { EnhancementService } from '@/lib/services/database/enhancements'
+import { AiCallService } from '@/lib/services/database/ai-calls'
+import { getModelConfig, AI_CONFIG } from '@/lib/config'
 
 /**
  * Remove all existing headings (h1-h6) from HTML content
@@ -63,7 +67,35 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const { html_content } = validationResult.data
+    const { html_content, documentId } = validationResult.data
+    
+    // Initialize database services
+    const supabase = await createClient()
+    const enhancementService = new EnhancementService(supabase)
+    const aiCallService = new AiCallService(supabase)
+    
+    // Check if headings already exist in database
+    const existingHeadings = await enhancementService.get(
+      documentId,
+      'headings'
+    )
+    
+    if (existingHeadings) {
+      // Validate cached data structure - fail fast if malformed
+      if (!existingHeadings.content || typeof existingHeadings.content !== 'object') {
+        throw new Error(`Malformed headings data in database for enhancement ${existingHeadings.id}: content is not an object`)
+      }
+      
+      if (!Array.isArray(existingHeadings.content.items)) {
+        throw new Error(`Malformed headings data in database for enhancement ${existingHeadings.id}: content.items is not an array. Found: ${typeof existingHeadings.content.items}`)
+      }
+      
+      return NextResponse.json({ 
+        headings: existingHeadings.content.items,
+        cached: true,
+        enhancementId: existingHeadings.id
+      })
+    }
     
     // Remove all existing headings from the HTML
     const cleanedHtml = removeExistingHeadings(html_content)
@@ -71,6 +103,23 @@ export async function POST(request: NextRequest) {
     console.log('Processing headings generation for document...')
     console.log(`Original HTML length: ${html_content.length} characters`)
     console.log(`Cleaned HTML length: ${cleanedHtml.length} characters`)
+    
+    // Resolve tier key to actual model details using config
+    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as any
+    const modelConfig = getModelConfig(tierKey)
+    
+    // Create AI call record for tracking
+    const aiCall = await aiCallService.startCall({
+      documentId,
+      provider: modelConfig.provider,
+      modelId: modelConfig.modelId,
+      prompt_type: 'headings',
+      input_data: { 
+        content_length: cleanedHtml.length,
+        original_length: html_content.length,
+        tier_used: tierKey
+      }
+    })
     
     // Generate headings using LLM
     const llmResponse = await executePrompt(headingsPrompt, { 
@@ -103,7 +152,34 @@ export async function POST(request: NextRequest) {
     // Log the generated headings hierarchy to console
     logHeadingsHierarchy(validatedResponse.headings)
     
-    return NextResponse.json(validatedResponse)
+    // Complete the AI call record
+    await aiCallService.completeCall(aiCall.id, {
+      output_data: {
+        headings_count: validatedResponse.headings.length,
+        processing_notes: 'Headings generation completed successfully'
+      }
+    })
+    
+    // Store the headings result in database
+    await enhancementService.storeHeadings(
+      documentId,
+      aiCall.id,
+      {
+        items: validatedResponse.headings,
+        metadata: {
+          content_length: cleanedHtml.length,
+          headings_count: validatedResponse.headings.length,
+          tier_used: tierKey,
+          model_used: modelConfig.modelId
+        }
+      }
+    )
+    
+    return NextResponse.json({
+      ...validatedResponse,
+      cached: false,
+      enhancementId: null // Will be available on next request from cache
+    })
   } catch (error) {
     console.error('Error generating headings:', error)
     return NextResponse.json(
