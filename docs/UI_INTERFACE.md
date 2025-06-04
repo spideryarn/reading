@@ -36,12 +36,13 @@ The application uses a **two-pane resizable layout** built with shadcn/ui Resiza
 - **Collapsible**: Ctrl+B keyboard shortcut, floating expand button when collapsed
 - **Scrollable**: `overflow-y-auto` with proper height constraints
 - **Component**: `UnifiedLeftPane` with consolidated functionality
-- **Tabs** (5 total):
+- **Tabs** (6 total):
   - **Original** - Document headings extracted from HTML
   - **AI-generated** - Semantically meaningful headings created by LLM analysis ✓
   - **Summary** - AI-generated document summary with collapsible content ✓
   - **Chat** - Interactive AI assistant for document discussion ✓
   - **Glossary** - AI-generated term definitions and explanations with click-to-scroll functionality ✓
+  - **Search** - Full-text document search with debounced input, loading states, and click-to-navigate results with element selection ✓
 
 ### 2. Right Pane - Document Viewer ✓
 - **Resizable width**: 70% default, expands to full width when left pane collapsed
@@ -91,11 +92,39 @@ interface Tab {
 ```
 
 **Consolidation Benefits**:
-- **Single source of truth**: All 5 tabs in one component
+- **Single source of truth**: All 6 tabs in one component
 - **Consistent behavior**: Unified scrolling and height management
 - **Simplified state**: One TabContainer instead of two separate ones
 - **Better UX**: All tools accessible in one location
 - **Code reduction**: Eliminated duplicate tab logic
+
+### Search Functionality ✓
+
+The **Search** tab provides full-text document search with real-time results:
+
+**Features**:
+- **Debounced input** (300ms delay) to optimize performance during typing
+- **Case-insensitive search** through all document elements
+- **Loading state** with spinner during search operations
+- **Result count display** showing number of matches found
+- **Text excerpts** showing first 100 characters with ellipsis truncation
+- **Element type metadata** (h1, h2, p, etc.) for each result
+- **Click-to-navigate** that scrolls to element and applies selection highlighting
+- **Clear button** to reset search query and results
+
+**Edge Case Handling**:
+- **Empty queries** clear results without showing "no results" message
+- **Whitespace-only queries** treated as empty queries
+- **Elements without content** skipped during search
+- **Rapid typing** properly debounced to prevent performance issues
+- **Long text excerpts** truncated with ellipsis at 100 characters
+
+**Technical Implementation**:
+- **Client-side search** through rendered document elements
+- **Reuses existing navigation** via `onHeadingClick` handler
+- **Element selection state** for consistent highlighting behavior
+- **Timeout management** to prevent memory leaks and race conditions
+- **Comprehensive test coverage** including edge cases and loading states
 
 ## Scrolling Architecture ✓
 
