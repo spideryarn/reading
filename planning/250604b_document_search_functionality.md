@@ -135,24 +135,19 @@ The application currently has:
   - 📔 Navigation already implemented via existing onHeadingClick handler
   - 📔 Highlighting uses data-highlight-target attribute with animate-highlight CSS
 - [x] Update planning doc with progress
-- [ ] Commit changes using subagent
+- [x] Commit changes using subagent
+  - 📔 Committed with message: "docs: mark search functionality Stage 4 as complete"
 
-### Stage 5: Polish and Edge Cases
-- [ ] Add keyboard support
-  - [ ] Enter key in search input focuses first result
-  - [ ] Arrow keys navigate between results
-  - [ ] Enter on focused result navigates to element
-- [ ] Handle edge cases
-  - [ ] Empty search query clears results
-  - [ ] Very long element text truncation
+### Stage 5: Edge Cases and Polish
+- [ ] Handle important edge cases
+  - [x] Empty search query clears results (already implemented)
+  - [x] Very long element text truncation (already implemented with line-clamp-2)
   - [ ] Elements without text content
+  - [ ] Handle whitespace-only queries
 - [ ] Add loading state during search
-  - [ ] Show spinner while searching (if needed)
-  - [ ] Disable input during search
-- [ ] Performance optimisation (if needed)
-  - [ ] Limit number of displayed results
-  - [ ] Virtual scrolling for large result sets
-- [ ] Write tests for edge cases and keyboard support
+  - [ ] Show spinner while searching
+  - [ ] Add subtle delay to show loading state for better UX
+- [ ] Write tests for edge cases
 - [ ] Run all tests and ensure they pass
 - [ ] Manual testing of complete feature
 - [ ] Update planning doc with progress
@@ -167,6 +162,15 @@ The application currently has:
 - [ ] Final manual testing of search feature
 - [ ] Move planning doc to planning/finished/
 - [ ] Final commit using subagent
+
+### Later Stage: Keyboard Navigation
+- [ ] Add keyboard support for search
+  - [ ] Enter key in search input focuses first result
+  - [ ] Arrow keys navigate between results
+  - [ ] Enter on focused result navigates to element
+  - [ ] Escape key clears search
+- [ ] Write tests for keyboard navigation
+- [ ] Update documentation with keyboard shortcuts
 
 ### Later Stage: Advanced Search Features
 - [ ] Investigate mapping plaintext positions to HTML text nodes
