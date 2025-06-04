@@ -30,6 +30,28 @@ export function SummaryPane({
   const [isSummaryCollapsed, setIsSummaryCollapsed] = useState(false)
   const [isCached, setIsCached] = useState(false)
   const [enhancementId, setEnhancementId] = useState<string | null>(null)
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  // Helper function to fetch cached summary from database
+  const fetchCachedSummary = async (documentId: string, granularity?: string) => {
+    try {
+      const params = new URLSearchParams({ documentId })
+      if (granularity) {
+        params.append('granularity', granularity)
+      }
+      
+      const response = await fetch(`/api/summarise?${params}`)
+      if (!response.ok) {
+        console.error('Failed to fetch cached summary:', response.status)
+        return null
+      }
+      const data = await response.json()
+      return data.cached ? data : null
+    } catch (error) {
+      console.error('Error fetching cached summary:', error)
+      return null
+    }
+  }
 
   const generateSummary = useCallback(async () => {
     try {
@@ -57,6 +79,7 @@ export function SummaryPane({
       setSummary(data.summary)
       setIsCached(data.cached || false)
       setEnhancementId(data.enhancementId || null)
+      setIsLoaded(data.cached || false)
       
       // Show warning if database storage failed
       if (data.warning) {
@@ -72,17 +95,83 @@ export function SummaryPane({
   }, [content, documentId, granularity])
 
   const regenerateSummary = useCallback(async () => {
-    // For regeneration, we could add a force parameter to bypass cache
-    // For now, just call generateSummary which will use cached if available
-    await generateSummary()
-  }, [generateSummary])
-
-  // Auto-activate summary generation if requested
-  useEffect(() => {
-    if (autoActivate && showSummaryButton && !summaryLoading) {
-      generateSummary()
+    console.log('Regenerating summary...')
+    setSummaryLoading(true)
+    setSummaryError('')
+    setIsLoaded(false)
+    
+    try {
+      // First delete the cached enhancement if it exists
+      if (enhancementId) {
+        console.log('Deleting cached summary enhancement...')
+        const params = new URLSearchParams({ documentId })
+        if (granularity) {
+          params.append('granularity', granularity)
+        }
+        
+        const deleteResponse = await fetch(`/api/summarise?${params}`, {
+          method: 'DELETE'
+        })
+        
+        if (!deleteResponse.ok) {
+          console.warn('Failed to delete cached summary, continuing with regeneration')
+        }
+      }
+      
+      setEnhancementId(null)
+      
+      // Wait a bit before generating new summary to ensure clean state
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // Force regeneration by calling the API directly
+      await generateSummary()
+    } catch (error) {
+      console.error('Error regenerating summary:', error)
+      setSummaryError('Failed to regenerate summary')
+      setShowSummaryButton(true)
+    } finally {
+      setSummaryLoading(false)
     }
-  }, [autoActivate, showSummaryButton, summaryLoading, generateSummary])
+  }, [documentId, granularity, enhancementId, generateSummary])
+
+  // Auto-load cached summary or generate new one if autoActivate is true
+  useEffect(() => {
+    const loadSummary = async () => {
+      if (!autoActivate || !showSummaryButton || summaryLoading) {
+        return
+      }
+      
+      setSummaryLoading(true)
+      setSummaryError('')
+      
+      try {
+        // First try to load cached summary
+        const cached = await fetchCachedSummary(documentId, granularity)
+        if (cached && cached.summary) {
+          console.log('Found cached summary, loading it...')
+          setSummary(cached.summary)
+          setIsCached(true)
+          setIsLoaded(true)
+          setEnhancementId(cached.enhancementId || null)
+          setShowSummaryButton(false)
+        } else {
+          // Generate new summary if none cached and autoActivate is true
+          console.log('No cached summary found, generating new one...')
+          await generateSummary()
+        }
+      } catch (error) {
+        console.error('Error in loadSummary:', error)
+        setSummaryError(`Failed to load summary: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        setShowSummaryButton(true)
+      } finally {
+        setSummaryLoading(false)
+      }
+    }
+    
+    if (autoActivate && showSummaryButton && !summaryLoading) {
+      loadSummary()
+    }
+  }, [autoActivate, showSummaryButton, summaryLoading, documentId, granularity, generateSummary])
 
   if (showSummaryButton) {
     return (
@@ -132,20 +221,21 @@ export function SummaryPane({
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-2">
             <h3 className="text-sm font-semibold text-blue-800">Summary</h3>
-            {isCached && (
+            {isLoaded && (
               <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
                 Loaded
               </span>
             )}
           </div>
           <div className="flex items-center space-x-1">
-            {isCached && (
+            {(isCached || isLoaded) && (
               <Button
                 onClick={regenerateSummary}
                 variant="ghost"
                 size="icon-xs"
                 className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
                 title="Regenerate summary"
+                disabled={summaryLoading}
               >
                 <svg 
                   className="w-4 h-4" 
