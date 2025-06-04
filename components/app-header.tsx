@@ -6,6 +6,7 @@ import { ArrowLeft } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/context/auth-context'
 import { Button } from '@/components/ui/button'
+import { ProfileDropdown } from '@/components/auth/profile-dropdown'
 
 interface AppHeaderProps {
   title?: string
@@ -24,16 +25,7 @@ export function AppHeader({
   actions, 
   className 
 }: AppHeaderProps) {
-  const { user, loading, signOut } = useAuth()
-
-  const handleSignOut = async () => {
-    try {
-      await signOut()
-      window.location.href = '/'
-    } catch (error) {
-      console.error('Error signing out:', error)
-    }
-  }
+  const { user, loading } = useAuth()
 
   return (
     <header className={cn(
@@ -95,17 +87,8 @@ export function AppHeader({
             
             {!loading && (
               user ? (
-                <div className="flex items-center gap-3 ml-4">
-                  <span className="text-sm text-gray-600">
-                    {user.email}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSignOut}
-                  >
-                    Sign out
-                  </Button>
+                <div className="ml-4">
+                  <ProfileDropdown user={user} />
                 </div>
               ) : (
                 <div className="flex items-center gap-2 ml-4">

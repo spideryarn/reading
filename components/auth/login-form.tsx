@@ -18,6 +18,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import { OAuthButton } from './oauth-button'
 
 const loginSchema = z.object({
   email: z
@@ -123,6 +124,15 @@ export function LoginForm() {
             )}
           />
 
+          <div className="text-right">
+            <Link 
+              href="/auth/reset-password" 
+              className="text-sm text-orange-600 hover:text-orange-700 transition-colors"
+            >
+              Forgot password?
+            </Link>
+          </div>
+
           <Button
             type="submit"
             size="full"
@@ -131,6 +141,19 @@ export function LoginForm() {
           >
             {isLoading ? 'Logging in...' : 'Log in'}
           </Button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
+            </div>
+          </div>
+
+          <OAuthButton provider="google" disabled={isLoading}>
+            Sign in with Google
+          </OAuthButton>
         </form>
       </Form>
     </div>

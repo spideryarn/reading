@@ -72,6 +72,32 @@ Debugging resources:
 This follows our principle: "Raise errors early, clearly & fatally" (see `docs/CODING_PRINCIPLES.md`)
 
 
+## Authentication System
+
+The project includes a complete authentication system using Supabase Auth with Next.js App Router:
+
+**Key Features**:
+- Email/password and Google OAuth authentication
+- Automatic user profile creation and document ownership tracking
+- Route protection with server-side validation
+- Long-lasting sessions (1 week) with automatic refresh
+- Password reset flow with Gmail SMTP
+- Profile management with dropdown navigation
+
+**Documentation**:
+- `docs/AUTHENTICATION_OVERVIEW.md` - System architecture and flows
+- `docs/AUTHENTICATION_SETUP.md` - Configuration and deployment guide
+- `docs/AUTHENTICATION_UI.md` - UI components and forms
+- `docs/AUTHENTICATION_DATABASE.md` - Database integration and RLS
+- `docs/AUTHENTICATION_SECURITY.md` - Security practices and troubleshooting
+
+**Implementation Files**:
+- `lib/auth/` - Authentication utilities and server-side helpers
+- `components/auth/` - UI components (login, signup, profile dropdown)
+- `app/auth/` - Authentication pages and route handlers
+- `middleware.ts` - Session management and token refresh
+
+
 ## Project Structure
 
 **Active Development** (root directory):

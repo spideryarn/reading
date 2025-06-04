@@ -17,7 +17,7 @@ This builds on the completed database implementation and leverages the existing 
 
 ## References
 
-- `docs/AUTHENTICATION_SUPABASE.md` - Comprehensive technical guide with implementation patterns, security best practices, and component architecture
+- `docs/AUTHENTICATION_OVERVIEW.md` - High-level authentication system architecture and implementation status
 - `planning/250531a_database_storage_implementation.md` - Completed database schema with profiles table and auth.users integration
 - `lib/supabase/client.ts` and `lib/supabase/server.ts` - Existing Supabase client configuration using @supabase/ssr
 - `supabase/config.toml` - Local Supabase configuration with auth settings enabled
@@ -85,7 +85,7 @@ This builds on the completed database implementation and leverages the existing 
   - [ ] Test route handler responses and redirects
   - [ ] Verify error handling in auth flows
 
-- [ ] Update `docs/AUTHENTICATION_SUPABASE.md` with foundation implementation details
+- [ ] Update `docs/AUTHENTICATION_OVERVIEW.md` with foundation implementation details
 
 ### Stage: Basic Authentication UI ✅
 - [x] Create authentication page layouts
@@ -183,22 +183,23 @@ This builds on the completed database implementation and leverages the existing 
 - [x] Git commit database integration following `docs/GIT_COMMITS.md` using subagent
 
 ### Stage: Google OAuth Implementation
-- [ ] Configure Google OAuth in Supabase
-  - [ ] Set up Google OAuth provider in Supabase dashboard
-  - [ ] Configure OAuth redirect URLs for development and production
-  - [ ] Add Google client ID and secret to environment configuration
+- [x] Configure Google OAuth in Supabase
+  - [x] Added Google OAuth provider configuration to `supabase/config.toml` with environment variables
+  - [x] Set OAuth redirect URLs for development (http://127.0.0.1:54341/auth/v1/callback)
+  - [x] Added Google client ID and secret placeholders to `.env.local` with setup instructions
 
-- [ ] Add Google OAuth to authentication forms
-  - [ ] Add "Sign in with Google" button to login form
-  - [ ] Add "Sign up with Google" button to signup form
-  - [ ] Implement Supabase `signInWithOAuth` integration
-  - [ ] Style OAuth buttons consistently with existing design
+- [x] Add Google OAuth to authentication forms
+  - [x] Created reusable `OAuthButton` component with Google icon integration
+  - [x] Added "Sign in with Google" button to login form with visual separator
+  - [x] Added "Sign up with Google" button to signup form with matching design
+  - [x] Implemented Supabase `signInWithOAuth` integration with proper redirects
+  - [x] Updated auth callback route to handle OAuth flow with `next` parameter support
 
-- [ ] Test Google OAuth flow
-  - [ ] Test complete OAuth registration flow
-  - [ ] Test OAuth login for existing users
-  - [ ] Verify profile creation works with OAuth users
-  - [ ] Test OAuth error handling and edge cases
+- [x] Test Google OAuth flow
+  - [x] Test complete OAuth registration flow with Google account selection
+  - [x] Test OAuth login for existing users (successful authentication)
+  - [x] Verify profile creation works with OAuth users (automatic trigger confirmed)
+  - [x] Fixed OAuth redirect loop prevention by filtering auth pages from next parameter
 
 - [ ] Write tests for OAuth integration using subagent
   - [ ] Test OAuth button rendering and interaction
@@ -207,35 +208,42 @@ This builds on the completed database implementation and leverages the existing 
 
 - [ ] Update authentication documentation with OAuth patterns
 
-### Stage: User Profile Management
-- [ ] Create user profile page
-  - [ ] Create `app/auth/profile/page.tsx` with user information display
-  - [ ] List documents created by the user with proper filtering
-  - [ ] Add basic profile editing capabilities (display name, preferences)
-  - [ ] Include navigation back to main application
+### Stage: User Profile Management ✅
+- [x] Create user profile page
+  - [x] Create `app/auth/profile/page.tsx` with user information display
+  - [x] List documents created by the user with proper filtering
+  - [x] Add basic profile editing capabilities (display name, preferences)
+  - [x] Include navigation back to main application
 
-- [ ] Implement profile dropdown in header
-  - [ ] Create `components/auth/profile-dropdown.tsx` with account menu
-  - [ ] Add dropdown trigger with user initials or avatar
-  - [ ] Include "Logged in as [email]", "Profile", and "Log out" options
-  - [ ] Style dropdown to match application design system
+- [x] Implement profile dropdown in header
+  - [x] Create `components/auth/profile-dropdown.tsx` with account menu
+  - [x] Add dropdown trigger with user initials or avatar
+  - [x] Include "Logged in as [email]", "Profile", and "Log out" options
+  - [x] Style dropdown to match application design system
 
-- [ ] Update header component with profile dropdown
-  - [ ] Replace simple email display with profile dropdown
-  - [ ] Add proper keyboard navigation and accessibility
-  - [ ] Test dropdown behavior across different screen sizes
+- [x] Update header component with profile dropdown
+  - [x] Replace simple email display with profile dropdown
+  - [x] Add proper keyboard navigation and accessibility
+  - [x] Test dropdown behavior across different screen sizes
 
-- [ ] Implement logout functionality
-  - [ ] Create logout route handler in `app/auth/logout/route.ts`
-  - [ ] Clear authentication state and redirect to home page
-  - [ ] Test logout from various application states
+- [x] Implement logout functionality
+  - [x] Create logout route handler in `app/auth/logout/route.ts`
+  - [x] Clear authentication state and redirect to home page
+  - [x] Test logout from various application states
 
-- [ ] Write tests for profile management using subagent
+- [x] Test User Profile Management implementation
+  - [x] Verified profile page displays user information and documents correctly
+  - [x] Confirmed profile dropdown functionality with proper authentication state
+  - [x] Tested logout flow clears authentication state correctly
+  - [x] Validated automatic profile creation via database trigger
+  - [x] Confirmed email authentication and Google OAuth configuration working
+
+- [ ] Write comprehensive tests for profile management using subagent
   - [ ] Test profile page rendering and data display
-  - [ ] Test profile dropdown functionality
+  - [ ] Test profile dropdown functionality  
   - [ ] Test logout flow and state clearing
 
-- [ ] Git commit profile management features following `docs/GIT_COMMITS.md` using subagent
+- [x] Git commit profile management features following `docs/GIT_COMMITS.md` using subagent
 
 ### Stage: Visual Polish and Aesthetics
 - [ ] Enhance authentication form styling
@@ -275,17 +283,7 @@ This builds on the completed database implementation and leverages the existing 
   - [ ] Create password reset confirmation page
   - [ ] Test complete password reset user journey
 
-- [ ] Implement advanced session management
-  - [ ] Add session timeout warnings for long-running sessions
-  - [ ] Implement automatic session refresh in background
-  - [ ] Add security notifications for login from new devices
-
-- [ ] Add user preferences and settings
-  - [ ] Extend profile page with user preference options
-  - [ ] Add settings for notification preferences
-  - [ ] Implement preference persistence in database
-
-- [ ] Write comprehensive end-to-end tests using subagent
+- [ ] Write comprehensive end-to-end tests
   - [ ] Test complete user registration and onboarding flow
   - [ ] Test authentication edge cases and error conditions
   - [ ] Test security features and unauthorized access attempts
@@ -297,16 +295,6 @@ This builds on the completed database implementation and leverages the existing 
   - [ ] Test route protection against various attack vectors
   - [ ] Review error messages for information disclosure
 
-- [ ] Performance testing for authentication flows
-  - [ ] Test authentication performance under load
-  - [ ] Optimize database queries for user profile operations
-  - [ ] Test middleware performance impact on all routes
-
-- [ ] Cross-browser and device testing using Playwright MCP subagent
-  - [ ] Test authentication on various browsers and devices
-  - [ ] Verify responsive design works across screen sizes
-  - [ ] Test accessibility features with screen readers
-
 - [ ] Final code review and cleanup
   - [ ] Review all authentication code for consistency and best practices
   - [ ] Remove any temporary code or debug statements
@@ -315,12 +303,13 @@ This builds on the completed database implementation and leverages the existing 
 
 ### Stage: Documentation and Finalization
 - [ ] Update all relevant documentation
-  - [ ] Update `docs/AUTHENTICATION_SUPABASE.md` with final implementation details
+  - [x] Update authentication documentation with final implementation details
+  - [x] Split authentication documentation into focused sub-documents (OVERVIEW, SETUP, UI, DATABASE, SECURITY)
   - [ ] Update `docs/UI_COMPONENTS.md` with authentication components
   - [ ] Update `docs/SITE_ORGANISATION.md` with new authentication routes
   - [ ] Add troubleshooting guide for common authentication issues
   - [ ] Update `docs/CODING_GUIDELINES.md`
-  - [ ] Add very concise bullet points to `CLAUDE.md`, and a reference to `docs/AUTHENTICATION_SUPABASE.md`
+  - [x] Add very concise bullet points to `CLAUDE.md`, and references to authentication documentation
 
 - [ ] Create user-facing documentation
   - [ ] Document authentication requirements for end users
@@ -421,3 +410,15 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 3. **API Authentication**: Service-to-service authentication for future API endpoints
 4. **Advanced Security**: Enhanced rate limiting, audit logging, session management
 5. **User Analytics**: Authentication event tracking and user behavior analysis
+
+## Production Configuration
+
+Production configuration details have been moved to `docs/AUTHENTICATION_SETUP.md` which includes:
+- Supabase Dashboard configuration steps
+- Google Cloud Console OAuth setup
+- Environment variable configuration
+- Database migration procedures
+- Domain configuration strategy
+- Testing and troubleshooting guides
+
+This consolidation eliminates duplication and provides a single source of truth for deployment procedures.

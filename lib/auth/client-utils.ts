@@ -32,9 +32,14 @@ export function getRedirectUrl(searchParams: URLSearchParams, fallback = '/'): s
   }
   
   // Basic validation: ensure it's a relative URL to prevent open redirects
-  if (next.startsWith('/') && !next.startsWith('//')) {
-    return next
+  if (!next.startsWith('/') || next.startsWith('//')) {
+    return fallback
   }
   
-  return fallback
+  // Prevent redirect loops by avoiding auth pages
+  if (next.startsWith('/auth/')) {
+    return fallback
+  }
+  
+  return next
 }
