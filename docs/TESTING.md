@@ -7,6 +7,7 @@ This document describes the testing approach for the Spideryarn Reading project.
 - `src/lib/hooks/__tests__/` - Jest test files for React hooks
 - `src/lib/services/__tests__/` - Jest test files for services
 - `tests/test-mutation-engine.ts` - legacy standalone test runner
+- `docs/AUTHENTICATION_TESTING.md` - Comprehensive authentication testing patterns and strategies
 - `docs/ARCHITECTURE.md` - for understanding the components being tested
 - `docs/CODING_PRINCIPLES.md` - for testing philosophy and approach
 
@@ -148,6 +149,13 @@ Current test coverage includes:
 - `tests/test-edge-cases.ts` - Edge case testing for mutations
 - `tests/test-heading-mutation-generator.ts` - Heading mutation generator tests
 - `tests/test-mutation-edge-cases.ts` - Additional mutation edge case tests
+
+**Authentication Test Suite** ✅:
+- `lib/auth/__tests__/` - Server and client authentication utilities
+- `app/auth/__tests__/` - Authentication pages and components
+- `__tests__/auth-integration.test.ts` - Cross-component authentication flows
+- `lib/services/database/__tests__/profiles.test.ts` - Profile management
+- See `docs/AUTHENTICATION_TESTING.md` for comprehensive authentication testing patterns
 
 Additional tests should be added as new features are developed.
 
