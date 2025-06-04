@@ -466,11 +466,61 @@ export function AIGeneratedHeadingsTab({
     }
   }, [aiHeadings])
 
-  const handleGenerateHeadings = async () => {
-    setIsLoadingHeadings(true)
-    setHeadingsError(null)
-    
+  // Helper function to fetch cached headings from database
+  const fetchCachedHeadings = async (documentId: string) => {
     try {
+      const response = await fetch(`/api/headings?documentId=${documentId}`)
+      if (!response.ok) {
+        console.error('Failed to fetch cached headings:', response.status)
+        return null
+      }
+      const data = await response.json()
+      return data.cached ? data : null
+    } catch (error) {
+      console.error('Error fetching cached headings:', error)
+      return null
+    }
+  }
+
+  // Helper function to apply cached headings without API call
+  const applyCachedHeadings = async (cachedHeadings: Array<{ id_of_after: string, html: string }>) => {
+    try {
+      console.log('Applying cached headings:', cachedHeadings)
+      
+      // Generate mutation from cached headings data
+      const mutation = generateHeadingMutation({
+        headings: cachedHeadings,
+        documentId: documentId
+      })
+      
+      // Apply the mutation to insert headings into document
+      const result = await applyMutation(mutation)
+      
+      if (result.success) {
+        // Extract headings from mutation for display
+        const generatedHeadings = extractHeadingsFromMutation(mutation).map(h => ({
+          ...h,
+          elementId: h.id  // Ensure elementId is set for AI headings
+        }))
+        setAiHeadings(generatedHeadings)
+        setShowHeadings(true)
+        
+        // Clear AI-generated collapsed state when cached headings are loaded
+        setCollapsedIds(new Set())
+        
+        console.log('Successfully applied cached headings')
+      } else {
+        throw new Error(result.error || 'Failed to apply cached headings mutation')
+      }
+    } catch (error) {
+      console.error('Error applying cached headings:', error)
+      setHeadingsError(`Failed to load cached headings: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setShowHeadings(true)  // Show the error state
+    }
+  }
+
+  // Core headings generation logic without state management
+  const generateHeadingsFromAPI = async () => {
       // Reconstruct HTML from elements with proper IDs
       let htmlWithIds = ''
       if (elements && elements.length > 0) {
@@ -533,6 +583,15 @@ export function AIGeneratedHeadingsTab({
       } else {
         throw new Error(result.error || 'Failed to apply mutation')
       }
+  }
+
+  // Public API for manual headings generation (with state management)
+  const handleGenerateHeadings = async () => {
+    setIsLoadingHeadings(true)
+    setHeadingsError(null)
+    
+    try {
+      await generateHeadingsFromAPI()
     } catch (error) {
       console.error('Error generating headings:', error)
       setHeadingsError(error instanceof Error ? error.message : 'Failed to generate headings')
@@ -542,10 +601,34 @@ export function AIGeneratedHeadingsTab({
     }
   }
 
-  // Auto-generate headings on mount
+  // Auto-load cached headings or generate new ones on mount
   useEffect(() => {
+    const loadHeadings = async () => {
+      setIsLoadingHeadings(true)
+      setHeadingsError(null)
+      
+      try {
+        // First try to load cached headings
+        const cached = await fetchCachedHeadings(documentId)
+        if (cached && cached.headings) {
+          console.log('Found cached headings, applying them...')
+          await applyCachedHeadings(cached.headings)
+        } else {
+          // Generate new headings if none cached
+          console.log('No cached headings found, generating new ones...')
+          await generateHeadingsFromAPI()
+        }
+      } catch (error) {
+        console.error('Error in loadHeadings:', error)
+        setHeadingsError(`Failed to load headings: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        setShowHeadings(true)
+      } finally {
+        setIsLoadingHeadings(false)
+      }
+    }
+    
     if (!showHeadings && !isLoadingHeadings) {
-      handleGenerateHeadings()
+      loadHeadings()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

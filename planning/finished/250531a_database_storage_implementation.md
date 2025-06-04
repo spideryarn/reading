@@ -422,3 +422,169 @@ This is not Next.js best practice. The recommended approach is to use `@next/env
    - Create proper test fixtures with auth.users
    - Separate admin vs user operation test suites
    - Consider Supabase's testing utilities
+
+## Continued Implementation: Headings Feature Database Integration
+
+### Current Headings Implementation Status (2025-06-04)
+
+The headings feature is **already well-integrated with the database**. Analysis shows:
+
+**✅ What's Working**:
+- API route (`/api/headings/route.ts`) properly stores headings in `document_enhancements` table
+- Uses `EnhancementService.storeHeadings()` with correct type='headings'
+- Checks for existing cached headings before generating new ones
+- Returns cached headings with `cached: true` flag when available
+- Frontend generates and applies headings mutations correctly
+
+**❌ Missing Piece**: Auto-loading cached headings on page load
+- Current: AI headings only generated on-demand when user clicks "Generate AI headings"
+- Issue: Cached headings in database are not automatically loaded and applied on page load
+- Result: Page refreshes lose AI-generated headings until user manually regenerates them
+
+### Specific Implementation Plan
+
+#### Stage: Add Auto-Load for Cached Headings
+
+**Task 1**: Update `AIGeneratedHeadingsTab` component to check for cached headings on mount
+- **File**: `components/table-of-contents-tabs.tsx`
+- **Location**: Line 546 - modify the existing `useEffect` that auto-generates headings
+- **Logic**: 
+  1. First check if cached headings exist for this document
+  2. If cached headings found, generate mutation and apply it (without API call)
+  3. Only call `handleGenerateHeadings()` if no cached headings exist
+
+**Task 2**: Create helper function to fetch cached headings
+- **File**: `components/table-of-contents-tabs.tsx` or extract to utility
+- **Function**: `fetchCachedHeadings(documentId: string)` 
+- **Returns**: Cached headings data from `document_enhancements` table or null
+
+**Task 3**: Update headings generation logic to handle cached vs fresh headings
+- **File**: `components/table-of-contents-tabs.tsx`
+- **Update**: Modify `handleGenerateHeadings()` to distinguish between cached and fresh generation
+- **Add**: Separate function `applyCachedHeadings()` for loading existing headings
+
+**Task 4**: Test the complete workflow
+- Generate headings for a document
+- Refresh the page
+- Verify headings automatically reappear without user action
+- Verify "cached" indicator appears in UI (if desired)
+
+#### Stage: Optional Enhancements
+
+**Enhancement 1**: Add "cached" indicator in UI
+- Show when headings were loaded from cache vs freshly generated
+- Add refresh/regenerate option for cached headings
+
+**Enhancement 2**: Handle mutation persistence (future)
+- Currently mutations are re-generated from stored headings data
+- Consider storing the actual mutation object for faster loading
+- Add to `document_enhancements.content` as `{ items: headings, mutation: mutationObject }`
+
+### Implementation Details
+
+**Cached Headings API Endpoint** (if needed):
+```typescript
+// GET /api/headings?documentId=123
+// Returns: { cached: true, headings: [...] } or { cached: false }
+```
+
+**Modified Auto-Load Logic**:
+```typescript
+useEffect(() => {
+  const loadHeadings = async () => {
+    // First try to load cached headings
+    const cached = await fetchCachedHeadings(documentId)
+    if (cached) {
+      await applyCachedHeadings(cached.headings)
+    } else {
+      // Generate new headings if none cached
+      await handleGenerateHeadings()
+    }
+  }
+  
+  if (!showHeadings && !isLoadingHeadings) {
+    loadHeadings()
+  }
+}, [])
+```
+
+### Files Requiring Updates
+
+1. **`components/table-of-contents-tabs.tsx`** - Primary component updates
+2. **`app/api/headings/route.ts`** - Possibly add GET endpoint for cached lookup
+3. **Test files** - Update tests to verify auto-loading behavior
+
+### Timeline Estimate
+
+**Total effort**: 2-4 hours
+- **Task 1-3**: 1-2 hours implementation
+- **Task 4**: 30-60 minutes testing
+- **Documentation**: 30 minutes
+
+This is a relatively small enhancement that will significantly improve user experience by persisting AI-generated headings across page reloads.
+
+## Implementation Completed (2025-06-04)
+
+### What Was Implemented
+
+**✅ Task 1**: Updated `AIGeneratedHeadingsTab` component
+- **File**: `components/table-of-contents-tabs.tsx`
+- **Changes**: Modified `useEffect` to check for cached headings before generating new ones
+- **Logic**: First fetches cached headings, applies them if found, otherwise generates fresh headings
+
+**✅ Task 2**: Created helper function to fetch cached headings
+- **Function**: `fetchCachedHeadings(documentId: string)`
+- **Implementation**: Makes GET request to `/api/headings?documentId=X`
+- **Returns**: Cached headings data or null if none exist
+
+**✅ Task 3**: Updated headings generation logic
+- **Added**: `applyCachedHeadings()` function for loading existing headings
+- **Refactored**: Split `handleGenerateHeadings()` into state management wrapper and core logic
+- **Result**: Clean separation between cached loading and fresh generation
+
+**✅ Task 4**: Comprehensive testing completed
+- **Verified**: Headings automatically reappear on page refresh without user action
+- **Confirmed**: Console shows expected behavior ("Found cached headings..." vs "No cached headings found...")
+- **Tested**: Both documents with existing cache and new documents work correctly
+
+**✅ Additional**: Added GET endpoint to headings API
+- **File**: `app/api/headings/route.ts`
+- **Endpoint**: `GET /api/headings?documentId=X`
+- **Returns**: `{ cached: true, headings: [...], enhancementId: X }` or `{ cached: false, headings: null }`
+
+### Issue Discovered and Resolved
+
+**Problem**: During testing, discovered that headings weren't being cached properly due to:
+1. Database duplicate entries preventing retrieval
+2. `EnhancementService.get()` method using `.single()` which failed with multiple rows
+
+**Solution**: Fixed database service to handle duplicates gracefully:
+- Changed `.single()` to `.maybeSingle()`
+- Added ordering by `created_at DESC` to get most recent entry
+- Added `.limit(1)` for consistency
+
+### Current Status
+
+**🎉 Fully Working**: The headings auto-loading feature is now completely functional
+- Cached headings load instantly on page visit
+- Fresh headings generate automatically for new documents
+- Persistence works correctly across page refreshes
+- User experience is smooth with no manual intervention required
+
+### User Experience Improvement
+
+**Before**: Users had to manually click "Generate AI headings" button every time they visited a document, losing headings on page refresh.
+
+**After**: Headings automatically appear when users navigate to the AI-Generated tab, persisting across sessions and page refreshes. The system intelligently uses cached headings when available and generates fresh ones only when needed.
+
+### Next Steps Identified
+
+1. **Database Cleanup**: Remove duplicate entries in `document_enhancements` table (can be done with psql)
+2. **Duplicate Prevention**: Implement strategy to prevent future duplicates (either database constraints or cleanup logic)
+3. **UI Improvements**: 
+   - Change "Cached" label to "Loaded" for consistency with glossary
+   - Add reset button for regenerating headings (like glossary feature)
+4. **Other Features**: Check if AI Summary feature needs similar auto-loading implementation
+
+### Status: Complete ✅
+The headings auto-loading feature is fully implemented and working. The database integration work for headings is complete.

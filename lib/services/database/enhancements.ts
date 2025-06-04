@@ -72,12 +72,12 @@ export class EnhancementService {
       query = query.is('subtype', null)
     }
 
-    const { data, error } = await query.single()
+    const { data, error } = await query
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
     if (error) {
-      if (error.code === 'PGRST116') { // Not found
-        return null
-      }
       throw new Error(`Failed to fetch enhancement: ${error.message}`)
     }
 

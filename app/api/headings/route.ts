@@ -54,6 +54,59 @@ function logHeadingsHierarchy(headings: Array<{ html: string }>): void {
   console.log('========================\n')
 }
 
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const documentId = searchParams.get('documentId')
+    
+    if (!documentId) {
+      return NextResponse.json(
+        { error: 'documentId is required' },
+        { status: 400 }
+      )
+    }
+    
+    // Initialize database services
+    const supabase = await createClient()
+    const enhancementService = new EnhancementService(supabase)
+    
+    // Check if headings already exist in database
+    const existingHeadings = await enhancementService.get(
+      documentId,
+      'headings'
+    )
+    
+    if (existingHeadings) {
+      // Validate cached data structure - fail fast if malformed
+      if (!existingHeadings.content || typeof existingHeadings.content !== 'object') {
+        throw new Error(`Malformed headings data in database for enhancement ${existingHeadings.id}: content is not an object`)
+      }
+      
+      if (!Array.isArray(existingHeadings.content.items)) {
+        throw new Error(`Malformed headings data in database for enhancement ${existingHeadings.id}: content.items is not an array. Found: ${typeof existingHeadings.content.items}`)
+      }
+      
+      return NextResponse.json({ 
+        headings: existingHeadings.content.items,
+        cached: true,
+        enhancementId: existingHeadings.id
+      })
+    }
+    
+    // No cached headings found
+    return NextResponse.json({ 
+      cached: false,
+      headings: null
+    })
+  } catch (error) {
+    console.error('Error fetching cached headings:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch cached headings' },
+      { status: 500 }
+    )
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
