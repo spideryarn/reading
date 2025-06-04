@@ -4,10 +4,10 @@
 // Part of the 2-pane layout architecture using ResizablePanelGroup
 // All 5 tabs are at the same level as requested by the user
 
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { AssistantChat } from './assistant-chat'
 import { TabContainer, type Tab, type TabContainerRef } from './tab-container'
-import { CircleNotch, Book, Question, Calendar, SidebarSimple, ArrowCounterClockwise } from '@phosphor-icons/react'
+import { CircleNotch, Book, Question, Calendar, SidebarSimple, ArrowCounterClockwise, MagnifyingGlass, X } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { AlertWithIcon } from '@/components/ui/alert'
 import type { DocumentElement } from '@/lib/types/document'
@@ -33,6 +33,14 @@ interface Entity {
   datetime?: string
   url?: string
   extra?: Record<string, unknown>
+}
+
+// Search result interface
+interface SearchResult {
+  elementId: string
+  elementType: string
+  textExcerpt: string
+  matchCount: number
 }
 
 interface UnifiedLeftPaneProps {
@@ -225,6 +233,10 @@ export function UnifiedLeftPane({
   onToggleCollapse
 }: UnifiedLeftPaneProps) {
   const tabContainerRef = useRef<TabContainerRef>(null)
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
 
   // NEW: Listen for document clicks (from ResizableDocumentLayout) to scroll ToC
   useEffect(() => {
@@ -414,7 +426,79 @@ export function UnifiedLeftPane({
     )
   }
 
-  // Define all 5 tabs at the same level
+  // Render Search tab
+  const renderSearchTab = () => {
+    return (
+      <div className="p-4">
+        {/* Search input */}
+        <div className="relative mb-4">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search document..."
+              className="w-full px-4 py-2 pl-10 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <MagnifyingGlass 
+              size={16} 
+              weight="bold" 
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('')
+                  setSearchResults([])
+                }}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X size={16} weight="bold" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Search results */}
+        {searchQuery && searchResults.length === 0 ? (
+          <div className="text-sm text-gray-500 text-center py-8">
+            No results found
+          </div>
+        ) : searchResults.length > 0 ? (
+          <div>
+            <div className="text-sm text-gray-600 mb-3">
+              {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found
+            </div>
+            <div className="space-y-2">
+              {searchResults.map((result) => (
+                <div
+                  key={result.elementId}
+                  className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                  onClick={() => onHeadingClick(result.textExcerpt, result.elementId)}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-medium text-gray-500 uppercase">
+                      {result.elementType}
+                    </span>
+                    {result.matchCount > 1 && (
+                      <span className="text-xs text-gray-500">
+                        {result.matchCount} matches
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-700 line-clamp-2">
+                    {result.textExcerpt}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
+  // Define all 6 tabs at the same level
   const tabs: Tab[] = [
     {
       id: 'original',
@@ -446,6 +530,11 @@ export function UnifiedLeftPane({
           onLoadGlossary()
         }
       }
+    },
+    {
+      id: 'search',
+      label: 'Search',
+      content: renderSearchTab()
     }
   ]
 

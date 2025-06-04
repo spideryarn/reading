@@ -156,6 +156,15 @@ jest.mock('@phosphor-icons/react', () => ({
   ),
   Info: ({ className, size, weight }: any) => (
     <span data-testid="icon-info" className={className} data-size={size} data-weight={weight} />
+  ),
+  MagnifyingGlass: ({ className, size, weight }: any) => (
+    <span data-testid="icon-magnifying-glass" className={className} data-size={size} data-weight={weight} />
+  ),
+  X: ({ className, size, weight }: any) => (
+    <span data-testid="icon-x" className={className} data-size={size} data-weight={weight} />
+  ),
+  ArrowCounterClockwise: ({ className, size, weight }: any) => (
+    <span data-testid="icon-arrow-counter-clockwise" className={className} data-size={size} data-weight={weight} />
   )
 }));
 
@@ -252,7 +261,7 @@ describe('UnifiedLeftPane', () => {
   });
 
   describe('Basic Rendering', () => {
-    it('should render all 5 tabs correctly', () => {
+    it('should render all 6 tabs correctly', () => {
       render(<UnifiedLeftPane {...defaultProps} />);
       
       expect(screen.getByTestId('tab-button-original')).toBeInTheDocument();
@@ -260,12 +269,14 @@ describe('UnifiedLeftPane', () => {
       expect(screen.getByTestId('tab-button-summary')).toBeInTheDocument();
       expect(screen.getByTestId('tab-button-chat')).toBeInTheDocument();
       expect(screen.getByTestId('tab-button-glossary')).toBeInTheDocument();
+      expect(screen.getByTestId('tab-button-search')).toBeInTheDocument();
       
       expect(screen.getByText('Original')).toBeInTheDocument();
       expect(screen.getByText('AI-generated')).toBeInTheDocument();
       expect(screen.getByText('Summary')).toBeInTheDocument();
       expect(screen.getByText('Chat')).toBeInTheDocument();
       expect(screen.getByText('Glossary')).toBeInTheDocument();
+      expect(screen.getByText('Search')).toBeInTheDocument();
     });
 
     it('should render header with title', () => {
@@ -796,6 +807,77 @@ describe('UnifiedLeftPane', () => {
       render(<UnifiedLeftPane {...defaultProps} />);
       
       expect(screen.getByTestId('tab-container')).toBeInTheDocument();
+    });
+  });
+
+  describe('Search Functionality', () => {
+    it('should render search tab with input field', () => {
+      render(<UnifiedLeftPane {...defaultProps} />);
+      
+      // Switch to search tab
+      fireEvent.click(screen.getByTestId('tab-button-search'));
+      
+      const searchInput = screen.getByPlaceholderText('Search document...');
+      expect(searchInput).toBeInTheDocument();
+      expect(screen.getByTestId('icon-magnifying-glass')).toBeInTheDocument();
+    });
+
+    it('should update search query when typing', () => {
+      render(<UnifiedLeftPane {...defaultProps} />);
+      
+      // Switch to search tab
+      fireEvent.click(screen.getByTestId('tab-button-search'));
+      
+      const searchInput = screen.getByPlaceholderText('Search document...');
+      fireEvent.change(searchInput, { target: { value: 'test search' } });
+      
+      expect(searchInput).toHaveValue('test search');
+    });
+
+    it('should show clear button when search query is present', () => {
+      render(<UnifiedLeftPane {...defaultProps} />);
+      
+      // Switch to search tab
+      fireEvent.click(screen.getByTestId('tab-button-search'));
+      
+      const searchInput = screen.getByPlaceholderText('Search document...');
+      
+      // Clear button should not be present initially
+      expect(screen.queryByTestId('icon-x')).not.toBeInTheDocument();
+      
+      // Type in search field
+      fireEvent.change(searchInput, { target: { value: 'test' } });
+      
+      // Clear button should now be visible
+      expect(screen.getByTestId('icon-x')).toBeInTheDocument();
+    });
+
+    it('should clear search when clear button is clicked', () => {
+      render(<UnifiedLeftPane {...defaultProps} />);
+      
+      // Switch to search tab
+      fireEvent.click(screen.getByTestId('tab-button-search'));
+      
+      const searchInput = screen.getByPlaceholderText('Search document...');
+      fireEvent.change(searchInput, { target: { value: 'test search' } });
+      
+      // Click clear button
+      const clearButton = screen.getByTestId('icon-x').parentElement;
+      fireEvent.click(clearButton!);
+      
+      expect(searchInput).toHaveValue('');
+    });
+
+    it('should show no results message when search has no matches', () => {
+      render(<UnifiedLeftPane {...defaultProps} />);
+      
+      // Switch to search tab
+      fireEvent.click(screen.getByTestId('tab-button-search'));
+      
+      const searchInput = screen.getByPlaceholderText('Search document...');
+      fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
+      
+      expect(screen.getByText('No results found')).toBeInTheDocument();
     });
   });
 
