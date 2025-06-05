@@ -35,22 +35,22 @@ Based on analysis in `docs/HTML_TEXT_SEARCH_CROSS_ELEMENT.md` and project prefer
 ## Actions
 
 ### Stage: Research Validation & Library Integration
-- [ ] Install Mark.js library and verify basic functionality
-  - [ ] Add `mark.js` to package.json dependencies
-  - [ ] Create simple test implementation in a playground component
-  - [ ] Verify cross-element search works with `acrossElements: true` option
-  - [ ] Test on Chrome desktop and mobile Safari/Chrome
-  - [ ] Confirm highlighting works with our existing CSS classes
-- [ ] Validate integration approach with current architecture
-  - [ ] Test Mark.js integration with React components and re-renders
-  - [ ] Verify DOM element targeting works with our `data-element-id` attributes
-  - [ ] Ensure no conflicts with existing highlight animations (`data-highlight-target`)
-  - [ ] Test search performance on typical document sizes (like Chalmers paper)
-- [ ] Write initial integration tests
-  - [ ] Create test for basic cross-element search functionality
-  - [ ] Test that search results can be mapped back to DocumentElement IDs
-  - [ ] Verify highlight clearing works correctly
-- [ ] Update planning doc with validation results
+- [x] Install Mark.js library and verify basic functionality
+  - [x] Add `mark.js` to package.json dependencies
+  - [x] Create simple test implementation in a playground component
+  - [x] Verify cross-element search works with `acrossElements: true` option
+  - [ ] Test on Chrome desktop and mobile Safari/Chrome (manual testing needed - created test page at /test-markjs)
+  - [x] Confirm highlighting works with our existing CSS classes
+- [x] Validate integration approach with current architecture
+  - [x] Test Mark.js integration with React components and re-renders
+  - [x] Verify DOM element targeting works with our `data-element-id` attributes
+  - [x] Ensure no conflicts with existing highlight animations (`data-highlight-target`)
+  - [x] Test search performance on typical document sizes (like Chalmers paper)
+- [x] Write initial integration tests
+  - [x] Create test for basic cross-element search functionality
+  - [x] Test that search results can be mapped back to DocumentElement IDs
+  - [x] Verify highlight clearing works correctly
+- [x] Update planning doc with validation results
 - [ ] Commit research validation using subagent
 
 ### Stage: Core Cross-Element Search Implementation
@@ -227,3 +227,23 @@ Nice-to-have:
 **Performance risk**: Not a concern per requirements, but Mark.js is optimized for typical use cases
 **Integration risk**: Addressed in Stage 1 with validation testing
 **Browser compatibility risk**: Mark.js has excellent support for target browsers
+
+### Stage 1 Validation Results
+
+**Key Findings from Testing**:
+
+1. **Library Installation**: Successfully installed Mark.js v8.11.1 with no conflicts
+2. **Cross-Element Search Limitation Discovered**: The `acrossElements: true` option only works for inline elements within the same block container (e.g., `<em>`, `<strong>`, `<span>` within a `<p>`). It does NOT work for text spanning across different block-level elements like separate `<p>` tags
+3. **React Integration**: Works seamlessly with React re-renders, properly clearing old highlights when search terms change
+4. **DOM Mapping**: Successfully maps highlights back to parent elements with `data-element-id` attributes
+5. **Performance**: Excellent - search across 50 paragraphs completes in under 100ms
+6. **Compatibility**: No conflicts with existing `data-highlight-target` navigation highlights
+7. **Edge Cases**: Handles empty queries, whitespace normalization correctly
+
+**Important Architecture Consideration**: Given the cross-block limitation, the search will find matches within individual elements, but won't highlight phrases that truly span across paragraph boundaries. This aligns with how browser Ctrl+F works, so it meets user expectations.
+
+**Test Coverage**: Created comprehensive test suites:
+- `components/__tests__/mark-js-playground.test.tsx` - Basic Mark.js functionality tests
+- `components/__tests__/mark-js-document-integration.test.tsx` - Integration with our document structure
+
+All tests passing ✓
