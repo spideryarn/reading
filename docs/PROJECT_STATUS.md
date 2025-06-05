@@ -10,7 +10,7 @@ Spideryarn Reading is in active development with core AI features now implemente
 - HTML document parsing using Cheerio (`lib/services/document-parser.ts`)
 - Document elements with deterministic ID generation using UUID v5
 - Two-pane resizable document viewer layout:
-  - Left: Unified pane with 5 tabs (Original ToC, AI headings, Summary, Chat, Glossary)
+  - Left: Unified pane with 6 tabs (Original ToC, AI headings, Summary, Chat, Glossary, Search)
   - Right: Document viewer with element details and highlighting
   - Collapsible left pane with keyboard shortcuts (Ctrl+B)
 - Sample documents loaded from `static/examples/` (Chalmers consciousness paper, Rhizome text, The Bitter Lesson)
@@ -24,6 +24,14 @@ Spideryarn Reading is in active development with core AI features now implemente
 - **Multi-LLM provider support** - Anthropic Claude and Google Gemini via Vercel AI SDK
 - **Advanced chat interface** - Full @assistant-ui integration with document context
 - **Prompt template system** - Nunjucks templates with Zod validation (`lib/prompts/templates/`)
+
+**Search Features (Implemented)**
+- **Full-text document search** - Case-insensitive search through all document elements
+- **Debounced input** - 300ms delay with loading states for optimal performance
+- **Smart result display** - Element type metadata, text excerpts, and match counts
+- **Click-to-navigate** - Results link directly to document elements with selection highlighting
+- **Edge case handling** - Whitespace queries, empty content elements, and rapid typing
+- **Comprehensive testing** - Full test coverage including edge cases and loading states
 
 **Data Model & UI Components**
 - **Document parsing pipeline**: HTML → Cheerio → structured elements with hierarchical relationships
