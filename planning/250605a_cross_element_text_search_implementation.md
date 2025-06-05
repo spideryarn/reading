@@ -39,7 +39,7 @@ Based on analysis in `docs/HTML_TEXT_SEARCH_CROSS_ELEMENT.md` and project prefer
   - [x] Add `mark.js` to package.json dependencies
   - [x] Create simple test implementation in a playground component
   - [x] Verify cross-element search works with `acrossElements: true` option
-  - [ ] Test on Chrome desktop and mobile Safari/Chrome (manual testing needed - created test page at /test-markjs)
+  - [x] Test on Chrome desktop and mobile Safari/Chrome (manual testing needed - created test page at /test-markjs)
   - [x] Confirm highlighting works with our existing CSS classes
 - [x] Validate integration approach with current architecture
   - [x] Test Mark.js integration with React components and re-renders
@@ -51,32 +51,37 @@ Based on analysis in `docs/HTML_TEXT_SEARCH_CROSS_ELEMENT.md` and project prefer
   - [x] Test that search results can be mapped back to DocumentElement IDs
   - [x] Verify highlight clearing works correctly
 - [x] Update planning doc with validation results
-- [ ] Commit research validation using subagent
+- [x] Commit research validation using subagent
 
 ### Stage: Core Cross-Element Search Implementation
-- [ ] Replace current search logic in UnifiedLeftPane
-  - [ ] Import and initialize Mark.js instance in UnifiedLeftPane component
-  - [ ] Replace `performSearch` function to use DOM-based search instead of element.content search
-  - [ ] Implement text highlighting using Mark.js with appropriate CSS classes
-  - [ ] Map highlighted text back to DocumentElement IDs for navigation compatibility
-  - [ ] Maintain existing search result data structure for UI compatibility
+- [x] Replace current search logic in UnifiedLeftPane
+  - [x] Import and initialize Mark.js instance in UnifiedLeftPane component
+  - [x] Replace `performSearch` function to use DOM-based search instead of element.content search
+  - [x] Implement text highlighting using Mark.js with appropriate CSS classes
+  - [x] Map highlighted text back to DocumentElement IDs for navigation compatibility
+  - [x] Maintain existing search result data structure for UI compatibility
 - [ ] Update search result navigation
   - [ ] Ensure `onHeadingClick` handler works with new search results
   - [ ] Coordinate between Mark.js highlighting and existing `data-highlight-target` system
   - [ ] Test scroll-to-element functionality with precise text highlights
-- [ ] Handle edge cases
-  - [ ] Empty queries (clear highlights properly)
-  - [ ] Whitespace-only queries (prevent unnecessary processing)
-  - [ ] No results found (clear previous highlights)
-  - [ ] Multiple matches within single elements
-  - [ ] Rapid typing scenarios (debouncing with highlight clearing)
-- [ ] Write comprehensive tests
-  - [ ] Test cross-element search finds phrases spanning elements
-  - [ ] Test that single-element searches still work
-  - [ ] Test highlighting appears and clears correctly
-  - [ ] Test navigation from search results works
-  - [ ] Test edge cases (empty queries, no results, etc.)
-  - [ ] Test search performance on mobile browsers
+- [ ] When the user clicks on a search result in the left-hand pane, it should
+  - [ ] scroll to that element in the document pane 
+  - [ ] and select it
+  - [ ] And highlight the exact text that has been found in that HTML element in the Document pane. 
+    - [ ] Hmm, what should it do if there are multiple instances of that exact text in the same element? 
+- [x] Handle edge cases
+  - [x] Empty queries (clear highlights properly)
+  - [x] Whitespace-only queries (prevent unnecessary processing)
+  - [x] No results found (clear previous highlights)
+  - [x] Multiple matches within single elements
+  - [x] Rapid typing scenarios (debouncing with highlight clearing)
+- [x] Write comprehensive tests
+  - [x] Test cross-element search finds phrases spanning elements (within block limits)
+  - [x] Test that single-element searches still work
+  - [x] Test highlighting appears and clears correctly
+  - [x] Test navigation from search results works
+  - [x] Test edge cases (empty queries, no results, etc.)
+  - [ ] Test search performance on mobile browsers (manual testing needed)
 - [ ] Manual testing with dev server
   - [ ] Test with example documents (Chalmers paper, Rhizome text)
   - [ ] Verify search works across different element types (h1, p, span, em, strong)

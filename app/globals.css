@@ -284,4 +284,11 @@ body {
         @apply max-w-none;
     }
 
+    /* Search highlighting styles */
+    .search-highlight {
+        background-color: #ffeb3b;
+        font-weight: bold;
+        padding: 2px 0;
+    }
+
 }
