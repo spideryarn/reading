@@ -164,11 +164,31 @@ export function TweetThreadView({ documentContent, isActive = false, onStateChan
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Thread Header */}
       <div className="text-center space-y-4 animate-in slide-in-from-top duration-700">
-        <div className="space-y-2">
+        <div className="flex items-center justify-center space-x-2">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
             🧵 Tweet Thread
           </h1>
+          {isLoaded && (
+            <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+              Loaded
+            </span>
+          )}
         </div>
+        {(isLoaded || hasGenerated) && (
+          <div className="flex justify-center">
+            <Button
+              onClick={regenerateTweetThread}
+              variant="ghost"
+              size="sm"
+              className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+              title="Regenerate tweet thread"
+              disabled={isLoading}
+            >
+              <ArrowCounterClockwise size={16} />
+              <span className="ml-1">Reset</span>
+            </Button>
+          </div>
+        )}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           
           <div className="flex flex-col sm:flex-row items-center gap-2">
