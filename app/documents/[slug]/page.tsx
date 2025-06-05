@@ -48,20 +48,15 @@ export default async function DocumentPage({ params }: PageProps) {
   const elements = parser.parse(html, documentId)
 
   return (
-    <div className="h-screen flex flex-col">
-      <AppHeader 
-        title={doc.title}
-        titleLink={`/documents/${slug}`}
-        actions={<DocumentHeaderActions slug={slug} />}
+    <MutationProvider initialDocument={elements}>
+      <DocumentPageClient 
+        html={html}
+        markdownContent={markdownContent}
+        elements={elements}
+        documentId={documentId}
+        initialTitle={doc.title}
+        slug={slug}
       />
-      <MutationProvider initialDocument={elements}>
-        <DocumentPageClient 
-          html={html}
-          markdownContent={markdownContent}
-          elements={elements}
-          documentId={documentId}
-        />
-      </MutationProvider>
-    </div>
+    </MutationProvider>
   )
 }

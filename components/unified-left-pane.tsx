@@ -21,7 +21,8 @@ import {
   DocumentSummaryTab 
 } from './table-of-contents-tabs'
 import { debounce } from '@/lib/utils/debounce'
-import Mark from 'mark.js'
+// @ts-ignore - mark.js doesn't have TypeScript definitions
+const Mark = typeof window !== 'undefined' ? require('mark.js') : null
 
 // Entity type (will be moved to proper types file later)
 interface Entity {
