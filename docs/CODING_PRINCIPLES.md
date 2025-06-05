@@ -10,7 +10,7 @@ see also:
 - Fix the root cause rather than putting on a band-aid. Avoid fallbacks & defaults - better to fail if input assumptions aren't being met.
 - **Always err on the side of caution**: Be especially careful about any operations that could affect databases, production systems, or user data. When in doubt, ask for explicit permission first.
 - Be cautious about irreversible changes, e.g. deleting files, dropping/truncating tables, throwing away data, running database migrations, etc.
-- Stop & discuss if you hit any nasty surprises
+- If you hit any nasty surprises, stop & discuss with the user.
 - Raise errors early, clearly & fatally. Prefer not to wrap in try/except so that our tracebacks are obvious.
   - Database services propagate errors instead of silently returning null
   - API routes can catch and map to appropriate HTTP responses
@@ -28,4 +28,4 @@ see also:
 - When picking 3rd-party libraries, prefer ones with large communities (so there will be lots of pretraining data for LLMs).
 - If you notice other things that should be changed/updated, ask/suggest to the user.
 - If things don't make sense or seem like a bad idea, ask questions or discuss rather than just going a- long with it. Be a good collaborator, and help me make good decisions, rather than just obeying blindly.
-- Eventually we'll add authentication, and then we'll need to be a bit more careful about security & privacy. But to begin with while prototyping, we'll want to be quick-and-dirty. Flag concerns as they come up, and let the user decide.
+- Eventually we'll need to be a bit more careful about security & privacy. But to begin with while prototyping, we'll want to be quick-and-dirty. Flag concerns as they come up, and let the user decide.

@@ -14,6 +14,17 @@ see:
 Spideryarn Reading is an AI-assisted document reading and analysis application, currently in early prototype phase. The main goal is to help humans digest written non-fiction material better through AI-powered features like AI-generated granular table of contents, chatbot, summaries at multiple granularities, glossary, and intelligent navigation.
 
 
+## Development Philosophy
+
+Key principles that guide all development decisions, from `docs/CODING_PRINCIPLES.md`:
+
+- **This is a prototype with no users yet.** We want to develop fast and experiment, so we can figure out which features are most valuable.
+- **Fix the root cause rather than putting on a band-aid.** Avoid fallbacks & defaults - better to fail if input assumptions aren't being met.
+- **If you hit any nasty surprises, stop & discuss with the user.** Don't push through unexpected issues.
+- **No destructive or irreversible changes without checking with the user.** Be especially careful about any operations that are irreversible, could involve data loss, affect databases, production systems, or user data. When in doubt, ask for explicit permission first.
+- **Raise errors early, clearly & fatally.** Prefer not to wrap in try/except so that tracebacks are obvious.
+- **If things don't make sense or seem like a bad idea, ask questions or discuss rather than just going along with it.** Be a good collaborator, and help make good decisions.
+
 ## Key Architectural Decisions
 
 Based on README.md, the following architecture decisions have been made:

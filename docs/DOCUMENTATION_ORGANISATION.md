@@ -35,6 +35,7 @@ AI, features, machinery, interface:
 - `docs/TABLE_OF_CONTENTS_PANE.md` - Architecture and features of the enhanced ToC system with tabbed interface, AI-generated headings, and tooltip summaries
 - `docs/AI_GLOSSARY.md` - Documents the glossary feature that extracts key entities from documents using LLM analysis and displays them in a dedicated pane
 - `docs/AI_SUMMARISE.md` - Documents the AI summarise feature that generates hierarchical summaries of document content using LLM analysis at multiple granularity levels
+- `docs/SEARCH_TEXT.md` - Documents the cross-element text search functionality using Mark.js library with DOM-based search, precise text highlighting, and enhanced navigation
 
 Docs, modes, and admin:
 - `docs/GIT_COMMITS.md` - Guidelines for Git commit best practices including batching changes, message format, and handling concurrent changes
