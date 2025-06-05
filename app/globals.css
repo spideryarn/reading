@@ -289,6 +289,26 @@ body {
         background-color: #ffeb3b;
         font-weight: bold;
         padding: 2px 0;
+        transition: all 0.3s ease-in-out;
+    }
+
+    /* Active search highlight when clicked from search results */
+    .search-highlight-active {
+        background-color: #ffc107;
+        box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.4);
+        animation: pulse-highlight 0.5s ease-out 3;
+    }
+
+    @keyframes pulse-highlight {
+        0% {
+            box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.4);
+        }
+        50% {
+            box-shadow: 0 0 0 6px rgba(255, 193, 7, 0.2);
+        }
+        100% {
+            box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.4);
+        }
     }
 
 }

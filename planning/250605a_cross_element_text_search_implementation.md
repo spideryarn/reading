@@ -60,15 +60,16 @@ Based on analysis in `docs/HTML_TEXT_SEARCH_CROSS_ELEMENT.md` and project prefer
   - [x] Implement text highlighting using Mark.js with appropriate CSS classes
   - [x] Map highlighted text back to DocumentElement IDs for navigation compatibility
   - [x] Maintain existing search result data structure for UI compatibility
-- [ ] Update search result navigation
-  - [ ] Ensure `onHeadingClick` handler works with new search results
-  - [ ] Coordinate between Mark.js highlighting and existing `data-highlight-target` system
-  - [ ] Test scroll-to-element functionality with precise text highlights
-- [ ] When the user clicks on a search result in the left-hand pane, it should
-  - [ ] scroll to that element in the document pane 
-  - [ ] and select it
-  - [ ] And highlight the exact text that has been found in that HTML element in the Document pane. 
-    - [ ] Hmm, what should it do if there are multiple instances of that exact text in the same element? 
+- [x] Update search result navigation
+  - [x] Ensure `onHeadingClick` handler works with new search results
+  - [x] Coordinate between Mark.js highlighting and existing `data-highlight-target` system
+  - [x] Test scroll-to-element functionality with precise text highlights
+- [x] When the user clicks on a search result in the left-hand pane, it should
+  - [x] scroll to that element in the document pane 
+  - [x] and select it
+  - [x] And highlight the exact text that has been found in that HTML element in the Document pane. 
+    - [x] Hmm, what should it do if there are multiple instances of that exact text in the same element? 
+      - Solution: Scrolls to and highlights the FIRST match in the element with a pulse animation 
 - [x] Handle edge cases
   - [x] Empty queries (clear highlights properly)
   - [x] Whitespace-only queries (prevent unnecessary processing)
@@ -87,8 +88,8 @@ Based on analysis in `docs/HTML_TEXT_SEARCH_CROSS_ELEMENT.md` and project prefer
   - [ ] Verify search works across different element types (h1, p, span, em, strong)
   - [ ] Test on Chrome desktop and mobile Safari/Chrome
   - [ ] Verify no regressions in existing search functionality
-- [ ] Update planning doc with implementation progress
-- [ ] Commit core implementation using subagent
+- [x] Update planning doc with implementation progress
+- [x] Commit core implementation using subagent
 
 ### Stage: UI Enhancement & Polish (Priority Updates) ✅
 - [x] Focus and pinning improvements
