@@ -257,10 +257,18 @@ describe('/api/chat', () => {
       ;(chatPromptInputSchema.safeParse as jest.Mock).mockReturnValueOnce({
         success: false,
         error: {
-          format: () => ({ 
-            messages: { _errors: ['Required'] },
-            documentContext: { _errors: ['Invalid type'] }
-          })
+          issues: [
+            {
+              path: ['messages'],
+              message: 'Required',
+              received: undefined
+            },
+            {
+              path: ['documentContext'],
+              message: 'Invalid type',
+              received: 'invalid'
+            }
+          ]
         }
       })
 
@@ -274,11 +282,23 @@ describe('/api/chat', () => {
 
       expect(response.status).toBe(400)
       expect(data).toEqual({
-        error: 'Invalid request',
-        details: { 
-          messages: { _errors: ['Required'] },
-          documentContext: { _errors: ['Invalid type'] }
-        }
+        error: 'Invalid request format',
+        details: {
+          message: 'Request validation failed',
+          issues: [
+            {
+              path: 'messages',
+              message: 'Required',
+              received: undefined
+            },
+            {
+              path: 'documentContext',
+              message: 'Invalid type',
+              received: 'invalid'
+            }
+          ]
+        },
+        code: 'VALIDATION_ERROR'
       })
       expect(mockGenerateText).not.toHaveBeenCalled()
     })
@@ -287,9 +307,13 @@ describe('/api/chat', () => {
       ;(chatPromptInputSchema.safeParse as jest.Mock).mockReturnValueOnce({
         success: false,
         error: {
-          format: () => ({ 
-            messages: { _errors: ['Array must contain at least 1 element(s)'] }
-          })
+          issues: [
+            {
+              path: ['messages'],
+              message: 'Array must contain at least 1 element(s)',
+              received: []
+            }
+          ]
         }
       })
 
@@ -302,7 +326,8 @@ describe('/api/chat', () => {
       const data = await response.json()
 
       expect(response.status).toBe(400)
-      expect(data.error).toBe('Invalid request')
+      expect(data.error).toBe('Invalid request format')
+      expect(data.code).toBe('VALIDATION_ERROR')
     })
 
     it('should return 500 for API key errors', async () => {
