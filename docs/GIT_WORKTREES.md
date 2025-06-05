@@ -29,7 +29,7 @@ Multi-worktree development setup for parallel feature development using a hub-an
 
 - **Protected main branch**: Never work directly on main; all changes go through feature branches
 - **Hub-and-spoke model**: Each worktree syncs only with main, not with other worktrees
-- **General-purpose worktrees**: Three permanent branches (worktree1/2/3) for flexible development
+- **General-purpose worktrees**: Six permanent branches (worktree1-6) for flexible development
 - **Simple synchronisation**: One-way merge at a time, no complex cross-worktree syncing
 
 ## Migration from Two-Worktree Setup
@@ -70,49 +70,65 @@ git branch -d experim
 git push origin --delete experim  # If it was pushed
 ```
 
-## Setting Up Three-Worktree Environment
+## Setting Up Multi-Worktree Environment
 
 ### Directory Structure
 ```
-/Users/greg/Dropbox/dev/experim/
+/Users/greg/Dropbox/dev/spideryarn/
 ├── reading/              # Main branch (protected, read-only)
 ├── reading-worktree1/    # General-purpose development
 ├── reading-worktree2/    # General-purpose development
-└── reading-worktree3/    # General-purpose development
+├── reading-worktree3/    # General-purpose development
+├── reading-worktree4/    # General-purpose development
+├── reading-worktree5/    # General-purpose development
+└── reading-worktree6/    # General-purpose development
 ```
 
 ### Initial Setup
 
-1. **Navigate to repository parent directory**:
+1. **Navigate to repository directory**:
    ```bash
-   cd /Users/greg/Dropbox/dev/experim
+   cd /Users/greg/Dropbox/dev/spideryarn/reading
    ```
 
-2. **Create the three worktree branches**:
+2. **Create worktree branches**:
    ```bash
-   cd reading
    git checkout main
    git checkout -b worktree1
    git checkout -b worktree2
    git checkout -b worktree3
+   git checkout -b worktree4
+   git checkout -b worktree5
+   git checkout -b worktree6
    git checkout main  # Return to main
    ```
 
 3. **Create worktree directories**:
    ```bash
-   cd ..  # Back to /Users/greg/Dropbox/dev/experim
-   git worktree add reading-worktree1 worktree1
-   git worktree add reading-worktree2 worktree2
-   git worktree add reading-worktree3 worktree3
+   # From within the reading repository
+   git worktree add ../reading-worktree1 worktree1
+   git worktree add ../reading-worktree2 worktree2
+   git worktree add ../reading-worktree3 worktree3
+   git worktree add ../reading-worktree4 worktree4
+   git worktree add ../reading-worktree5 worktree5
+   git worktree add ../reading-worktree6 worktree6
    ```
 
 4. **Set up each worktree environment**:
    ```bash
-   # For each worktree (example for worktree1)
-   cd reading-worktree1
-   cp ../reading/.env.local .env.local
-   # Edit .env.local and set unique PORT (e.g., 3002, 3003, 3004)
-   npm install
+   # From the main reading directory, copy .env.local to each worktree
+   cp .env.local ../reading-worktree1/
+   cp .env.local ../reading-worktree2/
+   cp .env.local ../reading-worktree3/
+   cp .env.local ../reading-worktree4/
+   cp .env.local ../reading-worktree5/
+   cp .env.local ../reading-worktree6/
+   
+   # Edit each .env.local to set unique PORT values
+   # Then install dependencies in each worktree
+   cd ../reading-worktree1 && npm install
+   cd ../reading-worktree2 && npm install
+   # ... and so on for each worktree
    ```
 
 5. **Configure ports** in each worktree's `.env.local`:
@@ -120,6 +136,9 @@ git push origin --delete experim  # If it was pushed
    - reading-worktree1: PORT=3001
    - reading-worktree2: PORT=3002
    - reading-worktree3: PORT=3003
+   - reading-worktree4: PORT=3004
+   - reading-worktree5: PORT=3005
+   - reading-worktree6: PORT=3006
 
 ## Development Workflow
 
@@ -162,7 +181,7 @@ You have two options:
    # In reading (main branch)
    ./scripts/sync-branches.ts  # Merges all worktree branches → main
    ```
-   This will attempt to merge worktree1, worktree2, and worktree3 into main sequentially. If any branch has conflicts, it will be skipped and reported.
+   This will attempt to merge all worktree branches (worktree1-6) into main sequentially. If any branch has conflicts, it will be skipped and reported.
 
 **Two-step process for full sync**:
 1. From main: Run sync to merge worktree changes into main
@@ -276,8 +295,12 @@ If a port is already in use:
 ### Worktree Errors
 If "worktree already exists" error:
 ```bash
+# First, clean up stale metadata
 git worktree prune
-git worktree add reading-worktree1 worktree1 --force
+
+# If the error persists, force remove and re-add
+git worktree remove --force <path-to-worktree>
+git worktree add ../reading-worktree1 worktree1
 ```
 
 ### Sync Script Issues
@@ -290,11 +313,14 @@ The sync script validates your worktree setup before running:
 
 **Expected directory structure**:
 ```
-/Users/greg/Dropbox/dev/experim/
+/Users/greg/Dropbox/dev/spideryarn/
 ├── reading/              # Main branch
 ├── reading-worktree1/    # worktree1 branch
 ├── reading-worktree2/    # worktree2 branch
-└── reading-worktree3/    # worktree3 branch
+├── reading-worktree3/    # worktree3 branch
+├── reading-worktree4/    # worktree4 branch
+├── reading-worktree5/    # worktree5 branch
+└── reading-worktree6/    # worktree6 branch
 ```
 
 **Common validation errors**:
