@@ -7,7 +7,7 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { AssistantChat } from './assistant-chat'
 import { TabContainer, type Tab, type TabContainerRef } from './tab-container'
-import { CircleNotch, Book, Question, Calendar, SidebarSimple, ArrowCounterClockwise, MagnifyingGlass, X } from '@phosphor-icons/react'
+import { CircleNotch, Book, Question, Calendar, SidebarSimple, ArrowCounterClockwise, MagnifyingGlass, X, CaretDown } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { AlertWithIcon } from '@/components/ui/alert'
 import type { DocumentElement } from '@/lib/types/document'
@@ -240,12 +240,17 @@ export function UnifiedLeftPane({
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [caseSensitive, setCaseSensitive] = useState(false)
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false)
   
   // Store timeout ID to cancel pending searches
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Mark.js instance
   const markInstanceRef = useRef<Mark | null>(null)
+  
+  // Ref for search input to enable auto-focus
+  const searchInputRef = useRef<HTMLInputElement>(null)
   
   // Initialize Mark.js when component mounts
   useEffect(() => {
@@ -300,6 +305,7 @@ export function UnifiedLeftPane({
         separateWordSearch: false,    // Find exact phrases
         acrossElements: true,         // Enable cross-element search
         className: 'search-highlight',
+        caseSensitive: caseSensitive, // Apply case sensitivity option
         each: function(element) {
           // Find parent DocumentElement for navigation
           const elementContainer = element.closest('[data-element-id]')
@@ -343,7 +349,7 @@ export function UnifiedLeftPane({
         }
       })
     }, 150) // Small delay to show loading state
-  }, [elements])
+  }, [elements, caseSensitive])
   
   // Debounced search function (300ms delay)
   const debouncedSearch = useMemo(
@@ -371,6 +377,13 @@ export function UnifiedLeftPane({
       }
     }
   }, [])
+  
+  // Re-run search when case sensitivity changes
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      performSearch(searchQuery)
+    }
+  }, [caseSensitive, searchQuery, performSearch])
 
   // NEW: Listen for document clicks (from ResizableDocumentLayout) to scroll ToC
   useEffect(() => {
@@ -563,11 +576,12 @@ export function UnifiedLeftPane({
   // Render Search tab
   const renderSearchTab = () => {
     return (
-      <div className="p-4">
-        {/* Search input */}
-        <div className="relative mb-4">
+      <div className="flex flex-col h-full">
+        {/* Pinned search input */}
+        <div className="sticky top-0 bg-white z-10 p-4 border-b border-gray-200">
           <div className="relative">
             <input
+              ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearchInputChange(e.target.value)}
@@ -597,9 +611,39 @@ export function UnifiedLeftPane({
               </button>
             )}
           </div>
+          
+          {/* Advanced options */}
+          <div className="mt-3">
+            <button
+              onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+              className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              <CaretDown 
+                size={14} 
+                weight="bold" 
+                className={`transform transition-transform ${showAdvancedOptions ? 'rotate-180' : ''}`}
+              />
+              Advanced options
+            </button>
+            
+            {showAdvancedOptions && (
+              <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={caseSensitive}
+                    onChange={(e) => setCaseSensitive(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">Case sensitive</span>
+                </label>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Search results */}
+        <div className="flex-1 overflow-y-auto px-4 pb-4">
         {isSearching ? (
           <div className="flex flex-col items-center justify-center py-8">
             <CircleNotch className="animate-spin text-gray-400 mb-2" size={24} weight="bold" />
@@ -639,6 +683,7 @@ export function UnifiedLeftPane({
             </div>
           </div>
         ) : null}
+        </div>
       </div>
     )
   }
@@ -679,7 +724,13 @@ export function UnifiedLeftPane({
     {
       id: 'search',
       label: 'Search',
-      content: renderSearchTab()
+      content: renderSearchTab(),
+      onActivate: () => {
+        // Auto-focus search input when tab is activated
+        setTimeout(() => {
+          searchInputRef.current?.focus()
+        }, 50)
+      }
     }
   ]
 

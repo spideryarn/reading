@@ -26,12 +26,16 @@ Spideryarn Reading is in active development with core AI features now implemente
 - **Prompt template system** - Nunjucks templates with Zod validation (`lib/prompts/templates/`)
 
 **Search Features (Implemented)**
-- **Full-text document search** - Case-insensitive search through all document elements
+- **Cross-element text search** - Finds phrases spanning inline elements using Mark.js library
+- **Visual text highlighting** - Yellow background highlights on matched text in document
+- **Auto-focus search input** - Automatically focuses when Search tab is clicked
+- **Pinned search header** - Search input stays visible when scrolling through results
+- **Case sensitivity option** - Toggle in collapsible advanced options (default: case-insensitive)
 - **Debounced input** - 300ms delay with loading states for optimal performance
 - **Smart result display** - Element type metadata, text excerpts, and match counts
 - **Click-to-navigate** - Results link directly to document elements with selection highlighting
 - **Edge case handling** - Whitespace queries, empty content elements, and rapid typing
-- **Comprehensive testing** - Full test coverage including edge cases and loading states
+- **Comprehensive testing** - Full test coverage including UI enhancements and Mark.js integration
 
 **Data Model & UI Components**
 - **Document parsing pipeline**: HTML → Cheerio → structured elements with hierarchical relationships

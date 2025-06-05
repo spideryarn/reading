@@ -100,31 +100,41 @@ interface Tab {
 
 ### Search Functionality ✓
 
-The **Search** tab provides full-text document search with real-time results:
+The **Search** tab provides advanced full-text document search with cross-element capabilities:
 
-**Features**:
+**Core Features**:
+- **Cross-element search** using Mark.js library - finds phrases spanning inline elements (e.g., `<em>`, `<strong>`)
+- **Visual text highlighting** with yellow background on matched text using CSS `.search-highlight` class
+- **Auto-focus** search input when Search tab is clicked for immediate typing
+- **Pinned search input** stays at top when scrolling through results
 - **Debounced input** (300ms delay) to optimize performance during typing
-- **Case-insensitive search** through all document elements
 - **Loading state** with spinner during search operations
 - **Result count display** showing number of matches found
-- **Text excerpts** showing first 100 characters with ellipsis truncation
+- **Text excerpts** showing matched text with context
 - **Element type metadata** (h1, h2, p, etc.) for each result
 - **Click-to-navigate** that scrolls to element and applies selection highlighting
 - **Clear button** to reset search query and results
 
+**Advanced Options**:
+- **Collapsible settings** section below search input
+- **Case sensitivity toggle** (default: false) with immediate re-search on change
+- **Expandable design** for future search options (regex, whole word, etc.)
+
 **Edge Case Handling**:
-- **Empty queries** clear results without showing "no results" message
+- **Empty queries** clear results and highlights without showing "no results" message
 - **Whitespace-only queries** treated as empty queries
 - **Elements without content** skipped during search
 - **Rapid typing** properly debounced to prevent performance issues
-- **Long text excerpts** truncated with ellipsis at 100 characters
+- **Cross-block limitations** documented - search works within blocks, not across paragraphs
 
 **Technical Implementation**:
-- **Client-side search** through rendered document elements
+- **Mark.js integration** for robust text highlighting and cross-element search
+- **DOM-based search** finds text as users see it, not markdown source
+- **React refs** for search input focus and Mark.js instance management
 - **Reuses existing navigation** via `onHeadingClick` handler
 - **Element selection state** for consistent highlighting behavior
 - **Timeout management** to prevent memory leaks and race conditions
-- **Comprehensive test coverage** including edge cases and loading states
+- **Comprehensive test coverage** including UI enhancements and edge cases
 
 ## Scrolling Architecture ✓
 

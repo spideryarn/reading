@@ -90,26 +90,27 @@ Based on analysis in `docs/HTML_TEXT_SEARCH_CROSS_ELEMENT.md` and project prefer
 - [ ] Update planning doc with implementation progress
 - [ ] Commit core implementation using subagent
 
-### Stage: UI Enhancement & Polish
-- [ ] Enhance search result display
-  - [ ] Update result excerpts to show highlighted text context
-  - [ ] Consider showing number of matches per element (if multiple)
-  - [ ] Improve visual feedback for active highlights
-  - [ ] Ensure result click behavior is intuitive with new highlighting
-- [ ] Improve highlighting visual design
-  - [ ] Coordinate Mark.js highlight styles with existing CSS theme
-  - [ ] Ensure highlights are visible and accessible
-  - [ ] Test highlight visibility on mobile devices
-  - [ ] Consider animation timing with existing highlight system
-- [ ] Add search options (if needed)
-  - [ ] Case-sensitive search toggle (optional enhancement)
-  - [ ] Whole word matching option (optional enhancement)
-- [ ] Write additional tests for UI enhancements
-  - [ ] Test visual highlighting styles
-  - [ ] Test result display with multiple matches
-  - [ ] Test accessibility of highlights
-- [ ] Update planning doc with enhancement progress
-- [ ] Commit UI enhancements using subagent
+### Stage: UI Enhancement & Polish (Priority Updates) ✅
+- [x] Focus and pinning improvements
+  - [x] Auto-focus search input when Search tab is clicked
+  - [x] Pin search input to top when scrolling through results
+  - [x] Keep search query visible at all times
+- [x] Add case sensitivity option
+  - [x] Create collapsible "Advanced options" section
+  - [x] Add case-sensitive toggle (default: false)
+  - [x] Update Mark.js configuration based on toggle state
+  - [x] Design for future expansion of search options
+- [x] Cleanup tasks
+  - [x] Remove any debugging code or console.logs (verified none in search code)
+  - [x] Clean up unused imports or dead code
+  - [x] Ensure proper TypeScript types
+- [x] Write additional tests for UI enhancements
+  - [x] Test auto-focus behavior
+  - [x] Test pinned search input
+  - [x] Test case sensitivity toggle
+  - [x] Test accessibility of highlights
+- [x] Update planning doc with enhancement progress
+- [x] Commit UI enhancements using subagent
 
 ### Stage: Integration Testing & Documentation
 - [ ] Run full test suite
@@ -134,16 +135,16 @@ Based on analysis in `docs/HTML_TEXT_SEARCH_CROSS_ELEMENT.md` and project prefer
 - [ ] Update planning doc with testing results
 - [ ] Commit final implementation using subagent
 
-### Stage: Cleanup & Documentation Update
-- [ ] Clean up code
-  - [ ] Remove any old element-based search code that's no longer needed
-  - [ ] Clean up console.log statements or debugging code
-  - [ ] Ensure TypeScript types are correct for new search implementation
-  - [ ] Update comments and documentation strings in code
-- [ ] Final documentation updates
-  - [ ] Update `docs/HTML_TEXT_SEARCH_CROSS_ELEMENT.md` with implementation notes
-  - [ ] Add implementation examples and patterns to relevant docs
-  - [ ] Update any references to old search behavior in documentation
+### Stage: Documentation Update ✅
+- [x] Rename and update search documentation
+  - [x] Rename `docs/HTML_TEXT_SEARCH_CROSS_ELEMENT.md` to `docs/SEARCH_TEXT.md`
+  - [x] Update content to reflect current implementation status
+  - [x] Document Mark.js integration and limitations
+  - [x] Include examples of search functionality
+- [x] Update other relevant documentation
+  - [x] Ensure `docs/UI_INTERFACE.md` accurately describes search
+  - [x] Update `docs/PROJECT_STATUS.md` with search enhancements
+  - [x] Add any new search features to relevant docs
 - [ ] Final testing
   - [ ] Run complete test suite one more time
   - [ ] Manual verification that all features work as expected
