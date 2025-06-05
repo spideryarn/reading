@@ -99,6 +99,8 @@ Use consistent markers throughout documentation:
 - 📋 **Planned** - Designed but not yet started
 - ⚠️ **Deprecated** - Being phased out, avoid using
 
+N.B. Don't make stuff up - if you don't know, don't include this.
+
 Example:
 ```markdown
 ## Features
