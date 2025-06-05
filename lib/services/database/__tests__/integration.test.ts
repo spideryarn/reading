@@ -88,7 +88,12 @@ describeIfEnv('Database Service Integration Tests', () => {
       is_public: false
     }
     
-    const doc = await documentService.create({ ...defaults, ...overrides })
+    const data = { ...defaults, ...overrides }
+    // Generate slug from title if not provided
+    const { generateSlug } = await import('@/lib/utils/slug')
+    const slug = generateSlug(data.title)
+    
+    const doc = await documentService.create({ ...data, slug })
     if (!doc) throw new Error('Failed to create test document')
     
     createdDocIds.push(doc.id)
