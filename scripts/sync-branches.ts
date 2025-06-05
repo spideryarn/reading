@@ -62,6 +62,9 @@ class SyncBranchesCommand extends Command {
         await this.performOneDirectionMerge(sourceBranch, targetBranch);
 
         console.log('✅ Synced');
+        const date = new Date();
+        const formattedDate = `${date.getFullYear()}-${date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}-${date.getDate().toString().padStart(2, '0')}`;
+        console.log(`Synced at ${formattedDate}`);
         
         // Provide next step guidance only for complex scenarios
         if (currentBranch === this.mainBranch) {
@@ -210,6 +213,9 @@ class SyncBranchesCommand extends Command {
     }
     
     console.log(`\n✅ Synced all ${worktreeBranches.length} worktrees to main`);
+    const date = new Date();
+    const formattedDate = `${date.getFullYear()}-${date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}-${date.getDate().toString().padStart(2, '0')}`;
+    console.log(`Synced at ${formattedDate}`);
     console.log('Next: run this script from each worktree to pull latest main');
   }
 

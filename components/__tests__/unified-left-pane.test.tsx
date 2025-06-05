@@ -8,6 +8,9 @@ jest.mock('@/lib/utils/debounce', () => ({
   debounce: (fn: any) => fn // No delay in tests
 }));
 
+// Mock mark.js
+jest.mock('mark.js');
+
 // Mock external dependencies
 jest.mock('../tab-container', () => {
   const TabContainerComponent = React.forwardRef<any, any>(({ tabs, title, defaultTab, onTabChange, className }: any, ref) => {
@@ -162,14 +165,17 @@ jest.mock('@phosphor-icons/react', () => ({
   Info: ({ className, size, weight }: any) => (
     <span data-testid="icon-info" className={className} data-size={size} data-weight={weight} />
   ),
+  ArrowCounterClockwise: ({ className, size, weight }: any) => (
+    <span data-testid="icon-arrow-counter-clockwise" className={className} data-size={size} data-weight={weight} />
+  ),
   MagnifyingGlass: ({ className, size, weight }: any) => (
     <span data-testid="icon-magnifying-glass" className={className} data-size={size} data-weight={weight} />
   ),
   X: ({ className, size, weight }: any) => (
     <span data-testid="icon-x" className={className} data-size={size} data-weight={weight} />
   ),
-  ArrowCounterClockwise: ({ className, size, weight }: any) => (
-    <span data-testid="icon-arrow-counter-clockwise" className={className} data-size={size} data-weight={weight} />
+  CaretDown: ({ className, size, weight }: any) => (
+    <span data-testid="icon-caret-down" className={className} data-size={size} data-weight={weight} />
   )
 }));
 
@@ -188,6 +194,23 @@ interface Entity {
 }
 
 describe('UnifiedLeftPane', () => {
+  // Mock document.getElementById to return a mock element
+  beforeEach(() => {
+    const mockDocumentViewer = document.createElement('div');
+    mockDocumentViewer.id = 'document-viewer';
+    
+    jest.spyOn(document, 'getElementById').mockImplementation((id) => {
+      if (id === 'document-viewer') {
+        return mockDocumentViewer;
+      }
+      return null;
+    });
+  });
+  
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+  
   // Mock data
   const mockElements: DocumentElement[] = [
     {
