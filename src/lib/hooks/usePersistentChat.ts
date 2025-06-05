@@ -4,12 +4,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { 
   useLocalRuntime, 
   type ChatModelAdapter,
-  type Message
+  type Message,
+  type ThreadMessageLike
 } from "@assistant-ui/react";
 import { createClient } from '@/lib/supabase/client';
 import { ChatService } from '@/lib/services/database/chat';
 import { AiCallService } from '@/lib/services/database/ai-calls';
-import { getModelConfig, AI_CONFIG } from '@/lib/config';
 
 interface UsePersistentChatProps {
   documentId: string;
@@ -23,26 +23,6 @@ interface UsePersistentChatReturn {
   error: string | null;
 }
 
-// Mock system user ID (from database migration)
-const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000001';
-
-// Thread title generation utility
-function generateThreadTitle(firstUserMessage: string): string {
-  const maxLength = 50;
-  const cleaned = firstUserMessage.trim();
-  
-  if (cleaned.length <= maxLength) {
-    return cleaned;
-  }
-  
-  // Find natural break point
-  const truncated = cleaned.slice(0, maxLength);
-  const lastSpace = truncated.lastIndexOf(' ');
-  
-  return lastSpace > 20 
-    ? truncated.slice(0, lastSpace) + '...'
-    : truncated + '...';
-}
 
 export function usePersistentChat({ 
   documentId, 
@@ -52,8 +32,10 @@ export function usePersistentChat({
   const [threadId, setThreadId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [chatService, setChatService] = useState<ChatService | null>(null);
-  const [aiCallService, setAiCallService] = useState<AiCallService | null>(null);
+  const [, setAiCallService] = useState<AiCallService | null>(null);
   const [currentModelId, setCurrentModelId] = useState<string | null>(null);
+  const [initialMessages, setInitialMessages] = useState<ThreadMessageLike[]>([]);
+  const [messagesLoaded, setMessagesLoaded] = useState(false);
 
   // Initialize database services
   useEffect(() => {
@@ -182,7 +164,6 @@ export function usePersistentChat({
 
       // Get the latest user message
       const latestUserMessage = conversationHistory[conversationHistory.length - 1];
-      const isFirstMessage = conversationHistory.length === 1 && latestUserMessage?.role === 'user';
 
       let currentThreadId = threadId;
 
@@ -194,23 +175,42 @@ export function usePersistentChat({
         await saveMessage(currentThreadId, 'user', latestUserMessage.content);
       }
 
-      // Make API call (same as original implementation)
+      // Make API call with comprehensive request logging
+      const requestPayload = {
+        messages: conversationHistory,
+        documentContext,
+        ...(currentThreadId ? { threadId: currentThreadId } : {}), // Only include threadId if it's not null
+        documentId // Pass document ID for thread creation
+      };
+      
+      console.log('[Persistent Chat] Making API request:', {
+        url: '/api/chat',
+        payload: {
+          messageCount: requestPayload.messages.length,
+          documentContextLength: requestPayload.documentContext?.length || 0,
+          threadId: requestPayload.threadId || 'none',
+          documentId: requestPayload.documentId || 'none'
+        },
+        timestamp: new Date().toISOString()
+      });
+      
       let res;
       try {
         res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages: conversationHistory,
-            documentContext,
-            threadId: currentThreadId, // Pass thread ID to API
-            documentId // Pass document ID for thread creation
-          }),
+          body: JSON.stringify(requestPayload),
           signal: abortSignal,
         });
       } catch (error) {
         console.error('[Persistent Chat] Network Error:', {
           error: error instanceof Error ? error.message : 'Unknown network error',
+          requestPayload: {
+            messageCount: requestPayload.messages.length,
+            documentContextLength: requestPayload.documentContext?.length || 0,
+            threadId: requestPayload.threadId || 'none',
+            documentId: requestPayload.documentId || 'none'
+          },
           timestamp: new Date().toISOString()
         });
         
@@ -232,18 +232,39 @@ export function usePersistentChat({
         try {
           const errorData = await res.json();
           errorMessage = errorData.error || errorMessage;
-          errorDetails = errorData.details || '';
           errorCode = errorData.code || errorCode;
+          
+          // Handle detailed error formatting
+          if (errorData.details) {
+            if (typeof errorData.details === 'string') {
+              errorDetails = errorData.details;
+            } else if (errorData.details.issues) {
+              // Validation errors with structured issues
+              errorDetails = `Validation failed:\n${errorData.details.issues.map((issue: {path?: string; message: string; received?: unknown}) => 
+                `• ${issue.path || 'root'}: ${issue.message}${issue.received ? ` (received: ${JSON.stringify(issue.received)})` : ''}`
+              ).join('\n')}`;
+            } else {
+              // Other structured error details
+              errorDetails = JSON.stringify(errorData.details, null, 2);
+            }
+          }
           
           console.error('[Persistent Chat] API Error:', {
             status: res.status,
             error: errorMessage,
-            details: errorDetails,
+            details: errorData.details,
             code: errorCode,
+            requestBody: {
+              messages: conversationHistory,
+              documentContext: documentContext?.substring(0, 100) + '...',
+              threadId: currentThreadId,
+              documentId
+            },
             timestamp: new Date().toISOString()
           });
         } catch (e) {
           console.error('[Persistent Chat] Failed to parse error response:', e);
+          errorDetails = 'Unable to parse error details from server';
         }
         
         const fullError = errorDetails 
@@ -254,7 +275,7 @@ export function usePersistentChat({
           content: [
             {
               type: "text" as const,
-              text: `❌ Error: ${fullError}\n\nPlease try again or contact support if the issue persists.`
+              text: `❌ Error: ${fullError}\n\nError Code: ${errorCode}\nPlease try again or contact support if the issue persists.`
             }
           ]
         };
@@ -291,10 +312,12 @@ export function usePersistentChat({
           },
         ],
       };
-    }, [documentContext, threadId, chatService, currentModelId, saveMessage]),
+    }, [documentContext, threadId, documentId, chatService, currentModelId, saveMessage]),
   };
 
-  const runtime = useLocalRuntime(chatModelAdapter);
+  const runtime = useLocalRuntime(chatModelAdapter, { 
+    initialMessages: messagesLoaded ? initialMessages : undefined 
+  });
 
   // Load conversation history on mount
   useEffect(() => {
@@ -312,14 +335,24 @@ export function usePersistentChat({
         if (existingThreadId) {
           const history = await loadConversationHistory(existingThreadId);
           
-          // Populate runtime with historical messages
+          // Convert to ThreadMessageLike format for initialMessages
           if (history.length > 0) {
-            // Note: assistant-ui doesn't expose direct message setting
-            // For now, we'll let the conversation start fresh and rely on
-            // the database for persistence across sessions
-            console.log('[Persistent Chat] Historical messages found but not loaded into UI yet');
+            const threadMessages: ThreadMessageLike[] = history.map(msg => ({
+              id: msg.id,
+              role: msg.role as 'user' | 'assistant',
+              content: msg.content.find(part => part.type === 'text')?.text || '',
+              createdAt: msg.createdAt
+            }));
+            
+            setInitialMessages(threadMessages);
+            console.log('[Persistent Chat] Loaded conversation history:', {
+              threadId: existingThreadId,
+              messageCount: threadMessages.length
+            });
           }
         }
+        
+        setMessagesLoaded(true); // Mark messages as loaded (even if empty)
 
         setIsLoaded(true);
       } catch (err) {
@@ -331,6 +364,13 @@ export function usePersistentChat({
 
     initConversation();
   }, [chatService, findOrCreateThread, loadConversationHistory]);
+  
+  // Reset initial messages when documentId changes
+  useEffect(() => {
+    setInitialMessages([]);
+    setMessagesLoaded(false);
+    setThreadId(null);
+  }, [documentId]);
 
   return {
     runtime,

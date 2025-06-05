@@ -15,11 +15,30 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     // Note: 'body' is only accessible within this try block scope
     
-    // Validate input
+    // Validate input with detailed error reporting
     const validationResult = chatPromptInputSchema.safeParse(body)
     if (!validationResult.success) {
+      const errorDetails = {
+        message: 'Request validation failed',
+        issues: validationResult.error.issues.map(issue => ({
+          path: issue.path.join('.'),
+          message: issue.message,
+          received: issue.received
+        }))
+      }
+      
+      console.error('[Chat API] Validation error:', {
+        body: JSON.stringify(body, null, 2),
+        errors: errorDetails,
+        timestamp: new Date().toISOString()
+      })
+      
       return NextResponse.json(
-        { error: 'Invalid request', details: validationResult.error.format() },
+        { 
+          error: 'Invalid request format', 
+          details: errorDetails,
+          code: 'VALIDATION_ERROR'
+        },
         { status: 400 }
       )
     }

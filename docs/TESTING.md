@@ -157,6 +157,13 @@ Current test coverage includes:
 - `lib/services/database/__tests__/profiles.test.ts` - Profile management
 - See `docs/AUTHENTICATION_TESTING.md` for comprehensive authentication testing patterns
 
+**Chat Persistence Test Suite** ✅:
+- `src/lib/hooks/__tests__/usePersistentChat.test.ts` - Core persistence hook testing
+- `components/__tests__/assistant-chat-persistence.test.tsx` - Component integration with persistence
+- `app/api/__tests__/chat-persistence.test.ts` - API route persistence support
+- Uses mock system user ID: `00000000-0000-0000-0000-000000000001`
+- See `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md` for implementation details
+
 Additional tests should be added as new features are developed.
 
 # Appendix: Known Issues and Workarounds
