@@ -36,7 +36,8 @@ const tweetThreadPromptSchema = z.object({
   target_length: z.number()
     .min(3, 'Thread should be at least 3 tweets')
     .max(20, 'Thread should not exceed 25 tweets')
-    .default(12) // Based on research: 10-15 tweets optimal for academic content
+    .default(12), // Based on research: 10-15 tweets optimal for academic content
+  documentId: z.string().uuid('documentId must be a valid UUID')
 })
 
 // Load the tweet thread prompt template

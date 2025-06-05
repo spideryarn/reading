@@ -4,15 +4,15 @@
 
 Complete the database integration for Spideryarn Reading by connecting existing AI features to database storage and addressing remaining infrastructure gaps. This follows the successful database schema implementation in `planning/finished/250531a_database_storage_implementation.md` which created comprehensive tables but left the UI integration incomplete.
 
-**Current State**: Documents are successfully loaded from database instead of static files, but AI-generated content (summaries, glossaries, headings) and chat conversations are still handled in-memory. The application has a robust database schema but isn't leveraging it for core features.
+**Current State**: Documents are successfully loaded from database instead of static files. All AI-generated content (summaries, glossaries, headings, tweet threads) now persists in the database with auto-loading functionality. Chat conversations remain in-memory (moved to separate planning doc). The application has a robust database schema and is now leveraging it for all core AI features.
 
 **Primary Goals**:
-1. Move static HTML files to archive location since database migration is complete
-2. Add slug column to documents table for more efficient routing 
-3. Connect AI features (summaries, glossary, headings) to store results in `document_enhancements` table
-4. Integrate chat functionality with `chat_threads` and `chat_messages` tables
+1. Move static HTML files to archive location since database migration is complete ✅
+2. Add slug column to documents table for more efficient routing ✅
+3. Connect AI features (summaries, glossary, headings, tweet threads) to store results in `document_enhancements` table ✅
+4. Integrate chat functionality with `chat_threads` and `chat_messages` tables → Moved to separate planning doc
 5. Implement simple real-time proof-of-concept for database changes
-6. Work around authentication dependency using mock user approach
+6. Work around authentication dependency using mock user approach ✅
 
 **Success Criteria**: All existing features work as before, but data persists across page reloads and multiple sessions. No user-facing feature changes, just robust backend storage.
 
@@ -37,8 +37,9 @@ Complete the database integration for Spideryarn Reading by connecting existing 
 - `docs/AI_SUMMARISE.md` - AI summarise feature generating hierarchical summaries at multiple granularities
 - `docs/AI_GLOSSARY.md` - Glossary feature extracting key entities using LLM analysis  
 - `docs/AI_HEADINGS.md` - AI-generated headings feature with mutation system
+- `docs/AI_TWEET_THREAD_VIEW.md` - Tweet thread feature converting documents to Twitter-style threads
 - `lib/prompts/` - Nunjucks + Zod prompt templates for all AI features
-- `app/api/summarise/route.ts`, `app/api/glossary/route.ts`, `app/api/headings/route.ts` - Current AI API routes (in-memory)
+- `app/api/summarise/route.ts`, `app/api/glossary/route.ts`, `app/api/headings/route.ts`, `app/api/tweet-thread/route.ts` - AI API routes with database integration
 
 **Real-time Infrastructure**:
 - `lib/supabase/realtime.ts` - Real-time subscription helpers for all major tables
@@ -62,8 +63,8 @@ Complete the database integration for Spideryarn Reading by connecting existing 
 
 ### Storage Integration Priorities
 **From conversation analysis**:
-1. **High Priority**: AI enhancements storage (summaries, glossary, headings) - provides immediate persistence value
-2. **High Priority**: Chat storage - enables persistent conversations across sessions  
+1. **High Priority**: AI enhancements storage (summaries, glossary, headings, tweet threads) - provides immediate persistence value ✅ COMPLETED
+2. **High Priority**: Chat storage - enables persistent conversations across sessions → Moved to separate planning doc  
 3. **Medium Priority**: Simple real-time PoC - demonstrates database change propagation
 4. **Low Priority**: Performance optimizations, cost tracking - defer to later phases
 

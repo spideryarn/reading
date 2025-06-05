@@ -6,11 +6,13 @@ import { TweetThreadView } from '@/components/tweet-thread-view'
 interface TweetThreadPageClientProps {
   documentContent: string
   documentTitle: string
+  documentId: string
   slug: string
 }
 
 export function TweetThreadPageClient({ 
-  documentContent 
+  documentContent,
+  documentId
 }: TweetThreadPageClientProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [hasGenerated, setHasGenerated] = useState(false)
@@ -65,7 +67,8 @@ export function TweetThreadPageClient({
       )}
       
       <TweetThreadView 
-        documentContent={documentContent} 
+        documentContent={documentContent}
+        documentId={documentId}
         isActive={true} 
         onStateChange={handleStateChange}
       />

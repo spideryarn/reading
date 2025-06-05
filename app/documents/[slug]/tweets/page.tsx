@@ -65,6 +65,7 @@ export default async function TweetThreadPage({ params }: PageProps) {
         <TweetThreadPageClient 
           documentContent={markdownContent} 
           documentTitle={doc.title}
+          documentId={doc.id}
           slug={slug}
         />
       </div>
