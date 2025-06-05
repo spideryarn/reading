@@ -24,6 +24,16 @@ export interface CreateAiCallOptions {
   extra?: Record<string, any>
 }
 
+export interface SimpleCreateAiCallOptions {
+  provider: 'anthropic' | 'google'
+  modelId: string
+  promptTokens?: number | null
+  completionTokens?: number | null
+  totalTokens?: number | null
+  requestData?: Record<string, any>
+  responseData?: Record<string, any>
+}
+
 export class AiCallService {
   constructor(private supabase: SupabaseClient<Database>) {}
 
@@ -286,6 +296,40 @@ export class AiCallService {
     }
 
     return data || []
+  }
+
+  /**
+   * Simple create method for completed AI calls (used by API routes)
+   */
+  async create(options: SimpleCreateAiCallOptions): Promise<AiCall> {
+    // Look up model UUID by provider and model ID
+    const modelUuid = await this.getModelUuidByProviderAndId(options.provider, options.modelId)
+
+    const aiCall: Omit<AiCallInsert, 'id' | 'created_at' | 'updated_at'> = {
+      document_id: null, // No document association for this simple method
+      model_id: modelUuid,
+      prompt_type: 'chat', // Default to chat for this simple interface
+      prompt_input: JSON.stringify(options.requestData || {}),
+      prompt_template: null,
+      status: 'success', // Mark as completed immediately
+      completed_at: new Date().toISOString(),
+      prompt_tokens: options.promptTokens,
+      completion_tokens: options.completionTokens,
+      total_tokens: options.totalTokens,
+      extra: options.responseData || {},
+    }
+
+    const { data, error } = await this.supabase
+      .from('ai_calls')
+      .insert(aiCall)
+      .select()
+      .single()
+
+    if (error) {
+      throw new Error(`Failed to create AI call: ${error.message}`)
+    }
+
+    return data
   }
 
   /**

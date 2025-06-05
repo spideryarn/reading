@@ -4,8 +4,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from 'ai'
 import { getModel } from '@/lib/services/llm-provider'
-import { AI_CONFIG } from '@/lib/config'
+import { AI_CONFIG, getModelConfig } from '@/lib/config'
 import { chatPromptInputSchema } from '@/lib/prompts/templates/chat'
+import { createClient } from '@/lib/supabase/server'
+import { AiCallService } from '@/lib/services/database/ai-calls'
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,12 +23,13 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const { messages, documentContext } = validationResult.data
+    const { messages, documentContext, threadId } = validationResult.data
     
     // Log conversation processing
     console.log('[Chat API] Processing conversation:', {
       messageCount: messages.length,
       documentContextLength: documentContext?.length || 0,
+      threadId: threadId || 'none',
       timestamp: new Date().toISOString()
     })
     
@@ -69,13 +72,51 @@ Please respond to the user's latest message while considering the full conversat
     
     const response = result.text
     
+    // Store AI call in database for tracking (if possible)
+    let aiCallId: string | null = null;
+    if (threadId) {
+      try {
+        const supabase = await createClient()
+        const aiCallService = new AiCallService(supabase)
+        const modelConfig = getModelConfig()
+        
+        const aiCall = await aiCallService.create({
+          provider: modelConfig.provider,
+          modelId: modelConfig.modelId,
+          promptTokens: result.usage?.promptTokens || null,
+          completionTokens: result.usage?.completionTokens || null,
+          totalTokens: result.usage?.totalTokens || null,
+          requestData: {
+            messages: messages.map(m => ({ role: m.role, content: m.content })),
+            documentContext: documentContext ? documentContext.substring(0, 1000) + '...' : null,
+            threadId
+          },
+          responseData: { response }
+        })
+        
+        aiCallId = aiCall.id
+        
+        console.log('[Chat API] AI call tracked:', {
+          aiCallId,
+          threadId,
+          usage: result.usage
+        })
+      } catch (err) {
+        console.warn('[Chat API] Failed to track AI call:', err)
+        // Don't fail the request if AI call tracking fails
+      }
+    }
+    
     console.log('[Chat API] Response generated successfully:', {
       responseLength: response.length,
+      threadId: threadId || 'none',
+      aiCallId: aiCallId || 'none',
       timestamp: new Date().toISOString()
     })
     
     return NextResponse.json({ 
       response,
+      aiCallId,
       timestamp: new Date().toISOString()
     })
     

@@ -8,6 +8,7 @@ export const chatPromptInputSchema = z.object({
     content: z.string().min(1).max(10000)
   })).min(1).describe('The conversation history'),
   documentContext: z.string().max(10000).describe('The document content for context'),
+  threadId: z.string().uuid().optional().describe('Optional chat thread ID for persistence'),
 })
 
 // Load the chat prompt template

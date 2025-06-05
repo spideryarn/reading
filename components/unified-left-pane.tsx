@@ -383,7 +383,10 @@ export function UnifiedLeftPane({
   const renderChatTab = () => {
     return (
       <div className="h-full">
-        <AssistantChat documentContext={documentContext} />
+        <AssistantChat 
+          documentId={documentId} 
+          documentContext={documentContext} 
+        />
       </div>
     )
   }
