@@ -191,7 +191,7 @@ export function SimpleDocumentViewer({
       className="h-full overflow-y-auto bg-white"
       onClick={handleContainerClick}
     >
-      <div className="max-w-4xl mx-auto p-8">
+      <div id="document-viewer" className="max-w-4xl mx-auto p-8">
         {/* Render root elements */}
         {elements
           .filter(element => !element.parent_id)
