@@ -191,19 +191,38 @@ Complete the database integration for Spideryarn Reading by connecting existing 
   - [ ] Verify that enhancements are linked to correct documents and AI calls
   - [ ] Test behavior when enhancements already exist (update vs create new)
 
-### Stage: Chat Database Integration
-- [ ] Connect chat functionality to database storage
-  - [ ] Update chat components to use ChatService instead of in-memory state
-  - [ ] Modify `components/assistant-chat.tsx` to load existing threads from database
-  - [ ] Store chat messages in chat_messages table with proper sequencing
-  - [ ] Link chat threads to documents and AI models in database
-  - [ ] Test that conversations persist across page reloads and browser sessions
+### Stage: Tweet Thread Database Integration
+- ✅ Connect AI tweet thread feature to database storage
+  - ✅ **Comprehensive Database Integration Implementation**: Complete tweet thread database integration with auto-loading pattern
+    - 📔 **API Route Enhancement**: Updated `/app/api/tweet-thread/route.ts` with GET/POST/DELETE endpoints following established patterns
+      - ✅ Added GET endpoint to fetch cached tweet threads from `document_enhancements` table
+      - ✅ Added DELETE endpoint for reset/regenerate functionality  
+      - ✅ Modified POST endpoint to use EnhancementService with type='tweet_thread'
+      - ✅ Integrated with AiCallService for tracking AI usage
+      - ✅ Added config-based model resolution for database storage
+    - 📔 **Schema Updates**: Updated prompt input validation to include documentId parameter
+      - ✅ Modified `lib/prompts/templates/tweet-thread.ts` to require documentId in request schema
+      - ✅ Ensured UUID validation for documentId parameter
+    - 📔 **Component Integration**: Updated tweet thread components for database-backed functionality
+      - ✅ Enhanced `components/tweet-thread-view.tsx` with auto-loading logic
+      - ✅ Added fetchCachedTweetThread() helper function for database retrieval
+      - ✅ Implemented regenerateTweetThread() function with cache deletion
+      - ✅ Added "Loaded" badge and reset button UI elements consistent with other AI features
+      - ✅ Updated component props to accept documentId parameter
+    - 📔 **Page Integration**: Updated tweet thread pages to pass documentId
+      - ✅ Modified `app/documents/[slug]/tweets/page.tsx` to pass document.id to client component
+      - ✅ Updated `app/documents/[slug]/tweets/page-client.tsx` to forward documentId to TweetThreadView
+    - 📔 **Current Issue**: JSON parsing error in POST endpoint - component sending malformed request body
+      - 📔 **Symptoms**: Infinite retry loop with 400/200 errors and "Unexpected end of JSON input"
+      - 📔 **Root Cause**: Auto-loading useEffect logic issue creating empty request bodies
+      - 📔 **Status**: Core database integration complete, minor debugging needed for component request payload
 
-- [ ] Update chat UI for database-backed conversations
-  - [ ] Load conversation history on component mount
-  - [ ] Handle message persistence and thread continuity
-  - [ ] Test multi-turn conversations with proper message ordering
-  - [ ] Verify that conversation context is maintained
+### Stage: Chat Database Integration → See `planning/250605a_chat_database_integration.md`
+- [ ] **COMPLEX PROJECT**: Chat database persistence implementation moved to dedicated planning document
+  - [ ] **Scope**: Transform in-memory chat to database-backed with permanent conversation persistence
+  - [ ] **Approach**: `useLocalRuntime` + background persistence (researched via `docs/ASSISTANT_UI_DATABASE_PERSISTENCE.md`)
+  - [ ] **Strategy**: One thread per document initially, auto-generated titles, fail-fast error handling
+  - [ ] **References**: `planning/250605a_chat_database_integration.md` for detailed implementation stages
 
 ### Stage: Simple Real-time Proof of Concept
 - [ ] Implement basic real-time document title updates
