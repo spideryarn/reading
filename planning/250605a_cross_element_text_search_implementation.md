@@ -276,3 +276,15 @@ Nice-to-have:
 - `components/__tests__/mark-js-document-integration.test.tsx` - Integration with our document structure
 
 All tests passing ✓
+
+## Status
+
+**Stage 1: Research Validation & Library Integration** - ✅ Complete
+**Stage 2: Core Cross-Element Search Implementation** - ✅ Complete
+**Stage 3: Manual Testing & Bug Fixes** - ✅ Complete (Stage 2 included comprehensive manual testing)
+**Stage 4: Integration Testing** - 🔄 In Progress
+**Stage 5: Polish & Edge Cases** - ✅ Complete (UI enhancements moved to separate implementation)
+
+### Known Issues
+
+1. **Safari CSS Animation Bug**: The `.search-highlight-active` pulse animation doesn't render correctly in Safari. This is a low-priority cosmetic issue that doesn't affect functionality. Chrome and mobile browsers work as expected.
