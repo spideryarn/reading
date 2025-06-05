@@ -11,6 +11,7 @@ import { SimpleDocumentViewer } from './simple-document-viewer'
 import { Button } from '@/components/ui/button'
 import { SidebarSimple } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
+import { DocumentCommunicationProvider, useDocumentCommunication } from '@/lib/context/document-communication-context'
 
 // Entity type (will be moved to proper types file later)
 interface Entity {
@@ -52,7 +53,8 @@ interface ResizableDocumentLayoutProps {
   onElementClick?: (element: DocumentElement) => void
 }
 
-export function ResizableDocumentLayout({
+// Inner component that uses the document communication context
+function ResizableDocumentLayoutInner({
   html,
   elements,
   documentId,
@@ -70,6 +72,7 @@ export function ResizableDocumentLayout({
   onElementVisibilityChange,
   onElementClick
 }: ResizableDocumentLayoutProps) {
+  const { actions } = useDocumentCommunication()
   const [, setScrollTarget] = useState<{ id: string; timestamp: number } | null>(null)
   const [isLeftPaneCollapsed, setIsLeftPaneCollapsed] = useState(false)
   
@@ -152,7 +155,10 @@ export function ResizableDocumentLayout({
     
     const nearestHeading = findNearestHeading(element)
     if (nearestHeading && nearestHeading.id) {
-      // Dispatch a custom event so the UnifiedLeftPane can respond
+      // Update document position in context
+      actions.setCurrentPosition(nearestHeading.id)
+      
+      // Still dispatch the custom event for now (gradual migration)
       if (typeof window !== 'undefined') {
         window.dispatchEvent(
           new CustomEvent('doc-heading-click', {
@@ -161,7 +167,7 @@ export function ResizableDocumentLayout({
         )
       }
     }
-  }, [elements, onElementClick])
+  }, [elements, onElementClick, actions])
   
   // Handle left pane collapse toggle
   const handleToggleCollapse = useCallback(() => {
@@ -190,10 +196,10 @@ export function ResizableDocumentLayout({
   
   return (
     <div className="relative h-full w-full">
-      <ResizablePanelGroup 
-        direction="horizontal" 
-        className="h-full w-full"
-      >
+        <ResizablePanelGroup 
+          direction="horizontal" 
+          className="h-full w-full"
+        >
         {/* Left pane - Unified navigation and tools */}
         <ResizablePanel 
           defaultSize={30} 
@@ -268,5 +274,14 @@ export function ResizableDocumentLayout({
         </div>
       )}
     </div>
+  )
+}
+
+// Main component that provides the context
+export function ResizableDocumentLayout(props: ResizableDocumentLayoutProps) {
+  return (
+    <DocumentCommunicationProvider>
+      <ResizableDocumentLayoutInner {...props} />
+    </DocumentCommunicationProvider>
   )
 }

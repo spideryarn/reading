@@ -21,6 +21,7 @@ import {
   DocumentSummaryTab 
 } from './table-of-contents-tabs'
 import { debounce } from '@/lib/utils/debounce'
+import { useDocumentCommunication } from '@/lib/context/document-communication-context'
 
 // Entity type (will be moved to proper types file later)
 interface Entity {
@@ -234,6 +235,7 @@ export function UnifiedLeftPane({
   onToggleCollapse
 }: UnifiedLeftPaneProps) {
   const tabContainerRef = useRef<TabContainerRef>(null)
+  const { actions } = useDocumentCommunication()
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('')
@@ -593,28 +595,41 @@ export function UnifiedLeftPane({
     {
       id: 'original',
       label: 'Original',
-      content: renderOriginalTab()
+      content: renderOriginalTab(),
+      onActivate: () => {
+        actions.setActiveTab('original')
+      }
     },
     {
       id: 'ai-generated',
       label: 'AI-generated',
-      content: renderAIGeneratedTab()
+      content: renderAIGeneratedTab(),
+      onActivate: () => {
+        actions.setActiveTab('ai-generated')
+      }
     },
     {
       id: 'summary',
       label: 'Summary',
-      content: renderSummaryTab()
+      content: renderSummaryTab(),
+      onActivate: () => {
+        actions.setActiveTab('summary')
+      }
     },
     {
       id: 'chat',
       label: 'Chat',
-      content: renderChatTab()
+      content: renderChatTab(),
+      onActivate: () => {
+        actions.setActiveTab('chat')
+      }
     },
     {
       id: 'glossary',
       label: 'Glossary',
       content: renderGlossaryTab(),
       onActivate: () => {
+        actions.setActiveTab('glossary')
         // Auto-load glossary when tab is activated
         if (!showGlossary && !isLoadingGlossary) {
           onLoadGlossary()
@@ -624,7 +639,10 @@ export function UnifiedLeftPane({
     {
       id: 'search',
       label: 'Search',
-      content: renderSearchTab()
+      content: renderSearchTab(),
+      onActivate: () => {
+        actions.setActiveTab('search')
+      }
     }
   ]
 

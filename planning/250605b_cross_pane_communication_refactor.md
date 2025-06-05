@@ -40,28 +40,28 @@ Based on the moderate frequency of updates (every few seconds), React Context is
 ## Actions
 
 ### Stage: Set up React Context infrastructure
-- [ ] Create `lib/context/document-communication-context.tsx` with:
-  - [ ] DocumentPosition interface (elementId, scrollOffset, timestamp)
-  - [ ] DocumentCommunicationState interface
-  - [ ] DocumentCommunicationActions interface
-  - [ ] Context provider component with proper TypeScript types
-  - [ ] useDocumentCommunication hook
+- [x] Create `lib/context/document-communication-context.tsx` with:
+  - [x] DocumentPosition interface (elementId, scrollOffset, timestamp)
+  - [x] DocumentCommunicationState interface
+  - [x] DocumentCommunicationActions interface
+  - [x] Context provider component with proper TypeScript types
+  - [x] useDocumentCommunication hook
 
 ### Stage: Add provider to layout
-- [ ] Wrap ResizableDocumentLayout children with DocumentCommunicationProvider
-- [ ] Ensure provider is at correct level to cover both panes
-- [ ] Test that context is accessible in both UnifiedLeftPane and document pane
+- [x] Wrap ResizableDocumentLayout children with DocumentCommunicationProvider
+- [x] Ensure provider is at correct level to cover both panes
+- [ ] Test that context is accessible in both UnifiedLeftPane and document pane (pending dev server restart)
 
 ### Stage: Implement document position tracking
-- [ ] Update document pane clicks to set currentPosition in context
+- [x] Update document pane clicks to set currentPosition in context
 - [ ] Add scroll position detection when user manually scrolls
-- [ ] Ensure position updates include timestamp for debugging
+- [x] Ensure position updates include timestamp for debugging
 
 ### Stage: Implement ToC synchronization
-- [ ] In table-of-contents-tabs components:
-  - [ ] Use useDocumentCommunication to read currentPosition
-  - [ ] Add useEffect to sync ToC scroll when tab becomes active
-  - [ ] Handle case where position elementId doesn't exist in current ToC
+- [x] In table-of-contents-tabs components:
+  - [x] Use useDocumentCommunication to read currentPosition
+  - [x] Add useEffect to sync ToC scroll when tab becomes active
+  - [x] Handle case where position elementId doesn't exist in current ToC
 - [ ] Test clicking document → switching to ToC tab → verify sync
 
 ### Stage: Migrate search results
