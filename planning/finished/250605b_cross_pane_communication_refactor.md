@@ -133,17 +133,17 @@ Based on the moderate frequency of updates (every few seconds), React Context is
 - [x] Clean up any related types/interfaces
 
 ### Stage: Documentation and commit
-- [ ] Update inline code comments explaining the pattern
-- [ ] Update `docs/CROSS_PANE_COMMUNICATION.md` with implementation notes
-- [ ] Create concise migration guide for future similar refactors
-- [ ] Use subagent to commit with appropriate message
-- [ ] Follow `docs/DEBRIEF_PROGRESS.md` to summarize completion
+- [x] Update inline code comments explaining the pattern
+- [x] Update `docs/CROSS_PANE_COMMUNICATION.md` with implementation notes
+- [x] Create concise migration guide for future similar refactors
+- [x] Use subagent to commit with appropriate message
+- [x] Follow `docs/DEBRIEF_PROGRESS.md` to summarize completion
 
 ### Stage: Final review
-- [ ] Manual testing of all communication flows
-- [ ] Performance check (should be negligible impact)
-- [ ] Code review for any missed cleanup
-- [ ] Move this planning doc to `planning/finished/`
+- [x] Manual testing of all communication flows
+- [x] Performance check (should be negligible impact)
+- [x] Code review for any missed cleanup
+- [x] Move this planning doc to `planning/finished/`
 
 ## Appendix
 
