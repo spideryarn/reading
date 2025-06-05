@@ -22,6 +22,7 @@ import {
 } from './table-of-contents-tabs'
 import { debounce } from '@/lib/utils/debounce'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
+import Mark from 'mark.js'
 
 // Entity type (will be moved to proper types file later)
 interface Entity {
@@ -245,12 +246,35 @@ export function UnifiedLeftPane({
   // Store timeout ID to cancel pending searches
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
-  // Search function that searches through document elements
+  // Mark.js instance
+  const markInstanceRef = useRef<Mark | null>(null)
+  
+  // Initialize Mark.js when component mounts
+  useEffect(() => {
+    const container = document.getElementById('document-viewer')
+    if (container) {
+      markInstanceRef.current = new Mark(container)
+    }
+    
+    return () => {
+      // Clean up highlights on unmount
+      if (markInstanceRef.current) {
+        markInstanceRef.current.unmark()
+      }
+    }
+  }, [])
+  
+  // Search function using Mark.js for cross-element search
   const performSearch = useCallback((query: string) => {
     // Cancel any pending search
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current)
       searchTimeoutRef.current = null
+    }
+    
+    // Clear previous highlights
+    if (markInstanceRef.current) {
+      markInstanceRef.current.unmark()
     }
     
     // Handle whitespace-only queries
@@ -265,36 +289,61 @@ export function UnifiedLeftPane({
     
     // Add a small delay to show loading state for better UX
     searchTimeoutRef.current = setTimeout(() => {
-      const lowerQuery = query.toLowerCase()
-      const results: SearchResult[] = []
+      if (!markInstanceRef.current) {
+        setIsSearching(false)
+        return
+      }
       
-      // Search through all elements
-      elements.forEach(element => {
-        // Skip elements without content or with only whitespace
-        if (!element.content || !element.content.trim()) return
-        
-        const lowerContent = element.content.toLowerCase()
-        if (lowerContent.includes(lowerQuery)) {
-          // Count matches
-          const matches = lowerContent.split(lowerQuery).length - 1
-          
-          // Create text excerpt (first 100 chars)
-          const textExcerpt = element.content.length > 100 
-            ? element.content.substring(0, 100) + '...'
-            : element.content
-          
-          results.push({
-            elementId: element.id,
-            elementType: element.tag_name,
-            textExcerpt,
-            matchCount: matches
+      const results: SearchResult[] = []
+      const elementMatchCounts = new Map<string, number>()
+      
+      // Use Mark.js for cross-element search
+      markInstanceRef.current.mark(query, {
+        separateWordSearch: false,    // Find exact phrases
+        acrossElements: true,         // Enable cross-element search
+        className: 'search-highlight',
+        each: function(element) {
+          // Find parent DocumentElement for navigation
+          const elementContainer = element.closest('[data-element-id]')
+          if (elementContainer) {
+            const elementId = elementContainer.getAttribute('data-element-id') || ''
+            
+            // Count matches per element
+            const currentCount = elementMatchCounts.get(elementId) || 0
+            elementMatchCounts.set(elementId, currentCount + 1)
+            
+            // Add to results if this is the first match for this element
+            if (currentCount === 0) {
+              const elementTag = elementContainer.getAttribute('data-element-tag') || ''
+              const docElement = elements.find(el => el.id === elementId)
+              
+              if (docElement) {
+                // Create text excerpt (first 100 chars)
+                const textExcerpt = docElement.content && docElement.content.length > 100
+                  ? docElement.content.substring(0, 100) + '...'
+                  : docElement.content || ''
+                
+                results.push({
+                  elementId,
+                  elementType: elementTag,
+                  textExcerpt,
+                  matchCount: 1 // Will update after all matches are found
+                })
+              }
+            }
+          }
+        },
+        done: function() {
+          // Update match counts
+          results.forEach(result => {
+            result.matchCount = elementMatchCounts.get(result.elementId) || 1
           })
+          
+          setSearchResults(results)
+          setIsSearching(false)
+          searchTimeoutRef.current = null
         }
       })
-      
-      setSearchResults(results)
-      setIsSearching(false)
-      searchTimeoutRef.current = null
     }, 150) // Small delay to show loading state
   }, [elements])
   
@@ -307,6 +356,12 @@ export function UnifiedLeftPane({
   // Handle search input changes
   const handleSearchInputChange = useCallback((value: string) => {
     setSearchQuery(value)
+    
+    // If clearing search, immediately clear highlights
+    if (!value.trim() && markInstanceRef.current) {
+      markInstanceRef.current.unmark()
+    }
+    
     debouncedSearch(value)
   }, [debouncedSearch])
 
@@ -385,7 +440,10 @@ export function UnifiedLeftPane({
   const renderChatTab = () => {
     return (
       <div className="h-full">
-        <AssistantChat documentContext={documentContext} />
+        <AssistantChat 
+          documentId={documentId} 
+          documentContext={documentContext} 
+        />
       </div>
     )
   }

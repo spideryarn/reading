@@ -10,11 +10,12 @@ import {
 } from "@assistant-ui/react";
 // import { useCallback } from 'react'; // No longer used directly
 import { User, Robot, PaperPlaneTilt, CircleNotch } from '@phosphor-icons/react';
-import { useChatRuntime } from '@/src/lib/hooks/useChatRuntime'; // Import the new hook
+import { usePersistentChat } from '@/src/lib/hooks/usePersistentChat'; // Import persistent chat hook
 import { Button } from '@/components/ui/button'
 import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 
 interface AssistantChatProps {
+  documentId: string;
   documentContext: string;
 }
 
@@ -151,15 +152,61 @@ function Thread() {
   );
 }
 
-export function AssistantChat({ documentContext }: AssistantChatProps) {
+export function AssistantChat({ documentId, documentContext }: AssistantChatProps) {
+  const { runtime, isLoaded, threadId, error } = usePersistentChat({ 
+    documentId, 
+    documentContext 
+  });
 
-  // const chatModelAdapter: ChatModelAdapter = { ... }; // Removed
-  // const runtime = useLocalRuntime(chatModelAdapter); // Removed
+  // Show loading state while initializing
+  if (!isLoaded) {
+    return (
+      <div className="h-full flex flex-col bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="flex flex-col items-center gap-3">
+            <CircleNotch size={24} className="animate-spin text-blue-600" weight="bold" />
+            <p className="text-sm text-gray-600">Loading conversation...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const runtime = useChatRuntime({ documentContext }); // Use the new hook
+  // Show error state if persistence failed
+  if (error) {
+    return (
+      <div className="h-full flex flex-col bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="flex flex-col items-center gap-3 text-center max-w-sm">
+            <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">
+              <Robot size={24} weight="bold" className="text-red-600" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900">Chat Unavailable</h3>
+            <p className="text-sm text-gray-600">{error}</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => window.location.reload()}
+              className="mt-2"
+            >
+              Reload Page
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      {/* Thread persistence indicator */}
+      {threadId && (
+        <div className="px-4 py-2 bg-blue-50 border-b border-blue-100 text-xs text-blue-700">
+          <span className="font-medium">✓ Conversation saved</span>
+          <span className="text-blue-600 ml-2">Thread: {threadId.slice(-8)}</span>
+        </div>
+      )}
+      
       <AssistantRuntimeProvider runtime={runtime}>
         <Thread />
       </AssistantRuntimeProvider>
