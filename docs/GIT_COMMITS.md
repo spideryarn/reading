@@ -21,7 +21,7 @@ ABOVE ALL, don't do anything that could result in lost work or mess up yet-to-be
 <type>: <subject> (50 chars max)
 
 <body> (optional, wrap at 72 chars)
-- Reference to current planning doc (if there is one)
+- Always include a reference to current planning doc, if there is one, e.g. "Planning doc: yyMMddx_blah.md"
 - More detailed explanation
 - Bullet points for multiple changes
 ```
