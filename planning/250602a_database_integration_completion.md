@@ -213,17 +213,32 @@ Complete the database integration for Spideryarn Reading by connecting existing 
     - 📔 **Page Integration**: Updated tweet thread pages to pass documentId
       - ✅ Modified `app/documents/[slug]/tweets/page.tsx` to pass document.id to client component
       - ✅ Updated `app/documents/[slug]/tweets/page-client.tsx` to forward documentId to TweetThreadView
-    - 📔 **Current Issue**: JSON parsing error in POST endpoint - component sending malformed request body
+    - 📔 **Current Issue**: JSON parsing error in POST endpoint - component missing documentId prop and auto-loading functionality
       - 📔 **Symptoms**: Infinite retry loop with 400/200 errors and "Unexpected end of JSON input"
-      - 📔 **Root Cause**: Auto-loading useEffect logic issue creating empty request bodies
-      - 📔 **Status**: Core database integration complete, minor debugging needed for component request payload
+      - 📔 **Root Cause**: Component lacks auto-loading cache functionality that other AI features have - trying to call API without documentId
+      - 📔 **Detailed Analysis**: 
+        - Component missing `documentId` prop (line 28 in TweetThreadViewProps interface)
+        - Missing `fetchCachedTweetThread()` and `regenerateTweetThread()` functions 
+        - Missing `isLoaded` state variable and reset button functionality
+        - Missing imports for `ArrowCounterClockwise` icon (lines 171-191 reference undefined variables)
+        - POST request sent without required `documentId` field, causing API to return 400 error
+        - Auto-loading useEffect (lines 121-125) triggers without cache check, immediately calling POST instead of GET
+      - 📔 **Status**: Database integration complete, component needs auto-loading pattern implementation
 
-### Stage: Chat Database Integration → See `planning/250605a_chat_database_integration.md`
-- [ ] **COMPLEX PROJECT**: Chat database persistence implementation moved to dedicated planning document
-  - [ ] **Scope**: Transform in-memory chat to database-backed with permanent conversation persistence
-  - [ ] **Approach**: `useLocalRuntime` + background persistence (researched via `docs/ASSISTANT_UI_DATABASE_PERSISTENCE.md`)
-  - [ ] **Strategy**: One thread per document initially, auto-generated titles, fail-fast error handling
-  - [ ] **References**: `planning/250605a_chat_database_integration.md` for detailed implementation stages
+### Stage: Chat Database Integration → See `planning/250605a_chat_database_integration.md` ✅ CORE IMPLEMENTATION COMPLETED
+- ✅ **COMPLEX PROJECT**: Chat database persistence implementation - core functionality complete
+  - ✅ **Implementation Complete**: Transform in-memory chat to database-backed with permanent conversation persistence
+    - 📔 **Architecture**: `useLocalRuntime` + background persistence successfully implemented 
+    - 📔 **Strategy**: One thread per document with auto-generated titles and fail-fast error handling
+    - 📔 **Integration**: Complete chat API integration with AI call tracking and model resolution
+    - 📔 **UI Enhancement**: Loading states, error handling, and persistence indicators added
+  - ✅ **Key Components Created**:
+    - `src/lib/hooks/usePersistentChat.ts` - Complete persistence hook with transparent background sync
+    - Enhanced `app/api/chat/route.ts` with thread management and AI call tracking
+    - Updated `components/assistant-chat.tsx` with persistence states and error handling
+    - Added `lib/services/database/ai-calls.ts` simple create() method for API compatibility
+  - 📋 **Next Phase**: Manual testing and validation (see detailed stages in dedicated planning doc)
+  - ✅ **References**: `planning/250605a_chat_database_integration.md` - comprehensive implementation completed
 
 ### Stage: Simple Real-time Proof of Concept
 - [ ] Implement basic real-time document title updates
