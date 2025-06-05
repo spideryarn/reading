@@ -1,5 +1,12 @@
 # Cross-Element Text Search Implementation
 
+## Status: 80% Complete
+- ✅ Stage 1: Research Validation & Library Integration
+- ✅ Stage 2: Core Cross-Element Search Implementation  
+- ✅ Stage 3: UI Enhancement & Polish
+- 🔄 Stage 4: Integration Testing & Documentation (in progress)
+- ✅ Stage 5: Documentation Update
+
 ## Goal
 
 Implement text search functionality that spans multiple HTML elements, enabling users to find phrases like "hello world" even when they cross element boundaries (e.g., `<p>hello <span>world</span></p>`). This addresses the core limitation of our current element-based search approach.
@@ -53,7 +60,7 @@ Based on analysis in `docs/HTML_TEXT_SEARCH_CROSS_ELEMENT.md` and project prefer
 - [x] Update planning doc with validation results
 - [x] Commit research validation using subagent
 
-### Stage: Core Cross-Element Search Implementation
+### Stage: Core Cross-Element Search Implementation ✅
 - [x] Replace current search logic in UnifiedLeftPane
   - [x] Import and initialize Mark.js instance in UnifiedLeftPane component
   - [x] Replace `performSearch` function to use DOM-based search instead of element.content search
@@ -106,6 +113,8 @@ Based on analysis in `docs/HTML_TEXT_SEARCH_CROSS_ELEMENT.md` and project prefer
 - [x] Update planning doc with implementation progress
 - [x] Commit core implementation using subagent
 
+**Stage 2 Summary**: Successfully implemented Mark.js-based cross-element search with enhanced navigation. Search results now scroll to and highlight specific text matches with visual feedback animations. Manual testing confirmed functionality on Chrome desktop. Safari bug documented as known issue for later investigation.
+
 ### Stage: UI Enhancement & Polish (Priority Updates) ✅
 - [x] Focus and pinning improvements
   - [x] Auto-focus search input when Search tab is clicked
@@ -128,7 +137,7 @@ Based on analysis in `docs/HTML_TEXT_SEARCH_CROSS_ELEMENT.md` and project prefer
 - [x] Update planning doc with enhancement progress
 - [x] Commit UI enhancements using subagent
 
-### Stage: Integration Testing & Documentation
+### Stage: Integration Testing & Documentation 🔄
 - [ ] Run full test suite
   - [ ] Verify all existing tests still pass
   - [ ] Run new cross-element search tests
