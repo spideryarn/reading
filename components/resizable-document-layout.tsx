@@ -158,15 +158,6 @@ function ResizableDocumentLayoutInner({
     if (nearestHeading && nearestHeading.id) {
       // Update document position in context
       actions.setCurrentPosition(nearestHeading.id)
-      
-      // Still dispatch the custom event for now (gradual migration)
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(
-          new CustomEvent('doc-heading-click', {
-            detail: { headingId: nearestHeading.id }
-          })
-        )
-      }
     }
   }, [elements, onElementClick, actions])
   

@@ -389,30 +389,7 @@ export function UnifiedLeftPane({
     }
   }, [caseSensitive, searchQuery, performSearch])
 
-  // NEW: Listen for document clicks (from ResizableDocumentLayout) to scroll ToC
-  useEffect(() => {
-    const handleDocHeadingClick = (event: Event) => {
-      const customEvent = event as CustomEvent<{ headingId: string }>
-      const headingId = customEvent.detail?.headingId
-      if (!headingId) return
-
-      // Activate the "Original" tab so the ToC is rendered
-      tabContainerRef.current?.setActiveTab('original')
-
-      // Wait for the tab content to render then scroll
-      setTimeout(() => {
-        const container = tabContainerRef.current?.getContentContainer()
-        if (!container) return
-        const tocElement = container.querySelector(`[data-heading-id="${headingId}"]`)
-        if (tocElement) {
-          ;(tocElement as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' })
-        }
-      }, 100)
-    }
-
-    window.addEventListener('doc-heading-click', handleDocHeadingClick)
-    return () => window.removeEventListener('doc-heading-click', handleDocHeadingClick)
-  }, [])
+  // Note: DOM event listener removed - now using DocumentCommunicationContext for all cross-pane communication
 
   // Render Original headings tab
   const renderOriginalTab = () => {
