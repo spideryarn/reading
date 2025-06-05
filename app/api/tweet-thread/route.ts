@@ -163,7 +163,8 @@ export async function POST(request: NextRequest) {
     // Generate tweet thread using LLM template
     const llmResponse = await executePrompt(tweetThreadPrompt, {
       content: processedContent,
-      target_length
+      target_length,
+      documentId
     })
 
     // Handle markdown code blocks in LLM response

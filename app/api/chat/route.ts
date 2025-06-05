@@ -8,6 +8,7 @@ import { AI_CONFIG, getModelConfig } from '@/lib/config'
 import { chatPromptInputSchema } from '@/lib/prompts/templates/chat'
 import { createClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
+import { ChatService } from '@/lib/services/database/chat'
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const { messages, documentContext, threadId } = validationResult.data
+    const { messages, documentContext, threadId, documentId } = validationResult.data
     
     // Log conversation processing
     console.log('[Chat API] Processing conversation:', {
@@ -72,9 +73,52 @@ Please respond to the user's latest message while considering the full conversat
     
     const response = result.text
     
+    // Handle thread creation for first message (if needed)
+    let finalThreadId = threadId;
+    if (!threadId && messages.length === 1 && messages[0].role === 'user' && documentId) {
+      try {
+        const supabase = await createClient()
+        const chatService = new ChatService(supabase)
+        const modelConfig = getModelConfig()
+        
+        // Create title from first user message
+        const userMessage = messages[0].content;
+        const title = userMessage.length > 50 
+          ? userMessage.substring(0, 47) + '...'
+          : userMessage;
+        
+        // Get model UUID for thread creation
+        const aiCallService = new AiCallService(supabase)
+        const modelUuid = await aiCallService.getModelUuidByProviderAndId(
+          modelConfig.provider, 
+          modelConfig.modelId
+        );
+        
+        // Create new thread
+        const newThread = await chatService.createThread({
+          documentId,
+          modelId: modelUuid,
+          title,
+          userId: '00000000-0000-0000-0000-000000000001' // Mock system user
+        });
+        
+        finalThreadId = newThread.id;
+        
+        console.log('[Chat API] Created new thread:', {
+          threadId: finalThreadId,
+          title,
+          documentId
+        });
+        
+      } catch (err) {
+        console.warn('[Chat API] Failed to create thread:', err)
+        // Continue without thread creation
+      }
+    }
+    
     // Store AI call in database for tracking (if possible)
     let aiCallId: string | null = null;
-    if (threadId) {
+    if (finalThreadId) {
       try {
         const supabase = await createClient()
         const aiCallService = new AiCallService(supabase)
@@ -89,7 +133,7 @@ Please respond to the user's latest message while considering the full conversat
           requestData: {
             messages: messages.map(m => ({ role: m.role, content: m.content })),
             documentContext: documentContext ? documentContext.substring(0, 1000) + '...' : null,
-            threadId
+            threadId: finalThreadId
           },
           responseData: { response }
         })
@@ -98,7 +142,7 @@ Please respond to the user's latest message while considering the full conversat
         
         console.log('[Chat API] AI call tracked:', {
           aiCallId,
-          threadId,
+          threadId: finalThreadId,
           usage: result.usage
         })
       } catch (err) {
@@ -109,7 +153,7 @@ Please respond to the user's latest message while considering the full conversat
     
     console.log('[Chat API] Response generated successfully:', {
       responseLength: response.length,
-      threadId: threadId || 'none',
+      threadId: finalThreadId || 'none',
       aiCallId: aiCallId || 'none',
       timestamp: new Date().toISOString()
     })
@@ -117,6 +161,7 @@ Please respond to the user's latest message while considering the full conversat
     return NextResponse.json({ 
       response,
       aiCallId,
+      threadId: finalThreadId,
       timestamp: new Date().toISOString()
     })
     

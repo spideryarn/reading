@@ -33,7 +33,7 @@ const customJestConfig = {
     '<rootDir>/backup/'
   ],
   transformIgnorePatterns: [
-    'node_modules/(?!(@assistant-ui|cheerio)/)'
+    'node_modules/(?!(@assistant-ui|cheerio|@assistant-ui/react-markdown)/)'
   ]
 };
 
