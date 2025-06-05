@@ -83,11 +83,26 @@ Based on analysis in `docs/HTML_TEXT_SEARCH_CROSS_ELEMENT.md` and project prefer
   - [x] Test navigation from search results works
   - [x] Test edge cases (empty queries, no results, etc.)
   - [ ] Test search performance on mobile browsers (manual testing needed)
-- [ ] Manual testing with dev server
-  - [ ] Test with example documents (Chalmers paper, Rhizome text)
-  - [ ] Verify search works across different element types (h1, p, span, em, strong)
-  - [ ] Test on Chrome desktop and mobile Safari/Chrome
-  - [ ] Verify no regressions in existing search functionality
+- [x] Manual testing with dev server at http://localhost:3002
+  - [x] Verify search functionality:
+    - [x] Basic text search works (e.g., search for "consciousness", "problem")
+    - [ ] Cross-element search finds phrases split by inline tags (e.g., text with `<em>`, `<strong>`)
+    - [x] Search highlights appear with yellow background
+    - [x] Multiple matches in same element show correct count
+  - [x] Test navigation from search results:
+    - [x] Clicking result scrolls to element in document
+    - [x] First text match gets pulse animation highlight
+    - [x] Element gets temporary border highlight (fixed - was missing CSS)
+  - [ ] Test UI enhancements:
+    - [ ] Search input auto-focuses when Search tab clicked
+    - [ ] Search input stays pinned at top when scrolling results
+    - [ ] Case sensitivity toggle works correctly
+    - [ ] Advanced options collapse/expand properly
+  - [x] Test on Chrome desktop ~~and mobile Safari/Chrome~~ (mobile testing deferred)
+  - [ ] Verify no regressions in existing functionality:
+    - [ ] ToC navigation still works
+    - [ ] AI headings tab loads without infinite loop
+    - [ ] Glossary and Summary tabs function normally
 - [x] Update planning doc with implementation progress
 - [x] Commit core implementation using subagent
 
@@ -136,7 +151,11 @@ Based on analysis in `docs/HTML_TEXT_SEARCH_CROSS_ELEMENT.md` and project prefer
 - [ ] Update planning doc with testing results
 - [ ] Commit final implementation using subagent
 
-### Later stage:
+### Known Issues (Later Stage):
+- [ ] Safari bug: Clicking on search result sometimes replaces search input text (e.g., "nonreductive explanation" becomes "none")
+  - Low priority - Safari is not a primary target browser
+  - Could be related to text selection or focus event handling
+  - Investigate and fix in a later iteration if needed
 - [ ] Revisit search for headings (but discuss with user first, because we may want to wait until after we have reworked the headings-mutations)
 
 ### Stage: Documentation Update ✅

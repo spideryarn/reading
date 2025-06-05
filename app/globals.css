@@ -311,4 +311,31 @@ body {
         }
     }
 
+    /* Element highlight animation for ToC/search navigation */
+    .animate-highlight {
+        animation: element-highlight 2s ease-out;
+    }
+
+    @keyframes element-highlight {
+        0% {
+            outline: 2px solid transparent;
+            outline-offset: 0;
+        }
+        20% {
+            outline: 2px solid rgb(59, 130, 246);
+            outline-offset: 4px;
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+        80% {
+            outline: 2px solid rgb(59, 130, 246);
+            outline-offset: 4px;
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+        100% {
+            outline: 2px solid transparent;
+            outline-offset: 0;
+            background-color: transparent;
+        }
+    }
+
 }
