@@ -72,13 +72,14 @@ The ToC uses a shared `HeadingTree` component that eliminates code duplication b
 
 ## Unified Tabbed Interface
 
-The ToC is now part of a 5-tab unified interface in the left pane:
+The ToC is now part of a 6-tab unified interface in the left pane:
 
 - **Original** - Headings extracted directly from the HTML document
 - **AI-generated** - Semantically meaningful headings created by LLM analysis
 - **Summary** - AI-generated document summary with expandable content
 - **Chat** - Interactive AI assistant for document discussion
 - **Glossary** - AI-generated term definitions with click-to-scroll
+- **Search** - Cross-element text search with Mark.js library and enhanced navigation
 
 ### Tab Implementation
 - Consolidated into single `TabContainer` within `UnifiedLeftPane`

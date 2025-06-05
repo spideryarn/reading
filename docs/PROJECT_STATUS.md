@@ -25,17 +25,18 @@ Spideryarn Reading is in active development with core AI features now implemente
 - **Advanced chat interface** - Full @assistant-ui integration with document context
 - **Prompt template system** - Nunjucks templates with Zod validation (`lib/prompts/templates/`)
 
-**Search Features (Implemented)**
-- **Cross-element text search** - Finds phrases spanning inline elements using Mark.js library
-- **Visual text highlighting** - Yellow background highlights on matched text in document
-- **Auto-focus search input** - Automatically focuses when Search tab is clicked
-- **Pinned search header** - Search input stays visible when scrolling through results
-- **Case sensitivity option** - Toggle in collapsible advanced options (default: case-insensitive)
-- **Debounced input** - 300ms delay with loading states for optimal performance
-- **Smart result display** - Element type metadata, text excerpts, and match counts
-- **Click-to-navigate** - Results link directly to document elements with selection highlighting
-- **Edge case handling** - Whitespace queries, empty content elements, and rapid typing
-- **Comprehensive testing** - Full test coverage including UI enhancements and Mark.js integration
+**Search Features (Implemented)** ✓
+- **Cross-element text search** - DOM-based search using Mark.js library finds phrases spanning inline elements within block containers
+- **Precise text highlighting** - Yellow background highlights on exact matched text, not just element highlighting
+- **Enhanced navigation** - Search results scroll to specific text matches with pulse animations and visual feedback
+- **Auto-focus search input** - Automatically focuses when Search tab is clicked for immediate typing
+- **Pinned search header** - Search input stays visible at top when scrolling through results
+- **Case sensitivity toggle** - Advanced options with case-sensitive matching (default: case-insensitive)
+- **Debounced search** - 300ms delay with proper highlight clearing for optimal performance
+- **Smart result display** - Element type metadata, text excerpts, and accurate match counts
+- **Click-to-navigate** - Results scroll to document elements with specific text selection highlighting
+- **Edge case handling** - Empty queries, whitespace normalization, rapid typing, and multiple matches per element
+- **Comprehensive testing** - Full test coverage including Mark.js integration, UI enhancements, and cross-element scenarios
 
 **Data Model & UI Components**
 - **Document parsing pipeline**: HTML → Cheerio → structured elements with hierarchical relationships
