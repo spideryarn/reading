@@ -69,7 +69,27 @@ Based on the moderate frequency of updates (every few seconds), React Context is
   - [ ] Test highlight persists when switching between Original/AI-generated tabs
 - [ ] Test clicking document → switching to ToC tab → verify sync and highlight
 
-### Stage: Migrate search results
+### Stage: Fix visual feedback architecture
+- [x] Add missing CSS rule for `data-highlight-target` in `app/globals.css`:
+  - [x] Use existing `element-highlight` animation pattern (blue outline with background tint)
+  - [x] Apply 2-second duration to match context timeout
+  - [x] CSS rule: `[data-highlight-target="true"] { animation: element-highlight 2s ease-out; }`
+  - [x] Install missing mark.js package dependency
+  - [x] Verify TypeScript compilation succeeds
+- [x] Resolve merge conflict in `components/unified-left-pane.tsx` (lines 674-699):
+  - [x] Use context approach: `actions.scrollToElement(result.elementId)` 
+  - [x] Keep Mark.js `.search-highlight-active` pulse effect for within-text highlighting
+  - [x] Remove redundant `onHeadingClick` call since context handles scrolling
+  - [x] Preserve layered highlighting: element-level (blue outline) + text-level (yellow/amber)
+- [x] Test complete search flow:
+  - [x] Fixed missing useRef import in resizable-document-layout.tsx
+  - [x] Page now loads successfully (GET 200 status)
+  - [ ] Search for text → click result → verify smooth scroll AND blue outline highlight
+  - [ ] Verify Mark.js yellow highlights remain within text  
+  - [ ] Switch to ToC tab → verify sync works with new approach
+  - [ ] Manual testing of visual feedback layers
+
+### Stage: Migrate search results  
 - [x] Update search results to use context scrollToElement action
 - [ ] Remove custom event dispatching for search clicks (keeping old system during migration)
 - [ ] Test search → document scroll → ToC sync flow
@@ -136,3 +156,52 @@ Based on the moderate frequency of updates (every few seconds), React Context is
 - But overkill for moderate frequency updates
 - Adds external dependency
 - Decision: Stick with React Context for simplicity
+
+### Visual Feedback Architecture Analysis
+
+#### Current State
+The DocumentCommunicationContext's `scrollToElement` function already implements element highlighting:
+```typescript
+// In lib/context/document-communication-context.tsx
+element.setAttribute('data-highlight-target', 'true')
+setTimeout(() => {
+  element.removeAttribute('data-highlight-target')
+}, 2000)
+```
+
+However, the corresponding CSS rule is missing from `app/globals.css`, so no visual feedback appears.
+
+#### Existing CSS Patterns
+The codebase has two established highlighting patterns:
+
+1. **Element-level highlighting** (for navigation):
+```css
+.animate-highlight { animation: element-highlight 2s ease-out; }
+@keyframes element-highlight {
+  /* Blue outline with background tint, 2s duration */
+}
+```
+
+2. **Text-level highlighting** (for search):
+```css
+.search-highlight { background-color: #ffeb3b; } /* Mark.js base */
+.search-highlight-active { 
+  background-color: #ffc107; 
+  animation: pulse-highlight 0.5s ease-out 3; 
+}
+```
+
+#### Merge Conflict Resolution Strategy
+The merge conflict in `unified-left-pane.tsx` represents two different approaches:
+
+- **HEAD (feature branch)**: Uses new context API - `actions.scrollToElement(result.elementId)`
+- **main branch**: Direct DOM manipulation with querySelector + classList for visual feedback
+
+**Resolution approach**: Use the context API for architectural consistency, complete the missing CSS to restore visual feedback functionality.
+
+#### Layered Highlighting System
+After resolution, search results will have two complementary highlight layers:
+1. **Element-level**: Blue outline via `data-highlight-target` (navigation context)
+2. **Text-level**: Yellow background via Mark.js `.search-highlight` (search context)
+
+This provides both "where am I?" (element) and "what matched?" (text) feedback.

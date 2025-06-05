@@ -673,6 +673,22 @@ export function UnifiedLeftPane({
                   onClick={() => {
                     // Use context action for both scrolling and position tracking
                     actions.scrollToElement(result.elementId)
+                    
+                    // Additionally, add pulse effect to the first search highlight within the element
+                    setTimeout(() => {
+                      const element = document.getElementById(result.elementId)
+                      if (element) {
+                        // Find the first highlighted mark within this element
+                        const firstMark = element.querySelector('.search-highlight')
+                        if (firstMark) {
+                          // Add a temporary pulse effect to the mark
+                          firstMark.classList.add('search-highlight-active')
+                          setTimeout(() => {
+                            firstMark.classList.remove('search-highlight-active')
+                          }, 2000)
+                        }
+                      }
+                    }, 100) // Small delay to ensure DOM is updated
                   }}
                 >
                   <div className="flex items-center justify-between mb-1">

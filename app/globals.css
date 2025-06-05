@@ -289,6 +289,58 @@ body {
         background-color: #ffeb3b;
         font-weight: bold;
         padding: 2px 0;
+        transition: all 0.3s ease-in-out;
+    }
+
+    /* Active search highlight when clicked from search results */
+    .search-highlight-active {
+        background-color: #ffc107;
+        box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.4);
+        animation: pulse-highlight 0.5s ease-out 3;
+    }
+
+    @keyframes pulse-highlight {
+        0% {
+            box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.4);
+        }
+        50% {
+            box-shadow: 0 0 0 6px rgba(255, 193, 7, 0.2);
+        }
+        100% {
+            box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.4);
+        }
+    }
+
+    /* Element highlight animation for ToC/search navigation */
+    .animate-highlight {
+        animation: element-highlight 2s ease-out;
+    }
+
+    @keyframes element-highlight {
+        0% {
+            outline: 2px solid transparent;
+            outline-offset: 0;
+        }
+        20% {
+            outline: 2px solid rgb(59, 130, 246);
+            outline-offset: 4px;
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+        80% {
+            outline: 2px solid rgb(59, 130, 246);
+            outline-offset: 4px;
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+        100% {
+            outline: 2px solid transparent;
+            outline-offset: 0;
+            background-color: transparent;
+        }
+    }
+
+    /* Context-based element highlighting for cross-pane navigation */
+    [data-highlight-target="true"] {
+        animation: element-highlight 2s ease-out;
     }
 
 }
