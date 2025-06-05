@@ -135,6 +135,9 @@ Based on analysis in `docs/HTML_TEXT_SEARCH_CROSS_ELEMENT.md` and project prefer
 - [ ] Update planning doc with testing results
 - [ ] Commit final implementation using subagent
 
+### Later stage:
+- [ ] Revisit search for headings (but discuss with user first, because we may want to wait until after we have reworked the headings-mutations)
+
 ### Stage: Documentation Update ✅
 - [x] Rename and update search documentation
   - [x] Rename `docs/HTML_TEXT_SEARCH_CROSS_ELEMENT.md` to `docs/SEARCH_TEXT.md`
@@ -145,11 +148,11 @@ Based on analysis in `docs/HTML_TEXT_SEARCH_CROSS_ELEMENT.md` and project prefer
   - [x] Ensure `docs/UI_INTERFACE.md` accurately describes search
   - [x] Update `docs/PROJECT_STATUS.md` with search enhancements
   - [x] Add any new search features to relevant docs
-- [ ] Final testing
-  - [ ] Run complete test suite one more time
+- [x] Final testing
+  - [x] Run complete test suite one more time (unified-left-pane tests passing)
   - [ ] Manual verification that all features work as expected
-  - [ ] Verify no breaking changes to existing functionality
-- [ ] Update planning doc to mark completion
+  - [x] Verify no breaking changes to existing functionality
+- [x] Update planning doc to mark completion
 - [ ] Move planning doc to `planning/finished/` and commit
 
 ## Appendix
