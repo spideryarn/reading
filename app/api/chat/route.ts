@@ -6,6 +6,7 @@ import { generateText } from 'ai'
 import { getModel } from '@/lib/services/llm-provider'
 import { AI_CONFIG, getModelConfig } from '@/lib/config'
 import { chatPromptInputSchema } from '@/lib/prompts/templates/chat'
+import { renderChatSystemPrompt } from '@/lib/prompts/templates/chat-system'
 import { createClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { ChatService } from '@/lib/services/database/chat'
@@ -53,22 +54,10 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     })
     
-    // Build the system prompt with document context
-    const systemPrompt = `You are an AI assistant helping users understand and analyze documents. Your role is to provide insightful, accurate, and helpful analysis based on the document content provided.
-
-DOCUMENT CONTEXT:
-${documentContext || 'No document context provided.'}
-
-INSTRUCTIONS:
-1. Base your responses on the document content provided above
-2. Be specific and reference relevant parts of the document when applicable
-3. If the document doesn't contain information to fully answer a question, acknowledge this limitation
-4. Keep responses concise but comprehensive
-5. Use clear, accessible language
-6. When appropriate, suggest follow-up questions or areas for deeper exploration
-7. Remember the conversation context and refer back to previous questions/answers when relevant
-
-Please respond to the user's latest message while considering the full conversation context.`
+    // Build the system prompt with document context using Nunjucks template
+    const systemPrompt = renderChatSystemPrompt({
+      documentContext: documentContext || 'No document context provided.'
+    })
     
     // Convert messages to Vercel AI SDK format
     const aiMessages = [
