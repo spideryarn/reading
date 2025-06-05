@@ -138,6 +138,7 @@ function GlossaryDisplay({
   elements: DocumentElement[]
   onScrollToEntity?: (elementId: string) => void
 }) {
+  const { actions } = useDocumentCommunication()
   const findFirstOccurrence = (entity: Entity): string | null => {
     const searchTerms = [entity.name, ...entity.aliases]
     const sortedElements = [...elements].sort((a, b) => a.position - b.position)
@@ -158,8 +159,9 @@ function GlossaryDisplay({
   
   const handleEntityClick = (entity: Entity) => {
     const elementId = findFirstOccurrence(entity)
-    if (elementId && onScrollToEntity) {
-      onScrollToEntity(elementId)
+    if (elementId) {
+      // Use context action for both scrolling and position tracking
+      actions.scrollToElement(elementId)
     }
   }
   
@@ -668,7 +670,10 @@ export function UnifiedLeftPane({
                 <div
                   key={result.elementId}
                   className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                  onClick={() => onHeadingClick(result.textExcerpt, result.elementId)}
+                  onClick={() => {
+                    // Use context action for both scrolling and position tracking
+                    actions.scrollToElement(result.elementId)
+                  }}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-medium text-gray-500 uppercase">

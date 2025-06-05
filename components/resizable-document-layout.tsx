@@ -75,6 +75,7 @@ function ResizableDocumentLayoutInner({
   const { actions } = useDocumentCommunication()
   const [, setScrollTarget] = useState<{ id: string; timestamp: number } | null>(null)
   const [isLeftPaneCollapsed, setIsLeftPaneCollapsed] = useState(false)
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Handle heading clicks from ToC
   const handleHeadingClick = useCallback((headingText: string, headingId?: string) => {
@@ -173,6 +174,56 @@ function ResizableDocumentLayoutInner({
   const handleToggleCollapse = useCallback(() => {
     setIsLeftPaneCollapsed(prev => !prev)
   }, [])
+
+  // Handle document scroll to detect current heading
+  const handleDocumentScroll = useCallback(() => {
+    // Clear any pending timeout
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current)
+    }
+
+    // Debounce scroll events
+    scrollTimeoutRef.current = setTimeout(() => {
+      const documentViewer = document.getElementById('document-viewer')
+      if (!documentViewer) return
+
+      // Find all headings in the document
+      const headings = Array.from(documentViewer.querySelectorAll('h1, h2, h3, h4, h5, h6'))
+      if (headings.length === 0) return
+
+      // Find the heading that's currently visible (or most recently passed)
+      let currentHeading: Element | null = null
+      const viewportTop = window.scrollY || document.documentElement.scrollTop
+      const viewportMiddle = viewportTop + (window.innerHeight / 3) // Check 1/3 down the viewport
+
+      for (let i = headings.length - 1; i >= 0; i--) {
+        const heading = headings[i]
+        const rect = heading.getBoundingClientRect()
+        const absoluteTop = rect.top + viewportTop
+
+        if (absoluteTop <= viewportMiddle) {
+          currentHeading = heading
+          break
+        }
+      }
+
+      // If we found a current heading, update the context
+      if (currentHeading && currentHeading.id) {
+        actions.setCurrentPosition(currentHeading.id)
+      }
+    }, 150) // 150ms debounce
+  }, [actions])
+
+  // Set up scroll listener
+  useEffect(() => {
+    window.addEventListener('scroll', handleDocumentScroll)
+    return () => {
+      window.removeEventListener('scroll', handleDocumentScroll)
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current)
+      }
+    }
+  }, [handleDocumentScroll])
   
   // Keyboard shortcut handler for Ctrl+B
   useEffect(() => {

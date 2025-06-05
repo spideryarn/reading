@@ -50,11 +50,11 @@ Based on the moderate frequency of updates (every few seconds), React Context is
 ### Stage: Add provider to layout
 - [x] Wrap ResizableDocumentLayout children with DocumentCommunicationProvider
 - [x] Ensure provider is at correct level to cover both panes
-- [ ] Test that context is accessible in both UnifiedLeftPane and document pane (pending dev server restart)
+- [x] Test that context is accessible in both UnifiedLeftPane and document pane - Added console logs to verify
 
 ### Stage: Implement document position tracking
 - [x] Update document pane clicks to set currentPosition in context
-- [ ] Add scroll position detection when user manually scrolls
+- [x] Add scroll position detection when user manually scrolls - Detects current heading with 150ms debounce
 - [x] Ensure position updates include timestamp for debugging
 
 ### Stage: Implement ToC synchronization
@@ -62,22 +62,27 @@ Based on the moderate frequency of updates (every few seconds), React Context is
   - [x] Use useDocumentCommunication to read currentPosition
   - [x] Add useEffect to sync ToC scroll when tab becomes active
   - [x] Handle case where position elementId doesn't exist in current ToC
-- [ ] Test clicking document → switching to ToC tab → verify sync
+- [x] Add highlighting for current heading in ToC:
+  - [x] CSS highlight already implemented (bg-yellow-100 with 2s fade)
+  - [x] ToC components already apply highlight based on currentPosition
+  - [x] Highlight updates when document position changes
+  - [ ] Test highlight persists when switching between Original/AI-generated tabs
+- [ ] Test clicking document → switching to ToC tab → verify sync and highlight
 
 ### Stage: Migrate search results
-- [ ] Update search results to use context scrollToElement action
-- [ ] Remove custom event dispatching for search clicks
+- [x] Update search results to use context scrollToElement action
+- [ ] Remove custom event dispatching for search clicks (keeping old system during migration)
 - [ ] Test search → document scroll → ToC sync flow
 
 ### Stage: Migrate glossary clicks
-- [ ] Update glossary entity clicks to use context
-- [ ] Ensure glossary maintains its current scroll-to functionality
+- [x] Update glossary entity clicks to use context
+- [x] Ensure glossary maintains its current scroll-to functionality via scrollToElement
 - [ ] Test glossary → document → ToC sync
 
 ### Stage: Add debugging support
-- [ ] Add console logging in development for all position changes
-- [ ] Create debug panel (if in dev mode) showing current position state
-- [ ] Document debugging approach in code comments
+- [x] Add console logging in development for all position changes - Already implemented with [DocumentComm] prefix
+- [ ] Create debug panel (if in dev mode) showing current position state (optional enhancement)
+- [x] Document debugging approach in code comments - Logging uses NODE_ENV check
 
 ### Stage: Test edge cases
 - [ ] Test rapid clicks (ensure state updates correctly)

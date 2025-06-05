@@ -524,8 +524,3 @@ export const Constants = {
   },
 } as const
 
-// Type aliases for easier usage
-export type Document = Tables<'documents'>
-export type DocumentInsert = TablesInsert<'documents'>
-export type DocumentUpdate = TablesUpdate<'documents'>
-
