@@ -3,6 +3,10 @@
 // Unified left pane component that combines all navigation and tools
 // Part of the 2-pane layout architecture using ResizablePanelGroup
 // All 5 tabs are at the same level as requested by the user
+//
+// Cross-pane communication: This component uses DocumentCommunicationContext
+// for all inter-component communication. The old DOM event system was removed
+// in favour of React Context for better type safety and React integration.
 
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { AssistantChat } from './assistant-chat'

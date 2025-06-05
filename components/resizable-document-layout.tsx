@@ -3,6 +3,10 @@
 // Resizable document layout using shadcn/ui ResizablePanelGroup
 // Implements the 2-pane architecture with unified left pane and document viewer
 // Replaces the problematic 3-pane grid layout
+//
+// Cross-pane communication: This component uses DocumentCommunicationContext
+// to update document position state when users click elements. The old custom
+// DOM event dispatching was removed in favour of React Context patterns.
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
