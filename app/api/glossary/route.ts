@@ -55,15 +55,6 @@ export async function POST(request: NextRequest) {
     // Debug: Log content length
     console.log(`Processing glossary for content length: ${content.length} characters`)
     
-    // Truncate content if it's too long (roughly estimate for token limits)
-    // Claude models have different context windows, but we'll be conservative
-    const MAX_CONTENT_LENGTH = 50000 // Roughly 12-15k tokens
-    let processedContent = content
-    if (content.length > MAX_CONTENT_LENGTH) {
-      console.log(`Content too long (${content.length} chars), truncating to ${MAX_CONTENT_LENGTH} chars`)
-      processedContent = content.substring(0, MAX_CONTENT_LENGTH) + '\n\n[Content truncated for processing...]'
-    }
-    
     // Resolve tier key to actual model details using config
     const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as any
     const modelConfig = getModelConfig(tierKey)
@@ -75,7 +66,7 @@ export async function POST(request: NextRequest) {
       modelId: modelConfig.modelId,
       prompt_type: 'glossary',
       input_data: { 
-        content_length: processedContent.length,
+        content_length: content.length,
         already_entities_count: already_entities?.length || 0,
         tier_used: tierKey
       }
@@ -83,7 +74,7 @@ export async function POST(request: NextRequest) {
     
     // Use real LLM processing - no fallback
     const llmResponse = await executePrompt(glossaryPrompt, { 
-      content: processedContent,
+      content,
       already_entities 
     })
     
@@ -121,7 +112,7 @@ export async function POST(request: NextRequest) {
       {
         entities: validatedResponse.entities,
         metadata: {
-          content_length: processedContent.length,
+          content_length: content.length,
           entities_count: validatedResponse.entities.length,
           tier_used: tierKey,
           model_used: modelConfig.modelId
