@@ -9,7 +9,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { ChatService } from '@/lib/services/database/chat';
 import { AiCallService } from '@/lib/services/database/ai-calls';
-import { getModelConfig } from '@/lib/config';
+import { getModelConfig, AI_CONFIG } from '@/lib/config';
 
 interface UsePersistentChatProps {
   documentId: string;
@@ -66,18 +66,9 @@ export function usePersistentChat({
         setChatService(chatSvc);
         setAiCallService(aiCallSvc);
         
-        // Get current model configuration and lookup model UUID
-        const modelConfig = getModelConfig();
-        try {
-          const modelUuid = await aiCallSvc.getModelUuidByProviderAndId(
-            modelConfig.provider, 
-            modelConfig.modelId
-          );
-          setCurrentModelId(modelUuid);
-        } catch (err) {
-          console.warn('[Persistent Chat] Model lookup failed, will skip thread creation:', err);
-          setCurrentModelId(null);
-        }
+        // For persistence, we'll let the server-side API handle model configuration
+        // and thread creation. Client just needs to know chat service is ready.
+        setCurrentModelId('client-ready');
         
       } catch (err) {
         console.error('[Persistent Chat] Failed to initialize services:', err);
@@ -195,31 +186,8 @@ export function usePersistentChat({
 
       let currentThreadId = threadId;
 
-      // Create thread if this is the first message and we have a valid model ID
-      if (!currentThreadId && isFirstMessage && chatService && currentModelId) {
-        try {
-          const title = generateThreadTitle(latestUserMessage.content);
-          const newThread = await chatService.createThread({
-            documentId,
-            modelId: currentModelId,
-            title,
-            userId: SYSTEM_USER_ID
-          });
-          
-          currentThreadId = newThread.id;
-          setThreadId(currentThreadId);
-          
-          console.log('[Persistent Chat] Created new thread:', {
-            threadId: currentThreadId,
-            title,
-            documentId
-          });
-        } catch (err) {
-          console.error('[Persistent Chat] Failed to create thread:', err);
-          setError(`Failed to create chat thread: ${err instanceof Error ? err.message : 'Unknown error'}`);
-          // Continue without persistence for this message
-        }
-      }
+      // Thread creation will be handled server-side by the API route
+      // We'll get the thread ID back from the API response
 
       // Save user message to database if we have a thread
       if (currentThreadId && latestUserMessage?.role === 'user') {
@@ -235,7 +203,8 @@ export function usePersistentChat({
           body: JSON.stringify({
             messages: conversationHistory,
             documentContext,
-            threadId: currentThreadId // Pass thread ID to API
+            threadId: currentThreadId, // Pass thread ID to API
+            documentId // Pass document ID for thread creation
           }),
           signal: abortSignal,
         });
@@ -294,6 +263,14 @@ export function usePersistentChat({
       const data = await res.json();
       const response = data.response;
       const aiCallId = data.aiCallId;
+      const returnedThreadId = data.threadId; // Thread ID from server
+      
+      // Update thread ID if server created a new one
+      if (returnedThreadId && !currentThreadId) {
+        currentThreadId = returnedThreadId;
+        setThreadId(currentThreadId);
+        console.log('[Persistent Chat] Thread created by server:', currentThreadId);
+      }
       
       // Save assistant response to database if we have a thread
       if (currentThreadId && response) {
