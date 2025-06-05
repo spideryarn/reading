@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import { TweetCard } from './tweet-card'
 import { AlertWithIcon } from '@/components/ui/alert'
-import { Copy, Check, Cloud } from '@phosphor-icons/react'
+import { Copy, Check, Cloud, ArrowCounterClockwise } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { SITE_CONFIG } from '@/lib/config'
 
@@ -26,11 +26,12 @@ interface TweetThreadResponse {
 
 interface TweetThreadViewProps {
   documentContent: string
+  documentId: string
   isActive?: boolean
   onStateChange?: (isLoading: boolean, hasGenerated: boolean) => void
 }
 
-export function TweetThreadView({ documentContent, isActive = false, onStateChange }: TweetThreadViewProps) {
+export function TweetThreadView({ documentContent, documentId, isActive = false, onStateChange }: TweetThreadViewProps) {
   const [tweets, setTweets] = useState<Tweet[]>([])
   const [summary, setSummary] = useState<string>('')
   const [metadata, setMetadata] = useState<TweetThreadResponse['metadata'] | null>(null)
@@ -39,6 +40,24 @@ export function TweetThreadView({ documentContent, isActive = false, onStateChan
   const [hasGenerated, setHasGenerated] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
   const [isBlueskyPressed, setIsBlueskyPressed] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  // Helper function to fetch cached tweet thread from database
+  const fetchCachedTweetThread = async (documentId: string) => {
+    try {
+      const params = new URLSearchParams({ documentId })
+      const response = await fetch(`/api/tweet-thread?${params}`)
+      if (!response.ok) {
+        console.error('Failed to fetch cached tweet thread:', response.status)
+        return null
+      }
+      const data = await response.json()
+      return data.cached ? data : null
+    } catch (error) {
+      console.error('Error fetching cached tweet thread:', error)
+      return null
+    }
+  }
 
   const generateTweetThread = useCallback(async () => {
     if (!documentContent.trim()) {
@@ -46,19 +65,24 @@ export function TweetThreadView({ documentContent, isActive = false, onStateChan
       return
     }
 
+    console.log('generateTweetThread called with documentId:', documentId)
     setIsLoading(true)
     setError(null)
     
     try {
+      const requestBody = {
+        content: documentContent,
+        target_length: 12,
+        documentId
+      }
+      console.log('Sending request body:', requestBody)
+      
       const response = await fetch('/api/tweet-thread', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          content: documentContent,
-          targetLength: 12
-        })
+        body: JSON.stringify(requestBody)
       })
 
       if (!response.ok) {
@@ -70,13 +94,14 @@ export function TweetThreadView({ documentContent, isActive = false, onStateChan
       setSummary(data.thread_summary)
       setMetadata(data.metadata)
       setHasGenerated(true)
+      setIsLoaded(data.cached || false)
     } catch (err) {
       console.error('Error generating tweet thread:', err)
       setError(err instanceof Error ? err.message : 'Failed to generate tweet thread')
     } finally {
       setIsLoading(false)
     }
-  }, [documentContent])
+  }, [documentContent, documentId])
 
   const pathname = usePathname()
   
@@ -117,12 +142,73 @@ export function TweetThreadView({ documentContent, isActive = false, onStateChan
     setTimeout(() => setIsBlueskyPressed(false), 1000)
   }, [])
 
-  // Auto-generate when tab becomes active (similar to glossary pattern)
-  useEffect(() => {
-    if (isActive && !hasGenerated && !isLoading) {
-      generateTweetThread()
+  const regenerateTweetThread = useCallback(async () => {
+    console.log('Regenerating tweet thread...')
+    setIsLoading(true)
+    setError(null)
+    setIsLoaded(false)
+    
+    try {
+      // First delete the cached enhancement
+      console.log('Deleting cached tweet thread enhancement...')
+      const params = new URLSearchParams({ documentId })
+      
+      const deleteResponse = await fetch(`/api/tweet-thread?${params}`, {
+        method: 'DELETE'
+      })
+      
+      if (!deleteResponse.ok) {
+        console.warn('Failed to delete cached tweet thread, continuing with regeneration')
+      }
+      
+      // Wait a bit before generating new tweet thread to ensure clean state
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // Force regeneration by calling the API directly
+      await generateTweetThread()
+    } catch (error) {
+      console.error('Error regenerating tweet thread:', error)
+      setError('Failed to regenerate tweet thread')
+    } finally {
+      setIsLoading(false)
     }
-  }, [isActive, hasGenerated, isLoading, generateTweetThread])
+  }, [documentId, generateTweetThread])
+
+  // Auto-load cached tweet thread or generate new one when tab becomes active
+  useEffect(() => {
+    const loadTweetThread = async () => {
+      if (!isActive || hasGenerated || isLoading) {
+        return
+      }
+      
+      setIsLoading(true)
+      setError(null)
+      
+      try {
+        // First try to load cached tweet thread
+        const cached = await fetchCachedTweetThread(documentId)
+        if (cached && cached.tweets && cached.tweets.length > 0) {
+          console.log('Found cached tweet thread, loading it...')
+          setTweets(cached.tweets)
+          setSummary(cached.thread_summary || '')
+          setMetadata(cached.metadata || null)
+          setIsLoaded(true)
+          setHasGenerated(true)
+        } else {
+          // No cached tweet thread found, generate new one
+          console.log('No cached tweet thread found, generating new one...')
+          await generateTweetThread()
+        }
+      } catch (error) {
+        console.error('Error loading tweet thread:', error)
+        setError('Failed to load tweet thread')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    loadTweetThread()
+  }, [isActive, hasGenerated, isLoading, documentId, generateTweetThread])
 
   // Notify parent of state changes
   useEffect(() => {
