@@ -400,6 +400,13 @@ export function HeadingTree({
             headingVisibility={headingVisibility}
           />
         ))}
+        {/* 
+         * Spacer to ensure the last heading can be scrolled to the top of the viewport.
+         * Without this spacer, the last few headings in the list can't be scrolled high enough
+         * to be fully visible when clicked, especially when the granularity control is expanded.
+         * The h-20 (80px) provides enough buffer space at the bottom of the scrollable area.
+         */}
+        <div className="h-20" aria-hidden="true" />
         </nav>
       </div>
     </div>

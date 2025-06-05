@@ -666,7 +666,29 @@ export function UnifiedLeftPane({
                 <div
                   key={result.elementId}
                   className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                  onClick={() => onHeadingClick(result.textExcerpt, result.elementId)}
+                  onClick={() => {
+                    // Call the regular heading click handler
+                    onHeadingClick(result.textExcerpt, result.elementId)
+                    
+                    // Additionally, find and highlight the first match mark within the element
+                    setTimeout(() => {
+                      const element = document.getElementById(result.elementId)
+                      if (element) {
+                        // Find the first highlighted mark within this element
+                        const firstMark = element.querySelector('.search-highlight')
+                        if (firstMark) {
+                          // Scroll the specific mark into view
+                          firstMark.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                          
+                          // Add a temporary pulse effect to the mark
+                          firstMark.classList.add('search-highlight-active')
+                          setTimeout(() => {
+                            firstMark.classList.remove('search-highlight-active')
+                          }, 2000)
+                        }
+                      }
+                    }, 100) // Small delay to ensure DOM is updated
+                  }}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-medium text-gray-500 uppercase">

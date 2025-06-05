@@ -5,7 +5,7 @@
 // See docs/AI_SUMMARISE.md for tooltip summarisation feature details
 // See docs/MUTATIONS.md for document mutation system
 
-import { useState, useEffect, useRef, useMemo, type JSX } from 'react'
+import React, { useState, useEffect, useRef, useMemo, type JSX } from 'react'
 import { CircleNotch } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import type { GranularityKey } from '@/lib/prompts/templates/summarise'
@@ -440,7 +440,7 @@ export function OriginalHeadingsTab({
  * AI-Generated Headings Tab Component
  * Displays AI-generated headings with auto-generation on first view
  */
-export function AIGeneratedHeadingsTab({ 
+export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab({ 
   content, 
   elements, 
   onHeadingClick, 
@@ -459,6 +459,8 @@ export function AIGeneratedHeadingsTab({
   const [granularityLevel, setGranularityLevel] = useState(3)
   const [isLoaded, setIsLoaded] = useState(false)
   const [enhancementId, setEnhancementId] = useState<string | null>(null)
+  const [hasInitialized, setHasInitialized] = useState(false)
+  const fetchInProgressRef = useRef(false)
   
 
   // Update default granularity for AI headings
@@ -471,6 +473,14 @@ export function AIGeneratedHeadingsTab({
 
   // Helper function to fetch cached headings from database
   const fetchCachedHeadings = async (documentId: string) => {
+    // Prevent concurrent fetches
+    if (fetchInProgressRef.current) {
+      console.log('Fetch already in progress, skipping duplicate request')
+      return null
+    }
+    
+    fetchInProgressRef.current = true
+    
     try {
       const response = await fetch(`/api/headings?documentId=${documentId}`)
       if (!response.ok) {
@@ -482,6 +492,8 @@ export function AIGeneratedHeadingsTab({
     } catch (error) {
       console.error('Error fetching cached headings:', error)
       return null
+    } finally {
+      fetchInProgressRef.current = false
     }
   }
 
@@ -489,6 +501,20 @@ export function AIGeneratedHeadingsTab({
   const applyCachedHeadings = async (cachedHeadings: Array<{ id_of_after: string, html: string }>) => {
     try {
       console.log('Applying cached headings:', cachedHeadings)
+      
+      // Check if there's already an active mutation
+      if (mutationState.activeMutation?.type === 'insert-headings') {
+        console.warn('AI headings mutation already active, extracting existing headings')
+        // Just extract the existing headings from the active mutation
+        const existingHeadings = extractHeadingsFromMutation(mutationState.activeMutation).map(h => ({
+          ...h,
+          elementId: h.id
+        }))
+        setAiHeadings(existingHeadings)
+        setShowHeadings(true)
+        setIsLoaded(true)
+        return
+      }
       
       // Generate mutation from cached headings data
       const mutation = generateHeadingMutation({
@@ -525,9 +551,21 @@ export function AIGeneratedHeadingsTab({
 
   // Core headings generation logic without state management
   const generateHeadingsFromAPI = async (isRegeneration = false) => {
-      // Note: We don't need to manually remove AI headings here anymore
-      // The mutation system should handle this when we revert the active mutation
-      // in handleResetHeadings before calling this function
+      console.log('generateHeadingsFromAPI called, isRegeneration:', isRegeneration)
+      
+      // Check if there's already an active mutation
+      if (mutationState.activeMutation?.type === 'insert-headings' && !isRegeneration) {
+        console.warn('AI headings mutation already active, skipping generation')
+        // Just extract the existing headings from the active mutation
+        const existingHeadings = extractHeadingsFromMutation(mutationState.activeMutation).map(h => ({
+          ...h,
+          elementId: h.id
+        }))
+        setAiHeadings(existingHeadings)
+        setShowHeadings(true)
+        setIsLoaded(true)
+        return
+      }
       
       // Reconstruct HTML from elements with proper IDs
       let htmlWithIds = ''
@@ -666,13 +704,31 @@ export function AIGeneratedHeadingsTab({
 
   // Auto-load cached headings or generate new ones on mount
   useEffect(() => {
+    console.log('AIGeneratedHeadingsTab mounted, documentId:', documentId)
+    
+    // Guard against multiple API calls
+    let isCancelled = false
+    
     const loadHeadings = async () => {
+      // Additional guard: check if we're already loading or have loaded
+      if (isLoadingHeadings || showHeadings || aiHeadings.length > 0 || hasInitialized) {
+        return
+      }
+      
+      setHasInitialized(true)
       setIsLoadingHeadings(true)
       setHeadingsError(null)
       
       try {
         // First try to load cached headings
         const cached = await fetchCachedHeadings(documentId)
+        
+        // Check if component was unmounted or cancelled
+        if (isCancelled) {
+          console.log('AI headings load cancelled (component unmounted)')
+          return
+        }
+        
         if (cached && cached.headings) {
           console.log('Found cached headings, applying them...')
           setEnhancementId(cached.enhancementId || null)
@@ -684,18 +740,28 @@ export function AIGeneratedHeadingsTab({
         }
       } catch (error) {
         console.error('Error in loadHeadings:', error)
-        setHeadingsError(`Failed to load headings: ${error instanceof Error ? error.message : 'Unknown error'}`)
-        setShowHeadings(true)
+        if (!isCancelled) {
+          setHeadingsError(`Failed to load headings: ${error instanceof Error ? error.message : 'Unknown error'}`)
+          setShowHeadings(true)
+        }
       } finally {
-        setIsLoadingHeadings(false)
+        if (!isCancelled) {
+          setIsLoadingHeadings(false)
+        }
       }
     }
     
-    if (!showHeadings && !isLoadingHeadings) {
+    // Only load if we haven't already loaded headings
+    if (!showHeadings && !isLoadingHeadings && aiHeadings.length === 0 && !hasInitialized) {
       loadHeadings()
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    
+    // Cleanup function to cancel any in-flight requests
+    return () => {
+      console.log('AIGeneratedHeadingsTab unmounting')
+      isCancelled = true
+    }
+  }, [documentId]) // Only depend on documentId, which shouldn't change
 
   const handleHeadingClick = (heading: Heading) => {
     if (onHeadingClick) {
@@ -891,7 +957,7 @@ export function AIGeneratedHeadingsTab({
       )}
     </div>
   )
-}
+})
 
 /**
  * Document Summary Tab Component
