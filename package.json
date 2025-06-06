@@ -13,6 +13,7 @@
         "test:coverage": "jest --coverage",
         "db:types": "supabase gen types typescript --local > lib/types/database.ts",
         "db:reset": "supabase db reset && npm run db:types",
+        "db:backup": "./scripts/backup-database.sh",
         "import-documents": "dotenv -e .env.local -- npx tsx scripts/import-static-documents.ts"
     },
     "dependencies": {
