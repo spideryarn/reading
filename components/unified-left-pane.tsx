@@ -843,24 +843,8 @@ export function UnifiedLeftPane({
                   key={result.elementId}
                   className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
                   onClick={() => {
-                    // Use context action for both scrolling and position tracking
+                    // Use context action for scrolling and persistent element selection
                     actions.scrollToElement(result.elementId)
-                    
-                    // Additionally, add pulse effect to the first search highlight within the element
-                    setTimeout(() => {
-                      const element = document.getElementById(result.elementId)
-                      if (element) {
-                        // Find the first highlighted mark within this element
-                        const firstMark = element.querySelector('.search-highlight')
-                        if (firstMark) {
-                          // Add a temporary pulse effect to the mark
-                          firstMark.classList.add('search-highlight-active')
-                          setTimeout(() => {
-                            firstMark.classList.remove('search-highlight-active')
-                          }, 2000)
-                        }
-                      }
-                    }, 100) // Small delay to ensure DOM is updated
                   }}
                 >
                   <div className="flex items-center justify-between mb-1">
