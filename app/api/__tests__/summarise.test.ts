@@ -8,6 +8,15 @@ import { createMockRequest } from './test-helpers'
 
 // Mock the dependencies
 jest.mock('@/lib/prompts/types')
+jest.mock('@/lib/supabase/server', () => ({
+  createClient: jest.fn()
+}))
+jest.mock('@/lib/services/database/enhancements')
+jest.mock('@/lib/services/database/ai-calls')
+jest.mock('@/lib/config', () => ({
+  getModelConfig: jest.fn(() => ({ provider: 'anthropic', modelId: 'claude-3-haiku' })),
+  AI_CONFIG: { DEFAULT_MODEL: 'haiku' }
+}))
 jest.mock('@/lib/prompts/templates/summarise', () => ({
   ...jest.requireActual('@/lib/prompts/templates/summarise'),
   summarisePrompt: {
@@ -23,11 +32,41 @@ jest.mock('@/lib/prompts/templates/summarise', () => ({
 
 const mockExecutePrompt = executePrompt as jest.MockedFunction<typeof executePrompt>
 
+// Mock the services after importing them
+import { createClient } from '@/lib/supabase/server'
+import { EnhancementService } from '@/lib/services/database/enhancements'
+import { AiCallService } from '@/lib/services/database/ai-calls'
+
+const mockCreateClient = createClient as jest.MockedFunction<typeof createClient>
+const mockEnhancementService = {
+  get: jest.fn(),
+  storeSummary: jest.fn(),
+  delete: jest.fn()
+}
+const mockAiCallService = {
+  startCall: jest.fn(),
+  completeCall: jest.fn(),
+  failCall: jest.fn()
+}
+
+// Mock service constructors
+;(EnhancementService as jest.Mock).mockImplementation(() => mockEnhancementService)
+;(AiCallService as jest.Mock).mockImplementation(() => mockAiCallService)
+
 describe('/api/summarise', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     // Reset environment variables
     delete process.env.LLM_PROVIDER
+    
+    // Set up database service mocks
+    mockCreateClient.mockResolvedValue({} as any)
+    mockEnhancementService.get.mockResolvedValue(null) // No cached summary by default
+    mockEnhancementService.storeSummary.mockResolvedValue({})
+    mockEnhancementService.delete.mockResolvedValue(true)
+    mockAiCallService.startCall.mockResolvedValue({ id: 'test-ai-call-id' })
+    mockAiCallService.completeCall.mockResolvedValue({})
+    mockAiCallService.failCall.mockResolvedValue({})
   })
 
   describe('successful responses', () => {
@@ -38,7 +77,8 @@ describe('/api/summarise', () => {
       const request = createMockRequest('http://localhost:3000/api/summarise', {
         method: 'POST',
         body: {
-          content: 'This is some test content to summarise.'
+          content: 'This is some test content to summarise.',
+          documentId: 'test-doc-id'
         }
       })
 
@@ -46,7 +86,11 @@ describe('/api/summarise', () => {
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data).toEqual({ summary: mockSummary })
+      expect(data).toEqual({ 
+        summary: mockSummary,
+        aiCallId: 'test-ai-call-id',
+        cached: false
+      })
       expect(mockExecutePrompt).toHaveBeenCalledWith(
         expect.objectContaining({
           modelConfig: expect.objectContaining({
@@ -68,7 +112,8 @@ describe('/api/summarise', () => {
         method: 'POST',
         body: {
           content: 'Test content',
-          granularity: 'high'
+          granularity: 'high',
+          documentId: 'test-doc-id'
         }
       })
 
@@ -76,7 +121,11 @@ describe('/api/summarise', () => {
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data).toEqual({ summary: mockSummary })
+      expect(data).toEqual({ 
+        summary: mockSummary,
+        aiCallId: 'test-ai-call-id',
+        cached: false
+      })
       expect(mockExecutePrompt).toHaveBeenCalledWith(
         expect.objectContaining({
           modelConfig: expect.objectContaining({
@@ -98,7 +147,8 @@ describe('/api/summarise', () => {
       const request = createMockRequest('http://localhost:3000/api/summarise', {
         method: 'POST',
         body: {
-          content: 'Test content for Anthropic'
+          content: 'Test content for Anthropic',
+          documentId: 'test-doc-id'
         }
       })
 
@@ -106,7 +156,11 @@ describe('/api/summarise', () => {
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data).toEqual({ summary: mockSummary })
+      expect(data).toEqual({ 
+        summary: mockSummary,
+        aiCallId: 'test-ai-call-id',
+        cached: false
+      })
     })
 
     it('should work with Google provider', async () => {
@@ -117,7 +171,8 @@ describe('/api/summarise', () => {
       const request = createMockRequest('http://localhost:3000/api/summarise', {
         method: 'POST',
         body: {
-          content: 'Test content for Google'
+          content: 'Test content for Google',
+          documentId: 'test-doc-id'
         }
       })
 
@@ -125,7 +180,11 @@ describe('/api/summarise', () => {
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data).toEqual({ summary: mockSummary })
+      expect(data).toEqual({ 
+        summary: mockSummary,
+        aiCallId: 'test-ai-call-id',
+        cached: false
+      })
     })
   })
 
@@ -170,7 +229,8 @@ describe('/api/summarise', () => {
       const request = createMockRequest('http://localhost:3000/api/summarise', {
         method: 'POST',
         body: {
-          content: 'Test content'
+          content: 'Test content',
+          documentId: 'test-doc-id'
         }
       })
 

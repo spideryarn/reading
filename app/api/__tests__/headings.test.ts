@@ -8,6 +8,15 @@ import { createMockRequest } from './test-helpers'
 
 // Mock the dependencies
 jest.mock('@/lib/prompts/types')
+jest.mock('@/lib/supabase/server', () => ({
+  createClient: jest.fn()
+}))
+jest.mock('@/lib/services/database/enhancements')
+jest.mock('@/lib/services/database/ai-calls')
+jest.mock('@/lib/config', () => ({
+  getModelConfig: jest.fn(() => ({ provider: 'anthropic', modelId: 'claude-3-haiku' })),
+  AI_CONFIG: { DEFAULT_MODEL: 'haiku' }
+}))
 jest.mock('@/lib/prompts/templates/headings', () => ({
   headingsPrompt: {
     name: 'headings',
@@ -29,6 +38,26 @@ const mockExecutePrompt = executePrompt as jest.MockedFunction<typeof executePro
 // Import after mocking to get mocked versions
 import { headingsPromptInputSchema, headingsResponseSchema } from '@/lib/prompts/templates/headings'
 
+// Mock the services after importing them
+import { createClient } from '@/lib/supabase/server'
+import { EnhancementService } from '@/lib/services/database/enhancements'
+import { AiCallService } from '@/lib/services/database/ai-calls'
+
+const mockCreateClient = createClient as jest.MockedFunction<typeof createClient>
+const mockEnhancementService = {
+  get: jest.fn(),
+  storeHeadings: jest.fn(),
+  delete: jest.fn()
+}
+const mockAiCallService = {
+  startCall: jest.fn(),
+  completeCall: jest.fn()
+}
+
+// Mock service constructors
+;(EnhancementService as jest.Mock).mockImplementation(() => mockEnhancementService)
+;(AiCallService as jest.Mock).mockImplementation(() => mockAiCallService)
+
 describe('/api/headings', () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -37,6 +66,14 @@ describe('/api/headings', () => {
     // Mock console methods to reduce noise in tests
     jest.spyOn(console, 'log').mockImplementation()
     jest.spyOn(console, 'error').mockImplementation()
+    
+    // Reset all service mocks to their defaults
+    mockCreateClient.mockResolvedValue({} as any)
+    mockEnhancementService.get.mockResolvedValue(null) // No cached headings by default
+    mockEnhancementService.storeHeadings.mockResolvedValue({})
+    mockEnhancementService.delete.mockResolvedValue(true)
+    mockAiCallService.startCall.mockResolvedValue({ id: 'test-ai-call-id' })
+    mockAiCallService.completeCall.mockResolvedValue({})
   })
 
   afterEach(() => {
@@ -65,7 +102,7 @@ describe('/api/headings', () => {
       // Mock validation success
       ;(headingsPromptInputSchema.safeParse as jest.Mock).mockReturnValueOnce({
         success: true,
-        data: { html_content: inputHtml }
+        data: { html_content: inputHtml, documentId: 'test-doc-id' }
       })
       
       // Mock LLM response
@@ -76,14 +113,18 @@ describe('/api/headings', () => {
 
       const request = createMockRequest('http://localhost:3000/api/headings', {
         method: 'POST',
-        body: { html_content: inputHtml }
+        body: { html_content: inputHtml, documentId: 'test-doc-id' }
       })
 
       const response = await POST(request)
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data).toEqual(mockHeadingsResponse)
+      expect(data).toEqual({
+        ...mockHeadingsResponse,
+        cached: false,
+        enhancementId: null
+      })
       
       // Verify that existing headings were removed before passing to LLM
       const executePromptCall = mockExecutePrompt.mock.calls[0]
@@ -165,7 +206,7 @@ describe('/api/headings', () => {
       
       ;(headingsPromptInputSchema.safeParse as jest.Mock).mockReturnValueOnce({
         success: true,
-        data: { html_content: '<p>Test</p>' }
+        data: { html_content: '<p>Test</p>', documentId: 'test-doc-id' }
       })
       
       // Test various markdown formats
@@ -179,21 +220,25 @@ describe('/api/headings', () => {
         jest.clearAllMocks()
         ;(headingsPromptInputSchema.safeParse as jest.Mock).mockReturnValueOnce({
           success: true,
-          data: { html_content: '<p>Test</p>' }
+          data: { html_content: '<p>Test</p>', documentId: 'test-doc-id' }
         })
         mockExecutePrompt.mockResolvedValueOnce(mdResponse)
         ;(headingsResponseSchema.parse as jest.Mock).mockReturnValueOnce(mockHeadingsResponse)
 
         const request = createMockRequest('http://localhost:3000/api/headings', {
           method: 'POST',
-          body: { html_content: '<p>Test</p>' }
+          body: { html_content: '<p>Test</p>', documentId: 'test-doc-id' }
         })
 
         const response = await POST(request)
         const data = await response.json()
 
         expect(response.status).toBe(200)
-        expect(data).toEqual(mockHeadingsResponse)
+        expect(data).toEqual({
+          ...mockHeadingsResponse,
+          cached: false,
+          enhancementId: null
+        })
       }
     })
 
@@ -225,9 +270,19 @@ describe('/api/headings', () => {
 
   describe('error cases', () => {
     it('should return 400 for invalid input', async () => {
+      const mockError = {
+        issues: [
+          {
+            path: ['html_content'],
+            message: 'Required',
+            received: 'undefined'
+          }
+        ]
+      }
+      
       ;(headingsPromptInputSchema.safeParse as jest.Mock).mockReturnValueOnce({
         success: false,
-        error: { message: 'Invalid input' }
+        error: mockError
       })
 
       const request = createMockRequest('http://localhost:3000/api/headings', {
@@ -241,7 +296,7 @@ describe('/api/headings', () => {
       expect(response.status).toBe(400)
       expect(data).toEqual({
         error: 'Invalid request body',
-        details: { message: 'Invalid input' }
+        details: mockError
       })
       expect(mockExecutePrompt).not.toHaveBeenCalled()
     })
@@ -250,14 +305,14 @@ describe('/api/headings', () => {
       jest.clearAllMocks()
       ;(headingsPromptInputSchema.safeParse as jest.Mock).mockReturnValueOnce({
         success: true,
-        data: { html_content: '<p>Test</p>' }
+        data: { html_content: '<p>Test</p>', documentId: 'test-doc-id' }
       })
       
       mockExecutePrompt.mockRejectedValueOnce(new Error('LLM API error'))
 
       const request = createMockRequest('http://localhost:3000/api/headings', {
         method: 'POST',
-        body: { html_content: '<p>Test</p>' }
+        body: { html_content: '<p>Test</p>', documentId: 'test-doc-id' }
       })
 
       const response = await POST(request)
@@ -336,7 +391,7 @@ describe('/api/headings', () => {
       
       ;(headingsPromptInputSchema.safeParse as jest.Mock).mockReturnValueOnce({
         success: true,
-        data: { html_content: '<p>Content 1</p><p>Content 2</p>' }
+        data: { html_content: '<p>Content 1</p><p>Content 2</p>', documentId: 'test-doc-id' }
       })
       
       mockExecutePrompt.mockResolvedValueOnce(JSON.stringify(mockHeadingsResponse))
@@ -344,7 +399,7 @@ describe('/api/headings', () => {
 
       const request = createMockRequest('http://localhost:3000/api/headings', {
         method: 'POST',
-        body: { html_content: '<p>Content 1</p><p>Content 2</p>' }
+        body: { html_content: '<p>Content 1</p><p>Content 2</p>', documentId: 'test-doc-id' }
       })
 
       const response = await POST(request)
@@ -355,7 +410,10 @@ describe('/api/headings', () => {
       const consoleLogCalls = (console.log as jest.Mock).mock.calls
       const loggedStrings = consoleLogCalls.map(call => call[0])
       
-      expect(loggedStrings).toContain('=== Generated Headings ===')
+      // Debug the actual logged strings
+      console.log('DEBUG: All logged strings:', JSON.stringify(loggedStrings, null, 2))
+      
+      expect(loggedStrings.some(str => str.includes('=== Generated Headings ==='))).toBe(true)
       expect(loggedStrings.some(str => str.includes('H2: Main Section'))).toBe(true)
       expect(loggedStrings.some(str => str.includes('H3: Subsection'))).toBe(true)
       expect(loggedStrings.some(str => str.includes('Total headings generated: 2'))).toBe(true)

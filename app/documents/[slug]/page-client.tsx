@@ -2,9 +2,14 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { ResizableDocumentLayout } from '@/components/resizable-document-layout'
+import { AppHeader } from '@/components/app-header'
+import { DocumentHeaderActions } from '@/components/document-header-actions'
 import type { DocumentElement } from '@/lib/types/document'
 import { useDocument } from '@/lib/context/mutation-context'
 import { getHeadingAndSectionElements, extractHeadingElements } from '@/lib/services/heading-section-detector'
+import { createClient } from '@/lib/supabase/client'
+import { subscribeToDocument } from '@/lib/supabase/realtime'
+import type { RealtimeSubscription } from '@/lib/supabase/realtime'
 
 // Define entity type (will be moved to a proper types file later)
 interface Entity {
@@ -25,9 +30,17 @@ interface DocumentPageClientProps {
   markdownContent: string
   elements: DocumentElement[]
   documentId: string
+  initialTitle: string
+  slug: string
 }
 
-export default function DocumentPageClient({ html, markdownContent, documentId }: DocumentPageClientProps) {
+export default function DocumentPageClient({ 
+  html, 
+  markdownContent, 
+  documentId, 
+  initialTitle, 
+  slug 
+}: DocumentPageClientProps) {
   const mutatedDocument = useDocument() // Get mutated document from context
   const [selectedElement, setSelectedElement] = useState<DocumentElement | null>(null)
   const [glossaryEntities, setGlossaryEntities] = useState<Entity[]>([])
@@ -36,9 +49,45 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
   const [glossaryError, setGlossaryError] = useState<string | null>(null)
   const [glossaryCached, setGlossaryCached] = useState(false)
   
+  // Real-time document title state
+  const [currentTitle, setCurrentTitle] = useState(initialTitle)
+  
   // Heading visibility state
   const [headingVisibility, setHeadingVisibility] = useState<Map<string, 'visible' | 'not-visible'>>(new Map())
   const [elementVisibility, setElementVisibility] = useState<Map<string, boolean>>(new Map())
+  
+  // Real-time document subscription
+  useEffect(() => {
+    console.log(`[Real-time PoC] Setting up document subscription for: ${documentId}`)
+    
+    const supabase = createClient()
+    const subscription = subscribeToDocument(
+      supabase,
+      documentId,
+      (payload) => {
+        console.log('[Real-time PoC] Document updated:', payload)
+        
+        // Update the title if it changed
+        if (payload.eventType === 'UPDATE' && payload.new?.title) {
+          console.log(`[Real-time PoC] Title changing from "${currentTitle}" to "${payload.new.title}"`)
+          setCurrentTitle(payload.new.title)
+          
+          // Also update the browser tab title
+          if (typeof window !== 'undefined') {
+            document.title = `${payload.new.title} - Spideryarn`
+          }
+        }
+      }
+    )
+    
+    console.log('[Real-time PoC] Subscription established')
+    
+    // Cleanup subscription on unmount
+    return () => {
+      console.log('[Real-time PoC] Cleaning up document subscription')
+      subscription.unsubscribe()
+    }
+  }, [documentId, currentTitle])
   
   // Extract all headings (both original and AI-generated)
   const allHeadings = useMemo(() => {
@@ -86,6 +135,51 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
     
     setHeadingVisibility(newHeadingVisibility)
   }, [elementVisibility, allHeadings, mutatedDocument])
+  
+  // Real-time document updates (Proof of Concept)
+  useEffect(() => {
+    let subscription: RealtimeSubscription | null = null;
+    
+    const setupRealtimeSubscription = async () => {
+      try {
+        const supabase = createClient();
+        
+        console.log('[Real-time PoC] Setting up document subscription for:', documentId);
+        
+        subscription = subscribeToDocument(
+          supabase, 
+          documentId, 
+          (payload) => {
+            console.log('[Real-time PoC] Document updated:', payload);
+            
+            // Update the title if it changed
+            if (payload.new && payload.new.title !== currentTitle) {
+              const newTitle = payload.new.title;
+              console.log('[Real-time PoC] Title updated from', currentTitle, 'to', newTitle);
+              setCurrentTitle(newTitle);
+              
+              // Update the browser tab title as well
+              document.title = `${newTitle} - Spideryarn`;
+            }
+          }
+        );
+        
+        console.log('[Real-time PoC] Subscription established');
+      } catch (error) {
+        console.error('[Real-time PoC] Failed to setup subscription:', error);
+      }
+    };
+    
+    setupRealtimeSubscription();
+    
+    // Cleanup on unmount
+    return () => {
+      if (subscription) {
+        console.log('[Real-time PoC] Cleaning up subscription');
+        subscription.unsubscribe();
+      }
+    };
+  }, [documentId, currentTitle]);
   
   // Handle element clicks in the document viewer
   const handleElementClick = useCallback((element: DocumentElement) => {
@@ -161,25 +255,32 @@ export default function DocumentPageClient({ html, markdownContent, documentId }
   }
 
   return (
-    <div className="flex-1 overflow-hidden">
-      <ResizableDocumentLayout
-      html={html}
-      elements={mutatedDocument}
-      documentId={documentId}
-      markdownContent={markdownContent}
-      selectedElement={selectedElement}
-      onElementSelect={setSelectedElement}
-      glossaryEntities={glossaryEntities}
-      isLoadingGlossary={isLoadingGlossary}
-      showGlossary={showGlossary}
-      glossaryError={glossaryError}
-      glossaryCached={glossaryCached}
-      onLoadGlossary={fetchGlossary}
-      onResetGlossary={resetGlossary}
-      headingVisibility={headingVisibility}
-      onElementVisibilityChange={handleElementVisibilityChange}
-      onElementClick={handleElementClick}
-    />
+    <div className="h-screen flex flex-col">
+      <AppHeader 
+        title={currentTitle}
+        titleLink={`/documents/${slug}`}
+        actions={<DocumentHeaderActions slug={slug} />}
+      />
+      <div className="flex-1 overflow-hidden">
+        <ResizableDocumentLayout
+        html={html}
+        elements={mutatedDocument}
+        documentId={documentId}
+        markdownContent={markdownContent}
+        selectedElement={selectedElement}
+        onElementSelect={setSelectedElement}
+        glossaryEntities={glossaryEntities}
+        isLoadingGlossary={isLoadingGlossary}
+        showGlossary={showGlossary}
+        glossaryError={glossaryError}
+        glossaryCached={glossaryCached}
+        onLoadGlossary={fetchGlossary}
+        onResetGlossary={resetGlossary}
+        headingVisibility={headingVisibility}
+        onElementVisibilityChange={handleElementVisibilityChange}
+        onElementClick={handleElementClick}
+      />
+      </div>
     </div>
   )
 }
