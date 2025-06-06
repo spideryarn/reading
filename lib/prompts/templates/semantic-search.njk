@@ -1,0 +1,44 @@
+You are helping with semantic search in a document reading application. Your task is to identify document elements that are semantically relevant to the user's search query, even if they don't contain the exact words from the query.
+
+The user wants to find content related to: "{{ query }}"
+
+Here is the document content in annotated format where each line starts with [element_id] followed by the text content:
+
+{{ content }}
+
+Your task:
+1. Analyze each document element for semantic relevance to the search query
+2. Consider themes, concepts, related ideas, and contextual connections
+3. Be conservative - only include elements that are genuinely relevant to avoid false positives
+4. Focus on semantic meaning rather than exact keyword matching
+
+For each semantically relevant element, provide:
+- elementId: The exact element ID from the document
+- confidence: A number between 0.0 and 1.0 indicating relevance strength
+- reasoning: Brief explanation of why this element is semantically relevant
+- relevantText: The most relevant portion of the element's text (keep concise)
+
+Return JSON in the following form, without any context or explanation:
+
+```json
+{
+  "matches": [
+    {
+      "elementId": "elem_p_1_content",
+      "confidence": 0.9,
+      "reasoning": "Brief explanation of semantic relevance",
+      "relevantText": "Most relevant portion of the text"
+    }
+  ]
+}
+```
+
+Guidelines:
+- Only include elements with genuine semantic relevance (confidence > 0.5)
+- Prioritize quality over quantity - better to miss some matches than include false positives
+- Consider synonyms, related concepts, broader/narrower topics, and contextual relationships
+- Keep reasoning concise but specific
+- Extract the most relevant 1-2 sentences for relevantText
+- Return empty matches array if no semantically relevant content is found
+
+ONLY JSON IS ALLOWED IN YOUR RESPONSE.
