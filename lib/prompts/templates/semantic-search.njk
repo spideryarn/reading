@@ -42,15 +42,19 @@ Return JSON in the following form, without any context or explanation:
 Confidence Scoring Guidelines (be conservative):
 - 0.9-1.0: Perfect/exact semantic match - directly addresses the query concept
 - 0.75-0.89: Clearly relevant - strong conceptual connection to the query
-- 0.5-0.74: Somewhat relevant - related concept or indirect connection
+- 0.5-0.74: Somewhat relevant - contains substantive discussion of concepts directly related to the query
 - 0.25-0.49: Tangentially related - weak connection, usually exclude these
 - 0.0-0.24: Not relevant - do not include in results
 
-Additional Guidelines:
+Critical Guidelines to Avoid False Positives:
+- REJECT generic contextual associations (e.g., "this is scientific so it relates to scientific method")
+- REJECT domain-based reasoning (e.g., "both are about psychology/science/philosophy")
+- REJECT structural connections (e.g., "introductions are related to the topic")
+- REQUIRE substantive conceptual overlap - the content must actually discuss ideas relevant to the query
 - Only include elements with confidence ≥ 0.5 (exclude weak/tangential matches)
 - Prioritize quality over quantity - better to miss some matches than include false positives
-- Consider synonyms, related concepts, broader/narrower topics, and contextual relationships
-- Keep reasoning concise but specific
+- Focus on direct semantic meaning rather than loose associations
+- Keep reasoning concise but specific to actual content relevance
 - Extract the most relevant 1-2 sentences for relevantText
 - Return empty matches array if no semantically relevant content is found
 
