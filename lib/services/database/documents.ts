@@ -1,5 +1,12 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import type { Database, Document, DocumentInsert, DocumentUpdate } from '@/lib/types/database'
+import { 
+  uploadDocumentFile, 
+  downloadDocumentFile, 
+  deleteDocumentFile, 
+  getSignedDocumentUrl,
+  StorageUploadResult 
+} from '@/lib/services/storage'
 
 export class DocumentService {
   constructor(private supabase: SupabaseClient<Database>) {}
@@ -306,6 +313,186 @@ export class DocumentService {
       plaintext_content: content.plaintext,
       word_count: wordCount,
     })
+  }
+
+  /**
+   * Create a document with original file storage
+   * Uploads the original file to storage and creates the database record
+   */
+  async createWithStorage(
+    userId: string,
+    document: Omit<DocumentInsert, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'storage_path'>,
+    originalFile?: File | Blob,
+    originalFilename?: string
+  ): Promise<{ document: Document; storageResult?: StorageUploadResult }> {
+    // Generate document ID early so we can use it for storage path
+    const documentId = crypto.randomUUID()
+    
+    let storageResult: StorageUploadResult | undefined
+    let storagePath: string | null = null
+    
+    // Upload to storage first if file provided
+    if (originalFile) {
+      try {
+        storageResult = await uploadDocumentFile(originalFile, documentId, originalFilename)
+        storagePath = storageResult.path
+      } catch (error) {
+        // Log storage error but continue with document creation
+        console.warn('Storage upload failed, creating document without original file:', error)
+      }
+    }
+    
+    // Create document record with explicit ID and storage path
+    const documentToCreate: DocumentInsert = {
+      ...document,
+      id: documentId,
+      created_by: userId,
+      storage_path: storagePath,
+      original_file_type: originalFile?.type || null
+    }
+    
+    try {
+      const { data, error } = await this.supabase
+        .from('documents')
+        .insert(documentToCreate)
+        .select()
+        .single()
+
+      if (error) {
+        // If document creation fails after successful storage upload, clean up
+        if (storagePath) {
+          try {
+            await deleteDocumentFile(storagePath)
+          } catch (cleanupError) {
+            console.warn('Failed to clean up storage after document creation failure:', cleanupError)
+          }
+        }
+        throw new Error(`Failed to create document: ${error.message}`)
+      }
+
+      return { document: data, storageResult }
+      
+    } catch (error) {
+      // Clean up storage on any failure
+      if (storagePath) {
+        try {
+          await deleteDocumentFile(storagePath)
+        } catch (cleanupError) {
+          console.warn('Failed to clean up storage after error:', cleanupError)
+        }
+      }
+      throw error
+    }
+  }
+
+  /**
+   * Get original file from storage for a document
+   */
+  async getOriginalFile(documentId: string): Promise<Blob | null> {
+    const document = await this.getById(documentId)
+    
+    if (!document?.storage_path) {
+      return null
+    }
+    
+    try {
+      return await downloadDocumentFile(document.storage_path)
+    } catch (error) {
+      console.warn(`Failed to download original file for document ${documentId}:`, error)
+      return null
+    }
+  }
+
+  /**
+   * Get a signed URL for accessing the original file
+   */
+  async getOriginalFileUrl(documentId: string, expiresIn?: number): Promise<string | null> {
+    const document = await this.getById(documentId)
+    
+    if (!document?.storage_path) {
+      return null
+    }
+    
+    try {
+      return await getSignedDocumentUrl(document.storage_path, expiresIn)
+    } catch (error) {
+      console.warn(`Failed to get signed URL for document ${documentId}:`, error)
+      return null
+    }
+  }
+
+  /**
+   * Check if a document has an original file in storage
+   */
+  async hasOriginalFile(documentId: string): Promise<boolean> {
+    const document = await this.getById(documentId)
+    return !!(document?.storage_path)
+  }
+
+  /**
+   * Delete a document and its storage files
+   */
+  async deleteWithStorage(id: string): Promise<boolean> {
+    // Get document to find storage path
+    const document = await this.getById(id)
+    
+    if (!document) {
+      return false
+    }
+    
+    // Delete from database first
+    const deleted = await this.delete(id)
+    
+    if (!deleted) {
+      return false
+    }
+    
+    // Clean up storage file if it exists
+    if (document.storage_path) {
+      try {
+        await deleteDocumentFile(document.storage_path)
+      } catch (error) {
+        console.warn(`Failed to delete storage file for document ${id}:`, error)
+        // Don't fail the entire operation if storage cleanup fails
+      }
+    }
+    
+    return true
+  }
+
+  /**
+   * Update storage path for an existing document
+   */
+  async updateStoragePath(
+    documentId: string, 
+    originalFile: File | Blob, 
+    originalFilename?: string
+  ): Promise<{ document: Document | null; storageResult?: StorageUploadResult }> {
+    const existingDocument = await this.getById(documentId)
+    
+    if (!existingDocument) {
+      throw new Error('Document not found')
+    }
+    
+    // Upload new file
+    const storageResult = await uploadDocumentFile(originalFile, documentId, originalFilename)
+    
+    // Update document with new storage path
+    const updatedDocument = await this.update(documentId, {
+      storage_path: storageResult.path,
+      original_file_type: originalFile.type || null
+    })
+    
+    // Clean up old storage file if it existed
+    if (existingDocument.storage_path && existingDocument.storage_path !== storageResult.path) {
+      try {
+        await deleteDocumentFile(existingDocument.storage_path)
+      } catch (error) {
+        console.warn(`Failed to clean up old storage file:`, error)
+      }
+    }
+    
+    return { document: updatedDocument, storageResult }
   }
 
   /**
