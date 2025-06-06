@@ -137,6 +137,21 @@ The project is configured to use custom ports to avoid conflicts with other loca
 
 These custom ports are configured in `supabase/config.toml`.
 
+### Database Connection and Environment Variables
+
+The application uses Supabase's REST API for all database operations, requiring only one database-related environment variable:
+
+- `NEXT_PUBLIC_SUPABASE_URL` - The Supabase API endpoint (e.g., `http://127.0.0.1:54341`)
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - The anonymous/public key for client access
+
+**Note**: The application does NOT use direct PostgreSQL connections. All database operations go through the Supabase client SDK which uses the REST API.
+
+**For direct database access** (development/debugging only):
+- Use the connection string from `npx supabase status` output
+- Default: `postgresql://postgres:postgres@localhost:54342/postgres`
+- Tools like Postico, pgAdmin, or psql should connect to port `54342` (not the standard 5432)
+- This is only for manual database inspection, not for the application
+
 ### Common Supabase Commands
 
 ```bash
@@ -155,11 +170,14 @@ npm run db:reset
 # Generate TypeScript types only
 npm run db:types
 
-# Check status
+# Check status (shows actual ports and connection URLs)
 npx supabase status
 
-# Access database directly
+# Access database directly (use port from supabase status)
 psql postgres://postgres:postgres@localhost:54342/postgres
+
+# Load seed data manually (if needed)
+psql postgres://postgres:postgres@localhost:54342/postgres -f supabase/seed.sql
 ```
 
 ### Troubleshooting
