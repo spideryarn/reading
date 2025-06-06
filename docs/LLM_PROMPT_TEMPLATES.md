@@ -1,10 +1,25 @@
 # LLM Prompt Templates Guide
 
-This guide explains how to create new AI/LLM calls using our Nunjucks + Zod template system.
+This guide explains our two approaches for LLM integration in Spideryarn Reading, clarifying when to use each pattern.
+
+## 🎯 Two LLM Usage Patterns
+
+We use **different approaches** for different types of LLM interactions:
+
+### 1. **Single-Use Prompts**: Nunjucks + Zod Template System ✅
+- **For**: Document analysis, summarisation, glossary extraction, heading generation
+- **Also includes**: Chat system prompts (the initial system message)
+- **Pattern**: One request → one response, predictable input/output
+- **Implementation**: `executePrompt()` with Nunjucks templates and Zod validation
+
+### 2. **Multi-Turn Chat**: Vercel AI SDK + @assistant-ui/react ✅  
+- **For**: Interactive conversations, multi-turn document discussions
+- **Pattern**: Ongoing conversation state, streaming responses, message history
+- **Implementation**: Direct Vercel AI SDK calls with @assistant-ui/react for UI
 
 ## ⚠️ Standard Implementation Pattern
 
-**All new LLM functionality MUST use this template system.** This is not optional - it's the architectural standard for AI integration in Spideryarn Reading.
+**All new single-use LLM functionality MUST use the Nunjucks + Zod template system.** This is not optional - it's the architectural standard for predictable AI operations in Spideryarn Reading.
 
 See also:
 - [CHATBOT_ASSISTANT_UI_INTEGRATION.md](CHATBOT_ASSISTANT_UI_INTEGRATION.md) - For chat interface implementations
@@ -18,7 +33,49 @@ We use a hybrid approach:
 - **Zod** for runtime validation and TypeScript type safety
 - Templates and schemas live side-by-side for easy maintenance
 
-## Creating a New Prompt
+## Understanding the Two Patterns
+
+### Pattern 1: Single-Use Prompts (Nunjucks Template System)
+
+**Use this for**: Document analysis, content generation, one-off AI operations
+
+**Examples in codebase**:
+- Summarisation (`/api/summarise`)
+- Glossary extraction (`/api/glossary`) 
+- Heading generation (`/api/headings`)
+- Chat system prompt (initial system message only)
+
+**How it works**:
+```typescript
+// Uses executePrompt() with template validation
+const result = await executePrompt(myFeaturePrompt, {
+  content: documentContent,
+  analysisType: 'summary'
+})
+```
+
+### Pattern 2: Multi-Turn Chat (Direct Vercel AI SDK)
+
+**Use this for**: Interactive conversations, ongoing dialogue, stateful interactions
+
+**Examples in codebase**:
+- Chat conversations (`/api/chat`)
+- Multi-turn document Q&A
+- Conversation persistence and threading
+
+**How it works**:
+```typescript
+// Direct generateText() call with message history
+const result = await generateText({
+  model: getModel(),
+  messages: conversationHistory, // Array of user/assistant messages
+  maxTokens: AI_CONFIG.DEFAULT_MAX_TOKENS
+})
+```
+
+**Key distinction**: The chat system prompt (first message) uses a Nunjucks template, but the conversation flow itself uses direct Vercel AI SDK calls to handle message history, persistence, and real-time interactions.
+
+## Creating a New Single-Use Prompt
 
 ### 1. Create the Nunjucks Template
 
@@ -247,13 +304,25 @@ Keep templates and their schemas together for easy maintenance.
 ## Integration with Other Systems
 
 ### Chat Interface Integration
-For interactive chat functionality, this template system integrates seamlessly with assistant-ui components. See [CHATBOT_ASSISTANT_UI_INTEGRATION.md](CHATBOT_ASSISTANT_UI_INTEGRATION.md) for detailed implementation patterns.
+
+**Important**: Chat has a hybrid approach:
+
+1. **System Prompt**: Uses Nunjucks template system (`chat-system.njk`) for the initial system message with document context
+2. **Conversation Flow**: Uses direct Vercel AI SDK calls for multi-turn interactions, message history, and persistence
+
+See [CHATBOT_ASSISTANT_UI_INTEGRATION.md](CHATBOT_ASSISTANT_UI_INTEGRATION.md) for complete chat implementation patterns.
 
 ### Existing Features
-Current implementations using this system:
+
+**Single-Use Prompts** (Nunjucks Template System):
 - **Summarisation**: `/api/summarise` (see [AI_SUMMARISE.md](AI_SUMMARISE.md))
 - **Glossary Generation**: `/api/glossary` (see [AI_GLOSSARY.md](AI_GLOSSARY.md))
-- **Heading Generation**: `/api/headings` 
-- **Chat Interface**: `/api/chat` (see [CHATBOT_ASSISTANT_UI_INTEGRATION.md](CHATBOT_ASSISTANT_UI_INTEGRATION.md))
+- **Heading Generation**: `/api/headings`
+- **Chat System Prompt**: `chat-system.njk` (initial message only)
 
-All new AI features should follow the same pattern established by these implementations.
+**Multi-Turn Chat** (Direct Vercel AI SDK):
+- **Chat Conversations**: `/api/chat` conversation flow (see [CHATBOT_ASSISTANT_UI_INTEGRATION.md](CHATBOT_ASSISTANT_UI_INTEGRATION.md))
+- **Persistence**: Thread management and message history
+- **Real-time Interactions**: @assistant-ui/react integration
+
+All new **single-use AI features** should use the Nunjucks + Zod template system. **Interactive chat features** should follow the pattern established in `/api/chat` and `usePersistentChat`.
