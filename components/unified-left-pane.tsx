@@ -48,6 +48,9 @@ interface SearchResult {
   elementType: string
   textExcerpt: string
   matchCount: number
+  searchType?: 'text' | 'semantic' // Track search type for display
+  confidence?: number // For semantic search results
+  reasoning?: string // For semantic search results
 }
 
 interface UnifiedLeftPaneProps {
@@ -250,6 +253,8 @@ export function UnifiedLeftPane({
   const [isSearching, setIsSearching] = useState(false)
   const [caseSensitive, setCaseSensitive] = useState(false)
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false)
+  const [useSemanticSearch, setUseSemanticSearch] = useState(false)
+  const [semanticSearchError, setSemanticSearchError] = useState<string | null>(null)
   
   // Store timeout ID to cancel pending searches
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -359,23 +364,11 @@ export function UnifiedLeftPane({
     }, 150) // Small delay to show loading state
   }, [elements, caseSensitive])
   
-  // Debounced search function (300ms delay)
+  // Debounced search function (300ms delay) - only for text search
   const debouncedSearch = useMemo(
     () => debounce(performSearch, 300),
     [performSearch]
   )
-  
-  // Handle search input changes
-  const handleSearchInputChange = useCallback((value: string) => {
-    setSearchQuery(value)
-    
-    // If clearing search, immediately clear highlights
-    if (!value.trim() && markInstanceRef.current) {
-      markInstanceRef.current.unmark()
-    }
-    
-    debouncedSearch(value)
-  }, [debouncedSearch])
 
   // Cleanup search timeout on unmount
   useEffect(() => {
@@ -386,12 +379,106 @@ export function UnifiedLeftPane({
     }
   }, [])
   
-  // Re-run search when case sensitivity changes
+  // Re-run search when case sensitivity changes - only for text search
   useEffect(() => {
-    if (searchQuery.trim()) {
+    if (searchQuery.trim() && !useSemanticSearch) {
       performSearch(searchQuery)
     }
-  }, [caseSensitive, searchQuery, performSearch])
+  }, [caseSensitive, searchQuery, performSearch, useSemanticSearch])
+
+  // Semantic search function using API endpoint
+  const performSemanticSearch = useCallback(async (query: string) => {
+    // Clear any previous search state
+    setSemanticSearchError(null)
+    setSearchResults([])
+    setIsSearching(true)
+    
+    // Clear text search highlights since we're doing semantic search
+    if (markInstanceRef.current) {
+      markInstanceRef.current.unmark()
+    }
+
+    try {
+      const response = await fetch('/api/semantic-search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          query,
+          documentId
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Semantic search failed')
+      }
+
+      // Convert semantic search results to SearchResult format
+      const semanticResults: SearchResult[] = data.matches.map((match: {
+        elementId: string
+        confidence: number
+        reasoning: string
+        relevantText: string
+      }) => {
+        // Find the corresponding element to get tag name and content
+        const element = elements.find(el => el.id === match.elementId)
+        
+        return {
+          elementId: match.elementId,
+          elementType: element?.tag_name || 'unknown',
+          textExcerpt: match.relevantText || element?.content?.substring(0, 100) + '...' || '',
+          matchCount: 1, // Semantic search doesn't have traditional match counts
+          searchType: 'semantic' as const,
+          confidence: match.confidence,
+          reasoning: match.reasoning
+        }
+      })
+
+      setSearchResults(semanticResults)
+      console.log(`[SemanticSearch] Found ${semanticResults.length} semantic matches for query: "${query}"`)
+      
+    } catch (error) {
+      console.error('[SemanticSearch] Error performing semantic search:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to perform semantic search'
+      setSemanticSearchError(errorMessage)
+      setSearchResults([])
+    } finally {
+      setIsSearching(false)
+    }
+  }, [documentId, elements])
+
+  // Modify the existing search handler to support both search types
+  const handleSearchInputChange = useCallback((value: string) => {
+    setSearchQuery(value)
+    
+    // Clear previous errors and highlights
+    setSemanticSearchError(null)
+    if (!value.trim() && markInstanceRef.current) {
+      markInstanceRef.current.unmark()
+    }
+    
+    // Use appropriate search type
+    if (useSemanticSearch) {
+      // Semantic search is manual trigger only - don't auto-search
+      if (!value.trim()) {
+        setSearchResults([])
+        setIsSearching(false)
+      }
+    } else {
+      // Continue with regular debounced text search
+      debouncedSearch(value)
+    }
+  }, [useSemanticSearch, debouncedSearch])
+
+  // Manual semantic search trigger
+  const triggerSemanticSearch = useCallback(() => {
+    if (searchQuery.trim() && useSemanticSearch) {
+      performSemanticSearch(searchQuery)
+    }
+  }, [searchQuery, useSemanticSearch, performSemanticSearch])
 
   // Note: DOM event listener removed - now using DocumentCommunicationContext for all cross-pane communication
 
@@ -567,13 +654,66 @@ export function UnifiedLeftPane({
       <div className="flex flex-col h-full">
         {/* Pinned search input */}
         <div className="sticky top-0 bg-white z-10 p-4 border-b border-gray-200">
+          {/* Search Type Selection */}
+          <div className="mb-3">
+            <div className="flex bg-gray-100 p-1 rounded-lg">
+              <button
+                onClick={() => {
+                  setUseSemanticSearch(false)
+                  setSemanticSearchError(null)
+                  setSearchResults([])
+                  if (markInstanceRef.current) {
+                    markInstanceRef.current.unmark()
+                  }
+                }}
+                className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all ${
+                  !useSemanticSearch 
+                    ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Text Search
+              </button>
+              <button
+                onClick={() => {
+                  setUseSemanticSearch(true)
+                  setSemanticSearchError(null)
+                  setSearchResults([])
+                  if (markInstanceRef.current) {
+                    markInstanceRef.current.unmark()
+                  }
+                }}
+                className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all ${
+                  useSemanticSearch 
+                    ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Semantic Search
+              </button>
+            </div>
+            {/* Search type description */}
+            <p className="text-xs text-gray-500 mt-2">
+              {useSemanticSearch 
+                ? "Find content by meaning and concepts, not just exact words"
+                : "Find exact text matches with optional case sensitivity"
+              }
+            </p>
+          </div>
+
           <div className="relative">
             <input
               ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearchInputChange(e.target.value)}
-              placeholder="Search document..."
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && useSemanticSearch) {
+                  e.preventDefault()
+                  triggerSemanticSearch()
+                }
+              }}
+              placeholder={useSemanticSearch ? "Describe what you're looking for..." : "Search document..."}
               className="w-full px-4 py-2 pl-10 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <MagnifyingGlass 
@@ -600,51 +740,102 @@ export function UnifiedLeftPane({
             )}
           </div>
           
-          {/* Advanced options */}
-          <div className="mt-3">
-            <button
-              onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-              className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              <CaretDown 
-                size={14} 
-                weight="bold" 
-                className={`transform transition-transform ${showAdvancedOptions ? 'rotate-180' : ''}`}
-              />
-              Advanced options
-            </button>
-            
-            {showAdvancedOptions && (
-              <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={caseSensitive}
-                    onChange={(e) => setCaseSensitive(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">Case sensitive</span>
-                </label>
-              </div>
-            )}
-          </div>
+          {/* Search action area */}
+          {useSemanticSearch && (
+            <div className="mt-3 space-y-2">
+              <Button
+                onClick={triggerSemanticSearch}
+                disabled={!searchQuery.trim() || isSearching}
+                variant="default"
+                size="sm"
+                className="w-full"
+              >
+                {isSearching ? (
+                  <>
+                    <CircleNotch className="animate-spin mr-2" size={14} />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <MagnifyingGlass className="mr-2" size={14} weight="bold" />
+                    Search Semantically
+                  </>
+                )}
+              </Button>
+              
+              {/* Example queries for semantic search */}
+              {!searchQuery.trim() && !isSearching && (
+                <div className="text-xs text-gray-500 space-y-1">
+                  <div className="font-medium">Try searching for:</div>
+                  <div>• "arguments against this theory"</div>
+                  <div>• "experimental evidence"</div>
+                  <div>• "main conclusion"</div>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Advanced options - only show for text search */}
+          {!useSemanticSearch && (
+            <div className="mt-3">
+              <button
+                onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+                className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                <CaretDown 
+                  size={14} 
+                  weight="bold" 
+                  className={`transform transition-transform ${showAdvancedOptions ? 'rotate-180' : ''}`}
+                />
+                Advanced options
+              </button>
+              
+              {showAdvancedOptions && (
+                <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={caseSensitive}
+                      onChange={(e) => setCaseSensitive(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">
+                      Case sensitive
+                    </span>
+                  </label>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Search results */}
         <div className="flex-1 overflow-y-auto px-4 pb-4">
+        {/* Show semantic search error if present */}
+        {semanticSearchError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <div className="text-red-600 text-sm font-medium">Semantic search failed:</div>
+            </div>
+            <div className="text-red-700 text-sm mt-1">{semanticSearchError}</div>
+          </div>
+        )}
+        
         {isSearching ? (
           <div className="flex flex-col items-center justify-center py-8">
             <CircleNotch className="animate-spin text-gray-400 mb-2" size={24} weight="bold" />
-            <div className="text-sm text-gray-500">Searching...</div>
+            <div className="text-sm text-gray-500">
+              {useSemanticSearch ? 'Analyzing document semantically...' : 'Searching...'}
+            </div>
           </div>
-        ) : searchQuery.trim() && searchResults.length === 0 ? (
+        ) : searchQuery.trim() && searchResults.length === 0 && !semanticSearchError ? (
           <div className="text-sm text-gray-500 text-center py-8">
-            No results found
+            {useSemanticSearch ? 'No semantically relevant content found' : 'No results found'}
           </div>
         ) : searchResults.length > 0 ? (
           <div>
             <div className="text-sm text-gray-600 mb-3">
-              {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found
+              {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found for {useSemanticSearch ? 'semantic' : 'exact'} "{searchQuery}"
             </div>
             <div className="space-y-2">
               {searchResults.map((result) => (
@@ -673,18 +864,30 @@ export function UnifiedLeftPane({
                   }}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-gray-500 uppercase">
-                      {result.elementType}
-                    </span>
-                    {result.matchCount > 1 && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-gray-500 uppercase">
+                        {result.elementType}
+                      </span>
+                      {result.searchType === 'semantic' && result.confidence && (
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                          {Math.round(result.confidence * 100)}% match
+                        </span>
+                      )}
+                    </div>
+                    {result.searchType === 'text' && result.matchCount > 1 && (
                       <span className="text-xs text-gray-500">
                         {result.matchCount} matches
                       </span>
                     )}
                   </div>
-                  <div className="text-sm text-gray-700 line-clamp-2">
+                  <div className="text-sm text-gray-700 line-clamp-2 mb-2">
                     {result.textExcerpt}
                   </div>
+                  {result.searchType === 'semantic' && result.reasoning && (
+                    <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded border-l-2 border-blue-200">
+                      <span className="font-medium">Match:</span> {result.reasoning}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
