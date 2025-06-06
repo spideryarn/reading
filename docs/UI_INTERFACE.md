@@ -100,31 +100,49 @@ interface Tab {
 
 ### Search Functionality ✓
 
-The **Search** tab provides full-text document search with real-time results:
+The **Search** tab provides advanced full-text document search with cross-element capabilities using Mark.js:
 
-**Features**:
-- **Debounced input** (300ms delay) to optimize performance during typing
-- **Case-insensitive search** through all document elements
+**Core Features**:
+- **Cross-element search** using Mark.js library - finds phrases spanning inline elements (e.g., `<em>`, `<strong>`, `<span>`) within block containers
+- **Precise text highlighting** with yellow background on exact matched text spans, not just element-level highlighting
+- **Enhanced navigation** - search results scroll to specific text matches with pulse animations and visual feedback
+- **Auto-focus** search input when Search tab is clicked for immediate typing
+- **Pinned search input** stays at top when scrolling through results
+- **Debounced search** (300ms delay) with proper highlight clearing to optimize performance during typing
 - **Loading state** with spinner during search operations
-- **Result count display** showing number of matches found
-- **Text excerpts** showing first 100 characters with ellipsis truncation
+- **Result count display** showing accurate number of matches found
+- **Text excerpts** showing matched text with context
 - **Element type metadata** (h1, h2, p, etc.) for each result
-- **Click-to-navigate** that scrolls to element and applies selection highlighting
-- **Clear button** to reset search query and results
+- **Click-to-navigate** that scrolls to element and highlights the specific text match with pulse animation
+- **Clear button** to reset search query and remove all highlights
+
+**Advanced Options**:
+- **Collapsible settings** section below search input
+- **Case sensitivity toggle** (default: false) with immediate re-search on change
+- **Expandable design** for future search options (regex, whole word, etc.)
 
 **Edge Case Handling**:
-- **Empty queries** clear results without showing "no results" message
+- **Empty queries** clear results and highlights without showing "no results" message
 - **Whitespace-only queries** treated as empty queries
 - **Elements without content** skipped during search
 - **Rapid typing** properly debounced to prevent performance issues
-- **Long text excerpts** truncated with ellipsis at 100 characters
+- **Multiple matches per element** handled with accurate counting and first-match navigation
+- **Cross-block limitations** documented - search works within block containers, not across separate paragraphs
 
 **Technical Implementation**:
-- **Client-side search** through rendered document elements
-- **Reuses existing navigation** via `onHeadingClick` handler
-- **Element selection state** for consistent highlighting behavior
+- **Mark.js integration** (v8.11.1) for robust DOM-based text highlighting and cross-element search
+- **DOM-based search** finds text as users see it in rendered HTML, not markdown source
+- **React refs** for search input focus and Mark.js instance management
+- **Element mapping** from highlights back to DocumentElement IDs for navigation
+- **Reuses existing navigation** via `onHeadingClick` handler for consistent behavior
+- **Element selection state** coordination with existing highlight system
 - **Timeout management** to prevent memory leaks and race conditions
-- **Comprehensive test coverage** including edge cases and loading states
+- **Comprehensive test coverage** including Mark.js integration, UI enhancements, and cross-element scenarios
+
+**Known Limitations**:
+- **Cross-block search limitation**: Mark.js `acrossElements: true` only works within block containers, not across separate `<p>` tags or different block elements
+- **Safari CSS animation bug**: Pulse animation may not render correctly in Safari (cosmetic issue only)
+- **Browser compatibility**: Optimized for Chrome and mobile browsers; other browsers are supported but not primary targets
 
 ## Scrolling Architecture ✓
 

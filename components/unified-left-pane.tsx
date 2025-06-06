@@ -3,11 +3,15 @@
 // Unified left pane component that combines all navigation and tools
 // Part of the 2-pane layout architecture using ResizablePanelGroup
 // All 5 tabs are at the same level as requested by the user
+//
+// Cross-pane communication: This component uses DocumentCommunicationContext
+// for all inter-component communication. The old DOM event system was removed
+// in favour of React Context for better type safety and React integration.
 
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { AssistantChat } from './assistant-chat'
 import { TabContainer, type Tab, type TabContainerRef } from './tab-container'
-import { CircleNotch, Book, Question, Calendar, SidebarSimple, ArrowCounterClockwise, MagnifyingGlass, X } from '@phosphor-icons/react'
+import { CircleNotch, Book, Question, Calendar, SidebarSimple, ArrowCounterClockwise, MagnifyingGlass, X, CaretDown } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { AlertWithIcon } from '@/components/ui/alert'
 import type { DocumentElement } from '@/lib/types/document'
@@ -21,8 +25,8 @@ import {
   DocumentSummaryTab 
 } from './table-of-contents-tabs'
 import { debounce } from '@/lib/utils/debounce'
-// @ts-ignore - mark.js doesn't have TypeScript definitions
-const Mark = typeof window !== 'undefined' ? require('mark.js') : null
+import { useDocumentCommunication } from '@/lib/context/document-communication-context'
+import Mark from 'mark.js'
 
 // Entity type (will be moved to proper types file later)
 interface Entity {
@@ -138,6 +142,7 @@ function GlossaryDisplay({
   elements: DocumentElement[]
   onScrollToEntity?: (elementId: string) => void
 }) {
+  const { actions } = useDocumentCommunication()
   const findFirstOccurrence = (entity: Entity): string | null => {
     const searchTerms = [entity.name, ...entity.aliases]
     const sortedElements = [...elements].sort((a, b) => a.position - b.position)
@@ -158,8 +163,9 @@ function GlossaryDisplay({
   
   const handleEntityClick = (entity: Entity) => {
     const elementId = findFirstOccurrence(entity)
-    if (elementId && onScrollToEntity) {
-      onScrollToEntity(elementId)
+    if (elementId) {
+      // Use context action for both scrolling and position tracking
+      actions.scrollToElement(elementId)
     }
   }
   
@@ -236,17 +242,23 @@ export function UnifiedLeftPane({
   onToggleCollapse
 }: UnifiedLeftPaneProps) {
   const tabContainerRef = useRef<TabContainerRef>(null)
+  const { actions } = useDocumentCommunication()
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [caseSensitive, setCaseSensitive] = useState(false)
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false)
   
   // Store timeout ID to cancel pending searches
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Mark.js instance
   const markInstanceRef = useRef<Mark | null>(null)
+  
+  // Ref for search input to enable auto-focus
+  const searchInputRef = useRef<HTMLInputElement>(null)
   
   // Initialize Mark.js when component mounts
   useEffect(() => {
@@ -301,6 +313,7 @@ export function UnifiedLeftPane({
         separateWordSearch: false,    // Find exact phrases
         acrossElements: true,         // Enable cross-element search
         className: 'search-highlight',
+        caseSensitive: caseSensitive, // Apply case sensitivity option
         each: function(element) {
           // Find parent DocumentElement for navigation
           const elementContainer = element.closest('[data-element-id]')
@@ -344,7 +357,7 @@ export function UnifiedLeftPane({
         }
       })
     }, 150) // Small delay to show loading state
-  }, [elements])
+  }, [elements, caseSensitive])
   
   // Debounced search function (300ms delay)
   const debouncedSearch = useMemo(
@@ -372,31 +385,15 @@ export function UnifiedLeftPane({
       }
     }
   }, [])
-
-  // NEW: Listen for document clicks (from ResizableDocumentLayout) to scroll ToC
+  
+  // Re-run search when case sensitivity changes
   useEffect(() => {
-    const handleDocHeadingClick = (event: Event) => {
-      const customEvent = event as CustomEvent<{ headingId: string }>
-      const headingId = customEvent.detail?.headingId
-      if (!headingId) return
-
-      // Activate the "Original" tab so the ToC is rendered
-      tabContainerRef.current?.setActiveTab('original')
-
-      // Wait for the tab content to render then scroll
-      setTimeout(() => {
-        const container = tabContainerRef.current?.getContentContainer()
-        if (!container) return
-        const tocElement = container.querySelector(`[data-heading-id="${headingId}"]`)
-        if (tocElement) {
-          ;(tocElement as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' })
-        }
-      }, 100)
+    if (searchQuery.trim()) {
+      performSearch(searchQuery)
     }
+  }, [caseSensitive, searchQuery, performSearch])
 
-    window.addEventListener('doc-heading-click', handleDocHeadingClick)
-    return () => window.removeEventListener('doc-heading-click', handleDocHeadingClick)
-  }, [])
+  // Note: DOM event listener removed - now using DocumentCommunicationContext for all cross-pane communication
 
   // Render Original headings tab
   const renderOriginalTab = () => {
@@ -567,11 +564,12 @@ export function UnifiedLeftPane({
   // Render Search tab
   const renderSearchTab = () => {
     return (
-      <div className="p-4">
-        {/* Search input */}
-        <div className="relative mb-4">
+      <div className="flex flex-col h-full">
+        {/* Pinned search input */}
+        <div className="sticky top-0 bg-white z-10 p-4 border-b border-gray-200">
           <div className="relative">
             <input
+              ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearchInputChange(e.target.value)}
@@ -601,9 +599,39 @@ export function UnifiedLeftPane({
               </button>
             )}
           </div>
+          
+          {/* Advanced options */}
+          <div className="mt-3">
+            <button
+              onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+              className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              <CaretDown 
+                size={14} 
+                weight="bold" 
+                className={`transform transition-transform ${showAdvancedOptions ? 'rotate-180' : ''}`}
+              />
+              Advanced options
+            </button>
+            
+            {showAdvancedOptions && (
+              <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={caseSensitive}
+                    onChange={(e) => setCaseSensitive(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">Case sensitive</span>
+                </label>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Search results */}
+        <div className="flex-1 overflow-y-auto px-4 pb-4">
         {isSearching ? (
           <div className="flex flex-col items-center justify-center py-8">
             <CircleNotch className="animate-spin text-gray-400 mb-2" size={24} weight="bold" />
@@ -623,7 +651,26 @@ export function UnifiedLeftPane({
                 <div
                   key={result.elementId}
                   className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                  onClick={() => onHeadingClick(result.textExcerpt, result.elementId)}
+                  onClick={() => {
+                    // Use context action for both scrolling and position tracking
+                    actions.scrollToElement(result.elementId)
+                    
+                    // Additionally, add pulse effect to the first search highlight within the element
+                    setTimeout(() => {
+                      const element = document.getElementById(result.elementId)
+                      if (element) {
+                        // Find the first highlighted mark within this element
+                        const firstMark = element.querySelector('.search-highlight')
+                        if (firstMark) {
+                          // Add a temporary pulse effect to the mark
+                          firstMark.classList.add('search-highlight-active')
+                          setTimeout(() => {
+                            firstMark.classList.remove('search-highlight-active')
+                          }, 2000)
+                        }
+                      }
+                    }, 100) // Small delay to ensure DOM is updated
+                  }}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-medium text-gray-500 uppercase">
@@ -643,6 +690,7 @@ export function UnifiedLeftPane({
             </div>
           </div>
         ) : null}
+        </div>
       </div>
     )
   }
@@ -652,28 +700,41 @@ export function UnifiedLeftPane({
     {
       id: 'original',
       label: 'Original',
-      content: renderOriginalTab()
+      content: renderOriginalTab(),
+      onActivate: () => {
+        actions.setActiveTab('original')
+      }
     },
     {
       id: 'ai-generated',
       label: 'AI-generated',
-      content: renderAIGeneratedTab()
+      content: renderAIGeneratedTab(),
+      onActivate: () => {
+        actions.setActiveTab('ai-generated')
+      }
     },
     {
       id: 'summary',
       label: 'Summary',
-      content: renderSummaryTab()
+      content: renderSummaryTab(),
+      onActivate: () => {
+        actions.setActiveTab('summary')
+      }
     },
     {
       id: 'chat',
       label: 'Chat',
-      content: renderChatTab()
+      content: renderChatTab(),
+      onActivate: () => {
+        actions.setActiveTab('chat')
+      }
     },
     {
       id: 'glossary',
       label: 'Glossary',
       content: renderGlossaryTab(),
       onActivate: () => {
+        actions.setActiveTab('glossary')
         // Auto-load glossary when tab is activated
         if (!showGlossary && !isLoadingGlossary) {
           onLoadGlossary()
@@ -683,7 +744,14 @@ export function UnifiedLeftPane({
     {
       id: 'search',
       label: 'Search',
-      content: renderSearchTab()
+      content: renderSearchTab(),
+      onActivate: () => {
+        actions.setActiveTab('search')
+        // Auto-focus search input when tab is activated
+        setTimeout(() => {
+          searchInputRef.current?.focus()
+        }, 50)
+      }
     }
   ]
 

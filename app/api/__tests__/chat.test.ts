@@ -261,12 +261,12 @@ describe('/api/chat', () => {
             {
               path: ['messages'],
               message: 'Required',
-              received: 'undefined'
+              received: undefined
             },
             {
               path: ['documentContext'],
               message: 'Invalid type',
-              received: 'undefined'
+              received: 'invalid'
             }
           ]
         }
@@ -289,12 +289,12 @@ describe('/api/chat', () => {
             {
               path: 'messages',
               message: 'Required',
-              received: 'undefined'
+              received: undefined
             },
             {
               path: 'documentContext',
               message: 'Invalid type',
-              received: 'undefined'
+              received: 'invalid'
             }
           ]
         },
@@ -311,7 +311,7 @@ describe('/api/chat', () => {
             {
               path: ['messages'],
               message: 'Array must contain at least 1 element(s)',
-              received: '[]'
+              received: []
             }
           ]
         }
@@ -327,6 +327,7 @@ describe('/api/chat', () => {
 
       expect(response.status).toBe(400)
       expect(data.error).toBe('Invalid request format')
+      expect(data.code).toBe('VALIDATION_ERROR')
     })
 
     it('should return 500 for API key errors', async () => {

@@ -3,14 +3,19 @@
 // Resizable document layout using shadcn/ui ResizablePanelGroup
 // Implements the 2-pane architecture with unified left pane and document viewer
 // Replaces the problematic 3-pane grid layout
+//
+// Cross-pane communication: This component uses DocumentCommunicationContext
+// to update document position state when users click elements. The old custom
+// DOM event dispatching was removed in favour of React Context patterns.
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { UnifiedLeftPane } from './unified-left-pane'
 import { SimpleDocumentViewer } from './simple-document-viewer'
 import { Button } from '@/components/ui/button'
 import { SidebarSimple } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
+import { DocumentCommunicationProvider, useDocumentCommunication } from '@/lib/context/document-communication-context'
 
 // Entity type (will be moved to proper types file later)
 interface Entity {
@@ -52,7 +57,8 @@ interface ResizableDocumentLayoutProps {
   onElementClick?: (element: DocumentElement) => void
 }
 
-export function ResizableDocumentLayout({
+// Inner component that uses the document communication context
+function ResizableDocumentLayoutInner({
   html,
   elements,
   documentId,
@@ -70,8 +76,10 @@ export function ResizableDocumentLayout({
   onElementVisibilityChange,
   onElementClick
 }: ResizableDocumentLayoutProps) {
+  const { actions } = useDocumentCommunication()
   const [, setScrollTarget] = useState<{ id: string; timestamp: number } | null>(null)
   const [isLeftPaneCollapsed, setIsLeftPaneCollapsed] = useState(false)
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Handle heading clicks from ToC
   const handleHeadingClick = useCallback((headingText: string, headingId?: string) => {
@@ -152,21 +160,65 @@ export function ResizableDocumentLayout({
     
     const nearestHeading = findNearestHeading(element)
     if (nearestHeading && nearestHeading.id) {
-      // Dispatch a custom event so the UnifiedLeftPane can respond
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(
-          new CustomEvent('doc-heading-click', {
-            detail: { headingId: nearestHeading.id }
-          })
-        )
-      }
+      // Update document position in context
+      actions.setCurrentPosition(nearestHeading.id)
     }
-  }, [elements, onElementClick])
+  }, [elements, onElementClick, actions])
   
   // Handle left pane collapse toggle
   const handleToggleCollapse = useCallback(() => {
     setIsLeftPaneCollapsed(prev => !prev)
   }, [])
+
+  // Handle document scroll to detect current heading
+  const handleDocumentScroll = useCallback(() => {
+    // Clear any pending timeout
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current)
+    }
+
+    // Debounce scroll events
+    scrollTimeoutRef.current = setTimeout(() => {
+      const documentViewer = document.getElementById('document-viewer')
+      if (!documentViewer) return
+
+      // Find all headings in the document
+      const headings = Array.from(documentViewer.querySelectorAll('h1, h2, h3, h4, h5, h6'))
+      if (headings.length === 0) return
+
+      // Find the heading that's currently visible (or most recently passed)
+      let currentHeading: Element | null = null
+      const viewportTop = window.scrollY || document.documentElement.scrollTop
+      const viewportMiddle = viewportTop + (window.innerHeight / 3) // Check 1/3 down the viewport
+
+      for (let i = headings.length - 1; i >= 0; i--) {
+        const heading = headings[i]
+        const rect = heading.getBoundingClientRect()
+        const absoluteTop = rect.top + viewportTop
+
+        if (absoluteTop <= viewportMiddle) {
+          currentHeading = heading
+          break
+        }
+      }
+
+      // If we found a current heading, update the context
+      if (currentHeading && currentHeading.id) {
+        actions.setCurrentPosition(currentHeading.id)
+      }
+    }, 150) // 150ms debounce
+  }, [actions])
+
+  // Set up scroll listener
+  useEffect(() => {
+    window.addEventListener('scroll', handleDocumentScroll)
+    return () => {
+      window.removeEventListener('scroll', handleDocumentScroll)
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current)
+      }
+    }
+  }, [handleDocumentScroll])
   
   // Keyboard shortcut handler for Ctrl+B
   useEffect(() => {
@@ -190,10 +242,10 @@ export function ResizableDocumentLayout({
   
   return (
     <div className="relative h-full w-full">
-      <ResizablePanelGroup 
-        direction="horizontal" 
-        className="h-full w-full"
-      >
+        <ResizablePanelGroup 
+          direction="horizontal" 
+          className="h-full w-full"
+        >
         {/* Left pane - Unified navigation and tools */}
         <ResizablePanel 
           defaultSize={30} 
@@ -268,5 +320,14 @@ export function ResizableDocumentLayout({
         </div>
       )}
     </div>
+  )
+}
+
+// Main component that provides the context
+export function ResizableDocumentLayout(props: ResizableDocumentLayoutProps) {
+  return (
+    <DocumentCommunicationProvider>
+      <ResizableDocumentLayoutInner {...props} />
+    </DocumentCommunicationProvider>
   )
 }

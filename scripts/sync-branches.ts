@@ -62,6 +62,10 @@ class SyncBranchesCommand extends Command {
         await this.performOneDirectionMerge(sourceBranch, targetBranch);
 
         console.log('✅ Synced');
+        const date = new Date();
+        const formattedDate = `${date.getFullYear()}-${date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}-${date.getDate().toString().padStart(2, '0')}`;
+        const formattedTime = date.toLocaleTimeString('en-US', { hour12: false });
+        console.log(`Synced at ${formattedDate} ${formattedTime}`);
         
         // Provide next step guidance only for complex scenarios
         if (currentBranch === this.mainBranch) {
@@ -119,64 +123,76 @@ class SyncBranchesCommand extends Command {
   }
 
   private async validateWorktreeStructure(): Promise<void> {
-    const fs = require('fs');
-    const path = require('path');
+    // Get all worktrees using git worktree list
+    const worktreeInfo = this.getWorktreeInfo();
     
-    // Get the parent directory (where worktrees should be)
-    const repoRoot = this.execGit('rev-parse --show-toplevel').trim();
-    const parentDir = path.dirname(repoRoot);
-    
-    try {
-      const entries = fs.readdirSync(parentDir, { withFileTypes: true });
-      const readingDirs = entries
-        .filter((entry: any) => entry.isDirectory() && entry.name.startsWith('reading'))
-        .map((entry: any) => entry.name);
-      
-      const expectedDirs = ['reading', 'reading-worktree1', 'reading-worktree2', 'reading-worktree3'];
-      const unexpectedDirs = readingDirs.filter(dir => !expectedDirs.includes(dir));
-      const missingDirs = expectedDirs.filter(dir => !readingDirs.includes(dir));
-      
-      if (unexpectedDirs.length > 0) {
+    // For sync-all operations, ensure we have worktree branches to sync
+    const currentBranch = this.getCurrentBranch();
+    if (currentBranch === this.mainBranch && !this.targetBranch) {
+      if (worktreeInfo.branches.length === 0) {
         throw new Error(
-          `Unexpected reading-* directories: ${unexpectedDirs.join(', ')}. ` +
-          `Expected only: ${expectedDirs.join(', ')}. ` +
-          `See docs/GIT_WORKTREES.md for proper setup.`
+          `No worktree branches found. ` +
+          `Create worktree branches (e.g., git checkout -b worktree1) and set up worktrees. ` +
+          `See docs/GIT_WORKTREES.md for setup instructions.`
         );
       }
-      
-      // Check if worktree branches exist for directories that exist
-      const branches = this.execGit('branch --list').split('\n').map(b => b.replace(/^[\*\+]?\s*/, ''));
-      const worktreeBranches = ['worktree1', 'worktree2', 'worktree3'];
-      const existingWorktreeDirs = readingDirs.filter(dir => dir.startsWith('reading-worktree'));
-      
-      for (const dir of existingWorktreeDirs) {
-        const branchName = dir.replace('reading-', '');
-        if (!branches.includes(branchName)) {
-          throw new Error(
-            `Directory '${dir}' exists but branch '${branchName}' missing. ` +
-            `Create branch: git checkout -b ${branchName}, or remove directory.`
-          );
-        }
-      }
-      
-      // For sync-all operations, ensure all worktree branches exist
-      const currentBranch = this.getCurrentBranch();
-      if (currentBranch === this.mainBranch && !this.targetBranch) {
-        const missingBranches = worktreeBranches.filter(branch => !branches.includes(branch));
-        if (missingBranches.length > 0) {
-          throw new Error(
-            `Cannot sync all worktrees: missing branches ${missingBranches.join(', ')}. ` +
-            `Create them: git checkout -b <branch>, or use --branch to sync specific worktrees.`
-          );
-        }
-      }
-      
-    } catch (error: any) {
-      if (error.code === 'ENOENT') {
-        throw new Error(`Parent directory '${parentDir}' does not exist`);
-      }
-      throw error;
     }
+  }
+
+  private getWorktreeInfo(): { branches: string[], worktrees: Map<string, string> } {
+    // Get all worktrees from git
+    const worktreeOutput = this.execGit('worktree list --porcelain');
+    const worktrees = this.parseWorktreeList(worktreeOutput);
+    
+    // Get all branches
+    const branches = this.execGit('branch --list').split('\n')
+      .map(b => b.replace(/^[\*\+]?\s*/, '').trim())
+      .filter(b => b.length > 0);
+    
+    // Filter for worktree branches (matching pattern worktree[0-9]+)
+    const worktreeBranches = branches.filter(b => /^worktree\d+$/.test(b));
+    
+    // Create a map of branch to worktree path
+    const worktreeMap = new Map<string, string>();
+    for (const wt of worktrees) {
+      if (wt.branch && /^worktree\d+$/.test(wt.branch)) {
+        worktreeMap.set(wt.branch, wt.path);
+      }
+    }
+    
+    return { branches: worktreeBranches, worktrees: worktreeMap };
+  }
+
+  private parseWorktreeList(output: string): Array<{ path: string, branch: string | null }> {
+    const worktrees: Array<{ path: string, branch: string | null }> = [];
+    const lines = output.split('\n');
+    
+    let currentWorktree: { path?: string, branch?: string | null } = {};
+    for (const line of lines) {
+      if (line.startsWith('worktree ')) {
+        if (currentWorktree.path) {
+          worktrees.push({ 
+            path: currentWorktree.path, 
+            branch: currentWorktree.branch || null 
+          });
+        }
+        currentWorktree = { path: line.substring(9) };
+      } else if (line.startsWith('branch refs/heads/')) {
+        currentWorktree.branch = line.substring(18);
+      } else if (line === 'detached') {
+        currentWorktree.branch = null;
+      }
+    }
+    
+    // Don't forget the last worktree
+    if (currentWorktree.path) {
+      worktrees.push({ 
+        path: currentWorktree.path, 
+        branch: currentWorktree.branch || null 
+      });
+    }
+    
+    return worktrees;
   }
 
   private determineSyncDirection(currentBranch: string): { sourceBranch: string; targetBranch: string } {
@@ -200,16 +216,27 @@ class SyncBranchesCommand extends Command {
   private async syncAllWorktrees(): Promise<void> {
     console.log('🔄 Syncing all worktree branches with main...\n');
     
-    const worktreeBranches = ['worktree1', 'worktree2', 'worktree3'];
-    // Note: validateWorktreeStructure() already ensures all branches exist
+    // Get all worktree branches dynamically
+    const worktreeInfo = this.getWorktreeInfo();
+    const worktreeBranches = worktreeInfo.branches.sort(); // Sort for consistent ordering
+    
+    if (worktreeBranches.length === 0) {
+      throw new Error('No worktree branches found to sync');
+    }
+    
+    console.log(`Found ${worktreeBranches.length} worktree branches: ${worktreeBranches.join(', ')}\n`);
     
     for (const branch of worktreeBranches) {
       console.log(`🔀 ${branch} → main`);
-    // will abort if there are conflicts
+      // will abort if there are conflicts
       await this.performOneDirectionMerge(branch, this.mainBranch);
     }
     
     console.log(`\n✅ Synced all ${worktreeBranches.length} worktrees to main`);
+    const date = new Date();
+    const formattedDate = `${date.getFullYear()}-${date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}-${date.getDate().toString().padStart(2, '0')}`;
+    const formattedTime = date.toLocaleTimeString('en-US', { hour12: false });
+    console.log(`Synced at ${formattedDate} ${formattedTime}`);
     console.log('Next: run this script from each worktree to pull latest main');
   }
 

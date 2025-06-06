@@ -13,15 +13,16 @@ ABOVE ALL, don't do anything that could result in lost work or mess up yet-to-be
 
 ### Batching changes into commits
 - Each commit should represent a small/medium feature, or stage, or cluster of related changes (e.g. tweaking a bunch of docs).
-- The codebase should (ideally) be in a working state after each commit
-- Try not to mix unrelated changes
+- The codebase should (ideally) be in a working state after each commit.
+- Try not to mix unrelated changes.
+- Before making the commit, list all files that will be committed.
 
 ### Commit Message Format
 ```
 <type>: <subject> (50 chars max)
 
 <body> (optional, wrap at 72 chars)
-- Reference to current planning doc (if there is one)
+- Always include a reference to current planning doc, if there is one, e.g. "Planning doc: yyMMddx_blah.md"
 - More detailed explanation
 - Bullet points for multiple changes
 ```
