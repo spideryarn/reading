@@ -64,10 +64,10 @@ Based on research findings and user priorities (accuracy and simplicity over cos
   - [x] Test end-to-end pipeline with academic content (successful with `static/examples/2105.10461v2_cropped.pdf`) ✅
   
   **Step 3: Storage**:
-  - [ ] Set up Supabase Storage if it hasn't been already (search the web with a subagent)
-  - [ ] Discuss Supabase Storage questions with user, e.g. how should the Document row reference the Supabase Storage row (so that the document knows about where its original file is stored)
-  - [ ] Write & run tests (use a subagent)
-  - [ ] Update the PDF pipeline to store the original PDF in Supabase Storage
+  - [x] Set up Supabase Storage if it hasn't been already ✅ (completed via `planning/250606a_pdf_Supabase_Storage_integration.md`)
+  - [x] Discuss Supabase Storage questions with user ✅ (single bucket, document-centric security model)
+  - [x] Write & run tests ✅ (comprehensive storage integration tests implemented)
+  - [x] Update the PDF pipeline to store the original PDF in Supabase Storage ✅ (full integration complete)
 
   - [x] Remove single-page constraint to enable multi-page PDF processing ✅
   - [x] Add Gemini support (following the Claude implementation approach as an example) ✅

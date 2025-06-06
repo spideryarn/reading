@@ -143,16 +143,45 @@ Implement Supabase Storage integration for the PDF upload pipeline to store orig
   - [x] Document deployment considerations for production
   - [x] All testing confirms ready for production use
 
-### Stage: Git Commit and Finalization 🚧 IN PROGRESS
-- [ ] **Commit all changes following `docs/GIT_COMMITS.md`**
-  - [ ] Use subagent for commit to ensure proper message structure
-  - [ ] Include storage setup, API changes, and documentation updates
-  - [ ] Verify working tree is clean after commit
+### Stage: Git Commit and Finalization ✅ COMPLETED
+- [x] **Commit all changes following `docs/GIT_COMMITS.md`**
+  - [x] Use subagent for commit to ensure proper message structure
+  - [x] Include storage setup, API changes, and documentation updates
+  - [x] Verify working tree is clean after commit
+  - [x] Three comprehensive commits completed covering all implementation
 
-- [ ] **Move completed planning documents**
+- [x] **Security and migration documentation**
+  - [x] Created `docs/DATABASE_SECURITY.md` with comprehensive RLS reference
+  - [x] Updated `docs/DATABASE_MIGRATIONS.md` with storage migration notes
+  - [x] Documented RLS policy restrictions and workarounds
+  - [x] Additional commit for documentation updates completed
+
+- [ ] **Move completed planning documents** (REMAINING WORK)
   - [ ] Update `planning/later/250530h_pdf_to_html_conversion_implementation.md` to mark storage action as complete
   - [ ] Move this planning document to `planning/finished/`
   - [ ] Final commit with planning doc move
+
+## Future Stages (When Real Authentication Implemented)
+
+### Stage: Production RLS Policies for Storage 📋 FUTURE
+- [ ] **Implement database-level storage security**
+  - [ ] Create RLS policies for authenticated user storage access
+  - [ ] Policy: Users can upload documents to their own document folders
+  - [ ] Policy: Users can view/download documents they own
+  - [ ] Policy: Public access to documents marked `is_public = true`
+  - [ ] Policy: Users can update/delete their own storage files
+
+- [ ] **Transition from application-layer security**
+  - [ ] Test RLS policies with real user authentication
+  - [ ] Update storage service to use client-side authentication
+  - [ ] Remove service role bypass for regular operations
+  - [ ] Maintain service role access only for administrative operations
+
+- [ ] **Security validation and testing**
+  - [ ] Test storage access with multiple user accounts
+  - [ ] Verify proper isolation between user files
+  - [ ] Test public document sharing functionality
+  - [ ] Performance testing with RLS policy evaluation
 
 ## Appendix
 

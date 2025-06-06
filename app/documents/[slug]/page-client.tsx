@@ -32,6 +32,8 @@ interface DocumentPageClientProps {
   documentId: string
   initialTitle: string
   slug: string
+  storagePath: string | null
+  originalFileType: string | null
 }
 
 export default function DocumentPageClient({ 
@@ -39,7 +41,9 @@ export default function DocumentPageClient({
   markdownContent, 
   documentId, 
   initialTitle, 
-  slug 
+  slug,
+  storagePath,
+  originalFileType
 }: DocumentPageClientProps) {
   const mutatedDocument = useDocument() // Get mutated document from context
   const [selectedElement, setSelectedElement] = useState<DocumentElement | null>(null)
@@ -259,7 +263,7 @@ export default function DocumentPageClient({
       <AppHeader 
         title={currentTitle}
         titleLink={`/documents/${slug}`}
-        actions={<DocumentHeaderActions slug={slug} />}
+        actions={<DocumentHeaderActions slug={slug} storagePath={storagePath} originalFileType={originalFileType} />}
       />
       <div className="flex-1 overflow-hidden">
         <ResizableDocumentLayout

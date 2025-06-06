@@ -56,6 +56,8 @@ export default async function DocumentPage({ params }: PageProps) {
         documentId={documentId}
         initialTitle={doc.title}
         slug={slug}
+        storagePath={doc.storage_path}
+        originalFileType={doc.original_file_type}
       />
     </MutationProvider>
   )
