@@ -110,5 +110,5 @@ see `docs/ARCHITECTURE.md` for detailed system architecture
 see also:
 - `docs/ARCHITECTURE.md` - System architecture and design decisions
 - `planning/250527a_reversible_document_mutations.md` - Upcoming mutations system
-- `docs/TABLE_OF_CONTENTS_PANE.md` - ToC implementation details
+- `docs/UNIFIED_LEFT_PANE.md` - Unified left pane implementation details
 - `docs/AI_GLOSSARY.md` - Glossary feature documentation

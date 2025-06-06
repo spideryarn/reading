@@ -1,7 +1,7 @@
 'use client'
 
 // Table of Contents component that extracts headings and provides navigation
-// See docs/TABLE_OF_CONTENTS_PANE.md for architecture and usage patterns
+// See docs/UNIFIED_LEFT_PANE.md for architecture and usage patterns
 // See docs/AI_SUMMARISE.md for tooltip summarisation feature details
 // See docs/MUTATIONS.md for document mutation system
 

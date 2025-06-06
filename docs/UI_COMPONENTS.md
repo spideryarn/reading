@@ -267,6 +267,102 @@ printf "\\n" | npx shadcn@latest add [component-name] --force
 
 **Note:** Follow YAGNI principle - only install components when actually needed.
 
+## Authentication Components
+
+### AuthenticationForms (`components/auth/`)
+
+**Status:** Complete authentication system with email/password and OAuth
+
+The authentication system provides comprehensive user management with multiple sign-in methods and profile management.
+
+#### LoginForm (`components/auth/login-form.tsx`)
+
+**Features:**
+- Email/password authentication with Zod validation
+- Error handling with Alert component display
+- "Remember me" functionality for session persistence
+- Password reset link integration
+- Redirect handling for protected routes
+
+**Dependencies:**
+- `react-hook-form` with `zodResolver` for form validation
+- Supabase Auth for authentication service
+- shadcn/ui components: Button, Input, Alert, Form primitives
+
+#### SignupForm (`components/auth/signup-form.tsx`)
+
+**Features:**
+- Account creation with email confirmation
+- Password strength validation
+- Terms of service acknowledgment
+- Email verification workflow integration
+- Automatic redirect to confirmation page
+
+#### ProfileDropdown (`components/auth/profile-dropdown.tsx`)
+
+**Features:**
+- User profile display with avatar and email
+- Dropdown menu with profile management links
+- Sign-out functionality with loading states
+- Click-outside-to-close behavior
+- Proper accessibility with dropdown navigation
+
+**UI Elements:**
+- User icon and caret indicator
+- Card-based dropdown design
+- Button variants for actions
+- Loading states during sign-out
+
+#### OAuthButton (`components/auth/oauth-button.tsx`)
+
+**Features:**
+- Google OAuth integration via Supabase Auth
+- Customizable provider support (currently Google)
+- Loading states and error handling
+- Redirect URL management
+- Reusable button wrapper with provider branding
+
+#### GoogleIcon (`components/auth/google-icon.tsx`)
+
+**Features:**
+- SVG-based Google brand icon
+- Consistent sizing and styling
+- Proper accessibility attributes
+- Brand guideline compliance
+
+### Authentication Integration
+
+**Usage Patterns:**
+```tsx
+import { LoginForm } from '@/components/auth/login-form'
+import { ProfileDropdown } from '@/components/auth/profile-dropdown'
+import { OAuthButton } from '@/components/auth/oauth-button'
+
+// Login page
+<LoginForm />
+
+// In app header with authenticated user
+{user ? <ProfileDropdown user={user} /> : <LoginButton />}
+
+// OAuth sign-in
+<OAuthButton provider="google">
+  Sign in with Google
+</OAuthButton>
+```
+
+**Route Integration:**
+- Login: `/auth/login`
+- Signup: `/auth/signup`  
+- Profile: `/auth/profile`
+- Password reset: `/auth/reset-password`
+- OAuth callback: `/auth/callback`
+
+**Styling:**
+- Consistent with shadcn/ui design system
+- Spideryarn orange theme integration
+- Responsive form layouts
+- Proper spacing and typography
+
 ## Best Practices
 
 ### When to Use shadcn/ui

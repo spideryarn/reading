@@ -9,7 +9,7 @@ Spideryarn Reading uses a hierarchical, document-centric architecture built on N
 - `docs/ARCHITECTURE.md` - Detailed architectural decisions and data structure choices
 - `docs/PROJECT_STATUS.md` - Current development state and missing features
 - `docs/SETUP.md` - Development environment setup and Supabase configuration
-- `docs/TABLE_OF_CONTENTS_PANE.md` - ToC implementation with tabs and AI features
+- `docs/UNIFIED_LEFT_PANE.md` - Unified left pane implementation with tabs and AI features
 - `docs/AI_GLOSSARY.md` - Glossary feature documentation
 - `docs/LLM_PROMPT_TEMPLATES.md` - Prompt template system architecture
 

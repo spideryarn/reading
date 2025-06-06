@@ -1,6 +1,6 @@
-# Table of Contents Pane
+# Unified Left Pane
 
-The table of contents pane provides hierarchical document navigation with both original and AI-generated headings, interactive element selection, and AI-powered tooltip summaries. Now integrated as part of the unified left pane in the 2-pane resizable layout. This document covers the architecture and features of the enhanced ToC system.
+The unified left pane provides comprehensive document navigation and AI-powered tools through a tabbed interface containing table of contents (original and AI-generated), summaries, chat, glossary, and search functionality. This document covers the architecture and features of the complete left pane system in the 2-pane resizable layout.
 
 ## See also
 
