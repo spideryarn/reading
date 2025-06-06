@@ -379,14 +379,10 @@ export function UnifiedLeftPane({
     }
   }, [])
   
-  // Re-run search when case sensitivity changes
+  // Re-run search when case sensitivity changes - only for text search
   useEffect(() => {
-    if (searchQuery.trim()) {
-      if (useSemanticSearch) {
-        performSemanticSearch(searchQuery)
-      } else {
-        performSearch(searchQuery)
-      }
+    if (searchQuery.trim() && !useSemanticSearch) {
+      performSearch(searchQuery)
     }
   }, [caseSensitive, searchQuery, performSearch, useSemanticSearch])
 
@@ -711,6 +707,12 @@ export function UnifiedLeftPane({
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearchInputChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && useSemanticSearch) {
+                  e.preventDefault()
+                  triggerSemanticSearch()
+                }
+              }}
               placeholder={useSemanticSearch ? "Describe what you're looking for..." : "Search document..."}
               className="w-full px-4 py-2 pl-10 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
@@ -833,7 +835,7 @@ export function UnifiedLeftPane({
         ) : searchResults.length > 0 ? (
           <div>
             <div className="text-sm text-gray-600 mb-3">
-              {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found
+              {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found for {useSemanticSearch ? 'semantic' : 'exact'} "{searchQuery}"
             </div>
             <div className="space-y-2">
               {searchResults.map((result) => (
@@ -883,7 +885,7 @@ export function UnifiedLeftPane({
                   </div>
                   {result.searchType === 'semantic' && result.reasoning && (
                     <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded border-l-2 border-blue-200">
-                      <span className="font-medium">Why this matches:</span> {result.reasoning}
+                      <span className="font-medium">Match:</span> {result.reasoning}
                     </div>
                   )}
                 </div>
