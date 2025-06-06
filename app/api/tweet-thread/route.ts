@@ -146,23 +146,12 @@ export async function POST(request: NextRequest) {
     // Log content length for monitoring
     console.log(`Generating tweet thread for content: ${content.length} characters`)
 
-    // Handle oversized content (truncate if too long)
-    const MAX_CONTENT_LENGTH = 50000 // Characters
-    let processedContent = content
-    let truncated = false
-
-    if (content.length > MAX_CONTENT_LENGTH) {
-      processedContent = content.substring(0, MAX_CONTENT_LENGTH)
-      truncated = true
-      console.log(`Content truncated from ${content.length} to ${MAX_CONTENT_LENGTH} characters`)
-    }
-
     // Resolve tier to provider + modelId for database storage
     const modelConfig = getModelConfig()
     
     // Generate tweet thread using LLM template
     const llmResponse = await executePrompt(tweetThreadPrompt, {
-      content: processedContent,
+      content: content,
       target_length,
       documentId
     })
@@ -214,8 +203,7 @@ export async function POST(request: NextRequest) {
     // Add metadata about processing
     const metadata = {
       content_length: content.length,
-      processed_length: processedContent.length,
-      truncated,
+      processed_length: content.length,
       tweet_count: validatedResponse.tweets.length
     }
     
@@ -232,7 +220,7 @@ export async function POST(request: NextRequest) {
       completionTokens: null,
       totalTokens: null,
       requestData: {
-        content: processedContent,
+        content: content,
         target_length
       },
       responseData: validatedResponse
