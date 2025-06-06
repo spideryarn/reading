@@ -283,6 +283,6 @@ FOR SELECT USING (true);  -- Adjust condition as needed
 - API endpoints handle upload/download with proper access control
 
 **References**:
-- Planning: `planning/250606a_pdf_Supabase_Storage_integration.md`
+- Planning: `planning/finished/250606a_pdf_Supabase_Storage_integration.md`
 - Storage docs: `docs/DATABASE_SUPABASE_STORAGE_REFERENCE.md`
 - Security: `docs/DATABASE_SECURITY.md`

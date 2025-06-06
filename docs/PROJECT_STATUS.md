@@ -9,10 +9,13 @@ Spideryarn Reading is in active development with core AI features now implemente
 **Document Infrastructure**
 - HTML document parsing using Cheerio (`lib/services/document-parser.ts`)
 - Document elements with deterministic ID generation using UUID v5
+- **PDF upload and conversion** - Direct PDF to HTML conversion using Claude/Gemini APIs with Supabase Storage
+- **File storage system** - Original PDFs stored in Supabase Storage with database references
 - Two-pane resizable document viewer layout:
   - Left: Unified pane with 6 tabs (Original ToC, AI headings, Summary, Chat, Glossary, Search)
   - Right: Document viewer with element details and highlighting
   - Collapsible left pane with keyboard shortcuts (Ctrl+B)
+- **Document header** - PDF icon for documents with stored files, File icon for HTML-only documents
 - Sample documents loaded from `static/examples/` (Chalmers consciousness paper, Rhizome text, The Bitter Lesson)
 - Next.js app with routing (`app/`, `app/documents/[slug]/`)
 
@@ -52,6 +55,9 @@ Spideryarn Reading is in active development with core AI features now implemente
 - **Phosphor Icons SSR** - Server-side rendering compatible icon system
 
 **API Endpoints**
+- `/api/upload-pdf` - PDF upload, storage, and conversion to HTML
+- `/api/documents/[slug]/download` - Original file download with access control
+- `/api/documents/[slug]/original` - Original HTML document viewing
 - `/api/summarise` - Text summarisation with configurable granularity
 - `/api/glossary` - Entity extraction from documents
 - `/api/headings` - AI-powered heading generation
@@ -65,6 +71,7 @@ Spideryarn Reading is in active development with core AI features now implemente
 - **Dependencies**: Core packages installed (Next.js, Cheerio, Supabase client, UUID, Tippy.js, Nunjucks, Zod)
 - **Static Assets**: Sample HTML documents in `static/examples/`
 - **Database**: Supabase project configured with migrations, connection established
+- **Storage**: Supabase Storage bucket configured for PDF and document file management
 - **Testing**: Console-first approach for new features
 
 ## Architecture
@@ -89,7 +96,7 @@ see `docs/ARCHITECTURE.md` for detailed system architecture
 2. **Enhanced vertical icon navigation** - 3-pane approach with icons on far left
 3. **Social media integration** - Direct posting to Twitter/X and Bluesky
 4. **Persistent AI content** - Store generated summaries/headings in Supabase
-5. **Document upload** - Allow users to upload their own HTML documents
+5. **Enhanced document upload** - Support for additional file formats beyond PDF
 6. **User authentication** - Personal document libraries
 7. **Document expand/collapse** - Granular content visibility controls
 
