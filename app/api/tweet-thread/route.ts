@@ -146,23 +146,12 @@ export async function POST(request: NextRequest) {
     // Log content length for monitoring
     console.log(`Generating tweet thread for content: ${content.length} characters`)
 
-    // Handle oversized content (truncate if too long)
-    const MAX_CONTENT_LENGTH = 50000 // Characters
-    let processedContent = content
-    let truncated = false
-
-    if (content.length > MAX_CONTENT_LENGTH) {
-      processedContent = content.substring(0, MAX_CONTENT_LENGTH)
-      truncated = true
-      console.log(`Content truncated from ${content.length} to ${MAX_CONTENT_LENGTH} characters`)
-    }
-
     // Resolve tier to provider + modelId for database storage
     const modelConfig = getModelConfig()
     
     // Generate tweet thread using LLM template
     const llmResponse = await executePrompt(tweetThreadPrompt, {
-      content: processedContent,
+      content: content,
       target_length,
       documentId
     })
@@ -188,34 +177,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate response structure with graceful degradation
-    let validatedResponse
-    try {
-      validatedResponse = tweetThreadResponseSchema.parse(parsedResponse)
-    } catch (validationError) {
-      console.warn('Tweet thread validation failed, applying graceful degradation:', validationError)
-      
-      // Apply graceful fixes to the response
-      const fixedResponse = {
-        ...parsedResponse,
-        tweets: parsedResponse.tweets?.map((tweet: { number?: number; text?: string }, index: number) => ({
-          number: tweet.number || index + 1,
-          text: typeof tweet.text === 'string' && tweet.text.length > 270 
-            ? tweet.text.substring(0, 267) + '...' 
-            : tweet.text || 'Error processing tweet'
-        })) || [],
-        thread_summary: parsedResponse.thread_summary || 'Generated tweet thread'
-      }
-      
-      // Try validation again with fixed response
-      validatedResponse = tweetThreadResponseSchema.parse(fixedResponse)
-    }
+    // Validate response structure - fail fast if invalid
+    const validatedResponse = tweetThreadResponseSchema.parse(parsedResponse)
 
     // Add metadata about processing
     const metadata = {
       content_length: content.length,
-      processed_length: processedContent.length,
-      truncated,
+      processed_length: content.length,
       tweet_count: validatedResponse.tweets.length
     }
     
@@ -232,7 +200,7 @@ export async function POST(request: NextRequest) {
       completionTokens: null,
       totalTokens: null,
       requestData: {
-        content: processedContent,
+        content: content,
         target_length
       },
       responseData: validatedResponse
