@@ -107,8 +107,7 @@ Implement Supabase Storage integration for the PDF upload pipeline to store orig
   - [x] Created `/api/documents/[slug]/download/route.ts` with comprehensive features
 
 - [ ] **Update document interface for file access** (REMAINING WORK)
-  - [ ] Add UI indicator when original file is available
-  - [ ] Consider adding download link in document header actions
+  - [ ] Add UI indicator when original file is available (we already have View Original icon at the top - let's use that. perhaps replace it with a PDF icon for PDFs)
   - [ ] Ensure graceful handling when storage_path is null (legacy documents)
   - [ ] Test UI updates don't break existing document display
 
@@ -154,63 +153,6 @@ Implement Supabase Storage integration for the PDF upload pipeline to store orig
   - [ ] Update `planning/later/250530h_pdf_to_html_conversion_implementation.md` to mark storage action as complete
   - [ ] Move this planning document to `planning/finished/`
   - [ ] Final commit with planning doc move
-
-## Progress Debrief (2025-06-06)
-
-### How This Work is Going
-
-**Excellent progress!** The PDF Storage integration has been **overwhelmingly successful** with minimal surprises. The implementation went much smoother than anticipated.
-
-**Key Successes:**
-- ✅ **Supabase Storage setup**: Worked flawlessly once we simplified the RLS policy approach
-- ✅ **Storage utilities**: Clean, comprehensive API with proper error handling
-- ✅ **Document service integration**: Seamless addition of storage methods without breaking existing functionality
-- ✅ **API endpoint integration**: Complete workflow from upload → storage → conversion → database
-- ✅ **Testing**: All functionality verified working with real PDF files
-
-### Issues/Surprises/Complexity
-
-**Minor Issues Encountered:**
-1. **RLS Policy Permissions**: Initial migration failed due to permission restrictions on `storage.objects` table. **Resolution**: Simplified approach using application-layer access control during development.
-
-2. **Next.js Context Issues**: Testing scripts initially failed due to server context requirements. **Resolution**: Used direct Supabase client for testing.
-
-3. **Storage Migration**: Had to apply bucket creation via direct SQL rather than `supabase db push` due to project linking. **Resolution**: Successfully applied migration manually.
-
-**Complexity Assessment**: **Medium** 
-- Storage integration itself is straightforward
-- Database relationships already existed
-- Error handling and cleanup logic required careful consideration
-- Overall much less complex than initially anticipated
-
-### What's Left to Do
-
-**Remaining Work (Low Priority):**
-1. **UI Updates** - Add download links for documents with original files
-2. **Documentation Updates** - Update related planning docs to mark completion
-3. **Optional Enhancements** - Real RLS policies for production authentication
-
-**Completion Status**: **~95% Complete** 
-- All core functionality implemented and tested
-- Production-ready for PDF storage and retrieval
-- Remaining work is UI polish and documentation
-
-### Cost/Benefit Analysis
-
-**Development Investment**: ~4-6 hours of focused implementation
-**Business Value**: **High** - Enables crucial features:
-- ✅ Original file preservation for re-processing
-- ✅ Direct PDF downloads for users
-- ✅ Version history capabilities (foundation)
-- ✅ Better data integrity and user experience
-
-**Technical Value**: **Very High**
-- ✅ Robust storage architecture for future file types
-- ✅ Clean separation of concerns (processed vs original content)
-- ✅ Scalable foundation for document management features
-- ✅ Production-ready error handling and cleanup
-
-**Verdict**: **Excellent ROI** - High-impact feature with surprisingly low implementation complexity. The foundation enables multiple future enhancements with minimal additional work.
 
 ## Appendix
 
