@@ -174,6 +174,7 @@ FOR SELECT USING (true);  -- Adjust condition as needed
 - **Avoid `supabase db commit`**: The auto-diffing tool is unreliable and can break schemas
 - **RLS policies affect tests**: When testing with anon keys, ensure appropriate policies exist
 - **Environment variables in tests**: Use `@next/env` loadEnvConfig for proper Next.js integration
+- **⚠️ Storage RLS policy restrictions**: Migrations cannot directly modify RLS policies on `storage.objects` table due to permission restrictions. Use application-layer security during development, or create policies through Supabase Studio/API after migration.
 
 ## Migration History
 
@@ -235,3 +236,53 @@ FOR SELECT USING (true);  -- Adjust condition as needed
 - Could add database triggers for automatic slug generation
 - Could implement slug conflict resolution for duplicate titles
 - Could add slug validation rules at database level
+
+### 20250603211615_add_mock_system_user.sql
+
+**Purpose**: Add system user for development and testing with document ownership
+
+**Major Changes**:
+- Created mock system user with UUID `00000000-0000-0000-0000-000000000001`
+- Added to `auth.users` table for authentication system compatibility
+- Enables document ownership tracking during development phase
+- Provides foundation for future real authentication integration
+
+### 20250603211716_add_automatic_profile_creation_trigger.sql
+
+**Purpose**: Automatic profile creation when new users sign up
+
+**Major Changes**:
+- Added database trigger for automatic profile creation
+- Ensures every authenticated user has a corresponding profile record
+- Maintains data consistency between auth and application layers
+
+### 20250606000001_storage_bucket_and_policies.sql
+
+**Purpose**: Set up Supabase Storage for PDF document storage
+
+**Major Changes**:
+- Created `documents` storage bucket for original file storage
+- Configured bucket settings: private, 50MB limit, specific MIME types allowed
+- Attempted RLS policy creation (failed due to permission restrictions)
+- Documented storage security approach in planning documents
+
+**Storage Configuration**:
+- **Bucket**: `documents` (private)
+- **File Size Limit**: 50MB
+- **Allowed Types**: PDF, DOC, DOCX, HTML, TXT
+- **Path Structure**: `{document-uuid}/original/{filename}`
+
+**Security Implementation**:
+- RLS policies could not be created via migration due to permission restrictions
+- Using application-layer security with service role key during development
+- Future RLS policies documented in `docs/DATABASE_SECURITY.md`
+
+**Integration Points**:
+- Documents table `storage_path` field references stored files
+- `lib/services/storage.ts` provides storage utility functions
+- API endpoints handle upload/download with proper access control
+
+**References**:
+- Planning: `planning/250606a_pdf_Supabase_Storage_integration.md`
+- Storage docs: `docs/DATABASE_SUPABASE_STORAGE_REFERENCE.md`
+- Security: `docs/DATABASE_SECURITY.md`

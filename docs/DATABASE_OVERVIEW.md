@@ -13,6 +13,7 @@ Spideryarn Reading uses PostgreSQL via Supabase for persistent storage. The data
 📖 **Related Documentation:**
 - [ARCHITECTURE.md](ARCHITECTURE.md) - Database design decisions
 - [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) - Detailed table descriptions
+- [DATABASE_SUPABASE_STORAGE_REFERENCE.md](DATABASE_SUPABASE_STORAGE_REFERENCE.md) - Supabase Storage integration for file uploads
 - [DATABASE_MIGRATIONS.md](DATABASE_MIGRATIONS.md) - Migration workflow
 - [SETUP.md](SETUP.md) - How to start Supabase locally
 - [planning/250531a_database_storage_implementation.md](../planning/250531a_database_storage_implementation.md) - Implementation details

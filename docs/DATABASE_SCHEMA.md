@@ -31,6 +31,7 @@ The database schema is defined and represented in several places:
 
 📖 **Related Documentation:**
 - [DATABASE_OVERVIEW.md](DATABASE_OVERVIEW.md) - High-level database guide
+- [DATABASE_SUPABASE_STORAGE_REFERENCE.md](DATABASE_SUPABASE_STORAGE_REFERENCE.md) - File storage integration and patterns
 - [DATABASE_MIGRATIONS.md](DATABASE_MIGRATIONS.md) - Migration workflow
 - [ARCHITECTURE.md](ARCHITECTURE.md) - Design decisions
 - [planning/250531a_database_storage_implementation.md](../planning/250531a_database_storage_implementation.md) - Implementation details
@@ -69,6 +70,8 @@ The database schema is defined and represented in several places:
 - `title`: Document title
 - `html_content`: Full HTML for display
 - `plaintext_content`: Extracted text for search and AI processing
+- `storage_path`: Reference to original file in Supabase Storage (nullable)
+- `original_file_type`: MIME type of uploaded file (e.g., 'application/pdf')
 - `source_url`: Original URL if imported from web
 - `language_code`: 2-letter language code (default 'en')
 - `word_count`: Calculated word count
@@ -82,6 +85,7 @@ The database schema is defined and represented in several places:
 - Moved from element-decomposition to single-row for simplicity
 - HTML stored in database rather than Supabase Storage for easier querying
 - Plaintext extraction enables both search and AI processing
+- Original files (PDFs, etc.) stored in Supabase Storage with path references
 
 ### **`ai_calls`** - AI API Call Tracking
 
