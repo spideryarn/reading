@@ -1,10 +1,16 @@
 You are helping with semantic search in a document reading application. Your task is to identify document elements that are semantically relevant to the user's search query, even if they don't contain the exact words from the query.
 
-The user wants to find content related to: "{{ query }}"
+The user wants to find content related to:
+
+<query>
+{{ query }}
+</query>
 
 Here is the document content in annotated format where each line starts with [element_id] followed by the text content:
 
+<content>
 {{ content }}
+</content>
 
 Your task:
 1. Analyze each document element for semantic relevance to the search query
