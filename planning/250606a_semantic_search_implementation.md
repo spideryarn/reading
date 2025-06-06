@@ -24,9 +24,10 @@ Add semantic search functionality to complement the existing text search in Spid
 The application currently has:
 - Robust text search using Mark.js with cross-element highlighting
 - Search tab in unified left pane with advanced options (case sensitivity)
+- **DocumentCommunicationContext system** for type-safe cross-pane communication (recently implemented)
 - Existing LLM integration using Nunjucks + Zod prompt templates
 - Element-based document structure with deterministic IDs
-- Search result navigation that scrolls to and highlights matched elements
+- Search result navigation using `actions.scrollToElement(elementId)` with automatic highlighting
 - Document storage with both HTML and plaintext content
 
 ## References
@@ -34,8 +35,11 @@ The application currently has:
 - `docs/SEARCH_TEXT.md` - Current text search implementation and architecture
 - `planning/finished/250604b_document_search_functionality.md` - Initial search feature planning
 - `planning/finished/250605a_cross_element_text_search_implementation.md` - Cross-element search development
+- `planning/finished/250605b_cross_pane_communication_refactor.md` - **RECENT**: React Context migration for cross-pane communication
+- `docs/CROSS_PANE_COMMUNICATION.md` - **UPDATED**: DocumentCommunicationContext implementation details
 - `docs/LLM_PROMPT_TEMPLATES.md` - Standard pattern for LLM integration using Nunjucks + Zod
-- `components/unified-left-pane.tsx` - Search UI implementation with advanced options section
+- `components/unified-left-pane.tsx` - **UPDATED**: Search UI now uses DocumentCommunicationContext
+- `lib/context/document-communication-context.tsx` - **NEW**: React Context for element navigation and highlighting
 - `lib/prompts/templates/` - Existing prompt templates (glossary, summarise, headings)
 - `docs/CODING_PRINCIPLES.md` - Development principles emphasising simplicity and rapid prototyping
 
@@ -116,7 +120,7 @@ The application currently has:
 - [ ] Update search result display
   - [ ] Distinguish semantic results from text results (simple approach initially)
   - [ ] Use existing result format but indicate source (text vs semantic)
-  - [ ] Reuse existing navigation and highlighting on click
+  - [ ] Reuse existing `actions.scrollToElement()` navigation from DocumentCommunicationContext
 - [ ] Write UI tests for semantic search components
   - [ ] Test toggle rendering and state changes
   - [ ] Test semantic search button functionality
@@ -126,10 +130,10 @@ The application currently has:
 - [ ] Update planning doc with progress and commit changes
 
 ### Stage 5: Integrate Semantic Search with Existing Navigation
-- [ ] Ensure semantic search results work with existing `onHeadingClick` navigation
+- [ ] Ensure semantic search results work with existing `actions.scrollToElement()` navigation
   - [ ] Verify element IDs from LLM match document structure
-  - [ ] Test scroll-to-element functionality
-  - [ ] Test element highlighting/selection state
+  - [ ] Test scroll-to-element functionality via DocumentCommunicationContext
+  - [ ] Test element highlighting/selection state (already handled by context)
 - [ ] Handle edge cases for semantic search
   - [ ] No results from LLM
   - [ ] Invalid element IDs returned by LLM
