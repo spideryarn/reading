@@ -35,7 +35,13 @@ const semanticSearchPromptSchema = z.object({
   documentId: z.string().optional() // For future use in database caching
 })
 
-// Export input schema for API validation
+// API input schema (what the API endpoint expects from clients)
+export const semanticSearchApiInputSchema = z.object({
+  query: z.string().min(1, 'Search query cannot be empty'),
+  documentId: z.string().min(1, 'Document ID is required')
+})
+
+// Export input schema for prompt template (internal use)
 export const semanticSearchPromptInputSchema = semanticSearchPromptSchema
 
 // Export individual schemas for testing and validation
