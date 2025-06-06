@@ -90,10 +90,7 @@ export async function POST(request: NextRequest) {
         const modelConfig = getModelConfig()
         
         // Create title from first user message
-        const userMessage = messages[0].content;
-        const title = userMessage.length > 50 
-          ? userMessage.substring(0, 47) + '...'
-          : userMessage;
+        const title = messages[0].content;
         
         // Get model UUID for thread creation
         const aiCallService = new AiCallService(supabase)
