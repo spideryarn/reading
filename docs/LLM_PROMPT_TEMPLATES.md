@@ -85,10 +85,15 @@ Create a new `.njk` file in `/lib/prompts/templates/`:
 {# /lib/prompts/templates/my-feature.njk #}
 Please analyze the following {{ contentType }}:
 
+<document>
 {{ content }}
+</document>
 
 {% if includeExamples %}
-Consider these examples: {{ examples }}
+Consider these examples:
+<examples>
+{{ examples }}
+</examples>
 {% endif %}
 
 Provide your analysis in {{ outputFormat }} format.
@@ -241,6 +246,37 @@ export const myFeaturePrompt = loadPromptTemplateFromCaller(
 
 ## Common Patterns
 
+### XML-Style Delimiters for Input Documents
+
+**Best Practice**: Use XML-style delimiters to clearly separate different parts of your prompts, especially for input documents and structured data. This helps LLMs better understand boundaries between instructions and content.
+
+```nunjucks
+Analyse the document below and extract key themes:
+
+<document>
+{{ documentContent }}
+</document>
+
+{% if additionalContext %}
+<context>
+{{ additionalContext }}
+</context>
+{% endif %}
+
+Please provide your analysis in the following format:
+<output_format>
+- Theme 1: Description
+- Theme 2: Description
+</output_format>
+```
+
+Common delimiter patterns:
+- `<document>...</document>` for main input documents
+- `<context>...</context>` for additional context
+- `<examples>...</examples>` for example content
+- `<constraints>...</constraints>` for specific requirements
+- `<output_format>...</output_format>` for expected output structure
+
 ### Optional Variables with Defaults
 ```typescript
 const schema = z.object({
@@ -252,15 +288,19 @@ const schema = z.object({
 ### Conditional Sections in Templates
 ```nunjucks
 {% if context %}
-Additional context: {{ context }}
+<additional_context>
+{{ context }}
+</additional_context>
 {% endif %}
 ```
 
 ### Array Handling
 ```nunjucks
+<items>
 {% for item in items %}
-- {{ item }}
+  <item>{{ item }}</item>
 {% endfor %}
+</items>
 ```
 
 ### Complex Validation
@@ -300,6 +340,36 @@ myFeatureSchema.parse(invalidInput) // Will throw ZodError
 ```
 
 Keep templates and their schemas together for easy maintenance.
+
+## Best Practices for Prompt Design
+
+### Use XML Delimiters Consistently
+
+When creating new prompts or updating existing ones, consistently use XML-style delimiters to improve LLM comprehension:
+
+1. **Wrap all input documents** in `<document>` tags
+2. **Use semantic tag names** that describe the content (e.g., `<requirements>`, `<constraints>`, `<examples>`)
+3. **Be consistent** across all prompts in the codebase
+4. **Consider nesting** for complex structures:
+   ```nunjucks
+   <analysis_request>
+     <document>{{ content }}</document>
+     <requirements>
+       <format>{{ outputFormat }}</format>
+       <length>{{ maxLength }}</length>
+     </requirements>
+   </analysis_request>
+   ```
+
+### Existing Templates to Update
+
+Several existing templates in `/lib/prompts/templates/` could benefit from adding XML delimiters:
+- `glossary.njk` - wrap document content
+- `headings.njk` - wrap input document
+- `summarise.njk` - wrap document content
+- `semantic-search.njk` - wrap query and documents
+
+This is an ongoing improvement - update templates as you work with them.
 
 ## Integration with Other Systems
 
