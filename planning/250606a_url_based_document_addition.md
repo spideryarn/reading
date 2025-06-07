@@ -40,25 +40,25 @@ Based on user requirements and research findings:
   - [x] Test Gemini URL fetching - confirmed: cannot fetch URLs directly
   - [x] Document findings: must use fetch-then-LLM approach
 
-### Stage: Configuration Setup
-- [ ] Add URL extraction configuration to `lib/config.ts`
-  - [ ] Add `URL_EXTRACTION_CONFIG` with 500KB size limit, 10s timeout, user agent
-  - [ ] Define clear error messages for size limits and validation failures
-  - [ ] Ensure configuration follows existing patterns
+### Stage: Configuration Setup ✅
+- [x] Add URL extraction configuration to `lib/config.ts`
+  - [x] Add `URL_EXTRACTION_CONFIG` with 500KB size limit, 10s timeout, user agent
+  - [x] Define clear error messages for size limits and validation failures
+  - [x] Ensure configuration follows existing patterns
 
-### Stage: API Foundation
-- [ ] Create URL extraction API route
-  - [ ] Create `/app/api/extract-url/route.ts` following updated PDF pattern from `app/api/upload-pdf/route.ts`
-  - [ ] Implement URL validation (HTTP/HTTPS format, basic safety checks)
-  - [ ] Add HTML fetching with built-in `fetch()` and anti-bot headers
-  - [ ] Add size validation (500KB limit) with immediate clear error
-  - [ ] Follow document creation pattern: auto-save to database and return document details
-- [ ] Create URL extraction prompt template
-  - [ ] Create `lib/prompts/templates/url-to-html.njk` and corresponding TypeScript file
-  - [ ] Follow pattern from `pdf-to-html-direct.njk` for consistency
-  - [ ] Include instructions for main content extraction, removing ads/navigation
-  - [ ] Add hard error instruction for JavaScript-required pages
-  - [ ] Use Claude as default provider (anthropic-balanced model)
+### Stage: API Foundation ✅
+- [x] Create URL extraction API route
+  - [x] Create `/app/api/extract-url/route.ts` following updated PDF pattern from `app/api/upload-pdf/route.ts`
+  - [x] Implement URL validation (HTTP/HTTPS format, basic safety checks)
+  - [x] Add HTML fetching with built-in `fetch()` and anti-bot headers
+  - [x] Add size validation (500KB limit) with immediate clear error
+  - [x] Follow document creation pattern: auto-save to database and return document details
+- [x] Create URL extraction prompt template
+  - [x] Create `lib/prompts/templates/url-to-html.njk` and corresponding TypeScript file
+  - [x] Follow pattern from `pdf-to-html-direct.njk` for consistency
+  - [x] Include instructions for main content extraction, removing ads/navigation
+  - [x] Add hard error instruction for JavaScript-required pages
+  - [x] Use Claude as default provider (anthropic-balanced model)
 
 ### Stage: Frontend Integration
 - [ ] Transform upload page into unified "Add Document" interface
