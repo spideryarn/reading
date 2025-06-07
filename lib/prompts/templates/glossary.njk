@@ -65,14 +65,18 @@ For example, if the text is about the history of the United States, the response
 ```
 
 {% if already_entities %}
+<already_extracted_entities>
 This text already has the following entities, so don't include any of these in your response:
 {% for entity in already_entities %}
 - {{ entity.name }}, aliases={{ entity.aliases }}
 {% endfor %}
+</already_extracted_entities>
 {% endif %}
 
 ONLY JSON IS ALLOWED IN YOUR RESPONSE.
 
 ----
 
+<document>
 {{ content }}
+</document>
