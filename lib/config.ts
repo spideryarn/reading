@@ -123,6 +123,21 @@ export const VISIBILITY_CONFIG = {
   THRESHOLD: 0.15,         // Minimum visible ratio to count as visible (15%)
 } as const
 
+// URL extraction configuration for webpage content processing
+export const URL_EXTRACTION_CONFIG = {
+  MAX_HTML_SIZE_BYTES: 500 * 1024, // 500KB limit (safe for both Claude/Gemini token limits)
+  FETCH_TIMEOUT_MS: 10000, // 10 second timeout
+  DEFAULT_USER_AGENT: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  ERROR_MESSAGES: {
+    SIZE_LIMIT: 'Webpage content too large (max 500KB). Try a more specific URL or consider PDF upload for lengthy documents.',
+    JAVASCRIPT_REQUIRED: 'This webpage requires JavaScript for content rendering and cannot be processed.',
+    INVALID_URL: 'Please enter a valid HTTP or HTTPS URL.',
+    FETCH_FAILED: 'Unable to fetch webpage content. The site may be blocking automated access.',
+    TIMEOUT: 'Request timed out while fetching webpage content.',
+    NETWORK_ERROR: 'Network error occurred while fetching webpage content.'
+  }
+} as const
+
 // Site configuration
 export const SITE_CONFIG = {
   // Base URL for the application
