@@ -66,14 +66,14 @@ export const TabContainer = forwardRef<TabContainerRef, TabContainerProps>(
           
           {/* Modern Vertical Tab Navigation */}
           <div className="mb-6">
-            <nav className="flex flex-col space-y-1" aria-label="Tabs" role="tablist">
+            <nav className="flex flex-col space-y-0.5" aria-label="Tabs" role="tablist">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => handleTabClick(tab)}
                   role="tab"
                   aria-selected={activeTab === tab.id}
-                  className={`group relative flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                  className={`group relative flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                     activeTab === tab.id
                       ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-900 shadow-sm border border-blue-200'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-transparent hover:border-gray-200'
