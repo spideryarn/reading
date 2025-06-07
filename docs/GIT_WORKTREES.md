@@ -4,7 +4,7 @@ Multi-worktree development setup for parallel feature development using a hub-an
 
 ## See also
 
-- `scripts/sync-branches.ts` - Branch synchronisation tool implementation
+- `scripts/sync-worktrees.ts` - Branch synchronisation tool implementation
 - `docs/SETUP.md` - General development environment setup
 - `docs/GIT_COMMITS.md` - Git commit best practices for the project
 - `planning/finished/250526c_git_worktree_sync_strategy.md` - Historical decisions about worktree synchronisation (out of date)
@@ -14,13 +14,13 @@ Multi-worktree development setup for parallel feature development using a hub-an
 **Basic sync commands:**
 ```bash
 # From any worktree: pull latest from main
-./scripts/sync-branches.ts
+./scripts/sync-worktrees.ts
 
 # From main: merge a specific worktree
-./scripts/sync-branches.ts --branch worktree1
+./scripts/sync-worktrees.ts --branch worktree1
 
 # From main: merge all worktrees
-./scripts/sync-branches.ts
+./scripts/sync-worktrees.ts
 ```
 
 **Autostash support:** The script automatically handles uncommitted changes using Git's `--autostash` feature. Your changes are safely stashed before merge and reapplied afterward.
@@ -46,9 +46,9 @@ git status  # Should show clean working tree
 ### 2. Sync Branches Bidirectionally
 ```bash
 # From reading (main branch)
-./scripts/sync-branches.ts
+./scripts/sync-worktrees.ts
 # From reading2 (experim branch)
-./scripts/sync-branches.ts
+./scripts/sync-worktrees.ts
 ```
 
 ### 3. Merge experim into main
@@ -157,14 +157,14 @@ The sync script automatically detects your current branch and syncs with main:
 
 ```bash
 # From any worktree directory
-./scripts/sync-branches.ts
+./scripts/sync-worktrees.ts
 ```
 
 #### From a worktree branch
 Merges main → current worktree:
 ```bash
 # In reading-worktree1
-./scripts/sync-branches.ts  # Merges main → worktree1
+./scripts/sync-worktrees.ts  # Merges main → worktree1
 ```
 
 #### From main branch
@@ -173,13 +173,13 @@ You have two options:
 1. **Sync a specific worktree**:
    ```bash
    # In reading (main branch)
-   ./scripts/sync-branches.ts --branch worktree1  # Merges worktree1 → main
+   ./scripts/sync-worktrees.ts --branch worktree1  # Merges worktree1 → main
    ```
 
 2. **Sync all worktrees at once**:
    ```bash
    # In reading (main branch)
-   ./scripts/sync-branches.ts  # Merges all worktree branches → main
+   ./scripts/sync-worktrees.ts  # Merges all worktree branches → main
    ```
    This will attempt to merge all worktree branches (worktree1-6) into main sequentially. If any branch has conflicts, it will be skipped and reported.
 
@@ -273,13 +273,13 @@ When syncing all worktrees partially fails:
 
 3. **Re-run sync-all**:
    ```bash
-   ./scripts/sync-branches.ts    # Retries failed branches
+   ./scripts/sync-worktrees.ts    # Retries failed branches
    ```
 
 4. **Pull to worktrees**:
    ```bash
    # In each worktree directory
-   ./scripts/sync-branches.ts    # Gets latest main
+   ./scripts/sync-worktrees.ts    # Gets latest main
    ```
 
 **Recovery tip**: Git merges are idempotent - re-running skips already-synced branches.

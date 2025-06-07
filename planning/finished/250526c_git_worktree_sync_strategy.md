@@ -117,7 +117,7 @@ git merge main           # Update current branch
 
 ### Script Development ✅
 
-- [x] Create `scripts/sync-branches.ts` script with hybrid approach
+- [x] Create `scripts/sync-worktrees.ts` script with hybrid approach
   - [x] Add precondition checks (branch validation, uncommitted changes)
   - [x] Implement fast-forward attempt first
   - [x] Implement temporary worktree fallback with proper cleanup
