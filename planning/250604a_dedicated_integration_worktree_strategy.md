@@ -4,7 +4,7 @@
 
 Improve the Git worktree synchronization workflow by implementing a dedicated integration worktree to eliminate file-watching disruption in development environments while simplifying the sync script logic.
 
-**Current Problem**: The sync script (`scripts/sync-branches.ts`) requires complex logic to handle the fact that the main `reading` worktree permanently occupies the `main` branch. This creates:
+**Current Problem**: The sync script (`scripts/sync-worktrees.ts`) requires complex logic to handle the fact that the main `reading` worktree permanently occupies the `main` branch. This creates:
 - Special-case handling when syncing from main vs. to main
 - Potential file-watching disruption when temporarily switching branches for merges
 - Asymmetric complexity in sync operations
@@ -14,7 +14,7 @@ Improve the Git worktree synchronization workflow by implementing a dedicated in
 ## References
 
 - `docs/GIT_WORKTREES.md` - Current worktree setup and workflow documentation
-- `scripts/sync-branches.ts` - Current sync script implementation with complex main branch handling
+- `scripts/sync-worktrees.ts` - Current sync script implementation with complex main branch handling
 - `planning/finished/250526c_git_worktree_sync_strategy.md` - Original worktree sync strategy decisions (now outdated)
 - Research findings on Git worktree patterns and file-watching behavior (see Appendix)
 
