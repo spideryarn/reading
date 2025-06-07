@@ -53,7 +53,6 @@ export const TabContainer = forwardRef<TabContainerRef, TabContainerProps>(
   }
 
   const activeTabData = tabs.find(tab => tab.id === activeTab)
-  const activeTabContent = activeTabData?.content
   const hasManagedScroll = activeTabData?.managedScroll ?? false
 
   return (
@@ -66,14 +65,14 @@ export const TabContainer = forwardRef<TabContainerRef, TabContainerProps>(
           
           {/* Modern Vertical Tab Navigation */}
           <div className="mb-6">
-            <nav className="flex flex-col space-y-1" aria-label="Tabs" role="tablist">
+            <nav className="flex flex-col space-y-0.5" aria-label="Tabs" role="tablist">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => handleTabClick(tab)}
                   role="tab"
                   aria-selected={activeTab === tab.id}
-                  className={`group relative flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                  className={`group relative flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                     activeTab === tab.id
                       ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-900 shadow-sm border border-blue-200'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-transparent hover:border-gray-200'
@@ -111,9 +110,17 @@ export const TabContainer = forwardRef<TabContainerRef, TabContainerProps>(
             </div>
           </div>
 
-          {/* Vertical Tab Content */}
+          {/* Vertical Tab Content - All tabs rendered but only active one visible */}
           <div ref={contentRef} className={`flex-1 min-h-0 ${hasManagedScroll ? '' : 'overflow-y-auto'}`}>
-            {activeTabContent}
+            {tabs.map((tab) => (
+              <div
+                key={tab.id}
+                style={{ display: activeTab === tab.id ? 'block' : 'none' }}
+                className="h-full"
+              >
+                {tab.content}
+              </div>
+            ))}
           </div>
         </>
       ) : (
@@ -143,9 +150,17 @@ export const TabContainer = forwardRef<TabContainerRef, TabContainerProps>(
             </nav>
           </div>
 
-          {/* Horizontal Tab Content */}
+          {/* Horizontal Tab Content - All tabs rendered but only active one visible */}
           <div ref={contentRef} className={`flex-1 min-h-0 ${hasManagedScroll ? '' : 'overflow-y-auto'}`}>
-            {activeTabContent}
+            {tabs.map((tab) => (
+              <div
+                key={tab.id}
+                style={{ display: activeTab === tab.id ? 'block' : 'none' }}
+                className="h-full"
+              >
+                {tab.content}
+              </div>
+            ))}
           </div>
         </>
       )}

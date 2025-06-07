@@ -52,11 +52,11 @@ Don't include a `Date` section at the top since it's implicit from the filename.
 - If there are any surprises/issues, stop immediately, and discuss with the user before proceeding.
 
 
-### Actions
+### Stages & actions
 
 Overall approach:
 - Break into lots of stages. Start with a really simple working v1, and gradually layer in complexity, ending each stage with passing tests and working code.
-- List action in the order that they should be tackled
+- List stages and actions in the order that they should be tackled
 - Don't number the stages, so that it's easier to move them around without having to renumber everything
 - Use `[ ]` and `[x]` checkboxes to indicate todo/done.
 - Include subtasks with clear acceptance criteria
@@ -72,6 +72,9 @@ Overall approach:
 - Try to surface potential risks early. For example, if the whole plan rests on the library being able to do X, let's do a quick trial to make sure that works).
 - Try to organise the stages so that we frontload the business value, so that we could stop partway. For example, get it working for the primary/most valuable use-case first.
 
+As the very, very first preparatory action:
+- Run `./scripts/sync-worktrees.ts` to make sure we've pulled the latest changes from `main` before we start (to make merge conflicts less likely).
+
 At the end of every stage:
 - Add actions to update the planning doc with progress so far.
 - Follow instructions in `docs/DEBRIEF_PROGRESS.md` to output a summary of where things stand.
@@ -80,18 +83,18 @@ At the end of every stage:
 As a very final action:
 - Move the doc to `planning/finished/` and commit.
 
-Example action (no need to include the words `TODO` or `DONE` explicitly, since the `[ ]` todo-checkboxes capture that):
+Example stages & action (no need to include the words `TODO` or `DONE` explicitly, since the `[ ]` todo-checkboxes capture that):
 
 ```
 ### Stage: High-level description of this stage
-- [ ] This is a top-level action description line
-  - [ ] It can have sub-points that get ticked off
+- [ ] This is a top-level action
+  - [ ] It can have sub-actions that get ticked off
     - You can add bulletpoint notes with extra detail/context to help plan & shape future actions
 
-- ✅ This stage has already been completed
-  - ✅ This step has already been completed
+### ✅ This stage has already been completed
+  - ✅ This action has already been completed
     - 📔 You could journal about useful/unexpected discoveries when you update progress on completed tasks
-  - ❌ This step has been skipped
+  - ❌ This action has failed/been skipped
 ```
 
 # Appendix

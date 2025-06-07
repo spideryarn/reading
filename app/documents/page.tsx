@@ -1,10 +1,12 @@
 import Link from 'next/link'
 import { AppHeader } from '@/components/app-header'
 import { Footer } from '@/components/footer'
+import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { generateSlug } from '@/lib/utils/slug'
 import type { Document } from '@/lib/types/database'
+import { Plus } from '@phosphor-icons/react/dist/ssr/Plus'
 
 async function getDocuments(): Promise<Document[]> {
   const supabase = await createClient()
@@ -28,7 +30,19 @@ export default async function DocumentsPage() {
   
   return (
     <div className="min-h-screen">
-      <AppHeader title="Documents" />
+      <AppHeader 
+        title="Documents" 
+        actions={
+          <div>
+            <Button asChild variant="orange" size="sm">
+              <Link href="/upload">
+                <Plus size={16} />
+                Add Document
+              </Link>
+            </Button>
+          </div>
+        }
+      />
       
       <div className="pb-16 px-8">
         <div className="max-w-4xl mx-auto text-center py-16">
