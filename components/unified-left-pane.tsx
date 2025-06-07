@@ -510,9 +510,10 @@ export function UnifiedLeftPane({
 
   // Note: DOM event listener removed - now using DocumentCommunicationContext for all cross-pane communication
 
-  // Render Original headings tab
-  const renderOriginalTab = () => {
-    return (
+  // Memoized tab elements to prevent React hooks order violations
+  // These elements are only recreated when their dependencies change
+  const originalTabElement = useMemo(
+    () => (
       <OriginalHeadingsTab
         content={content}
         elements={elements}
@@ -520,12 +521,12 @@ export function UnifiedLeftPane({
         documentId={documentId}
         headingVisibility={headingVisibility}
       />
-    )
-  }
+    ),
+    [content, elements, onHeadingClick, documentId, headingVisibility]
+  )
 
-  // Render AI-generated headings tab
-  const renderAIGeneratedTab = () => {
-    return (
+  const aiGeneratedTabElement = useMemo(
+    () => (
       <AIGeneratedHeadingsTab
         content={content}
         elements={elements}
@@ -533,34 +534,35 @@ export function UnifiedLeftPane({
         documentId={documentId}
         headingVisibility={headingVisibility}
       />
-    )
-  }
+    ),
+    [content, elements, onHeadingClick, documentId, headingVisibility]
+  )
 
-  // Render Summary tab
-  const renderSummaryTab = () => {
-    return (
-      <DocumentSummaryTab 
+  const summaryTabElement = useMemo(
+    () => (
+      <DocumentSummaryTab
         content={content}
         documentId={documentId}
         markdownContent={markdownContent}
       />
-    )
-  }
+    ),
+    [content, documentId, markdownContent]
+  )
 
-  // Render Chat tab
-  const renderChatTab = () => {
-    return (
+  const chatTabElement = useMemo(
+    () => (
       <div className="h-full">
-        <AssistantChat 
-          documentId={documentId} 
-          documentContext={documentContext} 
+        <AssistantChat
+          documentId={documentId}
+          documentContext={documentContext}
         />
       </div>
-    )
-  }
+    ),
+    [documentId, documentContext]
+  )
 
-  // Render Glossary tab
-  const renderGlossaryTab = () => {
+  const glossaryTabElement = useMemo(
+    () => {
     if (!showGlossary) {
       return (
         <div className="flex flex-col items-center justify-center p-8 text-center">
@@ -674,11 +676,22 @@ export function UnifiedLeftPane({
         )}
       </>
     )
-  }
+  },
+    [
+      showGlossary,
+      onLoadGlossary,
+      isLoadingGlossary,
+      glossaryError,
+      onResetGlossary,
+      glossaryCached,
+      glossaryEntities,
+      elements,
+      onScrollToEntity
+    ]
+  )
 
-  // Render Search tab
-  const renderSearchTab = () => {
-    return (
+  const searchTabElement = useMemo(
+    () => (
       <div className="flex flex-col h-full">
         {/* Pinned search input */}
         <div className="sticky top-0 bg-white z-10 p-4 border-b border-gray-200">
@@ -946,15 +959,40 @@ export function UnifiedLeftPane({
         ) : null}
         </div>
       </div>
-    )
-  }
+    ),
+    [
+      searchQuery,
+      searchResults,
+      isSearching,
+      caseSensitive,
+      showAdvancedOptions,
+      useSemanticSearch,
+      semanticSearchError,
+      semanticSortByRelevance,
+      sortedSearchResults,
+      handleSearchInputChange,
+      triggerSemanticSearch,
+      setUseSemanticSearch,
+      setSemanticSearchError,
+      setSearchResults,
+      setSemanticSortByRelevance,
+      markInstanceRef,
+      searchInputRef,
+      setShowAdvancedOptions,
+      setCaseSensitive,
+      searchTimeoutRef,
+      setSearchQuery,
+      setIsSearching,
+      actions
+    ]
+  )
 
   // Define all 6 tabs at the same level
   const tabs: Tab[] = [
     {
       id: 'original',
       label: 'Original',
-      content: renderOriginalTab(),
+      content: originalTabElement,
       onActivate: () => {
         actions.setActiveTab('original')
       }
@@ -962,7 +1000,7 @@ export function UnifiedLeftPane({
     {
       id: 'ai-generated',
       label: 'AI-generated',
-      content: renderAIGeneratedTab(),
+      content: aiGeneratedTabElement,
       onActivate: () => {
         actions.setActiveTab('ai-generated')
       }
@@ -970,7 +1008,7 @@ export function UnifiedLeftPane({
     {
       id: 'summary',
       label: 'Summary',
-      content: renderSummaryTab(),
+      content: summaryTabElement,
       onActivate: () => {
         actions.setActiveTab('summary')
       }
@@ -978,7 +1016,7 @@ export function UnifiedLeftPane({
     {
       id: 'chat',
       label: 'Chat',
-      content: renderChatTab(),
+      content: chatTabElement,
       onActivate: () => {
         actions.setActiveTab('chat')
       }
@@ -986,7 +1024,7 @@ export function UnifiedLeftPane({
     {
       id: 'glossary',
       label: 'Glossary',
-      content: renderGlossaryTab(),
+      content: glossaryTabElement,
       onActivate: () => {
         actions.setActiveTab('glossary')
         // Auto-load glossary when tab is activated
@@ -998,7 +1036,7 @@ export function UnifiedLeftPane({
     {
       id: 'search',
       label: 'Search',
-      content: renderSearchTab(),
+      content: searchTabElement,
       onActivate: () => {
         actions.setActiveTab('search')
         // Auto-focus search input when tab is activated
