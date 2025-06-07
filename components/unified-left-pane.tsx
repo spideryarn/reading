@@ -255,6 +255,7 @@ export function UnifiedLeftPane({
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false)
   const [useSemanticSearch, setUseSemanticSearch] = useState(false)
   const [semanticSearchError, setSemanticSearchError] = useState<string | null>(null)
+  const [semanticSortByRelevance, setSemanticSortByRelevance] = useState(false) // false = position, true = relevance
   
   // Store timeout ID to cancel pending searches
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -449,6 +450,33 @@ export function UnifiedLeftPane({
       setIsSearching(false)
     }
   }, [documentId, elements])
+
+  // Function to sort semantic search results
+  const sortSemanticResults = useCallback((results: SearchResult[], sortByRelevance: boolean) => {
+    if (!results.length || results[0]?.searchType !== 'semantic') {
+      return results
+    }
+
+    return [...results].sort((a, b) => {
+      if (sortByRelevance) {
+        // Sort by confidence (relevance) - highest first
+        return (b.confidence || 0) - (a.confidence || 0)
+      } else {
+        // Sort by document position - find element positions
+        const elementA = elements.find(el => el.id === a.elementId)
+        const elementB = elements.find(el => el.id === b.elementId)
+        return (elementA?.position || 0) - (elementB?.position || 0)
+      }
+    })
+  }, [elements])
+
+  // Memoized sorted search results
+  const sortedSearchResults = useMemo(() => {
+    if (useSemanticSearch && searchResults.length > 0 && searchResults[0]?.searchType === 'semantic') {
+      return sortSemanticResults(searchResults, semanticSortByRelevance)
+    }
+    return searchResults
+  }, [searchResults, semanticSortByRelevance, useSemanticSearch, sortSemanticResults])
 
   // Modify the existing search handler to support both search types
   const handleSearchInputChange = useCallback((value: string) => {
@@ -662,6 +690,7 @@ export function UnifiedLeftPane({
                   setUseSemanticSearch(false)
                   setSemanticSearchError(null)
                   setSearchResults([])
+                  setSemanticSortByRelevance(false) // Reset sort to default (position)
                   if (markInstanceRef.current) {
                     markInstanceRef.current.unmark()
                   }
@@ -683,6 +712,7 @@ export function UnifiedLeftPane({
                   setUseSemanticSearch(true)
                   setSemanticSearchError(null)
                   setSearchResults([])
+                  setSemanticSortByRelevance(false) // Reset sort to default (position)
                   if (markInstanceRef.current) {
                     markInstanceRef.current.unmark()
                   }
@@ -845,8 +875,37 @@ export function UnifiedLeftPane({
             <div className="text-sm text-gray-600 mb-3">
               {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found for {useSemanticSearch ? 'semantic' : 'exact'} "{searchQuery}"
             </div>
+            
+            {/* Sort toggle - only show for semantic search with results */}
+            {useSemanticSearch && searchResults.length > 1 && searchResults[0]?.searchType === 'semantic' && (
+              <div className="mb-3">
+                <div className="flex bg-gray-50 p-1 rounded-lg">
+                  <button
+                    onClick={() => setSemanticSortByRelevance(false)}
+                    className={`flex-1 px-2 py-1 text-xs font-medium rounded transition-all ${
+                      !semanticSortByRelevance 
+                        ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Position
+                  </button>
+                  <button
+                    onClick={() => setSemanticSortByRelevance(true)}
+                    className={`flex-1 px-2 py-1 text-xs font-medium rounded transition-all ${
+                      semanticSortByRelevance 
+                        ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Relevance
+                  </button>
+                </div>
+              </div>
+            )}
+            
             <div className="space-y-2">
-              {searchResults.map((result) => (
+              {sortedSearchResults.map((result) => (
                 <div
                   key={result.elementId}
                   className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
