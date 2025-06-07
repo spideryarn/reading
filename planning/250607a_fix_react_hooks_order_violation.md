@@ -40,7 +40,7 @@ const tabs: Tab[] = [
   {
     id: 'ai-generated',
     label: 'AI-generated',
-    content: renderAIGeneratedTab(), // ❌ Creates new component instance every render
+    content: renderAIGeneratedTab(), // ❌ Creates new React element every render
     ...
   },
   ...
@@ -48,9 +48,12 @@ const tabs: Tab[] = [
 ```
 
 This pattern causes:
-- `AIGeneratedHeadingsTab` to be completely recreated on each parent render
-- React to see it as a "new" component with different hook execution
-- Loss of all component state on parent re-renders
+- A new React element tree to be created on each parent render
+- React to unmount the old component instance and mount a new one
+- All component state to be lost (hooks are re-initialized)
+- React's reconciliation to see different hook calls between renders, triggering the warning
+
+The issue occurs because `renderAIGeneratedTab()` returns a new JSX element (`<AIGeneratedHeadingsTab ... />`) each time it's called, even though the props may be identical.
 
 ## Alternative Solutions Considered
 
@@ -91,6 +94,8 @@ The memoization approach using `useMemo` is recommended because:
 5. Performance cost is acceptable for 6 tabs with text content
 6. Parent callbacks are already properly memoized with `useCallback`
 
+**Important implementation note**: We'll memoize the rendered React elements (e.g., `<AIGeneratedHeadingsTab ... />`) rather than component functions. This means props are captured at memo-creation time, so all dynamic props must be included in the dependency arrays.
+
 ## Actions
 
 ### Stage: Fix React hooks order violation
@@ -104,7 +109,7 @@ The memoization approach using `useMemo` is recommended because:
   - [ ] Add `useMemo` for Search tab content
   - [ ] Update tabs array to use memoized content references
   - [ ] Ensure all dependencies are properly included in `useMemo` arrays
-  - [ ] Include `documentSlug` (and any other per-document identifiers) in each memo's dependency array
+  - [ ] Include `documentId` in each memo's dependency array to ensure tabs refresh when switching documents
 
 - [ ] Test the fix
   - [ ] Verify hooks order error is resolved
@@ -112,7 +117,7 @@ The memoization approach using `useMemo` is recommended because:
   - [ ] Test state persistence when collapsing/expanding pane
   - [ ] Verify database loading still works on page refresh
   - [ ] Check that all tabs still function correctly
-  - [ ] Automate a regression test that fails if a hooks-order warning is emitted
+  - [ ] Create automated regression test that fails if a hooks-order warning is emitted
 
 - [ ] Review and optimize
   - [ ] Check if `documentContext` in parent should be memoized (minor optimization)
@@ -122,6 +127,37 @@ The memoization approach using `useMemo` is recommended because:
 - [ ] Finalize
   - [ ] Create git commit following `docs/GIT_COMMITS.md`
   - [ ] Move this doc to `planning/finished/`
+
+## Implementation Considerations
+
+### Dependencies and Props Capture
+When implementing the memoization solution, be aware that:
+- Props are captured at memo-creation time when storing `<Component {...props} />` 
+- All dynamic props must be included in the dependency array
+- Changes to props not in the dependency array will NOT propagate to the memoized element
+- At minimum, include `documentId` to handle document switching
+
+### Initial Render Performance
+All six tabs will mount immediately on page load, which means:
+- Any `useEffect` hooks that fetch data will run for all tabs
+- To optimize, tabs can check if they're active before initiating expensive operations
+- The performance impact is acceptable for our use case (10k word documents)
+
+### Memory Considerations
+For typical documents (10k words), keeping all tabs mounted is fine. If 100k word documents become common:
+- Monitor memory usage with browser dev tools
+- Consider lazy initialization where tabs mount on first activation
+- The current approach prioritizes simplicity over memory optimization
+
+### Variable Naming
+Use descriptive names like `aiGeneratedTabElement` instead of `aiGeneratedTabContent` to emphasize that we're storing ReactElements, not component functions.
+
+### Future Enhancement: Lazy Tab Caching
+If performance or memory becomes an issue, a middle-ground approach is to keep tabs mounted once the user has opened them (lazy caching):
+- Use a `useRef` Map keyed by tab id to track mounted tabs
+- Mount tabs on first activation and keep them mounted thereafter
+- This preserves state while reducing initial load
+- Can be implemented without changing the public API
 
 ## Appendix
 
