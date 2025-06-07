@@ -11,8 +11,10 @@ import {
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
+import { EnhancementService } from '@/lib/services/database/enhancements'
 import { DocumentParser } from '@/lib/services/document-parser'
 import { getModelConfig, AI_CONFIG } from '@/lib/config'
+import { normalizeSemanticSearchQuery } from '@/lib/utils/semantic-search'
 import { 
   formatDocumentForSemanticSearch, 
   validateSemanticSearchElementIds,
@@ -43,11 +45,63 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    // Normalize the query for consistent caching
+    const normalizedQuery = normalizeSemanticSearchQuery(query)
+    
     // Initialize database services
     const supabase = await createClient()
     const documentService = new DocumentService(supabase)
     const aiCallService = new AiCallService(supabase)
+    const enhancementService = new EnhancementService(supabase)
     const documentParser = new DocumentParser()
+    
+    // Check for cached results first
+    const cachedResult = await enhancementService.get(
+      documentId,
+      'semantic-search', // Type is just a string in the database
+      normalizedQuery
+    )
+    
+    if (cachedResult) {
+      console.log(`[SemanticSearch] Returning cached results for query: "${query}" (normalized: "${normalizedQuery}")`)
+      
+      // Validate cached data structure
+      if (!cachedResult.content || typeof cachedResult.content !== 'object') {
+        throw new Error(`Malformed semantic search cache data for enhancement ${cachedResult.id}: content is not an object`)
+      }
+      
+      const cachedContent = cachedResult.content as {
+        originalQuery?: string
+        normalizedQuery: string
+        matches: Array<{
+          elementId: string
+          confidence: number
+          reasoning: string
+          relevantText?: string
+        }>
+        stats?: {
+          totalElements: number
+          searchableElements: number
+          matchesFound: number
+          estimatedTokensUsed?: number
+        }
+        searchedAt: string
+      }
+      if (!Array.isArray(cachedContent.matches)) {
+        throw new Error(`Malformed semantic search cache data for enhancement ${cachedResult.id}: matches is not an array`)
+      }
+      
+      return NextResponse.json({
+        matches: cachedContent.matches,
+        query: cachedContent.originalQuery || query,
+        documentId,
+        stats: cachedContent.stats,
+        aiCallId: cachedResult.ai_call_id,
+        cached: true,
+        cachedAt: cachedResult.created_at,
+        enhancementId: cachedResult.id
+      })
+    }
     
     // Load document from database
     const document = await documentService.getById(documentId)
@@ -203,6 +257,35 @@ export async function POST(request: NextRequest) {
     
     console.log(`[SemanticSearch] Found ${validMatches.length} semantic matches for query: "${query}"`)
     
+    // Store the results in cache
+    try {
+      const cacheContent = {
+        originalQuery: query,
+        normalizedQuery: normalizedQuery,
+        matches: validMatches,
+        stats: {
+          totalElements: stats.totalElements,
+          searchableElements: stats.meaningfulElements,
+          matchesFound: validMatches.length,
+          estimatedTokensUsed: estimatedTokens
+        },
+        searchedAt: new Date().toISOString()
+      }
+      
+      await enhancementService.upsert({
+        documentId,
+        aiCallId: aiCall.id,
+        type: 'semantic-search',
+        subtype: normalizedQuery,
+        content: cacheContent
+      })
+      
+      console.log(`[SemanticSearch] Cached results for query: "${query}" (normalized: "${normalizedQuery}")`)
+    } catch (cacheError) {
+      // Log error but don't fail the request - results are still valid
+      console.error('[SemanticSearch] Failed to cache results:', cacheError)
+    }
+    
     return NextResponse.json({
       matches: validMatches,
       query,
@@ -213,7 +296,8 @@ export async function POST(request: NextRequest) {
         matchesFound: validMatches.length,
         estimatedTokensUsed: estimatedTokens
       },
-      aiCallId: aiCall.id
+      aiCallId: aiCall.id,
+      cached: false
     })
   } catch (error) {
     console.error('[SemanticSearch] Error processing semantic search:', error)
