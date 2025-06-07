@@ -75,7 +75,8 @@ obsolete_alternative_version/
 screenshots/
 
 # Claude AI specific
-.claude/
+# Claude Code local settings
+.claude/settings.local.json
 
 # Cursor IDE
 .cursor/
