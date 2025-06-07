@@ -28,7 +28,8 @@ The application uses a **two-pane resizable layout** built with shadcn/ui Resiza
 - **Content**: Document title (left) and action buttons (right)
 - **Action Buttons**:
   - **Settings** - Shows configuration dialog with LLM parameters ✓
-  - **View Original** - Links to original HTML document
+  - **Download/View Original** - PDF icon for stored PDF files (download), File icon for HTML documents (view original) ✓
+  - **Tweet Thread** - Convert document to tweet thread format ✓
 - **Settings Dialog**: Modal overlay showing current AI model, temperature, max tokens, and UI configuration
 
 ### 1. Left Pane - Unified Navigation & Tools ✓

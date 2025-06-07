@@ -129,8 +129,10 @@ export async function POST(request: NextRequest) {
       documentId
     })
     
-    // Parse the JSON response from LLM (strip markdown code blocks if present)
+    // Parse the JSON response from LLM with improved robustness
     let jsonString = llmResponse.trim()
+    
+    // Strip markdown code blocks if present
     if (jsonString.startsWith('```json')) {
       jsonString = jsonString.slice(7) // Remove ```json
     }
@@ -140,7 +142,32 @@ export async function POST(request: NextRequest) {
     if (jsonString.endsWith('```')) {
       jsonString = jsonString.slice(0, -3) // Remove ending ```
     }
-    const parsedResponse = JSON.parse(jsonString.trim())
+    
+    // Clean up the JSON string
+    jsonString = jsonString.trim()
+    
+    // Try to parse JSON with better error handling
+    let parsedResponse
+    try {
+      parsedResponse = JSON.parse(jsonString)
+    } catch (parseError) {
+      console.error(`[SemanticSearch] JSON parse error for query "${query}":`, parseError)
+      console.error(`[SemanticSearch] Raw LLM response length: ${llmResponse.length}`)
+      console.error(`[SemanticSearch] Cleaned JSON string length: ${jsonString.length}`)
+      
+      // Try to extract JSON from the response if it's embedded in other text
+      const jsonMatch = jsonString.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        try {
+          parsedResponse = JSON.parse(jsonMatch[0])
+          console.log(`[SemanticSearch] Successfully recovered JSON from embedded response`)
+        } catch (recoveryError) {
+          throw new Error(`Failed to parse LLM JSON response: ${parseError.message}`)
+        }
+      } else {
+        throw new Error(`Failed to parse LLM JSON response: ${parseError.message}`)
+      }
+    }
     
     // Debug: Log the parsed LLM response
     console.log(`[SemanticSearch] LLM Response:`, JSON.stringify(parsedResponse, null, 2))
@@ -152,13 +179,16 @@ export async function POST(request: NextRequest) {
     const elementIds = validatedResponse.matches.map(match => match.elementId)
     const validElementIds = validateSemanticSearchElementIds(elements, elementIds)
     
-    // Filter matches to only include valid element IDs
+    // Filter matches: valid element IDs + confidence >= 0.25 (conservative threshold)
     const validMatches = validatedResponse.matches.filter(match => 
-      validElementIds.includes(match.elementId)
+      validElementIds.includes(match.elementId) && match.confidence >= 0.25
     )
     
-    if (validMatches.length !== validatedResponse.matches.length) {
-      console.warn(`[SemanticSearch] Filtered ${validatedResponse.matches.length - validMatches.length} invalid element IDs`)
+    const filteredCount = validatedResponse.matches.length - validMatches.length
+    if (filteredCount > 0) {
+      const lowConfidenceCount = validatedResponse.matches.filter(match => match.confidence < 0.25).length
+      const invalidIdCount = filteredCount - lowConfidenceCount
+      console.warn(`[SemanticSearch] Filtered ${filteredCount} matches: ${invalidIdCount} invalid element IDs, ${lowConfidenceCount} low confidence (<0.25)`)
     }
     
     // Complete the AI call record
