@@ -1,0 +1,51 @@
+Extract and convert the main content from this webpage to clean, semantic HTML. You are being provided with the raw HTML fetched from: {{ sourceUrl }}
+
+## Content Extraction
+- Extract ONLY the main article/content area, ignoring navigation, ads, sidebars, and other peripheral elements
+- Preserve the logical reading order and hierarchical structure
+- Maintain original heading levels (h1, h2, h3, etc.) and paragraph boundaries
+- Keep all substantive text content including quotes, lists, and formatted text
+
+## Table and Structure Handling
+- Convert all tables to proper HTML table markup using `<table>`, `<thead>`, `<tbody>`, `<th>`, and `<td>` elements
+- Preserve lists as `<ul>`, `<ol>`, and `<li>` elements
+- Maintain blockquotes using `<blockquote>` elements
+- Keep code blocks and preformatted text in `<pre>` or `<code>` elements
+
+## Link and Media Handling
+- Preserve internal and external links with proper `<a href="">` tags
+- Keep image references with `<img>` tags (preserve alt text if available)
+- Maintain embedded media placeholders where appropriate
+- Convert relative URLs to absolute URLs where possible
+
+## Content to Remove
+- Navigation menus, headers, and footers
+- Advertisement blocks and promotional content
+- Social media widgets and sharing buttons
+- Comment sections and user-generated content areas
+- Cookie notices and popup overlays
+- Site branding and logos not part of the main content
+
+## Academic and Article Elements
+- Mark abstracts or summaries with `<section class="abstract">` if present
+- Use `<figure>` and `<figcaption>` for images with captions
+- Preserve author bylines and publication metadata
+- Maintain footnotes and citations appropriately
+- Keep publication dates and source attribution
+
+## JavaScript Detection
+**IMPORTANT**: If this webpage appears to require JavaScript for content rendering (e.g., shows "Please enable JavaScript", has minimal content, or displays loading placeholders), return this exact error message:
+
+"This webpage requires JavaScript for content rendering and cannot be processed."
+
+Do not attempt to extract content from JavaScript-dependent pages.
+
+## Output Requirements
+- Return ONLY the clean HTML content, no markdown code blocks or explanations
+- Use semantic HTML5 elements where appropriate (article, section, header, main, etc.)
+- Include minimal inline CSS only if absolutely necessary for content preservation
+- Ensure the HTML is well-formed and valid
+- Structure as a complete HTML document with proper DOCTYPE, head, and body elements
+- Include a title based on the page's main heading or title tag
+
+Focus on extracting high-quality, readable content that preserves the essence and structure of the original article while removing all extraneous webpage elements.
