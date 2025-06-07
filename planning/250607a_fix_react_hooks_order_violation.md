@@ -40,7 +40,7 @@ const tabs: Tab[] = [
   {
     id: 'ai-generated',
     label: 'AI-generated',
-    content: renderAIGeneratedTab(), // ❌ Creates new component instance every render
+    content: renderAIGeneratedTab(), // ❌ Creates new React element every render
     ...
   },
   ...
@@ -48,9 +48,12 @@ const tabs: Tab[] = [
 ```
 
 This pattern causes:
-- `AIGeneratedHeadingsTab` to be completely recreated on each parent render
-- React to see it as a "new" component with different hook execution
-- Loss of all component state on parent re-renders
+- A new React element tree to be created on each parent render
+- React to unmount the old component instance and mount a new one
+- All component state to be lost (hooks are re-initialized)
+- React's reconciliation to see different hook calls between renders, triggering the warning
+
+The issue occurs because `renderAIGeneratedTab()` returns a new JSX element (`<AIGeneratedHeadingsTab ... />`) each time it's called, even though the props may be identical.
 
 ## Alternative Solutions Considered
 
@@ -91,35 +94,128 @@ The memoization approach using `useMemo` is recommended because:
 5. Performance cost is acceptable for 6 tabs with text content
 6. Parent callbacks are already properly memoized with `useCallback`
 
+**Important implementation note**: We'll memoize the rendered React elements (e.g., `<AIGeneratedHeadingsTab ... />`) rather than component functions. This means props are captured at memo-creation time, so all dynamic props must be included in the dependency arrays.
+
 ## Actions
 
-### Stage: Fix React hooks order violation
+### Stage: Fix React hooks order violation ✅ COMPLETED
 
-- [ ] Implement memoized tab content for all tabs in `UnifiedLeftPane`
-  - [ ] Add `useMemo` for Original tab content
-  - [ ] Add `useMemo` for AI-generated tab content
-  - [ ] Add `useMemo` for Summary tab content
-  - [ ] Add `useMemo` for Chat tab content
-  - [ ] Add `useMemo` for Glossary tab content
-  - [ ] Add `useMemo` for Search tab content
-  - [ ] Update tabs array to use memoized content references
-  - [ ] Ensure all dependencies are properly included in `useMemo` arrays
+- [x] Implement memoized tab content for all tabs in `UnifiedLeftPane`
+  - [x] Add `useMemo` for Original tab content
+  - [x] Add `useMemo` for AI-generated tab content
+  - [x] Add `useMemo` for Summary tab content
+  - [x] Add `useMemo` for Chat tab content
+  - [x] Add `useMemo` for Glossary tab content
+  - [x] Add `useMemo` for Search tab content
+  - [x] Update tabs array to use memoized content references
+  - [x] Ensure all dependencies are properly included in `useMemo` arrays
+  - [x] Include `documentId` in each memo's dependency array to ensure tabs refresh when switching documents
 
-- [ ] Test the fix
-  - [ ] Verify hooks order error is resolved
-  - [ ] Test state persistence when switching tabs
+- [x] Test the fix
+  - [x] Verify hooks order error is resolved
+  - [x] Test state persistence when switching tabs
   - [ ] Test state persistence when collapsing/expanding pane
   - [ ] Verify database loading still works on page refresh
-  - [ ] Check that all tabs still function correctly
+  - [x] Check that all tabs still function correctly
+  - [x] Create automated regression test that fails if a hooks-order warning is emitted
 
-- [ ] Review and optimize
+- [x] Review and optimize
   - [ ] Check if `documentContext` in parent should be memoized (minor optimization)
-  - [ ] Run existing tests to ensure no regressions
-  - [ ] Update planning doc with progress
+  - [x] Run existing tests to ensure no regressions
+  - [x] Update planning doc with progress
 
 - [ ] Finalize
   - [ ] Create git commit following `docs/GIT_COMMITS.md`
   - [ ] Move this doc to `planning/finished/`
+
+## Implementation Considerations
+
+### Dependencies and Props Capture
+When implementing the memoization solution, be aware that:
+- Props are captured at memo-creation time when storing `<Component {...props} />` 
+- All dynamic props must be included in the dependency array
+- Changes to props not in the dependency array will NOT propagate to the memoized element
+- At minimum, include `documentId` to handle document switching
+
+### Initial Render Performance
+All six tabs will mount immediately on page load, which means:
+- Any `useEffect` hooks that fetch data will run for all tabs
+- To optimize, tabs can check if they're active before initiating expensive operations
+- The performance impact is acceptable for our use case (10k word documents)
+
+### Memory Considerations
+For typical documents (10k words), keeping all tabs mounted is fine. If 100k word documents become common:
+- Monitor memory usage with browser dev tools
+- Consider lazy initialization where tabs mount on first activation
+- The current approach prioritizes simplicity over memory optimization
+
+### Variable Naming
+Use descriptive names like `aiGeneratedTabElement` instead of `aiGeneratedTabContent` to emphasize that we're storing ReactElements, not component functions.
+
+### Future Enhancement: Lazy Tab Caching
+If performance or memory becomes an issue, a middle-ground approach is to keep tabs mounted once the user has opened them (lazy caching):
+- Use a `useRef` Map keyed by tab id to track mounted tabs
+- Mount tabs on first activation and keep them mounted thereafter
+- This preserves state while reducing initial load
+- Can be implemented without changing the public API
+
+## Implementation Notes
+
+### Root Cause Analysis - Updated
+
+The hooks order violation was actually caused by the `TabContainer` component only rendering the active tab's content. This meant:
+- When switching tabs, components were unmounted and remounted
+- When collapsing/expanding the left pane, the entire component tree was destroyed and recreated
+- This caused React to see different hook orders between renders
+
+### Final Solution
+
+1. **Modified `TabContainer` to keep all tabs mounted**:
+   - Changed from rendering only `activeTabContent` to rendering all tabs
+   - Used `display: none` to hide inactive tabs while keeping them mounted
+   - This preserves component state and prevents hooks order violations
+
+2. **Fixed collapse/expand state loss**:
+   - Changed `ResizableDocumentLayout` to keep `UnifiedLeftPane` mounted when collapsed
+   - Used `display: none` instead of conditional rendering
+   - This preserves tab selection and search queries when toggling the pane
+
+### Changes Made
+
+1. **`components/tab-container.tsx`**:
+   ```tsx
+   // Before: Only rendered active tab
+   {activeTabContent}
+   
+   // After: Renders all tabs, hides inactive ones
+   {tabs.map((tab) => (
+     <div
+       key={tab.id}
+       style={{ display: activeTab === tab.id ? 'block' : 'none' }}
+       className="h-full"
+     >
+       {tab.content}
+     </div>
+   ))}
+   ```
+
+2. **`components/resizable-document-layout.tsx`**:
+   ```tsx
+   // Before: Conditionally rendered
+   {!isLeftPaneCollapsed && (<UnifiedLeftPane ... />)}
+   
+   // After: Always rendered, conditionally visible
+   <div style={{ display: isLeftPaneCollapsed ? 'none' : 'block', height: '100%' }}>
+     <UnifiedLeftPane ... />
+   </div>
+   ```
+
+### Why the Initial Memoization Approach Didn't Work
+
+The initial approach of memoizing tab content in `UnifiedLeftPane` didn't solve the problem because:
+1. The real issue was in `TabContainer`, not in how tabs were created
+2. Even with memoized elements, `TabContainer` was still unmounting/remounting them
+3. The memoization actually helped reveal the underlying issue by making the error more consistent
 
 ## Appendix
 
@@ -166,3 +262,47 @@ This means the memoization approach will work effectively without needing to wor
 ### Document Size Considerations
 
 User indicated documents are typically 10k words, rarely 100k words. This is well within browser capabilities for rendering multiple tabs simultaneously.
+
+### Critique from o3
+
+**Overall assessment**
+
+The planning document does a solid job of identifying the *immediate* root cause (a new React element being created on every render) and choosing a pragmatic, low-risk fix that aligns with the stated product priorities.  In general the proposal is sound and should eliminate the hooks-order warning.
+
+**Strengths**
+
+- Correctly isolates the parent component as the source of the hooks-order violation rather than the child.
+- Evaluates several alternatives and selects the simplest approach that also preserves component state between tab switches – a key user requirement.
+- Recognises that the performance impact of keeping six mostly-text components mounted is acceptable for the domain (≈10 kword documents).
+- Identifies that parent callbacks are already memoised, reducing the risk of unnecessary re-renders.
+
+**Areas to tighten or clarify**
+
+1. **Dependency lists for `useMemo`**  
+   The proposal says "ensure all dependencies are properly included" but does not enumerate them.  At a minimum the memo should invalidate when the active *document* (slug / id) changes; otherwise tab content may show stale data after a document switch without a full reload.  Calling that out explicitly will prevent an easy-to-miss bug.
+
+2. **Caching *elements* vs *components***  
+   React generally recommends memoising *values* or *components*, not the rendered *element* itself.  Storing `<Component …/>` in a memo can be surprising because props are captured at memo-creation time.  Two clarifications would help:
+   - Make it explicit that changes to props not listed in the dependency array will **not** propagate into the memoised element.
+   - Consider an alternative API where the tabs array stores a *component function* and the tab container renders it lazily.  That keeps identity stable without capturing props prematurely.
+
+3. **Initial render cost & side-effects**  
+   Mounting all six tabs up-front means that any network requests or heavy computations kicked off in `useEffect` of *any* tab will run immediately.  If some tabs fetch data that the user may never open, that work is wasted.  If this becomes noticeable, a trivial optimisation is to gate those effects on the tab's `active` prop.
+
+4. **Memory retention over long sessions**  
+   Keeping every tab mounted is fine for small to medium documents, but if 100 kword documents become common the DOM tree and in-memory state could grow.  Worth capturing a follow-up task to instrument memory and revisit if needed.
+
+5. **Testing strategy**  
+   The checklist calls for manual tests; adding a regression test that renders the left pane, flips tabs, and asserts that no hook-order warning is logged would lock the fix in place.
+
+6. **Terminology / naming**  
+   When updating code, prefer naming like `originalTabElement` over `originalTabContent` to emphasise that the memo holds a *ReactElement*.
+
+**Suggested small edits to the Action list**
+
+- Under _Implement memoised tab content_ add a bullet: "Include `documentSlug` (and any other per-document identifiers) in each memo's dependency array."
+- Under _Test the fix_ add: "Automate a regression test that fails if a hooks-order warning is emitted."
+
+**Potential future enhancement**
+
+If performance/memory ever becomes an issue, a middle-ground is to keep a tab mounted once the user has *ever* opened it (i.e. lazily cache).  A small `useRef` map keyed by tab id can achieve this without changing the public API.

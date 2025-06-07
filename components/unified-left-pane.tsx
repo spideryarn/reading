@@ -510,56 +510,44 @@ export function UnifiedLeftPane({
 
   // Note: DOM event listener removed - now using DocumentCommunicationContext for all cross-pane communication
 
-  // Render Original headings tab
-  const renderOriginalTab = () => {
-    return (
-      <OriginalHeadingsTab
-        content={content}
-        elements={elements}
-        onHeadingClick={onHeadingClick}
+  // Render functions for tabs
+  const renderOriginalTab = () => (
+    <OriginalHeadingsTab
+      content={content}
+      elements={elements}
+      onHeadingClick={onHeadingClick}
+      documentId={documentId}
+      headingVisibility={headingVisibility}
+    />
+  )
+
+  const renderAIGeneratedTab = () => (
+    <AIGeneratedHeadingsTab
+      content={content}
+      elements={elements}
+      onHeadingClick={onHeadingClick}
+      documentId={documentId}
+      headingVisibility={headingVisibility}
+    />
+  )
+
+  const renderSummaryTab = () => (
+    <DocumentSummaryTab
+      content={content}
+      documentId={documentId}
+      markdownContent={markdownContent}
+    />
+  )
+
+  const renderChatTab = () => (
+    <div className="h-full">
+      <AssistantChat
         documentId={documentId}
-        headingVisibility={headingVisibility}
+        documentContext={documentContext}
       />
-    )
-  }
+    </div>
+  )
 
-  // Render AI-generated headings tab
-  const renderAIGeneratedTab = () => {
-    return (
-      <AIGeneratedHeadingsTab
-        content={content}
-        elements={elements}
-        onHeadingClick={onHeadingClick}
-        documentId={documentId}
-        headingVisibility={headingVisibility}
-      />
-    )
-  }
-
-  // Render Summary tab
-  const renderSummaryTab = () => {
-    return (
-      <DocumentSummaryTab 
-        content={content}
-        documentId={documentId}
-        markdownContent={markdownContent}
-      />
-    )
-  }
-
-  // Render Chat tab
-  const renderChatTab = () => {
-    return (
-      <div className="h-full">
-        <AssistantChat 
-          documentId={documentId} 
-          documentContext={documentContext} 
-        />
-      </div>
-    )
-  }
-
-  // Render Glossary tab
   const renderGlossaryTab = () => {
     if (!showGlossary) {
       return (
@@ -676,9 +664,7 @@ export function UnifiedLeftPane({
     )
   }
 
-  // Render Search tab
-  const renderSearchTab = () => {
-    return (
+  const renderSearchTab = () => (
       <div className="flex flex-col h-full">
         {/* Pinned search input */}
         <div className="sticky top-0 bg-white z-10 p-4 border-b border-gray-200">
@@ -947,7 +933,6 @@ export function UnifiedLeftPane({
         </div>
       </div>
     )
-  }
 
   // Define all 6 tabs at the same level
   const tabs: Tab[] = [

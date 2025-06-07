@@ -257,7 +257,7 @@ function ResizableDocumentLayoutInner({
             width: isLeftPaneCollapsed ? '0px' : undefined 
           }}
         >
-          {!isLeftPaneCollapsed && (
+          <div style={{ display: isLeftPaneCollapsed ? 'none' : 'block', height: '100%' }}>
             <UnifiedLeftPane
               content={html}
               elements={elements}
@@ -276,7 +276,7 @@ function ResizableDocumentLayoutInner({
               documentContext={documentContext}
               onToggleCollapse={handleToggleCollapse}
             />
-          )}
+          </div>
         </ResizablePanel>
         
         {/* Resize handle - always present but hidden when collapsed */}
