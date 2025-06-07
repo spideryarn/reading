@@ -665,6 +665,10 @@ export function UnifiedLeftPane({
                   if (markInstanceRef.current) {
                     markInstanceRef.current.unmark()
                   }
+                  // Auto-focus search input
+                  setTimeout(() => {
+                    searchInputRef.current?.focus()
+                  }, 50)
                 }}
                 className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all ${
                   !useSemanticSearch 
@@ -682,6 +686,10 @@ export function UnifiedLeftPane({
                   if (markInstanceRef.current) {
                     markInstanceRef.current.unmark()
                   }
+                  // Auto-focus search input
+                  setTimeout(() => {
+                    searchInputRef.current?.focus()
+                  }, 50)
                 }}
                 className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all ${
                   useSemanticSearch 
