@@ -161,31 +161,61 @@ If performance or memory becomes an issue, a middle-ground approach is to keep t
 
 ## Implementation Notes
 
+### Root Cause Analysis - Updated
+
+The hooks order violation was actually caused by the `TabContainer` component only rendering the active tab's content. This meant:
+- When switching tabs, components were unmounted and remounted
+- When collapsing/expanding the left pane, the entire component tree was destroyed and recreated
+- This caused React to see different hook orders between renders
+
+### Final Solution
+
+1. **Modified `TabContainer` to keep all tabs mounted**:
+   - Changed from rendering only `activeTabContent` to rendering all tabs
+   - Used `display: none` to hide inactive tabs while keeping them mounted
+   - This preserves component state and prevents hooks order violations
+
+2. **Fixed collapse/expand state loss**:
+   - Changed `ResizableDocumentLayout` to keep `UnifiedLeftPane` mounted when collapsed
+   - Used `display: none` instead of conditional rendering
+   - This preserves tab selection and search queries when toggling the pane
+
 ### Changes Made
 
-1. **Memoized all tab elements** in `components/unified-left-pane.tsx`:
-   - Replaced inline `renderXxxTab()` function calls with `useMemo` wrapped elements
-   - Each tab element is now stable across renders unless its dependencies change
-   - Used descriptive names like `originalTabElement`, `aiGeneratedTabElement` etc.
+1. **`components/tab-container.tsx`**:
+   ```tsx
+   // Before: Only rendered active tab
+   {activeTabContent}
+   
+   // After: Renders all tabs, hides inactive ones
+   {tabs.map((tab) => (
+     <div
+       key={tab.id}
+       style={{ display: activeTab === tab.id ? 'block' : 'none' }}
+       className="h-full"
+     >
+       {tab.content}
+     </div>
+   ))}
+   ```
 
-2. **Dependency arrays**:
-   - Original tab: `[content, elements, onHeadingClick, documentId, headingVisibility]`
-   - AI-generated tab: `[content, elements, onHeadingClick, documentId, headingVisibility]`
-   - Summary tab: `[content, documentId, markdownContent]`
-   - Chat tab: `[documentId, documentContext]`
-   - Glossary tab: Complex dependencies including all glossary-related state and callbacks
-   - Search tab: Extensive dependencies including all search-related state and callbacks
+2. **`components/resizable-document-layout.tsx`**:
+   ```tsx
+   // Before: Conditionally rendered
+   {!isLeftPaneCollapsed && (<UnifiedLeftPane ... />)}
+   
+   // After: Always rendered, conditionally visible
+   <div style={{ display: isLeftPaneCollapsed ? 'none' : 'block', height: '100%' }}>
+     <UnifiedLeftPane ... />
+   </div>
+   ```
 
-3. **Testing**:
-   - Created `components/__tests__/hooks-order-test.test.tsx` to verify the fix
-   - Test switches between tabs multiple times and rerenders with changing props
-   - Verifies no hooks order violations are logged to console
-   - All tests pass successfully
+### Why the Initial Memoization Approach Didn't Work
 
-4. **Known Issues**:
-   - Existing unified-left-pane tests fail due to missing DocumentCommunicationProvider
-   - This is a test setup issue, not a problem with the implementation
-   - Other component tests (tab-container, resizable-document-layout) pass without issues
+The initial approach of memoizing tab content in `UnifiedLeftPane` didn't solve the problem because:
+1. The real issue was in `TabContainer`, not in how tabs were created
+2. Even with memoized elements, `TabContainer` was still unmounting/remounting them
+3. The memoization actually helped reveal the underlying issue by making the error more consistent
 
 ## Appendix
 
