@@ -104,6 +104,7 @@ The memoization approach using `useMemo` is recommended because:
   - [ ] Add `useMemo` for Search tab content
   - [ ] Update tabs array to use memoized content references
   - [ ] Ensure all dependencies are properly included in `useMemo` arrays
+  - [ ] Include `documentSlug` (and any other per-document identifiers) in each memo's dependency array
 
 - [ ] Test the fix
   - [ ] Verify hooks order error is resolved
@@ -111,6 +112,7 @@ The memoization approach using `useMemo` is recommended because:
   - [ ] Test state persistence when collapsing/expanding pane
   - [ ] Verify database loading still works on page refresh
   - [ ] Check that all tabs still function correctly
+  - [ ] Automate a regression test that fails if a hooks-order warning is emitted
 
 - [ ] Review and optimize
   - [ ] Check if `documentContext` in parent should be memoized (minor optimization)
@@ -166,3 +168,47 @@ This means the memoization approach will work effectively without needing to wor
 ### Document Size Considerations
 
 User indicated documents are typically 10k words, rarely 100k words. This is well within browser capabilities for rendering multiple tabs simultaneously.
+
+### Critique from o3
+
+**Overall assessment**
+
+The planning document does a solid job of identifying the *immediate* root cause (a new React element being created on every render) and choosing a pragmatic, low-risk fix that aligns with the stated product priorities.  In general the proposal is sound and should eliminate the hooks-order warning.
+
+**Strengths**
+
+- Correctly isolates the parent component as the source of the hooks-order violation rather than the child.
+- Evaluates several alternatives and selects the simplest approach that also preserves component state between tab switches – a key user requirement.
+- Recognises that the performance impact of keeping six mostly-text components mounted is acceptable for the domain (≈10 kword documents).
+- Identifies that parent callbacks are already memoised, reducing the risk of unnecessary re-renders.
+
+**Areas to tighten or clarify**
+
+1. **Dependency lists for `useMemo`**  
+   The proposal says "ensure all dependencies are properly included" but does not enumerate them.  At a minimum the memo should invalidate when the active *document* (slug / id) changes; otherwise tab content may show stale data after a document switch without a full reload.  Calling that out explicitly will prevent an easy-to-miss bug.
+
+2. **Caching *elements* vs *components***  
+   React generally recommends memoising *values* or *components*, not the rendered *element* itself.  Storing `<Component …/>` in a memo can be surprising because props are captured at memo-creation time.  Two clarifications would help:
+   - Make it explicit that changes to props not listed in the dependency array will **not** propagate into the memoised element.
+   - Consider an alternative API where the tabs array stores a *component function* and the tab container renders it lazily.  That keeps identity stable without capturing props prematurely.
+
+3. **Initial render cost & side-effects**  
+   Mounting all six tabs up-front means that any network requests or heavy computations kicked off in `useEffect` of *any* tab will run immediately.  If some tabs fetch data that the user may never open, that work is wasted.  If this becomes noticeable, a trivial optimisation is to gate those effects on the tab's `active` prop.
+
+4. **Memory retention over long sessions**  
+   Keeping every tab mounted is fine for small to medium documents, but if 100 kword documents become common the DOM tree and in-memory state could grow.  Worth capturing a follow-up task to instrument memory and revisit if needed.
+
+5. **Testing strategy**  
+   The checklist calls for manual tests; adding a regression test that renders the left pane, flips tabs, and asserts that no hook-order warning is logged would lock the fix in place.
+
+6. **Terminology / naming**  
+   When updating code, prefer naming like `originalTabElement` over `originalTabContent` to emphasise that the memo holds a *ReactElement*.
+
+**Suggested small edits to the Action list**
+
+- Under _Implement memoised tab content_ add a bullet: "Include `documentSlug` (and any other per-document identifiers) in each memo's dependency array."
+- Under _Test the fix_ add: "Automate a regression test that fails if a hooks-order warning is emitted."
+
+**Potential future enhancement**
+
+If performance/memory ever becomes an issue, a middle-ground is to keep a tab mounted once the user has *ever* opened it (i.e. lazily cache).  A small `useRef` map keyed by tab id can achieve this without changing the public API.
