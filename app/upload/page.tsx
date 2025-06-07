@@ -1,11 +1,22 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { AppHeader } from '@/components/app-header'
 import { Footer } from '@/components/footer'
-import { Upload, FilePdf, X } from '@phosphor-icons/react'
+import { Upload, FilePdf, X, Link as LinkIcon, CircleNotch } from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
 
-export default function UploadPage() {
+export default function AddDocumentPage() {
+  const router = useRouter()
+  const [activeTab, setActiveTab] = useState<'url' | 'pdf'>('url')
+  
+  // URL state
+  const [url, setUrl] = useState('')
+  const [isExtractingUrl, setIsExtractingUrl] = useState(false)
+  const [urlError, setUrlError] = useState<string>('')
+  
+  // PDF state
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [convertedHtml, setConvertedHtml] = useState<string>('')
@@ -14,6 +25,54 @@ export default function UploadPage() {
   const [selectedProvider, setSelectedProvider] = useState<'claude' | 'gemini'>('claude')
   const fileInputRef = useRef<HTMLInputElement>(null)
   
+  // URL validation helper
+  const isValidUrl = (urlString: string): boolean => {
+    try {
+      const url = new URL(urlString)
+      return url.protocol === 'http:' || url.protocol === 'https:'
+    } catch {
+      return false
+    }
+  }
+
+  // URL submission handler
+  const handleUrlSubmit = async () => {
+    if (!url.trim()) {
+      setUrlError('Please enter a URL')
+      return
+    }
+
+    if (!isValidUrl(url.trim())) {
+      setUrlError('Please enter a valid HTTP or HTTPS URL')
+      return
+    }
+
+    setIsExtractingUrl(true)
+    setUrlError('')
+
+    try {
+      const response = await fetch('/api/extract-url', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: url.trim() }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.text()
+        throw new Error(errorData || 'URL extraction failed')
+      }
+
+      const result = await response.json()
+      // Navigate to the document page using the slug
+      router.push(`/documents/${result.slug}`)
+    } catch (error) {
+      setUrlError(error instanceof Error ? error.message : 'Unknown error occurred')
+    } finally {
+      setIsExtractingUrl(false)
+    }
+  }
 
   const handleFile = (file: File) => {
     // Reset previous results
@@ -121,8 +180,9 @@ export default function UploadPage() {
         throw new Error(errorData || 'Upload failed')
       }
 
-      const html = await response.text()
-      setConvertedHtml(html)
+      const result = await response.json()
+      // Navigate to the document page using the slug
+      router.push(`/documents/${result.slug}`)
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Unknown error occurred')
     } finally {
@@ -132,150 +192,243 @@ export default function UploadPage() {
 
   return (
     <div className="min-h-screen">
-      <AppHeader title="PDF to HTML Converter" backLink="/documents" backText="Documents" />
+      <AppHeader title="Add Document" backLink="/documents" backText="Documents" />
       
       <main className="max-w-4xl mx-auto px-8 py-8">
         <div className="space-y-8">
-          {/* Upload Section */}
+          {/* Tab Navigation */}
           <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold mb-6 text-gray-900 border-b border-gray-100 pb-2">
-              Upload PDF Document
-            </h2>
-            
-            <div className="space-y-6">
-              {/* Drag and Drop Zone */}
-              <div
-                className={`
-                  relative border-2 border-dashed rounded-lg p-8 transition-all duration-200 cursor-pointer
-                  ${isDragging 
-                    ? 'border-orange-500 bg-orange-50' 
-                    : 'border-gray-300 hover:border-orange-400 bg-gray-50'
-                  }
-                  ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}
-                `}
-                onDragOver={handleDragOver}
-                onDragEnter={handleDragEnter}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={() => !isUploading && fileInputRef.current?.click()}
-                onKeyDown={handleKeyDown}
-                tabIndex={0}
-                role="button"
-                aria-label="Drag and drop a PDF file here or press Enter to select a file"
-                aria-describedby="upload-help"
+            <div className="flex space-x-1 mb-6 border-b border-gray-100 pb-4">
+              <button
+                onClick={() => setActiveTab('url')}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === 'url'
+                    ? 'bg-orange-100 text-orange-800 border border-orange-200'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
               >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf"
-                  onChange={handleFileSelect}
-                  disabled={isUploading}
-                  className="sr-only"
-                />
+                <LinkIcon size={16} className="inline mr-2" />
+                Paste URL
+              </button>
+              <button
+                onClick={() => setActiveTab('pdf')}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === 'pdf'
+                    ? 'bg-orange-100 text-orange-800 border border-orange-200'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <FilePdf size={16} className="inline mr-2" />
+                Upload PDF
+              </button>
+            </div>
+
+            {/* URL Tab Content */}
+            {activeTab === 'url' && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Add Document from URL
+                </h2>
                 
-                {!selectedFile ? (
-                  <div className="flex flex-col items-center justify-center space-y-4">
-                    <Upload 
-                      size={48} 
-                      className={isDragging ? 'text-orange-500' : 'text-gray-400'}
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="url-input" className="block text-sm font-medium text-gray-700 mb-2">
+                      Website URL
+                    </label>
+                    <input
+                      id="url-input"
+                      type="url"
+                      value={url}
+                      onChange={(e) => {
+                        setUrl(e.target.value)
+                        setUrlError('') // Clear error on input change
+                      }}
+                      placeholder="https://example.com/article"
+                      disabled={isExtractingUrl}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">
+                      Enter a URL to extract and save the webpage content. Supports articles, blog posts, and most text-based web content.
+                    </p>
+                  </div>
+
+                  <Button
+                    onClick={handleUrlSubmit}
+                    disabled={!url.trim() || isExtractingUrl}
+                    variant="orange"
+                    size="full"
+                  >
+                    {isExtractingUrl ? (
+                      <>
+                        <CircleNotch className="animate-spin" size={16} />
+                        Extracting content...
+                      </>
+                    ) : (
+                      'Extract and Save Document'
+                    )}
+                  </Button>
+
+                  {urlError && (
+                    <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                      <div className="font-medium mb-1">Extraction Error</div>
+                      <div>{urlError}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* PDF Tab Content */}
+            {activeTab === 'pdf' && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Upload PDF Document
+                </h2>
+                
+                <div className="space-y-6">
+                  {/* Drag and Drop Zone */}
+                  <div
+                    className={`
+                      relative border-2 border-dashed rounded-lg p-8 transition-all duration-200 cursor-pointer
+                      ${isDragging 
+                        ? 'border-orange-500 bg-orange-50' 
+                        : 'border-gray-300 hover:border-orange-400 bg-gray-50'
+                      }
+                      ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}
+                    `}
+                    onDragOver={handleDragOver}
+                    onDragEnter={handleDragEnter}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={() => !isUploading && fileInputRef.current?.click()}
+                    onKeyDown={handleKeyDown}
+                    tabIndex={0}
+                    role="button"
+                    aria-label="Drag and drop a PDF file here or press Enter to select a file"
+                    aria-describedby="upload-help"
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleFileSelect}
+                      disabled={isUploading}
+                      className="sr-only"
                     />
                     
-                    <div className="text-center">
-                      <p className="text-lg font-medium text-gray-700">
-                        {isDragging ? 'Drop your PDF here' : 'Drag and drop your PDF here'}
-                      </p>
-                      <p id="upload-help" className="text-sm text-gray-500 mt-1">
-                        or click to browse (max 32MB, multi-page supported)
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center">
-                    <div className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex items-center gap-3">
-                      <FilePdf size={32} className="text-red-600 flex-shrink-0" />
-                      <div className="flex-grow">
-                        <p className="font-medium text-gray-900">{selectedFile.name}</p>
-                        <p className="text-sm text-gray-500">
-                          {(selectedFile.size / 1024).toFixed(1)} KB
-                        </p>
+                    {!selectedFile ? (
+                      <div className="flex flex-col items-center justify-center space-y-4">
+                        <Upload 
+                          size={48} 
+                          className={isDragging ? 'text-orange-500' : 'text-gray-400'}
+                        />
+                        
+                        <div className="text-center">
+                          <p className="text-lg font-medium text-gray-700">
+                            {isDragging ? 'Drop your PDF here' : 'Drag and drop your PDF here'}
+                          </p>
+                          <p id="upload-help" className="text-sm text-gray-500 mt-1">
+                            or click to browse (max 32MB, multi-page supported)
+                          </p>
+                        </div>
                       </div>
+                    ) : (
+                      <div className="flex items-center justify-center">
+                        <div className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex items-center gap-3">
+                          <FilePdf size={32} className="text-red-600 flex-shrink-0" />
+                          <div className="flex-grow">
+                            <p className="font-medium text-gray-900">{selectedFile.name}</p>
+                            <p className="text-sm text-gray-500">
+                              {(selectedFile.size / 1024).toFixed(1)} KB
+                            </p>
+                          </div>
+                          <button
+                            onClick={clearSelectedFile}
+                            disabled={isUploading}
+                            className="ml-4 p-1 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                            aria-label="Remove file"
+                          >
+                            <X size={20} className="text-gray-500" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Provider Selection */}
+                  <div className="space-y-3">
+                    <label className="block text-sm font-medium text-gray-700">
+                      AI Provider
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
                       <button
-                        onClick={clearSelectedFile}
+                        type="button"
+                        onClick={() => setSelectedProvider('claude')}
                         disabled={isUploading}
-                        className="ml-4 p-1 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                        aria-label="Remove file"
+                        className={`p-3 border rounded-lg text-sm font-medium transition-colors ${
+                          selectedProvider === 'claude'
+                            ? 'border-orange-500 bg-orange-50 text-orange-700'
+                            : 'border-gray-300 bg-white text-gray-700 hover:border-orange-300'
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
                       >
-                        <X size={20} className="text-gray-500" />
+                        <div className="font-semibold">Anthropic Claude</div>
+                        <div className="text-xs text-gray-500 mt-1">Try this first</div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedProvider('gemini')}
+                        disabled={isUploading}
+                        className={`p-3 border rounded-lg text-sm font-medium transition-colors ${
+                          selectedProvider === 'gemini'
+                            ? 'border-orange-500 bg-orange-50 text-orange-700'
+                            : 'border-gray-300 bg-white text-gray-700 hover:border-orange-300'
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        <div className="font-semibold">Google Gemini</div>
+                        <div className="text-xs text-gray-500 mt-1">Better for longer docs</div>
                       </button>
                     </div>
                   </div>
-                )}
-              </div>
 
-              {/* Provider Selection */}
-              <div className="space-y-3">
-                <label className="block text-sm font-medium text-gray-700">
-                  AI Provider
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedProvider('claude')}
-                    disabled={isUploading}
-                    className={`p-3 border rounded-lg text-sm font-medium transition-colors ${
-                      selectedProvider === 'claude'
-                        ? 'border-orange-500 bg-orange-50 text-orange-700'
-                        : 'border-gray-300 bg-white text-gray-700 hover:border-orange-300'
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  <Button
+                    onClick={handleUpload}
+                    disabled={!selectedFile || isUploading}
+                    variant="orange"
+                    size="full"
                   >
-                    <div className="font-semibold">Anthropic Claude</div>
-                    <div className="text-xs text-gray-500 mt-1">Try this first</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedProvider('gemini')}
-                    disabled={isUploading}
-                    className={`p-3 border rounded-lg text-sm font-medium transition-colors ${
-                      selectedProvider === 'gemini'
-                        ? 'border-orange-500 bg-orange-50 text-orange-700'
-                        : 'border-gray-300 bg-white text-gray-700 hover:border-orange-300'
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    <div className="font-semibold">Google Gemini</div>
-                    <div className="text-xs text-gray-500 mt-1">Better for longer docs</div>
-                  </button>
-                </div>
-              </div>
+                    {isUploading ? (
+                      <>
+                        <CircleNotch className="animate-spin" size={16} />
+                        {`Converting with ${selectedProvider === 'claude' ? 'Claude' : 'Gemini'}...`}
+                      </>
+                    ) : (
+                      'Convert and Save Document'
+                    )}
+                  </Button>
 
-              <button
-                onClick={handleUpload}
-                disabled={!selectedFile || isUploading}
-                className="w-full px-4 py-3 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
-              >
-                {isUploading ? `Converting with ${selectedProvider === 'claude' ? 'Claude' : 'Gemini'}...` : 'Convert to HTML'}
-              </button>
-
-              {error && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700 text-sm space-y-2">
-                  <div className="font-medium">Conversion Error</div>
-                  {error.includes('could not resolve') || error.includes('canvas') || error.includes('Internal Server Error') ? (
-                    <div>
-                      <div className="mb-2">
-                        <strong>Backend Dependency Issue:</strong> The PDF processing system needs additional native dependencies to be installed.
-                      </div>
-                      <div className="text-xs bg-red-100 p-2 rounded font-mono">
-                        Technical details: {error}
-                      </div>
-                      <div className="mt-2 text-xs">
-                        💡 The drag & drop interface and HTML preview are working correctly. A demo preview will be shown below.
-                      </div>
+                  {error && (
+                    <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700 text-sm space-y-2">
+                      <div className="font-medium">Conversion Error</div>
+                      {error.includes('could not resolve') || error.includes('canvas') || error.includes('Internal Server Error') ? (
+                        <div>
+                          <div className="mb-2">
+                            <strong>Backend Dependency Issue:</strong> The PDF processing system needs additional native dependencies to be installed.
+                          </div>
+                          <div className="text-xs bg-red-100 p-2 rounded font-mono">
+                            Technical details: {error}
+                          </div>
+                          <div className="mt-2 text-xs">
+                            💡 The drag & drop interface and HTML preview are working correctly. A demo preview will be shown below.
+                          </div>
+                        </div>
+                      ) : (
+                        <div>{error}</div>
+                      )}
                     </div>
-                  ) : (
-                    <div>{error}</div>
                   )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Results Section */}

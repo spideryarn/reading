@@ -60,19 +60,19 @@ Based on user requirements and research findings:
   - [x] Add hard error instruction for JavaScript-required pages
   - [x] Use Claude as default provider (anthropic-balanced model)
 
-### Stage: Frontend Integration
-- [ ] Transform upload page into unified "Add Document" interface
-  - [ ] Update page title from "PDF to HTML Converter" to "Add Document"
-  - [ ] Add tabbed interface or section toggle for "Paste URL" vs "Upload PDF"
-  - [ ] Create URL input form with validation
-  - [ ] Maintain existing PDF upload drag-and-drop functionality
-  - [ ] Follow same provider selection pattern (Claude default, later stage for user choice)
-- [ ] Implement URL submission flow
-  - [ ] Add URL input field with client-side validation
-  - [ ] Create loading state during extraction (similar to PDF processing)
-  - [ ] Handle success: redirect to document page using returned slug
-  - [ ] Handle errors: display full error message (size limits, JavaScript required, etc.)
-  - [ ] Follow same response pattern as updated PDF flow
+### Stage: Frontend Integration ✅
+- [x] Transform upload page into unified "Add Document" interface
+  - [x] Update page title from "PDF to HTML Converter" to "Add Document"
+  - [x] Add tabbed interface or section toggle for "Paste URL" vs "Upload PDF"
+  - [x] Create URL input form with validation
+  - [x] Maintain existing PDF upload drag-and-drop functionality
+  - [x] Follow same provider selection pattern (Claude default, later stage for user choice)
+- [x] Implement URL submission flow
+  - [x] Add URL input field with client-side validation
+  - [x] Create loading state during extraction (similar to PDF processing)
+  - [x] Handle success: redirect to document page using returned slug
+  - [x] Handle errors: display full error message (size limits, JavaScript required, etc.)
+  - [x] Follow same response pattern as updated PDF flow
 
 ### Stage: Testing and Validation
 - [ ] Write automated tests for URL extraction
