@@ -260,6 +260,16 @@ export function UnifiedLeftPane({
   const [semanticSearchCached, setSemanticSearchCached] = useState(false)
   const [semanticSearchCachedAt, setSemanticSearchCachedAt] = useState<string | null>(null)
   
+  // Query history for semantic search
+  const [queryHistory, setQueryHistory] = useState<Array<{
+    query: string
+    normalizedQuery: string
+    searchedAt: string
+    resultCount: number
+  }>>([])
+  const [showQueryHistory, setShowQueryHistory] = useState(false)
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
+  
   // Store timeout ID to cancel pending searches
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
@@ -390,6 +400,41 @@ export function UnifiedLeftPane({
     }
   }, [caseSensitive, searchQuery, performSearch, useSemanticSearch])
 
+  // Fetch query history for semantic search
+  const fetchQueryHistory = useCallback(async () => {
+    if (!useSemanticSearch) return
+    
+    setIsLoadingHistory(true)
+    try {
+      const response = await fetch(`/api/semantic-search?documentId=${encodeURIComponent(documentId)}`)
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch query history')
+      }
+      
+      setQueryHistory(data.queries || [])
+      console.log(`[QueryHistory] Fetched ${data.queries?.length || 0} historical queries`)
+    } catch (error) {
+      console.error('[QueryHistory] Failed to fetch query history:', error)
+      // Don't show error to user - query history is nice-to-have
+      setQueryHistory([])
+    } finally {
+      setIsLoadingHistory(false)
+    }
+  }, [documentId, useSemanticSearch])
+
+  // Fetch query history when semantic search is enabled
+  useEffect(() => {
+    if (useSemanticSearch) {
+      fetchQueryHistory()
+    } else {
+      // Clear history when switching to text search
+      setQueryHistory([])
+      setShowQueryHistory(false)
+    }
+  }, [useSemanticSearch, fetchQueryHistory])
+
   // Semantic search function using API endpoint
   const performSemanticSearch = useCallback(async (query: string) => {
     // Clear any previous search state
@@ -457,8 +502,12 @@ export function UnifiedLeftPane({
       setSearchResults([])
     } finally {
       setIsSearching(false)
+      // Refresh query history after search (success or failure)
+      if (useSemanticSearch) {
+        fetchQueryHistory()
+      }
     }
-  }, [documentId, elements])
+  }, [documentId, elements, useSemanticSearch, fetchQueryHistory])
 
   // Function to sort semantic search results
   const sortSemanticResults = useCallback((results: SearchResult[], sortByRelevance: boolean) => {
@@ -744,10 +793,21 @@ export function UnifiedLeftPane({
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearchInputChange(e.target.value)}
+              onFocus={() => {
+                if (useSemanticSearch && queryHistory.length > 0) {
+                  setShowQueryHistory(true)
+                }
+              }}
+              onBlur={() => {
+                // Delay hiding to allow clicking on dropdown items
+                setTimeout(() => setShowQueryHistory(false), 150)
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && useSemanticSearch) {
                   e.preventDefault()
                   triggerSemanticSearch()
+                } else if (e.key === 'Escape') {
+                  setShowQueryHistory(false)
                 }
               }}
               placeholder={useSemanticSearch ? "Describe what you're looking for..." : "Search document..."}
@@ -776,6 +836,38 @@ export function UnifiedLeftPane({
               >
                 <X size={16} weight="bold" />
               </button>
+            )}
+            
+            {/* Query history dropdown - only for semantic search */}
+            {useSemanticSearch && showQueryHistory && queryHistory.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                <div className="p-2">
+                  <div className="text-xs text-gray-500 font-medium mb-2 px-2">Recent searches</div>
+                  {queryHistory.map((historyItem, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setSearchQuery(historyItem.query)
+                        setShowQueryHistory(false)
+                        // Auto-trigger search for historical query
+                        performSemanticSearch(historyItem.query)
+                      }}
+                      className="w-full text-left px-2 py-2 text-sm rounded hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="truncate font-medium text-gray-900">
+                            {historyItem.query}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            {historyItem.resultCount} {historyItem.resultCount === 1 ? 'result' : 'results'} • {new Date(historyItem.searchedAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
           

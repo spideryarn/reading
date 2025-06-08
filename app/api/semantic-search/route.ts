@@ -22,6 +22,71 @@ import {
   estimateTokenCount 
 } from '@/lib/services/semantic-search-formatter'
 
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const documentId = searchParams.get('documentId')
+    
+    if (!documentId) {
+      return NextResponse.json(
+        { error: 'documentId query parameter is required' },
+        { status: 400 }
+      )
+    }
+    
+    // Initialize database services
+    const supabase = await createClient()
+    const enhancementService = new EnhancementService(supabase)
+    
+    // Get all semantic search enhancements for this document
+    const { data: enhancements, error } = await supabase
+      .from('document_enhancements')
+      .select('subtype, created_at, content')
+      .eq('document_id', documentId)
+      .eq('type', 'semantic-search')
+      .order('created_at', { ascending: false })
+    
+    if (error) {
+      console.error('[SemanticSearch] Error fetching query history:', error)
+      return NextResponse.json(
+        { error: 'Failed to fetch query history' },
+        { status: 500 }
+      )
+    }
+    
+    // Extract query information from the cached data
+    const queries = (enhancements || []).map(enhancement => {
+      const content = enhancement.content as {
+        originalQuery?: string
+        normalizedQuery: string
+        matches?: Array<any>
+        searchedAt?: string
+      }
+      
+      return {
+        query: content.originalQuery || enhancement.subtype, // Fallback to subtype if originalQuery not available
+        normalizedQuery: enhancement.subtype,
+        searchedAt: content.searchedAt || enhancement.created_at,
+        resultCount: Array.isArray(content.matches) ? content.matches.length : 0
+      }
+    })
+    
+    console.log(`[SemanticSearch] Found ${queries.length} cached queries for document ${documentId}`)
+    
+    return NextResponse.json({
+      documentId,
+      queries
+    })
+  } catch (error) {
+    console.error('[SemanticSearch] Error in GET handler:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch query history'
+    return NextResponse.json(
+      { error: errorMessage },
+      { status: 500 }
+    )
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
