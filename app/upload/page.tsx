@@ -15,6 +15,7 @@ export default function AddDocumentPage() {
   const [url, setUrl] = useState('')
   const [isExtractingUrl, setIsExtractingUrl] = useState(false)
   const [urlError, setUrlError] = useState<string>('')
+  const [extractionMethod, setExtractionMethod] = useState<'readability' | 'ai-transcription' | 'ai-dom'>('readability')
   
   // PDF state
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -63,6 +64,12 @@ export default function AddDocumentPage() {
       return
     }
 
+    // Check if AI DOM Manipulation is selected
+    if (extractionMethod === 'ai-dom') {
+      setUrlError('AI DOM Manipulation is an experimental feature that is not yet implemented.')
+      return
+    }
+
     setIsExtractingUrl(true)
     setUrlError('')
 
@@ -72,7 +79,10 @@ export default function AddDocumentPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url: url.trim() }),
+        body: JSON.stringify({ 
+          url: url.trim(),
+          extractionMethod 
+        }),
       })
 
       if (!response.ok) {
@@ -268,6 +278,62 @@ export default function AddDocumentPage() {
                     <p className="text-xs text-gray-500 mt-2">
                       Enter a URL to extract and save the webpage content. Supports articles, blog posts, and most text-based web content. Press ENTER to submit when URL is valid.
                     </p>
+                  </div>
+
+                  {/* Extraction Method Selection */}
+                  <div className="space-y-3">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Extraction Method
+                    </label>
+                    <div className="space-y-2">
+                      <label className="flex items-start cursor-pointer">
+                        <input
+                          type="radio"
+                          name="extractionMethod"
+                          value="readability"
+                          checked={extractionMethod === 'readability'}
+                          onChange={(e) => setExtractionMethod(e.target.value as any)}
+                          disabled={isExtractingUrl}
+                          className="mt-0.5 mr-3 text-orange-600 focus:ring-orange-500"
+                        />
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900">Mozilla Readability (Fast & Reliable)</div>
+                          <div className="text-xs text-gray-500">Best for standard articles and blog posts. Extracts content instantly without AI processing.</div>
+                        </div>
+                      </label>
+                      
+                      <label className="flex items-start cursor-pointer">
+                        <input
+                          type="radio"
+                          name="extractionMethod"
+                          value="ai-transcription"
+                          checked={extractionMethod === 'ai-transcription'}
+                          onChange={(e) => setExtractionMethod(e.target.value as any)}
+                          disabled={isExtractingUrl}
+                          className="mt-0.5 mr-3 text-orange-600 focus:ring-orange-500"
+                        />
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900">AI Transcription (High Quality)</div>
+                          <div className="text-xs text-gray-500">Uses AI to carefully transcribe content. Slower but handles complex layouts better.</div>
+                        </div>
+                      </label>
+                      
+                      <label className="flex items-start cursor-pointer opacity-50">
+                        <input
+                          type="radio"
+                          name="extractionMethod"
+                          value="ai-dom"
+                          checked={extractionMethod === 'ai-dom'}
+                          onChange={(e) => setExtractionMethod(e.target.value as any)}
+                          disabled={isExtractingUrl}
+                          className="mt-0.5 mr-3 text-orange-600 focus:ring-orange-500"
+                        />
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900">AI DOM Manipulation (Experimental)</div>
+                          <div className="text-xs text-gray-500">Instructs AI to programmatically clean the HTML. This feature is not yet implemented.</div>
+                        </div>
+                      </label>
+                    </div>
                   </div>
 
                   <Button

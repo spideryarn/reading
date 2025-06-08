@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
   try {
     // Parse JSON request body
     const body = await request.json()
-    const { url, title: providedTitle, provider = 'claude' } = body
+    const { url, title: providedTitle, provider = 'claude', extractionMethod = 'ai-transcription' } = body
     
     if (!url) {
       return new NextResponse(URL_EXTRACTION_CONFIG.ERROR_MESSAGES.INVALID_URL, { status: 400 })
@@ -104,7 +104,17 @@ export async function POST(request: NextRequest) {
       return new NextResponse('Invalid provider. Must be "claude" or "gemini"', { status: 400 })
     }
     
-    console.log(`Processing URL with extraction: ${url} using ${provider}`)
+    // Validate extraction method
+    if (!['readability', 'ai-transcription', 'ai-dom'].includes(extractionMethod)) {
+      return new NextResponse('Invalid extraction method', { status: 400 })
+    }
+    
+    // Check if AI DOM Manipulation is selected (not implemented)
+    if (extractionMethod === 'ai-dom') {
+      return new NextResponse('AI DOM Manipulation is an experimental feature that is not yet implemented.', { status: 501 })
+    }
+    
+    console.log(`Processing URL with extraction: ${url} using ${extractionMethod} method`)
     
     // Step 1: Fetch webpage content
     console.log('Step 1: Fetching webpage content...')
@@ -132,33 +142,69 @@ export async function POST(request: NextRequest) {
     
     const providerDisplayName = provider === 'gemini' ? 'Gemini 1.5 Pro' : 'Claude 4 Sonnet'
     
-    console.log(`Step 3: Extracting content using ${providerDisplayName}...`)
+    console.log(`Step 3: Extracting content using ${extractionMethod} method...`)
     
-    // Execute the URL extraction prompt
+    // Execute extraction based on selected method
     let extractedHtml: string
+    let extractionMethodUsed: string
     
-    try {
-      const extractResult = await executeMultimodalPromptWithUsage(urlToHtmlPrompt, {
-        htmlContent,
-        sourceUrl: url
-      })
-      extractedHtml = extractResult.text
+    if (extractionMethod === 'readability') {
+      // Mozilla Readability extraction (placeholder for now)
+      // TODO: Implement Readability.js extraction in next stage
+      console.log('Note: Readability extraction not yet implemented, falling back to AI transcription')
+      extractionMethodUsed = 'ai-transcription-fallback'
       
-      // Clean up any markdown wrapping from LLM response
-      extractedHtml = extractedHtml
-        .replace(/^```html\s*\n?/, '')
-        .replace(/\n?```\s*$/, '')
-        .trim()
+      // For now, fall back to AI transcription
+      try {
+        const extractResult = await executeMultimodalPromptWithUsage(urlToHtmlPrompt, {
+          htmlContent,
+          sourceUrl: url
+        })
+        extractedHtml = extractResult.text
         
-    } catch (error) {
-      console.error('LLM extraction error:', error)
-      
-      // Check for JavaScript detection error
-      if (error instanceof Error && error.message.includes('JavaScript')) {
-        return new NextResponse(URL_EXTRACTION_CONFIG.ERROR_MESSAGES.JAVASCRIPT_REQUIRED, { status: 400 })
+        // Clean up any markdown wrapping from LLM response
+        extractedHtml = extractedHtml
+          .replace(/^```html\s*\n?/, '')
+          .replace(/\n?```\s*$/, '')
+          .trim()
+          
+      } catch (error) {
+        console.error('LLM extraction error:', error)
+        
+        // Check for JavaScript detection error
+        if (error instanceof Error && error.message.includes('JavaScript')) {
+          return new NextResponse(URL_EXTRACTION_CONFIG.ERROR_MESSAGES.JAVASCRIPT_REQUIRED, { status: 400 })
+        }
+        
+        throw error
       }
+    } else {
+      // AI Transcription method
+      extractionMethodUsed = 'ai-transcription'
       
-      throw error
+      try {
+        const extractResult = await executeMultimodalPromptWithUsage(urlToHtmlPrompt, {
+          htmlContent,
+          sourceUrl: url
+        })
+        extractedHtml = extractResult.text
+        
+        // Clean up any markdown wrapping from LLM response
+        extractedHtml = extractedHtml
+          .replace(/^```html\s*\n?/, '')
+          .replace(/\n?```\s*$/, '')
+          .trim()
+          
+      } catch (error) {
+        console.error('LLM extraction error:', error)
+        
+        // Check for JavaScript detection error
+        if (error instanceof Error && error.message.includes('JavaScript')) {
+          return new NextResponse(URL_EXTRACTION_CONFIG.ERROR_MESSAGES.JAVASCRIPT_REQUIRED, { status: 400 })
+        }
+        
+        throw error
+      }
     }
     
     // Check if LLM detected JavaScript requirement
@@ -221,7 +267,8 @@ export async function POST(request: NextRequest) {
         provider: providerDisplayName,
         source_url: url,
         content_size_kb: Math.round(htmlContent.length / 1024),
-        extracted_size_kb: Math.round(extractedHtml.length / 1024)
+        extracted_size_kb: Math.round(extractedHtml.length / 1024),
+        extraction_method: extractionMethodUsed
       }
     }, {
       status: 201,
