@@ -72,7 +72,6 @@ interface UnifiedLeftPaneProps {
   onHeadingClick: (headingText: string, headingId?: string) => void
   onLoadGlossary: () => void
   onResetGlossary?: () => void
-  onScrollToEntity: (elementId: string) => void
   
   // For chat context
   documentContext: string
@@ -328,7 +327,6 @@ export function UnifiedLeftPane({
   onHeadingClick,
   onLoadGlossary,
   onResetGlossary,
-  onScrollToEntity,
   documentContext,
   onToggleCollapse
 }: UnifiedLeftPaneProps) {
