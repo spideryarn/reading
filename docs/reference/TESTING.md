@@ -206,6 +206,32 @@ npm install --save-dev next-test-api-route-handler
 
 This package is specifically designed for Next.js App Router API testing and solves the NextRequest mocking complexity.
 
+**Alternative: Enhanced Request/Response Mocking**:
+```javascript
+// Alternative pattern for API route testing
+import { NextRequest, NextResponse } from 'next/server'
+
+// Mock NextRequest properly for API routes
+const createMockRequest = (url: string, options: RequestInit = {}) => {
+  return new NextRequest(url, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    ...options,
+  })
+}
+
+// Test API route handlers
+it('should handle API route correctly', async () => {
+  const request = createMockRequest('http://localhost:3000/api/test', {
+    method: 'POST',
+    body: JSON.stringify({ data: 'test' }),
+  })
+  
+  const response = await POST(request)
+  expect(response.status).toBe(200)
+})
+```
+
 ### Current Workaround
 
 **Run tests individually when debugging API routes:**

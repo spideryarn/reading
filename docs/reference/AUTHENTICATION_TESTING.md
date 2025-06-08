@@ -453,6 +453,206 @@ it('should clear sensitive data on logout', async () => {
 })
 ```
 
+## Multi-User Context Switching for RLS Testing
+
+### Row Level Security (RLS) Testing Patterns
+
+**Database-Level Multi-User Testing**:
+```typescript
+// Test user isolation at database level
+describe('Document RLS policies', () => {
+  let userAClient: SupabaseClient
+  let userBClient: SupabaseClient
+  
+  beforeEach(async () => {
+    // Create test users with different auth contexts
+    userAClient = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!)
+    userBClient = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!)
+    
+    // Sign in as different users
+    await userAClient.auth.signInWithPassword({ email: 'userA@test.com', password: 'test123' })
+    await userBClient.auth.signInWithPassword({ email: 'userB@test.com', password: 'test123' })
+  })
+  
+  it('should prevent User A from accessing User B documents', async () => {
+    // User B creates document
+    const { data: docB } = await userBClient
+      .from('documents')
+      .insert({ title: 'User B Document', content: 'Private content' })
+      .select()
+      .single()
+    
+    // User A tries to access User B's document
+    const { data: accessAttempt, error } = await userAClient
+      .from('documents')
+      .select('*')
+      .eq('id', docB.id)
+      .single()
+    
+    expect(accessAttempt).toBeNull()
+    expect(error?.code).toBe('PGRST116') // No rows returned
+  })
+})
+```
+
+**Application-Level Multi-User Testing**:
+```typescript
+// Test service layer with different user contexts
+describe('DocumentService user isolation', () => {
+  it('should only return documents for the authenticated user', async () => {
+    // Mock different users
+    const mockGetUser = getUser as jest.MockedFunction<typeof getUser>
+    
+    // Test User A
+    mockGetUser.mockResolvedValue({ 
+      user: { id: 'user-a-id', email: 'userA@test.com' }, 
+      error: null 
+    })
+    
+    const userADocuments = await DocumentService.getByUserId('user-a-id')
+    
+    // Test User B  
+    mockGetUser.mockResolvedValue({ 
+      user: { id: 'user-b-id', email: 'userB@test.com' }, 
+      error: null 
+    })
+    
+    const userBDocuments = await DocumentService.getByUserId('user-b-id')
+    
+    // Verify isolation
+    expect(userADocuments).not.toEqual(userBDocuments)
+    expect(userADocuments.every(doc => doc.created_by === 'user-a-id')).toBe(true)
+    expect(userBDocuments.every(doc => doc.created_by === 'user-b-id')).toBe(true)
+  })
+})
+```
+
+**API Route Multi-User Testing**:
+```typescript
+// Test API routes with different user sessions
+describe('API route authentication', () => {
+  it('should enforce document ownership in API routes', async () => {
+    // Mock User A accessing User B's document
+    const mockGetUser = getUser as jest.MockedFunction<typeof getUser>
+    mockGetUser.mockResolvedValue({ 
+      user: { id: 'user-a-id' }, 
+      error: null 
+    })
+    
+    // Mock DocumentService to return User B's document
+    const mockIsOwnedByUser = jest.fn().mockResolvedValue(false)
+    DocumentService.prototype.isOwnedByUser = mockIsOwnedByUser
+    
+    const request = new NextRequest('http://localhost:3000/api/documents/user-b-doc/download')
+    const response = await GET(request, { params: { slug: 'user-b-doc' } })
+    
+    expect(response.status).toBe(404) // Access denied (disguised as not found)
+    expect(mockIsOwnedByUser).toHaveBeenCalledWith('user-b-doc', 'user-a-id')
+  })
+})
+```
+
+### Multi-User Test Factory Patterns
+
+**User Factory for Consistent Test Data**:
+```typescript
+interface TestUser {
+  id: string
+  email: string
+  mockClient: SupabaseClient
+}
+
+const createTestUser = async (identifier: string): Promise<TestUser> => {
+  const email = `${identifier}@test.com`
+  const id = `user-${identifier}-${Date.now()}`
+  
+  const mockClient = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!)
+  
+  // In real tests, create actual user or mock appropriately
+  const mockGetUser = getUser as jest.MockedFunction<typeof getUser>
+  mockGetUser.mockResolvedValue({ 
+    user: { id, email, aud: 'authenticated' }, 
+    error: null 
+  })
+  
+  return { id, email, mockClient }
+}
+
+// Usage in tests
+describe('Multi-user document scenarios', () => {
+  let alice: TestUser
+  let bob: TestUser
+  
+  beforeEach(async () => {
+    alice = await createTestUser('alice')
+    bob = await createTestUser('bob')
+  })
+  
+  it('should maintain document ownership boundaries', async () => {
+    // Alice creates document
+    const aliceDoc = await DocumentService.createForUser(alice.id, { title: 'Alice Doc' })
+    
+    // Bob tries to access Alice's document
+    const bobAccess = await DocumentService.isOwnedByUser(aliceDoc.id, bob.id)
+    
+    expect(bobAccess).toBe(false)
+  })
+})
+```
+
+**Context Switching Utilities**:
+```typescript
+// Helper for switching authentication context in tests
+class TestAuthContext {
+  private static currentUser: TestUser | null = null
+  
+  static switchToUser(user: TestUser) {
+    this.currentUser = user
+    
+    // Update all relevant mocks
+    const mockGetUser = getUser as jest.MockedFunction<typeof getUser>
+    mockGetUser.mockResolvedValue({
+      user: { id: user.id, email: user.email, aud: 'authenticated' },
+      error: null
+    })
+    
+    // Update client-side auth context mock
+    const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>
+    mockUseAuth.mockReturnValue({
+      user: { id: user.id, email: user.email },
+      session: { user: { id: user.id } },
+      loading: false,
+    })
+  }
+  
+  static getCurrentUser(): TestUser | null {
+    return this.currentUser
+  }
+  
+  static clearAuth() {
+    this.currentUser = null
+    const mockGetUser = getUser as jest.MockedFunction<typeof getUser>
+    mockGetUser.mockResolvedValue({ user: null, error: null })
+  }
+}
+
+// Usage in tests
+it('should handle user switching within same test', async () => {
+  const alice = await createTestUser('alice')
+  const bob = await createTestUser('bob')
+  
+  // Alice creates document
+  TestAuthContext.switchToUser(alice)
+  const doc = await DocumentService.createForUser(alice.id, { title: 'Test' })
+  
+  // Bob tries to access it
+  TestAuthContext.switchToUser(bob)
+  const access = await DocumentService.isOwnedByUser(doc.id, bob.id)
+  
+  expect(access).toBe(false)
+})
+```
+
 ## Testing Best Practices
 
 ### Test Organization
