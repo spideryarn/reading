@@ -14,7 +14,7 @@ import { SUMMARY_CONFIG } from '@/lib/config'
 import { generateHeadingMutation, extractHeadingsFromMutation } from '@/lib/services/heading-mutation-generator'
 import { TabContainer, type Tab, type TabContainerRef } from './tab-container'
 import { HeadingTree, type Heading } from './heading-tree'
-import { SummaryPane } from './summary-pane'
+import { MultiSummaryPane } from './multi-summary-pane'
 import { Button } from '@/components/ui/button'
 import { Loading } from '@/components/ui/loading'
 import { AlertWithIcon } from '@/components/ui/alert'
@@ -671,7 +671,13 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
   }
 
   const renderSummaryTab = () => {
-    return <SummaryPane content={markdownContent} autoActivate />
+    return (
+      <MultiSummaryPane 
+        content={markdownContent} 
+        documentId={documentId}
+        autoActivate 
+      />
+    )
   }
 
   const tabs: Tab[] = [
@@ -681,7 +687,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
       content: renderOriginalTab(),
       managedScroll: true,  // HeadingTree manages its own scrolling
       onActivate: () => {
-        setActiveTab('original')
+        // Tab container handles activation state
       }
     },
     {
@@ -690,7 +696,6 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
       content: renderAiGeneratedTab(),
       managedScroll: true,  // HeadingTree manages its own scrolling
       onActivate: () => {
-        setActiveTab('ai-generated')
         // Auto-click "Generate new headings" button when tab is activated
         if (!showHeadings && !isLoadingHeadings) {
           handleGenerateHeadings()
@@ -703,8 +708,7 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
       content: renderSummaryTab(),
       managedScroll: false,  // Summary tab uses default scrolling
       onActivate: () => {
-        setActiveTab('summary')
-        // SummaryPane handles auto-activation with autoActivate prop
+        // MultiSummaryPane handles auto-activation with autoActivate prop
       }
     }
   ]
