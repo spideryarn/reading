@@ -8,6 +8,7 @@ import { useRef, useEffect } from 'react'
 import type { DocumentElement } from '@/lib/types/document'
 import { MarkdownRenderer } from './markdown-renderer'
 import { useElementVisibility } from '@/lib/hooks/useElementVisibility'
+import { DocumentParser } from '@/lib/services/document-parser'
 
 interface SimpleDocumentViewerProps {
   elements: DocumentElement[]
@@ -137,16 +138,20 @@ export function SimpleDocumentViewer({
         <div className="flex items-start justify-between gap-4">
           {element.content && (
             <div className={textStyles}>
-              {/* Use MarkdownRenderer for markdown content */}
+              {/* Render content based on type */}
               {element.attributes?.['data-markdown'] === 'true' ? (
                 <MarkdownRenderer content={element.content} />
               ) : isListItem ? (
                 <span className="flex items-start">
                   <span className="mr-2">{element.parent_id && elements.find(e => e.id === element.parent_id)?.tag_name === 'ol' ? `${depth + 1}.` : '•'}</span>
-                  <span>{element.content}</span>
+                  <span dangerouslySetInnerHTML={{ __html: element.content }} />
                 </span>
-              ) : (
+              ) : element.tag_name === 'text' || DocumentParser.INLINE_ELEMENTS.has(element.tag_name) ? (
+                // For text nodes and inline elements, render as plain text
                 element.content
+              ) : (
+                // For block elements, render as HTML to preserve formatting
+                <div dangerouslySetInnerHTML={{ __html: element.content }} />
               )}
             </div>
           )}
