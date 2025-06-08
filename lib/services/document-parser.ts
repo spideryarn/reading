@@ -1,6 +1,5 @@
 import { load } from 'cheerio'
 import { v4 as uuidv4 } from 'uuid'
-import TurndownService from 'turndown'
 import type { Element } from 'domhandler'
 import type { DocumentElement } from '@/lib/types/document'
 import { assignDeterministicIds } from './deterministicId'
@@ -9,7 +8,7 @@ export class DocumentParser {
   // Define inline elements that should be kept within their parent's text content
   // Based on HTML5 phrasing content and default CSS display values
   // Reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Inline_elements
-  private static INLINE_ELEMENTS = new Set([
+  public static INLINE_ELEMENTS = new Set([
     // Text-level semantic elements
     'a', 'abbr', 'b', 'bdi', 'bdo', 'br', 'cite', 'code', 'data', 'dfn',
     'em', 'i', 'kbd', 'mark', 'q', 'rp', 'rt', 'rtc', 'ruby', 's', 'samp',
@@ -25,30 +24,6 @@ export class DocumentParser {
     // Other inline elements
     'slot', 'template'
   ])
-
-  // Create a single TurndownService instance for performance
-  private turndownService = new TurndownService({
-    headingStyle: 'atx',
-    bulletListMarker: '-',
-    codeBlockStyle: 'fenced'
-  })
-
-  /**
-   * Converts HTML to Markdown format for better structured text processing.
-   * 
-   * @param html - Raw HTML string
-   * @returns Markdown-formatted text with preserved structure
-   * 
-   * @example
-   * // Before:
-   * `<h1>Title</h1><p>First paragraph with <strong>bold text</strong>.</p><p>Second paragraph.</p>`
-   * 
-   * // After:
-   * `# Title\n\nFirst paragraph with **bold text**.\n\nSecond paragraph.`
-   */
-  convertToMarkdown(html: string): string {
-    return this.turndownService.turndown(html)
-  }
 
   parse(html: string, documentId: string): DocumentElement[] {
     // First, assign deterministic IDs to all elements
@@ -82,23 +57,22 @@ export class DocumentParser {
         })
       }
 
-      // For block elements, extract content while preserving inline formatting
+      // Extract content based on element type
       let textContent = ''
-      if (tagName === 'text' || DocumentParser.INLINE_ELEMENTS.has(tagName)) {
-        // For inline elements or text nodes, just get direct text
-        textContent = $el.contents()
-          .filter(function() {
-            return this.type === 'text'
-          })
-          .text()
-          .trim()
+      if (tagName === 'text') {
+        // For text nodes, get the direct text
+        textContent = (element as Element & { data?: string }).data?.trim() || ''
+      } else if (DocumentParser.INLINE_ELEMENTS.has(tagName)) {
+        // For inline elements, get text content only
+        textContent = $el.text().trim()
       } else {
-        // For block elements, get HTML content and convert to Markdown to preserve formatting
-        // Get the inner HTML of the element
+        // For block elements, preserve the inner HTML
+        // This maintains links, emphasis, and other inline formatting
         const innerHtml = $el.html() || ''
         
-        // Convert to Markdown, which preserves emphasis and other formatting
-        textContent = this.turndownService.turndown(innerHtml).trim()
+        // TODO: Add HTML sanitization here with a library like DOMPurify
+        // For now, we'll use the raw HTML (safe in our controlled environment)
+        textContent = innerHtml.trim()
       }
 
       // Only get block-level children (skip inline elements as they're included in text)
