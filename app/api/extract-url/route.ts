@@ -8,6 +8,8 @@ import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { createUrlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
+import { AiCallService } from '@/lib/services/database/ai-calls'
+import { getModelConfig, AI_CONFIG } from '@/lib/config'
 import { generateSlug } from '@/lib/utils/slug'
 import { URL_EXTRACTION_CONFIG } from '@/lib/config'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
@@ -133,9 +135,10 @@ export async function POST(request: NextRequest) {
     
     console.log(`Step 2: Fetched ${(htmlContent.length / 1024).toFixed(1)} KB of HTML content`)
     
-    // Initialize Supabase client and document service
+    // Initialize Supabase client and services
     const supabase = await createClient()
     const documentService = new DocumentService(supabase)
+    const aiCallService = new AiCallService(supabase)
     
     // Extract title from URL or use provided title
     const urlObject = new URL(url)
@@ -148,6 +151,7 @@ export async function POST(request: NextRequest) {
     // Execute extraction based on selected method
     let extractedHtml: string
     let extractionMethodUsed: string
+    let aiCall: { id: string } | null = null // Track AI call for AI transcription method
     
     if (extractionMethod === 'readability') {
       // Mozilla Readability extraction - fast and reliable
@@ -190,6 +194,24 @@ export async function POST(request: NextRequest) {
       // AI Transcription method
       extractionMethodUsed = 'ai-transcription'
       
+      // Get model configuration for AI call tracking
+      const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as keyof typeof AI_CONFIG.MODELS
+      const modelConfig = getModelConfig(tierKey)
+      
+      // Create AI call record for tracking (before LLM processing)
+      const startTime = Date.now()
+      aiCall = await aiCallService.startCall({
+        provider: modelConfig.provider,
+        modelId: modelConfig.modelId,
+        prompt_type: 'url-to-html',
+        input_data: {
+          source_url: url,
+          content_size_bytes: htmlContent.length,
+          provider_requested: provider,
+          tier_used: tierKey
+        }
+      })
+      
       // Create provider-specific prompt template with appropriate model configuration
       const promptTemplate = createUrlToHtmlPrompt(provider)
       
@@ -200,6 +222,19 @@ export async function POST(request: NextRequest) {
         })
         extractedHtml = extractResult.text
         
+        const processingTime = Date.now() - startTime
+        
+        // Complete the AI call record with usage metadata
+        await aiCallService.completeCall(aiCall.id, {
+          output_data: {
+            html_length: extractResult.text.length,
+            processing_time_ms: processingTime,
+            provider_used: providerDisplayName
+          },
+          usage: extractResult.usage,
+          finishReason: extractResult.finishReason
+        })
+        
         // Clean up any markdown wrapping from LLM response
         extractedHtml = extractedHtml
           .replace(/^```html\s*\n?/, '')
@@ -208,6 +243,14 @@ export async function POST(request: NextRequest) {
           
       } catch (error) {
         console.error('LLM extraction error:', error)
+        
+        // Mark AI call as failed
+        await aiCallService.completeCall(aiCall.id, {
+          output_data: {
+            error_type: 'llm_extraction_failed',
+            error_message: error instanceof Error ? error.message : 'Unknown error'
+          }
+        })
         
         // Check for JavaScript detection error
         if (error instanceof Error && error.message.includes('JavaScript')) {
@@ -241,6 +284,22 @@ export async function POST(request: NextRequest) {
     
     console.log('Step 5: Creating document with database integration...')
     
+    // Prepare upload metadata based on extraction method
+    const uploadMetadata = {
+      extraction_method: extractionMethodUsed,
+      provider_used: extractionMethodUsed === 'ai-transcription' ? provider : null,
+      upload_source: 'url',
+      content_size_kb: Math.round(htmlContent.length / 1024),
+      extracted_size_kb: Math.round(extractedHtml.length / 1024)
+    }
+    
+    // Add AI-specific metadata if AI transcription was used
+    if (extractionMethodUsed === 'ai-transcription') {
+      const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as keyof typeof AI_CONFIG.MODELS
+      const modelConfig = getModelConfig(tierKey)
+      uploadMetadata.model_used = modelConfig.modelId
+    }
+    
     // Create document in database (no file storage for URLs)
     const { document } = await documentService.createWithStorage(
       MOCK_USER_ID,
@@ -254,7 +313,9 @@ export async function POST(request: NextRequest) {
         word_count: plaintext.split(/\s+/).length
       },
       null, // No file for URL-based documents
-      null  // No filename
+      null, // No filename
+      uploadMetadata, // Upload metadata
+      extractionMethodUsed === 'ai-transcription' ? aiCall?.id : null // Link to AI call only for AI transcription
     )
     
     console.log(`Step 6: Document created successfully with ID: ${document.id}`)

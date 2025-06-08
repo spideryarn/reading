@@ -321,9 +321,11 @@ export class DocumentService {
    */
   async createWithStorage(
     userId: string,
-    document: Omit<DocumentInsert, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'storage_path'>,
+    document: Omit<DocumentInsert, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'storage_path' | 'upload_metadata' | 'upload_ai_call_id'>,
     originalFile?: File | Blob,
-    originalFilename?: string
+    originalFilename?: string,
+    uploadMetadata?: Record<string, string | number | boolean | null>,
+    uploadAiCallId?: string
   ): Promise<{ document: Document; storageResult?: StorageUploadResult }> {
     // Generate document ID early so we can use it for storage path
     const documentId = crypto.randomUUID()
@@ -348,7 +350,9 @@ export class DocumentService {
       id: documentId,
       created_by: userId,
       storage_path: storagePath,
-      original_file_type: originalFile?.type || null
+      original_file_type: originalFile?.type || null,
+      upload_metadata: uploadMetadata || null,
+      upload_ai_call_id: uploadAiCallId || null
     }
     
     try {

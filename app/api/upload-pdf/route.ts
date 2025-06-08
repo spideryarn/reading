@@ -8,6 +8,8 @@ import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { createPdfToHtmlPrompt } from '@/lib/prompts/templates/pdf-to-html-direct'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
+import { AiCallService } from '@/lib/services/database/ai-calls'
+import { getModelConfig, AI_CONFIG } from '@/lib/config'
 import { generateSlug } from '@/lib/utils/slug'
 
 // Mock user ID for development (matches database mock user)
@@ -58,9 +60,10 @@ export async function POST(request: NextRequest) {
 
     console.log(`Processing PDF with storage integration: ${pdfFile.name} (${(pdfBuffer.length / 1024).toFixed(1)} KB) using ${provider}`)
 
-    // Initialize Supabase client and document service
+    // Initialize Supabase client and services
     const supabase = await createClient()
     const documentService = new DocumentService(supabase)
+    const aiCallService = new AiCallService(supabase)
 
     // Generate slug for the document
     const slug = generateSlug(title)
@@ -69,6 +72,24 @@ export async function POST(request: NextRequest) {
     const promptTemplate = createPdfToHtmlPrompt(provider)
     const providerDisplayName = provider === 'gemini' ? 'Gemini 1.5 Pro' : 'Claude 4 Sonnet'
     
+    // Get model configuration for AI call tracking
+    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as keyof typeof AI_CONFIG.MODELS
+    const modelConfig = getModelConfig(tierKey)
+    
+    // Create AI call record for tracking (before LLM processing)
+    const startTime = Date.now()
+    const aiCall = await aiCallService.startCall({
+      provider: modelConfig.provider,
+      modelId: modelConfig.modelId,
+      prompt_type: 'pdf-to-html',
+      input_data: {
+        file_name: pdfFile.name,
+        file_size_bytes: pdfBuffer.length,
+        provider_requested: provider,
+        tier_used: tierKey
+      }
+    })
+    
     console.log(`Step 1: Converting PDF to HTML using ${providerDisplayName}...`)
 
     // Execute the direct PDF prompt (multi-page support enabled)
@@ -76,6 +97,19 @@ export async function POST(request: NextRequest) {
       pdfBuffer,
       fileName: pdfFile.name,
       singlePageOnly: false // Multi-page processing enabled
+    })
+    
+    const processingTime = Date.now() - startTime
+    
+    // Complete the AI call record with usage metadata
+    await aiCallService.completeCall(aiCall.id, {
+      output_data: {
+        html_length: htmlResult.text.length,
+        processing_time_ms: processingTime,
+        provider_used: providerDisplayName
+      },
+      usage: htmlResult.usage,
+      finishReason: htmlResult.finishReason
     })
 
     console.log('Step 2: HTML conversion completed, extracting plaintext...')
@@ -87,6 +121,16 @@ export async function POST(request: NextRequest) {
       .trim()
 
     console.log('Step 3: Creating document with storage integration...')
+    
+    // Prepare upload metadata
+    const uploadMetadata = {
+      extraction_method: 'ai-transcription',
+      provider_used: provider,
+      upload_source: 'pdf',
+      processing_time_ms: processingTime,
+      file_size_bytes: pdfBuffer.length,
+      model_used: modelConfig.modelId
+    }
 
     // Create document with storage integration
     const { document, storageResult } = await documentService.createWithStorage(
@@ -101,7 +145,9 @@ export async function POST(request: NextRequest) {
         word_count: plaintext.split(/\s+/).length
       },
       pdfFile, // Original file for storage
-      pdfFile.name // Original filename
+      pdfFile.name, // Original filename
+      uploadMetadata, // Upload metadata
+      aiCall.id // Link to AI call
     )
 
     console.log(`Step 4: Document created successfully with ID: ${document.id}`)
