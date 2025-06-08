@@ -294,9 +294,12 @@ export function OriginalHeadingsTab({
   useEffect(() => {
     if (headings.length > 0) {
       const maxDepth = Math.max(...headings.map(h => h.level))
-      setGranularityLevel(Math.min(3, maxDepth))
+      const newGranularityLevel = Math.min(3, maxDepth)
+      if (newGranularityLevel !== granularityLevel) {
+        setGranularityLevel(newGranularityLevel)
+      }
     }
-  }, [headings])
+  }, [headings, granularityLevel])
 
   const handleHeadingClick = (heading: Heading) => {
     if (onHeadingClick) {
@@ -503,9 +506,12 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
   useEffect(() => {
     if (aiHeadings.length > 0) {
       const maxDepth = Math.max(...aiHeadings.map(h => h.level))
-      setGranularityLevel(Math.min(3, maxDepth))
+      const newGranularityLevel = Math.min(3, maxDepth)
+      if (newGranularityLevel !== granularityLevel) {
+        setGranularityLevel(newGranularityLevel)
+      }
     }
-  }, [aiHeadings])
+  }, [aiHeadings, granularityLevel])
 
   // Helper function to fetch cached headings from database
   const fetchCachedHeadings = async (documentId: string) => {
