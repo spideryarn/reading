@@ -48,10 +48,10 @@ With prompt caching implemented, generating 9 summaries (3×3 combinations) in p
 
 ### Technical Approach
 - **New API endpoint**: Create `/api/multi-summarise` alongside existing `/api/summarise`
-- **Parallel generation**: Use `Promise.all()` for nine concurrent API calls
-- **Leverage caching**: Ensure prompt caching is enabled for all nine calls
+- **Single prompt generation**: Use one LLM call to generate all 9 summaries in structured JSON
+- **Structured output**: Request all 9 combinations in a single response with clear JSON structure
 - **Single storage**: Store all 9 summaries in one JSON field in database
-- **All-or-nothing**: If any summary fails, entire operation fails
+- **All-or-nothing**: If generation fails, entire operation fails (simpler than 9 separate calls)
 - **Markdown format**: Generate summaries in markdown for proper formatting
 - **Clean migration**: OK to delete existing summary rows for prototype
 
@@ -102,21 +102,17 @@ With prompt caching implemented, generating 9 summaries (3×3 combinations) in p
 
 ### Stage: Create new multi-summarise API
 - [ ] Create new `/app/api/multi-summarise/route.ts` (keep existing `/api/summarise` unchanged)
-- [ ] Create new multi-summarise prompt template with expertise and length variables
-- [ ] Implement parallel generation using Promise.all() for 9 combinations:
+- [ ] Create new multi-summarise prompt template requesting all 9 summaries in structured JSON
+- [ ] Implement single prompt generation with structured output:
   ```typescript
-  const summaries = await Promise.all([
-    // All 9 combinations of expertise × length
-    generateSummary(content, 'beginner', 'sentence or two'),
-    generateSummary(content, 'beginner', 'single short paragraph'),
-    // ... etc for all 9 combinations
-  ]);
+  const result = await executePromptWithUsage(multiSummarisePrompt, { content })
+  const summaries = JSON.parse(result.text) // Parse structured JSON response
   ```
-- [ ] Ensure all 9 calls use prompt caching with common document prefix
-- [ ] Generate summaries in markdown format
+- [ ] Design prompt to return JSON with all 9 expertise×length combinations
+- [ ] Generate summaries in markdown format within each JSON field
 - [ ] Store results in new nested JSON structure
-- [ ] Add all-or-nothing error handling (any failure = total failure)
-- [ ] Write unit tests for parallel generation
+- [ ] Add error handling for JSON parsing and validation
+- [ ] Write unit tests for single-prompt generation
 - [ ] Run tests to verify functionality
 - [ ] Update planning doc with progress
 - [ ] Follow `docs/DEBRIEF_PROGRESS.md` for progress summary
@@ -204,13 +200,13 @@ With prompt caching implemented, generating 9 summaries (3×3 combinations) in p
 
 ## Appendix
 
-### Cost Analysis with Caching
+### Cost Analysis with Single Prompt
 
-With prompt caching enabled for 9 parallel calls:
-- First call: 100% base cost + 25% cache write
-- Calls 2-9: 10% base cost each (90% savings per call)
-- **Total: 1.0 + 0.25 + (8 × 0.1) = 2.05x single call cost** (vs 9x without caching)
-- **Savings: ~77% vs non-cached approach**
+With single prompt generating all 9 summaries:
+- One LLM call generating ~1500 tokens (all 9 summaries combined)
+- **Total: 1.0x single call cost** (vs 9x with separate calls, or 2.05x with caching)
+- **Savings: ~89% vs separate calls, ~51% vs cached parallel approach**
+- **Simpler implementation**: No parallel coordination, caching complexity, or partial failure handling
 
 ### UI Slider Design Considerations
 

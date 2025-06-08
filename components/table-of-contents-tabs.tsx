@@ -14,7 +14,7 @@ import { useDocumentCommunication } from '@/lib/context/document-communication-c
 import { SUMMARY_CONFIG } from '@/lib/config'
 import { generateHeadingMutation, extractHeadingsFromMutation } from '@/lib/services/heading-mutation-generator'
 import { HeadingTree, type Heading } from './heading-tree'
-import { SummaryPane } from './summary-pane'
+import { MultiSummaryPane } from './multi-summary-pane'
 import { Button } from '@/components/ui/button'
 import { Loading } from '@/components/ui/loading'
 import { AlertWithIcon } from '@/components/ui/alert'
@@ -1039,5 +1039,5 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
  * Displays an AI-generated summary of the entire document
  */
 export function DocumentSummaryTab({ markdownContent, documentId }: BaseTabProps) {
-  return <SummaryPane content={markdownContent || ""} documentId={documentId} autoActivate />
+  return <MultiSummaryPane content={markdownContent || ""} documentId={documentId} autoActivate />
 }

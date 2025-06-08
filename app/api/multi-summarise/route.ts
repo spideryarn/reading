@@ -1,14 +1,13 @@
 // Multi-Dimensional AI Summarisation API endpoint
-// Generates 9 summaries in parallel (3×3 expertise × length combinations)
+// Generates all 9 summaries in a single LLM call using structured JSON output
 // See planning/250608b_multiple_summary_granularities.md for architecture
 
 import { NextRequest, NextResponse } from 'next/server'
 import { executePromptWithUsage } from '@/lib/prompts/types'
 import { 
   multiSummarisePrompt, 
-  getAllCombinations, 
-  getLengthInstruction,
-  getMaxTokensForLength
+  multiSummaryOutputSchema,
+  type MultiSummaryOutput
 } from '@/lib/prompts/templates/multi-summarise'
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
@@ -124,148 +123,128 @@ export async function POST(request: NextRequest) {
     const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as keyof typeof AI_CONFIG.MODELS
     const modelConfig = getModelConfig(tierKey)
     
-    // Generate all 9 combinations
-    const combinations = getAllCombinations()
-    
-    // Create AI call tracking for each combination
-    const aiCalls: { [key: string]: { id: string } } = {}
-    const aiCallPromises = combinations.map(async ({ expertise, length }) => {
-      const combinationKey = `${expertise}_${length}`
-      
-      try {
-        const aiCall = await aiCallService.startCall({
-          documentId,
-          provider: modelConfig.provider,
-          modelId: modelConfig.modelId,
-          prompt_type: 'multi-summarise',
-          input_data: { 
-            content_length: content.length,
-            expertise_level: expertise,
-            length_level: length,
-            combination_key: combinationKey,
-            tier_used: tierKey
-          }
-        })
-        
-        aiCalls[combinationKey] = aiCall
-        return { combinationKey, aiCall }
-      } catch (aiCallError) {
-        console.error(`Failed to create AI call for ${combinationKey}:`, aiCallError)
-        throw new Error(`Failed to initialize AI call tracking for ${combinationKey}`)
-      }
-    })
-    
-    // Wait for all AI call initializations
-    await Promise.all(aiCallPromises)
-    
-    // Generate all summaries in parallel
-    const summaryPromises = combinations.map(async ({ expertise, length }) => {
-      const combinationKey = `${expertise}_${length}`
-      const aiCall = aiCalls[combinationKey]
-      
-      try {
-        // Create template with length-specific maxTokens
-        const templateWithTokens = {
-          ...multiSummarisePrompt,
-          modelConfig: {
-            ...multiSummarisePrompt.modelConfig,
-            maxTokens: getMaxTokensForLength(length)
-          }
-        }
-        
-        const summaryResult = await executePromptWithUsage(templateWithTokens, { 
-          content, 
-          expertise_level: expertise,
-          length_instruction: getLengthInstruction(length)
-        })
-        
-        // Complete AI call tracking with success
-        await aiCallService.completeCall(aiCall.id, {
-          output_data: {
-            text_length: summaryResult.text.length,
-            expertise_level: expertise,
-            length_level: length,
-            processing_notes: 'Multi-dimensional summary generation completed successfully'
-          },
-          usage: summaryResult.usage,
-          finishReason: summaryResult.finishReason
-        })
-        
-        return {
-          expertise,
-          length,
-          text: summaryResult.text,
-          combinationKey,
-          aiCallId: aiCall.id
-        }
-      } catch (summaryError) {
-        // Mark AI call as failed
-        await aiCallService.failCall(
-          aiCall.id,
-          summaryError instanceof Error ? summaryError.message : 'Unknown summary generation error'
-        )
-        throw summaryError
-      }
-    })
-    
-    let summaryResults
+    // Create AI call tracking for the single multi-summary generation
+    let aiCall
     try {
-      // All-or-nothing: if any summary fails, entire operation fails
-      summaryResults = await Promise.all(summaryPromises)
-    } catch (error) {
-      console.error('Failed to generate one or more summaries:', error)
+      aiCall = await aiCallService.startCall({
+        documentId,
+        provider: modelConfig.provider,
+        modelId: modelConfig.modelId,
+        prompt_type: 'multi-summarise',
+        input_data: { 
+          content_length: content.length,
+          approach: 'single-prompt-structured-output',
+          combinations_count: 9,
+          tier_used: tierKey
+        }
+      })
+    } catch (aiCallError) {
+      console.error('Failed to create AI call:', aiCallError)
       return NextResponse.json(
-        { error: 'Failed to generate complete summary set - all-or-nothing policy' },
+        { error: 'Failed to initialize AI call tracking' },
         { status: 500 }
       )
     }
     
-    // Organize results into nested structure
-    const organizedSummaries: {
-      beginner: { sentence_or_two: string; single_short_paragraph: string; page: string }
-      intermediate: { sentence_or_two: string; single_short_paragraph: string; page: string }
-      expert: { sentence_or_two: string; single_short_paragraph: string; page: string }
-    } = {
-      beginner: { sentence_or_two: '', single_short_paragraph: '', page: '' },
-      intermediate: { sentence_or_two: '', single_short_paragraph: '', page: '' },
-      expert: { sentence_or_two: '', single_short_paragraph: '', page: '' }
+    // Generate all 9 summaries in a single structured LLM call
+    let summaryResult
+    try {
+      summaryResult = await executePromptWithUsage(multiSummarisePrompt, { content })
+    } catch (summaryError) {
+      // Mark AI call as failed
+      await aiCallService.failCall(
+        aiCall.id,
+        summaryError instanceof Error ? summaryError.message : 'Unknown summary generation error'
+      )
+      
+      console.error('Failed to generate multi-dimensional summary:', summaryError)
+      return NextResponse.json(
+        { error: 'Failed to generate multi-dimensional summary' },
+        { status: 500 }
+      )
     }
     
-    const aiCallMapping: { [key: string]: string } = {}
+    // Parse and validate the structured JSON response
+    let parsedSummaries: MultiSummaryOutput
+    try {
+      // Attempt to parse JSON from the LLM response
+      const jsonText = summaryResult.text.trim()
+      
+      // Handle cases where the response might be wrapped in markdown code blocks
+      const cleanJsonText = jsonText.startsWith('```json') 
+        ? jsonText.replace(/^```json\s*/, '').replace(/\s*```$/, '')
+        : jsonText.startsWith('```')
+        ? jsonText.replace(/^```\s*/, '').replace(/\s*```$/, '')
+        : jsonText
+      
+      const rawParsed = JSON.parse(cleanJsonText)
+      
+      // Validate the structure using Zod schema
+      parsedSummaries = multiSummaryOutputSchema.parse(rawParsed)
+      
+    } catch (parseError) {
+      // Mark AI call as failed
+      await aiCallService.failCall(
+        aiCall.id,
+        `JSON parsing/validation failed: ${parseError instanceof Error ? parseError.message : 'Unknown parsing error'}`
+      )
+      
+      console.error('Failed to parse multi-summary JSON:', parseError)
+      console.error('Raw LLM response:', summaryResult.text)
+      return NextResponse.json(
+        { error: 'Invalid JSON response from LLM - failed to parse structured summary output' },
+        { status: 500 }
+      )
+    }
     
-    summaryResults.forEach(({ expertise, length, text, combinationKey, aiCallId }) => {
-      organizedSummaries[expertise][length] = text
-      aiCallMapping[combinationKey] = aiCallId
-    })
+    // Complete AI call tracking with success
+    try {
+      await aiCallService.completeCall(aiCall.id, {
+        output_data: {
+          text_length: summaryResult.text.length,
+          combinations_generated: 9,
+          json_structure_valid: true,
+          processing_notes: 'Multi-dimensional summary generation completed successfully using single structured prompt'
+        },
+        usage: summaryResult.usage,
+        finishReason: summaryResult.finishReason
+      })
+    } catch (trackingError) {
+      console.error('Failed to complete AI call tracking:', trackingError)
+      // Continue - the summaries were generated successfully even if tracking failed
+    }
     
     // Store in database
     try {
       const enhancement = await enhancementService.storeMultiSummary(
         documentId,
-        aiCallMapping,
-        organizedSummaries,
+        { 'single-call': aiCall.id }, // Simple mapping since it's one call
+        parsedSummaries,
         {
           generatedAt: new Date().toISOString(),
           modelUsed: modelConfig.modelId,
-          tierUsed: tierKey
+          tierUsed: tierKey,
+          approach: 'single-prompt-structured-output'
         }
       )
       
       return NextResponse.json({ 
-        summaries: organizedSummaries,
+        summaries: parsedSummaries,
         cached: false,
         enhancementId: enhancement.id,
         totalCombinations: 9,
-        aiCallMapping
+        aiCallId: aiCall.id,
+        approach: 'single-prompt'
       })
     } catch (dbError) {
       // If database storage fails, still return the generated summaries
       console.error('Failed to store multi-summary in database:', dbError)
       return NextResponse.json({ 
-        summaries: organizedSummaries,
+        summaries: parsedSummaries,
         cached: false,
         warning: 'Summaries generated but not saved to database',
-        error: dbError instanceof Error ? dbError.message : 'Unknown database error'
+        error: dbError instanceof Error ? dbError.message : 'Unknown database error',
+        aiCallId: aiCall.id
       })
     }
   } catch (error) {
