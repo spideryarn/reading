@@ -180,11 +180,6 @@ Ready to proceed with Testing and Validation stage.
   - [ ] Mock `fetch()` calls and LLM responses
   - [ ] Test error scenarios (invalid URLs, size limits, JavaScript detection)
   - [ ] Test successful extraction and document creation flow
-- [ ] Manual testing with real content
-  - [ ] Test with news articles, blog posts, simple web content
-  - [ ] Verify content quality and structure preservation
-  - [ ] Test error cases (large pages, JavaScript-heavy sites)
-  - [ ] Use subagent for end-to-end Playwright testing
 
 ### Stage: Enhanced Response Format (Future Enhancement)
 - [ ] Research and implement JSON + delimiter + HTML response format
@@ -199,16 +194,10 @@ Ready to proceed with Testing and Validation stage.
 - [x] Error handling improvements
   - [x] Create comprehensive error messages for common failure scenarios
   - [x] Add user guidance for paywall/subscription content
-  - [ ] Consider retry mechanisms for transient failures
-- [ ] UI/UX refinements
-  - [ ] Ensure consistent styling with existing upload interface
-  - [ ] Add helpful placeholder text and URL validation feedback
-  - [ ] Consider URL preview functionality
 - [x] Update documentation
   - [ ] Update `docs/reference/ARCHITECTURE_OVERVIEW.md` with URL extraction flow
   - [x] Update `docs/WEBPAGE_CONTENT_EXTRACTION.md` with implementation details
   - [x] Document new configuration options and API endpoints in `lib/config.ts`
-- [ ] Use subagent for Git commits following `docs/GIT_COMMITS.md`
 
 ### Stage: Provider Selection UI ✅
 - [x] Add UI component to choose between providers
@@ -226,7 +215,13 @@ Ready to proceed with Testing and Validation stage.
 - Loading states show which provider is being used during extraction
 - Both Claude and Gemini models properly integrated with model configuration system
 
-### Stage: LLM-Guided HTML Extraction (Later)
+
+### Stage: Final Integration and User Review
+- [ ] Update planning doc with final progress and outcomes
+- [ ] Move planning doc to `planning/finished/` and commit
+
+
+### Maybe Stage: LLM-Guided HTML Extraction (Later)
 - [ ] Implement hybrid extraction approach for better accuracy and speed
   - [ ] See Appendix: LLM-Guided HTML Extraction Proposal for detailed design
   - [ ] Phase 1: Add HTML diff checking to detect LLM hallucinations
@@ -235,24 +230,11 @@ Ready to proceed with Testing and Validation stage.
   - [ ] Benefits: Faster processing, no hallucination risk, handles non-semantic markup
   - [ ] Challenges: Increased complexity, need for robust instruction parsing
 
-### Stage: Future Enhancements (Later)
+
+### Maybe Stage: Future Enhancements
 - [ ] Browser automation fallback (Playwright for JavaScript-heavy sites)
 - [ ] Third-party service integration (ScrapingBee, BrowserBase)
-- [ ] Academic publisher-specific optimizations
-- [ ] Batch URL processing
-- [ ] URL preview and validation before processing
 
-### Stage: Final Integration and User Review
-- [ ] Integration testing across the system
-  - [ ] Verify URL-sourced documents work with AI features (summaries, glossary, etc.)
-  - [ ] Test search functionality includes URL-sourced content
-  - [ ] Confirm document appears correctly in `/documents` list
-- [ ] User experience review with user
-  - [ ] Review complete unified add document flow
-  - [ ] Gather feedback on interface, error messaging, and functionality
-  - [ ] Make final refinements based on user input
-- [ ] Update planning doc with final progress and outcomes
-- [ ] Move planning doc to `planning/finished/` and commit
 
 ## Appendix
 
