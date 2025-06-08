@@ -86,6 +86,22 @@ Debugging resources:
 This follows our principle: "Raise errors early, clearly & fatally" (see `docs/CODING_PRINCIPLES.md`)
 
 
+## Upload Metadata Tracking
+
+The system now tracks comprehensive metadata for all document uploads (PDF and URL-based):
+
+**Implementation Features**:
+- Upload metadata stored in `documents.upload_metadata` JSONB field (extraction method, provider, processing time, file sizes, etc.)
+- Full AI call traceability via `documents.upload_ai_call_id` foreign key to `ai_calls` table
+- Implemented across both PDF upload (`/api/upload-pdf`) and URL extraction (`/api/extract-url`) APIs
+- Enables debugging, analytics, and processing optimization
+
+**Database Integration**:
+- Migration: `supabase/migrations/20250608120000_add_upload_metadata_fields.sql`
+- Types: Auto-generated in `lib/types/database.ts`
+- Service: Updated `DocumentService.createWithStorage()` method to handle metadata
+
+
 ## Authentication System
 
 The project includes a complete authentication system using Supabase Auth with Next.js App Router:

@@ -48,6 +48,11 @@ npm run db:reset
 2. **Edit SQL file**: Add your schema changes in `supabase/migrations/[timestamp]_feature_name.sql`
 3. **IMPORTANT**: Ask user for explicit permission before applying migrations with `npm run db:reset`
 4. **Apply locally** (with permission): `npm run db:reset` (resets DB, applies all migrations, and regenerates types)
+
+## Recent Migrations
+
+- `20250531235026_comprehensive_storage_schema.sql` - Initial comprehensive database schema
+- `20250608120000_add_upload_metadata_fields.sql` - Upload metadata tracking (documents.upload_metadata JSONB, documents.upload_ai_call_id UUID)
 5. **Verify types**: Check that `lib/types/database.ts` has been updated with your changes
 5. **Test**: Verify changes work as expected in code with proper type safety
 6. **Commit**: Include both the migration file and updated types in your git commit

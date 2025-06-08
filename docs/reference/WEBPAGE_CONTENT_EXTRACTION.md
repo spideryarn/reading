@@ -310,8 +310,10 @@ export async function POST(request: Request) {
 **Document Processing Pipeline**:
 1. **Raw URL Storage**: Original source URL and metadata
 2. **Extraction Results**: Multiple extraction attempts with quality scores
-3. **Processed Content**: Final cleaned content with structure annotations
-4. **LLM Enhancements**: AI-generated summaries, glossaries, headings
+3. **Upload Metadata Tracking**: Extraction method, provider, processing time, content sizes stored in documents.upload_metadata JSONB field
+4. **AI Call Linking**: Full traceability via documents.upload_ai_call_id foreign key to ai_calls table
+5. **Processed Content**: Final cleaned content with structure annotations
+6. **LLM Enhancements**: AI-generated summaries, glossaries, headings
 
 ## Performance and Cost Analysis
 

@@ -17,7 +17,8 @@ This document provides concise descriptions of all tables in the Spideryarn Read
 The database schema is defined and represented in several places:
 
 1. **SQL Migration** (Source of Truth):
-   - `supabase/migrations/20250531235026_comprehensive_storage_schema.sql`
+   - `supabase/migrations/20250531235026_comprehensive_storage_schema.sql` - Initial comprehensive schema
+   - `supabase/migrations/20250608120000_add_upload_metadata_fields.sql` - Upload metadata tracking fields
    - Contains CREATE TABLE statements, indexes, triggers, and initial data
 
 2. **TypeScript Types** (Auto-generated):
@@ -77,6 +78,8 @@ The database schema is defined and represented in several places:
 - `word_count`: Calculated word count
 - `is_public`: Privacy flag for multi-user support
 - `created_by`: Links to auth.users
+- `upload_metadata`: JSONB for upload-related metadata (extraction method, provider, processing time, file size, etc.)
+- `upload_ai_call_id`: Foreign key to ai_calls table linking to the AI call that processed this document during upload
 - `metadata`: JSONB for flexible document properties
 
 **Indexes**: GIN index on plaintext_content for full-text search
@@ -86,6 +89,8 @@ The database schema is defined and represented in several places:
 - HTML stored in database rather than Supabase Storage for easier querying
 - Plaintext extraction enables both search and AI processing
 - Original files (PDFs, etc.) stored in Supabase Storage with path references
+- Upload metadata tracks processing details for debugging and analytics
+- Upload AI call linking provides full traceability from document to generating model and processing parameters
 
 ### **`ai_calls`** - AI API Call Tracking
 

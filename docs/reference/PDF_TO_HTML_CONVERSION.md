@@ -403,6 +403,7 @@ const qualityPipeline = {
 - **Batch Processing**: Queue-based processing to leverage parallel compute capabilities
 - **Model Routing**: Intelligent selection between Claude 4 (accuracy) vs Gemini 2.5 (cost/speed)
 - **Caching**: "15-minute cache for faster responses when repeatedly accessing the same URL" approach
+- **Upload Metadata Tracking**: Complete processing traceability via documents.upload_metadata JSONB field and upload_ai_call_id foreign key for debugging and analytics
 
 ### Active Research Monitoring 🔍
 

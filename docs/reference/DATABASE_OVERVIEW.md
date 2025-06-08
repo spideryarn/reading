@@ -29,6 +29,7 @@ Spideryarn Reading uses PostgreSQL via Supabase for persistent storage. The data
 2. **`documents`** - Document storage with full HTML and plaintext
    - Stores content inline (not decomposed into elements)
    - Includes metadata: title, URL, language, word count
+   - Upload tracking: metadata and AI call linking for full processing traceability
    - Full-text search enabled on plaintext content
 
 3. **`ai_calls`** - Comprehensive AI API call tracking
