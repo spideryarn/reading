@@ -146,6 +146,37 @@ function GlossaryDisplay({
   onScrollToEntity?: (elementId: string) => void
 }) {
   const { actions } = useDocumentCommunication()
+  const [searchTerm, setSearchTerm] = useState('')
+  
+  // Filter entities based on search term
+  const filterEntities = useCallback((entities: Entity[], searchTerm: string): Entity[] => {
+    if (!searchTerm.trim()) return entities
+    
+    const term = searchTerm.toLowerCase()
+    return entities.filter(entity => 
+      entity.name.toLowerCase().includes(term) ||
+      entity.aliases.some(alias => alias.toLowerCase().includes(term))
+    )
+  }, [])
+  
+  // Debounced search function
+  const debouncedFilter = useMemo(
+    () => debounce((term: string) => {
+      // The filtering happens in the render through filteredEntities
+    }, 300),
+    []
+  )
+  
+  // Apply search and get filtered entities
+  const filteredEntities = useMemo(() => {
+    return filterEntities(entities, searchTerm)
+  }, [entities, searchTerm, filterEntities])
+  
+  // Clear search when tab changes or entities reload
+  useEffect(() => {
+    setSearchTerm('')
+  }, [entities])
+  
   const findFirstOccurrence = (entity: Entity): string | null => {
     const searchTerms = [entity.name, ...entity.aliases]
     const sortedElements = [...elements].sort((a, b) => a.position - b.position)
@@ -173,8 +204,64 @@ function GlossaryDisplay({
   }
   
   return (
-    <div className="space-y-4 p-4">
-      {entities.map((entity, index) => {
+    <div className="flex flex-col h-full">
+      {/* Search input */}
+      <div className="p-4 border-b border-gray-200">
+        <div className="relative">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value)
+              debouncedFilter(e.target.value)
+            }}
+            placeholder="Search glossary..."
+            className="w-full px-4 py-2 pl-10 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <MagnifyingGlass 
+            size={16} 
+            weight="bold" 
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X size={16} weight="bold" />
+            </button>
+          )}
+        </div>
+        
+        {/* Results indicator */}
+        {searchTerm.trim() && (
+          <div className="mt-2 text-sm text-gray-600">
+            {filteredEntities.length === 0 ? (
+              <span className="text-red-600">No matches found</span>
+            ) : (
+              <span className="text-blue-600 bg-blue-50 px-2 py-1 rounded-full font-medium">
+                {filteredEntities.length} of {entities.length} {filteredEntities.length === 1 ? 'entry' : 'entries'}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+      
+      {/* Entities list */}
+      <div className="flex-1 overflow-y-auto">
+        {filteredEntities.length === 0 && searchTerm.trim() ? (
+          <div className="flex flex-col items-center justify-center p-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mb-4">
+              <MagnifyingGlass size={24} weight="bold" className="text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No matches found</h3>
+            <p className="text-sm text-gray-600">
+              Try searching for a different term or clear the search.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4 p-4">
+            {filteredEntities.map((entity, index) => {
         const hasOccurrence = findFirstOccurrence(entity) !== null
         
         return (
@@ -222,6 +309,9 @@ function GlossaryDisplay({
           </div>
         )
       })}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
