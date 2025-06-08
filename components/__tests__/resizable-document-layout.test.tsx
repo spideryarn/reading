@@ -90,6 +90,20 @@ jest.mock('../unified-left-pane', () => ({
   )
 }));
 
+// Mock VerticalIconNav component
+jest.mock('../vertical-icon-nav', () => ({
+  VerticalIconNav: ({ activeTab, onTabClick, className }: any) => (
+    <div data-testid="vertical-icon-nav" data-active-tab={activeTab} className={className}>
+      <button data-testid="icon-nav-original" onClick={() => onTabClick('original')}>Original</button>
+      <button data-testid="icon-nav-ai-generated" onClick={() => onTabClick('ai-generated')}>AI-generated</button>
+      <button data-testid="icon-nav-summary" onClick={() => onTabClick('summary')}>Summary</button>
+      <button data-testid="icon-nav-chat" onClick={() => onTabClick('chat')}>Chat</button>
+      <button data-testid="icon-nav-glossary" onClick={() => onTabClick('glossary')}>Glossary</button>
+      <button data-testid="icon-nav-search" onClick={() => onTabClick('search')}>Search</button>
+    </div>
+  )
+}));
+
 jest.mock('../simple-document-viewer', () => ({
   SimpleDocumentViewer: ({ 
     elements, 

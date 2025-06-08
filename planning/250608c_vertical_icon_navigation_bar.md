@@ -40,36 +40,36 @@ Currently, the unified left pane displays navigation options as a vertical list 
 ## Stages & Actions
 
 ### Stage: Preparation
-- [ ] Run `./scripts/sync-worktrees.ts` to sync latest changes from main
-- [ ] Research and document icon choices for each navigation mode
+- [x] Run `./scripts/sync-worktrees.ts` to sync latest changes from main
+- [x] Research and document icon choices for each navigation mode
 
-### Stage: Create Icon Navigation Component
-- [ ] Create `components/vertical-icon-nav.tsx` with basic structure
-  - [ ] Define TypeScript interfaces for navigation items
-  - [ ] Implement icon button rendering with Phosphor icons
-  - [ ] Add active state styling with Spideryarn orange
-- [ ] Write tests for `VerticalIconNav` component in `components/__tests__/vertical-icon-nav.test.tsx`
-  - [ ] Test icon rendering
-  - [ ] Test active state changes
-  - [ ] Test click handlers
-- [ ] Run tests with `npm test`
+### Stage: Create Icon Navigation Component ✅ COMPLETED
+- [x] Create `components/vertical-icon-nav.tsx` with basic structure
+  - [x] Define TypeScript interfaces for navigation items
+  - [x] Implement icon button rendering with Phosphor icons
+  - [x] Add active state styling with Spideryarn orange
+- [x] Write tests for `VerticalIconNav` component in `components/__tests__/vertical-icon-nav.test.tsx`
+  - [x] Test icon rendering
+  - [x] Test active state changes
+  - [x] Test click handlers
+- [x] Run tests with `npm test`
 
-### Stage: Implement Tooltips
-- [ ] Add Radix UI Tooltip to each icon
-  - [ ] Configure 600ms delay
-  - [ ] Style tooltips with bold title and description
-  - [ ] Position tooltips to the right of icons
-- [ ] Update tests to verify tooltip content and behaviour
-- [ ] Run tests
+### Stage: Implement Tooltips ✅ COMPLETED
+- [x] Add Radix UI Tooltip to each icon
+  - [x] Configure 600ms delay
+  - [x] Style tooltips with bold title and description
+  - [x] Position tooltips to the right of icons
+- [x] Update tests to verify tooltip content and behaviour
+- [x] Run tests
 
-### Stage: Integrate with Unified Left Pane
-- [ ] Modify `components/resizable-document-layout.tsx` to show VerticalIconNav when left pane is collapsed
-- [ ] Replace the existing expand button with the icon navigation rail when collapsed
-- [ ] Keep existing text tabs when left pane is expanded (Option 2 approach)
-- [ ] Connect icon clicks to existing tab switching logic via DocumentCommunicationContext
-- [ ] Ensure keyboard shortcuts (Ctrl+B) still work with new icon rail
-- [ ] Update existing unified-left-pane tests
-- [ ] Run all tests
+### Stage: Integrate with Unified Left Pane ✅ COMPLETED
+- [x] Modify `components/resizable-document-layout.tsx` to show VerticalIconNav when left pane is collapsed
+- [x] Replace the existing expand button with the icon navigation rail when collapsed
+- [x] Keep existing text tabs when left pane is expanded (Option 2 approach)
+- [x] Connect icon clicks to existing tab switching logic via DocumentCommunicationContext
+- [x] Ensure keyboard shortcuts (Ctrl+B) still work with new icon rail
+- [x] Update existing unified-left-pane tests
+- [x] Run all tests
 
 ### Stage: Visual Polish & Accessibility
 - [ ] Add hover states and transitions
@@ -77,6 +77,26 @@ Currently, the unified left pane displays navigation options as a vertical list 
 - [ ] Add ARIA labels and roles
 - [ ] Test with keyboard-only navigation
 - [ ] ACTION: Review UI with user for feedback
+
+### Stage: User Feedback & Refinements (Current)
+- [ ] **Spacing Issue**: Add more gap between vertical icon rail and Document pane when collapsed
+  - Current implementation may have insufficient visual separation
+  - Consider 8-16px margin-right on the icon rail container
+- [ ] **Keyboard Shortcut Enhancement**: Improve Cmd+B (Mac) / Ctrl+B (Windows/Linux) implementation
+  - Research web best practices for keyboard shortcuts (completed via subagent research)
+  - Implement platform-specific modifier key detection (Cmd on Mac, Ctrl on Windows/Linux)
+  - Add visual indicators showing shortcut availability (e.g., tooltip showing "Cmd+B")
+  - Ensure accessibility compliance (WCAG 2.1) and conflict prevention
+- [ ] **Design Decision Review**: Reconsider Option 2 approach vs always-visible icon rail
+  - Current: Icon rail only when collapsed, text tabs when expanded
+  - Alternative: Show icon rail always, remove text tabs entirely
+  - Benefits of always-visible: More consistent UI, better space utilization
+  - Research needed: User testing to determine preference
+- [ ] **Documentation**: Create `docs/reference/KEYBOARD_SHORTCUTS.md`
+  - Document all keyboard shortcuts (starting with Cmd+B/Ctrl+B for sidebar toggle)
+  - Include implementation patterns for developers
+  - Reference from `docs/reference/UI_INTERFACE.md` and `docs/reference/DOCUMENTATION_ORGANISATION.md`
+  - Cover accessibility considerations and platform differences
 
 ### Stage: Documentation & Cleanup
 - [ ] Update `docs/reference/UNIFIED_LEFT_PANE.md` with new icon navigation
@@ -119,20 +139,42 @@ Currently, the unified left pane displays navigation options as a vertical list 
 
 ## Appendix
 
-### Proposed Icon Mapping
+### Final Icon Mapping
 
-Based on Phosphor icons that match the design aesthetic:
+Based on research of Phosphor icons library and existing usage patterns in the codebase:
 
-| Navigation Item | Icon Choice | Rationale |
-|----------------|-------------|-----------|
-| Original | `Article` or `FileText` | Represents the source document |
-| AI-generated | `Robot` or `Sparkle` | Indicates AI enhancement |
-| Summary | `ListBullets` or `TextAlignLeft` | Suggests condensed content |
-| Chat | `ChatCircle` or `ChatTeardrop` | Universal chat symbol |
-| Glossary | `BookOpen` or `BookBookmark` | Reference/dictionary metaphor |
-| Search | `MagnifyingGlass` | Standard search icon |
-| Metadata (future) | `Info` or `Tag` | Document properties |
-| Tweet Thread (future) | `TwitterLogo` or `ChatCenteredText` | Social/thread format |
+| Navigation Item | **SELECTED ICON** | Alternative | Rationale |
+|----------------|------------------|-------------|-----------|
+| **Original** | `Article` | `File`, `FileText` | Already used in codebase (line 19), represents source document clearly |
+| **AI-generated** | `Robot` | `Sparkle`, `MagicWand` | Already used in assistant-chat.tsx (line 12), universally recognized AI symbol |
+| **Summary** | `ListBullets` | `TextAlignLeft`, `ClipboardText` | Suggests condensed, organized content effectively |
+| **Chat** | `ChatCircle` | `ChatTeardrop`, `Chat` | Clean, recognizable conversation icon |
+| **Glossary** | `BookOpen` | `Book`, `Dictionary` | Reference/learning metaphor, distinct from chat |
+| **Search** | `MagnifyingGlass` | N/A | Already used in unified-left-pane.tsx (line 14), universal search icon |
+
+### Future Navigation Items
+
+| Navigation Item | **SELECTED ICON** | Alternative | Rationale |
+|----------------|------------------|-------------|-----------|
+| **Metadata** | `Info` | `Tag`, `Gear` | Already used in codebase (line 20), represents document properties |
+| **Tweet Thread** | `TwitterLogo` | `ChatCenteredText` | Already used in document-header.tsx, social/thread format |
+
+### Icon Technical Details
+
+**Weight**: `duotone` (consistent with design system)
+**Size**: 20px (standard for navigation, can scale to 16px/24px as needed)
+**Import Format**: 
+```tsx
+import { 
+  Article, Robot, ListBullets, ChatCircle, 
+  BookOpen, MagnifyingGlass, Info, TwitterLogo 
+} from '@phosphor-icons/react'
+```
+
+**Usage Pattern**:
+```tsx
+<Article size={20} weight="duotone" className="text-gray-600" />
+```
 
 ### Tooltip Content Structure
 
@@ -145,9 +187,9 @@ interface TooltipContent {
 const navigationTooltips: Record<string, TooltipContent> = {
   original: {
     title: "Original Document",
-    description: "View the unmodified source document"
+    description: "View the unmodified source document with original headings"
   },
-  aiGenerated: {
+  'ai-generated': {
     title: "AI-Generated",
     description: "View document with AI-enhanced headings and structure"
   },
@@ -157,7 +199,7 @@ const navigationTooltips: Record<string, TooltipContent> = {
   },
   chat: {
     title: "Chat",
-    description: "Ask questions about the document with AI assistance"
+    description: "Ask questions and discuss the document with AI"
   },
   glossary: {
     title: "Glossary",
@@ -205,3 +247,66 @@ From web research on best practices:
 4. **Grouped dropdown menus**: Added complexity without space savings
 
 The vertical icon rail was chosen for its proven effectiveness in professional tools, space efficiency, and scalability for future features.
+
+## Research Summary
+
+### Icon Selection Methodology (Completed 8 June 2025)
+
+**Research Approach:**
+1. **Codebase Analysis**: Examined existing Phosphor icon usage in `unified-left-pane.tsx`, `assistant-chat.tsx`, `document-header.tsx`, and other components
+2. **Icon Library Research**: Investigated Phosphor Icons duotone weight options via web search and official documentation
+3. **Consistency Assessment**: Prioritized icons already in use to maintain design consistency
+4. **Semantic Evaluation**: Selected icons that clearly represent their respective functions
+
+**Key Findings:**
+- **Existing Usage**: Many suitable icons (Article, Robot, MagnifyingGlass, Info) already imported in codebase
+- **Duotone Weight**: Available across all selected icons, supports the sophisticated visual design
+- **Professional Context**: All selected icons align with professional document reading application context
+- **Scalability**: Icon choices support future navigation additions (metadata, tweet threads)
+
+**Selected Icons Rationale:**
+- `Article` (Original): Clean document representation, already in use
+- `Robot` (AI-generated): Universal AI symbol, consistency with chat component  
+- `ListBullets` (Summary): Visually suggests organized, condensed content
+- `ChatCircle` (Chat): Balanced, professional conversation icon
+- `BookOpen` (Glossary): Clear reference/learning metaphor
+- `MagnifyingGlass` (Search): Universal search standard, already in use
+
+**Next Stage Ready**: Component creation with finalized icon specifications and tooltip content structure.
+
+### Implementation Progress (8 June 2025)
+
+**Stage: Preparation ✅ COMPLETED**
+- ✅ Synced latest changes from main branch via sync-worktrees script
+- ✅ Comprehensive icon research completed with final selections documented
+- ✅ Technical specifications defined (duotone weight, sizing, import patterns)
+- ✅ Tooltip content structure finalized with proper descriptions
+- ✅ Consistency analysis with existing codebase completed
+
+**Status**: Core implementation completed with icon navigation, tooltips, and resizable layout integration.
+
+### Implementation Progress (8 June 2025)
+
+**Stage: Create Icon Navigation Component ✅ COMPLETED**
+- ✅ Created `components/vertical-icon-nav.tsx` with comprehensive TypeScript interfaces
+- ✅ Implemented all 6 navigation icons with Phosphor icons library (duotone weight, 20px)
+- ✅ Added Spideryarn orange active state styling (#DB8A45)
+- ✅ Created full test suite with 11 tests covering icon rendering, states, and interactions
+- ✅ All tests passing with proper accessibility attributes
+
+**Stage: Implement Tooltips ✅ COMPLETED**
+- ✅ Integrated Radix UI Tooltip with 600ms delay configuration
+- ✅ Styled tooltips with bold titles and descriptive text
+- ✅ Positioned tooltips to the right of icons with proper spacing
+- ✅ Added tooltip content structure with proper semantics
+- ✅ Updated tests to verify tooltip trigger data attributes
+
+**Stage: Integrate with Resizable Layout ✅ COMPLETED**
+- ✅ Modified `components/resizable-document-layout.tsx` to use VerticalIconNav when collapsed
+- ✅ Replaced floating expand button with full-height icon navigation rail
+- ✅ Connected icon clicks to DocumentCommunicationContext for tab switching
+- ✅ Maintained keyboard shortcut (Ctrl+B) functionality
+- ✅ Added proper state management for active tab tracking
+- ✅ Updated test mocks for new component integration
+
+**Current Status**: Core vertical icon navigation bar implementation complete. Ready for visual polish and accessibility enhancements.
