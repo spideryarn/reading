@@ -50,20 +50,40 @@ The system supports multiple LLM providers (Claude and Gemini) for analysing doc
 
 1. **Loading**: Click "Load glossary" button to generate entities
 2. **Display**: Entities shown with name, ontology type (grey smallcaps), and long explanation
-3. **Error states**: Clear error messages with warning icons when generation fails
-4. **Loading states**: Spinning icon during LLM processing
+3. **Search**: Real-time text search filters entities by name and aliases
+4. **Navigation**: Click entity to scroll to first occurrence in document text
+5. **Error states**: Clear error messages with warning icons when generation fails
+6. **Loading states**: Spinning icon during LLM processing
+
+### Search Functionality
+
+The glossary includes client-side search functionality for quick entity lookup:
+
+- **Real-time filtering**: Filter entities as you type with 300ms debouncing
+- **Search scope**: Searches entity names and aliases (case-insensitive exact matching)
+- **Results indicator**: Shows "X of Y entries" badge when search is active
+- **Clear functionality**: X button to clear search and return to full list
+- **Empty state**: "No matches found" message with helpful guidance
+- **Auto-clear**: Search resets when switching between documents/tabs
+
+## Current features
+
+✅ **Entity extraction and display**: LLM-powered entity identification with ontology categorisation
+✅ **Click navigation**: Click any entity to scroll to its first occurrence in the document
+✅ **Search and filtering**: Real-time search through entity names and aliases
+✅ **Loading and error states**: Clear UI feedback during processing and on failures
 
 ## Limitations
 
 - Requires fresh LLM processing for each document (no caching yet)
-- No navigation to entity occurrences in document text
 - No highlighting of entities within the document
 - Processing time depends on document length and LLM response time
+- Search only covers names/aliases, not explanations
 
 ## Planned enhancements
 
-- Click entity to scroll to first occurrence in document
 - Highlight entity mentions in document text with tooltips
 - Cache entities in Supabase for faster subsequent loads
-- Filter and search within glossary
 - User preferences for entity types and display options
+- Fuzzy search and typo tolerance
+- Search within entity explanations
