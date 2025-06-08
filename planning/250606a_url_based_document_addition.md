@@ -83,6 +83,18 @@ Based on user requirements and research findings:
 
 Ready to proceed with Testing and Validation stage.
 
+### Stage: Fix Model Selection (Early)
+- [ ] Fix the model selection/configuration approach
+  - [ ] Review how model selection is handled in PDF upload (uses separate prompt templates per provider)
+  - [ ] Review how glossary and other APIs handle model selection (uses environment variable override)
+  - [ ] Update URL extraction to follow standardized pattern:
+    - Option 1: Create separate prompt templates for each provider (like PDF upload)
+    - Option 2: Pass provider parameter to override template configuration
+    - Option 3: Use environment variable override (simplest but less flexible)
+  - [ ] Ensure the `provider` parameter in the API request actually affects model selection
+  - [ ] Test that both Claude and Gemini models can be selected and used
+  - [ ] Ask user for clarification if the standardization approach needs discussion
+
 ### Stage: Testing and Validation
 - [ ] Write automated tests for URL extraction
   - [ ] Create Jest tests for `/api/extract-url` route following PDF test patterns
@@ -119,8 +131,25 @@ Ready to proceed with Testing and Validation stage.
   - [ ] Document new configuration options and API endpoints
 - [ ] Use subagent for Git commits following `docs/GIT_COMMITS.md`
 
+### Stage: Provider Selection UI (Later)
+- [ ] Add UI component to choose between providers
+  - [ ] Follow the PDF upload interface pattern for provider selection
+  - [ ] Add radio buttons or dropdown for Anthropic (anthropic-balanced) vs Google (google-balanced)
+  - [ ] Consider abstracting the provider selection into a reusable component
+  - [ ] Update the API to properly use the selected provider (building on early stage fix)
+  - [ ] Show provider-specific information (e.g., context window sizes, strengths)
+  - [ ] Test both providers work correctly with various content types
+
+### Stage: LLM-Guided HTML Extraction (Later)
+- [ ] Implement hybrid extraction approach for better accuracy and speed
+  - [ ] See Appendix: LLM-Guided HTML Extraction Proposal for detailed design
+  - [ ] Phase 1: Add HTML diff checking to detect LLM hallucinations
+  - [ ] Phase 2: Try readability libraries (Mozilla Readability.js) as Plan A
+  - [ ] Phase 3: Implement full LLM-guided DOM manipulation if needed
+  - [ ] Benefits: Faster processing, no hallucination risk, handles non-semantic markup
+  - [ ] Challenges: Increased complexity, need for robust instruction parsing
+
 ### Stage: Future Enhancements (Later)
-- [ ] Provider selection UI (allow user to choose Claude vs Gemini)
 - [ ] Browser automation fallback (Playwright for JavaScript-heavy sites)
 - [ ] Third-party service integration (ScrapingBee, BrowserBase)
 - [ ] Academic publisher-specific optimizations
@@ -260,3 +289,114 @@ export const URL_EXTRACTION_CONFIG = {
 6. **Bot Detection**: Site blocks fetch request with 403/captcha
 
 **Error Response Strategy**: Clear, immediate failure messages with specific guidance rather than fallbacks or partial success handling.
+
+## Appendix: LLM-Guided HTML Extraction Proposal
+
+### Problem Statement
+Current full-LLM extraction approach has several issues:
+- **Hallucination Risk**: LLMs can mistranscribe or invent content
+- **Speed**: Processing entire HTML through LLM is slow (10-30 seconds)
+- **Non-Semantic Markup**: Websites often use CSS styling instead of semantic HTML (e.g., large fonts instead of `<h1>` tags)
+
+### Proposed Solution: Hybrid LLM-Guided DOM Manipulation
+
+**Core Concept**: Instead of having the LLM transcribe HTML, have it provide instructions for programmatic DOM manipulation.
+
+### Implementation Approaches
+
+#### Approach 1: JSON Instruction Format
+LLM returns structured commands:
+```json
+{
+  "operations": [
+    {"action": "delete", "selector": "#nav-menu"},
+    {"action": "delete", "selector": ".advertisement"},
+    {"action": "promote", "selector": ".article-title", "to": "h1"},
+    {"action": "promote", "selector": ".section-header", "to": "h2"},
+    {"action": "unwrap", "selector": "div.content-wrapper"},
+    {"action": "merge", "selectors": ["p#intro-1", "p#intro-2"]}
+  ]
+}
+```
+
+#### Approach 2: Code Generation (Sandboxed)
+LLM generates actual DOM manipulation code:
+```javascript
+// Remove navigation and ads
+document.querySelectorAll('#nav, .ad, .sidebar').forEach(el => el.remove());
+
+// Convert styled text to semantic headings
+document.querySelectorAll('.big-text').forEach(el => {
+  const h1 = document.createElement('h1');
+  h1.textContent = el.textContent;
+  el.replaceWith(h1);
+});
+```
+
+### Supported Operations
+
+**Essential Operations**:
+1. **Delete**: Remove elements by selector
+2. **Promote**: Convert elements to semantic tags (div→h1, span→em)
+3. **Unwrap**: Remove wrapper while keeping children
+4. **Extract**: Keep only specified elements
+5. **SetAttribute**: Add/modify attributes
+
+**Advanced Operations**:
+1. **Merge**: Combine adjacent elements
+2. **Split**: Break elements at specific points
+3. **Reorder**: Change element sequence
+4. **Group**: Wrap elements in new container
+5. **ConvertTable**: Transform layout tables to semantic markup
+
+### Technical Considerations
+
+**DOM Manipulation Libraries**:
+- **jsdom**: Full DOM implementation in Node.js
+- **cheerio**: jQuery-like server-side DOM manipulation (currently used)
+- **linkedom**: Faster, lighter alternative to jsdom
+- **parse5**: Low-level HTML parser with tree manipulation
+
+**Safety & Validation**:
+- Sandbox any code execution
+- Validate all selectors before execution
+- Set operation limits (max deletions, transformations)
+- Rollback capability for failed operations
+
+### Phased Implementation Plan
+
+**Phase 1: Detection & Validation**
+- Add checksum/hash validation to detect LLM changes
+- Log and flag suspicious transcription changes
+- Measure hallucination frequency
+
+**Phase 2: Simple Extraction**
+- Integrate Mozilla Readability.js
+- Use as primary extraction for compatible sites
+- Fall back to LLM for complex layouts
+
+**Phase 3: Guided Manipulation**
+- Implement JSON instruction format
+- Start with delete operations only
+- Gradually add transformation operations
+
+**Phase 4: Advanced Features**
+- Support full operation set
+- Consider code generation approach
+- Add visual diff preview
+
+### Benefits vs Complexity Trade-off
+
+| Approach | Complexity | Benefits |
+|----------|------------|----------|
+| Current (Full LLM) | Low | Simple but slow, hallucination risk |
+| Readability.js | Medium | Fast, reliable for standard articles |
+| JSON Instructions | High | Full control, no hallucination |
+| Code Generation | Very High | Maximum flexibility |
+
+### Recommendation
+
+Start with Readability.js integration (Phase 2) as it provides the best complexity/benefit ratio. Only proceed to LLM-guided manipulation if:
+1. Hallucination remains a problem after prompt improvements
+2. Many sites fail Readability.js extraction
+3. Speed remains unacceptable for users
