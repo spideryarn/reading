@@ -78,6 +78,26 @@ Currently, the unified left pane displays navigation options as a vertical list 
 - [ ] Test with keyboard-only navigation
 - [ ] ACTION: Review UI with user for feedback
 
+### Stage: User Feedback & Refinements (Current)
+- [ ] **Spacing Issue**: Add more gap between vertical icon rail and Document pane when collapsed
+  - Current implementation may have insufficient visual separation
+  - Consider 8-16px margin-right on the icon rail container
+- [ ] **Keyboard Shortcut Enhancement**: Improve Cmd+B (Mac) / Ctrl+B (Windows/Linux) implementation
+  - Research web best practices for keyboard shortcuts (completed via subagent research)
+  - Implement platform-specific modifier key detection (Cmd on Mac, Ctrl on Windows/Linux)
+  - Add visual indicators showing shortcut availability (e.g., tooltip showing "Cmd+B")
+  - Ensure accessibility compliance (WCAG 2.1) and conflict prevention
+- [ ] **Design Decision Review**: Reconsider Option 2 approach vs always-visible icon rail
+  - Current: Icon rail only when collapsed, text tabs when expanded
+  - Alternative: Show icon rail always, remove text tabs entirely
+  - Benefits of always-visible: More consistent UI, better space utilization
+  - Research needed: User testing to determine preference
+- [ ] **Documentation**: Create `docs/reference/KEYBOARD_SHORTCUTS.md`
+  - Document all keyboard shortcuts (starting with Cmd+B/Ctrl+B for sidebar toggle)
+  - Include implementation patterns for developers
+  - Reference from `docs/reference/UI_INTERFACE.md` and `docs/reference/DOCUMENTATION_ORGANISATION.md`
+  - Cover accessibility considerations and platform differences
+
 ### Stage: Documentation & Cleanup
 - [ ] Update `docs/reference/UNIFIED_LEFT_PANE.md` with new icon navigation
 - [ ] Update `docs/reference/UI_COMPONENTS.md` if needed
