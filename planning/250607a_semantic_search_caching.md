@@ -156,7 +156,7 @@ The goal is to:
   - [ ] Ensure fresh search works after cache clear
   - [ ] Check that other cached queries remain intact
 
-### Later Stage: Query History Dropdown
+### Stage: Query History Dropdown UI ✅ COMPLETED
 - [x] Create endpoint to list cached queries for a document
   - [x] GET /api/semantic-search?documentId=xxx (integrated into existing route)
   - [x] Return list of cached queries with timestamps
@@ -170,6 +170,16 @@ The goal is to:
   - [x] Verify dropdown shows correct historical queries
   - [x] Ensure selection loads cached results
   - [x] Check that new queries still work
+- [x] Fix implementation issues
+  - [x] Resolved JavaScript initialization order error with fetchQueryHistory
+  - [x] Verified functionality working in dev environment
+  - [x] Confirmed cache performance: 40ms vs 4-8s for repeat queries
+- [x] Enhanced UX improvements
+  - [x] Added real-time filtering as user types (e.g., "mon" filters to show "monism")
+  - [x] Implemented unambiguous date format: "2025-June-08 at 22:15"
+  - [x] Added explanatory tooltip for cached timestamps
+  - [x] Improved dropdown behavior to stay open during filtering
+  - [x] Added visual counter for filtered results
 
 ### Final Stage: Wrap Up
 - [ ] Move this planning doc to `planning/finished/`
