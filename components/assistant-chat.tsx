@@ -8,9 +8,8 @@ import {
   // useLocalRuntime, // No longer used directly
   // type ChatModelAdapter // No longer used directly
 } from "@assistant-ui/react";
-// import { useCallback } from 'react'; // No longer used directly
-import { User, Robot, PaperPlaneTilt, CircleNotch } from '@phosphor-icons/react';
-import { usePersistentChat } from '@/src/lib/hooks/usePersistentChat'; // Import persistent chat hook
+import { User, Robot, PaperPlaneTilt, CircleNotch, ArrowClockwise } from '@phosphor-icons/react';
+import { usePersistentChat } from '@/src/lib/hooks/usePersistentChat';
 import { Button } from '@/components/ui/button'
 import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 
@@ -153,7 +152,7 @@ function Thread() {
 }
 
 export function AssistantChat({ documentId, documentContext }: AssistantChatProps) {
-  const { runtime, isLoaded, threadId, error } = usePersistentChat({ 
+  const { runtime, isLoaded, threadId, error, isRefreshing, refreshMessages } = usePersistentChat({ 
     documentId, 
     documentContext 
   });
@@ -199,13 +198,35 @@ export function AssistantChat({ documentId, documentContext }: AssistantChatProp
 
   return (
     <div className="h-full flex flex-col bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      {/* Thread persistence indicator */}
-      {threadId && (
-        <div className="px-4 py-2 bg-blue-50 border-b border-blue-100 text-xs text-blue-700">
-          <span className="font-medium">✓ Conversation saved</span>
-          <span className="text-blue-600 ml-2">Thread: {threadId.slice(-8)}</span>
+      {/* Chat header with persistence status and refresh */}
+      <div className="px-4 py-2 bg-blue-50 border-b border-blue-100 flex items-center justify-between">
+        <div className="text-xs text-blue-700">
+          {threadId ? (
+            <>
+              <span className="font-medium">✓ Conversation saved</span>
+              <span className="text-blue-600 ml-2">Thread: {threadId.slice(-8)}</span>
+            </>
+          ) : (
+            <span className="text-blue-600">Ready to chat</span>
+          )}
         </div>
-      )}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={refreshMessages}
+          disabled={isRefreshing}
+          className="h-6 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
+        >
+          <ArrowClockwise 
+            size={12} 
+            weight="bold" 
+            className={isRefreshing ? "animate-spin" : ""} 
+          />
+          <span className="ml-1 text-xs">
+            {isRefreshing ? "Refreshing..." : "Refresh"}
+          </span>
+        </Button>
+      </div>
       
       <AssistantRuntimeProvider runtime={runtime}>
         <Thread />

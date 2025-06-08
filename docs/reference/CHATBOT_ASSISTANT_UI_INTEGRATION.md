@@ -430,6 +430,85 @@ export async function POST(req: Request) {
 }
 ```
 
+## Advanced Features of assistant-ui
+
+### Current Capabilities
+
+assistant-ui/react offers several advanced features that enhance the chat experience beyond basic message exchange:
+
+#### 1. **Rich Message Components**
+- **Tool/Function Calling UI**: Automatic UI for displaying when the AI uses tools or functions, with proper formatting and status indicators
+- **Streaming Components**: Built-in support for streaming responses with loading states, partial message display, and smooth animations
+- **Code Highlighting**: Syntax highlighting for code blocks with language detection
+- **Markdown Rendering**: Full markdown support with tables, lists, links, and custom components
+- **File Attachments**: Support for uploading images and files within messages
+
+#### 2. **Advanced Interaction Patterns**
+- **Message Branching**: Users can edit previous messages, creating alternate conversation branches to explore different paths
+- **Message Regeneration**: "Regenerate response" functionality to get alternative AI responses
+- **Stop Generation**: Ability to interrupt streaming responses mid-generation
+- **Copy/Share Messages**: Built-in buttons for copying message content or sharing conversations
+- **Message Ratings**: Thumbs up/down feedback collection on AI responses
+
+#### 3. **Composer Enhancements**
+- **Suggested Prompts**: Display context-aware suggested questions or prompts
+- **Auto-resize Textarea**: Input field that grows with content for better UX
+- **Keyboard Shortcuts**: Configurable shortcuts like Ctrl+Enter to send
+- **Voice Input**: Speech-to-text integration capabilities
+- **Smart Paste Handling**: Special handling for pasted images, code, or rich content
+
+#### 4. **Thread Management**
+- **Multiple Threads**: Support for multiple conversation threads per context
+- **Thread Persistence**: Built-in adapter system (ThreadHistoryAdapter) for saving/loading conversations
+- **Thread Forking**: Create new threads from any point in a conversation
+- **Thread Sharing**: Export or share conversation links
+
+#### 5. **Runtime Flexibility**
+- **Multiple Model Support**: Switch between different AI models mid-conversation
+- **Custom Tool Integration**: Define custom functions/tools the AI can use with automatic UI
+- **Streaming Function Calls**: Real-time display of tool usage during generation
+- **Error Recovery**: Automatic retry mechanisms and graceful error handling
+
+### Future Potential Features
+
+The assistant-ui architecture enables several powerful features that could be valuable for Spideryarn Reading:
+
+#### 1. **Document-Aware Features**
+- **Inline Citations**: AI responses that link back to specific document sections
+- **Visual References**: Highlighting relevant document passages during chat
+- **Context Switching**: Seamlessly switch document context within a conversation
+- **Multi-Document Chat**: Discuss multiple documents in one thread
+
+#### 2. **Collaborative Features**
+- **Real-time Collaboration**: Multiple users in the same chat session
+- **Comment Threads**: Inline comments on specific messages
+- **User Presence**: See who else is viewing the conversation
+- **Shared Annotations**: Collaborative highlighting and notes
+
+#### 3. **Advanced Analysis Tools**
+- **Comparison Views**: Side-by-side comparison of different AI interpretations
+- **Inline Editing**: Edit and refine AI-generated summaries
+- **Visualization Generation**: Create charts or diagrams from document data
+- **Export Formats**: Save conversations in various formats (PDF, Markdown, etc.)
+
+#### 4. **Learning and Personalization**
+- **Conversation Memory**: AI remembers previous discussions about documents
+- **User Preferences**: Personalized response styles and focus areas
+- **Learning Feedback**: Train the AI on document-specific terminology
+- **Custom Prompts**: Save and reuse effective prompts
+
+### Why Keep assistant-ui
+
+Given Spideryarn Reading's document analysis focus, assistant-ui's advanced features provide significant value:
+
+1. **Message Branching** is perfect for exploring different interpretations of complex texts
+2. **Tool Integration** could enable features like "summarize this section" or "find contradictions"
+3. **Rich Rendering** supports displaying formatted quotes, references, and document excerpts
+4. **Thread Persistence** (once debugged) enables continuing analysis across sessions
+5. **Streaming UI** provides immediate feedback for long document analyses
+
+These features align well with the goal of helping users "digest written non-fiction material better" by enabling exploratory, iterative conversations about document content.
+
 ## Advanced Features and Patterns
 
 ### Message Editing with Branch Management
@@ -895,16 +974,17 @@ const VirtualThread = ({ messages }) => {
 };
 ```
 
-## Database Persistence Patterns ✓
+## Database Persistence Patterns ⚠️
 
-The Spideryarn Reading application implements comprehensive conversation persistence using Supabase PostgreSQL with the assistant-ui library's `initialMessages` feature for seamless conversation restoration.
+The Spideryarn Reading application implements comprehensive conversation persistence using Supabase PostgreSQL with the assistant-ui library's **ThreadHistoryAdapter** system for seamless conversation restoration.
 
 ### Overview
 
-- **Approach**: Transparent background persistence with assistant-ui managing UI state
+- **Approach**: ThreadHistoryAdapter-based persistence with assistant-ui managing UI state  
 - **Thread Model**: One thread per document with automatic thread creation
-- **History Loading**: Uses `initialMessages` option to restore conversations on page refresh
+- **History Loading**: Uses `ThreadHistoryAdapter.load()` to restore conversations on runtime initialization
 - **Error Handling**: Fail-fast approach with detailed error reporting
+- **Current Status**: ⚠️ Under development - experiencing loading state issues
 
 ### Database Schema
 
@@ -933,9 +1013,9 @@ CREATE TABLE chat_messages (
 );
 ```
 
-### Core Implementation: usePersistentChat Hook
+### Core Implementation: usePersistentChat Hook with ThreadHistoryAdapter
 
-The `usePersistentChat` hook extends the basic `useLocalRuntime` with transparent database persistence:
+The `usePersistentChat` hook uses assistant-ui's built-in ThreadHistoryAdapter system for proper persistence integration:
 
 ```typescript
 // src/lib/hooks/usePersistentChat.ts
@@ -945,44 +1025,76 @@ export function usePersistentChat({
   documentId, 
   documentContext 
 }: UsePersistentChatProps) {
-  const [initialMessages, setInitialMessages] = useState<ThreadMessageLike[]>([]);
-  const [messagesLoaded, setMessagesLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Synchronous service initialization (critical for adapter timing)
+  const chatService = useMemo(() => new ChatService(createClient()), []);
 
-  // Initialize with conversation history
-  const runtime = useLocalRuntime(chatModelAdapter, { 
-    initialMessages: messagesLoaded ? initialMessages : undefined 
-  });
+  // ThreadHistoryAdapter - assistant-ui's official persistence mechanism
+  const historyAdapter: ThreadHistoryAdapter = useMemo(() => ({
+    // Called once when runtime initializes - loads existing conversation
+    async load() {
+      if (!chatService) return { messages: [] };
 
-  // Background persistence in the chatModelAdapter.run function
-  const chatModelAdapter: ChatModelAdapter = {
-    run: async ({ messages, abortSignal }) => {
-      // Save user message to database
-      if (currentThreadId && latestUserMessage?.role === 'user') {
-        await saveMessage(currentThreadId, 'user', latestUserMessage.content);
+      try {
+        const existingId = await findOrCreateThread();
+        if (existingId) {
+          setThreadId(existingId);
+          const history = await loadConversationHistory(existingId);
+          setIsLoaded(true); // Mark as loaded
+          return { messages: history };
+        }
+        setIsLoaded(true);
+        return { messages: [] };
+      } catch (err) {
+        console.error('[Persistent Chat] History load error:', err);
+        setError('Failed to load chat history');
+        setIsLoaded(true);
+        return { messages: [] };
       }
+    },
 
-      // Make API call with thread management
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        body: JSON.stringify({
-          messages: conversationHistory,
-          documentContext,
-          ...(currentThreadId ? { threadId: currentThreadId } : {}),
-          documentId // For thread creation
-        }),
+    // Called automatically by runtime when new messages are added
+    async append(message) {
+      if (!chatService || !threadId) return;
+
+      const getText = (msg: ThreadMessageLike) => {
+        if (Array.isArray(msg.content)) {
+          return (msg.content as any).find((p: any) => p.type === 'text')?.text || '';
+        }
+        return (msg.content as any) || '';
+      };
+
+      await chatService.addMessage({
+        threadId,
+        role: message.role as 'user' | 'assistant',
+        content: getText(message),
       });
+    },
+  }), [chatService, threadId, findOrCreateThread, loadConversationHistory]);
 
-      // Save assistant response to database
-      if (currentThreadId && response) {
-        await saveMessage(currentThreadId, 'assistant', response, aiCallId);
-      }
-    }
-  };
+  // Create runtime with history adapter
+  const runtime = useLocalRuntime(chatModelAdapter, {
+    adapters: { history: historyAdapter as any }
+  });
 
   return { runtime, isLoaded, threadId, error };
 }
 ```
+
+### Known Issues ⚠️
+
+**Current Problem**: The chat interface hangs on "Loading conversation..." indefinitely after implementing ThreadHistoryAdapter.
+
+**Root Cause**: The `isLoaded` state is set inside the `historyAdapter.load()` method, but the loading state in the UI never resolves properly.
+
+**Suspected Issues**:
+1. **Timing Race Condition**: `historyAdapter.load()` may be called before `chatService` is ready
+2. **Async State Management**: Setting `isLoaded` inside the adapter may not trigger UI updates properly  
+3. **Runtime Lifecycle**: assistant-ui may have specific expectations about when adapters complete
+4. **Service Initialization**: Even with synchronous service creation, there may be Supabase connection delays
 
 ### Key Persistence Features
 
@@ -1252,14 +1364,35 @@ As of database persistence completion, the Spideryarn Reading application has su
 
 ### Current Status Summary
 
-The chat persistence implementation is **feature-complete** and **production-ready**:
+The chat persistence implementation is **partially complete** with **active debugging required**:
 
 - ✅ **Database Schema**: Complete with proper relationships and constraints
-- ✅ **API Integration**: Full thread management and AI call tracking
-- ✅ **UI Components**: Persistence indicators and loading states
+- ✅ **API Integration**: Full thread management and AI call tracking  
+- ⚠️ **ThreadHistoryAdapter**: Implemented but causing loading state hangs
+- ⚠️ **UI Loading States**: Infinite "Loading conversation..." spinner issue
 - ✅ **Error Handling**: Comprehensive validation and error reporting
 - ✅ **Testing**: Unit and integration tests covering full persistence flow
-- ✅ **Documentation**: Complete implementation guide and best practices
+- ✅ **Documentation**: Complete implementation guide with known issues documented
+
+### Debugging Approaches Attempted
+
+1. **Initial Implementation**: Used `initialMessages` prop with timing-based loading
+   - **Issue**: React hooks order violations due to conditional runtime creation
+   
+2. **Manual Message Appending**: Used `runtime.append()` to add loaded messages  
+   - **Issue**: Messages didn't persist or display correctly on refresh
+   
+3. **ThreadHistoryAdapter (Current)**: Implemented assistant-ui's official persistence pattern
+   - **Issue**: UI hangs on "Loading conversation..." indefinitely
+   - **Root Cause**: `isLoaded` state management inside async adapter methods
+
+### Recommended Next Steps
+
+1. **Investigate ThreadHistoryAdapter Lifecycle**: Research how assistant-ui expects adapters to signal completion
+2. **Separate Loading State Management**: Move `isLoaded` state outside of adapter methods
+3. **Add Adapter Debugging**: Log adapter method calls and completion timing
+4. **Consider Alternative Approaches**: Conditional component rendering or external state management
+5. **Consult Library Documentation**: Review assistant-ui docs for async loading patterns
 
 ### Future Enhancements 📋
 
