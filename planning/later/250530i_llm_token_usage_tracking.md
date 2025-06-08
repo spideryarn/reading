@@ -1,140 +1,129 @@
-# LLM Token Usage Tracking and Cost Calculation
+# Complete LLM Token Usage Tracking
 
 ## Goal, context
 
-Implement comprehensive token usage tracking for all LLM calls in the Spideryarn Reading application. Currently, the Vercel AI SDK provides detailed token usage metadata (`promptTokens`, `completionTokens`, `totalTokens`, `finishReason`) in all `generateText` responses, but our codebase doesn't capture or log this information.
+Complete the LLM token usage tracking implementation in the Spideryarn Reading application. Since this planning document was written, significant progress has been made:
 
-The goal is to track every LLM interaction for monitoring, debugging, and eventual cost analysis. This will help with:
-- Understanding actual token usage patterns across different features
-- Debugging LLM performance issues
-- Preparing for production cost monitoring and optimization
-- Supporting future billing/usage analytics
+**✅ Already implemented:**
+- Database schema (`ai_calls` table) with token tracking fields
+- Chat API (`app/api/chat/route.ts`) already captures and stores usage metadata
+- `AiCallService` infrastructure with usage tracking methods
+- Multi-provider support with tier-based configuration
 
-Current state: Zero token tracking. All LLM calls occur through two main pathways:
-1. **Prompt Template System** (`lib/prompts/types.ts`) - handles `summarise`, `glossary`, `headings`, `tweet-thread` APIs
-2. **Direct Chat API** (`app/api/chat/route.ts`) - handles conversational interactions
+**❌ Still missing:**
+- Prompt template system (`lib/prompts/types.ts`) doesn't return usage metadata to API routes
+- API routes using `executePrompt` can't populate token fields in their AI call records
+- Model pricing data is empty in the database
+- Cost calculation is broken (references non-existent column names)
+
+The remaining goal is to close the gap so that ALL LLM calls track token usage and costs. This affects 7 API routes: `summarise`, `glossary`, `headings`, `semantic-search`, `tweet-thread`, `upload-pdf`, `extract-url`.
 
 ## References
 
-- `docs/VERCEL_AI_SDK_REFERENCE.md` - Documents Vercel AI SDK capabilities including usage metadata (lines 98-99)
-- `lib/services/llm-provider.ts` - Multi-provider abstraction layer for AI SDK
-- `lib/prompts/types.ts` - Centralized prompt template execution system (lines 85-92)
-- `app/api/chat/route.ts` - Chat API endpoint using direct `generateText` calls (line 63)
-- `docs/LLM_PROMPT_TEMPLATES.md` - Will need updating to document usage tracking
-- `lib/config.ts` - Contains model configuration and pricing information for cost calculations
+- `lib/prompts/types.ts` - Prompt template system needing usage metadata return
+- `lib/services/database/ai-calls.ts` - AiCallService with existing token tracking infrastructure
+- `supabase/migrations/` - Database schema with `ai_calls` table and `ai_models` pricing placeholders
+- `lib/services/llm-provider.ts` - Multi-provider abstraction layer
+- `docs/LLM_PROMPT_TEMPLATES.md` - Will need updating to document completed usage tracking
+- API routes using executePrompt: `/api/glossary`, `/api/headings`, `/api/summarise`, `/api/semantic-search`, `/api/tweet-thread`, `/api/upload-pdf`, `/api/extract-url`
 
 ## Principles, key decisions
 
-- **Simple logging first**: Start with browser console logging before implementing database storage
-- **Two-pathway approach**: Implement separately for prompt templates and chat API (don't force chat into template system)
+- **Work with existing infrastructure**: Use the existing AiCallService and database schema rather than console logging
+- **Minimal breaking changes**: Enhance prompt templates internally without changing API route interfaces
+- **Standard industry approach**: Hardcode current pricing rates and calculate costs from token usage (per web research)
 - **Preserve existing architecture**: Minimal changes to current LLM call patterns
 - **Prototype-focused**: Prioritize accuracy and development speed over production concerns
-- **Future-ready data structure**: Design logging format to support eventual Supabase storage
-- **Comprehensive coverage**: Track all LLM calls, not just user-facing ones
+- **Fix what's broken**: Address the broken cost calculation that references non-existent columns
 
 ## Actions
 
-### Stage: Enhance Prompt Template System with Usage Tracking
-- [ ] Modify `executePromptInternal` function in `lib/prompts/types.ts` to capture and log usage data
-  - [ ] Change return type from `Promise<string>` to include usage metadata
-  - [ ] Add console logging with structured format: `[LLM Usage] template_name: { promptTokens, completionTokens, totalTokens, finishReason }`
-  - [ ] Extract prompt type from template name (remove `.njk` extension)
-  - [ ] Test with existing APIs: `summarise`, `glossary`, `headings`, `tweet-thread`
+### Stage: Fix Broken Cost Calculation
+- [ ] Fix cost calculation in `lib/services/database/ai-calls.ts`
+  - [ ] Change `input_cost_per_1k` to `input_token_cost` (correct column name)
+  - [ ] Change `output_cost_per_1k` to `output_token_cost` (correct column name)
+  - [ ] Test that `getDocumentUsageStats` can calculate costs when pricing data exists
 
-- [ ] Update all API routes that use `executePrompt` to handle new return format
-  - [ ] Modify return statements to extract `text` property from enhanced response
-  - [ ] Verify no breaking changes to existing API responses
+### Stage: Add Model Pricing Data
+- [ ] Research current pricing for Anthropic Claude and Google Gemini models
+  - [ ] Get exact current rates per token (not per 1K tokens) from provider websites
+  - [ ] Document source and date of pricing research
 
-- [ ] Test enhanced prompt template system
+- [ ] Populate `ai_models` table with pricing data
+  - [ ] Update seed data or create migration to populate `input_token_cost` and `output_token_cost`
+  - [ ] Include all models currently used: Claude Haiku/Sonnet/Opus, Gemini Flash/Pro variants
+  - [ ] Use cost per individual token (not per 1K) to match database schema
+
+### Stage: Enhance Prompt Template System to Return Usage Metadata
+- [ ] Modify `executePromptInternal` in `lib/prompts/types.ts` to capture usage
+  - [ ] Change return type from `Promise<string>` to `Promise<{ text: string, usage: Usage, finishReason: string }>`
+  - [ ] Extract and return `result.usage` and `result.finishReason` from Vercel AI SDK response
+  - [ ] Maintain backward compatibility by having wrapper functions return just text
+
+- [ ] Update `AiCallService.completeCall()` to accept usage metadata
+  - [ ] Add optional `usage` parameter to `completeCall` method
+  - [ ] Populate `prompt_tokens`, `completion_tokens`, `total_tokens`, `reasoning_tokens` when usage provided
+  - [ ] Calculate and store cost using pricing data from `ai_models` table
+
+- [ ] Update all 7 API routes to capture and store usage
+  - [ ] `/api/glossary` - extract usage from enhanced executePrompt response
+  - [ ] `/api/headings` - extract usage from enhanced executePrompt response
+  - [ ] `/api/summarise` - extract usage from enhanced executePrompt response
+  - [ ] `/api/semantic-search` - extract usage from enhanced executePrompt response
+  - [ ] `/api/tweet-thread` - extract usage from enhanced executePrompt response
+  - [ ] `/api/upload-pdf` - extract usage from enhanced executeMultimodalPrompt response
+  - [ ] `/api/extract-url` - extract usage from enhanced executeMultimodalPrompt response
+  - [ ] Pass usage metadata to `aiCallService.completeCall()`
+
+### Stage: Testing and Verification
+- [ ] Write tests for enhanced usage tracking
+  - [ ] Unit tests for modified `executePromptInternal` return format
+  - [ ] Unit tests for enhanced `AiCallService.completeCall()` with usage
+  - [ ] Integration tests for API routes capturing usage metadata
+  - [ ] Test cost calculation with sample pricing data
+
+- [ ] Manual testing of token tracking
+  - [ ] Test each API route and verify `ai_calls` records populate token fields
+  - [ ] Verify cost calculation works when pricing data is present
+  - [ ] Test with different models (Claude vs Gemini) and tiers (cheap vs balanced)
   - [ ] Run existing test suite: `npm test`
-  - [ ] Manual testing of each API endpoint via browser dev tools
-  - [ ] Verify console logging appears for each LLM call
 
-### Stage: Add Usage Tracking to Chat API
-- [ ] Enhance chat API in `app/api/chat/route.ts` to capture usage metadata
-  - [ ] Extract `usage` and `finishReason` from `generateText` result (line 63)
-  - [ ] Add console logging with format: `[LLM Usage] chat: { promptTokens, completionTokens, totalTokens, finishReason }`
-  - [ ] Include message count and document context length in logging
+### Stage: Documentation and Completion
+- [ ] Update `docs/LLM_PROMPT_TEMPLATES.md` to document completed usage tracking
+  - [ ] Document that all LLM calls now track token usage and costs
+  - [ ] Include examples of how to query usage data from `ai_calls` table
+  - [ ] Note pricing data storage in `ai_models` table
 
-- [ ] Test chat API usage tracking
-  - [ ] Manual testing via chatbot interface
-  - [ ] Verify console logging appears for chat interactions
-  - [ ] Test with different conversation lengths and document contexts
-
-### Stage: Create Unified Logging Interface
-- [ ] Create utility function for standardized usage logging
-  - [ ] New file: `lib/services/usage-logger.ts`
-  - [ ] Function signature: `logLLMUsage(promptType: string, usage: Usage, finishReason: string, metadata?: object)`
-  - [ ] Consistent console.log format across all LLM calls
-
-- [ ] Refactor both tracking implementations to use unified logger
-  - [ ] Update prompt template system to use `logLLMUsage`
-  - [ ] Update chat API to use `logLLMUsage`
-  - [ ] Include relevant metadata (template name, message count, etc.)
-
-### Stage: Add Cost Calculation Framework
-- [ ] Research current model pricing for Anthropic Claude and Google Gemini
-  - [ ] Update `lib/config.ts` with pricing information per model
-  - [ ] Add separate pricing for input vs output tokens
-
-- [ ] Implement cost calculation utility
-  - [ ] Function to calculate cost based on token usage and model type
-  - [ ] Include cost in console logging output
-  - [ ] Format: `[LLM Usage] template_name: { tokens: {...}, cost: $0.0123, model: 'claude-3-5-haiku' }`
-
-### Stage: Prepare for Database Storage
-- [ ] Design Supabase table schema for LLM usage tracking
-  - [ ] Fields: `id`, `prompt_type`, `model`, `prompt_tokens`, `completion_tokens`, `total_tokens`, `finish_reason`, `cost`, `timestamp`, `metadata` (JSON)
-  - [ ] Create migration file: `supabase/migrations/[timestamp]_create_llm_usage_table.sql`
-
-- [ ] Implement database storage functions (but don't activate yet)
-  - [ ] Function to insert usage record into Supabase
-  - [ ] Add feature flag to toggle between console logging and database storage
-  - [ ] Test database insertion with sample data
-
-### Stage: Documentation and Testing
-- [ ] Update `docs/LLM_PROMPT_TEMPLATES.md` to document usage tracking
-  - [ ] Add section on token usage monitoring
-  - [ ] Document logging format and data structure
-  - [ ] Include examples of cost calculation
-
-- [ ] Write tests for usage tracking functionality
-  - [ ] Unit tests for usage logger utility
-  - [ ] Integration tests for prompt template usage tracking
-  - [ ] Integration tests for chat API usage tracking
-
-- [ ] Run comprehensive testing
-  - [ ] Full test suite: `npm test`
-  - [ ] Manual testing of all LLM-powered features
-  - [ ] Verify consistent logging across all APIs
-
-### Stage: Review and Cleanup
 - [ ] Review implementation with user
-  - [ ] Demonstrate console logging in action
-  - [ ] Confirm data structure meets requirements
-  - [ ] Discuss next steps for database activation
+  - [ ] Demonstrate token tracking in database for all API routes
+  - [ ] Show cost calculation working with populated pricing data
+  - [ ] Confirm all 7 prompt-template routes now track usage
 
-- [ ] Git commit all changes
-  - [ ] Follow `docs/GIT_COMMITS.md` guidelines
-  - [ ] Use descriptive commit message covering all tracking enhancements
+- [ ] Use subagent to commit changes following `docs/GIT_COMMITS.md`
+  - [ ] Descriptive commit message covering usage tracking completion
+  - [ ] Include all modified files: prompt templates, API routes, AiCallService, pricing data
 
 - [ ] Move this document to `planning/finished/` and commit
 
 ## Appendix
 
-### Current LLM Call Analysis
+### Current Implementation Status
 
-**Prompt Template System** (`lib/prompts/types.ts:85-92`):
-- Used by: `summarise`, `glossary`, `headings`, `tweet-thread` APIs
-- Current return: `Promise<string>` (just the generated text)
-- Available metadata: `result.usage`, `result.finishReason` from underlying `generateText` call
-- Centralized: ✅ Single function handles all template-based calls
+**✅ Chat API** (`app/api/chat/route.ts`):
+- Already tracks token usage and stores in `ai_calls` table
+- Captures `result.usage.promptTokens`, `result.usage.completionTokens`, etc.
+- Creates AI call records with complete usage metadata
 
-**Chat API** (`app/api/chat/route.ts:63`):
-- Direct `generateText` call with conversation history
-- Current logging: Response length only (line 72-75)
-- Available metadata: Same `result.usage`, `result.finishReason`
-- Centralized: ❌ Single endpoint but separate from template system
+**❌ Prompt Template APIs** (7 routes):
+- `/api/glossary`, `/api/headings`, `/api/summarise`, `/api/semantic-search`, `/api/tweet-thread`, `/api/upload-pdf`, `/api/extract-url`
+- All use `executePrompt` or `executeMultimodalPrompt` which only return text
+- Create AI call records but token fields remain NULL
+- Usage metadata is available from Vercel AI SDK but not captured
+
+**🔧 Database Infrastructure** (already exists):
+- `ai_calls` table with token fields: `prompt_tokens`, `completion_tokens`, `total_tokens`, `reasoning_tokens`
+- `ai_models` table with pricing placeholders: `input_token_cost`, `output_token_cost` (currently NULL)
+- `AiCallService` with usage tracking methods (needs enhancement to accept usage metadata)
 
 ### Token Usage Metadata Structure (from Vercel AI SDK)
 ```typescript
@@ -147,26 +136,80 @@ interface Usage {
 type FinishReason = 'stop' | 'length' | 'content-filter'
 ```
 
-### Planned Database Schema
-```sql
-CREATE TABLE llm_usage (
-  id SERIAL PRIMARY KEY,
-  prompt_type VARCHAR(50) NOT NULL,  -- 'chat', 'summarise', 'glossary', etc.
-  model VARCHAR(100) NOT NULL,       -- 'claude-3-5-haiku', 'gemini-1.5-flash', etc.
-  prompt_tokens INTEGER NOT NULL,
-  completion_tokens INTEGER NOT NULL,
-  total_tokens INTEGER NOT NULL,
-  finish_reason VARCHAR(20),
-  cost DECIMAL(10,6),               -- Calculated cost in USD
-  timestamp TIMESTAMP DEFAULT NOW(),
-  metadata JSONB                    -- Additional context (message count, content length, etc.)
-);
+### Enhanced Return Types for Prompt Templates
+```typescript
+// Current (returns only text):
+executePrompt(template: string, data: any): Promise<string>
+
+// Enhanced (returns text + usage metadata):
+executePrompt(template: string, data: any): Promise<{
+  text: string
+  usage: Usage
+  finishReason: string
+}>
 ```
 
-### Cost Calculation Research
-Based on web search of Anthropic pricing:
-- Claude 3.5 Haiku: Input ~$0.25/1M tokens, Output ~$1.25/1M tokens
+### Existing Database Schema
+
+**`ai_calls` table** (already implemented):
+```sql
+-- Core tracking fields
+id, created_at, updated_at
+prompt_type VARCHAR(50)        -- 'chat', 'summarise', 'glossary', etc.
+model_id VARCHAR(100)          -- 'claude-3-5-haiku', 'gemini-1.5-flash', etc.
+provider VARCHAR(50)           -- 'anthropic', 'google'
+
+-- Token usage fields (currently NULL for prompt template routes)
+prompt_tokens INTEGER
+completion_tokens INTEGER  
+total_tokens INTEGER
+reasoning_tokens INTEGER       -- For Anthropic thinking mode
+
+-- Performance and result tracking
+latency_ms INTEGER
+finish_reason VARCHAR(20)
+request_data JSONB
+response_data JSONB
+extra JSONB
+extra_usage JSONB
+```
+
+**`ai_models` table** (pricing placeholders):
+```sql
+id, model_id, provider, display_name
+input_token_cost DECIMAL(10,6)     -- Currently NULL, needs population
+output_token_cost DECIMAL(10,6)    -- Currently NULL, needs population
+context_window INTEGER
+max_output_tokens INTEGER
+```
+
+### Current Pricing Research (January 2025)
+
+**Industry Standard Approach** (from web research):
+- Vercel AI SDK does not provide pricing information automatically
+- Standard practice is to hardcode current pricing rates and calculate costs from token usage
+- Most developers store pricing in configuration and update periodically
+
+**Current Anthropic Pricing** (to be verified and updated):
+- Claude 3.5 Haiku: Input ~$0.25/1M tokens, Output ~$1.25/1M tokens  
 - Claude 3.5 Sonnet: Input ~$3/1M tokens, Output ~$15/1M tokens
-- Billing calculated monthly based on actual usage
-- Tool use requests priced same as regular requests
-- Volume discounts available for enterprise customers
+- Claude 3 Opus: Input ~$15/1M tokens, Output ~$75/1M tokens
+
+**Google Gemini Pricing** (to be researched):
+- Gemini 1.5/2.0 Flash: TBD
+- Gemini 1.5/2.5 Pro: TBD
+
+**Database Storage**: Convert to per-token rates (divide by 1M) for `input_token_cost`/`output_token_cost` columns
+
+### Broken Cost Calculation Fix
+
+Current code in `ai-calls.ts:253-258` references non-existent columns:
+```typescript
+// BROKEN - these columns don't exist:
+cost = (call.prompt_tokens * (model.input_cost_per_1k || 0) / 1000) +
+       (call.completion_tokens * (model.output_cost_per_1k || 0) / 1000)
+
+// FIXED - use actual column names:
+cost = (call.prompt_tokens * (model.input_token_cost || 0)) +
+       (call.completion_tokens * (model.output_token_cost || 0))
+```
