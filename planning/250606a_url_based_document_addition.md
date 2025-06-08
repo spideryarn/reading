@@ -95,6 +95,41 @@ Ready to proceed with Testing and Validation stage.
   - [ ] Test that both Claude and Gemini models can be selected and used
   - [ ] Ask user for clarification if the standardization approach needs discussion
 
+### Stage: Add HTML Extraction Method Selection UI ✅
+- [x] Add extraction method selection to the /upload page
+  - [x] Create a group of radio buttons for choosing HTML extraction method
+  - [x] Option 1: "Mozilla Readability (Fast & Reliable)" - Use Mozilla Readability.js
+  - [x] Option 2: "AI Transcription (High Quality)" - Ask the LLM to transcribe it
+  - [x] Option 3: "AI DOM Manipulation (Experimental)" - Instruct the LLM to programmatically manipulate the DOM
+  - [x] Make Option 1 (Readability) the default selection
+  - [x] For Option 3, either disable it or show immediate error: "This experimental feature is not yet implemented"
+  - [x] Pass the selected method to the API in the request
+  - [x] Update the API to handle the extraction method parameter
+  - [x] Store the extraction method used in document metadata for reference (in response, not DB yet)
+
+**Progress Note (2025-01-08)**: HTML extraction method selection UI implemented successfully:
+- Added radio buttons for three extraction methods with appropriate descriptions
+- Readability is the default selection as requested
+- AI DOM Manipulation shows error message when selected
+- API updated to accept and validate extraction method parameter
+- Currently falls back to AI transcription for Readability (placeholder for next stage)
+- Extraction method returned in API response for tracking
+
+### Stage: Implement Mozilla Readability Extraction
+- [ ] Integrate Mozilla Readability.js for fast HTML extraction
+  - [ ] Install @mozilla/readability package
+  - [ ] Create a new extraction function using Readability
+  - [ ] Update the extract-url API route to support method selection
+  - [ ] When method="readability" is selected:
+    - Fetch the raw HTML as before
+    - Parse with Readability to extract article content
+    - Convert Readability output to clean HTML
+    - Skip LLM processing entirely for this method
+  - [ ] Handle Readability failures gracefully (fall back to error message)
+  - [ ] Test with various article types and websites
+  - [ ] Compare speed and quality with LLM extraction
+  - [ ] Update response to include extraction method in metadata
+
 ### Stage: Testing and Validation
 - [ ] Write automated tests for URL extraction
   - [ ] Create Jest tests for `/api/extract-url` route following PDF test patterns
