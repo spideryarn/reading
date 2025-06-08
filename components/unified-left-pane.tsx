@@ -934,7 +934,7 @@ export function UnifiedLeftPane({
                   setShowQueryHistory(false)
                 }
               }}
-              placeholder={useSemanticSearch ? "Describe what you're looking for..." : "Search document..."}
+              placeholder={useSemanticSearch ? "Describe what you&apos;re looking for..." : "Search document..."}
               className="w-full px-4 py-2 pl-10 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <MagnifyingGlass 
@@ -1024,9 +1024,9 @@ export function UnifiedLeftPane({
               {!searchQuery.trim() && !isSearching && (
                 <div className="text-xs text-gray-500 space-y-1">
                   <div className="font-medium">Try searching for:</div>
-                  <div>• "arguments against this theory"</div>
-                  <div>• "experimental evidence"</div>
-                  <div>• "main conclusion"</div>
+                  <div>• &quot;arguments against this theory&quot;</div>
+                  <div>• &quot;experimental evidence&quot;</div>
+                  <div>• &quot;main conclusion&quot;</div>
                 </div>
               )}
             </div>
@@ -1093,7 +1093,7 @@ export function UnifiedLeftPane({
           <div>
             <div className="flex items-center justify-between mb-3">
               <div className="text-sm text-gray-600">
-                {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found for {useSemanticSearch ? 'semantic' : 'exact'} "{searchQuery}"
+                {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found for {useSemanticSearch ? 'semantic' : 'exact'} &quot;{searchQuery}&quot;
               </div>
               {useSemanticSearch && semanticSearchCached && (
                 <div className="flex items-center gap-2">

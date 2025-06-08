@@ -174,7 +174,8 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const startTime = Date.now()
+    // Performance timing was removed as it's not currently used
+    // If needed in future: const startTime = Date.now()
     
     try {
       const summaryResult = await executePromptWithUsage(templateWithTokens, { 
@@ -182,7 +183,8 @@ export async function POST(request: NextRequest) {
         granularity: getGranularityInstruction(granularity)
       })
       
-      const endTime = Date.now()
+      // Performance timing was removed as it's not currently used
+      // If needed in future: const endTime = Date.now()
       
       // Complete AI call tracking with success and usage metadata
       await aiCallService.completeCall(aiCall.id, {
