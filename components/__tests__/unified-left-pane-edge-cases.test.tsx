@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { renderWithProviders } from './test-wrapper';
 import { UnifiedLeftPane } from '../unified-left-pane';
 import type { DocumentElement } from '@/lib/types/document';
 
@@ -180,7 +181,7 @@ describe('UnifiedLeftPane - Search Edge Cases', () => {
 
   describe('Elements without text content', () => {
     it('should skip elements with empty content', async () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       // Switch to search tab
       fireEvent.click(screen.getByTestId('tab-button-search'));
@@ -204,7 +205,7 @@ describe('UnifiedLeftPane - Search Edge Cases', () => {
     });
 
     it('should skip elements with whitespace-only content', async () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       fireEvent.click(screen.getByTestId('tab-button-search'));
       
@@ -222,7 +223,7 @@ describe('UnifiedLeftPane - Search Edge Cases', () => {
     });
 
     it('should skip elements with null content', async () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       fireEvent.click(screen.getByTestId('tab-button-search'));
       
@@ -241,7 +242,7 @@ describe('UnifiedLeftPane - Search Edge Cases', () => {
 
   describe('Whitespace-only queries', () => {
     it('should handle whitespace-only search query', async () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       fireEvent.click(screen.getByTestId('tab-button-search'));
       
@@ -260,7 +261,7 @@ describe('UnifiedLeftPane - Search Edge Cases', () => {
     });
 
     it('should handle tabs and newlines in search query', async () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       fireEvent.click(screen.getByTestId('tab-button-search'));
       
@@ -281,7 +282,7 @@ describe('UnifiedLeftPane - Search Edge Cases', () => {
 
   describe('Loading state', () => {
     it('should show loading spinner while searching', async () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       fireEvent.click(screen.getByTestId('tab-button-search'));
       
@@ -311,7 +312,7 @@ describe('UnifiedLeftPane - Search Edge Cases', () => {
     });
 
     it('should not show loading state for empty query', async () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       fireEvent.click(screen.getByTestId('tab-button-search'));
       
@@ -331,7 +332,7 @@ describe('UnifiedLeftPane - Search Edge Cases', () => {
     });
 
     it('should clear loading state when clear button is clicked', async () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       fireEvent.click(screen.getByTestId('tab-button-search'));
       
@@ -373,7 +374,7 @@ describe('UnifiedLeftPane - Search Edge Cases', () => {
         updated_at: '2024-01-01T00:00:00Z'
       }];
 
-      render(<UnifiedLeftPane {...defaultProps} elements={longElements} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} elements={longElements} />);
       
       fireEvent.click(screen.getByTestId('tab-button-search'));
       
@@ -396,7 +397,7 @@ describe('UnifiedLeftPane - Search Edge Cases', () => {
 
   describe('Multiple rapid searches', () => {
     it('should handle rapid query changes correctly', async () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       fireEvent.click(screen.getByTestId('tab-button-search'));
       

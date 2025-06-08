@@ -1,10 +1,10 @@
 import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
+import { renderWithProviders } from './test-wrapper'
 import '@testing-library/jest-dom'
 import { UnifiedLeftPane } from '../unified-left-pane'
 import { ResizableDocumentLayout } from '../resizable-document-layout'
 import { DocumentElement } from '@/lib/types/document'
-import { MutationProvider } from '@/lib/context/mutation-context'
 
 // Mock Mark.js
 const mockMark = jest.fn()
@@ -91,8 +91,7 @@ describe('Search Result Navigation', () => {
       </div>
     `
 
-    render(
-      <MutationProvider>
+    renderWithProviders(
         <UnifiedLeftPane
           content="<p>Test content</p>"
           elements={mockElements}
@@ -106,7 +105,6 @@ describe('Search Result Navigation', () => {
           glossaryCached={false}
           onLoadGlossary={() => {}}
         />
-      </MutationProvider>
     )
 
     // Simulate search
@@ -169,8 +167,7 @@ describe('Search Result Navigation', () => {
       </div>
     `
 
-    render(
-      <MutationProvider>
+    renderWithProviders(
         <UnifiedLeftPane
           content="<p>Test content</p>"
           elements={[{
@@ -190,7 +187,6 @@ describe('Search Result Navigation', () => {
           glossaryCached={false}
           onLoadGlossary={() => {}}
         />
-      </MutationProvider>
     )
 
     // Simulate search
@@ -231,8 +227,7 @@ describe('Search Result Navigation', () => {
       </div>
     `
 
-    render(
-      <MutationProvider>
+    renderWithProviders(
         <UnifiedLeftPane
           content="<p>Test content</p>"
           elements={mockElements}
@@ -246,7 +241,6 @@ describe('Search Result Navigation', () => {
           glossaryCached={false}
           onLoadGlossary={() => {}}
         />
-      </MutationProvider>
     )
 
     const searchInput = screen.getByPlaceholderText('Search document...')

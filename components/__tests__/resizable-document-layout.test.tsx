@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { renderWithProviders } from './test-wrapper';
 import userEvent from '@testing-library/user-event';
 import { ResizableDocumentLayout } from '../resizable-document-layout';
 import type { DocumentElement } from '@/lib/types/document';
@@ -279,7 +280,7 @@ describe('ResizableDocumentLayout', () => {
 
   describe('Basic Rendering', () => {
     it('should render ResizablePanelGroup with correct configuration', () => {
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       const panelGroup = screen.getByTestId('resizable-panel-group');
       expect(panelGroup).toBeInTheDocument();
@@ -288,7 +289,7 @@ describe('ResizableDocumentLayout', () => {
     });
 
     it('should render both ResizablePanels with correct sizes', () => {
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       const panels = screen.getAllByTestId('resizable-panel');
       expect(panels).toHaveLength(2);
@@ -303,7 +304,7 @@ describe('ResizableDocumentLayout', () => {
     });
 
     it('should render ResizableHandle with correct configuration', () => {
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       const handle = screen.getByTestId('resizable-handle');
       expect(handle).toBeInTheDocument();
@@ -314,7 +315,7 @@ describe('ResizableDocumentLayout', () => {
     it('should render UnifiedLeftPane with correct props', () => {
       const headingVisibility = new Map([['syr-root-1', 'visible' as const]]);
       
-      render(
+      renderWithProviders(
         <ResizableDocumentLayout 
           {...defaultProps} 
           headingVisibility={headingVisibility}
@@ -334,7 +335,7 @@ describe('ResizableDocumentLayout', () => {
     });
 
     it('should render SimpleDocumentViewer with correct props', () => {
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       expect(screen.getByTestId('simple-document-viewer')).toBeInTheDocument();
       expect(screen.getByTestId('viewer-elements-count')).toHaveTextContent('3');
@@ -342,7 +343,7 @@ describe('ResizableDocumentLayout', () => {
     });
 
     it('should pass document context with correct length limit', () => {
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       // Document context should be elements content joined with newlines, limited to 10000 chars
       const expectedContext = 'Document Title\n\nFirst paragraph content\n\nSection Title';
@@ -350,7 +351,7 @@ describe('ResizableDocumentLayout', () => {
     });
 
     it('should not render floating expand button when left pane is not collapsed', () => {
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       expect(screen.queryByTitle('Toggle sidebar (Ctrl+B)')).not.toBeInTheDocument();
     });
@@ -358,7 +359,7 @@ describe('ResizableDocumentLayout', () => {
 
   describe('Collapsible Left Pane', () => {
     it('should collapse left pane when toggle is clicked', () => {
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       // Click toggle collapse button from UnifiedLeftPane
       fireEvent.click(screen.getByTestId('mock-toggle-collapse'));
@@ -371,7 +372,7 @@ describe('ResizableDocumentLayout', () => {
     });
 
     it('should show floating expand button when collapsed', () => {
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       // Collapse the pane
       fireEvent.click(screen.getByTestId('mock-toggle-collapse'));
@@ -386,7 +387,7 @@ describe('ResizableDocumentLayout', () => {
     });
 
     it('should hide UnifiedLeftPane content when collapsed', () => {
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       // Initially content should be visible
       expect(screen.getByTestId('unified-left-pane')).toBeInTheDocument();
@@ -399,7 +400,7 @@ describe('ResizableDocumentLayout', () => {
     });
 
     it('should hide resize handle when collapsed', () => {
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       // Initially handle should be visible
       const handle = screen.getByTestId('resizable-handle');
@@ -416,7 +417,7 @@ describe('ResizableDocumentLayout', () => {
     });
 
     it('should expand left pane when floating button is clicked', () => {
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       // Collapse first
       fireEvent.click(screen.getByTestId('mock-toggle-collapse'));
@@ -441,7 +442,7 @@ describe('ResizableDocumentLayout', () => {
 
   describe('Keyboard Shortcuts', () => {
     it('should toggle collapse on Ctrl+B keypress', () => {
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       // Initially expanded
       expect(screen.getByTestId('unified-left-pane')).toBeInTheDocument();
@@ -462,7 +463,7 @@ describe('ResizableDocumentLayout', () => {
     });
 
     it('should prevent default behavior on Ctrl+B', () => {
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       // Instead of trying to mock preventDefault directly, test that the event handler is working
       // by verifying the keyboard shortcut functionality
@@ -475,7 +476,7 @@ describe('ResizableDocumentLayout', () => {
     });
 
     it('should not toggle on other key combinations', () => {
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       // Initially expanded
       expect(screen.getByTestId('unified-left-pane')).toBeInTheDocument();
@@ -490,7 +491,7 @@ describe('ResizableDocumentLayout', () => {
     });
 
     it('should add and remove keyboard event listeners', () => {
-      const { unmount } = render(<ResizableDocumentLayout {...defaultProps} />);
+      const { unmount } = renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       expect(document.addEventListener).toHaveBeenCalledWith('keydown', expect.any(Function));
       
@@ -502,7 +503,7 @@ describe('ResizableDocumentLayout', () => {
 
   describe('Heading Click Handling', () => {
     it('should handle heading clicks and scroll to element', () => {
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       // Trigger heading click
       fireEvent.click(screen.getByTestId('mock-heading-click'));
@@ -517,7 +518,7 @@ describe('ResizableDocumentLayout', () => {
     });
 
     it('should remove highlight after timeout', () => {
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       // Trigger heading click
       fireEvent.click(screen.getByTestId('mock-heading-click'));
@@ -531,7 +532,7 @@ describe('ResizableDocumentLayout', () => {
     it('should handle heading click when element not found', () => {
       mockGetElementById.mockReturnValue(null);
       
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       // Trigger heading click
       fireEvent.click(screen.getByTestId('mock-heading-click'));
@@ -543,7 +544,7 @@ describe('ResizableDocumentLayout', () => {
 
     it('should handle heading click without headingId', () => {
       // Test the case where element is not found in DOM
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       // First clear any previous calls
       mockGetElementById.mockClear();
@@ -565,7 +566,7 @@ describe('ResizableDocumentLayout', () => {
     it('should handle entity clicks and scroll to element', () => {
       const onElementSelect = jest.fn();
       
-      render(
+      renderWithProviders(
         <ResizableDocumentLayout 
           {...defaultProps} 
           onElementSelect={onElementSelect}
@@ -591,7 +592,7 @@ describe('ResizableDocumentLayout', () => {
     it('should not call onElementSelect when element not found', () => {
       const onElementSelect = jest.fn();
       
-      render(
+      renderWithProviders(
         <ResizableDocumentLayout 
           {...defaultProps} 
           onElementSelect={onElementSelect}
@@ -606,7 +607,7 @@ describe('ResizableDocumentLayout', () => {
     });
 
     it('should handle entity click without onElementSelect callback', () => {
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       // Trigger entity scroll
       fireEvent.click(screen.getByTestId('mock-scroll-to-entity'));
@@ -621,7 +622,7 @@ describe('ResizableDocumentLayout', () => {
     it('should handle element clicks and call original callback', () => {
       const onElementClick = jest.fn();
       
-      render(
+      renderWithProviders(
         <ResizableDocumentLayout 
           {...defaultProps} 
           onElementClick={onElementClick}
@@ -636,7 +637,7 @@ describe('ResizableDocumentLayout', () => {
     });
 
     it('should handle element click without onElementClick callback', () => {
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       // Should not throw error
       expect(() => {
@@ -647,7 +648,7 @@ describe('ResizableDocumentLayout', () => {
     it('should handle complex element click scenarios', () => {
       const onElementClick = jest.fn();
       
-      render(
+      renderWithProviders(
         <ResizableDocumentLayout 
           {...defaultProps} 
           onElementClick={onElementClick}
@@ -672,7 +673,7 @@ describe('ResizableDocumentLayout', () => {
         { ...mockElements[2], tag_name: 'div' }
       ];
       
-      render(
+      renderWithProviders(
         <ResizableDocumentLayout 
           {...defaultProps} 
           elements={elementsWithDifferentTags}
@@ -690,7 +691,7 @@ describe('ResizableDocumentLayout', () => {
     it('should propagate onElementSelect callback', () => {
       const onElementSelect = jest.fn();
       
-      render(
+      renderWithProviders(
         <ResizableDocumentLayout 
           {...defaultProps} 
           onElementSelect={onElementSelect}
@@ -706,7 +707,7 @@ describe('ResizableDocumentLayout', () => {
     it('should propagate onElementVisibilityChange callback', () => {
       const onElementVisibilityChange = jest.fn();
       
-      render(
+      renderWithProviders(
         <ResizableDocumentLayout 
           {...defaultProps} 
           onElementVisibilityChange={onElementVisibilityChange}
@@ -722,7 +723,7 @@ describe('ResizableDocumentLayout', () => {
     it('should propagate onLoadGlossary callback', () => {
       const onLoadGlossary = jest.fn();
       
-      render(
+      renderWithProviders(
         <ResizableDocumentLayout 
           {...defaultProps} 
           onLoadGlossary={onLoadGlossary}
@@ -738,7 +739,7 @@ describe('ResizableDocumentLayout', () => {
 
   describe('Props Validation', () => {
     it('should handle selectedElement prop', () => {
-      render(
+      renderWithProviders(
         <ResizableDocumentLayout 
           {...defaultProps} 
           selectedElement={mockElements[1]}
@@ -749,7 +750,7 @@ describe('ResizableDocumentLayout', () => {
     });
 
     it('should handle glossary loading state', () => {
-      render(
+      renderWithProviders(
         <ResizableDocumentLayout 
           {...defaultProps} 
           isLoadingGlossary={true}
@@ -760,7 +761,7 @@ describe('ResizableDocumentLayout', () => {
     });
 
     it('should handle glossary error state', () => {
-      render(
+      renderWithProviders(
         <ResizableDocumentLayout 
           {...defaultProps} 
           glossaryError="Test error message"
@@ -776,7 +777,7 @@ describe('ResizableDocumentLayout', () => {
         ['syr-section-1', 'not-visible' as const]
       ]);
       
-      render(
+      renderWithProviders(
         <ResizableDocumentLayout 
           {...defaultProps} 
           headingVisibility={headingVisibility}
@@ -789,7 +790,7 @@ describe('ResizableDocumentLayout', () => {
 
   describe('Document Context Generation', () => {
     it('should generate document context from elements', () => {
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       // Should join non-empty element content with newlines
       const expectedContext = 'Document Title\n\nFirst paragraph content\n\nSection Title';
@@ -825,7 +826,7 @@ describe('ResizableDocumentLayout', () => {
         }
       ];
       
-      render(
+      renderWithProviders(
         <ResizableDocumentLayout 
           {...defaultProps} 
           elements={elementsWithEmpty}
@@ -866,7 +867,7 @@ describe('ResizableDocumentLayout', () => {
         }
       ];
       
-      render(
+      renderWithProviders(
         <ResizableDocumentLayout 
           {...defaultProps} 
           elements={longElements}
@@ -895,7 +896,7 @@ describe('ResizableDocumentLayout', () => {
         }
       ];
       
-      render(
+      renderWithProviders(
         <ResizableDocumentLayout 
           {...defaultProps} 
           elements={elementsWithMissingTag}
@@ -925,7 +926,7 @@ describe('ResizableDocumentLayout', () => {
         }
       ];
       
-      render(
+      renderWithProviders(
         <ResizableDocumentLayout 
           {...defaultProps} 
           elements={elementsWithNullContent}
@@ -941,7 +942,7 @@ describe('ResizableDocumentLayout', () => {
     it('should maintain state consistency between components', () => {
       const onElementSelect = jest.fn();
       
-      render(
+      renderWithProviders(
         <ResizableDocumentLayout 
           {...defaultProps} 
           onElementSelect={onElementSelect}
@@ -959,7 +960,7 @@ describe('ResizableDocumentLayout', () => {
     });
 
     it('should coordinate between left pane and document viewer', () => {
-      render(<ResizableDocumentLayout {...defaultProps} />);
+      renderWithProviders(<ResizableDocumentLayout {...defaultProps} />);
       
       // Both components should receive same elements data
       expect(screen.getByTestId('elements-count')).toHaveTextContent('3');

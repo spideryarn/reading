@@ -1,4 +1,5 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
+import { renderWithProviders } from './test-wrapper'
 import { UnifiedLeftPane } from '../unified-left-pane'
 import React from 'react'
 
@@ -91,7 +92,7 @@ describe('UnifiedLeftPane - UI Enhancements', () => {
 
   describe('Auto-focus search input', () => {
     it('should auto-focus search input when Search tab is clicked', async () => {
-      render(<UnifiedLeftPane {...mockProps} />)
+      renderWithProviders(<UnifiedLeftPane {...mockProps} />)
       
       // Find and click the Search tab
       const searchTab = screen.getByRole('tab', { name: 'Search' })
@@ -107,7 +108,7 @@ describe('UnifiedLeftPane - UI Enhancements', () => {
 
   describe('Pinned search input', () => {
     it('should keep search input visible with sticky positioning', () => {
-      render(<UnifiedLeftPane {...mockProps} />)
+      renderWithProviders(<UnifiedLeftPane {...mockProps} />)
       
       // Click the Search tab
       const searchTab = screen.getByRole('tab', { name: 'Search' })
@@ -124,7 +125,7 @@ describe('UnifiedLeftPane - UI Enhancements', () => {
 
   describe('Case sensitivity option', () => {
     it('should show advanced options when clicked', () => {
-      render(<UnifiedLeftPane {...mockProps} />)
+      renderWithProviders(<UnifiedLeftPane {...mockProps} />)
       
       // Click the Search tab
       const searchTab = screen.getByRole('tab', { name: 'Search' })
@@ -142,7 +143,7 @@ describe('UnifiedLeftPane - UI Enhancements', () => {
     })
 
     it('should toggle case sensitivity option', () => {
-      render(<UnifiedLeftPane {...mockProps} />)
+      renderWithProviders(<UnifiedLeftPane {...mockProps} />)
       
       // Click the Search tab
       const searchTab = screen.getByRole('tab', { name: 'Search' })
@@ -161,7 +162,7 @@ describe('UnifiedLeftPane - UI Enhancements', () => {
     })
 
     it('should rotate caret icon when advanced options are toggled', () => {
-      render(<UnifiedLeftPane {...mockProps} />)
+      renderWithProviders(<UnifiedLeftPane {...mockProps} />)
       
       // Click the Search tab
       const searchTab = screen.getByRole('tab', { name: 'Search' })
@@ -178,7 +179,7 @@ describe('UnifiedLeftPane - UI Enhancements', () => {
     })
 
     it('should re-run search when case sensitivity changes', async () => {
-      render(<UnifiedLeftPane {...mockProps} />)
+      renderWithProviders(<UnifiedLeftPane {...mockProps} />)
       
       // Click the Search tab
       const searchTab = screen.getByRole('tab', { name: 'Search' })
@@ -209,7 +210,7 @@ describe('UnifiedLeftPane - UI Enhancements', () => {
 
   describe('Advanced options container', () => {
     it('should style advanced options container correctly', () => {
-      render(<UnifiedLeftPane {...mockProps} />)
+      renderWithProviders(<UnifiedLeftPane {...mockProps} />)
       
       // Click the Search tab
       const searchTab = screen.getByRole('tab', { name: 'Search' })

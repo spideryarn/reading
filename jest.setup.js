@@ -1,31 +1,42 @@
 import '@testing-library/jest-dom';
+import { existsSync } from 'fs';
+import path from 'path';
+
+// Validate .env.test exists - tests should abort if missing
+const envTestPath = path.join(process.cwd(), '.env.test');
+if (!existsSync(envTestPath)) {
+  console.error('❌ TESTING ABORTED: .env.test file is missing');
+  console.error('   Create it by running: cp .env.local .env.test');
+  console.error('   See docs/reference/TESTING.md for setup instructions');
+  process.exit(1);
+}
 
 // Mock Next.js Web APIs for testing environment
 const { TextEncoder, TextDecoder } = require('util');
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
-// Simple Request and Response mocks for testing
+// Add fetch polyfill for next-test-api-route-handler
+if (typeof fetch === 'undefined') {
+  try {
+    const { fetch } = require('undici');
+    global.fetch = fetch;
+  } catch (error) {
+    // Fallback minimal fetch mock
+    global.fetch = async (url, options = {}) => {
+      throw new Error('Fetch not available in test environment');
+    };
+  }
+}
+
+// Basic Request polyfill for imports - next-test-api-route-handler handles the runtime
 if (typeof Request === 'undefined') {
   global.Request = class Request {
     constructor(input, init = {}) {
-      this.url = input;
+      this.url = typeof input === 'string' ? input : input.url;
       this.method = init.method || 'GET';
-      this._headers = new Map(Object.entries(init.headers || {}));
-    }
-    
-    get headers() {
-      return {
-        get: (name) => {
-          const lowerName = name.toLowerCase();
-          for (const [key, value] of this._headers.entries()) {
-            if (key.toLowerCase() === lowerName) {
-              return value;
-            }
-          }
-          return null;
-        }
-      };
+      this.headers = new Map(Object.entries(init.headers || {}));
+      this.body = init.body;
     }
   };
 }

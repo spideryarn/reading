@@ -9,8 +9,18 @@ const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jsdom',
   testMatch: [
-    '**/__tests__/**/*.(ts|tsx|js)',
+    '**/__tests__/**/*.(test|spec).(ts|tsx|js)',
     '**/*.(test|spec).(ts|tsx|js)'
+  ],
+  testPathIgnorePatterns: [
+    '<rootDir>/.next/',
+    '<rootDir>/node_modules/',
+    '<rootDir>/obsolete_alternative_version/',
+    '<rootDir>/backup/',
+    // Exclude helper/utility files that aren't tests
+    '.*test-helpers\\.(ts|tsx|js)$',
+    '.*visibility-test-utils\\.(ts|tsx|js)$',
+    '.*test-utils\\.(ts|tsx|js)$'
   ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
@@ -26,12 +36,6 @@ const customJestConfig = {
     '!jest.setup.js'
   ],
   coverageReporters: ['text', 'lcov', 'html'],
-  testPathIgnorePatterns: [
-    '<rootDir>/.next/',
-    '<rootDir>/node_modules/',
-    '<rootDir>/obsolete_alternative_version/',
-    '<rootDir>/backup/'
-  ],
   transformIgnorePatterns: [
     '/node_modules/(?!(@assistant-ui|cheerio|nanoid|htmlparser2|domhandler|domutils|dom-serializer|entities|parse5|parse5-htmlparser2-tree-adapter|@assistant-ui/react-markdown)/)'
   ]
