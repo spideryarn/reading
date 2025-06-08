@@ -34,7 +34,7 @@ Perform testing housekeeping:
 
 ## Process Overview
 
-### Stage 1: Health Check & Analysis
+### Stage: Health Check & Analysis
 
 **Test Suite Status Assessment:**
 1. Run full test suite: `npm test`
@@ -56,7 +56,7 @@ Perform testing housekeeping:
 3. Ensure database tests use proper isolation
 4. Validate mock configurations are working
 
-### Stage 2: Critical Issues Resolution
+### Stage: Critical Issues Resolution
 
 **Fix Broken Infrastructure:**
 - Environment configuration issues (missing `.env.test`)
@@ -72,7 +72,7 @@ Perform testing housekeeping:
 
 Use subagents for diagnosis and repair of complex infrastructure issues.
 
-### Stage 3: Test Consolidation
+### Stage: Test Consolidation
 
 **Identify Consolidation Candidates:**
 1. **Component Unit Tests** → Feature-level integration tests
@@ -94,7 +94,7 @@ Use subagents for diagnosis and repair of complex infrastructure issues.
 - Have subagent analyse test groups and propose consolidation plan
 - Review proposed changes before implementation
 
-### Stage 4: File Cleanup & Organisation  
+### Stage: File Cleanup & Organisation  
 
 **Remove Obsolete Files:**
 - Delete empty or placeholder test files
@@ -108,7 +108,7 @@ Use subagents for diagnosis and repair of complex infrastructure issues.
 - Remove orphaned test files for deleted features
 - Update test file naming for clarity
 
-### Stage 5: Performance & Cost Optimisation
+### Stage: Performance & Cost Optimisation
 
 **Optimise Test Performance:**
 - Identify and fix slow tests (database heavy, complex setup)
@@ -122,7 +122,7 @@ Use subagents for diagnosis and repair of complex infrastructure issues.
 - Ensure file upload tests use mock data
 - Validate test environment separation
 
-### Stage 6: Documentation & Standards Update
+### Stage: Documentation & Standards Update
 
 **Update Documentation:**
 - Update `docs/reference/TESTING.md` with new patterns
@@ -136,7 +136,7 @@ Use subagents for diagnosis and repair of complex infrastructure issues.
 - Test file organisation standards
 - Performance and cost targets
 
-### Stage 7: Validation & Completion
+### Stage: Validation & Completion
 
 **Final Validation:**
 1. Run full test suite and verify 100% pass rate

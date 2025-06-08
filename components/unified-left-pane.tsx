@@ -364,6 +364,7 @@ export function UnifiedLeftPane({
     resultCount: number
   }>>([])
   const [showQueryHistory, setShowQueryHistory] = useState(false)
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   
   // Store timeout ID to cancel pending searches
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
