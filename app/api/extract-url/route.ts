@@ -142,6 +142,13 @@ export async function POST(request: NextRequest) {
         htmlContent,
         sourceUrl: url
       })
+      
+      // Clean up any markdown wrapping from LLM response
+      extractedHtml = extractedHtml
+        .replace(/^```html\s*\n?/, '')
+        .replace(/\n?```\s*$/, '')
+        .trim()
+        
     } catch (error) {
       console.error('LLM extraction error:', error)
       
@@ -185,7 +192,7 @@ export async function POST(request: NextRequest) {
         plaintext_content: plaintext,
         slug: finalSlug,
         source_url: url,
-        is_public: false,
+        is_public: true,
         word_count: plaintext.split(/\s+/).length
       },
       null, // No file for URL-based documents
