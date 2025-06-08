@@ -161,7 +161,7 @@ Ready to proceed with Testing and Validation stage.
   - [ ] Add helpful placeholder text and URL validation feedback
   - [ ] Consider URL preview functionality
 - [ ] Update documentation
-  - [ ] Update `docs/ARCHITECTURE.md` with URL extraction flow
+  - [ ] Update `docs/reference/ARCHITECTURE_OVERVIEW.md` with URL extraction flow
   - [ ] Update `docs/WEBPAGE_CONTENT_EXTRACTION.md` with implementation details
   - [ ] Document new configuration options and API endpoints
 - [ ] Use subagent for Git commits following `docs/GIT_COMMITS.md`

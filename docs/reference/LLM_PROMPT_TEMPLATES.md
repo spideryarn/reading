@@ -23,7 +23,7 @@ We use **different approaches** for different types of LLM interactions:
 
 See also:
 - [CHATBOT_ASSISTANT_UI_INTEGRATION.md](CHATBOT_ASSISTANT_UI_INTEGRATION.md) - For chat interface implementations
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Overall system architecture decisions
+- [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) - Overall system architecture decisions
 - [AI_SUMMARISE.md](AI_SUMMARISE.md) and [AI_GLOSSARY.md](AI_GLOSSARY.md) - Examples of template system usage
 
 ## Overview
@@ -300,7 +300,7 @@ The system includes current pricing for all supported models:
 
 ## Model Configuration
 
-AI model settings use a provider-tier system centralised in `/lib/config.ts` (see [ARCHITECTURE.md](ARCHITECTURE.md) for rationale):
+AI model settings use a provider-tier system centralised in `/lib/config.ts` (see [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) for rationale):
 
 ```typescript
 // Provider-tier model keys for easy configuration

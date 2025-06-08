@@ -33,7 +33,7 @@ The database schema is defined and represented in several places:
 - [DATABASE_OVERVIEW.md](DATABASE_OVERVIEW.md) - High-level database guide
 - [DATABASE_SUPABASE_STORAGE_REFERENCE.md](DATABASE_SUPABASE_STORAGE_REFERENCE.md) - File storage integration and patterns
 - [DATABASE_MIGRATIONS.md](DATABASE_MIGRATIONS.md) - Migration workflow
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Design decisions
+- [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) - Design decisions
 - [planning/250531a_database_storage_implementation.md](../planning/250531a_database_storage_implementation.md) - Implementation details
 
 ## Table Schemas

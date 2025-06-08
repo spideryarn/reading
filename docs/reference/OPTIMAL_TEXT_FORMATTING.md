@@ -6,7 +6,7 @@ This document provides research-backed guidelines for optimal text formatting in
 
 - `docs/STYLING.md` - CSS and visual styling configuration for the application
 - `docs/UI_INTERFACE.md` - Multi-pane layout and interface design documentation  
-- `docs/ARCHITECTURE.md` - Overall system architecture and design decisions
+- `docs/reference/ARCHITECTURE_DECISIONS.md` - Overall system architecture and design decisions
 - `app/globals.css` - Current CSS implementation of typography and styling
 - `components/ui/` - shadcn/ui component implementations for consistent design
 - [WCAG 2.2 Guidelines](https://www.w3.org/WAI/WCAG22/quickref/) - Accessibility standards referenced throughout

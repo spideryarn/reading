@@ -24,5 +24,5 @@ see `docs/CODING_PRINCIPLES.md`
 
 ### Architecture
 
-see `docs/ARCHITECTURE.md`
+see `docs/reference/ARCHITECTURE_OVERVIEW.md`
 

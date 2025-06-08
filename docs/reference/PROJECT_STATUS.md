@@ -78,7 +78,7 @@ Spideryarn Reading is in active development with core AI features now implemente
 
 ## Architecture
 
-see `docs/ARCHITECTURE.md` for detailed system architecture
+see `docs/reference/ARCHITECTURE_OVERVIEW.md` for detailed system architecture
 
 ### Key Architectural Decisions (Implemented)
 - Next.js + TypeScript + Tailwind CSS
@@ -117,7 +117,8 @@ see `docs/ARCHITECTURE.md` for detailed system architecture
 5. **Persist AI content** - Save generated summaries and headings to database
 
 see also:
-- `docs/ARCHITECTURE.md` - System architecture and design decisions
+- `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture
+- `docs/reference/ARCHITECTURE_DECISIONS.md` - System design decisions and rationale
 - `planning/250527a_reversible_document_mutations.md` - Upcoming mutations system
 - `docs/UNIFIED_LEFT_PANE.md` - Unified left pane implementation details
 - `docs/AI_GLOSSARY.md` - Glossary feature documentation

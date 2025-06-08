@@ -34,7 +34,7 @@ The Spideryarn Reading app has a 2-pane layout with a unified left pane containi
 - `components/unified-left-pane.tsx` - Current implementation with DOM event listeners
 - `components/resizable-document-layout.tsx` - Event dispatching from document clicks
 - `docs/CODING_PRINCIPLES.md` - Emphasis on simplicity and debugging ease
-- `docs/ARCHITECTURE.md` - Overall application architecture
+- `docs/reference/ARCHITECTURE_OVERVIEW.md` - Overall application architecture
 
 ## Principles, Key Decisions
 

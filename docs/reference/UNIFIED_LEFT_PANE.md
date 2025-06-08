@@ -9,7 +9,7 @@ The unified left pane provides comprehensive document navigation and AI-powered 
 - `components/resizable-document-layout.tsx` - main 2-pane layout coordinator
 - `app/documents/[slug]/page-client.tsx` - state management and coordination between panes
 - `components/simple-document-viewer.tsx` - streamlined document viewer
-- `docs/ARCHITECTURE.md` - overall application architecture
+- `docs/reference/ARCHITECTURE_OVERVIEW.md` - overall application architecture
 - `docs/UI_INTERFACE.md` - 2-pane resizable layout documentation
 - `docs/LLM_PROMPT_TEMPLATES.md` - prompt template system for AI features
 - `planning/250526g_ai_generated_headings.md` - AI headings implementation details

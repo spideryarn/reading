@@ -4,7 +4,7 @@ A comprehensive technical reference for implementing PDF to HTML conversion in t
 
 ## See Also
 
-- `docs/ARCHITECTURE.md` - Overall architectural decisions and LLM integration approach
+- `docs/reference/ARCHITECTURE_DECISIONS.md` - Overall architectural decisions and LLM integration approach
 - `docs/LLM_PROMPT_TEMPLATES.md` - Implementation guidance for LLM calls using Nunjucks + Zod templates
 - `docs/CODING_PRINCIPLES.md` - Development principles prioritising simplicity and rapid prototyping
 - `README.md` - Project goals and document reading enhancement features

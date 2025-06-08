@@ -9,7 +9,7 @@ The mutations system enables reversible transformations of document content, all
 - `lib/types/mutation.ts` - Core TypeScript interfaces for mutations
 - `lib/services/mutation-engine.ts` - Implementation of mutation application logic
 - `planning/250527a_reversible_document_mutations.md` - Detailed design decisions and implementation plan
-- `docs/ARCHITECTURE.md#document-mutations-system` - High-level architectural overview
+- `docs/reference/ARCHITECTURE_OVERVIEW.md` - High-level architectural overview
 - `tests/test-mutation-engine.ts` - Test suite demonstrating mutation usage patterns
 - `docs/LLM_PROMPT_TEMPLATES.md` - Required for implementing AI-generated content transformations
 

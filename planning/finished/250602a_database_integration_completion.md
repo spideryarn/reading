@@ -21,7 +21,7 @@ Complete the database integration for Spideryarn Reading by connecting existing 
 **Planning & Architecture**:
 - `planning/finished/250531a_database_storage_implementation.md` - Comprehensive database schema implementation with 7 tables, services, and testing
 - `docs/CODING_PRINCIPLES.md` - Emphasises simplicity, prototype-first approach, and gradual complexity layering
-- `docs/ARCHITECTURE.md` - Overall technical architecture including database storage decisions
+- `docs/reference/ARCHITECTURE_DECISIONS.md` - Overall technical architecture including database storage decisions
 - `docs/DATABASE_OVERVIEW.md` - Current database implementation with schema details and service patterns
 - `docs/DATABASE_SCHEMA.md` - Detailed table specifications for all 7 database tables
 - `docs/DATABASE_MIGRATIONS.md` - Migration workflow and best practices for schema changes

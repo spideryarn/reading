@@ -7,7 +7,8 @@ see:
 - `docs/reference/VISION.md` for comprehensive product vision and strategic direction
 - IMPORTANT: `docs/reference/CODING_PRINCIPLES.md`
 - IMPORTANT: `docs/reference/CODING_GUIDELINES.md` for code quality standards
-- `docs/reference/ARCHITECTURE.md`
+- `docs/reference/ARCHITECTURE_OVERVIEW.md` for current system architecture
+- `docs/reference/ARCHITECTURE_DECISIONS.md` for key architectural decisions and rationale
 - `docs/instructions/GIT_COMMITS.md` for using Git
 
 ## Project Overview
@@ -69,7 +70,7 @@ Debugging resources:
 - Browser debugging: Playwright MCP (console logs, network requests, screenshots)
 - Test files: `src/lib/*/tests/` and `components/__tests__/`
 - Database: `supabase/migrations/` and `docs/DATABASE_*.md`
-- Architecture: `docs/ARCHITECTURE.md`
+- Architecture: `docs/reference/ARCHITECTURE_OVERVIEW.md` and `docs/reference/ARCHITECTURE_DECISIONS.md`
 - Recent decisions: `planning/*.md` docs
 
 
@@ -157,7 +158,8 @@ Coding & infrastructure:
 - `docs/CODING_PRINCIPLES.md` - Outlines development principles prioritising simplicity, readability, debugging, and rapid prototyping for early-stage development
 - `docs/CODING_GUIDELINES.md` - Code quality standards including linting, TypeScript patterns, React best practices, and import conventions
 - `docs/COMMAND_LINE_SCRIPTS.md` - Guidelines for writing command-line scripts using shell scripts or TypeScript/Clipanion
-- `docs/ARCHITECTURE.md` - Contains high-level architectural decisions including framework choices, data structures, storage approach, and MVP features
+- `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture and implementation details
+- `docs/reference/ARCHITECTURE_DECISIONS.md` - Key architectural decisions including framework choices, data structures, storage approach, and MVP features
 - `docs/STYLING.md` - CSS and visual styling configuration including theme settings, Phosphor icons usage, and loading/error button patterns
 - `docs/SETUP.md` - Development environment setup guide including Node.js, Supabase, Git worktree configuration, and common commands
 - `docs/SITE_ORGANISATION.md` - Documents the hierarchical, document-centric architecture including application routes, component hierarchy, and navigation patterns. (May be out of date)

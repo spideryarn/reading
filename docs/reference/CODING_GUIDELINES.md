@@ -5,7 +5,7 @@ This document defines code quality standards and patterns to maintain consistenc
 ## See also
 
 - `docs/CODING_PRINCIPLES.md` - High-level development principles and philosophy
-- `docs/ARCHITECTURE.md` - System architecture and technical decisions
+- `docs/reference/ARCHITECTURE_DECISIONS.md` - System architecture and technical decisions
 - `docs/TESTING.md` - Testing approach and patterns
 - `docs/GIT_COMMITS.md` - Git workflow and commit guidelines
 - `docs/VERCEL_AI_SDK_REFERENCE.md` - Vercel AI SDK patterns and multi-provider support

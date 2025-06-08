@@ -112,7 +112,7 @@ This includes:
 ## Project Understanding
 
 - **Goals & Vision**: See [README.md](../README.md) for the application's core objectives and target users
-- **Technical Architecture**: See [ARCHITECTURE.md](ARCHITECTURE.md) for framework choices, data structure decisions, and implementation approach
+- **Technical Architecture**: See [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) for framework choices, data structure decisions, and implementation approach
 
 
 ## Key Architecture Points
@@ -195,4 +195,4 @@ If port conflicts occur:
 - Current focus is on basic document display with hierarchical summaries
 - Starting with sample HTML files (no upload functionality yet)
 
-For detailed architectural decisions and reasoning, see [ARCHITECTURE.md](ARCHITECTURE.md).
+For detailed architectural decisions and reasoning, see [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md).

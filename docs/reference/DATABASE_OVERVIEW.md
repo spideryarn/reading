@@ -11,7 +11,7 @@ Spideryarn Reading uses PostgreSQL via Supabase for persistent storage. The data
 **Type Safety**: Full TypeScript type generation from database schema
 
 📖 **Related Documentation:**
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Database design decisions
+- [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) - Database design decisions
 - [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) - Detailed table descriptions
 - [DATABASE_SUPABASE_STORAGE_REFERENCE.md](DATABASE_SUPABASE_STORAGE_REFERENCE.md) - Supabase Storage integration for file uploads
 - [DATABASE_MIGRATIONS.md](DATABASE_MIGRATIONS.md) - Migration workflow

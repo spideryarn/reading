@@ -8,7 +8,7 @@ This document describes the testing approach for the Spideryarn Reading project.
 - `src/lib/services/__tests__/` - Jest test files for services
 - `tests/test-mutation-engine.ts` - legacy standalone test runner
 - `docs/AUTHENTICATION_TESTING.md` - Comprehensive authentication testing patterns and strategies
-- `docs/ARCHITECTURE.md` - for understanding the components being tested
+- `docs/reference/ARCHITECTURE_OVERVIEW.md` - for understanding the components being tested
 - `docs/CODING_PRINCIPLES.md` - for testing philosophy and approach
 
 ## Current Testing Approach

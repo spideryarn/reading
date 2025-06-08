@@ -75,7 +75,7 @@ When documenting systems that are changing (e.g., architectural migrations):
    - **Target State**: The intended future architecture
    - **Migration Status**: Progress and timeline if known
 
-2. **Reference decisions**: Link to planning docs or ARCHITECTURE.md for rationale
+2. **Reference decisions**: Link to planning docs or ARCHITECTURE_DECISIONS.md for rationale
 
 3. **Update incrementally**: As migration progresses, update the documentation
 
@@ -87,7 +87,7 @@ Example:
 **Target State**: Single-row document storage with JSONB enhancements
 **Migration Status**: Schema designed, code updates pending
 
-see `docs/ARCHITECTURE.md` for migration rationale
+see `docs/reference/ARCHITECTURE_DECISIONS.md` for migration rationale
 ```
 
 

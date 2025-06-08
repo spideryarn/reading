@@ -2,7 +2,7 @@
 
 see also:
 - `docs/CODING_GUIDELINES.md` - Specific code quality standards and patterns
-- `docs/ARCHITECTURE.md` - Technical architecture decisions
+- `docs/reference/ARCHITECTURE_DECISIONS.md` - Technical architecture decisions
 - `docs/TESTING.md` - Testing approach and patterns
 
 - Prioritise code that's simple, easy-to-understand, debuggable, and readable.

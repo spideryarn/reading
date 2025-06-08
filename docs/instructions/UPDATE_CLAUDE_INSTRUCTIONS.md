@@ -29,7 +29,7 @@ CLAUDE.md serves as the primary orientation document for AI agents working on th
 - **Database info** - Migration files and schema documentation
 
 ### Navigation Signposts
-- **Architecture docs** - Link to `docs/ARCHITECTURE.md` for detailed decisions
+- **Architecture docs** - Link to `docs/reference/ARCHITECTURE_OVERVIEW.md` and `docs/reference/ARCHITECTURE_DECISIONS.md` for detailed decisions
 - **Planning docs** - Point to `planning/*.md` for recent decisions
 - **Specific domains** - Database, prompts, UI components documentation
 

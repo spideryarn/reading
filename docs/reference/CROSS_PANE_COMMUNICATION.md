@@ -7,7 +7,7 @@ This document provides a comprehensive analysis of patterns for cross-component 
 - `components/unified-left-pane.tsx` - current implementation using custom DOM events
 - `components/resizable-document-layout.tsx` - event dispatching from document pane to navigation
 - `docs/CODING_PRINCIPLES.md` - simplicity and debugging principles that guide pattern selection
-- `docs/ARCHITECTURE.md` - overall application architecture context
+- `docs/reference/ARCHITECTURE_OVERVIEW.md` - overall application architecture context
 - [React Context API Documentation](https://react.dev/reference/react/useContext) - official React context patterns
 - [Zustand GitHub](https://github.com/pmndrs/zustand) - lightweight state management library
 - [Event-driven architecture patterns](https://martinfowler.com/articles/201701-event-driven.html) - Martin Fowler's analysis of event patterns

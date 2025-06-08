@@ -96,7 +96,7 @@ Consider whether changes affect essential AI agent context (see `docs/UPDATE_CLA
 ```markdown
 # Add transitional documentation
 **Current State**: Code uses decomposed element storage
-**Target State**: Single-row document storage (see ARCHITECTURE.md)
+**Target State**: Single-row document storage (see ARCHITECTURE_DECISIONS.md)
 **Migration Status**: Schema exists, code needs updating
 ```
 

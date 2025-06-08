@@ -5,7 +5,7 @@ Spideryarn Reading is envisioned as a professional AI-assisted document reading 
 ## See also
 
 - `README.md` - Current implementation goals and features
-- `docs/reference/ARCHITECTURE.md` - Technical architecture decisions and rationale
+- `docs/reference/ARCHITECTURE_DECISIONS.md` - Technical architecture decisions and rationale
 - `docs/reference/PROJECT_STATUS.md` - Current development state and immediate roadmap
 - `docs/reference/CODING_PRINCIPLES.md` - Development philosophy emphasising rapid prototyping
 - `planning/*.md` - Historical decision context and feature planning documents
