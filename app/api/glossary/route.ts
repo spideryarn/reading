@@ -32,7 +32,8 @@ export async function POST(request: NextRequest) {
     // Check if glossary already exists in database
     const existingGlossary = await enhancementService.get(
       documentId,
-      'glossary'
+      'glossary',
+      'default'
     )
     
     if (existingGlossary) {

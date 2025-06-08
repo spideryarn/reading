@@ -10,7 +10,7 @@ export interface CreateEnhancementOptions {
   documentId: string
   aiCallId: string
   type: EnhancementType
-  subtype?: string
+  subtype: string
   content: Record<string, any>
   extra?: Record<string, any>
 }
@@ -26,7 +26,7 @@ export class EnhancementService {
       document_id: options.documentId,
       ai_call_id: options.aiCallId,
       type: options.type,
-      subtype: options.subtype || null,
+      subtype: options.subtype,
       content: options.content,
       extra: options.extra || {},
     }
@@ -69,7 +69,8 @@ export class EnhancementService {
     if (subtype !== undefined) {
       query = query.eq('subtype', subtype)
     } else {
-      query = query.is('subtype', null)
+      // When no subtype provided, look for 'default' subtype
+      query = query.eq('subtype', 'default')
     }
 
     const { data, error } = await query
@@ -139,7 +140,8 @@ export class EnhancementService {
     if (subtype !== undefined) {
       query = query.eq('subtype', subtype)
     } else {
-      query = query.is('subtype', null)
+      // When no subtype provided, look for 'default' subtype
+      query = query.eq('subtype', 'default')
     }
 
     const { error } = await query
@@ -166,7 +168,7 @@ export class EnhancementService {
       documentId,
       aiCallId,
       type: 'summary',
-      subtype: granularity,
+      subtype: granularity || 'document',
       content: summary,
     })
   }
@@ -195,6 +197,7 @@ export class EnhancementService {
       documentId,
       aiCallId,
       type: 'glossary',
+      subtype: 'default',
       content: glossary,
     })
   }
@@ -220,6 +223,7 @@ export class EnhancementService {
       documentId,
       aiCallId,
       type: 'headings',
+      subtype: 'default',
       content: headings,
     })
   }
@@ -243,6 +247,7 @@ export class EnhancementService {
       documentId,
       aiCallId,
       type: 'tweet-thread',
+      subtype: 'default',
       content: thread,
     })
   }
