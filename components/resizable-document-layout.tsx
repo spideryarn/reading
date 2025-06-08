@@ -12,6 +12,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { UnifiedLeftPane } from './unified-left-pane'
 import { SimpleDocumentViewer } from './simple-document-viewer'
+import { VerticalIconNav } from './vertical-icon-nav'
 import { Button } from '@/components/ui/button'
 import { SidebarSimple } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
@@ -76,7 +77,7 @@ function ResizableDocumentLayoutInner({
   onElementVisibilityChange,
   onElementClick
 }: ResizableDocumentLayoutProps) {
-  const { actions } = useDocumentCommunication()
+  const { actions, state } = useDocumentCommunication()
   const [, setScrollTarget] = useState<{ id: string; timestamp: number } | null>(null)
   const [isLeftPaneCollapsed, setIsLeftPaneCollapsed] = useState(false)
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -169,6 +170,17 @@ function ResizableDocumentLayoutInner({
   const handleToggleCollapse = useCallback(() => {
     setIsLeftPaneCollapsed(prev => !prev)
   }, [])
+
+  // Handle icon navigation tab clicks - expand left pane and switch to tab
+  const handleIconNavTabClick = useCallback((tabId: string) => {
+    // First expand the left pane if it's collapsed
+    if (isLeftPaneCollapsed) {
+      setIsLeftPaneCollapsed(false)
+    }
+    
+    // Then switch to the selected tab using context action
+    actions.setActiveTab(tabId)
+  }, [isLeftPaneCollapsed, actions])
 
   // Handle document scroll to detect current heading
   const handleDocumentScroll = useCallback(() => {
@@ -305,18 +317,14 @@ function ResizableDocumentLayoutInner({
         </ResizablePanel>
       </ResizablePanelGroup>
       
-      {/* Floating expand button when collapsed */}
+      {/* Vertical icon navigation when collapsed */}
       {isLeftPaneCollapsed && (
-        <div className="absolute top-4 left-4 z-10">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleToggleCollapse}
-            className="h-8 w-8 p-0 shadow-lg border border-gray-300"
-            title="Toggle sidebar (Ctrl+B)"
-          >
-            <SidebarSimple size={16} weight="bold" />
-          </Button>
+        <div className="absolute top-0 left-0 z-10 h-full">
+          <VerticalIconNav
+            activeTab={state.activeTab}
+            onTabClick={handleIconNavTabClick}
+            className="shadow-lg"
+          />
         </div>
       )}
     </div>

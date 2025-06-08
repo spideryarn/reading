@@ -1,0 +1,168 @@
+'use client'
+
+// Vertical icon navigation component for collapsed left pane
+// Implements VSCode-style activity bar with Phosphor icons and tooltips
+// See planning/250608c_vertical_icon_navigation_bar.md for design decisions
+
+import { 
+  Article, Robot, ListBullets, ChatCircle, 
+  BookOpen, MagnifyingGlass 
+} from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import * as Tooltip from '@radix-ui/react-tooltip'
+
+// Navigation item definition
+interface NavigationItem {
+  id: 'original' | 'ai-generated' | 'summary' | 'chat' | 'glossary' | 'search'
+  label: string
+  icon: React.ComponentType<{ size?: number; weight?: string; className?: string }>
+  tooltip: {
+    title: string
+    description: string
+  }
+}
+
+// Props for the VerticalIconNav component
+interface VerticalIconNavProps {
+  activeTab?: string
+  onTabClick: (tabId: string) => void
+  className?: string
+}
+
+// Navigation items configuration with final icon selections
+const NAVIGATION_ITEMS: NavigationItem[] = [
+  {
+    id: 'original',
+    label: 'Original',
+    icon: Article,
+    tooltip: {
+      title: 'Original Document',
+      description: 'View the unmodified source document with original headings'
+    }
+  },
+  {
+    id: 'ai-generated',
+    label: 'AI-generated',
+    icon: Robot,
+    tooltip: {
+      title: 'AI-Generated',
+      description: 'View document with AI-enhanced headings and structure'
+    }
+  },
+  {
+    id: 'summary',
+    label: 'Summary',
+    icon: ListBullets,
+    tooltip: {
+      title: 'Summary',
+      description: 'Read hierarchical summaries at different detail levels'
+    }
+  },
+  {
+    id: 'chat',
+    label: 'Chat',
+    icon: ChatCircle,
+    tooltip: {
+      title: 'Chat',
+      description: 'Ask questions and discuss the document with AI'
+    }
+  },
+  {
+    id: 'glossary',
+    label: 'Glossary',
+    icon: BookOpen,
+    tooltip: {
+      title: 'Glossary',
+      description: 'Explore key terms and concepts from the document'
+    }
+  },
+  {
+    id: 'search',
+    label: 'Search',
+    icon: MagnifyingGlass,
+    tooltip: {
+      title: 'Search',
+      description: 'Find specific text or concepts within the document'
+    }
+  }
+]
+
+export function VerticalIconNav({ 
+  activeTab, 
+  onTabClick, 
+  className 
+}: VerticalIconNavProps) {
+  return (
+    <div 
+      className={cn(
+        'flex flex-col bg-white border-r border-gray-200',
+        'w-12 min-w-12 max-w-12', // Fixed 48px width (12 * 4px = 48px)
+        className
+      )}
+      role="navigation"
+      aria-label="Document navigation"
+    >
+      {NAVIGATION_ITEMS.map((item) => {
+        const Icon = item.icon
+        const isActive = activeTab === item.id
+        
+        return (
+          <Tooltip.Provider key={item.id} delayDuration={600}>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onTabClick(item.id)}
+                  className={cn(
+                    'h-12 w-12 rounded-none border-0',
+                    'flex items-center justify-center',
+                    'text-gray-600 hover:text-gray-900',
+                    'hover:bg-gray-50',
+                    'transition-colors duration-200',
+                    'focus:ring-2 focus:ring-blue-500 focus:ring-inset',
+                    isActive && [
+                      'bg-orange-50 text-orange-700', // Spideryarn orange theme
+                      'border-r-2 border-orange-500',
+                      'hover:bg-orange-100 hover:text-orange-800'
+                    ]
+                  )}
+                  aria-label={`${item.tooltip.title}: ${item.tooltip.description}`}
+                >
+                  <Icon 
+                    size={20} 
+                    weight="duotone" 
+                    className="transition-colors duration-200"
+                  />
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  side="right"
+                  align="center"
+                  sideOffset={8}
+                  className="z-50 max-w-xs"
+                >
+                  <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                    <div className="font-semibold text-gray-900 text-sm mb-1">
+                      {item.tooltip.title}
+                    </div>
+                    <div className="text-gray-700 text-sm leading-relaxed">
+                      {item.tooltip.description}
+                    </div>
+                  </div>
+                  <Tooltip.Arrow 
+                    className="fill-gray-200" 
+                    width={12} 
+                    height={6}
+                  />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </Tooltip.Provider>
+        )
+      })}
+    </div>
+  )
+}
