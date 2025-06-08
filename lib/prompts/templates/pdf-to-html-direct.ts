@@ -11,13 +11,20 @@ export const pdfToHtmlDirectPromptInputSchema = z.object({
 // Schema for the expected HTML output (for validation if needed)
 export const pdfToHtmlDirectOutputSchema = z.string().min(1).describe('Clean semantic HTML converted from PDF')
 
-// Load the direct PDF to HTML prompt template
-export const pdfToHtmlDirectPrompt = loadMultimodalPromptTemplateFromCaller(
-  'pdf-to-html-direct.njk',
-  pdfToHtmlDirectPromptInputSchema,
-  {
-    model: 'anthropic-balanced', // Use Claude 4 Sonnet for maximum accuracy
-    temperature: 0, // Deterministic for academic content conversion
-    maxTokens: 8000, // Allow for longer HTML output from multi-page PDFs
-  }
-)
+// Create PDF to HTML prompt template with configurable provider
+export function createPdfToHtmlPrompt(provider: 'claude' | 'gemini' = 'claude') {
+  const modelTier = provider === 'gemini' ? 'google-balanced' : 'anthropic-balanced'
+  
+  return loadMultimodalPromptTemplateFromCaller(
+    'pdf-to-html-direct.njk',
+    pdfToHtmlDirectPromptInputSchema,
+    {
+      model: modelTier,
+      temperature: 0, // Deterministic for academic content conversion
+      maxTokens: 64000, // High limit for complex PDFs and long documents
+    }
+  )
+}
+
+// Default export for backward compatibility
+export const pdfToHtmlDirectPrompt = createPdfToHtmlPrompt('claude')

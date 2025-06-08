@@ -77,6 +77,65 @@ const modelUuid = await this.getModelUuidByProviderAndId(
 
 This architecture eliminates redundancy between config and database, follows the principle that configuration belongs in code, and makes tier management much simpler.
 
+## Template Architecture Guidelines
+
+### Single Template per Task (Recommended)
+
+**DO**: Use one template with dynamic provider selection:
+
+```typescript
+// ✅ Good: Single template with provider selection
+export function createUrlToHtmlPrompt(provider: 'claude' | 'gemini' = 'claude') {
+  const modelTier = provider === 'gemini' ? 'google-balanced' : 'anthropic-balanced'
+  
+  return loadMultimodalPromptTemplateFromCaller(
+    'url-to-html.njk',
+    urlToHtmlPromptInputSchema,
+    {
+      model: modelTier,
+      temperature: 0,
+      maxTokens: 64000,
+    }
+  )
+}
+```
+
+**DON'T**: Create separate template files per provider:
+
+```typescript
+// ❌ Bad: Separate files for each provider
+import { urlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
+import { urlToHtmlGeminiPrompt } from '@/lib/prompts/templates/url-to-html-gemini'
+
+// This creates unnecessary duplication and maintenance overhead
+```
+
+### When Provider-Specific Templates Are Justified
+
+Only create separate templates when there are **meaningful functional differences**:
+
+1. **Different capabilities**: Provider A supports feature X, Provider B doesn't
+2. **Different optimal prompting patterns**: Substantially different instruction styles needed
+3. **Different input/output formats**: Provider-specific data handling requirements
+
+**Not justified** for:
+- Minor wording preferences
+- Cosmetic formatting differences  
+- Token limit variations (handle in config)
+- Default model selection (handle in config)
+
+### Token Limits
+
+Use high token limits (64K) for content transcription tasks:
+- URL extraction: Complex webpages need room for long content
+- PDF conversion: Academic papers can be lengthy
+- Document processing: Better to have headroom than truncation
+
+Lower limits (8K) only for:
+- Simple classification tasks
+- Short content generation
+- Development/testing scenarios
+
 ## Thinking Mode
 
 Anthropic's Sonnet 4 supports a "thinking mode" that enables advanced reasoning capabilities. The model shows its reasoning process internally before generating the final response.

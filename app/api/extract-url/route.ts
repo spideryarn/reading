@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
-import { urlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
+import { createUrlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { generateSlug } from '@/lib/utils/slug'
@@ -158,33 +158,20 @@ export async function POST(request: NextRequest) {
       const article = extractWithReadability(htmlContent, url)
       
       if (!article) {
-        // Readability failed, fall back to AI transcription
-        console.log('Readability extraction failed, falling back to AI transcription')
-        extractionMethodUsed = 'ai-transcription-fallback'
+        // Readability failed - return error instead of falling back
+        console.log('Readability extraction failed - returning error for user to decide next action')
         
-        try {
-          const extractResult = await executeMultimodalPromptWithUsage(urlToHtmlPrompt, {
-            htmlContent,
-            sourceUrl: url
-          })
-          extractedHtml = extractResult.text
-          
-          // Clean up any markdown wrapping from LLM response
-          extractedHtml = extractedHtml
-            .replace(/^```html\s*\n?/, '')
-            .replace(/\n?```\s*$/, '')
-            .trim()
-            
-        } catch (error) {
-          console.error('LLM extraction error:', error)
-          
-          // Check for JavaScript detection error
-          if (error instanceof Error && error.message.includes('JavaScript')) {
-            return new NextResponse(URL_EXTRACTION_CONFIG.ERROR_MESSAGES.JAVASCRIPT_REQUIRED, { status: 400 })
+        return NextResponse.json({
+          success: false,
+          error: 'readability_failed',
+          message: URL_EXTRACTION_CONFIG.ERROR_MESSAGES.READABILITY_FAILED,
+          suggested_method: 'ai-transcription',
+          details: {
+            url: url,
+            extraction_method: 'readability',
+            content_size_kb: Math.round(htmlContent.length / 1024)
           }
-          
-          throw error
-        }
+        }, { status: 422 }) // 422 Unprocessable Entity - method failed but input was valid
       } else {
         // Readability succeeded
         const extractionTime = Date.now() - startTime
@@ -203,8 +190,11 @@ export async function POST(request: NextRequest) {
       // AI Transcription method
       extractionMethodUsed = 'ai-transcription'
       
+      // Create provider-specific prompt template with appropriate model configuration
+      const promptTemplate = createUrlToHtmlPrompt(provider)
+      
       try {
-        const extractResult = await executeMultimodalPromptWithUsage(urlToHtmlPrompt, {
+        const extractResult = await executeMultimodalPromptWithUsage(promptTemplate, {
           htmlContent,
           sourceUrl: url
         })

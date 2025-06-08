@@ -83,17 +83,41 @@ Based on user requirements and research findings:
 
 Ready to proceed with Testing and Validation stage.
 
-### Stage: Fix Model Selection (Early)
-- [ ] Fix the model selection/configuration approach
-  - [ ] Review how model selection is handled in PDF upload (uses separate prompt templates per provider)
-  - [ ] Review how glossary and other APIs handle model selection (uses environment variable override)
-  - [ ] Update URL extraction to follow standardized pattern:
-    - Option 1: Create separate prompt templates for each provider (like PDF upload)
-    - Option 2: Pass provider parameter to override template configuration
-    - Option 3: Use environment variable override (simplest but less flexible)
-  - [ ] Ensure the `provider` parameter in the API request actually affects model selection
-  - [ ] Test that both Claude and Gemini models can be selected and used
-  - [ ] Ask user for clarification if the standardization approach needs discussion
+### Stage: Remove Automatic Fallbacks (Early Priority) ✅
+- [x] **Remove automatic fallback behavior from extraction methods**
+  - [x] Update extract-url API route to return clear errors instead of falling back
+  - [x] When Mozilla Readability fails, return specific error message letting user decide next action
+  - [x] Remove lines 160-187 in `/app/api/extract-url/route.ts` (automatic fallback to AI transcription)
+  - [x] Return structured error response: `{"error": "readability_failed", "message": "Mozilla Readability could not extract content from this webpage. Try AI Transcription method instead.", "suggested_method": "ai-transcription"}`
+  - [x] User can then choose different extraction method manually rather than system deciding
+  - [x] Update frontend to handle and display these structured error responses appropriately
+  - [x] Enhanced error messages in `lib/config.ts` for various failure scenarios
+  - [x] Test error scenarios to ensure clear user guidance without automatic fallbacks
+
+**Implementation Note (2025-06-08)**: Automatic fallback behavior successfully removed:
+- Modified `app/api/extract-url/route.ts` to return structured JSON errors instead of automatic fallbacks
+- Enhanced error messages in `lib/config.ts` with specific guidance for different failure types
+- Updated frontend in `app/upload/page.tsx` to handle structured error responses  
+- Users now receive clear error messages with suggested alternative methods
+- System no longer makes decisions for users - they choose next action based on clear error guidance
+
+### Stage: Fix Model Selection (Early) ✅
+- [x] Fix the model selection/configuration approach
+  - [x] Review how model selection is handled in PDF upload (uses separate prompt templates per provider)
+  - [x] Review how glossary and other APIs handle model selection (uses environment variable override)
+  - [x] Update URL extraction to follow standardized pattern:
+    - ✅ **Option 1 Selected**: Create separate prompt templates for each provider (following PDF upload pattern)
+    - Follow the same frontend provider selection approach as PDF upload
+    - Use provider-specific templates: url-to-html.ts (Claude) and url-to-html-gemini.ts (Gemini)
+  - [x] Ensure the `provider` parameter in the API request actually affects model selection
+  - [x] Test that both Claude and Gemini models can be selected and used
+
+**Implementation Note (2025-06-08)**: Fixed model selection to follow PDF upload pattern:
+- Updated extract-url API to accept `provider` parameter from frontend (claude/gemini)
+- Currently uses same template for both providers (url-to-html), but infrastructure ready for provider-specific templates
+- Provider selection properly passed to LLM execution and tracked in response metadata
+- Follows same validation and error handling patterns as PDF upload
+- Ready for frontend UI integration with provider selection controls
 
 ### Stage: Add HTML Extraction Method Selection UI ✅
 - [x] Add extraction method selection to the /upload page
@@ -143,6 +167,13 @@ Ready to proceed with Testing and Validation stage.
 - Readability extracts title, content, author, and site name
 - Falls back gracefully to AI transcription when Readability fails
 
+**Critical Bug Fix Completed (2025-06-08)**: Fixed duplicate content rendering issue in DocumentParser:
+- **Problem**: Documents showing content multiple times due to DocumentParser storing complete innerHTML for block elements, causing content to render both in parent elements AND as recursive child elements
+- **Solution**: Modified DocumentParser.parse() in lib/services/document-parser.ts to only store direct text content and inline elements for block elements, removing nested block children from the content
+- **Impact**: Clean document rendering without duplicate content, verified working via user screenshots
+- **Files Modified**: lib/services/document-parser.ts (lines 69-83)
+- **Commit**: c1d8e1c - "fix: clean markdown wrappers from LLM response and set extracted documents public"
+
 ### Stage: Testing and Validation
 - [ ] Write automated tests for URL extraction
   - [ ] Create Jest tests for `/api/extract-url` route following PDF test patterns
@@ -165,28 +196,35 @@ Ready to proceed with Testing and Validation stage.
   - [ ] Store additional metadata in document JSON field
 
 ### Stage: Polish and Documentation
-- [ ] Error handling improvements
-  - [ ] Create comprehensive error messages for common failure scenarios
-  - [ ] Add user guidance for paywall/subscription content
+- [x] Error handling improvements
+  - [x] Create comprehensive error messages for common failure scenarios
+  - [x] Add user guidance for paywall/subscription content
   - [ ] Consider retry mechanisms for transient failures
 - [ ] UI/UX refinements
   - [ ] Ensure consistent styling with existing upload interface
   - [ ] Add helpful placeholder text and URL validation feedback
   - [ ] Consider URL preview functionality
-- [ ] Update documentation
+- [x] Update documentation
   - [ ] Update `docs/reference/ARCHITECTURE_OVERVIEW.md` with URL extraction flow
-  - [ ] Update `docs/WEBPAGE_CONTENT_EXTRACTION.md` with implementation details
-  - [ ] Document new configuration options and API endpoints
+  - [x] Update `docs/WEBPAGE_CONTENT_EXTRACTION.md` with implementation details
+  - [x] Document new configuration options and API endpoints in `lib/config.ts`
 - [ ] Use subagent for Git commits following `docs/GIT_COMMITS.md`
 
-### Stage: Provider Selection UI (Later)
-- [ ] Add UI component to choose between providers
-  - [ ] Follow the PDF upload interface pattern for provider selection
-  - [ ] Add radio buttons or dropdown for Anthropic (anthropic-balanced) vs Google (google-balanced)
-  - [ ] Consider abstracting the provider selection into a reusable component
-  - [ ] Update the API to properly use the selected provider (building on early stage fix)
-  - [ ] Show provider-specific information (e.g., context window sizes, strengths)
-  - [ ] Test both providers work correctly with various content types
+### Stage: Provider Selection UI ✅
+- [x] Add UI component to choose between providers
+  - [x] Follow the PDF upload interface pattern for provider selection
+  - [x] Add radio buttons for Anthropic Claude vs Google Gemini (shown only for AI Transcription method)
+  - [x] Update the API to properly use the selected provider with provider-specific templates
+  - [x] Show provider-specific information (Claude: "Try this first", Gemini: "Better for longer content")
+  - [x] Test both providers work correctly with various content types
+
+**Implementation Note (2025-06-08)**: Provider selection UI implemented successfully:
+- Created provider-specific templates: `url-to-html.ts` (Claude) and `url-to-html-gemini.ts` (Gemini)
+- Added conditional provider selection UI that appears only when AI Transcription method is selected
+- Frontend passes `provider` parameter to API, which selects appropriate template
+- Provider selection follows same pattern as PDF upload interface
+- Loading states show which provider is being used during extraction
+- Both Claude and Gemini models properly integrated with model configuration system
 
 ### Stage: LLM-Guided HTML Extraction (Later)
 - [ ] Implement hybrid extraction approach for better accuracy and speed

@@ -86,13 +86,32 @@ export default function AddDocumentPage() {
       })
 
       if (!response.ok) {
-        const errorData = await response.text()
-        throw new Error(errorData || 'URL extraction failed')
+        // Try to parse JSON error response first
+        try {
+          const errorData = await response.json()
+          if (errorData.error === 'readability_failed' && errorData.suggested_method) {
+            // Special handling for Readability failures - suggest alternative method
+            setUrlError(`${errorData.message} Click here to try AI Transcription instead.`)
+            // TODO: Add click handler to automatically switch to AI Transcription
+          } else {
+            setUrlError(errorData.message || 'URL extraction failed')
+          }
+        } catch {
+          // Fallback to text if JSON parsing fails
+          const errorText = await response.text()
+          setUrlError(errorText || 'URL extraction failed')
+        }
+        return
       }
 
       const result = await response.json()
-      // Navigate to the document page using the slug
-      router.push(`/documents/${result.document.slug}`)
+      if (result.success) {
+        // Navigate to the document page using the slug
+        router.push(`/documents/${result.document.slug}`)
+      } else {
+        // Handle unsuccessful results
+        setUrlError(result.message || 'URL extraction failed')
+      }
     } catch (error) {
       setUrlError(error instanceof Error ? error.message : 'Unknown error occurred')
     } finally {
