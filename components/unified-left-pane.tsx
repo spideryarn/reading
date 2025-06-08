@@ -256,6 +256,9 @@ export function UnifiedLeftPane({
   const [useSemanticSearch, setUseSemanticSearch] = useState(false)
   const [semanticSearchError, setSemanticSearchError] = useState<string | null>(null)
   const [semanticSortByRelevance, setSemanticSortByRelevance] = useState(false) // false = position, true = relevance
+  // Cache state for semantic search
+  const [semanticSearchCached, setSemanticSearchCached] = useState(false)
+  const [semanticSearchCachedAt, setSemanticSearchCachedAt] = useState<string | null>(null)
   
   // Store timeout ID to cancel pending searches
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -393,6 +396,8 @@ export function UnifiedLeftPane({
     setSemanticSearchError(null)
     setSearchResults([])
     setIsSearching(true)
+    setSemanticSearchCached(false)
+    setSemanticSearchCachedAt(null)
     
     // Clear text search highlights since we're doing semantic search
     if (markInstanceRef.current) {
@@ -416,6 +421,10 @@ export function UnifiedLeftPane({
       if (!response.ok) {
         throw new Error(data.error || 'Semantic search failed')
       }
+
+      // Update cache status
+      setSemanticSearchCached(!!data.cached)
+      setSemanticSearchCachedAt(data.cachedAt || null)
 
       // Convert semantic search results to SearchResult format
       const semanticResults: SearchResult[] = data.matches.map((match: {
@@ -691,6 +700,8 @@ export function UnifiedLeftPane({
                   setSemanticSearchError(null)
                   setSearchResults([])
                   setSemanticSortByRelevance(false) // Reset sort to default (position)
+                  setSemanticSearchCached(false)
+                  setSemanticSearchCachedAt(null)
                   if (markInstanceRef.current) {
                     markInstanceRef.current.unmark()
                   }
@@ -713,6 +724,8 @@ export function UnifiedLeftPane({
                   setSemanticSearchError(null)
                   setSearchResults([])
                   setSemanticSortByRelevance(false) // Reset sort to default (position)
+                  setSemanticSearchCached(false)
+                  setSemanticSearchCachedAt(null)
                   if (markInstanceRef.current) {
                     markInstanceRef.current.unmark()
                   }
@@ -770,6 +783,8 @@ export function UnifiedLeftPane({
                   setSearchQuery('')
                   setSearchResults([])
                   setIsSearching(false)
+                  setSemanticSearchCached(false)
+                  setSemanticSearchCachedAt(null)
                 }}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
@@ -872,8 +887,22 @@ export function UnifiedLeftPane({
           </div>
         ) : searchResults.length > 0 ? (
           <div>
-            <div className="text-sm text-gray-600 mb-3">
-              {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found for {useSemanticSearch ? 'semantic' : 'exact'} "{searchQuery}"
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-sm text-gray-600">
+                {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found for {useSemanticSearch ? 'semantic' : 'exact'} "{searchQuery}"
+              </div>
+              {useSemanticSearch && semanticSearchCached && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full font-medium">
+                    Loaded
+                  </span>
+                  {semanticSearchCachedAt && (
+                    <span className="text-xs text-gray-500" title={new Date(semanticSearchCachedAt).toLocaleString()}>
+                      {new Date(semanticSearchCachedAt).toLocaleTimeString()}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
             
             {/* Sort toggle - only show for semantic search with results */}
