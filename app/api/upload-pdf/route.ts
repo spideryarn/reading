@@ -11,12 +11,13 @@ import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelConfig, AI_CONFIG } from '@/lib/config'
 import { generateSlug } from '@/lib/utils/slug'
-
-// Mock user ID for development (matches database mock user)
-const MOCK_USER_ID = '00000000-0000-0000-0000-000000000001'
+import { validateAuth } from '@/lib/auth/server-auth'
 
 export async function POST(request: NextRequest) {
   try {
+    // Validate authentication first
+    const user = await validateAuth()
+    
     // Parse multipart form data
     const formData = await request.formData()
     const pdfFile = formData.get('pdf') as File
@@ -132,9 +133,9 @@ export async function POST(request: NextRequest) {
       model_used: modelConfig.modelId
     }
 
-    // Create document with storage integration
+    // Create document with storage integration using authenticated user
     const { document, storageResult } = await documentService.createWithStorage(
-      MOCK_USER_ID,
+      user.id,
       {
         title,
         html_content: htmlResult.text,
@@ -191,8 +192,12 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('PDF upload API error:', error)
     
-    // Provide more specific error messages
+    // Handle authentication errors first
     if (error instanceof Error) {
+      if (error.message.includes('Authentication failed') || error.message.includes('User not authenticated')) {
+        return new NextResponse('Authentication required', { status: 401 })
+      }
+      
       if (error.message.includes('rate limit') || error.message.includes('quota')) {
         return new NextResponse('AI service rate limit exceeded. Please try again later.', { status: 429 })
       }

@@ -6,28 +6,32 @@ import { DeleteDocumentButton } from '@/components/delete-document-button'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { generateSlug } from '@/lib/utils/slug'
+import { getUserId } from '@/lib/auth/server-auth'
 import type { Document } from '@/lib/types/database'
 import { Plus } from '@phosphor-icons/react/dist/ssr/Plus'
 
-async function getDocuments(): Promise<Document[]> {
+async function getUserDocuments(): Promise<Document[]> {
   const supabase = await createClient()
   const documentService = new DocumentService(supabase)
   
   try {
-    const { documents } = await documentService.list({
-      isPublic: true,
-      limit: 50 // Get all public documents
-    })
+    const userId = await getUserId()
     
-    return documents.sort((a, b) => a.title.localeCompare(b.title))
+    if (!userId) {
+      return [] // No user logged in, return empty array
+    }
+    
+    const documents = await documentService.getByUserId(userId)
+    
+    return documents.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) // Sort by newest first
   } catch (error) {
-    console.error('Failed to fetch documents:', error)
+    console.error('Failed to fetch user documents:', error)
     return []
   }
 }
 
 export default async function DocumentsPage() {
-  const documents = await getDocuments()
+  const documents = await getUserDocuments()
   
   return (
     <div className="min-h-screen">
@@ -57,8 +61,19 @@ export default async function DocumentsPage() {
       <main className="max-w-4xl mx-auto px-8">
         
         <div className="space-y-4">
-          <h2 className="text-2xl font-semibold">Sample Documents</h2>
-          <div className="grid gap-4">
+          <h2 className="text-2xl font-semibold">Your Documents</h2>
+          {documents.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500 mb-4">No documents yet. Upload your first document to get started.</p>
+              <Button asChild variant="orange">
+                <Link href="/upload">
+                  <Plus size={16} />
+                  Upload Document
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-4">
             {documents.map(doc => {
               // Generate slug from title to maintain URL compatibility
               const slug = generateSlug(doc.title)
@@ -87,7 +102,8 @@ export default async function DocumentsPage() {
                 </div>
               )
             })}
-          </div>
+            </div>
+          )}
         </div>
       </main>
       

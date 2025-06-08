@@ -70,6 +70,17 @@ Notion and Obsidian are more like writing tools or at least collaboration tools 
 - **Estimated pricing**: $20/month (or perhaps $10 or $50 or tiers) for uploading as many papers as you like and having the AI process them
 - **AI output sharing**: Maybe there'll be some kind of sense of the AI's AI-generated output being pooled or available, but for people that want to generate new AI output, they definitely have to pay for that
 
+### Centaur-Sourcing Model 📋
+**Shared AI Enhancement Commons**: A hybrid approach between crowdsourcing and AI processing where users contribute AI-generated enhancements that benefit the entire community:
+
+- **Individual Payment**: Users pay for AI processing they commission (summarization, glossaries, etc.)
+- **Shared Benefits**: AI-generated enhancements become available to all users who can access the document
+- **Quality Assumption**: AI processing is expected to be consistently valuable, regardless of who commissions it
+- **Community Value**: Popular documents develop rich AI-generated annotations through distributed user contributions
+- **Traceability**: Full tracking of who commissioned each enhancement for billing and quality control
+
+This model aims to create valuable AI-generated commons while maintaining fair cost distribution and user incentives for processing.
+
 ## Product Development Philosophy
 
 ### Development Approach ✓

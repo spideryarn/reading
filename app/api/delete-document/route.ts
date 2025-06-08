@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
+import { validateAuth } from '@/lib/auth/server-auth'
 
 /**
  * POST /api/delete-document
  * Delete a document and its associated storage files
+ * Requires authentication and user ownership
  */
 export async function POST(request: NextRequest) {
   try {
+    // Validate authentication first
+    const user = await validateAuth()
+    
     const { documentId } = await request.json()
     
     if (!documentId) {
@@ -19,6 +24,16 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient()
     const documentService = new DocumentService(supabase)
+    
+    // Check if user owns the document before deletion
+    const isOwned = await documentService.isOwnedByUser(documentId, user.id)
+    
+    if (!isOwned) {
+      return NextResponse.json(
+        { error: 'Document not found' }, // Use 404 to prevent information leakage
+        { status: 404 }
+      )
+    }
     
     // Delete document and associated storage files
     const deleted = await documentService.deleteWithStorage(documentId)
@@ -34,6 +49,14 @@ export async function POST(request: NextRequest) {
     
   } catch (error) {
     console.error('Delete document error:', error)
+    
+    // Handle authentication errors first
+    if (error instanceof Error && (error.message.includes('Authentication failed') || error.message.includes('User not authenticated'))) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
     
     const errorMessage = error instanceof Error 
       ? error.message 

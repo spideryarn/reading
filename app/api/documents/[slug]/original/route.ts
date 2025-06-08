@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
+import { validateAuth } from '@/lib/auth/server-auth'
 import type { Document } from '@/lib/types/database'
 
 /**
@@ -31,19 +32,43 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  const { slug } = await params
-  const doc = await getDocumentBySlug(slug)
-  
-  if (!doc) {
-    return new Response('Document not found', { status: 404 })
-  }
+  try {
+    // Validate authentication first
+    const user = await validateAuth()
+    
+    const { slug } = await params
+    const doc = await getDocumentBySlug(slug)
+    
+    if (!doc) {
+      return new Response('Document not found', { status: 404 })
+    }
 
-  // Get HTML content from database
-  const html = doc.html_content
-  
-  return new Response(html, {
-    headers: {
-      'Content-Type': 'text/html',
-    },
-  })
+    // Check if user owns the document
+    const supabase = await createClient()
+    const documentService = new DocumentService(supabase)
+    const isOwned = await documentService.isOwnedByUser(doc.id, user.id)
+    
+    if (!isOwned) {
+      return new Response('Document not found', { status: 404 }) // Use 404 to prevent information leakage
+    }
+
+    // Get HTML content from database
+    const html = doc.html_content
+    
+    return new Response(html, {
+      headers: {
+        'Content-Type': 'text/html',
+        'Cache-Control': 'private, max-age=3600', // Cache for 1 hour
+      },
+    })
+  } catch (error) {
+    console.error('Original document API error:', error)
+    
+    // Handle authentication errors
+    if (error instanceof Error && (error.message.includes('Authentication failed') || error.message.includes('User not authenticated'))) {
+      return new Response('Authentication required', { status: 401 })
+    }
+    
+    return new Response('Internal server error', { status: 500 })
+  }
 }

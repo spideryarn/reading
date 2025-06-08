@@ -29,6 +29,7 @@ Database:
 - `docs/DATABASE_OVERVIEW.md`
 - `docs/DATABASE_MIGRATIONS.md` - Guide for managing database schema changes through Supabase migrations with timestamped SQL files
 - `docs/DATABASE_SCHEMA.md` - Reference for both current (deprecated) schema and target schema showing the transition from element decomposition to single-row storage (VERY MUCH EVOLVING)
+- `docs/reference/SUPABASE_INTEGRATION_REFERENCE.md` - Comprehensive guide for Supabase.js usage patterns, RLS best practices, performance optimisation, and security considerations for document-centric applications
 
 AI, features, machinery, interface:
 - `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Comprehensive technical guide for integrating the @assistant-ui/react library with database persistence for conversation storage and restoration
