@@ -4,7 +4,7 @@
 // Uses direct PDF processing via Anthropic/Google APIs (no image conversion)
 
 import { NextRequest, NextResponse } from 'next/server'
-import { executeMultimodalPrompt } from '@/lib/prompts/types'
+import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { pdfToHtmlDirectPrompt } from '@/lib/prompts/templates/pdf-to-html-direct'
 import { pdfToHtmlGeminiPrompt } from '@/lib/prompts/templates/pdf-to-html-gemini'
 import { createClient } from '@/lib/supabase/server'
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     console.log(`Step 1: Converting PDF to HTML using ${providerDisplayName}...`)
 
     // Execute the direct PDF prompt (multi-page support enabled)
-    const htmlOutput = await executeMultimodalPrompt(promptTemplate, {
+    const htmlResult = await executeMultimodalPromptWithUsage(promptTemplate, {
       pdfBuffer,
       fileName: pdfFile.name,
       singlePageOnly: false // Multi-page processing enabled
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     console.log('Step 2: HTML conversion completed, extracting plaintext...')
 
     // Extract plaintext from HTML for search and word count
-    const plaintext = htmlOutput
+    const plaintext = htmlResult.text
       .replace(/<[^>]*>/g, ' ') // Remove HTML tags
       .replace(/\s+/g, ' ') // Normalize whitespace
       .trim()
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       MOCK_USER_ID,
       {
         title,
-        html_content: htmlOutput,
+        html_content: htmlResult.text,
         plaintext_content: plaintext,
         slug,
         source_url: null,

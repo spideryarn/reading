@@ -2,7 +2,7 @@
 // See docs/AI_SUMMARISE.md for architecture and usage patterns
 
 import { NextRequest, NextResponse } from 'next/server'
-import { executePrompt } from '@/lib/prompts/types'
+import { executePromptWithUsage } from '@/lib/prompts/types'
 import { summarisePrompt, getMaxTokensForGranularity, getGranularityInstruction } from '@/lib/prompts/templates/summarise'
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
@@ -177,24 +177,22 @@ export async function POST(request: NextRequest) {
     const startTime = Date.now()
     
     try {
-      const summary = await executePrompt(templateWithTokens, { 
+      const summaryResult = await executePromptWithUsage(templateWithTokens, { 
         content, 
         granularity: getGranularityInstruction(granularity)
       })
       
       const endTime = Date.now()
       
-      // Complete AI call tracking with success
-      await aiCallService.completeCall(
-        aiCall.id,
-        summary,
-        {
-          promptTokens: 0,  // Will be updated if available from response
-          completionTokens: 0,
-          totalTokens: 0,
-          latencyMs: endTime - startTime
-        }
-      )
+      // Complete AI call tracking with success and usage metadata
+      await aiCallService.completeCall(aiCall.id, {
+        output_data: {
+          text_length: summaryResult.text.length,
+          processing_notes: 'Summary generation completed successfully'
+        },
+        usage: summaryResult.usage,
+        finishReason: summaryResult.finishReason
+      })
       
       // Store summary in database
       try {
@@ -202,7 +200,7 @@ export async function POST(request: NextRequest) {
           documentId,
           aiCall.id,
           {
-            text: summary,
+            text: summaryResult.text,
             metadata: {
               granularity,
               sectionId,
@@ -214,7 +212,7 @@ export async function POST(request: NextRequest) {
         )
         
         return NextResponse.json({ 
-          summary,
+          summary: summaryResult.text,
           cached: false,
           enhancementId: enhancement.id,
           aiCallId: aiCall.id
@@ -223,7 +221,7 @@ export async function POST(request: NextRequest) {
         // If database storage fails, still return the generated summary
         console.error('Failed to store summary in database:', dbError)
         return NextResponse.json({ 
-          summary,
+          summary: summaryResult.text,
           cached: false,
           warning: 'Summary generated but not saved to database',
           error: dbError instanceof Error ? dbError.message : 'Unknown database error'

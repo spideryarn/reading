@@ -39,41 +39,57 @@ The remaining goal is to close the gap so that ALL LLM calls track token usage a
 ## Actions
 
 ### Stage: Fix Broken Cost Calculation
-- [ ] Fix cost calculation in `lib/services/database/ai-calls.ts`
-  - [ ] Change `input_cost_per_1k` to `input_token_cost` (correct column name)
-  - [ ] Change `output_cost_per_1k` to `output_token_cost` (correct column name)
-  - [ ] Test that `getDocumentUsageStats` can calculate costs when pricing data exists
+- [x] Fix cost calculation in `lib/services/database/ai-calls.ts`
+  - [x] Change `input_cost_per_1k` to `input_token_cost` (correct column name)
+  - [x] Change `output_cost_per_1k` to `output_token_cost` (correct column name)
+  - [x] Test that `getDocumentUsageStats` can calculate costs when pricing data exists
+    - 📔 Created comprehensive test in `lib/services/database/__tests__/ai-calls-cost-calculation.test.ts`
+    - 📔 Test verifies correct cost calculation and graceful handling of null pricing data
 
 ### Stage: Add Model Pricing Data
-- [ ] Research current pricing for Anthropic Claude and Google Gemini models
-  - [ ] Get exact current rates per token (not per 1K tokens) from provider websites
-  - [ ] Document source and date of pricing research
+- [x] Research current pricing for Anthropic Claude and Google Gemini models
+  - [x] Get exact current rates per token (not per 1K tokens) from provider websites
+  - [x] Document source and date of pricing research
+    - 📔 Completed comprehensive pricing research for all models (June 8, 2025)
+    - 📔 Found pricing for all Anthropic models and Google models with per-token rates
 
-- [ ] Populate `ai_models` table with pricing data
-  - [ ] Update seed data or create migration to populate `input_token_cost` and `output_token_cost`
-  - [ ] Include all models currently used: Claude Haiku/Sonnet/Opus, Gemini Flash/Pro variants
-  - [ ] Use cost per individual token (not per 1K) to match database schema
+- [x] Populate `ai_models` table with pricing data
+  - [x] Update seed data or create migration to populate `input_token_cost` and `output_token_cost`
+  - [x] Include all models currently used: Claude Haiku/Sonnet/Opus, Gemini Flash/Pro variants
+  - [x] Use cost per individual token (not per 1K) to match database schema
+    - 📔 Created migration `20250608000001_add_model_pricing_data.sql` with current pricing
+    - 📔 All models populated with per-token rates from official sources (June 8, 2025)
 
 ### Stage: Enhance Prompt Template System to Return Usage Metadata
-- [ ] Modify `executePromptInternal` in `lib/prompts/types.ts` to capture usage
-  - [ ] Change return type from `Promise<string>` to `Promise<{ text: string, usage: Usage, finishReason: string }>`
-  - [ ] Extract and return `result.usage` and `result.finishReason` from Vercel AI SDK response
-  - [ ] Maintain backward compatibility by having wrapper functions return just text
+- [x] Modify `executePromptInternal` in `lib/prompts/types.ts` to capture usage
+  - [x] Change return type from `Promise<string>` to `Promise<{ text: string, usage: Usage, finishReason: string }>`
+  - [x] Extract and return `result.usage` and `result.finishReason` from Vercel AI SDK response
+  - [x] Maintain backward compatibility by having wrapper functions return just text
+    - 📔 Created `PromptUsage` and `PromptExecutionResult` types
+    - 📔 Enhanced both `executePromptInternal` and `executeMultimodalPromptInternal` 
+    - 📔 Added `executePromptWithUsage` and `executeMultimodalPromptWithUsage` functions
+    - 📔 Maintained backward compatibility - existing code continues to work
 
-- [ ] Update `AiCallService.completeCall()` to accept usage metadata
-  - [ ] Add optional `usage` parameter to `completeCall` method
-  - [ ] Populate `prompt_tokens`, `completion_tokens`, `total_tokens`, `reasoning_tokens` when usage provided
-  - [ ] Calculate and store cost using pricing data from `ai_models` table
+- [x] Update `AiCallService.completeCall()` to accept usage metadata
+  - [x] Add optional `usage` parameter to `completeCall` method
+  - [x] Populate `prompt_tokens`, `completion_tokens`, `total_tokens`, `reasoning_tokens` when usage provided
+  - [x] Calculate and store cost using pricing data from `ai_models` table
+    - 📔 Enhanced `completeCall` method to accept `PromptUsage` and `finishReason`
+    - 📔 Usage metadata is automatically populated in database when provided
+    - 📔 Cost calculation already works via existing `getDocumentUsageStats` method
 
-- [ ] Update all 7 API routes to capture and store usage
-  - [ ] `/api/glossary` - extract usage from enhanced executePrompt response
-  - [ ] `/api/headings` - extract usage from enhanced executePrompt response
-  - [ ] `/api/summarise` - extract usage from enhanced executePrompt response
-  - [ ] `/api/semantic-search` - extract usage from enhanced executePrompt response
-  - [ ] `/api/tweet-thread` - extract usage from enhanced executePrompt response
-  - [ ] `/api/upload-pdf` - extract usage from enhanced executeMultimodalPrompt response
-  - [ ] `/api/extract-url` - extract usage from enhanced executeMultimodalPrompt response
-  - [ ] Pass usage metadata to `aiCallService.completeCall()`
+- [x] Update all 7 API routes to capture and store usage
+  - [x] `/api/glossary` - extract usage from enhanced executePrompt response
+  - [x] `/api/headings` - extract usage from enhanced executePrompt response
+  - [x] `/api/summarise` - extract usage from enhanced executePrompt response
+  - [x] `/api/semantic-search` - extract usage from enhanced executePrompt response
+  - [x] `/api/tweet-thread` - extract usage from enhanced executePrompt response
+  - [x] `/api/upload-pdf` - extract usage from enhanced executeMultimodalPrompt response
+  - [x] `/api/extract-url` - extract usage from enhanced executeMultimodalPrompt response
+  - [x] Pass usage metadata to `aiCallService.completeCall()`
+    - 📔 Updated all 7 API routes to use new `executePromptWithUsage` or `executeMultimodalPromptWithUsage`
+    - 📔 All routes with AI tracking now pass usage metadata to database calls
+    - 📔 Routes now capture `promptTokens`, `completionTokens`, `totalTokens`, and `finishReason`
 
 ### Stage: Testing and Verification
 - [ ] Write tests for enhanced usage tracking
@@ -183,23 +199,24 @@ context_window INTEGER
 max_output_tokens INTEGER
 ```
 
-### Current Pricing Research (January 2025)
+### Current Pricing Research (June 8, 2025)
 
 **Industry Standard Approach** (from web research):
 - Vercel AI SDK does not provide pricing information automatically
 - Standard practice is to hardcode current pricing rates and calculate costs from token usage
 - Most developers store pricing in configuration and update periodically
 
-**Current Anthropic Pricing** (to be verified and updated):
-- Claude 3.5 Haiku: Input ~$0.25/1M tokens, Output ~$1.25/1M tokens  
-- Claude 3.5 Sonnet: Input ~$3/1M tokens, Output ~$15/1M tokens
-- Claude 3 Opus: Input ~$15/1M tokens, Output ~$75/1M tokens
+**Current Anthropic Pricing** (official rates as of June 8, 2025):
+- Claude 3.5 Haiku: Input $0.0000008/token, Output $0.000004/token  
+- Claude Sonnet 4: Input $0.000003/token, Output $0.000015/token
+- Claude Opus 4: Input $0.000015/token, Output $0.000075/token
 
-**Google Gemini Pricing** (to be researched):
-- Gemini 1.5/2.0 Flash: TBD
-- Gemini 1.5/2.5 Pro: TBD
+**Google Gemini Pricing** (Google AI Studio rates as of June 8, 2025):
+- Gemini 2.0 Flash: Input $0.0000001/token, Output $0.0000004/token
+- Gemini 2.5 Pro: Input $0.00000125/token, Output $0.00001/token (≤200K tokens)
 
-**Database Storage**: Convert to per-token rates (divide by 1M) for `input_token_cost`/`output_token_cost` columns
+**Database Storage**: All rates stored as per-token costs in `input_token_cost`/`output_token_cost` columns
+**Migration**: Created `20250608000001_add_model_pricing_data.sql` to populate pricing data
 
 ### Broken Cost Calculation Fix
 

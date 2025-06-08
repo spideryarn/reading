@@ -2,7 +2,7 @@
 // See docs/AI_GLOSSARY.md for architecture and usage patterns
 
 import { NextRequest, NextResponse } from 'next/server'
-import { executePrompt } from '@/lib/prompts/types'
+import { executePromptWithUsage } from '@/lib/prompts/types'
 import { glossaryPrompt, glossaryPromptInputSchema, glossaryResponseSchema } from '@/lib/prompts/templates/glossary'
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
@@ -74,13 +74,13 @@ export async function POST(request: NextRequest) {
     })
     
     // Use real LLM processing - no fallback
-    const llmResponse = await executePrompt(glossaryPrompt, { 
+    const llmResult = await executePromptWithUsage(glossaryPrompt, { 
       content,
       already_entities 
     })
     
     // Parse the JSON response from LLM (strip markdown code blocks if present)
-    let jsonString = llmResponse.trim()
+    let jsonString = llmResult.text.trim()
     if (jsonString.startsWith('```json')) {
       jsonString = jsonString.slice(7) // Remove ```json
     }
@@ -98,12 +98,14 @@ export async function POST(request: NextRequest) {
     // Validate the response matches our expected schema
     const validatedResponse = glossaryResponseSchema.parse(parsedResponse)
     
-    // Complete the AI call record
+    // Complete the AI call record with usage metadata
     await aiCallService.completeCall(aiCall.id, {
       output_data: {
         entities_count: validatedResponse.entities.length,
         processing_notes: 'Glossary generation completed successfully'
-      }
+      },
+      usage: llmResult.usage,
+      finishReason: llmResult.finishReason
     })
     
     // Store the glossary result in database

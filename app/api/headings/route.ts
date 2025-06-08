@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import * as cheerio from 'cheerio'
-import { executePrompt } from '@/lib/prompts/types'
+import { executePromptWithUsage } from '@/lib/prompts/types'
 import { headingsPrompt, headingsPromptInputSchema, headingsResponseSchema } from '@/lib/prompts/templates/headings'
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
@@ -209,16 +209,16 @@ export async function POST(request: NextRequest) {
     })
     
     // Generate headings using LLM
-    const llmResponse = await executePrompt(headingsPrompt, { 
+    const llmResult = await executePromptWithUsage(headingsPrompt, { 
       html_content: cleanedHtml
     })
     
-    console.log('Raw LLM response length:', llmResponse.length, 'characters')
-    console.log('Raw LLM response preview (first 200 chars):', JSON.stringify(llmResponse.substring(0, 200)))
-    console.log('Raw LLM response ending (last 200 chars):', JSON.stringify(llmResponse.substring(llmResponse.length - 200)))
+    console.log('Raw LLM response length:', llmResult.text.length, 'characters')
+    console.log('Raw LLM response preview (first 200 chars):', JSON.stringify(llmResult.text.substring(0, 200)))
+    console.log('Raw LLM response ending (last 200 chars):', JSON.stringify(llmResult.text.substring(llmResult.text.length - 200)))
     
     // Parse the JSON response from LLM (strip markdown code blocks if present)
-    let jsonString = llmResponse.trim()
+    let jsonString = llmResult.text.trim()
     if (jsonString.startsWith('```json')) {
       jsonString = jsonString.slice(7) // Remove ```json
     }
@@ -239,12 +239,14 @@ export async function POST(request: NextRequest) {
     // Log the generated headings hierarchy to console
     logHeadingsHierarchy(validatedResponse.headings)
     
-    // Complete the AI call record
+    // Complete the AI call record with usage metadata
     await aiCallService.completeCall(aiCall.id, {
       output_data: {
         headings_count: validatedResponse.headings.length,
         processing_notes: 'Headings generation completed successfully'
-      }
+      },
+      usage: llmResult.usage,
+      finishReason: llmResult.finishReason
     })
     
     // Store the headings result in database
