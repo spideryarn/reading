@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
+import { validateAuth } from '@/lib/auth/server-auth'
 
 interface RouteContext {
   params: Promise<{ slug: string }>
@@ -11,6 +12,9 @@ interface RouteContext {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
+    // Validate authentication first
+    const user = await validateAuth()
+    
     const { slug } = await context.params
 
     if (!slug) {
@@ -30,13 +34,17 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return new NextResponse('Document not found', { status: 404 })
     }
 
+    // Check if user owns the document
+    const isOwned = await documentService.isOwnedByUser(document.id, user.id)
+    
+    if (!isOwned) {
+      return new NextResponse('Document not found', { status: 404 }) // Use 404 to prevent information leakage
+    }
+
     // Check if document has an original file
     if (!document.storage_path) {
       return new NextResponse('Original file not available for this document', { status: 404 })
     }
-
-    // TODO: Add proper access control here when authentication is implemented
-    // For now, all documents are accessible since we're using mock user system
 
     console.log(`Retrieving original file from storage: ${document.storage_path}`)
 
@@ -73,6 +81,11 @@ export async function GET(request: NextRequest, context: RouteContext) {
     console.error('Download original file API error:', error)
     
     if (error instanceof Error) {
+      // Handle authentication errors first
+      if (error.message.includes('Authentication failed') || error.message.includes('User not authenticated')) {
+        return new NextResponse('Authentication required', { status: 401 })
+      }
+      
       if (error.message.includes('not found') || error.message.includes('PGRST116')) {
         return new NextResponse('Document or file not found', { status: 404 })
       }
@@ -95,6 +108,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
 // Alternative endpoint for direct file access via signed URL
 export async function HEAD(request: NextRequest, context: RouteContext) {
   try {
+    // Validate authentication first
+    const user = await validateAuth()
+    
     const { slug } = await context.params
 
     if (!slug) {
@@ -110,6 +126,13 @@ export async function HEAD(request: NextRequest, context: RouteContext) {
     
     if (!document || !document.storage_path) {
       return new NextResponse(null, { status: 404 })
+    }
+    
+    // Check if user owns the document
+    const isOwned = await documentService.isOwnedByUser(document.id, user.id)
+    
+    if (!isOwned) {
+      return new NextResponse(null, { status: 404 }) // Use 404 to prevent information leakage
     }
 
     // Get file metadata without downloading the full file

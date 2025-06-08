@@ -11,9 +11,7 @@ import { DocumentService } from '@/lib/services/database/documents'
 import { generateSlug } from '@/lib/utils/slug'
 import { URL_EXTRACTION_CONFIG } from '@/lib/config'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
-
-// Mock user ID for development (matches database mock user)
-const MOCK_USER_ID = '00000000-0000-0000-0000-000000000001'
+import { validateAuth } from '@/lib/auth/server-auth'
 
 // URL validation function
 function isValidUrl(urlString: string): boolean {
@@ -87,6 +85,9 @@ async function fetchWebpageContent(url: string): Promise<string> {
 
 export async function POST(request: NextRequest) {
   try {
+    // Validate authentication first
+    const user = await validateAuth()
+    
     // Parse JSON request body
     const body = await request.json()
     const { url, title: providedTitle, provider = 'claude', extractionMethod = 'ai-transcription' } = body
@@ -241,16 +242,16 @@ export async function POST(request: NextRequest) {
     
     console.log('Step 5: Creating document with database integration...')
     
-    // Create document in database (no file storage for URLs)
+    // Create document in database using authenticated user (no file storage for URLs)
     const { document } = await documentService.createWithStorage(
-      MOCK_USER_ID,
+      user.id,
       {
         title: finalTitle,
         html_content: extractedHtml,
         plaintext_content: plaintext,
         slug: finalSlug,
         source_url: url,
-        is_public: true,
+        is_public: false, // Default to private for user documents
         word_count: plaintext.split(/\s+/).length
       },
       null, // No file for URL-based documents
@@ -291,8 +292,12 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('URL extraction API error:', error)
     
-    // Provide more specific error messages
+    // Handle authentication errors first
     if (error instanceof Error) {
+      if (error.message.includes('Authentication failed') || error.message.includes('User not authenticated')) {
+        return new NextResponse('Authentication required', { status: 401 })
+      }
+      
       if (error.message.includes('rate limit') || error.message.includes('quota')) {
         return new NextResponse('AI service rate limit exceeded. Please try again later.', { status: 429 })
       }
