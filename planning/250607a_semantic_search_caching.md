@@ -174,6 +174,12 @@ The goal is to:
   - [x] Resolved JavaScript initialization order error with fetchQueryHistory
   - [x] Verified functionality working in dev environment
   - [x] Confirmed cache performance: 40ms vs 4-8s for repeat queries
+- [x] Enhanced UX improvements
+  - [x] Added real-time filtering as user types (e.g., "mon" filters to show "monism")
+  - [x] Implemented unambiguous date format: "2025-June-08 at 22:15"
+  - [x] Added explanatory tooltip for cached timestamps
+  - [x] Improved dropdown behavior to stay open during filtering
+  - [x] Added visual counter for filtered results
 
 ### Final Stage: Wrap Up
 - [ ] Move this planning doc to `planning/finished/`

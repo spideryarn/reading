@@ -536,6 +536,35 @@ export function UnifiedLeftPane({
     return searchResults
   }, [searchResults, semanticSortByRelevance, useSemanticSearch, sortSemanticResults])
 
+  // Filtered query history based on current search input
+  const filteredQueryHistory = useMemo(() => {
+    if (!useSemanticSearch || !searchQuery.trim()) {
+      return queryHistory
+    }
+    
+    const searchLower = searchQuery.toLowerCase()
+    return queryHistory.filter(item => 
+      item.query.toLowerCase().includes(searchLower)
+    )
+  }, [queryHistory, searchQuery, useSemanticSearch])
+
+  // Format date in unambiguous format: "2025-June-08 at 22:15"
+  const formatDate = useCallback((dateString: string) => {
+    const date = new Date(dateString)
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ]
+    
+    const year = date.getFullYear()
+    const month = monthNames[date.getMonth()]
+    const day = date.getDate().toString().padStart(2, '0')
+    const hours = date.getHours().toString().padStart(2, '0')
+    const minutes = date.getMinutes().toString().padStart(2, '0')
+    
+    return `${year}-${month}-${day} at ${hours}:${minutes}`
+  }, [])
+
   // Modify the existing search handler to support both search types
   const handleSearchInputChange = useCallback((value: string) => {
     setSearchQuery(value)
@@ -544,6 +573,11 @@ export function UnifiedLeftPane({
     setSemanticSearchError(null)
     if (!value.trim() && markInstanceRef.current) {
       markInstanceRef.current.unmark()
+    }
+    
+    // For semantic search, show history dropdown when focusing and typing
+    if (useSemanticSearch && queryHistory.length > 0) {
+      setShowQueryHistory(true)
     }
     
     // Use appropriate search type
@@ -557,7 +591,7 @@ export function UnifiedLeftPane({
       // Continue with regular debounced text search
       debouncedSearch(value)
     }
-  }, [useSemanticSearch, debouncedSearch])
+  }, [useSemanticSearch, debouncedSearch, queryHistory.length])
 
   // Manual semantic search trigger
   const triggerSemanticSearch = useCallback(() => {
@@ -839,11 +873,13 @@ export function UnifiedLeftPane({
             )}
             
             {/* Query history dropdown - only for semantic search */}
-            {useSemanticSearch && showQueryHistory && queryHistory.length > 0 && (
+            {useSemanticSearch && showQueryHistory && filteredQueryHistory.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
                 <div className="p-2">
-                  <div className="text-xs text-gray-500 font-medium mb-2 px-2">Recent searches</div>
-                  {queryHistory.map((historyItem, index) => (
+                  <div className="text-xs text-gray-500 font-medium mb-2 px-2">
+                    {searchQuery.trim() ? `Filtered searches (${filteredQueryHistory.length} of ${queryHistory.length})` : 'Recent searches'}
+                  </div>
+                  {filteredQueryHistory.map((historyItem, index) => (
                     <button
                       key={index}
                       onClick={() => {
@@ -860,7 +896,7 @@ export function UnifiedLeftPane({
                             {historyItem.query}
                           </div>
                           <div className="text-xs text-gray-500 mt-0.5">
-                            {historyItem.resultCount} {historyItem.resultCount === 1 ? 'result' : 'results'} • {new Date(historyItem.searchedAt).toLocaleDateString()}
+                            {historyItem.resultCount} {historyItem.resultCount === 1 ? 'result' : 'results'} • {formatDate(historyItem.searchedAt)}
                           </div>
                         </div>
                       </div>
@@ -975,7 +1011,10 @@ export function UnifiedLeftPane({
                     Loaded
                   </span>
                   {semanticSearchCachedAt && (
-                    <span className="text-xs text-gray-500" title={new Date(semanticSearchCachedAt).toLocaleString()}>
+                    <span 
+                      className="text-xs text-gray-500" 
+                      title={`Query results for this semantic search were saved at ${formatDate(semanticSearchCachedAt)}`}
+                    >
                       {new Date(semanticSearchCachedAt).toLocaleTimeString()}
                     </span>
                   )}
