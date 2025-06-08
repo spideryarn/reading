@@ -10,6 +10,9 @@
  * 1. From feature branch: merge main → current
  * 2. From main branch: merge specified branch → main
  * 
+ * For automated two-way sync across all worktrees, use:
+ *   scripts/sync-worktrees-all.ts (runs from main worktree)
+ * 
  * AUTOSTASH SUPPORT:
  * This script uses Git's built-in --autostash functionality to safely handle
  * uncommitted changes during merges. Local changes are automatically stashed

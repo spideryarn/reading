@@ -5,6 +5,7 @@ Multi-worktree development setup for parallel feature development using a hub-an
 ## See also
 
 - `scripts/sync-worktrees.ts` - Branch synchronisation tool implementation
+- `scripts/sync-worktrees-all.ts` - Wrapper script for automated two-way sync across all worktrees
 - `docs/SETUP.md` - General development environment setup
 - `docs/GIT_COMMITS.md` - Git commit best practices for the project
 - `planning/finished/250526c_git_worktree_sync_strategy.md` - Historical decisions about worktree synchronisation (out of date)
@@ -21,6 +22,9 @@ Multi-worktree development setup for parallel feature development using a hub-an
 
 # From main: merge all worktrees
 ./scripts/sync-worktrees.ts
+
+# Automated two-way sync all worktrees (from main)
+./scripts/sync-worktrees-all.ts
 ```
 
 **Autostash support:** The script automatically handles uncommitted changes using Git's `--autostash` feature. Your changes are safely stashed before merge and reapplied afterward.
@@ -184,8 +188,13 @@ You have two options:
    This will attempt to merge all worktree branches (worktree1-6) into main sequentially. If any branch has conflicts, it will be skipped and reported.
 
 **Two-step process for full sync**:
+
+Manual approach:
 1. From main: Run sync to merge worktree changes into main
 2. From each worktree: Run sync to pull latest main changes
+
+Automated approach (recommended for multiple worktrees):
+- From main: `./scripts/sync-worktrees-all.ts` - automatically performs both steps
 
 ### Working with Feature Branches
 
@@ -281,6 +290,11 @@ When syncing all worktrees partially fails:
    # In each worktree directory
    ./scripts/sync-worktrees.ts    # Gets latest main
    ```
+   
+   Or use the automated wrapper from main:
+   ```bash
+   ./scripts/sync-worktrees-all.ts  # Handles step 2 automatically
+   ```
 
 **Recovery tip**: Git merges are idempotent - re-running skips already-synced branches.
 
@@ -346,4 +360,4 @@ The script fails fast with clear error messages to prevent unexpected behavior.
 - All worktrees share the same local Supabase instance
 - Cannot checkout the same branch in multiple worktrees
 - Worktree branches are local-only (not pushed to origin)
-- Manual two-step process required for bidirectional sync
+- Manual two-step process required for bidirectional sync (automated by sync-worktrees-all.ts)
