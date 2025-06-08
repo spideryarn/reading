@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -33,7 +33,6 @@ export default function ResetPasswordConfirmPage() {
   const [error, setError] = useState<string | null>(null)
   const [isValidSession, setIsValidSession] = useState<boolean | null>(null)
   const router = useRouter()
-  const _searchParams = useSearchParams()
 
   const form = useForm<NewPasswordForm>({
     resolver: zodResolver(newPasswordSchema),

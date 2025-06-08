@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { User as UserIcon, SignOut, CaretDown } from '@phosphor-icons/react'
 

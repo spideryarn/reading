@@ -69,7 +69,7 @@ export default function ResetPasswordPage() {
               Check your email
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600">
-              We've sent a password reset link to <strong>{form.getValues('email')}</strong>
+              We&apos;ve sent a password reset link to <strong>{form.getValues('email')}</strong>
             </p>
           </div>
           

@@ -138,12 +138,10 @@ function getEntityColor(ontology: string) {
 // Component to display glossary entities
 function GlossaryDisplay({ 
   entities, 
-  elements, 
-  onScrollToEntity 
+  elements 
 }: { 
   entities: Entity[]
   elements: DocumentElement[]
-  onScrollToEntity?: (elementId: string) => void
 }) {
   const { actions } = useDocumentCommunication()
   const [searchTerm, setSearchTerm] = useState('')
@@ -161,7 +159,7 @@ function GlossaryDisplay({
   
   // Debounced search function
   const debouncedFilter = useMemo(
-    () => debounce((term: string) => {
+    () => debounce(() => {
       // The filtering happens in the render through filteredEntities
     }, 300),
     []
@@ -358,7 +356,6 @@ export function UnifiedLeftPane({
     resultCount: number
   }>>([])
   const [showQueryHistory, setShowQueryHistory] = useState(false)
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   
   // Store timeout ID to cancel pending searches
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -828,7 +825,6 @@ export function UnifiedLeftPane({
             <GlossaryDisplay 
               entities={glossaryEntities || []} 
               elements={elements}
-              onScrollToEntity={onScrollToEntity}
             />
           </div>
         ) : (

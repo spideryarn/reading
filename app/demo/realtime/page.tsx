@@ -51,7 +51,7 @@ export default async function RealtimeDemoPage() {
         <h3 className="font-semibold mb-2">Testing Real-time Updates:</h3>
         <p className="text-sm text-gray-600 mb-2">
           Open this page in multiple browser tabs to see real-time synchronisation.
-          When you click "Start Real-time Demo" in one tab, all tabs will update simultaneously.
+          When you click &quot;Start Real-time Demo&quot; in one tab, all tabs will update simultaneously.
         </p>
         <p className="text-sm text-gray-600">
           You can also monitor the updates in Supabase Studio at{' '}
