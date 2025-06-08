@@ -16,6 +16,7 @@ export default function AddDocumentPage() {
   const [isExtractingUrl, setIsExtractingUrl] = useState(false)
   const [urlError, setUrlError] = useState<string>('')
   const [extractionMethod, setExtractionMethod] = useState<'readability' | 'ai-transcription' | 'ai-dom'>('readability')
+  const [urlProvider, setUrlProvider] = useState<'claude' | 'gemini'>('claude')
   
   // PDF state
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -81,7 +82,8 @@ export default function AddDocumentPage() {
         },
         body: JSON.stringify({ 
           url: url.trim(),
-          extractionMethod 
+          extractionMethod,
+          provider: urlProvider
         }),
       })
 
@@ -355,6 +357,43 @@ export default function AddDocumentPage() {
                     </div>
                   </div>
 
+                  {/* Provider Selection (only for AI Transcription) */}
+                  {extractionMethod === 'ai-transcription' && (
+                    <div className="space-y-3">
+                      <label className="block text-sm font-medium text-gray-700">
+                        AI Provider (for AI Transcription)
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setUrlProvider('claude')}
+                          disabled={isExtractingUrl}
+                          className={`p-3 border rounded-lg text-sm font-medium transition-colors ${
+                            urlProvider === 'claude'
+                              ? 'border-orange-500 bg-orange-50 text-orange-700'
+                              : 'border-gray-300 bg-white text-gray-700 hover:border-orange-300'
+                          } disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                          <div className="font-semibold">Anthropic Claude</div>
+                          <div className="text-xs text-gray-500 mt-1">Try this first</div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setUrlProvider('gemini')}
+                          disabled={isExtractingUrl}
+                          className={`p-3 border rounded-lg text-sm font-medium transition-colors ${
+                            urlProvider === 'gemini'
+                              ? 'border-orange-500 bg-orange-50 text-orange-700'
+                              : 'border-gray-300 bg-white text-gray-700 hover:border-orange-300'
+                          } disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                          <div className="font-semibold">Google Gemini</div>
+                          <div className="text-xs text-gray-500 mt-1">Better for longer content</div>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <Button
                     onClick={handleUrlSubmit}
                     disabled={!url.trim() || isExtractingUrl}
@@ -364,7 +403,10 @@ export default function AddDocumentPage() {
                     {isExtractingUrl ? (
                       <>
                         <CircleNotch className="animate-spin" size={16} />
-                        Extracting content...
+                        {extractionMethod === 'ai-transcription' 
+                          ? `Extracting with ${urlProvider === 'gemini' ? 'Gemini' : 'Claude'}...`
+                          : 'Extracting content...'
+                        }
                       </>
                     ) : (
                       'Extract and Save Document'
