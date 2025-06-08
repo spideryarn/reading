@@ -37,9 +37,12 @@ AI, features, machinery, interface:
 - `docs/AI_SUMMARISE.md` - Documents the AI summarise feature that generates hierarchical summaries of document content using LLM analysis at multiple granularity levels
 - `docs/SEARCH_TEXT.md` - Documents the cross-element text search functionality using Mark.js library with DOM-based search, precise text highlighting, and enhanced navigation
 
+Strategic vision & planning:
+- `docs/VISION.md` - Comprehensive product vision including target users, business model, competitive positioning, and long-term strategic direction
+- `docs/PROJECT_STATUS.md` - Current development state overview showing implemented features (AI summaries, glossary, headings) and planned enhancements
+
 Docs, modes, and admin:
 - `docs/GIT_COMMITS.md` - Guidelines for Git commit best practices including batching changes, message format, and handling concurrent changes
-- `docs/PROJECT_STATUS.md` - Current development state overview showing implemented features (AI summaries, glossary, headings) and planned enhancements
 - `docs/SOUNDING_BOARD.md` - Instructions for collaborative discussion mode emphasising asking questions and suggesting alternatives rather than immediate implementation
 - `docs/WRITE_EVERGREEN_DOC.md` - Guidelines for writing evergreen documentation including structure, cross-references, status indicators, and maintenance practices
 - `docs/WRITE_PLANNING_DOC.md` - Guide for writing planning/project management documents with file naming conventions, structure, and stage-based action plans

@@ -1,5 +1,7 @@
 # Project Status
 
+**see `docs/reference/VISION.md` for long-term strategic vision and target market**
+
 ## Current State (Early Prototype)
 
 Spideryarn Reading is in active development with core AI features now implemented. The application provides AI-assisted document reading with hierarchical summaries, glossaries, and intelligent navigation.
