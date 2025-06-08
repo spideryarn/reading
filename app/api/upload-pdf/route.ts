@@ -5,8 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
-import { pdfToHtmlDirectPrompt } from '@/lib/prompts/templates/pdf-to-html-direct'
-import { pdfToHtmlGeminiPrompt } from '@/lib/prompts/templates/pdf-to-html-gemini'
+import { createPdfToHtmlPrompt } from '@/lib/prompts/templates/pdf-to-html-direct'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { generateSlug } from '@/lib/utils/slug'
@@ -66,8 +65,8 @@ export async function POST(request: NextRequest) {
     // Generate slug for the document
     const slug = generateSlug(title)
 
-    // Select the appropriate prompt template based on provider
-    const promptTemplate = provider === 'gemini' ? pdfToHtmlGeminiPrompt : pdfToHtmlDirectPrompt
+    // Create provider-specific prompt template with appropriate model configuration
+    const promptTemplate = createPdfToHtmlPrompt(provider)
     const providerDisplayName = provider === 'gemini' ? 'Gemini 1.5 Pro' : 'Claude 4 Sonnet'
     
     console.log(`Step 1: Converting PDF to HTML using ${providerDisplayName}...`)
