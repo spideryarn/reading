@@ -9,14 +9,11 @@ see:
 
 ## High-level background & decisions
 
-- Web or mobile?
-  - Web for now.
+**see `docs/reference/VISION.md` for strategic vision, business model, and target market decisions**
 
-- Online or desktop?
-  - Start with a local dev webserver, then we can decide later whether to host (e.g. on Vercel serverless), or Tauri for a local app experience.
-
-- Open source vs paid?
-  - Eventually this will be a for-profit business in some way, though I haven't figured out any details.
+**Platform decisions**:
+- **Web-based** - Web application for now, deployment strategy TBD (Vercel serverless vs desktop app)
+- **Professional tool** - For-profit business targeting academic and research professionals
 
 - AI
   - **Multi-Provider LLM Support**: Uses Vercel AI SDK Core with support for Anthropic Claude and Google Gemini models. Provider selection via environment configuration with tier-based model mapping (anthropic-balanced, google-cheap, etc.)

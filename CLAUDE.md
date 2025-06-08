@@ -4,10 +4,11 @@ This document provides essential context for Claude instances working on the Spi
 
 see:
 - `README.md` for goals/intents/features
-- IMPORTANT: `docs/CODING_PRINCIPLES.md`
-- IMPORTANT: `docs/CODING_GUIDELINES.md` for code quality standards
-- `docs/ARCHITECTURE.md`
-- `docs/GIT_COMMITS.md` for using Git
+- `docs/reference/VISION.md` for comprehensive product vision and strategic direction
+- IMPORTANT: `docs/reference/CODING_PRINCIPLES.md`
+- IMPORTANT: `docs/reference/CODING_GUIDELINES.md` for code quality standards
+- `docs/reference/ARCHITECTURE.md`
+- `docs/instructions/GIT_COMMITS.md` for using Git
 
 ## Project Overview
 

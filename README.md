@@ -7,11 +7,13 @@ Spideryarn Reading is an application for AI-assisted document reading and analys
 
 ## Goals
 
-To help humans digest written non-fiction material better - to help them get the gist or extract quotes and relevant information faster, see the structure and take different trajectories through it, clear up confusions and make sense of complex parts, get up to speed on terminology or requisite background, understand the core ideas more deeply, compare with existing knowledge or other sources, evaluate what's trustworthy and see potential flaws, chat with an interlocutor and think things through, and generate/evaluate/manage new/varied/complex ideas.
+**see `docs/reference/VISION.md` for comprehensive product vision, target users, and strategic direction**
 
-Designed primarily for reading a single document, essay, or book at a time. In HTML format - if it's provided in another format (e.g. PDF), we'll first have to convert to HTML.
+Core mission: Help humans digest written non-fiction material better through AI-assisted document reading and analysis.
 
-Designed primarily for individuals, rather than teams. For anyone who needs to read a lot of non-fiction, e.g. academics, researchers, editors & reviewers, journalists, strategists, politicians, investors, commentators, leaders.
+Designed primarily for:
+- **Single document focus** - essays, papers, books in HTML format (PDF conversion available)
+- **Professional users** - academics, researchers, journal editors & reviewers, analysts, strategists
 
 
 ## Implementation
