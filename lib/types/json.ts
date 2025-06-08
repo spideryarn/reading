@@ -3,11 +3,11 @@
 // Recursive JSON type definition
 export type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
 
-export type JsonObject = {
+export interface JsonObject {
   [key: string]: JsonValue;
 }
 
-export interface JsonArray extends Array<JsonValue> {}
+export type JsonArray = JsonValue[]
 
 // For database columns that store JSON
 export type JsonColumn = JsonObject | JsonArray | null;

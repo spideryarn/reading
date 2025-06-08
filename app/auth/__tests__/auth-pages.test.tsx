@@ -39,7 +39,7 @@ jest.mock('@/components/auth/signup-form', () => ({
 }))
 
 jest.mock('@/components/ui/button', () => ({
-  Button: ({ children, asChild, ...props }: any) => {
+  Button: ({ children, asChild, ...props }: { children: React.ReactNode; asChild?: boolean; [key: string]: unknown }) => {
     if (asChild) {
       return <div {...props}>{children}</div>
     }
@@ -50,7 +50,7 @@ jest.mock('@/components/ui/button', () => ({
 // Mock Next.js Link component
 jest.mock('next/link', () => ({
   __esModule: true,
-  default: ({ children, href, ...props }: any) => (
+  default: ({ children, href, ...props }: { children: React.ReactNode; href: string; [key: string]: unknown }) => (
     <a href={href} {...props}>
       {children}
     </a>
@@ -264,12 +264,12 @@ describe('Authentication Pages', () => {
   describe('Cross-page consistency', () => {
     test('all auth pages use consistent layout structure', () => {
       const pages = [
-        { component: LoginPage, name: 'LoginPage' },
-        { component: SignupPage, name: 'SignupPage' },
-        { component: AuthCodeErrorPage, name: 'AuthCodeErrorPage' },
+        { component: LoginPage },
+        { component: SignupPage },
+        { component: AuthCodeErrorPage },
       ]
       
-      pages.forEach(({ component: Component, name }) => {
+      pages.forEach(({ component: Component }) => {
         const { container, unmount } = render(<Component />)
         
         // All should have min-h-screen bg-gray-50

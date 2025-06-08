@@ -1,8 +1,6 @@
-import { AppHeader } from '@/components/app-header'
 import { DocumentParser } from '@/lib/services/document-parser'
 import DocumentPageClient from './page-client'
 import { MutationProvider } from '@/lib/context/mutation-context'
-import { DocumentHeaderActions } from '@/components/document-header-actions'
 import { requireAuth } from '@/lib/auth/route-protection'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'

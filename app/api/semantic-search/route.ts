@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     
     // Initialize database services
     const supabase = await createClient()
-    const enhancementService = new EnhancementService(supabase)
+    // Note: enhancementService not currently used for reading enhancements directly
     
     // Get all semantic search enhancements for this document
     const { data: enhancements, error } = await supabase
@@ -59,7 +59,12 @@ export async function GET(request: NextRequest) {
       const content = enhancement.content as {
         originalQuery?: string
         normalizedQuery: string
-        matches?: Array<any>
+        matches?: Array<{
+          elementId: string
+          confidence: number
+          reasoning: string
+          relevantText: string
+        }>
         searchedAt?: string
       }
       
@@ -223,7 +228,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Resolve tier key to actual model details using config
-    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as any
+    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as keyof typeof AI_CONFIG.MODELS
     const modelConfig = getModelConfig(tierKey)
     
     // Create AI call record for tracking
@@ -281,6 +286,7 @@ export async function POST(request: NextRequest) {
           parsedResponse = JSON.parse(jsonMatch[0])
           console.log(`[SemanticSearch] Successfully recovered JSON from embedded response`)
         } catch (recoveryError) {
+          console.error('[SemanticSearch] Recovery parse failed:', recoveryError)
           throw new Error(`Failed to parse LLM JSON response: ${parseError.message}`)
         }
       } else {

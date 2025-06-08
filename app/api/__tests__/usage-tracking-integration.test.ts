@@ -18,6 +18,8 @@ import { AiCallService } from '@/lib/services/database/ai-calls'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { getModelConfig } from '@/lib/config'
 import { tweetThreadPromptInputSchema, tweetThreadResponseSchema } from '@/lib/prompts/templates/tweet-thread'
+import type { MockSupabaseClient, MockAiCallService, MockEnhancementService, MockAiCall } from './test-types'
+import type { ModelConfig } from '@/lib/config'
 
 // Mock external dependencies
 jest.mock('@/lib/prompts/types')
@@ -64,19 +66,21 @@ const mockTweetThreadInputSchema = tweetThreadPromptInputSchema as jest.Mocked<t
 const mockTweetThreadResponseSchema = tweetThreadResponseSchema as jest.Mocked<typeof tweetThreadResponseSchema>
 
 // Mock classes
-const mockAiCallService = {
+const mockAiCallService: MockAiCallService & { failCall: jest.Mock } = {
   startCall: jest.fn(),
   completeCall: jest.fn(),
   failCall: jest.fn(),
 }
 
-const mockEnhancementService = {
+const mockEnhancementService: MockEnhancementService & { upsert: jest.Mock } = {
   get: jest.fn(),
   storeSummary: jest.fn(),
+  storeHeadings: jest.fn(),
+  delete: jest.fn(),
   upsert: jest.fn(),
 }
 
-const mockSupabaseClient = {
+const mockSupabaseClient: MockSupabaseClient = {
   // Mock client methods as needed
 }
 
@@ -85,15 +89,15 @@ describe('API Routes Usage Tracking Integration', () => {
     jest.clearAllMocks()
     
     // Setup common mocks
-    mockSupabaseServer.createClient.mockResolvedValue(mockSupabaseClient as any)
-    ;(AiCallService as jest.MockedClass<typeof AiCallService>).mockImplementation(() => mockAiCallService as any)
-    ;(EnhancementService as jest.MockedClass<typeof EnhancementService>).mockImplementation(() => mockEnhancementService as any)
+    mockSupabaseServer.createClient.mockResolvedValue(mockSupabaseClient)
+    ;(AiCallService as jest.MockedClass<typeof AiCallService>).mockImplementation(() => mockAiCallService as unknown as AiCallService)
+    ;(EnhancementService as jest.MockedClass<typeof EnhancementService>).mockImplementation(() => mockEnhancementService as unknown as EnhancementService)
     
     mockGetModelConfig.mockReturnValue({
       provider: 'anthropic',
       modelId: 'claude-3-haiku-20240307',
       name: 'Claude 3 Haiku'
-    } as any)
+    } as ModelConfig)
   })
 
   describe('Summarise API Route', () => {
@@ -123,14 +127,14 @@ describe('API Routes Usage Tracking Integration', () => {
       mockEnhancementService.get.mockResolvedValue(null)
       
       // Mock AI call creation
-      mockAiCallService.startCall.mockResolvedValue(mockAiCall as any)
+      mockAiCallService.startCall.mockResolvedValue(mockAiCall as MockAiCall)
       
       // Mock prompt execution with usage
       mockPromptTypes.executePromptWithUsage.mockResolvedValue(mockUsageResult)
       
       // Mock successful completion and storage
-      mockAiCallService.completeCall.mockResolvedValue({} as any)
-      mockEnhancementService.storeSummary.mockResolvedValue(mockEnhancement as any)
+      mockAiCallService.completeCall.mockResolvedValue({} as MockAiCall)
+      mockEnhancementService.storeSummary.mockResolvedValue(mockEnhancement as { id: string })
 
       const request = createMockRequest('http://localhost/api/summarise', {
         method: 'POST',
@@ -209,14 +213,14 @@ describe('API Routes Usage Tracking Integration', () => {
 
     it('should handle LLM errors and mark AI call as failed', async () => {
       mockEnhancementService.get.mockResolvedValue(null)
-      mockAiCallService.startCall.mockResolvedValue(mockAiCall as any)
+      mockAiCallService.startCall.mockResolvedValue(mockAiCall as MockAiCall)
       
       // Mock LLM error
       const llmError = new Error('LLM API rate limit exceeded')
       mockPromptTypes.executePromptWithUsage.mockRejectedValue(llmError)
       
       // Mock fail call
-      mockAiCallService.failCall.mockResolvedValue({} as any)
+      mockAiCallService.failCall.mockResolvedValue({} as MockAiCall)
 
       const request = createMockRequest('http://localhost/api/summarise', {
         method: 'POST',
@@ -249,7 +253,12 @@ describe('API Routes Usage Tracking Integration', () => {
         }
       }
 
-      mockEnhancementService.get.mockResolvedValue(cachedSummary as any)
+      mockEnhancementService.get.mockResolvedValue(cachedSummary as { 
+        id: string
+        type: string 
+        document_id: string
+        content: { text: string; metadata: { granularity: string } }
+      })
 
       const request = createMockRequest('http://localhost/api/summarise', {
         method: 'POST',
@@ -317,10 +326,10 @@ describe('API Routes Usage Tracking Integration', () => {
       mockPromptTypes.executePromptWithUsage.mockResolvedValue(mockTweetThreadResult)
       
       // Mock AI call service create method (used by tweet-thread route)
-      mockAiCallService.create = jest.fn().mockResolvedValue(mockAiCall as any)
+      mockAiCallService.create = jest.fn().mockResolvedValue(mockAiCall as MockAiCall)
       
       // Mock enhancement storage
-      mockEnhancementService.upsert.mockResolvedValue({} as any)
+      mockEnhancementService.upsert.mockResolvedValue({} as { id: string })
 
       const request = createMockRequest('http://localhost/api/tweet-thread', {
         method: 'POST',
@@ -437,8 +446,8 @@ describe('API Routes Usage Tracking Integration', () => {
       }
       
       mockPromptTypes.executePromptWithUsage.mockResolvedValue(markdownWrappedResult)
-      mockAiCallService.create = jest.fn().mockResolvedValue(mockAiCall as any)
-      mockEnhancementService.upsert.mockResolvedValue({} as any)
+      mockAiCallService.create = jest.fn().mockResolvedValue(mockAiCall as MockAiCall)
+      mockEnhancementService.upsert.mockResolvedValue({} as { id: string })
 
       const request = createMockRequest('http://localhost/api/tweet-thread', {
         method: 'POST',

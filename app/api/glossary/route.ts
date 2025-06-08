@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     console.log(`Processing glossary for content length: ${content.length} characters`)
     
     // Resolve tier key to actual model details using config
-    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as any
+    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as keyof typeof AI_CONFIG.MODELS
     const modelConfig = getModelConfig(tierKey)
     
     // Create AI call record for tracking

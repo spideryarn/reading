@@ -1,6 +1,7 @@
 // Integration tests for PDF upload API endpoint (V2 - direct PDF processing)
 
 import { POST } from '../upload-pdf/route'
+import type { MockFileArrayBuffer, MockFormDataRequest } from './test-types'
 
 // Mock the multimodal prompt execution for direct PDF processing
 jest.mock('@/lib/prompts/types', () => ({
@@ -16,8 +17,10 @@ jest.mock('@/lib/prompts/templates/pdf-to-html-direct', () => ({
   }
 }))
 
+import { executeMultimodalPrompt } from '@/lib/prompts/types'
+
 describe('/api/upload-pdf (V2 - direct PDF processing)', () => {
-  const mockExecutePrompt = require('@/lib/prompts/types').executeMultimodalPrompt
+  const mockExecutePrompt = executeMultimodalPrompt as jest.MockedFunction<typeof executeMultimodalPrompt>
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -31,7 +34,7 @@ describe('/api/upload-pdf (V2 - direct PDF processing)', () => {
     const file = new File([content], filename, { type: mimeType })
     
     // Mock the arrayBuffer method that Jest's File doesn't have
-    ;(file as any).arrayBuffer = jest.fn().mockResolvedValue(content.buffer.slice(content.byteOffset, content.byteOffset + content.byteLength))
+    ;(file as MockFileArrayBuffer).arrayBuffer = jest.fn().mockResolvedValue(content.buffer.slice(content.byteOffset, content.byteOffset + content.byteLength))
     
     formData.append('pdf', file)
     return formData
@@ -45,13 +48,13 @@ describe('/api/upload-pdf (V2 - direct PDF processing)', () => {
     })
     
     // Add the formData method that Jest doesn't provide by default
-    ;(request as any).formData = jest.fn().mockResolvedValue(formData)
+    ;(request as MockFormDataRequest).formData = jest.fn().mockResolvedValue(formData)
     
     return request
   }
 
   // Helper function to extract response body text in Jest environment
-  const getResponseText = (response: any): string => {
+  const getResponseText = (response: Response & { body?: string }): string => {
     // In Jest, Next.js Response objects have a 'body' property instead of text() method
     return response.body || ''
   }

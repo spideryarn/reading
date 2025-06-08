@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getRedirectUrl } from '@/lib/auth/client-utils'
 import { Button } from '@/components/ui/button'
@@ -15,7 +15,6 @@ interface OAuthButtonProps {
 
 export function OAuthButton({ provider, children, disabled }: OAuthButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
   const searchParams = useSearchParams()
   const redirectUrl = getRedirectUrl(searchParams, '/')
 

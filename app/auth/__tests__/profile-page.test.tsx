@@ -34,13 +34,13 @@ jest.mock('@/lib/services/database/documents', () => ({
 
 // Mock UI components to avoid complex dependencies
 jest.mock('@/components/ui/card', () => ({
-  Card: ({ children, className, ...props }: any) => (
+  Card: ({ children, className, ...props }: { children: React.ReactNode; className?: string; [key: string]: unknown }) => (
     <div className={`card ${className || ''}`} {...props}>{children}</div>
   ),
 }))
 
 jest.mock('@/components/ui/button', () => ({
-  Button: ({ children, asChild, ...props }: any) => {
+  Button: ({ children, asChild, ...props }: { children: React.ReactNode; asChild?: boolean; [key: string]: unknown }) => {
     if (asChild) {
       return <div {...props}>{children}</div>
     }

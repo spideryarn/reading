@@ -5,11 +5,10 @@
 // See docs/AI_SUMMARISE.md for tooltip summarisation feature details
 // See docs/MUTATIONS.md for document mutation system
 
-import React, { useState, useEffect, useRef, useMemo, type JSX } from 'react'
+import React, { useState, useEffect, useRef, useCallback, type JSX } from 'react'
 import { CircleNotch } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import type { GranularityKey } from '@/lib/prompts/templates/summarise'
-import type { Mutation } from '@/lib/types/mutation'
 import { useMutation, useActiveMutationType } from '@/lib/context/mutation-context'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
 import { SUMMARY_CONFIG } from '@/lib/config'
@@ -535,7 +534,7 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
   }
 
   // Helper function to apply cached headings without API call
-  const applyCachedHeadings = async (cachedHeadings: Array<{ id_of_after: string, html: string }>) => {
+  const applyCachedHeadings = useCallback(async (cachedHeadings: Array<{ id_of_after: string, html: string }>) => {
     try {
       console.log('Applying cached headings:', cachedHeadings)
       
@@ -584,10 +583,10 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
       setHeadingsError(`Failed to load cached headings: ${error instanceof Error ? error.message : 'Unknown error'}`)
       setShowHeadings(true)  // Show the error state
     }
-  }
+  }, [documentId, applyMutation, mutationState.activeMutation, setAiHeadings, setShowHeadings, setIsLoaded, setCollapsedIds, setHeadingsError])
 
   // Core headings generation logic without state management
-  const generateHeadingsFromAPI = async (isRegeneration = false) => {
+  const generateHeadingsFromAPI = useCallback(async (isRegeneration = false) => {
       console.log('generateHeadingsFromAPI called, isRegeneration:', isRegeneration)
       
       // Check if there's already an active mutation
@@ -668,7 +667,7 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
       } else {
         throw new Error(result.error || 'Failed to apply mutation')
       }
-  }
+  }, [content, elements, documentId, mutationState.activeMutation, applyMutation, setAiHeadings, setShowHeadings, setIsLoaded, setCollapsedIds])
 
   // Public API for manual headings generation (with state management)
   const handleGenerateHeadings = async () => {
@@ -798,7 +797,7 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
       console.log('AIGeneratedHeadingsTab unmounting')
       isCancelled = true
     }
-  }, [documentId]) // Only depend on documentId, which shouldn't change
+  }, [documentId, isLoadingHeadings, showHeadings, aiHeadings.length, hasInitialized, applyCachedHeadings, generateHeadingsFromAPI])
 
   const handleHeadingClick = (heading: Heading) => {
     if (onHeadingClick) {

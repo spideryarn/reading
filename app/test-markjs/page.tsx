@@ -50,7 +50,7 @@ export default function TestMarkJsPage() {
       <div ref={contentRef} className="prose prose-lg">
         <h2>Test Document</h2>
         <p>This is a test document to verify that <strong>Mark.js</strong> can find text across elements.</p>
-        <p>Try searching for "Mark.js can find" to see cross-element highlighting in action.</p>
+        <p>Try searching for &quot;Mark.js can find&quot; to see cross-element highlighting in action.</p>
         
         <h3>Complex Example</h3>
         <p>The <em>hard problem</em> of consciousness refers to the difficulty</p>
@@ -58,9 +58,9 @@ export default function TestMarkJsPage() {
         
         <p>Search for these test cases:</p>
         <ul>
-          <li>"hard problem of" - spans em tag</li>
-          <li>"difficulty of explaining" - spans two paragraphs (won't highlight as one match)</li>
-          <li>"subjective experience" - within single paragraph</li>
+          <li>&quot;hard problem of&quot; - spans em tag</li>
+          <li>&quot;difficulty of explaining&quot; - spans two paragraphs (won&apos;t highlight as one match)</li>
+          <li>&quot;subjective experience&quot; - within single paragraph</li>
         </ul>
 
         <style jsx>{`

@@ -108,7 +108,7 @@ export function RealtimeDemo({ documentId }: RealtimeDemoProps) {
         <h3 className="text-lg font-semibold">Live Enhancements ({enhancements.length})</h3>
         
         {enhancements.length === 0 ? (
-          <p className="text-gray-500">No enhancements yet. Click "Start Real-time Demo" to begin.</p>
+          <p className="text-gray-500">No enhancements yet. Click &quot;Start Real-time Demo&quot; to begin.</p>
         ) : (
           enhancements.map((enhancement) => (
             <div key={enhancement.id} className="border rounded p-4 bg-gray-50">

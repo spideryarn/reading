@@ -100,7 +100,7 @@ export async function convertPdfToBase64Image(pdfBuffer: Buffer): Promise<PdfCon
     if (tempPdfPath) {
       try {
         unlinkSync(tempPdfPath);
-      } catch (e) {
+      } catch {
         // Ignore cleanup errors
       }
     }
@@ -108,7 +108,7 @@ export async function convertPdfToBase64Image(pdfBuffer: Buffer): Promise<PdfCon
     if (tempOutputDir) {
       try {
         unlinkSync(tempOutputDir);
-      } catch (e) {
+      } catch {
         // Ignore cleanup errors (directory might not be empty)
       }
     }

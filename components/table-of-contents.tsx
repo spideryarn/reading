@@ -5,7 +5,7 @@
 // See docs/AI_SUMMARISE.md for tooltip summarisation feature details
 // See docs/MUTATIONS.md for document mutation system
 
-import { useEffect, useState, useRef, useMemo } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Spinner, ExclamationMark, CircleNotch } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import type { GranularityKey } from '@/lib/prompts/templates/summarise'
@@ -61,7 +61,6 @@ export function TableOfContents({ content, elements, onHeadingClick, documentId,
   
   // Tab container ref for auto-scrolling
   const tabContainerRef = useRef<TabContainerRef>(null)
-  const [activeTab, setActiveTab] = useState<string>('original')
   
   
   // Expand/collapse state for each tab - track collapsed items (default is expanded)

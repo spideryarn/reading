@@ -292,7 +292,7 @@ export default function AddDocumentPage() {
                           name="extractionMethod"
                           value="readability"
                           checked={extractionMethod === 'readability'}
-                          onChange={(e) => setExtractionMethod(e.target.value as any)}
+                          onChange={(e) => setExtractionMethod(e.target.value as 'readability' | 'ai-transcription' | 'ai-dom')}
                           disabled={isExtractingUrl}
                           className="mt-0.5 mr-3 text-orange-600 focus:ring-orange-500"
                         />
@@ -308,7 +308,7 @@ export default function AddDocumentPage() {
                           name="extractionMethod"
                           value="ai-transcription"
                           checked={extractionMethod === 'ai-transcription'}
-                          onChange={(e) => setExtractionMethod(e.target.value as any)}
+                          onChange={(e) => setExtractionMethod(e.target.value as 'readability' | 'ai-transcription' | 'ai-dom')}
                           disabled={isExtractingUrl}
                           className="mt-0.5 mr-3 text-orange-600 focus:ring-orange-500"
                         />
@@ -324,7 +324,7 @@ export default function AddDocumentPage() {
                           name="extractionMethod"
                           value="ai-dom"
                           checked={extractionMethod === 'ai-dom'}
-                          onChange={(e) => setExtractionMethod(e.target.value as any)}
+                          onChange={(e) => setExtractionMethod(e.target.value as 'readability' | 'ai-transcription' | 'ai-dom')}
                           disabled={isExtractingUrl}
                           className="mt-0.5 mr-3 text-orange-600 focus:ring-orange-500"
                         />
