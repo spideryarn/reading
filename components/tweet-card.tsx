@@ -3,6 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { Fragment } from 'react'
+import * as Tooltip from '@radix-ui/react-tooltip'
 
 // Function to parse tweet text and style hashtags with enhanced interactions
 function parseHashtags(text: string) {
@@ -49,17 +50,44 @@ export function TweetCard({ tweet, totalTweets }: TweetCardProps) {
   
   return (
     <Card className={cn(
-      "relative transition-all duration-300 hover:shadow-lg hover:shadow-blue-200/50 sm:hover:scale-[1.02] group cursor-pointer",
+      "relative transition-all duration-200 hover:shadow-lg hover:shadow-blue-200/50 sm:hover:scale-[1.01] group cursor-pointer",
       "border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50/50 to-white",
       "hover:from-blue-50 hover:to-blue-50 hover:border-l-blue-600",
       "focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-opacity-50",
-      "active:scale-[0.98] active:shadow-md",
+      "active:scale-[0.99] active:shadow-md",
       "mobile-optimized"
     )}>
       <CardContent className="p-5 sm:p-6">
         <div className="space-y-3">
           {/* Thread progress indicator */}
-          <div className="flex items-center justify-end mb-2">
+          <div className="flex items-center justify-end mb-2 space-x-2">
+            {/* Visual character limit indicator with tooltip */}
+            <Tooltip.Provider>
+              <Tooltip.Root>
+                <Tooltip.Trigger asChild>
+                  <div className="w-12 sm:w-16 h-1 bg-gray-200 rounded-full overflow-hidden cursor-help">
+                    <div 
+                      className={cn(
+                        "h-full transition-all duration-300 rounded-full",
+                        characterCount <= 200 ? "bg-green-400" :
+                        characterCount <= 250 ? "bg-amber-400" : "bg-red-400"
+                      )}
+                      style={{ width: `${Math.min((characterCount / 280) * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content className="bg-gray-900 text-white text-xs px-2 py-1 rounded shadow-lg">
+                    <span className="inline-flex items-center space-x-1">
+                      <span>✏️</span>
+                      <span>{characterCount} / 280 characters</span>
+                    </span>
+                    <Tooltip.Arrow className="fill-gray-900" />
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
+            </Tooltip.Provider>
+            
             <div className="text-xs text-gray-400 font-mono bg-gradient-to-r from-gray-50 to-gray-100 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-gray-200 transition-all duration-200 group-hover:from-blue-50 group-hover:to-blue-100 group-hover:border-blue-200 group-hover:text-blue-600">
               <span className="font-semibold">{tweet.number}</span>
               <span className="text-gray-300 group-hover:text-blue-400">/</span>
@@ -80,44 +108,7 @@ export function TweetCard({ tweet, totalTweets }: TweetCardProps) {
             </p>
           </div>
           
-          {/* Enhanced character count and metadata */}
-          <div className="pt-3 border-t border-gray-100 group-hover:border-blue-200 transition-colors duration-200">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div className={cn(
-                "text-xs font-medium transition-colors duration-200",
-                getCharacterCountColor()
-              )}>
-                <span className="inline-flex items-center space-x-1">
-                  <span>✏️</span>
-                  <span className="hidden sm:inline">{characterCount} characters</span>
-                  <span className="sm:hidden">{characterCount} chars</span>
-                </span>
-              </div>
-              
-              {/* Visual character limit indicator */}
-              <div className="flex items-center space-x-2">
-                <div className="w-12 sm:w-16 h-1 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
-                    className={cn(
-                      "h-full transition-all duration-500 rounded-full",
-                      characterCount <= 200 ? "bg-green-400" :
-                      characterCount <= 250 ? "bg-amber-400" : "bg-red-400"
-                    )}
-                    style={{ width: `${Math.min((characterCount / 280) * 100, 100)}%` }}
-                  ></div>
-                </div>
-                <span className="text-xs text-gray-400 font-mono">280</span>
-              </div>
-            </div>
-            
-            {/* Additional metadata for long tweets */}
-            {isLongTweet && (
-              <div className="mt-2 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-200">
-                <span className="hidden sm:inline">⚠️ Long tweet - consider splitting for better engagement</span>
-                <span className="sm:hidden">⚠️ Long tweet</span>
-              </div>
-            )}
-          </div>
+          {/* Remove the character count and metadata section */}
         </div>
       </CardContent>
       
@@ -130,7 +121,7 @@ export function TweetCard({ tweet, totalTweets }: TweetCardProps) {
       )}
       
       {/* Subtle glow effect on hover */}
-      <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-500/0 to-blue-500/0 group-hover:from-blue-500/5 group-hover:to-transparent transition-all duration-300 pointer-events-none"></div>
+      <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-500/0 to-blue-500/0 group-hover:from-blue-500/5 group-hover:to-transparent transition-all duration-200 pointer-events-none"></div>
     </Card>
   )
 }

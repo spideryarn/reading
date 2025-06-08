@@ -48,7 +48,12 @@ export function TweetThreadView({ documentContent, documentId, isActive = false,
       const params = new URLSearchParams({ documentId })
       const response = await fetch(`/api/tweet-thread?${params}`)
       if (!response.ok) {
-        console.error('Failed to fetch cached tweet thread:', response.status)
+        // 404 is expected when no cache exists - not an error
+        if (response.status === 404) {
+          console.log('No cached tweet thread found')
+        } else {
+          console.error('Failed to fetch cached tweet thread:', response.status)
+        }
         return null
       }
       const data = await response.json()
@@ -236,7 +241,7 @@ export function TweetThreadView({ documentContent, documentId, isActive = false,
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4">
-        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-6 animate-pulse">
+        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-6">
           <svg className="w-8 h-8 text-white animate-spin" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -265,9 +270,9 @@ export function TweetThreadView({ documentContent, documentId, isActive = false,
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6">
       {/* Thread Header */}
-      <div className="text-center space-y-4 animate-in slide-in-from-top duration-700">
+      <div className="text-center space-y-4">
         <div className="flex items-center justify-center space-x-2">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
             🧵 Tweet Thread
@@ -277,22 +282,20 @@ export function TweetThreadView({ documentContent, documentId, isActive = false,
               Loaded
             </span>
           )}
-        </div>
-        {(isLoaded || hasGenerated) && (
-          <div className="flex justify-center">
+          {(isLoaded || hasGenerated) && (
             <Button
               onClick={regenerateTweetThread}
               variant="ghost"
               size="sm"
-              className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+              className="text-blue-600 hover:text-blue-800 hover:bg-blue-100 ml-2"
               title="Regenerate tweet thread"
               disabled={isLoading}
             >
               <ArrowCounterClockwise size={16} />
               <span className="ml-1">Reset</span>
             </Button>
-          </div>
-        )}
+          )}
+        </div>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           
           <div className="flex flex-col sm:flex-row items-center gap-2">
@@ -341,7 +344,7 @@ export function TweetThreadView({ documentContent, documentId, isActive = false,
           </div>
         </div>
         {metadata && (
-          <div className="text-sm text-gray-600 font-medium space-y-1 animate-in slide-in-from-bottom duration-700 delay-200">
+          <div className="text-sm text-gray-600 font-medium space-y-1">
             <div className="flex items-center justify-center flex-wrap gap-2">
               <div className="inline-flex items-center space-x-1 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-xs font-semibold">
                 <span>📊</span>
@@ -359,7 +362,7 @@ export function TweetThreadView({ documentContent, documentId, isActive = false,
               </div>
             </div>
             {metadata.truncated && (
-              <div className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200 animate-pulse mx-4">
+              <div className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200 mx-4">
                 ⚠️ Original document was truncated for processing
               </div>
             )}
@@ -369,7 +372,7 @@ export function TweetThreadView({ documentContent, documentId, isActive = false,
 
       {/* Thread summary */}
       {summary && (
-        <div className="relative mb-8 animate-in slide-in-from-left duration-800 delay-300">
+        <div className="relative mb-8">
           {/* Decorative background elements */}
           <div className="absolute inset-0 bg-gradient-to-br from-amber-100 via-orange-50 to-red-50 rounded-2xl transform rotate-1"></div>
           <div className="absolute inset-0 bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-100 rounded-2xl transform -rotate-1"></div>
@@ -417,13 +420,9 @@ export function TweetThreadView({ documentContent, documentId, isActive = false,
       )}
 
       {/* Tweet thread */}
-      <div className="space-y-4 animate-in slide-in-from-bottom duration-700 delay-500">
+      <div className="space-y-4">
         {tweets.map((tweet, index) => (
-          <div 
-            key={index} 
-            className="animate-in slide-in-from-right duration-500"
-            style={{ animationDelay: `${(index * 100) + 600}ms` }}
-          >
+          <div key={index}>
             <TweetCard 
               tweet={tweet}
               totalTweets={tweets.length}
@@ -434,9 +433,9 @@ export function TweetThreadView({ documentContent, documentId, isActive = false,
 
       {/* Thread footer */}
       {tweets.length > 0 && (
-        <div className="text-center pt-6 border-t border-gray-200 animate-in fade-in duration-700 delay-1000">
+        <div className="text-center pt-6 border-t border-gray-200">
           <div className="inline-flex items-center space-x-2 text-gray-500 text-sm bg-gray-50 px-4 py-3 rounded-full hover:bg-gray-100 transition-colors duration-200">
-            <span className="animate-bounce">🏁</span>
+            <span>🏁</span>
             <span>End of thread</span>
             <span>•</span>
             <span className="font-medium text-gray-700">{tweets.length} tweets total</span>
