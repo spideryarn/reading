@@ -343,4 +343,31 @@ body {
         animation: element-highlight 2s ease-out;
     }
 
+    /* Left pane collapse/expand animations */
+    .panel-transition {
+        transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity 200ms ease-out;
+    }
+    
+    .panel-collapsed {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    
+    .panel-expanded {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    
+    /* Respect user motion preferences */
+    @media (prefers-reduced-motion: reduce) {
+        .panel-transition {
+            transition: none;
+        }
+        
+        .transition-all {
+            transition: none;
+        }
+    }
+
 }

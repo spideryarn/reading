@@ -172,20 +172,26 @@ function ResizableDocumentLayoutInner({
   // Handle left pane collapse toggle with size persistence
   const handleToggleCollapse = useCallback(() => {
     if (isLeftPaneCollapsed) {
-      // Expanding: restore the saved size
-      setIsLeftPaneCollapsed(false)
+      // Expanding: restore the saved size first, then show content
+      if (leftPanelRef.current) {
+        leftPanelRef.current.resize(savedLeftPaneSize)
+      }
       setTimeout(() => {
-        if (leftPanelRef.current) {
-          leftPanelRef.current.resize(savedLeftPaneSize)
-        }
-      }, 50) // Small delay to ensure panel is expanded first
+        setIsLeftPaneCollapsed(false)
+      }, 50) // Small delay to let panel resize first
     } else {
-      // Collapsing: save current size first
+      // Collapsing: hide content first, then collapse panel
       if (leftPanelRef.current) {
         const currentSize = leftPanelRef.current.getSize()
         setSavedLeftPaneSize(currentSize)
       }
       setIsLeftPaneCollapsed(true)
+      // Delay panel collapse until after content animation (300ms + buffer)
+      setTimeout(() => {
+        if (leftPanelRef.current) {
+          leftPanelRef.current.resize(0)
+        }
+      }, 350)
     }
   }, [isLeftPaneCollapsed, savedLeftPaneSize])
 
@@ -193,12 +199,12 @@ function ResizableDocumentLayoutInner({
   const handleIconNavTabClick = useCallback((tabId: string) => {
     // First expand the left pane if it's collapsed
     if (isLeftPaneCollapsed) {
-      setIsLeftPaneCollapsed(false)
+      if (leftPanelRef.current) {
+        leftPanelRef.current.resize(savedLeftPaneSize)
+      }
       setTimeout(() => {
-        if (leftPanelRef.current) {
-          leftPanelRef.current.resize(savedLeftPaneSize)
-        }
-      }, 50) // Small delay to ensure panel is expanded first
+        setIsLeftPaneCollapsed(false)
+      }, 50) // Small delay to let panel resize first
     }
     
     // Then switch to the selected tab using context action
@@ -290,15 +296,18 @@ function ResizableDocumentLayoutInner({
         <ResizablePanel 
           ref={leftPanelRef}
           defaultSize={savedLeftPaneSize} 
-          minSize={isLeftPaneCollapsed ? 0 : 20} 
-          maxSize={isLeftPaneCollapsed ? 0 : 50}
+          minSize={20} 
+          maxSize={50}
           className="h-full"
           style={{ 
-            overflow: 'hidden',
-            width: isLeftPaneCollapsed ? '0px' : undefined 
+            overflow: 'hidden'
           }}
         >
-          <div style={{ display: isLeftPaneCollapsed ? 'none' : 'block', height: '100%' }}>
+          <div 
+            className={`h-full panel-transition ${
+              isLeftPaneCollapsed ? 'panel-collapsed' : 'panel-expanded'
+            }`}
+          >
             <div className="pl-16 h-full">
               <UnifiedLeftPane
               content={html}
@@ -323,12 +332,11 @@ function ResizableDocumentLayoutInner({
         {/* Resize handle - always present but hidden when collapsed */}
         <ResizableHandle 
           withHandle={!isLeftPaneCollapsed}
-          className={`w-1 transition-colors ${
+          className={`w-1 transition-all duration-300 ${
             isLeftPaneCollapsed 
               ? 'w-0 opacity-0' 
               : 'bg-gray-200 hover:bg-gray-300 active:bg-blue-300'
           }`}
-          style={{ display: isLeftPaneCollapsed ? 'none' : undefined }}
         />
         
         {/* Right pane - Document viewer */}
