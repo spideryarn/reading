@@ -276,7 +276,7 @@ export type Database = {
           document_id: string
           extra: Json | null
           id: string
-          subtype: string
+          subtype: string | null
           type: string
           updated_at: string | null
         }
@@ -287,7 +287,7 @@ export type Database = {
           document_id: string
           extra?: Json | null
           id?: string
-          subtype: string
+          subtype?: string | null
           type: string
           updated_at?: string | null
         }
@@ -298,7 +298,7 @@ export type Database = {
           document_id?: string
           extra?: Json | null
           id?: string
-          subtype?: string
+          subtype?: string | null
           type?: string
           updated_at?: string | null
         }
