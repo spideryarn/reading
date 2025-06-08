@@ -2,7 +2,7 @@
 
 **Planning Document**  
 **Created**: 8 January 2025  
-**Status**: Planning Stage - Phase 1 Focus  
+**Status**: Implementation Stage - Phase 1 Focus  
 **Related**: `docs/reference/DATABASE_SECURITY.md`, `docs/reference/AUTHENTICATION_SECURITY.md`
 
 ## Executive Summary
@@ -100,11 +100,66 @@ CREATE POLICY "Users can access messages for accessible threads" ON chat_message
 
 ### Implementation Steps
 
-1. **Audit Current Usage**: Verify all document operations use authenticated sessions
-2. **Update RLS Policies**: Replace development policies with user-scoped ones
-3. **Test Access Control**: Verify users can only access owned documents
-4. **Update Application Code**: Ensure proper error handling for access denied scenarios
-5. **Test Multi-User Scenarios**: Verify isolation between different users
+**COMPLETED:**
+1. **✅ Audit Current Usage**: Verified all document operations use authenticated sessions
+   - **Critical Finding**: All API routes currently use hardcoded mock users instead of real authentication
+   - **Security Risk Level**: HIGH - All document operations bypass authentication
+   - **RLS Readiness**: HIGH - Infrastructure exists, needs API route updates
+
+**COMPLETED:**
+2. **✅ Fix API Route Authentication**: Replace mock users with real authentication
+   - ✅ Updated `/api/upload-pdf` to use `validateAuth()` and `user.id`
+   - ✅ Updated `/api/extract-url` to use `validateAuth()` and `user.id`
+   - ✅ Updated `/api/delete-document` to validate ownership with `isOwnedByUser()`
+   - ✅ Updated `/api/documents/[slug]/download` to check ownership
+   - ✅ Updated `/api/documents/[slug]/original` to check ownership
+   - ✅ Updated `/app/documents/page.tsx` to show user documents instead of public
+   - ✅ Added proper authentication error handling (401 responses)
+
+**COMPLETED:**
+3. **✅ Update RLS Policies**: Replace development policies with user-scoped ones
+   - ✅ Created migration `20250108000001_implement_phase1_document_rls_policies.sql`
+   - ✅ Drops all permissive development policies
+   - ✅ Implements user-scoped policies for all document-related tables
+   - ✅ Maintains centaur-sourcing support with proper foreign key relationships
+   - ✅ Added performance-optimized indexes for RLS policy evaluation
+4. **✅ Update Application Code**: Ensure proper error handling for access denied scenarios
+   - ✅ All API routes now return 401 for authentication failures
+   - ✅ Download/delete operations return 404 for ownership violations (prevents info leakage)
+   - ✅ Documents list page shows user-specific documents with empty state
+
+**COMPLETED:**
+5. **✅ Apply Migration**: Run the RLS policies migration
+   - ✅ Fixed type casting issues in RLS policies (UUID comparisons)
+   - ✅ Applied migration `20250610000001_implement_phase1_document_rls_policies.sql` successfully
+   - ✅ All permissive development policies replaced with user-scoped policies
+   - ✅ RLS policies active on all document-related tables
+
+**READY FOR USER TESTING:**
+6. **🔄 Test Access Control**: Verify users can only access owned documents  
+7. **🔄 Test Multi-User Scenarios**: Verify isolation between different users
+
+**✨ IMPLEMENTATION COMPLETE - READY FOR UI TESTING ✨**
+
+The **Phase 1 Document RLS Security** is now fully implemented and active. The application is ready for testing with:
+- ✅ **All API routes secured** with real authentication
+- ✅ **User-scoped database policies** enforcing document ownership
+- ✅ **Proper error handling** for unauthorized access
+- ✅ **UI updated** to show user-specific documents
+
+### Critical Pre-RLS Security Issues Discovered
+
+**🚨 API Routes Using Mock Authentication:**
+- `app/api/upload-pdf/route.ts` - Creates documents for hardcoded mock user
+- `app/api/extract-url/route.ts` - Creates documents for hardcoded mock user
+- `app/api/delete-document/route.ts` - No ownership validation
+- `app/api/documents/[slug]/download/route.ts` - TODO comment for access control
+- `app/api/documents/[slug]/original/route.ts` - No access control
+
+**✅ Service Layer Already RLS-Ready:**
+- `DocumentService` has proper user-scoped methods: `createForUser()`, `getByUserId()`, `isOwnedByUser()`
+- Authentication utilities exist: `validateAuth()`, `getUserId()`, `requireAuth()`
+- Page-level protection already implemented for document routes
 
 ### Authentication Requirements
 
