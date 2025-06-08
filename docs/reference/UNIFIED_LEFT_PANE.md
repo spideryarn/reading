@@ -1,17 +1,20 @@
 # Unified Left Pane
 
-The unified left pane provides comprehensive document navigation and AI-powered tools through a tabbed interface containing table of contents (original and AI-generated), summaries, chat, glossary, and search functionality. This document covers the architecture and features of the complete left pane system in the 2-pane resizable layout.
+The unified left pane provides comprehensive document navigation and AI-powered tools through a vertical icon navigation system. Navigation includes table of contents (original and AI-generated), summaries, chat, glossary, and search functionality. This document covers the architecture and features of the complete left pane system in the 2-pane resizable layout.
 
 ## See also
 
 - `components/unified-left-pane.tsx` - consolidated navigation and tools pane containing ToC
+- `components/vertical-icon-nav.tsx` - vertical icon navigation bar component
 - `components/heading-tree.tsx` - shared tree component for rendering hierarchical headings
 - `components/resizable-document-layout.tsx` - main 2-pane layout coordinator
 - `app/documents/[slug]/page-client.tsx` - state management and coordination between panes
 - `components/simple-document-viewer.tsx` - streamlined document viewer
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - overall application architecture
+- `docs/reference/KEYBOARD_SHORTCUTS.md` - keyboard shortcut documentation including sidebar toggle
 - `docs/UI_INTERFACE.md` - 2-pane resizable layout documentation
 - `docs/LLM_PROMPT_TEMPLATES.md` - prompt template system for AI features
+- `planning/250608c_vertical_icon_navigation_bar.md` - vertical icon navigation implementation
 - `planning/250526g_ai_generated_headings.md` - AI headings implementation details
 - `planning/250526a_ToC_hierarchical_summary_tooltips.md` - tooltip feature planning
 - `planning/250529b_ToC_expand_collapse_granularity.md` - expand/collapse and granularity control planning
@@ -70,23 +73,32 @@ The ToC uses a shared `HeadingTree` component that eliminates code duplication b
 - Provides intuitive navigation for complex documents
 - Maintains all existing features: tooltips, navigation, visual hierarchy
 
-## Unified Tabbed Interface
+## Vertical Icon Navigation Interface
 
-The ToC is now part of a 6-tab unified interface in the left pane:
+The left pane uses a vertical icon navigation system for space-efficient access to all tools:
 
-- **Original** - Headings extracted directly from the HTML document
-- **AI-generated** - Semantically meaningful headings created by LLM analysis
-- **Summary** - AI-generated document summary with expandable content
-- **Chat** - Interactive AI assistant for document discussion
-- **Glossary** - AI-generated term definitions with click-to-scroll
-- **Search** - Cross-element text search with Mark.js library and enhanced navigation
+- **Original** (Article icon) - Headings extracted directly from the HTML document
+- **AI-generated** (Robot icon) - Semantically meaningful headings created by LLM analysis
+- **Summary** (ListBullets icon) - AI-generated document summary with expandable content
+- **Chat** (ChatCircle icon) - Interactive AI assistant for document discussion
+- **Glossary** (BookOpen icon) - AI-generated term definitions with click-to-scroll
+- **Search** (MagnifyingGlass icon) - Cross-element text search with Mark.js library and enhanced navigation
 
-### Tab Implementation
-- Consolidated into single `TabContainer` within `UnifiedLeftPane`
-- Uses controlled component pattern with `activeTab` state
-- Visual styling: active tab (blue theme), inactive tab (gray text)
-- Generate buttons appear in AI tabs to trigger content generation
-- Loading states during AI processing with spinner animation
+### Icon Navigation Implementation
+- Always-visible vertical icon rail (48px width) on the far left edge
+- Phosphor icons with duotone weight for professional appearance
+- Rich tooltips with bold titles and descriptive text (600ms delay)
+- Spideryarn orange active state (#DB8A45) for current selection
+- Platform-specific keyboard shortcuts (Cmd+B on Mac, Ctrl+B on Windows/Linux)
+- Smooth CSS animations for pane collapse/expand (300ms duration)
+- Accessibility compliant with proper ARIA labels and focus management
+
+### Interaction Patterns
+- Icon clicks expand left pane (if collapsed) AND activate the selected mode
+- Collapse button integrated into top of icon rail for space efficiency
+- Size persistence: remembers user's preferred left pane width
+- Auto-loading behaviors preserved (glossary content, search input focus)
+- All existing functionality maintained through DocumentCommunicationContext
 
 ## Heading Extraction
 
