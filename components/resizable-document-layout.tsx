@@ -10,6 +10,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
+import { ImperativePanelHandle } from 'react-resizable-panels'
 import { UnifiedLeftPane } from './unified-left-pane'
 import { SimpleDocumentViewer } from './simple-document-viewer'
 import { VerticalIconNav } from './vertical-icon-nav'
@@ -80,6 +81,8 @@ function ResizableDocumentLayoutInner({
   const { actions, state } = useDocumentCommunication()
   const [, setScrollTarget] = useState<{ id: string; timestamp: number } | null>(null)
   const [isLeftPaneCollapsed, setIsLeftPaneCollapsed] = useState(false)
+  const [savedLeftPaneSize, setSavedLeftPaneSize] = useState(30) // Remember the last size
+  const leftPanelRef = useRef<ImperativePanelHandle>(null)
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Handle heading clicks from ToC
@@ -166,21 +169,41 @@ function ResizableDocumentLayoutInner({
     }
   }, [elements, onElementClick, actions])
   
-  // Handle left pane collapse toggle
+  // Handle left pane collapse toggle with size persistence
   const handleToggleCollapse = useCallback(() => {
-    setIsLeftPaneCollapsed(prev => !prev)
-  }, [])
+    if (isLeftPaneCollapsed) {
+      // Expanding: restore the saved size
+      setIsLeftPaneCollapsed(false)
+      setTimeout(() => {
+        if (leftPanelRef.current) {
+          leftPanelRef.current.resize(savedLeftPaneSize)
+        }
+      }, 50) // Small delay to ensure panel is expanded first
+    } else {
+      // Collapsing: save current size first
+      if (leftPanelRef.current) {
+        const currentSize = leftPanelRef.current.getSize()
+        setSavedLeftPaneSize(currentSize)
+      }
+      setIsLeftPaneCollapsed(true)
+    }
+  }, [isLeftPaneCollapsed, savedLeftPaneSize])
 
   // Handle icon navigation tab clicks - expand left pane and switch to tab
   const handleIconNavTabClick = useCallback((tabId: string) => {
     // First expand the left pane if it's collapsed
     if (isLeftPaneCollapsed) {
       setIsLeftPaneCollapsed(false)
+      setTimeout(() => {
+        if (leftPanelRef.current) {
+          leftPanelRef.current.resize(savedLeftPaneSize)
+        }
+      }, 50) // Small delay to ensure panel is expanded first
     }
     
     // Then switch to the selected tab using context action
     actions.setActiveTab(tabId)
-  }, [isLeftPaneCollapsed, actions])
+  }, [isLeftPaneCollapsed, savedLeftPaneSize, actions])
 
   // Handle document scroll to detect current heading
   const handleDocumentScroll = useCallback(() => {
@@ -265,7 +288,8 @@ function ResizableDocumentLayoutInner({
         >
         {/* Left pane - Unified navigation and tools */}
         <ResizablePanel 
-          defaultSize={30} 
+          ref={leftPanelRef}
+          defaultSize={savedLeftPaneSize} 
           minSize={isLeftPaneCollapsed ? 0 : 20} 
           maxSize={isLeftPaneCollapsed ? 0 : 50}
           className="h-full"
