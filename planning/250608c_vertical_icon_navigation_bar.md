@@ -122,6 +122,19 @@ Currently, the unified left pane displays navigation options as a vertical list 
   - ✅ Added useEffect for search input auto-focus when search tab is activated
   - ✅ All tab switching functionality preserved through DocumentCommunicationContext
 
+### Stage: Left Pane Space Optimization ✅ COMPLETED
+- [x] **Add Left Pane Size Persistence**: Implemented size memory for better UX
+  - ✅ Added `ImperativePanelHandle` ref and `savedLeftPaneSize` state tracking
+  - ✅ Enhanced `handleToggleCollapse` to save current size before collapsing
+  - ✅ Enhanced `handleIconNavTabClick` to restore saved size when expanding via icons
+  - ✅ Users' preferred left pane width is now remembered across collapse/expand cycles
+- [x] **Optimize Header Space Usage**: Moved collapse functionality to icon rail
+  - ✅ Removed "Navigation & Tools" header text from left pane
+  - ✅ Moved collapse button to top of vertical icon rail with proper spacing
+  - ✅ Added `mb-3` gap below collapse button to separate from navigation options
+  - ✅ Updated component props to route `onToggleCollapse` through `VerticalIconNav`
+  - ✅ Maintains all existing functionality (keyboard shortcuts, tooltips, accessibility)
+
 ### Stage: Documentation & Cleanup
 - [ ] Update `docs/reference/UNIFIED_LEFT_PANE.md` with new icon navigation
 - [ ] Update `docs/reference/UI_COMPONENTS.md` if needed
@@ -132,6 +145,14 @@ Currently, the unified left pane displays navigation options as a vertical list 
 - [ ] Commit changes following `docs/instructions/GIT_COMMITS.md` (use subagent)
 
 ### Future Stages (Not Part of Initial Implementation)
+
+### Stage: Animated Collapse/Expand (Later)
+- [ ] Add smooth animation transitions for left pane collapse/expand
+- [ ] Implement CSS-based width transition with duration control
+- [ ] Consider using Framer Motion for more advanced spring animations
+- [ ] Add preference to disable animations for accessibility
+- [ ] Ensure animations don't interfere with size persistence functionality
+- [ ] Test animation performance across different devices and browsers
 
 ### Stage: Scrollable Rail (Later)
 - [ ] Detect when icons overflow viewport height

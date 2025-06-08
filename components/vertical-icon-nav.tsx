@@ -6,7 +6,7 @@
 
 import { 
   Article, Robot, ListBullets, ChatCircle, 
-  BookOpen, MagnifyingGlass 
+  BookOpen, MagnifyingGlass, SidebarSimple 
 } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -27,6 +27,7 @@ interface NavigationItem {
 interface VerticalIconNavProps {
   activeTab?: string
   onTabClick: (tabId: string) => void
+  onToggleCollapse: () => void
   className?: string
 }
 
@@ -91,6 +92,7 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
 export function VerticalIconNav({ 
   activeTab, 
   onTabClick, 
+  onToggleCollapse,
   className 
 }: VerticalIconNavProps) {
   // Platform-specific shortcut text
@@ -108,6 +110,59 @@ export function VerticalIconNav({
       role="navigation"
       aria-label="Document navigation"
     >
+      {/* Collapse button at top with spacing below */}
+      <Tooltip.Provider delayDuration={600}>
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleCollapse}
+              className={cn(
+                'h-12 w-12 rounded-none border-0 mb-3',
+                'flex items-center justify-center',
+                'text-gray-600 hover:text-gray-900',
+                'hover:bg-gray-50',
+                'transition-colors duration-200',
+                'focus:ring-2 focus:ring-blue-500 focus:ring-inset'
+              )}
+              aria-label={`Toggle sidebar (${shortcutText})`}
+            >
+              <SidebarSimple 
+                size={20} 
+                weight="duotone" 
+                className="transition-colors duration-200"
+              />
+            </Button>
+          </Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content
+              side="right"
+              align="center"
+              sideOffset={8}
+              className="z-50 max-w-xs"
+            >
+              <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                <div className="font-semibold text-gray-900 text-sm mb-1">
+                  Toggle Sidebar
+                </div>
+                <div className="text-gray-700 text-sm leading-relaxed mb-2">
+                  Collapse or expand the navigation panel
+                </div>
+                <div className="text-xs text-gray-500 font-mono">
+                  Press {shortcutText} to toggle
+                </div>
+              </div>
+              <Tooltip.Arrow 
+                className="fill-gray-200" 
+                width={12} 
+                height={6}
+              />
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+      </Tooltip.Provider>
+      
       {NAVIGATION_ITEMS.map((item) => {
         const Icon = item.icon
         const isActive = activeTab === item.id

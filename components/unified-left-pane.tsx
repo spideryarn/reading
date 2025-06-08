@@ -10,7 +10,7 @@
 
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { AssistantChat } from './assistant-chat'
-import { CircleNotch, Book, Question, Calendar, SidebarSimple, ArrowCounterClockwise, MagnifyingGlass, X, CaretDown } from '@phosphor-icons/react'
+import { CircleNotch, Book, Question, Calendar, ArrowCounterClockwise, MagnifyingGlass, X, CaretDown } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { AlertWithIcon } from '@/components/ui/alert'
 import type { DocumentElement } from '@/lib/types/document'
@@ -74,9 +74,6 @@ interface UnifiedLeftPaneProps {
   
   // For chat context
   documentContext: string
-  
-  // Collapse functionality
-  onToggleCollapse?: () => void
 }
 
 // Get icon component for entity type
@@ -326,8 +323,7 @@ export function UnifiedLeftPane({
   onHeadingClick,
   onLoadGlossary,
   onResetGlossary,
-  documentContext,
-  onToggleCollapse
+  documentContext
 }: UnifiedLeftPaneProps) {
   const { actions, state } = useDocumentCommunication()
   
@@ -1195,22 +1191,6 @@ export function UnifiedLeftPane({
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header with collapse button */}
-      <div className="flex items-center justify-between p-3 border-b border-gray-200">
-        <h2 className="text-sm font-medium text-gray-900">Navigation & Tools</h2>
-        {onToggleCollapse && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggleCollapse}
-            className="h-8 w-8 p-0 hover:bg-gray-100"
-            title="Toggle sidebar (Ctrl+B)"
-          >
-            <SidebarSimple size={16} weight="bold" />
-          </Button>
-        )}
-      </div>
-      
       {/* Direct content rendering based on active tab */}
       <div className="flex-1 overflow-y-auto">
         {state.activeTabId === 'original' && renderOriginalTab()}

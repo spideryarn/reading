@@ -314,9 +314,7 @@ function ResizableDocumentLayoutInner({
               onHeadingClick={handleHeadingClick}
               onLoadGlossary={onLoadGlossary}
               onResetGlossary={onResetGlossary}
-              onScrollToEntity={handleScrollToEntity}
               documentContext={documentContext}
-              onToggleCollapse={handleToggleCollapse}
             />
             </div>
           </div>
@@ -355,6 +353,7 @@ function ResizableDocumentLayoutInner({
         <VerticalIconNav
           activeTab={state.activeTab}
           onTabClick={handleIconNavTabClick}
+          onToggleCollapse={handleToggleCollapse}
           className="shadow-lg"
         />
       </div>
