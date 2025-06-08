@@ -232,10 +232,15 @@ function ResizableDocumentLayoutInner({
     }
   }, [handleDocumentScroll])
   
-  // Keyboard shortcut handler for Ctrl+B
+  // Keyboard shortcut handler for Cmd+B (Mac) / Ctrl+B (Windows/Linux)
   useEffect(() => {
     const handleKeydown = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.key === 'b') {
+      // Platform-specific modifier key detection
+      const isMac = typeof window !== 'undefined' && 
+                  /Mac|iPod|iPhone|iPad/.test(window.navigator.platform)
+      const correctModifier = isMac ? event.metaKey : event.ctrlKey
+      
+      if (correctModifier && event.key.toLowerCase() === 'b') {
         event.preventDefault()
         handleToggleCollapse()
       }
@@ -270,7 +275,8 @@ function ResizableDocumentLayoutInner({
           }}
         >
           <div style={{ display: isLeftPaneCollapsed ? 'none' : 'block', height: '100%' }}>
-            <UnifiedLeftPane
+            <div className="pl-16 h-full">
+              <UnifiedLeftPane
               content={html}
               elements={elements}
               documentId={documentId}
@@ -288,6 +294,7 @@ function ResizableDocumentLayoutInner({
               documentContext={documentContext}
               onToggleCollapse={handleToggleCollapse}
             />
+            </div>
           </div>
         </ResizablePanel>
         
@@ -307,26 +314,26 @@ function ResizableDocumentLayoutInner({
           defaultSize={70}
           className="h-full"
         >
-          <SimpleDocumentViewer
-            elements={elements}
-            selectedElement={selectedElement}
-            onElementSelect={onElementSelect}
-            onElementVisibilityChange={onElementVisibilityChange}
-            onElementClick={handleElementClick}
-          />
+          <div className="h-full pl-16">
+            <SimpleDocumentViewer
+              elements={elements}
+              selectedElement={selectedElement}
+              onElementSelect={onElementSelect}
+              onElementVisibilityChange={onElementVisibilityChange}
+              onElementClick={handleElementClick}
+            />
+          </div>
         </ResizablePanel>
       </ResizablePanelGroup>
       
-      {/* Vertical icon navigation when collapsed */}
-      {isLeftPaneCollapsed && (
-        <div className="absolute top-0 left-0 z-10 h-full">
-          <VerticalIconNav
-            activeTab={state.activeTab}
-            onTabClick={handleIconNavTabClick}
-            className="shadow-lg"
-          />
-        </div>
-      )}
+      {/* Vertical icon navigation - always visible */}
+      <div className="absolute top-0 left-0 z-10 h-full">
+        <VerticalIconNav
+          activeTab={state.activeTab}
+          onTabClick={handleIconNavTabClick}
+          className="shadow-lg"
+        />
+      </div>
     </div>
   )
 }

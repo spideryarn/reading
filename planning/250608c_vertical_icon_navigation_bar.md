@@ -78,25 +78,49 @@ Currently, the unified left pane displays navigation options as a vertical list 
 - [ ] Test with keyboard-only navigation
 - [ ] ACTION: Review UI with user for feedback
 
-### Stage: User Feedback & Refinements (Current)
-- [ ] **Spacing Issue**: Add more gap between vertical icon rail and Document pane when collapsed
-  - Current implementation may have insufficient visual separation
-  - Consider 8-16px margin-right on the icon rail container
-- [ ] **Keyboard Shortcut Enhancement**: Improve Cmd+B (Mac) / Ctrl+B (Windows/Linux) implementation
-  - Research web best practices for keyboard shortcuts (completed via subagent research)
-  - Implement platform-specific modifier key detection (Cmd on Mac, Ctrl on Windows/Linux)
-  - Add visual indicators showing shortcut availability (e.g., tooltip showing "Cmd+B")
-  - Ensure accessibility compliance (WCAG 2.1) and conflict prevention
-- [ ] **Design Decision Review**: Reconsider Option 2 approach vs always-visible icon rail
-  - Current: Icon rail only when collapsed, text tabs when expanded
-  - Alternative: Show icon rail always, remove text tabs entirely
-  - Benefits of always-visible: More consistent UI, better space utilization
-  - Research needed: User testing to determine preference
-- [ ] **Documentation**: Create `docs/reference/KEYBOARD_SHORTCUTS.md`
-  - Document all keyboard shortcuts (starting with Cmd+B/Ctrl+B for sidebar toggle)
-  - Include implementation patterns for developers
-  - Reference from `docs/reference/UI_INTERFACE.md` and `docs/reference/DOCUMENTATION_ORGANISATION.md`
-  - Cover accessibility considerations and platform differences
+### Stage: User Feedback & Refinements ✅ COMPLETED
+- [x] **Spacing Issue**: Add more gap between vertical icon rail and Document pane when collapsed
+  - ✅ Added 64px left padding (`pl-16`) to document pane when collapsed
+  - ✅ Creates 16px visual separation between 48px icon rail and document content
+  - ✅ Implemented in `components/resizable-document-layout.tsx` line 310
+- [x] **Keyboard Shortcut Enhancement**: Improve Cmd+B (Mac) / Ctrl+B (Windows/Linux) implementation
+  - ✅ Research web best practices for keyboard shortcuts (completed via subagent research)
+  - ✅ Implemented platform-specific modifier key detection (Cmd on Mac, Ctrl on Windows/Linux)
+  - ✅ Added visual indicators showing shortcut availability in tooltips
+  - ✅ Ensured accessibility compliance (WCAG 2.1) and conflict prevention
+  - ✅ Updated keyboard handler in `components/resizable-document-layout.tsx` lines 235-251
+  - ✅ Enhanced tooltips in `components/vertical-icon-nav.tsx` with platform-specific shortcut text
+- [x] **Design Decision Review**: Reconsider Option 2 approach vs always-visible icon rail
+  - ✅ **UPDATED DECISION**: Switch to always-visible icon rail approach (removed text tabs entirely)
+  - ✅ **NEW RATIONALE**: User feedback indicated preference for consistent UI and better space utilization
+  - ✅ Icon rail now serves as primary navigation with comprehensive tooltips for discoverability
+  - ✅ More consistent with VSCode-style professional tools where icon rails are always visible
+  - ✅ Significantly improves space efficiency by removing redundant text tab navigation
+- [x] **Documentation**: Create `docs/reference/KEYBOARD_SHORTCUTS.md`
+  - ✅ Created comprehensive keyboard shortcuts documentation
+  - ✅ Documented Cmd+B/Ctrl+B for sidebar toggle with implementation patterns
+  - ✅ Included platform detection patterns and accessibility considerations
+  - ✅ Added developer guidelines for adding future shortcuts
+  - ✅ Covered WCAG 2.1 compliance and conflict prevention strategies
+
+### Stage: Always-Visible Icon Rail Implementation ✅ COMPLETED
+- [x] **Remove Text Tab Navigation**: Eliminated TabContainer and text-based tab navigation
+  - ✅ Removed TabContainer import and usage from `components/unified-left-pane.tsx`
+  - ✅ Replaced tab-based content switching with direct conditional rendering
+  - ✅ Maintained all existing functionality while removing redundant UI
+- [x] **Always Show Icon Rail**: Modified layout to permanently display vertical icon navigation
+  - ✅ Updated `components/resizable-document-layout.tsx` to always render VerticalIconNav
+  - ✅ Added permanent left padding (`pl-16`) to both left pane content and document pane
+  - ✅ Ensures 64px space reservation for 48px icon rail + 16px gap
+- [x] **Enhanced Icon Click Behavior**: Icon clicks expand pane AND activate mode
+  - ✅ Preserved existing logic in `handleIconNavTabClick` function
+  - ✅ When collapsed: expands left pane and switches to selected mode
+  - ✅ When expanded: switches directly to selected mode
+  - ✅ Maintained special behaviors (glossary auto-loading, search input focus)
+- [x] **Preserve Tab-Specific Behaviors**: Maintained existing tab activation logic
+  - ✅ Added useEffect for glossary auto-loading when glossary tab is activated
+  - ✅ Added useEffect for search input auto-focus when search tab is activated
+  - ✅ All tab switching functionality preserved through DocumentCommunicationContext
 
 ### Stage: Documentation & Cleanup
 - [ ] Update `docs/reference/UNIFIED_LEFT_PANE.md` with new icon navigation
@@ -309,4 +333,21 @@ The vertical icon rail was chosen for its proven effectiveness in professional t
 - ✅ Added proper state management for active tab tracking
 - ✅ Updated test mocks for new component integration
 
-**Current Status**: Core vertical icon navigation bar implementation complete. Ready for visual polish and accessibility enhancements.
+**Current Status**: Complete always-visible icon rail implementation with text tabs removed. Icon navigation is now the primary and only navigation method, providing consistent UI and better space utilization.
+
+**Stage: Always-Visible Icon Rail Implementation ✅ COMPLETED (8 June 2025)**
+- ✅ **DESIGN CHANGE**: Switched from Option 2 to always-visible icon rail approach based on user feedback
+- ✅ Removed all text-based tab navigation (TabContainer eliminated)
+- ✅ Icon rail now permanently visible and serves as primary navigation
+- ✅ Enhanced icon click behavior: expands pane AND activates mode when collapsed
+- ✅ Preserved all existing functionality including auto-loading and auto-focus behaviors
+- ✅ Improved space efficiency by removing redundant navigation elements
+- ✅ Maintained accessibility and platform-specific keyboard shortcut support
+
+**Key Implementation Changes:**
+- `components/resizable-document-layout.tsx`: Always renders VerticalIconNav, permanent 64px space reservation
+- `components/unified-left-pane.tsx`: Replaced TabContainer with direct conditional content rendering
+- Icon clicks handle both expansion and mode activation seamlessly
+- All tab-specific behaviors preserved through useEffect hooks
+
+**Next Stage**: Documentation & Cleanup to update related documentation and finalize the implementation.
