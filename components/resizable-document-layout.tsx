@@ -14,8 +14,7 @@ import { ImperativePanelHandle } from 'react-resizable-panels'
 import { UnifiedLeftPane } from './unified-left-pane'
 import { SimpleDocumentViewer } from './simple-document-viewer'
 import { VerticalIconNav } from './vertical-icon-nav'
-import { Button } from '@/components/ui/button'
-import { SidebarSimple } from '@phosphor-icons/react'
+import { CommandPalette } from './command-palette'
 import type { DocumentElement } from '@/lib/types/document'
 import { DocumentCommunicationProvider, useDocumentCommunication } from '@/lib/context/document-communication-context'
 
@@ -365,6 +364,9 @@ function ResizableDocumentLayoutInner({
           className="shadow-lg"
         />
       </div>
+      
+      {/* Command palette - positioned above all other content */}
+      <CommandPalette />
     </div>
   )
 }
