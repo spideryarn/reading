@@ -10,6 +10,9 @@
  * Run this from your main worktree to sync everything in one command.
  * The script will "boomerang" - go out to each worktree and come back.
  * 
+ * Options:
+ * --ignore-dirty    Skip worktrees with uncommitted changes (default: false)
+ * 
  * See also:
  * - docs/GIT_WORKTREES.md - Complete worktree setup and workflow documentation
  * - scripts/sync-worktrees.ts - The underlying sync script this wrapper calls
@@ -18,6 +21,10 @@
 import { execSync } from 'child_process';
 import { existsSync } from 'fs';
 import { resolve, basename } from 'path';
+
+// Parse command line arguments
+const args = process.argv.slice(2);
+const ignoreDirty = args.includes('--ignore-dirty');
 
 // ANSI color codes for output
 const colors = {
@@ -50,8 +57,25 @@ function execInDirectory(directory: string, command: string): { success: boolean
   }
 }
 
+function isWorktreeDirty(worktreePath: string): boolean {
+  try {
+    const status = execSync('git status --porcelain', {
+      cwd: worktreePath,
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe']
+    }).trim();
+    return status.length > 0;
+  } catch {
+    // If we can't check status, consider it dirty to be safe
+    return true;
+  }
+}
+
 async function main() {
   log('🔄 Sync All Worktrees - Boomerang Mode', colors.bright);
+  if (ignoreDirty) {
+    log('   Option: --ignore-dirty (skipping dirty worktrees)', colors.yellow);
+  }
   
   // Get current directory (should be main)
   const currentDir = process.cwd();
@@ -86,38 +110,97 @@ async function main() {
   }
   
   log(`\nFound ${worktreeOnlyPaths.length} worktrees:`, colors.cyan);
-  worktreeOnlyPaths.forEach(wt => {
-    log(`  • ${wt.branch} → ${wt.path}`);
-  });
+  
+  // Check dirty status if needed
+  let cleanWorktrees = worktreeOnlyPaths;
+  const dirtyWorktrees: typeof worktreeOnlyPaths = [];
+  
+  if (ignoreDirty) {
+    cleanWorktrees = [];
+    for (const wt of worktreeOnlyPaths) {
+      const isDirty = isWorktreeDirty(wt.path);
+      if (isDirty) {
+        dirtyWorktrees.push(wt);
+        log(`  • ${wt.branch} → ${wt.path} (⚠️  dirty - skipping)`, colors.yellow);
+      } else {
+        cleanWorktrees.push(wt);
+        log(`  • ${wt.branch} → ${wt.path}`, colors.green);
+      }
+    }
+    
+    if (cleanWorktrees.length === 0) {
+      log(`\n⚠️  All worktrees are dirty. No branches to sync.`, colors.yellow);
+      log(`   Use without --ignore-dirty to sync anyway.`, colors.yellow);
+      process.exit(0);
+    }
+  } else {
+    worktreeOnlyPaths.forEach(wt => {
+      log(`  • ${wt.branch} → ${wt.path}`);
+    });
+  }
   
   // Step 1: Sync all worktrees to main (from main)
   log(`\n📥 Step 1: Collecting changes from all worktrees...`, colors.bright);
   log(`   Running from: ${currentDir}\n`);
   
-  const step1Result = execInDirectory(currentDir, './scripts/sync-worktrees.ts');
-  
-  if (!step1Result.success) {
-    log(`\n❌ Failed to sync worktrees to main:`, colors.red);
-    log(step1Result.error || 'Unknown error', colors.red);
+  // Build command with specific branches if ignoring dirty ones
+  let syncCommand = './scripts/sync-worktrees.ts';
+  if (ignoreDirty && cleanWorktrees.length < worktreeOnlyPaths.length) {
+    // Need to sync specific branches only
+    for (const wt of cleanWorktrees) {
+      log(`   Syncing ${wt.branch}...`);
+      const branchResult = execInDirectory(currentDir, `./scripts/sync-worktrees.ts --branch ${wt.branch}`);
+      if (!branchResult.success) {
+        log(`\n❌ Failed to sync ${wt.branch} to main:`, colors.red);
+        log(branchResult.error || 'Unknown error', colors.red);
+        if (branchResult.output) {
+          log(`\nOutput:`, colors.yellow);
+          console.log(branchResult.output);
+        }
+        log(`\n🔧 Fix the issues above and try again.`, colors.yellow);
+        process.exit(1);
+      }
+      if (branchResult.output) {
+        console.log(branchResult.output);
+      }
+    }
+  } else {
+    // Sync all branches
+    const step1Result = execInDirectory(currentDir, syncCommand);
+    
+    if (!step1Result.success) {
+      log(`\n❌ Failed to sync worktrees to main:`, colors.red);
+      log(step1Result.error || 'Unknown error', colors.red);
+      if (step1Result.output) {
+        log(`\nOutput:`, colors.yellow);
+        console.log(step1Result.output);
+      }
+      log(`\n🔧 Fix the issues above and try again.`, colors.yellow);
+      process.exit(1);
+    }
+    
     if (step1Result.output) {
-      log(`\nOutput:`, colors.yellow);
       console.log(step1Result.output);
     }
-    log(`\n🔧 Fix the issues above and try again.`, colors.yellow);
-    process.exit(1);
-  }
-  
-  if (step1Result.output) {
-    console.log(step1Result.output);
   }
   
   // Step 2: Go to each worktree and pull from main
   log(`\n📤 Step 2: Distributing main to all worktrees...`, colors.bright);
   
   let allSuccess = true;
-  const results: Array<{ branch: string; success: boolean; error?: string }> = [];
+  const results: Array<{ branch: string; success: boolean; error?: string; skipped?: boolean }> = [];
   
-  for (const worktree of worktreeOnlyPaths) {
+  // If ignoring dirty, add skipped results for dirty worktrees
+  if (ignoreDirty) {
+    for (const wt of dirtyWorktrees) {
+      results.push({ branch: wt.branch!, success: true, skipped: true });
+    }
+  }
+  
+  // Only sync clean worktrees
+  const worktreesToSync = ignoreDirty ? cleanWorktrees : worktreeOnlyPaths;
+  
+  for (const worktree of worktreesToSync) {
     log(`\n🔀 Syncing ${worktree.branch}...`, colors.cyan);
     log(`   Going to: ${worktree.path}`);
     
@@ -161,9 +244,21 @@ async function main() {
   log(`Summary: ${successCount}/${results.length} worktrees synced successfully\n`);
   
   results.forEach(result => {
-    const icon = result.success ? '✅' : '❌';
-    const color = result.success ? colors.green : colors.red;
-    log(`  ${icon} ${result.branch}${result.error ? ': ' + result.error : ''}`, color);
+    let icon, color, suffix;
+    if (result.skipped) {
+      icon = '⏭️';
+      color = colors.yellow;
+      suffix = ' (skipped - dirty)';
+    } else if (result.success) {
+      icon = '✅';
+      color = colors.green;
+      suffix = '';
+    } else {
+      icon = '❌';
+      color = colors.red;
+      suffix = result.error ? ': ' + result.error : '';
+    }
+    log(`  ${icon} ${result.branch}${suffix}`, color);
   });
   
   if (!allSuccess) {
