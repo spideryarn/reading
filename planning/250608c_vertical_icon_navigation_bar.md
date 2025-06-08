@@ -40,8 +40,8 @@ Currently, the unified left pane displays navigation options as a vertical list 
 ## Stages & Actions
 
 ### Stage: Preparation
-- [ ] Run `./scripts/sync-worktrees.ts` to sync latest changes from main
-- [ ] Research and document icon choices for each navigation mode
+- [x] Run `./scripts/sync-worktrees.ts` to sync latest changes from main
+- [x] Research and document icon choices for each navigation mode
 
 ### Stage: Create Icon Navigation Component
 - [ ] Create `components/vertical-icon-nav.tsx` with basic structure
@@ -119,20 +119,42 @@ Currently, the unified left pane displays navigation options as a vertical list 
 
 ## Appendix
 
-### Proposed Icon Mapping
+### Final Icon Mapping
 
-Based on Phosphor icons that match the design aesthetic:
+Based on research of Phosphor icons library and existing usage patterns in the codebase:
 
-| Navigation Item | Icon Choice | Rationale |
-|----------------|-------------|-----------|
-| Original | `Article` or `FileText` | Represents the source document |
-| AI-generated | `Robot` or `Sparkle` | Indicates AI enhancement |
-| Summary | `ListBullets` or `TextAlignLeft` | Suggests condensed content |
-| Chat | `ChatCircle` or `ChatTeardrop` | Universal chat symbol |
-| Glossary | `BookOpen` or `BookBookmark` | Reference/dictionary metaphor |
-| Search | `MagnifyingGlass` | Standard search icon |
-| Metadata (future) | `Info` or `Tag` | Document properties |
-| Tweet Thread (future) | `TwitterLogo` or `ChatCenteredText` | Social/thread format |
+| Navigation Item | **SELECTED ICON** | Alternative | Rationale |
+|----------------|------------------|-------------|-----------|
+| **Original** | `Article` | `File`, `FileText` | Already used in codebase (line 19), represents source document clearly |
+| **AI-generated** | `Robot` | `Sparkle`, `MagicWand` | Already used in assistant-chat.tsx (line 12), universally recognized AI symbol |
+| **Summary** | `ListBullets` | `TextAlignLeft`, `ClipboardText` | Suggests condensed, organized content effectively |
+| **Chat** | `ChatCircle` | `ChatTeardrop`, `Chat` | Clean, recognizable conversation icon |
+| **Glossary** | `BookOpen` | `Book`, `Dictionary` | Reference/learning metaphor, distinct from chat |
+| **Search** | `MagnifyingGlass` | N/A | Already used in unified-left-pane.tsx (line 14), universal search icon |
+
+### Future Navigation Items
+
+| Navigation Item | **SELECTED ICON** | Alternative | Rationale |
+|----------------|------------------|-------------|-----------|
+| **Metadata** | `Info` | `Tag`, `Gear` | Already used in codebase (line 20), represents document properties |
+| **Tweet Thread** | `TwitterLogo` | `ChatCenteredText` | Already used in document-header.tsx, social/thread format |
+
+### Icon Technical Details
+
+**Weight**: `duotone` (consistent with design system)
+**Size**: 20px (standard for navigation, can scale to 16px/24px as needed)
+**Import Format**: 
+```tsx
+import { 
+  Article, Robot, ListBullets, ChatCircle, 
+  BookOpen, MagnifyingGlass, Info, TwitterLogo 
+} from '@phosphor-icons/react'
+```
+
+**Usage Pattern**:
+```tsx
+<Article size={20} weight="duotone" className="text-gray-600" />
+```
 
 ### Tooltip Content Structure
 
@@ -145,9 +167,9 @@ interface TooltipContent {
 const navigationTooltips: Record<string, TooltipContent> = {
   original: {
     title: "Original Document",
-    description: "View the unmodified source document"
+    description: "View the unmodified source document with original headings"
   },
-  aiGenerated: {
+  'ai-generated': {
     title: "AI-Generated",
     description: "View document with AI-enhanced headings and structure"
   },
@@ -157,7 +179,7 @@ const navigationTooltips: Record<string, TooltipContent> = {
   },
   chat: {
     title: "Chat",
-    description: "Ask questions about the document with AI assistance"
+    description: "Ask questions and discuss the document with AI"
   },
   glossary: {
     title: "Glossary",
@@ -205,3 +227,40 @@ From web research on best practices:
 4. **Grouped dropdown menus**: Added complexity without space savings
 
 The vertical icon rail was chosen for its proven effectiveness in professional tools, space efficiency, and scalability for future features.
+
+## Research Summary
+
+### Icon Selection Methodology (Completed 8 June 2025)
+
+**Research Approach:**
+1. **Codebase Analysis**: Examined existing Phosphor icon usage in `unified-left-pane.tsx`, `assistant-chat.tsx`, `document-header.tsx`, and other components
+2. **Icon Library Research**: Investigated Phosphor Icons duotone weight options via web search and official documentation
+3. **Consistency Assessment**: Prioritized icons already in use to maintain design consistency
+4. **Semantic Evaluation**: Selected icons that clearly represent their respective functions
+
+**Key Findings:**
+- **Existing Usage**: Many suitable icons (Article, Robot, MagnifyingGlass, Info) already imported in codebase
+- **Duotone Weight**: Available across all selected icons, supports the sophisticated visual design
+- **Professional Context**: All selected icons align with professional document reading application context
+- **Scalability**: Icon choices support future navigation additions (metadata, tweet threads)
+
+**Selected Icons Rationale:**
+- `Article` (Original): Clean document representation, already in use
+- `Robot` (AI-generated): Universal AI symbol, consistency with chat component  
+- `ListBullets` (Summary): Visually suggests organized, condensed content
+- `ChatCircle` (Chat): Balanced, professional conversation icon
+- `BookOpen` (Glossary): Clear reference/learning metaphor
+- `MagnifyingGlass` (Search): Universal search standard, already in use
+
+**Next Stage Ready**: Component creation with finalized icon specifications and tooltip content structure.
+
+### Implementation Progress (8 June 2025)
+
+**Stage: Preparation ✅ COMPLETED**
+- ✅ Synced latest changes from main branch via sync-worktrees script
+- ✅ Comprehensive icon research completed with final selections documented
+- ✅ Technical specifications defined (duotone weight, sizing, import patterns)
+- ✅ Tooltip content structure finalized with proper descriptions
+- ✅ Consistency analysis with existing codebase completed
+
+**Current Status**: Ready to proceed to component creation stage with all research and planning completed.
