@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { renderWithProviders } from './test-wrapper';
 import { UnifiedLeftPane } from '../unified-left-pane';
 import type { DocumentElement } from '@/lib/types/document';
 
@@ -290,7 +291,7 @@ describe('UnifiedLeftPane', () => {
 
   describe('Basic Rendering', () => {
     it('should render all 6 tabs correctly', () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       expect(screen.getByTestId('tab-button-original')).toBeInTheDocument();
       expect(screen.getByTestId('tab-button-ai-generated')).toBeInTheDocument();
@@ -308,14 +309,14 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should render header with title', () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       expect(screen.getByText('Navigation & Tools')).toBeInTheDocument();
     });
 
     it('should render collapse button when onToggleCollapse is provided', () => {
       const onToggleCollapse = jest.fn();
-      render(<UnifiedLeftPane {...defaultProps} onToggleCollapse={onToggleCollapse} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} onToggleCollapse={onToggleCollapse} />);
       
       const collapseButton = screen.getByTitle('Toggle sidebar (Ctrl+B)');
       expect(collapseButton).toBeInTheDocument();
@@ -323,13 +324,13 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should not render collapse button when onToggleCollapse is not provided', () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       expect(screen.queryByTitle('Toggle sidebar (Ctrl+B)')).not.toBeInTheDocument();
     });
 
     it('should render default tab content (original tab)', () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       expect(screen.getByTestId('original-headings-tab')).toBeInTheDocument();
       expect(screen.getByText('Original Headings')).toBeInTheDocument();
@@ -338,7 +339,7 @@ describe('UnifiedLeftPane', () => {
 
   describe('Tab Functionality', () => {
     it('should pass correct props to OriginalHeadingsTab', () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       const originalTab = screen.getByTestId('original-headings-tab');
       expect(originalTab).toBeInTheDocument();
@@ -347,7 +348,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should pass correct props to AIGeneratedHeadingsTab', () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       // Switch to AI-generated tab
       fireEvent.click(screen.getByTestId('tab-button-ai-generated'));
@@ -358,7 +359,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should pass correct props to DocumentSummaryTab', () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       // Switch to summary tab
       fireEvent.click(screen.getByTestId('tab-button-summary'));
@@ -369,7 +370,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should pass correct props to AssistantChat', () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       // Switch to chat tab
       fireEvent.click(screen.getByTestId('tab-button-chat'));
@@ -381,7 +382,7 @@ describe('UnifiedLeftPane', () => {
 
     it('should handle heading clicks from original tab', () => {
       const onHeadingClick = jest.fn();
-      render(<UnifiedLeftPane {...defaultProps} onHeadingClick={onHeadingClick} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} onHeadingClick={onHeadingClick} />);
       
       const headingButton = screen.getByTestId('heading-syr-root-1');
       fireEvent.click(headingButton);
@@ -391,7 +392,7 @@ describe('UnifiedLeftPane', () => {
 
     it('should handle heading clicks from AI-generated tab', () => {
       const onHeadingClick = jest.fn();
-      render(<UnifiedLeftPane {...defaultProps} onHeadingClick={onHeadingClick} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} onHeadingClick={onHeadingClick} />);
       
       // Switch to AI-generated tab
       fireEvent.click(screen.getByTestId('tab-button-ai-generated'));
@@ -406,7 +407,7 @@ describe('UnifiedLeftPane', () => {
   describe('Collapse Functionality', () => {
     it('should call onToggleCollapse when collapse button is clicked', () => {
       const onToggleCollapse = jest.fn();
-      render(<UnifiedLeftPane {...defaultProps} onToggleCollapse={onToggleCollapse} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} onToggleCollapse={onToggleCollapse} />);
       
       const collapseButton = screen.getByTitle('Toggle sidebar (Ctrl+B)');
       fireEvent.click(collapseButton);
@@ -416,7 +417,7 @@ describe('UnifiedLeftPane', () => {
 
     it('should have correct button styling for collapse button', () => {
       const onToggleCollapse = jest.fn();
-      render(<UnifiedLeftPane {...defaultProps} onToggleCollapse={onToggleCollapse} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} onToggleCollapse={onToggleCollapse} />);
       
       const collapseButton = screen.getByTitle('Toggle sidebar (Ctrl+B)');
       expect(collapseButton).toHaveAttribute('data-variant', 'ghost');
@@ -425,7 +426,7 @@ describe('UnifiedLeftPane', () => {
 
   describe('Glossary Functionality', () => {
     it('should show generate glossary prompt when showGlossary is false', () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       // Switch to glossary tab
       fireEvent.click(screen.getByTestId('tab-button-glossary'));
@@ -437,7 +438,7 @@ describe('UnifiedLeftPane', () => {
 
     it('should call onLoadGlossary when generate button is clicked', () => {
       const onLoadGlossary = jest.fn();
-      render(<UnifiedLeftPane {...defaultProps} onLoadGlossary={onLoadGlossary} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} onLoadGlossary={onLoadGlossary} />);
       
       // Switch to glossary tab (this will auto-trigger once)
       fireEvent.click(screen.getByTestId('tab-button-glossary'));
@@ -453,7 +454,7 @@ describe('UnifiedLeftPane', () => {
 
     it('should auto-load glossary when tab is activated and not loading', () => {
       const onLoadGlossary = jest.fn();
-      render(<UnifiedLeftPane {...defaultProps} onLoadGlossary={onLoadGlossary} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} onLoadGlossary={onLoadGlossary} />);
       
       // Switch to glossary tab (should trigger onActivate)
       fireEvent.click(screen.getByTestId('tab-button-glossary'));
@@ -463,7 +464,7 @@ describe('UnifiedLeftPane', () => {
 
     it('should not auto-load glossary when already loading', () => {
       const onLoadGlossary = jest.fn();
-      render(
+      renderWithProviders(
         <UnifiedLeftPane 
           {...defaultProps} 
           onLoadGlossary={onLoadGlossary} 
@@ -480,7 +481,7 @@ describe('UnifiedLeftPane', () => {
 
     it('should not auto-load glossary when already showing', () => {
       const onLoadGlossary = jest.fn();
-      render(
+      renderWithProviders(
         <UnifiedLeftPane 
           {...defaultProps} 
           onLoadGlossary={onLoadGlossary} 
@@ -495,7 +496,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should show loading state when isLoadingGlossary is true', () => {
-      render(
+      renderWithProviders(
         <UnifiedLeftPane 
           {...defaultProps} 
           isLoadingGlossary={true}
@@ -512,7 +513,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should show loading state in button when generate button is disabled', () => {
-      render(
+      renderWithProviders(
         <UnifiedLeftPane 
           {...defaultProps} 
           isLoadingGlossary={true}
@@ -529,7 +530,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should show error state when glossaryError is provided', () => {
-      render(
+      renderWithProviders(
         <UnifiedLeftPane 
           {...defaultProps} 
           glossaryError="Failed to load glossary data"
@@ -546,7 +547,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should show no entries found when glossary is empty', () => {
-      render(
+      renderWithProviders(
         <UnifiedLeftPane 
           {...defaultProps} 
           showGlossary={true}
@@ -563,7 +564,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should display glossary entities when available', () => {
-      render(
+      renderWithProviders(
         <UnifiedLeftPane 
           {...defaultProps} 
           showGlossary={true}
@@ -588,7 +589,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should display entity with correct icon and color for person type', () => {
-      render(
+      renderWithProviders(
         <UnifiedLeftPane 
           {...defaultProps} 
           showGlossary={true}
@@ -604,7 +605,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should display entity with correct icon and color for concept type', () => {
-      render(
+      renderWithProviders(
         <UnifiedLeftPane 
           {...defaultProps} 
           showGlossary={true}
@@ -620,7 +621,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should display entity aliases when available', () => {
-      render(
+      renderWithProviders(
         <UnifiedLeftPane 
           {...defaultProps} 
           showGlossary={true}
@@ -637,7 +638,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should display entity datetime when available', () => {
-      render(
+      renderWithProviders(
         <UnifiedLeftPane 
           {...defaultProps} 
           showGlossary={true}
@@ -654,7 +655,7 @@ describe('UnifiedLeftPane', () => {
 
     it('should handle entity click to scroll when entity has occurrence', async () => {
       const onScrollToEntity = jest.fn();
-      render(
+      renderWithProviders(
         <UnifiedLeftPane 
           {...defaultProps} 
           showGlossary={true}
@@ -690,7 +691,7 @@ describe('UnifiedLeftPane', () => {
         brief_explanation: 'This entity does not exist in the document'
       }];
       
-      render(
+      renderWithProviders(
         <UnifiedLeftPane 
           {...defaultProps} 
           showGlossary={true}
@@ -736,7 +737,7 @@ describe('UnifiedLeftPane', () => {
       ];
 
       const onScrollToEntity = jest.fn();
-      render(
+      renderWithProviders(
         <UnifiedLeftPane 
           {...defaultProps} 
           elements={elementsWithMissingContent}
@@ -759,7 +760,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should prefer long_explanation over brief_explanation when available', () => {
-      render(
+      renderWithProviders(
         <UnifiedLeftPane 
           {...defaultProps} 
           showGlossary={true}
@@ -790,7 +791,7 @@ describe('UnifiedLeftPane', () => {
         { name: 'Other Entity', ontology: 'other', aliases: [], brief_explanation: 'Something else' },
       ];
 
-      render(
+      renderWithProviders(
         <UnifiedLeftPane 
           {...defaultProps} 
           showGlossary={true}
@@ -815,7 +816,7 @@ describe('UnifiedLeftPane', () => {
 
   describe('Tab Container Integration', () => {
     it('should pass correct props to TabContainer', () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       const tabContainer = screen.getByTestId('tab-container');
       expect(tabContainer).toBeInTheDocument();
@@ -823,7 +824,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should set defaultTab to original', () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       // Original tab content should be visible by default
       expect(screen.getByTestId('original-headings-tab')).toBeInTheDocument();
@@ -832,7 +833,7 @@ describe('UnifiedLeftPane', () => {
     it('should use vertical orientation', () => {
       // The TabContainer mock doesn't check orientation directly,
       // but we can verify it's passed through the props
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       expect(screen.getByTestId('tab-container')).toBeInTheDocument();
     });
@@ -840,7 +841,7 @@ describe('UnifiedLeftPane', () => {
 
   describe('Search Functionality', () => {
     it('should render search tab with input field', () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       // Switch to search tab
       fireEvent.click(screen.getByTestId('tab-button-search'));
@@ -851,7 +852,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should update search query when typing', () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       // Switch to search tab
       fireEvent.click(screen.getByTestId('tab-button-search'));
@@ -863,7 +864,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should show clear button when search query is present', () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       // Switch to search tab
       fireEvent.click(screen.getByTestId('tab-button-search'));
@@ -881,7 +882,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should clear search when clear button is clicked', () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       // Switch to search tab
       fireEvent.click(screen.getByTestId('tab-button-search'));
@@ -897,7 +898,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should show no results message when search has no matches', async () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       // Switch to search tab
       fireEvent.click(screen.getByTestId('tab-button-search'));
@@ -911,7 +912,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should perform case-insensitive search', async () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       // Switch to search tab
       fireEvent.click(screen.getByTestId('tab-button-search'));
@@ -927,7 +928,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should find multiple matches in elements', async () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       // Switch to search tab
       fireEvent.click(screen.getByTestId('tab-button-search'));
@@ -944,7 +945,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should show element type in search results', async () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       // Switch to search tab
       fireEvent.click(screen.getByTestId('tab-button-search'));
@@ -959,7 +960,7 @@ describe('UnifiedLeftPane', () => {
     });
 
     it('should handle empty search query', async () => {
-      render(<UnifiedLeftPane {...defaultProps} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} />);
       
       // Switch to search tab
       fireEvent.click(screen.getByTestId('tab-button-search'));
@@ -984,7 +985,7 @@ describe('UnifiedLeftPane', () => {
 
     it('should navigate to element when clicking on search result', async () => {
       const onHeadingClick = jest.fn();
-      render(<UnifiedLeftPane {...defaultProps} onHeadingClick={onHeadingClick} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} onHeadingClick={onHeadingClick} />);
       
       // Switch to search tab
       fireEvent.click(screen.getByTestId('tab-button-search'));
@@ -1007,7 +1008,7 @@ describe('UnifiedLeftPane', () => {
 
     it('should navigate when clicking on search results with multiple matches', async () => {
       const onHeadingClick = jest.fn();
-      render(<UnifiedLeftPane {...defaultProps} onHeadingClick={onHeadingClick} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} onHeadingClick={onHeadingClick} />);
       
       // Switch to search tab
       fireEvent.click(screen.getByTestId('tab-button-search'));
@@ -1032,14 +1033,14 @@ describe('UnifiedLeftPane', () => {
   describe('Accessibility', () => {
     it('should have proper ARIA attributes on collapse button', () => {
       const onToggleCollapse = jest.fn();
-      render(<UnifiedLeftPane {...defaultProps} onToggleCollapse={onToggleCollapse} />);
+      renderWithProviders(<UnifiedLeftPane {...defaultProps} onToggleCollapse={onToggleCollapse} />);
       
       const collapseButton = screen.getByTitle('Toggle sidebar (Ctrl+B)');
       expect(collapseButton).toHaveAttribute('title', 'Toggle sidebar (Ctrl+B)');
     });
 
     it('should have proper tooltip on entity with occurrence', () => {
-      render(
+      renderWithProviders(
         <UnifiedLeftPane 
           {...defaultProps} 
           showGlossary={true}

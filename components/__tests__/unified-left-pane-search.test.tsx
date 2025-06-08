@@ -1,5 +1,6 @@
 import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
+import { renderWithProviders } from './test-wrapper'
 import userEvent from '@testing-library/user-event'
 import { UnifiedLeftPane } from '../unified-left-pane'
 import type { DocumentElement } from '@/lib/types/document'
@@ -114,14 +115,14 @@ describe('UnifiedLeftPane Search Functionality', () => {
 
   it('should initialize Mark.js on mount', () => {
     const Mark = require('mark.js')
-    render(<UnifiedLeftPane {...defaultProps} />)
+    renderWithProviders(<UnifiedLeftPane {...defaultProps} />)
     
     expect(Mark).toHaveBeenCalledWith(document.getElementById('document-viewer'))
   })
 
   it('should perform search when text is entered', async () => {
     const user = userEvent.setup()
-    render(<UnifiedLeftPane {...defaultProps} />)
+    renderWithProviders(<UnifiedLeftPane {...defaultProps} />)
     
     // Switch to search tab
     const searchTab = screen.getByText('Search')
@@ -142,7 +143,7 @@ describe('UnifiedLeftPane Search Functionality', () => {
     const Mark = require('mark.js')
     const mockMarkInstance = new Mark()
     
-    render(<UnifiedLeftPane {...defaultProps} />)
+    renderWithProviders(<UnifiedLeftPane {...defaultProps} />)
     
     // Switch to search tab
     const searchTab = screen.getByText('Search')
@@ -166,7 +167,7 @@ describe('UnifiedLeftPane Search Functionality', () => {
 
   it('should handle empty search queries', async () => {
     const user = userEvent.setup()
-    render(<UnifiedLeftPane {...defaultProps} />)
+    renderWithProviders(<UnifiedLeftPane {...defaultProps} />)
     
     // Switch to search tab
     const searchTab = screen.getByText('Search')
@@ -182,7 +183,7 @@ describe('UnifiedLeftPane Search Functionality', () => {
 
   it('should navigate to element when search result is clicked', async () => {
     const user = userEvent.setup()
-    render(<UnifiedLeftPane {...defaultProps} />)
+    renderWithProviders(<UnifiedLeftPane {...defaultProps} />)
     
     // Switch to search tab
     const searchTab = screen.getByText('Search')
@@ -207,7 +208,7 @@ describe('UnifiedLeftPane Search Functionality', () => {
 
   it('should show loading state during search', async () => {
     const user = userEvent.setup()
-    render(<UnifiedLeftPane {...defaultProps} />)
+    renderWithProviders(<UnifiedLeftPane {...defaultProps} />)
     
     // Switch to search tab
     const searchTab = screen.getByText('Search')
@@ -225,7 +226,7 @@ describe('UnifiedLeftPane Search Functionality', () => {
 
   it('should handle no results found', async () => {
     const user = userEvent.setup()
-    render(<UnifiedLeftPane {...defaultProps} />)
+    renderWithProviders(<UnifiedLeftPane {...defaultProps} />)
     
     // Switch to search tab
     const searchTab = screen.getByText('Search')
@@ -256,7 +257,7 @@ describe('UnifiedLeftPane Search Functionality', () => {
       }
     ]
     
-    render(<UnifiedLeftPane {...defaultProps} elements={elementsWithDuplicates} />)
+    renderWithProviders(<UnifiedLeftPane {...defaultProps} elements={elementsWithDuplicates} />)
     
     // Switch to search tab
     const searchTab = screen.getByText('Search')
