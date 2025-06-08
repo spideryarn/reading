@@ -10,7 +10,6 @@
 
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { AssistantChat } from './assistant-chat'
-import { TabContainer, type Tab, type TabContainerRef } from './tab-container'
 import { CircleNotch, Book, Question, Calendar, SidebarSimple, ArrowCounterClockwise, MagnifyingGlass, X, CaretDown } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { AlertWithIcon } from '@/components/ui/alert'
@@ -330,8 +329,23 @@ export function UnifiedLeftPane({
   documentContext,
   onToggleCollapse
 }: UnifiedLeftPaneProps) {
-  const tabContainerRef = useRef<TabContainerRef>(null)
-  const { actions } = useDocumentCommunication()
+  const { actions, state } = useDocumentCommunication()
+  
+  // Auto-load glossary when glossary tab is activated
+  useEffect(() => {
+    if (state.activeTabId === 'glossary' && !showGlossary && !isLoadingGlossary) {
+      onLoadGlossary()
+    }
+  }, [state.activeTabId, showGlossary, isLoadingGlossary, onLoadGlossary])
+  
+  // Auto-focus search input when search tab is activated
+  useEffect(() => {
+    if (state.activeTabId === 'search') {
+      setTimeout(() => {
+        searchInputRef.current?.focus()
+      }, 50)
+    }
+  }, [state.activeTabId])
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('')
@@ -1178,65 +1192,6 @@ export function UnifiedLeftPane({
       </div>
     )
 
-  // Define all 6 tabs at the same level
-  const tabs: Tab[] = [
-    {
-      id: 'original',
-      label: 'Original',
-      content: renderOriginalTab(),
-      onActivate: () => {
-        actions.setActiveTab('original')
-      }
-    },
-    {
-      id: 'ai-generated',
-      label: 'AI-generated',
-      content: renderAIGeneratedTab(),
-      onActivate: () => {
-        actions.setActiveTab('ai-generated')
-      }
-    },
-    {
-      id: 'summary',
-      label: 'Summary',
-      content: renderSummaryTab(),
-      onActivate: () => {
-        actions.setActiveTab('summary')
-      }
-    },
-    {
-      id: 'chat',
-      label: 'Chat',
-      content: renderChatTab(),
-      onActivate: () => {
-        actions.setActiveTab('chat')
-      }
-    },
-    {
-      id: 'glossary',
-      label: 'Glossary',
-      content: renderGlossaryTab(),
-      onActivate: () => {
-        actions.setActiveTab('glossary')
-        // Auto-load glossary when tab is activated
-        if (!showGlossary && !isLoadingGlossary) {
-          onLoadGlossary()
-        }
-      }
-    },
-    {
-      id: 'search',
-      label: 'Search',
-      content: renderSearchTab(),
-      onActivate: () => {
-        actions.setActiveTab('search')
-        // Auto-focus search input when tab is activated
-        setTimeout(() => {
-          searchInputRef.current?.focus()
-        }, 50)
-      }
-    }
-  ]
 
   return (
     <div className="h-full flex flex-col">
@@ -1256,14 +1211,15 @@ export function UnifiedLeftPane({
         )}
       </div>
       
-      {/* Tab container without its own title since we have the header */}
-      <TabContainer 
-        ref={tabContainerRef}
-        tabs={tabs}
-        defaultTab="original"
-        orientation="vertical"
-        className="text-sm flex-1"
-      />
+      {/* Direct content rendering based on active tab */}
+      <div className="flex-1 overflow-y-auto">
+        {state.activeTabId === 'original' && renderOriginalTab()}
+        {state.activeTabId === 'ai-generated' && renderAIGeneratedTab()}
+        {state.activeTabId === 'summary' && renderSummaryTab()}
+        {state.activeTabId === 'chat' && renderChatTab()}
+        {state.activeTabId === 'glossary' && renderGlossaryTab()}
+        {state.activeTabId === 'search' && renderSearchTab()}
+      </div>
     </div>
   )
 }

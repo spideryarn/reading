@@ -93,6 +93,11 @@ export function VerticalIconNav({
   onTabClick, 
   className 
 }: VerticalIconNavProps) {
+  // Platform-specific shortcut text
+  const isMac = typeof window !== 'undefined' && 
+              /Mac|iPod|iPhone|iPad/.test(window.navigator.platform)
+  const shortcutText = isMac ? 'Cmd+B' : 'Ctrl+B'
+  
   return (
     <div 
       className={cn(
@@ -148,8 +153,11 @@ export function VerticalIconNav({
                     <div className="font-semibold text-gray-900 text-sm mb-1">
                       {item.tooltip.title}
                     </div>
-                    <div className="text-gray-700 text-sm leading-relaxed">
+                    <div className="text-gray-700 text-sm leading-relaxed mb-2">
                       {item.tooltip.description}
+                    </div>
+                    <div className="text-xs text-gray-500 font-mono">
+                      Press {shortcutText} to toggle sidebar
                     </div>
                   </div>
                   <Tooltip.Arrow 
