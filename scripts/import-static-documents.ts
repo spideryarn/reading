@@ -15,7 +15,7 @@
 import { readFile, readdir } from 'fs/promises'
 import { join } from 'path'
 import { createClient } from '@supabase/supabase-js'
-import { DocumentParser } from '../lib/services/document-parser'
+import { load } from 'cheerio'
 import type { Database } from '../lib/types/database'
 
 // Load environment variables
@@ -35,18 +35,41 @@ interface ImportResult {
 
 class DocumentImporter {
   private supabase: ReturnType<typeof createClient<Database>>
-  private parser: DocumentParser
 
   constructor() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
     if (!supabaseUrl || !supabaseKey) {
       throw new Error('Missing Supabase environment variables. Please check .env.local')
     }
 
     this.supabase = createClient<Database>(supabaseUrl, supabaseKey)
-    this.parser = new DocumentParser()
+  }
+
+  /**
+   * Extract plaintext content from HTML using Cheerio
+   */
+  private extractPlaintextContent(htmlContent: string): string {
+    if (!htmlContent || htmlContent.trim() === '') {
+      throw new Error('HTML content is empty or undefined')
+    }
+
+    const $ = load(htmlContent)
+    
+    // Remove script and style elements
+    $('script, style').remove()
+    
+    // Get text content and clean it up
+    const textContent = $('body').text()
+      .replace(/\s+/g, ' ')  // Replace multiple whitespace with single space
+      .trim()
+
+    if (!textContent || textContent === '') {
+      throw new Error('No readable text content found in HTML')
+    }
+
+    return textContent
   }
 
   /**
@@ -97,7 +120,7 @@ class DocumentImporter {
       const htmlContent = await readFile(filePath, 'utf-8')
       
       // Parse HTML to get plaintext content
-      const plaintextContent = this.parser.convertToMarkdown(htmlContent)
+      const plaintextContent = this.extractPlaintextContent(htmlContent)
       
       // Calculate word count
       const wordCount = plaintextContent.trim().split(/\s+/).length
@@ -110,16 +133,37 @@ class DocumentImporter {
         .limit(1)
 
       if (existingDocs && existingDocs.length > 0) {
-        console.log(`📄 Document "${title}" already exists with ID: ${existingDocs[0].id}`)
-        result.documentId = existingDocs[0].id
+        const existingDoc = existingDocs[0]
+        console.log(`📄 Document "${title}" already exists with ID: ${existingDoc.id}, updating content...`)
+        
+        // Update existing document with HTML content
+        const { error: updateError } = await this.supabase
+          .from('documents')
+          .update({
+            html_content: htmlContent,
+            plaintext_content: plaintextContent,
+            word_count: wordCount,
+          })
+          .eq('id', existingDoc.id)
+
+        if (updateError) {
+          const errorMessage = `Update error: ${updateError.message}`
+          result.error = errorMessage
+          console.error(`💥 UPDATE ERROR for "${title}": ${errorMessage}`)
+          throw new Error(errorMessage)
+        }
+
+        result.documentId = existingDoc.id
         result.status = 'success'
+        result.wordCount = wordCount
+        console.log(`✅ Updated: "${title}" (${wordCount} words) -> ID: ${existingDoc.id}`)
         return result
       }
 
       // Generate slug from title
       const slug = this.generateSlug(filename)
 
-      // Insert new document
+      // Insert new document using system user ID
       const { data: newDoc, error } = await this.supabase
         .from('documents')
         .insert({
@@ -130,15 +174,16 @@ class DocumentImporter {
           word_count: wordCount,
           language_code: 'en',
           is_public: true,
-          // Note: created_by is optional for now (no auth)
-          // source_url could be added later if we track origins
+          created_by: '00000000-0000-0000-0000-000000000001', // System user from seed.sql
         })
         .select('id')
         .single()
 
       if (error) {
-        result.error = `Database error: ${error.message}`
-        return result
+        const errorMessage = `Database error: ${error.message}`
+        result.error = errorMessage
+        console.error(`💥 DATABASE ERROR for "${title}": ${errorMessage}`)
+        throw new Error(errorMessage)
       }
 
       result.documentId = newDoc.id
