@@ -5,6 +5,7 @@ import { POST } from '../headings/route'
 import { executePrompt } from '@/lib/prompts/types'
 import * as cheerio from 'cheerio'
 import { createMockRequest } from './test-helpers'
+import type { MockSupabaseClient } from './test-types'
 
 // Mock the dependencies
 jest.mock('@/lib/prompts/types')
@@ -68,7 +69,7 @@ describe('/api/headings', () => {
     jest.spyOn(console, 'error').mockImplementation()
     
     // Reset all service mocks to their defaults
-    mockCreateClient.mockResolvedValue({} as any)
+    mockCreateClient.mockResolvedValue({} as MockSupabaseClient)
     mockEnhancementService.get.mockResolvedValue(null) // No cached headings by default
     mockEnhancementService.storeHeadings.mockResolvedValue({})
     mockEnhancementService.delete.mockResolvedValue(true)

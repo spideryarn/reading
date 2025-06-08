@@ -8,6 +8,8 @@ import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { executePrompt } from '@/lib/prompts/types'
+import type { MockSupabaseClient, MockDocumentService, MockAiCallService, MockAiCall } from './test-types'
+import type { Database } from '@/lib/types/database'
 
 // Mock the external dependencies
 jest.mock('@/lib/supabase/server')
@@ -21,14 +23,25 @@ const MockAiCallService = AiCallService as jest.MockedClass<typeof AiCallService
 const mockExecutePrompt = executePrompt as jest.MockedFunction<typeof executePrompt>
 
 // Sample test data
-const sampleDocument = {
+const sampleDocument: Database['public']['Tables']['documents']['Row'] = {
   id: 'doc-123',
   title: 'Test Document',
   created_at: '2025-01-01T00:00:00Z',
-  updated_at: '2025-01-01T00:00:00Z'
+  updated_at: '2025-01-01T00:00:00Z',
+  content: null,
+  source_url: null,
+  source_type: null,
+  html_content: null,
+  metadata: null,
+  user_id: null,
+  slug: null,
+  ai_generated_description: null,
+  uploaded_file_path: null,
+  uploaded_file_type: null,
+  original_filename: null
 }
 
-const sampleElements = [
+const sampleElements: Database['public']['Tables']['document_elements']['Row'][] = [
   {
     id: 'elem_h1_1',
     document_id: 'doc-123',
@@ -67,9 +80,9 @@ const sampleLLMResponse = JSON.stringify({
 })
 
 describe('/api/semantic-search', () => {
-  let mockDocumentService: jest.Mocked<DocumentService>
-  let mockAiCallService: jest.Mocked<AiCallService>
-  let mockSupabase: any
+  let mockDocumentService: MockDocumentService
+  let mockAiCallService: MockAiCallService
+  let mockSupabase: MockSupabaseClient
 
   beforeEach(() => {
     // Reset all mocks
@@ -83,28 +96,28 @@ describe('/api/semantic-search', () => {
     mockDocumentService = {
       getById: jest.fn(),
       getElements: jest.fn(),
-    } as any
-    MockDocumentService.mockImplementation(() => mockDocumentService)
+    }
+    MockDocumentService.mockImplementation(() => mockDocumentService as DocumentService)
     
     // Mock AiCallService  
     mockAiCallService = {
       startCall: jest.fn(),
       completeCall: jest.fn(),
-    } as any
-    MockAiCallService.mockImplementation(() => mockAiCallService)
+    }
+    MockAiCallService.mockImplementation(() => mockAiCallService as AiCallService)
     
     // Mock successful LLM response by default
     mockExecutePrompt.mockResolvedValue(sampleLLMResponse)
     
     // Mock AI call tracking
-    mockAiCallService.startCall.mockResolvedValue({ id: 'ai-call-123' } as any)
+    mockAiCallService.startCall.mockResolvedValue({ id: 'ai-call-123' } as MockAiCall)
     mockAiCallService.completeCall.mockResolvedValue(undefined)
   })
 
   it('should process valid semantic search request successfully', async () => {
     // Setup mocks
-    mockDocumentService.getById.mockResolvedValue(sampleDocument as any)
-    mockDocumentService.getElements.mockResolvedValue(sampleElements as any)
+    mockDocumentService.getById.mockResolvedValue(sampleDocument)
+    mockDocumentService.getElements.mockResolvedValue(sampleElements)
     
     // Create request
     const request = createMockRequest('http://localhost:3000/api/semantic-search', {
@@ -185,7 +198,7 @@ describe('/api/semantic-search', () => {
   })
 
   it('should return 404 for document with no elements', async () => {
-    mockDocumentService.getById.mockResolvedValue(sampleDocument as any)
+    mockDocumentService.getById.mockResolvedValue(sampleDocument)
     mockDocumentService.getElements.mockResolvedValue([])
     
     const request = createMockRequest('http://localhost:3000/api/semantic-search', {
@@ -204,8 +217,8 @@ describe('/api/semantic-search', () => {
   })
 
   it('should handle empty semantic search results', async () => {
-    mockDocumentService.getById.mockResolvedValue(sampleDocument as any)
-    mockDocumentService.getElements.mockResolvedValue(sampleElements as any)
+    mockDocumentService.getById.mockResolvedValue(sampleDocument)
+    mockDocumentService.getElements.mockResolvedValue(sampleElements)
     mockExecutePrompt.mockResolvedValue(JSON.stringify({ matches: [] }))
     
     const request = createMockRequest('http://localhost:3000/api/semantic-search', {
@@ -225,8 +238,8 @@ describe('/api/semantic-search', () => {
   })
 
   it('should filter out invalid element IDs from LLM response', async () => {
-    mockDocumentService.getById.mockResolvedValue(sampleDocument as any)
-    mockDocumentService.getElements.mockResolvedValue(sampleElements as any)
+    mockDocumentService.getById.mockResolvedValue(sampleDocument)
+    mockDocumentService.getElements.mockResolvedValue(sampleElements)
     
     // LLM returns both valid and invalid element IDs
     const responseWithInvalidIds = JSON.stringify({
@@ -264,8 +277,8 @@ describe('/api/semantic-search', () => {
   })
 
   it('should handle LLM errors gracefully', async () => {
-    mockDocumentService.getById.mockResolvedValue(sampleDocument as any)
-    mockDocumentService.getElements.mockResolvedValue(sampleElements as any)
+    mockDocumentService.getById.mockResolvedValue(sampleDocument)
+    mockDocumentService.getElements.mockResolvedValue(sampleElements)
     mockExecutePrompt.mockRejectedValue(new Error('LLM service unavailable'))
     
     const request = createMockRequest('http://localhost:3000/api/semantic-search', {
@@ -284,8 +297,8 @@ describe('/api/semantic-search', () => {
   })
 
   it('should handle malformed JSON from LLM', async () => {
-    mockDocumentService.getById.mockResolvedValue(sampleDocument as any)
-    mockDocumentService.getElements.mockResolvedValue(sampleElements as any)
+    mockDocumentService.getById.mockResolvedValue(sampleDocument)
+    mockDocumentService.getElements.mockResolvedValue(sampleElements)
     mockExecutePrompt.mockResolvedValue('Invalid JSON response')
     
     const request = createMockRequest('http://localhost:3000/api/semantic-search', {
@@ -304,8 +317,8 @@ describe('/api/semantic-search', () => {
   })
 
   it('should strip markdown code blocks from LLM response', async () => {
-    mockDocumentService.getById.mockResolvedValue(sampleDocument as any)
-    mockDocumentService.getElements.mockResolvedValue(sampleElements as any)
+    mockDocumentService.getById.mockResolvedValue(sampleDocument)
+    mockDocumentService.getElements.mockResolvedValue(sampleElements)
     
     // LLM returns JSON wrapped in markdown code blocks
     const wrappedResponse = '```json\n' + sampleLLMResponse + '\n```'

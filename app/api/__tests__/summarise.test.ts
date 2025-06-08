@@ -5,6 +5,7 @@ import { POST } from '../summarise/route'
 import { executePrompt } from '@/lib/prompts/types'
 import { getMaxTokensForGranularity, getGranularityInstruction } from '@/lib/prompts/templates/summarise'
 import { createMockRequest } from './test-helpers'
+import type { MockSupabaseClient } from './test-types'
 
 // Mock the dependencies
 jest.mock('@/lib/prompts/types')
@@ -60,7 +61,7 @@ describe('/api/summarise', () => {
     delete process.env.LLM_PROVIDER
     
     // Set up database service mocks
-    mockCreateClient.mockResolvedValue({} as any)
+    mockCreateClient.mockResolvedValue({} as MockSupabaseClient)
     mockEnhancementService.get.mockResolvedValue(null) // No cached summary by default
     mockEnhancementService.storeSummary.mockResolvedValue({})
     mockEnhancementService.delete.mockResolvedValue(true)
