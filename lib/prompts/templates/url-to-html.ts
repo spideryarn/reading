@@ -10,13 +10,20 @@ export const urlToHtmlPromptInputSchema = z.object({
 // Schema for the expected HTML output (for validation if needed)
 export const urlToHtmlOutputSchema = z.string().min(1).describe('Clean semantic HTML extracted from webpage')
 
-// Load the URL to HTML prompt template
-export const urlToHtmlPrompt = loadMultimodalPromptTemplateFromCaller(
-  'url-to-html.njk',
-  urlToHtmlPromptInputSchema,
-  {
-    model: 'anthropic-balanced', // Use Claude 4 Sonnet for maximum accuracy
-    temperature: 0, // Deterministic for content extraction
-    maxTokens: 8000, // Allow for longer HTML output from complex webpages
-  }
-)
+// Create URL to HTML prompt template with configurable provider
+export function createUrlToHtmlPrompt(provider: 'claude' | 'gemini' = 'claude') {
+  const modelTier = provider === 'gemini' ? 'google-balanced' : 'anthropic-balanced'
+  
+  return loadMultimodalPromptTemplateFromCaller(
+    'url-to-html.njk',
+    urlToHtmlPromptInputSchema,
+    {
+      model: modelTier,
+      temperature: 0, // Deterministic for content extraction
+      maxTokens: 64000, // High limit for complex webpages and long content
+    }
+  )
+}
+
+// Default export for backward compatibility
+export const urlToHtmlPrompt = createUrlToHtmlPrompt('claude')

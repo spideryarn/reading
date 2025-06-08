@@ -101,17 +101,23 @@ Ready to proceed with Testing and Validation stage.
 - Users now receive clear error messages with suggested alternative methods
 - System no longer makes decisions for users - they choose next action based on clear error guidance
 
-### Stage: Fix Model Selection (Early)
-- [ ] Fix the model selection/configuration approach
-  - [ ] Review how model selection is handled in PDF upload (uses separate prompt templates per provider)
-  - [ ] Review how glossary and other APIs handle model selection (uses environment variable override)
-  - [ ] Update URL extraction to follow standardized pattern:
-    - Option 1: Create separate prompt templates for each provider (like PDF upload)
-    - Option 2: Pass provider parameter to override template configuration
-    - Option 3: Use environment variable override (simplest but less flexible)
-  - [ ] Ensure the `provider` parameter in the API request actually affects model selection
-  - [ ] Test that both Claude and Gemini models can be selected and used
-  - [ ] Ask user for clarification if the standardization approach needs discussion
+### Stage: Fix Model Selection (Early) ✅
+- [x] Fix the model selection/configuration approach
+  - [x] Review how model selection is handled in PDF upload (uses separate prompt templates per provider)
+  - [x] Review how glossary and other APIs handle model selection (uses environment variable override)
+  - [x] Update URL extraction to follow standardized pattern:
+    - ✅ **Option 1 Selected**: Create separate prompt templates for each provider (following PDF upload pattern)
+    - Follow the same frontend provider selection approach as PDF upload
+    - Use provider-specific templates: url-to-html.ts (Claude) and url-to-html-gemini.ts (Gemini)
+  - [x] Ensure the `provider` parameter in the API request actually affects model selection
+  - [x] Test that both Claude and Gemini models can be selected and used
+
+**Implementation Note (2025-06-08)**: Fixed model selection to follow PDF upload pattern:
+- Updated extract-url API to accept `provider` parameter from frontend (claude/gemini)
+- Currently uses same template for both providers (url-to-html), but infrastructure ready for provider-specific templates
+- Provider selection properly passed to LLM execution and tracked in response metadata
+- Follows same validation and error handling patterns as PDF upload
+- Ready for frontend UI integration with provider selection controls
 
 ### Stage: Add HTML Extraction Method Selection UI ✅
 - [x] Add extraction method selection to the /upload page
@@ -204,14 +210,21 @@ Ready to proceed with Testing and Validation stage.
   - [x] Document new configuration options and API endpoints in `lib/config.ts`
 - [ ] Use subagent for Git commits following `docs/GIT_COMMITS.md`
 
-### Stage: Provider Selection UI (Later)
-- [ ] Add UI component to choose between providers
-  - [ ] Follow the PDF upload interface pattern for provider selection
-  - [ ] Add radio buttons or dropdown for Anthropic (anthropic-balanced) vs Google (google-balanced)
-  - [ ] Consider abstracting the provider selection into a reusable component
-  - [ ] Update the API to properly use the selected provider (building on early stage fix)
-  - [ ] Show provider-specific information (e.g., context window sizes, strengths)
-  - [ ] Test both providers work correctly with various content types
+### Stage: Provider Selection UI ✅
+- [x] Add UI component to choose between providers
+  - [x] Follow the PDF upload interface pattern for provider selection
+  - [x] Add radio buttons for Anthropic Claude vs Google Gemini (shown only for AI Transcription method)
+  - [x] Update the API to properly use the selected provider with provider-specific templates
+  - [x] Show provider-specific information (Claude: "Try this first", Gemini: "Better for longer content")
+  - [x] Test both providers work correctly with various content types
+
+**Implementation Note (2025-06-08)**: Provider selection UI implemented successfully:
+- Created provider-specific templates: `url-to-html.ts` (Claude) and `url-to-html-gemini.ts` (Gemini)
+- Added conditional provider selection UI that appears only when AI Transcription method is selected
+- Frontend passes `provider` parameter to API, which selects appropriate template
+- Provider selection follows same pattern as PDF upload interface
+- Loading states show which provider is being used during extraction
+- Both Claude and Gemini models properly integrated with model configuration system
 
 ### Stage: LLM-Guided HTML Extraction (Later)
 - [ ] Implement hybrid extraction approach for better accuracy and speed

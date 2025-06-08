@@ -18,6 +18,6 @@ export const pdfToHtmlDirectPrompt = loadMultimodalPromptTemplateFromCaller(
   {
     model: 'anthropic-balanced', // Use Claude 4 Sonnet for maximum accuracy
     temperature: 0, // Deterministic for academic content conversion
-    maxTokens: 8000, // Allow for longer HTML output from multi-page PDFs
+    maxTokens: 64000, // High limit for complex PDFs and long documents
   }
 )

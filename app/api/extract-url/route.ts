@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
-import { urlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
+import { createUrlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { generateSlug } from '@/lib/utils/slug'
@@ -190,8 +190,11 @@ export async function POST(request: NextRequest) {
       // AI Transcription method
       extractionMethodUsed = 'ai-transcription'
       
+      // Create provider-specific prompt template with appropriate model configuration
+      const promptTemplate = createUrlToHtmlPrompt(provider)
+      
       try {
-        const extractResult = await executeMultimodalPromptWithUsage(urlToHtmlPrompt, {
+        const extractResult = await executeMultimodalPromptWithUsage(promptTemplate, {
           htmlContent,
           sourceUrl: url
         })

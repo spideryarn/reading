@@ -18,6 +18,6 @@ export const pdfToHtmlGeminiPrompt = loadMultimodalPromptTemplateFromCaller(
   {
     model: 'google-balanced', // Use Gemini 2.5 Pro for cost-effective processing
     temperature: 0, // Deterministic for academic content conversion
-    maxTokens: 8000, // Allow for longer HTML output from multi-page PDFs
+    maxTokens: 64000, // High limit for complex PDFs and long documents
   }
 )
