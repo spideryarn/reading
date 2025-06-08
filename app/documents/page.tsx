@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { AppHeader } from '@/components/app-header'
 import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
+import { DeleteDocumentButton } from '@/components/delete-document-button'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { generateSlug } from '@/lib/utils/slug'
@@ -63,17 +64,27 @@ export default async function DocumentsPage() {
               const slug = generateSlug(doc.title)
                 
               return (
-                <Link
+                <div
                   key={doc.id}
-                  href={`/documents/${slug}`}
-                  className="block p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  <h3 className="font-medium">{doc.title}</h3>
-                  <p className="text-sm text-gray-500">
-                    {doc.word_count ? `${doc.word_count.toLocaleString()} words` : 'No word count'}
-                    {doc.language_code && doc.language_code !== 'en' && ` • ${doc.language_code.toUpperCase()}`}
-                  </p>
-                </Link>
+                  <Link
+                    href={`/documents/${slug}`}
+                    className="flex-1 min-w-0"
+                  >
+                    <h3 className="font-medium">{doc.title}</h3>
+                    <p className="text-sm text-gray-500">
+                      {doc.word_count ? `${doc.word_count.toLocaleString()} words` : 'No word count'}
+                      {doc.language_code && doc.language_code !== 'en' && ` • ${doc.language_code.toUpperCase()}`}
+                    </p>
+                  </Link>
+                  <div className="ml-4 flex-shrink-0">
+                    <DeleteDocumentButton
+                      documentId={doc.id}
+                      documentTitle={doc.title}
+                    />
+                  </div>
+                </div>
               )
             })}
           </div>
