@@ -60,8 +60,15 @@ export function TweetThreadView({ documentContent, documentId, isActive = false,
   }
 
   const generateTweetThread = useCallback(async () => {
-    if (!documentContent.trim()) {
+    if (!documentContent || !documentContent.trim()) {
       setError('No document content available')
+      setHasGenerated(true) // Prevent infinite retries
+      return
+    }
+
+    if (documentContent.trim().length < 100) {
+      setError('Document content is too short to generate a tweet thread (minimum 100 characters)')
+      setHasGenerated(true) // Prevent infinite retries
       return
     }
 
@@ -86,6 +93,8 @@ export function TweetThreadView({ documentContent, documentId, isActive = false,
       })
 
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('API error response:', errorData)
         throw new Error(`Failed to generate tweet thread: ${response.statusText}`)
       }
 
@@ -98,6 +107,7 @@ export function TweetThreadView({ documentContent, documentId, isActive = false,
     } catch (err) {
       console.error('Error generating tweet thread:', err)
       setError(err instanceof Error ? err.message : 'Failed to generate tweet thread')
+      setHasGenerated(true) // Prevent infinite retries on error
     } finally {
       setIsLoading(false)
     }
@@ -177,7 +187,14 @@ export function TweetThreadView({ documentContent, documentId, isActive = false,
   // Auto-load cached tweet thread or generate new one when tab becomes active
   useEffect(() => {
     const loadTweetThread = async () => {
-      if (!isActive || hasGenerated || isLoading) {
+      if (!isActive || hasGenerated || isLoading || error) {
+        return
+      }
+      
+      // Check if content is valid before attempting to load/generate
+      if (!documentContent || documentContent.trim().length < 100) {
+        setError('Document content is too short to generate a tweet thread')
+        setHasGenerated(true) // Prevent infinite retries
         return
       }
       
@@ -202,13 +219,14 @@ export function TweetThreadView({ documentContent, documentId, isActive = false,
       } catch (error) {
         console.error('Error loading tweet thread:', error)
         setError('Failed to load tweet thread')
+        setHasGenerated(true) // Prevent infinite retries on error
       } finally {
         setIsLoading(false)
       }
     }
     
     loadTweetThread()
-  }, [isActive, hasGenerated, isLoading, documentId, generateTweetThread])
+  }, [isActive, hasGenerated, isLoading, documentId, documentContent, generateTweetThread, error])
 
   // Notify parent of state changes
   useEffect(() => {
