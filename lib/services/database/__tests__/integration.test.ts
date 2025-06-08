@@ -380,10 +380,10 @@ describeIfEnv('Database Service Integration Tests', () => {
         keyPoints: ['AI enhancement ready', 'Multiple features supported']
       })
 
-      const retrievedGlossary = await enhancementService.get(testDocId, 'glossary')
+      const retrievedGlossary = await enhancementService.get(testDocId, 'glossary', 'default')
       expect(retrievedGlossary?.type).toBe('glossary')
 
-      const retrievedHeadings = await enhancementService.get(testDocId, 'headings')
+      const retrievedHeadings = await enhancementService.get(testDocId, 'headings', 'default')
       expect(retrievedHeadings?.type).toBe('headings')
     })
 
@@ -393,6 +393,7 @@ describeIfEnv('Database Service Integration Tests', () => {
         documentId: testDocId,
         aiCallId: testAiCallId,
         type: 'tweet-thread',
+        subtype: 'default',
         content: {
           tweets: [
             { id: '1', text: 'AI enhancement transforms document analysis 🧠' },
@@ -408,6 +409,7 @@ describeIfEnv('Database Service Integration Tests', () => {
         documentId: testDocId,
         aiCallId: testAiCallId,
         type: 'tweet-thread',
+        subtype: 'default',
         content: {
           tweets: [
             { id: '1', text: 'Enhanced: AI analysis revolutionizes documents 🚀' },
@@ -691,9 +693,9 @@ describeIfEnv('Database Service Integration Tests', () => {
       expect(enhancementStats.byType.headings).toBeGreaterThanOrEqual(1)
 
       // Verify data relationships
-      const summaryEnhancement = await enhancementService.get(doc.id, 'summary')
-      const glossaryEnhancement = await enhancementService.get(doc.id, 'glossary')
-      const headingsEnhancement = await enhancementService.get(doc.id, 'headings')
+      const summaryEnhancement = await enhancementService.get(doc.id, 'summary', 'document')
+      const glossaryEnhancement = await enhancementService.get(doc.id, 'glossary', 'default')
+      const headingsEnhancement = await enhancementService.get(doc.id, 'headings', 'default')
       
       expect(summaryEnhancement?.ai_call_id).toBe(summaryCall.id)
       expect(glossaryEnhancement?.ai_call_id).toBe(glossaryCall.id)

@@ -306,3 +306,100 @@ The planning document does a solid job of identifying the *immediate* root cause
 **Potential future enhancement**
 
 If performance/memory ever becomes an issue, a middle-ground is to keep a tab mounted once the user has *ever* opened it (i.e. lazily cache).  A small `useRef` map keyed by tab id can achieve this without changing the public API.
+
+### Final Review After Things Seem to Be Fixed
+
+This section documents the complete journey of fixing the React hooks order violation, including the actual root cause, the implemented solution, and lessons learned.
+
+#### The Real Problem
+
+The original planning document correctly identified that tab content was being recreated on every render, but the proposed memoization solution turned out to be addressing only a symptom, not the root cause. The actual problem had multiple layers:
+
+1. **Immediate cause (discovered by o3)**: In `AIGeneratedHeadingsTab`, there was a conditional early return (`if (!showHeadings) return ...`) that occurred before a `useEffect` hook for scroll synchronization. This violated React's rule that hooks must be called in the same order every render.
+
+2. **Deeper structural issue**: The `TabContainer` component was only rendering the active tab's content, causing components to unmount and remount when switching tabs. This was the real culprit behind the hooks order violation we initially observed.
+
+3. **Related issue**: The `ResizableDocumentLayout` was conditionally rendering the entire `UnifiedLeftPane` based on collapse state, causing all tabs to lose their state when the pane was collapsed and expanded.
+
+#### The Journey to the Solution
+
+**Phase 1: Initial Misdiagnosis**
+- We initially thought the problem was that `UnifiedLeftPane` was calling render functions (e.g., `renderAIGeneratedTab()`) on every render
+- Implemented memoization using `useMemo` for all tab contents
+- This didn't fix the problem because the real issue was components being unmounted
+
+**Phase 2: o3's Intervention**
+- o3 identified the conditional hook in `AIGeneratedHeadingsTab` - a `useEffect` that was placed after an early return
+- Fixed by moving the scroll sync `useEffect` before the early return and adding a guard inside the effect
+- This fixed one manifestation of the problem but not the root cause
+
+**Phase 3: Discovering the Root Cause**
+- Through testing, we found that TabContainer was only rendering the active tab
+- This meant switching tabs completely unmounted the previous tab and mounted the new one
+- Similarly, collapsing the left pane unmounted everything
+
+**Phase 4: The Complete Fix**
+Two key changes fixed all issues:
+
+1. **Modified TabContainer** to render all tabs but hide inactive ones:
+```tsx
+// Before: Only rendered active tab
+{activeTabContent}
+
+// After: Renders all tabs, hides inactive ones
+{tabs.map((tab) => (
+  <div
+    key={tab.id}
+    style={{ display: activeTab === tab.id ? 'block' : 'none' }}
+    className="h-full"
+  >
+    {tab.content}
+  </div>
+))}
+```
+
+2. **Modified ResizableDocumentLayout** to keep UnifiedLeftPane mounted when collapsed:
+```tsx
+// Before: Conditionally rendered
+{!isLeftPaneCollapsed && (<UnifiedLeftPane ... />)}
+
+// After: Always rendered, conditionally visible
+<div style={{ display: isLeftPaneCollapsed ? 'none' : 'block', height: '100%' }}>
+  <UnifiedLeftPane ... />
+</div>
+```
+
+#### Key Lessons Learned
+
+1. **Hook order violations can have multiple causes**: While the immediate error pointed to a conditional hook, the deeper issue was component lifecycle management.
+
+2. **Memoization isn't always the answer**: Our initial instinct to memoize tab content would have been a performance optimization but didn't address the fundamental mounting/unmounting issue.
+
+3. **Display:none vs conditional rendering**: Using CSS to hide components preserves their state and lifecycle, while conditional rendering destroys and recreates them. This distinction is crucial for maintaining component state.
+
+4. **The value of external perspective**: o3's analysis helped identify the immediate conditional hook issue, which we had missed while focusing on the broader architecture.
+
+5. **Test the actual user experience**: The real test wasn't just whether the error disappeared, but whether state persisted across tab switches and pane collapses.
+
+#### What Actually Fixed It
+
+The combination of:
+1. Fixing the conditional hook order in AIGeneratedHeadingsTab (o3's fix)
+2. Keeping all tabs mounted in TabContainer 
+3. Keeping UnifiedLeftPane mounted when collapsed
+
+These changes ensure that:
+- React hooks are always called in the same order
+- Component state persists across tab switches
+- Component state persists when collapsing/expanding the pane
+- No performance degradation for typical document sizes
+
+#### Future Considerations
+
+While the current solution works well, there are potential optimizations if needed:
+- Lazy mounting with caching (mount on first use, then keep mounted)
+- Gating expensive effects based on tab visibility
+- Moving from storing React elements to component functions in the tabs array
+- Adding regression tests to prevent similar issues
+
+The implemented solution prioritizes simplicity and correctness over premature optimization, which aligns with the project's coding principles.

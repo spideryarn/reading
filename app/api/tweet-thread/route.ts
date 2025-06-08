@@ -25,7 +25,8 @@ export async function GET(request: NextRequest) {
     // Check if tweet thread already exists in database
     const existingTweetThread = await enhancementService.get(
       documentId,
-      'tweet_thread'
+      'tweet-thread',
+      'default'
     )
     
     if (existingTweetThread) {
@@ -77,7 +78,7 @@ export async function DELETE(request: NextRequest) {
     const enhancementService = new EnhancementService(supabase)
     
     // Delete tweet thread enhancement for this document
-    await enhancementService.delete(documentId, 'tweet_thread')
+    await enhancementService.delete(documentId, 'tweet-thread')
     
     return NextResponse.json({ 
       success: true,
@@ -122,7 +123,8 @@ export async function POST(request: NextRequest) {
     // Check if tweet thread already exists in database
     const existingTweetThread = await enhancementService.get(
       documentId,
-      'tweet_thread'
+      'tweet-thread',
+      'default'
     )
     
     if (existingTweetThread) {
@@ -210,7 +212,7 @@ export async function POST(request: NextRequest) {
     await enhancementService.upsert({
       documentId: documentId,
       aiCallId: aiCall.id,
-      type: 'tweet_thread',
+      type: 'tweet-thread',
       content: {
         tweets: validatedResponse.tweets,
         thread_summary: validatedResponse.thread_summary,

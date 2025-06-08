@@ -418,23 +418,21 @@ export function OriginalHeadingsTab({
 
     // Only sync if we have a current position and this tab is active
     if (commState.currentPosition?.elementId && commState.activeTabId === 'original') {
-      // Add a small delay to ensure the tab content has rendered
       scrollTimeoutRef.current = setTimeout(() => {
-        const tocElement = document.querySelector(`[data-heading-id="${commState.currentPosition.elementId}"]`)
+        const tocElement = document.querySelector(
+          `[data-heading-id="${commState.currentPosition.elementId}"]`
+        )
         if (tocElement) {
           ;(tocElement as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' })
-          
-          // Optional: Add a temporary highlight
+          // Temporary highlight for visibility
           tocElement.classList.add('bg-yellow-100')
-          setTimeout(() => {
-            tocElement.classList.remove('bg-yellow-100')
-          }, 2000)
+          setTimeout(() => tocElement.classList.remove('bg-yellow-100'), 2000)
         }
         scrollTimeoutRef.current = null
       }, 100)
     }
 
-    // Cleanup on unmount
+    // Cleanup on unmount or dependency change
     return () => {
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current)
@@ -911,6 +909,39 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
     })
   }
 
+  // Sync ToC scroll position when document position changes
+  useEffect(() => {
+    // Bail early until headings have been generated / loaded
+    if (!showHeadings) return
+
+    // Clear any pending scroll timeout
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current)
+      scrollTimeoutRef.current = null
+    }
+
+    // Only sync if we have a current position and this tab is active
+    if (commState.currentPosition?.elementId && commState.activeTabId === 'ai-generated') {
+      scrollTimeoutRef.current = setTimeout(() => {
+        const tocElement = document.querySelector(
+          `[data-heading-id="${commState.currentPosition.elementId}"]`
+        )
+        if (tocElement) {
+          ;(tocElement as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' })
+          tocElement.classList.add('bg-yellow-100')
+          setTimeout(() => tocElement.classList.remove('bg-yellow-100'), 2000)
+        }
+        scrollTimeoutRef.current = null
+      }, 100)
+    }
+
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current)
+      }
+    }
+  }, [showHeadings, commState.currentPosition, commState.activeTabId])
+
   if (!showHeadings) {
     return (
       <div className="p-4">
@@ -933,40 +964,6 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
       </div>
     )
   }
-
-  // Sync ToC scroll position when document position changes
-  useEffect(() => {
-    // Clear any pending scroll timeout
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current)
-      scrollTimeoutRef.current = null
-    }
-
-    // Only sync if we have a current position and this tab is active
-    if (commState.currentPosition?.elementId && commState.activeTabId === 'ai-generated') {
-      // Add a small delay to ensure the tab content has rendered
-      scrollTimeoutRef.current = setTimeout(() => {
-        const tocElement = document.querySelector(`[data-heading-id="${commState.currentPosition.elementId}"]`)
-        if (tocElement) {
-          ;(tocElement as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' })
-          
-          // Optional: Add a temporary highlight
-          tocElement.classList.add('bg-yellow-100')
-          setTimeout(() => {
-            tocElement.classList.remove('bg-yellow-100')
-          }, 2000)
-        }
-        scrollTimeoutRef.current = null
-      }, 100)
-    }
-
-    // Cleanup on unmount
-    return () => {
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current)
-      }
-    }
-  }, [commState.currentPosition, commState.activeTabId])
 
   return (
     <div className="p-4 h-full flex flex-col overflow-y-auto">

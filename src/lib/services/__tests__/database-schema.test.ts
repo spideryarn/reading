@@ -306,6 +306,7 @@ describe('Database Schema Tests', () => {
         .insert({
           document_id: testDocumentId,
           type: 'headings',
+          subtype: 'default',
           content: { headings: [] }
         })
         .select()
@@ -514,6 +515,7 @@ describe('Database Schema Tests', () => {
           document_id: testDocumentId,
           ai_call_id: testAiCallId,
           type: 'glossary',
+          subtype: 'default',
           content: { terms: ['test'] }
         })
         .select()
@@ -560,6 +562,7 @@ describe('Database Schema Tests', () => {
           document_id: testDocumentId,
           ai_call_id: testAiCallId,
           type: 'summary',
+          subtype: 'document',
           content: { text: 'Summary' }
         })
         .select()
