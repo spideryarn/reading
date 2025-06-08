@@ -111,7 +111,8 @@ export async function POST(request: NextRequest) {
               }
             ],
             metadata: { extractedTerms: 2 }
-          }
+          },
+          'default'
         )
 
         await aiCallService.completeCall(
@@ -160,7 +161,8 @@ export async function POST(request: NextRequest) {
               }
             ],
             metadata: { algorithm: 'semantic-analysis' }
-          }
+          },
+          'default'
         )
 
         await aiCallService.completeCall(

@@ -73,7 +73,8 @@ export async function GET(request: NextRequest) {
     // Check if headings already exist in database
     const existingHeadings = await enhancementService.get(
       documentId,
-      'headings'
+      'headings',
+      'default'
     )
     
     if (existingHeadings) {
@@ -162,7 +163,8 @@ export async function POST(request: NextRequest) {
     // Check if headings already exist in database
     const existingHeadings = await enhancementService.get(
       documentId,
-      'headings'
+      'headings',
+      'default'
     )
     
     if (existingHeadings) {
