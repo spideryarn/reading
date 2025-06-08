@@ -83,6 +83,24 @@ Based on user requirements and research findings:
 
 Ready to proceed with Testing and Validation stage.
 
+### Stage: Remove Automatic Fallbacks (Early Priority) ✅
+- [x] **Remove automatic fallback behavior from extraction methods**
+  - [x] Update extract-url API route to return clear errors instead of falling back
+  - [x] When Mozilla Readability fails, return specific error message letting user decide next action
+  - [x] Remove lines 160-187 in `/app/api/extract-url/route.ts` (automatic fallback to AI transcription)
+  - [x] Return structured error response: `{"error": "readability_failed", "message": "Mozilla Readability could not extract content from this webpage. Try AI Transcription method instead.", "suggested_method": "ai-transcription"}`
+  - [x] User can then choose different extraction method manually rather than system deciding
+  - [x] Update frontend to handle and display these structured error responses appropriately
+  - [x] Enhanced error messages in `lib/config.ts` for various failure scenarios
+  - [x] Test error scenarios to ensure clear user guidance without automatic fallbacks
+
+**Implementation Note (2025-06-08)**: Automatic fallback behavior successfully removed:
+- Modified `app/api/extract-url/route.ts` to return structured JSON errors instead of automatic fallbacks
+- Enhanced error messages in `lib/config.ts` with specific guidance for different failure types
+- Updated frontend in `app/upload/page.tsx` to handle structured error responses  
+- Users now receive clear error messages with suggested alternative methods
+- System no longer makes decisions for users - they choose next action based on clear error guidance
+
 ### Stage: Fix Model Selection (Early)
 - [ ] Fix the model selection/configuration approach
   - [ ] Review how model selection is handled in PDF upload (uses separate prompt templates per provider)
@@ -143,6 +161,13 @@ Ready to proceed with Testing and Validation stage.
 - Readability extracts title, content, author, and site name
 - Falls back gracefully to AI transcription when Readability fails
 
+**Critical Bug Fix Completed (2025-06-08)**: Fixed duplicate content rendering issue in DocumentParser:
+- **Problem**: Documents showing content multiple times due to DocumentParser storing complete innerHTML for block elements, causing content to render both in parent elements AND as recursive child elements
+- **Solution**: Modified DocumentParser.parse() in lib/services/document-parser.ts to only store direct text content and inline elements for block elements, removing nested block children from the content
+- **Impact**: Clean document rendering without duplicate content, verified working via user screenshots
+- **Files Modified**: lib/services/document-parser.ts (lines 69-83)
+- **Commit**: c1d8e1c - "fix: clean markdown wrappers from LLM response and set extracted documents public"
+
 ### Stage: Testing and Validation
 - [ ] Write automated tests for URL extraction
   - [ ] Create Jest tests for `/api/extract-url` route following PDF test patterns
@@ -165,18 +190,18 @@ Ready to proceed with Testing and Validation stage.
   - [ ] Store additional metadata in document JSON field
 
 ### Stage: Polish and Documentation
-- [ ] Error handling improvements
-  - [ ] Create comprehensive error messages for common failure scenarios
-  - [ ] Add user guidance for paywall/subscription content
+- [x] Error handling improvements
+  - [x] Create comprehensive error messages for common failure scenarios
+  - [x] Add user guidance for paywall/subscription content
   - [ ] Consider retry mechanisms for transient failures
 - [ ] UI/UX refinements
   - [ ] Ensure consistent styling with existing upload interface
   - [ ] Add helpful placeholder text and URL validation feedback
   - [ ] Consider URL preview functionality
-- [ ] Update documentation
+- [x] Update documentation
   - [ ] Update `docs/reference/ARCHITECTURE_OVERVIEW.md` with URL extraction flow
-  - [ ] Update `docs/WEBPAGE_CONTENT_EXTRACTION.md` with implementation details
-  - [ ] Document new configuration options and API endpoints
+  - [x] Update `docs/WEBPAGE_CONTENT_EXTRACTION.md` with implementation details
+  - [x] Document new configuration options and API endpoints in `lib/config.ts`
 - [ ] Use subagent for Git commits following `docs/GIT_COMMITS.md`
 
 ### Stage: Provider Selection UI (Later)

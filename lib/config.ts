@@ -130,11 +130,14 @@ export const URL_EXTRACTION_CONFIG = {
   DEFAULT_USER_AGENT: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
   ERROR_MESSAGES: {
     SIZE_LIMIT: 'Webpage content too large (max 500KB). Try a more specific URL or consider PDF upload for lengthy documents.',
-    JAVASCRIPT_REQUIRED: 'This webpage requires JavaScript for content rendering and cannot be processed.',
+    JAVASCRIPT_REQUIRED: 'This webpage requires JavaScript for content rendering and cannot be processed. Try using the AI Transcription method instead, or consider uploading the content as a PDF.',
     INVALID_URL: 'Please enter a valid HTTP or HTTPS URL.',
-    FETCH_FAILED: 'Unable to fetch webpage content. The site may be blocking automated access.',
-    TIMEOUT: 'Request timed out while fetching webpage content.',
-    NETWORK_ERROR: 'Network error occurred while fetching webpage content.'
+    FETCH_FAILED: 'Unable to fetch webpage content. The site may be blocking automated access or require authentication.',
+    TIMEOUT: 'Request timed out while fetching webpage content. The webpage may be slow to respond or contain large resources.',
+    NETWORK_ERROR: 'Network error occurred while fetching webpage content. Please check your internet connection and try again.',
+    READABILITY_FAILED: 'Mozilla Readability could not extract content from this webpage. The page may have unusual formatting or be primarily JavaScript-based. Try the AI Transcription method instead.',
+    PAYWALL_DETECTED: 'This webpage appears to be behind a paywall or requires subscription access. Please ensure you have access to the content before extracting.',
+    CONTENT_TOO_SPARSE: 'This webpage contains insufficient extractable content. The page may be primarily navigation, advertisements, or interactive elements.'
   }
 } as const
 

@@ -236,6 +236,30 @@ async function llmCleanContent(rawContent: string, prompt: string) {
 - **AI**: Anthropic Claude models via API routes
 - **Processing**: Frontend-driven queue with API calls
 
+### Current Implementation (2025-06-08)
+
+**Spideryarn Reading URL Extraction** (`app/api/extract-url/route.ts`):
+- **Method Selection**: User chooses between Mozilla Readability, AI Transcription, or AI DOM Manipulation (not implemented)
+- **No Automatic Fallbacks**: When selected method fails, returns structured error with suggested alternative rather than automatically falling back
+- **Error Handling**: Comprehensive error messages with specific guidance for different failure scenarios
+- **Document Integration**: Auto-saves extracted content as full document with slug-based routing
+- **Performance**: Mozilla Readability ~100-400ms vs AI Transcription ~30+ seconds
+
+**Implementation Files**:
+- `app/api/extract-url/route.ts` - Main extraction API endpoint
+- `lib/utils/readability-extractor.ts` - Mozilla Readability integration
+- `lib/prompts/templates/url-to-html.njk` - AI transcription prompt template
+- `app/upload/page.tsx` - Unified document addition interface
+- `lib/config.ts` - URL extraction configuration and error messages
+
+**Current Capabilities**:
+- ✅ Mozilla Readability extraction (fast, reliable for standard articles)
+- ✅ AI Transcription via Claude/Gemini (high quality, slow, expensive)  
+- ✅ Size limits (500KB) with clear error handling
+- ✅ JavaScript detection and appropriate error responses
+- ✅ Structured error responses for method failures
+- ⏸️ AI DOM Manipulation (placeholder, returns not implemented error)
+
 ### Recommended Architecture Pattern
 
 ```typescript
