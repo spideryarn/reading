@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { executePrompt } from '@/lib/prompts/types'
+import { executePromptWithUsage } from '@/lib/prompts/types'
 import { tweetThreadPrompt, tweetThreadPromptInputSchema, tweetThreadResponseSchema } from '@/lib/prompts/templates/tweet-thread'
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
@@ -150,14 +150,14 @@ export async function POST(request: NextRequest) {
     const modelConfig = getModelConfig()
     
     // Generate tweet thread using LLM template
-    const llmResponse = await executePrompt(tweetThreadPrompt, {
+    const llmResult = await executePromptWithUsage(tweetThreadPrompt, {
       content: content,
       target_length,
       documentId
     })
 
     // Handle markdown code blocks in LLM response
-    let jsonString = llmResponse.trim()
+    let jsonString = llmResult.text.trim()
     if (jsonString.startsWith('```json')) {
       jsonString = jsonString.slice(7)
     }
@@ -192,13 +192,13 @@ export async function POST(request: NextRequest) {
       metadata
     }
     
-    // Store AI call in database for tracking
+    // Store AI call in database for tracking with usage metadata
     const aiCall = await aiCallService.create({
       provider: modelConfig.provider,
       modelId: modelConfig.modelId,
-      promptTokens: null, // Not available from executePrompt
-      completionTokens: null,
-      totalTokens: null,
+      promptTokens: llmResult.usage.promptTokens,
+      completionTokens: llmResult.usage.completionTokens,
+      totalTokens: llmResult.usage.totalTokens,
       requestData: {
         content: content,
         target_length

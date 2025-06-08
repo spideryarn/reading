@@ -2,7 +2,7 @@
 // See planning/250606a_semantic_search_implementation.md for architecture details
 
 import { NextRequest, NextResponse } from 'next/server'
-import { executePrompt } from '@/lib/prompts/types'
+import { executePromptWithUsage } from '@/lib/prompts/types'
 import { 
   semanticSearchPrompt, 
   semanticSearchApiInputSchema, 
@@ -123,14 +123,14 @@ export async function POST(request: NextRequest) {
     })
     
     // Execute semantic search prompt with LLM
-    const llmResponse = await executePrompt(semanticSearchPrompt, { 
+    const llmResult = await executePromptWithUsage(semanticSearchPrompt, { 
       content: annotatedContent,
       query,
       documentId
     })
     
     // Parse the JSON response from LLM with improved robustness
-    let jsonString = llmResponse.trim()
+    let jsonString = llmResult.text.trim()
     
     // Strip markdown code blocks if present
     if (jsonString.startsWith('```json')) {
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
       parsedResponse = JSON.parse(jsonString)
     } catch (parseError) {
       console.error(`[SemanticSearch] JSON parse error for query "${query}":`, parseError)
-      console.error(`[SemanticSearch] Raw LLM response length: ${llmResponse.length}`)
+      console.error(`[SemanticSearch] Raw LLM response length: ${llmResult.text.length}`)
       console.error(`[SemanticSearch] Cleaned JSON string length: ${jsonString.length}`)
       
       // Try to extract JSON from the response if it's embedded in other text
@@ -191,14 +191,16 @@ export async function POST(request: NextRequest) {
       console.warn(`[SemanticSearch] Filtered ${filteredCount} matches: ${invalidIdCount} invalid element IDs, ${lowConfidenceCount} low confidence (<0.25)`)
     }
     
-    // Complete the AI call record
+    // Complete the AI call record with usage metadata
     await aiCallService.completeCall(aiCall.id, {
       output_data: {
         matches_found: validMatches.length,
         total_matches_returned: validatedResponse.matches.length,
         invalid_ids_filtered: validatedResponse.matches.length - validMatches.length,
         processing_notes: 'Semantic search completed successfully'
-      }
+      },
+      usage: llmResult.usage,
+      finishReason: llmResult.finishReason
     })
     
     console.log(`[SemanticSearch] Found ${validMatches.length} semantic matches for query: "${query}"`)

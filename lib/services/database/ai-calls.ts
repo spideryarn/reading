@@ -6,6 +6,7 @@ import type {
   CallStatus,
   PromptType
 } from '@/lib/types/database'
+import type { PromptUsage } from '@/lib/prompts/types'
 
 export interface AiCallMetrics {
   promptTokens: number
@@ -90,7 +91,11 @@ export class AiCallService {
    */
   async completeCall(
     id: string,
-    data: { output_data?: Record<string, any> }
+    data: { 
+      output_data?: Record<string, any>
+      usage?: PromptUsage
+      finishReason?: string
+    }
   ): Promise<AiCall | null> {
     // Validate UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -100,13 +105,31 @@ export class AiCallService {
 
     const completedAt = new Date().toISOString()
     
+    // Build update object with usage metadata if provided
+    const updateData: any = {
+      status: 'success',
+      completed_at: completedAt,
+      extra: data.output_data || {},
+    }
+    
+    // Add usage metadata if provided
+    if (data.usage) {
+      updateData.prompt_tokens = data.usage.promptTokens
+      updateData.completion_tokens = data.usage.completionTokens
+      updateData.total_tokens = data.usage.totalTokens
+      if (data.usage.reasoningTokens !== undefined) {
+        updateData.reasoning_tokens = data.usage.reasoningTokens
+      }
+    }
+    
+    // Add finish reason if provided
+    if (data.finishReason) {
+      updateData.finish_reason = data.finishReason
+    }
+    
     const { data: result, error } = await this.supabase
       .from('ai_calls')
-      .update({
-        status: 'success',
-        completed_at: completedAt,
-        extra: data.output_data || {},
-      })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single()
@@ -253,8 +276,8 @@ export class AiCallService {
         let cost = 0
         if (model && call.prompt_tokens && call.completion_tokens) {
           cost = 
-            (call.prompt_tokens * (model.input_cost_per_1k || 0) / 1000) +
-            (call.completion_tokens * (model.output_cost_per_1k || 0) / 1000)
+            (call.prompt_tokens * (model.input_token_cost || 0)) +
+            (call.completion_tokens * (model.output_token_cost || 0))
         }
 
         acc.totalCalls++

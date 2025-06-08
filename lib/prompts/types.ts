@@ -6,6 +6,20 @@ import { generateText } from 'ai'
 import { AI_CONFIG, type ProviderTierKey } from '@/lib/config'
 import { getModel } from '@/lib/services/llm-provider'
 
+// Types for enhanced prompt execution with usage metadata
+export interface PromptUsage {
+  promptTokens: number
+  completionTokens: number
+  totalTokens: number
+  reasoningTokens?: number
+}
+
+export interface PromptExecutionResult {
+  text: string
+  usage: PromptUsage
+  finishReason: string
+}
+
 // Configure Nunjucks with strict mode
 const env = nunjucks.configure({
   autoescape: false,
@@ -72,7 +86,7 @@ export function loadPromptTemplateFromCaller<T extends z.ZodSchema>(
 async function executePromptInternal<T extends z.ZodSchema>(
   template: PromptTemplate<T>,
   variables: z.infer<T>
-): Promise<string> {
+): Promise<PromptExecutionResult> {
   // Validate variables against schema
   const validated = template.schema.parse(variables)
   
@@ -96,14 +110,33 @@ async function executePromptInternal<T extends z.ZodSchema>(
     temperature: template.modelConfig?.temperature ?? AI_CONFIG.DEFAULT_TEMPERATURE,
   })
   
-  return result.text
+  // Return enhanced result with usage metadata
+  return {
+    text: result.text,
+    usage: {
+      promptTokens: result.usage?.promptTokens || 0,
+      completionTokens: result.usage?.completionTokens || 0,
+      totalTokens: result.usage?.totalTokens || 0,
+      reasoningTokens: result.usage?.reasoningTokens
+    },
+    finishReason: result.finishReason || 'unknown'
+  }
 }
 
-// Execute a prompt with validation and rendering
+// Execute a prompt with validation and rendering (backward compatible - returns only text)
 export async function executePrompt<T extends z.ZodSchema>(
   template: PromptTemplate<T>,
   variables: z.infer<T>
 ): Promise<string> {
+  const result = await executePromptInternal(template, variables)
+  return result.text
+}
+
+// Execute a prompt with validation and rendering (enhanced - returns text + usage metadata)
+export async function executePromptWithUsage<T extends z.ZodSchema>(
+  template: PromptTemplate<T>,
+  variables: z.infer<T>
+): Promise<PromptExecutionResult> {
   return executePromptInternal(template, variables)
 }
 
@@ -145,11 +178,11 @@ export interface MultimodalPromptTemplate<T extends z.ZodSchema> {
   }
 }
 
-// Execute a multimodal prompt with support for images and messages
-export async function executeMultimodalPrompt<T extends z.ZodSchema>(
+// Internal implementation for multimodal prompts
+async function executeMultimodalPromptInternal<T extends z.ZodSchema>(
   template: MultimodalPromptTemplate<T>,
   variables: z.infer<T>
-): Promise<string> {
+): Promise<PromptExecutionResult> {
   // Validate variables against schema
   const validated = template.schema.parse(variables)
   
@@ -204,7 +237,34 @@ export async function executeMultimodalPrompt<T extends z.ZodSchema>(
     temperature: template.modelConfig?.temperature ?? AI_CONFIG.DEFAULT_TEMPERATURE,
   })
   
+  // Return enhanced result with usage metadata
+  return {
+    text: result.text,
+    usage: {
+      promptTokens: result.usage?.promptTokens || 0,
+      completionTokens: result.usage?.completionTokens || 0,
+      totalTokens: result.usage?.totalTokens || 0,
+      reasoningTokens: result.usage?.reasoningTokens
+    },
+    finishReason: result.finishReason || 'unknown'
+  }
+}
+
+// Execute a multimodal prompt with support for images and messages (backward compatible - returns only text)
+export async function executeMultimodalPrompt<T extends z.ZodSchema>(
+  template: MultimodalPromptTemplate<T>,
+  variables: z.infer<T>
+): Promise<string> {
+  const result = await executeMultimodalPromptInternal(template, variables)
   return result.text
+}
+
+// Execute a multimodal prompt with support for images and messages (enhanced - returns text + usage metadata)
+export async function executeMultimodalPromptWithUsage<T extends z.ZodSchema>(
+  template: MultimodalPromptTemplate<T>,
+  variables: z.infer<T>
+): Promise<PromptExecutionResult> {
+  return executeMultimodalPromptInternal(template, variables)
 }
 
 // Helper function to auto-resolve template path for multimodal templates

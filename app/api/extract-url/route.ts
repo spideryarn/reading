@@ -4,7 +4,7 @@
 // Uses fetch-then-LLM approach since LLMs cannot fetch URLs directly
 
 import { NextRequest, NextResponse } from 'next/server'
-import { executeMultimodalPrompt } from '@/lib/prompts/types'
+import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { urlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
@@ -141,10 +141,11 @@ export async function POST(request: NextRequest) {
     let extractedHtml: string
     
     try {
-      extractedHtml = await executeMultimodalPrompt(urlToHtmlPrompt, {
+      const extractResult = await executeMultimodalPromptWithUsage(urlToHtmlPrompt, {
         htmlContent,
         sourceUrl: url
       })
+      extractedHtml = extractResult.text
     } catch (error) {
       console.error('LLM extraction error:', error)
       
