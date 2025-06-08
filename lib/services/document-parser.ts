@@ -66,12 +66,19 @@ export class DocumentParser {
         // For inline elements, get text content only
         textContent = $el.text().trim()
       } else {
-        // For block elements, preserve the inner HTML
-        // This maintains links, emphasis, and other inline formatting
-        const innerHtml = $el.html() || ''
+        // For block elements, only get direct text content and inline elements
+        // Clone the element to avoid modifying the original
+        const $clone = $el.clone()
         
-        // TODO: Add HTML sanitization here with a library like DOMPurify
-        // For now, we'll use the raw HTML (safe in our controlled environment)
+        // Remove all block-level children from the clone
+        $clone.children().each((_, child) => {
+          if (!DocumentParser.INLINE_ELEMENTS.has(child.name)) {
+            $(child).remove()
+          }
+        })
+        
+        // Get the remaining HTML (just text and inline elements)
+        const innerHtml = $clone.html() || ''
         textContent = innerHtml.trim()
       }
 
