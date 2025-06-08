@@ -153,7 +153,7 @@ export class EnhancementService {
   }
 
   /**
-   * Store document summary
+   * Store document summary (single-dimension, legacy)
    */
   async storeSummary(
     documentId: string,
@@ -172,6 +172,107 @@ export class EnhancementService {
       subtype: granularity || 'document',
       content: summary,
     })
+  }
+
+  /**
+   * Store multi-dimensional summary (3x3 expertise × length matrix)
+   * 
+   * Content structure:
+   * {
+   *   beginner: { 
+   *     sentence_or_two: "...", 
+   *     single_short_paragraph: "...", 
+   *     page: "..." 
+   *   },
+   *   intermediate: { 
+   *     sentence_or_two: "...", 
+   *     single_short_paragraph: "...", 
+   *     page: "..." 
+   *   },
+   *   expert: { 
+   *     sentence_or_two: "...", 
+   *     single_short_paragraph: "...", 
+   *     page: "..." 
+   *   }
+   * }
+   */
+  async storeMultiSummary(
+    documentId: string,
+    aiCallIds: { [key: string]: string }, // Map of combination keys to AI call IDs
+    summaries: {
+      beginner: {
+        sentence_or_two: string
+        single_short_paragraph: string
+        page: string
+      }
+      intermediate: {
+        sentence_or_two: string
+        single_short_paragraph: string
+        page: string
+      }
+      expert: {
+        sentence_or_two: string
+        single_short_paragraph: string
+        page: string
+      }
+    },
+    metadata?: JsonObject
+  ): Promise<DocumentEnhancement> {
+    // Use the first AI call ID as the primary reference
+    const primaryAiCallId = Object.values(aiCallIds)[0]
+    
+    return await this.upsert({
+      documentId,
+      aiCallId: primaryAiCallId,
+      type: 'summary',
+      subtype: 'multi-dimensional',
+      content: {
+        summaries,
+        ai_call_mapping: aiCallIds,
+        metadata: {
+          ...metadata,
+          generatedAt: new Date().toISOString(),
+          totalCombinations: 9,
+          expertiseLevels: ['beginner', 'intermediate', 'expert'],
+          lengthLevels: ['sentence_or_two', 'single_short_paragraph', 'page']
+        }
+      },
+    })
+  }
+
+  /**
+   * Get multi-dimensional summary
+   */
+  async getMultiSummary(documentId: string): Promise<{
+    beginner: {
+      sentence_or_two: string
+      single_short_paragraph: string
+      page: string
+    }
+    intermediate: {
+      sentence_or_two: string
+      single_short_paragraph: string
+      page: string
+    }
+    expert: {
+      sentence_or_two: string
+      single_short_paragraph: string
+      page: string
+    }
+  } | null> {
+    const enhancement = await this.get(documentId, 'summary', 'multi-dimensional')
+    
+    if (!enhancement || !enhancement.content) {
+      return null
+    }
+    
+    // Validate the structure
+    const content = enhancement.content as { summaries?: unknown }
+    if (!content.summaries) {
+      throw new Error(`Malformed multi-dimensional summary data: missing summaries field`)
+    }
+    
+    return content.summaries
   }
 
   /**
