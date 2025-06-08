@@ -1,7 +1,27 @@
+import { redirect } from 'next/navigation'
 import { AppHeader } from "@/components/app-header"
 import { LoginForm } from "@/components/auth/login-form"
+import { getUser } from "@/lib/auth/server-auth"
 
-export default function LoginPage() {
+interface LoginPageProps {
+  searchParams: { [key: string]: string | string[] | undefined }
+}
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const { user } = await getUser()
+  
+  // If user is already logged in, redirect them
+  if (user) {
+    const nextUrl = typeof searchParams.next === 'string' ? searchParams.next : null
+    
+    // Basic validation: ensure it's a relative URL to prevent open redirects
+    if (nextUrl && nextUrl.startsWith('/') && !nextUrl.startsWith('//') && !nextUrl.startsWith('/auth/')) {
+      redirect(nextUrl)
+    } else {
+      redirect('/')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <AppHeader />
