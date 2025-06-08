@@ -63,7 +63,7 @@ describe('usePersistentChat', () => {
       mockAiCallService.getModelUuidByProviderAndId.mockResolvedValue(mockModelUuid);
       mockChatService.listThreadsByDocument.mockResolvedValue([]);
 
-      const { result } = renderHook(() => 
+      renderHook(() => 
         usePersistentChat({ documentId: mockDocumentId, documentContext: mockDocumentContext })
       );
 

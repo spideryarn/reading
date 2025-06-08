@@ -5,14 +5,15 @@ import type {
   DocumentEnhancementInsert,
   EnhancementType 
 } from '@/lib/types/database'
+import type { JsonObject } from '@/lib/types/json'
 
 export interface CreateEnhancementOptions {
   documentId: string
   aiCallId: string
   type: EnhancementType
   subtype: string
-  content: Record<string, any>
-  extra?: Record<string, any>
+  content: JsonObject
+  extra?: JsonObject
 }
 
 export class EnhancementService {
@@ -160,7 +161,7 @@ export class EnhancementService {
     summary: {
       text: string
       keyPoints?: string[]
-      metadata?: Record<string, any>
+      metadata?: JsonObject
     },
     granularity?: string
   ): Promise<DocumentEnhancement> {
@@ -190,7 +191,7 @@ export class EnhancementService {
         url?: string
         extra?: Record<string, unknown>
       }>
-      metadata?: Record<string, any>
+      metadata?: JsonObject
     }
   ): Promise<DocumentEnhancement> {
     return await this.upsert({
@@ -216,7 +217,7 @@ export class EnhancementService {
         parentId?: string
         elementId?: string
       }>
-      metadata?: Record<string, any>
+      metadata?: JsonObject
     }
   ): Promise<DocumentEnhancement> {
     return await this.upsert({
@@ -240,7 +241,7 @@ export class EnhancementService {
         text: string
         mediaHint?: string
       }>
-      metadata?: Record<string, any>
+      metadata?: JsonObject
     }
   ): Promise<DocumentEnhancement> {
     return await this.upsert({

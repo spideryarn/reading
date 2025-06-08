@@ -7,6 +7,7 @@ import type {
   PromptType
 } from '@/lib/types/database'
 import type { PromptUsage } from '@/lib/prompts/types'
+import type { JsonObject } from '@/lib/types/json'
 
 export interface AiCallMetrics {
   promptTokens: number
@@ -21,8 +22,8 @@ export interface CreateAiCallOptions {
   provider: 'anthropic' | 'google'
   modelId: string
   prompt_type: PromptType
-  input_data?: Record<string, any>
-  extra?: Record<string, any>
+  input_data?: JsonObject
+  extra?: JsonObject
 }
 
 export interface SimpleCreateAiCallOptions {
@@ -31,8 +32,8 @@ export interface SimpleCreateAiCallOptions {
   promptTokens?: number | null
   completionTokens?: number | null
   totalTokens?: number | null
-  requestData?: Record<string, any>
-  responseData?: Record<string, any>
+  requestData?: JsonObject
+  responseData?: JsonObject
 }
 
 export class AiCallService {
@@ -92,7 +93,7 @@ export class AiCallService {
   async completeCall(
     id: string,
     data: { 
-      output_data?: Record<string, any>
+      output_data?: JsonObject
       usage?: PromptUsage
       finishReason?: string
     }
@@ -106,7 +107,7 @@ export class AiCallService {
     const completedAt = new Date().toISOString()
     
     // Build update object with usage metadata if provided
-    const updateData: any = {
+    const updateData: Partial<AiCallInsert> = {
       status: 'success',
       completed_at: completedAt,
       extra: data.output_data || {},
@@ -151,7 +152,7 @@ export class AiCallService {
     id: string,
     errorMessage: string,
     errorCode?: string,
-    extra?: Record<string, any>
+    extra?: JsonObject
   ): Promise<AiCall> {
     const { data, error } = await this.supabase
       .from('ai_calls')
@@ -263,14 +264,14 @@ export class AiCallService {
         totalCalls: 0,
         totalTokens: 0,
         totalCost: 0,
-        byPromptType: {} as any,
+        byPromptType: {} as Record<PromptType, { calls: number; tokens: number }>,
       }
     }
 
     const stats = data.reduce(
       (acc, call) => {
         const tokens = call.total_tokens || 0
-        const model = call.ai_models as any
+        const model = call.ai_models as Database['public']['Tables']['ai_models']['Row'] | null
 
         // Calculate cost if model has pricing info
         let cost = 0
@@ -358,7 +359,19 @@ export class AiCallService {
   /**
    * Helper to extract metrics from Vercel AI SDK response
    */
-  extractMetricsFromAiResponse(response: any): AiCallMetrics {
+  extractMetricsFromAiResponse(response: {
+    usage?: {
+      promptTokens?: number
+      completionTokens?: number
+      totalTokens?: number
+    }
+    experimental_providerMetadata?: {
+      latency?: number
+    }
+    finishTimestamp?: number
+    startTimestamp?: number
+    finishReason?: string
+  }): AiCallMetrics {
     // Based on Vercel AI SDK structure
     const usage = response.usage || {}
     const latency = response.experimental_providerMetadata?.latency || 

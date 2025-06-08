@@ -86,7 +86,7 @@ export class DocumentService {
 
     // Filter out invalid fields like 'metadata' that don't exist in the schema
     const validUpdates = { ...updates }
-    delete (validUpdates as any).metadata
+    delete (validUpdates as Record<string, unknown>).metadata
 
     const { data, error } = await this.supabase
       .from('documents')

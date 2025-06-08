@@ -10,7 +10,6 @@
  * These tests focus on user ownership functionality and UUID validation.
  */
 
-import { createClient } from '@/lib/supabase/client'
 import { DocumentService } from '../documents'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database, Document } from '@/lib/types/database'

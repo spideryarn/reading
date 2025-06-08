@@ -4,7 +4,6 @@
 
 import { convertPdfToBase64Image, validatePdfBuffer } from '../pdf-converter'
 import fs from 'fs'
-import path from 'path'
 
 // Mock pdf2pic to avoid system dependencies in tests
 jest.mock('pdf2pic', () => {
@@ -18,8 +17,9 @@ jest.mock('pdf2pic', () => {
   }
 })
 
+import mockPdf2pic from 'pdf2pic'
+
 describe('PDF Converter (V1 Legacy - Image-based)', () => {
-  const mockPdf2pic = require('pdf2pic').default
   
   beforeEach(() => {
     jest.clearAllMocks()
