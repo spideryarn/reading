@@ -130,9 +130,6 @@ export async function POST(request: NextRequest) {
     const urlObject = new URL(url)
     const defaultTitle = providedTitle || `Document from ${urlObject.hostname}`
     
-    // Generate slug for the document
-    const slug = generateSlug(defaultTitle)
-    
     const providerDisplayName = provider === 'gemini' ? 'Gemini 1.5 Pro' : 'Claude 4 Sonnet'
     
     console.log(`Step 3: Extracting content using ${providerDisplayName}...`)
@@ -146,6 +143,13 @@ export async function POST(request: NextRequest) {
         sourceUrl: url
       })
       extractedHtml = extractResult.text
+      
+      // Clean up any markdown wrapping from LLM response
+      extractedHtml = extractedHtml
+        .replace(/^```html\s*\n?/, '')
+        .replace(/\n?```\s*$/, '')
+        .trim()
+        
     } catch (error) {
       console.error('LLM extraction error:', error)
       
@@ -175,6 +179,9 @@ export async function POST(request: NextRequest) {
     const extractedTitle = titleMatch ? titleMatch[1].replace(/<[^>]*>/g, '').trim() : null
     const finalTitle = providedTitle || extractedTitle || defaultTitle
     
+    // Generate final slug from the actual title (not the default title)
+    const finalSlug = generateSlug(finalTitle)
+    
     console.log('Step 5: Creating document with database integration...')
     
     // Create document in database (no file storage for URLs)
@@ -184,9 +191,9 @@ export async function POST(request: NextRequest) {
         title: finalTitle,
         html_content: extractedHtml,
         plaintext_content: plaintext,
-        slug,
+        slug: finalSlug,
         source_url: url,
-        is_public: false,
+        is_public: true,
         word_count: plaintext.split(/\s+/).length
       },
       null, // No file for URL-based documents

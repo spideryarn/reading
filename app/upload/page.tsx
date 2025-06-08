@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppHeader } from '@/components/app-header'
 import { Footer } from '@/components/footer'
@@ -24,6 +24,22 @@ export default function AddDocumentPage() {
   const [isDragging, setIsDragging] = useState(false)
   const [selectedProvider, setSelectedProvider] = useState<'claude' | 'gemini'>('claude')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const urlInputRef = useRef<HTMLInputElement>(null)
+
+  // Autofocus on URL input when URL tab is active
+  useEffect(() => {
+    if (activeTab === 'url' && urlInputRef.current) {
+      urlInputRef.current.focus()
+    }
+  }, [activeTab])
+
+  // Handle ENTER key submission for URL input
+  const handleUrlKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && url.trim() && isValidUrl(url.trim())) {
+      e.preventDefault()
+      handleUrlSubmit()
+    }
+  }
   
   // URL validation helper
   const isValidUrl = (urlString: string): boolean => {
@@ -66,7 +82,7 @@ export default function AddDocumentPage() {
 
       const result = await response.json()
       // Navigate to the document page using the slug
-      router.push(`/documents/${result.slug}`)
+      router.push(`/documents/${result.document.slug}`)
     } catch (error) {
       setUrlError(error instanceof Error ? error.message : 'Unknown error occurred')
     } finally {
@@ -182,7 +198,7 @@ export default function AddDocumentPage() {
 
       const result = await response.json()
       // Navigate to the document page using the slug
-      router.push(`/documents/${result.slug}`)
+      router.push(`/documents/${result.document.slug}`)
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Unknown error occurred')
     } finally {
@@ -236,6 +252,7 @@ export default function AddDocumentPage() {
                       Website URL
                     </label>
                     <input
+                      ref={urlInputRef}
                       id="url-input"
                       type="url"
                       value={url}
@@ -243,12 +260,13 @@ export default function AddDocumentPage() {
                         setUrl(e.target.value)
                         setUrlError('') // Clear error on input change
                       }}
+                      onKeyDown={handleUrlKeyDown}
                       placeholder="https://example.com/article"
                       disabled={isExtractingUrl}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <p className="text-xs text-gray-500 mt-2">
-                      Enter a URL to extract and save the webpage content. Supports articles, blog posts, and most text-based web content.
+                      Enter a URL to extract and save the webpage content. Supports articles, blog posts, and most text-based web content. Press ENTER to submit when URL is valid.
                     </p>
                   </div>
 
