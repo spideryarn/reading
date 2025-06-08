@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { generateSlug } from '@/lib/utils/slug'
 import { URL_EXTRACTION_CONFIG } from '@/lib/config'
+import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
 
 // Mock user ID for development (matches database mock user)
 const MOCK_USER_ID = '00000000-0000-0000-0000-000000000001'
@@ -149,34 +150,54 @@ export async function POST(request: NextRequest) {
     let extractionMethodUsed: string
     
     if (extractionMethod === 'readability') {
-      // Mozilla Readability extraction (placeholder for now)
-      // TODO: Implement Readability.js extraction in next stage
-      console.log('Note: Readability extraction not yet implemented, falling back to AI transcription')
-      extractionMethodUsed = 'ai-transcription-fallback'
+      // Mozilla Readability extraction - fast and reliable
+      console.log('Using Mozilla Readability for extraction')
+      extractionMethodUsed = 'readability'
       
-      // For now, fall back to AI transcription
-      try {
-        const extractResult = await executeMultimodalPromptWithUsage(urlToHtmlPrompt, {
-          htmlContent,
-          sourceUrl: url
-        })
-        extractedHtml = extractResult.text
+      const startTime = Date.now()
+      const article = extractWithReadability(htmlContent, url)
+      
+      if (!article) {
+        // Readability failed, fall back to AI transcription
+        console.log('Readability extraction failed, falling back to AI transcription')
+        extractionMethodUsed = 'ai-transcription-fallback'
         
-        // Clean up any markdown wrapping from LLM response
-        extractedHtml = extractedHtml
-          .replace(/^```html\s*\n?/, '')
-          .replace(/\n?```\s*$/, '')
-          .trim()
+        try {
+          const extractResult = await executeMultimodalPromptWithUsage(urlToHtmlPrompt, {
+            htmlContent,
+            sourceUrl: url
+          })
+          extractedHtml = extractResult.text
           
-      } catch (error) {
-        console.error('LLM extraction error:', error)
-        
-        // Check for JavaScript detection error
-        if (error instanceof Error && error.message.includes('JavaScript')) {
-          return new NextResponse(URL_EXTRACTION_CONFIG.ERROR_MESSAGES.JAVASCRIPT_REQUIRED, { status: 400 })
+          // Clean up any markdown wrapping from LLM response
+          extractedHtml = extractedHtml
+            .replace(/^```html\s*\n?/, '')
+            .replace(/\n?```\s*$/, '')
+            .trim()
+            
+        } catch (error) {
+          console.error('LLM extraction error:', error)
+          
+          // Check for JavaScript detection error
+          if (error instanceof Error && error.message.includes('JavaScript')) {
+            return new NextResponse(URL_EXTRACTION_CONFIG.ERROR_MESSAGES.JAVASCRIPT_REQUIRED, { status: 400 })
+          }
+          
+          throw error
         }
+      } else {
+        // Readability succeeded
+        const extractionTime = Date.now() - startTime
+        console.log(`Readability extraction completed in ${extractionTime}ms`)
         
-        throw error
+        // Format the extracted content as clean HTML
+        extractedHtml = formatReadabilityHtml(article)
+        
+        // Log extraction details
+        console.log(`Extracted title: ${article.title}`)
+        console.log(`Extracted content length: ${article.content.length} characters`)
+        console.log(`Site name: ${article.siteName || 'Not detected'}`)
+        console.log(`Author: ${article.byline || 'Not detected'}`)
       }
     } else {
       // AI Transcription method
