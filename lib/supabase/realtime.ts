@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/types/database'
+import type { RealtimeChangeHandler } from '@/lib/types/supabase-realtime'
 
 export type RealtimeChannelType = ReturnType<SupabaseClient<Database>['channel']>
 
@@ -15,7 +16,7 @@ export interface RealtimeSubscription {
 export function subscribeToDocumentEnhancements(
   supabase: SupabaseClient<Database>,
   documentId: string,
-  onChange: (payload: any) => void
+  onChange: RealtimeChangeHandler<Database['public']['Tables']['document_enhancements']['Row']>
 ): RealtimeSubscription {
   const channel = supabase
     .channel(`document-enhancements:${documentId}`)
@@ -46,7 +47,7 @@ export function subscribeToDocumentEnhancements(
 export function subscribeToDocument(
   supabase: SupabaseClient<Database>,
   documentId: string,
-  onChange: (payload: any) => void
+  onChange: RealtimeChangeHandler<Database['public']['Tables']['documents']['Row']>
 ): RealtimeSubscription {
   const channel = supabase
     .channel(`document:${documentId}`)
@@ -77,7 +78,7 @@ export function subscribeToDocument(
 export function subscribeToChatMessages(
   supabase: SupabaseClient<Database>,
   threadId: string,
-  onNewMessage: (payload: any) => void
+  onNewMessage: RealtimeChangeHandler<Database['public']['Tables']['chat_messages']['Row']>
 ): RealtimeSubscription {
   const channel = supabase
     .channel(`chat-thread:${threadId}`)
@@ -108,7 +109,7 @@ export function subscribeToChatMessages(
 export function subscribeToAiCallStatus(
   supabase: SupabaseClient<Database>,
   aiCallId: string,
-  onChange: (payload: any) => void
+  onChange: RealtimeChangeHandler<Database['public']['Tables']['ai_calls']['Row']>
 ): RealtimeSubscription {
   const channel = supabase
     .channel(`ai-call:${aiCallId}`)
@@ -140,7 +141,7 @@ export function subscribeToTable<T extends keyof Database['public']['Tables']>(
   table: T,
   event: 'INSERT' | 'UPDATE' | 'DELETE' | '*',
   filter: string | null,
-  onChange: (payload: any) => void
+  onChange: RealtimeChangeHandler<Database['public']['Tables'][T]['Row']>
 ): RealtimeSubscription {
   const channelName = filter ? `${table}:${filter}` : `${table}:all`
   

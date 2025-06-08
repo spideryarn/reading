@@ -13,11 +13,13 @@ jest.mock('@/lib/supabase/server');
 jest.mock('@/lib/services/database/ai-calls');
 
 // Mock NextRequest and NextResponse
+import { NextRequest } from 'next/server';
+
 jest.mock('next/server', () => ({
   NextRequest: class MockNextRequest {
-    constructor(url: string, init: any = {}) {
+    constructor(url: string, init: Record<string, unknown> = {}) {
       this.url = url;
-      this.method = init.method || 'GET';
+      this.method = init.method as string || 'GET';
       this.body = init.body;
     }
     
@@ -29,7 +31,7 @@ jest.mock('next/server', () => ({
     }
   },
   NextResponse: {
-    json: (data: any, init?: any) => ({
+    json: (data: unknown, init?: ResponseInit) => ({
       json: async () => data,
       status: init?.status || 200,
       ok: (init?.status || 200) >= 200 && (init?.status || 200) < 300,
@@ -81,7 +83,7 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      const response = await POST(mockRequest as any);
+      const response = await POST(mockRequest as unknown as NextRequest);
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -97,11 +99,11 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      const response = await POST(mockRequest as any);
+      const response = await POST(mockRequest as unknown as NextRequest);
       const data = await response.json();
 
       expect(response.status).toBe(400);
-      expect(data.error).toBe('Invalid request');
+      expect(data.error).toBe('Invalid request format');
       expect(data.details).toBeDefined();
     });
   });
@@ -118,7 +120,7 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      const response = await POST(mockRequest as any);
+      const response = await POST(mockRequest as unknown as NextRequest);
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -141,7 +143,7 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      const response = await POST(mockRequest as any);
+      const response = await POST(mockRequest as unknown as NextRequest);
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -163,7 +165,7 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      const response = await POST(mockRequest as any);
+      const response = await POST(mockRequest as unknown as NextRequest);
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -192,7 +194,7 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      const response = await POST(mockRequest as any);
+      const response = await POST(mockRequest as unknown as NextRequest);
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -213,7 +215,7 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      const response = await POST(mockRequest as any);
+      const response = await POST(mockRequest as unknown as NextRequest);
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -241,8 +243,8 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      const response = await POST(mockRequest as any);
-      const data = await response.json();
+      const response = await POST(mockRequest as unknown as NextRequest);
+      await response.json();
 
       expect(response.status).toBe(200);
       expect(mockAiCallService.create).toHaveBeenCalledWith(
@@ -264,7 +266,7 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      await POST(mockRequest as any);
+      await POST(mockRequest as unknown as NextRequest);
 
       expect(mockGenerateText).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -286,7 +288,7 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      await POST(mockRequest as any);
+      await POST(mockRequest as unknown as NextRequest);
 
       expect(mockGenerateText).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -317,7 +319,7 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      await POST(mockRequest as any);
+      await POST(mockRequest as unknown as NextRequest);
 
       expect(mockGenerateText).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -341,7 +343,7 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      const response = await POST(mockRequest as any);
+      const response = await POST(mockRequest as unknown as NextRequest);
       const data = await response.json();
 
       expect(response.status).toBe(500);
@@ -360,7 +362,7 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      const response = await POST(mockRequest as any);
+      const response = await POST(mockRequest as unknown as NextRequest);
       const data = await response.json();
 
       expect(response.status).toBe(429);
@@ -378,7 +380,7 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      const response = await POST(mockRequest as any);
+      const response = await POST(mockRequest as unknown as NextRequest);
       const data = await response.json();
 
       expect(response.status).toBe(500);
@@ -396,7 +398,7 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      const response = await POST(mockRequest as any);
+      const response = await POST(mockRequest as unknown as NextRequest);
       const data = await response.json();
 
       expect(response.status).toBe(503);
@@ -414,7 +416,7 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      const response = await POST(mockRequest as any);
+      const response = await POST(mockRequest as unknown as NextRequest);
       const data = await response.json();
 
       expect(response.status).toBe(500);
@@ -433,7 +435,7 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      const response = await POST(mockRequest as any);
+      const response = await POST(mockRequest as unknown as NextRequest);
       const data = await response.json();
 
       expect(response.status).toBe(500);
@@ -462,7 +464,7 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      await POST(mockRequest as any);
+      await POST(mockRequest as unknown as NextRequest);
 
       expect(consoleSpy).toHaveBeenCalledWith(
         '[Chat API] Processing conversation:',
@@ -487,7 +489,7 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      await POST(mockRequest as any);
+      await POST(mockRequest as unknown as NextRequest);
 
       expect(consoleSpy).toHaveBeenCalledWith(
         '[Chat API] Response generated successfully:',
@@ -512,7 +514,7 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      await POST(mockRequest as any);
+      await POST(mockRequest as unknown as NextRequest);
 
       expect(consoleSpy).toHaveBeenCalledWith(
         '[Chat API] AI call tracked:',
@@ -541,7 +543,7 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      await POST(mockRequest as any);
+      await POST(mockRequest as unknown as NextRequest);
 
       expect(mockGenerateText).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -558,7 +560,7 @@ describe('Chat API Route with Persistence', () => {
         }),
       };
 
-      await POST(mockRequest as any);
+      await POST(mockRequest as unknown as NextRequest);
 
       expect(mockGenerateText).toHaveBeenCalledWith(
         expect.objectContaining({

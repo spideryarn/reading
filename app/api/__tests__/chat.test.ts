@@ -51,14 +51,14 @@ describe('/api/chat', () => {
       
       // Mock model
       const mockModel = { id: 'test-model' }
-      mockGetModel.mockReturnValueOnce(mockModel as any)
+      mockGetModel.mockReturnValueOnce(mockModel as ReturnType<typeof getModel>)
       
       // Mock AI generation
       mockGenerateText.mockResolvedValueOnce({
         text: mockResponse,
         finishReason: 'stop',
         usage: { totalTokens: 100 }
-      } as any)
+      } as Awaited<ReturnType<typeof generateText>>)
 
       const request = createMockRequest('http://localhost:3000/api/chat', {
         method: 'POST',
@@ -102,13 +102,13 @@ describe('/api/chat', () => {
       })
       
       const mockModel = { id: 'test-model' }
-      mockGetModel.mockReturnValueOnce(mockModel as any)
+      mockGetModel.mockReturnValueOnce(mockModel as ReturnType<typeof getModel>)
       
       mockGenerateText.mockResolvedValueOnce({
         text: mockResponse,
         finishReason: 'stop',
         usage: { totalTokens: 150 }
-      } as any)
+      } as Awaited<ReturnType<typeof generateText>>)
 
       const request = createMockRequest('http://localhost:3000/api/chat', {
         method: 'POST',
@@ -151,13 +151,13 @@ describe('/api/chat', () => {
       })
       
       const mockModel = { id: 'test-model' }
-      mockGetModel.mockReturnValueOnce(mockModel as any)
+      mockGetModel.mockReturnValueOnce(mockModel as ReturnType<typeof getModel>)
       
       mockGenerateText.mockResolvedValueOnce({
         text: mockResponse,
         finishReason: 'stop',
         usage: { totalTokens: 50 }
-      } as any)
+      } as Awaited<ReturnType<typeof generateText>>)
 
       const request = createMockRequest('http://localhost:3000/api/chat', {
         method: 'POST',
@@ -196,13 +196,13 @@ describe('/api/chat', () => {
       })
       
       const mockModel = { id: 'claude-3-haiku' }
-      mockGetModel.mockReturnValueOnce(mockModel as any)
+      mockGetModel.mockReturnValueOnce(mockModel as ReturnType<typeof getModel>)
       
       mockGenerateText.mockResolvedValueOnce({
         text: mockResponse,
         finishReason: 'stop',
         usage: { totalTokens: 100 }
-      } as any)
+      } as Awaited<ReturnType<typeof generateText>>)
 
       const request = createMockRequest('http://localhost:3000/api/chat', {
         method: 'POST',
@@ -230,13 +230,13 @@ describe('/api/chat', () => {
       })
       
       const mockModel = { id: 'gemini-1.5-flash' }
-      mockGetModel.mockReturnValueOnce(mockModel as any)
+      mockGetModel.mockReturnValueOnce(mockModel as ReturnType<typeof getModel>)
       
       mockGenerateText.mockResolvedValueOnce({
         text: mockResponse,
         finishReason: 'stop',
         usage: { totalTokens: 100 }
-      } as any)
+      } as Awaited<ReturnType<typeof generateText>>)
 
       const request = createMockRequest('http://localhost:3000/api/chat', {
         method: 'POST',
@@ -339,7 +339,7 @@ describe('/api/chat', () => {
       })
       
       const mockModel = { id: 'test-model' }
-      mockGetModel.mockReturnValueOnce(mockModel as any)
+      mockGetModel.mockReturnValueOnce(mockModel as ReturnType<typeof getModel>)
       
       mockGenerateText.mockRejectedValueOnce(new Error('401 Unauthorized: Invalid API key'))
 
@@ -368,7 +368,7 @@ describe('/api/chat', () => {
       })
       
       const mockModel = { id: 'test-model' }
-      mockGetModel.mockReturnValueOnce(mockModel as any)
+      mockGetModel.mockReturnValueOnce(mockModel as ReturnType<typeof getModel>)
       
       mockGenerateText.mockRejectedValueOnce(new Error('429 Too Many Requests: Rate limit exceeded'))
 
@@ -425,7 +425,7 @@ describe('/api/chat', () => {
       })
       
       const mockModel = { id: 'test-model' }
-      mockGetModel.mockReturnValueOnce(mockModel as any)
+      mockGetModel.mockReturnValueOnce(mockModel as ReturnType<typeof getModel>)
       
       mockGenerateText.mockRejectedValueOnce(new Error('fetch failed: network error'))
 
@@ -454,7 +454,7 @@ describe('/api/chat', () => {
       })
       
       const mockModel = { id: 'test-model' }
-      mockGetModel.mockReturnValueOnce(mockModel as any)
+      mockGetModel.mockReturnValueOnce(mockModel as ReturnType<typeof getModel>)
       
       mockGenerateText.mockRejectedValueOnce(new Error('Something unexpected happened'))
 
@@ -494,7 +494,7 @@ describe('/api/chat', () => {
       })
       
       const mockModel = { id: 'test-model' }
-      mockGetModel.mockReturnValueOnce(mockModel as any)
+      mockGetModel.mockReturnValueOnce(mockModel as ReturnType<typeof getModel>)
       
       // Throw a non-Error object
       mockGenerateText.mockRejectedValueOnce('String error')
@@ -531,13 +531,13 @@ describe('/api/chat', () => {
       })
       
       const mockModel = { id: 'test-model' }
-      mockGetModel.mockReturnValueOnce(mockModel as any)
+      mockGetModel.mockReturnValueOnce(mockModel as ReturnType<typeof getModel>)
       
       mockGenerateText.mockResolvedValueOnce({
         text: 'Test response',
         finishReason: 'stop',
         usage: { totalTokens: 100 }
-      } as any)
+      } as Awaited<ReturnType<typeof generateText>>)
 
       const request = createMockRequest('http://localhost:3000/api/chat', {
         method: 'POST',
@@ -575,7 +575,7 @@ describe('/api/chat', () => {
       })
       
       const mockModel = { id: 'test-model' }
-      mockGetModel.mockReturnValueOnce(mockModel as any)
+      mockGetModel.mockReturnValueOnce(mockModel as ReturnType<typeof getModel>)
       
       mockGenerateText.mockRejectedValueOnce(testError)
 

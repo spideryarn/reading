@@ -7,13 +7,14 @@ import type {
   ChatMessageInsert,
   MessageRole
 } from '@/lib/types/database'
+import type { JsonObject } from '@/lib/types/json'
 
 export interface CreateThreadOptions {
   documentId: string
   modelId: string
   title?: string
   userId?: string
-  extra?: Record<string, any>
+  extra?: JsonObject
 }
 
 export interface CreateMessageOptions {
@@ -21,7 +22,7 @@ export interface CreateMessageOptions {
   role: MessageRole
   content: string
   aiCallId?: string
-  extra?: Record<string, any>
+  extra?: JsonObject
 }
 
 export class ChatService {
@@ -83,7 +84,7 @@ export class ChatService {
    */
   async updateThread(
     id: string,
-    updates: { title?: string; extra?: Record<string, any> }
+    updates: { title?: string; extra?: JsonObject }
   ): Promise<ChatThread> {
     const { data, error } = await this.supabase
       .from('chat_threads')

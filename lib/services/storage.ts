@@ -87,7 +87,7 @@ export async function uploadDocumentFile(
     }
     
     // Handle specific Supabase storage errors
-    const err = error as any
+    const err = error as { message?: string }
     if (err.message?.includes('Asset Already Exists')) {
       throw new StorageError(`File already exists at path: ${storagePath}`)
     }
@@ -128,7 +128,7 @@ export async function downloadDocumentFile(storagePath: string): Promise<Blob> {
       throw error
     }
     
-    const err = error as any
+    const err = error as { message?: string }
     if (err.message?.includes('Object not found')) {
       throw new StorageError(`File not found at path: ${storagePath}`)
     }
@@ -170,7 +170,7 @@ export async function getSignedDocumentUrl(
       throw error
     }
     
-    const err = error as any
+    const err = error as { message?: string }
     throw new StorageError(`Unexpected signed URL error: ${err.message}`)
   }
 }
@@ -213,7 +213,7 @@ export async function deleteDocumentFile(storagePath: string): Promise<void> {
       throw error
     }
     
-    const err = error as any
+    const err = error as { message?: string }
     throw new StorageError(`Unexpected delete error: ${err.message}`)
   }
 }
@@ -246,7 +246,7 @@ export async function listDocumentFiles(documentId: string) {
       throw error
     }
     
-    const err = error as any
+    const err = error as { message?: string }
     throw new StorageError(`Unexpected list error: ${err.message}`)
   }
 }
@@ -303,7 +303,7 @@ export async function cleanupOrphanedFiles(documentIds: string[]): Promise<numbe
       throw error
     }
     
-    const err = error as any
+    const err = error as { message?: string }
     throw new StorageError(`Unexpected cleanup error: ${err.message}`)
   }
 }
@@ -341,7 +341,7 @@ export async function getStorageStats() {
       throw error
     }
     
-    const err = error as any
+    const err = error as { message?: string }
     throw new StorageError(`Unexpected stats error: ${err.message}`)
   }
 }

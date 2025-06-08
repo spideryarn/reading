@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import type { Database, Profile } from '@/lib/types/database'
+import type { JsonObject } from '@/lib/types/json'
 
 export type ProfileInsert = Database['public']['Tables']['profiles']['Insert']
 export type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
@@ -84,14 +85,14 @@ export class ProfileService {
   /**
    * Update user preferences
    */
-  async updatePreferences(userId: string, preferences: Record<string, any>): Promise<Profile> {
+  async updatePreferences(userId: string, preferences: JsonObject): Promise<Profile> {
     return this.updateByUserId(userId, { preferences })
   }
 
   /**
    * Get user preferences with defaults
    */
-  async getPreferences(userId: string): Promise<Record<string, any>> {
+  async getPreferences(userId: string): Promise<JsonObject> {
     const profile = await this.getByUserId(userId)
     
     if (!profile) {
@@ -100,9 +101,9 @@ export class ProfileService {
 
     // Return preferences with sensible defaults
     // Ensure preferences is a proper object, not null, string, or other type
-    let preferences: Record<string, any> = {}
+    let preferences: JsonObject = {}
     if (profile.preferences && typeof profile.preferences === 'object' && !Array.isArray(profile.preferences)) {
-      preferences = profile.preferences as Record<string, any>
+      preferences = profile.preferences as JsonObject
     }
     
     return {

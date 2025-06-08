@@ -60,7 +60,7 @@ export async function convertPdfToBase64Image(pdfBuffer: Buffer): Promise<PdfCon
         // Clean up individual image file
         try {
           unlinkSync(result.path);
-        } catch (e) {
+        } catch {
           // Ignore cleanup errors
         }
       }

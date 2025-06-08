@@ -312,7 +312,7 @@ export function usePersistentChat({
           },
         ],
       };
-    }, [documentContext, threadId, documentId, chatService, currentModelId, saveMessage]),
+    }, [documentContext, threadId, documentId, saveMessage]),
   };
 
   const runtime = useLocalRuntime(chatModelAdapter, { 
