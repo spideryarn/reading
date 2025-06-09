@@ -11,7 +11,7 @@ import {
   CommandList,
   CommandShortcut,
 } from '@/components/ui/command'
-import { useDocumentCommunication } from '@/lib/context/document-communication-context'
+import { useDocumentCommunication, useDocumentSlug } from '@/lib/context/document-communication-context'
 import { useAuth } from '@/lib/context/auth-context'
 import {
   Article,
@@ -27,6 +27,8 @@ import {
   SignIn,
   UserPlus,
   SignOut,
+  TwitterLogo,
+  FileText,
 } from '@phosphor-icons/react'
 
 // Command definition interfaces
@@ -54,16 +56,22 @@ const NAVIGATION_CATEGORY: CommandCategory = {
   priority: 1,
 }
 
+const DOCUMENT_ACTIONS_CATEGORY: CommandCategory = {
+  id: 'document-actions',
+  name: 'Document Actions',
+  priority: 2,
+}
+
 const APP_NAVIGATION_CATEGORY: CommandCategory = {
   id: 'app-navigation',
   name: 'App Navigation',
-  priority: 2,
+  priority: 3,
 }
 
 const ACCOUNT_CATEGORY: CommandCategory = {
   id: 'account',
   name: 'Account',
-  priority: 3,
+  priority: 4,
 }
 
 interface CommandPaletteProps {
@@ -79,6 +87,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
   const open = externalOpen !== undefined ? externalOpen : internalOpen
   const setOpen = onOpenChange || setInternalOpen
   const { actions } = useDocumentCommunication()
+  const documentSlug = useDocumentSlug()
   const router = useRouter()
   const { user, signOut } = useAuth()
 
@@ -167,6 +176,31 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
       action: () => actions.setActiveTab('search'),
       icon: MagnifyingGlass,
     },
+
+    // Document-specific commands (only show when viewing a document)
+    ...(documentSlug ? [
+      {
+        id: 'doc-tweet-thread',
+        name: 'View as Tweet Thread',
+        keywords: ['tweet', 'thread', 'twitter', 'social', 'x'],
+        shortcut: [isMac ? '⌘' : 'Ctrl', 'T'],
+        category: DOCUMENT_ACTIONS_CATEGORY,
+        action: () => navigateWithErrorHandling(`/documents/${documentSlug}/tweets`),
+        icon: TwitterLogo,
+      },
+      {
+        id: 'doc-view-original',
+        name: 'View Original',
+        keywords: ['original', 'view', 'source', 'html'],
+        shortcut: [isMac ? '⌘' : 'Ctrl', 'O'],
+        category: DOCUMENT_ACTIONS_CATEGORY,
+        action: () => {
+          // Open in new tab like the existing View Original button
+          window.open(`/api/documents/${documentSlug}/original`, '_blank', 'noopener,noreferrer')
+        },
+        icon: FileText,
+      },
+    ] as Command[] : []),
 
     // App navigation commands
     {

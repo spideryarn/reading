@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { useRouter } from 'next/navigation'
 import { CommandPalette } from '../command-palette'
 import { useAuth } from '@/lib/context/auth-context'
-import { useDocumentCommunication } from '@/lib/context/document-communication-context'
+import { useDocumentCommunication, useDocumentSlug } from '@/lib/context/document-communication-context'
 
 // Mock Next.js useRouter
 jest.mock('next/navigation', () => ({
@@ -19,6 +19,7 @@ jest.mock('@/lib/context/auth-context', () => ({
 // Mock document communication context
 jest.mock('@/lib/context/document-communication-context', () => ({
   useDocumentCommunication: jest.fn(),
+  useDocumentSlug: jest.fn(),
 }))
 
 // Mock shadcn/ui command components
@@ -97,6 +98,12 @@ jest.mock('@phosphor-icons/react', () => ({
   SignOut: ({ size, className }: any) => (
     <span data-testid="icon-sign-out" data-size={size} className={className} />
   ),
+  TwitterLogo: ({ size, className }: any) => (
+    <span data-testid="icon-twitter-logo" data-size={size} className={className} />
+  ),
+  FileText: ({ size, className }: any) => (
+    <span data-testid="icon-file-text" data-size={size} className={className} />
+  ),
 }))
 
 describe('CommandPalette', () => {
@@ -116,6 +123,7 @@ describe('CommandPalette', () => {
     ;(useDocumentCommunication as jest.Mock).mockReturnValue({
       actions: mockDocumentActions,
     })
+    ;(useDocumentSlug as jest.Mock).mockReturnValue(null) // Default: no document context
 
     // Mock platform detection to default to non-Mac
     Object.defineProperty(window, 'navigator', {
@@ -712,6 +720,73 @@ describe('CommandPalette', () => {
       document.dispatchEvent(keydownEvent)
       
       expect(preventDefaultSpy).toHaveBeenCalled()
+    })
+  })
+
+  describe('Document-Specific Commands', () => {
+    it('should not show document commands when no document context', () => {
+      ;(useAuth as jest.Mock).mockReturnValue({
+        user: { id: '1', email: 'test@example.com' },
+        signOut: mockSignOut,
+      })
+      ;(useDocumentSlug as jest.Mock).mockReturnValue(null)
+
+      render(<CommandPalette open={true} />)
+
+      // Should not find document-specific commands
+      expect(screen.queryByText('View as Tweet Thread')).not.toBeInTheDocument()
+      expect(screen.queryByText('View Original')).not.toBeInTheDocument()
+    })
+
+    it('should show document commands when document context exists', () => {
+      ;(useAuth as jest.Mock).mockReturnValue({
+        user: { id: '1', email: 'test@example.com' },
+        signOut: mockSignOut,
+      })
+      ;(useDocumentSlug as jest.Mock).mockReturnValue('test-document-slug')
+
+      render(<CommandPalette open={true} />)
+
+      // Should find document-specific commands
+      expect(screen.getByText('View as Tweet Thread')).toBeInTheDocument()
+      expect(screen.getByText('View Original')).toBeInTheDocument()
+    })
+
+    it('should execute document commands with correct navigation', async () => {
+      ;(useAuth as jest.Mock).mockReturnValue({
+        user: { id: '1', email: 'test@example.com' },
+        signOut: mockSignOut,
+      })
+      ;(useDocumentSlug as jest.Mock).mockReturnValue('test-document-slug')
+
+      // Mock window.open for View Original command
+      const mockWindowOpen = jest.fn()
+      Object.defineProperty(window, 'open', {
+        value: mockWindowOpen,
+        writable: true,
+      })
+
+      render(<CommandPalette open={true} />)
+
+      // Click tweet thread command
+      const tweetCommand = screen.getByText('View as Tweet Thread')
+      fireEvent.click(tweetCommand)
+
+      await waitFor(() => {
+        expect(mockRouter.push).toHaveBeenCalledWith('/documents/test-document-slug/tweets')
+      })
+
+      // Clear mocks and test original document command
+      jest.clearAllMocks()
+      ;(useRouter as jest.Mock).mockReturnValue(mockRouter)
+
+      // Click view original command
+      const originalCommand = screen.getByText('View Original')
+      fireEvent.click(originalCommand)
+
+      await waitFor(() => {
+        expect(mockWindowOpen).toHaveBeenCalledWith('/api/documents/test-document-slug/original', '_blank', 'noopener,noreferrer')
+      })
     })
   })
 })

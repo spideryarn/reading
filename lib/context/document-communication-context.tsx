@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useMemo, useState, ReactNode } from 'react'
+import { createContext, useContext, useMemo, useState, useEffect, ReactNode } from 'react'
 
 // Interface for tracking document position
 export interface DocumentPosition {
@@ -14,6 +14,7 @@ export interface DocumentCommunicationState {
   currentPosition: DocumentPosition | null
   highlightedTerm: string | null
   activeTabId: string
+  documentSlug: string | null
 }
 
 // Actions interface for document communication
@@ -40,12 +41,39 @@ interface DocumentCommunicationProviderProps {
 
 // Provider component
 export function DocumentCommunicationProvider({ children }: DocumentCommunicationProviderProps) {
+  // Extract document slug from URL
+  const getDocumentSlug = (): string | null => {
+    if (typeof window === 'undefined') return null
+    const pathname = window.location.pathname
+    const match = pathname.match(/\/documents\/([^\/]+)/)
+    return match ? match[1] : null
+  }
+
   // Initialize state
   const [state, setState] = useState<DocumentCommunicationState>({
     currentPosition: null,
     highlightedTerm: null,
-    activeTabId: 'original'
+    activeTabId: 'original',
+    documentSlug: getDocumentSlug()
   })
+
+  // Update document slug when URL changes
+  useEffect(() => {
+    const updateDocumentSlug = () => {
+      const newSlug = getDocumentSlug()
+      setState(prev => ({ ...prev, documentSlug: newSlug }))
+    }
+
+    // Listen for navigation changes
+    window.addEventListener('popstate', updateDocumentSlug)
+    
+    // Also check on mount and when pathname might change
+    updateDocumentSlug()
+
+    return () => {
+      window.removeEventListener('popstate', updateDocumentSlug)
+    }
+  }, [])
 
   // Create memoized actions to prevent unnecessary re-renders
   const actions = useMemo<DocumentCommunicationActions>(() => ({
@@ -141,4 +169,9 @@ export function useDocumentPosition() {
 export function useActiveTab() {
   const { state } = useDocumentCommunication()
   return state.activeTabId
+}
+
+export function useDocumentSlug() {
+  const { state } = useDocumentCommunication()
+  return state.documentSlug
 }
