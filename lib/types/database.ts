@@ -334,8 +334,6 @@ export type Database = {
           storage_path: string | null
           title: string
           updated_at: string | null
-          upload_ai_call_id: string | null
-          upload_metadata: Json | null
           word_count: number | null
         }
         Insert: {
@@ -352,8 +350,6 @@ export type Database = {
           storage_path?: string | null
           title: string
           updated_at?: string | null
-          upload_ai_call_id?: string | null
-          upload_metadata?: Json | null
           word_count?: number | null
         }
         Update: {
@@ -370,19 +366,9 @@ export type Database = {
           storage_path?: string | null
           title?: string
           updated_at?: string | null
-          upload_ai_call_id?: string | null
-          upload_metadata?: Json | null
           word_count?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "documents_upload_ai_call_id_fkey"
-            columns: ["upload_ai_call_id"]
-            isOneToOne: false
-            referencedRelation: "ai_calls"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {
