@@ -81,6 +81,7 @@ function ResizableDocumentLayoutInner({
   const [, setScrollTarget] = useState<{ id: string; timestamp: number } | null>(null)
   const [isLeftPaneCollapsed, setIsLeftPaneCollapsed] = useState(false)
   const [savedLeftPaneSize, setSavedLeftPaneSize] = useState(30) // Remember the last size
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
   const leftPanelRef = useRef<ImperativePanelHandle>(null)
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
@@ -193,6 +194,11 @@ function ResizableDocumentLayoutInner({
       }, 350)
     }
   }, [isLeftPaneCollapsed, savedLeftPaneSize])
+
+  // Handle command palette toggle
+  const handleCommandPaletteToggle = useCallback(() => {
+    setIsCommandPaletteOpen(prev => !prev)
+  }, [])
 
   // Handle icon navigation tab clicks - expand left pane and switch to tab
   const handleIconNavTabClick = useCallback((tabId: string) => {
@@ -361,12 +367,16 @@ function ResizableDocumentLayoutInner({
           activeTab={state.activeTab}
           onTabClick={handleIconNavTabClick}
           onToggleCollapse={handleToggleCollapse}
+          onCommandPaletteToggle={handleCommandPaletteToggle}
           className="shadow-lg"
         />
       </div>
       
       {/* Command palette - positioned above all other content */}
-      <CommandPalette />
+      <CommandPalette 
+        open={isCommandPaletteOpen}
+        onOpenChange={setIsCommandPaletteOpen}
+      />
     </div>
   )
 }
