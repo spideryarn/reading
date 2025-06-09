@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import * as Tooltip from '@radix-ui/react-tooltip'
+import { useState, useEffect } from 'react'
 
 // Navigation item definition
 interface NavigationItem {
@@ -97,10 +98,15 @@ export function VerticalIconNav({
   onCommandPaletteToggle,
   className 
 }: VerticalIconNavProps) {
-  // Platform-specific shortcut text
-  const isMac = typeof window !== 'undefined' && 
-              /Mac|iPod|iPhone|iPad/.test(window.navigator.platform)
-  const shortcutText = isMac ? 'Cmd+B' : 'Ctrl+B'
+  // Platform-specific shortcut text with SSR-safe implementation
+  const [shortcutText, setShortcutText] = useState('Ctrl+B') // Default to non-Mac
+  const [commandShortcutText, setCommandShortcutText] = useState('Ctrl+K') // Default to non-Mac
+  
+  useEffect(() => {
+    const isMac = /Mac|iPod|iPhone|iPad/.test(window.navigator.platform)
+    setShortcutText(isMac ? 'Cmd+B' : 'Ctrl+B')
+    setCommandShortcutText(isMac ? 'Cmd+K' : 'Ctrl+K')
+  }, [])
   
   return (
     <div 
@@ -209,7 +215,7 @@ export function VerticalIconNav({
                     Quick access to navigation and actions
                   </div>
                   <div className="text-xs text-gray-500 font-mono">
-                    Press {isMac ? 'Cmd+K' : 'Ctrl+K'} to open
+                    Press {commandShortcutText} to open
                   </div>
                 </div>
                 <Tooltip.Arrow 
