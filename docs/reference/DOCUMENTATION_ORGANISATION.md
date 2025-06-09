@@ -1,61 +1,139 @@
-# Documentation organsation
+# Documentation Organisation
 
 ## References
 
-- `README.md`
-- `docs/SITE_ORGANISATION.md`
+- `README.md` - Project overview, goals, and key features
+- `CLAUDE.md` - Essential context and instructions for AI agents working on this codebase
+- `docs/instructions/WRITE_EVERGREEN_DOC.md` - Guidelines for writing documentation
 
+## Getting Started (Key Docs for Newcomers)
 
-## Evergreen documentation Reference
+**Start here for understanding the project:**
+- `README.md` - Project goals, features, and high-level overview
+- `docs/reference/VISION.md` - Comprehensive product vision and strategic direction  
+- `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture and implementation
 
-(Written based on `docs/WRITE_EVERGREEN_DOC.md`)
+**Essential for development:**
+- `CLAUDE.md` - AI agent context and development instructions
+- `docs/reference/CODING_PRINCIPLES.md` - Core development philosophy and principles
+- `docs/reference/SETUP.md` - Development environment setup guide
 
-Available evergreen documentation in `docs/` - here are some of the most useful.
+## Evergreen Documentation Reference
 
-Coding & infrastructure:
-- `docs/CODING_PRINCIPLES.md` - Outlines development principles prioritising simplicity, readability, debugging, and rapid prototyping for early-stage development
-- `docs/CODING_GUIDELINES.md` - Code quality standards including linting, TypeScript patterns, React best practices, and import conventions
-- `docs/COMMAND_LINE_SCRIPTS.md` - Guidelines for writing command-line scripts using shell scripts or TypeScript/Clipanion
-- `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture and implementation details
+Available evergreen documentation in `docs/` organised by category:
+
+### Coding & Infrastructure
+- `docs/reference/CODING_PRINCIPLES.md` - Development philosophy prioritising simplicity, readability, debugging, and rapid prototyping ⭐ **Essential**
+- `docs/reference/CODING_GUIDELINES.md` - Code quality standards including linting, TypeScript patterns, React best practices, and import conventions ⭐ **Essential**
+- `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture and implementation details ⭐ **Essential**
 - `docs/reference/ARCHITECTURE_DECISIONS.md` - Key architectural decisions including framework choices, data structures, storage approach, and MVP features
-- `docs/STYLING.md` - CSS and visual styling configuration including theme settings, Phosphor icons usage, and loading/error button patterns
-- `docs/SETUP.md` - Development environment setup guide including Node.js, Supabase, Git worktree configuration, and common commands
-- `docs/WORKTREES.md` - Comprehensive guide for multi-worktree development setup using a hub-and-spoke model with protected main branch and sync-worktrees.ts tool
-- `docs/SITE_ORGANISATION.md` - Documents the hierarchical, document-centric architecture including application routes, component hierarchy, and navigation patterns. (May be out of date)
-- `docs/TESTING.md` - Testing approach documentation covering Jest with React Testing Library setup, test structure, and current test coverage
-- `docs/UI_INTERFACE.md` - Documents the 2-pane resizable layout with unified tabbed navigation including ResizablePanelGroup architecture, collapsible functionality, and scrolling fixes. See related docs below in "AI, features, machinery, interface" section.
+- `docs/reference/SETUP.md` - Development environment setup guide including Node.js, Supabase, Git worktree configuration ⭐ **Start here**
+- `docs/reference/TESTING.md` - Testing approach documentation covering Jest with React Testing Library setup, test structure, and current test coverage
+- `docs/reference/COMMAND_LINE_SCRIPTS.md` - Guidelines for writing command-line scripts using shell scripts or TypeScript/Clipanion
+- `docs/reference/STYLING.md` - CSS and visual styling configuration including theme settings, Phosphor icons usage, and loading/error button patterns
+- `docs/reference/GIT_WORKTREES.md` - Multi-worktree development setup using hub-and-spoke model
+- `docs/reference/SITE_ORGANISATION.md` - Application routes, component hierarchy, and navigation patterns (may be outdated)
 
-Database:
-- `docs/DATABASE_OVERVIEW.md`
-- `docs/DATABASE_MIGRATIONS.md` - Guide for managing database schema changes through Supabase migrations with timestamped SQL files
-- `docs/DATABASE_SCHEMA.md` - Reference for both current (deprecated) schema and target schema showing the transition from element decomposition to single-row storage (VERY MUCH EVOLVING)
-- `docs/reference/SUPABASE_INTEGRATION_REFERENCE.md` - Comprehensive guide for Supabase.js usage patterns, RLS best practices, performance optimisation, and security considerations for document-centric applications
+### Database
+- `docs/reference/DATABASE_OVERVIEW.md` - Database architecture and Supabase integration overview
+- `docs/reference/DATABASE_SCHEMA.md` - Database schema reference showing transition from element decomposition to single-row storage
+- `docs/reference/DATABASE_MIGRATIONS.md` - Guide for managing database schema changes through Supabase migrations
+- `docs/reference/DATABASE_SUPABASE_INTEGRATION_REFERENCE.md` - Comprehensive Supabase.js usage patterns, RLS best practices, and security considerations
+- `docs/reference/DATABASE_SUPABASE_STORAGE_REFERENCE.md` - File storage integration with Supabase Storage
+- `docs/reference/DATABASE_SECURITY.md` - Database security practices and RLS policies
 
-AI, features, machinery, interface:
-- `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Comprehensive technical guide for integrating the @assistant-ui/react library with database persistence for conversation storage and restoration
-- `docs/LLM_PROMPT_TEMPLATES.md` - Guide for creating AI/LLM calls using the Nunjucks + Zod template system with type safety and validation
-- `docs/MUTATIONS.md` - Documents the reversible document transformation system for applying/reverting changes like AI-generated headings and content filtering
-- `docs/UNIFIED_LEFT_PANE.md` - Architecture and features of the unified left pane with tabbed interface, ToC, AI-generated headings, and tooltip summaries
-- `docs/AI_GLOSSARY.md` - Documents the glossary feature that extracts key entities from documents using LLM analysis and displays them in a dedicated pane
-- `docs/AI_SUMMARISE.md` - Documents the AI summarise feature that generates hierarchical summaries of document content using LLM analysis at multiple granularity levels
-- `docs/SEARCH_TEXT.md` - Documents the cross-element text search functionality using Mark.js library with DOM-based search, precise text highlighting, and enhanced navigation
+### Authentication & Security
+- `docs/reference/AUTHENTICATION_OVERVIEW.md` - Authentication system architecture and flows using Supabase Auth
+- `docs/reference/AUTHENTICATION_SETUP.md` - Configuration and deployment guide for authentication
+- `docs/reference/AUTHENTICATION_UI.md` - UI components and forms for authentication flows
+- `docs/reference/AUTHENTICATION_DATABASE.md` - Database integration and Row Level Security for authentication
+- `docs/reference/AUTHENTICATION_SECURITY.md` - Security practices and troubleshooting for authentication
+- `docs/reference/AUTHENTICATION_TESTING.md` - Testing authentication flows and security
 
-Strategic vision & planning:
-- `docs/VISION.md` - Comprehensive product vision including target users, business model, competitive positioning, and long-term strategic direction
-- `docs/PROJECT_STATUS.md` - Current development state overview showing implemented features (AI summaries, glossary, headings) and planned enhancements
+### AI Features & Implementation
+- `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide for creating AI/LLM calls using Nunjucks + Zod template system ⭐ **Essential for AI features**
+- `docs/reference/LLM_MODELS_REFERENCE.md` - LLM model configuration and provider integration
+- `docs/reference/VERCEL_AI_SDK_REFERENCE.md` - Vercel AI SDK integration patterns and usage
+- `docs/reference/AI_SUMMARISE.md` - AI summarise feature generating hierarchical summaries at multiple granularities
+- `docs/reference/AI_GLOSSARY.md` - Glossary feature extracting key entities from documents using LLM analysis
+- `docs/reference/AI_HEADINGS.md` - AI-generated heading system for document structure enhancement
+- `docs/reference/AI_TWEET_THREAD_VIEW.md` - Tweet thread generation from document content
+- `docs/reference/AI_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - @assistant-ui/react integration for chatbot interface
+- `docs/reference/AI_CHATBOT_ASSISTANT_UI_PERSISTENCE_DEBUGGING.md` - Debugging guide for chat persistence
+- `docs/reference/AI_CHATBOT_ASSISTANT_UI_DATABASE_PERSISTENCE.md` - Database persistence for chat conversations
 
-Docs, modes, and admin:
-- `docs/GIT_COMMITS.md` - Guidelines for Git commit best practices including batching changes, message format, and handling concurrent changes
-- `docs/SOUNDING_BOARD.md` - Instructions for collaborative discussion mode emphasising asking questions and suggesting alternatives rather than immediate implementation
-- `docs/WRITE_EVERGREEN_DOC.md` - Guidelines for writing evergreen documentation including structure, cross-references, status indicators, and maintenance practices
-- `docs/WRITE_PLANNING_DOC.md` - Guide for writing planning/project management documents with file naming conventions, structure, and stage-based action plans
-- `docs/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` - Process for keeping project documentation up-to-date including review steps, update patterns, and quality checklist
-- `docs/UPDATING_CLAUDE_INSTRUCTIONS.md` - Guidelines for maintaining CLAUDE.md to help AI agents operate effectively on the Spideryarn Reading codebase
+### UI Components & Interface
+- `docs/reference/UI_COMPONENTS.md` - Available UI components and usage patterns
+- `docs/reference/UI_INTERFACE.md` - Multi-pane layout with tabbed navigation architecture
+- `docs/reference/SHADCN_UI_REFERENCE.md` - shadcn/ui component library integration and customisation
+- `docs/reference/UNIFIED_LEFT_PANE.md` - Architecture of unified left pane with tabbed interface, ToC, and tooltip summaries
+- `docs/reference/COMMAND_PALETTE.md` - Command palette implementation and usage
+- `docs/reference/CROSS_PANE_COMMUNICATION.md` - Inter-pane communication patterns and architecture
+- `docs/reference/KEYBOARD_SHORTCUTS.md` - Application keyboard shortcuts and navigation
+- `docs/reference/MUTATIONS.md` - Reversible document transformation system for applying/reverting changes
 
+### Content Processing & Search
+- `docs/reference/SEARCH_TEXT.md` - Cross-element text search functionality using Mark.js with DOM-based highlighting
+- `docs/reference/PDF_TO_HTML_CONVERSION.md` - PDF processing and HTML conversion implementation
+- `docs/reference/WEBPAGE_CONTENT_EXTRACTION.md` - Web content extraction and processing
+- `docs/reference/OPTIMAL_TEXT_FORMATTING.md` - Text formatting standards and typography
 
-## Planning docs
+### Strategic Vision & Business
+- `docs/reference/VISION.md` - Comprehensive product vision including target users, business model, competitive positioning ⭐ **Important**
+- `docs/reference/PROJECT_STATUS.md` - Current development state showing implemented and planned features
+- `docs/reference/MARKETING_BRANDING.md` - Marketing strategy, branding guidelines, and positioning
+- `docs/reference/RESEARCH_POTENTIAL_LIBRARY_CHANGES_GOTCHAS.md` - Research notes on potential library changes and considerations
 
-(Written based on `docs/WRITE_PLANNING_DOC.md`)
+### Project Management & Meta
+- `docs/reference/OBSOLETE_ALTERNATIVE_VERSION.md` - Documentation of deprecated Python version for reference
 
-Recent planning decisions & progress-tracking of major features: `planning/*.md`
+## Instructions & Modes Documentation
 
+Process and workflow documentation in `docs/instructions/`:
+
+### Core Workflow Instructions
+- `docs/instructions/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` - Process for keeping project documentation up-to-date ⭐ **Run regularly**
+- `docs/instructions/UPDATE_DOCUMENTATION_ORGANISATION_DOC.md` - Instructions for updating this organisation guide
+- `docs/instructions/WRITE_EVERGREEN_DOC.md` - Guidelines for writing evergreen documentation ⭐ **Essential for doc writers**
+- `docs/instructions/WRITE_PLANNING_DOC.md` - Guide for writing planning documents with file naming conventions
+- `docs/instructions/UPDATE_CLAUDE_INSTRUCTIONS.md` - Guidelines for maintaining CLAUDE.md for AI agents
+
+### Development Process Instructions
+- `docs/instructions/DO_GIT_COMMITS.md` - Git commit best practices including batching changes and message format
+- `docs/instructions/FIX_NPM_LINT_ISSUES.md` - Process for resolving linting and code quality issues
+- `docs/instructions/UPDATE_HOUSEKEEPING_TESTS.md` - Maintaining test quality and organisation
+- `docs/instructions/WRITE_UPDATE_CODING_GUIDELINES.md` - Process for updating coding standards
+
+### Working Modes & Collaboration
+- `docs/instructions/SOUNDING_BOARD_MODE.md` - Collaborative discussion mode for exploring ideas before implementation
+- `docs/instructions/SCIENTIST_DETECTIVE_MODE.md` - Systematic investigation and analysis mode
+- `docs/instructions/NONINTERACTIVE.md` - Guidelines for non-interactive batch processing
+- `docs/instructions/AUDIT_ARCHITECTURE_MODE.md` - Comprehensive architecture review and analysis mode
+
+### Specialised Tasks
+- `docs/instructions/RESOLVE_MERGE_CONFLICTS.md` - Git merge conflict resolution process
+- `docs/instructions/RENAME_OR_MOVE.md` - File and directory renaming/moving procedures
+- `docs/instructions/PORT_DOCS_TO_GJDUTILS.md` - Documentation porting process
+- `docs/instructions/WRITE_DEEP_DIVE_AS_DOC.md` - Creating comprehensive technical deep-dive documentation
+- `docs/instructions/DEBRIEF_PROGRESS.md` - Progress review and retrospective process
+- `docs/instructions/CRITIQUE_OF_PLANNING_DOC.md` - Planning document review and improvement process
+- `docs/instructions/DO_PLANNING_DOC.md` - Planning document creation process
+
+## Planning Documentation
+
+Recent planning decisions & progress tracking in `planning/`.
+
+### Completed Planning
+See `planning/finished/` for historical planning documents and implementation records.
+
+### Future Planning
+See `planning/later/` for deferred features and future enhancements.
+
+## Navigation Tips
+
+**For newcomers**: Start with README.md → VISION.md → ARCHITECTURE_OVERVIEW.md → SETUP.md
+**For developers**: Focus on CODING_PRINCIPLES.md → CODING_GUIDELINES.md → TESTING.md
+**For AI features**: Begin with LLM_PROMPT_TEMPLATES.md → AI_SUMMARISE.md → AI_GLOSSARY.md
+**For documentation work**: Use WRITE_EVERGREEN_DOC.md → UPDATE_HOUSEKEEPING_DOCUMENTATION.md
+
+⭐ Marks essential starting points for different development areas.
