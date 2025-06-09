@@ -12,6 +12,40 @@ Comprehensive reference for keyboard shortcuts in the Spideryarn Reading applica
 
 ## Navigation Shortcuts
 
+### Command Palette
+
+**Shortcut**: `Cmd+K` (Mac) / `Ctrl+K` (Windows/Linux)  
+**Function**: Open/close command palette for keyboard-driven navigation  
+**Component**: `CommandPalette`  
+**Implementation**: `components/command-palette.tsx`
+
+The command palette provides rapid access to all navigation modes, document actions, and app-level functionality through fuzzy search. Includes 12 commands across 4 categories with full keyboard navigation support.
+
+**See**: `docs/reference/COMMAND_PALETTE.md` for complete reference
+
+### Document Navigation Shortcuts
+
+Available globally when command palette is closed:
+
+- **Original Document**: `Cmd/Ctrl+1` - Switch to original document view
+- **AI-Generated**: `Cmd/Ctrl+2` - Switch to AI-enhanced document view  
+- **Summary**: `Cmd/Ctrl+3` - Switch to summary view
+- **Chat**: `Cmd/Ctrl+4` - Switch to chat interface
+- **Glossary**: `Cmd/Ctrl+5` - Switch to glossary view
+- **Search**: `Cmd/Ctrl+6` - Switch to search interface
+
+### App Navigation Shortcuts
+
+- **Documents List**: `Cmd/Ctrl+D` - Navigate to documents library
+- **Upload Document**: `Cmd/Ctrl+U` - Navigate to document upload
+- **Settings**: `Cmd/Ctrl+,` - Navigate to application settings
+
+### Document Action Shortcuts
+
+Available when viewing a document:
+- **Tweet Thread View**: `Cmd/Ctrl+T` - Navigate to tweet thread representation
+- **View Original**: `Cmd/Ctrl+O` - Open raw document in new tab
+
 ### Sidebar Toggle
 
 **Shortcut**: `Cmd+B` (Mac) / `Ctrl+B` (Windows/Linux)  
@@ -117,7 +151,6 @@ The application uses `event.metaKey` on Mac and `event.ctrlKey` on Windows/Linux
 
 ### Planned Additions
 
-- `Cmd/Ctrl+K`: Command palette (planned for later implementation)
 - `Cmd/Ctrl+F`: Focus search input (when search tab is active)
 - Arrow keys: Navigate between icon rail items (accessibility enhancement)
 - `Escape`: Return focus to document from navigation
@@ -131,21 +164,23 @@ When adding new shortcuts:
 3. **Test accessibility**: Ensure shortcuts don't break screen reader navigation
 4. **Update this documentation**: Add new shortcuts to this reference
 
-### Command Palette Integration
+### Command Palette Patterns
 
-Future command palette implementation should follow these patterns:
+The implemented command palette follows these established patterns:
 
-- `Cmd/Ctrl+K`: Open command palette
-- `Cmd/Ctrl+Shift+P`: Alternative command palette trigger
-- Type-ahead search within palette
-- Fuzzy matching for command names
-- Show shortcuts next to command names
+- `Cmd/Ctrl+K`: Primary command palette trigger (industry standard)
+- Type-ahead fuzzy search within palette
+- Visual keyboard shortcuts displayed next to commands
+- Category-based organization with priority ordering
+- Platform-specific modifier key detection
 
 ## Related Documentation
 
+- `docs/reference/COMMAND_PALETTE.md` - Complete command palette reference and implementation guide
 - `docs/reference/UI_INTERFACE.md` - UI component interactions
-- `docs/reference/ACCESSIBILITY.md` - Accessibility guidelines (if exists)
-- `components/resizable-document-layout.tsx` - Main keyboard shortcut implementation
+- `docs/reference/CROSS_PANE_COMMUNICATION.md` - Context-based communication patterns used by commands
+- `components/command-palette.tsx` - Main command palette implementation
+- `components/resizable-document-layout.tsx` - Sidebar toggle shortcut implementation
 - `components/vertical-icon-nav.tsx` - Icon navigation with tooltip shortcuts
 
 ## Notes
@@ -157,5 +192,5 @@ Future command palette implementation should follow these patterns:
 
 ---
 
-*Last updated: 8 June 2025*  
-*Shortcut count: 1 (Sidebar Toggle)*
+*Last updated: 9 June 2025*  
+*Shortcut count: 13 (Command Palette + 11 global shortcuts + Sidebar Toggle)*

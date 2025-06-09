@@ -133,6 +133,26 @@ Dropdown selection component based on Radix UI Select primitive.
 
 Checkbox input component with proper accessibility.
 
+### Command (`components/ui/command.tsx`)
+
+**Status:** ✅ **Active** - Core component for command palette implementation
+
+shadcn/ui Command component built on cmdk library provides searchable command interface functionality.
+
+**Sub-components:**
+- `CommandDialog` - Modal wrapper for command palette
+- `CommandInput` - Search input with placeholder text  
+- `CommandList` - Scrollable list of command results
+- `CommandEmpty` - Empty state when no results found
+- `CommandGroup` - Category grouping with headings
+- `CommandItem` - Individual command with icon, text, and shortcut
+- `CommandShortcut` - Keyboard shortcut display component
+
+**Usage:**
+Used exclusively by `components/command-palette.tsx` for the main command palette interface. Provides keyboard navigation, fuzzy search, and proper accessibility support.
+
+**See:** `docs/reference/COMMAND_PALETTE.md` for complete command palette implementation details
+
 ## Page-Level Components
 
 ### AppHeader (`components/app-header.tsx`)
@@ -230,6 +250,40 @@ export default function MyPage() {
 - Consistent spacing with `mt-12` top margin
 
 ## Custom Components
+
+### CommandPalette (`components/command-palette.tsx`)
+
+**Status:** ✅ **Active** - Core application feature for keyboard-driven navigation
+
+Comprehensive command palette implementation providing rapid access to all application functionality through Cmd+K/Ctrl+K trigger.
+
+**Features:**
+- 12 commands across 4 categories (Navigation, Document Actions, App Navigation, Account)
+- Platform-specific keyboard shortcuts (Cmd on Mac, Ctrl on Windows/Linux)
+- Fuzzy search with category organization
+- Authentication-dependent commands
+- DocumentCommunicationContext integration for navigation
+- Visual integration with vertical navigation rail
+
+**Dependencies:**
+- shadcn/ui Command component (cmdk library)
+- DocumentCommunicationContext for navigation actions
+- AuthContext for conditional commands
+- Next.js router for page navigation
+
+**Usage:**
+```tsx
+// Integrated into main layout
+<CommandPalette />
+
+// With external state control
+<CommandPalette 
+  open={isCommandPaletteOpen} 
+  onOpenChange={setIsCommandPaletteOpen} 
+/>
+```
+
+**See:** `docs/reference/COMMAND_PALETTE.md` for complete implementation guide
 
 ### Dialog (`components/dialog.tsx`)
 
@@ -395,6 +449,7 @@ All shadcn/ui components include proper TypeScript definitions:
 
 Component tests are located in `components/__tests__/`:
 - Button component: 5 comprehensive tests covering all variants and interactions
+- CommandPalette component: 25 comprehensive tests covering command execution, keyboard shortcuts, authentication states, and context integration
 - Focus on user interactions and accessibility
 - Jest + React Testing Library setup
 
@@ -404,6 +459,7 @@ Component tests are located in `components/__tests__/`:
 - ✅ Button - All instances migrated (25+ across 9 files)
 - ✅ Loading states - Standardised across application
 - ✅ Error states - Using Alert component
+- ✅ Command - Complete command palette implementation with comprehensive testing
 
 **Pending:**
 - Dialog - Custom implementation retained for compatibility
@@ -421,6 +477,8 @@ Visit `/design` for a live, interactive design reference page showcasing all com
 
 ## Related Documentation
 
+- `docs/reference/COMMAND_PALETTE.md` - Complete command palette implementation guide
+- `docs/reference/KEYBOARD_SHORTCUTS.md` - Keyboard shortcut patterns and platform detection
 - `docs/SHADCN_UI_REFERENCE.md` - Installation and technical reference
 - `docs/STYLING.md` - Overall styling configuration and theme
 - `planning/250530a_shadcn_ui_adoption.md` - Implementation planning and decisions

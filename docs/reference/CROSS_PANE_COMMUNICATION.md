@@ -4,8 +4,11 @@ This document provides a comprehensive analysis of patterns for cross-component 
 
 ## See also
 
-- `components/unified-left-pane.tsx` - current implementation using custom DOM events
-- `components/resizable-document-layout.tsx` - event dispatching from document pane to navigation
+- `components/unified-left-pane.tsx` - current implementation using DocumentCommunicationContext
+- `components/resizable-document-layout.tsx` - document communication context usage
+- `components/command-palette.tsx` - command palette integration with DocumentCommunicationContext for navigation actions
+- `lib/context/document-communication-context.tsx` - main React Context implementation
+- `docs/reference/COMMAND_PALETTE.md` - command palette using context for navigation actions
 - `docs/CODING_PRINCIPLES.md` - simplicity and debugging principles that guide pattern selection
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - overall application architecture context
 - [React Context API Documentation](https://react.dev/reference/react/useContext) - official React context patterns
