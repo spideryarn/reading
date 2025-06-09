@@ -1,4 +1,5 @@
 import { MutationEngine } from '@/lib/services/mutation-engine'
+import { generateHeadingMutation } from '@/lib/services/heading-mutation-generator'
 import { Mutation } from '@/lib/types/mutation'
 import { DocumentElement } from '@/lib/types/document'
 
@@ -487,6 +488,298 @@ describe('MutationEngine', () => {
       expect(parent?.position).toBe(1) // Parent position unchanged
       expect(child1?.position).toBe(1) // Child before removed element unchanged
       expect(child3?.position).toBe(2) // Child after removed element moved up
+    })
+
+    it('should handle multiple inserts at same insertion point', () => {
+      const document = createTestDocument()
+      const mutation: Mutation = {
+        id: 'test-mutation-13',
+        type: 'multiple-inserts',
+        forward: [
+          {
+            action: 'insert',
+            afterId: 'para-1',
+            content: {
+              id: 'heading-1',
+              tag_name: 'h1',
+              content: 'Heading 1',
+              attributes: { 'data-ai-generated': 'true' }
+            }
+          },
+          {
+            action: 'insert',
+            afterId: 'para-1',
+            content: {
+              id: 'heading-2',
+              tag_name: 'h2',
+              content: 'Heading 2',
+              attributes: { 'data-ai-generated': 'true' }
+            }
+          },
+          {
+            action: 'insert',
+            afterId: 'para-1',
+            content: {
+              id: 'heading-3',
+              tag_name: 'h3',
+              content: 'Heading 3',
+              attributes: { 'data-ai-generated': 'true' }
+            }
+          }
+        ],
+        reverse: [
+          { action: 'remove', targetId: 'heading-1' },
+          { action: 'remove', targetId: 'heading-2' },
+          { action: 'remove', targetId: 'heading-3' }
+        ]
+      }
+
+      const result = MutationEngine.applyMutation(document, mutation)
+      
+      expect(result.success).toBe(true)
+      expect(result.document).toHaveLength(6)
+      expect(result.changes).toEqual({
+        inserted: 3,
+        replaced: 0,
+        removed: 0,
+        modified: 0
+      })
+
+      // Verify AI-generated headings are properly marked
+      const aiHeadings = result.document?.filter(el => el.attributes?.['data-ai-generated'] === 'true')
+      expect(aiHeadings).toHaveLength(3)
+    })
+
+    it('should fail when trying to revert non-existent element', () => {
+      const document = createTestDocument()
+      const mutation: Mutation = {
+        id: 'test-mutation-14',
+        type: 'invalid-revert',
+        forward: [],
+        reverse: [{
+          action: 'remove',
+          targetId: 'non-existent-element'
+        }]
+      }
+
+      const result = MutationEngine.revertMutation(document, mutation)
+      
+      expect(result.success).toBe(false)
+      expect(result.error).toContain('non-existent element')
+    })
+
+    it('should fail with mixed valid and invalid insertion points', () => {
+      const document = createTestDocument()
+      const mutation: Mutation = {
+        id: 'test-mutation-15',
+        type: 'mixed-validity',
+        forward: [
+          {
+            action: 'insert',
+            afterId: 'para-1', // exists
+            content: {
+              id: 'valid-heading',
+              tag_name: 'h2',
+              content: 'Valid Heading'
+            }
+          },
+          {
+            action: 'insert',
+            afterId: 'non-existent', // doesn't exist
+            content: {
+              id: 'invalid-heading',
+              tag_name: 'h2',
+              content: 'Invalid Heading'
+            }
+          }
+        ],
+        reverse: []
+      }
+
+      const result = MutationEngine.applyMutation(document, mutation)
+      
+      expect(result.success).toBe(false)
+      expect(result.error).toContain('element not found')
+    })
+
+    it('should work with document containing only headings', () => {
+      const headingsOnlyDoc: DocumentElement[] = [
+        {
+          id: 'h1-1',
+          document_id: 'test-doc',
+          parent_id: null,
+          tag_name: 'h1',
+          content: 'Main Title',
+          attributes: {},
+          position: 1,
+          level: 0,
+          created_at: '2025-01-01T00:00:00Z',
+          updated_at: '2025-01-01T00:00:00Z'
+        },
+        {
+          id: 'h2-1',
+          document_id: 'test-doc',
+          parent_id: null,
+          tag_name: 'h2',
+          content: 'Subtitle',
+          attributes: {},
+          position: 2,
+          level: 0,
+          created_at: '2025-01-01T00:00:00Z',
+          updated_at: '2025-01-01T00:00:00Z'
+        }
+      ]
+
+      const mutation: Mutation = {
+        id: 'test-mutation-16',
+        type: 'heading-after-heading',
+        forward: [{
+          action: 'insert',
+          afterId: 'h1-1',
+          content: {
+            id: 'new-section',
+            tag_name: 'h2',
+            content: 'New Section After Title',
+            attributes: { 'data-ai-generated': 'true' }
+          }
+        }],
+        reverse: [{
+          action: 'remove',
+          targetId: 'new-section'
+        }]
+      }
+
+      const result = MutationEngine.applyMutation(headingsOnlyDoc, mutation)
+      
+      expect(result.success).toBe(true)
+      expect(result.document).toHaveLength(3)
+      expect(result.document?.find(el => el.id === 'new-section')).toBeDefined()
+    })
+
+    it('should handle complete roundtrip with AI heading verification', () => {
+      const document = createTestDocument()
+      const mutation: Mutation = {
+        id: 'test-mutation-17',
+        type: 'ai-heading-roundtrip',
+        forward: [
+          {
+            action: 'insert',
+            afterId: 'para-1',
+            content: {
+              id: 'ai-section-1',
+              tag_name: 'h2',
+              content: 'Background and Context',
+              attributes: { 'data-ai-generated': 'true' }
+            }
+          },
+          {
+            action: 'insert',
+            afterId: 'para-2',
+            content: {
+              id: 'ai-section-2',
+              tag_name: 'h3',
+              content: 'Key Findings',
+              attributes: { 'data-ai-generated': 'true' }
+            }
+          }
+        ],
+        reverse: [
+          { action: 'remove', targetId: 'ai-section-1' },
+          { action: 'remove', targetId: 'ai-section-2' }
+        ]
+      }
+
+      // Apply mutation
+      const applyResult = MutationEngine.applyMutation(document, mutation)
+      
+      expect(applyResult.success).toBe(true)
+      expect(applyResult.document).toHaveLength(5)
+
+      // Verify AI headings are properly marked
+      const aiHeadings = applyResult.document?.filter(el => el.attributes?.['data-ai-generated'] === 'true')
+      expect(aiHeadings).toHaveLength(2)
+      expect(aiHeadings?.map(h => h.content)).toEqual(['Background and Context', 'Key Findings'])
+
+      // Revert mutation
+      const revertResult = MutationEngine.revertMutation(applyResult.document!, mutation)
+      
+      expect(revertResult.success).toBe(true)
+      expect(revertResult.document).toHaveLength(3)
+
+      // Verify complete restoration to original state
+      const isIdentical = revertResult.document?.length === document.length &&
+        revertResult.document?.every(el => document.some(orig => 
+          orig.id === el.id && 
+          orig.content === el.content &&
+          orig.tag_name === el.tag_name &&
+          orig.position === el.position
+        ))
+      
+      expect(isIdentical).toBe(true)
+    })
+  })
+
+  describe('heading mutation generator edge cases', () => {
+    it('should throw error for invalid heading HTML format', () => {
+      expect(() => {
+        generateHeadingMutation({
+          headings: [{
+            id_of_after: 'para-1',
+            html: 'Not valid HTML tags'  // Missing <h> tags
+          }],
+          documentId: 'test-doc'
+        })
+      }).toThrow('Invalid heading HTML format')
+    })
+
+    it('should throw error for malformed heading tags', () => {
+      expect(() => {
+        generateHeadingMutation({
+          headings: [{
+            id_of_after: 'para-1',
+            html: '<h2>Unclosed heading'  // Missing closing tag
+          }],
+          documentId: 'test-doc'
+        })
+      }).toThrow('Invalid heading HTML format')
+    })
+
+    it('should handle empty heading content', () => {
+      const document = createTestDocument()
+      
+      const mutation = generateHeadingMutation({
+        headings: [{
+          id_of_after: 'para-1',
+          html: '<h1></h1>'  // Empty heading content
+        }],
+        documentId: 'test-doc'
+      })
+      
+      const result = MutationEngine.applyMutation(document, mutation)
+      expect(result.success).toBe(true)
+      
+      const insertedHeading = result.document?.find(el => el.content === '')
+      expect(insertedHeading).toBeDefined()
+      expect(insertedHeading?.tag_name).toBe('h1')
+    })
+
+    it('should handle heading content with special characters', () => {
+      const document = createTestDocument()
+      
+      const mutation = generateHeadingMutation({
+        headings: [{
+          id_of_after: 'para-1',
+          html: '<h2>Section with "quotes" & special chars</h2>'
+        }],
+        documentId: 'test-doc'
+      })
+      
+      const result = MutationEngine.applyMutation(document, mutation)
+      expect(result.success).toBe(true)
+      
+      const insertedHeading = result.document?.find(el => el.content.includes('quotes'))
+      expect(insertedHeading).toBeDefined()
+      expect(insertedHeading?.content).toBe('Section with "quotes" & special chars')
     })
   })
 

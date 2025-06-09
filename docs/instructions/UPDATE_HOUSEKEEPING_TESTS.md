@@ -122,6 +122,11 @@ Use subagents for diagnosis and repair of complex infrastructure issues.
 - Ensure file upload tests use mock data
 - Validate test environment separation
 
+### Stage: fix linting errors in tests?
+- Discuss with user. If we decide to fix linting, then use a subagent to run linting on the tests, and provide enough output for you to see what's going on, so that you can group the tests that need fixing, and ask multiple subagents in parallel to fix them.
+- If in doubt, err on the side of caution, e.g. if some linting issues in tests look tricky, then discuss with user before proceeding
+(Focus on linting issues that affect *tests* (rather than other parts of the code) for this piece of work)
+
 ### Stage: Documentation & Standards Update
 
 **Update Documentation:**

@@ -35,10 +35,15 @@ jest.mock('@/lib/prompts/templates/summarise', () => ({
     schema: {},
     templatePath: 'test.njk',
     modelConfig: {
-      maxTokens: 200
+      maxTokens: 0  // This gets overridden by getMaxTokensForGranularity
     }
-  }
+  },
+  getMaxTokensForGranularity: jest.fn().mockReturnValue(200),
+  getGranularityInstruction: jest.fn().mockReturnValue('Write at most a detailed.')
 }))
+
+// Mock the prompt execution to return the correct structure
+const mockExecutePromptWithUsage = jest.fn()
 jest.mock('@/lib/prompts/templates/tweet-thread', () => ({
   ...jest.requireActual('@/lib/prompts/templates/tweet-thread'),
   tweetThreadPrompt: {
@@ -98,6 +103,18 @@ describe('API Routes Usage Tracking Integration', () => {
       modelId: 'claude-3-haiku-20240307',
       name: 'Claude 3 Haiku'
     } as ModelConfig)
+    
+    // Setup executePromptWithUsage mock with proper structure
+    mockPromptTypes.executePromptWithUsage.mockResolvedValue({
+      text: 'Default mock response',
+      usage: {
+        promptTokens: 100,
+        completionTokens: 50,
+        totalTokens: 150,
+        reasoningTokens: 0
+      },
+      finishReason: 'stop'
+    })
   })
 
   describe('Summarise API Route', () => {
@@ -383,7 +400,7 @@ describe('API Routes Usage Tracking Integration', () => {
       expect(mockEnhancementService.upsert).toHaveBeenCalledWith({
         documentId: 'doc-789',
         aiCallId: 'tweet-ai-call-456',
-        type: 'tweet_thread',
+        type: 'tweet-thread',
         content: {
           tweets: ["Tweet 1 content", "Tweet 2 content"],
           thread_summary: "Summary of tweet thread",
@@ -434,6 +451,16 @@ describe('API Routes Usage Tracking Integration', () => {
     it('should handle markdown code blocks in LLM response', async () => {
       mockEnhancementService.get.mockResolvedValue(null)
       
+      // Mock input schema validation
+      mockTweetThreadInputSchema.safeParse.mockReturnValue({
+        success: true,
+        data: {
+          content: 'Content...',
+          target_length: 'medium',
+          documentId: 'doc-789'
+        }
+      })
+      
       // Mock LLM returning JSON wrapped in markdown code blocks
       const markdownWrappedResult = {
         text: '```json\n{"tweets": ["Clean tweet 1", "Clean tweet 2"], "thread_summary": "Clean summary"}\n```',
@@ -445,7 +472,14 @@ describe('API Routes Usage Tracking Integration', () => {
         finishReason: 'stop'
       }
       
+      // Mock the parsed response after markdown stripping
+      const expectedParsedResponse = {
+        tweets: ["Clean tweet 1", "Clean tweet 2"],
+        thread_summary: "Clean summary"
+      }
+      
       mockPromptTypes.executePromptWithUsage.mockResolvedValue(markdownWrappedResult)
+      mockTweetThreadResponseSchema.parse.mockReturnValue(expectedParsedResponse)
       mockAiCallService.create = jest.fn().mockResolvedValue(mockAiCall as MockAiCall)
       mockEnhancementService.upsert.mockResolvedValue({} as { id: string })
 

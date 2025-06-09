@@ -6,6 +6,9 @@
  * components rather than implementation details.
  */
 
+// Import shared UI mocks to reduce setup overhead
+import './setup-ui-mocks'
+
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -16,139 +19,34 @@ import { AppHeader } from '@/components/app-header'
 import { AuthProvider } from '@/lib/context/auth-context'
 import { requireAuth } from '@/lib/auth/route-protection'
 import { createClient } from '@/lib/supabase/client'
-
-// Mock Next.js navigation
-jest.mock('next/navigation', () => ({
-  useRouter: jest.fn(),
-  useSearchParams: jest.fn(),
-  redirect: jest.fn(),
-}))
-
-// Mock Supabase client
-jest.mock('@/lib/supabase/client', () => ({
-  createClient: jest.fn(),
-}))
-
-// Mock UI components to avoid complex shadcn/ui setup
-jest.mock('@/components/ui/form', () => {
-  let fieldCounter = 0
-  return {
-    Form: ({ children, ...props }: any) => <div data-testid="form">{children}</div>,
-    FormControl: ({ children }: any) => <div>{children}</div>,
-    FormField: ({ render, control, name }: any) => {
-      const fieldId = `field-${++fieldCounter}-${name}`
-      const field = { value: '', onChange: jest.fn(), onBlur: jest.fn(), name }
-      let labelText = name
-      if (name === 'email') labelText = 'Email address'
-      else if (name === 'password') labelText = 'Password'
-      else if (name === 'confirmPassword') labelText = 'Confirm password'
-      
-      return (
-        <div>
-          <label htmlFor={fieldId}>{labelText}</label>
-          <input id={fieldId} {...field} />
-        </div>
-      )
-    },
-    FormItem: ({ children }: any) => <div>{children}</div>,
-    FormLabel: ({ children }: any) => <span>{children}</span>,
-    FormMessage: () => <div data-testid="form-message"></div>,
-  }
-})
-
-jest.mock('@/components/ui/button', () => ({
-  Button: ({ children, disabled, onClick, asChild, ...props }: any) => {
-    if (asChild) {
-      return <div {...props}>{children}</div>
-    }
-    return <button disabled={disabled} onClick={onClick} {...props}>{children}</button>
-  },
-}))
-
-jest.mock('@/components/ui/input', () => ({
-  Input: (props: any) => <input {...props} />,
-}))
-
-jest.mock('@/components/ui/alert', () => ({
-  Alert: ({ children }: any) => <div role="alert">{children}</div>,
-}))
-
-jest.mock('@/components/ui/card', () => ({
-  Card: ({ children, className, ...props }: any) => <div className={className} {...props}>{children}</div>,
-}))
-
-jest.mock('next/link', () => ({
-  __esModule: true,
-  default: ({ children, href, onClick, ...props }: any) => (
-    <a href={href} onClick={onClick} {...props}>{children}</a>
-  ),
-}))
-
-jest.mock('next/image', () => ({
-  __esModule: true,
-  default: ({ src, alt, ...props }: any) => <img src={src} alt={alt} {...props} />,
-}))
-
-// Mock window.location.origin
-Object.defineProperty(window, 'location', {
-  value: {
-    origin: 'http://localhost:3000',
-  },
-  writable: true,
-})
+import { 
+  createMockRouter, 
+  createMockSearchParams, 
+  createMockSupabaseClient, 
+  createMockUser 
+} from './setup-ui-mocks'
 
 describe('Authentication Integration Tests', () => {
-  const mockPush = jest.fn()
-  const mockRefresh = jest.fn()
-  const mockGet = jest.fn()
-  const mockSignInWithPassword = jest.fn()
-  const mockSignUp = jest.fn()
-  const mockSignOut = jest.fn()
-  const mockGetSession = jest.fn()
-  const mockOnAuthStateChange = jest.fn()
-
-  const mockSupabaseClient = {
-    auth: {
-      signInWithPassword: mockSignInWithPassword,
-      signUp: mockSignUp,
-      signOut: mockSignOut,
-      getSession: mockGetSession,
-      onAuthStateChange: mockOnAuthStateChange,
-    },
-  }
-
-  const mockUser = {
-    id: 'user-123',
-    email: 'test@example.com',
-    aud: 'authenticated',
-    role: 'authenticated',
-    created_at: '2024-01-01T00:00:00.000Z',
-    updated_at: '2024-01-01T00:00:00.000Z',
-    app_metadata: {},
-    user_metadata: {},
-  }
+  let mockRouter: ReturnType<typeof createMockRouter>
+  let mockSearchParams: ReturnType<typeof createMockSearchParams>
+  let mockSupabaseClient: ReturnType<typeof createMockSupabaseClient>
+  let mockUser: ReturnType<typeof createMockUser>
 
   beforeEach(() => {
     jest.clearAllMocks()
     
-    // Mock router
-    ;(useRouter as jest.Mock).mockReturnValue({
-      push: mockPush,
-      refresh: mockRefresh,
-    })
+    // Create mocks using helper functions
+    mockRouter = createMockRouter()
+    mockSearchParams = createMockSearchParams()
+    mockSupabaseClient = createMockSupabaseClient()
+    mockUser = createMockUser()
     
-    // Mock search params
-    ;(useSearchParams as jest.Mock).mockReturnValue({
-      get: mockGet.mockReturnValue(null),
-    })
+    // Setup Next.js navigation mocks
+    ;(useRouter as jest.Mock).mockReturnValue(mockRouter)
+    ;(useSearchParams as jest.Mock).mockReturnValue(mockSearchParams)
     
-    // Mock Supabase client
+    // Setup Supabase client mock
     ;(createClient as jest.Mock).mockReturnValue(mockSupabaseClient)
-    
-    // Mock auth state change subscription
-    mockOnAuthStateChange.mockReturnValue({
-      data: { subscription: { unsubscribe: jest.fn() } }
-    })
   })
 
   describe('Login Form Validation', () => {
@@ -165,7 +63,7 @@ describe('Authentication Integration Tests', () => {
       await user.click(submitButton)
       
       // Form validation should prevent submission
-      expect(mockSignInWithPassword).not.toHaveBeenCalled()
+      expect(mockSupabaseClient.auth.signInWithPassword).not.toHaveBeenCalled()
     })
 
     test('prevents submission with short password', async () => {
@@ -181,12 +79,12 @@ describe('Authentication Integration Tests', () => {
       await user.click(submitButton)
       
       // Form validation should prevent submission
-      expect(mockSignInWithPassword).not.toHaveBeenCalled()
+      expect(mockSupabaseClient.auth.signInWithPassword).not.toHaveBeenCalled()
     })
 
     test('allows submission with valid credentials', async () => {
       const user = userEvent.setup()
-      mockSignInWithPassword.mockResolvedValue({ error: null })
+      mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({ error: null })
       
       render(<LoginForm />)
       
@@ -199,7 +97,7 @@ describe('Authentication Integration Tests', () => {
       await user.click(submitButton)
       
       await waitFor(() => {
-        expect(mockSignInWithPassword).toHaveBeenCalledWith({
+        expect(mockSupabaseClient.auth.signInWithPassword).toHaveBeenCalledWith({
           email: 'test@example.com',
           password: 'password123',
         })
@@ -223,12 +121,12 @@ describe('Authentication Integration Tests', () => {
       await user.click(submitButton)
       
       // Form validation should prevent submission
-      expect(mockSignUp).not.toHaveBeenCalled()
+      expect(mockSupabaseClient.auth.signUp).not.toHaveBeenCalled()
     })
 
     test('allows submission with valid data and matching passwords', async () => {
       const user = userEvent.setup()
-      mockSignUp.mockResolvedValue({ error: null })
+      mockSupabaseClient.auth.signUp.mockResolvedValue({ error: null })
       
       render(<SignupForm />)
       
@@ -243,7 +141,7 @@ describe('Authentication Integration Tests', () => {
       await user.click(submitButton)
       
       await waitFor(() => {
-        expect(mockSignUp).toHaveBeenCalledWith({
+        expect(mockSupabaseClient.auth.signUp).toHaveBeenCalledWith({
           email: 'test@example.com',
           password: 'Password123',
           options: {
@@ -274,7 +172,7 @@ describe('Authentication Integration Tests', () => {
 
     test('handles logout functionality', async () => {
       const user = userEvent.setup()
-      mockSignOut.mockResolvedValue({ error: null })
+      mockSupabaseClient.auth.signOut.mockResolvedValue({ error: null })
       
       render(<ProfileDropdown user={mockUser} />)
       
@@ -287,8 +185,8 @@ describe('Authentication Integration Tests', () => {
       await user.click(logoutButton)
       
       await waitFor(() => {
-        expect(mockSignOut).toHaveBeenCalled()
-        expect(mockPush).toHaveBeenCalledWith('/')
+        expect(mockSupabaseClient.auth.signOut).toHaveBeenCalled()
+        expect(mockRouter.push).toHaveBeenCalledWith('/')
         expect(mockRefresh).toHaveBeenCalled()
       })
     })
@@ -296,7 +194,7 @@ describe('Authentication Integration Tests', () => {
 
   describe('App Header Auth Integration', () => {
     test('shows login/register buttons when user is not authenticated', () => {
-      mockGetSession.mockResolvedValue({ data: { session: null } })
+      mockSearchParams.getSession.mockResolvedValue({ data: { session: null } })
       
       const TestWrapper = ({ children }: { children: React.ReactNode }) => (
         <AuthProvider>{children}</AuthProvider>
@@ -314,7 +212,7 @@ describe('Authentication Integration Tests', () => {
     })
 
     test('shows profile dropdown when user is authenticated', async () => {
-      mockGetSession.mockResolvedValue({ 
+      mockSearchParams.getSession.mockResolvedValue({ 
         data: { session: { user: mockUser } } 
       })
       
@@ -441,7 +339,7 @@ describe('Authentication Integration Tests', () => {
     test('login form displays Supabase error messages', async () => {
       const user = userEvent.setup()
       const errorMessage = 'Invalid login credentials'
-      mockSignInWithPassword.mockResolvedValue({ 
+      mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({ 
         error: { message: errorMessage }
       })
       
@@ -463,7 +361,7 @@ describe('Authentication Integration Tests', () => {
     test('signup form displays Supabase error messages', async () => {
       const user = userEvent.setup()
       const errorMessage = 'User already registered'
-      mockSignUp.mockResolvedValue({ 
+      mockSupabaseClient.auth.signUp.mockResolvedValue({ 
         error: { message: errorMessage }
       })
       
@@ -487,7 +385,7 @@ describe('Authentication Integration Tests', () => {
     test('profile dropdown handles logout errors gracefully', async () => {
       const user = userEvent.setup()
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
-      mockSignOut.mockRejectedValue(new Error('Network error'))
+      mockSupabaseClient.auth.signOut.mockRejectedValue(new Error('Network error'))
       
       render(<ProfileDropdown user={mockUser} />)
       
@@ -499,7 +397,7 @@ describe('Authentication Integration Tests', () => {
       await user.click(logoutButton)
       
       await waitFor(() => {
-        expect(mockSignOut).toHaveBeenCalled()
+        expect(mockSupabaseClient.auth.signOut).toHaveBeenCalled()
         expect(consoleSpy).toHaveBeenCalledWith('Sign out error:', expect.any(Error))
       })
       
