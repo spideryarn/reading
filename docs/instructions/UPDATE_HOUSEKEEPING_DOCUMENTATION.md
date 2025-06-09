@@ -39,6 +39,7 @@ Use subagents where appropriate to maintain context window efficiency.
 Look for:
 - **Feature Status Mismatches** - Documentation says "not implemented" but code exists
 - **Architectural Drift** - Documentation describes old approaches superseded by new decisions
+- **Missing High-level Docs** - Missing high-level/overview evergreen/reference documentation, e.g. README, SETUP, ARCHITECTURE, PRODUCT VISION, CODING_PRINCIPLES/GUIDELINES, SITE_ORGANISATION.md, TESTING, UI_INTERFACE and/or STYLING/DESIGN/CSS, etc. These are just examples - use your judgment about which high-level docs would be most relevant to this particular codebase.
 - **Missing Features** - New functionality not documented
 - **Broken Cross-References** - Links to renamed/removed files
 - **Duplicate Information** - Same content in multiple places (consolidate to one location)
@@ -58,7 +59,7 @@ Discuss proposed changes to the user, usually grouped by priority (most importan
 
 Agree a plan with the user, and execute it, defaulting to highest-priority first.
 
-- Use tasks and subagents (provided with rich context to make sure they make correct/useful/sensible/aligned changes).
+- Use tasks and subagents, following instructions in `docs/instructions/TASKS_SUBAGENTS.md`
 
 - Commit in batches (following `docs/GIT_COMMITS.md`), using subagents.
 
@@ -68,12 +69,16 @@ Agree a plan with the user, and execute it, defaulting to highest-priority first
 Review where we are, and consider whether there's anything remaining, or any other gaps/improvements we're now noticing.
 
 
-### Step 5: Update CLAUDE.md if needed
+### Step 5: Late-stage housekeeping steps
 
-Consider whether changes affect essential AI agent context (see `docs/UPDATE_CLAUDE_INSTRUCTIONS.md`):
-- New build commands or debugging tools
-- Architectural changes affecting project structure
-- New documentation requiring signposts
+After completing the main documentation updates:
+
+1. **Update documentation organisation guide**: Run `docs/instructions/UPDATE_DOCUMENTATION_ORGANISATION_DOC.md` to ensure the documentation organisation guide reflects any structural changes made during housekeeping.
+
+2. **Update CLAUDE.md if needed**: Run `docs/instructions/UPDATE_CLAUDE_INSTRUCTIONS.md` if changes affect essential AI agent context:
+   - New build commands or debugging tools
+   - Architectural changes affecting project structure
+   - New documentation requiring signposts
 
 #### Common Update Patterns
 
@@ -107,11 +112,7 @@ Consider whether changes affect essential AI agent context (see `docs/UPDATE_CLA
 # Instead of duplicating prompt template info
 see `docs/LLM_PROMPT_TEMPLATES.md` for prompt template architecture
 ```
-### Step 6: Update documentation organisation guide
-
-Run `docs/instructions/UPDATE_DOCUMENTATION_ORGANISATION_DOC.md` to ensure the documentation organisation guide reflects any structural changes made during housekeeping.
-
-### Step 7: Suggest a commit to the user (following `docs/GIT_COMMITS.md`)
+### Step 6: Suggest a commit to the user (following `docs/GIT_COMMITS.md`)
 
 
 ## Documentation Quality Checklist
