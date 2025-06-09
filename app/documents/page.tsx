@@ -21,9 +21,9 @@ async function getUserDocuments(): Promise<Document[]> {
       return [] // No user logged in, return empty array
     }
     
-    const documents = await documentService.getByUserId(userId)
+    const result = await documentService.getByUserId(userId)
     
-    return documents.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) // Sort by newest first
+    return result.documents.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) // Sort by newest first
   } catch (error) {
     console.error('Failed to fetch user documents:', error)
     return []

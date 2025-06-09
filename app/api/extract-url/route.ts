@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     
     // Parse JSON request body
     const body = await request.json()
-    const { url, title: providedTitle, provider = 'claude', extractionMethod = 'ai-transcription' } = body
+    const { url, title: providedTitle, provider = 'claude', extractionMethod = 'ai-transcription', isPublic = false } = body
     
     if (!url) {
       return new NextResponse(URL_EXTRACTION_CONFIG.ERROR_MESSAGES.INVALID_URL, { status: 400 })
@@ -226,7 +226,7 @@ export async function POST(request: NextRequest) {
         const processingTime = Date.now() - startTime
         
         // Complete the AI call record with usage metadata
-        await aiCallService.completeCall(aiCall.id, {
+        await aiCallService.completeCall(aiCall!.id, {
           output_data: {
             html_length: extractResult.text.length,
             processing_time_ms: processingTime,
@@ -246,7 +246,7 @@ export async function POST(request: NextRequest) {
         console.error('LLM extraction error:', error)
         
         // Mark AI call as failed
-        await aiCallService.completeCall(aiCall.id, {
+        await aiCallService.completeCall(aiCall!.id, {
           output_data: {
             error_type: 'llm_extraction_failed',
             error_message: error instanceof Error ? error.message : 'Unknown error'
@@ -298,7 +298,7 @@ export async function POST(request: NextRequest) {
     if (extractionMethodUsed === 'ai-transcription') {
       const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as keyof typeof AI_CONFIG.MODELS
       const modelConfig = getModelConfig(tierKey)
-      uploadMetadata.model_used = modelConfig.modelId
+      ;(uploadMetadata as typeof uploadMetadata & { model_used?: string }).model_used = modelConfig.modelId
     }
     
     // Create document in database using authenticated user (no file storage for URLs)
@@ -310,7 +310,7 @@ export async function POST(request: NextRequest) {
         plaintext_content: plaintext,
         slug: finalSlug,
         source_url: url,
-        is_public: false, // Default to private for user documents
+        is_public: isPublic,
         word_count: plaintext.split(/\s+/).length
       },
       null, // No file for URL-based documents

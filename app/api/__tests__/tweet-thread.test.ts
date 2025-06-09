@@ -3,7 +3,7 @@
  */
 import { POST } from '../tweet-thread/route'
 import { executePrompt } from '@/lib/prompts/types'
-import { testApiRoute } from './test-helpers'
+import { testApiRoute, createMockRequest } from './test-helpers'
 
 // Mock the dependencies
 jest.mock('@/lib/prompts/types')

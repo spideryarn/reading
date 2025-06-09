@@ -6,10 +6,14 @@ import { AppHeader } from '@/components/app-header'
 import { Footer } from '@/components/footer'
 import { Upload, FilePdf, X, Link as LinkIcon, CircleNotch } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 
 export default function AddDocumentPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'url' | 'pdf'>('url')
+  
+  // Privacy state (shared across both tabs)
+  const [isPublic, setIsPublic] = useState(false) // Default to private
   
   // URL state
   const [url, setUrl] = useState('')
@@ -83,7 +87,8 @@ export default function AddDocumentPage() {
         body: JSON.stringify({ 
           url: url.trim(),
           extractionMethod,
-          provider: urlProvider
+          provider: urlProvider,
+          isPublic
         }),
       })
 
@@ -216,6 +221,7 @@ export default function AddDocumentPage() {
       const formData = new FormData()
       formData.append('pdf', selectedFile)
       formData.append('provider', selectedProvider)
+      formData.append('isPublic', isPublic.toString())
 
       const response = await fetch('/api/upload-pdf', {
         method: 'POST',
@@ -270,6 +276,7 @@ export default function AddDocumentPage() {
               </button>
             </div>
 
+
             {/* URL Tab Content */}
             {activeTab === 'url' && (
               <div className="space-y-6">
@@ -299,6 +306,33 @@ export default function AddDocumentPage() {
                     <p className="text-xs text-gray-500 mt-2">
                       Enter a URL to extract and save the webpage content. Supports articles, blog posts, and most text-based web content. Press ENTER to submit when URL is valid.
                     </p>
+                  </div>
+
+                  {/* Privacy Setting */}
+                  <div className="flex items-center space-x-3 py-4 border border-gray-200 rounded-lg px-4 bg-gray-50">
+                    <Checkbox
+                      id="privacy-setting"
+                      checked={isPublic}
+                      onCheckedChange={(checked) => setIsPublic(checked === true)}
+                      disabled={isExtractingUrl}
+                      className="data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                    />
+                    <div className="flex-1">
+                      <label
+                        htmlFor="privacy-setting"
+                        className={`text-sm font-medium cursor-pointer ${
+                          isExtractingUrl ? 'text-gray-400' : 'text-gray-700'
+                        }`}
+                      >
+                        Make this document public
+                      </label>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {isPublic 
+                          ? "Anyone can view this document, but only you can edit it or commission AI processing."
+                          : "Only you can view and interact with this document."
+                        }
+                      </p>
+                    </div>
                   </div>
 
                   {/* Extraction Method Selection */}
@@ -498,6 +532,33 @@ export default function AddDocumentPage() {
                         </div>
                       </div>
                     )}
+                  </div>
+
+                  {/* Privacy Setting */}
+                  <div className="flex items-center space-x-3 py-4 border border-gray-200 rounded-lg px-4 bg-gray-50">
+                    <Checkbox
+                      id="privacy-setting-pdf"
+                      checked={isPublic}
+                      onCheckedChange={(checked) => setIsPublic(checked === true)}
+                      disabled={isUploading}
+                      className="data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                    />
+                    <div className="flex-1">
+                      <label
+                        htmlFor="privacy-setting-pdf"
+                        className={`text-sm font-medium cursor-pointer ${
+                          isUploading ? 'text-gray-400' : 'text-gray-700'
+                        }`}
+                      >
+                        Make this document public
+                      </label>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {isPublic 
+                          ? "Anyone can view this document, but only you can edit it or commission AI processing."
+                          : "Only you can view and interact with this document."
+                        }
+                      </p>
+                    </div>
                   </div>
 
                   {/* Provider Selection */}

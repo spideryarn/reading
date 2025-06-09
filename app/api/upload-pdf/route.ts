@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
     const pdfFile = formData.get('pdf') as File
     const provider = (formData.get('provider') as string) || 'claude' // Default to Claude
     const title = (formData.get('title') as string) || pdfFile?.name?.replace('.pdf', '') || 'Untitled Document'
+    const isPublic = formData.get('isPublic') === 'true' // Default to false (private)
 
     if (!pdfFile) {
       return new NextResponse('No PDF file provided', { status: 400 })
@@ -142,7 +143,7 @@ export async function POST(request: NextRequest) {
         plaintext_content: plaintext,
         slug,
         source_url: null,
-        is_public: false,
+        is_public: isPublic,
         word_count: plaintext.split(/\s+/).length
       },
       pdfFile, // Original file for storage
