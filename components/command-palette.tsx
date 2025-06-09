@@ -68,10 +68,16 @@ const ACCOUNT_CATEGORY: CommandCategory = {
 
 interface CommandPaletteProps {
   className?: string
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function CommandPalette({ }: CommandPaletteProps) {
-  const [open, setOpen] = useState(false)
+export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPaletteProps) {
+  const [internalOpen, setInternalOpen] = useState(false)
+  
+  // Use external control if provided, otherwise use internal state
+  const open = externalOpen !== undefined ? externalOpen : internalOpen
+  const setOpen = onOpenChange || setInternalOpen
   const { actions } = useDocumentCommunication()
   const router = useRouter()
   const { user, signOut } = useAuth()
