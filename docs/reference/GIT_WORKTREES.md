@@ -203,7 +203,7 @@ Automated approach (recommended for multiple worktrees):
 
 ### Dependency Management
 
-**Automatic dependency synchronisation**: By default, `sync-worktrees-all.ts` runs `npm ci` in each worktree after successful Git sync to ensure all worktrees have identical, up-to-date dependencies that match package-lock.json.
+**Automatic dependency synchronisation**: By default, `sync-worktrees-all.ts` runs `npm ci` in main and each worktree after successful Git sync to ensure all worktrees have identical, up-to-date dependencies that match package-lock.json.
 
 **Benefits of npm ci**:
 - Faster than `npm install` (doesn't check for updates)

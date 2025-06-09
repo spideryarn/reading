@@ -221,6 +221,27 @@ class SyncAllWorktreesCommand extends Command {
           this.context.stdout.write(step1Result.output + '\n');
         }
       }
+
+      // Run npm ci in main after merging worktree changes
+      if (this.runNpmCi) {
+        this.log(`\n📦 Running npm ci in main...`, this.colors.cyan);
+        const mainNpmResult = this.execInDirectory(currentDir, 'npm ci');
+        
+        if (mainNpmResult.success) {
+          this.log(`✅ npm ci completed in main`, this.colors.green);
+        } else {
+          this.log(`❌ npm ci failed in main`, this.colors.red);
+          if (mainNpmResult.error) {
+            this.log(`Error: ${mainNpmResult.error}`, this.colors.red);
+          }
+          if (mainNpmResult.output) {
+            this.log(`npm ci output:`, this.colors.yellow);
+            this.context.stdout.write(mainNpmResult.output + '\n');
+          }
+          this.log(`\n🔧 Fix npm ci issues in main and try again.`, this.colors.yellow);
+          return 1;
+        }
+      }
   
       // Step 2: Go to each worktree and pull from main
       this.log(`\n📤 Step 2: Distributing main to all worktrees...`, this.colors.bright);
