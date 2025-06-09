@@ -4,11 +4,12 @@ This document describes the process for keeping project documentation up-to-date
 
 ## See also
 
-- `docs/DOCUMENTATION_ORGANISATION.md`
-- `docs/WRITE_EVERGREEN_DOC.md` - Guidelines for writing evergreen documentation
-- `docs/WRITE_PLANNING_DOC.md` - Guidelines for ephemeral planning documents
-- `docs/UPDATE_CLAUDE_INSTRUCTIONS.md` - Maintaining CLAUDE.md as part of housekeeping
-- `docs/GIT_COMMITS.md` - How to commit documentation updates
+- `docs/reference/DOCUMENTATION_ORGANISATION.md` - Comprehensive guide to all project documentation organisation and navigation
+- `docs/instructions/UPDATE_DOCUMENTATION_ORGANISATION_DOC.md` - Run after this process to update documentation organisation guide
+- `docs/instructions/WRITE_EVERGREEN_DOC.md` - Guidelines for writing evergreen documentation
+- `docs/instructions/WRITE_PLANNING_DOC.md` - Guidelines for ephemeral planning documents
+- `docs/instructions/UPDATE_CLAUDE_INSTRUCTIONS.md` - Maintaining CLAUDE.md as part of housekeeping
+- `docs/instructions/GIT_COMMITS.md` - How to commit documentation updates
 
 ## When to Update Documentation
 
@@ -25,10 +26,11 @@ Perform documentation housekeeping:
 
 Read all key documentation to understand the current state:
 1. `README.md` - Project overview and goals
-2. `docs/*.md` - All evergreen documentation
-3. Recent `planning/*.md` - Latest decisions and changes
-4. Key code files and API routes
-5. Configuration files and migrations
+2. `docs/reference/DOCUMENTATION_ORGANISATION.md` - Documentation structure and navigation guide
+3. `docs/reference/*.md` and `docs/instructions/*.md` - All evergreen documentation
+4. Recent `planning/*.md` - Latest decisions and changes
+5. Key code files and API routes
+6. Configuration files and migrations
 
 Use subagents where appropriate to maintain context window efficiency.
 
@@ -105,7 +107,11 @@ Consider whether changes affect essential AI agent context (see `docs/UPDATE_CLA
 # Instead of duplicating prompt template info
 see `docs/LLM_PROMPT_TEMPLATES.md` for prompt template architecture
 ```
-### Step 6: Suggest a commit to the user (following `docs/GIT_COMMITS.md`)
+### Step 6: Update documentation organisation guide
+
+Run `docs/instructions/UPDATE_DOCUMENTATION_ORGANISATION_DOC.md` to ensure the documentation organisation guide reflects any structural changes made during housekeeping.
+
+### Step 7: Suggest a commit to the user (following `docs/GIT_COMMITS.md`)
 
 
 ## Documentation Quality Checklist
@@ -118,6 +124,7 @@ Before committing, ensure:
 - [ ] "See also" sections are comprehensive
 - [ ] Examples match current code patterns
 - [ ] Technical details are accurate
+- [ ] Documentation organisation guide (`docs/reference/DOCUMENTATION_ORGANISATION.md`) reflects any structural changes
 
 ## Common Pitfalls
 
