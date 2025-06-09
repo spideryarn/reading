@@ -146,18 +146,21 @@ export function useMultiSummary(
     }
   }, [documentId])
   
-  // Auto-load cached summaries on mount
+  // Auto-load cached summaries or generate new ones on mount
   useEffect(() => {
-    if (autoLoad && documentId) {
+    if (autoLoad && documentId && content && !isGenerated && !isLoading) {
       fetchCachedSummaries().then((cached) => {
         if (cached?.summaries) {
           setSummaries(cached.summaries)
           setIsCached(true)
           setIsGenerated(true)
+        } else {
+          // If no cached summaries found, auto-generate new ones
+          generateSummaries()
         }
       })
     }
-  }, [autoLoad, documentId, fetchCachedSummaries])
+  }, [autoLoad, documentId, content, isGenerated, isLoading, fetchCachedSummaries, generateSummaries])
   
   return {
     // Data state
