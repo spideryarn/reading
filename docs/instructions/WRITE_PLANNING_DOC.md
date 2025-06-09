@@ -76,9 +76,8 @@ As the very, very first preparatory action:
 - Run `./scripts/sync-worktrees.ts` to make sure we've pulled the latest changes from `main` before we start (to make merge conflicts less likely).
 
 At the end of every stage:
-- Add actions to update the planning doc with progress so far.
-- Follow instructions in `docs/DEBRIEF_PROGRESS.md` to output a summary of where things stand.
-- Add actions to commit, following instructions in `docs/GIT_COMMITS.md` (i.e. use a subagent)
+- Follow instructions in `docs/DEBRIEF_PROGRESS.md` to output a summary of where things stand, and update the planning doc with progress so far.
+- Git commit (following instructions in `docs/GIT_COMMITS.md`, including use a subagent).
 
 As a very final action:
 - Move the doc to `planning/finished/` and commit.

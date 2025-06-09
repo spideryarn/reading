@@ -40,15 +40,24 @@ class SyncAllWorktreesCommand extends Command {
       
       With --ignore-dirty, the script will skip any worktrees that have uncommitted
       changes, preventing potential merge conflicts or lost work.
+      
+      By default, npm ci is run in each worktree after successful Git sync to ensure
+      dependencies are up to date. Use --run-npm-ci=false to skip this step for faster
+      execution when you know dependencies haven't changed.
     `,
     examples: [
       ['Sync all worktrees', 'sync-all-worktrees'],
       ['Skip worktrees with uncommitted changes', 'sync-all-worktrees --ignore-dirty'],
+      ['Sync without running npm ci', 'sync-all-worktrees --run-npm-ci=false'],
     ],
   });
 
   ignoreDirty = Option.Boolean('--ignore-dirty', false, {
     description: 'Skip worktrees with uncommitted changes',
+  });
+
+  runNpmCi = Option.Boolean('--run-npm-ci', true, {
+    description: 'Run npm ci in each worktree after successful Git sync (default: true)',
   });
 
   // ANSI color codes for output
@@ -101,6 +110,9 @@ class SyncAllWorktreesCommand extends Command {
       this.log('🔄 Sync All Worktrees - Boomerang Mode', this.colors.bright);
       if (this.ignoreDirty) {
         this.log('   Option: --ignore-dirty (skipping dirty worktrees)', this.colors.yellow);
+      }
+      if (!this.runNpmCi) {
+        this.log('   Option: --run-npm-ci=false (skipping npm ci)', this.colors.yellow);
       }
       
       // Get current directory (should be main)
@@ -242,14 +254,37 @@ class SyncAllWorktreesCommand extends Command {
         const result = this.execInDirectory(worktree.path, './scripts/sync-worktrees.ts');
         
         if (result.success) {
-          this.log(`   ✅ Synced successfully`, this.colors.green);
+          this.log(`   ✅ Git sync successful`, this.colors.green);
           if (result.output) {
             // Show the output but indent it
             this.context.stdout.write(result.output.split('\n').map(line => '      ' + line).join('\n') + '\n');
           }
-          results.push({ branch: worktree.branch!, success: true });
+          
+          // Run npm ci if enabled
+          if (this.runNpmCi) {
+            this.log(`   📦 Running npm ci...`, this.colors.cyan);
+            const npmResult = this.execInDirectory(worktree.path, 'npm ci');
+            
+            if (npmResult.success) {
+              this.log(`   ✅ npm ci completed`, this.colors.green);
+              results.push({ branch: worktree.branch!, success: true });
+            } else {
+              this.log(`   ❌ npm ci failed`, this.colors.red);
+              if (npmResult.error) {
+                this.log(`   Error: ${npmResult.error}`, this.colors.red);
+              }
+              if (npmResult.output) {
+                this.log(`   npm ci output:`, this.colors.yellow);
+                this.context.stdout.write(npmResult.output.split('\n').map(line => '      ' + line).join('\n') + '\n');
+              }
+              results.push({ branch: worktree.branch!, success: false, error: `npm ci failed: ${npmResult.error}` });
+              allSuccess = false;
+            }
+          } else {
+            results.push({ branch: worktree.branch!, success: true });
+          }
         } else {
-          this.log(`   ❌ Sync failed`, this.colors.red);
+          this.log(`   ❌ Git sync failed`, this.colors.red);
           if (result.error) {
             this.log(`   Error: ${result.error}`, this.colors.red);
           }

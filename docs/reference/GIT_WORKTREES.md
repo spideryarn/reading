@@ -26,6 +26,9 @@ Multi-worktree development setup for parallel feature development using a hub-an
 
 # Automated two-way sync all worktrees (from main)
 ./scripts/sync-worktrees-all.ts
+
+# Sync without running npm ci (faster when dependencies unchanged)
+./scripts/sync-worktrees-all.ts --run-npm-ci=false
 ```
 
 **Autostash support:** The script automatically handles uncommitted changes using Git's `--autostash` feature. Your changes are safely stashed before merge and reapplied afterward.
@@ -130,9 +133,10 @@ git push origin --delete experim  # If it was pushed
    cp .env.local ../reading-worktree6/
    
    # Edit each .env.local to set unique PORT values
-   # Then install dependencies in each worktree
-   cd ../reading-worktree1 && npm install
-   cd ../reading-worktree2 && npm install
+   # Note: Dependencies will be automatically installed when using sync-worktrees-all.ts
+   # Or manually install in each worktree if needed:
+   # cd ../reading-worktree1 && npm ci
+   # cd ../reading-worktree2 && npm ci
    # ... and so on for each worktree
    ```
 
@@ -195,7 +199,37 @@ Manual approach:
 2. From each worktree: Run sync to pull latest main changes
 
 Automated approach (recommended for multiple worktrees):
-- From main: `./scripts/sync-worktrees-all.ts` - automatically performs both steps
+- From main: `./scripts/sync-worktrees-all.ts` - automatically performs both steps and runs npm ci to ensure dependencies are up to date
+
+### Dependency Management
+
+**Automatic dependency synchronisation**: By default, `sync-worktrees-all.ts` runs `npm ci` in each worktree after successful Git sync to ensure all worktrees have identical, up-to-date dependencies that match package-lock.json.
+
+**Benefits of npm ci**:
+- Faster than `npm install` (doesn't check for updates)
+- Ensures exact dependency versions from package-lock.json
+- Prevents "module not found" errors when code changes introduce new dependencies
+- Maintains consistency across all worktrees
+
+**Performance options**:
+```bash
+# Default: sync Git + run npm ci
+./scripts/sync-worktrees-all.ts
+
+# Skip npm ci for faster execution (when dependencies haven't changed)
+./scripts/sync-worktrees-all.ts --run-npm-ci=false
+
+# Manual npm ci in a specific worktree if needed
+cd reading-worktree1 && npm ci
+```
+
+**When to skip npm ci**:
+- No changes to package.json or package-lock.json
+- Working only on code changes without new dependencies
+- Need faster sync for rapid iteration
+- Troubleshooting Git conflicts without dependency concerns
+
+**Failure handling**: If npm ci fails in any worktree, the script reports the error with full output and marks that worktree as failed, allowing you to investigate and retry.
 
 ### Working with Feature Branches
 
