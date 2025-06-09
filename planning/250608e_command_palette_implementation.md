@@ -72,23 +72,23 @@ The application has established patterns for cross-pane communication through `D
   - [ ] Test accessibility attributes and screen reader support
 - [ ] Run tests with `npm test`
 
-### Stage: Navigation Commands Implementation
-- [ ] Define navigation command structure matching existing tabs
-  - [ ] Original Document (⌘1) → `setActiveTab('original')`
-  - [ ] AI-Generated (⌘2) → `setActiveTab('ai-generated')`
-  - [ ] Summary (⌘3) → `setActiveTab('summary')`
-  - [ ] Chat (⌘4) → `setActiveTab('chat')`
-  - [ ] Glossary (⌘5) → `setActiveTab('glossary')`
-  - [ ] Search (⌘6) → `setActiveTab('search')`
-- [ ] Add keyboard shortcut display using CommandShortcut component
-- [ ] Implement command categories using CommandGroup
-  - [ ] "Navigation" group for tab switching
-  - [ ] "App Navigation" group for page-level actions
-  - [ ] "Document Actions" group for AI features (future)
-- [ ] Test navigation commands integration
-  - [ ] Verify all tab switches work correctly
-  - [ ] Test that command palette closes after command execution
-  - [ ] Verify keyboard shortcuts match visual indicators
+### Stage: Navigation Commands Implementation ✅ COMPLETED
+- [x] Define navigation command structure matching existing tabs
+  - [x] Original Document (⌘1) → `setActiveTab('original')`
+  - [x] AI-Generated (⌘2) → `setActiveTab('ai-generated')`
+  - [x] Summary (⌘3) → `setActiveTab('summary')`
+  - [x] Chat (⌘4) → `setActiveTab('chat')`
+  - [x] Glossary (⌘5) → `setActiveTab('glossary')`
+  - [x] Search (⌘6) → `setActiveTab('search')`
+- [x] Add keyboard shortcut display using CommandShortcut component
+- [x] Implement command categories using CommandGroup
+  - [x] "Navigation" group for tab switching
+  - [x] "App Navigation" group for page-level actions
+  - [x] "Document Actions" group for AI features (future)
+- [x] Test navigation commands integration
+  - [x] Verify all tab switches work correctly
+  - [x] Test that command palette closes after command execution
+  - [x] Verify keyboard shortcuts match visual indicators
 
 ### Stage: App Navigation Commands ✅ COMPLETED
 - [x] Add app-level navigation commands
@@ -166,17 +166,21 @@ The application has established patterns for cross-pane communication through `D
   - [ ] Test on multiple browsers and screen sizes
   - [ ] User acceptance testing with keyboard navigation patterns
 
-### Stage: Visual Command Palette Integration
-- [ ] Design and implement visual command palette access
-  - [ ] Research placement options: vertical icon rail, top of left pane, floating button
-  - [ ] Add command palette icon to vertical icon navigation rail
-  - [ ] Consider search input box at top of left pane as alternative
-  - [ ] Add visual indicator showing Cmd+K shortcut availability
-  - [ ] Test visual integration with existing layout and navigation
-- [ ] Enhance discoverability
-  - [ ] Add tooltip hints about command palette in relevant UI elements
-  - [ ] Consider onboarding hints for new users
-  - [ ] Update help text and keyboard shortcut displays
+### Stage: Visual Command Palette Integration ✅ COMPLETED
+- [x] Design and implement visual command palette access
+  - [x] Research placement options: vertical icon rail, top of left pane, floating button
+  - [x] Add command palette icon to vertical icon navigation rail
+  - [x] Consider search input box at top of left pane as alternative
+  - [x] Add visual indicator showing Cmd+K shortcut availability
+  - [x] Test visual integration with existing layout and navigation
+  - [x] Enhanced positioning: Move command palette icon from bottom to second position
+    - [x] Order: Expand/collapse button → gap → Command palette → gap → navigation items
+    - [x] Follows VS Code and similar tool conventions where utility functions are at the top
+    - [x] Verified all tests continue passing (25/25 command palette tests, 11/11 vertical nav tests)
+- [x] Enhance discoverability
+  - [x] Add tooltip hints about command palette in relevant UI elements
+  - [x] Consider onboarding hints for new users
+  - [x] Update help text and keyboard shortcut displays
 
 ### Stage: Structured Rich Text Commands (Phase 1)
 - [ ] Implement pattern-based command parsing
@@ -451,16 +455,16 @@ Perfect alignment with current design approach:
 ---
 
 *Planning document created: 8 June 2025*  
-*Last updated: 8 June 2025*  
-*Status: 🚧 In Progress - Core implementation completed, testing and enhancements in progress*
+*Last updated: 9 June 2025*  
+*Status: 🚧 In Progress - Core functionality and visual integration completed, enhancements remaining*
 
 ## Implementation Progress Summary
 
-### ✅ Completed (8 June 2025)
+### ✅ Completed (9 June 2025)
 - **Core command palette infrastructure**: CommandPalette component with full keyboard shortcut support
 - **Platform detection**: Proper Cmd/Ctrl key handling for Mac vs Windows/Linux
 - **Navigation commands**: All 6 tab navigation commands (⌘1-⌘6) with visual shortcuts
-- **App navigation**: Documents, Upload, Settings navigation with standard shortcuts
+- **App navigation commands**: Documents, Upload, Settings navigation with standard shortcuts
 - **Authentication integration**: Conditional commands based on user state (login/signup vs profile/logout)
 - **Error handling**: Robust navigation error handling and logout functionality
 - **Context integration**: Full DocumentCommunicationContext integration for state management
@@ -468,13 +472,21 @@ Perfect alignment with current design approach:
 - **TypeScript safety**: Complete type definitions for commands and categories
 - **React compatibility**: Fixed prop warnings and React 19 compatibility
 - **Comprehensive testing**: 25 passing tests covering all functionality
+- **Visual command palette integration**: Terminal icon integrated into vertical navigation rail with enhanced positioning
+  - Enhanced positioning: Moved from bottom to second position (after expand/collapse button)
+  - Follows VS Code conventions with utility functions positioned at the top
+  - Order: Expand/collapse → gap → Command palette → gap → navigation items
+  - Proper tooltip showing "Command Palette" with Cmd+K/Ctrl+K keyboard shortcut hint
+  - Connected icon to toggle command palette open/closed state
+  - Updated CommandPalette component to accept external open state control
+  - Integrated toggle handler in ResizableDocumentLayout
+  - All existing tests (25/25 command palette, 11/11 vertical nav) remain passing after enhancements
 
 ### 🔄 In Progress  
 - **Enhanced accessibility**: Screen reader support and WCAG compliance verification
-- **Visual integration**: Design placement for command palette icon in UI
 
 ### 📋 Planned Next Steps
-1. **Visual integration**: Add command palette icon to vertical navigation rail
+1. **Enhanced accessibility**: Complete screen reader support and WCAG compliance verification
 2. **Rich text commands**: Pattern-based parsing for "search for X" style commands  
 3. **LLM integration**: Natural language command interpretation for advanced queries
 4. **User feedback**: Review and refinement based on usage patterns
