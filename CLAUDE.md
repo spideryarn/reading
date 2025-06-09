@@ -160,14 +160,18 @@ Template: `.env.example` (may not be current - check `.env.local` for active con
 
 Use tasks whenever there's more than a couple of things to keep track of.
 
-Use subagents where appropriate (to avoid filling up the context window), e.g. for tests, curl, Playwright/Puppeteer MCP, other verbose output, Git commits, and any other encapsulated tasks.
-
-Give them lots of background so that they can make good decisions, e.g. about goals, what we've been changing, gotchas & things to avoid, warnings to abort and provide feedback on what happened if there are surprises, relevant environment variables like $PORT for Playwright, using Jest for testing, and anything else that will help them to be effective but careful).
+Use subagents where appropriate:
+- e.g. for running a battery of tests, curl, Playwright/Puppeteer MCP or other browser automation, other verbose output, Git commits, any other verbose-output, and anywhere else where you think it's a good fit
+- They are especially valuable as a way to avoid filling up your context window
+- They are also a good fit for encapsulated & well-defined tasks, i.e. tasks that don't need the full context of the conversation so far, and/or where we only need a summary of what was done in order to proceed
+- Use subagents in parallel where possible (because this is faster), but only if there isn't a dependency between tasks (e.g. the output of this one is useful as input for the next)
+- Give them lots of background so that they can make good decisions, e.g. about goals, point them to relevant docs/code, what we've been changing, gotchas & things to avoid, relevant environment variables like $PORT for Playwright, using Jest for testing, the current date/time from `date`, and anything else that will help them to be effective but correct/careful.
+- Tell subagents what to be cautious of, and to abort and provide feedback on what happened if there are problems or surprises (to avoid them going rogue and doing more harm than good)
 
 
 ## Documentation Reference
 
-see `docs/DOCUMENTATION_ORGANISATION.md`
+see `docs/reference/DOCUMENTATION_ORGANISATION.md` for a comprehensive, navigational overview of all project documentation
 
 Available evergreen documentation in `docs/` - here are some of the most useful.
 
