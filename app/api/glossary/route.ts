@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Debug: Log content length
-    console.log(`Processing glossary for content length: ${content.length} characters`)
+    console.log(`Processing glossary (${Math.round(content.length/1000)}k chars)`)
     
     // Resolve tier key to actual model details using config
     const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as keyof typeof AI_CONFIG.MODELS
@@ -92,8 +92,8 @@ export async function POST(request: NextRequest) {
     }
     const parsedResponse = JSON.parse(jsonString.trim())
     
-    // Debug: Log the parsed LLM response
-    console.log('LLM Response (parsed):', JSON.stringify(parsedResponse, null, 2))
+    // Debug: Log the parsed LLM response summary
+    console.log(`LLM Response: ${parsedResponse.entities?.length || 0} entities`)
     
     // Validate the response matches our expected schema
     const validatedResponse = glossaryResponseSchema.parse(parsedResponse)

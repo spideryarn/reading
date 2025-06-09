@@ -209,16 +209,17 @@ export async function POST(request: NextRequest) {
     })
     
     // Store tweet thread enhancement in database
-    await enhancementService.upsert({
-      documentId: documentId,
-      aiCallId: aiCall.id,
-      type: 'tweet-thread',
-      content: {
+    await enhancementService.storeTweetThread(
+      documentId,
+      aiCall.id,
+      {
         tweets: validatedResponse.tweets,
-        thread_summary: validatedResponse.thread_summary,
-        metadata
+        metadata: {
+          thread_summary: validatedResponse.thread_summary,
+          ...metadata
+        }
       }
-    })
+    )
     
     return NextResponse.json(response)
 
