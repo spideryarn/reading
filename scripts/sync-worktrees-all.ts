@@ -41,14 +41,14 @@ class SyncAllWorktreesCommand extends Command {
       With --ignore-dirty, the script will skip any worktrees that have uncommitted
       changes, preventing potential merge conflicts or lost work.
       
-      By default, npm ci is run in each worktree after successful Git sync to ensure
+      By default, npm install is run in each worktree after successful Git sync to ensure
       dependencies are up to date. Use --run-npm-ci=false to skip this step for faster
       execution when you know dependencies haven't changed.
     `,
     examples: [
       ['Sync all worktrees', 'sync-all-worktrees'],
       ['Skip worktrees with uncommitted changes', 'sync-all-worktrees --ignore-dirty'],
-      ['Sync without running npm ci', 'sync-all-worktrees --run-npm-ci=false'],
+      ['Sync without running npm install', 'sync-all-worktrees --run-npm-ci=false'],
     ],
   });
 
@@ -57,7 +57,7 @@ class SyncAllWorktreesCommand extends Command {
   });
 
   runNpmCi = Option.Boolean('--run-npm-ci', true, {
-    description: 'Run npm ci in each worktree after successful Git sync (default: true)',
+    description: 'Run npm install in each worktree after successful Git sync (default: true)',
   });
 
   // ANSI color codes for output
@@ -112,7 +112,7 @@ class SyncAllWorktreesCommand extends Command {
         this.log('   Option: --ignore-dirty (skipping dirty worktrees)', this.colors.yellow);
       }
       if (!this.runNpmCi) {
-        this.log('   Option: --run-npm-ci=false (skipping npm ci)', this.colors.yellow);
+        this.log('   Option: --run-npm-ci=false (skipping npm install)', this.colors.yellow);
       }
       
       // Get current directory (should be main)
@@ -222,23 +222,23 @@ class SyncAllWorktreesCommand extends Command {
         }
       }
 
-      // Run npm ci in main after merging worktree changes
+      // Run npm install in main after merging worktree changes
       if (this.runNpmCi) {
-        this.log(`\n📦 Running npm ci in main...`, this.colors.cyan);
-        const mainNpmResult = this.execInDirectory(currentDir, 'npm ci');
+        this.log(`\n📦 Running npm install in main...`, this.colors.cyan);
+        const mainNpmResult = this.execInDirectory(currentDir, 'npm install');
         
         if (mainNpmResult.success) {
-          this.log(`✅ npm ci completed in main`, this.colors.green);
+          this.log(`✅ npm install completed in main`, this.colors.green);
         } else {
-          this.log(`❌ npm ci failed in main`, this.colors.red);
+          this.log(`❌ npm install failed in main`, this.colors.red);
           if (mainNpmResult.error) {
             this.log(`Error: ${mainNpmResult.error}`, this.colors.red);
           }
           if (mainNpmResult.output) {
-            this.log(`npm ci output:`, this.colors.yellow);
+            this.log(`npm install output:`, this.colors.yellow);
             this.context.stdout.write(mainNpmResult.output + '\n');
           }
-          this.log(`\n🔧 Fix npm ci issues in main and try again.`, this.colors.yellow);
+          this.log(`\n🔧 Fix npm install issues in main and try again.`, this.colors.yellow);
           return 1;
         }
       }
@@ -281,24 +281,24 @@ class SyncAllWorktreesCommand extends Command {
             this.context.stdout.write(result.output.split('\n').map(line => '      ' + line).join('\n') + '\n');
           }
           
-          // Run npm ci if enabled
+          // Run npm install if enabled
           if (this.runNpmCi) {
-            this.log(`   📦 Running npm ci...`, this.colors.cyan);
-            const npmResult = this.execInDirectory(worktree.path, 'npm ci');
+            this.log(`   📦 Running npm install...`, this.colors.cyan);
+            const npmResult = this.execInDirectory(worktree.path, 'npm install');
             
             if (npmResult.success) {
-              this.log(`   ✅ npm ci completed`, this.colors.green);
+              this.log(`   ✅ npm install completed`, this.colors.green);
               results.push({ branch: worktree.branch!, success: true });
             } else {
-              this.log(`   ❌ npm ci failed`, this.colors.red);
+              this.log(`   ❌ npm install failed`, this.colors.red);
               if (npmResult.error) {
                 this.log(`   Error: ${npmResult.error}`, this.colors.red);
               }
               if (npmResult.output) {
-                this.log(`   npm ci output:`, this.colors.yellow);
+                this.log(`   npm install output:`, this.colors.yellow);
                 this.context.stdout.write(npmResult.output.split('\n').map(line => '      ' + line).join('\n') + '\n');
               }
-              results.push({ branch: worktree.branch!, success: false, error: `npm ci failed: ${npmResult.error}` });
+              results.push({ branch: worktree.branch!, success: false, error: `npm install failed: ${npmResult.error}` });
               allSuccess = false;
             }
           } else {
