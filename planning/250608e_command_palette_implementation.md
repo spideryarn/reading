@@ -90,40 +90,42 @@ The application has established patterns for cross-pane communication through `D
   - [ ] Test that command palette closes after command execution
   - [ ] Verify keyboard shortcuts match visual indicators
 
-### Stage: App Navigation Commands  
-- [ ] Add app-level navigation commands
-  - [ ] Documents List (⌘D) → `router.push('/documents')`
-  - [ ] Upload Document (⌘U) → `router.push('/upload')`
-  - [ ] Settings (⌘,) → open settings dialog
-  - [ ] User Profile → `router.push('/auth/profile')`
-- [ ] Implement Next.js router integration
-  - [ ] Import and use `useRouter` hook
-  - [ ] Handle navigation with proper error handling
-  - [ ] Maintain URL state and browser history
-- [ ] Add conditional commands based on authentication state
-  - [ ] Show login/signup commands for unauthenticated users
-  - [ ] Show profile/logout commands for authenticated users
-- [ ] Test app navigation functionality
-  - [ ] Verify all routes navigate correctly
-  - [ ] Test authentication-dependent command visibility
-  - [ ] Ensure proper page state management
+### Stage: App Navigation Commands ✅ COMPLETED
+- [x] Add app-level navigation commands
+  - [x] Documents List (⌘D) → `router.push('/documents')`
+  - [x] Upload Document (⌘U) → `router.push('/upload')`
+  - [x] Settings (⌘,) → `router.push('/settings')`
+  - [x] User Profile → `router.push('/auth/profile')`
+- [x] Implement Next.js router integration
+  - [x] Import and use `useRouter` hook
+  - [x] Handle navigation with proper error handling (`navigateWithErrorHandling` function)
+  - [x] Maintain URL state and browser history
+- [x] Add conditional commands based on authentication state
+  - [x] Show login/signup commands for unauthenticated users
+  - [x] Show profile/logout commands for authenticated users
+  - [x] Implement logout functionality with error handling
+- [x] Test app navigation functionality
+  - [x] Verify all routes navigate correctly
+  - [x] Test authentication-dependent command visibility
+  - [x] Ensure proper page state management
+  - [x] Create comprehensive test suite with 25 passing tests
 
-### Stage: Layout Integration
-- [ ] Integrate CommandPalette into main document layout
-  - [ ] Add CommandPalette component to `components/resizable-document-layout.tsx`
-  - [ ] Position outside main content flow to avoid layout shifts
-  - [ ] Ensure proper z-index layering above all other content
-- [ ] Add CommandPalette to TooltipProvider context
-  - [ ] Wrap in existing Radix UI TooltipProvider
-  - [ ] Verify tooltip compatibility with command palette
-- [ ] Implement command palette state management
-  - [ ] Add open/close state to layout component
-  - [ ] Connect keyboard shortcuts to state changes
-  - [ ] Ensure proper cleanup of event listeners
-- [ ] Test layout integration
-  - [ ] Verify command palette renders correctly in all page contexts
-  - [ ] Test interaction with existing UI elements (resizable panes, tooltips)
-  - [ ] Verify no layout shifts or visual glitches
+### Stage: Layout Integration ✅ COMPLETED (Previous Session)
+- [x] Integrate CommandPalette into main document layout
+  - [x] Add CommandPalette component to `components/resizable-document-layout.tsx`
+  - [x] Position outside main content flow to avoid layout shifts
+  - [x] Ensure proper z-index layering above all other content
+- [x] Add CommandPalette to TooltipProvider context
+  - [x] Wrap in existing Radix UI TooltipProvider
+  - [x] Verify tooltip compatibility with command palette
+- [x] Implement command palette state management
+  - [x] Add open/close state to layout component
+  - [x] Connect keyboard shortcuts to state changes
+  - [x] Ensure proper cleanup of event listeners
+- [x] Test layout integration
+  - [x] Verify command palette renders correctly in all page contexts
+  - [x] Test interaction with existing UI elements (resizable panes, tooltips)
+  - [x] Verify no layout shifts or visual glitches
 
 ### Stage: Enhanced Search and Accessibility
 - [ ] Implement fuzzy search functionality
@@ -459,14 +461,17 @@ Perfect alignment with current design approach:
 - **Platform detection**: Proper Cmd/Ctrl key handling for Mac vs Windows/Linux
 - **Navigation commands**: All 6 tab navigation commands (⌘1-⌘6) with visual shortcuts
 - **App navigation**: Documents, Upload, Settings navigation with standard shortcuts
+- **Authentication integration**: Conditional commands based on user state (login/signup vs profile/logout)
+- **Error handling**: Robust navigation error handling and logout functionality
 - **Context integration**: Full DocumentCommunicationContext integration for state management
 - **Layout integration**: Positioned in ResizableDocumentLayout without layout shifts
 - **TypeScript safety**: Complete type definitions for commands and categories
 - **React compatibility**: Fixed prop warnings and React 19 compatibility
+- **Comprehensive testing**: 25 passing tests covering all functionality
 
 ### 🔄 In Progress  
-- **Testing suite**: Comprehensive tests for keyboard shortcuts and command execution
 - **Enhanced accessibility**: Screen reader support and WCAG compliance verification
+- **Visual integration**: Design placement for command palette icon in UI
 
 ### 📋 Planned Next Steps
 1. **Visual integration**: Add command palette icon to vertical navigation rail

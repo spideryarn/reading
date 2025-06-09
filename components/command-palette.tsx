@@ -12,6 +12,7 @@ import {
   CommandShortcut,
 } from '@/components/ui/command'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
+import { useAuth } from '@/lib/context/auth-context'
 import {
   Article,
   Robot,
@@ -25,6 +26,7 @@ import {
   User,
   SignIn,
   UserPlus,
+  SignOut,
 } from '@phosphor-icons/react'
 
 // Command definition interfaces
@@ -72,10 +74,35 @@ export function CommandPalette({ }: CommandPaletteProps) {
   const [open, setOpen] = useState(false)
   const { actions } = useDocumentCommunication()
   const router = useRouter()
+  const { user, signOut } = useAuth()
 
   // Platform detection for keyboard shortcuts
   const isMac = typeof window !== 'undefined' && 
                /Mac|iPod|iPhone|iPad/.test(window.navigator.platform)
+
+  // Enhanced navigation with error handling
+  const navigateWithErrorHandling = useCallback(async (path: string) => {
+    try {
+      router.push(path)
+    } catch (error) {
+      console.error('Navigation error:', error)
+      // Could add toast notification here in the future
+    }
+  }, [router])
+
+  // Handle logout
+  const handleLogout = useCallback(async () => {
+    try {
+      const { error } = await signOut()
+      if (error) {
+        console.error('Logout error:', error)
+        return
+      }
+      router.push('/')
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
+  }, [signOut, router])
 
   // Define all commands
   const commands: Command[] = [
@@ -142,7 +169,7 @@ export function CommandPalette({ }: CommandPaletteProps) {
       keywords: ['documents', 'list', 'library', 'home'],
       shortcut: [isMac ? '⌘' : 'Ctrl', 'D'],
       category: APP_NAVIGATION_CATEGORY,
-      action: () => router.push('/documents'),
+      action: () => navigateWithErrorHandling('/documents'),
       icon: House,
     },
     {
@@ -151,7 +178,7 @@ export function CommandPalette({ }: CommandPaletteProps) {
       keywords: ['upload', 'add', 'new', 'document'],
       shortcut: [isMac ? '⌘' : 'Ctrl', 'U'],
       category: APP_NAVIGATION_CATEGORY,
-      action: () => router.push('/upload'),
+      action: () => navigateWithErrorHandling('/upload'),
       icon: Upload,
     },
     {
@@ -160,7 +187,7 @@ export function CommandPalette({ }: CommandPaletteProps) {
       keywords: ['settings', 'preferences', 'config'],
       shortcut: [isMac ? '⌘' : 'Ctrl', ','],
       category: APP_NAVIGATION_CATEGORY,
-      action: () => router.push('/settings'),
+      action: () => navigateWithErrorHandling('/settings'),
       icon: Gear,
     },
 
@@ -170,27 +197,36 @@ export function CommandPalette({ }: CommandPaletteProps) {
       name: 'Profile',
       keywords: ['profile', 'account', 'user'],
       category: ACCOUNT_CATEGORY,
-      action: () => router.push('/auth/profile'),
+      action: () => navigateWithErrorHandling('/auth/profile'),
       icon: User,
-      // TODO: Add condition for authenticated users
+      condition: () => !!user, // Show only for authenticated users
+    },
+    {
+      id: 'account-logout',
+      name: 'Sign Out',
+      keywords: ['logout', 'sign', 'out', 'exit'],
+      category: ACCOUNT_CATEGORY,
+      action: handleLogout,
+      icon: SignOut,
+      condition: () => !!user, // Show only for authenticated users
     },
     {
       id: 'account-login',
       name: 'Sign In',
       keywords: ['login', 'sign', 'in', 'auth'],
       category: ACCOUNT_CATEGORY,
-      action: () => router.push('/auth/login'),
+      action: () => navigateWithErrorHandling('/auth/login'),
       icon: SignIn,
-      // TODO: Add condition for unauthenticated users
+      condition: () => !user, // Show only for unauthenticated users
     },
     {
       id: 'account-signup',
       name: 'Sign Up',
       keywords: ['signup', 'register', 'create', 'account'],
       category: ACCOUNT_CATEGORY,
-      action: () => router.push('/auth/signup'),
+      action: () => navigateWithErrorHandling('/auth/signup'),
       icon: UserPlus,
-      // TODO: Add condition for unauthenticated users
+      condition: () => !user, // Show only for unauthenticated users
     },
   ]
 
@@ -259,22 +295,22 @@ export function CommandPalette({ }: CommandPaletteProps) {
       switch (event.key.toLowerCase()) {
         case 'd':
           event.preventDefault()
-          router.push('/documents')
+          navigateWithErrorHandling('/documents')
           break
         case 'u':
           event.preventDefault()
-          router.push('/upload')
+          navigateWithErrorHandling('/upload')
           break
         case ',':
           event.preventDefault()
-          router.push('/settings')
+          navigateWithErrorHandling('/settings')
           break
       }
     }
 
     document.addEventListener('keydown', handleNumberedShortcuts)
     return () => document.removeEventListener('keydown', handleNumberedShortcuts)
-  }, [isMac, actions, router])
+  }, [isMac, actions, navigateWithErrorHandling])
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
