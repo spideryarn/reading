@@ -65,11 +65,11 @@ export function MultiSummaryPane({
               Generating summaries...
             </>
           ) : (
-            'Generate multi-dimensional summaries'
+            'Generate summaries'
           )}
         </Button>
         <p className="text-xs text-gray-500 mt-2 text-center">
-          Generates 9 summaries across expertise levels and lengths
+          Generates summaries across expertise levels and lengths
         </p>
       </div>
     )
@@ -80,7 +80,7 @@ export function MultiSummaryPane({
     return (
       <div className={`p-4 ${className}`}>
         <Loading 
-          text="Generating 9 summary combinations..." 
+          text="Generating summary combinations..." 
           spinnerSize={20} 
         />
         <p className="text-xs text-gray-500 mt-2 text-center">
@@ -142,25 +142,16 @@ export function MultiSummaryPane({
               </div>
               
               {/* Actions */}
-              <div className="flex gap-2">
-                <Button
-                  onClick={clearSummaries}
-                  variant="outline"
-                  size="sm"
-                  className="text-red-600 border-red-200 hover:bg-red-50"
-                >
-                  <TrashSimple size={14} />
-                  Clear
-                </Button>
-                <Button
-                  onClick={generateSummaries}
-                  variant="outline"
-                  size="sm"
-                  className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                >
-                  Regenerate
-                </Button>
-              </div>
+              <Button
+                onClick={clearSummaries}
+                variant="outline"
+                size="sm"
+                className="text-red-600 border-red-200 hover:bg-red-50"
+                title="Clear all cached summaries and return to generation button"
+              >
+                <TrashSimple size={14} />
+                Clear
+              </Button>
             </div>
             
             {/* Summary Content */}

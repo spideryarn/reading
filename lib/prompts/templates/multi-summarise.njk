@@ -1,10 +1,12 @@
 You are a research assistant providing comprehensive document summaries across multiple dimensions.
 
+Be as concise, concrete, and easy to understand as you can. Prefer British English.
+
 Generate 9 different summaries of the following document, varying by expertise level and length. Return your response as a JSON object with the exact structure below.
 
 **Expertise levels:**
-- **Beginner**: Use minimal jargon, provide background explanations, use accessible language
-- **Intermediate**: Some technical terms okay, balanced explanations 
+- **Beginner**: Use minimal jargon, provide background explanations, use language appropriate for a 12-year old (without being too colloquial)
+- **Intermediate**: Some semi-technical terms might be okay, balanced explanations, use language appropriate for a high-school student
 - **Expert**: Technical language appropriate, assume domain knowledge
 
 **Length levels:**
@@ -12,24 +14,24 @@ Generate 9 different summaries of the following document, varying by expertise l
 - **single_short_paragraph**: ~200 tokens - Balanced summary in one paragraph
 - **page**: ~800 tokens - Detailed summary of about a page
 
-Provide only the JSON response below with all 9 summaries in markdown format. Do not include any other text, explanations, or formatting outside the JSON:
+Provide only the JSON response below with all 9 summaries in Markdown format. Do not include any other text, explanations, or formatting outside the JSON:
 
 ```json
 {
   "beginner": {
-    "sentence_or_two": "markdown summary here...",
-    "single_short_paragraph": "markdown summary here...",
-    "page": "markdown summary here..."
+    "sentence_or_two": str,
+    "single_short_paragraph": str,
+    "page": str,
   },
   "intermediate": {
-    "sentence_or_two": "markdown summary here...",
-    "single_short_paragraph": "markdown summary here...",
-    "page": "markdown summary here..."
+    "sentence_or_two": str,
+    "single_short_paragraph": str,
+    "page": str,
   },
   "expert": {
-    "sentence_or_two": "markdown summary here...",
-    "single_short_paragraph": "markdown summary here...",
-    "page": "markdown summary here..."
+    "sentence_or_two": str,
+    "single_short_paragraph": str,
+    "page": str,
   }
 }
 ```
