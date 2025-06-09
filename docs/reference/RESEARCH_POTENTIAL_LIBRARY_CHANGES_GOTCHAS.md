@@ -6,7 +6,7 @@ Identify areas of our code where someone new to the codebase might get tripped u
 
 ## Research Methodology
 
-### Phase 1: Background Research
+### Stage: Background Research
 - Read foundational documentation:
     - `docs/reference/DOCUMENTATION_ORGANISATION.md`
     - `docs/reference/SITE_ORGANISATION.md`
@@ -16,7 +16,7 @@ Identify areas of our code where someone new to the codebase might get tripped u
 
 - Run `date` to get today's date/time.
 
-### Phase 2: Library Research
+### Stage: Library Research
 For each library in `package.json` and `docs/reference/ARCHITECTURE_OVERVIEW.md`, research:
 - **Known gotchas and common pitfalls**
 - **API changes in the last 12 months** (breaking changes, deprecations, new patterns)
@@ -25,7 +25,7 @@ For each library in `package.json` and `docs/reference/ARCHITECTURE_OVERVIEW.md`
 - **Performance considerations or changes**
 - **Community-reported issues and solutions**
 
-### Phase 3: Codebase Analysis
+### Stage: Codebase Analysis
 Review the codebase for:
 - **Complex/unconventional patterns** that might need extra documentation
 - **Unclear code sections** where intent, rationale, or usage is ambiguous
@@ -33,12 +33,23 @@ Review the codebase for:
 - **Areas lacking sufficient comments** where context would prevent mistakes
 - **Potential maintenance hazards** or brittle implementations
 
-### Phase 4: Prioritised Recommendations
+### Stage: Ask User to Clarify Requirements
+Ask the user questions if you need to, based on what you've found so far, to suggest further actions, and to shape the recommendations that you provide.
+
+Following the user's response, do any final research needed, so that recommendations can be very concrete.
+
+### Stage: Prioritised Recommendations
 Generate actionable recommendations balancing:
-- **Risk assessment** of identified issues
-- **Impact on new developers** joining the codebase
+- **Priority/risk assessment** of identified issues. Don't be hyperbolic, e.g. don't label something 'Critical' unless it truly is. Don't sweat the small stuff.
+- **Likelihood that there will be a problem in this area, and that this documentation would help**
 - **Documentation burden** vs. benefit (avoiding over-documentation)
-- **Immediate vs. future concerns**
+
+Example recommendations (though these are just examples - use your judgment about what's valuable/relevant for the project you're working on)
+- Write a deep dive doc on a particular library, emphasising how the API for it has changed in the new version
+- Update the the deployment script or instructions to avoid a particular gotcha
+- Update the instructions for running migrations to ban potentially destructive actions (e.g. dropping all tables)
+- Create a doc for adding features of a particular type, that references relevant docs/code, provides examples/snippets/patterns
+- etc etc
 
 
 ## Execution Strategy
@@ -58,13 +69,21 @@ Tell subagents to output detailed enough evidence/logging that we can retrace th
 
 
 ### Output Format
-Deliver findings as:
-1. **Executive summary** of key risks and recommendations
-2. **Library-specific findings** with actionable items
-3. **Codebase improvement opportunities** prioritised by impact
-4. **Implementation roadmap** for addressing identified issues
+Deliver findings as a planning document in `planning/` following the instructions in `docs/instructions/WRITE_PLANNING_DOC.md`:
 
+1. **Planning document structure**:
+   - Goal and context section explaining the research scope
+   - Critical findings with risk assessment (urgent/high/medium priority)
+   - Stages & actions with checkboxes for implementation tracking
+   - Implementation roadmap for addressing identified issues
+   - Appendix with research evidence and sources
 
-IMPORTANT: Do not make any changes yet, until authorised by the user.
+2. **File naming**: Use format `yyMMdda_research_library_changes_gotchas.md` (or increment letter if multiple research docs on same day)
 
+3. **Content organisation**:
+   - Executive summary of key risks and recommendations
+   - Library-specific findings with actionable items
+   - Codebase improvement opportunities prioritised by impact
+   - Reference URLs and evidence for all findings
 
+IMPORTANT: Do not make any implementation changes yet, until authorised by the user. The planning document should only contain research findings and recommended actions.
