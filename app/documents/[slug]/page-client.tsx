@@ -241,7 +241,7 @@ export default function DocumentPageClient({
       }
       
       const data = await response.json()
-      console.log('Glossary API response:', data)
+      console.log(`Glossary API response: ${data.entities?.length || 0} entities${data.cached ? ' (cached)' : ''}`)
       setGlossaryEntities(data.entities || [])
       setGlossaryCached(data.cached || false)
       setShowGlossary(true)
