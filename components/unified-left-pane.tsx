@@ -10,6 +10,7 @@
 
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { AssistantChat } from './assistant-chat'
+import { HighlightManagement } from './highlight-management'
 import { CircleNotch, Book, Question, Calendar, ArrowCounterClockwise, MagnifyingGlass, X, CaretDown } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { AlertWithIcon } from '@/components/ui/alert'
@@ -364,7 +365,7 @@ export function UnifiedLeftPane({
     resultCount: number
   }>>([])
   const [showQueryHistory, setShowQueryHistory] = useState(false)
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
+  const [isLoadingHistory] = useState(false)
   
   // Store timeout ID to cancel pending searches
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -734,6 +735,12 @@ export function UnifiedLeftPane({
         documentContext={documentContext}
       />
     </div>
+  )
+
+  const renderHighlightsTab = () => (
+    <HighlightManagement
+      documentId={documentId}
+    />
   )
 
   const renderGlossaryTab = () => {
@@ -1200,6 +1207,7 @@ export function UnifiedLeftPane({
         {state.activeTabId === 'chat' && renderChatTab()}
         {state.activeTabId === 'glossary' && renderGlossaryTab()}
         {state.activeTabId === 'search' && renderSearchTab()}
+        {state.activeTabId === 'highlights' && renderHighlightsTab()}
       </div>
     </div>
   )

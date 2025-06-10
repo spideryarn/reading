@@ -6,7 +6,7 @@
 
 import { 
   Article, Robot, ListBullets, ChatCircle, 
-  BookOpen, MagnifyingGlass, SidebarSimple, Terminal 
+  BookOpen, MagnifyingGlass, SidebarSimple, Terminal, HighlighterCircle 
 } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -15,7 +15,7 @@ import { useState, useEffect } from 'react'
 
 // Navigation item definition
 interface NavigationItem {
-  id: 'original' | 'ai-generated' | 'summary' | 'chat' | 'glossary' | 'search'
+  id: 'original' | 'ai-generated' | 'summary' | 'chat' | 'glossary' | 'search' | 'highlights'
   label: string
   icon: React.ComponentType<{ size?: number; weight?: string; className?: string }>
   tooltip: {
@@ -87,6 +87,15 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
     tooltip: {
       title: 'Search',
       description: 'Find specific text or concepts within the document'
+    }
+  },
+  {
+    id: 'highlights',
+    label: 'Highlights',
+    icon: HighlighterCircle,
+    tooltip: {
+      title: 'Highlights',
+      description: 'Create and manage persistent highlights based on criteria'
     }
   }
 ]
