@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { validateAuth } from '@/lib/auth/server-auth'
+import { getCurrentUserAdminStatus } from '@/lib/auth/admin-utils'
 
 interface RouteContext {
   params: Promise<{ slug: string }>
@@ -34,10 +35,11 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return new NextResponse('Document not found', { status: 404 })
     }
 
-    // Check if user owns the document
+    // Check if user owns the document or has admin access
     const isOwned = await documentService.isOwnedByUser(document.id, user.id)
+    const adminStatus = await getCurrentUserAdminStatus()
     
-    if (!isOwned) {
+    if (!isOwned && !adminStatus.isAdmin) {
       return new NextResponse('Document not found', { status: 404 }) // Use 404 to prevent information leakage
     }
 
@@ -128,10 +130,11 @@ export async function HEAD(request: NextRequest, context: RouteContext) {
       return new NextResponse(null, { status: 404 })
     }
     
-    // Check if user owns the document
+    // Check if user owns the document or has admin access
     const isOwned = await documentService.isOwnedByUser(document.id, user.id)
+    const adminStatus = await getCurrentUserAdminStatus()
     
-    if (!isOwned) {
+    if (!isOwned && !adminStatus.isAdmin) {
       return new NextResponse(null, { status: 404 }) // Use 404 to prevent information leakage
     }
 
