@@ -28,7 +28,11 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture and implementation details ⭐ **Essential**
 - `docs/reference/ARCHITECTURE_DECISIONS.md` - Key architectural decisions including framework choices, data structures, storage approach, and MVP features
 - `docs/reference/SETUP.md` - Development environment setup guide including Node.js, Supabase, Git worktree configuration ⭐ **Start here**
-- `docs/reference/TESTING.md` - Testing approach documentation covering Jest with React Testing Library setup, test structure, and current test coverage
+- `docs/reference/TESTING_OVERVIEW.md` - Testing approach documentation covering Jest with React Testing Library setup, test structure, and current test coverage
+- `docs/reference/TESTING_SETUP.md` - Test configuration and environment setup including Jest, .env.test, and module resolution
+- `docs/reference/TESTING_TROUBLESHOOTING.md` - Known testing issues, workarounds, and debugging strategies including NextRequest mocking problems
+- `docs/reference/TESTING_DATABASE.md` - Database-specific testing patterns and integration testing strategies
+- `docs/reference/TESTING_AUTHENTICATION.md` - Redirect to AUTHENTICATION_TESTING.md for authentication testing patterns
 - `docs/reference/COMMAND_LINE_SCRIPTS.md` - Guidelines for writing command-line scripts using shell scripts or TypeScript/Clipanion
 - `docs/reference/STYLING.md` - CSS and visual styling configuration including theme settings, Phosphor icons usage, and loading/error button patterns
 - `docs/reference/GIT_WORKTREES.md` - Multi-worktree development setup using hub-and-spoke model
@@ -132,7 +136,7 @@ See `planning/later/` for deferred features and future enhancements.
 ## Navigation Tips
 
 **For newcomers**: Start with README.md → VISION.md → ARCHITECTURE_OVERVIEW.md → SETUP.md
-**For developers**: Focus on CODING_PRINCIPLES.md → CODING_GUIDELINES.md → TESTING.md
+**For developers**: Focus on CODING_PRINCIPLES.md → CODING_GUIDELINES.md → TESTING_OVERVIEW.md → TESTING_SETUP.md
 **For AI features**: Begin with LLM_PROMPT_TEMPLATES.md → TOOL_SUMMARISE.md → TOOL_GLOSSARY.md
 **For documentation work**: Use WRITE_EVERGREEN_DOC.md → UPDATE_HOUSEKEEPING_DOCUMENTATION.md
 

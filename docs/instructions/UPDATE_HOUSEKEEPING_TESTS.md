@@ -4,7 +4,9 @@ This document describes the process for maintaining test quality and organisatio
 
 ## See also
 
-- `docs/reference/TESTING.md` - Overall testing strategy and setup guidelines  
+- `docs/reference/TESTING_OVERVIEW.md` - Overall testing strategy and philosophy
+- `docs/reference/TESTING_SETUP.md` - Test configuration and setup guidelines  
+- `docs/reference/TESTING_TROUBLESHOOTING.md` - Known issues and debugging strategies  
 - `docs/instructions/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` - General housekeeping process pattern that inspired this approach
 - `docs/instructions/WRITE_PLANNING_DOC.md` - For creating one-time test cleanup planning documents
 - `docs/instructions/GIT_COMMITS.md` - How to commit test improvements
@@ -130,7 +132,7 @@ Use subagents for diagnosis and repair of complex infrastructure issues.
 ### Stage: Documentation & Standards Update
 
 **Update Documentation:**
-- Update `docs/reference/TESTING.md` with new patterns
+- Update testing documentation with new patterns (TESTING_OVERVIEW.md for philosophy, TESTING_SETUP.md for configuration, TESTING_TROUBLESHOOTING.md for known issues)
 - Document consolidation decisions and rationale
 - Add examples of preferred testing approaches
 - Update troubleshooting guides

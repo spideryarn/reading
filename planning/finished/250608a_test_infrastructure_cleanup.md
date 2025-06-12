@@ -10,7 +10,8 @@ Post-cleanup, we should have a reliable test suite that supports rapid feature d
 
 ## References
 
-- `docs/reference/TESTING.md` - Current testing overview and setup instructions
+- `docs/reference/TESTING_OVERVIEW.md` - Current testing overview and philosophy
+- `docs/reference/TESTING_SETUP.md` - Testing configuration and setup instructions
 - `docs/instructions/WRITE_PLANNING_DOC.md` - Structure and process guidelines for this document  
 - `planning/250608a_test_infrastructure_cleanup.md` - This document (self-reference)
 - `jest.config.js` & `jest.setup.js` - Current Jest configuration with broken Request mocking
@@ -88,7 +89,7 @@ Post-cleanup, we should have a reliable test suite that supports rapid feature d
 
 ### Stage: Documentation & Process Updates
 - [ ] Update testing documentation
-  - [ ] Update `docs/reference/TESTING.md` with new requirements and patterns
+  - [ ] Update `docs/reference/TESTING_OVERVIEW.md` with new requirements and patterns
   - [ ] Document LLM mocking strategy and cost considerations
   - [ ] Add troubleshooting section for common issues
 - [ ] Create test infrastructure monitoring

@@ -61,7 +61,7 @@ Overall approach:
 - Use `[ ]` and `[x]` checkboxes to indicate todo/done.
 - Include subtasks with clear acceptance criteria
 - Refer to specific docs, files/functions, examples, links, etc, so it's clear exactly what needs to be done
-- Explicitly add tasks for writing automated tests, usually before writing code. (Perhaps one or two end-to-end tests first, then gradually adding more detailed tests as complexity grows). Explicitly add tasks for running the automated tests before ending each stage. see `docs/reference/TESTING.md`
+- Explicitly add tasks for writing automated tests, usually before writing code. (Perhaps one or two end-to-end tests first, then gradually adding more detailed tests as complexity grows). Explicitly add tasks for running the automated tests before ending each stage. see `docs/reference/TESTING_OVERVIEW.md` for philosophy and `docs/reference/TESTING_SETUP.md` for configuration
 - If there are actions that the user needs to do, add those in too, so we can track progress and remind the user.
 - If this is a major piece of work, ask the user whether we should have an early action to create a `yyMMdd[letter]_complex_project` Git branch (and move over any changes). If so, then add a final action to merge that back into `main`.
 - Add actions to stop & review with user where appropriate, e.g. when we get to a good stopping point, to manually check changes to the user interface, etc

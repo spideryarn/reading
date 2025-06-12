@@ -113,7 +113,7 @@ Replace the current simulated RLS testing infrastructure with real database-leve
   - [ ] Test with different database states and user scenarios
   - [ ] Verify tests catch actual RLS policy violations
 - [ ] Update project documentation
-  - [ ] Update `docs/reference/TESTING.md` with new RLS patterns
+  - [ ] Update `docs/reference/TESTING_OVERVIEW.md` with new RLS patterns
   - [ ] Add examples to `CLAUDE.md` for future AI development
   - [ ] Document lessons learned and gotchas
 - [ ] Git commit following `docs/instructions/GIT_COMMITS.md`

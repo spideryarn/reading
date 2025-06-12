@@ -354,5 +354,5 @@ If port conflicts occur:
 
 **Development:**
 - [CODING_GUIDELINES.md](CODING_GUIDELINES.md) - Code quality standards and best practices
-- [TESTING.md](TESTING.md) - Testing approach and current test coverage
+- [TESTING_OVERVIEW.md](TESTING_OVERVIEW.md) - Testing approach and current test coverage
 - [GIT_WORKTREES.md](GIT_WORKTREES.md) - Advanced Git worktree development setup

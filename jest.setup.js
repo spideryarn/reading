@@ -7,7 +7,7 @@ const envTestPath = path.join(process.cwd(), '.env.test');
 if (!existsSync(envTestPath)) {
   console.error('❌ TESTING ABORTED: .env.test file is missing');
   console.error('   Create it by running: cp .env.local .env.test');
-  console.error('   See docs/reference/TESTING.md for setup instructions');
+  console.error('   See docs/reference/TESTING_SETUP.md for setup instructions');
   process.exit(1);
 }
 

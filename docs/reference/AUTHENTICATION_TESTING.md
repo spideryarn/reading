@@ -4,7 +4,7 @@ Comprehensive guide for testing authentication functionality in the Spideryarn R
 
 ## See also
 
-- `docs/reference/TESTING.md` - General testing framework and setup
+- `docs/reference/TESTING_OVERVIEW.md` - General testing framework and setup
 - `docs/reference/AUTHENTICATION_OVERVIEW.md` - Authentication system architecture
 - `docs/reference/AUTHENTICATION_SECURITY.md` - Security testing considerations
 - `lib/auth/__tests__/` - Authentication utility tests
