@@ -10,6 +10,7 @@
 
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { AssistantChat } from './assistant-chat'
+import { HighlightManagement } from './highlight-management'
 import { CircleNotch, Book, Question, Calendar, ArrowCounterClockwise, MagnifyingGlass, X, CaretDown } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { AlertWithIcon } from '@/components/ui/alert'
@@ -364,7 +365,7 @@ export function UnifiedLeftPane({
     resultCount: number
   }>>([])
   const [showQueryHistory, setShowQueryHistory] = useState(false)
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
+  const [isLoadingHistory] = useState(false)
   
   // Store timeout ID to cancel pending searches
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -698,8 +699,8 @@ export function UnifiedLeftPane({
 
   // Note: DOM event listener removed - now using DocumentCommunicationContext for all cross-pane communication
 
-  // Render functions for tabs
-  const renderOriginalTab = () => (
+  // Render functions for tabs - memoized to prevent unnecessary re-mounting
+  const renderOriginalTab = useCallback(() => (
     <OriginalHeadingsTab
       content={content}
       elements={elements}
@@ -707,9 +708,9 @@ export function UnifiedLeftPane({
       documentId={documentId}
       headingVisibility={headingVisibility}
     />
-  )
+  ), [content, elements, documentId, headingVisibility])
 
-  const renderAIGeneratedTab = () => (
+  const renderAIGeneratedTab = useCallback(() => (
     <AIGeneratedHeadingsTab
       content={content}
       elements={elements}
@@ -717,26 +718,32 @@ export function UnifiedLeftPane({
       documentId={documentId}
       headingVisibility={headingVisibility}
     />
-  )
+  ), [content, elements, documentId, headingVisibility])
 
-  const renderSummaryTab = () => (
+  const renderSummaryTab = useCallback(() => (
     <DocumentSummaryTab
       content={content}
       documentId={documentId}
       markdownContent={markdownContent}
     />
-  )
+  ), [content, documentId, markdownContent])
 
-  const renderChatTab = () => (
+  const renderChatTab = useCallback(() => (
     <div className="h-full">
       <AssistantChat
         documentId={documentId}
         documentContext={documentContext}
       />
     </div>
-  )
+  ), [documentId, documentContext])
 
-  const renderGlossaryTab = () => {
+  const renderHighlightsTab = useCallback(() => (
+    <HighlightManagement
+      documentId={documentId}
+    />
+  ), [documentId])
+
+  const renderGlossaryTab = useCallback(() => {
     if (!showGlossary) {
       return (
         <div className="flex flex-col items-center justify-center p-8 text-center">
@@ -849,9 +856,9 @@ export function UnifiedLeftPane({
         )}
       </>
     )
-  }
+  }, [showGlossary, isLoadingGlossary, glossaryError, glossaryCached, glossaryEntities, elements, onLoadGlossary, onResetGlossary])
 
-  const renderSearchTab = () => (
+  const renderSearchTab = useCallback(() => (
       <div className="flex flex-col h-full">
         {/* Pinned search input */}
         <div className="sticky top-0 bg-white z-10 p-4 border-b border-gray-200">
@@ -1187,7 +1194,7 @@ export function UnifiedLeftPane({
         ) : null}
         </div>
       </div>
-    )
+    ), [useSemanticSearch, searchQuery, isSearching, searchResults, semanticSearchError, semanticSearchCached, semanticSearchCachedAt, queryHistory, showQueryHistory, filteredQueryHistory, showAdvancedOptions, caseSensitive, isLoadingHistory, handleSearchInputChange, triggerSemanticSearch, performSemanticSearch, sortedSearchResults, actions])
 
 
   return (
@@ -1200,6 +1207,7 @@ export function UnifiedLeftPane({
         {state.activeTabId === 'chat' && renderChatTab()}
         {state.activeTabId === 'glossary' && renderGlossaryTab()}
         {state.activeTabId === 'search' && renderSearchTab()}
+        {state.activeTabId === 'highlights' && renderHighlightsTab()}
       </div>
     </div>
   )
