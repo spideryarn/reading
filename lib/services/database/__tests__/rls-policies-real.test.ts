@@ -3,232 +3,409 @@
  */
 
 /**
- * Real RLS Policy Testing
+ * Real RLS Policy Tests
  * 
- * Tests actual database-level RLS policies using authenticated Supabase clients.
- * This replaces the simulated RLS testing approach with real authentication.
+ * Tests actual Row Level Security policies using real Supabase authentication.
+ * Replaces simulated RLS testing with database-level security validation.
+ * 
+ * These tests validate that RLS policies correctly enforce user isolation
+ * and document ownership at the database level.
  */
 
-import { createClient } from '@/lib/supabase/server'
+import { RealRLSTestSetup, RLSAssertions, RLSTestHelpers } from './rls-test-helpers'
 import { TEST_USER_IDS } from '@/lib/testing/rls-test-context'
 
-// Test helper to create authenticated client for a specific user
-const createUserClient = async (userId: string) => {
-  const client = await createClient()
-  
-  // Mock auth.uid() to return our test user ID
-  // In a real test environment, this would be actual authentication
-  const originalAuth = client.auth
-  client.auth = {
-    ...originalAuth,
-    getUser: jest.fn().mockResolvedValue({
-      data: { user: { id: userId, email: `test-${userId}@example.com` } },
-      error: null
-    })
-  }
-  
-  // Override auth.uid() function used by RLS policies
-  // This simulates the user being authenticated as the specified user
-  Object.defineProperty(client, 'rpc', {
-    value: (fnName: string, params: any) => {
-      if (fnName === 'auth.uid') {
-        return Promise.resolve({ data: userId, error: null })
-      }
-      return originalAuth.getUser?.()
-    }
-  })
-  
-  return client
-}
+describe('Real RLS Policy Tests', () => {
+  let setup: RealRLSTestSetup
 
-describe('Real RLS Policy Testing', () => {
-  const USER_A_ID = TEST_USER_IDS.USER_A
-  const USER_B_ID = TEST_USER_IDS.USER_B
-
-  afterEach(async () => {
-    // Clean up any test data
-    const adminClient = await createClient()
-    await adminClient.from('documents').delete().ilike('title', '%RLS Test%')
-    await adminClient.from('ai_calls').delete().ilike('prompt_type', '%rls-test%')
+  beforeAll(async () => {
+    setup = new RealRLSTestSetup()
   })
 
-  describe('Document RLS Policies', () => {
+  afterAll(async () => {
+    await setup.cleanup()
+  })
+
+  describe('Test 1: Document ownership isolation', () => {
     test('Users can only access their own documents', async () => {
-      const userAClient = await createUserClient(USER_A_ID)
-      const userBClient = await createUserClient(USER_B_ID)
-      const adminClient = await createClient()
+      // Create test document owned by User A (using admin client)
+      const userADocument = await setup.createTestDocument({
+        title: 'User A Private Document',
+        slug: 'user-a-private-document',
+        html_content: '<h1>User A Content</h1>',
+        plaintext_content: 'User A Content',
+        created_by: TEST_USER_IDS.USER_A,
+        is_public: false,
+        word_count: 3,
+      })
 
-      // Create document owned by User A (as admin to bypass RLS)
-      const { data: userADoc } = await adminClient
-        .from('documents')
-        .insert({
-          title: 'User A RLS Test Document',
-          slug: 'user-a-rls-test',
-          html_content: '<p>Private content</p>',
-          plaintext_content: 'Private content',
-          created_by: USER_A_ID,
-          is_public: false,
-          word_count: 2,
-        })
-        .select()
-        .single()
+      // Create authenticated clients for both users
+      const userAClient = await setup.createUserClient(TEST_USER_IDS.USER_A)
+      const userBClient = await setup.createUserClient(TEST_USER_IDS.USER_B)
 
       // User A should be able to access their own document
-      const { data: userAAccess } = await userAClient
-        .from('documents')
-        .select('*')
-        .eq('id', userADoc.id)
-        .single()
+      const userAResult = await setup.testResourceAccess(
+        userAClient,
+        'documents',
+        userADocument.id
+      )
+      RLSAssertions.assertHasAccess(userAResult, userADocument.id)
+      RLSAssertions.assertOwnership(userAResult, TEST_USER_IDS.USER_A)
 
-      expect(userAAccess).not.toBeNull()
-      expect(userAAccess.title).toBe('User A RLS Test Document')
-
-      // User B should NOT be able to access User A's document
-      const { data: userBAccess } = await userBClient
-        .from('documents')
-        .select('*')
-        .eq('id', userADoc.id)
-        .single()
-
-      expect(userBAccess).toBeNull()
+      // User B should be blocked from accessing User A's document
+      const userBResult = await setup.testResourceAccess(
+        userBClient,
+        'documents',
+        userADocument.id
+      )
+      RLSAssertions.assertBlockedAccess(userBResult)
     })
 
     test('Document listing respects user isolation', async () => {
-      const userAClient = await createUserClient(USER_A_ID)
-      const userBClient = await createUserClient(USER_B_ID)
-      const adminClient = await createClient()
-
       // Create documents for both users
-      const { data: userADoc } = await adminClient
-        .from('documents')
-        .insert({
-          title: 'User A RLS Test List',
-          slug: 'user-a-rls-test-list',
-          html_content: '<p>User A content</p>',
-          plaintext_content: 'User A content',
-          created_by: USER_A_ID,
-          is_public: false,
-          word_count: 3,
-        })
-        .select()
-        .single()
+      const userADoc = await setup.createTestDocument({
+        title: 'User A List Test Document',
+        slug: 'user-a-list-test',
+        html_content: '<h1>User A List Content</h1>',
+        plaintext_content: 'User A List Content',
+        created_by: TEST_USER_IDS.USER_A,
+        is_public: false,
+        word_count: 4,
+      })
 
-      const { data: userBDoc } = await adminClient
-        .from('documents')
-        .insert({
-          title: 'User B RLS Test List',
-          slug: 'user-b-rls-test-list',
-          html_content: '<p>User B content</p>',
-          plaintext_content: 'User B content',
-          created_by: USER_B_ID,
-          is_public: false,
-          word_count: 3,
-        })
-        .select()
-        .single()
+      const userBDoc = await setup.createTestDocument({
+        title: 'User B List Test Document',
+        slug: 'user-b-list-test',
+        html_content: '<h1>User B List Content</h1>',
+        plaintext_content: 'User B List Content',
+        created_by: TEST_USER_IDS.USER_B,
+        is_public: false,
+        word_count: 4,
+      })
+
+      // Get authenticated clients
+      const userAClient = await setup.createUserClient(TEST_USER_IDS.USER_A)
+      const userBClient = await setup.createUserClient(TEST_USER_IDS.USER_B)
 
       // User A should only see their own documents
-      const { data: userADocs } = await userAClient
+      const { data: userADocuments } = await userAClient
         .from('documents')
-        .select('id, title')
-        .ilike('title', '%RLS Test List%')
+        .select('id, title, created_by')
 
-      expect(userADocs).toHaveLength(1)
-      expect(userADocs[0].id).toBe(userADoc.id)
+      expect(userADocuments).toBeTruthy()
+      const userADocIds = userADocuments?.map(doc => doc.id) || []
+      
+      // User A should see their own document but not User B's
+      expect(userADocIds).toContain(userADoc.id)
+      expect(userADocIds).not.toContain(userBDoc.id)
+
+      // All documents should belong to User A
+      userADocuments?.forEach(doc => {
+        expect(doc.created_by).toBe(TEST_USER_IDS.USER_A)
+      })
 
       // User B should only see their own documents
-      const { data: userBDocs } = await userBClient
+      const { data: userBDocuments } = await userBClient
         .from('documents')
-        .select('id, title')
-        .ilike('title', '%RLS Test List%')
+        .select('id, title, created_by')
 
-      expect(userBDocs).toHaveLength(1)
-      expect(userBDocs[0].id).toBe(userBDoc.id)
+      expect(userBDocuments).toBeTruthy()
+      const userBDocIds = userBDocuments?.map(doc => doc.id) || []
+      
+      // User B should see their own document but not User A's
+      expect(userBDocIds).toContain(userBDoc.id)
+      expect(userBDocIds).not.toContain(userADoc.id)
+
+      // All documents should belong to User B
+      userBDocuments?.forEach(doc => {
+        expect(doc.created_by).toBe(TEST_USER_IDS.USER_B)
+      })
     })
   })
 
-  describe('AI Calls RLS Policies', () => {
-    test('AI calls follow document ownership', async () => {
-      const userAClient = await createUserClient(USER_A_ID)
-      const userBClient = await createUserClient(USER_B_ID)
-      const adminClient = await createClient()
-
+  describe('Test 2: AI calls follow document ownership', () => {
+    test('Users can only access AI calls for documents they own', async () => {
       // Create document owned by User A
-      const { data: userADoc } = await adminClient
-        .from('documents')
-        .insert({
-          title: 'User A RLS Test AI Doc',
-          slug: 'user-a-rls-test-ai',
-          html_content: '<p>AI test content</p>',
-          plaintext_content: 'AI test content',
-          created_by: USER_A_ID,
-          is_public: false,
-          word_count: 3,
-        })
-        .select()
-        .single()
+      const userADocument = await setup.createTestDocument({
+        title: 'User A AI Document',
+        slug: 'user-a-ai-document',
+        html_content: '<h1>User A AI Content</h1>',
+        plaintext_content: 'User A AI Content',
+        created_by: TEST_USER_IDS.USER_A,
+        is_public: false,
+        word_count: 4,
+      })
 
       // Create AI call linked to User A's document
-      const { data: aiCall } = await adminClient
-        .from('ai_calls')
-        .insert({
-          provider: 'anthropic',
-          model_id: 'claude-3-haiku',
-          prompt_type: 'rls-test',
-          input_data: { test: true },
-          output_data: { result: 'test output' },
-          document_id: userADoc.id,
-          created_by: USER_A_ID,
-          usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
-          finish_reason: 'stop',
-        })
-        .select()
-        .single()
+      const aiCall = await setup.createTestAICall({
+        model_id: 'claude-3-haiku',
+        prompt_type: 'test_headings',
+        prompt_input: `Generate headings for document: ${userADocument.id}`,
+        document_id: userADocument.id,
+        created_by: TEST_USER_IDS.USER_A,
+        prompt_tokens: 100,
+        completion_tokens: 50,
+        total_tokens: 150,
+        finish_reason: 'stop',
+        response_text: 'Generated headings response',
+      })
+
+      // Get authenticated clients
+      const userAClient = await setup.createUserClient(TEST_USER_IDS.USER_A)
+      const userBClient = await setup.createUserClient(TEST_USER_IDS.USER_B)
 
       // User A should be able to access AI call for their document
-      const { data: userAAccess } = await userAClient
-        .from('ai_calls')
-        .select('*')
-        .eq('id', aiCall.id)
-        .single()
+      const userAResult = await setup.testResourceAccess(
+        userAClient,
+        'ai_calls',
+        aiCall.id
+      )
+      RLSAssertions.assertHasAccess(userAResult, aiCall.id)
 
-      expect(userAAccess).not.toBeNull()
-      expect(userAAccess.prompt_type).toBe('rls-test')
+      // User B should be blocked from accessing AI call for User A's document
+      const userBResult = await setup.testResourceAccess(
+        userBClient,
+        'ai_calls',
+        aiCall.id
+      )
+      RLSAssertions.assertBlockedAccess(userBResult)
+    })
 
-      // User B should NOT be able to access AI call for User A's document
-      const { data: userBAccess } = await userBClient
-        .from('ai_calls')
-        .select('*')
-        .eq('id', aiCall.id)
-        .single()
+    test('Document-independent AI calls are isolated by creator', async () => {
+      // Create AI call without document association (document_id = null)
+      const independentAICall = await setup.createTestAICall({
+        model_id: 'claude-3-haiku',
+        prompt_type: 'independent_test',
+        prompt_input: 'test independent call',
+        document_id: null, // No document association
+        created_by: TEST_USER_IDS.USER_A,
+        prompt_tokens: 50,
+        completion_tokens: 25,
+        total_tokens: 75,
+        finish_reason: 'stop',
+        response_text: 'test independent response',
+      })
 
-      expect(userBAccess).toBeNull()
+      // Get authenticated clients
+      const userAClient = await setup.createUserClient(TEST_USER_IDS.USER_A)
+      const userBClient = await setup.createUserClient(TEST_USER_IDS.USER_B)
+
+      // User A should be able to access their own independent AI call
+      const userAResult = await setup.testResourceAccess(
+        userAClient,
+        'ai_calls',
+        independentAICall.id
+      )
+      RLSAssertions.assertHasAccess(userAResult, independentAICall.id)
+
+      // User B should be blocked from accessing User A's independent AI call
+      const userBResult = await setup.testResourceAccess(
+        userBClient,
+        'ai_calls',
+        independentAICall.id
+      )
+      RLSAssertions.assertBlockedAccess(userBResult)
     })
   })
 
-  describe('Profile RLS Policies', () => {
+  describe('Test 3: Profile access isolation', () => {
     test('Users can only access their own profile', async () => {
-      const userAClient = await createUserClient(USER_A_ID)
-      const userBClient = await createUserClient(USER_B_ID)
+      // Create profiles for both users
+      const userAProfile = await setup.createTestProfile({
+        user_id: TEST_USER_IDS.USER_A,
+        preferences: { display_name: 'Test User A', bio: 'User A profile for RLS testing' },
+      })
+
+      const userBProfile = await setup.createTestProfile({
+        user_id: TEST_USER_IDS.USER_B,
+        preferences: { display_name: 'Test User B', bio: 'User B profile for RLS testing' },
+      })
+
+      // Get authenticated clients
+      const userAClient = await setup.createUserClient(TEST_USER_IDS.USER_A)
+      const userBClient = await setup.createUserClient(TEST_USER_IDS.USER_B)
 
       // User A should be able to access their own profile
-      const { data: userAProfile } = await userAClient
-        .from('profiles')
-        .select('*')
-        .eq('user_id', USER_A_ID)
-        .single()
+      const userAResult = await setup.testProfileAccess(userAClient, TEST_USER_IDS.USER_A)
+      RLSAssertions.assertHasAccess(userAResult)
+      expect(userAResult.data.user_id).toBe(TEST_USER_IDS.USER_A)
+      expect(userAResult.data.preferences?.display_name).toBe('Test User A')
 
-      expect(userAProfile).not.toBeNull()
-      expect(userAProfile.user_id).toBe(USER_A_ID)
+      // User A should be blocked from accessing User B's profile
+      const userAAccessToBResult = await setup.testProfileAccess(userAClient, TEST_USER_IDS.USER_B)
+      RLSAssertions.assertBlockedAccess(userAAccessToBResult)
 
-      // User A should NOT be able to access User B's profile
-      const { data: userBProfileAccess } = await userAClient
-        .from('profiles')
-        .select('*')
-        .eq('user_id', USER_B_ID)
-        .single()
+      // User B should be able to access their own profile
+      const userBResult = await setup.testProfileAccess(userBClient, TEST_USER_IDS.USER_B)
+      RLSAssertions.assertHasAccess(userBResult)
+      expect(userBResult.data.user_id).toBe(TEST_USER_IDS.USER_B)
+      expect(userBResult.data.preferences?.display_name).toBe('Test User B')
 
-      expect(userBProfileAccess).toBeNull()
+      // User B should be blocked from accessing User A's profile
+      const userBAccessToAResult = await setup.testProfileAccess(userBClient, TEST_USER_IDS.USER_A)
+      RLSAssertions.assertBlockedAccess(userBAccessToAResult)
+    })
+  })
+
+  describe('Test 4: Document enhancements follow document ownership', () => {
+    test('Enhancements follow document ownership rules', async () => {
+      // Create document owned by User A
+      const userADocument = await setup.createTestDocument({
+        title: 'User A Enhancement Document',
+        slug: 'user-a-enhancement-document',
+        html_content: '<h1>User A Enhancement Content</h1>',
+        plaintext_content: 'User A Enhancement Content',
+        created_by: TEST_USER_IDS.USER_A,
+        is_public: false,
+        word_count: 4,
+      })
+
+      // Create enhancement for User A's document
+      const enhancement = await setup.createTestEnhancement({
+        document_id: userADocument.id,
+        type: 'ai_headings',
+        content: { 
+          headings: [
+            { level: 1, text: 'Test Heading 1', id: 'h1' },
+            { level: 2, text: 'Test Heading 2', id: 'h2' }
+          ]
+        },
+      })
+
+      // Get authenticated clients
+      const userAClient = await setup.createUserClient(TEST_USER_IDS.USER_A)
+      const userBClient = await setup.createUserClient(TEST_USER_IDS.USER_B)
+
+      // User A should be able to access enhancement for their document
+      const userAResult = await setup.testResourceAccess(
+        userAClient,
+        'document_enhancements',
+        enhancement.id
+      )
+      RLSAssertions.assertHasAccess(userAResult, enhancement.id)
+      expect(userAResult.data.document_id).toBe(userADocument.id)
+      expect(userAResult.data.type).toBe('ai_headings')
+
+      // User B should be blocked from accessing enhancement for User A's document
+      const userBResult = await setup.testResourceAccess(
+        userBClient,
+        'document_enhancements',
+        enhancement.id
+      )
+      RLSAssertions.assertBlockedAccess(userBResult)
+    })
+
+    test('Enhancement listing respects document ownership', async () => {
+      // Create documents for both users
+      const userADocument = await setup.createTestDocument({
+        title: 'User A Enhancement List Document',
+        slug: 'user-a-enhancement-list',
+        html_content: '<h1>User A Enhancement List Content</h1>',
+        plaintext_content: 'User A Enhancement List Content',
+        created_by: TEST_USER_IDS.USER_A,
+        is_public: false,
+        word_count: 5,
+      })
+
+      const userBDocument = await setup.createTestDocument({
+        title: 'User B Enhancement List Document',
+        slug: 'user-b-enhancement-list',
+        html_content: '<h1>User B Enhancement List Content</h1>',
+        plaintext_content: 'User B Enhancement List Content',
+        created_by: TEST_USER_IDS.USER_B,
+        is_public: false,
+        word_count: 5,
+      })
+
+      // Create enhancements for both documents
+      const userAEnhancement = await setup.createTestEnhancement({
+        document_id: userADocument.id,
+        type: 'ai_summary',
+        content: { summary: 'User A document summary' },
+      })
+
+      const userBEnhancement = await setup.createTestEnhancement({
+        document_id: userBDocument.id,
+        type: 'ai_glossary',
+        content: { terms: [{ term: 'test', definition: 'a test term' }] },
+      })
+
+      // Get authenticated clients
+      const userAClient = await setup.createUserClient(TEST_USER_IDS.USER_A)
+      const userBClient = await setup.createUserClient(TEST_USER_IDS.USER_B)
+
+      // User A should only see enhancements for their documents
+      const { data: userAEnhancements } = await userAClient
+        .from('document_enhancements')
+        .select('id, document_id, type')
+
+      expect(userAEnhancements).toBeTruthy()
+      const userAEnhancementIds = userAEnhancements?.map(enh => enh.id) || []
+      
+      // User A should see their own enhancement but not User B's
+      expect(userAEnhancementIds).toContain(userAEnhancement.id)
+      expect(userAEnhancementIds).not.toContain(userBEnhancement.id)
+
+      // All enhancements should be for User A's documents
+      userAEnhancements?.forEach(enhancement => {
+        expect(enhancement.document_id).toBe(userADocument.id)
+      })
+
+      // User B should only see enhancements for their documents
+      const { data: userBEnhancements } = await userBClient
+        .from('document_enhancements')
+        .select('id, document_id, type')
+
+      expect(userBEnhancements).toBeTruthy()
+      const userBEnhancementIds = userBEnhancements?.map(enh => enh.id) || []
+      
+      // User B should see their own enhancement but not User A's
+      expect(userBEnhancementIds).toContain(userBEnhancement.id)
+      expect(userBEnhancementIds).not.toContain(userAEnhancement.id)
+
+      // All enhancements should be for User B's documents
+      userBEnhancements?.forEach(enhancement => {
+        expect(enhancement.document_id).toBe(userBDocument.id)
+      })
+    })
+  })
+
+  describe('Infrastructure validation', () => {
+    test('Test setup infrastructure works correctly', async () => {
+      // Test admin client can perform operations
+      const adminClient = setup.getAdminClient()
+      expect(adminClient).toBeDefined()
+
+      // Test admin client can query existing data
+      const { data: existingDocs, error } = await adminClient
+        .from('documents')
+        .select('id')
+        .limit(1)
+
+      expect(error).toBeNull()
+      expect(existingDocs).toBeDefined()
+
+      // Test user clients can be created
+      const userAClient = await setup.createUserClient(TEST_USER_IDS.USER_A)
+      const userBClient = await setup.createUserClient(TEST_USER_IDS.USER_B)
+
+      expect(userAClient).toBeDefined()
+      expect(userBClient).toBeDefined()
+
+      // Test user clients can perform queries (will be filtered by RLS)
+      const userAQuery = await userAClient
+        .from('documents')
+        .select('id')
+        .limit(5)
+
+      const userBQuery = await userBClient
+        .from('documents')
+        .select('id')
+        .limit(5)
+
+      // Both queries should succeed (though results will be filtered by RLS)
+      expect(userAQuery.error).toBeNull()
+      expect(userBQuery.error).toBeNull()
     })
   })
 })
