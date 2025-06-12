@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { validateAuth } from '@/lib/auth/server-auth'
+import { getCurrentUserAdminStatus } from '@/lib/auth/admin-utils'
 
 /**
  * POST /api/delete-document
@@ -25,10 +26,11 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient()
     const documentService = new DocumentService(supabase)
     
-    // Check if user owns the document before deletion
+    // Check if user owns the document or has admin access
     const isOwned = await documentService.isOwnedByUser(documentId, user.id)
+    const adminStatus = await getCurrentUserAdminStatus()
     
-    if (!isOwned) {
+    if (!isOwned && !adminStatus.isAdmin) {
       return NextResponse.json(
         { error: 'Document not found' }, // Use 404 to prevent information leakage
         { status: 404 }

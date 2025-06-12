@@ -281,8 +281,8 @@ describe('RLS Policy Integration Tests', () => {
       const enhancement = await rlsSetup.createTestEnhancement({
         id: '99999999-9999-9999-9999-999999999999',
         document_id: userADoc.id,
-        enhancement_type: 'ai_headings',
-        enhancement_data: { headings: [{ level: 1, text: 'Test Heading', id: 'h1' }] },
+        type: 'ai_headings',
+        content: { headings: [{ level: 1, text: 'Test Heading', id: 'h1' }] },
         status: 'completed',
       })
 
@@ -367,8 +367,8 @@ describe('RLS Policy Integration Tests', () => {
       const enhancement = await rlsSetup.createTestEnhancement({
         id: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
         document_id: userADoc.id,
-        enhancement_type: 'ai_headings',
-        enhancement_data: { headings: [{ level: 1, text: 'Ecosystem Heading', id: 'eh1' }] },
+        type: 'ai_headings',
+        content: { headings: [{ level: 1, text: 'Ecosystem Heading', id: 'eh1' }] },
         status: 'completed',
         ai_call_id: aiCall.id,
       })

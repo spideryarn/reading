@@ -61,34 +61,37 @@ export const SECURITY_TEST_DOCUMENTS = {
  */
 export const SECURITY_TEST_ENHANCEMENTS = {
   USER_A_ENHANCEMENT: {
-    enhancement_type: 'ai_headings',
-    enhancement_data: {
+    type: 'ai_headings',
+    subtype: 'auto',
+    content: {
       headings: [
         { level: 1, text: 'User A Heading 1', id: 'ua-h1' },
         { level: 2, text: 'User A Heading 2', id: 'ua-h2' }
       ]
     },
-    status: 'completed' as const,
+    extra: { status: 'completed' },
   },
 
   USER_B_ENHANCEMENT: {
-    enhancement_type: 'ai_summary',
-    enhancement_data: {
+    type: 'ai_summary',
+    subtype: 'medium',
+    content: {
       summary: 'This is a summary generated for User B document',
       granularity: 'medium'
     },
-    status: 'completed' as const,
+    extra: { status: 'completed' },
   },
 
   GLOSSARY_ENHANCEMENT: {
-    enhancement_type: 'ai_glossary',
-    enhancement_data: {
+    type: 'ai_glossary',
+    subtype: 'auto',
+    content: {
       terms: [
         { term: 'API', definition: 'Application Programming Interface' },
         { term: 'RLS', definition: 'Row Level Security' }
       ]
     },
-    status: 'completed' as const,
+    extra: { status: 'completed' },
   }
 } as const
 

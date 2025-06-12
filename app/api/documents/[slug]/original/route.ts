@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { validateAuth } from '@/lib/auth/server-auth'
+import { getCurrentUserAdminStatus } from '@/lib/auth/admin-utils'
 import type { Document } from '@/lib/types/database'
 
 /**
@@ -43,12 +44,13 @@ export async function GET(
       return new Response('Document not found', { status: 404 })
     }
 
-    // Check if user owns the document
+    // Check if user owns the document or has admin access
     const supabase = await createClient()
     const documentService = new DocumentService(supabase)
     const isOwned = await documentService.isOwnedByUser(doc.id, user.id)
+    const adminStatus = await getCurrentUserAdminStatus()
     
-    if (!isOwned) {
+    if (!isOwned && !adminStatus.isAdmin) {
       return new Response('Document not found', { status: 404 }) // Use 404 to prevent information leakage
     }
 
