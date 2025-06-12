@@ -26,7 +26,7 @@ This divergence creates maintenance burden and conceptual complexity.
 ## References
 
 - `docs/TABLE_OF_CONTENTS_PANE.md` - Documents the ToC architecture and current tooltip implementation
-- `docs/AI_SUMMARISE.md` - Describes how AI summaries work for tooltips
+- `docs/TOOL_SUMMARISE.md` - Describes how AI summaries work for tooltips
 - `docs/MUTATIONS.md` - Explains the document mutation system for AI headings
 - `docs/ARCHITECTURE.md` - Overall system architecture including mutation design
 - `planning/250526d_deterministic_id_generation.md` - Original ID generation design decisions

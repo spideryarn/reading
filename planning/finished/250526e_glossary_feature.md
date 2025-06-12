@@ -53,7 +53,7 @@ We want to adapt this approach for the new Next.js implementation while keeping 
   - [x] Added proper error handling with Phosphor icons
 
 - [x] **DONE** Create documentation
-  - [x] Created `docs/AI_GLOSSARY.md` following evergreen documentation guidelines
+  - [x] Created `docs/TOOL_GLOSSARY.md` following evergreen documentation guidelines
   - [x] Documented feature behaviour, implementation details, and future enhancements
 
 ### Phase 2: Navigation Features (Current Focus)

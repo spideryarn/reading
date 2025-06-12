@@ -34,10 +34,10 @@ Complete the database integration for Spideryarn Reading by connecting existing 
 - `components/assistant-chat.tsx` - Current chat UI using @assistant-ui/react (in-memory)
 
 **AI Features**:
-- `docs/AI_SUMMARISE.md` - AI summarise feature generating hierarchical summaries at multiple granularities
-- `docs/AI_GLOSSARY.md` - Glossary feature extracting key entities using LLM analysis  
-- `docs/AI_HEADINGS.md` - AI-generated headings feature with mutation system
-- `docs/AI_TWEET_THREAD_VIEW.md` - Tweet thread feature converting documents to Twitter-style threads
+- `docs/TOOL_SUMMARISE.md` - AI summarise feature generating hierarchical summaries at multiple granularities
+- `docs/TOOL_GLOSSARY.md` - Glossary feature extracting key entities using LLM analysis  
+- `docs/TOOL_HEADINGS.md` - AI-generated headings feature with mutation system
+- `docs/TOOL_TWEET_THREAD_VIEW.md` - Tweet thread feature converting documents to Twitter-style threads
 - `lib/prompts/` - Nunjucks + Zod prompt templates for all AI features
 - `app/api/summarise/route.ts`, `app/api/glossary/route.ts`, `app/api/headings/route.ts`, `app/api/tweet-thread/route.ts` - AI API routes with database integration
 

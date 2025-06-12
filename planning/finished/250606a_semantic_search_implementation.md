@@ -32,7 +32,7 @@ The application currently has:
 
 ## References
 
-- `docs/SEARCH_TEXT.md` - Current text search implementation and architecture
+- `docs/TOOL_SEARCH_TEXT.md` - Current text search implementation and architecture
 - `planning/finished/250604b_document_search_functionality.md` - Initial search feature planning
 - `planning/finished/250605a_cross_element_text_search_implementation.md` - Cross-element search development
 - `planning/finished/250605b_cross_pane_communication_refactor.md` - **RECENT**: React Context migration for cross-pane communication

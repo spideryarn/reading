@@ -2,7 +2,7 @@
 
 // Extracted tab components from TableOfContents for use in unified left pane
 // See docs/UNIFIED_LEFT_PANE.md for architecture and usage patterns
-// See docs/AI_SUMMARISE.md for tooltip summarisation feature details
+// See docs/TOOL_SUMMARISE.md for tooltip summarisation feature details
 // See docs/MUTATIONS.md for document mutation system
 
 import React, { useState, useEffect, useRef, useCallback, type JSX } from 'react'

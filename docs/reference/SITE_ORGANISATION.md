@@ -12,6 +12,8 @@ Spideryarn Reading is a database-driven, user-centric AI document analysis appli
 - `docs/reference/AUTHENTICATION_OVERVIEW.md` - Authentication system architecture and flows
 - `docs/reference/UNIFIED_LEFT_PANE.md` - Unified left pane implementation with tabbed interface
 - `docs/reference/COMMAND_PALETTE.md` - Global command palette implementation
+- `docs/reference/TOOL_GLOSSARY.md` - Glossary feature documentation
+- `docs/reference/LLM_PROMPT_TEMPLATES.md` - Prompt template system architecture
 
 ## Application Architecture Overview
 

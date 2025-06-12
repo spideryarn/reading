@@ -208,7 +208,7 @@ async function llmCleanContent(rawContent: string, prompt: string) {
 - **Footnote Processing**: Handle academic footnotes and endnotes
 
 **3. Entity and Terminology Extraction**
-- Integration with existing `AI_GLOSSARY.md` approach
+- Integration with existing `TOOL_GLOSSARY.md` approach
 - Author name standardisation
 - Institution and affiliation extraction
 - Technical term identification and definition

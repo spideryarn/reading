@@ -2,7 +2,7 @@
 
 // Reusable summary pane component using AI summarisation
 // Extracted from table-of-contents.tsx to eliminate code duplication
-// See docs/AI_SUMMARISE.md for architecture and usage patterns
+// See docs/TOOL_SUMMARISE.md for architecture and usage patterns
 
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'

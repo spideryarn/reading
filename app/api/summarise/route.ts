@@ -1,5 +1,5 @@
 // AI Summarisation API endpoint with configurable granularity
-// See docs/AI_SUMMARISE.md for architecture and usage patterns
+// See docs/TOOL_SUMMARISE.md for architecture and usage patterns
 
 import { NextRequest, NextResponse } from 'next/server'
 import { executePromptWithUsage } from '@/lib/prompts/types'

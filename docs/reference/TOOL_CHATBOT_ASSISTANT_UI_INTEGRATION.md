@@ -10,7 +10,7 @@ This document provides comprehensive technical guidance for integrating the @ass
 - [LLM_PROMPT_TEMPLATES.md](LLM_PROMPT_TEMPLATES.md) - **Required reading** for implementing any LLM functionality
 - [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) - Overall system design decisions and framework choices  
 - [DATABASE_OVERVIEW.md](DATABASE_OVERVIEW.md) - Database architecture and schema for persistence features
-- [AI_SUMMARISE.md](AI_SUMMARISE.md) and [AI_GLOSSARY.md](AI_GLOSSARY.md) - Examples of AI feature implementation patterns
+- [TOOL_SUMMARISE.md](TOOL_SUMMARISE.md) and [TOOL_GLOSSARY.md](TOOL_GLOSSARY.md) - Examples of AI feature implementation patterns
 - [TESTING.md](TESTING.md) - Testing approach for Jest with React Testing Library
 - [SHADCN_UI_REFERENCE.md](SHADCN_UI_REFERENCE.md) - UI component library integration patterns
 - [UI_INTERFACE.md](UI_INTERFACE.md) - Multi-pane layout and tabbed navigation architecture
