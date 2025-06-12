@@ -152,6 +152,90 @@ The **Phase 1 Document RLS Security** is now fully implemented and active. The a
 - `297d460`: Critical API route authentication security fix  
 - `c9068ee`: UI updates and documentation completion
 
+## Phase 1.5: Admin Access Support
+
+**Status**: PLANNED  
+**Priority**: MEDIUM - Important for system administration but not blocking core user functionality
+
+Admin users should have super-user access to all documents and system operations. This provides essential administrative capabilities while maintaining the security foundation established in Phase 1.
+
+### Technical Approach
+
+**Database Schema Update**:
+```sql
+-- Add admin timestamp field to profiles table
+ALTER TABLE profiles ADD COLUMN is_admin TIMESTAMPTZ NULL;
+
+-- NULL = regular user
+-- TIMESTAMPTZ value = admin since that date (provides audit trail)
+```
+
+**RLS Policy Updates**:
+```sql
+-- Update documents policy to include admin access
+DROP POLICY "Users can manage own documents" ON documents;
+
+CREATE POLICY "Owners and admins can manage documents" ON documents
+  FOR ALL TO authenticated
+  USING (
+    auth.uid() = created_by::uuid OR
+    EXISTS (SELECT 1 FROM profiles WHERE user_id = auth.uid() AND is_admin IS NOT NULL)
+  );
+
+-- Similar updates for all document-related tables
+-- (document_enhancements, ai_calls, chat_threads, chat_messages)
+```
+
+### Implementation Actions
+
+**Stage: Database Schema & Migration**
+- [ ] Create migration file: `supabase/migrations/20250108000002_add_admin_support.sql`
+  - [ ] Add `is_admin TIMESTAMPTZ NULL` field to `profiles` table
+  - [ ] Add index on `profiles(user_id, is_admin)` for RLS policy performance
+- [ ] Update TypeScript types: `npm run db:types`
+- [ ] Test migration in development environment
+
+**Stage: RLS Policy Updates**
+- [ ] Update all document-related RLS policies to include admin access
+  - [ ] `documents` table policy
+  - [ ] `document_enhancements` table policy
+  - [ ] `ai_calls` table policy
+  - [ ] `chat_threads` table policy
+  - [ ] `chat_messages` table policy
+- [ ] Test policy updates with multi-user scenarios
+- [ ] Verify performance impact is minimal
+
+**Stage: Admin Management Utilities**
+- [ ] Create admin management functions in `lib/auth/admin-utils.ts`
+  - [ ] `grantAdminAccess(userId: string)` - Set admin timestamp
+  - [ ] `revokeAdminAccess(userId: string)` - Clear admin timestamp
+  - [ ] `isUserAdmin(userId: string)` - Check admin status
+- [ ] Add admin status checks to relevant API routes
+- [ ] Document admin management procedures
+
+**Stage: Testing & Verification**
+- [ ] Create comprehensive admin access tests
+  - [ ] Admin can access all user documents
+  - [ ] Admin can perform all document operations
+  - [ ] Regular users cannot access admin functions
+  - [ ] Admin status changes take effect immediately
+- [ ] Test admin revocation scenarios
+- [ ] Performance testing with admin policies
+
+### Success Criteria
+
+- [ ] Admins can access and manage all documents regardless of ownership
+- [ ] Admin status can be granted/revoked through database operations
+- [ ] All existing functionality continues working unchanged
+- [ ] No significant performance impact from updated RLS policies
+- [ ] Clear audit trail of admin status changes via timestamp field
+
+### Risk Assessment
+
+**Low Risk**: Simple schema addition with straightforward RLS policy updates
+**Main Risk**: Potential performance impact from additional EXISTS clauses in RLS policies
+**Mitigation**: Proper indexing and performance testing before deployment
+
 ## Next Stage: Automated Testing Implementation
 
 **Status**: IN PROGRESS  
