@@ -140,51 +140,6 @@ export default function DocumentPageClient({
     setHeadingVisibility(newHeadingVisibility)
   }, [elementVisibility, allHeadings, mutatedDocument])
   
-  // Real-time document updates (Proof of Concept)
-  useEffect(() => {
-    let subscription: RealtimeSubscription | null = null;
-    
-    const setupRealtimeSubscription = async () => {
-      try {
-        const supabase = createClient();
-        
-        console.log('[Real-time PoC] Setting up document subscription for:', documentId);
-        
-        subscription = subscribeToDocument(
-          supabase, 
-          documentId, 
-          (payload) => {
-            console.log('[Real-time PoC] Document updated:', payload);
-            
-            // Update the title if it changed
-            if (payload.new && payload.new.title !== currentTitle) {
-              const newTitle = payload.new.title;
-              console.log('[Real-time PoC] Title updated from', currentTitle, 'to', newTitle);
-              setCurrentTitle(newTitle);
-              
-              // Update the browser tab title as well
-              document.title = `${newTitle} - Spideryarn`;
-            }
-          }
-        );
-        
-        console.log('[Real-time PoC] Subscription established');
-      } catch (error) {
-        console.error('[Real-time PoC] Failed to setup subscription:', error);
-      }
-    };
-    
-    setupRealtimeSubscription();
-    
-    // Cleanup on unmount
-    return () => {
-      if (subscription) {
-        console.log('[Real-time PoC] Cleaning up subscription');
-        subscription.unsubscribe();
-      }
-    };
-  }, [documentId, currentTitle]);
-  
   // Handle element clicks in the document viewer
   const handleElementClick = useCallback((element: DocumentElement) => {
     // Element click handling for selection etc. can be added here if needed
