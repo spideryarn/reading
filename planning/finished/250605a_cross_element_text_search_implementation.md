@@ -170,7 +170,7 @@ Based on analysis in `docs/HTML_TEXT_SEARCH_CROSS_ELEMENT.md` and project prefer
 
 ### Stage: Documentation Update ✅
 - [x] Rename and update search documentation
-  - [x] Rename `docs/HTML_TEXT_SEARCH_CROSS_ELEMENT.md` to `docs/SEARCH_TEXT.md`
+  - [x] Rename `docs/HTML_TEXT_SEARCH_CROSS_ELEMENT.md` to `docs/TOOL_SEARCH_TEXT.md`
   - [x] Update content to reflect current implementation status
   - [x] Document Mark.js integration and limitations
   - [x] Include examples of search functionality

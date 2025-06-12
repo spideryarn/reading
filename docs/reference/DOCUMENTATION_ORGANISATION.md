@@ -73,7 +73,7 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/MUTATIONS.md` - Reversible document transformation system for applying/reverting changes
 
 ### Content Processing & Search
-- `docs/reference/SEARCH_TEXT.md` - Cross-element text search functionality using Mark.js with DOM-based highlighting
+- `docs/reference/TOOL_SEARCH_TEXT.md` - Cross-element text search functionality using Mark.js with DOM-based highlighting
 - `docs/reference/PDF_TO_HTML_CONVERSION.md` - PDF processing and HTML conversion implementation
 - `docs/reference/WEBPAGE_CONTENT_EXTRACTION.md` - Web content extraction and processing
 - `docs/reference/OPTIMAL_TEXT_FORMATTING.md` - Text formatting standards and typography
