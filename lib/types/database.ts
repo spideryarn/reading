@@ -334,6 +334,8 @@ export type Database = {
           storage_path: string | null
           title: string
           updated_at: string | null
+          upload_ai_call_id: string | null
+          upload_metadata: Json | null
           word_count: number | null
         }
         Insert: {
@@ -350,6 +352,8 @@ export type Database = {
           storage_path?: string | null
           title: string
           updated_at?: string | null
+          upload_ai_call_id?: string | null
+          upload_metadata?: Json | null
           word_count?: number | null
         }
         Update: {
@@ -366,14 +370,25 @@ export type Database = {
           storage_path?: string | null
           title?: string
           updated_at?: string | null
+          upload_ai_call_id?: string | null
+          upload_metadata?: Json | null
           word_count?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "documents_upload_ai_call_id_fkey"
+            columns: ["upload_ai_call_id"]
+            isOneToOne: false
+            referencedRelation: "ai_calls"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
           created_at: string | null
           id: string
+          is_admin: string | null
           preferences: Json | null
           updated_at: string | null
           user_id: string
@@ -381,6 +396,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id?: string
+          is_admin?: string | null
           preferences?: Json | null
           updated_at?: string | null
           user_id: string
@@ -388,6 +404,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           id?: string
+          is_admin?: string | null
           preferences?: Json | null
           updated_at?: string | null
           user_id?: string
