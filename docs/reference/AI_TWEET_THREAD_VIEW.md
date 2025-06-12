@@ -9,7 +9,7 @@ The tweet thread feature converts academic documents into Twitter-style thread f
 - `app/api/tweet-thread/route.ts` - API endpoint for thread generation
 - `app/documents/[slug]/tweets/page.tsx` - Tweet thread page routing
 - `lib/prompts/templates/tweet-thread.njk` - Thread generation prompt template
-- `docs/LLM_PROMPT_TEMPLATES.md` - Prompt template system documentation
+- `docs/reference/LLM_PROMPT_TEMPLATES.md` - Prompt template system documentation
 - `planning/finished/250530d_tweet_thread_view.md` - Implementation planning
 
 ## Key Features

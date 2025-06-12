@@ -4,10 +4,10 @@ Complete configuration guide for setting up authentication in Spideryarn Reading
 
 ## See also
 
-- `docs/AUTHENTICATION_OVERVIEW.md` - High-level authentication system architecture and decisions
-- `docs/AUTHENTICATION_UI.md` - User interface components and authentication pages
-- `docs/AUTHENTICATION_DATABASE.md` - Database integration and user profile management
-- `docs/AUTHENTICATION_SECURITY.md` - Security best practices and troubleshooting
+- `docs/reference/AUTHENTICATION_OVERVIEW.md` - High-level authentication system architecture and decisions
+- `docs/reference/AUTHENTICATION_UI.md` - User interface components and authentication pages
+- `docs/reference/AUTHENTICATION_DATABASE.md` - Database integration and user profile management
+- `docs/reference/AUTHENTICATION_SECURITY.md` - Security best practices and troubleshooting
 - `supabase/config.toml` - Local Supabase configuration file
 - `.env.local` - Local environment variables (not committed to git)
 

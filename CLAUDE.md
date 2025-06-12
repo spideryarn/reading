@@ -70,7 +70,7 @@ Debugging resources:
 - Current logs: `tail dev.log`
 - Browser debugging: Playwright MCP (console logs, network requests, screenshots)
 - Test files: `src/lib/*/tests/` and `components/__tests__/`
-- Database: `supabase/migrations/` and `docs/DATABASE_*.md`
+- Database: `supabase/migrations/` and `docs/reference/DATABASE_*.md`
 - Architecture: `docs/reference/ARCHITECTURE_OVERVIEW.md` and `docs/reference/ARCHITECTURE_DECISIONS.md`
 - Recent decisions: `planning/*.md` docs
 
@@ -83,7 +83,7 @@ Debugging resources:
 - No more `console.error` + `return null` patterns
 - API routes should catch database errors and map to appropriate HTTP responses
 
-This follows our principle: "Raise errors early, clearly & fatally" (see `docs/CODING_PRINCIPLES.md`)
+This follows our principle: "Raise errors early, clearly & fatally" (see `docs/reference/CODING_PRINCIPLES.md`)
 
 
 ## Upload Metadata Tracking
@@ -115,11 +115,11 @@ The project includes a complete authentication system using Supabase Auth with N
 - Profile management with dropdown navigation
 
 **Documentation**:
-- `docs/AUTHENTICATION_OVERVIEW.md` - System architecture and flows
-- `docs/AUTHENTICATION_SETUP.md` - Configuration and deployment guide
-- `docs/AUTHENTICATION_UI.md` - UI components and forms
-- `docs/AUTHENTICATION_DATABASE.md` - Database integration and RLS
-- `docs/AUTHENTICATION_SECURITY.md` - Security practices and troubleshooting
+- `docs/reference/AUTHENTICATION_OVERVIEW.md` - System architecture and flows
+- `docs/reference/AUTHENTICATION_SETUP.md` - Configuration and deployment guide
+- `docs/reference/AUTHENTICATION_UI.md` - UI components and forms
+- `docs/reference/AUTHENTICATION_DATABASE.md` - Database integration and RLS
+- `docs/reference/AUTHENTICATION_SECURITY.md` - Security practices and troubleshooting
 
 **Implementation Files**:
 - `lib/auth/` - Authentication utilities and server-side helpers
@@ -146,12 +146,12 @@ Key variables in `.env.local`:
 - `ANTHROPIC_API_KEY` - Required for AI features
 - `PORT` - Dev server port
 - `LLM_MODEL` - default is Claude Sonnet 4, but we usually override to Haiku for development
-- Supabase connection details (see `docs/SETUP.md`)
+- Supabase connection details (see `docs/reference/SETUP.md`)
 
 Test environment (`.env.test`):
 - Currently mirrors `.env.local` for simplicity
 - Best practice: Use cheaper LLM models (Haiku) and separate test database in future
-- See `docs/TESTING.md` for setup instructions
+- See `docs/reference/TESTING.md` for setup instructions
 
 Template: `.env.example` (may not be current - check `.env.local` for active config)
 
@@ -176,39 +176,39 @@ see `docs/reference/DOCUMENTATION_ORGANISATION.md` for a comprehensive, navigati
 Available evergreen documentation in `docs/` - here are some of the most useful.
 
 Coding & infrastructure:
-- `docs/CODING_PRINCIPLES.md` - Outlines development principles prioritising simplicity, readability, debugging, and rapid prototyping for early-stage development
-- `docs/CODING_GUIDELINES.md` - Code quality standards including linting, TypeScript patterns, React best practices, and import conventions
-- `docs/COMMAND_LINE_SCRIPTS.md` - Guidelines for writing command-line scripts using shell scripts or TypeScript/Clipanion
+- `docs/reference/CODING_PRINCIPLES.md` - Outlines development principles prioritising simplicity, readability, debugging, and rapid prototyping for early-stage development
+- `docs/reference/CODING_GUIDELINES.md` - Code quality standards including linting, TypeScript patterns, React best practices, and import conventions
+- `docs/reference/COMMAND_LINE_SCRIPTS.md` - Guidelines for writing command-line scripts using shell scripts or TypeScript/Clipanion
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture and implementation details
 - `docs/reference/ARCHITECTURE_DECISIONS.md` - Key architectural decisions including framework choices, data structures, storage approach, and MVP features
-- `docs/STYLING.md` - CSS and visual styling configuration including theme settings, Phosphor icons usage, and loading/error button patterns
-- `docs/SETUP.md` - Development environment setup guide including Node.js, Supabase, Git worktree configuration, and common commands
-- `docs/SITE_ORGANISATION.md` - Documents the hierarchical, document-centric architecture including application routes, component hierarchy, and navigation patterns. (May be out of date)
+- `docs/reference/STYLING.md` - CSS and visual styling configuration including theme settings, Phosphor icons usage, and loading/error button patterns
+- `docs/reference/SETUP.md` - Development environment setup guide including Node.js, Supabase, Git worktree configuration, and common commands
+- `docs/reference/SITE_ORGANISATION.md` - Documents the hierarchical, document-centric architecture including application routes, component hierarchy, and navigation patterns. (May be out of date)
 - `docs/reference/TESTING.md` - Testing approach documentation covering Jest with React Testing Library setup, test structure, and current test coverage
-- `docs/UI_INTERFACE.md` - Documents the multi-pane layout with tabbed navigation including four-pane structure, tab system architecture, and scrolling fixes. See related docs below in "AI, features, machinery, interface" section.
+- `docs/reference/UI_INTERFACE.md` - Documents the multi-pane layout with tabbed navigation including four-pane structure, tab system architecture, and scrolling fixes. See related docs below in "AI, features, machinery, interface" section.
 
 Database:
-- `docs/DATABASE_OVERVIEW.md`
-- `docs/DATABASE_MIGRATIONS.md` - Guide for managing database schema changes through Supabase migrations with timestamped SQL files
-- `docs/DATABASE_SCHEMA.md` - Reference for both current (deprecated) schema and target schema showing the transition from element decomposition to single-row storage (VERY MUCH EVOLVING)
+- `docs/reference/DATABASE_OVERVIEW.md`
+- `docs/reference/DATABASE_MIGRATIONS.md` - Guide for managing database schema changes through Supabase migrations with timestamped SQL files
+- `docs/reference/DATABASE_SCHEMA.md` - Reference for both current (deprecated) schema and target schema showing the transition from element decomposition to single-row storage (VERY MUCH EVOLVING)
 
 AI, features, machinery, interface:
-- `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Comprehensive technical guide for integrating the @assistant-ui/react library into the chatbot interface within the Tools pane
-- `docs/LLM_PROMPT_TEMPLATES.md` - Guide for creating AI/LLM calls using the Nunjucks + Zod template system with type safety and validation
-- `docs/MUTATIONS.md` - Documents the reversible document transformation system for applying/reverting changes like AI-generated headings and content filtering
-- `docs/UNIFIED_LEFT_PANE.md` - Architecture and features of the unified left pane with tabbed interface, ToC, AI-generated headings, and tooltip summaries
-- `docs/AI_GLOSSARY.md` - Documents the glossary feature that extracts key entities from documents using LLM analysis and displays them in a dedicated pane
-- `docs/AI_SUMMARISE.md` - Documents the AI summarise feature that generates hierarchical summaries of document content using LLM analysis at multiple granularity levels
+- `docs/reference/AI_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Comprehensive technical guide for integrating the @assistant-ui/react library into the chatbot interface within the Tools pane
+- `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide for creating AI/LLM calls using the Nunjucks + Zod template system with type safety and validation
+- `docs/reference/MUTATIONS.md` - Documents the reversible document transformation system for applying/reverting changes like AI-generated headings and content filtering
+- `docs/reference/UNIFIED_LEFT_PANE.md` - Architecture and features of the unified left pane with tabbed interface, ToC, AI-generated headings, and tooltip summaries
+- `docs/reference/AI_GLOSSARY.md` - Documents the glossary feature that extracts key entities from documents using LLM analysis and displays them in a dedicated pane
+- `docs/reference/AI_SUMMARISE.md` - Documents the AI summarise feature that generates hierarchical summaries of document content using LLM analysis at multiple granularity levels
 
 Docs, modes, and admin:
-- `docs/GIT_COMMITS.md` - Guidelines for Git commit best practices including batching changes, message format, and handling concurrent changes
-- `docs/PROJECT_STATUS.md` - Current development state overview showing implemented features (AI summaries, glossary, headings) and planned enhancements
-- `docs/SOUNDING_BOARD.md` - Instructions for collaborative discussion mode emphasising asking questions and suggesting alternatives rather than immediate implementation
-- `docs/WRITE_EVERGREEN_DOC.md` - Guidelines for writing evergreen documentation including structure, cross-references, status indicators, and maintenance practices
-- `docs/WRITE_PLANNING_DOC.md` - Guide for writing planning/project management documents with file naming conventions, structure, and stage-based action plans
+- `docs/instructions/DO_GIT_COMMITS.md` - Guidelines for Git commit best practices including batching changes, message format, and handling concurrent changes
+- `docs/reference/PROJECT_STATUS.md` - Current development state overview showing implemented features (AI summaries, glossary, headings) and planned enhancements
+- `docs/instructions/SOUNDING_BOARD_MODE.md` - Instructions for collaborative discussion mode emphasising asking questions and suggesting alternatives rather than immediate implementation
+- `docs/instructions/WRITE_EVERGREEN_DOC.md` - Guidelines for writing evergreen documentation including structure, cross-references, status indicators, and maintenance practices
+- `docs/instructions/WRITE_PLANNING_DOC.md` - Guide for writing planning/project management documents with file naming conventions, structure, and stage-based action plans
 - `docs/instructions/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` - Process for keeping project documentation up-to-date including review steps, update patterns, and quality checklist
 - `docs/instructions/UPDATE_HOUSEKEEPING_TESTS.md` - Process for maintaining test quality and organisation while supporting rapid prototyping
-- `docs/UPDATING_CLAUDE_INSTRUCTIONS.md` - Guidelines for maintaining CLAUDE.md to help AI agents operate effectively on the Spideryarn Reading codebase
+- `docs/instructions/UPDATE_CLAUDE_INSTRUCTIONS.md` - Guidelines for maintaining CLAUDE.md to help AI agents operate effectively on the Spideryarn Reading codebase
 
 
 Recent planning decisions & progress tracking of major features: `planning/*.md`
@@ -244,8 +244,8 @@ printf "\n" | npx shadcn@latest add [component-name] --force
 - Primary colour set to Spideryarn orange: `hsl(30 62% 57%)`
 
 ### Documentation:
-- `docs/SHADCN_UI_REFERENCE.md` - Complete installation and usage guide
-- `docs/UI_COMPONENTS.md` - Available components and usage patterns
+- `docs/reference/SHADCN_UI_REFERENCE.md` - Complete installation and usage guide
+- `docs/reference/UI_COMPONENTS.md` - Available components and usage patterns
 
 ### Phosphor Icons SSR Usage:
 For server components (without 'use client'), use SSR-compatible imports:
@@ -275,7 +275,7 @@ Use British spelling.
 
 ## Git
 
-Follow the instructions in `docs/GIT_COMMITS.md`.
+Follow the instructions in `docs/instructions/DO_GIT_COMMITS.md`.
 
 
 ## Date

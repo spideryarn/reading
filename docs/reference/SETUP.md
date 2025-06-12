@@ -18,7 +18,7 @@ https://github.com/spideryarn/reading/
 1. **Clone and install dependencies:**
    ```bash
    git clone https://github.com/spideryarn/reading.git
-   cd syr
+   cd reading
    npm install
    ```
 
@@ -66,7 +66,7 @@ https://github.com/spideryarn/reading/
    
    **Alternative**: Use `npm run db:reset` to reset the database and generate types in one command.
 
-6. **Start development server:
+6. **Start development server:**
    ```bash
    npm run dev
    ```
@@ -89,6 +89,87 @@ https://github.com/spideryarn/reading/
    npm test
    ```
 
+## Authentication Setup
+
+### Google OAuth Configuration
+
+1. **Create Google Cloud Project:**
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project or select existing one
+   - Enable the "Google+ API" (for basic profile access)
+
+2. **Configure OAuth Consent Screen:**
+   - Go to "APIs & Services" → "OAuth consent screen"
+   - Choose "External" user type for development
+   - Fill in application name, user support email, and developer contact
+
+3. **Create OAuth Credentials:**
+   - Go to "APIs & Services" → "Credentials"
+   - Click "Create Credentials" → "OAuth 2.0 Client IDs"
+   - Application type: "Web application"
+   - Authorized redirect URIs:
+     - Development: `http://localhost:3001/auth/callback`
+     - Production: `https://yourdomain.com/auth/callback`
+
+4. **Add to Environment Variables:**
+   ```bash
+   # Add to .env.local
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   ```
+
+### Email/SMTP Configuration
+
+For password reset functionality:
+
+1. **Gmail SMTP Setup:**
+   - Enable 2-factor authentication on your Gmail account
+   - Generate an App Password: Account Settings → Security → App passwords
+   - Use the 16-character app password (not your regular password)
+
+2. **Add SMTP Variables:**
+   ```bash
+   # Add to .env.local
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_USER=your-email@gmail.com
+   SMTP_PASS=your-app-password
+   SMTP_FROM=your-email@gmail.com
+   ```
+
+### Environment Variables (.env.local)
+
+Complete environment setup:
+
+```bash
+# Core API Keys
+ANTHROPIC_API_KEY=your_anthropic_api_key
+PORT=3001
+LLM_MODEL=claude-3-5-haiku-20241022  # Use Haiku for development
+
+# Supabase (from npx supabase status)
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54341
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Authentication
+NEXTAUTH_URL=http://localhost:3001
+NEXTAUTH_SECRET=your_nextauth_secret  # Generate with: openssl rand -base64 32
+
+# Google OAuth
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# Email/SMTP (for password resets)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-gmail-app-password
+SMTP_FROM=your-email@gmail.com
+```
+
+**⚠️ Security Note**: Never commit `.env.local` to version control. The `.env.example` template excludes sensitive values.
+
 ## Test Environment Setup
 
 For running tests that require environment variables (like database tests), you need to create `.env.test`:
@@ -97,6 +178,11 @@ For running tests that require environment variables (like database tests), you 
 # Copy your local environment to test environment
 cp .env.local .env.test
 ```
+
+**Authentication Testing Requirements:**
+- Tests require authentication environment variables in `.env.test`
+- Use development-safe values (local Supabase URLs, test OAuth apps)
+- Consider using Haiku model (`LLM_MODEL=claude-3-5-haiku-20241022`) for faster test execution
 
 This follows Next.js conventions where `.env.local` is not loaded during tests. The `.env.test` file is automatically loaded when running `npm test`.
 
@@ -120,7 +206,7 @@ This includes:
 - **Framework**: Next.js with TypeScript and Tailwind CSS
 - **AI**: Anthropic Claude Sonnet 4 for most AI features
 - **Storage**: Supabase (Postgres with realtime)
-- **Data Strategy**: HTML documents decomposed into database rows with parent/child relationships
+- **Data Strategy**: Single-row document storage with complete content preserved
 - **Frontend State**: Virtual DOM approach using React state/context
 
 ## Supabase Local Development
@@ -152,7 +238,64 @@ The application uses Supabase's REST API for all database operations, requiring 
 - Tools like Postico, pgAdmin, or psql should connect to port `54342` (not the standard 5432)
 - This is only for manual database inspection, not for the application
 
-### Common Supabase Commands
+### Supabase Storage Setup
+
+For file uploads (PDFs, documents):
+
+1. **Create Storage Bucket:**
+   ```bash
+   # Start Supabase first
+   npx supabase start
+   
+   # Create storage bucket (if not already created by migrations)
+   npx supabase storage create documents --public
+   ```
+
+2. **Verify Storage Setup:**
+   - Visit Supabase Studio: http://localhost:54343
+   - Go to Storage → Buckets
+   - Confirm 'documents' bucket exists with public access
+
+3. **Storage Configuration:**
+   - Maximum file size: 50MB (configurable in bucket settings)
+   - Allowed types: PDF, HTML files
+   - RLS policies ensure users can only access their own documents
+
+**Note**: Storage buckets and policies are configured automatically via database migrations in `supabase/migrations/20250606000001_storage_bucket_and_policies.sql`.
+
+## shadcn/ui Component Setup
+
+The project uses shadcn/ui for consistent, accessible components:
+
+```bash
+# Install shadcn/ui (if not already installed)
+npx shadcn@latest init
+
+# Add new components as needed
+printf "\n" | npx shadcn@latest add button
+printf "\n" | npx shadcn@latest add dialog
+
+# For React 19 compatibility, use --force if needed
+printf "\n" | npx shadcn@latest add [component-name] --force
+```
+
+**Available Components**: Button, Dialog, Alert, Loading, Select, Checkbox
+**Customisation**: All components are copied to `components/ui/` and can be modified
+**Theme**: Configured with Spideryarn orange (`#DB8A45`) in `app/globals.css`
+
+See `docs/reference/SHADCN_UI_REFERENCE.md` for complete setup and usage guide.
+
+## Keyboard Shortcuts
+
+Basic shortcuts available in the application:
+
+- **Cmd/Ctrl + K**: Open command palette (global search and navigation)
+- **Cmd/Ctrl + Enter**: Submit chat messages
+- **Tab**: Navigate between panes and interactive elements
+
+For complete keyboard shortcut reference, see `docs/reference/KEYBOARD_SHORTCUTS.md`.
+
+## Common Supabase Commands
 
 ```bash
 # Start Supabase
@@ -162,9 +305,11 @@ npx supabase start
 npx supabase stop
 
 # Reset database (reapplies migrations and seeds)
+# ⚠️ DESTRUCTIVE: This deletes all data!
 npx supabase db reset
 
 # Reset database and regenerate TypeScript types
+# ⚠️ DESTRUCTIVE: This deletes all data!
 npm run db:reset
 
 # Generate TypeScript types only
@@ -191,8 +336,23 @@ If port conflicts occur:
 ## Development Notes
 
 - The `backup/` folder contains the deprecated SvelteKit implementation - ignore it
-- The `obsolete_alternative_version` contains a more advanced, also deprecated, Python version - mostly ignore that, but occasionally we'll borrow from the prompts etc. see `docs/OBSOLETE_ALTERNATIVE_VERSION.md`
+- The `obsolete_alternative_version` contains a more advanced, also deprecated, Python version - mostly ignore that, but occasionally we'll borrow from the prompts etc. see `docs/reference/OBSOLETE_ALTERNATIVE_VERSION.md`
 - Current focus is on basic document display with hierarchical summaries
 - Starting with sample HTML files (no upload functionality yet)
 
-For detailed architectural decisions and reasoning, see [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md).
+## Additional Documentation
+
+**Authentication & Security:**
+- [AUTHENTICATION_OVERVIEW.md](AUTHENTICATION_OVERVIEW.md) - Complete authentication system architecture
+- [AUTHENTICATION_SETUP.md](AUTHENTICATION_SETUP.md) - Detailed configuration guide
+- [AUTHENTICATION_SECURITY.md](AUTHENTICATION_SECURITY.md) - Security practices and troubleshooting
+
+**Architecture & Design:**
+- [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) - Key architectural decisions and rationale
+- [ARCHITECTURE_OVERVIEW.md](ARCHITECTURE_OVERVIEW.md) - Current system architecture
+- [UI_COMPONENTS.md](UI_COMPONENTS.md) - Available UI components and patterns
+
+**Development:**
+- [CODING_GUIDELINES.md](CODING_GUIDELINES.md) - Code quality standards and best practices
+- [TESTING.md](TESTING.md) - Testing approach and current test coverage
+- [GIT_WORKTREES.md](GIT_WORKTREES.md) - Advanced Git worktree development setup

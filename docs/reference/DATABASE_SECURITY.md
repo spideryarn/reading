@@ -3,10 +3,10 @@
 Row Level Security (RLS) policies and access control patterns used across database tables in Spideryarn Reading.
 
 📖 **Related Documentation:**
-- `docs/DATABASE_OVERVIEW.md` - Database architecture overview
-- `docs/DATABASE_SCHEMA.md` - Complete schema reference
-- `docs/AUTHENTICATION_SECURITY.md` - Authentication system security
-- `docs/DATABASE_MIGRATIONS.md` - Migration best practices
+- `docs/reference/DATABASE_OVERVIEW.md` - Database architecture overview
+- `docs/reference/DATABASE_SCHEMA.md` - Complete schema reference
+- `docs/reference/AUTHENTICATION_SECURITY.md` - Authentication system security
+- `docs/reference/DATABASE_MIGRATIONS.md` - Migration best practices
 
 ## Overview
 

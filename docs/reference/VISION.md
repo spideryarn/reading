@@ -1,5 +1,7 @@
 # Vision
 
+[NOTE TO LLMs: please don't edit this doc without explicit permission. It should be written by the user, or contain input provided directly by the user]
+
 Spideryarn Reading is envisioned as a professional AI-assisted document reading and analysis tool, designed to help experts make better decisions and develop deeper understanding through enhanced document comprehension.
 
 ## See also
@@ -119,3 +121,17 @@ The goal is for this to be about better decisions, that certainly fits with the 
 
 ### 5-Year Outlook
 Probably a professional tool for academics and people like that. It'll be paid. Maybe eventually this will be something that universities, journals, or research companies pay for, for their employees.
+
+
+## Appendix
+
+### In email to Marc ZS
+
+I'm thinking of focusing on scientific peer reviewers & journal editors, where:
+- The human has to make a decision
+- Based on evidence/criteria
+- It's a drudge job, where they don't want to do a terrible job, but they also very much want to be efficient
+- I can think of lots of ways to speed things up
+
+
+It's not 100% aligned with the vision of helping experts to read & understand new difficult material deeply, but a stepping stone in roughly the right direction with a fighting chance of being enough of a pain that people might pay…

@@ -9,7 +9,7 @@ This document provides a comprehensive analysis of patterns for cross-component 
 - `components/command-palette.tsx` - command palette integration with DocumentCommunicationContext for navigation actions
 - `lib/context/document-communication-context.tsx` - main React Context implementation
 - `docs/reference/COMMAND_PALETTE.md` - command palette using context for navigation actions
-- `docs/CODING_PRINCIPLES.md` - simplicity and debugging principles that guide pattern selection
+- `docs/reference/CODING_PRINCIPLES.md` - simplicity and debugging principles that guide pattern selection
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - overall application architecture context
 - [React Context API Documentation](https://react.dev/reference/react/useContext) - official React context patterns
 - [Zustand GitHub](https://github.com/pmndrs/zustand) - lightweight state management library

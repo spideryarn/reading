@@ -353,7 +353,7 @@ export const myFeaturePrompt = loadPromptTemplateFromCaller(
 )
 ```
 
-**For detailed model comparison, see [docs/LLM_MODELS_REFERENCE.md](LLM_MODELS_REFERENCE.md)**
+**For detailed model comparison, see [docs/reference/LLM_MODELS_REFERENCE.md](LLM_MODELS_REFERENCE.md)**
 
 **This centralised approach ensures:**
 - Consistent AI behaviour across all features

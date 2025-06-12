@@ -4,13 +4,13 @@ Authentication UI components, forms, and pages built with shadcn/ui components a
 
 ## See also
 
-- `docs/AUTHENTICATION_OVERVIEW.md` - High-level authentication system architecture and flows
-- `docs/AUTHENTICATION_SETUP.md` - Configuration and setup instructions for development and production
-- `docs/AUTHENTICATION_DATABASE.md` - Database integration and user profile data handling
-- `docs/AUTHENTICATION_SECURITY.md` - Security patterns and route protection implementation
+- `docs/reference/AUTHENTICATION_OVERVIEW.md` - High-level authentication system architecture and flows
+- `docs/reference/AUTHENTICATION_SETUP.md` - Configuration and setup instructions for development and production
+- `docs/reference/AUTHENTICATION_DATABASE.md` - Database integration and user profile data handling
+- `docs/reference/AUTHENTICATION_SECURITY.md` - Security patterns and route protection implementation
 - `components/auth/` - Authentication UI component implementations
 - `app/auth/` - Authentication page layouts and routing
-- `docs/SHADCN_UI_REFERENCE.md` - Component library installation and usage patterns
+- `docs/reference/SHADCN_UI_REFERENCE.md` - Component library installation and usage patterns
 
 ## Component Architecture
 

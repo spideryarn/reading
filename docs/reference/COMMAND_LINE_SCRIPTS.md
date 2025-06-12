@@ -134,7 +134,7 @@ catch (error) {
   console.error('\n🔧 Recovery options:');
   console.error('   • Check file permissions: ls -la ' + filepath);
   console.error('   • Verify database connection: npm run db:test');
-  console.error('   • See docs/TROUBLESHOOTING.md for more help\n');
+  // console.error('   • See docs/TROUBLESHOOTING.md for more help\n'); // TODO: Create troubleshooting doc
   return 1;
 }
 ```

@@ -338,8 +338,8 @@ const loadRecentMessages = async (threadId: string, limit = 50) => {
 - React chat application architecture patterns (2024-2025)
 
 **Internal Documentation**:
-- `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Current assistant-ui integration guide  
-- `docs/DATABASE_SCHEMA.md` - Database table specifications including chat_threads and chat_messages
+- `docs/reference/AI_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Current assistant-ui integration guide  
+- `docs/reference/DATABASE_SCHEMA.md` - Database table specifications including chat_threads and chat_messages
 - `lib/services/database/chat.ts` - Existing ChatService implementation ready for use
 - `components/assistant-chat.tsx` - Current working assistant-ui implementation
 - `src/lib/hooks/useChatRuntime.ts` - Current runtime management hook

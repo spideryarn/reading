@@ -1,8 +1,8 @@
 # Writing evergreen documentation
 
 see also: 
-- `docs/WRITE_PLANNING_DOC.md` - for writing ephemeral decision/planning docs
-- `docs/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` - for keeping documentation current every so often
+- `docs/instructions/WRITE_PLANNING_DOC.md` - for writing ephemeral decision/planning docs
+- `docs/instructions/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` - for keeping documentation current every so often
 
 
 # What are evergreen docs?
@@ -16,7 +16,7 @@ They should refer to one another, and avoid too much overlap in content, so that
 
 # Format
 
-They should be written in Markdown, stored as `docs/TOPIC_NAME.md`.
+They should be written in Markdown, stored as `docs/reference/TOPIC_NAME.md` or `docs/instructions/TOPIC_NAME.md` as appropriate.
 
 
 ## Document structure
@@ -33,7 +33,7 @@ They might be organised into something like the following sections. Use your jud
 Bullet-point list of other relevant docs, code, urls, or other resources that provide related information, or more detail. Provide a 1-sentence summary or explanation of how each one is relevant. 
 
 Examples of good cross-references:
-- `docs/WRITE_PLANNING_DOC.md` - for information about writing ephemeral decision/planning docs
+- `docs/instructions/WRITE_PLANNING_DOC.md` - for information about writing ephemeral decision/planning docs
 - `components/table-of-contents.tsx` - implementation of ToC features described here
 - `planning/250526a_ToC_hierarchical_summary_tooltips.md` - historical decision context
 - External URLs when relevant (e.g., library documentation)
@@ -42,7 +42,7 @@ Add references to and from this new doc (e.g. in relevant code, planning docs in
 
 #### Cross-Reference Best Practices
 
-- **Update `docs/DOCUMENTATION_ORGANISATION.md`
+- **Update `docs/reference/DOCUMENTATION_ORGANISATION.md`
 - **Link to canonical source** (e.g. functions, files, docs, urls, etc) for detailed information rather than duplicating
 - **Provide 1-sentence context** with each link explaining its relevance
 - **Use relative paths** for internal documentation links
@@ -128,7 +128,7 @@ Regular documentation review ensures accuracy:
 - **When outdated** - Fix immediately when noticed
 - **Before milestones** - Ensure docs reflect current state
 
-see `docs/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` for the complete housekeeping process
+see `docs/instructions/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` for the complete housekeeping process
 
 ## Common Pitfalls to Avoid
 

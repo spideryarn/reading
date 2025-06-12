@@ -4,12 +4,12 @@ This document defines code quality standards and patterns to maintain consistenc
 
 ## See also
 
-- `docs/CODING_PRINCIPLES.md` - High-level development principles and philosophy
+- `docs/reference/CODING_PRINCIPLES.md` - High-level development principles and philosophy
 - `docs/reference/ARCHITECTURE_DECISIONS.md` - System architecture and technical decisions
-- `docs/TESTING.md` - Testing approach and patterns
-- `docs/GIT_COMMITS.md` - Git workflow and commit guidelines
-- `docs/VERCEL_AI_SDK_REFERENCE.md` - Vercel AI SDK patterns and multi-provider support
-- `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Chat UI implementation with @assistant-ui/react
+- `docs/reference/TESTING.md` - Testing approach and patterns
+- `docs/instructions/DO_GIT_COMMITS.md` - Git workflow and commit guidelines
+- `docs/reference/VERCEL_AI_SDK_REFERENCE.md` - Vercel AI SDK patterns and multi-provider support
+- `docs/reference/AI_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Chat UI implementation with @assistant-ui/react
 - `.eslintrc.json` and `tsconfig.json` - Linting and TypeScript configuration
 
 ## Code Quality Checks
@@ -185,12 +185,12 @@ import { Warning, Info } from "@phosphor-icons/react"
 ### AI Integration
 - Use Vercel AI SDK Core (`generateText`, `streamText`) for LLM calls
 - Follow multi-provider pattern in `lib/services/llm-provider.ts`
-- See `docs/VERCEL_AI_SDK_REFERENCE.md` for detailed patterns
+- See `docs/reference/VERCEL_AI_SDK_REFERENCE.md` for detailed patterns
 
 ### Chat UI
 - Use @assistant-ui/react primitives for chat interfaces
 - Follow implementation patterns in `components/assistant-chat.tsx`
-- See `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md` for integration guide
+- See `docs/reference/AI_CHATBOT_ASSISTANT_UI_INTEGRATION.md` for integration guide
 
 ## Client/Server Components
 

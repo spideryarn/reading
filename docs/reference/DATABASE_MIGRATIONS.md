@@ -5,9 +5,9 @@
 Database schema changes are managed through Supabase migrations - timestamped SQL files that can be applied consistently across environments.
 
 📖 **Related Documentation:**
-- `docs/DATABASE_OVERVIEW.md`
-- `docs/DATABASE_MODELS.md`
-- `docs/SETUP.md` - How to start Supabase locally
+- `docs/reference/DATABASE_OVERVIEW.md`
+- `docs/reference/DATABASE_SCHEMA.md`
+- `docs/reference/SETUP.md` - How to start Supabase locally
 
 
 ## File Structure
@@ -209,7 +209,6 @@ FOR SELECT USING (true);  -- Adjust condition as needed
 
 **References**:
 - Planning: `planning/finished/250531a_database_storage_implementation.md`
-- Conversation: `docs/DATABASE_SCHEMA_CONVERSATION_250531.md`
 
 ### 20250602005754_add_documents_slug_column.sql
 
@@ -280,7 +279,7 @@ FOR SELECT USING (true);  -- Adjust condition as needed
 **Security Implementation**:
 - RLS policies could not be created via migration due to permission restrictions
 - Using application-layer security with service role key during development
-- Future RLS policies documented in `docs/DATABASE_SECURITY.md`
+- Future RLS policies documented in `docs/reference/DATABASE_SECURITY.md`
 
 **Integration Points**:
 - Documents table `storage_path` field references stored files
@@ -289,5 +288,5 @@ FOR SELECT USING (true);  -- Adjust condition as needed
 
 **References**:
 - Planning: `planning/finished/250606a_pdf_Supabase_Storage_integration.md`
-- Storage docs: `docs/DATABASE_SUPABASE_STORAGE_REFERENCE.md`
-- Security: `docs/DATABASE_SECURITY.md`
+- Storage docs: `docs/reference/DATABASE_SUPABASE_STORAGE_REFERENCE.md`
+- Security: `docs/reference/DATABASE_SECURITY.md`

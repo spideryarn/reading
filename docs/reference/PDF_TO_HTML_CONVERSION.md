@@ -5,8 +5,8 @@ A comprehensive technical reference for implementing PDF to HTML conversion in t
 ## See Also
 
 - `docs/reference/ARCHITECTURE_DECISIONS.md` - Overall architectural decisions and LLM integration approach
-- `docs/LLM_PROMPT_TEMPLATES.md` - Implementation guidance for LLM calls using Nunjucks + Zod templates
-- `docs/CODING_PRINCIPLES.md` - Development principles prioritising simplicity and rapid prototyping
+- `docs/reference/LLM_PROMPT_TEMPLATES.md` - Implementation guidance for LLM calls using Nunjucks + Zod templates
+- `docs/reference/CODING_PRINCIPLES.md` - Development principles prioritising simplicity and rapid prototyping
 - `README.md` - Project goals and document reading enhancement features
 - [pdf-to-png-converter npm package](https://www.npmjs.com/package/pdf-to-png-converter) - Zero-dependency PDF conversion library
 - [VILA: Visual Layout Groups paper](https://direct.mit.edu/tacl/article/doi/10.1162/tacl_a_00466/110438/VILA-Improving-Structured-Content-Extraction-from) - Academic research on document layout analysis
@@ -335,7 +335,7 @@ export async function convertPdfToHtml(pdfBuffer: Buffer): Promise<DocumentMutat
 }
 ```
 
-**See Also**: `docs/MUTATIONS.md` for complete mutation system documentation
+**See Also**: `docs/reference/MUTATIONS.md` for complete mutation system documentation
 
 ### Performance Considerations
 

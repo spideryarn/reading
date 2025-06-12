@@ -50,7 +50,7 @@ Generate actionable recommendations balancing:
 
 Example recommendations (though these are just examples - use your judgment about what's valuable/relevant for the project you're working on)
 - Write a deep dive doc on a particular library, emphasising how the API for it has changed in the new version
-- Update the the deployment script or instructions to avoid a particular gotcha
+- Update the deployment script or instructions to avoid a particular gotcha
 - Update the instructions for running migrations to ban potentially destructive actions (e.g. dropping all tables)
 - Create a doc for adding features of a particular type, that references relevant docs/code, provides examples/snippets/patterns
 - etc etc

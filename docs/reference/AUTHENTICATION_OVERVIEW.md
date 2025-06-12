@@ -5,10 +5,10 @@ Spideryarn Reading uses Supabase Auth with Next.js App Router for secure user re
 ## See also
 
 **Authentication Documentation**:
-- `docs/AUTHENTICATION_SETUP.md` - Configuration, Supabase, Gmail SMTP, development and production setup
-- `docs/AUTHENTICATION_UI.md` - UI components, forms, and authentication pages
-- `docs/AUTHENTICATION_DATABASE.md` - Database integration, user profiles, and data ownership
-- `docs/AUTHENTICATION_SECURITY.md` - Security practices, route protection, and troubleshooting
+- `docs/reference/AUTHENTICATION_SETUP.md` - Configuration, Supabase, Gmail SMTP, development and production setup
+- `docs/reference/AUTHENTICATION_UI.md` - UI components, forms, and authentication pages
+- `docs/reference/AUTHENTICATION_DATABASE.md` - Database integration, user profiles, and data ownership
+- `docs/reference/AUTHENTICATION_SECURITY.md` - Security practices, route protection, and troubleshooting
 
 **Implementation Files**:
 - `lib/auth/` - Authentication utilities and server-side helpers
@@ -17,7 +17,7 @@ Spideryarn Reading uses Supabase Auth with Next.js App Router for secure user re
 - `middleware.ts` - Session management and automatic token refresh
 
 **Related Documentation**:
-- `docs/SHADCN_UI_REFERENCE.md` - UI component library patterns
+- `docs/reference/SHADCN_UI_REFERENCE.md` - UI component library patterns
 - `planning/250601a_authentication_implementation.md` - Complete implementation history
 
 ## Key Architecture Decisions
@@ -78,7 +78,7 @@ Spideryarn Reading uses Supabase Auth with Next.js App Router for secure user re
 
 **Testing**: Email auth at `/auth/login`, OAuth flow, protected routes at `/documents/[slug]`, profile at `/auth/profile`
 
-**Production**: See `docs/AUTHENTICATION_SETUP.md` for Supabase dashboard, OAuth, and domain configuration
+**Production**: See `docs/reference/AUTHENTICATION_SETUP.md` for Supabase dashboard, OAuth, and domain configuration
 
 ## Troubleshooting
 

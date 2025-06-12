@@ -9,8 +9,8 @@ A comprehensive guide to the Vercel AI SDK library and its integration within th
 - `app/api/chat/route.ts` - Chat API endpoint using `generateText` for document analysis
 - `components/assistant-chat.tsx` - React chat UI component using @assistant-ui/react library
 - `src/lib/hooks/useChatRuntime.ts` - Custom hook bridging AI SDK with @assistant-ui/react
-- `docs/CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Integration guide for @assistant-ui/react library
-- `docs/LLM_PROMPT_TEMPLATES.md` - Prompt template system using Zod validation
+- `docs/reference/AI_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Integration guide for @assistant-ui/react library
+- `docs/reference/LLM_PROMPT_TEMPLATES.md` - Prompt template system using Zod validation
 - `lib/config.ts` - AI model configuration and provider settings
 
 ### Official Vercel AI SDK Documentation

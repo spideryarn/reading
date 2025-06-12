@@ -4,10 +4,10 @@ Comprehensive guide to implementing shadcn/ui component library in the Spideryar
 
 ## See also
 
-- `docs/STYLING.md` - Current CSS and visual styling configuration
-- `docs/UI_INTERFACE.md`
-- `docs/UI_COMPONENTS.md`
-- `docs/CODING_PRINCIPLES.md` - Development principles prioritising simplicity and rapid prototyping
+- `docs/reference/STYLING.md` - Current CSS and visual styling configuration
+- `docs/reference/UI_INTERFACE.md`
+- `docs/reference/UI_COMPONENTS.md`
+- `docs/reference/CODING_PRINCIPLES.md` - Development principles prioritising simplicity and rapid prototyping
 - `planning/250530a_shadcn_ui_adoption.md` - Planning document and implementation roadmap
 - `components/` - Current component implementations using raw Tailwind
 - `app/globals.css` - Tailwind v4 CSS configuration and theme variables
