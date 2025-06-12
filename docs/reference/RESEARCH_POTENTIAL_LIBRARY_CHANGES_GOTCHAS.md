@@ -17,13 +17,14 @@ Identify areas of our code where someone new to the codebase might get tripped u
 - Run `date` to get today's date/time.
 
 ### Stage: Library Research
-For each library in `package.json` and `docs/reference/ARCHITECTURE_OVERVIEW.md`, research:
+For each library in `package.json` and `docs/reference/ARCHITECTURE_OVERVIEW.md`, research on the web:
 - **Known gotchas and common pitfalls**
 - **API changes in the last 12 months** (breaking changes, deprecations, new patterns)
 - **Version compatibility issues**
 - **Security advisories or updates**
 - **Performance considerations or changes**
 - **Community-reported issues and solutions**
+- etc or anything else that you think might be a good idea to research
 
 ### Stage: Codebase Analysis
 Review the codebase for:
@@ -32,6 +33,7 @@ Review the codebase for:
 - **Cross-component interactions** with surprising or non-obvious behaviour
 - **Areas lacking sufficient comments** where context would prevent mistakes
 - **Potential maintenance hazards** or brittle implementations
+- etc or anything else that you think might be a potential problem
 
 ### Stage: Ask User to Clarify Requirements
 Ask the user questions if you need to, based on what you've found so far, to suggest further actions, and to shape the recommendations that you provide.
@@ -39,6 +41,8 @@ Ask the user questions if you need to, based on what you've found so far, to sug
 Following the user's response, do any final research needed, so that recommendations can be very concrete.
 
 ### Stage: Prioritised Recommendations
+Wait until you've received responses to your questions before starting to generate recommendations in a planning doc.
+
 Generate actionable recommendations balancing:
 - **Priority/risk assessment** of identified issues. Don't be hyperbolic, e.g. don't label something 'Critical' unless it truly is. Don't sweat the small stuff.
 - **Likelihood that there will be a problem in this area, and that this documentation would help**
