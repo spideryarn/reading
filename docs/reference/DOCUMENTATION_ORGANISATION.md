@@ -106,7 +106,7 @@ Process and workflow documentation in `docs/instructions/`:
 
 ### Working Modes & Collaboration
 - `docs/instructions/SOUNDING_BOARD_MODE.md` - Collaborative discussion mode for exploring ideas before implementation
-- `docs/instructions/SCIENTIST_DETECTIVE_MODE.md` - Systematic investigation and analysis mode
+- `docs/instructions/DETECTIVE_SCIENTIST_MODE.md` - Systematic investigation and analysis mode
 - `docs/instructions/NONINTERACTIVE.md` - Guidelines for non-interactive batch processing
 - `docs/instructions/AUDIT_ARCHITECTURE_MODE.md` - Comprehensive architecture review and analysis mode
 
