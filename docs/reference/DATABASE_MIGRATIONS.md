@@ -26,8 +26,7 @@ supabase/
 # Create new migration (generates timestamped file)
 npx supabase migration new add_user_preferences
 
-# Apply all pending migrations (DESTRUCTIVE - requires explicit user permission)
-npx supabase db reset
+# DO NOT RUN `npx supabase db reset` or `npm run db:reset`
 
 # Check current migration status
 npx supabase status
@@ -37,9 +36,6 @@ npx supabase db diff -f my_schema_changes
 
 # Generate TypeScript types from current schema
 npm run db:types
-
-# NEVER RUN WITHOUT USER PERMISSION - Reset database and regenerate types
-npm run db:reset
 ```
 
 ## Migration Workflow
