@@ -54,13 +54,13 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide for creating AI/LLM calls using Nunjucks + Zod template system ⭐ **Essential for AI features**
 - `docs/reference/LLM_MODELS_REFERENCE.md` - LLM model configuration and provider integration
 - `docs/reference/VERCEL_AI_SDK_REFERENCE.md` - Vercel AI SDK integration patterns and usage
-- `docs/reference/AI_SUMMARISE.md` - AI summarise feature generating hierarchical summaries at multiple granularities
-- `docs/reference/AI_GLOSSARY.md` - Glossary feature extracting key entities from documents using LLM analysis
-- `docs/reference/AI_HEADINGS.md` - AI-generated heading system for document structure enhancement
-- `docs/reference/AI_TWEET_THREAD_VIEW.md` - Tweet thread generation from document content
-- `docs/reference/AI_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - @assistant-ui/react integration for chatbot interface
-- `docs/reference/AI_CHATBOT_ASSISTANT_UI_PERSISTENCE_DEBUGGING.md` - Debugging guide for chat persistence
-- `docs/reference/AI_CHATBOT_ASSISTANT_UI_DATABASE_PERSISTENCE.md` - Database persistence for chat conversations
+- `docs/reference/TOOL_SUMMARISE.md` - AI summarise feature generating hierarchical summaries at multiple granularities
+- `docs/reference/TOOL_GLOSSARY.md` - Glossary feature extracting key entities from documents using LLM analysis
+- `docs/reference/TOOL_HEADINGS.md` - AI-generated heading system for document structure enhancement
+- `docs/reference/TOOL_TWEET_THREAD_VIEW.md` - Tweet thread generation from document content
+- `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - @assistant-ui/react integration for chatbot interface
+- `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_PERSISTENCE_DEBUGGING.md` - Debugging guide for chat persistence
+- `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_DATABASE_PERSISTENCE.md` - Database persistence for chat conversations
 
 ### UI Components & Interface
 - `docs/reference/UI_COMPONENTS.md` - Available UI components and usage patterns
@@ -133,7 +133,7 @@ See `planning/later/` for deferred features and future enhancements.
 
 **For newcomers**: Start with README.md → VISION.md → ARCHITECTURE_OVERVIEW.md → SETUP.md
 **For developers**: Focus on CODING_PRINCIPLES.md → CODING_GUIDELINES.md → TESTING.md
-**For AI features**: Begin with LLM_PROMPT_TEMPLATES.md → AI_SUMMARISE.md → AI_GLOSSARY.md
+**For AI features**: Begin with LLM_PROMPT_TEMPLATES.md → TOOL_SUMMARISE.md → TOOL_GLOSSARY.md
 **For documentation work**: Use WRITE_EVERGREEN_DOC.md → UPDATE_HOUSEKEEPING_DOCUMENTATION.md
 
 ⭐ Marks essential starting points for different development areas.

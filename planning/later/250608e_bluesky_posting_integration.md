@@ -2,13 +2,13 @@
 
 ## Goal, context
 
-Implement the ability for users to post AI-generated tweet threads to Bluesky directly from our application. This extends our existing tweet thread generation feature (documented in `docs/reference/AI_TWEET_THREAD_VIEW.md`) with actual social media posting capabilities.
+Implement the ability for users to post AI-generated tweet threads to Bluesky directly from our application. This extends our existing tweet thread generation feature (documented in `docs/reference/TOOL_TWEET_THREAD_VIEW.md`) with actual social media posting capabilities.
 
 Bluesky offers a developer-friendly, free API with native threading support, making it an ideal starting platform for social media integration. The existing tweet thread view already generates properly formatted thread content - we need to add authentication and posting functionality.
 
 ## References
 
-- `docs/reference/AI_TWEET_THREAD_VIEW.md` - Documents existing tweet thread generation and UI components
+- `docs/reference/TOOL_TWEET_THREAD_VIEW.md` - Documents existing tweet thread generation and UI components
 - `components/tweet-thread-view.tsx` - Current tweet thread display component with copy-to-clipboard
 - `app/api/tweet-thread/route.ts` - API endpoint for generating thread content
 - `docs/reference/AUTHENTICATION_OVERVIEW.md` - Current Supabase authentication system architecture
@@ -93,7 +93,7 @@ Bluesky offers a developer-friendly, free API with native threading support, mak
   - [ ] Manage network failures and retries
   - [ ] Deal with content that exceeds platform limits
 - [ ] Update documentation
-  - [ ] Add Bluesky integration to `docs/reference/AI_TWEET_THREAD_VIEW.md`
+  - [ ] Add Bluesky integration to `docs/reference/TOOL_TWEET_THREAD_VIEW.md`
   - [ ] Document authentication patterns in `docs/reference/AUTHENTICATION_OVERVIEW.md`
   - [ ] Create usage guide for users
 - [ ] Comprehensive testing

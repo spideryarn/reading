@@ -17,7 +17,7 @@ The goal is to merge these two panes into a single, double-wide **Document** pan
 - Architecture docs: `docs/ARCHITECTURE.md`, `docs/UI_INTERFACE.md`
 - Related features:
   - `docs/TABLE_OF_CONTENTS_PANE.md` - ToC scroll functionality
-  - `docs/AI_GLOSSARY.md` - Glossary click-to-scroll
+  - `docs/TOOL_GLOSSARY.md` - Glossary click-to-scroll
   - `docs/MUTATIONS.md` - Document transformation system
 - Styling: `docs/STYLING.md`, Phosphor icons
 

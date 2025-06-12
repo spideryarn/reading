@@ -24,7 +24,7 @@ We use **different approaches** for different types of LLM interactions:
 See also:
 - [CHATBOT_ASSISTANT_UI_INTEGRATION.md](CHATBOT_ASSISTANT_UI_INTEGRATION.md) - For chat interface implementations
 - [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) - Overall system architecture decisions
-- [AI_SUMMARISE.md](AI_SUMMARISE.md) and [AI_GLOSSARY.md](AI_GLOSSARY.md) - Examples of template system usage
+- [TOOL_SUMMARISE.md](TOOL_SUMMARISE.md) and [TOOL_GLOSSARY.md](TOOL_GLOSSARY.md) - Examples of template system usage
 
 ## Overview
 
@@ -513,8 +513,8 @@ See [CHATBOT_ASSISTANT_UI_INTEGRATION.md](CHATBOT_ASSISTANT_UI_INTEGRATION.md) f
 ### Existing Features
 
 **Single-Use Prompts** (Nunjucks Template System):
-- **Summarisation**: `/api/summarise` (see [AI_SUMMARISE.md](AI_SUMMARISE.md))
-- **Glossary Generation**: `/api/glossary` (see [AI_GLOSSARY.md](AI_GLOSSARY.md))
+- **Summarisation**: `/api/summarise` (see [TOOL_SUMMARISE.md](TOOL_SUMMARISE.md))
+- **Glossary Generation**: `/api/glossary` (see [TOOL_GLOSSARY.md](TOOL_GLOSSARY.md))
 - **Heading Generation**: `/api/headings`
 - **Chat System Prompt**: `chat-system.njk` (initial message only)
 

@@ -24,7 +24,7 @@ With prompt caching implemented, generating 9 summaries (3×3 combinations) in p
 
 ## References
 
-- `docs/AI_SUMMARISE.md` - Current summary implementation documentation
+- `docs/TOOL_SUMMARISE.md` - Current summary implementation documentation
 - `lib/prompts/templates/summarise.njk` - Summary prompt template
 - `components/summary-pane.tsx` - Summary UI component
 - `app/api/summarise/route.ts` - Summary API endpoint
@@ -178,7 +178,7 @@ With prompt caching implemented, generating 9 summaries (3×3 combinations) in p
 - [ ] Commit changes following `docs/GIT_COMMITS.md`
 
 ### Stage: Documentation and cleanup
-- [ ] Update `docs/reference/AI_SUMMARISE.md` with multi-dimensional summary feature
+- [ ] Update `docs/reference/TOOL_SUMMARISE.md` with multi-dimensional summary feature
 - [ ] Document the dual-slider interface and 9-combination approach
 - [ ] Document the new multi-summarise API alongside existing API
 - [ ] Add user-facing documentation about both expertise and length controls

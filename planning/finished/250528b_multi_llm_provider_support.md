@@ -145,13 +145,13 @@ Use tasks and subagents where appropriate, especially for curl, tests, and Playw
   - [x] Add section on multi-provider support
   - [x] Update all code examples to use 2-parameter format
   - [x] Add example of using different models
-- [x] Update `docs/AI_SUMMARISE.md`
+- [x] Update `docs/TOOL_SUMMARISE.md`
   - [x] Note multi-provider capability
   - [x] Update any code examples
-- [x] Update `docs/AI_GLOSSARY.md`
+- [x] Update `docs/TOOL_GLOSSARY.md`
   - [x] Note multi-provider capability
   - [x] Update any code examples
-- [x] Update `docs/AI_HEADINGS.md` (if exists, or create if needed)
+- [x] Update `docs/TOOL_HEADINGS.md` (if exists, or create if needed)
   - [x] Document the AI headings feature
   - [x] Note multi-provider capability
 - [x] Update `docs/TESTING.md` with new appendix

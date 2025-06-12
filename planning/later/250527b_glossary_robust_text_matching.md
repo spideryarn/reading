@@ -128,7 +128,7 @@ Since `element.content` is plain text:
 ## References
 
 ### Related Documentation
-- `docs/AI_GLOSSARY.md` - Current glossary feature architecture
+- `docs/TOOL_GLOSSARY.md` - Current glossary feature architecture
 - `planning/250526e_glossary_feature.md` - Base glossary implementation  
 - `planning/250526f_glossary_click_to_scroll_and_tooltips.md` - Click-to-scroll design decisions
 

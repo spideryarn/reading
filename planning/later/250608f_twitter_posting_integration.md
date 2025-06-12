@@ -8,7 +8,7 @@ The existing tweet thread generation feature provides the content foundation - w
 
 ## References
 
-- `docs/reference/AI_TWEET_THREAD_VIEW.md` - Documents existing tweet thread generation and UI components
+- `docs/reference/TOOL_TWEET_THREAD_VIEW.md` - Documents existing tweet thread generation and UI components
 - `components/tweet-thread-view.tsx` - Current tweet thread display component
 - `app/api/tweet-thread/route.ts` - API endpoint for generating thread content
 - `docs/reference/AUTHENTICATION_OVERVIEW.md` - Current Supabase authentication system

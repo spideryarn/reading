@@ -121,4 +121,4 @@ see also:
 - `docs/reference/ARCHITECTURE_DECISIONS.md` - System design decisions and rationale
 - `planning/250527a_reversible_document_mutations.md` - Upcoming mutations system
 - `docs/UNIFIED_LEFT_PANE.md` - Unified left pane implementation details
-- `docs/AI_GLOSSARY.md` - Glossary feature documentation
+- `docs/TOOL_GLOSSARY.md` - Glossary feature documentation

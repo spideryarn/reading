@@ -1,5 +1,5 @@
 // AI Glossary API endpoint for entity extraction
-// See docs/AI_GLOSSARY.md for architecture and usage patterns
+// See docs/TOOL_GLOSSARY.md for architecture and usage patterns
 
 import { NextRequest, NextResponse } from 'next/server'
 import { executePromptWithUsage } from '@/lib/prompts/types'
