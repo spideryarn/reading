@@ -4,7 +4,7 @@
 
 Implement PDF to HTML conversion functionality for Spideryarn Reading to enable processing of academic papers in PDF format. This expands the application's document input capabilities beyond HTML files to handle the most common academic document format.
 
-The implementation should leverage the comprehensive research documented in `docs/PDF_TO_HTML_CONVERSION.md`, which evaluated latest 2025 LLM capabilities, PDF conversion libraries, and bounding box detection approaches for academic documents.
+The implementation should leverage the comprehensive research documented in `docs/reference/PDF_TO_HTML_CONVERSION_OVERVIEW.md`, which evaluated latest 2025 LLM capabilities, PDF conversion libraries, and bounding box detection approaches for academic documents.
 
 Key requirements:
 - Convert PDF documents to HTML while preserving academic structure (tables, figures, equations) 
@@ -16,7 +16,7 @@ Key requirements:
 
 ## References
 
-- `docs/PDF_TO_HTML_CONVERSION.md` - Comprehensive research on PDF conversion approaches, LLM capabilities, and implementation guidance
+- `docs/reference/PDF_TO_HTML_CONVERSION_OVERVIEW.md` - Comprehensive research on PDF conversion approaches, LLM capabilities, and implementation guidance
 - `docs/reference/ARCHITECTURE_DECISIONS.md` - Multi-provider LLM support and document storage architecture
 - `docs/MUTATIONS.md` - Document transformation system for integrating PDF imports (DISCUSS WITH USER BEFORE STARTING whether to make use of mutations)
 - `docs/LLM_PROMPT_TEMPLATES.md` - Standardized Nunjucks + Zod template system for LLM calls
@@ -85,7 +85,7 @@ Based on research findings and user priorities (accuracy and simplicity over cos
   - [ ] Complete documentation updates
 
 - [ ] Update documentation
-  - [ ] Update `docs/PDF_TO_HTML_CONVERSION.md` with direct PDF approach
+  - [ ] Update `docs/reference/PDF_TO_HTML_CONVERSION_OVERVIEW.md` with direct PDF approach
   - [ ] Document Claude/Gemini API integration patterns
   - [ ] Note cost optimization strategies and API routing
   - [x] Document research findings and deprecated approaches ✅
@@ -171,7 +171,7 @@ Based on research findings and user priorities (accuracy and simplicity over cos
 - **Academic Tools**: PDFFigures 2.0 (Allen Institute), ChatExtract (LLM-based)
 
 ### Original PDF Conversion Research Summary
-The comprehensive research in `docs/PDF_TO_HTML_CONVERSION.md` evaluated:
+The comprehensive research in `docs/reference/PDF_TO_HTML_CONVERSION_OVERVIEW.md` evaluated:
 
 **PDF Conversion Libraries**:
 - **pdf-to-png-converter**: Zero dependencies, ideal for serverless deployment, Node.js 20+ requirement

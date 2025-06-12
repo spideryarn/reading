@@ -4,7 +4,7 @@ Comprehensive reference for extracting clean, readable content from academic pub
 
 ## See also
 
-- `docs/reference/PDF_TO_HTML_CONVERSION.md` - Converting PDF academic papers to HTML format
+- `docs/reference/PDF_TO_HTML_CONVERSION_OVERVIEW.md` - Converting PDF academic papers to HTML format
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Using Nunjucks + Zod templates for LLM content processing
 - `docs/reference/ARCHITECTURE_DECISIONS.md` - Overall system architecture and data processing approach
 - `lib/services/document-parser.ts` - Current HTML document parsing implementation

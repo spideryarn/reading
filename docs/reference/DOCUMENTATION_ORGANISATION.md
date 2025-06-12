@@ -74,7 +74,7 @@ Available evergreen documentation in `docs/` organised by category:
 
 ### Content Processing & Search
 - `docs/reference/TOOL_SEARCH_TEXT.md` - Cross-element text search functionality using Mark.js with DOM-based highlighting
-- `docs/reference/PDF_TO_HTML_CONVERSION.md` - PDF processing and HTML conversion implementation
+- `docs/reference/PDF_TO_HTML_CONVERSION_OVERVIEW.md` - PDF processing and HTML conversion overview
 - `docs/reference/WEBPAGE_CONTENT_EXTRACTION.md` - Web content extraction and processing
 - `docs/reference/OPTIMAL_TEXT_FORMATTING.md` - Text formatting standards and typography
 
@@ -117,7 +117,7 @@ Process and workflow documentation in `docs/instructions/`:
 - `docs/instructions/WRITE_DEEP_DIVE_AS_DOC.md` - Creating comprehensive technical deep-dive documentation
 - `docs/instructions/DEBRIEF_PROGRESS.md` - Progress review and retrospective process
 - `docs/instructions/CRITIQUE_OF_PLANNING_DOC.md` - Planning document review and improvement process
-- `docs/instructions/DO_PLANNING_DOC.md` - Planning document creation process
+- `docs/instructions/DO_EXECUTE_PLANNING_DOC.md` - Execute actions from planning documents
 
 ## Planning Documentation
 
