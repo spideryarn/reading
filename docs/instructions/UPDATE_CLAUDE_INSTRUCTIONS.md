@@ -5,8 +5,8 @@ Guidelines for maintaining CLAUDE.md to help AI agents operate effectively on th
 ## See also
 
 - `CLAUDE.md` - The main instructions file for AI agents
-- `docs/WRITE_EVERGREEN_DOC.md` - General documentation writing guidelines
-- `docs/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` - Documentation maintenance process (includes updating CLAUDE.md)
+- `docs/instructions/WRITE_EVERGREEN_DOC.md` - General documentation writing guidelines
+- `docs/instructions/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` - Documentation maintenance process (includes updating CLAUDE.md)
 
 ## Purpose of CLAUDE.md
 
@@ -34,7 +34,7 @@ CLAUDE.md serves as the primary orientation document for AI agents working on th
 - **Specific domains** - Database, prompts, UI components documentation
 
 ### Operational Guidelines
-- **Git practices** - Reference to `docs/GIT_COMMITS.md`
+- **Git practices** - Reference to `docs/instructions/DO_GIT_COMMITS.md`
 - **Code style** - British spelling, existing patterns
 - **Environment setup** - Key variables and configuration
 
@@ -43,7 +43,7 @@ CLAUDE.md serves as the primary orientation document for AI agents working on th
 - **Detailed instructions** - These belong in specific domain docs
 - **Code examples** - Link to actual implementation files instead
 - **Duplicate information** - Always reference canonical source
-- **Step-by-step tutorials** - These belong in `docs/SETUP.md`
+- **Step-by-step tutorials** - These belong in `docs/reference/SETUP.md`
 
 ## Maintenance Principles
 
@@ -52,7 +52,7 @@ Keep CLAUDE.md focused and scannable. Each section should be 3-5 bullet points m
 
 ### Signposting Over Duplication
 Instead of explaining how something works, point to where the information lives:
-- "Database schema: `supabase/migrations/` and `docs/DATABASE_SCHEMA.md`"
+- "Database schema: `supabase/migrations/` and `docs/reference/DATABASE_SCHEMA.md`"
 - "Testing: Jest setup in `jest.config.js`, tests in `src/lib/*/tests/`"
 
 ### Current State Focus

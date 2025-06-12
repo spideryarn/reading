@@ -4,7 +4,7 @@ The glossary feature extracts key entities from documents using LLM analysis and
 
 ## See also
 
-- `docs/LLM_PROMPT_TEMPLATES.md` - Guide to creating and using LLM prompt templates
+- `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide to creating and using LLM prompt templates
 - `planning/250526e_glossary_feature.md` - Implementation planning and progress tracking
 - `lib/prompts/templates/glossary.ts` - Entity schema and prompt configuration  
 - `lib/prompts/templates/glossary.njk` - LLM prompt template for entity extraction
@@ -27,7 +27,7 @@ The system supports multiple LLM providers (Claude and Gemini) for analysing doc
 - Search the web if needed for accurate information
 - Return entities ordered by first occurrence in the document
 
-**Multi-Provider Support**: Uses the centralised provider-tier system from `lib/config.ts`. Switch models using the `LLM_MODEL` environment variable (e.g., `google-cheap` for development, `anthropic-balanced` for production). See [docs/LLM_MODELS_REFERENCE.md](LLM_MODELS_REFERENCE.md) for model comparison.
+**Multi-Provider Support**: Uses the centralised provider-tier system from `lib/config.ts`. Switch models using the `LLM_MODEL` environment variable (e.g., `google-cheap` for development, `anthropic-balanced` for production). See [docs/reference/LLM_MODELS_REFERENCE.md](LLM_MODELS_REFERENCE.md) for model comparison.
 
 ## Entity schema
 

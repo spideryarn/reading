@@ -10,4 +10,4 @@
 
 - IMPORTANT: If in doubt, or you notice any issues/surprises/complications stop and ask.
 
-- Once you have finished, commit these changes as a single commit, following `docs/GIT_COMMITS.md`
+- Once you have finished, commit these changes as a single commit, following `docs/instructions/DO_GIT_COMMITS.md`

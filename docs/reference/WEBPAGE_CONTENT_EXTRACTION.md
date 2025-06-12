@@ -4,11 +4,11 @@ Comprehensive reference for extracting clean, readable content from academic pub
 
 ## See also
 
-- `docs/PDF_TO_HTML_CONVERSION.md` - Converting PDF academic papers to HTML format
-- `docs/LLM_PROMPT_TEMPLATES.md` - Using Nunjucks + Zod templates for LLM content processing
+- `docs/reference/PDF_TO_HTML_CONVERSION.md` - Converting PDF academic papers to HTML format
+- `docs/reference/LLM_PROMPT_TEMPLATES.md` - Using Nunjucks + Zod templates for LLM content processing
 - `docs/reference/ARCHITECTURE_DECISIONS.md` - Overall system architecture and data processing approach
 - `lib/services/document-parser.ts` - Current HTML document parsing implementation
-- `docs/DATABASE_SCHEMA.md` - Document storage structure and requirements
+- `docs/reference/DATABASE_SCHEMA.md` - Document storage structure and requirements
 - [Mozilla Readability GitHub](https://github.com/mozilla/readability) - Primary content extraction library
 - [Postlight Parser GitHub](https://github.com/postlight/parser) - Alternative extraction library
 - [Playwright Scraping Guide](https://www.zenrows.com/blog/playwright-scraping) - Modern browser automation approach

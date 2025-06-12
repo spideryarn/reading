@@ -12,8 +12,8 @@ The unified left pane provides comprehensive document navigation and AI-powered 
 - `components/simple-document-viewer.tsx` - streamlined document viewer
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - overall application architecture
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - keyboard shortcut documentation including sidebar toggle
-- `docs/UI_INTERFACE.md` - 2-pane resizable layout documentation
-- `docs/LLM_PROMPT_TEMPLATES.md` - prompt template system for AI features
+- `docs/reference/UI_INTERFACE.md` - 2-pane resizable layout documentation
+- `docs/reference/LLM_PROMPT_TEMPLATES.md` - prompt template system for AI features
 - `planning/250608c_vertical_icon_navigation_bar.md` - vertical icon navigation implementation
 - `planning/250526g_ai_generated_headings.md` - AI headings implementation details
 - `planning/250526a_ToC_hierarchical_summary_tooltips.md` - tooltip feature planning
@@ -185,7 +185,7 @@ const getTooltipContent = (headingText: string): JSX.Element
 
 ## Loading and Error States
 
-Follows standardised pattern documented in `docs/STYLING.md`:
+Follows standardised pattern documented in `docs/reference/STYLING.md`:
 
 - **Generate Button**: Phosphor icons for consistent UI
 - **Loading**: Spinner animation with disabled state

@@ -7,15 +7,15 @@ Every so often I would like to take a look at `docs/*.md`, and examine whether t
 I am actively improving & adding to `docs/` as I develop Spideryarn Reading, and so I would like to occasionally update `gjdutils/docs/` to include these improvements. The tricky part is that while some of the docs in this app's `docs/` are generic and could be of widespread utility (copied, perhaps with light modification), some of the docs in this app's `docs/` are specific to this app, and it wouldn't make sense to include them in `gjdutils/docs/`.
 
 Use a subagent to gather information & compare what's in both `docs` folders, and then make a proposal for:
-- Docs that exist in both that we should compare, and see if there are any improvements from one to port/update in the other (probably from `docs` -> `gjdutils/docs`, but perhaps occasionally vice versa), e.g.example `docs/WRITE_PLANNING_DOC.md` also exists as an older version as `gjdutils/docs/WRITE_PLANNING_DOC.md`.
+- Docs that exist in both that we should compare, and see if there are any improvements from one to port/update in the other (probably from `docs` -> `gjdutils/docs`, but perhaps occasionally vice versa), e.g. `docs/instructions/WRITE_PLANNING_DOC.md` also exists as an older version as `gjdutils/docs/WRITE_PLANNING_DOC.md`.
 - Docs that only exist in `docs/` and should be added to `gjdutils/docs` (or perhaps even vice versa).
 - Docs that should be renamed in `gjdutils/docs` (because there's a better name in `docs/`).
 - Docs that should be removed (though probably there should be a good reason for this, e.g. there are duplicates, or we agree the doc is bad/out of date in some clear way).
-- Include this `docs/PORT_DOCS_TO_GJDUTILS.md` as an example of one we should port (so that other projects can also port their docs to become general/shareable)
+- Include this `docs/instructions/PORT_DOCS_TO_GJDUTILS.md` as an example of one we should port (so that other projects can also port their docs to become general/shareable)
 
 When porting from `docs/` -> `gjdutils/docs/`, remove/generalise any references that are specific to this app. This could vary case-by-case, so let's discuss.
 
-My guess is that many of the the most relevant docs will be commands (e.g. `WRITE_PLANNING_DOCS`, `DEBRIEF_PROGRESS.md`) or modes (e.g. `SOUNDING_BOARD_MODE.md`), etc.
+My guess is that many of the most relevant docs will be commands (e.g. `WRITE_PLANNING_DOCS`, `DEBRIEF_PROGRESS.md`) or modes (e.g. `SOUNDING_BOARD_MODE.md`), etc.
 
 Discuss your proposal with the user. Don't make changes until they have been agreed.
 

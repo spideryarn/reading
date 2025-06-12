@@ -4,14 +4,14 @@ Database schema, user profile management, and data ownership patterns for the Sp
 
 ## See also
 
-- `docs/AUTHENTICATION_OVERVIEW.md` - High-level authentication system architecture and flows
-- `docs/AUTHENTICATION_SETUP.md` - Initial configuration and development environment setup
-- `docs/AUTHENTICATION_UI.md` - User interface components and authentication pages
-- `docs/AUTHENTICATION_SECURITY.md` - Security best practices and route protection
+- `docs/reference/AUTHENTICATION_OVERVIEW.md` - High-level authentication system architecture and flows
+- `docs/reference/AUTHENTICATION_SETUP.md` - Initial configuration and development environment setup
+- `docs/reference/AUTHENTICATION_UI.md` - User interface components and authentication pages
+- `docs/reference/AUTHENTICATION_SECURITY.md` - Security best practices and route protection
 - `lib/services/database/` - Database service layer implementations
 - `supabase/migrations/` - Database schema migrations and setup
-- `docs/DATABASE_SCHEMA.md` - Complete database schema documentation
-- `docs/DATABASE_OVERVIEW.md` - General database architecture and patterns
+- `docs/reference/DATABASE_SCHEMA.md` - Complete database schema documentation
+- `docs/reference/DATABASE_OVERVIEW.md` - General database architecture and patterns
 
 ## Database Schema Overview
 

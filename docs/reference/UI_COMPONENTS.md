@@ -11,8 +11,8 @@ The project uses a hybrid approach combining:
 
 ## References
 
-- `docs/UI_INTERFACE.md`
-- `docs/SHADCN_UI_REFERENCE.md`
+- `docs/reference/UI_INTERFACE.md`
+- `docs/reference/SHADCN_UI_REFERENCE.md`
 
 
 ## Component Library: shadcn/ui
@@ -479,8 +479,8 @@ Visit `/design` for a live, interactive design reference page showcasing all com
 
 - `docs/reference/COMMAND_PALETTE.md` - Complete command palette implementation guide
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - Keyboard shortcut patterns and platform detection
-- `docs/SHADCN_UI_REFERENCE.md` - Installation and technical reference
-- `docs/STYLING.md` - Overall styling configuration and theme
+- `docs/reference/SHADCN_UI_REFERENCE.md` - Installation and technical reference
+- `docs/reference/STYLING.md` - Overall styling configuration and theme
 - `planning/250530a_shadcn_ui_adoption.md` - Implementation planning and decisions
 - `CLAUDE.md` - Quick reference for AI agents
 - `/design` - Live design reference and style guide

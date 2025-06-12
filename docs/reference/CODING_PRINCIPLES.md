@@ -1,9 +1,9 @@
 # Coding principles
 
 see also:
-- `docs/CODING_GUIDELINES.md` - Specific code quality standards and patterns
+- `docs/reference/CODING_GUIDELINES.md` - Specific code quality standards and patterns
 - `docs/reference/ARCHITECTURE_DECISIONS.md` - Technical architecture decisions
-- `docs/TESTING.md` - Testing approach and patterns
+- `docs/reference/TESTING.md` - Testing approach and patterns
 
 - Prioritise code that's simple, easy-to-understand, debuggable, and readable.
 - This is a prototype with no users yet. We want to develop fast and experiment, so we can figure out which features are most valuable.

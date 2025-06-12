@@ -4,13 +4,13 @@ Security best practices, route protection patterns, and troubleshooting guide fo
 
 ## See also
 
-- `docs/AUTHENTICATION_OVERVIEW.md` - High-level authentication system architecture and flows
-- `docs/AUTHENTICATION_SETUP.md` - Configuration and setup for secure authentication
-- `docs/AUTHENTICATION_UI.md` - User interface components with security considerations
-- `docs/AUTHENTICATION_DATABASE.md` - Database security patterns and user data protection
+- `docs/reference/AUTHENTICATION_OVERVIEW.md` - High-level authentication system architecture and flows
+- `docs/reference/AUTHENTICATION_SETUP.md` - Configuration and setup for secure authentication
+- `docs/reference/AUTHENTICATION_UI.md` - User interface components with security considerations
+- `docs/reference/AUTHENTICATION_DATABASE.md` - Database security patterns and user data protection
 - `lib/auth/` - Authentication utilities and security helper functions
 - `middleware.ts` - Session management and automatic token refresh implementation
-- `docs/CODING_GUIDELINES.md` - Security-focused coding patterns and best practices
+- `docs/reference/CODING_GUIDELINES.md` - Security-focused coding patterns and best practices
 
 ## Security Architecture
 

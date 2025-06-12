@@ -11,7 +11,7 @@ The mutations system enables reversible transformations of document content, all
 - `planning/250527a_reversible_document_mutations.md` - Detailed design decisions and implementation plan
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - High-level architectural overview
 - `tests/test-mutation-engine.ts` - Test suite demonstrating mutation usage patterns
-- `docs/LLM_PROMPT_TEMPLATES.md` - Required for implementing AI-generated content transformations
+- `docs/reference/LLM_PROMPT_TEMPLATES.md` - Required for implementing AI-generated content transformations
 
 ## Status
 
@@ -130,7 +130,7 @@ Key test files:
 - `tests/test-heading-mutation-generator.ts` - Heading mutation generator tests
 - `tests/test-mutation-edge-cases.ts` - Additional edge cases
 
-See `docs/TESTING.md` for complete testing approach.
+See `docs/reference/TESTING.md` for complete testing approach.
 
 ## Limitations
 

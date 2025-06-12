@@ -4,9 +4,9 @@ Comprehensive guide for testing authentication functionality in the Spideryarn R
 
 ## See also
 
-- `docs/TESTING.md` - General testing framework and setup
-- `docs/AUTHENTICATION_OVERVIEW.md` - Authentication system architecture
-- `docs/AUTHENTICATION_SECURITY.md` - Security testing considerations
+- `docs/reference/TESTING.md` - General testing framework and setup
+- `docs/reference/AUTHENTICATION_OVERVIEW.md` - Authentication system architecture
+- `docs/reference/AUTHENTICATION_SECURITY.md` - Security testing considerations
 - `lib/auth/__tests__/` - Authentication utility tests
 - `app/auth/__tests__/` - Authentication page and component tests
 - `__tests__/auth-integration.test.ts` - Cross-component integration tests

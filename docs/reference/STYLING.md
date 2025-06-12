@@ -7,7 +7,7 @@ CSS and visual styling configuration for the Spideryarn Reading application.
 - `lib/config.ts` - UI configuration including theme settings
 - `app/globals.css` - Global CSS variables and base styles
 - `tailwind.config.js` - Tailwind CSS configuration (if exists)
-- `docs/UI_COMPONENTS.md` - shadcn/ui component reference and usage
+- `docs/reference/UI_COMPONENTS.md` - shadcn/ui component reference and usage
 - `/design` - Live design reference showing all components and colours
 
 ## Principles, key decisions
@@ -55,7 +55,7 @@ We use Tailwind CSS v4 beta, which has significant differences from v3:
 
 ### Important Notes
 - When adding Tailwind-related libraries, verify v4 compatibility first
-- See `docs/CODING_GUIDELINES.md` for detailed v4 patterns and migration notes
+- See `docs/reference/CODING_GUIDELINES.md` for detailed v4 patterns and migration notes
 - Manual CSS implementations are often more reliable than v3 plugins in v4
 
 ## Third-party styling

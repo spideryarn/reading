@@ -4,7 +4,7 @@ The AI summarise feature generates hierarchical summaries of document content us
 
 ## See also
 
-- `docs/LLM_PROMPT_TEMPLATES.md` - Guide to creating and using LLM prompt templates
+- `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide to creating and using LLM prompt templates
 - `planning/250526a_ToC_hierarchical_summary_tooltips.md` - Implementation of ToC tooltip summaries with hierarchical content extraction
 - `planning/250525b_debugging_summary.md` - Debugging and fixing the content pipeline from HTML to AI summarisation
 - `lib/prompts/templates/summarise.ts` - Schema configuration and granularity options for summarisation prompts
@@ -31,7 +31,7 @@ The system supports multiple LLM providers (Claude and Gemini) with configurable
 - Return only the summary without markup or commentary
 - Handle content from short phrases to full documents
 
-**Multi-Provider Support**: Uses the centralised provider-tier system from `lib/config.ts`. Switch models using the `LLM_MODEL` environment variable (e.g., `google-cheap` for development, `anthropic-balanced` for production). See [docs/LLM_MODELS_REFERENCE.md](LLM_MODELS_REFERENCE.md) for model comparison.
+**Multi-Provider Support**: Uses the centralised provider-tier system from `lib/config.ts`. Switch models using the `LLM_MODEL` environment variable (e.g., `google-cheap` for development, `anthropic-balanced` for production). See [docs/reference/LLM_MODELS_REFERENCE.md](LLM_MODELS_REFERENCE.md) for model comparison.
 
 ## Granularity options
 

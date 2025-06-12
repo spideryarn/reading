@@ -8,7 +8,7 @@ Comprehensive guide to implementing file storage in Spideryarn Reading using Sup
 - `planning/later/250530h_pdf_to_html_conversion_implementation.md` - PDF conversion implementation context
 - `supabase/migrations/20250531235026_comprehensive_storage_schema.sql` - Database schema with `storage_path` field
 - `lib/types/database.ts` - TypeScript definitions for documents table including storage references
-- `docs/DATABASE_SCHEMA.md` - Complete database schema documentation
+- `docs/reference/DATABASE_SCHEMA.md` - Complete database schema documentation
 - [Supabase Storage Documentation](https://supabase.com/docs/guides/storage) - Official Supabase Storage documentation
 
 ## Principles, key decisions
