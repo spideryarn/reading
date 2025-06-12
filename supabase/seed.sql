@@ -510,4 +510,4 @@ INSERT INTO documents (id, title, slug, html_content, plaintext_content, created
 
 </BODY>
 
-</HTML>$chalmers_cropped$, 'Chalmers (1995) - Facing Up to the Problem of Consciousness cropped', '00000000-0000-0000-0000-000000000001', true, 3822, 'en'),
+</HTML>$chalmers_cropped$, 'Chalmers (1995) - Facing Up to the Problem of Consciousness cropped', '00000000-0000-0000-0000-000000000001', true, 3822, 'en');
