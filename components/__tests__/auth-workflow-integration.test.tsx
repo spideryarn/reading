@@ -146,7 +146,6 @@ jest.mock('@/components/auth/signup-form', () => ({
   SignupForm: () => {
     const React = jest.requireActual('react')
     const { createClient } = jest.requireActual('@/lib/supabase/client')
-    const { useRouter, useSearchParams } = jest.requireActual('next/navigation')
     const [email, setEmail] = React.useState('')
     const [password, setPassword] = React.useState('')
     const [confirmPassword, setConfirmPassword] = React.useState('')
@@ -157,7 +156,6 @@ jest.mock('@/components/auth/signup-form', () => ({
     const [passwordError, setPasswordError] = React.useState('')
     const [confirmPasswordError, setConfirmPasswordError] = React.useState('')
     
-    const router = useRouter()
     const supabase = createClient()
     
     const handleSubmit = async (e: React.FormEvent) => {

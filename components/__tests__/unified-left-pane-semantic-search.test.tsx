@@ -552,7 +552,6 @@ describe('UnifiedLeftPane Semantic Search', () => {
       
       // Results should now be sorted by position (heading-1, para-1, para-2)
       await waitFor(() => {
-        const resultElements = screen.getAllByTestId(/result-item/) // Would need to add test IDs
         // Verify the order changed - first result should now be heading-1 (90% confidence)
         expect(screen.getAllByText(/%/)[0]).toHaveTextContent('90%') // heading-1 first by position
       })

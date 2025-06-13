@@ -15,6 +15,7 @@ import { renderWithProviders } from './test-wrapper'
 import userEvent from '@testing-library/user-event'
 import { UnifiedLeftPane } from '../unified-left-pane'
 import type { DocumentElement } from '@/lib/types/document'
+import Mark from 'mark.js'
 
 // Mock fetch for API calls
 global.fetch = jest.fn()
@@ -492,7 +493,6 @@ describe('Semantic Search Integration', () => {
   describe('Mark.js Integration', () => {
     it('should clear text highlights when switching to semantic search', async () => {
       const user = userEvent.setup()
-      const Mark = require('mark.js')
       const mockMarkInstance = new Mark()
       
       renderWithProviders(<UnifiedLeftPane {...defaultProps} />)
@@ -519,7 +519,6 @@ describe('Semantic Search Integration', () => {
 
     it('should handle semantic search highlighting', async () => {
       const user = userEvent.setup()
-      const Mark = require('mark.js')
       const mockMarkInstance = new Mark()
       
       // Mock semantic search response

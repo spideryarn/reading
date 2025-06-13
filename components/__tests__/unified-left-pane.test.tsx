@@ -3,7 +3,7 @@ import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderWithProviders } from './test-wrapper';
 import { UnifiedLeftPane } from '../unified-left-pane';
 import type { DocumentElement } from '@/lib/types/document';
-import { DocumentCommunicationProvider, useDocumentCommunication } from '@/lib/context/document-communication-context';
+import { useDocumentCommunication } from '@/lib/context/document-communication-context';
 
 // Mock the debounce utility
 jest.mock('@/lib/utils/debounce', () => ({
@@ -731,7 +731,7 @@ describe('UnifiedLeftPane', () => {
 
     it('should handle different active tabs from context', () => {
       // Test that different tabs render their specific content
-      const summaryProps = renderWithProvidersAndTab(<UnifiedLeftPane {...defaultProps} />, 'summary');
+      renderWithProvidersAndTab(<UnifiedLeftPane {...defaultProps} />, 'summary');
       expect(screen.getByTestId('document-summary-tab')).toBeInTheDocument();
     });
   });

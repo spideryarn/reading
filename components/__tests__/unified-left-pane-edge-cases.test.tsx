@@ -17,7 +17,8 @@ jest.mock('@/lib/utils/debounce', () => ({
 
 // Mock components
 jest.mock('../tab-container', () => {
-  const TabContainerComponent = React.forwardRef<any, any>(({ tabs, title, defaultTab, onTabChange, className }: any, ref) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const TabContainerComponent = React.forwardRef<any, any>(({ tabs, title, defaultTab, onTabChange, className }: any, _ref) => {
     const [activeTab, setActiveTab] = React.useState(defaultTab || tabs[0]?.id);
     
     const handleTabClick = (tabId: string) => {
@@ -47,6 +48,8 @@ jest.mock('../tab-container', () => {
       </div>
     );
   });
+  
+  TabContainerComponent.displayName = 'TabContainerComponent';
   
   return {
     TabContainer: TabContainerComponent,

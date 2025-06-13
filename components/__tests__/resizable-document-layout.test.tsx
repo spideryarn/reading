@@ -243,7 +243,6 @@ describe('ResizableDocumentLayout', () => {
 
   // Mock DOM methods
   let mockGetElementById: jest.SpyInstance;
-  let mockQuerySelector: jest.SpyInstance;
   let mockScrollIntoView: jest.SpyInstance;
   let mockSetAttribute: jest.SpyInstance;
   let mockRemoveAttribute: jest.SpyInstance;

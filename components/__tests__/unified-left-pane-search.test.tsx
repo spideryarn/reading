@@ -4,6 +4,7 @@ import { renderWithProviders } from './test-wrapper'
 import userEvent from '@testing-library/user-event'
 import { UnifiedLeftPane } from '../unified-left-pane'
 import type { DocumentElement } from '@/lib/types/document'
+import Mark from 'mark.js'
 
 // Mock Mark.js
 jest.mock('mark.js', () => {
@@ -114,7 +115,6 @@ describe('UnifiedLeftPane Search Functionality', () => {
   })
 
   it('should initialize Mark.js on mount', () => {
-    const Mark = require('mark.js')
     renderWithProviders(<UnifiedLeftPane {...defaultProps} />)
     
     expect(Mark).toHaveBeenCalledWith(document.getElementById('document-viewer'))
@@ -140,7 +140,6 @@ describe('UnifiedLeftPane Search Functionality', () => {
 
   it('should clear highlights when search is cleared', async () => {
     const user = userEvent.setup()
-    const Mark = require('mark.js')
     const mockMarkInstance = new Mark()
     
     renderWithProviders(<UnifiedLeftPane {...defaultProps} />)
