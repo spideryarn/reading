@@ -116,9 +116,14 @@ export class RLSTestSetup {
    * Create a test document with proper namespace isolation
    */
   async createTestDocument(data: any) {
+    // Add test prefix to title and slug to avoid collisions
+    const titlePrefix = `[TEST-${this.namespace}]`
+    const slugPrefix = `test-${this.namespace.slice(-8)}-` // Use last 8 chars of namespace
+    
     const documentData = {
       ...data,
-      metadata: createTestMetadata(this.namespace, data.metadata)
+      title: data.title ? `${titlePrefix} ${data.title}` : `${titlePrefix} Test Document`,
+      slug: data.slug ? `${slugPrefix}${data.slug}` : `${slugPrefix}${Date.now()}`,
     }
     
     const { data: document, error } = await this.adminClient
@@ -129,19 +134,23 @@ export class RLSTestSetup {
     
     if (error) throw error
     
-    // Track for cleanup
+    // Track for cleanup and add test metadata to returned object (not database)
     trackTestData(this.namespace, 'documents', document.id)
     
-    return document
+    return {
+      ...document,
+      metadata: createTestMetadata(this.namespace)
+    }
   }
   
   /**
    * Create a test AI call with namespace tracking
    */
   async createTestAiCall(data: any) {
+    // Use test prefix in prompt_input to identify test data
     const aiCallData = {
       ...data,
-      metadata: createTestMetadata(this.namespace, data.metadata)
+      prompt_input: `[TEST-${this.namespace}] ${data.prompt_input || 'Test prompt'}`
     }
     
     const { data: aiCall, error } = await this.adminClient
@@ -154,16 +163,23 @@ export class RLSTestSetup {
     
     trackTestData(this.namespace, 'aiCalls', aiCall.id)
     
-    return aiCall
+    return {
+      ...aiCall,
+      metadata: createTestMetadata(this.namespace)
+    }
   }
   
   /**
    * Create test document enhancement with namespace tracking
    */
   async createTestEnhancement(data: any) {
+    // Add test identifier to content if it's an object
     const enhancementData = {
       ...data,
-      metadata: createTestMetadata(this.namespace, data.metadata)
+      content: {
+        ...data.content,
+        _test_namespace: this.namespace
+      }
     }
     
     const { data: enhancement, error } = await this.adminClient
@@ -176,16 +192,20 @@ export class RLSTestSetup {
     
     trackTestData(this.namespace, 'enhancements', enhancement.id)
     
-    return enhancement
+    return {
+      ...enhancement,
+      metadata: createTestMetadata(this.namespace)
+    }
   }
   
   /**
    * Create test chat thread with namespace tracking
    */
   async createTestChatThread(data: any) {
+    // Add test prefix to title to identify test data
     const threadData = {
       ...data,
-      metadata: createTestMetadata(this.namespace, data.metadata)
+      title: data.title ? `[TEST-${this.namespace}] ${data.title}` : `[TEST-${this.namespace}] Test Thread`
     }
     
     const { data: thread, error } = await this.adminClient
@@ -198,16 +218,20 @@ export class RLSTestSetup {
     
     trackTestData(this.namespace, 'threads', thread.id)
     
-    return thread
+    return {
+      ...thread,
+      metadata: createTestMetadata(this.namespace)
+    }
   }
   
   /**
    * Create test chat message with namespace tracking
    */
   async createTestChatMessage(data: any) {
+    // Add test prefix to content to identify test data
     const messageData = {
       ...data,
-      metadata: createTestMetadata(this.namespace, data.metadata)
+      content: `[TEST-${this.namespace}] ${data.content || 'Test message'}`
     }
     
     const { data: message, error } = await this.adminClient
@@ -220,7 +244,10 @@ export class RLSTestSetup {
     
     trackTestData(this.namespace, 'messages', message.id)
     
-    return message
+    return {
+      ...message,
+      metadata: createTestMetadata(this.namespace)
+    }
   }
   
   /**
@@ -237,11 +264,14 @@ export class RLSTestSetup {
    * Create test profile with namespace tracking
    */
   async createTestProfile(userId: string, data: any = {}) {
+    // Add test prefix to preferences to identify test data
     const profileData = {
       user_id: userId,
-      preferences: { display_name: 'Test User' },
-      ...data,
-      metadata: createTestMetadata(this.namespace, data.metadata)
+      preferences: { 
+        display_name: `[TEST-${this.namespace.slice(-8)}] Test User`,
+        ...data.preferences
+      },
+      ...data
     }
     
     const { data: profile, error } = await this.adminClient
@@ -254,7 +284,10 @@ export class RLSTestSetup {
     
     trackTestData(this.namespace, 'users', profile.user_id)
     
-    return profile
+    return {
+      ...profile,
+      metadata: createTestMetadata(this.namespace)
+    }
   }
   
   /**
