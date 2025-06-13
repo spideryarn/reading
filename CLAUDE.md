@@ -52,7 +52,7 @@ Next.js local dev server:
 
 Database operations:
 - `npm run db:types` - Regenerate TypeScript types from Supabase schema
-- `npm run db:reset` - **DESTRUCTIVE**: Reset database and regenerate types (NEVER run without explicit user permission - this deletes all local data!)
+- ⛔ `npm run db:reset` - **DO NOT USE**: This command destroys ALL data including test and development data. Only use with explicit user permission in exceptional circumstances.
 - `npx supabase db push` - **CAUTION**: Applies migrations to database (NEVER run without explicit user permission)
 
 ⚠️ **CRITICAL**: Always ask for explicit user permission before modifying the database, especially in major ways. When in doubt, err on the side of caution!
@@ -65,6 +65,54 @@ Type checking and linting:
   - When writing tests, use our Jest testing framework with React Testing Library
   - Prefer using a subagent for running tests to avoid filling the context window
   - Current test health: ~71% pass rate due to NextRequest mocking issues (see `docs/reference/TESTING_TROUBLESHOOTING.md`)
+
+## Test Database Approach - IMPORTANT
+
+⚠️ **CRITICAL**: We use a **shared database** approach for testing, following Supabase's official recommendations. Tests run against the same local development database, NOT a separate test database.
+
+**Key Testing Principles**:
+- **NEVER reset the database** in tests - this would destroy development data
+- **NEVER use `npm run db:reset`** unless explicitly authorized by the user
+- **NEVER delete all records** from tables (no `DELETE FROM table` without WHERE)
+- **Use UUID-based test isolation** - all test data must be namespaced
+
+**Writing Tests - Required Pattern**:
+```typescript
+import { getTestNamespace, createTestUser, getCleanupFunctions } from '@/lib/testing/test-isolation-utils'
+
+describe('My Feature', () => {
+  const namespace = getTestNamespace('my-feature-test')
+  
+  afterEach(async () => {
+    // Clean up only test-namespaced data
+    const cleanup = getCleanupFunctions(namespace, supabase)
+    await cleanup.all()
+  })
+  
+  it('should do something', async () => {
+    // Create test data with namespace
+    const testUser = createTestUser(namespace)
+    
+    // Your test logic here
+    
+    // Assertions should filter by namespace
+    const results = await supabase
+      .from('profiles')
+      .select()
+      .eq('metadata->test_namespace', namespace)
+  })
+})
+```
+
+**Test Utilities Available**:
+- `getTestNamespace(testName)` - Generate unique namespace for test isolation
+- `createTestEmail(namespace)` - Create test-scoped email addresses
+- `createTestUser(namespace)` - Create properly namespaced test users
+- `createTestDocument(namespace)` - Create test documents
+- `getCleanupFunctions(namespace, supabase)` - Get cleanup helpers
+- `trackTestData(namespace, type, id)` - Track data for cleanup
+
+See `lib/testing/test-isolation-utils.ts` for full API and `docs/reference/TESTING_DATABASE.md` for detailed patterns.
 
 Debugging resources:
 - Current logs: `tail dev.log`
