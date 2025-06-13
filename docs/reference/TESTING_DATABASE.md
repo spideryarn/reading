@@ -1,59 +1,71 @@
 # Testing Database
 
-> ✅ **UPDATED**: This documentation reflects the shared database testing approach adopted in June 2025.
+> ✅ **Status**: Current documentation as of June 2025.
 
-This document covers database-specific testing patterns and setup for the Spideryarn Reading project.
+This document is the **primary guide** for database testing in the Spideryarn Reading project. It covers our shared database approach, test isolation patterns, and all practical testing guidance.
 
 ## See also
 
 - `docs/reference/TESTING_OVERVIEW.md` - Main testing guide with philosophy and basic usage
 - `docs/reference/TESTING_SETUP.md` - Configuration and environment setup
 - `docs/reference/TESTING_TROUBLESHOOTING.md` - Known issues and workarounds
-- `docs/reference/TESTING_DATABASE_SUPABASE_OPTIONS_RESEARCH.md` - Research and analysis of different test database approaches
+- `docs/reference/TESTING_DATABASE_CLEANUP.md` - Cleanup utilities and maintenance
+- `docs/reference/archive/TESTING_DATABASE_SUPABASE_OPTIONS_RESEARCH.md` - Historical research on database testing approaches
 - `docs/reference/DATABASE_OVERVIEW.md` - Database architecture and schema
-- `lib/testing/test-isolation-utils.ts` - Test isolation utilities
-- `docs/reference/AUTHENTICATION_TESTING.md` - Authentication-specific database testing
+- `lib/testing/test-isolation-utils.ts` - Test isolation utilities implementation
+- `planning/finished/250613b_test_database_shared_approach_migration.md` - Migration history and decisions
 
-## Shared Database Testing Approach
+## Overview
 
-⚠️ **IMPORTANT**: We use a **shared database** approach for testing, following Supabase's official recommendations. Tests run against the same local development database, NOT a separate test database.
+We use a **shared database approach** where both development and tests use the same local Supabase instance. This eliminates the complexity of maintaining separate test databases while ensuring tests don't interfere with each other or development data.
 
-### Key Principles
+## Core Principles
 
-1. **No database resets**: Tests must NEVER reset or truncate the database
-2. **UUID-based isolation**: All test data uses unique namespaces to avoid conflicts
-3. **Self-cleaning tests**: Tests must clean up their own data in afterEach hooks
-4. **Concurrent-safe**: Tests must work when run in parallel across multiple worktrees
-5. **No assumptions about state**: Tests cannot assume an empty database
+⚠️ **CRITICAL RULES**:
 
-### Why Shared Database?
+1. **NEVER reset the database** - Tests must NEVER reset, truncate, or clear the entire database
+2. **UUID-based isolation** - All test data uses unique namespaces to prevent conflicts
+3. **Self-cleaning tests** - Tests clean up their own data in `afterEach` hooks
+4. **Concurrent-safe** - Tests can run in parallel across multiple worktrees
+5. **No state assumptions** - Tests cannot assume an empty or specific database state
 
-From Supabase's official documentation:
+## Why Shared Database?
+
+**Supabase's Official Recommendation**: 
 > "Application-level tests should not rely on a clean database state, as resetting the database before each test can be slow and makes tests difficult to parallelize. Instead, design your tests to be independent by using unique user IDs for each test case."
 
-Benefits:
-- Simpler infrastructure (no dual-database setup)
-- Faster test execution (no reset overhead)
-- Better reflects production conditions
-- Supports concurrent testing across worktrees
-- No migration sync issues
+**Benefits**:
+- **Simplicity** - No additional infrastructure or sync scripts
+- **Performance** - 50-100x faster than database resets
+- **True parallelization** - Tests run concurrently without conflicts
+- **Production-like** - Better reflects real-world conditions
+- **Zero maintenance** - Single source of truth for migrations
 
 ## Test Isolation Utilities
 
-### Core Functions
+Import from `@/lib/testing/test-isolation-utils`:
 
 ```typescript
 import { 
   getTestNamespace, 
-  createTestUser, 
+  createTestEmail, 
+  createTestUser,
   createTestDocument,
   getCleanupFunctions,
-  trackTestData 
+  trackTestData
 } from '@/lib/testing/test-isolation-utils'
+```
 
+### Core Functions
+
+```typescript
 // Generate unique namespace for test isolation
 const namespace = getTestNamespace('my-feature-test')
 // Returns: 'test_my-feature-test_1718293847123_a1b2c3d4'
+
+// Create unique test emails
+const testEmail = createTestEmail(namespace)
+const adminEmail = createTestEmail(namespace, 'admin')
 
 // Create test data with namespace
 const testUser = createTestUser(namespace, {
@@ -69,327 +81,211 @@ const cleanup = getCleanupFunctions(namespace, supabase)
 await cleanup.all() // or cleanup.documents(), cleanup.users(), etc.
 ```
 
-### Required Test Pattern
+## Basic Test Pattern
 
 ```typescript
-describe('DocumentService', () => {
-  let supabase: SupabaseClient
-  let documentService: DocumentService
-  const namespace = getTestNamespace('document-service-test')
-  
-  beforeEach(() => {
-    supabase = createSupabaseClient()
-    documentService = new DocumentService(supabase)
-  })
+describe('My Feature', () => {
+  // Create a unique namespace for this test suite
+  const namespace = getTestNamespace('my-feature-test')
   
   afterEach(async () => {
-    // CRITICAL: Clean up test data after each test
+    // Clean up all test data created with this namespace
     const cleanup = getCleanupFunctions(namespace, supabase)
     await cleanup.all()
   })
   
-  it('should create document', async () => {
-    // Create test document with namespace
-    const testDoc = createTestDocument(namespace, {
-      title: 'Test Document'
-    })
+  it('should do something', async () => {
+    // Create test data with namespace
+    const testUser = await createTestUser(namespace)
+    const testDoc = await createTestDocument(namespace, testUser.id)
     
-    const document = await documentService.create(testDoc)
+    // Your test logic here
     
-    // Track for cleanup (if not using createTestDocument helper)
-    trackTestData(namespace, 'documents', document.id)
-    
-    expect(document.title).toBe('Test Document')
-    expect(document.metadata.test_namespace).toBe(namespace)
+    // Cleanup happens automatically in afterEach
   })
 })
 ```
 
-## Writing Database Tests
+## Authentication Test Pattern
 
-### DO's ✅
+For tests that don't interact with the database but need unique emails:
 
 ```typescript
-// DO: Use unique namespaces for isolation
-const namespace = getTestNamespace('auth-test')
-const email = createTestEmail(namespace)
+describe('Auth Component', () => {
+  const namespace = getTestNamespace('auth-component-test')
+  const testEmail = createTestEmail(namespace)
+  const adminEmail = createTestEmail(namespace, 'admin')
+  
+  const mockUser = {
+    id: 'user-123',
+    email: testEmail,
+    // ... other properties
+  }
+  
+  // No cleanup needed for mocked tests
+})
+```
 
-// DO: Clean up test data in afterEach
+## Multiple Test Emails
+
+When you need multiple unique emails in a test:
+
+```typescript
+const namespace = getTestNamespace('multi-user-test')
+const primaryEmail = createTestEmail(namespace)
+const secondaryEmail = createTestEmail(namespace, 'secondary')
+const adminEmail = createTestEmail(namespace, 'admin')
+```
+
+## Manual Cleanup Pattern
+
+For fine-grained control over cleanup:
+
+```typescript
+describe('Complex Feature', () => {
+  const namespace = getTestNamespace('complex-test')
+  
+  afterEach(async () => {
+    const cleanup = getCleanupFunctions(namespace, supabase)
+    
+    // Clean up specific types
+    await cleanup.documents()
+    await cleanup.profiles()
+    
+    // Or clean up everything
+    await cleanup.all()
+  })
+})
+```
+
+## Tracking Custom Data
+
+For data types not covered by built-in utilities:
+
+```typescript
+it('should handle custom data', async () => {
+  const namespace = getTestNamespace('custom-test')
+  
+  // Create custom data
+  const { data: customData } = await supabase
+    .from('custom_table')
+    .insert({ 
+      name: 'test',
+      // Note: no metadata column needed - we track by ID
+    })
+    .select()
+    .single()
+  
+  // Track for cleanup
+  trackTestData(namespace, 'custom', customData.id)
+  
+  // Will be cleaned up by cleanup.all()
+})
+```
+
+## Common Pitfalls to Avoid
+
+### ❌ Never Do This
+
+```typescript
+// BAD - Destroys all data including development data!
+beforeEach(async () => {
+  await supabase.from('users').delete()
+})
+
+// BAD - Assumes empty database
+expect(users.data).toHaveLength(0)
+
+// BAD - Hardcoded test emails that can conflict
+const testUser = { email: 'test@example.com' }
+```
+
+### ✅ Always Do This
+
+```typescript
+// GOOD - Namespace isolation
+const namespace = getTestNamespace('my-test')
+const testEmail = createTestEmail(namespace)
+
+// GOOD - Filter by tracked test IDs
+const cleanup = getCleanupFunctions(namespace, supabase)
+const testUsers = getTrackedData(namespace)?.users || []
+
+// GOOD - Clean up only your test data
 afterEach(async () => {
   const cleanup = getCleanupFunctions(namespace, supabase)
   await cleanup.all()
 })
-
-// DO: Filter assertions by namespace
-const users = await supabase
-  .from('profiles')
-  .select()
-  .eq('metadata->test_namespace', namespace)
-expect(users.data).toHaveLength(1)
-
-// DO: Use test metadata for tracking
-const doc = await documentService.create({
-  title: 'Test',
-  metadata: createTestMetadata(namespace)
-})
 ```
 
-### DON'Ts ❌
+## Testing with Real RLS
+
+When testing Row Level Security policies:
 
 ```typescript
-// DON'T: Reset the database
-await supabase.rpc('reset_db') // NEVER DO THIS
+import { RLSTestDatabase } from '@/lib/testing/rls-database-test-utils'
 
-// DON'T: Delete without filtering
-await supabase.from('documents').delete() // DESTRUCTIVE
-
-// DON'T: Assume empty tables
-const count = await supabase.from('users').select('count')
-expect(count).toBe(0) // WRONG ASSUMPTION
-
-// DON'T: Use hardcoded IDs or emails
-const user = { email: 'test@example.com' } // NOT UNIQUE
-
-// DON'T: Skip cleanup
-// Missing afterEach cleanup leaves test data behind
-```
-
-## Test Data Management
-
-### Creating Test Data
-
-Use the provided utilities for consistent test data:
-
-```typescript
-// Users
-const testUser = createTestUser(namespace, {
-  email: 'admin@test.local',
-  fullName: 'Admin User',
-  metadata: { role: 'admin' }
-})
-
-// Documents
-const testDoc = createTestDocument(namespace, {
-  title: 'Important Document',
-  content: '<p>Test content</p>'
-})
-
-// Custom data with tracking
-const thread = await chatService.createThread({
-  document_id: testDoc.id,
-  metadata: createTestMetadata(namespace)
-})
-trackTestData(namespace, 'threads', thread.id)
-```
-
-### Cleanup Patterns
-
-```typescript
-// Option 1: Clean up everything at once
-const cleanup = getCleanupFunctions(namespace, supabase)
-await cleanup.all()
-
-// Option 2: Selective cleanup
-await cleanup.documents()  // Only documents
-await cleanup.users()     // Only users
-
-// Option 3: Manual cleanup for custom data
-afterEach(async () => {
-  await supabase
-    .from('custom_table')
-    .delete()
-    .eq('test_namespace', namespace)
-})
-```
-
-## Authentication in Database Tests
-
-### Test User Creation
-
-```typescript
-describe('Authenticated Features', () => {
-  const namespace = getTestNamespace('auth-features')
-  let testUser: any
+describe('RLS Policies', () => {
+  const namespace = getTestNamespace('rls-test')
+  let rlsDb: RLSTestDatabase
   
-  beforeEach(() => {
-    testUser = createTestUser(namespace)
-    // Mock authentication context
-    jest.spyOn(auth, 'getUser').mockResolvedValue(testUser)
+  beforeEach(async () => {
+    rlsDb = new RLSTestDatabase(namespace)
+    await rlsDb.setup()
   })
   
   afterEach(async () => {
-    const cleanup = getCleanupFunctions(namespace, supabase)
-    await cleanup.all()
-    jest.restoreAllMocks()
+    await rlsDb.cleanup()
+  })
+  
+  it('should enforce document access', async () => {
+    const { alice, bob } = await rlsDb.createTestUsers()
+    const doc = await rlsDb.createDocument(alice.user.id)
+    
+    // Test with Alice's client
+    const canRead = await rlsDb.testDocumentRead(alice, doc.id)
+    expect(canRead).toBe(true)
+    
+    // Test with Bob's client
+    const cannotRead = await rlsDb.testDocumentRead(bob, doc.id)
+    expect(cannotRead).toBe(false)
   })
 })
 ```
 
-### RLS Testing with Test Users
+## Integration with CI/CD
 
-```typescript
-describe('Row Level Security', () => {
-  const namespace = getTestNamespace('rls-test')
-  
-  it('should enforce document ownership', async () => {
-    const user1 = createTestUser(namespace, { email: 'user1@test.local' })
-    const user2 = createTestUser(namespace, { email: 'user2@test.local' })
-    
-    // Create document as user1
-    const doc = await documentService.create({
-      ...createTestDocument(namespace),
-      user_id: user1.id
-    })
-    
-    // Try to access as user2 (should fail)
-    const result = await supabase
-      .from('documents')
-      .select()
-      .eq('id', doc.id)
-      .eq('user_id', user2.id)
-    
-    expect(result.data).toHaveLength(0)
-  })
-})
-```
+Our test isolation approach works seamlessly with CI/CD pipelines:
 
-## Common Patterns
+- Tests can run in parallel without conflicts
+- No need for database setup/teardown steps
+- Works with multiple concurrent test runners
+- Compatible with GitHub Actions matrix builds
 
-### Testing Error Cases
+## Cleanup Script
 
-```typescript
-it('should handle duplicate emails gracefully', async () => {
-  const namespace = getTestNamespace('duplicate-test')
-  const email = createTestEmail(namespace)
-  
-  // Create first user
-  await userService.create({ email })
-  
-  // Attempt duplicate (should fail)
-  await expect(
-    userService.create({ email })
-  ).rejects.toThrow('email already exists')
-})
-```
-
-### Testing Concurrent Operations
-
-```typescript
-it('should handle concurrent document creation', async () => {
-  const namespace = getTestNamespace('concurrent-test')
-  
-  // Create multiple documents concurrently
-  const promises = Array.from({ length: 5 }, (_, i) => 
-    documentService.create(
-      createTestDocument(namespace, { title: `Doc ${i}` })
-    )
-  )
-  
-  const documents = await Promise.all(promises)
-  
-  // Track all for cleanup
-  documents.forEach(doc => 
-    trackTestData(namespace, 'documents', doc.id)
-  )
-  
-  expect(documents).toHaveLength(5)
-})
-```
-
-## Migration Testing
-
-When testing migrations in a shared database environment:
-
-```typescript
-describe('Migration Validation', () => {
-  it('should have required columns', async () => {
-    // Query schema information
-    const { data: columns } = await supabase
-      .from('information_schema.columns')
-      .select('column_name')
-      .eq('table_name', 'documents')
-      .eq('table_schema', 'public')
-    
-    const columnNames = columns?.map(c => c.column_name) || []
-    
-    // Verify expected columns exist
-    expect(columnNames).toContain('upload_metadata')
-    expect(columnNames).toContain('upload_ai_call_id')
-  })
-})
-```
-
-## Performance Considerations
-
-### Efficient Cleanup
-
-```typescript
-// Good: Batch cleanup operations
-const cleanup = getCleanupFunctions(namespace, supabase)
-await cleanup.all() // Single transaction for all types
-
-// Less efficient: Individual cleanup calls
-await cleanup.documents()
-await cleanup.users()
-await cleanup.threads()
-// Multiple round trips
-```
-
-### Query Optimization
-
-```typescript
-// Good: Filter by namespace early
-const documents = await supabase
-  .from('documents')
-  .select('id, title')
-  .eq('metadata->test_namespace', namespace)
-  .limit(10)
-
-// Bad: Fetch all then filter
-const allDocs = await supabase.from('documents').select()
-const testDocs = allDocs.filter(d => 
-  d.metadata?.test_namespace === namespace
-)
-```
-
-## Troubleshooting
-
-### Test Data Accumulation
-
-If test data accumulates over time:
+For periodic maintenance, run:
 
 ```bash
-# Create cleanup script in scripts/cleanup-test-data.ts
-# Run periodically to remove old test data:
 npm run cleanup:test-data
 ```
 
-### Namespace Collisions
+This removes test data older than 24 hours. See `docs/reference/TESTING_DATABASE_CLEANUP.md` for details.
 
-Namespaces include timestamp and UUID to prevent collisions:
-- Format: `test_${testName}_${timestamp}_${uuid}`
-- Example: `test_auth_1718293847123_a1b2c3d4`
+## Migration Guide
 
-### Debugging Failed Cleanup
+If you're updating old tests:
 
-```typescript
-// Add logging to identify cleanup issues
-const cleanup = getCleanupFunctions(namespace, supabase)
-try {
-  await cleanup.all()
-} catch (error) {
-  console.error('Cleanup failed for namespace:', namespace)
-  console.error('Tracked data:', getTrackedData(namespace))
-  throw error
-}
-```
+1. Import test isolation utilities
+2. Replace hardcoded emails with `createTestEmail(namespace)`
+3. Add namespace to all test data creation
+4. Add cleanup in `afterEach`
+5. Remove any database reset operations
 
-## Best Practices Summary
+## See Also
 
-1. **Always use namespaces**: Every test must have a unique namespace
-2. **Track all test data**: Use utilities or manual tracking for cleanup
-3. **Clean up in afterEach**: Don't rely on beforeEach cleanup
-4. **Test in isolation**: Don't depend on data from other tests
-5. **Handle async properly**: Await all database operations
-6. **Use test utilities**: Leverage the provided helper functions
-7. **Document test data**: Add comments explaining test data relationships
+- `docs/reference/TESTING_DATABASE_CLEANUP.md` - Cleanup utilities and maintenance
+- `lib/testing/test-isolation-utils.ts` - Implementation details
+- `docs/reference/TESTING_OVERVIEW.md` - General testing philosophy and setup
+- `docs/reference/TESTING_SETUP.md` - Configuration and environment setup
+- `docs/reference/archive/TESTING_DATABASE_SUPABASE_OPTIONS_RESEARCH.md` - Historical research on testing approaches

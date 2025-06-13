@@ -71,13 +71,13 @@ Type checking and linting:
 
 ⚠️ **CRITICAL**: We use a **shared database** approach for testing, following Supabase's official recommendations. Tests run against the same local development database, NOT a separate test database.
 
-**Key Testing Principles**:
-- **NEVER reset the database** in tests - this would destroy development data
+**Key Testing Rules**:
+- **NEVER reset the database** - this would destroy development data
 - **NEVER use `npm run db:reset`** unless explicitly authorized by the user
 - **NEVER delete all records** from tables (no `DELETE FROM table` without WHERE)
 - **Use UUID-based test isolation** - all test data must be namespaced
 
-**Writing Tests - Required Pattern**:
+**Required Test Pattern**:
 ```typescript
 import { getTestNamespace, createTestUser, getCleanupFunctions } from '@/lib/testing/test-isolation-utils'
 
@@ -96,24 +96,12 @@ describe('My Feature', () => {
     
     // Your test logic here
     
-    // Assertions should filter by namespace
-    const results = await supabase
-      .from('profiles')
-      .select()
-      .eq('metadata->test_namespace', namespace)
+    // Cleanup happens automatically in afterEach
   })
 })
 ```
 
-**Test Utilities Available**:
-- `getTestNamespace(testName)` - Generate unique namespace for test isolation
-- `createTestEmail(namespace)` - Create test-scoped email addresses
-- `createTestUser(namespace)` - Create properly namespaced test users
-- `createTestDocument(namespace)` - Create test documents
-- `getCleanupFunctions(namespace, supabase)` - Get cleanup helpers
-- `trackTestData(namespace, type, id)` - Track data for cleanup
-
-See `lib/testing/test-isolation-utils.ts` for full API and `docs/reference/TESTING_DATABASE.md` for detailed patterns.
+**Complete Documentation**: See `docs/reference/TESTING_DATABASE.md` for comprehensive patterns, examples, and utilities.
 
 Debugging resources:
 - Current logs: `tail dev.log`
@@ -198,8 +186,8 @@ Key variables in `.env.local`:
 - Supabase connection details (see `docs/reference/SETUP.md`)
 
 Test environment (`.env.test`):
-- Currently mirrors `.env.local` for simplicity
-- Best practice: Use cheaper LLM models (Haiku) and separate test database in future
+- Currently mirrors `.env.local` for simplicity (shared database approach)
+- Best practice: Use cheaper LLM models (Haiku) for cost efficiency
 - See `docs/reference/TESTING_SETUP.md` for setup instructions
 
 Template: `.env.example` (may not be current - check `.env.local` for active config)

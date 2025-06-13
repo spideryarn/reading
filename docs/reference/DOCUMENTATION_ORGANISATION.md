@@ -33,7 +33,7 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/TESTING_SETUP.md` - Test configuration and environment setup including Jest, .env.test, and module resolution
 - `docs/reference/TESTING_TROUBLESHOOTING.md` - Known testing issues, workarounds, and debugging strategies including NextRequest mocking problems
 - `docs/reference/TESTING_DATABASE.md` - Database-specific testing patterns and integration testing strategies
-- `docs/reference/TESTING_DATABASE_SUPABASE_OPTIONS_RESEARCH.md` - Research and analysis of different test database approaches for Supabase local development
+- `docs/reference/archive/TESTING_DATABASE_SUPABASE_OPTIONS_RESEARCH.md` - Historical research on different test database approaches for Supabase local development
 - `docs/reference/TESTING_AUTHENTICATION.md` - Redirect to AUTHENTICATION_TESTING.md for authentication testing patterns
 - `docs/reference/COMMAND_LINE_SCRIPTS.md` - Guidelines for writing command-line scripts using shell scripts or TypeScript/Clipanion
 - `docs/reference/STYLING.md` - CSS and visual styling configuration including theme settings, Phosphor icons usage, and loading/error button patterns

@@ -7,11 +7,10 @@ This document covers the technical configuration and setup requirements for runn
 ## See also
 
 - `docs/reference/TESTING_OVERVIEW.md` - Main testing guide with philosophy and basic usage
+- `docs/reference/TESTING_DATABASE.md` - Database testing patterns and shared database approach
 - `docs/reference/TESTING_TROUBLESHOOTING.md` - Known issues and workarounds
-- `docs/reference/TESTING_DATABASE.md` - Database-specific testing patterns and shared database approach
-- `docs/reference/TESTING_DATABASE_SUPABASE_OPTIONS_RESEARCH.md` - Research and analysis of different test database approaches
-- `docs/reference/AUTHENTICATION_TESTING.md` - Authentication testing patterns
-- `lib/testing/test-isolation-utils.ts` - Test isolation utilities for shared database
+- `docs/reference/TESTING_DATABASE_CLEANUP.md` - Test data cleanup utilities
+- `lib/testing/test-isolation-utils.ts` - Test isolation utilities implementation
 - `jest.config.js` - Jest configuration file
 - `jest.setup.js` - Global test setup file  
 - `test/setupEnv.js` - Environment variable loading for tests
@@ -53,7 +52,7 @@ The project follows Next.js best practices for loading environment variables dur
 
    **⚠️ Required**: Tests will abort if `.env.test` is missing. This ensures consistent test environment setup.
    
-   **Important**: We use a **shared database approach** - `.env.test` should point to the same local Supabase instance as `.env.local`. This follows Supabase's official recommendation for test isolation through UUID namespacing rather than separate databases.
+   **Important**: We use a **shared database approach** - `.env.test` should point to the same local Supabase instance as `.env.local`. See `docs/reference/TESTING_DATABASE.md` for details on our test isolation approach.
 
 2. **Run tests**: Environment variables will be loaded automatically:
    ```bash
@@ -116,24 +115,10 @@ export const anthropic = {
 
 ### Best Practices
 - **Mock expensive operations**: Always mock LLM API calls and external services
-- **Use UUID isolation**: Test data is isolated using unique namespaces, not separate databases
 - **Prefer integration tests**: Focus on user-facing functionality over implementation details
 - **Batch test runs**: Use subagents for verbose test output to avoid context window issues
-- **Clean up test data**: Always use afterEach hooks to clean up test-created data
 
 ### Resource Management
-- **Environment separation**: Use `.env.test` for test-specific configuration (same DB as dev)
-- **Test isolation**: Use `lib/testing/test-isolation-utils.ts` for UUID-based test data namespacing
+- **Environment separation**: Use `.env.test` for test-specific configuration
 - **API call mocking**: Prevent accidental API usage during testing
-- **Concurrent testing**: Tests are designed to run safely in parallel across multiple worktrees
-
-## Database Testing Approach
-
-We follow Supabase's official recommendation for shared database testing:
-
-- **Single database**: Tests run against the same local Supabase instance as development
-- **UUID namespacing**: Each test creates data with unique identifiers to avoid conflicts
-- **No resets**: Tests NEVER reset or truncate the database
-- **Self-cleaning**: Tests clean up their own data using the provided utilities
-
-See `docs/reference/TESTING_DATABASE.md` for detailed patterns and examples.
+- **Database testing**: See `docs/reference/TESTING_DATABASE.md` for our shared database approach and test isolation patterns
