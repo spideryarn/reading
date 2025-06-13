@@ -32,18 +32,25 @@ The app has AI-heavy operations that need cost tracking, performance monitoring,
 
 ## Stages & Actions
 
-### Stage: Implement Pino structured logging
+### ✅ Stage: Implement Pino structured logging
 **Goal**: Add production-ready structured logging alongside current console patterns
 
-- [ ] Install Pino: `npm install pino`
-- [ ] Create `lib/services/logger.ts` with base logger and child loggers (ai, chat, mutations)
-- [ ] Add pretty-printing for development: `npm install pino-pretty --save-dev`
-- [ ] Configure logger to use pretty-printing in development, JSON in production
-- [ ] Write unit test for logger configuration in `lib/services/__tests__/logger.test.ts`
-- [ ] Update one API route (`/api/summarise`) to use Pino alongside existing console.log
-- [ ] Test locally to ensure both console and Pino logs appear correctly
-- [ ] Add correlation ID generation pattern with `crypto.randomUUID()`
-- [ ] Git commit: "Implement Pino structured logging infrastructure"
+- [x] Install Pino: `npm install pino`
+- [x] Create `lib/services/logger.ts` with base logger and child loggers (ai, chat, mutations, auth, upload, search)
+- [x] Add pretty-printing for development: `npm install pino-pretty --save-dev`
+- [x] Configure logger to use pretty-printing in development, JSON in production
+- [x] Write unit test for logger configuration in `lib/services/__tests__/logger.test.ts`
+- [x] Update one API route (`/api/summarise`) to use Pino alongside existing console.log
+- [x] Test locally to ensure both console and Pino logs appear correctly - All 7 tests pass, structured JSON output working
+- [x] Add correlation ID generation pattern with `crypto.randomUUID()`
+- [x] Git commit: "Implement Pino structured logging infrastructure" (commit: 329049c)
+
+📔 **Key Learnings**:
+- Pino works seamlessly with Next.js App Router and TypeScript
+- Pretty-printing disabled in test environment to avoid transport issues
+- Added comprehensive utilities: correlation IDs, performance timers, AI operation tracking
+- Created child loggers for feature separation (ai, chat, mutation, auth, upload, search)
+- Cost estimation added for AI operations (rough $0.000003 per token)
 
 ### Stage: Enhance AI operation logging
 **Goal**: Add comprehensive tracking for AI operations (tokens, costs, performance)
