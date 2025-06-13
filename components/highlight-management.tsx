@@ -15,6 +15,7 @@ import {
   Clock
 } from '@phosphor-icons/react'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
+import { getSemanticHighlightClass, getSemanticHighlightIntensity } from '@/lib/utils/semantic-highlighting'
 
 // Highlight interface matching semantic search result structure
 interface Highlight {
@@ -72,10 +73,51 @@ export function HighlightManagement({ documentId }: HighlightManagementProps) {
     }, 50)
   }, [])
 
+  // Apply semantic highlights to document elements
+  const applySemanticHighlights = useCallback((highlights: Highlight[]) => {
+    // First, clear any existing semantic highlights
+    clearSemanticHighlights()
+    
+    highlights.forEach(highlight => {
+      const element = document.querySelector(`[data-element-id="${highlight.elementId}"]`)
+      if (element) {
+        const highlightClass = getSemanticHighlightClass(highlight.confidence * 100)
+        element.classList.add(highlightClass)
+        element.setAttribute('data-semantic-highlight', 'true')
+        element.setAttribute('data-semantic-confidence', highlight.confidence.toString())
+      }
+    })
+  }, [])
+
+  // Clear all semantic highlights from document
+  const clearSemanticHighlights = useCallback(() => {
+    const highlightedElements = document.querySelectorAll('[data-semantic-highlight="true"]')
+    highlightedElements.forEach(element => {
+      // Remove all semantic highlight classes
+      element.classList.remove(
+        'semantic-highlight-very-low',
+        'semantic-highlight-low',
+        'semantic-highlight-medium',
+        'semantic-highlight-high',
+        'semantic-highlight-very-high',
+        'semantic-highlight-active'
+      )
+      element.removeAttribute('data-semantic-highlight')
+      element.removeAttribute('data-semantic-confidence')
+    })
+  }, [])
+
   // Load existing highlights and query history on mount
   useEffect(() => {
     fetchQueryHistory()
   }, [documentId])
+
+  // Clean up highlights when component unmounts
+  useEffect(() => {
+    return () => {
+      clearSemanticHighlights()
+    }
+  }, [clearSemanticHighlights])
 
   // Fetch query history from API
   const fetchQueryHistory = useCallback(async () => {
@@ -146,8 +188,9 @@ export function HighlightManagement({ documentId }: HighlightManagementProps) {
         createdAt: new Date().toISOString()
       }))
 
-      // Auto-highlight all matches in document by scrolling to first result
+      // Apply semantic highlights to the document and scroll to first result
       if (newHighlights.length > 0) {
+        applySemanticHighlights(newHighlights)
         // Scroll to first highlight to show the results
         actions.scrollToElement(newHighlights[0].elementId)
       }
@@ -166,7 +209,7 @@ export function HighlightManagement({ documentId }: HighlightManagementProps) {
       // Refresh query history after highlight creation
       fetchQueryHistory()
     }
-  }, [documentId, actions, fetchQueryHistory])
+  }, [documentId, actions, fetchQueryHistory, applySemanticHighlights])
 
   // Sort highlights function
   const sortHighlights = useCallback((highlights: Highlight[], sortByIntensity: boolean) => {
@@ -252,18 +295,33 @@ export function HighlightManagement({ documentId }: HighlightManagementProps) {
     }
   }, [isCreating, triggerHighlightCreation])
 
-  // Handle clicking on a highlight to scroll to it
+  // Handle clicking on a highlight to scroll to it and add active highlight effect
   const handleHighlightClick = useCallback((highlight: Highlight) => {
+    // Remove any existing active highlight
+    const activeElements = document.querySelectorAll('.semantic-highlight-active')
+    activeElements.forEach(el => el.classList.remove('semantic-highlight-active'))
+    
+    // Add active highlight to the clicked element
+    const element = document.querySelector(`[data-element-id="${highlight.elementId}"]`)
+    if (element) {
+      element.classList.add('semantic-highlight-active')
+      // Remove active class after animation
+      setTimeout(() => {
+        element.classList.remove('semantic-highlight-active')
+      }, 1600) // Duration matches CSS animation
+    }
+    
     actions.scrollToElement(highlight.elementId)
   }, [actions])
 
   // Clear all highlights
   const clearHighlights = useCallback(() => {
+    clearSemanticHighlights()
     setHighlights([])
     setHighlightsCached(false)
     setHighlightsCachedAt(null)
     setError(null)
-  }, [])
+  }, [clearSemanticHighlights])
 
   return (
     <div className="flex flex-col h-full">
@@ -488,7 +546,7 @@ export function HighlightManagement({ documentId }: HighlightManagementProps) {
                         {highlight.elementType}
                       </span>
                       <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
-                        {Math.round(highlight.confidence * 100)}% intensity
+                        {getSemanticHighlightIntensity(highlight.confidence * 100)} ({Math.round(highlight.confidence * 100)}%)
                       </span>
                     </div>
                   </div>
