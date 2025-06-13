@@ -15,7 +15,7 @@ import { createClient } from '@/lib/supabase/client'
 import { ProfileService } from '../profiles'
 import { DocumentService } from '../documents'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database, Profile, Document } from '@/lib/types/database'
+import type { Database, Profile } from '@/lib/types/database'
 
 // Skip tests if Supabase environment variables are not set
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -174,12 +174,12 @@ describeIfEnv('Profile-Document Integration Tests', () => {
       testUserIds.push(secondUserId)
 
       // Create profiles for both users
-      const firstProfile = await profileService.create({
+      await profileService.create({
         user_id: testUserId,
         preferences: { theme: 'dark' }
       })
 
-      const secondProfile = await profileService.create({
+      await profileService.create({
         user_id: secondUserId,
         preferences: { theme: 'light' }
       })

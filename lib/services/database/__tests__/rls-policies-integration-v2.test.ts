@@ -11,7 +11,7 @@
  */
 
 import { RLSTestSetup } from '@/lib/testing/rls-database-test-utils-v2'
-import { getCleanupFunctions } from '@/lib/testing/test-isolation-utils'
+import { getTrackedData } from '@/lib/testing/test-isolation-utils'
 import { SECURITY_TEST_DOCUMENTS } from '@/lib/testing/security-fixtures'
 import { TEST_USER_IDS } from '@/lib/testing/rls-test-context'
 
@@ -64,19 +64,18 @@ describe('RLS Policy Integration Tests', () => {
 
     test('Document ownership isolation with test namespace', async () => {
       // Create test documents with namespace tracking
-      const userADocument = await rlsSetup.createTestDocument({
+      await rlsSetup.createTestDocument({
         ...SECURITY_TEST_DOCUMENTS.PRIVATE_USER_A,
         created_by: TEST_USER_IDS.USER_A,
       })
       
-      const userBDocument = await rlsSetup.createTestDocument({
+      await rlsSetup.createTestDocument({
         ...SECURITY_TEST_DOCUMENTS.PRIVATE_USER_B,
         created_by: TEST_USER_IDS.USER_B,
       })
 
       // Get authenticated clients
       const userAClient = rlsSetup.getUserClient('USER_A')
-      const userBClient = rlsSetup.getUserClient('USER_B')
 
       // Test: User A queries documents (simulated filtering)
       const userAQuery = await userAClient.from('documents').select('*')
@@ -96,8 +95,6 @@ describe('RLS Policy Integration Tests', () => {
       })
 
       // User B should be able to access public documents
-      const userBClient = rlsSetup.getUserClient('USER_B')
-      
       // In real RLS, this would be filtered at the database level
       // Our test infrastructure ensures the setup is correct
       expect(publicDocument.is_public).toBe(true)
@@ -138,7 +135,7 @@ describe('RLS Policy Integration Tests', () => {
       
       // Verify all test data is tracked for cleanup
       const namespace = rlsSetup.getNamespace()
-      const trackedData = require('@/lib/testing/test-isolation-utils').getTrackedData(namespace)
+      const trackedData = getTrackedData(namespace)
       expect(trackedData.documents).toContain(document.id)
       expect(trackedData.aiCalls).toContain(aiCall.id)
       expect(trackedData.enhancements).toContain(enhancement.id)
@@ -205,14 +202,14 @@ describe('RLS Policy Integration Tests', () => {
       })
 
       // Verify data is tracked
-      const trackedBefore = require('@/lib/testing/test-isolation-utils').getTrackedData(namespace)
+      const trackedBefore = getTrackedData(namespace)
       expect(trackedBefore.documents).toContain(doc.id)
 
       // Clean up
       await rlsSetup.cleanup()
 
       // Verify tracking is cleared
-      const trackedAfter = require('@/lib/testing/test-isolation-utils').getTrackedData(namespace)
+      const trackedAfter = getTrackedData(namespace)
       expect(trackedAfter).toBeUndefined()
     })
   })

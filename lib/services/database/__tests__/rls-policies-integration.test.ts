@@ -156,7 +156,7 @@ describe.skip('DEPRECATED: RLS Policy Integration Tests', () => {
       RLSAssertions.assertListIsolation(userAListResult, 1)
 
       // Verify User A sees their document but not User B's
-      const userADocIds = userAListResult.data?.map((doc: any) => doc.id) || []
+      const userADocIds = userAListResult.data?.map((doc: { id: string }) => doc.id) || []
       expect(userADocIds).toContain(userADoc.id)
       expect(userADocIds).not.toContain(userBDoc.id)
 
@@ -169,7 +169,7 @@ describe.skip('DEPRECATED: RLS Policy Integration Tests', () => {
       RLSAssertions.assertListIsolation(userBListResult, 1)
 
       // Verify User B sees their document but not User A's
-      const userBDocIds = userBListResult.data?.map((doc: any) => doc.id) || []
+      const userBDocIds = userBListResult.data?.map((doc: { id: string }) => doc.id) || []
       expect(userBDocIds).toContain(userBDoc.id)
       expect(userBDocIds).not.toContain(userADoc.id)
     })

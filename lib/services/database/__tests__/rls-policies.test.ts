@@ -42,17 +42,15 @@ import {
   withUserB, 
   testUserIsolation,
   cleanupRLSTestContext,
-  TEST_USERS,
   TEST_USER_IDS
 } from '@/lib/testing/rls-test-context'
 import { 
   SECURITY_TEST_DOCUMENTS,
-  SECURITY_TEST_AI_CALLS,
   SECURITY_ASSERTIONS
 } from '@/lib/testing/security-fixtures'
 
 describe.skip('DEPRECATED: RLS Policy Testing', () => {
-  let supabase: any
+  let supabase: ReturnType<typeof createClient>
   let documentService: DocumentService
   let aiCallService: AiCallService
   let profileService: ProfileService

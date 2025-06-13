@@ -340,7 +340,7 @@ describe('ProfileService', () => {
     it('should handle non-object preferences gracefully', async () => {
       const profileWithInvalidPrefs = {
         ...testProfile,
-        preferences: 'invalid' as any
+        preferences: 'invalid' as unknown as Record<string, unknown>
       }
 
       jest.spyOn(profileService, 'getByUserId').mockResolvedValue(profileWithInvalidPrefs)

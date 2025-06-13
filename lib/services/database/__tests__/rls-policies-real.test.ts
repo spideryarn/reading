@@ -12,9 +12,8 @@
  * and document ownership at the database level.
  */
 
-import { RealRLSTestSetup, RLSAssertions, RLSTestHelpers } from './rls-test-helpers'
+import { RealRLSTestSetup, RLSAssertions } from './rls-test-helpers'
 import { TEST_USER_IDS } from '@/lib/testing/rls-test-context'
-import { getTestNamespace, getCleanupFunctions } from '@/lib/testing/test-isolation-utils'
 
 describe('Real RLS Policy Tests', () => {
   let setup: RealRLSTestSetup

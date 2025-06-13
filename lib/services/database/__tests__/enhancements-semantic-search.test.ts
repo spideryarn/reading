@@ -19,7 +19,15 @@ const mockSupabaseClient = {
 
 describe('EnhancementService - Semantic Search', () => {
   let enhancementService: EnhancementService
-  let mockQuery: any
+  let mockQuery: {
+    upsert: jest.Mock
+    select: jest.Mock
+    eq: jest.Mock
+    order: jest.Mock
+    limit: jest.Mock
+    maybeSingle: jest.Mock
+    single: jest.Mock
+  }
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -339,7 +347,7 @@ describe('EnhancementService - Semantic Search', () => {
         error: null 
       })
       
-      const result = await enhancementService.upsert({
+      await enhancementService.upsert({
         documentId: 'doc-123',
         aiCallId: 'ai-call-456',
         type: 'semantic-search',
