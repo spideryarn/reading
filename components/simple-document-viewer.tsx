@@ -5,17 +5,30 @@
 // Part of the ResizablePanelGroup architecture
 // Supports semantic highlighting display - see docs/reference/TOOL_HIGHLIGHT.md for highlighting system details
 
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useCallback } from 'react'
 import type { DocumentElement } from '@/lib/types/document'
 import { MarkdownRenderer } from './markdown-renderer'
 import { useElementVisibility } from '@/lib/hooks/useElementVisibility'
 import { DocumentParser } from '@/lib/services/document-parser'
 import { getSemanticHighlightClass } from '@/lib/utils/semantic-highlighting'
+import Mark from 'mark.js'
+import { useDocumentCommunication } from '@/lib/context/document-communication-context'
 
 // Semantic highlight interface
 interface SemanticHighlight {
   elementId: string
   confidence: number
+}
+
+// Entity interface for glossary highlighting
+interface Entity {
+  name: string
+  ontology: 'person' | 'place' | 'date' | 'theme' | 'event' | 
+           'reference' | 'object' | 'organization' | 'concept' | 
+           'definition' | 'other'
+  aliases: string[]
+  brief_explanation: string
+  long_explanation?: string
 }
 
 interface SimpleDocumentViewerProps {
@@ -26,6 +39,8 @@ interface SimpleDocumentViewerProps {
   onElementClick?: (element: DocumentElement) => void
   semanticHighlights?: SemanticHighlight[]
   activeElementId?: string | null
+  // Glossary highlighting props
+  glossaryEntities?: Entity[]
 }
 
 export function SimpleDocumentViewer({
@@ -35,10 +50,15 @@ export function SimpleDocumentViewer({
   onElementVisibilityChange,
   onElementClick,
   semanticHighlights = [],
-  activeElementId
+  activeElementId,
+  glossaryEntities = []
 }: SimpleDocumentViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const elementRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  
+  // Glossary highlighting
+  const glossaryMarkInstanceRef = useRef<Mark | null>(null)
+  const { actions } = useDocumentCommunication()
   
   // Element visibility tracking
   const { observeElement, unobserveElement } = useElementVisibility(onElementVisibilityChange)
@@ -66,6 +86,87 @@ export function SimpleDocumentViewer({
       }
     })
   }, [elements, observeElement, unobserveElement])
+  
+  // Initialize glossary Mark.js instance
+  useEffect(() => {
+    const container = document.getElementById('document-viewer')
+    if (container) {
+      glossaryMarkInstanceRef.current = new Mark(container)
+    }
+    
+    return () => {
+      // Clean up glossary highlights on unmount
+      if (glossaryMarkInstanceRef.current) {
+        glossaryMarkInstanceRef.current.unmark({ className: 'highlight-glossary' })
+      }
+    }
+  }, [])
+  
+  // Handle glossary click events
+  const handleGlossaryClick = useCallback((entityName: string) => {
+    // Switch to glossary tab and scroll to entity
+    actions.setActiveTab('glossary')
+    // Note: Scrolling to specific entity in glossary pane will be implemented later
+    console.log(`Glossary click: ${entityName}`) // Temporary log to use entityName
+  }, [actions])
+  
+  // Apply glossary highlights when entities change (but not on every re-render)
+  useEffect(() => {
+    if (!glossaryMarkInstanceRef.current || !glossaryEntities.length) {
+      return
+    }
+    
+    // Clear previous glossary highlights
+    glossaryMarkInstanceRef.current.unmark({ className: 'highlight-glossary' })
+    
+    // Extract all entity terms (names + aliases)
+    const allTerms: string[] = []
+    const termToEntityMap = new Map<string, Entity>()
+    
+    glossaryEntities.forEach(entity => {
+      const terms = [entity.name, ...entity.aliases]
+      terms.forEach(term => {
+        if (term.trim()) {
+          allTerms.push(term)
+          termToEntityMap.set(term.toLowerCase(), entity)
+        }
+      })
+    })
+    
+    if (allTerms.length === 0) return
+    
+    // Apply highlights using Mark.js with a small delay to ensure DOM is ready
+    setTimeout(() => {
+      if (glossaryMarkInstanceRef.current) {
+        glossaryMarkInstanceRef.current.mark(allTerms, {
+          separateWordSearch: false,  // Match exact phrases
+          acrossElements: true,       // Handle terms split across HTML elements
+          caseSensitive: false,       // Case-insensitive matching
+          exclude: ['mark'],          // Don't highlight within existing marks
+          className: 'highlight-glossary',
+          each: function(element) {
+            // Get the matched text to find corresponding entity
+            const matchedText = element.textContent || ''
+            const entity = termToEntityMap.get(matchedText.toLowerCase())
+            
+            if (entity) {
+              // Store entity reference for click handling
+              element.setAttribute('data-glossary-entity', entity.name)
+              element.setAttribute('title', entity.brief_explanation)
+              element.style.cursor = 'pointer'
+              
+              // Add click handler
+              element.addEventListener('click', (e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                handleGlossaryClick(entity.name)
+              })
+            }
+          }
+        })
+      }
+    }, 10)
+  }, [glossaryEntities, handleGlossaryClick])
   
   // Render an individual element based on its type
   const renderElement = (element: DocumentElement, depth: number = 0) => {
@@ -239,6 +340,26 @@ export function SimpleDocumentViewer({
         }
         .animate-highlight {
           animation: highlight 2s ease-out;
+        }
+        
+        /* Glossary highlight styles */
+        .highlight-glossary {
+          border-bottom: 1px dotted #6B7280;
+          cursor: help;
+          transition: all 0.2s ease;
+        }
+        
+        .highlight-glossary::after {
+          content: "📖";
+          font-size: 0.75em;
+          vertical-align: super;
+          margin-left: 2px;
+        }
+        
+        .highlight-glossary:hover {
+          background-color: rgba(107, 114, 128, 0.1);
+          border-radius: 2px;
+          padding: 1px 2px;
         }
       `}</style>
     </div>

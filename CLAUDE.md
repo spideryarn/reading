@@ -247,13 +247,20 @@ Template: `.env.example` (may not be current - check `.env.local` for active con
 
 **Puppeteer MCP (Preferred)**:
 - Use Puppeteer for browser automation tasks via MCP server
-- **Port configuration**: Always check `.env.local` for the PORT variable before navigating. Different Git worktrees use different ports (3001, 3002, etc.), not the default 3000
+- **⚠️ CRITICAL - Port configuration**: Always check `.env.local` for the PORT variable before navigating. Different Git worktrees use different ports (3001, 3002, 3003, etc.), not the default 3000. This is essential for reliable testing.
+- **Test credentials**: Use hello@spideryarn.com with password 'ASDFasdf1' (from `supabase/seed.sql`)
 - **Headless by default**: Always use `{"headless": true}` in launchOptions unless user specifically requests visual debugging
 - **Window size**: Set viewport in launchOptions and screenshot dimensions for proper page rendering:
   - `defaultViewport: {"width": 1200, "height": 800}` in launchOptions for better page layout
   - Use `width` and `height` parameters in screenshot calls (e.g., 1200x800)
   - Default 800x600 is often too small for modern web layouts
-- Example: `mcp__puppeteer__puppeteer_navigate({url: "http://localhost:${PORT}/", launchOptions: {"headless": true, "defaultViewport": {"width": 1200, "height": 800}}})`
+- **Port checking example**: 
+  ```bash
+  # Always check .env.local first
+  PORT=$(grep "^PORT=" .env.local | cut -d'=' -f2)
+  # Then navigate with the correct port
+  mcp__puppeteer__puppeteer_navigate({url: "http://localhost:${PORT}/", launchOptions: {"headless": true, "defaultViewport": {"width": 1200, "height": 800}}})
+  ```
 
 **Playwright**: Available as alternative, but prefer Puppeteer for MCP integration
 
