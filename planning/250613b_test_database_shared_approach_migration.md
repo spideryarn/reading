@@ -113,12 +113,15 @@
   - [ ] Replace hardcoded test emails (found in server-auth.test.ts, route-protection.test.ts, etc.)
   - [ ] Add cleanup for test users
 - [ ] Run all updated tests to ensure they pass
-- [ ] Git commit test updates
+- [x] Git commit test updates
+  - Commit 1: RLS test utilities with namespace isolation (`acf60c9`)
+  - Commit 2: Remove dangerous test database scripts (`439612a`) 
+  - Commit 3: Planning progress update (`1d19dfa`)
 
 ### Stage: Revert infrastructure to single database
-- [ ] Update `.env.test` to point to dev database ports
-  - [ ] Change SUPABASE_URL from 54351 to 54341
-  - [ ] Change DATABASE_URL from 54352 to 54342
+- [x] Update `.env.test` to point to dev database ports
+  - [x] Change SUPABASE_URL from 54351 to 54341
+  - [x] Change DATABASE_URL from 54352 to 54342
 - [x] Update `package.json` to remove test database scripts
   - [x] Remove `test:db:start`, `test:db:stop`, etc.
   - [x] Update test scripts to remove `test:db:ensure`
@@ -127,10 +130,10 @@
 - [ ] Git commit infrastructure simplification
 
 ### Stage: Clean up test database artifacts
-- [ ] Stop test database if running: `npm run test:db:stop`
-- [ ] Remove `supabase-test/` directory
-- [ ] Remove `supabase/config.test.toml`
-- [ ] Verify no Docker containers for test database remain
+- [x] Stop test database if running: `npm run test:db:stop`
+- [x] Remove `supabase-test/` directory
+- [x] Remove `supabase/config.test.toml`
+- [x] Verify no Docker containers for test database remain
 - [ ] Git commit cleanup
 
 ### Stage: Create cleanup utilities
