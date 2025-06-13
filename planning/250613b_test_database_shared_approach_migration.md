@@ -31,40 +31,70 @@
 
 ## Stages & actions
 
-### Stage: Initial setup and sync
-- [ ] Run `./scripts/sync-worktrees.ts` to pull latest changes from main
-
 ### Stage: Find and document destructive operations
-- [ ] Search for all database reset operations in tests (use subagent)
-  - [ ] Search for `db.reset`, `db reset`, `supabase db reset`
-  - [ ] Search for `DELETE FROM` without WHERE clauses
-  - [ ] Search for `TRUNCATE` operations
-  - [ ] Search for any cleanup that assumes empty tables
-- [ ] Create comprehensive list of files and line numbers that need updating
-- [ ] Document the patterns we're replacing (for future reference)
+- [x] Search for all database reset operations in tests (use subagent)
+  - [x] Search for `db.reset`, `db reset`, `supabase db reset`
+  - [x] Search for `DELETE FROM` without WHERE clauses
+  - [x] Search for `TRUNCATE` operations
+  - [x] Search for any cleanup that assumes empty tables
+- [x] Create comprehensive list of files and line numbers that need updating
+- [x] Document the patterns we're replacing (for future reference)
+
+#### Findings from Destructive Operations Audit
+
+**Critical Issues Found:**
+
+1. **RLS Test Utilities - Broad DELETE Operations**
+   - File: `lib/testing/rls-database-test-utils.ts` (lines 370-380)
+   - Issue: The `cleanup()` method deletes ALL records from tables
+   - Impact: This will delete ALL data in the development database, not just test data
+   - Fix Required: Track created test records and delete only those specific records
+
+2. **Database Reset Scripts**
+   - File: `package.json`
+   - Issue: Contains `db:reset` script that completely resets the database
+   - Impact: Accidental execution will destroy all development data
+   - Fix Required: Remove or rename this script with warnings
+
+**Good Patterns Already in Use:**
+
+1. **Specific Record Cleanup**
+   - File: `src/lib/services/__tests__/database-schema.test.ts`
+   - Pattern: Tracks and deletes only specific test records using testDocumentId
+
+2. **Tracked Test Data**
+   - File: `lib/services/database/__tests__/integration.test.ts`
+   - Pattern: Maintains arrays of created IDs for cleanup
+
+**Documentation References to Update:**
+- CLAUDE.md - References to `npm run db:reset`
+- docs/reference/SETUP.md - Multiple references to database reset
+- docs/reference/CODING_GUIDELINES.md - Mentions reset operations
+- docs/reference/DATABASE_OVERVIEW.md - References to reset commands
 
 ### Stage: Create test isolation utilities
-- [ ] Create `lib/testing/test-isolation-utils.ts` with:
-  - [ ] `getTestNamespace()` function for unique test identifiers
-  - [ ] `createTestEmail()` function for test emails
-  - [ ] `createTestUser()` helper with automatic cleanup tracking
-  - [ ] `cleanupTestData()` utility for afterEach hooks
-- [ ] Write tests for the test utilities themselves
-- [ ] Run tests to ensure utilities work correctly
+- [x] Create `lib/testing/test-isolation-utils.ts` with:
+  - [x] `getTestNamespace()` function for unique test identifiers
+  - [x] `createTestEmail()` function for test emails
+  - [x] `createTestUser()` helper with automatic cleanup tracking
+  - [x] `cleanupTestData()` utility for afterEach hooks
+  - Added additional utilities: `initTestTracking()`, `trackTestData()`, `createTestDocument()`, `getCleanupFunctions()`
+- [x] Write tests for the test utilities themselves
+- [x] Run tests to ensure utilities work correctly - all 21 tests passing
 
 ### Stage: Update documentation for LLM guidance
-- [ ] Update `CLAUDE.md` with new testing approach
-  - [ ] Add section on shared database testing
-  - [ ] Include explicit "NEVER use database resets" instruction
-  - [ ] Add code examples of proper test patterns
-- [ ] Update `docs/reference/TESTING_DATABASE.md`
-  - [ ] Remove references to test database separation
-  - [ ] Add UUID-based isolation examples
-  - [ ] Include cleanup patterns
-- [ ] Update `docs/reference/TESTING_SETUP.md`
-  - [ ] Remove dual-database setup instructions
-  - [ ] Simplify to single database approach
-- [ ] Add test pattern examples to `docs/reference/TESTING_OVERVIEW.md`
+- [x] Update `CLAUDE.md` with new testing approach
+  - [x] Add section on shared database testing
+  - [x] Include explicit "NEVER use database resets" instruction
+  - [x] Add code examples of proper test patterns
+- [x] Update `docs/reference/TESTING_DATABASE.md`
+  - [x] Remove references to test database separation
+  - [x] Add UUID-based isolation examples
+  - [x] Include cleanup patterns
+- [x] Update `docs/reference/TESTING_SETUP.md`
+  - [x] Remove dual-database setup instructions
+  - [x] Simplify to single database approach
+- [x] Add test pattern examples to `docs/reference/TESTING_OVERVIEW.md`
 - [ ] Git commit documentation updates
 
 ### Stage: Update existing tests to remove destructive operations
