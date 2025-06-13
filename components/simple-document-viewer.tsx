@@ -10,7 +10,6 @@ import type { DocumentElement } from '@/lib/types/document'
 import { MarkdownRenderer } from './markdown-renderer'
 import { useElementVisibility } from '@/lib/hooks/useElementVisibility'
 import { DocumentParser } from '@/lib/services/document-parser'
-import { sanitizeAcademicContent } from '@/lib/utils/html-sanitizer'
 import { getSemanticHighlightClass } from '@/lib/utils/semantic-highlighting'
 
 // Semantic highlight interface

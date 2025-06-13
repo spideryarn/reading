@@ -96,7 +96,6 @@ function ResizableDocumentLayoutInner({
   onActiveElementChange
 }: ResizableDocumentLayoutProps) {
   const { actions, state } = useDocumentCommunication()
-  const [, setScrollTarget] = useState<{ id: string; timestamp: number } | null>(null)
   const [isLeftPaneCollapsed, setIsLeftPaneCollapsed] = useState(false)
   const [savedLeftPaneSize, setSavedLeftPaneSize] = useState(30) // Remember the last size
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
@@ -123,30 +122,6 @@ function ResizableDocumentLayoutInner({
     }
   }, [])
   
-  // Handle glossary entity clicks
-  const handleScrollToEntity = useCallback((elementId: string) => {
-    // Set scroll target to trigger effect in document viewer
-    setScrollTarget({ id: elementId, timestamp: Date.now() })
-    
-    // Find and highlight the element
-    const element = document.getElementById(elementId)
-    if (element) {
-      element.setAttribute('data-highlight-target', 'true')
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      
-      setTimeout(() => {
-        element.removeAttribute('data-highlight-target')
-      }, 2000)
-    }
-    
-    // Also select the element if callback provided
-    if (onElementSelect) {
-      const targetElement = elements.find(el => el.id === elementId)
-      if (targetElement) {
-        onElementSelect(targetElement)
-      }
-    }
-  }, [elements, onElementSelect])
   
   // Handle element clicks from document viewer to scroll ToC
   const handleElementClick = useCallback((element: DocumentElement) => {

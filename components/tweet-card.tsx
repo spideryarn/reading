@@ -41,12 +41,6 @@ export function TweetCard({ tweet, totalTweets }: TweetCardProps) {
   const characterCount = tweet.text.length
   const isLongTweet = characterCount > 200
   
-  // Character count color based on Twitter's approach
-  const getCharacterCountColor = () => {
-    if (characterCount > 250) return 'text-red-500'
-    if (characterCount > 200) return 'text-amber-500'
-    return 'text-gray-400'
-  }
   
   return (
     <Card className={cn(

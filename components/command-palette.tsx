@@ -296,7 +296,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
   const executeCommand = useCallback(async (command: Command) => {
     setOpen(false)
     await command.action()
-  }, [])
+  }, [setOpen])
 
   // Keyboard shortcut handler for Cmd+K (Mac) / Ctrl+K (Windows/Linux)
   useEffect(() => {
@@ -311,7 +311,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
     
     document.addEventListener('keydown', handleKeydown)
     return () => document.removeEventListener('keydown', handleKeydown)
-  }, [isMac])
+  }, [isMac, setOpen])
 
   // Individual shortcut handlers for numbered navigation
   useEffect(() => {
