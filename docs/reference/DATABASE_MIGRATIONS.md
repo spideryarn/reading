@@ -26,8 +26,16 @@ supabase/
 # Create new migration (generates timestamped file)
 npx supabase migration new add_user_preferences
 
-# Apply all pending migrations (DESTRUCTIVE - requires explicit user permission)
-npx supabase db reset
+# Apply new migrations to local database (RECOMMENDED)
+npx supabase db push --local
+
+# Apply new migrations to remote database
+npx supabase db push
+
+# Preview migrations without applying them
+npx supabase db push --local --dry-run
+
+# DO NOT RUN `npx supabase db reset` or `npm run db:reset` (resets entire database)
 
 # Check current migration status
 npx supabase status
@@ -37,17 +45,14 @@ npx supabase db diff -f my_schema_changes
 
 # Generate TypeScript types from current schema
 npm run db:types
-
-# NEVER RUN WITHOUT USER PERMISSION - Reset database and regenerate types
-npm run db:reset
 ```
 
 ## Migration Workflow
 
 1. **Create migration**: `npx supabase migration new feature_name`
 2. **Edit SQL file**: Add your schema changes in `supabase/migrations/[timestamp]_feature_name.sql`
-3. **IMPORTANT**: Ask user for explicit permission before applying migrations with `npm run db:reset`
-4. **Apply locally** (with permission): `npm run db:reset` (resets DB, applies all migrations, and regenerates types)
+3. **Apply locally**: `npx supabase db push --local` (applies new migrations only)
+4. **IMPORTANT**: Ask user for explicit permission before applying migrations
 
 ## Recent Migrations
 
@@ -76,18 +81,10 @@ CREATE TABLE user_preferences (
 CREATE INDEX idx_user_preferences_user_id ON user_preferences(user_id);
 ```
 
-## ⚠️ CRITICAL SAFETY WARNING
-
-**Only run migrations with explicit user permission (or as part of a planning document)**
-
-This includes but is not limited to:
-- `npm run db:reset` / `npx supabase db reset` - DESTRUCTIVE: deletes all local database data
-- `npx supabase db push` - Applies migrations to database
-- `npx supabase migration new` - Creates new migration files
-- Any SQL operations that modify data or schema
-
 
 ## IMPORTANT RULES - always err on the side of caution
+
+**Only run migrations with explicit user permission (or as part of a planning document)**
 
 - **NEVER run database operations without explicit user permission** - this includes migrations, resets, pushes, or any schema changes
 - **PRODUCTION AWARENESS**: Any operation that could affect production data or systems requires extra caution and explicit permission
@@ -105,9 +102,6 @@ The project uses Supabase's type generation to create TypeScript types from the 
 ```bash
 # Generate types only (manual)
 npm run db:types
-
-# Reset database and generate types (recommended for testing schema changes)
-npm run db:reset
 ```
 
 ### Generated Types Location
@@ -129,7 +123,7 @@ npm run db:reset
 ### Essential Practices
 - **Descriptive names**: `add_summaries_level_index` not `fix_stuff`
 - **One feature per migration**: Keep changes focused and atomic
-- **Always regenerate types**: Use `npm run db:reset` or `npm run db:types` after schema changes
+- **Always regenerate types**: Use `npm run db:types` after schema changes
 - **Commit types with migrations**: Include both migration files and updated types in the same commit
 
 ### File Naming Requirements

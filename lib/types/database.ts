@@ -390,6 +390,10 @@ export type Database = {
           id: string
           is_admin: string | null
           preferences: Json | null
+          stripe_customer_id: string | null
+          subscription_ends_at: string | null
+          subscription_plan: string | null
+          subscription_status: string | null
           updated_at: string | null
           user_id: string
         }
@@ -398,6 +402,10 @@ export type Database = {
           id?: string
           is_admin?: string | null
           preferences?: Json | null
+          stripe_customer_id?: string | null
+          subscription_ends_at?: string | null
+          subscription_plan?: string | null
+          subscription_status?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -406,6 +414,10 @@ export type Database = {
           id?: string
           is_admin?: string | null
           preferences?: Json | null
+          stripe_customer_id?: string | null
+          subscription_ends_at?: string | null
+          subscription_plan?: string | null
+          subscription_status?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -416,7 +428,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_active_subscription: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
