@@ -3,6 +3,7 @@ import { render, screen, waitFor, act } from '@testing-library/react'
 import { AuthProvider, useAuth } from '@/lib/context/auth-context'
 import { createClient } from '@/lib/supabase/client'
 import { User, Session, AuthError } from '@supabase/supabase-js'
+import { getTestNamespace, createTestEmail } from '@/lib/testing/test-isolation-utils'
 
 // Mock Supabase client
 jest.mock('@/lib/supabase/client', () => ({
@@ -18,7 +19,7 @@ Object.defineProperty(window, 'location', {
 })
 
 // Test component that uses the auth context
-function TestComponent() {
+function TestComponent({ testEmail }: { testEmail: string }) {
   const { user, session, loading, signIn, signUp, signOut } = useAuth()
   
   return (
@@ -26,10 +27,10 @@ function TestComponent() {
       <div data-testid="loading">{loading ? 'Loading' : 'Loaded'}</div>
       <div data-testid="user">{user ? user.email : 'No user'}</div>
       <div data-testid="session">{session ? 'Has session' : 'No session'}</div>
-      <button data-testid="sign-in" onClick={() => signIn('test@example.com', 'password')}>
+      <button data-testid="sign-in" onClick={() => signIn(testEmail, 'password')}>
         Log in
       </button>
-      <button data-testid="sign-up" onClick={() => signUp('test@example.com', 'password')}>
+      <button data-testid="sign-up" onClick={() => signUp(testEmail, 'password')}>
         Register
       </button>
       <button data-testid="sign-out" onClick={() => signOut()}>
@@ -47,6 +48,12 @@ describe('AuthContext', () => {
   const mockSignOut = jest.fn()
   const mockUnsubscribe = jest.fn()
 
+  // Create test namespace for this test suite
+  const namespace = getTestNamespace('auth-context-test')
+  const testEmail = createTestEmail(namespace)
+  const existingEmail = createTestEmail(namespace, 'existing')
+  const newEmail = createTestEmail(namespace, 'new')
+
   const mockSupabaseClient = {
     auth: {
       getSession: mockGetSession,
@@ -59,7 +66,7 @@ describe('AuthContext', () => {
 
   const mockUser: User = {
     id: 'user-123',
-    email: 'test@example.com',
+    email: testEmail,
     aud: 'authenticated',
     role: 'authenticated',
     created_at: '2024-01-01T00:00:00.000Z',
@@ -95,7 +102,7 @@ describe('AuthContext', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
       
       expect(() => {
-        render(<TestComponent />)
+        render(<TestComponent testEmail={testEmail} />)
       }).toThrow('useAuth must be used within an AuthProvider')
       
       consoleSpy.mockRestore()
@@ -110,7 +117,7 @@ describe('AuthContext', () => {
       
       render(
         <AuthProvider>
-          <TestComponent />
+          <TestComponent testEmail={testEmail} />
         </AuthProvider>
       )
       
@@ -126,13 +133,13 @@ describe('AuthContext', () => {
       
       render(
         <AuthProvider>
-          <TestComponent />
+          <TestComponent testEmail={testEmail} />
         </AuthProvider>
       )
       
       await waitFor(() => {
         expect(screen.getByTestId('loading')).toHaveTextContent('Loaded')
-        expect(screen.getByTestId('user')).toHaveTextContent('test@example.com')
+        expect(screen.getByTestId('user')).toHaveTextContent(testEmail)
         expect(screen.getByTestId('session')).toHaveTextContent('Has session')
       })
     })
@@ -144,7 +151,7 @@ describe('AuthContext', () => {
       
       render(
         <AuthProvider>
-          <TestComponent />
+          <TestComponent testEmail={testEmail} />
         </AuthProvider>
       )
       
@@ -161,7 +168,7 @@ describe('AuthContext', () => {
       
       render(
         <AuthProvider>
-          <TestComponent />
+          <TestComponent testEmail={testEmail} />
         </AuthProvider>
       )
       
@@ -182,7 +189,7 @@ describe('AuthContext', () => {
       
       render(
         <AuthProvider>
-          <TestComponent />
+          <TestComponent testEmail={testEmail} />
         </AuthProvider>
       )
       
@@ -222,7 +229,7 @@ describe('AuthContext', () => {
       
       render(
         <AuthProvider>
-          <TestComponent />
+          <TestComponent testEmail={testEmail} />
         </AuthProvider>
       )
       
@@ -253,13 +260,13 @@ describe('AuthContext', () => {
       
       render(
         <AuthProvider>
-          <TestComponent />
+          <TestComponent testEmail={testEmail} />
         </AuthProvider>
       )
       
       // Wait for initial load with session
       await waitFor(() => {
-        expect(screen.getByTestId('user')).toHaveTextContent('test@example.com')
+        expect(screen.getByTestId('user')).toHaveTextContent(testEmail)
       })
       
       // Simulate sign out
@@ -280,7 +287,7 @@ describe('AuthContext', () => {
       
       render(
         <AuthProvider>
-          <TestComponent />
+          <TestComponent testEmail={testEmail} />
         </AuthProvider>
       )
       
@@ -300,7 +307,7 @@ describe('AuthContext', () => {
         })
         
         expect(mockSignInWithPassword).toHaveBeenCalledWith({
-          email: 'test@example.com',
+          email: testEmail,
           password: 'password',
         })
       })
@@ -317,7 +324,7 @@ describe('AuthContext', () => {
           const [result, setResult] = React.useState<{ error: AuthError | null } | null>(null)
           
           React.useEffect(() => {
-            signIn('test@example.com', 'wrongpassword').then(setResult)
+            signIn(testEmail, 'wrongpassword').then(setResult)
           }, [signIn])
           
           return <div data-testid="result">{result ? (result.error ? 'error' : 'success') : 'loading'}</div>
@@ -342,7 +349,7 @@ describe('AuthContext', () => {
           const [result, setResult] = React.useState<{ error: AuthError | null } | null>(null)
           
           React.useEffect(() => {
-            signIn('test@example.com', 'password').then(setResult)
+            signIn(testEmail, 'password').then(setResult)
           }, [signIn])
           
           return <div data-testid="result">{result ? (result.error ? 'error' : 'success') : 'loading'}</div>
@@ -370,7 +377,7 @@ describe('AuthContext', () => {
         })
         
         expect(mockSignUp).toHaveBeenCalledWith({
-          email: 'test@example.com',
+          email: testEmail,
           password: 'password',
           options: {
             emailRedirectTo: 'http://localhost:3000/auth/callback',
@@ -390,7 +397,7 @@ describe('AuthContext', () => {
           const [result, setResult] = React.useState<{ error: AuthError | null } | null>(null)
           
           React.useEffect(() => {
-            signUp('existing@example.com', 'password').then(setResult)
+            signUp(existingEmail, 'password').then(setResult)
           }, [signUp])
           
           return <div data-testid="result">{result ? (result.error ? 'error' : 'success') : 'loading'}</div>
@@ -415,7 +422,7 @@ describe('AuthContext', () => {
           const [result, setResult] = React.useState<{ error: AuthError | null } | null>(null)
           
           React.useEffect(() => {
-            signUp('new@example.com', 'password').then(setResult)
+            signUp(newEmail, 'password').then(setResult)
           }, [signUp])
           
           return <div data-testid="result">{result ? (result.error ? 'error' : 'success') : 'loading'}</div>
@@ -514,7 +521,7 @@ describe('AuthContext', () => {
       )
       
       await waitFor(() => {
-        expect(screen.getByTestId('user')).toHaveTextContent('test@example.com')
+        expect(screen.getByTestId('user')).toHaveTextContent(testEmail)
       })
       
       rerender(
@@ -534,7 +541,7 @@ describe('AuthContext', () => {
       
       render(
         <AuthProvider>
-          <TestComponent />
+          <TestComponent testEmail={testEmail} />
         </AuthProvider>
       )
       
@@ -560,7 +567,7 @@ describe('AuthContext', () => {
       
       render(
         <AuthProvider>
-          <TestComponent />
+          <TestComponent testEmail={testEmail} />
         </AuthProvider>
       )
       
