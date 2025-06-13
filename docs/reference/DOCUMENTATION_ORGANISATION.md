@@ -54,7 +54,7 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/AUTHENTICATION_DATABASE.md` - Database integration and Row Level Security for authentication
 - `docs/reference/AUTHENTICATION_SECURITY.md` - Security practices and troubleshooting for authentication
 - `docs/reference/AUTHENTICATION_TESTING.md` - Testing authentication flows and security
-- `docs/reference/HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md` - Comprehensive guide for HTML sanitization balancing XSS protection with academic content preservation ⭐ **Essential for content security**
+- `docs/reference/WEBPAGE_HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md` - Comprehensive guide for HTML sanitization balancing XSS protection with academic content preservation ⭐ **Essential for content security**
 
 ### AI Features & Implementation
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide for creating AI/LLM calls using Nunjucks + Zod template system ⭐ **Essential for AI features**

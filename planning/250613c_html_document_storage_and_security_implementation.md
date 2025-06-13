@@ -25,6 +25,7 @@ Implement comprehensive storage and security improvements for HTML document impo
 ## References
 
 - `docs/reference/WEBPAGE_CONTENT_EXTRACTION.md` - Current HTML extraction implementation and security gaps analysis
+- `docs/reference/WEBPAGE_HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md` - Comprehensive security and sanitization guide for academic HTML content
 - `planning/finished/250606a_pdf_Supabase_Storage_integration.md` - Completed PDF storage implementation to follow as pattern
 - `app/api/extract-url/route.ts:316` - Current URL extraction endpoint that needs storage integration
 - `lib/services/database/documents.ts:322` - `createWithStorage()` method for consistent storage pattern
@@ -54,14 +55,14 @@ Based on user requirements and security analysis:
 - **Storage + security together**: Implement both features simultaneously (no hotfix approach)
 - **Accuracy over performance**: Prioritize content preservation and security over processing speed
 - **Academic content priority**: Ensure sanitization doesn't break legitimate academic formatting
-- **Research-based implementation**: Use findings from `docs/reference/HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md`
+- **Research-based implementation**: Use findings from `docs/reference/WEBPAGE_HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md`
 
 ## Stages & actions
 
 ### Stage: Preparatory Setup
 - [ ] Run `./scripts/sync-worktrees.ts` to pull latest changes from main
 - [x] Research academic content sanitization requirements ✅
-  - [x] ✅ Comprehensive research completed in `docs/reference/HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md`
+  - [x] ✅ Comprehensive research completed in `docs/reference/WEBPAGE_HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md`
   - [x] ✅ DOMPurify confirmed as optimal choice (9.9M weekly downloads, security expert maintenance)
   - [x] ✅ Academic publisher patterns analyzed (arXiv LaTeXML, PMC JATS, IEEE/ACM structures)
   - [x] ✅ Academic-specific configuration documented with MathML/SVG/table preservation
@@ -169,7 +170,7 @@ Based on academic publisher research, these elements must be preserved:
 - **Cross-references**: `<a>` tags for internal document navigation
 - **Typography**: `<em>`, `<strong>`, `<blockquote>` for academic formatting
 
-**Research-Based DOMPurify Configuration** (from `docs/reference/HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md`):
+**Research-Based DOMPurify Configuration** (from `docs/reference/WEBPAGE_HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md`):
 ```typescript
 const ACADEMIC_SANITIZATION_CONFIG = {
   USE_PROFILES: { 

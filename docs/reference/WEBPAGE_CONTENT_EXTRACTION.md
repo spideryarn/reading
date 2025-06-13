@@ -5,7 +5,7 @@ Comprehensive reference for extracting clean, readable content from academic pub
 ## See also
 
 - `docs/reference/PDF_TO_HTML_CONVERSION_OVERVIEW.md` - Converting PDF academic papers to HTML format
-- `docs/reference/HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md` - Comprehensive security and sanitization guide for academic HTML content
+- `docs/reference/WEBPAGE_HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md` - Comprehensive security and sanitization guide for academic HTML content
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Using Nunjucks + Zod templates for LLM content processing
 - `docs/reference/ARCHITECTURE_DECISIONS.md` - Overall system architecture and data processing approach
 - `lib/services/document-parser.ts` - Current HTML document parsing implementation
@@ -20,7 +20,7 @@ Comprehensive reference for extracting clean, readable content from academic pub
 - **TypeScript-first approach**: All extraction tools must provide robust TypeScript support
 - **Academic content priority**: Optimise for research papers, think tank reports, and long-form academic content
 - **Accuracy over performance**: Prioritise content preservation and security over processing speed
-- **Security-first approach**: All extracted HTML must be sanitized before storage or display (see `docs/reference/HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md`)
+- **Security-first approach**: All extracted HTML must be sanitized before storage or display (see `docs/reference/WEBPAGE_HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md`)
 - **Privacy and ethics**: Respect robots.txt, rate limiting, and academic publisher terms of service
 - **Incremental enhancement**: Start with simple extraction, add complexity only where needed
 
@@ -186,7 +186,7 @@ async function respectfulExtraction(url: string) {
 - **Citation formatting and cross-references**
 - **Multi-column layouts** and academic typography
 
-**Implementation**: See `docs/reference/HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md` for comprehensive security guidance including DOMPurify configuration, CSP headers, and academic content preservation strategies.
+**Implementation**: See `docs/reference/WEBPAGE_HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md` for comprehensive security guidance including DOMPurify configuration, CSP headers, and academic content preservation strategies.
 
 ### Raw HTML Storage Strategy
 
@@ -360,7 +360,7 @@ export async function POST(request: Request) {
 **Document Processing Pipeline**:
 1. **Raw HTML Storage**: Original source HTML stored in Supabase Storage before any processing
 2. **Content Extraction**: Multiple extraction attempts (Readability, AI) with quality scores
-3. **HTML Sanitization**: All extracted HTML sanitized using DOMPurify with academic content preservation (see `docs/reference/HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md`)
+3. **HTML Sanitization**: All extracted HTML sanitized using DOMPurify with academic content preservation (see `docs/reference/WEBPAGE_HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md`)
 4. **Upload Metadata Tracking**: Extraction method, provider, processing time, content sizes stored in documents.upload_metadata JSONB field
 5. **AI Call Linking**: Full traceability via documents.upload_ai_call_id foreign key to ai_calls table
 6. **Processed Content**: Final cleaned and sanitized content with structure annotations
