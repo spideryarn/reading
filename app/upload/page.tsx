@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppHeader } from '@/components/app-header'
 import { Footer } from '@/components/footer'
-import { Upload, FilePdf, X, Link as LinkIcon, CircleNotch } from '@phosphor-icons/react'
+import { Upload, FilePdf, FileHtml, X, Link as LinkIcon, CircleNotch } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 
@@ -29,6 +29,10 @@ export default function AddDocumentPage() {
   const [error, setError] = useState<string>('')
   const [isDragging, setIsDragging] = useState(false)
   const [selectedProvider, setSelectedProvider] = useState<'claude' | 'gemini'>('claude')
+  
+  // HTML processing state
+  const [htmlProcessingMethod, setHtmlProcessingMethod] = useState<'as-is' | 'readability' | 'ai-transcription'>('as-is')
+  const [htmlProvider, setHtmlProvider] = useState<'claude' | 'gemini'>('claude')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const urlInputRef = useRef<HTMLInputElement>(null)
 
@@ -55,6 +59,16 @@ export default function AddDocumentPage() {
     } catch {
       return false
     }
+  }
+
+  // File type detection helpers
+  const isSelectedFilePdf = (file: File | null): boolean => {
+    return file?.type === 'application/pdf'
+  }
+
+  const isSelectedFileHtml = (file: File | null): boolean => {
+    if (!file) return false
+    return file.type === 'text/html' || file.name.toLowerCase().endsWith('.html') || file.name.toLowerCase().endsWith('.htm')
   }
 
   // URL submission handler
@@ -131,17 +145,30 @@ export default function AddDocumentPage() {
     setError('')
     setConvertedHtml('')
 
-    // Validate file type
-    if (file.type !== 'application/pdf') {
-      setError('Please select a PDF file')
+    // Validate file type - support both PDF and HTML files
+    const isPdf = file.type === 'application/pdf'
+    const isHtml = file.type === 'text/html' || file.name.toLowerCase().endsWith('.html') || file.name.toLowerCase().endsWith('.htm')
+    
+    if (!isPdf && !isHtml) {
+      setError('Please select a PDF file (.pdf) or HTML file (.html, .htm)')
       return
     }
 
-    // Validate file size (32MB limit for Claude API)
-    const maxSize = 32 * 1024 * 1024 // 32MB
-    if (file.size > maxSize) {
-      setError('PDF file too large (max 32MB for Claude direct processing)')
-      return
+    // Validate file size based on file type
+    if (isPdf) {
+      // 32MB limit for PDF files (Claude API limit)
+      const maxPdfSize = 32 * 1024 * 1024 // 32MB
+      if (file.size > maxPdfSize) {
+        setError('PDF file too large (max 32MB for Claude direct processing)')
+        return
+      }
+    } else if (isHtml) {
+      // 10MB limit for HTML files (reasonable limit for HTML content)
+      const maxHtmlSize = 10 * 1024 * 1024 // 10MB
+      if (file.size > maxHtmlSize) {
+        setError('HTML file too large (max 10MB for processing)')
+        return
+      }
     }
 
     setSelectedFile(file)
@@ -218,24 +245,52 @@ export default function AddDocumentPage() {
     setConvertedHtml('')
 
     try {
-      const formData = new FormData()
-      formData.append('pdf', selectedFile)
-      formData.append('provider', selectedProvider)
-      formData.append('isPublic', isPublic.toString())
+      if (isSelectedFilePdf(selectedFile)) {
+        // Handle PDF file upload - route to existing PDF API
+        const formData = new FormData()
+        formData.append('pdf', selectedFile)
+        formData.append('provider', selectedProvider)
+        formData.append('isPublic', isPublic.toString())
 
-      const response = await fetch('/api/upload-pdf', {
-        method: 'POST',
-        body: formData,
-      })
+        const response = await fetch('/api/upload-pdf', {
+          method: 'POST',
+          body: formData,
+        })
 
-      if (!response.ok) {
-        const errorData = await response.text()
-        throw new Error(errorData || 'Upload failed')
+        if (!response.ok) {
+          const errorData = await response.text()
+          throw new Error(errorData || 'PDF upload failed')
+        }
+
+        const result = await response.json()
+        router.push(`/documents/${result.document.slug}`)
+      } else if (isSelectedFileHtml(selectedFile)) {
+        // Handle HTML file upload - route to new HTML API
+        const formData = new FormData()
+        formData.append('html', selectedFile)
+        formData.append('processingMethod', htmlProcessingMethod)
+        formData.append('isPublic', isPublic.toString())
+        
+        // Only include provider for AI transcription
+        if (htmlProcessingMethod === 'ai-transcription') {
+          formData.append('provider', htmlProvider)
+        }
+
+        const response = await fetch('/api/upload-html', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!response.ok) {
+          const errorData = await response.text()
+          throw new Error(errorData || 'HTML upload failed')
+        }
+
+        const result = await response.json()
+        router.push(`/documents/${result.document.slug}`)
+      } else {
+        throw new Error('Unsupported file type')
       }
-
-      const result = await response.json()
-      // Navigate to the document page using the slug
-      router.push(`/documents/${result.document.slug}`)
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Unknown error occurred')
     } finally {
@@ -304,7 +359,7 @@ export default function AddDocumentPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <p className="text-xs text-gray-500 mt-2">
-                      Enter a URL to extract and save the webpage content. Supports articles, blog posts, and most text-based web content. Press ENTER to submit when URL is valid.
+                      Enter a URL to extract and save the content. Supports HTML web pages (articles, blog posts) and PDF documents with automatic detection. Press ENTER to submit when URL is valid.
                     </p>
                   </div>
 
@@ -353,7 +408,7 @@ export default function AddDocumentPage() {
                         />
                         <div className="flex-1">
                           <div className="font-medium text-gray-900">Mozilla Readability (Fast & Reliable)</div>
-                          <div className="text-xs text-gray-500">Best for standard articles and blog posts. Extracts content instantly without AI processing.</div>
+                          <div className="text-xs text-gray-500">Best for standard articles and blog posts. Extracts content instantly without AI processing. PDF URLs automatically use AI processing.</div>
                         </div>
                       </label>
                       
@@ -369,7 +424,7 @@ export default function AddDocumentPage() {
                         />
                         <div className="flex-1">
                           <div className="font-medium text-gray-900">AI Transcription (High Quality)</div>
-                          <div className="text-xs text-gray-500">Uses AI to carefully transcribe content. Slower but handles complex layouts better.</div>
+                          <div className="text-xs text-gray-500">Uses AI to carefully transcribe content. Slower but handles complex layouts better. Works for both HTML pages and PDF documents.</div>
                         </div>
                       </label>
                       
@@ -438,8 +493,8 @@ export default function AddDocumentPage() {
                       <>
                         <CircleNotch className="animate-spin" size={16} />
                         {extractionMethod === 'ai-transcription' 
-                          ? `Extracting with ${urlProvider === 'gemini' ? 'Gemini' : 'Claude'}...`
-                          : 'Extracting content...'
+                          ? `Processing with ${urlProvider === 'gemini' ? 'Gemini' : 'Claude'}...`
+                          : 'Processing content...'
                         }
                       </>
                     ) : (
@@ -489,7 +544,7 @@ export default function AddDocumentPage() {
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept=".pdf"
+                      accept=".pdf,.html,.htm"
                       onChange={handleFileSelect}
                       disabled={isUploading}
                       className="sr-only"
@@ -504,21 +559,25 @@ export default function AddDocumentPage() {
                         
                         <div className="text-center">
                           <p className="text-lg font-medium text-gray-700">
-                            {isDragging ? 'Drop your PDF here' : 'Drag and drop your PDF here'}
+                            {isDragging ? 'Drop your file here' : 'Drag and drop your file here'}
                           </p>
                           <p id="upload-help" className="text-sm text-gray-500 mt-1">
-                            or click to browse (max 32MB, multi-page supported)
+                            or click to browse • PDF (max 32MB) • HTML (max 10MB)
                           </p>
                         </div>
                       </div>
                     ) : (
                       <div className="flex items-center justify-center">
                         <div className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex items-center gap-3">
-                          <FilePdf size={32} className="text-red-600 flex-shrink-0" />
+                          {isSelectedFilePdf(selectedFile) ? (
+                            <FilePdf size={32} className="text-red-600 flex-shrink-0" />
+                          ) : (
+                            <FileHtml size={32} className="text-blue-600 flex-shrink-0" />
+                          )}
                           <div className="flex-grow">
                             <p className="font-medium text-gray-900">{selectedFile.name}</p>
                             <p className="text-sm text-gray-500">
-                              {(selectedFile.size / 1024).toFixed(1)} KB
+                              {(selectedFile.size / 1024).toFixed(1)} KB • {isSelectedFilePdf(selectedFile) ? 'PDF' : 'HTML'} file
                             </p>
                           </div>
                           <button
@@ -561,18 +620,83 @@ export default function AddDocumentPage() {
                     </div>
                   </div>
 
-                  {/* Provider Selection */}
-                  <div className="space-y-3">
-                    <label className="block text-sm font-medium text-gray-700">
-                      AI Provider
-                    </label>
+                  {/* HTML Processing Method Selection (only for HTML files) */}
+                  {isSelectedFileHtml(selectedFile) && (
+                    <div className="space-y-3">
+                      <label className="block text-sm font-medium text-gray-700">
+                        HTML Processing Method
+                      </label>
+                      <div className="space-y-2">
+                        <label className="flex items-start cursor-pointer">
+                          <input
+                            type="radio"
+                            name="htmlProcessingMethod"
+                            value="as-is"
+                            checked={htmlProcessingMethod === 'as-is'}
+                            onChange={(e) => setHtmlProcessingMethod(e.target.value as 'as-is' | 'readability' | 'ai-transcription')}
+                            disabled={isUploading}
+                            className="mt-0.5 mr-3 text-orange-600 focus:ring-orange-500"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900">Use As-Is (Minimal Processing)</div>
+                            <div className="text-xs text-gray-500">Apply security sanitization only. Preserves original HTML structure. Fastest option.</div>
+                          </div>
+                        </label>
+                        
+                        <label className="flex items-start cursor-pointer">
+                          <input
+                            type="radio"
+                            name="htmlProcessingMethod"
+                            value="readability"
+                            checked={htmlProcessingMethod === 'readability'}
+                            onChange={(e) => setHtmlProcessingMethod(e.target.value as 'as-is' | 'readability' | 'ai-transcription')}
+                            disabled={isUploading}
+                            className="mt-0.5 mr-3 text-orange-600 focus:ring-orange-500"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900">Mozilla Readability Extraction</div>
+                            <div className="text-xs text-gray-500">Extract main content using Mozilla Readability. Good for complex web pages saved as HTML files.</div>
+                          </div>
+                        </label>
+                        
+                        <label className="flex items-start cursor-pointer">
+                          <input
+                            type="radio"
+                            name="htmlProcessingMethod"
+                            value="ai-transcription"
+                            checked={htmlProcessingMethod === 'ai-transcription'}
+                            onChange={(e) => setHtmlProcessingMethod(e.target.value as 'as-is' | 'readability' | 'ai-transcription')}
+                            disabled={isUploading}
+                            className="mt-0.5 mr-3 text-orange-600 focus:ring-orange-500"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900">AI Content Extraction</div>
+                            <div className="text-xs text-gray-500">Use AI to intelligently extract and structure content. Best for complex layouts and documents.</div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Provider Selection (for PDF files or AI transcription) */}
+                  {(isSelectedFilePdf(selectedFile) || (isSelectedFileHtml(selectedFile) && htmlProcessingMethod === 'ai-transcription')) && (
+                    <div className="space-y-3">
+                      <label className="block text-sm font-medium text-gray-700">
+                        AI Provider {isSelectedFileHtml(selectedFile) ? '(for AI Content Extraction)' : ''}
+                      </label>
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         type="button"
-                        onClick={() => setSelectedProvider('claude')}
+                        onClick={() => {
+                          if (isSelectedFilePdf(selectedFile)) {
+                            setSelectedProvider('claude')
+                          } else {
+                            setHtmlProvider('claude')
+                          }
+                        }}
                         disabled={isUploading}
                         className={`p-3 border rounded-lg text-sm font-medium transition-colors ${
-                          selectedProvider === 'claude'
+                          (isSelectedFilePdf(selectedFile) ? selectedProvider : htmlProvider) === 'claude'
                             ? 'border-orange-500 bg-orange-50 text-orange-700'
                             : 'border-gray-300 bg-white text-gray-700 hover:border-orange-300'
                         } disabled:opacity-50 disabled:cursor-not-allowed`}
@@ -582,10 +706,16 @@ export default function AddDocumentPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setSelectedProvider('gemini')}
+                        onClick={() => {
+                          if (isSelectedFilePdf(selectedFile)) {
+                            setSelectedProvider('gemini')
+                          } else {
+                            setHtmlProvider('gemini')
+                          }
+                        }}
                         disabled={isUploading}
                         className={`p-3 border rounded-lg text-sm font-medium transition-colors ${
-                          selectedProvider === 'gemini'
+                          (isSelectedFilePdf(selectedFile) ? selectedProvider : htmlProvider) === 'gemini'
                             ? 'border-orange-500 bg-orange-50 text-orange-700'
                             : 'border-gray-300 bg-white text-gray-700 hover:border-orange-300'
                         } disabled:opacity-50 disabled:cursor-not-allowed`}
@@ -594,7 +724,8 @@ export default function AddDocumentPage() {
                         <div className="text-xs text-gray-500 mt-1">Better for longer docs</div>
                       </button>
                     </div>
-                  </div>
+                    </div>
+                  )}
 
                   <Button
                     onClick={handleUpload}
@@ -605,10 +736,17 @@ export default function AddDocumentPage() {
                     {isUploading ? (
                       <>
                         <CircleNotch className="animate-spin" size={16} />
-                        {`Converting with ${selectedProvider === 'claude' ? 'Claude' : 'Gemini'}...`}
+                        {isSelectedFilePdf(selectedFile) 
+                          ? `Converting with ${selectedProvider === 'claude' ? 'Claude' : 'Gemini'}...`
+                          : isSelectedFileHtml(selectedFile) && htmlProcessingMethod === 'ai-transcription'
+                            ? `Processing with ${htmlProvider === 'claude' ? 'Claude' : 'Gemini'}...`
+                            : 'Processing document...'
+                        }
                       </>
                     ) : (
-                      'Convert and Save Document'
+                      isSelectedFilePdf(selectedFile) 
+                        ? 'Convert and Save Document'
+                        : 'Process and Save Document'
                     )}
                   </Button>
 

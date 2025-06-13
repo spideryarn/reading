@@ -118,8 +118,16 @@ The existing upload interface has a clean 2-tab design that should be preserved 
 - [ ] Test keyboard navigation with new features
 
 ### Stage: Metadata and tracking improvements
+- [ ] **IMPORTANT: Fix inconsistent upload_source naming**
+  - [ ] Rename values to be more consistent and clear:
+    - 'url' → 'url_html_extraction' 
+    - 'url-pdf' → 'url_pdf_download'
+    - 'pdf' → 'file_pdf_upload'
+    - 'html-upload' → 'file_html_upload'
+  - [ ] Update all three API routes (extract-url, upload-pdf, upload-html)
+  - [ ] Update type definitions and documentation
 - [ ] Enhance upload_metadata schema documentation
-  - [ ] Document new source types: 'url-pdf', 'html-upload'
+  - [ ] Document new source types with clear naming
   - [ ] Document processing method tracking
   - [ ] Update type definitions in database.ts
 - [ ] Update document service to handle new source types

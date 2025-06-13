@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { createUrlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
+import { createPdfToHtmlPrompt } from '@/lib/prompts/templates/pdf-to-html-direct'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
@@ -16,6 +17,7 @@ import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/reada
 import { validateAuth } from '@/lib/auth/server-auth'
 import { sanitizeAcademicContent } from '@/lib/utils/html-sanitizer'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
+import { detectAndAnalyzeContent, isPdfContentType } from '@/lib/utils/content-type-detection'
 
 // URL validation function
 function isValidUrl(urlString: string): boolean {
@@ -87,6 +89,292 @@ async function fetchWebpageContent(url: string): Promise<string> {
   }
 }
 
+// Fetch PDF content from URL for processing
+async function fetchPdfContent(url: string): Promise<Buffer> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), URL_EXTRACTION_CONFIG.FETCH_TIMEOUT_MS)
+  
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': URL_EXTRACTION_CONFIG.DEFAULT_USER_AGENT,
+        'Accept': 'application/pdf,*/*;q=0.9',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'DNT': '1',
+        'Connection': 'keep-alive',
+      }
+    })
+    
+    clearTimeout(timeoutId)
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    
+    // Verify content type is PDF
+    const contentType = response.headers.get('content-type') || ''
+    if (!isPdfContentType(contentType)) {
+      throw new Error(`Expected PDF content, but received: ${contentType}`)
+    }
+    
+    // Check content length for PDF size limits
+    const contentLength = response.headers.get('content-length')
+    const maxPdfSize = 32 * 1024 * 1024 // 32MB limit for Claude API
+    if (contentLength && parseInt(contentLength) > maxPdfSize) {
+      throw new Error('PDF file too large for processing (max 32MB for Claude direct processing)')
+    }
+    
+    const arrayBuffer = await response.arrayBuffer()
+    const pdfBuffer = Buffer.from(arrayBuffer)
+    
+    // Check actual PDF size
+    if (pdfBuffer.length > maxPdfSize) {
+      throw new Error('PDF file too large for processing (max 32MB for Claude direct processing)')
+    }
+    
+    // Basic PDF validation - check header
+    const pdfHeader = pdfBuffer.subarray(0, 4).toString()
+    if (pdfHeader !== '%PDF') {
+      throw new Error('Downloaded content is not a valid PDF file')
+    }
+    
+    return pdfBuffer
+    
+  } catch (error) {
+    clearTimeout(timeoutId)
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout while downloading PDF')
+      }
+      throw error
+    }
+    
+    throw new Error('Failed to download PDF content')
+  }
+}
+
+// Process PDF content downloaded from URL using the same pipeline as upload-pdf
+async function processPdfFromUrl(
+  sourceUrl: string,
+  pdfBuffer: Buffer,
+  provider: string,
+  providedTitle: string | undefined,
+  isPublic: boolean,
+  user: any,
+  supabase: any,
+  documentService: DocumentService,
+  aiCallService: AiCallService,
+  requestLogger: any,
+  correlationId: string
+): Promise<NextResponse> {
+  const urlObject = new URL(sourceUrl)
+  const defaultTitle = providedTitle || `Document from ${urlObject.hostname}`
+  
+  // Create provider-specific prompt template with appropriate model configuration
+  const promptTemplate = createPdfToHtmlPrompt(provider)
+  const providerDisplayName = provider === 'gemini' ? 'Gemini 1.5 Pro' : 'Claude 4 Sonnet'
+  
+  // Get model configuration for AI call tracking
+  const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
+  const modelConfig = getModelConfig(tierKey)
+  
+  // Create AI call record for tracking (before LLM processing)
+  const startTime = Date.now()
+  const aiCall = await aiCallService.startCall({
+    provider: modelConfig.provider,
+    modelId: modelConfig.modelId,
+    prompt_type: 'pdf-to-html',
+    input_data: {
+      source_url: sourceUrl,
+      file_size_bytes: pdfBuffer.length,
+      provider_requested: provider,
+      tier_used: tierKey
+    }
+  })
+  
+  console.log(`Step 3: Converting PDF to HTML using ${providerDisplayName}...`)
+  requestLogger.info({
+    correlationId,
+    step: 'pdf-to-html-conversion',
+    provider: providerDisplayName,
+    modelId: modelConfig.modelId,
+    aiCallId: aiCall.id
+  }, 'Starting PDF to HTML conversion using AI')
+
+  // Execute the direct PDF prompt (multi-page support enabled)
+  const htmlResult = await executeMultimodalPromptWithUsage(promptTemplate, {
+    pdfBuffer,
+    fileName: `document-from-${urlObject.hostname}.pdf`,
+    singlePageOnly: false // Multi-page processing enabled
+  })
+  
+  const processingTime = Date.now() - startTime
+  
+  // Log AI operation completion
+  logAIOperation('pdf-to-html-conversion', {
+    modelProvider: modelConfig.provider,
+    tokensUsed: htmlResult.usage.totalTokens,
+    userId: user.id,
+    correlationId
+  }, 'success')
+  
+  // Complete the AI call record with usage metadata
+  await aiCallService.completeCall(aiCall.id, {
+    output_data: {
+      html_length: htmlResult.text.length,
+      processing_time_ms: processingTime,
+      provider_used: providerDisplayName,
+      source_url: sourceUrl
+    },
+    usage: htmlResult.usage,
+    finishReason: htmlResult.finishReason
+  })
+
+  console.log('Step 4: HTML conversion completed, sanitizing content...')
+  requestLogger.info({
+    correlationId,
+    step: 'html-conversion-complete',
+    processingTimeMs: processingTime,
+    htmlLength: htmlResult.text.length,
+    tokensUsed: htmlResult.usage.totalTokens
+  }, 'PDF to HTML conversion completed successfully')
+
+  // Sanitize HTML content before storage
+  let sanitizedHtml: string
+  try {
+    sanitizedHtml = sanitizeAcademicContent(htmlResult.text)
+    console.log(`Sanitized HTML content (${sanitizedHtml.length} chars from ${htmlResult.text.length} chars)`)
+    requestLogger.info({
+      correlationId,
+      step: 'sanitization-complete',
+      sanitizedLength: sanitizedHtml.length,
+      originalLength: htmlResult.text.length
+    }, 'HTML sanitization completed successfully')
+  } catch (sanitizationError) {
+    console.error('HTML sanitization failed:', sanitizationError)
+    requestLogger.error({
+      correlationId,
+      step: 'sanitization-failed',
+      error: sanitizationError instanceof Error ? sanitizationError.message : 'Unknown sanitization error'
+    }, 'HTML sanitization failed')
+    throw new Error(`Content sanitization failed: ${sanitizationError instanceof Error ? sanitizationError.message : 'Unknown sanitization error'}`)
+  }
+
+  console.log('Step 5: Extracting plaintext from sanitized content...')
+  requestLogger.info({
+    correlationId,
+    step: 'plaintext-extraction',
+    sanitizedLength: sanitizedHtml.length
+  }, 'Starting plaintext extraction from sanitized content')
+
+  // Extract plaintext from sanitized HTML for search and word count
+  const plaintext = sanitizedHtml
+    .replace(/<[^>]*>/g, ' ') // Remove HTML tags
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .trim()
+
+  // Generate final slug from the title
+  const finalSlug = generateSlug(defaultTitle)
+
+  console.log('Step 6: Creating document with database integration...')
+  requestLogger.info({
+    correlationId,
+    step: 'document-creation',
+    plaintextLength: plaintext.length,
+    wordCount: plaintext.split(/\s+/).length,
+    slug: finalSlug
+  }, 'Starting document creation with storage integration')
+  
+  // Prepare upload metadata for URL→PDF path
+  const uploadMetadata = {
+    extraction_method: 'ai-transcription',
+    provider_used: provider,
+    upload_source: 'url-pdf', // New source type for URL→PDF flow
+    processing_time_ms: processingTime,
+    file_size_bytes: pdfBuffer.length,
+    model_used: modelConfig.modelId,
+    original_url: sourceUrl,
+    content_type_detected: 'application/pdf',
+    auto_detected: true
+  }
+
+  // Create document with storage integration
+  // Store the original PDF for reprocessing capabilities
+  const pdfBlob = new Blob([pdfBuffer], { type: 'application/pdf' })
+  const pdfFilename = generateHtmlFilename(sourceUrl).replace('.html', '.pdf')
+  
+  const { document, storageResult } = await documentService.createWithStorage(
+    user.id,
+    {
+      title: defaultTitle,
+      html_content: sanitizedHtml,
+      plaintext_content: plaintext,
+      slug: finalSlug,
+      source_url: sourceUrl,
+      is_public: isPublic,
+      word_count: plaintext.split(/\s+/).length
+    },
+    pdfBlob, // Original PDF for storage
+    pdfFilename, // URL-based filename for PDF
+    uploadMetadata, // Upload metadata with URL→PDF tracking
+    aiCall.id // Link to AI call
+  )
+
+  console.log(`Step 7: Document created successfully with ID: ${document.id}`)
+  requestLogger.info({
+    correlationId,
+    step: 'document-created',
+    documentId: document.id,
+    documentSlug: document.slug,
+    hasOriginalFile: !!storageResult
+  }, 'Document created successfully from PDF URL')
+  
+  // Log successful AI operation
+  logAIOperation(
+    'url-pdf-processing',
+    {
+      modelProvider: provider,
+      correlationId,
+      userId: user.id,
+      documentId: document.id
+    },
+    'success'
+  )
+
+  // Return comprehensive response with document details
+  return NextResponse.json({
+    success: true,
+    document: {
+      id: document.id,
+      title: document.title,
+      slug: document.slug,
+      source_url: document.source_url,
+      html_content: document.html_content,
+      plaintext_content: document.plaintext_content,
+      word_count: document.word_count,
+      has_original_file: !!storageResult,
+      original_file_type: document.original_file_type,
+      created_at: document.created_at
+    },
+    processing: {
+      provider: providerDisplayName,
+      source_url: sourceUrl,
+      content_size_kb: Math.round(pdfBuffer.length / 1024),
+      extracted_size_kb: Math.round(htmlResult.text.length / 1024),
+      extraction_method: 'ai-transcription',
+      content_type_detected: 'application/pdf'
+    }
+  }, {
+    status: 201,
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+}
+
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
   const requestLogger = createRequestLogger('/api/extract-url', correlationId)
@@ -134,38 +422,111 @@ export async function POST(request: NextRequest) {
       isPublic
     }, 'URL extraction request initiated')
     
-    // Step 1: Fetch webpage content
-    console.log('Step 1: Fetching webpage content...')
-    requestLogger.info({ step: 1, hostname: new URL(url).hostname }, 'Starting webpage content fetch')
-    let htmlContent: string
+    // Step 1: Detect content type to determine processing path
+    console.log('Step 1: Detecting content type...')
+    requestLogger.info({ step: 1, hostname: new URL(url).hostname }, 'Starting content type detection')
     
+    let contentDetection
     try {
-      htmlContent = await fetchWebpageContent(url)
+      contentDetection = await detectAndAnalyzeContent(url)
+      console.log(`Content type detected: ${contentDetection.contentType} (PDF: ${contentDetection.isPdf}, HTML: ${contentDetection.isHtml})`)
+      requestLogger.info({
+        step: 1,
+        hostname: new URL(url).hostname,
+        contentType: contentDetection.contentType,
+        isPdf: contentDetection.isPdf,
+        isHtml: contentDetection.isHtml,
+        isSupported: contentDetection.isSupported
+      }, 'Content type detection completed')
     } catch (error) {
-      console.error('Failed to fetch webpage:', error)
+      console.error('Failed to detect content type:', error)
       requestLogger.error({
         step: 1,
         hostname: new URL(url).hostname,
         error: error instanceof Error ? error.message : 'Unknown error'
-      }, 'Failed to fetch webpage content')
+      }, 'Failed to detect content type')
       if (error instanceof Error) {
         return new NextResponse(error.message, { status: 400 })
       }
-      return new NextResponse(URL_EXTRACTION_CONFIG.ERROR_MESSAGES.FETCH_FAILED, { status: 400 })
+      return new NextResponse('Failed to detect content type', { status: 400 })
     }
     
-    console.log(`Step 2: Fetched ${(htmlContent.length / 1024).toFixed(1)} KB of HTML content`)
+    // Check if content type is supported
+    if (!contentDetection.isSupported) {
+      console.log(`Unsupported content type: ${contentDetection.contentType}`)
+      requestLogger.warn({
+        step: 1,
+        hostname: new URL(url).hostname,
+        contentType: contentDetection.contentType,
+        suggestedAction: contentDetection.suggestedAction
+      }, 'Unsupported content type detected')
+      return new NextResponse(contentDetection.errorMessage || 'Unsupported content type', { status: 400 })
+    }
+    
+    // Initialize Supabase client and services (needed for both PDF and HTML paths)
+    const supabase = await createClient()
+    const documentService = new DocumentService(supabase)
+    const aiCallService = new AiCallService(supabase)
+    
+    // Route based on detected content type
+    if (contentDetection.isPdf) {
+      // Handle PDF content - download and process via PDF pipeline
+      console.log('Step 2: PDF detected, downloading PDF content...')
+      requestLogger.info({ step: 2, hostname: new URL(url).hostname }, 'PDF detected, switching to PDF processing pipeline')
+      
+      let pdfBuffer: Buffer
+      try {
+        pdfBuffer = await fetchPdfContent(url)
+        console.log(`Downloaded PDF: ${(pdfBuffer.length / 1024).toFixed(1)} KB`)
+        requestLogger.info({
+          step: 2,
+          hostname: new URL(url).hostname,
+          pdfSizeKb: Math.round(pdfBuffer.length / 1024),
+          pdfSizeBytes: pdfBuffer.length
+        }, 'PDF content downloaded successfully')
+      } catch (error) {
+        console.error('Failed to download PDF:', error)
+        requestLogger.error({
+          step: 2,
+          hostname: new URL(url).hostname,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }, 'Failed to download PDF content')
+        if (error instanceof Error) {
+          return new NextResponse(error.message, { status: 400 })
+        }
+        return new NextResponse('Failed to download PDF content', { status: 400 })
+      }
+      
+      // Process PDF using the same logic as upload-pdf route
+      return await processPdfFromUrl(url, pdfBuffer, provider, providedTitle, isPublic, user, supabase, documentService, aiCallService, requestLogger, correlationId)
+    } else {
+      // Handle HTML content - existing webpage extraction logic
+      console.log('Step 2: HTML detected, fetching webpage content...')
+      requestLogger.info({ step: 2, hostname: new URL(url).hostname }, 'HTML detected, proceeding with webpage extraction')
+      
+      let htmlContent: string
+      try {
+        htmlContent = await fetchWebpageContent(url)
+      } catch (error) {
+        console.error('Failed to fetch webpage:', error)
+        requestLogger.error({
+          step: 2,
+          hostname: new URL(url).hostname,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }, 'Failed to fetch webpage content')
+        if (error instanceof Error) {
+          return new NextResponse(error.message, { status: 400 })
+        }
+        return new NextResponse(URL_EXTRACTION_CONFIG.ERROR_MESSAGES.FETCH_FAILED, { status: 400 })
+      }
+    
+    console.log(`Step 3: Fetched ${(htmlContent.length / 1024).toFixed(1)} KB of HTML content`)
     requestLogger.info({
-      step: 2,
+      step: 3,
       hostname: new URL(url).hostname,
       contentSizeKb: Math.round(htmlContent.length / 1024),
       contentSizeBytes: htmlContent.length
     }, 'Webpage content fetched successfully')
-    
-    // Initialize Supabase client and services
-    const supabase = await createClient()
-    const documentService = new DocumentService(supabase)
-    const aiCallService = new AiCallService(supabase)
     
     // Extract title from URL or use provided title
     const urlObject = new URL(url)
@@ -173,9 +534,9 @@ export async function POST(request: NextRequest) {
     
     const providerDisplayName = provider === 'gemini' ? 'Gemini 1.5 Pro' : 'Claude 4 Sonnet'
     
-    console.log(`Step 3: Extracting content using ${extractionMethod} method...`)
+    console.log(`Step 4: Extracting content using ${extractionMethod} method...`)
     requestLogger.info({
-      step: 3,
+      step: 4,
       extractionMethod,
       provider: extractionMethod === 'ai-transcription' ? provider : null
     }, 'Starting content extraction')
@@ -348,9 +709,9 @@ export async function POST(request: NextRequest) {
       return new NextResponse(URL_EXTRACTION_CONFIG.ERROR_MESSAGES.JAVASCRIPT_REQUIRED, { status: 400 })
     }
     
-    console.log('Step 4: Content extraction completed, sanitizing content...')
+    console.log('Step 5: Content extraction completed, sanitizing content...')
     requestLogger.info({
-      step: 4,
+      step: 5,
       extractionMethod: extractionMethodUsed,
       extractedSizeKb: Math.round(extractedHtml.length / 1024)
     }, 'Content extraction completed, starting sanitization')
@@ -374,9 +735,9 @@ export async function POST(request: NextRequest) {
       throw new Error(`Content sanitization failed: ${sanitizationError instanceof Error ? sanitizationError.message : 'Unknown sanitization error'}`)
     }
 
-    console.log('Step 5: Extracting plaintext from sanitized content...')
+    console.log('Step 6: Extracting plaintext from sanitized content...')
     requestLogger.info({
-      step: 5,
+      step: 6,
       sanitizedSizeKb: Math.round(sanitizedHtml.length / 1024)
     }, 'Starting plaintext extraction from sanitized content')
     
@@ -394,9 +755,9 @@ export async function POST(request: NextRequest) {
     // Generate final slug from the actual title (not the default title)
     const finalSlug = generateSlug(finalTitle)
     
-    console.log('Step 6: Creating document with database integration...')
+    console.log('Step 7: Creating document with database integration...')
     requestLogger.info({
-      step: 6,
+      step: 7,
       finalTitle,
       finalSlug,
       wordCount: plaintext.split(/\s+/).length,
@@ -407,9 +768,11 @@ export async function POST(request: NextRequest) {
     const uploadMetadata = {
       extraction_method: extractionMethodUsed,
       provider_used: extractionMethodUsed === 'ai-transcription' ? provider : null,
-      upload_source: 'url',
+      upload_source: 'url', // Direct HTML extraction from URL
       content_size_kb: Math.round(htmlContent.length / 1024),
-      extracted_size_kb: Math.round(extractedHtml.length / 1024)
+      extracted_size_kb: Math.round(extractedHtml.length / 1024),
+      content_type_detected: contentDetection.contentType,
+      auto_detected: true
     }
     
     // Add AI-specific metadata if AI transcription was used
@@ -448,9 +811,9 @@ export async function POST(request: NextRequest) {
       extractionMethodUsed === 'ai-transcription' ? aiCall?.id : undefined // Link to AI call only for AI transcription
     )
     
-    console.log(`Step 7: Document created successfully with ID: ${document.id}`)
+    console.log(`Step 8: Document created successfully with ID: ${document.id}`)
     requestLogger.info({
-      step: 7,
+      step: 8,
       documentId: document.id,
       title: document.title,
       slug: document.slug,
@@ -482,6 +845,15 @@ export async function POST(request: NextRequest) {
       correlationId
     })
     
+    // Complete request timing
+    requestTimer.end({
+      userId: user.id,
+      documentId: document.id,
+      extractionMethod: extractionMethodUsed,
+      provider: provider,
+      correlationId
+    })
+    
     // Return comprehensive response with document details
     return NextResponse.json({
       success: true,
@@ -502,7 +874,8 @@ export async function POST(request: NextRequest) {
         source_url: url,
         content_size_kb: Math.round(htmlContent.length / 1024),
         extracted_size_kb: Math.round(extractedHtml.length / 1024),
-        extraction_method: extractionMethodUsed
+        extraction_method: extractionMethodUsed,
+        content_type_detected: contentDetection.contentType
       }
     }, {
       status: 201,
@@ -510,6 +883,7 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json'
       }
     })
+    } // Close the else block for HTML processing
     
   } catch (error) {
     console.error('URL extraction API error:', error)
