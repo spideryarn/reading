@@ -246,12 +246,13 @@ Template: `.env.example` (may not be current - check `.env.local` for active con
 
 **Puppeteer MCP (Preferred)**:
 - Use Puppeteer for browser automation tasks via MCP server
+- **Port configuration**: Always check `.env.local` for the PORT variable before navigating. Different Git worktrees use different ports (3001, 3002, etc.), not the default 3000
 - **Headless by default**: Always use `{"headless": true}` in launchOptions unless user specifically requests visual debugging
 - **Window size**: Set viewport in launchOptions and screenshot dimensions for proper page rendering:
   - `defaultViewport: {"width": 1200, "height": 800}` in launchOptions for better page layout
   - Use `width` and `height` parameters in screenshot calls (e.g., 1200x800)
   - Default 800x600 is often too small for modern web layouts
-- Example: `mcp__puppeteer__puppeteer_navigate({url: "...", launchOptions: {"headless": true, "defaultViewport": {"width": 1200, "height": 800}}})`
+- Example: `mcp__puppeteer__puppeteer_navigate({url: "http://localhost:${PORT}/", launchOptions: {"headless": true, "defaultViewport": {"width": 1200, "height": 800}}})`
 
 **Playwright**: Available as alternative, but prefer Puppeteer for MCP integration
 
