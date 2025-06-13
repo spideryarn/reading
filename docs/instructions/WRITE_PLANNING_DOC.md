@@ -1,18 +1,21 @@
 # Project Management Practices
 
-This is a guide for writing planning/project management `.md` files, e.g. `planning/yyMMdda_complex_project.md`. These are for thinking through & documenting decisions, breaking down complex projects into multiple stages, and tracking progress.
+This is a guide for writing planning/project management `.md` files, e.g. `planning/yyMMdda_complex_project.md`.
+
+These are for thinking through & documenting decisions, breaking down complex projects into multiple stages, and tracking progress.
 
 Aim to keep these concise, but emphasise & clearly capture all the decisions, responses, and requirements from the user.
 
-If you're starting the doc from scratch:
-- (Use MCP or run `date +"%y%m%d"` command first to get the current date for naming the file)
-- Store it in `planning/`, and first ask the user questions about their project requirements to clarify key decisions.
-- See `docs/instructions/SOUNDING_BOARD_MODE.md`
+Update this doc regularly to keep the actions up-to-date. When you change it, make minimal, focused changes, based on new user input.
+
+Ultrathink.
+
+Use todo lists to help you keep track of everything required for generating a planning doc.
 
 see also: `docs/instructions/WRITE_EVERGREEN_DOC.md` for instructions on writing evergreen docs
 
 
-## File naming conventions
+## File naming
 
 Planning docs should follow this naming format: `yyMMdd[letter]_description_in_normal_case.md`
 
@@ -23,10 +26,24 @@ Planning docs should follow this naming format: `yyMMdd[letter]_description_in_n
   - This ensures files sort alphanumerically by creation date
   - Sometimes we might end up with multiple docs with the same day and letter (e.g. `250526a`, e.g if multiple agents were working simultaneously in separate Git worktrees) - don't worry if this happens
 - Description: Use lowercase words separated by underscores
-  - Exception: Keep proper capitalisation for acronyms like `ToC` (Table of Contents)
+  - Exception: Keep proper capitalisation for acronyms like `ToC` (Table of Contents) or proper names, e.g. `Vercel`
   - Example: `250526a_ToC_hierarchical_summary_tooltips.md`
 
-Update this doc regularly to keep the actions up-to-date. When you change it, make minimal, focused changes, based on new user input.
+## Creating the doc
+
+### Process for starting the doc from scratch:
+- (Generating the filename should be done by an appropriately-instructed sub-agent)
+- Use MCP or run `date +"%y%m%d"` command first to get the current date for naming the file
+- Store it in `planning/`
+- IMPORTANT Before writing the doc, make sure you have asked the user questions about their requirements to clarify key principles & decisions, following instructions in `docs/instructions/SOUNDING_BOARD_MODE.md`.
+
+## Reporting a summary to the user after generating the doc
+
+After you've created the doc, provide a summary output to the user, with info such as:
+- Key assumptions/principles/decisions
+- Overall stages
+- Important concerns/risks you foresee if there are any
+- Anything else that you think is surprising, distinctive, or important to know about this plan
 
 
 ## Document structure
@@ -54,32 +71,43 @@ Don't include a `Date` section at the top since it's implicit from the filename.
 
 ### Stages & actions
 
-Overall approach:
-- Break into lots of stages. Start with a really simple working v1, and gradually layer in complexity, ending each stage with passing tests and working code.
+Structuring:
+- Break into lots of stages. 
 - List stages and actions in the order that they should be tackled
-- Don't number the stages, so that it's easier to move them around without having to renumber everything
-- Use `[ ]` and `[x]` checkboxes to indicate todo/done.
-- Include subtasks with clear acceptance criteria
-- Refer to specific docs, files/functions, examples, links, etc, so it's clear exactly what needs to be done
-- Explicitly add tasks for writing automated tests, usually before writing code. (Perhaps one or two end-to-end tests first, then gradually adding more detailed tests as complexity grows). Explicitly add tasks for running the automated tests before ending each stage. see `docs/reference/TESTING_OVERVIEW.md` for philosophy and `docs/reference/TESTING_SETUP.md` for configuration
-- If there are actions that the user needs to do, add those in too, so we can track progress and remind the user.
-- If this is a major piece of work, ask the user whether we should have an early action to create a `yyMMdd[letter]_complex_project` Git branch (and move over any changes). If so, then add a final action to merge that back into `main`.
-- Add actions to stop & review with user where appropriate, e.g. when we get to a good stopping point, to manually check changes to the user interface, etc
-- Add actions to search the web where appropriate, e.g. when debugging, determining best practices, making use of 3rd-party libraries, etc
-- Add actions to update relevant `docs/reference/*.md` evergreen docs (see `docs/instructions/WRITE_EVERGREEN_DOC.md`). 
-- If you think we need a new evergreen-doc, ask the user
-- Explicitly say to use subagents for encapsulated tasks or where the task will create a lot of verbose content, e.g. checking for errors or browser console output with Puppeteer/Playwright MCP (preferring Puppeteer), doing research
+- Start with a really simple working v1, and gradually layer in complexity, ending each stage with passing tests and working code.
 - Try to surface potential risks early. For example, if the whole plan rests on the library being able to do X, let's do a quick trial to make sure that works).
 - Try to organise the stages so that we frontload the business value, so that we could stop partway. For example, get it working for the primary/most valuable use-case first.
+- Include subtasks with clear acceptance criteria
+- If there are actions that the user needs to do, add those in too, so we can track progress and remind the user.
 
-As the very, very first preparatory action:
-- Run `./scripts/sync-worktrees.ts` to make sure we've pulled the latest changes from `main` before we start (to make merge conflicts less likely).
+Formatting:
+- Don't number the stages, so that it's easier to move them around without having to renumber everything
+- Use `[ ]` and `[x]` checkboxes to indicate todo/done.
+- Refer to specific docs, files/functions, examples, links, etc, so it's clear exactly what needs to be done
+- If there are caveats, snippets, examples, or other rich detail that won't fit in a couple of sentences, add a section in the Appendix and reference it from the action
+- Explicitly say to use subagents for encapsulated tasks or where the task will create a lot of verbose content, e.g. checking for errors or browser console output with Puppeteer/Playwright MCP (preferring Puppeteer), doing research
+- Make sure the actions are described clearly enough and with enough detail/context that someone else could implement correctly
 
-At the end of every stage:
-- Follow instructions in `docs/instructions/DEBRIEF_PROGRESS.md` to output a summary of where things stand, and update the planning doc with progress so far.
+Upfront preparatory actions:
+- Run `./scripts/sync-worktrees.ts` in a subagent to make sure we've pulled the latest changes from `main` before we start (to make merge conflicts less likely).
+- If this is a major piece of work, ask the user whether we should have an early action to create a `yyMMdd[letter]_complex_project` Git branch (and move over any changes). If so, then add a final action to merge that back into `main`.
+
+Early stages:
+- Explicitly add tasks for writing some automated, low-level unit tests, often before writing code. Explicitly add tasks for re-running the automated tests before ending each stage (in a subagent) if you think it will be helpful. see `docs/reference/TESTING_OVERVIEW.md` for philosophy and `docs/reference/TESTING_SETUP.md` for configuration
+- Add actions to search the web where appropriate, e.g. determining best practices, making use of 3rd-party libraries, etc
+
+At the end of stages:
+- Add actions to stop & review with user where appropriate, e.g. when we get to a good stopping point, to manually check changes to the user interface, etc
+- Follow instructions in `docs/instructions/DEBRIEF_PROGRESS.md` to output a summary of where things stand
+- Update this planning doc with progress so far, log useful learnings/surprises/changes of plan/etc.
 - Git commit (following instructions in `docs/instructions/DO_GIT_COMMITS.md`, including use a subagent).
 
-As a very final action:
+In later stages:
+- Add actions to update relevant `docs/reference/*.md` evergreen docs (see `docs/instructions/WRITE_EVERGREEN_DOC.md`). If you think we need a new evergreen-doc, ask the user
+- Add actions to tidy up tests (e.g. remove redundant ones, consolidate into fewer, higher-coverage, integration tests optimised for catching regressions), and any other helpful polish
+
+As final actions:
+- Ask the user's permission to merge back (if we created a branch)
 - Move the doc to `planning/finished/` and commit.
 
 Example stages & action (no need to include the words `TODO` or `DONE` explicitly, since the `[ ]` todo-checkboxes capture that):
@@ -88,7 +116,8 @@ Example stages & action (no need to include the words `TODO` or `DONE` explicitl
 ### Stage: High-level description of this stage
 - [ ] This is a top-level action
   - [ ] It can have sub-actions that get ticked off
-    - You can add bulletpoint notes with extra detail/context to help plan & shape future actions
+    - You can add bulletpoint notes of up to a few sentences with extra detail/context to help plan & shape future actions
+    - Or reference a later Appendix section which can contain lots more relevant detail
 
 ### ✅ This stage has already been completed
   - ✅ This action has already been completed

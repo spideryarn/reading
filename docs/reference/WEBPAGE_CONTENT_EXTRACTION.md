@@ -5,6 +5,7 @@ Comprehensive reference for extracting clean, readable content from academic pub
 ## See also
 
 - `docs/reference/PDF_TO_HTML_CONVERSION_OVERVIEW.md` - Converting PDF academic papers to HTML format
+- `docs/reference/HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md` - Comprehensive security and sanitization guide for academic HTML content
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Using Nunjucks + Zod templates for LLM content processing
 - `docs/reference/ARCHITECTURE_DECISIONS.md` - Overall system architecture and data processing approach
 - `lib/services/document-parser.ts` - Current HTML document parsing implementation
@@ -18,7 +19,8 @@ Comprehensive reference for extracting clean, readable content from academic pub
 - **Favour simplicity over perfection**: Use Mozilla Readability for 80% of cases, browser automation only when necessary
 - **TypeScript-first approach**: All extraction tools must provide robust TypeScript support
 - **Academic content priority**: Optimise for research papers, think tank reports, and long-form academic content
-- **Cost-effectiveness**: Balance between accuracy and processing costs (LLM usage, browser automation overhead)
+- **Accuracy over performance**: Prioritise content preservation and security over processing speed
+- **Security-first approach**: All extracted HTML must be sanitized before storage or display (see `docs/reference/HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md`)
 - **Privacy and ethics**: Respect robots.txt, rate limiting, and academic publisher terms of service
 - **Incremental enhancement**: Start with simple extraction, add complexity only where needed
 
@@ -171,6 +173,51 @@ async function respectfulExtraction(url: string) {
 }
 ```
 
+## Security and Content Sanitization
+
+### Critical Security Requirements
+
+**XSS Prevention**: All extracted HTML content must be sanitized before storage or display to prevent Cross-Site Scripting attacks. The current system has vulnerabilities using `dangerouslySetInnerHTML` with unsanitized external content.
+
+**Academic Content Preservation**: Sanitization must preserve complex academic formatting while removing security threats:
+- **Mathematical notation** (MathML, LaTeX-rendered HTML)
+- **Complex table structures** (data tables with colspan/rowspan)
+- **Scientific figures and captions** with publisher-specific markup
+- **Citation formatting and cross-references**
+- **Multi-column layouts** and academic typography
+
+**Implementation**: See `docs/reference/HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md` for comprehensive security guidance including DOMPurify configuration, CSP headers, and academic content preservation strategies.
+
+### Raw HTML Storage Strategy
+
+**Storage-First Approach**: Following the PDF storage pattern, store original HTML before any processing:
+
+```typescript
+// Storage workflow for academic content accuracy
+export async function processAcademicHTML(url: string, htmlContent: string) {
+  // 1. Store raw HTML immediately (preserves original for re-processing)
+  const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
+  const filename = generateSafeFilename(url);
+  
+  // 2. Extract content using chosen method
+  const extractedContent = await extractContent(htmlContent, method);
+  
+  // 3. Sanitize for security (preserve academic content)
+  const sanitizedContent = sanitizeAcademicContent(extractedContent);
+  
+  // 4. Store with metadata and storage path
+  return await documentService.createWithStorage(
+    userId, documentData, htmlBlob, filename, metadata
+  );
+}
+```
+
+**Benefits**:
+- **Re-processing capability**: Can improve extraction methods later
+- **Debugging support**: Original source available for analysis
+- **Consistency**: Same storage pattern as PDF documents
+- **Security**: Sanitization applied only at display time
+
 ## LLM-Assisted Content Extraction and Cleaning
 
 ### Current State (2024-2025)
@@ -194,6 +241,7 @@ async function llmCleanContent(rawContent: string, prompt: string) {
     - Preserve academic citations and references
     - Maintain section headings and structure
     - Extract key entities and terminology
+    - CRITICAL: Maintain all mathematical notation and complex tables
     
     Content: ${rawContent}
   `;
@@ -222,11 +270,11 @@ async function llmCleanContent(rawContent: string, prompt: string) {
 - Output: ~$75 per million tokens
 - **Typical Academic Paper**: 10,000-50,000 tokens = $0.15-$0.75 per paper
 
-**Optimisation Strategies**:
-1. **Tiered Processing**: Use cheaper models (Haiku) for initial cleaning, Sonnet for complex analysis
-2. **Chunked Processing**: Process papers in sections to manage token limits
-3. **Caching**: Store processed results to avoid re-processing
-4. **Hybrid Approach**: Traditional extraction + LLM for edge cases only
+**Accuracy-First Optimisation Strategies**:
+1. **Quality over speed**: Use Claude Sonnet 4 for maximum academic content preservation
+2. **Comprehensive processing**: Process full documents rather than chunking when accuracy is critical
+3. **Redundant validation**: Multiple extraction methods for important content
+4. **Careful sanitization**: Academic-specific DOMPurify configuration to preserve formatting
 
 ## Implementation Architecture Recommendations
 
@@ -310,12 +358,13 @@ export async function POST(request: Request) {
 ### Storage and Caching Strategy
 
 **Document Processing Pipeline**:
-1. **Raw URL Storage**: Original source URL and metadata
-2. **Extraction Results**: Multiple extraction attempts with quality scores
-3. **Upload Metadata Tracking**: Extraction method, provider, processing time, content sizes stored in documents.upload_metadata JSONB field
-4. **AI Call Linking**: Full traceability via documents.upload_ai_call_id foreign key to ai_calls table
-5. **Processed Content**: Final cleaned content with structure annotations
-6. **LLM Enhancements**: AI-generated summaries, glossaries, headings
+1. **Raw HTML Storage**: Original source HTML stored in Supabase Storage before any processing
+2. **Content Extraction**: Multiple extraction attempts (Readability, AI) with quality scores
+3. **HTML Sanitization**: All extracted HTML sanitized using DOMPurify with academic content preservation (see `docs/reference/HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md`)
+4. **Upload Metadata Tracking**: Extraction method, provider, processing time, content sizes stored in documents.upload_metadata JSONB field
+5. **AI Call Linking**: Full traceability via documents.upload_ai_call_id foreign key to ai_calls table
+6. **Processed Content**: Final cleaned and sanitized content with structure annotations
+7. **LLM Enhancements**: AI-generated summaries, glossaries, headings
 
 ## Performance and Cost Analysis
 
