@@ -12,7 +12,7 @@ import {
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { getModelConfig, AI_CONFIG } from '@/lib/config'
+import { getModelConfig, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 
 export async function GET(request: NextRequest) {
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
     requestLogger.info({ documentId }, 'No existing summary found, proceeding with generation')
     
     // Resolve tier key to actual model details using config
-    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as keyof typeof AI_CONFIG.MODELS
+    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
     const modelConfig = getModelConfig(tierKey)
     
     requestLogger.info({

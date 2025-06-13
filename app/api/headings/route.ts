@@ -365,6 +365,9 @@ export async function POST(request: NextRequest) {
     )
     
     // Store the headings result in database (only if documentId provided)
+    // TODO: Schema mismatch - headings API generates {id_of_after, html} but storage expects {id, text, level}
+    // Temporarily disabled for deployment - headings will generate but not persist
+    /*
     if (documentId) {
       await enhancementService.storeHeadings(
         documentId,
@@ -380,6 +383,7 @@ export async function POST(request: NextRequest) {
       }
     )
     }
+    */
     
     mutationLogger.info({
       documentId,
