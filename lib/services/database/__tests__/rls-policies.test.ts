@@ -3,10 +3,33 @@
  */
 
 /**
- * Row Level Security (RLS) Policy Testing
+ * DEPRECATED: Row Level Security (RLS) Policy Testing
  * 
- * Tests that verify RLS policies are properly enforcing document ownership
- * and user isolation at the database level.
+ * This test file is DEPRECATED and should not be used for new development.
+ * 
+ * REPLACEMENT: Use `/lib/services/database/__tests__/rls-policies-real.test.ts` instead.
+ * 
+ * REASON FOR DEPRECATION:
+ * - This file uses a simulation-based approach that doesn't actually test real RLS policies
+ * - It relies on deprecated infrastructure in `/lib/testing/rls-test-context.ts`
+ * - The simulation approach provides false confidence - it doesn't test actual database security
+ * - Real RLS testing discovered critical security vulnerabilities that these simulations missed
+ * 
+ * PROBLEMS WITH SIMULATION APPROACH:
+ * - Uses mock user contexts that don't represent real authentication states
+ * - Doesn't actually test RLS policy SQL logic at the database level
+ * - Complex infrastructure that's hard to maintain and debug
+ * - Slower execution time and prone to infrastructure failures
+ * 
+ * MIGRATION PATH:
+ * - Replace any usage of this file with the new real RLS testing patterns
+ * - Use `RLSTestDatabase` class for real database-level RLS testing
+ * - See `docs/reference/TESTING_DATABASE.md` for comprehensive examples
+ * - New approach is faster, more reliable, and provides genuine security validation
+ * 
+ * This file is kept temporarily for reference but will be removed in a future cleanup.
+ * 
+ * @deprecated Use rls-policies-real.test.ts instead
  */
 
 import { createClient } from '@/lib/supabase/client'
@@ -28,7 +51,7 @@ import {
   SECURITY_ASSERTIONS
 } from '@/lib/testing/security-fixtures'
 
-describe('RLS Policy Testing', () => {
+describe.skip('DEPRECATED: RLS Policy Testing', () => {
   let supabase: any
   let documentService: DocumentService
   let aiCallService: AiCallService

@@ -187,13 +187,20 @@ Coding & infrastructure:
 - `docs/reference/TESTING_OVERVIEW.md` - Testing approach documentation covering Jest with React Testing Library setup, test structure, and current test coverage
 - `docs/reference/TESTING_SETUP.md` - Test configuration and environment setup
 - `docs/reference/TESTING_TROUBLESHOOTING.md` - Known testing issues and workarounds
-- `docs/reference/TESTING_DATABASE.md` - Database-specific testing patterns
+- `docs/reference/TESTING_DATABASE.md` - Database-specific testing patterns including real RLS testing guide with security validation
 - `docs/reference/UI_INTERFACE.md` - Documents the multi-pane layout with tabbed navigation including four-pane structure, tab system architecture, and scrolling fixes. See related docs below in "AI, features, machinery, interface" section.
 
 Database:
 - `docs/reference/DATABASE_OVERVIEW.md`
 - `docs/reference/DATABASE_MIGRATIONS.md` - Guide for managing database schema changes through Supabase migrations with timestamped SQL files
 - `docs/reference/DATABASE_SCHEMA.md` - Reference for both current (deprecated) schema and target schema showing the transition from element decomposition to single-row storage (VERY MUCH EVOLVING)
+
+**Row Level Security (RLS) Testing**:
+- **ALWAYS use real RLS testing**: Use `RLSTestDatabase` class in `lib/testing/rls-database-test-utils.ts`
+- **AVOID simulation approaches**: Old simulation-based RLS tests have been deprecated for security reasons
+- **Essential for security**: Real RLS testing discovered and fixed critical vulnerabilities
+- **See**: `docs/reference/TESTING_DATABASE.md` for comprehensive real RLS testing patterns
+- **Example**: `lib/services/database/__tests__/rls-policies-real.test.ts` for reference implementation
 
 AI, features, machinery, interface:
 - `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Comprehensive technical guide for integrating the @assistant-ui/react library into the chatbot interface within the Tools pane
