@@ -27,6 +27,7 @@ import {
 import { debounce } from '@/lib/utils/debounce'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
 import Mark from 'mark.js'
+import { extractCleanText } from '@/lib/utils/html-text-extraction'
 
 // Entity type (will be moved to proper types file later)
 interface Entity {
@@ -446,10 +447,12 @@ export function UnifiedLeftPane({
               const docElement = elements.find(el => el.id === elementId)
               
               if (docElement) {
-                // Create text excerpt (first 100 chars)
-                const textExcerpt = docElement.content && docElement.content.length > 100
-                  ? docElement.content.substring(0, 100) + '...'
-                  : docElement.content || ''
+                // Create text excerpt (first 100 chars) - use DOM parsing for clean text extraction
+                const rawContent = docElement.content || ''
+                const cleanContent = extractCleanText(rawContent)
+                const textExcerpt = cleanContent.length > 100
+                  ? cleanContent.substring(0, 100) + '...'
+                  : cleanContent
                 
                 results.push({
                   elementId,
@@ -581,7 +584,8 @@ export function UnifiedLeftPane({
         return {
           elementId: match.elementId,
           elementType: element?.tag_name || 'unknown',
-          textExcerpt: match.relevantText || element?.content?.substring(0, 100) + '...' || '',
+          textExcerpt: match.relevantText || (element?.content ? 
+            (extractCleanText(element.content).substring(0, 100) + '...') : ''),
           matchCount: 1, // Semantic search doesn't have traditional match counts
           searchType: 'semantic' as const,
           confidence: match.confidence,
@@ -740,8 +744,9 @@ export function UnifiedLeftPane({
   const renderHighlightsTab = useCallback(() => (
     <HighlightManagement
       documentId={documentId}
+      elements={elements}
     />
-  ), [documentId])
+  ), [documentId, elements])
 
   const renderGlossaryTab = useCallback(() => {
     if (!showGlossary) {
