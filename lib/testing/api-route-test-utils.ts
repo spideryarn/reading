@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Enhanced API Route Testing Utilities for RLS Security
  * 

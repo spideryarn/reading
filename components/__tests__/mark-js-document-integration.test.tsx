@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import Mark from 'mark.js';

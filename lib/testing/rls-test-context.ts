@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * DEPRECATED: Multi-User RLS Testing Context Management
  * 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * ❌ DEPRECATED: RLS Database Testing Utilities
  * 
