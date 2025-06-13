@@ -299,6 +299,89 @@ body {
         animation: pulse-highlight 0.5s ease-out 3;
     }
 
+    /* Semantic highlighting styles - confidence-based intensity using Spideryarn orange */
+    .semantic-highlight-very-low {
+        background-color: rgba(219, 138, 69, 0.1);
+        border-left: 2px solid rgba(219, 138, 69, 0.2);
+        padding: 2px 4px;
+        margin: 1px 0;
+        border-radius: 2px;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .semantic-highlight-low {
+        background-color: rgba(219, 138, 69, 0.2);
+        border-left: 2px solid rgba(219, 138, 69, 0.4);
+        padding: 2px 4px;
+        margin: 1px 0;
+        border-radius: 2px;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .semantic-highlight-medium {
+        background-color: rgba(219, 138, 69, 0.3);
+        border-left: 3px solid rgba(219, 138, 69, 0.6);
+        padding: 2px 4px;
+        margin: 1px 0;
+        border-radius: 3px;
+        font-weight: 500;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .semantic-highlight-high {
+        background-color: rgba(219, 138, 69, 0.4);
+        border-left: 3px solid rgba(219, 138, 69, 0.8);
+        padding: 3px 5px;
+        margin: 2px 0;
+        border-radius: 3px;
+        font-weight: 600;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .semantic-highlight-very-high {
+        background-color: rgba(219, 138, 69, 0.5);
+        border-left: 4px solid #DB8A45;
+        padding: 3px 6px;
+        margin: 2px 0;
+        border-radius: 4px;
+        font-weight: 700;
+        box-shadow: 0 1px 3px rgba(219, 138, 69, 0.2);
+        transition: all 0.3s ease-in-out;
+    }
+
+    /* Hover effects for semantic highlights */
+    .semantic-highlight-very-low:hover,
+    .semantic-highlight-low:hover,
+    .semantic-highlight-medium:hover,
+    .semantic-highlight-high:hover,
+    .semantic-highlight-very-high:hover {
+        transform: scale(1.01);
+        box-shadow: 0 2px 6px rgba(219, 138, 69, 0.3);
+        cursor: pointer;
+    }
+
+    /* Active semantic highlight when clicked from highlights list */
+    .semantic-highlight-active {
+        outline: 2px solid #DB8A45;
+        outline-offset: 2px;
+        animation: pulse-semantic-highlight 0.8s ease-out 2;
+    }
+
+    @keyframes pulse-semantic-highlight {
+        0% {
+            outline-color: #DB8A45;
+            outline-width: 2px;
+        }
+        50% {
+            outline-color: rgba(219, 138, 69, 0.6);
+            outline-width: 4px;
+        }
+        100% {
+            outline-color: #DB8A45;
+            outline-width: 2px;
+        }
+    }
+
     @keyframes pulse-highlight {
         0% {
             box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.4);
