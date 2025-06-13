@@ -428,9 +428,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_current_test_user_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       has_active_subscription: {
         Args: { user_uuid: string }
         Returns: boolean
+      }
+      reset_current_user_id: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      set_current_user_id: {
+        Args: { user_id: string }
+        Returns: undefined
       }
     }
     Enums: {

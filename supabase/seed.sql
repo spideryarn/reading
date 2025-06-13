@@ -31,8 +31,8 @@ BEGIN
       '00000000-0000-0000-0000-000000000000'::uuid,
       'authenticated',
       'authenticated',
-      'system@spideryarn.internal',
-      '', -- Empty password (user cannot log in)
+      'hello@spideryarn.com',
+      crypt('ASDFasdf1', gen_salt('bf')),
       NOW(),
       '{"provider": "email", "providers": ["email"]}'::jsonb,
       '{"name": "System User", "description": "Mock user for development foreign key constraints"}'::jsonb,
