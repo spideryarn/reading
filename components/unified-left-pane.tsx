@@ -29,6 +29,12 @@ import { useDocumentCommunication } from '@/lib/context/document-communication-c
 import Mark from 'mark.js'
 import { extractCleanText } from '@/lib/utils/html-text-extraction'
 
+// Semantic highlight interface
+interface SemanticHighlight {
+  elementId: string
+  confidence: number
+}
+
 // Entity type (will be moved to proper types file later)
 interface Entity {
   name: string
@@ -76,6 +82,10 @@ interface UnifiedLeftPaneProps {
   
   // For chat context
   documentContext: string
+  
+  // Semantic highlighting
+  semanticHighlights?: SemanticHighlight[]
+  onSemanticHighlightsChange?: (highlights: SemanticHighlight[]) => void
 }
 
 // Get icon component for entity type
@@ -325,7 +335,9 @@ export function UnifiedLeftPane({
   onHeadingClick,
   onLoadGlossary,
   onResetGlossary,
-  documentContext
+  documentContext,
+  semanticHighlights = [],
+  onSemanticHighlightsChange
 }: UnifiedLeftPaneProps) {
   const { actions, state } = useDocumentCommunication()
   
@@ -745,8 +757,10 @@ export function UnifiedLeftPane({
     <HighlightManagement
       documentId={documentId}
       elements={elements}
+      semanticHighlights={semanticHighlights}
+      onSemanticHighlightsChange={onSemanticHighlightsChange}
     />
-  ), [documentId, elements])
+  ), [documentId, elements, semanticHighlights, onSemanticHighlightsChange])
 
   const renderGlossaryTab = useCallback(() => {
     if (!showGlossary) {

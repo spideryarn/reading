@@ -25,6 +25,12 @@ interface Entity {
   extra?: Record<string, unknown>
 }
 
+// Semantic highlight interface
+interface SemanticHighlight {
+  elementId: string
+  confidence: number
+}
+
 interface DocumentPageClientProps {
   html: string
   markdownContent: string
@@ -59,6 +65,9 @@ export default function DocumentPageClient({
   // Heading visibility state
   const [headingVisibility, setHeadingVisibility] = useState<Map<string, 'visible' | 'not-visible'>>(new Map())
   const [elementVisibility, setElementVisibility] = useState<Map<string, boolean>>(new Map())
+  
+  // Semantic highlights state
+  const [semanticHighlights, setSemanticHighlights] = useState<SemanticHighlight[]>([])
   
   // Real-time document subscription
   useEffect(() => {
@@ -238,6 +247,8 @@ export default function DocumentPageClient({
         headingVisibility={headingVisibility}
         onElementVisibilityChange={handleElementVisibilityChange}
         onElementClick={handleElementClick}
+        semanticHighlights={semanticHighlights}
+        onSemanticHighlightsChange={setSemanticHighlights}
       />
       </div>
     </div>

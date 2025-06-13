@@ -3,6 +3,8 @@
  * 
  * Maps confidence scores (0-100%) to CSS class names for visual highlighting
  * Uses Spideryarn orange color scheme with varying opacity and styling intensity
+ * 
+ * See docs/reference/TOOL_HIGHLIGHT.md for complete semantic highlighting system documentation
  */
 
 /**

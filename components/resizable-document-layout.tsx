@@ -13,6 +13,12 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 import { ImperativePanelHandle } from 'react-resizable-panels'
 import { UnifiedLeftPane } from './unified-left-pane'
 import { SimpleDocumentViewer } from './simple-document-viewer'
+
+// Semantic highlight interface (matching the one in SimpleDocumentViewer)
+interface SemanticHighlight {
+  elementId: string
+  confidence: number
+}
 import { VerticalIconNav } from './vertical-icon-nav'
 import { CommandPalette } from './command-palette'
 import type { DocumentElement } from '@/lib/types/document'
@@ -56,6 +62,10 @@ interface ResizableDocumentLayoutProps {
   headingVisibility?: Map<string, 'visible' | 'not-visible'>
   onElementVisibilityChange?: (elementId: string, isVisible: boolean) => void
   onElementClick?: (element: DocumentElement) => void
+  
+  // Semantic highlighting
+  semanticHighlights?: SemanticHighlight[]
+  onSemanticHighlightsChange?: (highlights: SemanticHighlight[]) => void
 }
 
 // Inner component that uses the document communication context
@@ -75,7 +85,9 @@ function ResizableDocumentLayoutInner({
   onResetGlossary,
   headingVisibility,
   onElementVisibilityChange,
-  onElementClick
+  onElementClick,
+  semanticHighlights = [],
+  onSemanticHighlightsChange
 }: ResizableDocumentLayoutProps) {
   const { actions, state } = useDocumentCommunication()
   const [, setScrollTarget] = useState<{ id: string; timestamp: number } | null>(null)
@@ -329,6 +341,8 @@ function ResizableDocumentLayoutInner({
               onLoadGlossary={onLoadGlossary}
               onResetGlossary={onResetGlossary}
               documentContext={documentContext}
+              semanticHighlights={semanticHighlights}
+              onSemanticHighlightsChange={onSemanticHighlightsChange}
             />
             </div>
           </div>
@@ -356,6 +370,7 @@ function ResizableDocumentLayoutInner({
               onElementSelect={onElementSelect}
               onElementVisibilityChange={onElementVisibilityChange}
               onElementClick={handleElementClick}
+              semanticHighlights={semanticHighlights}
             />
           </div>
         </ResizablePanel>

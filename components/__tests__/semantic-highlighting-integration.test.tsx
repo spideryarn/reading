@@ -1,5 +1,7 @@
 /**
  * @jest-environment jsdom
+ * Integration tests for semantic highlighting system
+ * See docs/reference/TOOL_HIGHLIGHT.md for complete system documentation
  */
 
 import React from 'react'
