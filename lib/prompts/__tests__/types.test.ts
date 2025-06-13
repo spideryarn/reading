@@ -7,15 +7,14 @@ import {
   executeMultimodalPrompt,
   executeMultimodalPromptWithUsage,
   loadPromptTemplate, 
-  loadMultimodalPromptTemplate,
   PromptTemplate,
   MultimodalPromptTemplate,
-  PromptExecutionResult,
   PromptUsage
 } from '../types'
 import { AI_CONFIG } from '@/lib/config'
 import * as llmProvider from '@/lib/services/llm-provider'
 import { generateText } from 'ai'
+import * as fs from 'fs'
 
 // Mock the AI SDK and provider
 jest.mock('ai', () => ({
@@ -90,11 +89,7 @@ describe('Prompt Execution with Multi-Provider Support and Usage Tracking', () =
     reasoningTokens: 10
   }
   
-  const mockExecutionResult: PromptExecutionResult = {
-    text: 'Generated response with usage',
-    usage: mockUsage,
-    finishReason: 'stop'
-  }
+  // Mock execution result removed - not currently used in tests
   
   beforeEach(() => {
     jest.clearAllMocks()
@@ -115,7 +110,7 @@ describe('Prompt Execution with Multi-Provider Support and Usage Tracking', () =
         totalTokens: 125,
         reasoningTokens: 10
       },
-    } as any)
+    } as ReturnType<typeof generateText>)
   })
   
   describe('executePrompt', () => {
@@ -154,7 +149,7 @@ describe('Prompt Execution with Multi-Provider Support and Usage Tracking', () =
     })
     
     it('should validate variables against schema', async () => {
-      const invalidVariables = { name: 'Test', value: 'not-a-number' as any }
+      const invalidVariables = { name: 'Test', value: 'not-a-number' as unknown as number }
       
       await expect(executePrompt(testTemplate, invalidVariables)).rejects.toThrow()
     })
@@ -259,7 +254,7 @@ describe('Prompt Execution with Multi-Provider Support and Usage Tracking', () =
         text: 'Response without usage',
         finishReason: 'stop',
         usage: undefined,
-      } as any)
+      } as ReturnType<typeof generateText>)
       
       const variables = { name: 'Test', value: 42 }
       const result = await executePromptWithUsage(testTemplate, variables)
@@ -286,7 +281,7 @@ describe('Prompt Execution with Multi-Provider Support and Usage Tracking', () =
           totalTokens: 100
           // Missing completionTokens and reasoningTokens
         },
-      } as any)
+      } as ReturnType<typeof generateText>)
       
       const variables = { name: 'Test', value: 42 }
       const result = await executePromptWithUsage(testTemplate, variables)
@@ -309,7 +304,7 @@ describe('Prompt Execution with Multi-Provider Support and Usage Tracking', () =
         text: 'Response without finish reason',
         usage: mockUsage,
         // Missing finishReason
-      } as any)
+      } as ReturnType<typeof generateText>)
       
       const variables = { name: 'Test', value: 42 }
       const result = await executePromptWithUsage(testTemplate, variables)
@@ -318,7 +313,7 @@ describe('Prompt Execution with Multi-Provider Support and Usage Tracking', () =
     })
     
     it('should validate variables against schema', async () => {
-      const invalidVariables = { name: 'Test', value: 'not-a-number' as any }
+      const invalidVariables = { name: 'Test', value: 'not-a-number' as unknown as number }
       
       await expect(executePromptWithUsage(testTemplate, invalidVariables))
         .rejects.toThrow()
@@ -329,7 +324,7 @@ describe('Prompt Execution with Multi-Provider Support and Usage Tracking', () =
         ...testTemplate,
         modelConfig: {
           ...testTemplate.modelConfig,
-          model: 'anthropic-balanced' as any,
+          model: 'anthropic-balanced' as const,
           thinking: true
         }
       }

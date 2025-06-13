@@ -46,7 +46,7 @@ describe('LLM Provider Factory', () => {
     })
     
     it('should throw error for unknown provider', () => {
-      expect(() => getProvider('unknown' as any)).toThrow('Unknown provider: unknown')
+      expect(() => getProvider('unknown' as ReturnType<typeof getProvider>)).toThrow('Unknown provider: unknown')
     })
     
     it('should throw error if anthropic API key is missing', () => {
@@ -93,7 +93,7 @@ describe('LLM Provider Factory', () => {
     })
     
     it('should throw error for invalid provider-tier key', () => {
-      expect(() => getModel('invalid-key' as any)).toThrow('Unknown provider-tier key: invalid-key')
+      expect(() => getModel('invalid-key' as Parameters<typeof getModel>[0])).toThrow('Unknown provider-tier key: invalid-key')
     })
   })
   
@@ -168,7 +168,7 @@ describe('Model Configuration', () => {
     })
     
     it('should throw error for invalid key', () => {
-      expect(() => getModelConfig('invalid-key' as any))
+      expect(() => getModelConfig('invalid-key' as Parameters<typeof getModelConfig>[0]))
         .toThrow('Unknown provider-tier key: invalid-key')
     })
   })
@@ -231,7 +231,7 @@ describe('Provider-Tier Model System', () => {
     ]
     
     configs.forEach(key => {
-      const config = getModelConfig(key as any)
+      const config = getModelConfig(key as Parameters<typeof getModelConfig>[0])
       expect(config.description).toBeDefined()
       expect(config.description.length).toBeGreaterThan(10)
       expect(config.description).toContain(config.provider === 'anthropic' ? 'Claude' : 'Gemini')
