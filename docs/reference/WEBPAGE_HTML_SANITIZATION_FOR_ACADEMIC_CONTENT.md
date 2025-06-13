@@ -304,6 +304,43 @@ function enhanceAcademicContent(html: string): string {
 - **Root Cause**: Insufficient input sanitization in research forms
 - **Mitigation**: Updated sanitization + CSP implementation
 
+## Sanitization Architecture: Storage-Time vs Display-Time
+
+### Storage-Time Sanitization (✓ **Current Approach**)
+
+**Architecture**: HTML content is sanitized once during document import, before being stored in the database. The sanitized content is stored in the `html_content` database field and can be safely displayed without additional sanitization.
+
+**Workflow**:
+1. **Content Extraction**: Raw HTML extracted from PDF or web sources
+2. **Sanitization**: `sanitizeAcademicContent()` applied to extracted HTML
+3. **Database Storage**: Pre-sanitized content stored in `html_content` field
+4. **Original Preservation**: Raw originals stored in Supabase Storage for re-processing
+5. **Display**: Pre-sanitized content displayed directly without additional processing
+
+**Benefits**:
+- **Performance**: Zero sanitization overhead on page loads
+- **Security**: Guaranteed safe content in database (single sanitization point)
+- **Consistency**: All content sanitized using same configuration
+- **Debugging**: Clear audit trail of sanitization at import time
+
+**Implementation Files**:
+- `app/api/upload-pdf/route.ts` - PDF import with storage-time sanitization
+- `app/api/extract-url/route.ts` - URL extraction with storage-time sanitization
+- `lib/utils/html-sanitizer.ts` - Comprehensive sanitization utility
+- `components/simple-document-viewer.tsx` - Display pre-sanitized content
+
+### Display-Time Sanitization (❌ **Deprecated Approach**)
+
+**Previous Architecture**: HTML content was stored raw in the database and sanitized every time it was displayed using `dangerouslySetInnerHTML`.
+
+**Issues with Display-Time Approach**:
+- **Performance**: Sanitization overhead on every page load
+- **Security Risk**: Potential for bypassing sanitization in display components
+- **Inconsistency**: Multiple sanitization points with potential configuration drift
+- **Debugging**: Difficult to track where sanitization failures occur
+
+**Migration**: The system was migrated from display-time to storage-time sanitization in June 2025, ensuring all new imports use the secure storage-time approach.
+
 ## Implementation Recommendations
 
 ### For Spideryarn Reading

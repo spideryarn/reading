@@ -202,21 +202,26 @@ export async function processAcademicHTML(url: string, htmlContent: string) {
   // 2. Extract content using chosen method
   const extractedContent = await extractContent(htmlContent, method);
   
-  // 3. Sanitize for security (preserve academic content)
+  // 3. Sanitize for security BEFORE storage (storage-time sanitization)
   const sanitizedContent = sanitizeAcademicContent(extractedContent);
   
-  // 4. Store with metadata and storage path
+  // 4. Store sanitized content in database with raw original in storage
   return await documentService.createWithStorage(
-    userId, documentData, htmlBlob, filename, metadata
+    userId, 
+    { ...documentData, html_content: sanitizedContent }, // Sanitized content in DB
+    htmlBlob,  // Raw original in Supabase Storage
+    filename, 
+    metadata
   );
 }
 ```
 
 **Benefits**:
-- **Re-processing capability**: Can improve extraction methods later
+- **Re-processing capability**: Can improve extraction methods later using raw originals
 - **Debugging support**: Original source available for analysis
 - **Consistency**: Same storage pattern as PDF documents
-- **Security**: Sanitization applied only at display time
+- **Security**: Storage-time sanitization ensures all database content is pre-sanitized and safe for display
+- **Performance**: No sanitization overhead on page loads
 
 ## LLM-Assisted Content Extraction and Cleaning
 
@@ -360,10 +365,10 @@ export async function POST(request: Request) {
 **Document Processing Pipeline**:
 1. **Raw HTML Storage**: Original source HTML stored in Supabase Storage before any processing
 2. **Content Extraction**: Multiple extraction attempts (Readability, AI) with quality scores
-3. **HTML Sanitization**: All extracted HTML sanitized using DOMPurify with academic content preservation (see `docs/reference/WEBPAGE_HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md`)
-4. **Upload Metadata Tracking**: Extraction method, provider, processing time, content sizes stored in documents.upload_metadata JSONB field
-5. **AI Call Linking**: Full traceability via documents.upload_ai_call_id foreign key to ai_calls table
-6. **Processed Content**: Final cleaned and sanitized content with structure annotations
+3. **Storage-Time HTML Sanitization**: All extracted HTML sanitized using DOMPurify with academic content preservation BEFORE database storage (see `docs/reference/WEBPAGE_HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md`)
+4. **Database Storage**: Pre-sanitized content stored in `html_content` field for safe, fast display
+5. **Upload Metadata Tracking**: Extraction method, provider, processing time, content sizes stored in documents.upload_metadata JSONB field
+6. **AI Call Linking**: Full traceability via documents.upload_ai_call_id foreign key to ai_calls table
 7. **LLM Enhancements**: AI-generated summaries, glossaries, headings
 
 ## Performance and Cost Analysis

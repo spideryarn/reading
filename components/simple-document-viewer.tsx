@@ -9,7 +9,6 @@ import type { DocumentElement } from '@/lib/types/document'
 import { MarkdownRenderer } from './markdown-renderer'
 import { useElementVisibility } from '@/lib/hooks/useElementVisibility'
 import { DocumentParser } from '@/lib/services/document-parser'
-import { sanitizeAcademicContent } from '@/lib/utils/html-sanitizer'
 
 interface SimpleDocumentViewerProps {
   elements: DocumentElement[]
@@ -145,14 +144,14 @@ export function SimpleDocumentViewer({
               ) : isListItem ? (
                 <span className="flex items-start">
                   <span className="mr-2">{element.parent_id && elements.find(e => e.id === element.parent_id)?.tag_name === 'ol' ? `${depth + 1}.` : '•'}</span>
-                  <span dangerouslySetInnerHTML={{ __html: sanitizeAcademicContent(element.content) }} />
+                  <span dangerouslySetInnerHTML={{ __html: element.content }} />
                 </span>
               ) : element.tag_name === 'text' || DocumentParser.INLINE_ELEMENTS.has(element.tag_name) ? (
                 // For text nodes and inline elements, render as plain text
                 element.content
               ) : (
-                // For block elements, sanitize HTML content to prevent XSS
-                <div dangerouslySetInnerHTML={{ __html: sanitizeAcademicContent(element.content) }} />
+                // For block elements, content is pre-sanitized at storage time
+                <div dangerouslySetInnerHTML={{ __html: element.content }} />
               )}
             </div>
           )}

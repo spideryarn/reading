@@ -131,49 +131,100 @@ export function sanitizeAcademicContent(
     preserveSvg?: boolean;
   } = {}
 ): string {
+  // Input validation
+  if (typeof html !== 'string') {
+    throw new Error('HTML content must be a string')
+  }
+
+  if (html.length === 0) {
+    return '' // Empty input returns empty output
+  }
+
+  // Check for extremely large content that might cause memory issues
+  const MAX_HTML_SIZE = 50 * 1024 * 1024 // 50MB
+  if (html.length > MAX_HTML_SIZE) {
+    throw new Error(`HTML content too large (${Math.round(html.length / 1024 / 1024)}MB). Maximum size is ${MAX_HTML_SIZE / 1024 / 1024}MB`)
+  }
+
   const {
     restrictive = false,
     preserveMath = true,
     preserveSvg = true
   } = options;
 
-  // Use restrictive config for untrusted content
-  if (restrictive) {
-    return DOMPurify.sanitize(html, RESTRICTIVE_SANITIZATION_CONFIG);
+  try {
+    // Use restrictive config for untrusted content
+    if (restrictive) {
+      const sanitized = DOMPurify.sanitize(html, RESTRICTIVE_SANITIZATION_CONFIG);
+      if (sanitized === null || sanitized === undefined) {
+        throw new Error('Sanitization returned invalid result')
+      }
+      return sanitized;
+    }
+
+    // Create academic config with optional features
+    const config = {
+      ...ACADEMIC_SANITIZATION_CONFIG
+    };
+
+    // Handle math preservation option
+    if (!preserveMath) {
+      // Remove MathML tags from allowed list
+      config.FORBID_TAGS = [
+        ...(config.FORBID_TAGS || []),
+        'math', 'mrow', 'mi', 'mn', 'mo', 'mfrac', 'msub', 'msup',
+        'msubsup', 'munder', 'mover', 'munderover', 'mtable', 'mtr', 'mtd'
+      ];
+    }
+
+    // Handle SVG preservation option
+    if (!preserveSvg) {
+      // Remove SVG tags from allowed list
+      config.FORBID_TAGS = [
+        ...(config.FORBID_TAGS || []),
+        'svg', 'circle', 'rect', 'path', 'g', 'text', 'line', 'polygon'
+      ];
+    }
+
+    // Update USE_PROFILES based on options
+    config.USE_PROFILES = {
+      html: true,
+      mathMl: preserveMath,
+      svg: preserveSvg
+    };
+
+    const sanitized = DOMPurify.sanitize(html, config);
+    
+    // Validate sanitization result
+    if (sanitized === null || sanitized === undefined) {
+      throw new Error('Sanitization returned invalid result')
+    }
+
+    // Check for suspicious sanitization (removed too much content)
+    if (html.length > 1000 && sanitized.length < html.length * 0.1) {
+      console.warn(`Sanitization removed ${Math.round((1 - sanitized.length / html.length) * 100)}% of content. Original: ${html.length} chars, Sanitized: ${sanitized.length} chars`)
+    }
+
+    return sanitized;
+
+  } catch (error) {
+    // Enhanced error context for debugging
+    const errorContext = {
+      originalLength: html.length,
+      restrictive,
+      preserveMath,
+      preserveSvg,
+      preview: html.substring(0, 200) + (html.length > 200 ? '...' : '')
+    }
+    
+    console.error('HTML sanitization failed:', error, errorContext)
+    
+    if (error instanceof Error) {
+      throw new Error(`HTML sanitization failed: ${error.message}`)
+    } else {
+      throw new Error('HTML sanitization failed due to unknown error')
+    }
   }
-
-  // Create academic config with optional features
-  const config = {
-    ...ACADEMIC_SANITIZATION_CONFIG
-  };
-
-  // Handle math preservation option
-  if (!preserveMath) {
-    // Remove MathML tags from allowed list
-    config.FORBID_TAGS = [
-      ...(config.FORBID_TAGS || []),
-      'math', 'mrow', 'mi', 'mn', 'mo', 'mfrac', 'msub', 'msup',
-      'msubsup', 'munder', 'mover', 'munderover', 'mtable', 'mtr', 'mtd'
-    ];
-  }
-
-  // Handle SVG preservation option
-  if (!preserveSvg) {
-    // Remove SVG tags from allowed list
-    config.FORBID_TAGS = [
-      ...(config.FORBID_TAGS || []),
-      'svg', 'circle', 'rect', 'path', 'g', 'text', 'line', 'polygon'
-    ];
-  }
-
-  // Update USE_PROFILES based on options
-  config.USE_PROFILES = {
-    html: true,
-    mathMl: preserveMath,
-    svg: preserveSvg
-  };
-
-  return DOMPurify.sanitize(html, config);
 }
 
 /**
@@ -183,7 +234,46 @@ export function sanitizeAcademicContent(
  * @returns Sanitized HTML with restrictive security policy
  */
 export function sanitizeUserContent(html: string): string {
-  return DOMPurify.sanitize(html, RESTRICTIVE_SANITIZATION_CONFIG);
+  // Input validation
+  if (typeof html !== 'string') {
+    throw new Error('HTML content must be a string')
+  }
+
+  if (html.length === 0) {
+    return '' // Empty input returns empty output
+  }
+
+  // Check for large content that might cause memory issues
+  const MAX_HTML_SIZE = 10 * 1024 * 1024 // 10MB for user content (more restrictive)
+  if (html.length > MAX_HTML_SIZE) {
+    throw new Error(`HTML content too large (${Math.round(html.length / 1024 / 1024)}MB). Maximum size for user content is ${MAX_HTML_SIZE / 1024 / 1024}MB`)
+  }
+
+  try {
+    const sanitized = DOMPurify.sanitize(html, RESTRICTIVE_SANITIZATION_CONFIG);
+    
+    // Validate sanitization result
+    if (sanitized === null || sanitized === undefined) {
+      throw new Error('Sanitization returned invalid result')
+    }
+
+    return sanitized;
+
+  } catch (error) {
+    // Enhanced error context for debugging
+    const errorContext = {
+      originalLength: html.length,
+      preview: html.substring(0, 200) + (html.length > 200 ? '...' : '')
+    }
+    
+    console.error('User content sanitization failed:', error, errorContext)
+    
+    if (error instanceof Error) {
+      throw new Error(`User content sanitization failed: ${error.message}`)
+    } else {
+      throw new Error('User content sanitization failed due to unknown error')
+    }
+  }
 }
 
 /**

@@ -14,6 +14,7 @@ import { generateSlug, generateHtmlFilename } from '@/lib/utils/slug'
 import { URL_EXTRACTION_CONFIG } from '@/lib/config'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
 import { validateAuth } from '@/lib/auth/server-auth'
+import { sanitizeAcademicContent } from '@/lib/utils/html-sanitizer'
 
 // URL validation function
 function isValidUrl(urlString: string): boolean {
@@ -267,10 +268,22 @@ export async function POST(request: NextRequest) {
       return new NextResponse(URL_EXTRACTION_CONFIG.ERROR_MESSAGES.JAVASCRIPT_REQUIRED, { status: 400 })
     }
     
-    console.log('Step 4: Content extraction completed, processing plaintext...')
+    console.log('Step 4: Content extraction completed, sanitizing content...')
+
+    // Sanitize extracted HTML content before storage
+    let sanitizedHtml: string
+    try {
+      sanitizedHtml = sanitizeAcademicContent(extractedHtml)
+      console.log(`Sanitized HTML content (${sanitizedHtml.length} chars from ${extractedHtml.length} chars)`)
+    } catch (sanitizationError) {
+      console.error('HTML sanitization failed:', sanitizationError)
+      throw new Error(`Content sanitization failed: ${sanitizationError instanceof Error ? sanitizationError.message : 'Unknown sanitization error'}`)
+    }
+
+    console.log('Step 5: Extracting plaintext from sanitized content...')
     
-    // Extract plaintext from HTML for search and word count
-    const plaintext = extractedHtml
+    // Extract plaintext from sanitized HTML for search and word count
+    const plaintext = sanitizedHtml
       .replace(/<[^>]*>/g, ' ') // Remove HTML tags
       .replace(/\s+/g, ' ') // Normalize whitespace
       .trim()
@@ -283,7 +296,7 @@ export async function POST(request: NextRequest) {
     // Generate final slug from the actual title (not the default title)
     const finalSlug = generateSlug(finalTitle)
     
-    console.log('Step 5: Creating document with database integration...')
+    console.log('Step 6: Creating document with database integration...')
     
     // Prepare upload metadata based on extraction method
     const uploadMetadata = {
@@ -312,7 +325,7 @@ export async function POST(request: NextRequest) {
       user.id,
       {
         title: finalTitle,
-        html_content: extractedHtml,
+        html_content: sanitizedHtml, // Use sanitized HTML instead of raw extracted HTML
         plaintext_content: plaintext,
         slug: finalSlug,
         source_url: url,
@@ -325,7 +338,7 @@ export async function POST(request: NextRequest) {
       extractionMethodUsed === 'ai-transcription' ? aiCall?.id : null // Link to AI call only for AI transcription
     )
     
-    console.log(`Step 6: Document created successfully with ID: ${document.id}`)
+    console.log(`Step 7: Document created successfully with ID: ${document.id}`)
     
     // Return comprehensive response with document details
     return NextResponse.json({
@@ -379,6 +392,17 @@ export async function POST(request: NextRequest) {
       
       if (error.message.includes('database') || error.message.includes('Failed to create document')) {
         return new NextResponse('Database error. Please try again later.', { status: 503 })
+      }
+
+      if (error.message.includes('Content sanitization failed') || error.message.includes('sanitization')) {
+        // Provide specific error messages based on sanitization failure type
+        if (error.message.includes('too large')) {
+          return new NextResponse('Web page import failed: Extracted content is too large to process safely', { status: 413 })
+        }
+        if (error.message.includes('invalid result')) {
+          return new NextResponse('Web page import failed: Content sanitization produced invalid results', { status: 422 })
+        }
+        return new NextResponse('Web page import failed: Content could not be safely processed for security reasons', { status: 422 })
       }
       
       return new NextResponse(`Processing error: ${error.message}`, { status: 500 })
