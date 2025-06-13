@@ -409,6 +409,33 @@ body {
         border-left: 5px solid rgba(219, 138, 69, 0.9) !important;
     }
 
+    /* High-specificity rules for AI-generated elements (green background) with semantic highlights */
+    /* These override the AI-generated element styling to maintain highlight visibility */
+    .bg-green-50.semantic-highlight-very-low {
+        background-color: rgba(219, 138, 69, 0.15) !important;
+        border-left: 3px solid rgba(219, 138, 69, 0.3) !important;
+    }
+
+    .bg-green-50.semantic-highlight-low {
+        background-color: rgba(219, 138, 69, 0.25) !important;
+        border-left: 3px solid rgba(219, 138, 69, 0.5) !important;
+    }
+
+    .bg-green-50.semantic-highlight-medium {
+        background-color: rgba(219, 138, 69, 0.35) !important;
+        border-left: 4px solid rgba(219, 138, 69, 0.7) !important;
+    }
+
+    .bg-green-50.semantic-highlight-high {
+        background-color: rgba(219, 138, 69, 0.45) !important;
+        border-left: 4px solid rgba(219, 138, 69, 0.8) !important;
+    }
+
+    .bg-green-50.semantic-highlight-very-high {
+        background-color: rgba(219, 138, 69, 0.55) !important;
+        border-left: 5px solid rgba(219, 138, 69, 0.9) !important;
+    }
+
     @keyframes pulse-highlight {
         0% {
             box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.4);
