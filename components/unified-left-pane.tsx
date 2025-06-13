@@ -419,22 +419,22 @@ export function UnifiedLeftPane({
   const [isSearching, setIsSearching] = useState(false)
   const [caseSensitive, setCaseSensitive] = useState(false)
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false)
-  const [useSemanticSearch, setUseSemanticSearch] = useState(false)
-  const [semanticSearchError, setSemanticSearchError] = useState<string | null>(null)
-  const [semanticSortByRelevance, setSemanticSortByRelevance] = useState(false) // false = position, true = relevance
+  const [useSemanticSearch] = useState(false)
+  // const [semanticSearchError] = useState<string | null>(null)
+  const [semanticSortByRelevance] = useState(false) // false = position, true = relevance
   // Cache state for semantic search
-  const [semanticSearchCached, setSemanticSearchCached] = useState(false)
-  const [semanticSearchCachedAt, setSemanticSearchCachedAt] = useState<string | null>(null)
+  // const [semanticSearchCached] = useState(false)
+  // const [semanticSearchCachedAt] = useState<string | null>(null)
   
   // Query history for semantic search
-  const [queryHistory, setQueryHistory] = useState<Array<{
+  const [queryHistory] = useState<Array<{
     query: string
     normalizedQuery: string
     searchedAt: string
     resultCount: number
   }>>([])
-  const [showQueryHistory, setShowQueryHistory] = useState(false)
-  const [isLoadingHistory] = useState(false)
+  // const [showQueryHistory] = useState(false)
+  // const [isLoadingHistory] = useState(false)
   
   // Store timeout ID to cancel pending searches
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -573,116 +573,114 @@ export function UnifiedLeftPane({
   }, [caseSensitive, searchQuery, performSearch, useSemanticSearch])
 
   // Fetch query history for semantic search
-  const fetchQueryHistory = useCallback(async () => {
-    if (!useSemanticSearch) return
-    
-    setIsLoadingHistory(true)
-    try {
-      const response = await fetch(`/api/semantic-search?documentId=${encodeURIComponent(documentId)}`)
-      const data = await response.json()
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch query history')
-      }
-      
-      setQueryHistory(data.queries || [])
-      console.log(`[QueryHistory] Fetched ${data.queries?.length || 0} historical queries`)
-    } catch (error) {
-      console.error('[QueryHistory] Failed to fetch query history:', error)
-      // Don't show error to user - query history is nice-to-have
-      setQueryHistory([])
-    } finally {
-      setIsLoadingHistory(false)
-    }
-  }, [documentId, useSemanticSearch])
+  // const fetchQueryHistory = useCallback(async () => {
+  //   if (!useSemanticSearch) return
+  //   
+  //   setIsLoadingHistory(true)
+  //   try {
+  //     const response = await fetch(`/api/semantic-search?documentId=${encodeURIComponent(documentId)}`)
+  //     const data = await response.json()
+  //     
+  //     if (!response.ok) {
+  //       throw new Error(data.error || 'Failed to fetch query history')
+  //     }
+  //     
+  //     setQueryHistory(data.queries || [])
+  //     console.log(`[QueryHistory] Fetched ${data.queries?.length || 0} historical queries`)
+  //   } catch (error) {
+  //     console.error('[QueryHistory] Failed to fetch query history:', error)
+  //     // Don't show error to user - query history is nice-to-have
+  //     setQueryHistory([])
+  //   } finally {
+  //     setIsLoadingHistory(false)
+  //   }
+  // }, [documentId, useSemanticSearch])
 
   // Fetch query history when semantic search is enabled
-  useEffect(() => {
-    if (useSemanticSearch) {
-      fetchQueryHistory()
-    } else {
-      // Clear history when switching to text search
-      setQueryHistory([])
-      setShowQueryHistory(false)
-    }
-  }, [useSemanticSearch, fetchQueryHistory])
+  // useEffect(() => {
+  //   if (useSemanticSearch) {
+  //     fetchQueryHistory()
+  //   } else {
+  //     // Clear history when switching to text search
+  //     setQueryHistory([])
+  //     setShowQueryHistory(false)
+  //   }
+  // }, [useSemanticSearch, fetchQueryHistory])
 
   // Semantic search function using API endpoint
-  const performSemanticSearch = useCallback(async (query: string) => {
-    // Clear any previous search state
-    setSemanticSearchError(null)
-    setSearchResults([])
-    setIsSearching(true)
-    setSemanticSearchCached(false)
-    setSemanticSearchCachedAt(null)
-    
-    // Clear text search highlights since we're doing semantic search
-    if (markInstanceRef.current) {
-      markInstanceRef.current.unmark()
-    }
-
-    try {
-      const response = await fetch('/api/semantic-search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          query,
-          documentId
-        })
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Semantic search failed')
-      }
-
-      // Update cache status
-      setSemanticSearchCached(!!data.cached)
-      setSemanticSearchCachedAt(data.cachedAt || null)
-
-      // Convert semantic search results to SearchResult format
-      const semanticResults: SearchResult[] = data.matches.map((match: {
-        elementId: string
-        confidence: number
-        reasoning: string
-        relevantText: string
-      }) => {
-        // Find the corresponding element to get tag name and content
-        const element = elements.find(el => el.id === match.elementId)
-        
-        const fullElementText = element?.content ? extractCleanText(element.content) : ''
-        
-        return {
-          elementId: match.elementId,
-          elementType: element?.tag_name || 'unknown',
-          matchCount: 1, // Semantic search doesn't have traditional match counts
-          searchType: 'semantic' as const,
-          confidence: match.confidence,
-          reasoning: match.reasoning,
-          contexts: [{ text: match.relevantText || (fullElementText.substring(0, 100) + '...'), matchIndex: 0 }],
-          fullText: fullElementText
-        }
-      })
-
-      setSearchResults(semanticResults)
-      console.log(`[SemanticSearch] Found ${semanticResults.length} semantic matches for query: "${query}"`)
-      
-    } catch (error) {
-      console.error('[SemanticSearch] Error performing semantic search:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Failed to perform semantic search'
-      setSemanticSearchError(errorMessage)
-      setSearchResults([])
-    } finally {
-      setIsSearching(false)
-      // Refresh query history after search (success or failure)
-      if (useSemanticSearch) {
-        fetchQueryHistory()
-      }
-    }
-  }, [documentId, elements, useSemanticSearch, fetchQueryHistory])
+  // const performSemanticSearch = useCallback(async (query: string) => {
+  //   // Clear any previous search state
+  //   setSemanticSearchError(null)
+  //   setSearchResults([])
+  //   setIsSearching(true)
+  //   setSemanticSearchCached(false)
+  //   setSemanticSearchCachedAt(null)
+  //   
+  //   // Clear text search highlights since we're doing semantic search
+  //   if (markInstanceRef.current) {
+  //     markInstanceRef.current.unmark()
+  //   }
+  // 
+  //   try {
+  //     const response = await fetch('/api/semantic-search', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json'
+  //       },
+  //       body: JSON.stringify({
+  //         query,
+  //         documentId
+  //       })
+  //     })
+  // 
+  //     const data = await response.json()
+  // 
+  //     if (!response.ok) {
+  //       throw new Error(data.error || 'Semantic search failed')
+  //     }
+  // 
+  //     // Update cache status
+  //     setSemanticSearchCached(!!data.cached)
+  //     setSemanticSearchCachedAt(data.cachedAt || null)
+  // 
+  //     // Convert semantic search results to SearchResult format
+  //     const semanticResults: SearchResult[] = data.matches.map((match: {
+  //       elementId: string
+  //       confidence: number
+  //       reasoning: string
+  //       relevantText: string
+  //     }) => {
+  //       // Find the corresponding element to get tag name and content
+  //       const element = elements.find(el => el.id === match.elementId)
+  //       
+  //       return {
+  //         elementId: match.elementId,
+  //         elementType: element?.tag_name || 'unknown',
+  //         textExcerpt: match.relevantText || (element?.content ? 
+  //           (extractCleanText(element.content).substring(0, 100) + '...') : ''),
+  //         matchCount: 1, // Semantic search doesn't have traditional match counts
+  //         searchType: 'semantic' as const,
+  //         confidence: match.confidence,
+  //         reasoning: match.reasoning
+  //       }
+  //     })
+  // 
+  //     setSearchResults(semanticResults)
+  //     console.log(`[SemanticSearch] Found ${semanticResults.length} semantic matches for query: "${query}"`)
+  //     
+  //   } catch (error) {
+  //     console.error('[SemanticSearch] Error performing semantic search:', error)
+  //     const errorMessage = error instanceof Error ? error.message : 'Failed to perform semantic search'
+  //     setSemanticSearchError(errorMessage)
+  //     setSearchResults([])
+  //   } finally {
+  //     setIsSearching(false)
+  //     // Refresh query history after search (success or failure)
+  //     if (useSemanticSearch) {
+  //       fetchQueryHistory()
+  //     }
+  //   }
+  // }, [documentId, elements, useSemanticSearch, fetchQueryHistory])
 
   // Function to sort semantic search results
   const sortSemanticResults = useCallback((results: SearchResult[], sortByRelevance: boolean) => {
@@ -712,33 +710,33 @@ export function UnifiedLeftPane({
   }, [searchResults, semanticSortByRelevance, useSemanticSearch, sortSemanticResults])
 
   // Filtered query history based on current search input
-  const filteredQueryHistory = useMemo(() => {
-    if (!useSemanticSearch || !searchQuery.trim()) {
-      return queryHistory
-    }
-    
-    const searchLower = searchQuery.toLowerCase()
-    return queryHistory.filter(item => 
-      item.query.toLowerCase().includes(searchLower)
-    )
-  }, [queryHistory, searchQuery, useSemanticSearch])
+  // const filteredQueryHistory = useMemo(() => {
+  //   if (!useSemanticSearch || !searchQuery.trim()) {
+  //     return queryHistory
+  //   }
+  //   
+  //   const searchLower = searchQuery.toLowerCase()
+  //   return queryHistory.filter(item => 
+  //     item.query.toLowerCase().includes(searchLower)
+  //   )
+  // }, [queryHistory, searchQuery, useSemanticSearch])
 
   // Format date in unambiguous format: "2025-June-08 at 22:15"
-  const formatDate = useCallback((dateString: string) => {
-    const date = new Date(dateString)
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ]
-    
-    const year = date.getFullYear()
-    const month = monthNames[date.getMonth()]
-    const day = date.getDate().toString().padStart(2, '0')
-    const hours = date.getHours().toString().padStart(2, '0')
-    const minutes = date.getMinutes().toString().padStart(2, '0')
-    
-    return `${year}-${month}-${day} at ${hours}:${minutes}`
-  }, [])
+  // const formatDate = useCallback((dateString: string) => {
+  //   const date = new Date(dateString)
+  //   const monthNames = [
+  //     'January', 'February', 'March', 'April', 'May', 'June',
+  //     'July', 'August', 'September', 'October', 'November', 'December'
+  //   ]
+  //   
+  //   const year = date.getFullYear()
+  //   const month = monthNames[date.getMonth()]
+  //   const day = date.getDate().toString().padStart(2, '0')
+  //   const hours = date.getHours().toString().padStart(2, '0')
+  //   const minutes = date.getMinutes().toString().padStart(2, '0')
+  //   
+  //   return `${year}-${month}-${day} at ${hours}:${minutes}`
+  // }, [])
 
   // Modify the existing search handler to support both search types
   const handleSearchInputChange = useCallback((value: string) => {
@@ -769,11 +767,11 @@ export function UnifiedLeftPane({
   }, [useSemanticSearch, debouncedSearch, queryHistory.length])
 
   // Manual semantic search trigger
-  const triggerSemanticSearch = useCallback(() => {
-    if (searchQuery.trim() && useSemanticSearch) {
-      performSemanticSearch(searchQuery)
-    }
-  }, [searchQuery, useSemanticSearch, performSemanticSearch])
+  // const triggerSemanticSearch = useCallback(() => {
+  //   if (searchQuery.trim() && useSemanticSearch) {
+  //     performSemanticSearch(searchQuery)
+  //   }
+  // }, [searchQuery, useSemanticSearch, performSemanticSearch])
 
   // Note: DOM event listener removed - now using DocumentCommunicationContext for all cross-pane communication
 
@@ -786,7 +784,7 @@ export function UnifiedLeftPane({
       documentId={documentId}
       headingVisibility={headingVisibility}
     />
-  ), [content, elements, documentId, headingVisibility])
+  ), [content, elements, onHeadingClick, documentId, headingVisibility])
 
   const renderAIGeneratedTab = useCallback(() => (
     <AIGeneratedHeadingsTab
@@ -796,7 +794,7 @@ export function UnifiedLeftPane({
       documentId={documentId}
       headingVisibility={headingVisibility}
     />
-  ), [content, elements, documentId, headingVisibility])
+  ), [content, elements, onHeadingClick, documentId, headingVisibility])
 
   const renderSummaryTab = useCallback(() => (
     <DocumentSummaryTab
@@ -1088,7 +1086,7 @@ export function UnifiedLeftPane({
         ) : null}
         </div>
       </div>
-    ), [searchQuery, isSearching, searchResults, showAdvancedOptions, caseSensitive, handleSearchInputChange, actions])
+    ), [searchQuery, isSearching, searchResults, showAdvancedOptions, caseSensitive, handleSearchInputChange, actions, sortedSearchResults])
 
 
   return (

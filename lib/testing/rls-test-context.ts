@@ -21,7 +21,6 @@
  * @deprecated Use RLSTestDatabase class instead
  */
 
-import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 
 // Test user fixtures for consistent RLS testing
@@ -75,7 +74,7 @@ export type TestUserKey = keyof typeof TEST_USERS
 
 // Global context for tracking current test user
 let currentTestUser: User | null = null
-let originalSupabaseAuth: any = null
+let originalSupabaseAuth: unknown = null
 
 /**
  * Mock Supabase auth to return the current test user
@@ -193,7 +192,7 @@ export function getCurrentTestUser(): User | null {
  */
 export async function testUserIsolation<TResource>(
   createResourceAsUserA: () => Promise<TResource>,
-  accessResourceAsUserB: (resource: TResource) => Promise<any>,
+  accessResourceAsUserB: (resource: TResource) => Promise<unknown>,
   expectation: 'null' | 'empty' | 'error' = 'null'
 ): Promise<void> {
   // Create resource as User A
@@ -236,8 +235,8 @@ export function cleanupRLSTestContext(): void {
  * @param testDocument - Document data to create
  */
 export async function testDocumentOwnership(
-  documentService: any,
-  testDocument: any
+  documentService: Record<string, unknown>,
+  testDocument: Record<string, unknown>
 ): Promise<void> {
   await testUserIsolation(
     // User A creates document
@@ -294,7 +293,7 @@ export function mockApiAuth(userKey: TestUserKey | null): Record<string, string>
 export function createCrossUserTest<T>(
   scenario: string,
   setup: () => Promise<T>,
-  test: (setupResult: T) => Promise<any>,
+  test: (setupResult: T) => Promise<unknown>,
   expectation: 'null' | 'empty' | 'error' | 'success' = 'null'
 ) {
   return async () => {

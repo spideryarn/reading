@@ -6,8 +6,7 @@
  */
 
 import { testApiHandler } from 'next-test-api-route-handler'
-import { TEST_USERS, type TestUserKey, mockApiAuth } from './rls-test-context'
-import type { NextRequest, NextResponse } from 'next/server'
+import { type TestUserKey, mockApiAuth } from './rls-test-context'
 
 /**
  * Enhanced options for API route testing with security context
@@ -30,7 +29,7 @@ export interface SecurityTestApiOptions {
  */
 export interface SecurityTestResponse {
   status: number
-  body: any
+  body: Record<string, unknown>
   headers: Headers
   isSuccess: boolean
   isClientError: boolean
@@ -44,7 +43,7 @@ export interface SecurityTestResponse {
  * Test an API route with security context and enhanced assertions
  */
 export async function testSecureApiRoute(
-  handler: any,
+  handler: (request: Request) => Promise<Response>,
   options: SecurityTestApiOptions = {}
 ): Promise<SecurityTestResponse> {
   const {
@@ -63,7 +62,7 @@ export async function testSecureApiRoute(
     authHeaders = mockApiAuth(auth.user)
   }
 
-  let responseBody: any
+  let responseBody: unknown
   let responseStatus: number
   let responseHeaders: Headers
 
@@ -122,7 +121,7 @@ export async function testSecureApiRoute(
  * Test authentication requirements for an API endpoint
  */
 export async function testAuthenticationRequired(
-  handler: any,
+  handler: (request: Request) => Promise<Response>,
   options: Omit<SecurityTestApiOptions, 'auth'> = {}
 ): Promise<void> {
   const response = await testSecureApiRoute(handler, {
@@ -141,8 +140,8 @@ export async function testAuthenticationRequired(
  * Test ownership-based access control for an API endpoint
  */
 export async function testOwnershipRequired(
-  handler: any,
-  resourceSetup: (userKey: TestUserKey) => Promise<any>,
+  handler: (request: Request) => Promise<Response>,
+  resourceSetup: (userKey: TestUserKey) => Promise<Record<string, unknown>>,
   options: Omit<SecurityTestApiOptions, 'auth'> = {}
 ): Promise<void> {
   // Create resource as User A
@@ -171,9 +170,9 @@ export async function testOwnershipRequired(
  * Test cross-user isolation for an API endpoint
  */
 export async function testCrossUserIsolation(
-  handler: any,
-  setupA: () => Promise<any>,
-  setupB: () => Promise<any>,
+  handler: (request: Request) => Promise<Response>,
+  setupA: () => Promise<Record<string, unknown>>,
+  setupB: () => Promise<Record<string, unknown>>,
   listEndpoint: string
 ): Promise<void> {
   // Set up resources for both users
@@ -191,7 +190,7 @@ export async function testCrossUserIsolation(
   expect(Array.isArray(userAResponse.body)).toBe(true)
   
   // Should only contain User A's resources
-  const userAIds = userAResponse.body.map((item: any) => item.id)
+  const userAIds = (userAResponse.body as Record<string, unknown>[]).map((item) => (item as Record<string, unknown>).id)
   expect(userAIds).toContain(resourceA.id)
   expect(userAIds).not.toContain(resourceB.id)
 
@@ -206,7 +205,7 @@ export async function testCrossUserIsolation(
   expect(Array.isArray(userBResponse.body)).toBe(true)
   
   // Should only contain User B's resources
-  const userBIds = userBResponse.body.map((item: any) => item.id)
+  const userBIds = (userBResponse.body as Record<string, unknown>[]).map((item) => (item as Record<string, unknown>).id)
   expect(userBIds).toContain(resourceB.id)
   expect(userBIds).not.toContain(resourceA.id)
 }
@@ -215,9 +214,9 @@ export async function testCrossUserIsolation(
  * Test public vs private access patterns
  */
 export async function testPublicPrivateAccess(
-  handler: any,
-  publicResourceSetup: () => Promise<any>,
-  privateResourceSetup: () => Promise<any>,
+  handler: (request: Request) => Promise<Response>,
+  publicResourceSetup: () => Promise<Record<string, unknown>>,
+  privateResourceSetup: () => Promise<Record<string, unknown>>,
   options: Omit<SecurityTestApiOptions, 'auth'> = {}
 ): Promise<void> {
   const publicResource = await publicResourceSetup()
@@ -248,8 +247,8 @@ export async function testPublicPrivateAccess(
  * Test input validation and security boundaries
  */
 export async function testInputValidation(
-  handler: any,
-  invalidInputs: Array<{ input: any; expectedStatus: number; description: string }>,
+  handler: (request: Request) => Promise<Response>,
+  invalidInputs: Array<{ input: Record<string, unknown>; expectedStatus: number; description: string }>,
   options: Omit<SecurityTestApiOptions, 'body'> = {}
 ): Promise<void> {
   for (const { input, expectedStatus, description } of invalidInputs) {
@@ -259,8 +258,10 @@ export async function testInputValidation(
       auth: options.auth || { user: 'USER_A' },
     })
 
-    expect(response.status).toBe(expectedStatus), 
-      `Failed for input: ${description} - Expected ${expectedStatus}, got ${response.status}`
+    expect(response.status).toBe(expectedStatus)
+    if (response.status !== expectedStatus) {
+      throw new Error(`Failed for input: ${description} - Expected ${expectedStatus}, got ${response.status}`)
+    }
     
     if (response.isClientError) {
       expect(response.body).toHaveProperty('error')
@@ -272,7 +273,7 @@ export async function testInputValidation(
  * Test SQL injection and XSS protection
  */
 export async function testSecurityBoundaries(
-  handler: any,
+  handler: (request: Request) => Promise<Response>,
   options: SecurityTestApiOptions = {}
 ): Promise<void> {
   const maliciousInputs = [
@@ -300,7 +301,7 @@ export async function testSecurityBoundaries(
  * Test API rate limiting (if implemented)
  */
 export async function testRateLimiting(
-  handler: any,
+  handler: (request: Request) => Promise<Response>,
   options: SecurityTestApiOptions = {},
   requestCount: number = 100
 ): Promise<void> {
@@ -331,7 +332,7 @@ export async function testRateLimiting(
  * Test error response security (no information leakage)
  */
 export async function testErrorResponseSecurity(
-  handler: any,
+  handler: (request: Request) => Promise<Response>,
   options: SecurityTestApiOptions = {}
 ): Promise<void> {
   // Test unauthorized access returns generic 404, not 403
@@ -367,17 +368,17 @@ export async function testErrorResponseSecurity(
  * Comprehensive security test suite for an API endpoint
  */
 export async function runSecurityTestSuite(
-  handler: any,
+  handler: (request: Request) => Promise<Response>,
   config: {
     endpoint: string
     requiresAuth: boolean
     requiresOwnership: boolean
     supportsPublicAccess?: boolean
-    resourceSetup?: (userKey: TestUserKey) => Promise<any>
-    publicResourceSetup?: () => Promise<any>
-    privateResourceSetup?: () => Promise<any>
+    resourceSetup?: (userKey: TestUserKey) => Promise<Record<string, unknown>>
+    publicResourceSetup?: () => Promise<Record<string, unknown>>
+    privateResourceSetup?: () => Promise<Record<string, unknown>>
     method?: string
-    body?: any
+    body?: Record<string, unknown>
   }
 ): Promise<void> {
   const { 
@@ -431,7 +432,7 @@ export function createSecureMockRequest(
   options: {
     method?: string
     headers?: Record<string, string>
-    body?: unknown
+    body?: Record<string, unknown>
     auth?: { user: TestUserKey | null }
   } = {}
 ): Request {
@@ -460,7 +461,7 @@ export const DocumentApiSecurity = {
   /**
    * Test document creation with ownership
    */
-  testCreateDocument: async (handler: any, documentData: any) => {
+  testCreateDocument: async (handler: (request: Request) => Promise<Response>, documentData: Record<string, unknown>) => {
     return testSecureApiRoute(handler, {
       method: 'POST',
       body: documentData,
@@ -472,7 +473,7 @@ export const DocumentApiSecurity = {
   /**
    * Test document retrieval with ownership check
    */
-  testGetDocument: async (handler: any, documentId: string, owner: TestUserKey) => {
+  testGetDocument: async (handler: (request: Request) => Promise<Response>, documentId: string, owner: TestUserKey) => {
     // Owner should access successfully
     const ownerResponse = await testSecureApiRoute(handler, {
       url: `/api/documents/${documentId}`,
@@ -494,7 +495,7 @@ export const DocumentApiSecurity = {
   /**
    * Test document deletion with ownership check
    */
-  testDeleteDocument: async (handler: any, documentId: string, owner: TestUserKey) => {
+  testDeleteDocument: async (handler: (request: Request) => Promise<Response>, documentId: string, owner: TestUserKey) => {
     // Non-owner should not be able to delete
     const nonOwner = owner === 'USER_A' ? 'USER_B' : 'USER_A'
     const nonOwnerResponse = await testSecureApiRoute(handler, {

@@ -366,7 +366,7 @@ export function createTestDataSet(userId: string) {
 /**
  * Generate realistic test data with variations
  */
-export function generateVariantTestData(baseData: any, variant: string) {
+export function generateVariantTestData(baseData: Record<string, unknown>, variant: string) {
   return {
     ...baseData,
     title: `${baseData.title} - ${variant}`,
@@ -381,14 +381,14 @@ export const SECURITY_ASSERTIONS = {
   /**
    * Assert that a resource is not accessible
    */
-  assertInaccessible: (result: any) => {
+  assertInaccessible: (result: unknown) => {
     expect(result).toBeNull()
   },
 
   /**
    * Assert that a list is empty (for list-based queries)
    */
-  assertEmptyList: (result: any[]) => {
+  assertEmptyList: (result: unknown[]) => {
     expect(Array.isArray(result)).toBe(true)
     expect(result).toHaveLength(0)
   },
@@ -396,7 +396,7 @@ export const SECURITY_ASSERTIONS = {
   /**
    * Assert that a resource is accessible and has expected properties
    */
-  assertAccessible: (result: any, expectedId?: string) => {
+  assertAccessible: (result: Record<string, unknown>, expectedId?: string) => {
     expect(result).not.toBeNull()
     expect(result).toHaveProperty('id')
     if (expectedId) {
@@ -407,14 +407,14 @@ export const SECURITY_ASSERTIONS = {
   /**
    * Assert proper ownership in result
    */
-  assertOwnership: (result: any, expectedOwnerId: string) => {
+  assertOwnership: (result: Record<string, unknown>, expectedOwnerId: string) => {
     expect(result).toHaveProperty('created_by', expectedOwnerId)
   },
 
   /**
    * Assert proper error response format
    */
-  assertErrorResponse: (response: any, expectedStatus: number) => {
+  assertErrorResponse: (response: Record<string, unknown>, expectedStatus: number) => {
     expect(response).toHaveProperty('status', expectedStatus)
     expect(response.status).toBeGreaterThanOrEqual(400)
   }

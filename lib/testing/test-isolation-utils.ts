@@ -10,6 +10,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 /**
  * Tracks test data created during test execution for cleanup
@@ -102,15 +103,11 @@ export function clearTestTracking(namespace: string): void {
 }
 
 /**
- * Generate a test-safe ID that includes the namespace
- * Useful for creating IDs that can be easily identified and cleaned up
- * @param namespace - Test namespace
- * @param type - Optional type prefix
- * @returns UUID that includes namespace information
+ * Generate a test-safe ID
+ * @returns UUID for test data
  */
-export function createTestId(namespace: string, type?: string): string {
+export function createTestId(): string {
   const uuid = uuidv4()
-  const prefix = type ? `${type}_${namespace}` : namespace
   // Store namespace info in a comment-like format that won't break UUID parsing
   // but allows us to identify test data if needed
   return uuid
@@ -124,8 +121,8 @@ export function createTestId(namespace: string, type?: string): string {
  */
 export function createTestMetadata(
   namespace: string,
-  additionalMetadata?: Record<string, any>
-): Record<string, any> {
+  additionalMetadata?: Record<string, unknown>
+): Record<string, unknown> {
   return {
     test_namespace: namespace,
     test_created_at: new Date().toISOString(),
@@ -144,13 +141,13 @@ export function createTestUser(
   overrides?: Partial<{
     email: string
     fullName: string
-    metadata: Record<string, any>
+    metadata: Record<string, unknown>
   }>
 ) {
   initTestTracking(namespace)
   
   return {
-    id: createTestId(namespace, 'user'),
+    id: createTestId(),
     email: overrides?.email || createTestEmail(namespace),
     full_name: overrides?.fullName || `Test User ${namespace}`,
     metadata: {
@@ -170,13 +167,13 @@ export function createTestDocument(
   overrides?: Partial<{
     title: string
     content: string
-    metadata: Record<string, any>
+    metadata: Record<string, unknown>
   }>
 ) {
   initTestTracking(namespace)
   
   return {
-    id: createTestId(namespace, 'doc'),
+    id: createTestId(),
     title: overrides?.title || `Test Document ${namespace}`,
     html_content: overrides?.content || `<p>Test content for ${namespace}</p>`,
     plaintext_content: overrides?.content?.replace(/<[^>]*>/g, '') || `Test content for ${namespace}`,
@@ -200,7 +197,7 @@ export function createTestDocument(
  * await cleanup.all()
  * ```
  */
-export function getCleanupFunctions(namespace: string, supabase: any) {
+export function getCleanupFunctions(namespace: string, supabase: SupabaseClient) {
   const tracker = getTrackedData(namespace)
   
   const cleanupFunctions = {

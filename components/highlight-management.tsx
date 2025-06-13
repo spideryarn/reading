@@ -12,7 +12,6 @@ import {
   X, 
   CircleNotch, 
   Trash, 
-  CaretDown,
   Clock
 } from '@phosphor-icons/react'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
@@ -57,9 +56,7 @@ interface SemanticHighlight {
 export function HighlightManagement({ 
   documentId, 
   elements, 
-  semanticHighlights = [],
   onSemanticHighlightsChange,
-  activeElementId,
   onActiveElementChange
 }: HighlightManagementProps) {
   const { actions } = useDocumentCommunication()
@@ -69,7 +66,6 @@ export function HighlightManagement({
   const [highlights, setHighlights] = useState<Highlight[]>([])
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
   
   // Cache state for highlighting operations
   const [highlightsCached, setHighlightsCached] = useState(false)
@@ -78,7 +74,6 @@ export function HighlightManagement({
   // Query history state
   const [queryHistory, setQueryHistory] = useState<QueryHistoryItem[]>([])
   const [showQueryHistory, setShowQueryHistory] = useState(false)
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   
   // Sort state
   const [sortByIntensity, setSortByIntensity] = useState(false) // false = position, true = intensity
@@ -115,7 +110,7 @@ export function HighlightManagement({
   // Load existing highlights and query history on mount
   useEffect(() => {
     fetchQueryHistory()
-  }, [documentId])
+  }, [documentId, fetchQueryHistory])
 
   // Clean up highlights when component unmounts
   useEffect(() => {
@@ -126,7 +121,6 @@ export function HighlightManagement({
 
   // Fetch query history from API
   const fetchQueryHistory = useCallback(async () => {
-    setIsLoadingHistory(true)
     try {
       const response = await fetch(`/api/semantic-search?documentId=${encodeURIComponent(documentId)}`)
       const data = await response.json()
@@ -141,8 +135,6 @@ export function HighlightManagement({
       console.error('[HighlightHistory] Failed to fetch query history:', error)
       // Don't show error to user - query history is nice-to-have
       setQueryHistory([])
-    } finally {
-      setIsLoadingHistory(false)
     }
   }, [documentId])
 
@@ -459,12 +451,7 @@ export function HighlightManagement({
 
       {/* Highlights list */}
       <div className="flex-1 overflow-y-auto">
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-8">
-            <CircleNotch className="animate-spin text-gray-400 mb-2" size={24} weight="bold" />
-            <div className="text-sm text-gray-500">Loading highlights...</div>
-          </div>
-        ) : isCreating ? (
+        {isCreating ? (
           <div className="flex flex-col items-center justify-center py-8">
             <CircleNotch className="animate-spin text-orange-400 mb-2" size={24} weight="bold" />
             <div className="text-sm text-gray-500">

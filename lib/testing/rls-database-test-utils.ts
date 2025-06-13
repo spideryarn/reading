@@ -34,8 +34,9 @@
  * @deprecated Use RealRLSTestSetup from rls-test-helpers.ts instead
  */
 
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { TEST_USER_IDS, TEST_USERS, type TestUserKey } from './rls-test-context'
+import type { Database } from '@/lib/types/database'
 
 // Create admin client for test setup (bypasses RLS)
 /** @deprecated Use RealRLSTestSetup.getAdminClient() instead */
@@ -85,8 +86,8 @@ export function createAuthenticatedClient(userKey: TestUserKey) {
  * @deprecated Use RealRLSTestSetup from rls-test-helpers.ts instead
  */
 export class RLSTestSetup {
-  private adminClient: any
-  private testUsers: Map<TestUserKey, any> = new Map()
+  private adminClient: SupabaseClient
+  private testUsers: Map<TestUserKey, ReturnType<typeof createAuthenticatedClient>> = new Map()
   private usersCreated: boolean = false
 
   constructor() {
@@ -122,10 +123,11 @@ export class RLSTestSetup {
     for (const userData of testUsers) {
       try {
         await this.createTestUser(userData)
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Ignore duplicate key errors (user already exists)
-        if (!error.message?.includes('duplicate key') && !error.message?.includes('already exists')) {
-          console.warn(`Failed to create test user ${userData.id}:`, error.message)
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        if (!errorMessage?.includes('duplicate key') && !errorMessage?.includes('already exists')) {
+          console.warn(`Failed to create test user ${userData.id}:`, errorMessage)
         }
       }
     }
@@ -139,10 +141,11 @@ export class RLSTestSetup {
     for (const profileData of testProfiles) {
       try {
         await this.createTestProfile(profileData)
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Ignore duplicate key errors (profile already exists)
-        if (!error.message?.includes('duplicate key') && !error.message?.includes('already exists')) {
-          console.warn(`Failed to create test profile ${profileData.user_id}:`, error.message)
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        if (!errorMessage?.includes('duplicate key') && !errorMessage?.includes('already exists')) {
+          console.warn(`Failed to create test profile ${profileData.user_id}:`, errorMessage)
         }
       }
     }
@@ -187,7 +190,7 @@ export class RLSTestSetup {
   /**
    * Create test data as admin (bypasses RLS for setup)
    */
-  async createTestDocument(data: any) {
+  async createTestDocument(data: Database['public']['Tables']['documents']['Insert']) {
     // Ensure test users exist before creating documents
     await this.ensureTestUsers()
     
@@ -204,7 +207,7 @@ export class RLSTestSetup {
   /**
    * Create test AI call as admin
    */
-  async createTestAICall(data: any) {
+  async createTestAICall(data: Database['public']['Tables']['ai_calls']['Insert']) {
     // Ensure test users exist before creating AI calls
     await this.ensureTestUsers()
 
@@ -249,7 +252,7 @@ export class RLSTestSetup {
   /**
    * Create test enhancement as admin
    */
-  async createTestEnhancement(data: any) {
+  async createTestEnhancement(data: Database['public']['Tables']['document_enhancements']['Insert']) {
     // Ensure test users exist before creating enhancements
     await this.ensureTestUsers()
 
@@ -267,7 +270,7 @@ export class RLSTestSetup {
    * Create test user in auth.users table (as admin)
    * For now, we'll just ensure the user exists by checking and warning if not
    */
-  async createTestUser(data: any) {
+  async createTestUser(data: { id: string; email: string }) {
     // For RLS testing, we'll assume the seed data creates the necessary users
     // If users don't exist, the foreign key constraints will fail which is expected
     console.log(`Test user setup: ${data.id} (${data.email})`)
@@ -277,7 +280,7 @@ export class RLSTestSetup {
   /**
    * Create test profile as admin
    */
-  async createTestProfile(data: any) {
+  async createTestProfile(data: Database['public']['Tables']['profiles']['Insert']) {
     const { data: profile, error } = await this.adminClient
       .from('profiles')
       .upsert(data)
@@ -315,7 +318,7 @@ export const RLSTestHelpers = {
   /**
    * Test that user can access their own resource
    */
-  async testOwnerAccess(client: any, table: string, resourceId: string) {
+  async testOwnerAccess(client: SupabaseClient, table: string, resourceId: string) {
     const { data, error } = await client
       .from(table)
       .select('*')
@@ -328,7 +331,7 @@ export const RLSTestHelpers = {
   /**
    * Test that user cannot access other user's resource
    */
-  async testNonOwnerBlocked(client: any, table: string, resourceId: string) {
+  async testNonOwnerBlocked(client: SupabaseClient, table: string, resourceId: string) {
     const { data, error } = await client
       .from(table)
       .select('*')
@@ -342,7 +345,7 @@ export const RLSTestHelpers = {
   /**
    * Test document creation with proper ownership
    */
-  async testDocumentCreation(client: any, documentData: any, expectedOwnerId: string) {
+  async testDocumentCreation(client: SupabaseClient, documentData: Database['public']['Tables']['documents']['Insert'], expectedOwnerId: string) {
     const { data, error } = await client
       .from('documents')
       .insert(documentData)
@@ -356,12 +359,12 @@ export const RLSTestHelpers = {
   /**
    * Test list queries respect RLS (user only sees their own data)
    */
-  async testListIsolation(client: any, table: string, expectedOwnerId: string) {
+  async testListIsolation(client: SupabaseClient, table: string, expectedOwnerId: string) {
     const { data, error } = await client
       .from(table)
       .select('*')
 
-    const allOwnedByUser = data?.every((item: any) => 
+    const allOwnedByUser = data?.every((item: Record<string, unknown>) => 
       item.created_by === expectedOwnerId || item.user_id === expectedOwnerId
     )
 
@@ -377,7 +380,7 @@ export const RLSAssertions = {
   /**
    * Assert that access is properly granted to owner
    */
-  assertOwnerAccess(result: any, resourceId: string) {
+  assertOwnerAccess(result: { hasAccess: boolean; data: Record<string, unknown> | null; error: unknown }, resourceId: string) {
     expect(result.hasAccess).toBe(true)
     expect(result.data).not.toBeNull()
     expect(result.data.id).toBe(resourceId)
@@ -387,7 +390,7 @@ export const RLSAssertions = {
   /**
    * Assert that access is properly blocked for non-owner
    */
-  assertNonOwnerBlocked(result: any) {
+  assertNonOwnerBlocked(result: { isBlocked: boolean; data: unknown }) {
     expect(result.isBlocked).toBe(true)
     expect(result.data).toBeNull()
   },
@@ -395,7 +398,7 @@ export const RLSAssertions = {
   /**
    * Assert proper ownership assignment
    */
-  assertOwnership(result: any, expectedOwnerId: string) {
+  assertOwnership(result: { hasCorrectOwnership: boolean; data: Record<string, unknown> | null }, expectedOwnerId: string) {
     expect(result.hasCorrectOwnership).toBe(true)
     expect(result.data).not.toBeNull()
     expect(result.data.created_by || result.data.user_id).toBe(expectedOwnerId)
@@ -404,7 +407,7 @@ export const RLSAssertions = {
   /**
    * Assert list isolation (user only sees own data)
    */
-  assertListIsolation(result: any, expectedMinCount: number = 0) {
+  assertListIsolation(result: { allOwnedByUser: boolean; count: number; error: unknown }, expectedMinCount: number = 0) {
     expect(result.allOwnedByUser).toBe(true)
     expect(result.count).toBeGreaterThanOrEqual(expectedMinCount)
     expect(result.error).toBeNull()
@@ -413,7 +416,7 @@ export const RLSAssertions = {
   /**
    * Assert complete isolation between users
    */
-  assertUserIsolation(userAResult: any, userBResult: any) {
+  assertUserIsolation(userAResult: { hasAccess?: boolean; hasCorrectOwnership?: boolean }, userBResult: { isBlocked?: boolean; hasAccess?: boolean }) {
     // User A should have access
     expect(userAResult.hasAccess || userAResult.hasCorrectOwnership).toBe(true)
     

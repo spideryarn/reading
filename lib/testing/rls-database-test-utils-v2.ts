@@ -8,6 +8,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { TEST_USER_IDS, TEST_USERS, type TestUserKey } from './rls-test-context'
+import type { Database } from '@/lib/types/database'
 import { 
   getTestNamespace, 
   createTestMetadata,
@@ -58,7 +59,7 @@ export function createAuthenticatedClient(userKey: TestUserKey) {
           return {
             ...query,
             // Override methods to filter by user context
-            eq: (column: string, value: any) => {
+            eq: (column: string, value: unknown) => {
               if (column === 'created_by' || column === 'user_id') {
                 return query.eq(column, user.id)
               }
@@ -67,7 +68,7 @@ export function createAuthenticatedClient(userKey: TestUserKey) {
           }
         },
         
-        insert: (data: any) => {
+        insert: (data: Database['public']['Tables'][string]['Insert'] | Database['public']['Tables'][string]['Insert'][]) => {
           // Add user context to inserted data
           const enrichedData = Array.isArray(data) 
             ? data.map(d => ({ ...d, created_by: user.id }))
@@ -76,7 +77,7 @@ export function createAuthenticatedClient(userKey: TestUserKey) {
           return baseTable.insert(enrichedData)
         },
         
-        update: (data: any) => {
+        update: (data: Database['public']['Tables'][string]['Update']) => {
           return baseTable.update(data).eq('created_by', user.id)
         },
         
@@ -96,7 +97,7 @@ export function createAuthenticatedClient(userKey: TestUserKey) {
  */
 export class RLSTestSetup {
   private adminClient: ReturnType<typeof createAdminClient>
-  private testUsers: Map<string, any> = new Map()
+  private testUsers: Map<string, ReturnType<typeof createAuthenticatedClient>> = new Map()
   private namespace: string
   
   constructor(testName: string) {
@@ -115,7 +116,7 @@ export class RLSTestSetup {
   /**
    * Create a test document with proper namespace isolation
    */
-  async createTestDocument(data: any) {
+  async createTestDocument(data: Database['public']['Tables']['documents']['Insert']) {
     // Add test prefix to title and slug to avoid collisions
     const titlePrefix = `[TEST-${this.namespace}]`
     const slugPrefix = `test-${this.namespace.slice(-8)}-` // Use last 8 chars of namespace
@@ -146,7 +147,7 @@ export class RLSTestSetup {
   /**
    * Create a test AI call with namespace tracking
    */
-  async createTestAiCall(data: any) {
+  async createTestAiCall(data: Database['public']['Tables']['ai_calls']['Insert']) {
     // Use test prefix in prompt_input to identify test data
     const aiCallData = {
       ...data,
@@ -172,7 +173,7 @@ export class RLSTestSetup {
   /**
    * Create test document enhancement with namespace tracking
    */
-  async createTestEnhancement(data: any) {
+  async createTestEnhancement(data: Database['public']['Tables']['document_enhancements']['Insert']) {
     // Add test identifier to content if it's an object
     const enhancementData = {
       ...data,
@@ -201,7 +202,7 @@ export class RLSTestSetup {
   /**
    * Create test chat thread with namespace tracking
    */
-  async createTestChatThread(data: any) {
+  async createTestChatThread(data: Database['public']['Tables']['chat_threads']['Insert']) {
     // Add test prefix to title to identify test data
     const threadData = {
       ...data,
@@ -227,7 +228,7 @@ export class RLSTestSetup {
   /**
    * Create test chat message with namespace tracking
    */
-  async createTestChatMessage(data: any) {
+  async createTestChatMessage(data: Database['public']['Tables']['chat_messages']['Insert']) {
     // Add test prefix to content to identify test data
     const messageData = {
       ...data,
@@ -263,7 +264,7 @@ export class RLSTestSetup {
   /**
    * Create test profile with namespace tracking
    */
-  async createTestProfile(userId: string, data: any = {}) {
+  async createTestProfile(userId: string, data: Partial<Database['public']['Tables']['profiles']['Insert']> = {}) {
     // Add test prefix to preferences to identify test data
     const profileData = {
       user_id: userId,
@@ -306,9 +307,9 @@ export class RLSTestSetup {
    * Test user isolation for a resource
    */
   async testUserIsolation(
-    setupAsAdmin: () => Promise<any>,
-    getUserAAccess: (resource: any) => Promise<any>,
-    getUserBAccess: (resource: any) => Promise<any>
+    setupAsAdmin: () => Promise<unknown>,
+    getUserAAccess: (resource: unknown) => Promise<unknown>,
+    getUserBAccess: (resource: unknown) => Promise<unknown>
   ) {
     // Set up test data as admin
     const resource = await setupAsAdmin()
