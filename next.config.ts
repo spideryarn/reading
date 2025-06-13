@@ -27,7 +27,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'", // Tailwind and academic content require inline styles
               "img-src 'self' data: https: blob:", // Allow academic images from various sources
               "font-src 'self' data:",
-              "connect-src 'self' https://api.anthropic.com https://generativelanguage.googleapis.com wss: ws:", // AI APIs and websockets
+              "connect-src 'self' http://localhost:54341 http://127.0.0.1:54341 https://api.anthropic.com https://generativelanguage.googleapis.com wss: ws:", // Allow Supabase local + AI APIs
               "frame-src 'none'", // No iframes for security
               "object-src 'none'", // No objects/embeds for security
               "base-uri 'self'", // Restrict base tag
