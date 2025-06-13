@@ -9,6 +9,7 @@ Document semantic highlighting enables users to create AI-powered highlights bas
 - `lib/utils/semantic-highlighting.ts` - Utility functions for confidence-to-CSS mapping
 - `app/globals.css` - CSS classes for semantic highlighting with visual intensity levels
 - `docs/reference/CROSS_PANE_COMMUNICATION.md` - Cross-pane communication patterns including highlight data flow
+- `docs/reference/STYLING_OVERLAPPING_TEXT_HIGHLIGHTS.md` - Comprehensive guide for implementing overlapping text highlighting to combine semantic highlights with search and glossary
 - `planning/250612a_semantic_search_to_highlights_refactor.md` - Original implementation design decisions
 - `planning/250613a_semantic_highlight_persistence_fix.md` - React-first architecture migration and persistence fixes
 
