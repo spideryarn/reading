@@ -52,7 +52,7 @@ Spideryarn Reading is in active development with core AI features now implemente
 - **Table of Contents** component with:
   - Original headings extraction
   - AI-generated headings in separate tab
-  - Hover tooltips showing AI summaries (using Tippy.js)
+  - Hover tooltips showing AI summaries (using Radix UI tooltips)
   - Loading states and error handling
 - **Glossary component** with ordered entity display and simple text search
 - **Tweet thread view** with copy-to-clipboard and social sharing (Bluesky integration planned)
@@ -92,7 +92,7 @@ Spideryarn Reading is in active development with core AI features now implemente
 ### Development Status
 
 - **Environment**: Local development server (`npm run dev`)
-- **Dependencies**: Core packages installed (Next.js, Cheerio, Supabase client, UUID, Tippy.js, Nunjucks, Zod, @assistant-ui/react)
+- **Dependencies**: Core packages installed (Next.js, Cheerio, Supabase client, UUID, Radix UI tooltips, Nunjucks, Zod, @assistant-ui/react)
 - **Static Assets**: Sample HTML documents in `static/examples/`
 - **Database**: Supabase project with comprehensive migrations, RLS policies, and authentication configured
 - **Storage**: Supabase Storage bucket with security policies for authenticated file access

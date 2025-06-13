@@ -78,7 +78,7 @@ For Table of Contents tooltips, the system extracts hierarchical content by:
 1. **Trigger**: Hover over any heading in Table of Contents
 2. **Loading**: Brief delay with loading indicator during LLM processing
 3. **Display**: Tooltip with section summary using 'single short paragraph' granularity
-4. **Positioning**: Tippy.js handles robust tooltip positioning and behaviour
+4. **Positioning**: Radix UI tooltips handle robust tooltip positioning and behaviour
 5. **Caching**: Generated summaries cached in component state
 
 ## Template system

@@ -542,6 +542,61 @@ const matches = searchableText.toLowerCase().includes(query.toLowerCase())
 
 This utility ensures consistent, secure text extraction across document search, previews, and AI processing.
 
+### Search Context Extraction
+
+For creating contextual search snippets around matches, use the dedicated context extraction utilities:
+
+```typescript
+import { 
+  extractAllMatchContexts, 
+  generateTooltipContent,
+  extractMatchContext 
+} from '@/lib/utils/search-context-extraction'
+
+// ❌ Bad - Manual string slicing without context
+const badSnippet = text.substring(matchIndex - 50, matchIndex + 50)
+
+// ✅ Good - Context-aware snippet extraction
+const contexts = extractAllMatchContexts(text, query, 50, caseSensitive)
+
+// ✅ Good - Tooltip content with intelligent truncation
+const tooltipText = generateTooltipContent(fullText, query, 500, caseSensitive)
+```
+
+#### Search Snippet Best Practices
+
+1. **Use context extraction functions**: Always use `extractAllMatchContexts()` for search result snippets
+2. **Preserve word boundaries**: Context extraction respects word boundaries and adds ellipsis appropriately
+3. **Multiple matches**: Show separate snippets for each match in the same element
+4. **Safe highlighting**: Use `HighlightedSearchText` component for React-based highlighting
+5. **Rich tooltips**: Provide expanded context using `generateTooltipContent()` for better user experience
+
+```typescript
+// Multiple snippet rendering pattern
+{result.contexts.map((context, index) => (
+  <Tooltip key={index}>
+    <TooltipTrigger asChild>
+      <div className="search-snippet-container">
+        <HighlightedSearchText 
+          text={context.text} 
+          query={searchQuery} 
+          caseSensitive={caseSensitive} 
+        />
+      </div>
+    </TooltipTrigger>
+    <TooltipContent>
+      <HighlightedSearchText 
+        text={generateTooltipContent(result.fullText, searchQuery, 500, caseSensitive)} 
+        query={searchQuery} 
+        caseSensitive={caseSensitive} 
+      />
+    </TooltipContent>
+  </Tooltip>
+))}
+```
+
+**Location**: `@/lib/utils/search-context-extraction.ts`
+
 ## Appendix: Future Considerations
 
 ### Performance

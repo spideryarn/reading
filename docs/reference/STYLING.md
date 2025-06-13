@@ -60,19 +60,16 @@ We use Tailwind CSS v4 beta, which has significant differences from v3:
 
 ## Third-party styling
 
-### Tippy.js tooltips
+### Radix UI tooltips
 
-Custom overrides in `app/globals.css` remove default Tippy.js styling:
+Tooltips use Radix UI primitives with custom styling applied via Tailwind classes. The tooltip content is styled with:
 
-```css
-.tippy-box {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-```
+- `bg-white border border-gray-200 rounded-lg shadow-lg` for the container
+- `font-semibold text-gray-900 text-sm` for titles
+- `text-gray-700 text-sm leading-relaxed` for descriptions
+- `text-xs text-gray-500 font-mono` for keyboard shortcuts
 
-This allows tooltips to be styled consistently with the application theme.
+This provides consistent styling with the application theme and design system.
 
 ## Icons
 

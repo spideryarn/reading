@@ -184,7 +184,7 @@ const getTooltipContent = (headingText: string): JSX.Element
 - **Loading State**: Shows spinner with "Loading..." message during API calls
 - **Error Handling**: Displays "⚠️ Unable to generate summary. Please try again later."
 - **Caching**: Prevents duplicate requests and provides instant display on subsequent hovers
-- **Positioning**: Uses Tippy.js for robust tooltip positioning and behaviour
+- **Positioning**: Uses Radix UI tooltips for robust tooltip positioning and behaviour
 
 ## Loading and Error States
 

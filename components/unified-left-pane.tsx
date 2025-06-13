@@ -28,6 +28,8 @@ import { debounce } from '@/lib/utils/debounce'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
 import Mark from 'mark.js'
 import { extractCleanText } from '@/lib/utils/html-text-extraction'
+import { extractAllMatchContexts, generateTooltipContent } from '@/lib/utils/search-context-extraction'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 // Semantic highlight interface
 interface SemanticHighlight {
@@ -53,11 +55,12 @@ interface Entity {
 interface SearchResult {
   elementId: string
   elementType: string
-  textExcerpt: string
   matchCount: number
   searchType?: 'text' | 'semantic' // Track search type for display
   confidence?: number // For semantic search results
   reasoning?: string // For semantic search results
+  contexts: Array<{ text: string; matchIndex: number }> // Context-aware snippets
+  fullText: string // Full element text for tooltips
 }
 
 interface UnifiedLeftPaneProps {
@@ -325,6 +328,53 @@ function GlossaryDisplay({
   )
 }
 
+// Component for highlighting search terms within text snippets
+function HighlightedSearchText({ 
+  text, 
+  query, 
+  caseSensitive = false 
+}: { 
+  text: string
+  query: string
+  caseSensitive?: boolean 
+}) {
+  if (!query.trim()) {
+    return <span>{text}</span>
+  }
+  
+  // Split text by search query, preserving the case sensitivity
+  const searchText = caseSensitive ? text : text.toLowerCase()
+  const searchQuery = caseSensitive ? query : query.toLowerCase()
+  
+  const parts = []
+  let lastIndex = 0
+  let matchIndex = searchText.indexOf(searchQuery)
+  
+  while (matchIndex !== -1) {
+    // Add text before the match
+    if (matchIndex > lastIndex) {
+      parts.push(text.substring(lastIndex, matchIndex))
+    }
+    
+    // Add the highlighted match
+    parts.push(
+      <span key={matchIndex} className="text-spideryarn-orange bg-orange-50 font-medium">
+        {text.substring(matchIndex, matchIndex + query.length)}
+      </span>
+    )
+    
+    lastIndex = matchIndex + query.length
+    matchIndex = searchText.indexOf(searchQuery, lastIndex)
+  }
+  
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex))
+  }
+  
+  return <span>{parts}</span>
+}
+
 export function UnifiedLeftPane({
   content,
   elements,
@@ -465,19 +515,23 @@ export function UnifiedLeftPane({
               const docElement = elements.find(el => el.id === elementId)
               
               if (docElement) {
-                // Create text excerpt (first 100 chars) - use DOM parsing for clean text extraction
+                // Extract clean content for context generation
                 const rawContent = docElement.content || ''
                 const cleanContent = extractCleanText(rawContent)
-                const textExcerpt = cleanContent.length > 100
-                  ? cleanContent.substring(0, 100) + '...'
-                  : cleanContent
                 
-                results.push({
-                  elementId,
-                  elementType: elementTag,
-                  textExcerpt,
-                  matchCount: 1 // Will update after all matches are found
-                })
+                // Create context-aware snippets for all matches in this element
+                const contexts = extractAllMatchContexts(cleanContent, query, 50, caseSensitive)
+                
+                // Only add results if we have contexts (matches found)
+                if (contexts.length > 0) {
+                  results.push({
+                    elementId,
+                    elementType: elementTag,
+                    matchCount: 1, // Will update after all matches are found
+                    contexts,
+                    fullText: cleanContent // Store full text for tooltips
+                  })
+                }
               }
             }
           }
@@ -599,15 +653,17 @@ export function UnifiedLeftPane({
         // Find the corresponding element to get tag name and content
         const element = elements.find(el => el.id === match.elementId)
         
+        const fullElementText = element?.content ? extractCleanText(element.content) : ''
+        
         return {
           elementId: match.elementId,
           elementType: element?.tag_name || 'unknown',
-          textExcerpt: match.relevantText || (element?.content ? 
-            (extractCleanText(element.content).substring(0, 100) + '...') : ''),
           matchCount: 1, // Semantic search doesn't have traditional match counts
           searchType: 'semantic' as const,
           confidence: match.confidence,
-          reasoning: match.reasoning
+          reasoning: match.reasoning,
+          contexts: [{ text: match.relevantText || (fullElementText.substring(0, 100) + '...'), matchIndex: 0 }],
+          fullText: fullElementText
         }
       })
 
@@ -976,30 +1032,54 @@ export function UnifiedLeftPane({
               </div>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-3">
               {sortedSearchResults.map((result) => (
                 <div
                   key={result.elementId}
-                  className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="border border-gray-200 rounded-lg hover:shadow-sm cursor-pointer transition-all duration-200 bg-white"
                   onClick={() => {
                     // Use context action for scrolling and persistent element selection
                     actions.scrollToElement(result.elementId)
                   }}
                 >
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-100 rounded-t-lg">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-gray-500 uppercase">
+                      <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
                         {result.elementType}
                       </span>
                     </div>
                     {result.matchCount > 1 && (
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 bg-white px-2 py-0.5 rounded-full font-medium">
                         {result.matchCount} matches
                       </span>
                     )}
                   </div>
-                  <div className="text-sm text-gray-800 leading-relaxed">
-                    {result.textExcerpt}
+                  <div className="p-3">
+                    <div className="space-y-2">
+                      {result.contexts.map((context, index) => {
+                        // Generate tooltip content showing full paragraph with highlighted match
+                        const tooltipContent = generateTooltipContent(result.fullText, searchQuery, 500, caseSensitive)
+                        
+                        return (
+                          <Tooltip key={index}>
+                            <TooltipTrigger asChild>
+                              <div className="pl-3 border-l-2 border-orange-200 bg-orange-50 py-2 px-3 rounded-r cursor-help hover:bg-orange-100 transition-colors duration-150">
+                                <HighlightedSearchText text={context.text} query={searchQuery} caseSensitive={caseSensitive} />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent 
+                              side="right" 
+                              className="max-w-md text-left bg-white border border-gray-200 rounded-lg shadow-lg p-4"
+                              sideOffset={8}
+                            >
+                              <div className="text-xs text-gray-700 leading-relaxed">
+                                <HighlightedSearchText text={tooltipContent} query={searchQuery} caseSensitive={caseSensitive} />
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        )
+                      })}
+                    </div>
                   </div>
                 </div>
               ))}
