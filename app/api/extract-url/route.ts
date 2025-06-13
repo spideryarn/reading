@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelConfig, AI_CONFIG } from '@/lib/config'
-import { generateSlug } from '@/lib/utils/slug'
+import { generateSlug, generateHtmlFilename } from '@/lib/utils/slug'
 import { URL_EXTRACTION_CONFIG } from '@/lib/config'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
 import { validateAuth } from '@/lib/auth/server-auth'
@@ -301,7 +301,13 @@ export async function POST(request: NextRequest) {
       ;(uploadMetadata as typeof uploadMetadata & { model_used?: string }).model_used = modelConfig.modelId
     }
     
-    // Create document in database using authenticated user (no file storage for URLs)
+    // Create document in database with original HTML storage (following PDF storage pattern)
+    // Store raw HTML content before any processing for re-processing capabilities
+    const htmlBlob = new Blob([htmlContent], { type: 'text/html; charset=utf-8' })
+    const htmlFilename = generateHtmlFilename(url)
+    
+    console.log(`Storing original HTML as: ${htmlFilename} (${(htmlContent.length / 1024).toFixed(1)} KB)`)
+    
     const { document } = await documentService.createWithStorage(
       user.id,
       {
@@ -313,8 +319,8 @@ export async function POST(request: NextRequest) {
         is_public: isPublic,
         word_count: plaintext.split(/\s+/).length
       },
-      null, // No file for URL-based documents
-      null, // No filename
+      htmlBlob, // Store original HTML content for re-processing
+      htmlFilename, // URL-based filename (domain-and-path-slugified.html)
       uploadMetadata, // Upload metadata
       extractionMethodUsed === 'ai-transcription' ? aiCall?.id : null // Link to AI call only for AI transcription
     )
