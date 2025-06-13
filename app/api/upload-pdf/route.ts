@@ -12,6 +12,7 @@ import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelConfig, AI_CONFIG } from '@/lib/config'
 import { generateSlug } from '@/lib/utils/slug'
 import { validateAuth } from '@/lib/auth/server-auth'
+import { sanitizeAcademicContent } from '@/lib/utils/html-sanitizer'
 
 export async function POST(request: NextRequest) {
   try {
@@ -114,15 +115,27 @@ export async function POST(request: NextRequest) {
       finishReason: htmlResult.finishReason
     })
 
-    console.log('Step 2: HTML conversion completed, extracting plaintext...')
+    console.log('Step 2: HTML conversion completed, sanitizing content...')
 
-    // Extract plaintext from HTML for search and word count
-    const plaintext = htmlResult.text
+    // Sanitize HTML content before storage
+    let sanitizedHtml: string
+    try {
+      sanitizedHtml = sanitizeAcademicContent(htmlResult.text)
+      console.log(`Sanitized HTML content (${sanitizedHtml.length} chars from ${htmlResult.text.length} chars)`)
+    } catch (sanitizationError) {
+      console.error('HTML sanitization failed:', sanitizationError)
+      throw new Error(`Content sanitization failed: ${sanitizationError instanceof Error ? sanitizationError.message : 'Unknown sanitization error'}`)
+    }
+
+    console.log('Step 3: Extracting plaintext from sanitized content...')
+
+    // Extract plaintext from sanitized HTML for search and word count
+    const plaintext = sanitizedHtml
       .replace(/<[^>]*>/g, ' ') // Remove HTML tags
       .replace(/\s+/g, ' ') // Normalize whitespace
       .trim()
 
-    console.log('Step 3: Creating document with storage integration...')
+    console.log('Step 4: Creating document with storage integration...')
     
     // Prepare upload metadata
     const uploadMetadata = {
@@ -139,7 +152,7 @@ export async function POST(request: NextRequest) {
       user.id,
       {
         title,
-        html_content: htmlResult.text,
+        html_content: sanitizedHtml, // Use sanitized HTML instead of raw AI output
         plaintext_content: plaintext,
         slug,
         source_url: null,
@@ -152,12 +165,12 @@ export async function POST(request: NextRequest) {
       aiCall.id // Link to AI call
     )
 
-    console.log(`Step 4: Document created successfully with ID: ${document.id}`)
+    console.log(`Step 5: Document created successfully with ID: ${document.id}`)
     
     if (storageResult) {
-      console.log(`Step 5: Original PDF stored at: ${storageResult.path}`)
+      console.log(`Step 6: Original PDF stored at: ${storageResult.path}`)
     } else {
-      console.warn('Step 5: Storage upload failed, but document was created without original file')
+      console.warn('Step 6: Storage upload failed, but document was created without original file')
     }
 
     // Return comprehensive response with document details
@@ -217,6 +230,17 @@ export async function POST(request: NextRequest) {
 
       if (error.message.includes('database') || error.message.includes('Failed to create document')) {
         return new NextResponse('Database error. Please try again later.', { status: 503 })
+      }
+
+      if (error.message.includes('Content sanitization failed') || error.message.includes('sanitization')) {
+        // Provide specific error messages based on sanitization failure type
+        if (error.message.includes('too large')) {
+          return new NextResponse('PDF processing failed: Generated content is too large to process safely', { status: 413 })
+        }
+        if (error.message.includes('invalid result')) {
+          return new NextResponse('PDF processing failed: Content sanitization produced invalid results', { status: 422 })
+        }
+        return new NextResponse('PDF processing failed: Content could not be safely processed for security reasons', { status: 422 })
       }
       
       return new NextResponse(`Processing error: ${error.message}`, { status: 500 })
