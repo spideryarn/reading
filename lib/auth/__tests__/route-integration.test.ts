@@ -9,6 +9,7 @@ import { requireAuth, getAuthUser, isBot, createUnauthorizedResponse } from '../
 import { validateAuth, getUser, checkResourceOwnership } from '../server-auth'
 import { getRedirectUrl } from '../client-utils'
 import { redirect } from 'next/navigation'
+import { getTestNamespace, createTestEmail } from '@/lib/testing/test-isolation-utils'
 
 // Mock Next.js modules
 jest.mock('next/navigation', () => ({
@@ -41,6 +42,7 @@ jest.mock('next/server', () => ({
 }))
 
 describe('Route Protection Integration Tests', () => {
+  const namespace = getTestNamespace('route-integration')
   const mockRedirect = redirect as jest.MockedFunction<typeof redirect>
   
   beforeEach(() => {
@@ -90,7 +92,7 @@ describe('Route Protection Integration Tests', () => {
       
       const mockUser = {
         id: 'user-123',
-        email: 'test@example.com',
+        email: createTestEmail(namespace, 'authenticated'),
         aud: 'authenticated',
         role: 'authenticated',
         created_at: '2024-01-01T00:00:00.000Z',
@@ -229,7 +231,7 @@ describe('Route Protection Integration Tests', () => {
       
       const mockUser = {
         id: 'user-123',
-        email: 'test@example.com',
+        email: createTestEmail(namespace, 'ownership'),
         aud: 'authenticated',
         role: 'authenticated',
         created_at: '2024-01-01T00:00:00.000Z',
@@ -350,7 +352,7 @@ describe('Route Protection Integration Tests', () => {
       // Step 3: Authenticated access
       const mockUser = {
         id: 'user-123',
-        email: 'test@example.com',
+        email: createTestEmail(namespace, 'scenario'),
         aud: 'authenticated',
         role: 'authenticated',
         created_at: '2024-01-01T00:00:00.000Z',
@@ -441,7 +443,7 @@ describe('Route Protection Integration Tests', () => {
       
       const mockUser = {
         id: 'user-123',
-        email: 'test@example.com',
+        email: createTestEmail(namespace, 'performance'),
         aud: 'authenticated',
         role: 'authenticated',
         created_at: '2024-01-01T00:00:00.000Z',

@@ -119,8 +119,8 @@ it('should handle custom data', async () => {
   const { data: customData } = await supabase
     .from('custom_table')
     .insert({ 
-      name: 'test', 
-      metadata: { test_namespace: namespace } 
+      name: 'test',
+      // Note: no metadata column needed - we track by ID
     })
     .select()
     .single()
@@ -156,11 +156,9 @@ const testUser = { email: 'test@example.com' }
 const namespace = getTestNamespace('my-test')
 const testEmail = createTestEmail(namespace)
 
-// GOOD - Filter by namespace
-const users = await supabase
-  .from('profiles')
-  .select()
-  .eq('metadata->test_namespace', namespace)
+// GOOD - Filter by tracked test IDs
+const cleanup = getCleanupFunctions(namespace, supabase)
+const testUsers = getTrackedData(namespace)?.users || []
 
 // GOOD - Clean up only your test data
 afterEach(async () => {

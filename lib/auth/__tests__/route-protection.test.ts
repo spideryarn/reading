@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import type { User } from '@supabase/supabase-js'
+import { getTestNamespace, createTestEmail } from '@/lib/testing/test-isolation-utils'
 
 // Mock Next.js modules
 jest.mock('next/navigation', () => ({
@@ -31,13 +32,14 @@ jest.mock('next/server', () => ({
 }))
 
 describe('Route Protection Utilities', () => {
+  const namespace = getTestNamespace('route-protection')
   const mockRedirect = redirect as jest.MockedFunction<typeof redirect>
   const mockCookies = cookies as jest.MockedFunction<typeof cookies>
   const mockCreateServerClient = createServerClient as jest.MockedFunction<typeof createServerClient>
   
   const mockUser: User = {
     id: 'user-123',
-    email: 'test@example.com',
+    email: createTestEmail(namespace, 'default'),
     aud: 'authenticated',
     role: 'authenticated',
     created_at: '2024-01-01T00:00:00.000Z',

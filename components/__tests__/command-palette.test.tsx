@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { CommandPalette } from '../command-palette'
 import { useAuth } from '@/lib/context/auth-context'
 import { useDocumentCommunication, useDocumentSlug } from '@/lib/context/document-communication-context'
+import { getTestNamespace, createTestEmail } from '@/lib/testing/test-isolation-utils'
 
 // Mock Next.js useRouter
 jest.mock('next/navigation', () => ({
@@ -107,6 +108,7 @@ jest.mock('@phosphor-icons/react', () => ({
 }))
 
 describe('CommandPalette', () => {
+  const namespace = getTestNamespace('command-palette')
   const mockRouter = {
     push: jest.fn(),
   }
@@ -378,7 +380,7 @@ describe('CommandPalette', () => {
     })
 
     it('should show profile/logout commands for authenticated users', () => {
-      const mockUser = { id: '123', email: 'test@example.com' }
+      const mockUser = { id: '123', email: createTestEmail(namespace, 'authenticated') }
       ;(useAuth as jest.Mock).mockReturnValue({
         user: mockUser,
         signOut: mockSignOut,
@@ -426,7 +428,7 @@ describe('CommandPalette', () => {
     })
 
     it('should execute logout command correctly', async () => {
-      const mockUser = { id: '123', email: 'test@example.com' }
+      const mockUser = { id: '123', email: createTestEmail(namespace, 'logout') }
       mockSignOut.mockResolvedValue({ error: null })
 
       ;(useAuth as jest.Mock).mockReturnValue({
@@ -450,7 +452,7 @@ describe('CommandPalette', () => {
     })
 
     it('should handle logout error gracefully', async () => {
-      const mockUser = { id: '123', email: 'test@example.com' }
+      const mockUser = { id: '123', email: createTestEmail(namespace, 'logout-error') }
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
       mockSignOut.mockResolvedValue({ error: { message: 'Logout failed' } })
 
@@ -604,7 +606,7 @@ describe('CommandPalette', () => {
     })
 
     it('should handle logout errors with try-catch', async () => {
-      const mockUser = { id: '123', email: 'test@example.com' }
+      const mockUser = { id: '123', email: createTestEmail(namespace, 'logout-catch') }
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
       mockSignOut.mockRejectedValue(new Error('Network error'))
 
@@ -726,7 +728,7 @@ describe('CommandPalette', () => {
   describe('Document-Specific Commands', () => {
     it('should not show document commands when no document context', () => {
       ;(useAuth as jest.Mock).mockReturnValue({
-        user: { id: '1', email: 'test@example.com' },
+        user: { id: '1', email: createTestEmail(namespace, 'no-doc-context') },
         signOut: mockSignOut,
       })
       ;(useDocumentSlug as jest.Mock).mockReturnValue(null)
@@ -740,7 +742,7 @@ describe('CommandPalette', () => {
 
     it('should show document commands when document context exists', () => {
       ;(useAuth as jest.Mock).mockReturnValue({
-        user: { id: '1', email: 'test@example.com' },
+        user: { id: '1', email: createTestEmail(namespace, 'with-doc-context') },
         signOut: mockSignOut,
       })
       ;(useDocumentSlug as jest.Mock).mockReturnValue('test-document-slug')
@@ -754,7 +756,7 @@ describe('CommandPalette', () => {
 
     it('should execute document commands with correct navigation', async () => {
       ;(useAuth as jest.Mock).mockReturnValue({
-        user: { id: '1', email: 'test@example.com' },
+        user: { id: '1', email: createTestEmail(namespace, 'doc-navigation') },
         signOut: mockSignOut,
       })
       ;(useDocumentSlug as jest.Mock).mockReturnValue('test-document-slug')
