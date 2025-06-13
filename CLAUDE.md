@@ -9,6 +9,7 @@ see:
 - IMPORTANT: `docs/reference/CODING_GUIDELINES.md` for code quality standards
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` for current system architecture
 - `docs/reference/ARCHITECTURE_DECISIONS.md` for key architectural decisions and rationale
+- `docs/reference/LOGGING_BEST_PRACTICES.md` for comprehensive logging and observability guidance
 - `docs/instructions/GIT_COMMITS.md` for using Git
 
 ## Project Overview
