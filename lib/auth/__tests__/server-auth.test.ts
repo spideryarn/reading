@@ -25,7 +25,6 @@ describe('Server Auth Utilities', () => {
   // Create test namespace for this test suite
   const namespace = getTestNamespace('server-auth-test')
   const testEmail = createTestEmail(namespace)
-  const adminEmail = createTestEmail(namespace, 'admin')
   
   const mockUser: User = {
     id: 'user-123',
@@ -38,12 +37,7 @@ describe('Server Auth Utilities', () => {
     user_metadata: {},
   }
 
-  const mockAdminUser: User = {
-    ...mockUser,
-    id: 'admin-456',
-    email: adminEmail,
-    user_metadata: { role: 'admin' },
-  }
+  // Admin user mock removed - not currently used in tests
 
   const mockSession: Session = {
     access_token: 'access-token-123',
@@ -63,7 +57,7 @@ describe('Server Auth Utilities', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    mockCreateClient.mockResolvedValue(mockSupabaseClient as any)
+    mockCreateClient.mockResolvedValue(mockSupabaseClient as ReturnType<typeof createClient>)
     
     // Spy on console.error to verify error logging
     jest.spyOn(console, 'error').mockImplementation(() => {})

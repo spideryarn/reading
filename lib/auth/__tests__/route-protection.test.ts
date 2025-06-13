@@ -67,11 +67,11 @@ describe('Route Protection Utilities', () => {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key'
     
     // Mock cookies
-    mockCookies.mockResolvedValue(mockCookieStore as any)
+    mockCookies.mockResolvedValue(mockCookieStore as unknown as ReturnType<typeof cookies>)
     mockCookieStore.getAll.mockReturnValue([])
     
     // Mock Supabase client
-    mockCreateServerClient.mockReturnValue(mockSupabaseClient as any)
+    mockCreateServerClient.mockReturnValue(mockSupabaseClient as ReturnType<typeof createServerClient>)
   })
 
   afterEach(() => {
@@ -364,7 +364,7 @@ describe('Route Protection Utilities', () => {
         }),
       }
       
-      mockCookies.mockResolvedValue(failingCookieStore as any)
+      mockCookies.mockResolvedValue(failingCookieStore as unknown as ReturnType<typeof cookies>)
       
       // Mock the client creation with a callback that will trigger setAll
       mockCreateServerClient.mockImplementation((url, key, config) => {
@@ -373,11 +373,11 @@ describe('Route Protection Utilities', () => {
           config.cookies.setAll([
             { name: 'test-cookie', value: 'test-value', options: {} }
           ])
-        } catch (error) {
+        } catch {
           // This should be caught and ignored as per the implementation
         }
         
-        return mockSupabaseClient as any
+        return mockSupabaseClient as ReturnType<typeof createServerClient>
       })
       
       mockSupabaseClient.auth.getUser.mockResolvedValue({

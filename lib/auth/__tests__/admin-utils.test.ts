@@ -13,7 +13,13 @@ jest.mock('@/lib/supabase/server', () => ({
 const mockCreateClient = createClient as jest.MockedFunction<typeof createClient>
 
 describe('Admin Utils', () => {
-  let mockSupabase: any
+  let mockSupabase: {
+    from: jest.Mock
+    update: jest.Mock
+    eq: jest.Mock
+    select: jest.Mock
+    single: jest.Mock
+  }
 
   beforeEach(() => {
     mockSupabase = {
