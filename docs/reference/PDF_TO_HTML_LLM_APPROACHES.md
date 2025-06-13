@@ -435,6 +435,444 @@ const qualityPipeline = {
 };
 ```
 
+## Appendix: Parallel Processing Strategies for Token Optimization
+
+### The Output Token Challenge
+
+When processing multi-page academic PDFs with LLMs, output token limits pose a significant constraint. A typical 20-page academic paper can generate 60,000+ output tokens when processed as a single document, approaching or exceeding model limits while incurring substantial costs ($0.90+ at Claude 4's $15/M output token rate).
+
+Parallel processing strategies address this by:
+1. **Distributing output across multiple calls** - Each page generates ~2,000-3,000 tokens instead of 60,000+
+2. **Enabling true parallelization** - 10x speed improvement through concurrent processing
+3. **Providing fault tolerance** - Individual page failures don't compromise the entire document
+4. **Avoiding token limits** - No single call risks hitting output token ceilings
+
+### Option A: Simple Concatenation
+
+**Description**: Process each page independently, then concatenate results with basic cleanup.
+
+```typescript
+const simpleParallelProcessing = async (pdfBuffer: Buffer) => {
+  // Step 1: Convert PDF to images
+  const images = await convertPdfToBase64Image(pdfBuffer)
+  
+  // Step 2: Process pages in parallel
+  const pageHtmls = await Promise.all(
+    images.map(img => processPageToHtml(img))
+  )
+  
+  // Step 3: Basic concatenation with cleanup
+  return pageHtmls
+    .map(html => removePageNumbers(removeHeaders(removeFooters(html))))
+    .join('\n<!-- Page Break -->\n')
+}
+```
+
+**Advantages**:
+- Simplest implementation
+- Minimal additional processing
+- Predictable behavior
+
+**Disadvantages**:
+- No handling of split content (paragraphs, tables, words)
+- Duplicate headers/footers remain
+- Poor document flow preservation
+
+**Best for**: Simple documents with clear page boundaries, presentations, or documents where page integrity is important.
+
+### Option B: LLM-Assisted Unification (Flawed)
+
+**Description**: Use LLM to merge all pages into unified output.
+
+**Why this doesn't work**: This approach asks the LLM to output the entire document again, defeating the purpose of parallel processing and reintroducing the output token problem we're trying to solve.
+
+### Option C: LLM-Generated Merge Instructions
+
+**Description**: Use LLM to analyze page boundaries and generate merge instructions, not merged content.
+
+```typescript
+interface MergeInstructions {
+  splitType: 'word' | 'sentence' | 'paragraph' | 'table' | 'none'
+  trimEndChars?: number
+  trimStartChars?: number
+  hyphenatedWord?: { first: string, second: string }
+  continuationMarkers?: string[]
+}
+
+const generateMergeInstructions = async (
+  page1End: string, 
+  page2Start: string
+): Promise<MergeInstructions> => {
+  const response = await llm({
+    prompt: `Analyze these page boundaries:
+      Page 1 ends with: "${page1End.slice(-200)}"
+      Page 2 starts with: "${page2Start.slice(0, 200)}"
+      
+      Return JSON merge instructions only:
+      {
+        "splitType": "word|sentence|paragraph|table|none",
+        "trimEndChars": 0,
+        "trimStartChars": 0,
+        "hyphenatedWord": null or {"first": "pre", "second": "fix"},
+        "continuationMarkers": ["Table 1 (continued)", etc]
+      }
+    `,
+    maxTokens: 200 // Minimal output
+  })
+  
+  return JSON.parse(response)
+}
+
+const mergeWithInstructions = async (pages: string[]) => {
+  const merged = [pages[0]]
+  
+  for (let i = 1; i < pages.length; i++) {
+    const instructions = await generateMergeInstructions(
+      pages[i-1], 
+      pages[i]
+    )
+    
+    const processedPage = applyMergeInstructions(
+      pages[i], 
+      instructions
+    )
+    merged.push(processedPage)
+  }
+  
+  return merged.join('\n')
+}
+```
+
+**Advantages**:
+- Intelligent boundary detection
+- Structured, parseable instructions
+- Small LLM output (200 tokens vs 3000)
+
+**Disadvantages**:
+- Requires robust JSON parsing/validation
+- Additional LLM calls add latency
+- Complex instruction application logic
+
+**Token economics** (20-page document):
+- Page processing: 2,000 × 20 = 40,000 tokens
+- Merge instructions: 200 × 19 = 3,800 tokens
+- Total: 43,800 tokens (27% reduction)
+
+### Option D: Rule-Based Unification with Selective LLM Assistance (Recommended)
+
+**Description**: Use pattern matching for most boundaries, invoke LLM only for complex cases.
+
+**Detailed Implementation**:
+
+```typescript
+interface PageContent {
+  html: string
+  metadata: {
+    endsWithHyphen: boolean
+    endsWithCompleteSentence: boolean
+    hasOpenTable: boolean
+    hasOpenEquation: boolean
+    lastParagraph: string
+    firstParagraph: string
+    pageNumber?: number
+  }
+}
+
+const analyzePageBoundary = (page: string): PageContent['metadata'] => {
+  const lines = page.split('\n')
+  const lastLine = lines[lines.length - 1].trim()
+  const text = page.replace(/<[^>]*>/g, '') // Strip HTML
+  
+  return {
+    endsWithHyphen: /-\s*$/.test(lastLine),
+    endsWithCompleteSentence: /[.!?]["']?\s*$/.test(text),
+    hasOpenTable: /<table[^>]*>/.test(page) && !/<\/table>/.test(page),
+    hasOpenEquation: /\\begin\{/.test(page) && !/\\end\{/.test(page),
+    lastParagraph: text.slice(-500),
+    firstParagraph: text.slice(0, 500),
+    pageNumber: extractPageNumber(page)
+  }
+}
+
+const smartUnification = async (pages: PageContent[]): Promise<string> => {
+  const unified: string[] = []
+  const headerFooterPatterns = detectCommonHeadersFooters(pages)
+  
+  for (let i = 0; i < pages.length; i++) {
+    let processedContent = pages[i].html
+    
+    // Remove common headers/footers
+    processedContent = removePatterns(processedContent, headerFooterPatterns)
+    
+    if (i === 0) {
+      unified.push(processedContent)
+      continue
+    }
+    
+    const prevMeta = pages[i-1].metadata
+    const currMeta = pages[i].metadata
+    
+    // Determine if boundary needs special handling
+    const needsComplexMerge = 
+      prevMeta.endsWithHyphen ||
+      !prevMeta.endsWithCompleteSentence ||
+      prevMeta.hasOpenTable ||
+      prevMeta.hasOpenEquation ||
+      detectSplitParagraph(prevMeta.lastParagraph, currMeta.firstParagraph)
+    
+    if (needsComplexMerge) {
+      // Use LLM only for complex boundaries
+      const boundaryAnalysis = await analyzeBoundaryWithLLM(
+        prevMeta.lastParagraph,
+        currMeta.firstParagraph,
+        {
+          hyphenated: prevMeta.endsWithHyphen,
+          openTable: prevMeta.hasOpenTable,
+          openEquation: prevMeta.hasOpenEquation
+        }
+      )
+      
+      processedContent = applyBoundaryFix(processedContent, boundaryAnalysis)
+    }
+    
+    unified.push(processedContent)
+  }
+  
+  return postProcessUnifiedDocument(unified.join('\n'))
+}
+
+// Boundary analysis with minimal LLM output
+const analyzeBoundaryWithLLM = async (
+  endText: string,
+  startText: string,
+  hints: BoundaryHints
+): Promise<BoundaryFix> => {
+  const prompt = `Analyze this page boundary in an academic paper:
+
+Previous page ends: "${endText}"
+Next page starts: "${startText}"
+
+Context hints:
+- Ends with hyphen: ${hints.hyphenated}
+- Has open table: ${hints.openTable}
+- Has open equation: ${hints.openEquation}
+
+Return ONLY:
+{
+  "action": "merge_word|merge_sentence|merge_paragraph|continue_table|clean_break",
+  "trimChars": 0,
+  "joinText": " " or "-" or ""
+}
+
+Maximum 100 tokens.`
+
+  const response = await llm({ prompt, maxTokens: 100 })
+  return JSON.parse(response)
+}
+
+// Pattern-based detection functions
+const detectSplitParagraph = (endText: string, startText: string): boolean => {
+  // Check for incomplete citation
+  if (/\[[^\]]*$/.test(endText) && /^[^\[]*\]/.test(startText)) return true
+  
+  // Check for incomplete parenthetical
+  if (/\([^)]*$/.test(endText) && /^[^(]*\)/.test(startText)) return true
+  
+  // Check for lowercase start (likely continuation)
+  if (/[a-z]/.test(startText.trim()[0])) return true
+  
+  // Check for continuing lists
+  if (/[,;]\s*$/.test(endText) && /^[a-z]/.test(startText.trim())) return true
+  
+  return false
+}
+
+// Common header/footer detection
+const detectCommonHeadersFooters = (pages: PageContent[]): RegExp[] => {
+  const patterns: RegExp[] = []
+  
+  // Page numbers
+  patterns.push(/^\s*\d+\s*$/) // Simple number
+  patterns.push(/^\s*[-–—]\s*\d+\s*[-–—]\s*$/) // Formatted number
+  patterns.push(/^Page\s+\d+\s*(of\s+\d+)?$/i) // "Page X of Y"
+  
+  // Journal headers (detected from repetition)
+  const repeatedTexts = findRepeatedAcrossPages(pages, 0.8) // 80% threshold
+  repeatedTexts.forEach(text => {
+    if (text.length < 200) { // Headers are typically short
+      patterns.push(new RegExp(escapeRegex(text)))
+    }
+  })
+  
+  return patterns
+}
+```
+
+**Advanced Features**:
+
+1. **Header/Footer Detection Algorithm**:
+```typescript
+const findRepeatedAcrossPages = (
+  pages: PageContent[], 
+  threshold: number
+): string[] => {
+  const candidates = new Map<string, number>()
+  
+  pages.forEach(page => {
+    // Extract potential headers/footers (first and last 5 lines)
+    const lines = page.html.split('\n')
+    const headerCandidates = lines.slice(0, 5)
+    const footerCandidates = lines.slice(-5)
+    
+    [...headerCandidates, ...footerCandidates].forEach(line => {
+      const cleaned = line.trim().replace(/<[^>]*>/g, '')
+      if (cleaned.length > 10 && cleaned.length < 200) {
+        candidates.set(cleaned, (candidates.get(cleaned) || 0) + 1)
+      }
+    })
+  })
+  
+  // Return texts that appear in >threshold% of pages
+  const minOccurrences = Math.floor(pages.length * threshold)
+  return Array.from(candidates.entries())
+    .filter(([_, count]) => count >= minOccurrences)
+    .map(([text, _]) => text)
+}
+```
+
+2. **Table Continuation Handling**:
+```typescript
+const handleTableContinuation = (
+  prevPage: string, 
+  currPage: string
+): string => {
+  // Check for table continuation markers
+  const continuationMarkers = [
+    /Table\s+\d+\s*\(continued\)/i,
+    /\(continued from previous page\)/i,
+    /^\s*\(cont\.\)/i
+  ]
+  
+  let processedCurrent = currPage
+  
+  // Remove continuation markers
+  continuationMarkers.forEach(marker => {
+    processedCurrent = processedCurrent.replace(marker, '')
+  })
+  
+  // If previous page has unclosed table, merge intelligently
+  if (/<table[^>]*>/.test(prevPage) && !/<\/table>/.test(prevPage)) {
+    // Remove duplicate table headers if present
+    const tableHeaderMatch = prevPage.match(/<thead>[\s\S]*?<\/thead>/)
+    if (tableHeaderMatch) {
+      processedCurrent = processedCurrent.replace(tableHeaderMatch[0], '')
+    }
+  }
+  
+  return processedCurrent
+}
+```
+
+3. **Mathematical Content Preservation**:
+```typescript
+const preserveMathematicalContinuity = (boundary: BoundaryAnalysis): string => {
+  // Handle split equations
+  if (boundary.openEquation) {
+    return boundary.content.replace(/^\s*\\end\{equation\}/, '')
+  }
+  
+  // Handle inline math across pages
+  if (boundary.content.match(/^\s*\$[^$]+\$/)) {
+    return ' ' + boundary.content // Add space before inline math
+  }
+  
+  return boundary.content
+}
+```
+
+**Advantages**:
+- Optimal balance of speed and quality
+- Minimal LLM usage (only complex boundaries)
+- Robust pattern-based handling for common cases
+- Graceful degradation
+
+**Disadvantages**:
+- More complex implementation
+- Requires tuning patterns for specific document types
+- May miss edge cases
+
+**Token economics** (20-page document):
+- Page processing: 2,000 × 20 = 40,000 tokens
+- Complex boundaries (30% of pages): 100 × 6 = 600 tokens
+- Total: 40,600 tokens (32% reduction)
+- Speed improvement: 10x through parallelization
+
+### Option E: Overlapping Processing Windows
+
+**Description**: Process pages with overlap to catch split content.
+
+```typescript
+const overlapProcessing = async (pdfImages: string[]): Promise<string[]> => {
+  const results: string[] = []
+  const overlapPercent = 0.1 // 10% overlap
+  
+  for (let i = 0; i < pdfImages.length; i++) {
+    if (i === 0) {
+      // First page: normal processing
+      results.push(await processPage(pdfImages[i]))
+    } else {
+      // Create composite image with overlap
+      const compositeImage = await createOverlapImage(
+        pdfImages[i-1], 
+        pdfImages[i],
+        overlapPercent
+      )
+      
+      const overlappedResult = await processWithOverlapContext(
+        compositeImage,
+        {
+          instruction: `Process this academic paper content.
+            The top ${overlapPercent*100}% is from the previous page for context.
+            Extract ONLY the content from the main page (bottom ${100-overlapPercent*100}%).
+            Handle any split content appropriately.`
+        }
+      )
+      
+      results.push(overlappedResult)
+    }
+  }
+  
+  return results
+}
+```
+
+**Advantages**:
+- LLM sees split content in context
+- Natural handling of continuations
+- No post-processing needed
+
+**Disadvantages**:
+- 10% increase in processing cost
+- Complex image composition
+- Potential confusion about what to extract
+
+### Implementation Recommendations
+
+**For Academic Papers (20+ pages)**: Option D provides the best balance of quality, cost, and speed. The combination of pattern matching for simple cases and selective LLM assistance for complex boundaries minimizes token usage while maintaining document integrity.
+
+**Key implementation considerations**:
+1. **Parallel processing architecture**: Use worker pools or Promise.all() for true parallelization
+2. **Error handling**: Implement page-level retry logic without failing entire document
+3. **Progress tracking**: Stream results as pages complete for better UX
+4. **Caching**: Cache processed pages to handle retries efficiently
+5. **Quality assurance**: Sample boundary merges for validation
+
+**Expected improvements**:
+- **Cost reduction**: 30-50% lower token costs
+- **Speed increase**: 10x faster through parallelization
+- **Reliability**: Individual page failures don't cascade
+- **Scalability**: Works for documents of any length
+
 ## References and Sources
 
 ### 2025 Model Benchmarks
@@ -452,8 +890,13 @@ const qualityPipeline = {
 - [GPT-4V Object Detection Analysis](https://blog.roboflow.com/gpt-4v-object-detection/) - Production readiness assessment
 - [LocateBench: Spatial Reasoning](https://arxiv.org/html/2410.19808v1) - LLM spatial accuracy evaluation
 
+### PDF Processing Research
+- [Layout-aware Text Extraction](https://scfbm.biomedcentral.com/articles/10.1186/1751-0473-7-7) - Academic paper boundary detection challenges
+- [PDF Hell and Practical RAG](https://unstract.com/blog/pdf-hell-and-practical-rag-applications/) - Real-world PDF processing challenges
+- [Multi-page Table Handling](https://www.llamaindex.ai/blog/mastering-pdfs-extracting-sections-headings-paragraphs-and-tables-with-cutting-edge-parser-faea18870125) - Modern approaches to complex PDF structures
+
 ---
 
 *Last updated: January 2025*  
-*Status: Comprehensive LLM approach analysis with latest 2025 models* ✅  
-*Next review: After major model updates or benchmark releases*
+*Status: Comprehensive LLM approach analysis with parallel processing strategies* ✅  
+*Next review: After major model updates or implementation of parallel processing*
