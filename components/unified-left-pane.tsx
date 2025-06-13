@@ -28,6 +28,7 @@ import { debounce } from '@/lib/utils/debounce'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
 import Mark from 'mark.js'
 import { extractCleanText } from '@/lib/utils/html-text-extraction'
+import { extractAllMatchContexts } from '@/lib/utils/search-context-extraction'
 
 // Entity type (will be moved to proper types file later)
 interface Entity {
@@ -47,11 +48,11 @@ interface Entity {
 interface SearchResult {
   elementId: string
   elementType: string
-  textExcerpt: string
   matchCount: number
   searchType?: 'text' | 'semantic' // Track search type for display
   confidence?: number // For semantic search results
   reasoning?: string // For semantic search results
+  contexts: Array<{ text: string; matchIndex: number }> // Context-aware snippets
 }
 
 interface UnifiedLeftPaneProps {
@@ -311,6 +312,53 @@ function GlossaryDisplay({
   )
 }
 
+// Component for highlighting search terms within text snippets
+function HighlightedSearchText({ 
+  text, 
+  query, 
+  caseSensitive = false 
+}: { 
+  text: string
+  query: string
+  caseSensitive?: boolean 
+}) {
+  if (!query.trim()) {
+    return <span>{text}</span>
+  }
+  
+  // Split text by search query, preserving the case sensitivity
+  const searchText = caseSensitive ? text : text.toLowerCase()
+  const searchQuery = caseSensitive ? query : query.toLowerCase()
+  
+  const parts = []
+  let lastIndex = 0
+  let matchIndex = searchText.indexOf(searchQuery)
+  
+  while (matchIndex !== -1) {
+    // Add text before the match
+    if (matchIndex > lastIndex) {
+      parts.push(text.substring(lastIndex, matchIndex))
+    }
+    
+    // Add the highlighted match
+    parts.push(
+      <span key={matchIndex} className="text-spideryarn-orange bg-orange-50 font-medium">
+        {text.substring(matchIndex, matchIndex + query.length)}
+      </span>
+    )
+    
+    lastIndex = matchIndex + query.length
+    matchIndex = searchText.indexOf(searchQuery, lastIndex)
+  }
+  
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex))
+  }
+  
+  return <span>{parts}</span>
+}
+
 export function UnifiedLeftPane({
   content,
   elements,
@@ -447,19 +495,22 @@ export function UnifiedLeftPane({
               const docElement = elements.find(el => el.id === elementId)
               
               if (docElement) {
-                // Create text excerpt (first 100 chars) - use DOM parsing for clean text extraction
+                // Extract clean content for context generation
                 const rawContent = docElement.content || ''
                 const cleanContent = extractCleanText(rawContent)
-                const textExcerpt = cleanContent.length > 100
-                  ? cleanContent.substring(0, 100) + '...'
-                  : cleanContent
                 
-                results.push({
-                  elementId,
-                  elementType: elementTag,
-                  textExcerpt,
-                  matchCount: 1 // Will update after all matches are found
-                })
+                // Create context-aware snippets for all matches in this element
+                const contexts = extractAllMatchContexts(cleanContent, query, 50, caseSensitive)
+                
+                // Only add results if we have contexts (matches found)
+                if (contexts.length > 0) {
+                  results.push({
+                    elementId,
+                    elementType: elementTag,
+                    matchCount: 1, // Will update after all matches are found
+                    contexts
+                  })
+                }
               }
             }
           }
@@ -977,7 +1028,13 @@ export function UnifiedLeftPane({
                     )}
                   </div>
                   <div className="text-sm text-gray-800 leading-relaxed">
-                    {result.textExcerpt}
+                    <div className="space-y-2">
+                      {result.contexts.map((context, index) => (
+                        <div key={index} className="pl-3 border-l-2 border-orange-200 bg-orange-50 py-1 px-2 rounded-r">
+                          <HighlightedSearchText text={context.text} query={searchQuery} caseSensitive={caseSensitive} />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               ))}
