@@ -136,18 +136,20 @@
 - [x] Verify no Docker containers for test database remain
 - [x] Git commit cleanup (commit: 2f35ec2)
 
-### Stage: Create cleanup utilities
+### Stage: Create cleanup utilities ✅
 - [x] Create `scripts/cleanup-test-data.ts` for periodic cleanup
   - [x] Delete test users older than 24 hours
   - [x] Remove orphaned test documents
   - [x] Clean up test-created enhancements
 - [x] Add cleanup script to package.json
 - [x] Document when/how to run cleanup (created `docs/reference/TESTING_CLEANUP.md`)
-- [ ] Git commit cleanup utilities
+- [x] Git commit cleanup utilities (commit: c7ad73b)
 
 ### Stage: Sync changes across worktrees
-- [ ] Copy updated `.env.test` to all worktrees (use subagent)
-- [ ] Create checklist of worktrees updated
+- [x] Copy updated `.env.test` to all worktrees (use subagent)
+- [x] Create checklist of worktrees updated
+  - Updated 6 worktrees: reading, reading-worktree1, reading-worktree3, reading-worktree4, reading-worktree5, reading-worktree6
+  - Source: reading-worktree2 (already had updated file)
 - [ ] Verify each worktree can run tests successfully
 
 ### Stage: Final validation and documentation
