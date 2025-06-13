@@ -34,7 +34,7 @@ We have:
 - ✅ Verify React 19 RC and Tailwind v4 Beta compatibility with Vercel's Node.js version
   - 📔 Research completed: React 19 RC + Next.js 15 fully supported on Vercel with Node.js 20/22. Tailwind v4 stable but requires PostCSS migration
 - ✅ Audit environment variables to ensure all are properly configured
-  - 📔 Created `docs/reference/SECRETS_AND_ENVIRONMENT_VARIABLES.md` documenting client vs server variable security
+  - 📔 Created `docs/reference/SETUP_SECRETS_AND_ENVIRONMENT_VARIABLES.md` documenting client vs server variable security
   - 📔 Environment variable exposure verified: NEXT_PUBLIC_ prefix correctly used for client-safe variables
 - ❌ Test production build locally
   - 📔 Build FAILS due to schema mismatch in headings API and 200+ ESLint violations
@@ -61,7 +61,7 @@ We have:
 - ✅ Set essential environment variables manually for first deployment
   - 📔 Added ANTHROPIC_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, Google OAuth credentials
   - 📔 Skipped LLM_MODEL to use application default (anthropic-balanced in production)
-  - 📔 Created .env.prod template and docs/reference/SECRETS_AND_ENVIRONMENT_VARIABLES.md
+  - 📔 Created .env.prod template and docs/reference/SETUP_SECRETS_AND_ENVIRONMENT_VARIABLES.md
 - [ ] Deploy to `[project].vercel.app` domain
   - 📔 Deployment attempted without git push (expected to fail until source code is available)
 - [ ] Verify basic functionality works

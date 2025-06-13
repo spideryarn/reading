@@ -9,7 +9,7 @@
 
 ## See also
 
-- `docs/reference/SECRETS_AND_ENVIRONMENT_VARIABLES.md` - Environment variable security and production configuration
+- `docs/reference/SETUP_SECRETS_AND_ENVIRONMENT_VARIABLES.md` - Environment variable security and production configuration
 
 
 ## GitHub repo
