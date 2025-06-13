@@ -1,13 +1,16 @@
 # Testing Overview
 
+> ✅ **UPDATED**: This documentation reflects the shared database testing approach adopted in June 2025.
+
 This document describes the testing approach and philosophy for the Spideryarn Reading project.
 
 ## See also
 
 - `docs/reference/TESTING_SETUP.md` - Configuration and environment setup for tests
 - `docs/reference/TESTING_TROUBLESHOOTING.md` - Known issues and workarounds
-- `docs/reference/TESTING_DATABASE.md` - Database-specific testing patterns
+- `docs/reference/TESTING_DATABASE.md` - Database-specific testing patterns and shared database approach
 - `docs/reference/TESTING_AUTHENTICATION.md` - Authentication testing patterns (→ AUTHENTICATION_TESTING.md)
+- `lib/testing/test-isolation-utils.ts` - Test isolation utilities for shared database
 - `docs/instructions/UPDATE_HOUSEKEEPING_TESTS.md` - Process for maintaining test quality and organisation
 - `planning/250608a_test_infrastructure_cleanup.md` - Example one-time test infrastructure cleanup
 - `src/lib/hooks/__tests__/` - Jest test files for React hooks
@@ -62,6 +65,54 @@ describe('myHook', () => {
   });
 });
 ```
+
+### Database Testing Pattern (Shared Database Approach)
+
+We use a **shared database** approach following Supabase's recommendations. Tests that interact with the database MUST use UUID-based isolation:
+
+```typescript
+import { getTestNamespace, createTestUser, createTestDocument, getCleanupFunctions } from '@/lib/testing/test-isolation-utils'
+
+describe('DocumentService', () => {
+  const namespace = getTestNamespace('document-service-test')
+  let documentService: DocumentService
+  
+  beforeEach(() => {
+    documentService = new DocumentService(supabase)
+  })
+  
+  afterEach(async () => {
+    // CRITICAL: Always clean up test data
+    const cleanup = getCleanupFunctions(namespace, supabase)
+    await cleanup.all()
+  })
+  
+  it('should create and retrieve document', async () => {
+    // Create test data with namespace
+    const testDoc = createTestDocument(namespace, {
+      title: 'My Test Document',
+      content: '<p>Test content</p>'
+    })
+    
+    // Perform operations
+    const created = await documentService.create(testDoc)
+    const retrieved = await documentService.getById(created.id)
+    
+    // Assertions
+    expect(retrieved?.title).toBe('My Test Document')
+    expect(retrieved?.metadata.test_namespace).toBe(namespace)
+  })
+})
+```
+
+**Critical Rules**:
+- ⛔ NEVER reset or truncate the database
+- ⛔ NEVER use `npm run db:reset` in tests
+- ✅ ALWAYS use unique namespaces for test isolation
+- ✅ ALWAYS clean up test data in afterEach hooks
+- ✅ Use the provided test utilities for consistency
+
+See `docs/reference/TESTING_DATABASE.md` for comprehensive patterns and examples.
 
 
 ## Framework Choice
