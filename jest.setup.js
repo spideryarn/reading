@@ -16,6 +16,12 @@ const { TextEncoder, TextDecoder } = require('util');
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
+// Polyfill setImmediate for pino-pretty/thread-stream in test environment
+if (typeof setImmediate === 'undefined') {
+  global.setImmediate = (fn, ...args) => setTimeout(fn, 0, ...args);
+  global.clearImmediate = clearTimeout;
+}
+
 // Add fetch polyfill for next-test-api-route-handler
 if (typeof fetch === 'undefined') {
   try {

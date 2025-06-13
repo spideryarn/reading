@@ -14,15 +14,16 @@ export const logger = pino({
       return { level: label }
     }
   },
-  // Pretty-printing for development, JSON for production and tests
-  ...(process.env.NODE_ENV === 'development' && {
+  // Pretty-printed logs in development mode
+  // Note: Requires serverExternalPackages: ['pino', 'pino-pretty'] in next.config.ts
+  // to handle worker thread compatibility with Next.js bundling
+  ...(process.env.NODE_ENV !== 'production' && {
     transport: {
       target: 'pino-pretty',
       options: {
         colorize: true,
-        levelFirst: true,
-        translateTime: 'SYS:standard',
-        ignore: 'pid,hostname'
+        ignore: 'pid,hostname',
+        translateTime: 'SYS:standard'
       }
     }
   })

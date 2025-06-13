@@ -118,6 +118,7 @@ Debugging resources:
 - **Mixed approach**: Pino added alongside existing console.log statements for safe migration
 - **Key utilities**: `createRequestLogger()`, `generateCorrelationId()`, `logAIOperation()`, `createTimer()`
 - **Security patterns**: Privacy-safe logging (IDs only, no sensitive content like API keys or full document content)
+- **Pretty logs in development**: Pino-pretty enabled for better developer experience (requires `serverExternalPackages` config in Next.js 15)
 
 **Current logging patterns**:
 ```typescript
