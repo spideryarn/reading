@@ -10,7 +10,8 @@ The AI headings feature generates relevant headings for document sections using 
 - `lib/prompts/templates/headings.ts` - Schema and prompt configuration for heading generation
 - `lib/prompts/templates/headings.njk` - LLM prompt template for heading generation
 - `/api/headings/route.ts` - API endpoint for generating document headings
-- `components/table-of-contents.tsx` - ToC component with AI headings integration
+- `components/table-of-contents-tabs.tsx` - ToC tab components with AI headings integration
+- `components/unified-left-pane.tsx` - Main left pane that includes AI headings tab
 
 ## Key decisions
 
