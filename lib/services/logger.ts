@@ -13,19 +13,9 @@ export const logger = pino({
     level: (label) => {
       return { level: label }
     }
-  },
-  // Pretty-printing for development, JSON for production and tests
-  ...(process.env.NODE_ENV === 'development' && {
-    transport: {
-      target: 'pino-pretty',
-      options: {
-        colorize: true,
-        levelFirst: true,
-        translateTime: 'SYS:standard',
-        ignore: 'pid,hostname'
-      }
-    }
-  })
+  }
+  // Note: pino-pretty transport removed due to worker thread incompatibility with Next.js
+  // Logs will be in JSON format in all environments
 })
 
 // Feature-specific child loggers for better organization

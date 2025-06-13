@@ -1091,15 +1091,29 @@ export function UnifiedLeftPane({
 
   return (
     <div className="h-full flex flex-col">
-      {/* Direct content rendering based on active tab */}
+      {/* All tabs rendered but only active one visible - using display:none for state persistence */}
       <div className="flex-1 overflow-y-auto">
-        {state.activeTabId === 'original' && renderOriginalTab()}
-        {state.activeTabId === 'ai-generated' && renderAIGeneratedTab()}
-        {state.activeTabId === 'summary' && renderSummaryTab()}
-        {state.activeTabId === 'chat' && renderChatTab()}
-        {state.activeTabId === 'glossary' && renderGlossaryTab()}
-        {state.activeTabId === 'search' && renderSearchTab()}
-        {state.activeTabId === 'highlights' && renderHighlightsTab()}
+        <div style={{ display: state.activeTabId === 'original' ? 'block' : 'none' }} className="h-full">
+          {renderOriginalTab()}
+        </div>
+        <div style={{ display: state.activeTabId === 'ai-generated' ? 'block' : 'none' }} className="h-full">
+          {renderAIGeneratedTab()}
+        </div>
+        <div style={{ display: state.activeTabId === 'summary' ? 'block' : 'none' }} className="h-full">
+          {renderSummaryTab()}
+        </div>
+        <div style={{ display: state.activeTabId === 'chat' ? 'block' : 'none' }} className="h-full">
+          {renderChatTab()}
+        </div>
+        <div style={{ display: state.activeTabId === 'glossary' ? 'block' : 'none' }} className="h-full">
+          {renderGlossaryTab()}
+        </div>
+        <div style={{ display: state.activeTabId === 'search' ? 'block' : 'none' }} className="h-full">
+          {renderSearchTab()}
+        </div>
+        <div style={{ display: state.activeTabId === 'highlights' ? 'block' : 'none' }} className="h-full">
+          {renderHighlightsTab()}
+        </div>
       </div>
     </div>
   )
