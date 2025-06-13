@@ -8,6 +8,8 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, FileText, Clock, Globe } from '@phosphor-icons/react/dist/ssr'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ProfilePage() {
   const { user } = await getUser()
   
