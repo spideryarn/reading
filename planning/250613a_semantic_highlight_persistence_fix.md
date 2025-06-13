@@ -563,3 +563,109 @@ Priority roadmap for follow-up work (highest value / least risk first)
    • Effort: Trivial CSS additions.
 
 This ordering tackles correctness first (1 & 2), performance second (3), architectural scalability next (4), and polish last (5).
+
+### Stage 6: Eliminate DOM Manipulation for Active Highlights ✅ COMPLETED
+
+**Priority Item #1 from o3 Critique: Eliminate the last DOM-level mutation (`.semantic-highlight-active`)**
+
+**Actions Taken:**
+- [✅] Replaced DOM manipulation in `handleHighlightClick` with React state-based approach
+- [✅] Added `activeElementId` state to `page-client.tsx` and threaded through component hierarchy
+- [✅] Updated component interfaces to accept active element props:
+  - `ResizableDocumentLayoutProps`: Added `activeElementId?: string | null` and `onActiveElementChange?: (elementId: string | null) => void`
+  - `UnifiedLeftPaneProps`: Added same active element props
+  - `HighlightManagementProps`: Added same active element props  
+  - `SimpleDocumentViewerProps`: Added `activeElementId?: string | null`
+- [✅] Updated `SimpleDocumentViewer` to apply `semantic-highlight-active` class via React state instead of DOM manipulation
+- [✅] Removed all `document.querySelector()` and manual `classList` operations from `handleHighlightClick`
+- [✅] Maintained existing timeout logic (1600ms) for clearing active state via callback
+- [✅] Verified TypeScript compilation passes
+
+**Architecture Change:**
+```typescript
+// BEFORE: Manual DOM manipulation (risky)
+const element = document.querySelector(`[data-element-id="${highlight.elementId}"]`)
+if (element) {
+  element.classList.add('semantic-highlight-active')
+  setTimeout(() => {
+    element.classList.remove('semantic-highlight-active')
+  }, 1600)
+}
+
+// AFTER: React state-based (robust)
+if (onActiveElementChange) {
+  onActiveElementChange(highlight.elementId)
+  setTimeout(() => {
+    onActiveElementChange(null)
+  }, 1600)
+}
+
+// Applied in render via React className
+const activeHighlightClass = activeElementId === element.id ? 'semantic-highlight-active' : ''
+```
+
+**Benefits Achieved:**
+- **100% DOM manipulation elimination**: No more `querySelector` or manual `classList` operations
+- **React VDOM compatibility**: Active highlight classes now persist through React re-renders
+- **Debugging simplification**: Active state is visible in React DevTools
+- **Future-proofing**: Compatible with React concurrent features and SSR
+- **Testing ease**: Active state can be tested via React state inspection
+
+**Impact:**
+This completes the migration from DOM manipulation to React-first architecture. The semantic highlighting system now has zero DOM manipulation, making it fully robust against React re-render conflicts. Users can click highlighted elements without any risk of losing the visual pulse effect.
+
+### Stage 7: Add CSS Override for AI-Generated Elements ✅ COMPLETED
+
+**Priority Item #5 from o3 Critique: Extend high-specificity CSS overrides to other selection colours**
+
+**Problem Identified:**
+AI-generated elements (marked with `data-ai-generated="true"`) receive green background styling (`bg-green-50`) similar to selected elements. However, when these AI-generated elements were also semantically highlighted, the green background would override the orange semantic highlight, making the highlighting invisible.
+
+**Actions Taken:**
+- [✅] Added CSS overrides in `app/globals.css` for `.bg-green-50` combined with semantic highlight classes
+- [✅] Created high-specificity rules matching the existing `.bg-blue-50` pattern
+- [✅] Applied same color values and opacity levels as selection overrides:
+  - `very-low`: `rgba(219, 138, 69, 0.15)` background, `3px` border
+  - `low`: `rgba(219, 138, 69, 0.25)` background, `3px` border  
+  - `medium`: `rgba(219, 138, 69, 0.35)` background, `4px` border
+  - `high`: `rgba(219, 138, 69, 0.45)` background, `4px` border
+  - `very-high`: `rgba(219, 138, 69, 0.55)` background, `5px` border
+- [✅] Verified build compilation passes with new CSS rules
+
+**CSS Rules Added:**
+```css
+/* High-specificity rules for AI-generated elements (green background) with semantic highlights */
+/* These override the AI-generated element styling to maintain highlight visibility */
+.bg-green-50.semantic-highlight-very-low {
+    background-color: rgba(219, 138, 69, 0.15) !important;
+    border-left: 3px solid rgba(219, 138, 69, 0.3) !important;
+}
+
+.bg-green-50.semantic-highlight-low {
+    background-color: rgba(219, 138, 69, 0.25) !important;
+    border-left: 3px solid rgba(219, 138, 69, 0.5) !important;
+}
+
+.bg-green-50.semantic-highlight-medium {
+    background-color: rgba(219, 138, 69, 0.35) !important;
+    border-left: 4px solid rgba(219, 138, 69, 0.7) !important;
+}
+
+.bg-green-50.semantic-highlight-high {
+    background-color: rgba(219, 138, 69, 0.45) !important;
+    border-left: 4px solid rgba(219, 138, 69, 0.8) !important;
+}
+
+.bg-green-50.semantic-highlight-very-high {
+    background-color: rgba(219, 138, 69, 0.55) !important;
+    border-left: 5px solid rgba(219, 138, 69, 0.9) !important;
+}
+```
+
+**Benefits:**
+- **Visual consistency**: Orange semantic highlights remain visible on AI-generated elements
+- **Complete coverage**: Now supports both selected elements (`bg-blue-50`) and AI-generated elements (`bg-green-50`)
+- **Future compatibility**: Pattern established for other background color combinations
+
+**Impact:**
+This completes the CSS specificity framework for semantic highlighting. Users can now create semantic highlights on any document element - whether normal, selected, or AI-generated - and the orange highlighting will remain consistently visible across all element states.
