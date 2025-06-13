@@ -6,7 +6,8 @@ import {
   extractMatchContext,
   findAllMatchPositions,
   extractAllMatchContexts,
-  mergeOverlappingContexts
+  mergeOverlappingContexts,
+  generateTooltipContent
 } from '../search-context-extraction'
 
 describe('extractMatchContext', () => {
@@ -220,5 +221,67 @@ describe('Edge cases and integration', () => {
     
     expect(context).toContain('Line 2')
     // Context should normalize whitespace to some degree
+  })
+})
+
+describe('generateTooltipContent', () => {
+  it('should return full text when under maxLength', () => {
+    const text = "Short text with fundamental concept"
+    const tooltip = generateTooltipContent(text, 'fundamental', 100)
+    
+    expect(tooltip).toBe(text.trim())
+    expect(tooltip).not.toContain('...')
+  })
+
+  it('should truncate long text and center around match', () => {
+    const longText = "This is a very long paragraph that contains many words and concepts. The fundamental principle discussed here is quite important for understanding the broader context of the document. It continues with even more detailed information about various topics."
+    const tooltip = generateTooltipContent(longText, 'fundamental', 100)
+    
+    expect(tooltip).toContain('fundamental')
+    expect(tooltip).toContain('...')
+    expect(tooltip.length).toBeLessThan(120) // Should be around maxLength + ellipsis
+  })
+
+  it('should handle text with no matches', () => {
+    const text = "This text has no matches for the query"
+    const tooltip = generateTooltipContent(text, 'missing', 50)
+    
+    // When text is short and no match found, should return full text without ellipsis
+    expect(tooltip).toBe(text.trim())
+    expect(tooltip.length).toBeLessThan(60)
+  })
+
+  it('should handle case sensitivity', () => {
+    const text = "The FUNDAMENTAL principle and fundamental concept are both important"
+    const tooltipInsensitive = generateTooltipContent(text, 'fundamental', 100, false)
+    const tooltipSensitive = generateTooltipContent(text, 'fundamental', 100, true)
+    
+    expect(tooltipInsensitive).toContain('FUNDAMENTAL')
+    expect(tooltipSensitive).toContain('fundamental')
+  })
+
+  it('should respect word boundaries when truncating', () => {
+    const text = "Here is some supercalifragilisticexpialidocious text with fundamental concepts that should be truncated properly at word boundaries"
+    const tooltip = generateTooltipContent(text, 'fundamental', 80)
+    
+    expect(tooltip).toContain('fundamental')
+    // Should not cut words in half at boundaries
+    expect(tooltip).toMatch(/\.\.\.\s*\w+/) // Should start with word after ellipsis if truncated
+  })
+
+  it('should handle empty inputs gracefully', () => {
+    expect(generateTooltipContent('', 'test')).toBe('')
+    expect(generateTooltipContent('test', '')).toBe('')
+    // With maxLength 0, fallback logic truncates but might add ellipsis
+    const result = generateTooltipContent('test', 'test', 0)
+    expect(result).toContain('test')
+  })
+
+  it('should handle very short maxLength', () => {
+    const text = "This is a test with fundamental concepts"
+    const tooltip = generateTooltipContent(text, 'fundamental', 20)
+    
+    expect(tooltip).toContain('fundamental')
+    expect(tooltip.length).toBeLessThan(30)
   })
 })

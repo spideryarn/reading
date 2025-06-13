@@ -30,7 +30,7 @@ export function extractMatchContext(
   query: string, 
   matchIndex: number, 
   contextChars: number = 50,
-  caseSensitive: boolean = false
+  _caseSensitive: boolean = false
 ): string {
   // Handle empty or invalid input
   if (!text || !query || matchIndex < 0) {
@@ -195,4 +195,86 @@ export function mergeOverlappingContexts(
   
   merged.push(current)
   return merged
+}
+
+/**
+ * Generates tooltip content showing the full paragraph with intelligent truncation.
+ * 
+ * For tooltips, we want to show more context than the snippet - ideally the whole
+ * paragraph unless it's extremely long, in which case we truncate intelligently.
+ * 
+ * @param fullText - The complete text of the element (e.g., full paragraph)
+ * @param query - The search query/term 
+ * @param maxLength - Maximum length before truncation (default: 500)
+ * @param caseSensitive - Whether to perform case-sensitive matching (default: false)
+ * @returns Tooltip text content, potentially truncated with ellipsis
+ * 
+ * @example
+ * ```typescript
+ * const paragraph = "This is a very long paragraph that discusses fundamental concepts..."
+ * const tooltip = generateTooltipContent(paragraph, "fundamental", 200)
+ * // Returns full paragraph if under 200 chars, or intelligently truncated version
+ * ```
+ */
+export function generateTooltipContent(
+  fullText: string,
+  query: string,
+  maxLength: number = 500,
+  caseSensitive: boolean = false
+): string {
+  if (!fullText || !query) {
+    return ''
+  }
+  
+  // If the full text is short enough, return it as-is
+  if (fullText.length <= maxLength) {
+    return fullText.trim()
+  }
+  
+  // Find the first match to center the truncation around
+  const searchText = caseSensitive ? fullText : fullText.toLowerCase()
+  const searchQuery = caseSensitive ? query : query.toLowerCase()
+  const matchIndex = searchText.indexOf(searchQuery)
+  
+  if (matchIndex === -1) {
+    // No match found, just truncate from the beginning
+    return fullText.substring(0, maxLength - 3).trim() + '...'
+  }
+  
+  // Calculate how much context we can show around the match
+  const queryLength = query.length
+  const halfMaxLength = Math.floor((maxLength - 20) / 2) // Reserve space for ellipsis
+  
+  let start = Math.max(0, matchIndex - halfMaxLength)
+  let end = Math.min(fullText.length, matchIndex + queryLength + halfMaxLength)
+  
+  // Adjust to try to end on word boundaries
+  if (start > 0) {
+    // Find the first word boundary after start
+    const wordBoundaryMatch = fullText.substring(start).match(/\s/)
+    if (wordBoundaryMatch && wordBoundaryMatch.index !== undefined && wordBoundaryMatch.index < 50) {
+      start = start + wordBoundaryMatch.index + 1
+    }
+  }
+  
+  if (end < fullText.length) {
+    // Find the last word boundary before end
+    const beforeEnd = fullText.substring(0, end)
+    const lastSpaceIndex = beforeEnd.lastIndexOf(' ')
+    if (lastSpaceIndex > end - 50) {
+      end = lastSpaceIndex
+    }
+  }
+  
+  let result = fullText.substring(start, end).trim()
+  
+  // Add ellipsis if we truncated
+  if (start > 0) {
+    result = '...' + result
+  }
+  if (end < fullText.length) {
+    result = result + '...'
+  }
+  
+  return result
 }

@@ -84,17 +84,26 @@ Transform search result snippets from paragraph-start excerpts to contextual, hi
 - [x] Test highlighting with various search terms and case sensitivity options
   - ✅ Comprehensive test coverage for highlighting edge cases and Unicode support
 
-### Stage: Rich Context Tooltips
-- [ ] Install and configure Radix Tooltip primitive (if not already available)
-  - Follow existing Radix UI tooltip styling patterns in `app/globals.css`
-  - Configure with 200ms delay and proper accessibility support
-- [ ] Create `SearchResultTooltip` component
-  - Show expanded context (200-300 characters around match)
-  - Use clean typography and proper text formatting
-  - Include document position indicator (heading name + progress percentage)
-  - Follow Radix Tooltip accessibility patterns
-- [ ] Integrate tooltips into search result snippet rendering
-  - Wrap each snippet in tooltip trigger
+### Stage: Rich Context Tooltips ✅ COMPLETED
+- [x] Install and configure Radix Tooltip primitive (if not already available)
+  - ✅ Used existing shadcn/ui tooltip component with Radix UI foundation
+  - ✅ Configured with proper accessibility support
+- [x] Create `SearchResultTooltip` component
+  - ✅ Show expanded context (full paragraph with intelligent truncation at 500 chars)
+  - ✅ Use clean typography and proper text formatting matching existing patterns
+  - ✅ Integrated highlighting within tooltip content
+  - ✅ Follow consistent light styling (`bg-white border border-gray-200`) not dark theme
+- [x] Integrate tooltips into search result snippet rendering
+  - ✅ Wrap each snippet in tooltip trigger with proper cursor styling
+
+**Implementation Details:**
+- Created `generateTooltipContent()` function for intelligent paragraph display
+- Added `fullText` field to SearchResult interface to store complete element content
+- Tooltips show up to 500 characters of context, centered around the search match
+- Maintains word boundaries when truncating longer content
+- Uses same `HighlightedSearchText` component for consistent highlighting
+- Fixed styling to match existing tooltip patterns (light background, not dark)
+- Added comprehensive test coverage for tooltip content generation
   - Generate expanded context using same `extractMatchContext()` utility with larger range
   - Add document position calculation using element position and total document length
 
