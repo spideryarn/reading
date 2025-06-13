@@ -5,9 +5,11 @@ Database schema, user profile management, and data ownership patterns for the Sp
 ## See also
 
 - `docs/reference/AUTHENTICATION_OVERVIEW.md` - High-level authentication system architecture and flows
+- `docs/reference/AUTHENTICATION_ADMIN.md` - Admin access system and super-user capabilities
 - `docs/reference/AUTHENTICATION_SETUP.md` - Initial configuration and development environment setup
 - `docs/reference/AUTHENTICATION_UI.md` - User interface components and authentication pages
 - `docs/reference/AUTHENTICATION_SECURITY.md` - Security best practices and route protection
+- `docs/reference/TESTING_DATABASE.md` - Real RLS testing patterns and validation
 - `lib/services/database/` - Database service layer implementations
 - `supabase/migrations/` - Database schema migrations and setup
 - `docs/reference/DATABASE_SCHEMA.md` - Complete database schema documentation
@@ -37,6 +39,7 @@ CREATE TABLE public.profiles (
   display_name TEXT,
   avatar_url TEXT,
   preferences JSONB DEFAULT '{}'::jsonb,
+  is_admin TIMESTAMPTZ NULL,  -- Admin access timestamp (NULL = regular user)
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
@@ -45,6 +48,7 @@ CREATE TABLE public.profiles (
 **Key Features**:
 - **Automatic Creation**: Profiles created via database trigger when users register
 - **Flexible Preferences**: JSONB field for user settings and customization
+- **Admin Support**: `is_admin` timestamp field for super-user access with audit trail
 - **Cascade Deletion**: Profiles automatically deleted when auth user is removed
 - **Unique Constraint**: One profile per authenticated user
 
@@ -169,47 +173,135 @@ class DocumentService {
 - **Pagination Support**: Efficient handling of large document collections
 - **Public Document Access**: Separate queries for public vs. private documents
 
-## Row Level Security (RLS) Patterns
+## Row Level Security (RLS) Architecture ✅
 
-### Profile Access Policies
+### Security Model: "Owners and Admins"
 
-**Read Access**: Users can read their own profiles
+The RLS implementation follows a consistent **"owners and admins"** pattern across all user-isolated tables. Every policy allows access to:
+1. **Resource owners** - Users who created or own the resource
+2. **System admins** - Users with `is_admin` timestamp set in their profile
+
+**Admin Detection Pattern**:
 ```sql
-CREATE POLICY "Users can read own profile" ON public.profiles
+-- Standard admin check used across all policies
+EXISTS (SELECT 1 FROM profiles WHERE user_id = auth.uid() AND is_admin IS NOT NULL)
+```
+
+**Performance Optimization**:
+```sql
+-- Dedicated index for fast admin lookups
+CREATE INDEX idx_profiles_admin_lookup ON profiles(user_id, is_admin) WHERE is_admin IS NOT NULL;
+```
+
+### Current RLS Policies ✅
+
+**Documents**: `"Owners and admins can manage documents"`
+```sql
+CREATE POLICY "Owners and admins can manage documents" ON documents
+  FOR ALL TO authenticated
+  USING (
+    auth.uid() = created_by::uuid OR
+    EXISTS (SELECT 1 FROM profiles WHERE user_id = auth.uid() AND is_admin IS NOT NULL)
+  );
+```
+
+**Document Enhancements**: `"Owners and admins can access enhancements"`
+```sql
+CREATE POLICY "Owners and admins can access enhancements" ON document_enhancements
+  FOR ALL TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM documents 
+      WHERE documents.id = document_enhancements.document_id 
+      AND documents.created_by::uuid = auth.uid()
+    ) OR
+    EXISTS (SELECT 1 FROM profiles WHERE user_id = auth.uid() AND is_admin IS NOT NULL)
+  );
+```
+
+**AI Calls**: `"Owners and admins can access AI calls"`
+```sql
+CREATE POLICY "Owners and admins can access AI calls" ON ai_calls
+  FOR ALL TO authenticated
+  USING (
+    auth.uid() = created_by AND (
+      document_id IS NULL OR 
+      EXISTS (
+        SELECT 1 FROM documents 
+        WHERE documents.id = ai_calls.document_id 
+        AND documents.created_by::uuid = auth.uid()
+      )
+    ) OR
+    EXISTS (SELECT 1 FROM profiles WHERE user_id = auth.uid() AND is_admin IS NOT NULL)
+  );
+```
+
+**Chat Threads**: `"Owners and admins can access chat threads"`
+```sql
+CREATE POLICY "Owners and admins can access chat threads" ON chat_threads
+  FOR ALL TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM documents 
+      WHERE documents.id = chat_threads.document_id 
+      AND documents.created_by::uuid = auth.uid()
+    ) OR
+    EXISTS (SELECT 1 FROM profiles WHERE user_id = auth.uid() AND is_admin IS NOT NULL)
+  );
+```
+
+**Chat Messages**: `"Owners and admins can access chat messages"`
+```sql
+CREATE POLICY "Owners and admins can access chat messages" ON chat_messages
+  FOR ALL TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM chat_threads 
+      JOIN documents ON documents.id = chat_threads.document_id
+      WHERE chat_threads.id = chat_messages.thread_id 
+      AND documents.created_by::uuid = auth.uid()
+    ) OR
+    EXISTS (SELECT 1 FROM profiles WHERE user_id = auth.uid() AND is_admin IS NOT NULL)
+  );
+```
+
+**Profiles**: `"Users can manage own profile"` (no admin override needed)
+```sql
+-- Read access
+CREATE POLICY "Users can read own profile" ON profiles
   FOR SELECT USING (auth.uid() = user_id);
-```
 
-**Update Access**: Users can update their own profiles
-```sql
-CREATE POLICY "Users can update own profile" ON public.profiles
+-- Update access  
+CREATE POLICY "Users can update own profile" ON profiles
   FOR UPDATE USING (auth.uid() = user_id);
-```
 
-**Insert Prevention**: Prevent manual profile creation (handled by trigger)
-```sql
-CREATE POLICY "Prevent manual profile creation" ON public.profiles
+-- Prevent manual creation (handled by trigger)
+CREATE POLICY "Prevent manual profile creation" ON profiles
   FOR INSERT WITH CHECK (false);
 ```
 
-### Document Access Policies
+### Public Access Policies ✅
 
-**Owner Access**: Full access to owned documents
+**Public Documents**: Anyone can read public documents
 ```sql
-CREATE POLICY "Users can manage own documents" ON public.documents
-  FOR ALL USING (auth.uid() = created_by);
-```
-
-**Public Read Access**: Anyone can read public documents
-```sql
-CREATE POLICY "Anyone can read public documents" ON public.documents
+CREATE POLICY "Anyone can read public documents" ON documents
   FOR SELECT USING (is_public = true);
 ```
 
-**Authenticated Creation**: Only authenticated users can create documents
+**Document Creation**: Only authenticated users can create documents
 ```sql
-CREATE POLICY "Authenticated users can create documents" ON public.documents
+CREATE POLICY "Authenticated users can create documents" ON documents
   FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 ```
+
+### RLS Security Features
+
+**Database-Level Enforcement**: All policies enforced at PostgreSQL level for maximum security
+**Consistent Pattern**: Same "owners and admins" logic across all tables for predictable behavior  
+**Performance Optimized**: Dedicated indexes for common access patterns
+**Real Testing**: Validated with actual JWT tokens and database queries (see `docs/reference/TESTING_DATABASE.md`)
+
+**Recent Security Fix**: AI calls policy vulnerability resolved in migration `20250613000004_fix_ai_calls_rls_security.sql` - previously allowed cross-user access to document-independent AI calls.
 
 ## User Data Patterns
 
@@ -290,6 +382,9 @@ if (!canEdit) {
 -- User profile lookups
 CREATE INDEX idx_profiles_user_id ON public.profiles(user_id);
 
+-- Admin access optimization (for RLS policies)
+CREATE INDEX idx_profiles_admin_lookup ON profiles(user_id, is_admin) WHERE is_admin IS NOT NULL;
+
 -- Document ownership queries
 CREATE INDEX idx_documents_created_by ON public.documents(created_by);
 CREATE INDEX idx_documents_user_public ON public.documents(created_by, is_public);
@@ -366,6 +461,7 @@ npx supabase db push --linked
 
 ---
 
-*Last updated: 6 June 2025*  
-*Implementation Status: Core Database Integration Complete ✅*  
-*Next review: After RLS policies implementation and testing*
+*Last updated: 13 June 2025*  
+*Implementation Status: Complete with Admin RLS Integration ✅*  
+*RLS Security: All vulnerabilities resolved ✅*  
+*Next review: After additional RLS features or security updates*
