@@ -1010,29 +1010,29 @@ export function UnifiedLeftPane({
               </div>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-3">
               {sortedSearchResults.map((result) => (
                 <div
                   key={result.elementId}
-                  className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="border border-gray-200 rounded-lg hover:shadow-sm cursor-pointer transition-all duration-200 bg-white"
                   onClick={() => {
                     // Use context action for scrolling and persistent element selection
                     actions.scrollToElement(result.elementId)
                   }}
                 >
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-100 rounded-t-lg">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-gray-500 uppercase">
+                      <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
                         {result.elementType}
                       </span>
                     </div>
                     {result.matchCount > 1 && (
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 bg-white px-2 py-0.5 rounded-full font-medium">
                         {result.matchCount} matches
                       </span>
                     )}
                   </div>
-                  <div className="text-sm text-gray-800 leading-relaxed">
+                  <div className="p-3">
                     <div className="space-y-2">
                       {result.contexts.map((context, index) => {
                         // Generate tooltip content showing full paragraph with highlighted match
@@ -1041,7 +1041,7 @@ export function UnifiedLeftPane({
                         return (
                           <Tooltip key={index}>
                             <TooltipTrigger asChild>
-                              <div className="pl-3 border-l-2 border-orange-200 bg-orange-50 py-1 px-2 rounded-r cursor-help">
+                              <div className="pl-3 border-l-2 border-orange-200 bg-orange-50 py-2 px-3 rounded-r cursor-help hover:bg-orange-100 transition-colors duration-150">
                                 <HighlightedSearchText text={context.text} query={searchQuery} caseSensitive={caseSensitive} />
                               </div>
                             </TooltipTrigger>
