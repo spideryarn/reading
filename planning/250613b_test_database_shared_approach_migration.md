@@ -113,12 +113,15 @@
   - [ ] Replace hardcoded test emails (found in server-auth.test.ts, route-protection.test.ts, etc.)
   - [ ] Add cleanup for test users
 - [ ] Run all updated tests to ensure they pass
-- [ ] Git commit test updates
+- [x] Git commit test updates
+  - Commit 1: RLS test utilities with namespace isolation (`acf60c9`)
+  - Commit 2: Remove dangerous test database scripts (`439612a`) 
+  - Commit 3: Planning progress update (`1d19dfa`)
 
 ### Stage: Revert infrastructure to single database
-- [ ] Update `.env.test` to point to dev database ports
-  - [ ] Change SUPABASE_URL from 54351 to 54341
-  - [ ] Change DATABASE_URL from 54352 to 54342
+- [x] Update `.env.test` to point to dev database ports
+  - [x] Change SUPABASE_URL from 54351 to 54341
+  - [x] Change DATABASE_URL from 54352 to 54342
 - [x] Update `package.json` to remove test database scripts
   - [x] Remove `test:db:start`, `test:db:stop`, etc.
   - [x] Update test scripts to remove `test:db:ensure`
@@ -126,25 +129,27 @@
 - [ ] Test that all tests still run with single database
 - [ ] Git commit infrastructure simplification
 
-### Stage: Clean up test database artifacts
-- [ ] Stop test database if running: `npm run test:db:stop`
-- [ ] Remove `supabase-test/` directory
-- [ ] Remove `supabase/config.test.toml`
-- [ ] Verify no Docker containers for test database remain
-- [ ] Git commit cleanup
+### Stage: Clean up test database artifacts ✅
+- [x] Stop test database if running: `npm run test:db:stop`
+- [x] Remove `supabase-test/` directory
+- [x] Remove `supabase/config.test.toml`
+- [x] Verify no Docker containers for test database remain
+- [x] Git commit cleanup (commit: 2f35ec2)
 
-### Stage: Create cleanup utilities
-- [ ] Create `scripts/cleanup-test-data.ts` for periodic cleanup
-  - [ ] Delete test users older than 24 hours
-  - [ ] Remove orphaned test documents
-  - [ ] Clean up test-created enhancements
-- [ ] Add cleanup script to package.json
-- [ ] Document when/how to run cleanup
-- [ ] Git commit cleanup utilities
+### Stage: Create cleanup utilities ✅
+- [x] Create `scripts/cleanup-test-data.ts` for periodic cleanup
+  - [x] Delete test users older than 24 hours
+  - [x] Remove orphaned test documents
+  - [x] Clean up test-created enhancements
+- [x] Add cleanup script to package.json
+- [x] Document when/how to run cleanup (created `docs/reference/TESTING_DATABASE_CLEANUP.md`)
+- [x] Git commit cleanup utilities (commit: c7ad73b)
 
 ### Stage: Sync changes across worktrees
-- [ ] Copy updated `.env.test` to all worktrees (use subagent)
-- [ ] Create checklist of worktrees updated
+- [x] Copy updated `.env.test` to all worktrees (use subagent)
+- [x] Create checklist of worktrees updated
+  - Updated 6 worktrees: reading, reading-worktree1, reading-worktree3, reading-worktree4, reading-worktree5, reading-worktree6
+  - Source: reading-worktree2 (already had updated file)
 - [ ] Verify each worktree can run tests successfully
 
 ### Stage: Final validation and documentation

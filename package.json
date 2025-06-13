@@ -14,6 +14,7 @@
         "db:types": "supabase gen types typescript --local > lib/types/database.ts",
         "db:reset:DANGEROUS": "echo '⚠️  WARNING: This will DELETE ALL DATA! Type YES to continue:' && read confirm && [ \"$confirm\" = \"YES\" ] && supabase db reset && npm run db:types",
         "db:backup": "./scripts/backup-database.sh",
+        "cleanup:test-data": "tsx scripts/cleanup-test-data.ts",
         "import-documents": "dotenv -e .env.local -- npx tsx scripts/import-static-documents.ts"
     },
     "dependencies": {
