@@ -10,6 +10,7 @@ This document defines code quality standards and patterns to maintain consistenc
 - `docs/instructions/DO_GIT_COMMITS.md` - Git workflow and commit guidelines
 - `docs/reference/VERCEL_AI_SDK_REFERENCE.md` - Vercel AI SDK patterns and multi-provider support
 - `docs/reference/AI_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Chat UI implementation with @assistant-ui/react
+- `docs/reference/TOOL_SEARCH_TEXT.md` - Document search functionality using HTML text extraction
 - `.eslintrc.json` and `tsconfig.json` - Linting and TypeScript configuration
 
 ## Code Quality Checks
@@ -483,6 +484,63 @@ All slug-related operations should use these centralized functions:
 **Location**: `@/lib/utils/slug.ts`
 
 This ensures consistent slug generation across document listing, routing, and API endpoints.
+
+## Utility Functions
+
+### HTML Text Extraction
+
+For extracting clean text from HTML content, use the centralised `extractCleanText()` utility:
+
+```typescript
+import { extractCleanText } from '@/lib/utils/html-text-extraction'
+
+// ❌ Bad - regex-based HTML stripping
+const badText = htmlContent.replace(/<[^>]*>/g, '')
+
+// ✅ Good - DOM-based extraction
+const goodText = extractCleanText(htmlContent)
+```
+
+#### Why Use DOM Parsing?
+
+1. **Security** - Avoids regex vulnerabilities with malformed HTML
+2. **Accuracy** - Properly handles nested tags and special characters
+3. **Filtering** - Automatically removes script/style content
+4. **Edge cases** - Handles self-closing tags, comments, CDATA sections
+5. **Normalisation** - Consistent whitespace handling
+
+#### Usage Examples
+
+```typescript
+// Simple HTML
+const html = '<p>The <strong>important</strong> text</p>'
+const text = extractCleanText(html) // "The important text"
+
+// Complex HTML with scripts
+const complex = `
+  <div>
+    <h1>Title</h1>
+    <script>alert('ignored')</script>
+    <p>Paragraph</p>
+  </div>
+`
+const clean = extractCleanText(complex) // "Title Paragraph"
+
+// Search functionality
+const searchableText = extractCleanText(element.content)
+const matches = searchableText.toLowerCase().includes(query.toLowerCase())
+```
+
+#### Implementation Details
+
+- **Browser**: Uses native DOMParser for robust HTML parsing
+- **Server**: Falls back to enhanced regex (avoids jsdom bundle issues)
+- **Error handling**: Graceful fallback for malformed HTML
+- **Performance**: Early return for non-HTML strings
+
+**Location**: `@/lib/utils/html-text-extraction.ts`
+
+This utility ensures consistent, secure text extraction across document search, previews, and AI processing.
 
 ## Appendix: Future Considerations
 

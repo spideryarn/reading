@@ -6,6 +6,8 @@ This document describes the text search functionality in Spideryarn Reading, inc
 
 - `planning/250605a_cross_element_text_search_implementation.md` - Implementation planning and progress tracking
 - `planning/finished/250604b_document_search_functionality.md` - Initial element-based search implementation
+- `docs/reference/CODING_GUIDELINES.md#html-text-extraction` - HTML text extraction utility documentation
+- `lib/utils/html-text-extraction.ts` - HTML text extraction implementation
 - `components/unified-left-pane.tsx` - Search UI and Mark.js integration
 - `components/simple-document-viewer.tsx` - Document rendering with highlighting support
 - [Mark.js Documentation](https://markjs.io/) - JavaScript text highlighting library used for search
@@ -29,6 +31,7 @@ The search functionality allows users to find text within documents, even when t
 - **React**: UI components with hooks for state management
 - **TypeScript**: Type-safe implementation
 - **Tailwind CSS**: Styling for search UI and highlights
+- **HTML Text Extraction**: DOM-based utility for clean text extraction from HTML content
 
 ### Architecture
 
@@ -58,6 +61,13 @@ The search functionality allows users to find text within documents, even when t
 ### Key Code Components
 
 ```typescript
+// HTML text extraction for search results
+import { extractCleanText } from '@/lib/utils/html-text-extraction'
+
+// Extract clean text from HTML content for searching
+const cleanContent = extractCleanText(element.content)
+const textExcerpt = cleanContent.substring(0, 100) + '...'
+
 // Mark.js initialization
 const markInstanceRef = useRef<Mark | null>(null)
 
@@ -95,6 +105,17 @@ markInstanceRef.current.mark(query, {
   }
 })
 ```
+
+### HTML Text Extraction
+
+The search functionality uses a centralised `extractCleanText()` utility for consistent text extraction from HTML content:
+
+- **DOM-based parsing** for security and accuracy (no regex vulnerabilities)
+- **Automatic filtering** of script and style tags
+- **Proper handling** of nested tags and special characters
+- **Server/browser compatibility** with appropriate fallbacks
+
+This ensures search results display clean, readable text excerpts without HTML artifacts.
 
 ## Limitations
 
