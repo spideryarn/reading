@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { LoginForm } from '@/components/auth/login-form'
 import { SignupForm } from '@/components/auth/signup-form'
 import { createClient } from '@/lib/supabase/client'
+import { getTestNamespace, createTestEmail } from '@/lib/testing/test-isolation-utils'
 
 // Mock Next.js navigation hooks
 jest.mock('next/navigation', () => ({
@@ -72,6 +73,11 @@ jest.mock('@/components/auth/oauth-button', () => ({
 }))
 
 describe('Authentication Workflow Integration', () => {
+  // Create test namespace for this test suite
+  const namespace = getTestNamespace('auth-workflow-test')
+  const testEmail = createTestEmail(namespace)
+  const newUserEmail = createTestEmail(namespace, 'newuser')
+  
   const mockRouter = {
     push: jest.fn(),
     replace: jest.fn(),
@@ -104,13 +110,13 @@ describe('Authentication Workflow Integration', () => {
       
       mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
         error: null,
-        data: { user: { id: '123', email: 'test@example.com' } }
+        data: { user: { id: '123', email: testEmail } }
       })
 
       render(<LoginForm />)
 
       // Fill form
-      await user.type(screen.getByLabelText(/email address/i), 'test@example.com')
+      await user.type(screen.getByLabelText(/email address/i), testEmail)
       await user.type(screen.getByLabelText(/password/i), 'password123')
 
       // Submit form
@@ -120,7 +126,7 @@ describe('Authentication Workflow Integration', () => {
       // Verify auth call and redirect
       await waitFor(() => {
         expect(mockSupabaseClient.auth.signInWithPassword).toHaveBeenCalledWith({
-          email: 'test@example.com',
+          email: testEmail,
           password: 'password123',
         })
         expect(mockRouter.push).toHaveBeenCalledWith('/')
@@ -152,7 +158,7 @@ describe('Authentication Workflow Integration', () => {
 
       render(<LoginForm />)
 
-      await user.type(screen.getByLabelText(/email address/i), 'test@example.com')
+      await user.type(screen.getByLabelText(/email address/i), testEmail)
       await user.type(screen.getByLabelText(/password/i), 'wrongpassword')
       await user.click(screen.getByRole('button', { name: /sign in/i }))
 
@@ -168,13 +174,13 @@ describe('Authentication Workflow Integration', () => {
       
       mockSupabaseClient.auth.signUp.mockResolvedValue({
         error: null,
-        data: { user: { id: '123', email: 'newuser@example.com' } }
+        data: { user: { id: '123', email: newUserEmail } }
       })
 
       render(<SignupForm />)
 
       // Fill form
-      await user.type(screen.getByLabelText(/email address/i), 'newuser@example.com')
+      await user.type(screen.getByLabelText(/email address/i), newUserEmail)
       await user.type(screen.getByLabelText(/^password$/i), 'password123')
       await user.type(screen.getByLabelText(/confirm password/i), 'password123')
 
@@ -185,7 +191,7 @@ describe('Authentication Workflow Integration', () => {
       // Verify auth call
       await waitFor(() => {
         expect(mockSupabaseClient.auth.signUp).toHaveBeenCalledWith({
-          email: 'newuser@example.com',
+          email: newUserEmail,
           password: 'password123',
           options: {
             emailRedirectTo: 'http://localhost:3000/auth/confirm',
@@ -201,7 +207,7 @@ describe('Authentication Workflow Integration', () => {
       const user = userEvent.setup()
       render(<SignupForm />)
 
-      await user.type(screen.getByLabelText(/email address/i), 'test@example.com')
+      await user.type(screen.getByLabelText(/email address/i), testEmail)
       await user.type(screen.getByLabelText(/^password$/i), 'password123')
       await user.type(screen.getByLabelText(/confirm password/i), 'different')
       await user.click(screen.getByRole('button', { name: /create account/i }))
@@ -247,7 +253,7 @@ describe('Authentication Workflow Integration', () => {
 
       render(<LoginForm />)
 
-      await user.type(screen.getByLabelText(/email address/i), 'test@example.com')
+      await user.type(screen.getByLabelText(/email address/i), testEmail)
       await user.type(screen.getByLabelText(/password/i), 'password123')
       await user.click(screen.getByRole('button', { name: /sign in/i }))
 
@@ -268,7 +274,7 @@ describe('Authentication Workflow Integration', () => {
 
       render(<LoginForm />)
 
-      await user.type(screen.getByLabelText(/email address/i), 'test@example.com')
+      await user.type(screen.getByLabelText(/email address/i), testEmail)
       await user.type(screen.getByLabelText(/password/i), 'password123')
       
       const submitButton = screen.getByRole('button', { name: /sign in/i })
@@ -301,7 +307,7 @@ describe('Authentication Workflow Integration', () => {
 
       render(<LoginForm />)
 
-      await user.type(screen.getByLabelText(/email address/i), 'test@example.com')
+      await user.type(screen.getByLabelText(/email address/i), testEmail)
       await user.type(screen.getByLabelText(/password/i), 'password123')
       await user.click(screen.getByRole('button', { name: /sign in/i }))
 

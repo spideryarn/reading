@@ -12,6 +12,7 @@ import {
 } from '../server-auth'
 import { createClient } from '@/lib/supabase/server'
 import type { User, Session } from '@supabase/supabase-js'
+import { getTestNamespace, createTestEmail } from '@/lib/testing/test-isolation-utils'
 
 // Mock Supabase server client
 jest.mock('@/lib/supabase/server', () => ({
@@ -21,9 +22,14 @@ jest.mock('@/lib/supabase/server', () => ({
 describe('Server Auth Utilities', () => {
   const mockCreateClient = createClient as jest.MockedFunction<typeof createClient>
   
+  // Create test namespace for this test suite
+  const namespace = getTestNamespace('server-auth-test')
+  const testEmail = createTestEmail(namespace)
+  const adminEmail = createTestEmail(namespace, 'admin')
+  
   const mockUser: User = {
     id: 'user-123',
-    email: 'test@example.com',
+    email: testEmail,
     aud: 'authenticated',
     role: 'authenticated',
     created_at: '2024-01-01T00:00:00.000Z',
@@ -35,7 +41,7 @@ describe('Server Auth Utilities', () => {
   const mockAdminUser: User = {
     ...mockUser,
     id: 'admin-456',
-    email: 'admin@example.com',
+    email: adminEmail,
     user_metadata: { role: 'admin' },
   }
 
@@ -458,7 +464,7 @@ describe('Server Auth Utilities', () => {
 
       const expected: UserProfile = {
         id: 'user-123',
-        email: 'test@example.com',
+        email: testEmail,
         displayName: 'John Doe',
         avatar: 'https://example.com/avatar.jpg',
         createdAt: '2024-01-01T00:00:00.000Z',
@@ -493,7 +499,7 @@ describe('Server Auth Utilities', () => {
 
       const result = await getUserProfile()
 
-      expect(result?.displayName).toBe('test@example.com')
+      expect(result?.displayName).toBe(testEmail)
     })
 
     it('should use "User" as final fallback for display name', async () => {
@@ -549,8 +555,8 @@ describe('Server Auth Utilities', () => {
 
       expect(result).toEqual({
         id: 'user-123',
-        email: 'test@example.com',
-        displayName: 'test@example.com',
+        email: testEmail,
+        displayName: testEmail,
         avatar: undefined,
         createdAt: '2024-01-01T00:00:00.000Z',
       })
@@ -571,8 +577,8 @@ describe('Server Auth Utilities', () => {
 
       expect(result).toEqual({
         id: 'user-123',
-        email: 'test@example.com',
-        displayName: 'test@example.com',
+        email: testEmail,
+        displayName: testEmail,
         avatar: undefined,
         createdAt: '2024-01-01T00:00:00.000Z',
       })

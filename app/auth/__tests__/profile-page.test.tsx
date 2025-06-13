@@ -7,6 +7,7 @@ import { ProfileService } from '@/lib/services/database/profiles'
 import { DocumentService } from '@/lib/services/database/documents'
 import type { User } from '@supabase/supabase-js'
 import type { Profile, Document } from '@/lib/types/database'
+import { getTestNamespace, createTestEmail } from '@/lib/testing/test-isolation-utils'
 
 // Mock Next.js redirect
 jest.mock('next/navigation', () => ({
@@ -73,9 +74,13 @@ describe('ProfilePage', () => {
   const MockProfileService = ProfileService as jest.MockedClass<typeof ProfileService>
   const MockDocumentService = DocumentService as jest.MockedClass<typeof DocumentService>
 
+  // Create test namespace for this test suite
+  const namespace = getTestNamespace('profile-page-test')
+  const testEmail = createTestEmail(namespace)
+  
   const mockUser: User = {
     id: 'user-123',
-    email: 'test@example.com',
+    email: testEmail,
     aud: 'authenticated',
     role: 'authenticated',
     created_at: '2024-01-01T00:00:00.000Z',
@@ -283,7 +288,7 @@ describe('ProfilePage', () => {
       // Check profile information
       expect(screen.getByText('Profile')).toBeInTheDocument()
       expect(screen.getByText('Account Information')).toBeInTheDocument()
-      expect(screen.getByText('test@example.com')).toBeInTheDocument()
+      expect(screen.getByText(testEmail)).toBeInTheDocument()
       expect(screen.getByText('John Doe')).toBeInTheDocument()
       expect(screen.getByText('1 January 2024')).toBeInTheDocument() // User created date
       expect(screen.getByText('2 January 2024')).toBeInTheDocument() // Profile created date

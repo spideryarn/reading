@@ -98,6 +98,9 @@ Object.defineProperty(window, 'location', {
   writable: true,
 })
 
+// Import test isolation utilities
+import { getTestNamespace, createTestEmail } from '@/lib/testing/test-isolation-utils'
+
 // Export helper functions for common test setup
 export const createMockRouter = () => ({
   push: jest.fn(),
@@ -127,14 +130,20 @@ export const createMockSupabaseClient = () => ({
   },
 })
 
-export const createMockUser = (overrides = {}) => ({
-  id: 'user-123',
-  email: 'test@example.com',
-  aud: 'authenticated',
-  role: 'authenticated',
-  created_at: '2024-01-01T00:00:00.000Z',
-  updated_at: '2024-01-01T00:00:00.000Z',
-  app_metadata: {},
-  user_metadata: {},
-  ...overrides,
-})
+export const createMockUser = (overrides = {}, namespace?: string) => {
+  // Use provided namespace or generate a new one
+  const testNamespace = namespace || getTestNamespace('mock-user-test')
+  const testEmail = createTestEmail(testNamespace)
+  
+  return {
+    id: 'user-123',
+    email: testEmail,
+    aud: 'authenticated',
+    role: 'authenticated',
+    created_at: '2024-01-01T00:00:00.000Z',
+    updated_at: '2024-01-01T00:00:00.000Z',
+    app_metadata: {},
+    user_metadata: {},
+    ...overrides,
+  }
+}
