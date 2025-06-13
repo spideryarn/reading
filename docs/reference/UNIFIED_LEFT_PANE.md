@@ -5,6 +5,7 @@ The unified left pane provides comprehensive document navigation and AI-powered 
 ## See also
 
 - `components/unified-left-pane.tsx` - consolidated navigation and tools pane containing ToC
+- `components/table-of-contents-tabs.tsx` - extracted ToC tab components (Original, AI-generated, Summary)
 - `components/vertical-icon-nav.tsx` - vertical icon navigation bar component
 - `components/heading-tree.tsx` - shared tree component for rendering hierarchical headings
 - `components/resizable-document-layout.tsx` - main 2-pane layout coordinator
@@ -48,7 +49,7 @@ The ToC uses a shared `HeadingTree` component that eliminates code duplication b
 ### Expand/Collapse Functionality
 - Individual sections can be collapsed to hide their child headings
 - Chevron buttons (CaretDown/CaretRight icons) indicate expandable sections
-- State is lifted to `TableOfContents` component and persists across tab switches
+- State is lifted to parent tab components and persists across tab switches
 - Separate expand/collapse state for Original and AI-generated tabs
 - Collapsed state automatically clears when new AI headings are generated
 - Only affects ToC display - document pane content remains unchanged

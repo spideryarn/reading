@@ -11,7 +11,8 @@ The AI summarise feature generates hierarchical summaries of document content us
 - `lib/prompts/templates/summarise.njk` - LLM prompt template for content summarisation
 - `/api/summarise/route.ts` - API endpoint for generating summaries with granularity control
 - `components/document-summary.tsx` - Summary pane component for document-level summaries
-- `components/table-of-contents.tsx` - ToC component with tooltip summarisation integration
+- `components/table-of-contents-tabs.tsx` - ToC tab components with tooltip summarisation integration
+- `components/unified-left-pane.tsx` - Main left pane that includes summary tab
 
 ## Key decisions
 
