@@ -6,4 +6,4 @@ Gather information, generate hypotheses, look for ways to test/confirm/disconfir
 
 Ask questions of the user if that will clarify (about the problem or the goals) or help you to gather more information.
 
-Don't make changes unless instructed, or do anything risky/destructive.
+Do not make changes yet, or do anything risky/destructive.
