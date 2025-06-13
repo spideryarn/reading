@@ -159,7 +159,12 @@ GitHub Actions automatically handles database schema changes:
    - Name: `SUPABASE_ACCESS_TOKEN`, Value: `sbp_your_token_here`
    - Name: `SUPABASE_DB_PASSWORD`, Value: `your_database_password`
 
-**Status:** ✅ **COMPLETE** - GitHub secrets configured and workflow tested
+**GitHub Token Requirements:**
+- Your local git token needs `repo` and `workflow` scopes to push workflow files
+- Create a dedicated token at https://github.com/settings/tokens/new with both scopes
+- Update your repo remote: `git remote set-url origin https://YOUR_TOKEN@github.com/spideryarn/reading.git`
+
+**Status:** ✅ **COMPLETE** - GitHub secrets configured, workflow tested, and token permissions resolved
 
 **Workflow File:** `.github/workflows/deploy-production.yml`
 

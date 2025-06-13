@@ -136,6 +136,9 @@ Recent planning decisions & progress tracking in `planning/`.
 ### Completed Planning
 See `planning/finished/` for historical planning documents and implementation records.
 
+Recent completions:
+- `planning/finished/250613e_Vercel_deployment_initial_setup.md` - Complete Vercel deployment with custom domain, database migrations, and production environment setup
+
 ### Future Planning
 See `planning/later/` for deferred features and future enhancements.
 

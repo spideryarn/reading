@@ -51,6 +51,12 @@ Next.js local dev server:
 - Logs: `dev.log` - Use `tail dev.log` to check recent output
 - URL: http://localhost:$PORT/ (configurable via PORT in `.env.local`)
 
+Production deployment:
+- **Live URL**: https://www.spideryarn.com
+- **Documentation**: `docs/reference/SETUP_DEPLOYMENT_PRODUCTION.md`
+- **Auto-deployment**: Pushes to main trigger GitHub Actions migrations + Vercel deployment
+- **Status**: ✅ Fully operational with custom domain, SSL, Google SSO, and database integration
+
 Database operations:
 - `npm run db:types` - Regenerate TypeScript types from Supabase schema
 - ⛔ `npm run db:reset` - **DO NOT USE**: This command destroys ALL data including test and development data. Only use with explicit user permission in exceptional circumstances.

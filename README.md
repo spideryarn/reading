@@ -28,3 +28,6 @@ AI-assisted document reading and analysis tool for professionals working with no
 - `docs/reference/TESTING_OVERVIEW.md` - Testing approach and infrastructure
 - `docs/reference/DATABASE_OVERVIEW.md` - Database schema and operations
 
+### Deployment
+- `docs/reference/SETUP_DEPLOYMENT_PRODUCTION.md` - Production deployment guide for Vercel
+
