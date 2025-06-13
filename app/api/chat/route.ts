@@ -10,11 +10,22 @@ import { renderChatSystemPrompt } from '@/lib/prompts/templates/chat-system'
 import { createClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { ChatService } from '@/lib/services/database/chat'
+import { createRequestLogger, createTimer, logAIOperation, generateCorrelationId } from '@/lib/services/logger'
 
 export async function POST(request: NextRequest) {
+  const correlationId = generateCorrelationId()
+  const requestLogger = createRequestLogger('/api/chat', correlationId)
+  
   try {
     const body = await request.json()
     // Note: 'body' is only accessible within this try block scope
+    
+    requestLogger.info({
+      method: 'POST',
+      bodyKeys: Object.keys(body),
+      hasMessages: !!body.messages,
+      hasDocumentContext: !!body.documentContext
+    }, 'Starting chat request processing')
     
     // Validate input with detailed error reporting
     const validationResult = chatPromptInputSchema.safeParse(body)
@@ -33,6 +44,11 @@ export async function POST(request: NextRequest) {
         errors: errorDetails,
         timestamp: new Date().toISOString()
       })
+      
+      requestLogger.warn({
+        validationErrors: errorDetails,
+        bodyKeys: Object.keys(body)
+      }, 'Chat request validation failed')
       
       return NextResponse.json(
         { 
@@ -54,6 +70,14 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     })
     
+    requestLogger.info({
+      messageCount: messages.length,
+      documentContextLength: documentContext?.length || 0,
+      threadId,
+      documentId,
+      correlationId
+    }, 'Processing chat conversation')
+    
     // Build the system prompt with document context using Nunjucks template
     const systemPrompt = renderChatSystemPrompt({
       documentContext: documentContext || 'No document context provided.'
@@ -70,6 +94,18 @@ export async function POST(request: NextRequest) {
     
     // Get the appropriate model based on configuration
     const model = getModel()
+    const modelConfig = getModelConfig()
+    
+    // Create performance timer for AI operation
+    const chatTimer = createTimer(requestLogger, 'chat-generation')
+    
+    requestLogger.info({
+      modelProvider: modelConfig.provider,
+      modelId: modelConfig.modelId,
+      messageCount: aiMessages.length,
+      maxTokens: AI_CONFIG.DEFAULT_MAX_TOKENS,
+      correlationId
+    }, 'Starting AI chat generation')
     
     // Generate response using Vercel AI SDK Core
     const result = await generateText({
@@ -77,6 +113,11 @@ export async function POST(request: NextRequest) {
       messages: aiMessages,
       maxTokens: AI_CONFIG.DEFAULT_MAX_TOKENS,
       temperature: 0, // Keep deterministic for document analysis
+    })
+    
+    const chatDuration = chatTimer.end({
+      tokensUsed: result.usage?.totalTokens,
+      responseLength: result.text.length
     })
     
     const response = result.text
@@ -150,6 +191,15 @@ export async function POST(request: NextRequest) {
           threadId: finalThreadId,
           usage: result.usage
         })
+        
+        // Log successful AI operation
+        logAIOperation('chat', {
+          modelProvider: modelConfig.provider,
+          tokensUsed: result.usage?.totalTokens,
+          documentId,
+          correlationId,
+          cost: result.usage?.totalTokens ? result.usage.totalTokens * 0.000003 : undefined // Rough cost estimate
+        }, 'success')
       } catch (err) {
         console.warn('[Chat API] Failed to track AI call:', err)
         // Don't fail the request if AI call tracking fails
@@ -162,6 +212,15 @@ export async function POST(request: NextRequest) {
       aiCallId: aiCallId || 'none',
       timestamp: new Date().toISOString()
     })
+    
+    requestLogger.info({
+      responseLength: response.length,
+      threadId: finalThreadId,
+      aiCallId,
+      tokensUsed: result.usage?.totalTokens,
+      duration: chatDuration,
+      correlationId
+    }, 'Chat response generated successfully')
     
     return NextResponse.json({ 
       response,
@@ -183,6 +242,11 @@ export async function POST(request: NextRequest) {
     }
     
     console.error('[Chat API] Error occurred:', errorDetails)
+    
+    requestLogger.error({
+      error: error instanceof Error ? error.message : 'Unknown error',
+      correlationId
+    }, 'Chat request failed')
     
     // Provide detailed error information to the client
     if (error instanceof Error) {

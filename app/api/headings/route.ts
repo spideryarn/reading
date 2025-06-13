@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelConfig, AI_CONFIG } from '@/lib/config'
+import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
 
 /**
  * Remove all existing headings (h1-h6) from HTML content
@@ -55,11 +56,20 @@ function logHeadingsHierarchy(headings: Array<{ html: string }>): void {
 }
 
 export async function GET(request: NextRequest) {
+  const correlationId = generateCorrelationId()
+  const requestLogger = createRequestLogger('/api/headings', correlationId)
+  
   try {
     const { searchParams } = new URL(request.url)
     const documentId = searchParams.get('documentId')
     
+    requestLogger.info({
+      method: 'GET',
+      documentId
+    }, 'Fetching cached headings')
+    
     if (!documentId) {
+      requestLogger.warn({ documentId }, 'Missing documentId parameter')
       return NextResponse.json(
         { error: 'documentId is required' },
         { status: 400 }

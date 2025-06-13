@@ -8,14 +8,25 @@ import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelConfig, AI_CONFIG } from '@/lib/config'
+import { createRequestLogger, createTimer, logAIOperation, generateCorrelationId } from '@/lib/services/logger'
 
 export async function GET(request: NextRequest) {
+  const correlationId = generateCorrelationId()
+  const requestLogger = createRequestLogger('/api/summarise', correlationId)
+  
   try {
     const { searchParams } = new URL(request.url)
     const documentId = searchParams.get('documentId')
     const granularity = searchParams.get('granularity')
     
+    requestLogger.info({
+      method: 'GET',
+      documentId,
+      granularity
+    }, 'Fetching cached summary')
+    
     if (!documentId) {
+      requestLogger.warn({ documentId }, 'Missing documentId parameter')
       return NextResponse.json(
         { error: 'documentId is required' },
         { status: 400 }
@@ -43,6 +54,13 @@ export async function GET(request: NextRequest) {
         throw new Error(`Malformed summary data in database for enhancement ${existingSummary.id}: content.text is not a string. Found: ${typeof existingSummary.content.text}`)
       }
       
+      requestLogger.info({
+        enhancementId: existingSummary.id,
+        textLength: existingSummary.content.text.length,
+        documentId,
+        granularity
+      }, 'Returning cached summary')
+      
       return NextResponse.json({ 
         summary: existingSummary.content.text,
         cached: true,
@@ -52,12 +70,17 @@ export async function GET(request: NextRequest) {
     }
     
     // No cached summary found
+    requestLogger.info({ documentId, granularity }, 'No cached summary found')
     return NextResponse.json({ 
       cached: false,
       summary: null
     })
   } catch (error) {
     console.error('Error fetching cached summary:', error)
+    requestLogger.error({ 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      documentId: new URL(request.url).searchParams.get('documentId')
+    }, 'Failed to fetch cached summary')
     return NextResponse.json(
       { error: 'Failed to fetch cached summary' },
       { status: 500 }
@@ -99,10 +122,23 @@ export async function DELETE(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const correlationId = generateCorrelationId()
+  const requestLogger = createRequestLogger('/api/summarise', correlationId)
+  
   try {
     const { content, granularity, documentId, sectionId } = await request.json()
     
+    requestLogger.info({
+      method: 'POST',
+      documentId,
+      granularity,
+      sectionId,
+      contentLength: content?.length,
+      hasContent: !!content
+    }, 'Starting summary generation')
+    
     if (!content || typeof content !== 'string') {
+      requestLogger.warn({ content: typeof content }, 'Invalid content parameter')
       return NextResponse.json(
         { error: 'Content is required and must be a string' },
         { status: 400 }
@@ -110,6 +146,7 @@ export async function POST(request: NextRequest) {
     }
     
     if (!documentId || typeof documentId !== 'string') {
+      requestLogger.warn({ documentId: typeof documentId }, 'Invalid documentId parameter')
       return NextResponse.json(
         { error: 'DocumentId is required and must be a string' },
         { status: 400 }
@@ -131,6 +168,12 @@ export async function POST(request: NextRequest) {
     )
     
     if (existingSummary) {
+      requestLogger.info({
+        enhancementId: existingSummary.id,
+        textLength: existingSummary.content.text.length,
+        cacheKey
+      }, 'Returning cached summary from POST request')
+      
       return NextResponse.json({ 
         summary: existingSummary.content.text,
         cached: true,
@@ -174,17 +217,28 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Performance timing was removed as it's not currently used
-    // If needed in future: const startTime = Date.now()
+    // Create performance timer for AI operation
+    const operationTimer = createTimer(requestLogger, 'summarise-generation')
     
     try {
+      requestLogger.info({
+        aiCallId: aiCall.id,
+        modelProvider: modelConfig.provider,
+        modelId: modelConfig.modelId,
+        contentLength: content.length,
+        granularity,
+        sectionId
+      }, 'Starting AI summary generation')
+      
       const summaryResult = await executePromptWithUsage(templateWithTokens, { 
         content, 
         granularity: getGranularityInstruction(granularity)
       })
       
-      // Performance timing was removed as it's not currently used
-      // If needed in future: const endTime = Date.now()
+      operationTimer.end({
+        tokensUsed: summaryResult.usage?.totalTokens,
+        outputLength: summaryResult.text.length
+      })
       
       // Complete AI call tracking with success and usage metadata
       await aiCallService.completeCall(aiCall.id, {
@@ -195,6 +249,15 @@ export async function POST(request: NextRequest) {
         usage: summaryResult.usage,
         finishReason: summaryResult.finishReason
       })
+      
+      // Log successful AI operation
+      logAIOperation('summarise', {
+        modelProvider: modelConfig.provider,
+        tokensUsed: summaryResult.usage?.totalTokens,
+        documentId,
+        correlationId,
+        cost: summaryResult.usage?.totalTokens ? summaryResult.usage.totalTokens * 0.000003 : undefined // Rough cost estimate
+      }, 'success')
       
       // Store summary in database
       try {
@@ -212,6 +275,13 @@ export async function POST(request: NextRequest) {
           },
           cacheKey
         )
+        
+        requestLogger.info({
+          enhancementId: enhancement.id,
+          aiCallId: aiCall.id,
+          textLength: summaryResult.text.length,
+          tokensUsed: summaryResult.usage?.totalTokens
+        }, 'Summary generated and stored successfully')
         
         return NextResponse.json({ 
           summary: summaryResult.text,
@@ -235,10 +305,23 @@ export async function POST(request: NextRequest) {
         aiCall.id,
         llmError instanceof Error ? llmError.message : 'Unknown LLM error'
       )
+      
+      // Log failed AI operation
+      logAIOperation('summarise', {
+        modelProvider: modelConfig.provider,
+        documentId,
+        correlationId
+      }, 'error', llmError instanceof Error ? llmError : new Error('Unknown LLM error'))
+      
       throw llmError
     }
   } catch (error) {
     console.error('Error generating summary:', error)
+    requestLogger.error({
+      error: error instanceof Error ? error.message : 'Unknown error',
+      documentId,
+      correlationId
+    }, 'Failed to generate summary')
     return NextResponse.json(
       { error: 'Failed to generate summary' },
       { status: 500 }
