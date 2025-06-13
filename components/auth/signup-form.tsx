@@ -61,7 +61,7 @@ export function SignupForm() {
     try {
       const supabase = createClient()
       
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
@@ -72,6 +72,29 @@ export function SignupForm() {
       if (signUpError) {
         setError(signUpError.message)
         return
+      }
+
+      // If user was created successfully, create Stripe customer
+      if (signUpData.user) {
+        try {
+          const response = await fetch('/api/stripe/create-customer', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              fullName: signUpData.user.user_metadata?.full_name
+            }),
+          })
+
+          if (!response.ok) {
+            console.error('Failed to create Stripe customer')
+            // Don't block the signup process if Stripe customer creation fails
+          }
+        } catch (stripeError) {
+          console.error('Failed to create Stripe customer:', stripeError)
+          // Don't block the signup process if Stripe customer creation fails
+        }
       }
 
       // Redirect to home page after successful signup

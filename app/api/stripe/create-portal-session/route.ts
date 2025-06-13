@@ -9,6 +9,14 @@ import { createPortalSession } from '@/lib/services/stripe/subscriptions'
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Stripe is properly configured (development check)
+    if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.includes('placeholder')) {
+      return NextResponse.json(
+        { error: 'Stripe not configured - using placeholder keys' },
+        { status: 503 }
+      )
+    }
+
     // Get the authenticated user
     const supabase = createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getOrCreateStripeCustomer } from '@/lib/services/stripe/customers'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
@@ -10,9 +11,22 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
     
-    if (!error) {
+    if (!error && data.user) {
+      // Create Stripe customer for OAuth users (both new and existing)
+      // The function is idempotent, so it's safe to call for existing users
+      try {
+        await getOrCreateStripeCustomer(
+          data.user.id,
+          data.user.email!,
+          data.user.user_metadata?.full_name
+        )
+      } catch (stripeError) {
+        console.error('Failed to create Stripe customer for OAuth user:', stripeError)
+        // Don't block the OAuth flow if Stripe customer creation fails
+      }
+
       const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
       const isLocalEnv = process.env.NODE_ENV === 'development'
       
