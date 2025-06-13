@@ -62,16 +62,38 @@ export function LoginForm() {
       })
 
       if (signInError) {
+        // Log authentication errors for debugging
+        console.error('[Auth] Login failed:', {
+          error: signInError.message,
+          email: data.email,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent
+        })
+        
         setError(signInError.message)
         return
       }
 
+      // Log successful login
+      console.info('[Auth] Login successful:', {
+        email: data.email,
+        redirectUrl,
+        timestamp: new Date().toISOString()
+      })
+      
       // Redirect to the requested page or home
       router.push(redirectUrl)
       router.refresh()
     } catch (err) {
+      // Log unexpected errors
+      console.error('[Auth] Unexpected login error:', {
+        error: err instanceof Error ? err.message : 'Unknown error',
+        email: data.email,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent
+      })
+      
       setError('An unexpected error occurred. Please try again.')
-      console.error('Login error:', err)
     } finally {
       setIsLoading(false)
     }

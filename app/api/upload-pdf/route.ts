@@ -12,8 +12,12 @@ import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelConfig, AI_CONFIG } from '@/lib/config'
 import { generateSlug } from '@/lib/utils/slug'
 import { validateAuth } from '@/lib/auth/server-auth'
+import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
 
 export async function POST(request: NextRequest) {
+  const correlationId = generateCorrelationId()
+  const requestLogger = createRequestLogger('/api/upload-pdf', correlationId)
+  
   try {
     // Validate authentication first
     const user = await validateAuth()
@@ -24,6 +28,17 @@ export async function POST(request: NextRequest) {
     const provider = (formData.get('provider') as string) || 'claude' // Default to Claude
     const title = (formData.get('title') as string) || pdfFile?.name?.replace('.pdf', '') || 'Untitled Document'
     const isPublic = formData.get('isPublic') === 'true' // Default to false (private)
+
+    requestLogger.info({
+      method: 'POST',
+      userId: user.id,
+      userEmail: user.email,
+      fileName: pdfFile?.name,
+      fileSize: pdfFile?.size,
+      provider,
+      title,
+      isPublic
+    }, 'PDF upload request initiated')
 
     if (!pdfFile) {
       return new NextResponse('No PDF file provided', { status: 400 })

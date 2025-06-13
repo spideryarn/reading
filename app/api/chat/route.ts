@@ -11,17 +11,23 @@ import { createClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { ChatService } from '@/lib/services/database/chat'
 import { createRequestLogger, createTimer, logAIOperation, generateCorrelationId } from '@/lib/services/logger'
+import { getUser } from '@/lib/auth/server-auth'
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
   const requestLogger = createRequestLogger('/api/chat', correlationId)
   
   try {
+    // Get user context for logging (optional - chat can work without auth)
+    const { user } = await getUser()
+    
     const body = await request.json()
     // Note: 'body' is only accessible within this try block scope
     
     requestLogger.info({
       method: 'POST',
+      userId: user?.id,
+      userEmail: user?.email,
       bodyKeys: Object.keys(body),
       hasMessages: !!body.messages,
       hasDocumentContext: !!body.documentContext
