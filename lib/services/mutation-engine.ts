@@ -9,6 +9,7 @@ import {
   isModifyTransform
 } from '../types/mutation'
 import { mutationDebugger } from './mutation-debug'
+import { mutationLogger, generateCorrelationId, createTimer } from './logger'
 
 /**
  * Core engine for applying and reverting document mutations.
@@ -23,7 +24,18 @@ export class MutationEngine {
     document: DocumentElement[], 
     mutation: Mutation
   ): MutationResult {
+    const correlationId = generateCorrelationId()
+    const timer = createTimer(mutationLogger, 'applyMutation')
     const startTime = performance.now()
+    
+    mutationLogger.info({
+      operation: 'applyMutation',
+      mutationId: mutation.id,
+      mutationType: mutation.type,
+      transformCount: mutation.forward.length,
+      documentSize: document.length,
+      correlationId
+    }, `Starting mutation application: ${mutation.type}`)
     
     try {
       // Create a deep copy to work with
@@ -37,6 +49,16 @@ export class MutationEngine {
             success: false,
             error: `Invalid transform: ${validation.error}`
           }
+          
+          mutationLogger.warn({
+            operation: 'applyMutation',
+            mutationId: mutation.id,
+            mutationType: mutation.type,
+            validationError: validation.error,
+            transformAction: transform.action,
+            correlationId
+          }, `Mutation validation failed: ${validation.error}`)
+          
           mutationDebugger.logMutation('apply', mutation, document, errorResult, performance.now() - startTime)
           return errorResult
         }
@@ -53,6 +75,26 @@ export class MutationEngine {
         document: finalDocument,
         success: true
       }
+      
+      const duration = timer.end({
+        mutationId: mutation.id,
+        mutationType: mutation.type,
+        changes: result.changes,
+        finalDocumentSize: finalDocument.length,
+        correlationId
+      })
+      
+      mutationLogger.info({
+        operation: 'applyMutation',
+        mutationId: mutation.id,
+        mutationType: mutation.type,
+        transformCount: mutation.forward.length,
+        changes: result.changes,
+        documentSizeBefore: document.length,
+        documentSizeAfter: finalDocument.length,
+        duration,
+        correlationId
+      }, `Mutation applied successfully: ${mutation.type}`)
       
       // Log debug info if enabled
       if (mutationDebugger.isEnabled()) {
@@ -74,6 +116,16 @@ export class MutationEngine {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error applying mutation'
       }
+      
+      mutationLogger.error({
+        operation: 'applyMutation',
+        mutationId: mutation.id,
+        mutationType: mutation.type,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        duration: performance.now() - startTime,
+        correlationId
+      }, `Mutation application failed: ${mutation.type}`)
+      
       mutationDebugger.logMutation('apply', mutation, document, errorResult, performance.now() - startTime)
       return errorResult
     }
@@ -87,7 +139,18 @@ export class MutationEngine {
     document: DocumentElement[], 
     mutation: Mutation
   ): MutationResult {
+    const correlationId = generateCorrelationId()
+    const timer = createTimer(mutationLogger, 'revertMutation')
     const startTime = performance.now()
+    
+    mutationLogger.info({
+      operation: 'revertMutation',
+      mutationId: mutation.id,
+      mutationType: mutation.type,
+      reverseTransformCount: mutation.reverse.length,
+      documentSize: document.length,
+      correlationId
+    }, `Starting mutation revert: ${mutation.type}`)
     
     try {
       // Create a deep copy to work with
@@ -101,6 +164,16 @@ export class MutationEngine {
             success: false,
             error: `Invalid reverse transform: ${validation.error}`
           }
+          
+          mutationLogger.warn({
+            operation: 'revertMutation',
+            mutationId: mutation.id,
+            mutationType: mutation.type,
+            validationError: validation.error,
+            transformAction: transform.action,
+            correlationId
+          }, `Mutation revert validation failed: ${validation.error}`)
+          
           mutationDebugger.logMutation('revert', mutation, document, errorResult, performance.now() - startTime)
           return errorResult
         }
@@ -117,6 +190,26 @@ export class MutationEngine {
         document: finalDocument,
         success: true
       }
+      
+      const duration = timer.end({
+        mutationId: mutation.id,
+        mutationType: mutation.type,
+        changes: result.changes,
+        finalDocumentSize: finalDocument.length,
+        correlationId
+      })
+      
+      mutationLogger.info({
+        operation: 'revertMutation',
+        mutationId: mutation.id,
+        mutationType: mutation.type,
+        reverseTransformCount: mutation.reverse.length,
+        changes: result.changes,
+        documentSizeBefore: document.length,
+        documentSizeAfter: finalDocument.length,
+        duration,
+        correlationId
+      }, `Mutation reverted successfully: ${mutation.type}`)
       
       // Log debug info if enabled
       if (mutationDebugger.isEnabled()) {
@@ -138,6 +231,16 @@ export class MutationEngine {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error reverting mutation'
       }
+      
+      mutationLogger.error({
+        operation: 'revertMutation',
+        mutationId: mutation.id,
+        mutationType: mutation.type,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        duration: performance.now() - startTime,
+        correlationId
+      }, `Mutation revert failed: ${mutation.type}`)
+      
       mutationDebugger.logMutation('revert', mutation, document, errorResult, performance.now() - startTime)
       return errorResult
     }

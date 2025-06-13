@@ -70,6 +70,14 @@ export function SignupForm() {
       })
 
       if (signUpError) {
+        // Log signup errors for debugging
+        console.error('[Auth] Signup failed:', {
+          error: signUpError.message,
+          email: data.email,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent
+        })
+        
         setError(signUpError.message)
         return
       }
@@ -88,21 +96,43 @@ export function SignupForm() {
           })
 
           if (!response.ok) {
-            console.error('Failed to create Stripe customer')
+            console.error('[Auth] Failed to create Stripe customer:', {
+              email: data.email,
+              status: response.status,
+              timestamp: new Date().toISOString()
+            })
             // Don't block the signup process if Stripe customer creation fails
           }
         } catch (stripeError) {
-          console.error('Failed to create Stripe customer:', stripeError)
+          console.error('[Auth] Stripe customer creation error:', {
+            error: stripeError instanceof Error ? stripeError.message : 'Unknown error',
+            email: data.email,
+            timestamp: new Date().toISOString()
+          })
           // Don't block the signup process if Stripe customer creation fails
         }
       }
+
+      // Log successful signup
+      console.info('[Auth] Signup successful:', {
+        email: data.email,
+        userId: signUpData.user?.id,
+        timestamp: new Date().toISOString()
+      })
 
       // Redirect to home page after successful signup
       router.push('/')
       router.refresh()
     } catch (err) {
+      // Log unexpected errors
+      console.error('[Auth] Unexpected signup error:', {
+        error: err instanceof Error ? err.message : 'Unknown error',
+        email: data.email,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent
+      })
+      
       setError('An unexpected error occurred. Please try again.')
-      console.error('Signup error:', err)
     } finally {
       setIsLoading(false)
     }

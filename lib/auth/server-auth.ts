@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import type { User } from '@supabase/supabase-js'
+import { authLogger, generateCorrelationId } from '@/lib/services/logger'
 
 /**
  * Server-side authentication utilities for Next.js App Router
@@ -42,16 +43,32 @@ export interface AuthResult {
  * ```
  */
 export async function getUser(): Promise<AuthResult> {
+  const correlationId = generateCorrelationId()
+  
   try {
     const supabase = await createClient()
     const { data: { user }, error } = await supabase.auth.getUser()
     
     if (error) {
-      console.error('Authentication error:', error.message)
+      authLogger.warn({
+        error: error.message,
+        correlationId,
+        operation: 'getUser'
+      }, 'Authentication error during user retrieval')
+      
       return {
         user: null,
         error: error.message
       }
+    }
+    
+    if (user) {
+      authLogger.debug({
+        userId: user.id,
+        email: user.email,
+        correlationId,
+        operation: 'getUser'
+      }, 'User retrieved successfully')
     }
     
     return {
@@ -59,7 +76,12 @@ export async function getUser(): Promise<AuthResult> {
       error: null
     }
   } catch (error) {
-    console.error('Unexpected authentication error:', error)
+    authLogger.error({
+      error: error instanceof Error ? error.message : 'Unknown error',
+      correlationId,
+      operation: 'getUser'
+    }, 'Unexpected authentication error')
+    
     return {
       user: null,
       error: 'An unexpected error occurred during authentication'
@@ -136,15 +158,33 @@ export async function getSession() {
  * ```
  */
 export async function validateAuth(): Promise<User> {
+  const correlationId = generateCorrelationId()
   const { user, error } = await getUser()
   
   if (error) {
+    authLogger.warn({
+      error,
+      correlationId,
+      operation: 'validateAuth'
+    }, 'Authentication validation failed due to auth error')
+    
     throw new Error(`Authentication failed: ${error}`)
   }
   
   if (!user) {
+    authLogger.warn({
+      correlationId,
+      operation: 'validateAuth'
+    }, 'Authentication validation failed - no user found')
+    
     throw new Error('User not authenticated')
   }
+  
+  authLogger.debug({
+    userId: user.id,
+    correlationId,
+    operation: 'validateAuth'
+  }, 'Authentication validation successful')
   
   return user
 }
@@ -173,9 +213,14 @@ export async function validateAuth(): Promise<User> {
  * ```
  */
 export async function checkAdminAccess(): Promise<boolean> {
+  const correlationId = generateCorrelationId()
   const { user } = await getUser()
   
   if (!user) {
+    authLogger.debug({
+      correlationId,
+      operation: 'checkAdminAccess'
+    }, 'Admin access check failed - no user')
     return false
   }
   
@@ -184,12 +229,21 @@ export async function checkAdminAccess(): Promise<boolean> {
   const userMetadata = user.user_metadata || {}
   const appMetadata = user.app_metadata || {}
   
-  return (
+  const isAdmin = (
     userMetadata.role === 'admin' ||
     appMetadata.role === 'admin' ||
     userMetadata.is_admin === true ||
     appMetadata.is_admin === true
   )
+  
+  authLogger.info({
+    userId: user.id,
+    isAdmin,
+    correlationId,
+    operation: 'checkAdminAccess'
+  }, `Admin access check completed: ${isAdmin ? 'granted' : 'denied'}`)
+  
+  return isAdmin
 }
 
 /**
@@ -275,13 +329,29 @@ export async function getAuthenticatedClient() {
  * ```
  */
 export async function checkResourceOwnership(resourceUserId: string): Promise<boolean> {
+  const correlationId = generateCorrelationId()
   const currentUserId = await getUserId()
   
   if (!currentUserId) {
+    authLogger.debug({
+      resourceUserId,
+      correlationId,
+      operation: 'checkResourceOwnership'
+    }, 'Resource ownership check failed - no current user')
     return false
   }
   
-  return currentUserId === resourceUserId
+  const isOwner = currentUserId === resourceUserId
+  
+  authLogger.info({
+    currentUserId,
+    resourceUserId,
+    isOwner,
+    correlationId,
+    operation: 'checkResourceOwnership'
+  }, `Resource ownership check completed: ${isOwner ? 'owned' : 'not owned'}`)
+  
+  return isOwner
 }
 
 /**

@@ -13,8 +13,13 @@ import { getModelConfig, AI_CONFIG } from '@/lib/config'
 import { generateSlug } from '@/lib/utils/slug'
 import { validateAuth } from '@/lib/auth/server-auth'
 import { sanitizeAcademicContent } from '@/lib/utils/html-sanitizer'
+import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 
 export async function POST(request: NextRequest) {
+  const correlationId = generateCorrelationId()
+  const requestLogger = createRequestLogger('/api/upload-pdf', correlationId)
+  const requestTimer = createTimer(requestLogger, 'upload-pdf-request')
+  
   try {
     // Validate authentication first
     const user = await validateAuth()
@@ -25,6 +30,17 @@ export async function POST(request: NextRequest) {
     const provider = (formData.get('provider') as string) || 'claude' // Default to Claude
     const title = (formData.get('title') as string) || pdfFile?.name?.replace('.pdf', '') || 'Untitled Document'
     const isPublic = formData.get('isPublic') === 'true' // Default to false (private)
+
+    requestLogger.info({
+      method: 'POST',
+      userId: user.id,
+      userEmail: user.email,
+      fileName: pdfFile?.name,
+      fileSize: pdfFile?.size,
+      provider,
+      title,
+      isPublic
+    }, 'PDF upload request initiated')
 
     if (!pdfFile) {
       return new NextResponse('No PDF file provided', { status: 400 })
@@ -62,6 +78,14 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`Processing PDF with storage integration: ${pdfFile.name} (${(pdfBuffer.length / 1024).toFixed(1)} KB) using ${provider}`)
+    
+    requestLogger.info({
+      correlationId,
+      fileName: pdfFile.name,
+      fileSizeKB: Math.round(pdfBuffer.length / 1024),
+      provider,
+      userId: user.id
+    }, 'Starting PDF processing with storage integration')
 
     // Initialize Supabase client and services
     const supabase = await createClient()
@@ -94,6 +118,14 @@ export async function POST(request: NextRequest) {
     })
     
     console.log(`Step 1: Converting PDF to HTML using ${providerDisplayName}...`)
+    
+    requestLogger.info({
+      correlationId,
+      step: 'pdf-to-html-conversion',
+      provider: providerDisplayName,
+      modelId: modelConfig.modelId,
+      aiCallId: aiCall.id
+    }, 'Starting PDF to HTML conversion using AI')
 
     // Execute the direct PDF prompt (multi-page support enabled)
     const htmlResult = await executeMultimodalPromptWithUsage(promptTemplate, {
@@ -103,6 +135,14 @@ export async function POST(request: NextRequest) {
     })
     
     const processingTime = Date.now() - startTime
+    
+    // Log AI operation completion
+    logAIOperation('pdf-to-html-conversion', {
+      modelProvider: modelConfig.provider,
+      tokensUsed: htmlResult.usage.totalTokens,
+      userId: user.id,
+      correlationId
+    }, 'success')
     
     // Complete the AI call record with usage metadata
     await aiCallService.completeCall(aiCall.id, {
@@ -116,18 +156,43 @@ export async function POST(request: NextRequest) {
     })
 
     console.log('Step 2: HTML conversion completed, sanitizing content...')
+    
+    requestLogger.info({
+      correlationId,
+      step: 'html-conversion-complete',
+      processingTimeMs: processingTime,
+      htmlLength: htmlResult.text.length,
+      tokensUsed: htmlResult.usage.totalTokens
+    }, 'PDF to HTML conversion completed successfully')
 
     // Sanitize HTML content before storage
     let sanitizedHtml: string
     try {
       sanitizedHtml = sanitizeAcademicContent(htmlResult.text)
       console.log(`Sanitized HTML content (${sanitizedHtml.length} chars from ${htmlResult.text.length} chars)`)
+      requestLogger.info({
+        correlationId,
+        step: 'sanitization-complete',
+        sanitizedLength: sanitizedHtml.length,
+        originalLength: htmlResult.text.length
+      }, 'HTML sanitization completed successfully')
     } catch (sanitizationError) {
       console.error('HTML sanitization failed:', sanitizationError)
+      requestLogger.error({
+        correlationId,
+        step: 'sanitization-failed',
+        error: sanitizationError instanceof Error ? sanitizationError.message : 'Unknown sanitization error'
+      }, 'HTML sanitization failed')
       throw new Error(`Content sanitization failed: ${sanitizationError instanceof Error ? sanitizationError.message : 'Unknown sanitization error'}`)
     }
 
     console.log('Step 3: Extracting plaintext from sanitized content...')
+    
+    requestLogger.info({
+      correlationId,
+      step: 'plaintext-extraction',
+      sanitizedLength: sanitizedHtml.length
+    }, 'Starting plaintext extraction from sanitized content')
 
     // Extract plaintext from sanitized HTML for search and word count
     const plaintext = sanitizedHtml
@@ -136,6 +201,14 @@ export async function POST(request: NextRequest) {
       .trim()
 
     console.log('Step 4: Creating document with storage integration...')
+    
+    requestLogger.info({
+      correlationId,
+      step: 'document-creation',
+      plaintextLength: plaintext.length,
+      wordCount: plaintext.split(/\s+/).length,
+      slug
+    }, 'Starting document creation with storage integration')
     
     // Prepare upload metadata
     const uploadMetadata = {
@@ -167,11 +240,41 @@ export async function POST(request: NextRequest) {
 
     console.log(`Step 5: Document created successfully with ID: ${document.id}`)
     
+    requestLogger.info({
+      correlationId,
+      step: 'document-created',
+      documentId: document.id,
+      documentSlug: document.slug,
+      hasOriginalFile: !!storageResult
+    }, 'Document created successfully')
+    
     if (storageResult) {
-      console.log(`Step 6: Original PDF stored at: ${storageResult.path}`)
+      console.log(`Step 5: Original PDF stored at: ${storageResult.path}`)
+      
+      requestLogger.info({
+        correlationId,
+        step: 'storage-complete',
+        storagePath: storageResult.path,
+        storageSize: storageResult.size
+      }, 'Original PDF stored successfully')
     } else {
-      console.warn('Step 6: Storage upload failed, but document was created without original file')
+      console.warn('Step 5: Storage upload failed, but document was created without original file')
+      
+      requestLogger.warn({
+        correlationId,
+        step: 'storage-failed',
+        documentId: document.id
+      }, 'Storage upload failed, document created without original file')
     }
+
+    // Complete request timing
+    requestTimer.end({
+      userId: user.id,
+      documentId: document.id,
+      provider: provider,
+      fileSize: pdfFile.size,
+      correlationId
+    })
 
     // Return comprehensive response with document details
     return NextResponse.json({
@@ -205,6 +308,12 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('PDF upload API error:', error)
+    
+    requestLogger.error({
+      correlationId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    }, 'PDF upload API error occurred')
     
     // Handle authentication errors first
     if (error instanceof Error) {

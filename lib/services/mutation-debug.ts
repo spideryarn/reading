@@ -1,5 +1,6 @@
 import { DocumentElement } from '../types/document'
 import { Mutation, MutationResult } from '../types/mutation'
+import { mutationLogger } from './logger'
 
 /**
  * Debug utilities for mutation system development.
@@ -36,6 +37,12 @@ class MutationDebugger {
   enable(): void {
     if (typeof window !== 'undefined') {
       window.localStorage?.setItem('MUTATION_DEBUG', 'true')
+      
+      mutationLogger.info({
+        operation: 'enableDebugMode',
+        debugMode: true
+      }, 'Mutation debug mode enabled')
+      
       console.log('🐛 Mutation debug mode enabled')
     }
   }
@@ -46,6 +53,12 @@ class MutationDebugger {
   disable(): void {
     if (typeof window !== 'undefined') {
       window.localStorage?.removeItem('MUTATION_DEBUG')
+      
+      mutationLogger.info({
+        operation: 'disableDebugMode',
+        debugMode: false
+      }, 'Mutation debug mode disabled')
+      
       console.log('🐛 Mutation debug mode disabled')
     }
   }
@@ -93,7 +106,15 @@ class MutationDebugger {
    * Clear mutation history
    */
   clearHistory(): void {
+    const previousSize = this.history.length
     this.history = []
+    
+    mutationLogger.info({
+      operation: 'clearDebugHistory',
+      previousHistorySize: previousSize,
+      newHistorySize: 0
+    }, 'Mutation debug history cleared')
+    
     console.log('🗑️ Mutation debug history cleared')
   }
 
@@ -114,6 +135,11 @@ class MutationDebugger {
    */
   analyzePerformance(): void {
     if (this.history.length === 0) {
+      mutationLogger.info({
+        operation: 'analyzePerformance',
+        historySize: 0
+      }, 'No mutation history to analyze')
+      
       console.log('No mutation history to analyze')
       return
     }
@@ -125,6 +151,12 @@ class MutationDebugger {
       fastestMutation: Math.min(...this.history.map(info => info.duration)),
       errorCount: this.history.filter(info => info.error).length
     }
+
+    mutationLogger.info({
+      operation: 'analyzePerformance',
+      performanceStats: stats,
+      historySize: this.history.length
+    }, 'Mutation performance analysis completed')
 
     console.group('📊 Mutation Performance Analysis')
     console.table(stats)

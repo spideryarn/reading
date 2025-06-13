@@ -6,12 +6,16 @@ import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { validateAuth } from '@/lib/auth/server-auth'
 import { getCurrentUserAdminStatus } from '@/lib/auth/admin-utils'
+import { createRequestLogger, generateCorrelationId, createTimer } from '@/lib/services/logger'
 
 interface RouteContext {
   params: Promise<{ slug: string }>
 }
 
 export async function GET(request: NextRequest, context: RouteContext) {
+  const correlationId = generateCorrelationId()
+  const requestLogger = createRequestLogger('/api/documents/[slug]/download', correlationId)
+  
   try {
     // Validate authentication first
     const user = await validateAuth()
@@ -23,6 +27,14 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     console.log(`Downloading original file for document: ${slug}`)
+    
+    requestLogger.info({
+      method: 'GET',
+      documentSlug: slug,
+      userId: user.id,
+      userEmail: user.email,
+      correlationId
+    }, 'Document download request initiated')
 
     // Initialize Supabase client and document service
     const supabase = await createClient()
@@ -39,7 +51,20 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const isOwned = await documentService.isOwnedByUser(document.id, user.id)
     const adminStatus = await getCurrentUserAdminStatus()
     
+    requestLogger.info({
+      correlationId,
+      documentId: document.id,
+      isOwned,
+      isAdmin: adminStatus.isAdmin
+    }, 'Checking document access permissions')
+    
     if (!isOwned && !adminStatus.isAdmin) {
+      requestLogger.warn({
+        correlationId,
+        documentId: document.id,
+        userId: user.id
+      }, 'Access denied - user does not own document and is not admin')
+      
       return new NextResponse('Document not found', { status: 404 }) // Use 404 to prevent information leakage
     }
 
@@ -49,6 +74,14 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     console.log(`Retrieving original file from storage: ${document.storage_path}`)
+    
+    requestLogger.info({
+      correlationId,
+      documentId: document.id,
+      storagePath: document.storage_path
+    }, 'Starting file retrieval from storage')
+    
+    const downloadTimer = createTimer(requestLogger, 'file-download')
 
     // Get the original file from storage
     const originalFile = await documentService.getOriginalFile(document.id)
@@ -65,6 +98,20 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const fileBuffer = await originalFile.arrayBuffer()
 
     console.log(`Serving original file: ${downloadFilename} (${Math.round(fileBuffer.byteLength / 1024)} KB)`)
+    
+    const downloadTime = downloadTimer.end({
+      documentId: document.id,
+      fileSizeKB: Math.round(fileBuffer.byteLength / 1024),
+      filename: downloadFilename
+    })
+    
+    requestLogger.info({
+      correlationId,
+      documentId: document.id,
+      filename: downloadFilename,
+      fileSizeKB: Math.round(fileBuffer.byteLength / 1024),
+      downloadTimeMs: downloadTime
+    }, 'File download completed successfully')
 
     // Return the file with appropriate headers
     return new NextResponse(fileBuffer, {
@@ -81,6 +128,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
   } catch (error) {
     console.error('Download original file API error:', error)
+    
+    requestLogger.error({
+      correlationId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    }, 'Download original file API error occurred')
     
     if (error instanceof Error) {
       // Handle authentication errors first
@@ -109,6 +162,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 // Alternative endpoint for direct file access via signed URL
 export async function HEAD(request: NextRequest, context: RouteContext) {
+  const correlationId = generateCorrelationId()
+  const requestLogger = createRequestLogger('/api/documents/[slug]/download', correlationId)
+  
   try {
     // Validate authentication first
     const user = await validateAuth()
@@ -118,6 +174,13 @@ export async function HEAD(request: NextRequest, context: RouteContext) {
     if (!slug) {
       return new NextResponse(null, { status: 400 })
     }
+    
+    requestLogger.info({
+      method: 'HEAD',
+      documentSlug: slug,
+      userId: user.id,
+      correlationId
+    }, 'Document HEAD request for signed URL initiated')
 
     // Initialize services
     const supabase = await createClient()
@@ -158,6 +221,12 @@ export async function HEAD(request: NextRequest, context: RouteContext) {
 
   } catch (error) {
     console.error('Head original file API error:', error)
+    
+    requestLogger.error({
+      correlationId,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 'HEAD original file API error occurred')
+    
     return new NextResponse(null, { status: 500 })
   }
 }

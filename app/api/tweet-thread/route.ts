@@ -5,11 +5,21 @@ import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelConfig } from '@/lib/config'
+import { createRequestLogger, generateCorrelationId, logAIOperation } from '@/lib/services/logger'
 
 export async function GET(request: NextRequest) {
+  const correlationId = generateCorrelationId()
+  const requestLogger = createRequestLogger('/api/tweet-thread', correlationId)
+  
   try {
     const { searchParams } = new URL(request.url)
     const documentId = searchParams.get('documentId')
+    
+    requestLogger.info({
+      method: 'GET',
+      documentId,
+      correlationId
+    }, 'Tweet thread GET request initiated')
     
     if (!documentId) {
       return NextResponse.json(
@@ -54,6 +64,12 @@ export async function GET(request: NextRequest) {
     )
   } catch (error) {
     console.error('Error fetching cached tweet thread:', error)
+    
+    requestLogger.error({
+      correlationId,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 'Error fetching cached tweet thread')
+    
     return NextResponse.json(
       { error: 'Failed to fetch cached tweet thread' },
       { status: 500 }
@@ -62,9 +78,18 @@ export async function GET(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const correlationId = generateCorrelationId()
+  const requestLogger = createRequestLogger('/api/tweet-thread', correlationId)
+  
   try {
     const { searchParams } = new URL(request.url)
     const documentId = searchParams.get('documentId')
+    
+    requestLogger.info({
+      method: 'DELETE',
+      documentId,
+      correlationId
+    }, 'Tweet thread DELETE request initiated')
     
     if (!documentId) {
       return NextResponse.json(
@@ -80,12 +105,23 @@ export async function DELETE(request: NextRequest) {
     // Delete tweet thread enhancement for this document
     await enhancementService.delete(documentId, 'tweet-thread')
     
+    requestLogger.info({
+      correlationId,
+      documentId
+    }, 'Tweet thread enhancement deleted successfully')
+    
     return NextResponse.json({ 
       success: true,
       message: 'Tweet thread enhancement deleted successfully'
     })
   } catch (error) {
     console.error('Error deleting tweet thread enhancement:', error)
+    
+    requestLogger.error({
+      correlationId,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 'Error deleting tweet thread enhancement')
+    
     return NextResponse.json(
       { error: 'Failed to delete tweet thread enhancement' },
       { status: 500 }
@@ -94,8 +130,16 @@ export async function DELETE(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const correlationId = generateCorrelationId()
+  const requestLogger = createRequestLogger('/api/tweet-thread', correlationId)
+  
   try {
     const body = await request.json()
+    
+    requestLogger.info({
+      method: 'POST',
+      correlationId
+    }, 'Tweet thread POST request initiated')
 
     // Validate input using Zod schema
     const validationResult = tweetThreadPromptInputSchema.safeParse(body)
@@ -114,6 +158,13 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+    
+    requestLogger.info({
+      correlationId,
+      documentId,
+      contentLength: content.length,
+      targetLength: target_length
+    }, 'Starting tweet thread generation process')
     
     // Initialize database services
     const supabase = await createClient()
@@ -137,6 +188,12 @@ export async function POST(request: NextRequest) {
         throw new Error(`Malformed tweet thread data in database for enhancement ${existingTweetThread.id}: content.tweets is not an array`)
       }
       
+      requestLogger.info({
+        correlationId,
+        enhancementId: existingTweetThread.id,
+        tweetCount: existingTweetThread.content.tweets.length
+      }, 'Returning cached tweet thread from POST request')
+      
       return NextResponse.json({ 
         tweets: existingTweetThread.content.tweets,
         thread_summary: existingTweetThread.content.thread_summary,
@@ -147,6 +204,13 @@ export async function POST(request: NextRequest) {
 
     // Log content length for monitoring
     console.log(`Generating tweet thread for content: ${content.length} characters`)
+    
+    requestLogger.info({
+      correlationId,
+      documentId,
+      contentLength: content.length,
+      targetLength: target_length
+    }, 'Starting tweet thread generation')
 
     // Resolve tier to provider + modelId for database storage
     const modelConfig = getModelConfig()
@@ -157,6 +221,14 @@ export async function POST(request: NextRequest) {
       target_length,
       documentId
     })
+    
+    // Log AI operation completion
+    logAIOperation('tweet-thread-generation', {
+      modelProvider: modelConfig.provider,
+      tokensUsed: llmResult.usage.totalTokens,
+      documentId,
+      correlationId
+    }, 'success')
 
     // Handle markdown code blocks in LLM response
     let jsonString = llmResult.text.trim()
@@ -173,6 +245,13 @@ export async function POST(request: NextRequest) {
       parsedResponse = JSON.parse(jsonString.trim())
     } catch (parseError) {
       console.error('Failed to parse LLM response as JSON:', parseError)
+      
+      requestLogger.error({
+        correlationId,
+        parseError: parseError instanceof Error ? parseError.message : 'Unknown parse error',
+        llmResponseLength: jsonString.length
+      }, 'Failed to parse LLM response as JSON')
+      
       return NextResponse.json(
         { error: 'Invalid response format from AI model' },
         { status: 500 }
@@ -221,10 +300,25 @@ export async function POST(request: NextRequest) {
       }
     )
     
+    requestLogger.info({
+      correlationId,
+      documentId,
+      aiCallId: aiCall.id,
+      tweetCount: validatedResponse.tweets.length,
+      tokensUsed: llmResult.usage.totalTokens
+    }, 'Tweet thread generated and stored successfully')
+    
     return NextResponse.json(response)
 
   } catch (error) {
     console.error('Error generating tweet thread:', error)
+    
+    requestLogger.error({
+      correlationId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    }, 'Error generating tweet thread')
+    
     return NextResponse.json(
       { error: 'Failed to generate tweet thread' },
       { status: 500 }
