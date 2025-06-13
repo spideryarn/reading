@@ -15,6 +15,7 @@ The unified left pane provides comprehensive document navigation and AI-powered 
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - keyboard shortcut documentation including sidebar toggle
 - `docs/reference/UI_INTERFACE.md` - 2-pane resizable layout documentation
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - prompt template system for AI features
+- `docs/reference/TOOL_HIGHLIGHT.md` - semantic highlighting feature accessible via the Highlights tab
 - `planning/250608c_vertical_icon_navigation_bar.md` - vertical icon navigation implementation
 - `planning/250526g_ai_generated_headings.md` - AI headings implementation details
 - `planning/250526a_ToC_hierarchical_summary_tooltips.md` - tooltip feature planning
@@ -24,7 +25,7 @@ The unified left pane provides comprehensive document navigation and AI-powered 
 
 The ToC system is now integrated into the 2-pane architecture with simplified coordination:
 
-1. **UnifiedLeftPane** - contains ToC as tabs (Original, AI-generated) alongside Summary, Chat, and Glossary
+1. **UnifiedLeftPane** - contains ToC as tabs (Original, AI-generated) alongside Summary, Chat, Glossary, Search, and Highlights
 2. **ResizableDocumentLayout** - manages cross-pane communication and scroll coordination
 3. **SimpleDocumentViewer** - displays elements and accepts external selection state
 
@@ -84,6 +85,7 @@ The left pane uses a vertical icon navigation system for space-efficient access 
 - **Chat** (ChatCircle icon) - Interactive AI assistant for document discussion
 - **Glossary** (BookOpen icon) - AI-generated term definitions with click-to-scroll
 - **Search** (MagnifyingGlass icon) - Cross-element text search with Mark.js library and enhanced navigation
+- **Highlights** (HighlighterCircle icon) - AI-powered semantic highlighting with confidence-based visual intensity
 
 ### Icon Navigation Implementation
 - Always-visible vertical icon rail (48px width) on the far left edge

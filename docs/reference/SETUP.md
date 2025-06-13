@@ -287,7 +287,7 @@ printf "\n" | npx shadcn@latest add [component-name] --force
 **Customisation**: All components are copied to `components/ui/` and can be modified
 **Theme**: Configured with Spideryarn orange (`#DB8A45`) in `app/globals.css`
 
-See `docs/reference/SHADCN_UI_REFERENCE.md` for complete setup and usage guide.
+See `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` for complete setup and usage guide.
 
 ## Keyboard Shortcuts
 

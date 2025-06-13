@@ -18,7 +18,7 @@ User priorities:
 ## References
 
 - `docs/CODING_PRINCIPLES.md` - Development principles prioritising simplicity and rapid prototyping
-- `docs/SHADCN_UI_REFERENCE.md`
+- `docs/STYLING_SHADCN_UI_REFERENCE.md`
 - `docs/STYLING.md` - Current CSS and visual styling configuration
 - `components/` - Existing components showing current Tailwind usage patterns
 - Already using `@radix-ui/react-tooltip` - shadcn/ui is built on Radix UI
@@ -40,7 +40,7 @@ User priorities:
   - ✅ Used web search to find latest installation guide
   - ✅ Confirmed compatibility with Next.js 15 and React 19 (requires canary version)
   - ✅ Understood CLI tool and configuration options
-  - ✅ Created comprehensive reference guide: `docs/SHADCN_UI_REFERENCE.md`
+  - ✅ Created comprehensive reference guide: `docs/STYLING_SHADCN_UI_REFERENCE.md`
 
 - [x] Create a plan for which components to adopt first
   - ✅ Analysed current component usage patterns across codebase

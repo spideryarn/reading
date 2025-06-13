@@ -317,7 +317,7 @@ printf "\n" | npx shadcn@latest add [component-name] --force
 - Primary colour set to Spideryarn orange: `hsl(30 62% 57%)`
 
 ### Documentation:
-- `docs/reference/SHADCN_UI_REFERENCE.md` - Complete installation and usage guide
+- `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - Complete installation and usage guide
 - `docs/reference/UI_COMPONENTS.md` - Available components and usage patterns
 
 ### Phosphor Icons SSR Usage:

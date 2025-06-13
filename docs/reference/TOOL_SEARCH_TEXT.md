@@ -7,6 +7,7 @@ This document describes the text search functionality in Spideryarn Reading, inc
 - `planning/250605a_cross_element_text_search_implementation.md` - Implementation planning and progress tracking
 - `planning/finished/250604b_document_search_functionality.md` - Initial element-based search implementation
 - `docs/reference/CODING_GUIDELINES.md#html-text-extraction` - HTML text extraction utility documentation
+- `docs/reference/TOOL_HIGHLIGHT.md` - semantic highlighting system for AI-powered highlighting (complementary to text search)
 - `lib/utils/html-text-extraction.ts` - HTML text extraction implementation
 - `components/unified-left-pane.tsx` - Search UI and Mark.js integration
 - `components/simple-document-viewer.tsx` - Document rendering with highlighting support

@@ -24,7 +24,7 @@ Current state: Spideryarn uses basic web typography without research-based optim
 - `app/globals.css` - Current CSS implementation that will be enhanced
 - `components/document-viewer.tsx` - Main document rendering component requiring typography updates
 - `docs/CODING_PRINCIPLES.md` - Development approach emphasising simplicity and rapid prototyping
-- `docs/SHADCN_UI_REFERENCE.md` - Component system for consistent design implementation
+- `docs/STYLING_SHADCN_UI_REFERENCE.md` - Component system for consistent design implementation
 
 ## Principles and Key Decisions
 

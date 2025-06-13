@@ -17,7 +17,7 @@ Spideryarn Reading uses Supabase Auth with Next.js App Router for secure user re
 - `middleware.ts` - Session management and automatic token refresh
 
 **Related Documentation**:
-- `docs/reference/SHADCN_UI_REFERENCE.md` - UI component library patterns
+- `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - UI component library patterns
 - `planning/250601a_authentication_implementation.md` - Complete implementation history
 
 ## Key Architecture Decisions

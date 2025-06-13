@@ -9,7 +9,6 @@ import { useDocument } from '@/lib/context/mutation-context'
 import { getHeadingAndSectionElements, extractHeadingElements } from '@/lib/services/heading-section-detector'
 import { createClient } from '@/lib/supabase/client'
 import { subscribeToDocument } from '@/lib/supabase/realtime'
-import type { RealtimeSubscription } from '@/lib/supabase/realtime'
 
 // Define entity type (will be moved to a proper types file later)
 interface Entity {
@@ -23,6 +22,12 @@ interface Entity {
   datetime?: string
   url?: string
   extra?: Record<string, unknown>
+}
+
+// Semantic highlight interface
+interface SemanticHighlight {
+  elementId: string
+  confidence: number
 }
 
 interface DocumentPageClientProps {
@@ -59,6 +64,12 @@ export default function DocumentPageClient({
   // Heading visibility state
   const [headingVisibility, setHeadingVisibility] = useState<Map<string, 'visible' | 'not-visible'>>(new Map())
   const [elementVisibility, setElementVisibility] = useState<Map<string, boolean>>(new Map())
+  
+  // Semantic highlights state
+  const [semanticHighlights, setSemanticHighlights] = useState<SemanticHighlight[]>([])
+  
+  // Active highlight element state (for active pulse animation)
+  const [activeElementId, setActiveElementId] = useState<string | null>(null)
   
   // Real-time document subscription
   useEffect(() => {
@@ -238,6 +249,10 @@ export default function DocumentPageClient({
         headingVisibility={headingVisibility}
         onElementVisibilityChange={handleElementVisibilityChange}
         onElementClick={handleElementClick}
+        semanticHighlights={semanticHighlights}
+        onSemanticHighlightsChange={setSemanticHighlights}
+        activeElementId={activeElementId}
+        onActiveElementChange={setActiveElementId}
       />
       </div>
     </div>

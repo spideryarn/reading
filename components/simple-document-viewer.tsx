@@ -3,12 +3,21 @@
 // Simplified document viewer for the 2-pane layout
 // Only handles document structure rendering, no tools pane
 // Part of the ResizablePanelGroup architecture
+// Supports semantic highlighting display - see docs/reference/TOOL_HIGHLIGHT.md for highlighting system details
 
 import { useRef, useEffect } from 'react'
 import type { DocumentElement } from '@/lib/types/document'
 import { MarkdownRenderer } from './markdown-renderer'
 import { useElementVisibility } from '@/lib/hooks/useElementVisibility'
 import { DocumentParser } from '@/lib/services/document-parser'
+import { sanitizeAcademicContent } from '@/lib/utils/html-sanitizer'
+import { getSemanticHighlightClass } from '@/lib/utils/semantic-highlighting'
+
+// Semantic highlight interface
+interface SemanticHighlight {
+  elementId: string
+  confidence: number
+}
 
 interface SimpleDocumentViewerProps {
   elements: DocumentElement[]
@@ -16,6 +25,8 @@ interface SimpleDocumentViewerProps {
   onElementSelect?: (element: DocumentElement | null) => void
   onElementVisibilityChange?: (elementId: string, isVisible: boolean) => void
   onElementClick?: (element: DocumentElement) => void
+  semanticHighlights?: SemanticHighlight[]
+  activeElementId?: string | null
 }
 
 export function SimpleDocumentViewer({
@@ -23,7 +34,9 @@ export function SimpleDocumentViewer({
   selectedElement,
   onElementSelect,
   onElementVisibilityChange,
-  onElementClick
+  onElementClick,
+  semanticHighlights = [],
+  activeElementId
 }: SimpleDocumentViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const elementRefs = useRef<Map<string, HTMLDivElement>>(new Map())
@@ -107,6 +120,15 @@ export function SimpleDocumentViewer({
       ? 'animate-highlight'
       : ''
     
+    // Semantic highlight class based on confidence score
+    const semanticHighlight = semanticHighlights.find(h => h.elementId === element.id)
+    const semanticHighlightClass = semanticHighlight 
+      ? getSemanticHighlightClass(semanticHighlight.confidence * 100)
+      : ''
+    
+    // Active highlight class for pulse animation (React-based, no DOM manipulation)
+    const activeHighlightClass = activeElementId === element.id ? 'semantic-highlight-active' : ''
+    
     return (
       <div
         key={element.id}
@@ -118,6 +140,8 @@ export function SimpleDocumentViewer({
           ${indentClass} 
           ${layoutStyles}
           ${highlightClass}
+          ${semanticHighlightClass}
+          ${activeHighlightClass}
           ${isSelected ? 'bg-blue-50 border-l-4 border-blue-500 -ml-4 pl-4' : ''}
           ${element.attributes?.['data-ai-generated'] === 'true' ? 'bg-green-50 border-l-4 border-green-500 -ml-4 pl-4' : ''}
           transition-colors duration-200
@@ -134,6 +158,10 @@ export function SimpleDocumentViewer({
         }}
         data-element-id={element.id}
         data-element-tag={element.tag_name}
+        {...(semanticHighlight && {
+          'data-semantic-highlight': 'true',
+          'data-semantic-confidence': semanticHighlight.confidence.toString()
+        })}
       >
         <div className="flex items-start justify-between gap-4">
           {element.content && (

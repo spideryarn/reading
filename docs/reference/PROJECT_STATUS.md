@@ -16,7 +16,7 @@ Spideryarn Reading is in active development with core AI features now implemente
 - **File storage system** - Original PDFs stored in Supabase Storage with database references
 - **Upload metadata tracking** - Comprehensive metadata capture (extraction method, provider, processing time, file sizes) with AI call traceability via `documents.upload_ai_call_id`
 - Two-pane resizable document viewer layout:
-  - Left: Unified pane with 6 tabs (Original ToC, AI headings, Summary, Chat, Glossary, Search)
+  - Left: Unified pane with 7 tabs (Original ToC, AI headings, Summary, Chat, Glossary, Search, Highlights)
   - Right: Document viewer with element details and highlighting
   - Collapsible left pane with keyboard shortcuts (Ctrl+B)
 - **Document header** - PDF icon for documents with stored files, File icon for HTML-only documents
@@ -32,6 +32,7 @@ Spideryarn Reading is in active development with core AI features now implemente
 - **Multi-LLM provider support** - Anthropic Claude and Google Gemini via Vercel AI SDK
 - **Advanced chat interface** - Full @assistant-ui integration with document context
 - **Prompt template system** - Nunjucks templates with Zod validation (`lib/prompts/templates/`)
+- **Semantic highlighting** - AI-powered highlighting based on criteria with confidence-based visual intensity
 
 **Search Features (Implemented)** ✓
 - **Cross-element text search** - DOM-based search using Mark.js library finds phrases spanning inline elements within block containers

@@ -13,7 +13,7 @@ The goal is to add a trash can icon next to each document in the listing that al
 - `app/documents/page.tsx` - Current documents listing page that needs the delete button
 - `lib/services/database/documents.ts` - Contains `deleteWithStorage()` method for complete document removal
 - `docs/reference/STYLING.md` - Phosphor icons usage and UI patterns, specifically delete button styling
-- `docs/reference/SHADCN_UI_REFERENCE.md` - Dialog component for confirmation modals
+- `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - Dialog component for confirmation modals
 - `components/ui/dialog.tsx` - shadcn/ui Dialog component for confirmations
 - `components/ui/button.tsx` - Button variants including `destructive` for delete actions
 - `docs/reference/CODING_PRINCIPLES.md` - "Fail loudly" principle for error handling

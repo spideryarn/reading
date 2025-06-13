@@ -21,7 +21,7 @@ This builds on the completed database implementation and leverages the existing 
 - `planning/250531a_database_storage_implementation.md` - Completed database schema with profiles table and auth.users integration
 - `lib/supabase/client.ts` and `lib/supabase/server.ts` - Existing Supabase client configuration using @supabase/ssr
 - `supabase/config.toml` - Local Supabase configuration with auth settings enabled
-- `docs/SHADCN_UI_REFERENCE.md` - Component library installation and usage patterns
+- `docs/STYLING_SHADCN_UI_REFERENCE.md` - Component library installation and usage patterns
 - `docs/CODING_GUIDELINES.md` - TypeScript, React, and testing patterns to follow
 - `docs/STYLING.md` - CSS and visual styling configuration for UI consistency
 - `components/app-header.tsx` - Main header component requiring auth UI integration

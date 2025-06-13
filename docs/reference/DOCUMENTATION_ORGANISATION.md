@@ -63,6 +63,7 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/VERCEL_AI_SDK_REFERENCE.md` - Vercel AI SDK integration patterns and usage
 - `docs/reference/TOOL_SUMMARISE.md` - AI summarise feature generating hierarchical summaries at multiple granularities
 - `docs/reference/TOOL_GLOSSARY.md` - Glossary feature extracting key entities from documents using LLM analysis
+- `docs/reference/TOOL_HIGHLIGHT.md` - Semantic highlighting system with confidence-based visual intensity and React-first architecture
 - `docs/reference/TOOL_HEADINGS.md` - AI-generated heading system for document structure enhancement
 - `docs/reference/TOOL_TWEET_THREAD_VIEW.md` - Tweet thread generation from document content
 - `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - @assistant-ui/react integration for chatbot interface
@@ -72,7 +73,7 @@ Available evergreen documentation in `docs/` organised by category:
 ### UI Components & Interface
 - `docs/reference/UI_COMPONENTS.md` - Available UI components and usage patterns
 - `docs/reference/UI_INTERFACE.md` - Multi-pane layout with tabbed navigation architecture
-- `docs/reference/SHADCN_UI_REFERENCE.md` - shadcn/ui component library integration and customisation
+- `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - shadcn/ui component library integration and customisation
 - `docs/reference/UNIFIED_LEFT_PANE.md` - Architecture of unified left pane with tabbed interface, ToC, and tooltip summaries
 - `docs/reference/COMMAND_PALETTE.md` - Command palette implementation and usage
 - `docs/reference/CROSS_PANE_COMMUNICATION.md` - Inter-pane communication patterns and architecture

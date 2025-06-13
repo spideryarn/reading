@@ -3,6 +3,7 @@
 // Highlight management component for creating and managing persistent document highlights
 // Adapted from semantic search functionality in unified-left-pane.tsx
 // Treats semantic search results as persistent highlights rather than temporary search results
+// See docs/reference/TOOL_HIGHLIGHT.md for complete semantic highlighting system documentation
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
@@ -15,7 +16,8 @@ import {
   Clock
 } from '@phosphor-icons/react'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
-import { getSemanticHighlightClass, getSemanticHighlightIntensity } from '@/lib/utils/semantic-highlighting'
+import { getSemanticHighlightIntensity } from '@/lib/utils/semantic-highlighting'
+import type { DocumentElement } from '@/lib/types/document'
 
 // Highlight interface matching semantic search result structure
 interface Highlight {
@@ -39,9 +41,27 @@ interface QueryHistoryItem {
 
 interface HighlightManagementProps {
   documentId: string
+  elements: DocumentElement[]
+  semanticHighlights?: SemanticHighlight[]
+  onSemanticHighlightsChange?: (highlights: SemanticHighlight[]) => void
+  activeElementId?: string
+  onActiveElementChange?: (elementId: string | null) => void
 }
 
-export function HighlightManagement({ documentId }: HighlightManagementProps) {
+// Semantic highlight interface (matching the one used in other components)
+interface SemanticHighlight {
+  elementId: string
+  confidence: number
+}
+
+export function HighlightManagement({ 
+  documentId, 
+  elements, 
+  semanticHighlights = [],
+  onSemanticHighlightsChange,
+  activeElementId,
+  onActiveElementChange
+}: HighlightManagementProps) {
   const { actions } = useDocumentCommunication()
   
   // Core state
@@ -73,39 +93,24 @@ export function HighlightManagement({ documentId }: HighlightManagementProps) {
     }, 50)
   }, [])
 
-  // Apply semantic highlights to document elements
-  const applySemanticHighlights = useCallback((highlights: Highlight[]) => {
-    // First, clear any existing semantic highlights
-    clearSemanticHighlights()
+  // Convert highlights to semantic highlights and update state
+  const updateSemanticHighlights = useCallback((highlights: Highlight[]) => {
+    const newSemanticHighlights: SemanticHighlight[] = highlights.map(highlight => ({
+      elementId: highlight.elementId,
+      confidence: highlight.confidence
+    }))
     
-    highlights.forEach(highlight => {
-      const element = document.querySelector(`[data-element-id="${highlight.elementId}"]`)
-      if (element) {
-        const highlightClass = getSemanticHighlightClass(highlight.confidence * 100)
-        element.classList.add(highlightClass)
-        element.setAttribute('data-semantic-highlight', 'true')
-        element.setAttribute('data-semantic-confidence', highlight.confidence.toString())
-      }
-    })
-  }, [])
+    if (onSemanticHighlightsChange) {
+      onSemanticHighlightsChange(newSemanticHighlights)
+    }
+  }, [onSemanticHighlightsChange])
 
-  // Clear all semantic highlights from document
+  // Clear semantic highlights
   const clearSemanticHighlights = useCallback(() => {
-    const highlightedElements = document.querySelectorAll('[data-semantic-highlight="true"]')
-    highlightedElements.forEach(element => {
-      // Remove all semantic highlight classes
-      element.classList.remove(
-        'semantic-highlight-very-low',
-        'semantic-highlight-low',
-        'semantic-highlight-medium',
-        'semantic-highlight-high',
-        'semantic-highlight-very-high',
-        'semantic-highlight-active'
-      )
-      element.removeAttribute('data-semantic-highlight')
-      element.removeAttribute('data-semantic-confidence')
-    })
-  }, [])
+    if (onSemanticHighlightsChange) {
+      onSemanticHighlightsChange([])
+    }
+  }, [onSemanticHighlightsChange])
 
   // Load existing highlights and query history on mount
   useEffect(() => {
@@ -188,9 +193,9 @@ export function HighlightManagement({ documentId }: HighlightManagementProps) {
         createdAt: new Date().toISOString()
       }))
 
-      // Apply semantic highlights to the document and scroll to first result
+      // Update semantic highlights state and scroll to first result
       if (newHighlights.length > 0) {
-        applySemanticHighlights(newHighlights)
+        updateSemanticHighlights(newHighlights)
         // Scroll to first highlight to show the results
         actions.scrollToElement(newHighlights[0].elementId)
       }
@@ -209,7 +214,7 @@ export function HighlightManagement({ documentId }: HighlightManagementProps) {
       // Refresh query history after highlight creation
       fetchQueryHistory()
     }
-  }, [documentId, actions, fetchQueryHistory, applySemanticHighlights])
+  }, [documentId, actions, fetchQueryHistory, updateSemanticHighlights])
 
   // Sort highlights function
   const sortHighlights = useCallback((highlights: Highlight[], sortByIntensity: boolean) => {
@@ -218,12 +223,13 @@ export function HighlightManagement({ documentId }: HighlightManagementProps) {
         // Sort by confidence (intensity) - highest first
         return b.confidence - a.confidence
       } else {
-        // Sort by document position - would need element position data
-        // For now, sort by elementId as proxy
-        return a.elementId.localeCompare(b.elementId)
+        // Sort by document position using element position data
+        const elementA = elements.find(el => el.id === a.elementId)
+        const elementB = elements.find(el => el.id === b.elementId)
+        return (elementA?.position || 0) - (elementB?.position || 0)
       }
     })
-  }, [])
+  }, [elements])
 
   // Memoized sorted highlights
   const sortedHighlights = useMemo(() => {
@@ -295,24 +301,21 @@ export function HighlightManagement({ documentId }: HighlightManagementProps) {
     }
   }, [isCreating, triggerHighlightCreation])
 
-  // Handle clicking on a highlight to scroll to it and add active highlight effect
+  // Handle clicking on a highlight to scroll to it and set active highlight via React state
   const handleHighlightClick = useCallback((highlight: Highlight) => {
-    // Remove any existing active highlight
-    const activeElements = document.querySelectorAll('.semantic-highlight-active')
-    activeElements.forEach(el => el.classList.remove('semantic-highlight-active'))
-    
-    // Add active highlight to the clicked element
-    const element = document.querySelector(`[data-element-id="${highlight.elementId}"]`)
-    if (element) {
-      element.classList.add('semantic-highlight-active')
-      // Remove active class after animation
+    // Set active element via React state (no DOM manipulation)
+    if (onActiveElementChange) {
+      onActiveElementChange(highlight.elementId)
+      
+      // Clear active state after animation duration
       setTimeout(() => {
-        element.classList.remove('semantic-highlight-active')
+        onActiveElementChange(null)
       }, 1600) // Duration matches CSS animation
     }
     
+    // Scroll to element using robust existing system
     actions.scrollToElement(highlight.elementId)
-  }, [actions])
+  }, [actions, onActiveElementChange])
 
   // Clear all highlights
   const clearHighlights = useCallback(() => {

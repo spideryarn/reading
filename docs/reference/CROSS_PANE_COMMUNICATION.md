@@ -6,8 +6,10 @@ This document provides a comprehensive analysis of patterns for cross-component 
 
 - `components/unified-left-pane.tsx` - current implementation using DocumentCommunicationContext
 - `components/resizable-document-layout.tsx` - document communication context usage
+- `components/highlight-management.tsx` - semantic highlighting using context actions for active highlighting
 - `components/command-palette.tsx` - command palette integration with DocumentCommunicationContext for navigation actions
 - `lib/context/document-communication-context.tsx` - main React Context implementation
+- `docs/reference/TOOL_HIGHLIGHT.md` - semantic highlighting system with confidence-based visual intensity, React-first architecture, and cross-pane communication patterns
 - `docs/reference/COMMAND_PALETTE.md` - command palette using context for navigation actions
 - `docs/reference/CODING_PRINCIPLES.md` - simplicity and debugging principles that guide pattern selection
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - overall application architecture context
@@ -24,6 +26,7 @@ Before selecting a communication pattern, we need to clarify these requirements:
 - **Navigation → Document**: User clicks ToC heading, scroll document to that section  
 - **Chat → Document**: Assistant references document sections, need to highlight/scroll
 - **Glossary → Document**: Click glossary term, scroll to first occurrence
+- **Highlights → Document**: Click semantic highlight, scroll to highlighted content and apply active effect
 - **Cross-tab**: Actions in one tab (e.g., Summary) affect another tab (e.g., Original headings)
 
 ### **Performance Characteristics**
@@ -686,18 +689,45 @@ const TableOfContents = () => {
 2. User switches to ToC tab → ToC reads `currentPosition.elementId` → ToC scrolls to match
 3. User clicks different ToC heading → same pattern, all tabs stay in sync
 
+### Highlighting Data Flow Patterns
+
+**Semantic Highlight Data**: Uses **props-based** flow as document content state
+
+```typescript
+// Props threading from page-client through component hierarchy
+page-client.tsx: semanticHighlights: SemanticHighlight[]
+  ↓ (props)
+ResizableDocumentLayout: semanticHighlights prop
+  ↓ (props)  
+UnifiedLeftPane: semanticHighlights prop
+  ↓ (props)
+HighlightManagement: semanticHighlights prop for display
+SimpleDocumentViewer: semanticHighlights prop for CSS application
+```
+
+**Active Highlight Interactions**: Uses **DocumentCommunicationContext** actions for UI coordination
+
+```typescript
+// Context actions for scrolling and temporary effects
+const { actions } = useDocumentCommunication()
+
+// Active highlight click - reuses existing robust scrolling system
+actions.scrollToElement(highlight.elementId) // Handles scroll + temp highlight pulse
+```
+
+**Rationale**: Persistent highlight data is document content state (props), while interaction effects are cross-pane UI coordination (context).
+
 ### Current Event Types in Use
 
 ```typescript
-// Currently implemented
-'doc-heading-click': { headingId: string }
+// Currently implemented via DocumentCommunicationContext
+'setCurrentPosition': { elementId: string, scrollOffset?: number }
+'scrollToElement': { elementId: string }
+'setActiveTab': { tabId: string }
+'highlightTerm': { term: string | null }
 
-// Potential future events
-'glossary-term-click': { term: string, position?: number }
-'chat-mention-element': { elementId: string, context: string }
-'scroll-to-element': { elementId: string, behavior?: 'smooth' | 'instant' }
-'highlight-text': { text: string, className?: string }
-'tab-activated': { tabId: string, timestamp: number }
+// Semantic highlights use props, not context events
+// Active highlight interactions reuse scrollToElement action
 ```
 
 ## Troubleshooting Common Issues

@@ -151,7 +151,7 @@ Currently, the unified left pane displays navigation options as a vertical list 
 ### Future Stages (Not Part of Initial Implementation)
 
 ### Stage: visual polish and Animated Collapse/Expand ✅ COMPLETED
-- [x] Read docs/reference/SHADCN_UI_REFERENCE.md and research animation approaches (e.g. for Shadcn Collapsible) in a subagent
+- [x] Read docs/reference/STYLING_SHADCN_UI_REFERENCE.md and research animation approaches (e.g. for Shadcn Collapsible) in a subagent
 - [x] Discuss with user, and decide on next steps. If the user agrees, then:
   - [x] Add smooth animation transitions for left pane collapse/expand
   - [x] Implement CSS-based width transition with duration control

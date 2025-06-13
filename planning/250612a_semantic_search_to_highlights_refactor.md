@@ -18,6 +18,7 @@ The user has decided to separate these concerns cleanly: keep exact text search 
 - `components/vertical-icon-nav.tsx` - Tab navigation definitions 
 - `docs/reference/UNIFIED_LEFT_PANE.md` - Current left pane architecture documentation
 - `docs/reference/AI_SUMMARISE.md` - Example of existing AI feature documentation pattern
+- `docs/reference/TOOL_HIGHLIGHT.md` - Complete documentation created for the semantic highlighting system
 - `docs/instructions/WRITE_EVERGREEN_DOC.md` - Guidelines for creating TOOL_HIGHLIGHT.md documentation
 - `/api/semantic-search` route - Existing LLM integration that returns confidence scores
 - Mark.js integration - Current highlighting implementation for text search
@@ -115,6 +116,8 @@ The user has decided to separate these concerns cleanly: keep exact text search 
 - Created utility functions for confidence-to-class mapping and intensity labels
 - Updated HighlightManagement component to apply/remove highlights on document elements using data-element-id selectors
 - Added comprehensive test coverage including unit tests and DOM integration tests
+- **FIXES APPLIED**: Fixed position-based sorting to use actual element position data instead of elementId comparison
+- **FIXES APPLIED**: Added high-specificity CSS rules to preserve semantic highlights when elements are selected (fixes visual override issue)
 
 ### Stage: Update Documentation & Tests
 - [ ] Create `docs/reference/TOOL_HIGHLIGHT.md` following `docs/instructions/WRITE_EVERGREEN_DOC.md`
