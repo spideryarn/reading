@@ -25,6 +25,6 @@ AI-assisted document reading and analysis tool for professionals working with no
 
 ### Technical Reference
 - `docs/reference/DOCUMENTATION_ORGANISATION.md` - Complete documentation index
-- `docs/reference/TESTING.md` - Testing approach and infrastructure
+- `docs/reference/TESTING_OVERVIEW.md` - Testing approach and infrastructure
 - `docs/reference/DATABASE_OVERVIEW.md` - Database schema and operations
 

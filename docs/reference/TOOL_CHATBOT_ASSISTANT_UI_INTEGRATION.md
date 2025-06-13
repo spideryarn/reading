@@ -11,7 +11,7 @@ This document provides comprehensive technical guidance for integrating the @ass
 - [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) - Overall system design decisions and framework choices  
 - [DATABASE_OVERVIEW.md](DATABASE_OVERVIEW.md) - Database architecture and schema for persistence features
 - [TOOL_SUMMARISE.md](TOOL_SUMMARISE.md) and [TOOL_GLOSSARY.md](TOOL_GLOSSARY.md) - Examples of AI feature implementation patterns
-- [TESTING.md](TESTING.md) - Testing approach for Jest with React Testing Library
+- [TESTING_OVERVIEW.md](TESTING_OVERVIEW.md) - Testing approach for Jest with React Testing Library
 - [SHADCN_UI_REFERENCE.md](SHADCN_UI_REFERENCE.md) - UI component library integration patterns
 - [UI_INTERFACE.md](UI_INTERFACE.md) - Multi-pane layout and tabbed navigation architecture
 - [SITE_ORGANISATION.md](SITE_ORGANISATION.md) - Application routes and component hierarchy

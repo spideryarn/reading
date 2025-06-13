@@ -154,13 +154,13 @@ Use tasks and subagents where appropriate, especially for curl, tests, and Playw
 - [x] Update `docs/TOOL_HEADINGS.md` (if exists, or create if needed)
   - [x] Document the AI headings feature
   - [x] Note multi-provider capability
-- [x] Update `docs/TESTING.md` with new appendix
+- [x] Update `docs/reference/TESTING_TROUBLESHOOTING.md` with known issues
   - [x] Add "Known Issues and Workarounds" section
   - [x] Document NextRequest mocking challenges
   - [x] Note test isolation issues when running full suite
   - [x] Suggest running tests individually as workaround
   - [x] Recommend exploring MSW for better request mocking
-- [x] Add comments in test files pointing to TESTING.md appendix
+- [x] Add comments in test files pointing to TESTING_TROUBLESHOOTING.md
   - [x] `app/api/__tests__/test-helpers.js` - add comment about mocking issues
   - [x] Individual test files - add note if they fail in full suite
 - [x] Git commit with message "docs: update documentation for multi-provider support"

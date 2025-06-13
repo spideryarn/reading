@@ -130,7 +130,7 @@ Key test files:
 - `tests/test-heading-mutation-generator.ts` - Heading mutation generator tests
 - `tests/test-mutation-edge-cases.ts` - Additional edge cases
 
-See `docs/reference/TESTING.md` for complete testing approach.
+See `docs/reference/TESTING_OVERVIEW.md` for complete testing approach.
 
 ## Limitations
 

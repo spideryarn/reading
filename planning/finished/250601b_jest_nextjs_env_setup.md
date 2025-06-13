@@ -12,7 +12,8 @@ The main objectives are:
 
 ## References
 
-- `docs/TESTING.md` - Current testing documentation with dotenv workaround
+- `docs/reference/TESTING_OVERVIEW.md` - Current testing documentation with philosophy
+- `docs/reference/TESTING_SETUP.md` - Testing setup and configuration details
 - `planning/finished/250531a_database_storage_implementation.md` - Database implementation with test failure analysis
 - `src/lib/services/__tests__/database-schema.test.ts` - Database tests that need environment variables
 - `jest.config.js` - Current Jest configuration
@@ -76,11 +77,11 @@ The main objectives are:
 - [ ] Test with missing `.env.test` to ensure appropriate error messages
 
 ### Stage: Update Documentation
-- [x] Update `docs/TESTING.md` to remove dotenv workaround
+- [x] Update `docs/TESTING_OVERVIEW.md` to remove dotenv workaround
   - ✅ Removed old dotenv command documentation
   - ✅ Added new "Environment Variables in Tests" section
 - [x] Add section about `.env.test` setup for new developers
-  - ✅ Added comprehensive setup instructions in TESTING.md
+  - ✅ Added comprehensive setup instructions in TESTING_OVERVIEW.md
 - [x] Update `docs/SETUP.md` if needed to mention `.env.test`
   - ✅ Added "Test Environment Setup" section
 - [x] Add migration notes for existing developers
@@ -88,7 +89,7 @@ The main objectives are:
 
 ### Stage: Developer Communication
 - [x] Create clear migration instructions for team
-  - ✅ Added to TESTING.md with simple `cp .env.local .env.test` command
+  - ✅ Added to TESTING_OVERVIEW.md with simple `cp .env.local .env.test` command
 - [x] Document in planning doc any issues encountered
   - ✅ No issues encountered - migration was smooth
 - [x] Consider adding a setup script to automate `.env.test` creation
@@ -96,7 +97,7 @@ The main objectives are:
 
 ### Stage: Cleanup and Finalize
 - [x] Remove old dotenv command documentation
-  - ✅ Removed from TESTING.md
+  - ✅ Removed from TESTING_OVERVIEW.md
 - [x] Run linting: `npm run lint`
   - ✅ No new linting issues introduced
   - ✅ Existing 130 errors are unrelated to this work

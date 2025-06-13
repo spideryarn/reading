@@ -410,7 +410,7 @@ This is not Next.js best practice. The recommended approach is to use `@next/env
 
 1. **Short-term** (for immediate functionality):
    - Comment out the 3 failing tests with references to this appendix
-   - Document the special test command in TESTING.md (already done)
+   - Document the special test command in TESTING_OVERVIEW.md (already done)
    - Continue using the current setup
 
 2. **Medium-term** (when addressing test infrastructure):

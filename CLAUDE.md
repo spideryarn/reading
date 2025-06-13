@@ -64,7 +64,7 @@ Type checking and linting:
   - Tests **require** `.env.test` (copy from `.env.local`: `cp .env.local .env.test`) - tests abort if missing
   - When writing tests, use our Jest testing framework with React Testing Library
   - Prefer using a subagent for running tests to avoid filling the context window
-  - Current test health: ~71% pass rate due to NextRequest mocking issues (see `docs/reference/TESTING.md` appendix)
+  - Current test health: ~71% pass rate due to NextRequest mocking issues (see `docs/reference/TESTING_TROUBLESHOOTING.md`)
 
 Debugging resources:
 - Current logs: `tail dev.log`
@@ -151,7 +151,7 @@ Key variables in `.env.local`:
 Test environment (`.env.test`):
 - Currently mirrors `.env.local` for simplicity
 - Best practice: Use cheaper LLM models (Haiku) and separate test database in future
-- See `docs/reference/TESTING.md` for setup instructions
+- See `docs/reference/TESTING_SETUP.md` for setup instructions
 
 Template: `.env.example` (may not be current - check `.env.local` for active config)
 
@@ -184,7 +184,10 @@ Coding & infrastructure:
 - `docs/reference/STYLING.md` - CSS and visual styling configuration including theme settings, Phosphor icons usage, and loading/error button patterns
 - `docs/reference/SETUP.md` - Development environment setup guide including Node.js, Supabase, Git worktree configuration, and common commands
 - `docs/reference/SITE_ORGANISATION.md` - Documents the hierarchical, document-centric architecture including application routes, component hierarchy, and navigation patterns. (May be out of date)
-- `docs/reference/TESTING.md` - Testing approach documentation covering Jest with React Testing Library setup, test structure, and current test coverage
+- `docs/reference/TESTING_OVERVIEW.md` - Testing approach documentation covering Jest with React Testing Library setup, test structure, and current test coverage
+- `docs/reference/TESTING_SETUP.md` - Test configuration and environment setup
+- `docs/reference/TESTING_TROUBLESHOOTING.md` - Known testing issues and workarounds
+- `docs/reference/TESTING_DATABASE.md` - Database-specific testing patterns
 - `docs/reference/UI_INTERFACE.md` - Documents the multi-pane layout with tabbed navigation including four-pane structure, tab system architecture, and scrolling fixes. See related docs below in "AI, features, machinery, interface" section.
 
 Database:

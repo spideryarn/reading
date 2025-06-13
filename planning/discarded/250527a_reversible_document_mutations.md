@@ -53,7 +53,7 @@ And then revert back to the original document or try different transformations.
   - [x] MutationEngine class with apply/revert/validate methods
   - [x] Type guards for transform validation
   - [x] Comprehensive test suite (8 tests, all passing)
-  - [x] Created docs/TESTING.md for test documentation
+  - [x] Created docs/TESTING_OVERVIEW.md for test documentation
 
 ### Stage 2: Single Mutation State Management  
 - [x] Implement mutation application system
@@ -481,7 +481,7 @@ This section provides a comprehensive reference to all key files, functions, and
   - Implementation guide for new mutation types
 
 **Testing Documentation:**
-- `docs/TESTING.md` - Test strategy and coverage
+- `docs/TESTING_OVERVIEW.md` - Test strategy and coverage
   - How to run tests
   - Test file organisation
   - Adding new test cases
