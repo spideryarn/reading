@@ -163,6 +163,20 @@ Current test coverage includes:
 - Uses mock system user ID: `00000000-0000-0000-0000-000000000001`
 - See `docs/reference/AI_CHATBOT_ASSISTANT_UI_INTEGRATION.md` for implementation details
 
+**Row Level Security (RLS) Test Suite** ✅:
+- `lib/services/database/__tests__/rls-policies-real.test.ts` - Real database-level RLS testing
+- Uses `RLSTestDatabase` class for genuine security validation
+- Tests document ownership isolation, AI calls, profiles, and enhancements
+- **Performance**: 8 tests in ~330ms - significantly faster than simulation approaches
+- **Security**: Discovered and fixed critical AI calls RLS vulnerability
+- See `docs/reference/TESTING_DATABASE.md` for comprehensive real RLS testing guide
+
+**DEPRECATED RLS Tests** (marked for removal):
+- `lib/services/database/__tests__/rls-policies-integration.test.ts` - Deprecated simulation approach
+- `lib/services/database/__tests__/rls-policies.test.ts` - Deprecated simulation approach
+- `lib/testing/rls-test-context.ts` - Deprecated simulation infrastructure
+- Replaced by real RLS testing for genuine security validation
+
 Additional tests should be added as new features are developed.
 
 ## Test Maintenance

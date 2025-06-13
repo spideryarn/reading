@@ -1,8 +1,24 @@
 /**
- * Multi-User RLS Testing Context Management
+ * DEPRECATED: Multi-User RLS Testing Context Management
  * 
- * Provides utilities for testing Row Level Security (RLS) policies with multiple user contexts.
- * Enables switching between authenticated user contexts in tests to verify proper isolation.
+ * This file is DEPRECATED and should not be used for new development.
+ * 
+ * REPLACEMENT: Use `/lib/testing/rls-database-test-utils.ts` with `RLSTestDatabase` class instead.
+ * 
+ * REASON FOR DEPRECATION:
+ * - This simulation-based approach doesn't actually test real RLS policies
+ * - It provides false confidence by mocking user contexts instead of using real authentication
+ * - Complex infrastructure that's hard to maintain and prone to failures
+ * - Real RLS testing discovered critical security vulnerabilities that this approach missed
+ * 
+ * MIGRATION PATH:
+ * - Replace usage with RLSTestDatabase class for real database-level RLS testing
+ * - See `docs/reference/TESTING_DATABASE.md` for comprehensive real RLS testing guide
+ * - New approach is faster, more reliable, and provides genuine security validation
+ * 
+ * This file is kept temporarily for reference but will be removed in a future cleanup.
+ * 
+ * @deprecated Use RLSTestDatabase class instead
  */
 
 import { createClient } from '@/lib/supabase/client'
