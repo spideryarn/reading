@@ -129,20 +129,20 @@
 - [ ] Test that all tests still run with single database
 - [ ] Git commit infrastructure simplification
 
-### Stage: Clean up test database artifacts
+### Stage: Clean up test database artifacts ✅
 - [x] Stop test database if running: `npm run test:db:stop`
 - [x] Remove `supabase-test/` directory
 - [x] Remove `supabase/config.test.toml`
 - [x] Verify no Docker containers for test database remain
-- [ ] Git commit cleanup
+- [x] Git commit cleanup (commit: 2f35ec2)
 
 ### Stage: Create cleanup utilities
-- [ ] Create `scripts/cleanup-test-data.ts` for periodic cleanup
-  - [ ] Delete test users older than 24 hours
-  - [ ] Remove orphaned test documents
-  - [ ] Clean up test-created enhancements
-- [ ] Add cleanup script to package.json
-- [ ] Document when/how to run cleanup
+- [x] Create `scripts/cleanup-test-data.ts` for periodic cleanup
+  - [x] Delete test users older than 24 hours
+  - [x] Remove orphaned test documents
+  - [x] Clean up test-created enhancements
+- [x] Add cleanup script to package.json
+- [x] Document when/how to run cleanup (created `docs/reference/TESTING_CLEANUP.md`)
 - [ ] Git commit cleanup utilities
 
 ### Stage: Sync changes across worktrees
