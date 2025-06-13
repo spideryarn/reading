@@ -7,6 +7,10 @@
 - Anthropic API key
 - Supabase CLI (install with `npm install -g supabase`)
 
+## See also
+
+- `docs/reference/SECRETS_AND_ENVIRONMENT_VARIABLES.md` - Environment variable security and production configuration
+
 
 ## GitHub repo
 

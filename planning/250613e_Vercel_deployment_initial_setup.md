@@ -30,39 +30,40 @@ We have:
 
 # Stages & Actions
 
-### Stage: Pre-deployment verification checks
-- [ ] Verify React 19 RC and Tailwind v4 Beta compatibility with Vercel's Node.js version
-  - Use subagent to check Vercel's current Node.js versions and our package.json requirements, search the web, etc
-- [ ] Audit environment variables to ensure all are properly configured
-  - Check all NEXT_PUBLIC_ prefixed variables are set correctly
-  - Verify no sensitive values in client-exposed variables
-- [ ] Test production build locally
-  - Run `npm run build` and fix any errors
-  - Run `npm run lint` and address issues
-  - Document any specific build requirements
+### ✅ Stage: Pre-deployment verification checks
+- ✅ Verify React 19 RC and Tailwind v4 Beta compatibility with Vercel's Node.js version
+  - 📔 Research completed: React 19 RC + Next.js 15 fully supported on Vercel with Node.js 20/22. Tailwind v4 stable but requires PostCSS migration
+- ✅ Audit environment variables to ensure all are properly configured
+  - 📔 Created `docs/reference/SECRETS_AND_ENVIRONMENT_VARIABLES.md` documenting client vs server variable security
+  - 📔 Environment variable exposure verified: NEXT_PUBLIC_ prefix correctly used for client-safe variables
+- ❌ Test production build locally
+  - 📔 Build FAILS due to schema mismatch in headings API and 200+ ESLint violations
+  - 📔 Critical issue: Response schema `{id_of_after, html}` vs storage schema `{id, text, level, parentId?, elementId?}`
+  - 📔 Next.js 15 breaking changes mostly resolved (searchParams async, Zod validation, etc)
 
-### Stage: Vercel account setup
-- [ ] Check Vercel pricing plans and determine if Pro upgrade is needed
-  - Research team size limits, build minutes, and Supabase integration requirements
-  - Add upgrade to Pro plan as action if required
-  - Search the web with subagent etc
-- [ ] Set up Vercel account using GitHub authentication
-- [ ] Create new Vercel team/organization for Spideryarn
+### ✅ Stage: Vercel account setup
+- ✅ Check Vercel pricing plans and determine if Pro upgrade is needed
+  - 📔 User upgraded to Vercel Pro plan for Supabase integration support
+- ✅ Set up Vercel account using GitHub authentication
+  - 📔 Used existing account from Hello Zenno project
+- ✅ Create new Vercel team/organization for Spideryarn
+  - 📔 New project created with Next.js framework preset
 
-### Stage: Initial Vercel deployment
-- [ ] Connect GitHub repository to Vercel
-  - Import https://github.com/spideryarn/reading
-  - Configure root directory and framework preset (Next.js)
-- [ ] Configure build settings
-  - Build command: `npm run build`
-  - Output directory: `.next`
-  - Install command: `npm install`
-  - Node.js version: Set to latest LTS that supports our dependencies
-- [ ] Set essential environment variables manually for first deployment
-  - ANTHROPIC_API_KEY
-  - LLM_MODEL (use production model, not Haiku)
-  - Any other critical variables from .env.local
+### 🚧 Stage: Initial Vercel deployment
+- ✅ Connect GitHub repository to Vercel
+  - 📔 Repository https://github.com/spideryarn/reading imported successfully
+  - 📔 Framework preset: Next.js auto-detected and configured
+- ✅ Configure build settings
+  - 📔 Build command: `npm run build` (default)
+  - 📔 Output directory: `.next` (default)
+  - 📔 Install command: `npm install` (default)
+  - 📔 Node.js version: Using Vercel default (Node.js 20 LTS)
+- ✅ Set essential environment variables manually for first deployment
+  - 📔 Added ANTHROPIC_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, Google OAuth credentials
+  - 📔 Skipped LLM_MODEL to use application default (anthropic-balanced in production)
+  - 📔 Created .env.prod template and docs/reference/SECRETS_AND_ENVIRONMENT_VARIABLES.md
 - [ ] Deploy to `[project].vercel.app` domain
+  - 📔 Deployment attempted without git push (expected to fail until source code is available)
 - [ ] Verify basic functionality works
 
 ### Stage: Supabase integration setup
