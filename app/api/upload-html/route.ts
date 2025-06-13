@@ -461,6 +461,11 @@ export async function POST(request: NextRequest) {
         return new NextResponse('Storage service error. Please try again later.', { status: 503 })
       }
 
+      // Handle specific database constraint violations with user-friendly messages
+      if (error.message.includes('duplicate key value violates unique constraint "documents_slug_unique"')) {
+        return new NextResponse('A document with that name already exists. Please choose a different name.', { status: 409 })
+      }
+      
       if (error.message.includes('database') || error.message.includes('Failed to create document')) {
         return new NextResponse('Database error. Please try again later.', { status: 503 })
       }
