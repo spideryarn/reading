@@ -205,7 +205,7 @@ describe('AuthContext', () => {
       
       const { unmount } = render(
         <AuthProvider>
-          <TestComponent />
+          <TestComponent testEmail={testEmail} />
         </AuthProvider>
       )
       
@@ -243,7 +243,7 @@ describe('AuthContext', () => {
         authStateCallback!('SIGNED_IN', mockSession)
       })
       
-      expect(screen.getByTestId('user')).toHaveTextContent('test@example.com')
+      expect(screen.getByTestId('user')).toHaveTextContent(testEmail)
       expect(screen.getByTestId('session')).toHaveTextContent('Has session')
     })
 
@@ -516,7 +516,7 @@ describe('AuthContext', () => {
       
       const { rerender } = render(
         <AuthProvider>
-          <TestComponent />
+          <TestComponent testEmail={testEmail} />
         </AuthProvider>
       )
       
@@ -526,12 +526,12 @@ describe('AuthContext', () => {
       
       rerender(
         <AuthProvider>
-          <TestComponent />
+          <TestComponent testEmail={testEmail} />
         </AuthProvider>
       )
       
       // Should still maintain the user state
-      expect(screen.getByTestId('user')).toHaveTextContent('test@example.com')
+      expect(screen.getByTestId('user')).toHaveTextContent(testEmail)
     })
 
     test('loading state turns false after initial session check', async () => {

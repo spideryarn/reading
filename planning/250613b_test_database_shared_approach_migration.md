@@ -95,6 +95,7 @@
   - [x] Remove dual-database setup instructions
   - [x] Simplify to single database approach
 - [x] Add test pattern examples to `docs/reference/TESTING_OVERVIEW.md`
+- [x] Create comprehensive test isolation patterns guide (`docs/reference/TEST_ISOLATION_PATTERNS.md`)
 - [x] Git commit documentation updates
   - Commit 1: Test isolation utilities (`bdbdfbd`)
   - Commit 2: Documentation updates (`d805661`) 
@@ -109,14 +110,26 @@
 - [x] Update RLS policy tests
   - [x] Created new RLS test utilities with namespace isolation (rls-database-test-utils-v2.ts)
   - [x] Created updated integration test example (rls-policies-integration-v2.test.ts)
-- [ ] Update authentication tests
-  - [ ] Replace hardcoded test emails (found in server-auth.test.ts, route-protection.test.ts, etc.)
-  - [ ] Add cleanup for test users
-- [ ] Run all updated tests to ensure they pass
+- [x] Update authentication tests ✅ **COMPLETED**
+  - [x] Update `/lib/auth/__tests__/server-auth.test.ts` - migrated to use test isolation utilities
+  - [x] Update `/lib/context/__tests__/auth-context.test.tsx` - migrated to use test isolation utilities
+  - [x] Update `/__tests__/auth-integration.test.tsx` - migrated to use test isolation utilities
+  - [x] Update `/__tests__/setup-ui-mocks.ts` - updated createMockUser to use test isolation
+  - [x] Update `/components/__tests__/auth-workflow-integration.test.tsx` - migrated to use test isolation utilities
+  - [x] Update `/app/auth/__tests__/profile-page.test.tsx` - migrated to use test isolation utilities
+  - [x] Update `/lib/auth/__tests__/route-integration.test.ts` - replaced 4 hardcoded emails
+  - [x] Update `/lib/auth/__tests__/route-protection.test.ts` - replaced 1 hardcoded email
+  - [x] Update `/components/__tests__/command-palette.test.tsx` - replaced 7 hardcoded emails
+  - [x] Update `/lib/services/database/__tests__/rls-policies-real.test.ts` - uses RealRLSTestSetup (no changes needed)
+- [x] Run all updated tests to ensure they pass
+  - [x] Fixed failing auth-context.test.tsx - updated assertions to use namespaced emails
+  - [x] Fixed failing auth-workflow-integration.test.tsx - updated mock components and assertions
+  - [x] All authentication tests now passing with test isolation
 - [x] Git commit test updates
   - Commit 1: RLS test utilities with namespace isolation (`acf60c9`)
   - Commit 2: Remove dangerous test database scripts (`439612a`) 
   - Commit 3: Planning progress update (`1d19dfa`)
+  - Commit 4: Migrate auth tests to use test isolation (`09ccec7`)
 
 ### Stage: Revert infrastructure to single database
 - [x] Update `.env.test` to point to dev database ports

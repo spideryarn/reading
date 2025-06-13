@@ -14,6 +14,7 @@
 
 import { RealRLSTestSetup, RLSAssertions, RLSTestHelpers } from './rls-test-helpers'
 import { TEST_USER_IDS } from '@/lib/testing/rls-test-context'
+import { getTestNamespace, getCleanupFunctions } from '@/lib/testing/test-isolation-utils'
 
 describe('Real RLS Policy Tests', () => {
   let setup: RealRLSTestSetup
