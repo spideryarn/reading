@@ -7,6 +7,10 @@ import {
   getSignedDocumentUrl,
   StorageUploadResult 
 } from '@/lib/services/storage'
+import { logger, generateCorrelationId, createTimer } from '../logger'
+
+// Create database-specific logger
+const dbLogger = logger.child({ component: 'database-documents' })
 
 export class DocumentService {
   constructor(private supabase: SupabaseClient<Database>) {}
@@ -336,10 +340,33 @@ export class DocumentService {
     // Upload to storage first if file provided
     if (originalFile) {
       try {
+        dbLogger.info({
+          operation: 'createWithStorage',
+          documentId,
+          fileSize: originalFile.size,
+          fileType: originalFile.type,
+          filename: originalFilename
+        }, 'Uploading original file to storage')
+        
         storageResult = await uploadDocumentFile(originalFile, documentId, originalFilename)
         storagePath = storageResult.path
+        
+        dbLogger.info({
+          operation: 'createWithStorage',
+          documentId,
+          storagePath,
+          uploadedSize: storageResult.size
+        }, 'File uploaded to storage successfully')
       } catch (error) {
         // Log storage error but continue with document creation
+        dbLogger.warn({
+          operation: 'createWithStorage',
+          documentId,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          fileSize: originalFile.size,
+          fileType: originalFile.type
+        }, 'Storage upload failed, creating document without original file')
+        
         console.warn('Storage upload failed, creating document without original file:', error)
       }
     }
@@ -367,7 +394,21 @@ export class DocumentService {
         if (storagePath) {
           try {
             await deleteDocumentFile(storagePath)
+            dbLogger.info({
+              operation: 'createWithStorage',
+              documentId,
+              storagePath,
+              action: 'cleanup_after_db_failure'
+            }, 'Cleaned up storage after document creation failure')
           } catch (cleanupError) {
+            dbLogger.warn({
+              operation: 'createWithStorage',
+              documentId,
+              storagePath,
+              error: cleanupError instanceof Error ? cleanupError.message : 'Unknown error',
+              action: 'cleanup_failed'
+            }, 'Failed to clean up storage after document creation failure')
+            
             console.warn('Failed to clean up storage after document creation failure:', cleanupError)
           }
         }
@@ -381,7 +422,21 @@ export class DocumentService {
       if (storagePath) {
         try {
           await deleteDocumentFile(storagePath)
+          dbLogger.info({
+            operation: 'createWithStorage',
+            documentId,
+            storagePath,
+            action: 'cleanup_after_error'
+          }, 'Cleaned up storage after error')
         } catch (cleanupError) {
+          dbLogger.warn({
+            operation: 'createWithStorage',
+            documentId,
+            storagePath,
+            error: cleanupError instanceof Error ? cleanupError.message : 'Unknown error',
+            action: 'cleanup_failed'
+          }, 'Failed to clean up storage after error')
+          
           console.warn('Failed to clean up storage after error:', cleanupError)
         }
       }
@@ -400,8 +455,30 @@ export class DocumentService {
     }
     
     try {
-      return await downloadDocumentFile(document.storage_path)
+      dbLogger.info({
+        operation: 'getOriginalFile',
+        documentId,
+        storagePath: document.storage_path
+      }, 'Downloading original file from storage')
+      
+      const file = await downloadDocumentFile(document.storage_path)
+      
+      dbLogger.info({
+        operation: 'getOriginalFile',
+        documentId,
+        storagePath: document.storage_path,
+        fileSize: file.size
+      }, 'Original file downloaded successfully')
+      
+      return file
     } catch (error) {
+      dbLogger.warn({
+        operation: 'getOriginalFile',
+        documentId,
+        storagePath: document.storage_path,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }, 'Failed to download original file')
+      
       console.warn(`Failed to download original file for document ${documentId}:`, error)
       return null
     }
@@ -418,8 +495,31 @@ export class DocumentService {
     }
     
     try {
-      return await getSignedDocumentUrl(document.storage_path, expiresIn)
+      dbLogger.info({
+        operation: 'getOriginalFileUrl',
+        documentId,
+        storagePath: document.storage_path,
+        expiresIn
+      }, 'Generating signed URL for original file')
+      
+      const url = await getSignedDocumentUrl(document.storage_path, expiresIn)
+      
+      dbLogger.info({
+        operation: 'getOriginalFileUrl',
+        documentId,
+        storagePath: document.storage_path,
+        hasUrl: !!url
+      }, 'Signed URL generated successfully')
+      
+      return url
     } catch (error) {
+      dbLogger.warn({
+        operation: 'getOriginalFileUrl',
+        documentId,
+        storagePath: document.storage_path,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }, 'Failed to get signed URL')
+      
       console.warn(`Failed to get signed URL for document ${documentId}:`, error)
       return null
     }
@@ -454,8 +554,27 @@ export class DocumentService {
     // Clean up storage file if it exists
     if (document.storage_path) {
       try {
+        dbLogger.info({
+          operation: 'deleteWithStorage',
+          documentId: id,
+          storagePath: document.storage_path
+        }, 'Deleting storage file')
+        
         await deleteDocumentFile(document.storage_path)
+        
+        dbLogger.info({
+          operation: 'deleteWithStorage',
+          documentId: id,
+          storagePath: document.storage_path
+        }, 'Storage file deleted successfully')
       } catch (error) {
+        dbLogger.warn({
+          operation: 'deleteWithStorage',
+          documentId: id,
+          storagePath: document.storage_path,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }, 'Failed to delete storage file')
+        
         console.warn(`Failed to delete storage file for document ${id}:`, error)
         // Don't fail the entire operation if storage cleanup fails
       }
@@ -490,8 +609,28 @@ export class DocumentService {
     // Clean up old storage file if it existed
     if (existingDocument.storage_path && existingDocument.storage_path !== storageResult.path) {
       try {
+        dbLogger.info({
+          operation: 'updateStoragePath',
+          documentId,
+          oldStoragePath: existingDocument.storage_path,
+          newStoragePath: storageResult.path
+        }, 'Cleaning up old storage file')
+        
         await deleteDocumentFile(existingDocument.storage_path)
+        
+        dbLogger.info({
+          operation: 'updateStoragePath',
+          documentId,
+          oldStoragePath: existingDocument.storage_path
+        }, 'Old storage file deleted successfully')
       } catch (error) {
+        dbLogger.warn({
+          operation: 'updateStoragePath',
+          documentId,
+          oldStoragePath: existingDocument.storage_path,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }, 'Failed to clean up old storage file')
+        
         console.warn(`Failed to clean up old storage file:`, error)
       }
     }

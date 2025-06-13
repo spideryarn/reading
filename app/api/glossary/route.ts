@@ -8,10 +8,19 @@ import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelConfig, AI_CONFIG } from '@/lib/config'
+import { createRequestLogger, generateCorrelationId, logAIOperation } from '@/lib/services/logger'
 
 export async function POST(request: NextRequest) {
+  const correlationId = generateCorrelationId()
+  const requestLogger = createRequestLogger('/api/glossary', correlationId)
+  
   try {
     const body = await request.json()
+    
+    requestLogger.info({
+      method: 'POST',
+      correlationId
+    }, 'Glossary generation request initiated')
     
     // Validate input
     const validationResult = glossaryPromptInputSchema.safeParse(body)
@@ -23,6 +32,13 @@ export async function POST(request: NextRequest) {
     }
     
     const { content, already_entities, documentId } = validationResult.data
+    
+    requestLogger.info({
+      correlationId,
+      documentId,
+      contentLength: content.length,
+      alreadyEntitiesCount: already_entities?.length || 0
+    }, 'Starting glossary generation process')
     
     // Initialize database services
     const supabase = await createClient()
@@ -45,6 +61,12 @@ export async function POST(request: NextRequest) {
       if (!Array.isArray(existingGlossary.content.entities)) {
         throw new Error(`Malformed glossary data in database for enhancement ${existingGlossary.id}: content.entities is not an array. Found: ${typeof existingGlossary.content.entities}`)
       }
+      
+      requestLogger.info({
+        correlationId,
+        enhancementId: existingGlossary.id,
+        entityCount: existingGlossary.content.entities.length
+      }, 'Returning cached glossary')
       
       return NextResponse.json({ 
         entities: existingGlossary.content.entities,
@@ -73,11 +95,27 @@ export async function POST(request: NextRequest) {
       }
     })
     
+    requestLogger.info({
+      correlationId,
+      documentId,
+      modelProvider: modelConfig.provider,
+      modelId: modelConfig.modelId,
+      aiCallId: aiCall.id
+    }, 'Starting AI glossary generation')
+    
     // Use real LLM processing - no fallback
     const llmResult = await executePromptWithUsage(glossaryPrompt, { 
       content,
       already_entities 
     })
+    
+    // Log AI operation completion
+    logAIOperation('glossary-generation', {
+      modelProvider: modelConfig.provider,
+      tokensUsed: llmResult.usage.totalTokens,
+      documentId,
+      correlationId
+    }, 'success')
     
     // Parse the JSON response from LLM (strip markdown code blocks if present)
     let jsonString = llmResult.text.trim()
@@ -123,6 +161,14 @@ export async function POST(request: NextRequest) {
       }
     )
     
+    requestLogger.info({
+      correlationId,
+      documentId,
+      aiCallId: aiCall.id,
+      entityCount: validatedResponse.entities.length,
+      tokensUsed: llmResult.usage.totalTokens
+    }, 'Glossary generation completed and stored successfully')
+    
     return NextResponse.json({
       ...validatedResponse,
       cached: false,
@@ -130,6 +176,13 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error generating glossary:', error)
+    
+    requestLogger.error({
+      correlationId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    }, 'Error generating glossary')
+    
     const errorMessage = error instanceof Error ? error.message : 'Failed to generate glossary'
     return NextResponse.json(
       { error: errorMessage },
@@ -139,9 +192,18 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const correlationId = generateCorrelationId()
+  const requestLogger = createRequestLogger('/api/glossary', correlationId)
+  
   try {
     const body = await request.json()
     const { documentId } = body
+    
+    requestLogger.info({
+      method: 'DELETE',
+      documentId,
+      correlationId
+    }, 'Glossary DELETE request initiated')
     
     if (!documentId) {
       return NextResponse.json(
@@ -157,9 +219,20 @@ export async function DELETE(request: NextRequest) {
     // Delete the glossary enhancement
     await enhancementService.delete(documentId, 'glossary')
     
+    requestLogger.info({
+      correlationId,
+      documentId
+    }, 'Glossary enhancement deleted successfully')
+    
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting glossary:', error)
+    
+    requestLogger.error({
+      correlationId,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 'Error deleting glossary')
+    
     return NextResponse.json(
       { error: 'Failed to delete glossary' },
       { status: 500 }

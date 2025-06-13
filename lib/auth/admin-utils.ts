@@ -6,6 +6,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
+import { authLogger, generateCorrelationId, createTimer } from '@/lib/services/logger'
 
 /**
  * Grant admin access to a user by setting the is_admin timestamp
@@ -13,6 +14,15 @@ import { createClient } from '@/lib/supabase/server'
  * @returns Promise resolving to success status
  */
 export async function grantAdminAccess(userId: string): Promise<{ success: boolean; error?: string }> {
+  const correlationId = generateCorrelationId()
+  const timer = createTimer(authLogger, 'grantAdminAccess')
+  
+  authLogger.info({
+    operation: 'grantAdminAccess',
+    targetUserId: userId,
+    correlationId
+  }, 'Granting admin access to user')
+  
   try {
     const supabase = await createClient()
     
@@ -22,12 +32,38 @@ export async function grantAdminAccess(userId: string): Promise<{ success: boole
       .eq('user_id', userId)
     
     if (error) {
+      authLogger.error({
+        operation: 'grantAdminAccess',
+        targetUserId: userId,
+        error: error.message,
+        correlationId
+      }, 'Database error granting admin access')
+      
       console.error('Error granting admin access:', error)
       return { success: false, error: error.message }
     }
     
+    const duration = timer.end({
+      targetUserId: userId,
+      correlationId
+    })
+    
+    authLogger.info({
+      operation: 'grantAdminAccess',
+      targetUserId: userId,
+      duration,
+      correlationId
+    }, 'Admin access granted successfully')
+    
     return { success: true }
   } catch (error) {
+    authLogger.error({
+      operation: 'grantAdminAccess',
+      targetUserId: userId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      correlationId
+    }, 'Error granting admin access')
+    
     console.error('Error granting admin access:', error)
     return { 
       success: false, 
@@ -42,6 +78,15 @@ export async function grantAdminAccess(userId: string): Promise<{ success: boole
  * @returns Promise resolving to success status
  */
 export async function revokeAdminAccess(userId: string): Promise<{ success: boolean; error?: string }> {
+  const correlationId = generateCorrelationId()
+  const timer = createTimer(authLogger, 'revokeAdminAccess')
+  
+  authLogger.info({
+    operation: 'revokeAdminAccess',
+    targetUserId: userId,
+    correlationId
+  }, 'Revoking admin access from user')
+  
   try {
     const supabase = await createClient()
     
@@ -51,12 +96,38 @@ export async function revokeAdminAccess(userId: string): Promise<{ success: bool
       .eq('user_id', userId)
     
     if (error) {
+      authLogger.error({
+        operation: 'revokeAdminAccess',
+        targetUserId: userId,
+        error: error.message,
+        correlationId
+      }, 'Database error revoking admin access')
+      
       console.error('Error revoking admin access:', error)
       return { success: false, error: error.message }
     }
     
+    const duration = timer.end({
+      targetUserId: userId,
+      correlationId
+    })
+    
+    authLogger.info({
+      operation: 'revokeAdminAccess',
+      targetUserId: userId,
+      duration,
+      correlationId
+    }, 'Admin access revoked successfully')
+    
     return { success: true }
   } catch (error) {
+    authLogger.error({
+      operation: 'revokeAdminAccess',
+      targetUserId: userId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      correlationId
+    }, 'Error revoking admin access')
+    
     console.error('Error revoking admin access:', error)
     return { 
       success: false, 
@@ -75,6 +146,15 @@ export async function isUserAdmin(userId: string): Promise<{
   adminSince?: string; 
   error?: string 
 }> {
+  const correlationId = generateCorrelationId()
+  const timer = createTimer(authLogger, 'isUserAdmin')
+  
+  authLogger.debug({
+    operation: 'isUserAdmin',
+    targetUserId: userId,
+    correlationId
+  }, 'Checking user admin status')
+  
   try {
     const supabase = await createClient()
     
@@ -85,6 +165,13 @@ export async function isUserAdmin(userId: string): Promise<{
       .single()
     
     if (error) {
+      authLogger.error({
+        operation: 'isUserAdmin',
+        targetUserId: userId,
+        error: error.message,
+        correlationId
+      }, 'Database error checking admin status')
+      
       console.error('Error checking admin status:', error)
       return { isAdmin: false, error: error.message }
     }
@@ -92,8 +179,30 @@ export async function isUserAdmin(userId: string): Promise<{
     const isAdmin = data?.is_admin !== null
     const adminSince = data?.is_admin || undefined
     
+    const duration = timer.end({
+      targetUserId: userId,
+      isAdmin,
+      correlationId
+    })
+    
+    authLogger.info({
+      operation: 'isUserAdmin',
+      targetUserId: userId,
+      isAdmin,
+      adminSince,
+      duration,
+      correlationId
+    }, 'Admin status check completed')
+    
     return { isAdmin, adminSince }
   } catch (error) {
+    authLogger.error({
+      operation: 'isUserAdmin',
+      targetUserId: userId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      correlationId
+    }, 'Error checking admin status')
+    
     console.error('Error checking admin status:', error)
     return { 
       isAdmin: false, 
@@ -111,6 +220,14 @@ export async function getCurrentUserAdminStatus(): Promise<{
   adminSince?: string;
   error?: string;
 }> {
+  const correlationId = generateCorrelationId()
+  const timer = createTimer(authLogger, 'getCurrentUserAdminStatus')
+  
+  authLogger.debug({
+    operation: 'getCurrentUserAdminStatus',
+    correlationId
+  }, 'Getting current user admin status')
+  
   try {
     const supabase = await createClient()
     
@@ -118,12 +235,46 @@ export async function getCurrentUserAdminStatus(): Promise<{
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     
     if (userError || !user) {
+      authLogger.warn({
+        operation: 'getCurrentUserAdminStatus',
+        error: userError?.message || 'No user found',
+        correlationId
+      }, 'User not authenticated for admin status check')
+      
       return { isAdmin: false, error: 'User not authenticated' }
     }
     
+    authLogger.debug({
+      operation: 'getCurrentUserAdminStatus',
+      currentUserId: user.id,
+      correlationId
+    }, 'Current user found, checking admin status')
+    
     // Check admin status
-    return await isUserAdmin(user.id)
+    const result = await isUserAdmin(user.id)
+    
+    const duration = timer.end({
+      currentUserId: user.id,
+      isAdmin: result.isAdmin,
+      correlationId
+    })
+    
+    authLogger.info({
+      operation: 'getCurrentUserAdminStatus',
+      currentUserId: user.id,
+      isAdmin: result.isAdmin,
+      duration,
+      correlationId
+    }, 'Current user admin status retrieved')
+    
+    return result
   } catch (error) {
+    authLogger.error({
+      operation: 'getCurrentUserAdminStatus',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      correlationId
+    }, 'Error getting current user admin status')
+    
     console.error('Error getting current user admin status:', error)
     return { 
       isAdmin: false, 

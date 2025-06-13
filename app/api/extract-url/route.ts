@@ -14,6 +14,7 @@ import { generateSlug, generateHtmlFilename } from '@/lib/utils/slug'
 import { URL_EXTRACTION_CONFIG } from '@/lib/config'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
 import { validateAuth } from '@/lib/auth/server-auth'
+import { createRequestLogger, generateCorrelationId, logAIOperation } from '@/lib/services/logger'
 
 // URL validation function
 function isValidUrl(urlString: string): boolean {
@@ -86,6 +87,9 @@ async function fetchWebpageContent(url: string): Promise<string> {
 }
 
 export async function POST(request: NextRequest) {
+  const correlationId = generateCorrelationId()
+  const requestLogger = createRequestLogger('/api/extract-url', correlationId)
+  
   try {
     // Validate authentication first
     const user = await validateAuth()
@@ -119,15 +123,29 @@ export async function POST(request: NextRequest) {
     }
     
     console.log(`Processing URL with extraction: ${url} using ${extractionMethod} method`)
+    requestLogger.info({
+      userId: user.id,
+      userEmail: user.email,
+      url: new URL(url).hostname, // Log hostname only for privacy
+      extractionMethod,
+      provider,
+      isPublic
+    }, 'URL extraction request initiated')
     
     // Step 1: Fetch webpage content
     console.log('Step 1: Fetching webpage content...')
+    requestLogger.info({ step: 1, hostname: new URL(url).hostname }, 'Starting webpage content fetch')
     let htmlContent: string
     
     try {
       htmlContent = await fetchWebpageContent(url)
     } catch (error) {
       console.error('Failed to fetch webpage:', error)
+      requestLogger.error({
+        step: 1,
+        hostname: new URL(url).hostname,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }, 'Failed to fetch webpage content')
       if (error instanceof Error) {
         return new NextResponse(error.message, { status: 400 })
       }
@@ -135,6 +153,12 @@ export async function POST(request: NextRequest) {
     }
     
     console.log(`Step 2: Fetched ${(htmlContent.length / 1024).toFixed(1)} KB of HTML content`)
+    requestLogger.info({
+      step: 2,
+      hostname: new URL(url).hostname,
+      contentSizeKb: Math.round(htmlContent.length / 1024),
+      contentSizeBytes: htmlContent.length
+    }, 'Webpage content fetched successfully')
     
     // Initialize Supabase client and services
     const supabase = await createClient()
@@ -148,6 +172,11 @@ export async function POST(request: NextRequest) {
     const providerDisplayName = provider === 'gemini' ? 'Gemini 1.5 Pro' : 'Claude 4 Sonnet'
     
     console.log(`Step 3: Extracting content using ${extractionMethod} method...`)
+    requestLogger.info({
+      step: 3,
+      extractionMethod,
+      provider: extractionMethod === 'ai-transcription' ? provider : null
+    }, 'Starting content extraction')
     
     // Execute extraction based on selected method
     let extractedHtml: string
@@ -157,6 +186,7 @@ export async function POST(request: NextRequest) {
     if (extractionMethod === 'readability') {
       // Mozilla Readability extraction - fast and reliable
       console.log('Using Mozilla Readability for extraction')
+      requestLogger.info({ extractionMethod: 'readability' }, 'Starting Mozilla Readability extraction')
       extractionMethodUsed = 'readability'
       
       const startTime = Date.now()
@@ -165,6 +195,11 @@ export async function POST(request: NextRequest) {
       if (!article) {
         // Readability failed - return error instead of falling back
         console.log('Readability extraction failed - returning error for user to decide next action')
+        requestLogger.warn({
+          extractionMethod: 'readability',
+          hostname: new URL(url).hostname,
+          contentSizeKb: Math.round(htmlContent.length / 1024)
+        }, 'Readability extraction failed')
         
         return NextResponse.json({
           success: false,
@@ -181,6 +216,14 @@ export async function POST(request: NextRequest) {
         // Readability succeeded
         const extractionTime = Date.now() - startTime
         console.log(`Readability extraction completed in ${extractionTime}ms`)
+        requestLogger.info({
+          extractionMethod: 'readability',
+          extractionTimeMs: extractionTime,
+          titleExtracted: article.title,
+          contentLength: article.content.length,
+          siteName: article.siteName,
+          author: article.byline
+        }, 'Readability extraction completed successfully')
         
         // Format the extracted content as clean HTML
         extractedHtml = formatReadabilityHtml(article)
@@ -190,6 +233,14 @@ export async function POST(request: NextRequest) {
         console.log(`Extracted content length: ${article.content.length} characters`)
         console.log(`Site name: ${article.siteName || 'Not detected'}`)
         console.log(`Author: ${article.byline || 'Not detected'}`)
+        
+        // Detailed extraction logging (already covered in success log above)
+        requestLogger.debug({
+          extractedTitle: article.title,
+          contentLength: article.content.length,
+          siteName: article.siteName || 'Not detected',
+          author: article.byline || 'Not detected'
+        }, 'Readability extraction details')
       }
     } else {
       // AI Transcription method
@@ -236,6 +287,16 @@ export async function POST(request: NextRequest) {
           finishReason: extractResult.finishReason
         })
         
+        // Log successful AI operation
+        requestLogger.info({
+          extractionMethod: 'ai-transcription',
+          provider,
+          processingTimeMs: processingTime,
+          outputSizeKb: Math.round(extractResult.text.length / 1024),
+          tokensUsed: extractResult.usage?.totalTokens,
+          aiCallId: aiCall!.id
+        }, 'AI transcription completed successfully')
+        
         // Clean up any markdown wrapping from LLM response
         extractedHtml = extractedHtml
           .replace(/^```html\s*\n?/, '')
@@ -244,6 +305,24 @@ export async function POST(request: NextRequest) {
           
       } catch (error) {
         console.error('LLM extraction error:', error)
+        requestLogger.error({
+          extractionMethod: 'ai-transcription',
+          provider,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          aiCallId: aiCall?.id
+        }, 'LLM extraction failed')
+        
+        // Log AI operation failure
+        logAIOperation(
+          'url-extraction',
+          {
+            modelProvider: provider,
+            correlationId,
+            userId: user.id
+          },
+          'error',
+          error instanceof Error ? error : new Error('Unknown error')
+        )
         
         // Mark AI call as failed
         await aiCallService.completeCall(aiCall!.id, {
@@ -268,6 +347,11 @@ export async function POST(request: NextRequest) {
     }
     
     console.log('Step 4: Content extraction completed, processing plaintext...')
+    requestLogger.info({
+      step: 4,
+      extractionMethod: extractionMethodUsed,
+      extractedSizeKb: Math.round(extractedHtml.length / 1024)
+    }, 'Content extraction completed, processing plaintext')
     
     // Extract plaintext from HTML for search and word count
     const plaintext = extractedHtml
@@ -284,6 +368,13 @@ export async function POST(request: NextRequest) {
     const finalSlug = generateSlug(finalTitle)
     
     console.log('Step 5: Creating document with database integration...')
+    requestLogger.info({
+      step: 5,
+      finalTitle,
+      finalSlug,
+      wordCount: plaintext.split(/\s+/).length,
+      isPublic
+    }, 'Creating document with database integration')
     
     // Prepare upload metadata based on extraction method
     const uploadMetadata = {
@@ -307,6 +398,11 @@ export async function POST(request: NextRequest) {
     const htmlFilename = generateHtmlFilename(url)
     
     console.log(`Storing original HTML as: ${htmlFilename} (${(htmlContent.length / 1024).toFixed(1)} KB)`)
+    requestLogger.info({
+      htmlFilename,
+      originalSizeKb: Math.round(htmlContent.length / 1024),
+      extractedSizeKb: Math.round(extractedHtml.length / 1024)
+    }, 'Storing original HTML content for re-processing')
     
     const { document } = await documentService.createWithStorage(
       user.id,
@@ -326,6 +422,29 @@ export async function POST(request: NextRequest) {
     )
     
     console.log(`Step 6: Document created successfully with ID: ${document.id}`)
+    requestLogger.info({
+      step: 6,
+      documentId: document.id,
+      title: document.title,
+      slug: document.slug,
+      wordCount: document.word_count,
+      extractionMethod: extractionMethodUsed,
+      aiCallId: extractionMethodUsed === 'ai-transcription' ? aiCall?.id : null
+    }, 'Document created successfully')
+    
+    // Log successful AI operation if AI transcription was used
+    if (extractionMethodUsed === 'ai-transcription') {
+      logAIOperation(
+        'url-extraction',
+        {
+          modelProvider: provider,
+          correlationId,
+          userId: user.id,
+          documentId: document.id
+        },
+        'success'
+      )
+    }
     
     // Return comprehensive response with document details
     return NextResponse.json({
@@ -358,6 +477,10 @@ export async function POST(request: NextRequest) {
     
   } catch (error) {
     console.error('URL extraction API error:', error)
+    requestLogger.error({
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    }, 'URL extraction API error')
     
     // Handle authentication errors first
     if (error instanceof Error) {

@@ -123,6 +123,51 @@ Debugging resources:
 - Architecture: `docs/reference/ARCHITECTURE_OVERVIEW.md` and `docs/reference/ARCHITECTURE_DECISIONS.md`
 - Recent decisions: `planning/*.md` docs
 
+## Logging & Observability
+
+**Pino Structured Logging** (Stage 6 - Complete):
+- **Implementation**: Pino structured logging deployed across 11 critical API routes and 6 service files
+- **Mixed approach**: Pino added alongside existing console.log statements for safe migration
+- **Key utilities**: `createRequestLogger()`, `generateCorrelationId()`, `logAIOperation()`, `createTimer()`
+- **Security patterns**: Privacy-safe logging (IDs only, no sensitive content like API keys or full document content)
+
+**Current logging patterns**:
+```typescript
+// Standard API route pattern
+import { createRequestLogger, generateCorrelationId, logAIOperation } from '@/lib/services/logger'
+
+const correlationId = generateCorrelationId()
+const requestLogger = createRequestLogger('/api/route-name', correlationId)
+
+requestLogger.info({
+  userId: user.id,
+  documentId,
+  operation: 'ai-extraction',
+  correlationId
+}, 'Request initiated')
+
+// AI operations with token tracking
+logAIOperation('content-extraction', {
+  modelProvider: 'anthropic',
+  tokensUsed: result.usage.totalTokens,
+  userId: user.id,
+  documentId,
+  correlationId
+}, 'success')
+```
+
+**Mixed logging approach** (current):
+- **Console.log**: Still used for immediate development feedback
+- **Pino**: Added for structured production logging and correlation tracking
+- **Migration**: Gradual replacement of console.log with Pino loggers
+
+**Security & Privacy**:
+- **Safe**: Log user IDs, document IDs, operation metadata, token usage
+- **Private**: URL hostnames only (no query parameters), truncated search queries
+- **Never log**: API keys, full document content, personal data, payment information
+
+See `docs/reference/LOGGING_BEST_PRACTICES.md` for comprehensive patterns and examples.
+
 
 ## Error Handling
 

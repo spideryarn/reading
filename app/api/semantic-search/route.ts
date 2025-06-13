@@ -21,13 +21,24 @@ import {
   getDocumentStats,
   estimateTokenCount 
 } from '@/lib/services/semantic-search-formatter'
+import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 
 export async function GET(request: NextRequest) {
+  const correlationId = generateCorrelationId()
+  const requestLogger = createRequestLogger('/api/semantic-search', correlationId)
+  
   try {
     const { searchParams } = new URL(request.url)
     const documentId = searchParams.get('documentId')
     
+    requestLogger.info({ 
+      documentId,
+      correlationId,
+      method: 'GET'
+    }, 'Starting semantic search query history fetch')
+    
     if (!documentId) {
+      requestLogger.warn({ correlationId }, 'Missing documentId parameter')
       return NextResponse.json(
         { error: 'documentId query parameter is required' },
         { status: 400 }
@@ -48,6 +59,11 @@ export async function GET(request: NextRequest) {
     
     if (error) {
       console.error('[SemanticSearch] Error fetching query history:', error)
+      requestLogger.error({ 
+        error: error.message,
+        documentId,
+        correlationId 
+      }, 'Failed to fetch semantic search query history from database')
       return NextResponse.json(
         { error: 'Failed to fetch query history' },
         { status: 500 }
@@ -77,6 +93,11 @@ export async function GET(request: NextRequest) {
     })
     
     console.log(`[SemanticSearch] Found ${queries.length} cached queries for document ${documentId}`)
+    requestLogger.info({ 
+      documentId,
+      queryCount: queries.length,
+      correlationId 
+    }, 'Successfully retrieved semantic search query history')
     
     return NextResponse.json({
       documentId,
@@ -84,6 +105,10 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('[SemanticSearch] Error in GET handler:', error)
+    requestLogger.error({ 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      correlationId 
+    }, 'Unexpected error in semantic search GET handler')
     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch query history'
     return NextResponse.json(
       { error: errorMessage },
@@ -93,12 +118,19 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const correlationId = generateCorrelationId()
+  const requestLogger = createRequestLogger('/api/semantic-search', correlationId)
+  
   try {
     const body = await request.json()
     
     // Validate input
     const validationResult = semanticSearchApiInputSchema.safeParse(body)
     if (!validationResult.success) {
+      requestLogger.warn({ 
+        validationError: validationResult.error,
+        correlationId 
+      }, 'Invalid request body for semantic search')
       return NextResponse.json(
         { error: 'Invalid request body', details: validationResult.error },
         { status: 400 }
@@ -106,6 +138,13 @@ export async function POST(request: NextRequest) {
     }
     
     const { query, documentId } = validationResult.data
+    
+    requestLogger.info({ 
+      query: query.substring(0, 100) + (query.length > 100 ? '...' : ''), // Truncate query for privacy
+      documentId,
+      correlationId,
+      method: 'POST'
+    }, 'Starting semantic search request')
     
     // Validate required fields for API usage
     if (!documentId) {
@@ -134,10 +173,23 @@ export async function POST(request: NextRequest) {
     
     if (cachedResult) {
       console.log(`[SemanticSearch] Returning cached results for query: "${query}" (normalized: "${normalizedQuery}")`)
+      requestLogger.info({ 
+        query: query.substring(0, 100) + (query.length > 100 ? '...' : ''),
+        normalizedQuery,
+        documentId,
+        enhancementId: cachedResult.id,
+        correlationId 
+      }, 'Returning cached semantic search results')
       
       // Validate cached data structure
       if (!cachedResult.content || typeof cachedResult.content !== 'object') {
-        throw new Error(`Malformed semantic search cache data for enhancement ${cachedResult.id}: content is not an object`)
+        const errorMsg = `Malformed semantic search cache data for enhancement ${cachedResult.id}: content is not an object`
+        requestLogger.error({ 
+          enhancementId: cachedResult.id,
+          documentId,
+          correlationId 
+        }, 'Malformed cached data structure')
+        throw new Error(errorMsg)
       }
       
       const cachedContent = cachedResult.content as {
@@ -215,6 +267,14 @@ export async function POST(request: NextRequest) {
     console.log(`[SemanticSearch] Document stats:`, stats)
     console.log(`[SemanticSearch] Estimated tokens: ${estimatedTokens}`)
     
+    requestLogger.info({ 
+      query: query.substring(0, 100) + (query.length > 100 ? '...' : ''),
+      documentId,
+      documentStats: stats,
+      estimatedTokens,
+      correlationId 
+    }, 'Processing semantic search for document')
+    
     // Check token limit (conservative threshold)
     const MAX_TOKENS = 50000 // Conservative limit for semantic search
     if (estimatedTokens > MAX_TOKENS) {
@@ -247,11 +307,58 @@ export async function POST(request: NextRequest) {
     })
     
     // Execute semantic search prompt with LLM
-    const llmResult = await executePromptWithUsage(semanticSearchPrompt, { 
-      content: annotatedContent,
-      query,
-      documentId
-    })
+    const aiTimer = createTimer(requestLogger, 'semantic-search-llm-call')
+    let llmResult
+    
+    try {
+      llmResult = await executePromptWithUsage(semanticSearchPrompt, { 
+        content: annotatedContent,
+        query,
+        documentId
+      })
+      
+      const aiDuration = aiTimer.end({
+        documentId,
+        modelProvider: modelConfig.provider,
+        modelId: modelConfig.modelId,
+        tokensUsed: llmResult.usage?.totalTokens,
+        correlationId
+      })
+      
+      // Log AI operation success
+      logAIOperation('semantic-search', {
+        modelProvider: modelConfig.provider,
+        tokensUsed: llmResult.usage?.totalTokens,
+        documentId,
+        correlationId
+      }, 'success')
+      
+      requestLogger.info({ 
+        documentId,
+        aiCallId: aiCall.id,
+        modelProvider: modelConfig.provider,
+        modelId: modelConfig.modelId,
+        tokensUsed: llmResult.usage?.totalTokens,
+        duration: aiDuration,
+        correlationId 
+      }, 'LLM semantic search call completed successfully')
+    } catch (aiError) {
+      // Log AI operation failure
+      logAIOperation('semantic-search', {
+        modelProvider: modelConfig.provider,
+        documentId,
+        correlationId
+      }, 'error', aiError instanceof Error ? aiError : new Error('Unknown AI error'))
+      
+      requestLogger.error({ 
+        error: aiError instanceof Error ? aiError.message : 'Unknown AI error',
+        documentId,
+        aiCallId: aiCall.id,
+        correlationId 
+      }, 'LLM semantic search call failed')
+      
+      throw aiError
+    }
     
     // Parse the JSON response from LLM with improved robustness
     let jsonString = llmResult.text.trim()
@@ -279,14 +386,32 @@ export async function POST(request: NextRequest) {
       console.error(`[SemanticSearch] Raw LLM response length: ${llmResult.text.length}`)
       console.error(`[SemanticSearch] Cleaned JSON string length: ${jsonString.length}`)
       
+      requestLogger.error({ 
+        error: parseError instanceof Error ? parseError.message : 'JSON parse error',
+        query: query.substring(0, 100) + (query.length > 100 ? '...' : ''),
+        documentId,
+        rawResponseLength: llmResult.text.length,
+        cleanedResponseLength: jsonString.length,
+        correlationId 
+      }, 'Failed to parse LLM JSON response')
+      
       // Try to extract JSON from the response if it's embedded in other text
       const jsonMatch = jsonString.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
         try {
           parsedResponse = JSON.parse(jsonMatch[0])
           console.log(`[SemanticSearch] Successfully recovered JSON from embedded response`)
+          requestLogger.info({ 
+            documentId,
+            correlationId 
+          }, 'Successfully recovered JSON from embedded LLM response')
         } catch (recoveryError) {
           console.error('[SemanticSearch] Recovery parse failed:', recoveryError)
+          requestLogger.error({ 
+            error: recoveryError instanceof Error ? recoveryError.message : 'JSON recovery failed',
+            documentId,
+            correlationId 
+          }, 'Failed to recover JSON from embedded LLM response')
           throw new Error(`Failed to parse LLM JSON response: ${parseError.message}`)
         }
       } else {
@@ -299,6 +424,12 @@ export async function POST(request: NextRequest) {
     
     // Validate the response matches our expected schema
     const validatedResponse = semanticSearchResponseSchema.parse(parsedResponse)
+    
+    requestLogger.info({ 
+      documentId,
+      totalMatches: validatedResponse.matches.length,
+      correlationId 
+    }, 'LLM response validated successfully')
     
     // Validate that all returned element IDs exist in the document
     const elementIds = validatedResponse.matches.map(match => match.elementId)
@@ -314,6 +445,16 @@ export async function POST(request: NextRequest) {
       const lowConfidenceCount = validatedResponse.matches.filter(match => match.confidence < 0.25).length
       const invalidIdCount = filteredCount - lowConfidenceCount
       console.warn(`[SemanticSearch] Filtered ${filteredCount} matches: ${invalidIdCount} invalid element IDs, ${lowConfidenceCount} low confidence (<0.25)`)
+      
+      requestLogger.warn({ 
+        documentId,
+        totalMatches: validatedResponse.matches.length,
+        validMatches: validMatches.length,
+        filteredCount,
+        invalidIdCount,
+        lowConfidenceCount,
+        correlationId 
+      }, 'Filtered semantic search matches due to invalid IDs or low confidence')
     }
     
     // Complete the AI call record with usage metadata
@@ -329,6 +470,13 @@ export async function POST(request: NextRequest) {
     })
     
     console.log(`[SemanticSearch] Found ${validMatches.length} semantic matches for query: "${query}"`)
+    
+    requestLogger.info({ 
+      documentId,
+      query: query.substring(0, 100) + (query.length > 100 ? '...' : ''),
+      matchesFound: validMatches.length,
+      correlationId 
+    }, 'Semantic search completed successfully')
     
     // Store the results in cache
     try {
@@ -354,9 +502,19 @@ export async function POST(request: NextRequest) {
       })
       
       console.log(`[SemanticSearch] Cached results for query: "${query}" (normalized: "${normalizedQuery}")`)
+      requestLogger.info({ 
+        documentId,
+        normalizedQuery,
+        correlationId 
+      }, 'Successfully cached semantic search results')
     } catch (cacheError) {
       // Log error but don't fail the request - results are still valid
       console.error('[SemanticSearch] Failed to cache results:', cacheError)
+      requestLogger.error({ 
+        error: cacheError instanceof Error ? cacheError.message : 'Unknown cache error',
+        documentId,
+        correlationId 
+      }, 'Failed to cache semantic search results')
     }
     
     return NextResponse.json({
@@ -374,6 +532,10 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('[SemanticSearch] Error processing semantic search:', error)
+    requestLogger.error({ 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      correlationId 
+    }, 'Unexpected error processing semantic search')
     const errorMessage = error instanceof Error ? error.message : 'Failed to process semantic search'
     return NextResponse.json(
       { error: errorMessage },

@@ -6,6 +6,10 @@
 import { stripe } from './client'
 import { createClient } from '@/lib/supabase/server'
 import type { Database } from '@/lib/types/database'
+import { logger, generateCorrelationId, createTimer } from '../logger'
+
+// Create Stripe-specific logger
+const stripeLogger = logger.child({ component: 'stripe-customers' })
 
 type Profile = Database['public']['Tables']['profiles']['Row']
 type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
@@ -18,6 +22,17 @@ export async function createStripeCustomer(
   email: string,
   name?: string
 ): Promise<{ customer: any; error?: string }> {
+  const correlationId = generateCorrelationId()
+  const timer = createTimer(stripeLogger, 'createStripeCustomer')
+  
+  stripeLogger.info({
+    operation: 'createStripeCustomer',
+    userId,
+    email,
+    hasName: !!name,
+    correlationId
+  }, 'Starting Stripe customer creation')
+  
   try {
     // Create customer in Stripe
     const customer = await stripe.customers.create({
@@ -28,6 +43,13 @@ export async function createStripeCustomer(
       },
     })
 
+    stripeLogger.info({
+      operation: 'createStripeCustomer',
+      userId,
+      customerId: customer.id,
+      correlationId
+    }, 'Stripe customer created successfully')
+
     // Update user profile with Stripe customer ID
     const supabase = createClient()
     const { error: updateError } = await supabase
@@ -36,12 +58,42 @@ export async function createStripeCustomer(
       .eq('user_id', userId)
 
     if (updateError) {
+      stripeLogger.error({
+        operation: 'createStripeCustomer',
+        userId,
+        customerId: customer.id,
+        error: updateError.message,
+        correlationId
+      }, 'Failed to update profile with customer ID')
+      
       console.error('Failed to update profile with customer ID:', updateError)
       return { customer, error: 'Failed to link customer to profile' }
     }
 
+    const duration = timer.end({
+      userId,
+      customerId: customer.id,
+      correlationId
+    })
+
+    stripeLogger.info({
+      operation: 'createStripeCustomer',
+      userId,
+      customerId: customer.id,
+      duration,
+      correlationId
+    }, 'Stripe customer creation completed successfully')
+
     return { customer }
   } catch (error) {
+    stripeLogger.error({
+      operation: 'createStripeCustomer',
+      userId,
+      email,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      correlationId
+    }, 'Error creating Stripe customer')
+    
     console.error('Error creating Stripe customer:', error)
     return { 
       customer: null, 
@@ -58,6 +110,17 @@ export async function getOrCreateStripeCustomer(
   email: string,
   name?: string
 ): Promise<{ customer: any; error?: string }> {
+  const correlationId = generateCorrelationId()
+  const timer = createTimer(stripeLogger, 'getOrCreateStripeCustomer')
+  
+  stripeLogger.info({
+    operation: 'getOrCreateStripeCustomer',
+    userId,
+    email,
+    hasName: !!name,
+    correlationId
+  }, 'Starting get or create Stripe customer')
+  
   try {
     const supabase = createClient()
     
@@ -69,26 +132,109 @@ export async function getOrCreateStripeCustomer(
       .single()
 
     if (profileError) {
+      stripeLogger.error({
+        operation: 'getOrCreateStripeCustomer',
+        userId,
+        error: profileError.message,
+        correlationId
+      }, 'Error fetching user profile')
+      
       console.error('Error fetching user profile:', profileError)
       return { customer: null, error: 'Failed to fetch user profile' }
     }
 
     // If customer exists, retrieve from Stripe
     if (profile.stripe_customer_id) {
+      stripeLogger.info({
+        operation: 'getOrCreateStripeCustomer',
+        userId,
+        existingCustomerId: profile.stripe_customer_id,
+        correlationId
+      }, 'Found existing customer ID, retrieving from Stripe')
+      
       try {
         const customer = await stripe.customers.retrieve(profile.stripe_customer_id)
         if (!customer.deleted) {
+          const duration = timer.end({
+            userId,
+            customerId: customer.id,
+            action: 'retrieved_existing',
+            correlationId
+          })
+          
+          stripeLogger.info({
+            operation: 'getOrCreateStripeCustomer',
+            userId,
+            customerId: customer.id,
+            action: 'retrieved_existing',
+            duration,
+            correlationId
+          }, 'Successfully retrieved existing Stripe customer')
+          
           return { customer }
         }
       } catch (error) {
+        stripeLogger.warn({
+          operation: 'getOrCreateStripeCustomer',
+          userId,
+          existingCustomerId: profile.stripe_customer_id,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          correlationId
+        }, 'Error retrieving existing customer, will create new one')
+        
         console.error('Error retrieving existing customer:', error)
         // Fall through to create new customer
       }
     }
 
+    stripeLogger.info({
+      operation: 'getOrCreateStripeCustomer',
+      userId,
+      action: 'creating_new',
+      correlationId
+    }, 'Creating new Stripe customer')
+
     // Create new customer
-    return await createStripeCustomer(userId, email, name)
+    const result = await createStripeCustomer(userId, email, name)
+    
+    const duration = timer.end({
+      userId,
+      customerId: result.customer?.id,
+      action: 'created_new',
+      success: !result.error,
+      correlationId
+    })
+    
+    if (result.error) {
+      stripeLogger.error({
+        operation: 'getOrCreateStripeCustomer',
+        userId,
+        action: 'created_new',
+        error: result.error,
+        duration,
+        correlationId
+      }, 'Failed to create new Stripe customer')
+    } else {
+      stripeLogger.info({
+        operation: 'getOrCreateStripeCustomer',
+        userId,
+        customerId: result.customer?.id,
+        action: 'created_new',
+        duration,
+        correlationId
+      }, 'Successfully created new Stripe customer')
+    }
+    
+    return result
   } catch (error) {
+    stripeLogger.error({
+      operation: 'getOrCreateStripeCustomer',
+      userId,
+      email,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      correlationId
+    }, 'Error in getOrCreateStripeCustomer')
+    
     console.error('Error in getOrCreateStripeCustomer:', error)
     return { 
       customer: null, 
@@ -108,6 +254,18 @@ export async function updateUserSubscriptionStatus(
     endsAt?: string
   }
 ): Promise<{ success: boolean; error?: string }> {
+  const correlationId = generateCorrelationId()
+  const timer = createTimer(stripeLogger, 'updateUserSubscriptionStatus')
+  
+  stripeLogger.info({
+    operation: 'updateUserSubscriptionStatus',
+    stripeCustomerId,
+    subscriptionStatus: subscriptionData.status,
+    hasPlan: !!subscriptionData.plan,
+    hasEndsAt: !!subscriptionData.endsAt,
+    correlationId
+  }, 'Starting subscription status update')
+  
   try {
     const supabase = createClient()
     
@@ -130,12 +288,44 @@ export async function updateUserSubscriptionStatus(
       .eq('stripe_customer_id', stripeCustomerId)
 
     if (error) {
+      stripeLogger.error({
+        operation: 'updateUserSubscriptionStatus',
+        stripeCustomerId,
+        subscriptionStatus: subscriptionData.status,
+        error: error.message,
+        correlationId
+      }, 'Error updating subscription status in database')
+      
       console.error('Error updating subscription status:', error)
       return { success: false, error: error.message }
     }
 
+    const duration = timer.end({
+      stripeCustomerId,
+      subscriptionStatus: subscriptionData.status,
+      correlationId
+    })
+
+    stripeLogger.info({
+      operation: 'updateUserSubscriptionStatus',
+      stripeCustomerId,
+      subscriptionStatus: subscriptionData.status,
+      plan: subscriptionData.plan,
+      endsAt: subscriptionData.endsAt,
+      duration,
+      correlationId
+    }, 'Subscription status updated successfully')
+
     return { success: true }
   } catch (error) {
+    stripeLogger.error({
+      operation: 'updateUserSubscriptionStatus',
+      stripeCustomerId,
+      subscriptionStatus: subscriptionData.status,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      correlationId
+    }, 'Error in updateUserSubscriptionStatus')
+    
     console.error('Error in updateUserSubscriptionStatus:', error)
     return { 
       success: false, 
@@ -154,6 +344,15 @@ export async function getUserSubscriptionStatus(
   hasActiveSubscription: boolean
   error?: string 
 }> {
+  const correlationId = generateCorrelationId()
+  const timer = createTimer(stripeLogger, 'getUserSubscriptionStatus')
+  
+  stripeLogger.info({
+    operation: 'getUserSubscriptionStatus',
+    userId,
+    correlationId
+  }, 'Fetching user subscription status')
+  
   try {
     const supabase = createClient()
     
@@ -164,6 +363,13 @@ export async function getUserSubscriptionStatus(
       .single()
 
     if (error) {
+      stripeLogger.error({
+        operation: 'getUserSubscriptionStatus',
+        userId,
+        error: error.message,
+        correlationId
+      }, 'Error fetching user subscription status from database')
+      
       console.error('Error fetching user subscription status:', error)
       return { 
         profile: null, 
@@ -175,11 +381,35 @@ export async function getUserSubscriptionStatus(
     const hasActiveSubscription = profile.subscription_status === 'active' || 
                                  profile.subscription_status === 'trialing'
 
+    const duration = timer.end({
+      userId,
+      subscriptionStatus: profile.subscription_status,
+      hasActiveSubscription,
+      correlationId
+    })
+
+    stripeLogger.info({
+      operation: 'getUserSubscriptionStatus',
+      userId,
+      subscriptionStatus: profile.subscription_status,
+      subscriptionPlan: profile.subscription_plan,
+      hasActiveSubscription,
+      duration,
+      correlationId
+    }, 'User subscription status retrieved successfully')
+
     return { 
       profile, 
       hasActiveSubscription 
     }
   } catch (error) {
+    stripeLogger.error({
+      operation: 'getUserSubscriptionStatus',
+      userId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      correlationId
+    }, 'Error in getUserSubscriptionStatus')
+    
     console.error('Error in getUserSubscriptionStatus:', error)
     return { 
       profile: null, 

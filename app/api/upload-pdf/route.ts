@@ -12,7 +12,7 @@ import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelConfig, AI_CONFIG } from '@/lib/config'
 import { generateSlug } from '@/lib/utils/slug'
 import { validateAuth } from '@/lib/auth/server-auth'
-import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
+import { createRequestLogger, generateCorrelationId, logAIOperation } from '@/lib/services/logger'
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
@@ -76,6 +76,14 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`Processing PDF with storage integration: ${pdfFile.name} (${(pdfBuffer.length / 1024).toFixed(1)} KB) using ${provider}`)
+    
+    requestLogger.info({
+      correlationId,
+      fileName: pdfFile.name,
+      fileSizeKB: Math.round(pdfBuffer.length / 1024),
+      provider,
+      userId: user.id
+    }, 'Starting PDF processing with storage integration')
 
     // Initialize Supabase client and services
     const supabase = await createClient()
@@ -108,6 +116,14 @@ export async function POST(request: NextRequest) {
     })
     
     console.log(`Step 1: Converting PDF to HTML using ${providerDisplayName}...`)
+    
+    requestLogger.info({
+      correlationId,
+      step: 'pdf-to-html-conversion',
+      provider: providerDisplayName,
+      modelId: modelConfig.modelId,
+      aiCallId: aiCall.id
+    }, 'Starting PDF to HTML conversion using AI')
 
     // Execute the direct PDF prompt (multi-page support enabled)
     const htmlResult = await executeMultimodalPromptWithUsage(promptTemplate, {
@@ -117,6 +133,14 @@ export async function POST(request: NextRequest) {
     })
     
     const processingTime = Date.now() - startTime
+    
+    // Log AI operation completion
+    logAIOperation('pdf-to-html-conversion', {
+      modelProvider: modelConfig.provider,
+      tokensUsed: htmlResult.usage.totalTokens,
+      userId: user.id,
+      correlationId
+    }, 'success')
     
     // Complete the AI call record with usage metadata
     await aiCallService.completeCall(aiCall.id, {
@@ -130,6 +154,14 @@ export async function POST(request: NextRequest) {
     })
 
     console.log('Step 2: HTML conversion completed, extracting plaintext...')
+    
+    requestLogger.info({
+      correlationId,
+      step: 'html-conversion-complete',
+      processingTimeMs: processingTime,
+      htmlLength: htmlResult.text.length,
+      tokensUsed: htmlResult.usage.totalTokens
+    }, 'PDF to HTML conversion completed successfully')
 
     // Extract plaintext from HTML for search and word count
     const plaintext = htmlResult.text
@@ -138,6 +170,14 @@ export async function POST(request: NextRequest) {
       .trim()
 
     console.log('Step 3: Creating document with storage integration...')
+    
+    requestLogger.info({
+      correlationId,
+      step: 'document-creation',
+      plaintextLength: plaintext.length,
+      wordCount: plaintext.split(/\s+/).length,
+      slug
+    }, 'Starting document creation with storage integration')
     
     // Prepare upload metadata
     const uploadMetadata = {
@@ -169,10 +209,31 @@ export async function POST(request: NextRequest) {
 
     console.log(`Step 4: Document created successfully with ID: ${document.id}`)
     
+    requestLogger.info({
+      correlationId,
+      step: 'document-created',
+      documentId: document.id,
+      documentSlug: document.slug,
+      hasOriginalFile: !!storageResult
+    }, 'Document created successfully')
+    
     if (storageResult) {
       console.log(`Step 5: Original PDF stored at: ${storageResult.path}`)
+      
+      requestLogger.info({
+        correlationId,
+        step: 'storage-complete',
+        storagePath: storageResult.path,
+        storageSize: storageResult.size
+      }, 'Original PDF stored successfully')
     } else {
       console.warn('Step 5: Storage upload failed, but document was created without original file')
+      
+      requestLogger.warn({
+        correlationId,
+        step: 'storage-failed',
+        documentId: document.id
+      }, 'Storage upload failed, document created without original file')
     }
 
     // Return comprehensive response with document details
@@ -207,6 +268,12 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('PDF upload API error:', error)
+    
+    requestLogger.error({
+      correlationId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    }, 'PDF upload API error occurred')
     
     // Handle authentication errors first
     if (error instanceof Error) {
