@@ -1,14 +1,44 @@
 /**
- * RLS Database Testing Utilities
+ * ❌ DEPRECATED: RLS Database Testing Utilities
  * 
- * Provides proper database-level authentication for testing RLS policies.
- * Uses admin client for setup and authenticated clients for actual RLS testing.
+ * ⚠️  WARNING: This file is deprecated and should not be used for new tests.
+ * 
+ * **REPLACEMENT**: Use `@/lib/services/database/__tests__/rls-test-helpers.ts` instead.
+ * 
+ * **WHY DEPRECATED**: 
+ * This implementation used client-side JavaScript filtering to simulate RLS policies
+ * rather than testing actual database-level security. This approach was fundamentally
+ * flawed because:
+ * 
+ * 1. **False Security Confidence**: Tests could pass while real RLS policies were broken
+ * 2. **Complex Simulation Logic**: Required duplicating RLS logic in test code
+ * 3. **Maintenance Burden**: Simulation logic had to be kept in sync with real policies
+ * 4. **Missing Critical Bugs**: Failed to catch a serious security vulnerability in AI calls policy
+ * 
+ * **SECURITY ISSUE DISCOVERED**: During migration to real RLS testing, we discovered
+ * that this simulation approach missed a critical vulnerability where any user could
+ * access any document-independent AI call created by any other user. The real RLS
+ * testing implementation caught this immediately.
+ * 
+ * **MIGRATION GUIDE**: 
+ * Replace imports like:
+ *   `import { RLSTestSetup } from '@/lib/testing/rls-database-test-utils'`
+ * With:
+ *   `import { RealRLSTestSetup } from '@/lib/services/database/__tests__/rls-test-helpers'`
+ * 
+ * See docs/reference/AUTHENTICATION_TESTING.md for complete migration examples.
+ * 
+ * **REMOVAL TIMELINE**: This file will be deleted in a future cleanup once all
+ * references have been migrated to the real RLS testing approach.
+ * 
+ * @deprecated Use RealRLSTestSetup from rls-test-helpers.ts instead
  */
 
 import { createClient } from '@supabase/supabase-js'
 import { TEST_USER_IDS, TEST_USERS, type TestUserKey } from './rls-test-context'
 
 // Create admin client for test setup (bypasses RLS)
+/** @deprecated Use RealRLSTestSetup.getAdminClient() instead */
 export function createAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -26,139 +56,33 @@ export function createAdminClient() {
 }
 
 // Create authenticated client for specific user (simulates real authentication)
+/** @deprecated Use RealRLSTestSetup.createUserClient() instead */
 export function createAuthenticatedClient(userKey: TestUserKey) {
   const user = TEST_USERS[userKey]
-  
-  // For RLS testing, we'll use a simplified approach:
-  // Return the admin client with user context tracking
   const adminClient = createAdminClient()
   
+  // ⚠️ SIMPLIFIED DEPRECATED IMPLEMENTATION
+  // This no longer attempts to simulate complex RLS logic
+  // Use RealRLSTestSetup for actual RLS testing
   return {
-    // Store user context for RLS testing
     _testUserId: user.id,
     _testUser: user,
     _adminClient: adminClient,
-    
-    // Simplified from() method that tracks user context
-    from: (table: string) => {
-      const baseTable = adminClient.from(table)
-      
-      return {
-        select: (columns: string = '*') => {
-          const query = baseTable.select(columns)
-          
-          return {
-            eq: (column: string, value: any) => ({
-              single: async () => {
-                const result = await query.eq(column, value).single()
-                return {
-                  ...result,
-                  data: shouldUserSeeRecord(result.data, table, user.id) ? result.data : null
-                }
-              },
-              // Also support direct access
-              then: async (resolve: any, reject: any) => {
-                try {
-                  const result = await query.eq(column, value)
-                  const filteredResult = {
-                    ...result,
-                    data: filterDataByOwnership(result.data, table, user.id)
-                  }
-                  resolve(filteredResult)
-                } catch (error) {
-                  reject(error)
-                }
-              }
-            }),
-            single: async () => {
-              const result = await query.single()
-              return {
-                ...result,
-                data: shouldUserSeeRecord(result.data, table, user.id) ? result.data : null
-              }
-            },
-            limit: async (count: number) => {
-              const result = await query.limit(count)
-              return {
-                ...result,
-                data: filterDataByOwnership(result.data, table, user.id)
-              }
-            },
-            // For bare select() calls (list all)
-            then: async (resolve: any, reject: any) => {
-              try {
-                const result = await query
-                const filteredResult = {
-                  ...result,
-                  data: filterDataByOwnership(result.data, table, user.id)
-                }
-                resolve(filteredResult)
-              } catch (error) {
-                reject(error)
-              }
-            }
-          }
-        },
-        insert: (data: any) => {
-          // Set created_by to current user for inserts
-          const insertData = { ...data, created_by: user.id }
-          return baseTable.insert(insertData)
-        },
-        update: (data: any) => {
-          // Only allow updates to records owned by user
-          return baseTable.update(data).eq('created_by', user.id)
-        },
-        delete: () => {
-          // Only allow deletes of records owned by user
-          return baseTable.delete().eq('created_by', user.id)
-        }
-      }
-    },
-    
-    // Pass through other methods
+    from: adminClient.from.bind(adminClient),
     rpc: adminClient.rpc.bind(adminClient),
     auth: adminClient.auth,
     storage: adminClient.storage,
   }
 }
 
-// Helper functions to simulate RLS logic in test client
-function filterDataByOwnership(data: any[] | null, table: string, userId: string): any[] | null {
-  if (!data) return null
-  
-  return data.filter(record => shouldUserSeeRecord(record, table, userId))
-}
-
-function shouldUserSeeRecord(record: any, table: string, userId: string): boolean {
-  if (!record) return false
-  
-  switch (table) {
-    case 'documents':
-      return record.created_by === userId
-    
-    case 'profiles':
-      return record.user_id === userId
-    
-    case 'document_enhancements':
-      // Would need to check document ownership - simplified for now
-      return true // This would require joining with documents table
-    
-    case 'ai_calls':
-      // Would need to check document ownership - simplified for now
-      return true // This would require joining with documents table
-    
-    case 'chat_threads':
-    case 'chat_messages':
-      // Would need to check document ownership - simplified for now
-      return true // This would require joining with documents table
-    
-    default:
-      return false
-  }
-}
+// ⚠️ REMOVED: Complex simulation logic
+// The complex filterDataByOwnership and shouldUserSeeRecord functions have been
+// removed because they provided false confidence in security testing.
+// Use RealRLSTestSetup for actual database-level RLS testing.
 
 /**
  * Test setup class for RLS policy testing
+ * @deprecated Use RealRLSTestSetup from rls-test-helpers.ts instead
  */
 export class RLSTestSetup {
   private adminClient: any
@@ -379,29 +303,13 @@ export class RLSTestSetup {
     this.testUsers.clear()
   }
 
-  /**
-   * Test user isolation for a resource
-   */
-  async testUserIsolation(
-    setupAsAdmin: () => Promise<any>,
-    getUserAAccess: (resource: any) => Promise<any>,
-    getUserBAccess: (resource: any) => Promise<any>
-  ) {
-    // Setup resource as admin
-    const resource = await setupAsAdmin()
-
-    // Test User A access
-    const userAResult = await getUserAAccess(resource)
-    
-    // Test User B access  
-    const userBResult = await getUserBAccess(resource)
-
-    return { resource, userAResult, userBResult }
-  }
+  // ⚠️ REMOVED: testUserIsolation method
+  // Use RLSTestHelpers.testOwnershipIsolation() from rls-test-helpers.ts instead
 }
 
 /**
  * Helper functions for common RLS test patterns
+ * @deprecated Use RLSTestHelpers from rls-test-helpers.ts instead
  */
 export const RLSTestHelpers = {
   /**
@@ -463,6 +371,7 @@ export const RLSTestHelpers = {
 
 /**
  * Enhanced test assertions for RLS testing
+ * @deprecated Use RLSAssertions from rls-test-helpers.ts instead
  */
 export const RLSAssertions = {
   /**

@@ -470,8 +470,59 @@ it('should clear sensitive data on logout', async () => {
 
 ### Testing Approaches
 
-**Approach 1: Real Authentication** (Recommended for comprehensive testing)
+**Approach 1: Real Authentication with JWT Tokens** (✅ **RECOMMENDED** - Used in production)
+
+This is the current approach used in the Spideryarn Reading codebase. It uses actual JWT authentication to validate database-level RLS policies.
+
 ```typescript
+import { RealRLSTestSetup, RLSAssertions, RLSTestHelpers } from '@/lib/services/database/__tests__/rls-test-helpers'
+import { TEST_USER_IDS } from '@/lib/testing/rls-test-context'
+
+describe('Document RLS policies', () => {
+  let setup: RealRLSTestSetup
+  
+  beforeAll(async () => {
+    setup = new RealRLSTestSetup()
+  })
+  
+  afterAll(async () => {
+    await setup.cleanup()
+  })
+  
+  it('should prevent cross-user document access', async () => {
+    // Create document owned by User A using admin client
+    const document = await setup.createTestDocument({
+      title: 'User A Document',
+      created_by: TEST_USER_IDS.USER_A
+    })
+    
+    // Create authenticated clients for both users
+    const userAClient = await setup.createUserClient(TEST_USER_IDS.USER_A)
+    const userBClient = await setup.createUserClient(TEST_USER_IDS.USER_B)
+    
+    // User A should have access to their own document
+    const userAResult = await setup.testResourceAccess(userAClient, 'documents', document.id)
+    RLSAssertions.assertHasAccess(userAResult, document.id)
+    
+    // User B should be blocked from User A's document
+    const userBResult = await setup.testResourceAccess(userBClient, 'documents', document.id)
+    RLSAssertions.assertBlockedAccess(userBResult)
+  })
+})
+```
+
+**Key Features of Real RLS Testing**:
+- Uses actual JWT tokens signed with Supabase secret
+- Tests database-level RLS policies (not client-side simulation)
+- Service role client for test setup, authenticated clients for testing
+- Proper handling of RLS error codes (PGRST116)
+- Zero false positives - tests fail when they should
+
+**Approach 2: Legacy Simulation** (❌ **DEPRECATED** - Do not use)
+
+```typescript
+// ❌ DEPRECATED: This approach simulates RLS with JavaScript filtering
+// It was replaced because it provided false confidence in security controls
 describe('Document RLS policies', () => {
   let userAClient: SupabaseClient
   let userBClient: SupabaseClient
@@ -486,123 +537,180 @@ describe('Document RLS policies', () => {
   })
   
   it('should prevent cross-user document access', async () => {
-    // User B creates document
-    const { data: docB } = await userBClient
-      .from('documents')
-      .insert({ title: 'User B Document', content: 'Private content' })
-      .select()
-      .single()
-    
-    // User A should NOT access User B's document
-    const { data: accessAttempt, error } = await userAClient
-      .from('documents')
-      .select('*')
-      .eq('id', docB.id)
-      .single()
-    
-    expect(accessAttempt).toBeNull()
-    expect(error?.code).toBe('PGRST116') // RLS blocked access
+    // This approach was problematic because it didn't test real RLS policies
   })
 })
 ```
 
-**Approach 2: Service Role + Context Switching** (Simpler setup)
+**Approach 2: Helper Functions and Patterns**
+
+The `RealRLSTestSetup` class provides several helper methods for common testing patterns:
+
 ```typescript
-// Helper to create client with simulated user context
-const createUserClient = (userId: string) => {
-  const serviceClient = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY! // Bypasses RLS for setup
-  )
-  
-  // Override for RLS testing - simulate auth.uid()
-  return {
-    ...serviceClient,
-    from: (table: string) => {
-      const query = serviceClient.from(table)
-      // Add RLS simulation here if needed
-      return query
-    }
-  }
-}
+// Create test data with admin privileges (bypasses RLS for setup)
+const document = await setup.createTestDocument({
+  title: 'Test Document',
+  created_by: TEST_USER_IDS.USER_A
+})
+
+const aiCall = await setup.createTestAICall({
+  document_id: document.id,
+  created_by: TEST_USER_IDS.USER_A,
+  prompt_type: 'test'
+})
+
+// Test resource access with different user contexts
+const userAClient = await setup.createUserClient(TEST_USER_IDS.USER_A)
+const userBClient = await setup.createUserClient(TEST_USER_IDS.USER_B)
+
+// Use helper methods for standardized testing
+const ownerResult = await setup.testResourceAccess(userAClient, 'documents', document.id)
+const nonOwnerResult = await setup.testResourceAccess(userBClient, 'documents', document.id)
+
+// Use assertions for consistent validation
+RLSAssertions.assertHasAccess(ownerResult)
+RLSAssertions.assertBlockedAccess(nonOwnerResult)
 ```
 
-**Approach 3: SQL Helper Procedures** (Database-level testing)
-```sql
--- Create helper procedures for context switching
-CREATE OR REPLACE FUNCTION auth.login_as_user(user_email text)
-RETURNS void AS $$
-BEGIN
-  PERFORM set_config('request.jwt.claims', json_build_object('sub', user_email)::text, true);
-END;
-$$ LANGUAGE plpgsql;
+**Approach 3: Convenience Helper Patterns**
 
--- Test via SQL
-CALL auth.login_as_user('user1@test.com');
-SELECT * FROM documents; -- Should only see user1's documents
+For complex testing scenarios, use the convenience helper methods:
+
+```typescript
+// Test complete ownership isolation pattern
+await RLSTestHelpers.testOwnershipIsolation(
+  setup,
+  // Create resource
+  () => setup.createTestDocument({ created_by: TEST_USER_IDS.USER_A }),
+  // Test access function
+  (client, resource) => setup.testResourceAccess(client, 'documents', resource.id),
+  // Get resource ID
+  (resource) => resource.id
+)
+
+// Test profile access (uses different primary key)
+const userAClient = await setup.createUserClient(TEST_USER_IDS.USER_A)
+const userBClient = await setup.createUserClient(TEST_USER_IDS.USER_B)
+
+const profileResult = await setup.testProfileAccess(userAClient, TEST_USER_IDS.USER_A)
+RLSAssertions.assertHasAccess(profileResult)
+
+const blockedProfileResult = await setup.testProfileAccess(userBClient, TEST_USER_IDS.USER_A)
+RLSAssertions.assertBlockedAccess(blockedProfileResult)
 ```
 
 ### Common Gotchas
 
-**1. NextJS Server Components in Tests**
+**1. Real vs Simulated RLS Testing**
+```typescript
+// ❌ DEPRECATED: Client-side simulation (unreliable)
+import { RLSTestSetup } from '@/lib/testing/rls-database-test-utils' // OLD FILE
+
+// ✅ Real database-level testing (current approach)
+import { RealRLSTestSetup } from '@/lib/services/database/__tests__/rls-test-helpers'
+```
+
+**2. NextJS Server Components in Tests**
 ```typescript
 // ❌ This fails in tests - requires request context
 import { createClient } from '@/lib/supabase/server' 
 
-// ✅ Use client version for tests
-import { createClient } from '@/lib/supabase/client'
+// ✅ Use direct Supabase client creation in tests
+import { createClient } from '@supabase/supabase-js'
 ```
 
-**2. RLS Error Codes**
+**3. RLS Error Codes and Blocking Behavior**
 ```typescript
-// RLS violations return specific error codes:
+// ✅ RLS violations return specific error codes:
 expect(error?.code).toBe('PGRST116') // No rows returned (blocked by RLS)
-// NOT a generic error - RLS silently filters results
+
+// ✅ RLS assertions handle this automatically:
+RLSAssertions.assertBlockedAccess(result) // Expects PGRST116 or null data
+RLSAssertions.assertHasAccess(result)     // Expects valid data, no errors
 ```
 
-**3. Test User Management**
+**4. Test User Management**
 ```typescript
-// ❌ Don't reset database between tests (slow)
+// ❌ Don't reset database between tests (slow and unreliable)
 afterEach(() => resetDatabase())
 
-// ✅ Use unique IDs per test
-const testUserId = `test-user-${Date.now()}-${Math.random()}`
+// ✅ Use predefined test user IDs (consistent and fast)
+import { TEST_USER_IDS } from '@/lib/testing/rls-test-context'
+const userAClient = await setup.createUserClient(TEST_USER_IDS.USER_A)
 ```
 
-**4. Service Role vs Anon Key**
+**5. Service Role vs Anon Key**
 ```typescript
 // Service role bypasses ALL RLS - use for test setup only
-const adminClient = createClient(url, SERVICE_ROLE_KEY)
+const adminClient = setup.getAdminClient() // Uses service role
 
-// Anon key respects RLS - use for actual testing  
-const userClient = createClient(url, ANON_KEY)
+// Anon key + JWT respects RLS - use for actual testing  
+const userClient = await setup.createUserClient(userId) // Uses anon key + auth
 ```
 
-### Service Layer Testing with Mocked Authentication
+**6. JWT Token Requirements**
+```typescript
+// ✅ Ensure SUPABASE_JWT_SECRET is set in test environment
+if (!process.env.SUPABASE_JWT_SECRET) {
+  throw new Error('SUPABASE_JWT_SECRET required for RLS testing')
+}
+
+// JWT tokens are automatically generated by RealRLSTestSetup
+const client = await setup.createUserClient(userId) // Handles JWT creation
+```
+
+### Service Layer Testing with Real RLS
 
 ```typescript
-// Test service layer with different user contexts
+// Test service layer with real RLS policies (current approach)
+describe('DocumentService RLS integration', () => {
+  let setup: RealRLSTestSetup
+  
+  beforeAll(async () => {
+    setup = new RealRLSTestSetup()
+  })
+  
+  it('should enforce document ownership through RLS policies', async () => {
+    // Create document owned by User A
+    const document = await setup.createTestDocument({
+      title: 'User A Document',
+      created_by: TEST_USER_IDS.USER_A
+    })
+    
+    // Create authenticated clients
+    const userAClient = await setup.createUserClient(TEST_USER_IDS.USER_A)
+    const userBClient = await setup.createUserClient(TEST_USER_IDS.USER_B)
+    
+    // Create service instances with user context
+    const userADocService = new DocumentService(userAClient)
+    const userBDocService = new DocumentService(userBClient)
+    
+    // User A should access their document
+    const userADoc = await userADocService.getById(document.id)
+    expect(userADoc).not.toBeNull()
+    expect(userADoc?.id).toBe(document.id)
+    
+    // User B should be blocked by RLS
+    const userBDoc = await userBDocService.getById(document.id)
+    expect(userBDoc).toBeNull() // RLS blocks access
+  })
+})
+```
+
+### Legacy Service Layer Testing (Deprecated)
+
+```typescript
+// ❌ DEPRECATED: Mocked authentication approach (unreliable)
 describe('DocumentService user isolation', () => {
   it('should only return documents for the authenticated user', async () => {
     const mockGetUser = getUser as jest.MockedFunction<typeof getUser>
     
-    // Test User A context
-    mockGetUser.mockResolvedValue({ 
-      user: { id: 'user-a-id', email: 'userA@test.com' }, 
-      error: null 
-    })
-    const userADocuments = await DocumentService.getByUserId('user-a-id')
+    // This approach was problematic because:
+    // 1. It didn't test actual RLS policies
+    // 2. Required complex mocking infrastructure
+    // 3. Could pass tests while RLS was broken
     
-    // Test User B context
-    mockGetUser.mockResolvedValue({ 
-      user: { id: 'user-b-id', email: 'userB@test.com' }, 
-      error: null 
-    })
-    const userBDocuments = await DocumentService.getByUserId('user-b-id')
-    
-    // Verify isolation
-    expect(userADocuments).not.toEqual(userBDocuments)
-    expect(userADocuments.every(doc => doc.created_by === 'user-a-id')).toBe(true)
+    // Replaced with real RLS testing above
   })
 })
 ```
@@ -610,20 +718,52 @@ describe('DocumentService user isolation', () => {
 ### API Route Authentication Testing
 
 ```typescript
+// Current approach: API routes rely on RLS policies for security
+describe('API route RLS integration', () => {
+  let setup: RealRLSTestSetup
+  
+  beforeAll(async () => {
+    setup = new RealRLSTestSetup()
+  })
+  
+  it('should enforce document ownership through RLS', async () => {
+    // Create document owned by User A
+    const document = await setup.createTestDocument({
+      title: 'User A Document', 
+      created_by: TEST_USER_IDS.USER_A
+    })
+    
+    // Create JWT tokens for authentication
+    const userAToken = setup.createTestJWT(TEST_USER_IDS.USER_A)
+    const userBToken = setup.createTestJWT(TEST_USER_IDS.USER_B)
+    
+    // User A should access their document
+    const userARequest = new NextRequest(`http://localhost:3000/api/documents/${document.slug}`, {
+      headers: { 'Authorization': `Bearer ${userAToken}` }
+    })
+    const userAResponse = await GET(userARequest, { params: { slug: document.slug } })
+    expect(userAResponse.status).toBe(200)
+    
+    // User B should be blocked by RLS
+    const userBRequest = new NextRequest(`http://localhost:3000/api/documents/${document.slug}`, {
+      headers: { 'Authorization': `Bearer ${userBToken}` }
+    })
+    const userBResponse = await GET(userBRequest, { params: { slug: document.slug } })
+    expect(userBResponse.status).toBe(404) // RLS blocks access
+  })
+})
+```
+
+### Legacy API Route Testing (Deprecated)
+
+```typescript
+// ❌ DEPRECATED: Complex mocking approach
 describe('API route authentication', () => {
   it('should enforce document ownership', async () => {
-    // Mock User A trying to access User B's document
+    // This approach required extensive mocking and didn't test real RLS
     const mockGetUser = getUser as jest.MockedFunction<typeof getUser>
-    mockGetUser.mockResolvedValue({ user: { id: 'user-a-id' }, error: null })
-    
     const mockIsOwnedByUser = jest.fn().mockResolvedValue(false)
-    DocumentService.prototype.isOwnedByUser = mockIsOwnedByUser
-    
-    const request = new NextRequest('http://localhost:3000/api/documents/user-b-doc')
-    const response = await GET(request, { params: { slug: 'user-b-doc' } })
-    
-    expect(response.status).toBe(404) // Access denied
-    expect(mockIsOwnedByUser).toHaveBeenCalledWith('user-b-doc', 'user-a-id')
+    // ... complex mocking setup that could miss real security issues
   })
 })
 ```
@@ -657,6 +797,195 @@ describe('Multi-user scenarios', () => {
 })
 ```
 
+## Critical Security Discovery and Fix
+
+### AI Calls RLS Vulnerability (Fixed)
+
+**Issue**: The original AI calls RLS policy had a critical security vulnerability that allowed any authenticated user to access any document-independent AI call created by any other user.
+
+**Root Cause**: The policy used `OR` logic that was too permissive:
+```sql
+-- ❌ VULNERABLE: Original policy
+CREATE POLICY "ai_calls_access_policy" ON "public"."ai_calls"
+AS PERMISSIVE FOR ALL TO authenticated
+USING (
+  auth.uid() = created_by OR 
+  (
+    document_id IS NULL OR 
+    document_id IN (
+      SELECT id FROM documents WHERE created_by = auth.uid()
+    )
+  )
+);
+```
+
+**Problem**: The `document_id IS NULL` condition allowed access to ANY document-independent AI call, regardless of who created it.
+
+**Discovery**: Found during real RLS testing implementation when User B could access User A's document-independent AI calls.
+
+**Fix**: Applied in migration `20250613000003_fix_admin_policy_security_bugs.sql`:
+```sql
+-- ✅ SECURE: Fixed policy with proper AND logic
+CREATE POLICY "ai_calls_access_policy" ON "public"."ai_calls"
+AS PERMISSIVE FOR ALL TO authenticated
+USING (
+  auth.uid() = created_by AND (
+    document_id IS NULL OR 
+    document_id IN (
+      SELECT id FROM documents WHERE created_by = auth.uid()
+    )
+  )
+);
+```
+
+**Validation**: All 8 RLS tests now pass, confirming the security fix works correctly.
+
+**Lessons Learned**:
+1. **Real RLS testing is essential** - The simulated approach missed this vulnerability
+2. **Complex RLS policies need careful review** - `OR` conditions can create unintended access
+3. **Test document-independent scenarios** - Don't just test document-linked resources
+4. **Cross-user access tests are critical** - Always test that User B cannot access User A's data
+
+## Real RLS Testing Implementation Guide
+
+### Quick Start
+
+1. **Import the real RLS testing infrastructure**:
+```typescript
+import { RealRLSTestSetup, RLSAssertions } from '@/lib/services/database/__tests__/rls-test-helpers'
+import { TEST_USER_IDS } from '@/lib/testing/rls-test-context'
+```
+
+2. **Set up test infrastructure**:
+```typescript
+describe('Your RLS tests', () => {
+  let setup: RealRLSTestSetup
+  
+  beforeAll(async () => {
+    setup = new RealRLSTestSetup()
+  })
+  
+  afterAll(async () => {
+    await setup.cleanup()
+  })
+})
+```
+
+3. **Test ownership isolation pattern**:
+```typescript
+it('should enforce user isolation', async () => {
+  // Create resource owned by User A
+  const resource = await setup.createTestDocument({
+    created_by: TEST_USER_IDS.USER_A
+  })
+  
+  // Test access with different user contexts
+  const userAClient = await setup.createUserClient(TEST_USER_IDS.USER_A)
+  const userBClient = await setup.createUserClient(TEST_USER_IDS.USER_B)
+  
+  // User A should have access
+  const ownerResult = await setup.testResourceAccess(userAClient, 'documents', resource.id)
+  RLSAssertions.assertHasAccess(ownerResult)
+  
+  // User B should be blocked
+  const blockedResult = await setup.testResourceAccess(userBClient, 'documents', resource.id)
+  RLSAssertions.assertBlockedAccess(blockedResult)
+})
+```
+
+### Environment Requirements
+
+Ensure your test environment has these variables:
+```bash
+# Required for RLS testing
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+SUPABASE_JWT_SECRET=your_jwt_secret  # Required for token generation
+```
+
+### Common Test Patterns
+
+**Document Ownership Isolation**:
+```typescript
+it('documents respect user ownership', async () => {
+  const document = await setup.createTestDocument({ created_by: TEST_USER_IDS.USER_A })
+  
+  const userAClient = await setup.createUserClient(TEST_USER_IDS.USER_A)
+  const userBClient = await setup.createUserClient(TEST_USER_IDS.USER_B)
+  
+  const ownerAccess = await setup.testResourceAccess(userAClient, 'documents', document.id)
+  const nonOwnerAccess = await setup.testResourceAccess(userBClient, 'documents', document.id)
+  
+  RLSAssertions.assertHasAccess(ownerAccess)
+  RLSAssertions.assertBlockedAccess(nonOwnerAccess)
+})
+```
+
+**Profile Access Isolation**:
+```typescript
+it('profiles respect user isolation', async () => {
+  await setup.createTestProfile({ user_id: TEST_USER_IDS.USER_A })
+  
+  const userAClient = await setup.createUserClient(TEST_USER_IDS.USER_A)
+  const userBClient = await setup.createUserClient(TEST_USER_IDS.USER_B)
+  
+  const ownProfile = await setup.testProfileAccess(userAClient, TEST_USER_IDS.USER_A)
+  const otherProfile = await setup.testProfileAccess(userBClient, TEST_USER_IDS.USER_A)
+  
+  RLSAssertions.assertHasAccess(ownProfile)
+  RLSAssertions.assertBlockedAccess(otherProfile)
+})
+```
+
+**AI Calls with Document Relationships**:
+```typescript
+it('AI calls follow document ownership', async () => {
+  const document = await setup.createTestDocument({ created_by: TEST_USER_IDS.USER_A })
+  const aiCall = await setup.createTestAICall({ 
+    document_id: document.id,
+    created_by: TEST_USER_IDS.USER_A 
+  })
+  
+  const userAClient = await setup.createUserClient(TEST_USER_IDS.USER_A)
+  const userBClient = await setup.createUserClient(TEST_USER_IDS.USER_B)
+  
+  const ownerAccess = await setup.testResourceAccess(userAClient, 'ai_calls', aiCall.id)
+  const nonOwnerAccess = await setup.testResourceAccess(userBClient, 'ai_calls', aiCall.id)
+  
+  RLSAssertions.assertHasAccess(ownerAccess)
+  RLSAssertions.assertBlockedAccess(nonOwnerAccess)
+})
+```
+
+### Troubleshooting RLS Tests
+
+**Test Failures (Often Expected)**:
+- RLS tests are designed to fail when access should be blocked
+- Use `RLSAssertions.assertBlockedAccess()` to properly handle expected failures
+- Error code `PGRST116` indicates RLS is working correctly
+
+**JWT Token Issues**:
+```typescript
+// Ensure JWT secret is configured
+if (!process.env.SUPABASE_JWT_SECRET) {
+  throw new Error('SUPABASE_JWT_SECRET required for RLS testing')
+}
+
+// JWT tokens are automatically created by RealRLSTestSetup
+// No manual token management needed
+```
+
+**Performance Issues**:
+- RLS tests should complete in <500ms each
+- Use `beforeAll/afterAll` instead of `beforeEach/afterEach` for setup
+- Don't reset the entire database between tests
+
+**False Positives**:
+- If tests pass when they should fail, check that you're using authenticated clients (not admin)
+- Verify JWT tokens are being used: `client.auth.getUser()` should return the test user
+- Ensure you're testing with anon key, not service role key
+
 ## Testing Best Practices
 
 ### Test Organization
@@ -689,6 +1018,7 @@ describe('Multi-user scenarios', () => {
 
 ---
 
-*Last updated: 6 June 2025*  
-*Testing Status: Comprehensive Authentication Test Suite ✅*  
-*Next review: After authentication system updates or security changes*
+*Last updated: 13 June 2025*  
+*Testing Status: Real RLS Testing Implementation ✅*  
+*Security Status: Critical AI calls vulnerability discovered and fixed ✅*  
+*Next review: After RLS policy changes or security updates*
