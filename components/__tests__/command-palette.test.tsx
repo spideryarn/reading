@@ -1,6 +1,5 @@
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { useRouter } from 'next/navigation'
 import { CommandPalette } from '../command-palette'
 import { useAuth } from '@/lib/context/auth-context'
@@ -25,7 +24,7 @@ jest.mock('@/lib/context/document-communication-context', () => ({
 
 // Mock shadcn/ui command components
 jest.mock('@/components/ui/command', () => ({
-  CommandDialog: ({ children, open, onOpenChange }: any) => (
+  CommandDialog: ({ children, open, onOpenChange }: { children: React.ReactNode; open: boolean; onOpenChange: (open: boolean) => void }) => (
     open ? (
       <div data-testid="command-dialog" role="dialog">
         <button onClick={() => onOpenChange(false)} data-testid="close-dialog">Close</button>
@@ -33,16 +32,16 @@ jest.mock('@/components/ui/command', () => ({
       </div>
     ) : null
   ),
-  CommandInput: ({ placeholder, ...props }: any) => (
+  CommandInput: ({ placeholder, ...props }: { placeholder?: string; [key: string]: unknown }) => (
     <input data-testid="command-input" placeholder={placeholder} {...props} />
   ),
-  CommandList: ({ children }: any) => (
+  CommandList: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="command-list">{children}</div>
   ),
-  CommandEmpty: ({ children }: any) => (
+  CommandEmpty: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="command-empty">{children}</div>
   ),
-  CommandGroup: ({ children, heading }: any) => (
+  CommandGroup: ({ children, heading }: { children: React.ReactNode; heading?: string }) => (
     <div data-testid="command-group">
       {heading && <div data-testid="group-heading">{heading}</div>}
       {children}

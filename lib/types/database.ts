@@ -48,7 +48,6 @@ export type Database = {
           finish_reason: string | null
           id: string
           latency_ms: number | null
-          metadata: Json | null
           model_id: string
           prompt_input: string
           prompt_template: string | null
@@ -72,7 +71,6 @@ export type Database = {
           finish_reason?: string | null
           id?: string
           latency_ms?: number | null
-          metadata?: Json | null
           model_id: string
           prompt_input: string
           prompt_template?: string | null
@@ -96,7 +94,6 @@ export type Database = {
           finish_reason?: string | null
           id?: string
           latency_ms?: number | null
-          metadata?: Json | null
           model_id?: string
           prompt_input?: string
           prompt_template?: string | null
@@ -182,7 +179,6 @@ export type Database = {
           created_at: string | null
           extra: Json | null
           id: string
-          metadata: Json | null
           role: string
           sequence_number: number
           thread_id: string
@@ -193,7 +189,6 @@ export type Database = {
           created_at?: string | null
           extra?: Json | null
           id?: string
-          metadata?: Json | null
           role: string
           sequence_number: number
           thread_id: string
@@ -204,7 +199,6 @@ export type Database = {
           created_at?: string | null
           extra?: Json | null
           id?: string
-          metadata?: Json | null
           role?: string
           sequence_number?: number
           thread_id?: string
@@ -233,7 +227,6 @@ export type Database = {
           document_id: string | null
           extra: Json | null
           id: string
-          metadata: Json | null
           model_id: string | null
           title: string | null
           updated_at: string | null
@@ -244,7 +237,6 @@ export type Database = {
           document_id?: string | null
           extra?: Json | null
           id?: string
-          metadata?: Json | null
           model_id?: string | null
           title?: string | null
           updated_at?: string | null
@@ -255,7 +247,6 @@ export type Database = {
           document_id?: string | null
           extra?: Json | null
           id?: string
-          metadata?: Json | null
           model_id?: string | null
           title?: string | null
           updated_at?: string | null
@@ -285,7 +276,6 @@ export type Database = {
           document_id: string
           extra: Json | null
           id: string
-          metadata: Json | null
           subtype: string
           type: string
           updated_at: string | null
@@ -297,7 +287,6 @@ export type Database = {
           document_id: string
           extra?: Json | null
           id?: string
-          metadata?: Json | null
           subtype: string
           type: string
           updated_at?: string | null
@@ -309,7 +298,6 @@ export type Database = {
           document_id?: string
           extra?: Json | null
           id?: string
-          metadata?: Json | null
           subtype?: string
           type?: string
           updated_at?: string | null
@@ -339,7 +327,6 @@ export type Database = {
           id: string
           is_public: boolean | null
           language_code: string | null
-          metadata: Json | null
           original_file_type: string | null
           plaintext_content: string
           slug: string
@@ -358,7 +345,6 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           language_code?: string | null
-          metadata?: Json | null
           original_file_type?: string | null
           plaintext_content: string
           slug: string
@@ -377,7 +363,6 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           language_code?: string | null
-          metadata?: Json | null
           original_file_type?: string | null
           plaintext_content?: string
           slug?: string
@@ -404,7 +389,6 @@ export type Database = {
           created_at: string | null
           id: string
           is_admin: string | null
-          metadata: Json | null
           preferences: Json | null
           stripe_customer_id: string | null
           subscription_ends_at: string | null
@@ -417,7 +401,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_admin?: string | null
-          metadata?: Json | null
           preferences?: Json | null
           stripe_customer_id?: string | null
           subscription_ends_at?: string | null
@@ -430,7 +413,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_admin?: string | null
-          metadata?: Json | null
           preferences?: Json | null
           stripe_customer_id?: string | null
           subscription_ends_at?: string | null

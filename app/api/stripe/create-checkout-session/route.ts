@@ -5,8 +5,9 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getOrCreateStripeCustomer } from '@/lib/services/stripe/customers'
-import { createCheckoutSession } from '@/lib/services/stripe/subscriptions'
+// TODO: Stripe services temporarily disabled for deployment - missing STRIPE_SECRET_KEY env var
+// import { getOrCreateStripeCustomer } from '@/lib/services/stripe/customers'
+// import { createCheckoutSession } from '@/lib/services/stripe/subscriptions'
 import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
 
 export async function POST(request: NextRequest) {
@@ -56,13 +57,23 @@ export async function POST(request: NextRequest) {
     // Parse request body for custom URLs (optional)
     const { successUrl, cancelUrl } = await request.json().catch(() => ({}))
 
+    // TODO: Stripe customer creation temporarily disabled for deployment
+    /*
     // Get or create Stripe customer
     const { customer, error: customerError } = await getOrCreateStripeCustomer(
       user.id,
       user.email!,
       user.user_metadata?.full_name
     )
+    */
+    
+    // Return early with service unavailable for now
+    return NextResponse.json(
+      { error: 'Stripe checkout temporarily unavailable - service not configured' },
+      { status: 503 }
+    )
 
+    /* TODO: Restore when Stripe is configured
     if (customerError || !customer) {
       console.error('Failed to create/retrieve customer:', customerError)
       
@@ -118,6 +129,7 @@ export async function POST(request: NextRequest) {
       url,
       customerId: customer.id 
     })
+    */
   } catch (error) {
     console.error('Error in create-checkout-session:', error)
     

@@ -14,10 +14,10 @@ describe('Sanitization Edge Cases and Performance', () => {
   
   describe('Input Validation Edge Cases', () => {
     it('should handle null and undefined inputs gracefully', () => {
-      expect(() => sanitizeAcademicContent(null as any)).toThrow('HTML content must be a string')
-      expect(() => sanitizeAcademicContent(undefined as any)).toThrow('HTML content must be a string')
-      expect(() => sanitizeUserContent(null as any)).toThrow('HTML content must be a string')
-      expect(() => sanitizeUserContent(undefined as any)).toThrow('HTML content must be a string')
+      expect(() => sanitizeAcademicContent(null as unknown as string)).toThrow('HTML content must be a string')
+      expect(() => sanitizeAcademicContent(undefined as unknown as string)).toThrow('HTML content must be a string')
+      expect(() => sanitizeUserContent(null as unknown as string)).toThrow('HTML content must be a string')
+      expect(() => sanitizeUserContent(undefined as unknown as string)).toThrow('HTML content must be a string')
     })
 
     it('should handle non-string inputs', () => {

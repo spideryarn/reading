@@ -3,7 +3,7 @@
  */
 import { POST } from '../tweet-thread/route'
 import { executePromptWithUsage } from '@/lib/prompts/types'
-import { testApiRoute, createMockRequest } from './test-helpers'
+import { createMockRequest } from './test-helpers'
 import type { MockSupabaseClient } from './test-types'
 
 // Mock the dependencies

@@ -12,7 +12,8 @@
 import { POST as uploadPdfPost } from '../upload-pdf/route'
 import { POST as extractUrlPost } from '../extract-url/route'
 import { createClient } from '@/lib/supabase/server'
-import { DocumentService } from '@/lib/services/database/documents'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/types/database'
 import { sanitizeAcademicContent } from '@/lib/utils/html-sanitizer'
 import { getTestNamespace, createTestEmail, createTestMetadata } from '@/lib/testing/test-isolation-utils'
 import type { MockFileArrayBuffer, MockFormDataRequest } from './test-types'
@@ -47,14 +48,12 @@ const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>
 
 describe('Cross-API Sanitization Consistency', () => {
   const namespace = getTestNamespace('cross-api-sanitization')
-  let supabase: any
-  let documentService: DocumentService
+  let supabase: SupabaseClient<Database>
   let testUserId: string
 
   beforeAll(async () => {
     // Set up real database connection
     supabase = await createClient()
-    documentService = new DocumentService(supabase)
     
     // Create a test user profile
     testUserId = `test-user-${namespace}`

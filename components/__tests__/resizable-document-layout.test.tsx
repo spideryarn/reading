@@ -1,18 +1,17 @@
 import React from 'react';
-import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from './test-wrapper';
-import userEvent from '@testing-library/user-event';
 import { ResizableDocumentLayout } from '../resizable-document-layout';
 import type { DocumentElement } from '@/lib/types/document';
 
 // Mock shadcn/ui resizable components
 jest.mock('@/components/ui/resizable', () => ({
-  ResizablePanelGroup: ({ children, direction, className }: any) => (
+  ResizablePanelGroup: ({ children, direction, className }: { children: React.ReactNode; direction?: string; className?: string }) => (
     <div data-testid="resizable-panel-group" data-direction={direction} className={className}>
       {children}
     </div>
   ),
-  ResizablePanel: ({ children, defaultSize, minSize, maxSize, className, style }: any) => (
+  ResizablePanel: ({ children, defaultSize, minSize, maxSize, className, style }: { children: React.ReactNode; defaultSize?: number; minSize?: number; maxSize?: number; className?: string; style?: Record<string, unknown> }) => (
     <div 
       data-testid="resizable-panel" 
       data-default-size={defaultSize}
@@ -24,7 +23,7 @@ jest.mock('@/components/ui/resizable', () => ({
       {children}
     </div>
   ),
-  ResizableHandle: ({ withHandle, className, style }: any) => (
+  ResizableHandle: ({ withHandle, className, style }: { withHandle?: boolean; className?: string; style?: Record<string, unknown> }) => (
     <div 
       data-testid="resizable-handle" 
       data-with-handle={withHandle}

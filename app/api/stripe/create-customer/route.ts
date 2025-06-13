@@ -5,7 +5,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getOrCreateStripeCustomer } from '@/lib/services/stripe/customers'
+// TODO: Stripe services temporarily disabled for deployment - missing STRIPE_SECRET_KEY env var
+// import { getOrCreateStripeCustomer } from '@/lib/services/stripe/customers'
 import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
 
 export async function POST(request: NextRequest) {
@@ -17,6 +18,12 @@ export async function POST(request: NextRequest) {
       method: 'POST',
       correlationId
     }, 'Stripe customer creation request initiated')
+    
+    // TODO: Customer creation temporarily disabled for deployment - missing Stripe config
+    return NextResponse.json(
+      { error: 'Stripe customer creation temporarily unavailable - service not configured' },
+      { status: 503 }
+    )
     
     // Check if Stripe is properly configured (development check)
     if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.includes('placeholder')) {

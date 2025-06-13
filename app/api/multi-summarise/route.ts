@@ -211,7 +211,7 @@ export async function POST(request: NextRequest) {
     try {
       summaryResult = await executePromptWithUsage(multiSummarisePrompt, { content })
       
-      const aiDuration = aiTimer.end({
+      aiTimer.end({
         documentId,
         aiCallId: aiCall.id,
         tokensUsed: summaryResult.usage?.totalTokens,

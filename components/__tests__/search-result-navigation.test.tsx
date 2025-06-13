@@ -3,7 +3,6 @@ import { screen, fireEvent, waitFor } from '@testing-library/react'
 import { renderWithProviders } from './test-wrapper'
 import '@testing-library/jest-dom'
 import { UnifiedLeftPane } from '../unified-left-pane'
-import { ResizableDocumentLayout } from '../resizable-document-layout'
 import { DocumentElement } from '@/lib/types/document'
 
 // Mock Mark.js

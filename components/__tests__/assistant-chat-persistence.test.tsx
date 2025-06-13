@@ -1,9 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { AssistantChat } from '../assistant-chat';
 import { usePersistentChat } from '@/src/lib/hooks/usePersistentChat';
-import type { Message } from '@assistant-ui/react';
 
 // Mock the persistent chat hook
 jest.mock('@/src/lib/hooks/usePersistentChat');
@@ -12,11 +10,11 @@ jest.mock('@/src/lib/hooks/usePersistentChat');
 jest.mock('@assistant-ui/react', () => ({
   AssistantRuntimeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   ThreadPrimitive: {
-    Root: ({ children, className }: any) => <div className={className}>{children}</div>,
-    Viewport: ({ children, className }: any) => <div className={className}>{children}</div>,
-    Empty: ({ children }: any) => <div data-testid="thread-empty">{children}</div>,
-    Messages: ({ components }: any) => <div data-testid="thread-messages">Messages</div>,
-    Suggestion: ({ children, prompt, onClick, asChild }: any) => {
+    Root: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
+    Viewport: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
+    Empty: ({ children }: { children: React.ReactNode }) => <div data-testid="thread-empty">{children}</div>,
+    Messages: () => <div data-testid="thread-messages">Messages</div>,
+    Suggestion: ({ children, prompt, onClick, asChild }: { children?: React.ReactNode; prompt: string; onClick: () => void; asChild?: boolean }) => {
       if (asChild && children) {
         // Clone the child element and add our test props
         return React.cloneElement(children as React.ReactElement, {
@@ -30,21 +28,21 @@ jest.mock('@assistant-ui/react', () => ({
         </button>
       );
     },
-    If: ({ children, running }: any) => {
+    If: ({ children }: { children: React.ReactNode }) => {
       // For testing, always render children to make them accessible
       return <>{children}</>;
     },
   },
   ComposerPrimitive: {
-    Root: ({ children, className }: any) => <div className={className}>{children}</div>,
-    Input: ({ placeholder, ...props }: any) => (
+    Root: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
+    Input: ({ placeholder, ...props }: { placeholder?: string; [key: string]: unknown }) => (
       <textarea
         data-testid="composer-input"
         placeholder={placeholder}
         {...props}
       />
     ),
-    Send: ({ children, asChild }: any) => {
+    Send: ({ children, asChild }: { children?: React.ReactNode; asChild?: boolean }) => {
       if (asChild && children) {
         // Clone the child element and add our test props
         return React.cloneElement(children as React.ReactElement, {
@@ -53,21 +51,21 @@ jest.mock('@assistant-ui/react', () => ({
       }
       return <button data-testid="send-button">{children}</button>;
     },
-    Cancel: ({ children, asChild }: any) => {
+    Cancel: ({ children, asChild }: { children?: React.ReactNode; asChild?: boolean }) => {
       const Component = asChild ? children.type : 'button';
       return <Component data-testid="cancel-button">{asChild ? children.props.children : children}</Component>;
     },
   },
   MessagePrimitive: {
-    Root: ({ children, className }: any) => <div className={className}>{children}</div>,
-    Content: ({ components }: any) => <div data-testid="message-content">Message content</div>,
-    If: ({ children, hasContent }: any) => (hasContent ? children : null),
+    Root: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
+    Content: () => <div data-testid="message-content">Message content</div>,
+    If: ({ children, hasContent }: { children: React.ReactNode; hasContent?: boolean }) => (hasContent ? children : null),
   },
 }));
 
 // Mock @assistant-ui/react-markdown
 jest.mock('@assistant-ui/react-markdown', () => ({
-  MarkdownText: ({ children }: any) => <div>{children}</div>,
+  MarkdownText: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 // Mock Phosphor icons

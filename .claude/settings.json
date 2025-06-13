@@ -3,9 +3,7 @@
     "allow": [
       "Bash(ls:*)",
       "Bash(find:*)",
-      "Bash(mkdir:*)",
       "Bash(mv:*)",
-      "Bash(cat:*)",
       "Bash(chmod:*)",
       "Bash(grep:*)",
       "Bash(rg:*)",

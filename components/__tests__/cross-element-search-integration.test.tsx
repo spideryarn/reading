@@ -6,14 +6,14 @@ import type { DocumentElement } from '@/lib/types/document'
 
 // Mock the resizable components
 jest.mock('@/components/ui/resizable', () => ({
-  ResizablePanelGroup: ({ children }: any) => <div data-testid="panel-group">{children}</div>,
-  ResizablePanel: ({ children }: any) => <div data-testid="panel">{children}</div>,
+  ResizablePanelGroup: ({ children }: { children: React.ReactNode }) => <div data-testid="panel-group">{children}</div>,
+  ResizablePanel: ({ children }: { children: React.ReactNode }) => <div data-testid="panel">{children}</div>,
   ResizableHandle: () => <div data-testid="handle" />
 }))
 
 // Mock debounce to execute immediately
 jest.mock('@/lib/utils/debounce', () => ({
-  debounce: (fn: any) => fn
+  debounce: (fn: (...args: unknown[]) => void) => fn
 }))
 
 describe('Cross-Element Search Integration', () => {

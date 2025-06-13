@@ -3,7 +3,7 @@
 Use tasks whenever there's more than a couple of things to keep track of.
 
 Use subagents where appropriate:
-- e.g. for running a battery of tests, curl, Puppeteer/Playwright or other browser automation, other verbose output, Git commits, any other verbose-output, and anywhere else where you think it's a good fit
+- e.g. for running a battery of tests, checking lint/build, curl, Puppeteer/Playwright or other browser automation, other verbose output, Git commits, any other verbose-output, and anywhere else where you think it's a good fit
 - They are especially valuable as a way to avoid filling up your context window
 - They are also a good fit for encapsulated & well-defined tasks, i.e. tasks that don't need the full context of the conversation so far, and/or where we only need a summary of what was done in order to proceed
 - Use subagents in parallel where possible (because this is faster), but only if there isn't a dependency between tasks (e.g. the output of this one is useful as input for the next)

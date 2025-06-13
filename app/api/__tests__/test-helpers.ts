@@ -27,10 +27,10 @@ function createMockRequest(url: string, options: MockRequestOptions = {}) {
 
 // Helper to test API routes using next-test-api-route-handler
 async function testApiRoute(
-  handler: any,
+  handler: (request: Request) => Promise<Response>,
   options: TestApiOptions = {}
 ) {
-  let responseBody: any;
+  let responseBody: unknown;
   let responseStatus: number;
   let responseHeaders: Headers;
 

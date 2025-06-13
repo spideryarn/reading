@@ -23,8 +23,9 @@ export function TestWrapper({ children }: TestWrapperProps) {
 /**
  * Helper function to render components with necessary providers
  */
+import { render } from '@testing-library/react';
+
 export function renderWithProviders(ui: React.ReactElement, options = {}) {
-  const { render } = require('@testing-library/react');
   
   return render(ui, {
     wrapper: TestWrapper,

@@ -13,6 +13,8 @@ import { POST } from '../extract-url/route'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/types/database'
 import { getTestNamespace, createTestEmail, createTestMetadata } from '@/lib/testing/test-isolation-utils'
 
 // Mock the multimodal prompt execution
@@ -47,16 +49,14 @@ const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>
 
 describe('URL Extract API - Sanitization Integration', () => {
   const namespace = getTestNamespace('extract-url-sanitization')
-  let supabase: any
+  let supabase: SupabaseClient<Database>
   let documentService: DocumentService
-  let aiCallService: AiCallService
   let testUserId: string
 
   beforeAll(async () => {
     // Set up real database connection
     supabase = await createClient()
     documentService = new DocumentService(supabase)
-    aiCallService = new AiCallService(supabase)
     
     // Create a test user profile
     testUserId = `test-user-${namespace}`

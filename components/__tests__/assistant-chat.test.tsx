@@ -42,23 +42,23 @@ jest.mock('@assistant-ui/react', () => {
     AssistantRuntimeProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
     
     ThreadPrimitive: {
-      Root: ({ children, className }: any) => <div className={className}>{children}</div>,
-      Viewport: ({ children, className }: any) => <div className={className}>{children}</div>,
-      Empty: ({ children }: any) => {
+      Root: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
+      Viewport: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
+      Empty: ({ children }: { children: React.ReactNode }) => {
         if (mockThread.messages.length === 0) return <div>{children}</div>;
         return null;
       },
-      Messages: ({ components }: any) => {
+      Messages: ({ components }: { components?: Record<string, React.ComponentType> }) => {
         return (
           <div>
-            {mockThread.messages.map((msg: any, idx: number) => {
-              const Component = msg.role === 'user' ? components.UserMessage : components.AssistantMessage;
-              return <Component key={idx} />;
+            {mockThread.messages.map((msg: Record<string, unknown>, idx: number) => {
+              const Component = msg.role === 'user' ? components?.UserMessage : components?.AssistantMessage;
+              return Component ? <Component key={idx} /> : null;
             })}
           </div>
         );
       },
-      Suggestion: ({ children, prompt, autoSend, asChild, ...props }: any) => {
+      Suggestion: ({ children, prompt, autoSend, asChild, ...props }: { children?: React.ReactNode; prompt: string; autoSend?: boolean; asChild?: boolean; [key: string]: unknown }) => {
         const handleClick = () => {
           if (autoSend) {
             mockComposer.setText(prompt);
@@ -82,13 +82,13 @@ jest.mock('@assistant-ui/react', () => {
     },
     
     MessagePrimitive: {
-      Root: ({ children }: any) => <div className="flex gap-3 mb-4">{children}</div>,
+      Root: ({ children }: { children: React.ReactNode }) => <div className="flex gap-3 mb-4">{children}</div>,
       Content: () => <div>Test message content</div>,
     },
     
     ComposerPrimitive: {
-      Root: ({ children, className }: any) => <div className={className}>{children}</div>,
-      Input: ({ placeholder, className, ...props }: any) => (
+      Root: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
+      Input: ({ placeholder, className, ...props }: { placeholder?: string; className?: string; [key: string]: unknown }) => (
         <textarea 
           placeholder={placeholder}
           className={className}
@@ -97,7 +97,7 @@ jest.mock('@assistant-ui/react', () => {
           {...props}
         />
       ),
-      Send: ({ children, asChild, ...props }: any) => {
+      Send: ({ children, asChild, ...props }: { children?: React.ReactNode; asChild?: boolean; [key: string]: unknown }) => {
         const handleClick = () => mockComposer.send();
         if (asChild) {
           return React.cloneElement(children as React.ReactElement, { onClick: handleClick });

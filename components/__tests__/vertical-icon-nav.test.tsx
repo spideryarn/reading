@@ -3,25 +3,25 @@ import { VerticalIconNav } from '../vertical-icon-nav'
 
 // Mock Phosphor icons
 jest.mock('@phosphor-icons/react', () => ({
-  Article: ({ size, weight, className }: any) => (
+  Article: ({ size, weight, className }: { size?: number; weight?: string; className?: string }) => (
     <div data-testid="article-icon" data-size={size} data-weight={weight} className={className}>Article</div>
   ),
-  Robot: ({ size, weight, className }: any) => (
+  Robot: ({ size, weight, className }: { size?: number; weight?: string; className?: string }) => (
     <div data-testid="robot-icon" data-size={size} data-weight={weight} className={className}>Robot</div>
   ),
-  ListBullets: ({ size, weight, className }: any) => (
+  ListBullets: ({ size, weight, className }: { size?: number; weight?: string; className?: string }) => (
     <div data-testid="list-bullets-icon" data-size={size} data-weight={weight} className={className}>ListBullets</div>
   ),
-  ChatCircle: ({ size, weight, className }: any) => (
+  ChatCircle: ({ size, weight, className }: { size?: number; weight?: string; className?: string }) => (
     <div data-testid="chat-circle-icon" data-size={size} data-weight={weight} className={className}>ChatCircle</div>
   ),
-  BookOpen: ({ size, weight, className }: any) => (
+  BookOpen: ({ size, weight, className }: { size?: number; weight?: string; className?: string }) => (
     <div data-testid="book-open-icon" data-size={size} data-weight={weight} className={className}>BookOpen</div>
   ),
-  MagnifyingGlass: ({ size, weight, className }: any) => (
+  MagnifyingGlass: ({ size, weight, className }: { size?: number; weight?: string; className?: string }) => (
     <div data-testid="magnifying-glass-icon" data-size={size} data-weight={weight} className={className}>MagnifyingGlass</div>
   ),
-  SidebarSimple: ({ size, weight, className }: any) => (
+  SidebarSimple: ({ size, weight, className }: { size?: number; weight?: string; className?: string }) => (
     <div data-testid="sidebar-simple-icon" data-size={size} data-weight={weight} className={className}>SidebarSimple</div>
   ),
 }))

@@ -5,8 +5,9 @@
 
 import { headers } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
-import { stripe } from '@/lib/services/stripe/client'
-import { processSubscriptionWebhook } from '@/lib/services/stripe/subscriptions'
+// TODO: Stripe services temporarily disabled for deployment - missing STRIPE_SECRET_KEY env var
+// import { stripe } from '@/lib/services/stripe/client'
+// import { processSubscriptionWebhook } from '@/lib/services/stripe/subscriptions'
 import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
 
 export async function POST(request: NextRequest) {
@@ -21,6 +22,12 @@ export async function POST(request: NextRequest) {
     hasSignature: !!signature,
     bodyLength: body.length
   }, 'Processing Stripe webhook request')
+
+  // TODO: Webhook processing temporarily disabled for deployment - missing Stripe config
+  return NextResponse.json(
+    { error: 'Stripe webhooks temporarily unavailable - service not configured' },
+    { status: 503 }
+  )
 
   if (!signature) {
     // Legacy console.error for transition period

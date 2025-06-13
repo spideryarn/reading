@@ -13,9 +13,10 @@ import { POST } from '../upload-pdf/route'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { sanitizeAcademicContent } from '@/lib/utils/html-sanitizer'
 import { getTestNamespace, createTestEmail, createTestMetadata } from '@/lib/testing/test-isolation-utils'
 import type { MockFileArrayBuffer, MockFormDataRequest } from './test-types'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/types/database'
 
 // Mock the multimodal prompt execution
 jest.mock('@/lib/prompts/types', () => ({
@@ -41,7 +42,7 @@ const mockValidateAuth = validateAuth as jest.MockedFunction<typeof validateAuth
 
 describe('PDF Upload API - Sanitization Integration', () => {
   const namespace = getTestNamespace('upload-pdf-sanitization')
-  let supabase: any
+  let supabase: SupabaseClient<Database>
   let documentService: DocumentService
   let aiCallService: AiCallService
   let testUserId: string

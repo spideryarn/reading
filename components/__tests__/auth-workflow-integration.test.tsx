@@ -28,9 +28,9 @@ Object.defineProperty(window, 'location', {
 // Mock the entire auth forms to have better control over testing
 jest.mock('@/components/auth/login-form', () => ({
   LoginForm: () => {
-    const React = require('react')
-    const { createClient } = require('@/lib/supabase/client')
-    const { useRouter, useSearchParams } = require('next/navigation')
+    const React = jest.requireActual('react')
+    const { createClient } = jest.requireActual('@/lib/supabase/client')
+    const { useRouter, useSearchParams } = jest.requireActual('next/navigation')
     const [email, setEmail] = React.useState('')
     const [password, setPassword] = React.useState('')
     const [error, setError] = React.useState(null)
@@ -75,8 +75,8 @@ jest.mock('@/components/auth/login-form', () => ({
           const redirectTo = searchParams.get('redirectTo') || '/'
           router.push(redirectTo)
         }
-      } catch (err: any) {
-        setError(err.message)
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'An error occurred')
       } finally {
         setIsLoading(false)
       }
@@ -144,9 +144,9 @@ jest.mock('@/components/auth/login-form', () => ({
 
 jest.mock('@/components/auth/signup-form', () => ({
   SignupForm: () => {
-    const React = require('react')
-    const { createClient } = require('@/lib/supabase/client')
-    const { useRouter, useSearchParams } = require('next/navigation')
+    const React = jest.requireActual('react')
+    const { createClient } = jest.requireActual('@/lib/supabase/client')
+    const { useRouter, useSearchParams } = jest.requireActual('next/navigation')
     const [email, setEmail] = React.useState('')
     const [password, setPassword] = React.useState('')
     const [confirmPassword, setConfirmPassword] = React.useState('')
@@ -205,8 +205,8 @@ jest.mock('@/components/auth/signup-form', () => ({
         } else {
           setShowSuccess(true)
         }
-      } catch (err: any) {
-        setError(err.message)
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'An error occurred')
       } finally {
         setIsLoading(false)
       }

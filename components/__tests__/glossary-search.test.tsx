@@ -7,7 +7,7 @@ const { useState, useMemo, useCallback, useEffect } = React
 
 // Mock the debounce function to execute immediately in tests
 jest.mock('@/lib/utils/debounce', () => ({
-  debounce: (fn: any) => fn
+  debounce: (fn: (...args: unknown[]) => void) => fn
 }))
 
 // Mock DocumentCommunicationContext
@@ -43,11 +43,9 @@ interface Entity {
 
 // Standalone GlossaryDisplay component for testing
 function TestGlossaryDisplay({ 
-  entities, 
-  elements 
+  entities 
 }: { 
   entities: Entity[]
-  elements: DocumentElement[]
 }) {
   const [searchTerm, setSearchTerm] = useState('')
   
@@ -64,7 +62,7 @@ function TestGlossaryDisplay({
   
   // Debounced search function
   const debouncedFilter = useMemo(
-    () => debounce((term: string) => {
+    () => debounce(() => {
       // The filtering happens in the render through filteredEntities
     }, 300),
     []
