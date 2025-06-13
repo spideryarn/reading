@@ -14,7 +14,7 @@ import { generateSlug, generateHtmlFilename } from '@/lib/utils/slug'
 import { URL_EXTRACTION_CONFIG } from '@/lib/config'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
 import { validateAuth } from '@/lib/auth/server-auth'
-import { createRequestLogger, generateCorrelationId, logAIOperation } from '@/lib/services/logger'
+import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 
 // URL validation function
 function isValidUrl(urlString: string): boolean {
@@ -89,6 +89,7 @@ async function fetchWebpageContent(url: string): Promise<string> {
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
   const requestLogger = createRequestLogger('/api/extract-url', correlationId)
+  const requestTimer = createTimer(requestLogger, 'extract-url-request')
   
   try {
     // Validate authentication first
@@ -445,6 +446,15 @@ export async function POST(request: NextRequest) {
         'success'
       )
     }
+    
+    // Complete request timing
+    requestTimer.end({
+      userId: user.id,
+      documentId: document.id,
+      extractionMethod: extractionMethodUsed,
+      provider: provider,
+      correlationId
+    })
     
     // Return comprehensive response with document details
     return NextResponse.json({

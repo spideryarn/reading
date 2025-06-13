@@ -12,11 +12,12 @@ import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelConfig, AI_CONFIG } from '@/lib/config'
 import { generateSlug } from '@/lib/utils/slug'
 import { validateAuth } from '@/lib/auth/server-auth'
-import { createRequestLogger, generateCorrelationId, logAIOperation } from '@/lib/services/logger'
+import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
   const requestLogger = createRequestLogger('/api/upload-pdf', correlationId)
+  const requestTimer = createTimer(requestLogger, 'upload-pdf-request')
   
   try {
     // Validate authentication first
@@ -235,6 +236,15 @@ export async function POST(request: NextRequest) {
         documentId: document.id
       }, 'Storage upload failed, document created without original file')
     }
+
+    // Complete request timing
+    requestTimer.end({
+      userId: user.id,
+      documentId: document.id,
+      provider: provider,
+      fileSize: pdfFile.size,
+      correlationId
+    })
 
     // Return comprehensive response with document details
     return NextResponse.json({

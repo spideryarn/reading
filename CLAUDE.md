@@ -133,11 +133,12 @@ Debugging resources:
 
 **Current logging patterns**:
 ```typescript
-// Standard API route pattern
-import { createRequestLogger, generateCorrelationId, logAIOperation } from '@/lib/services/logger'
+// Standard API route pattern with request timing
+import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 
 const correlationId = generateCorrelationId()
 const requestLogger = createRequestLogger('/api/route-name', correlationId)
+const requestTimer = createTimer(requestLogger, 'request-name')
 
 requestLogger.info({
   userId: user.id,
@@ -154,6 +155,9 @@ logAIOperation('content-extraction', {
   documentId,
   correlationId
 }, 'success')
+
+// Complete request timing at end
+requestTimer.end({ userId: user.id, documentId, correlationId })
 ```
 
 **Mixed logging approach** (current):

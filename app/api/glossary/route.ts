@@ -8,11 +8,12 @@ import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelConfig, AI_CONFIG } from '@/lib/config'
-import { createRequestLogger, generateCorrelationId, logAIOperation } from '@/lib/services/logger'
+import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
   const requestLogger = createRequestLogger('/api/glossary', correlationId)
+  const requestTimer = createTimer(requestLogger, 'glossary-request')
   
   try {
     const body = await request.json()
@@ -169,6 +170,14 @@ export async function POST(request: NextRequest) {
       tokensUsed: llmResult.usage.totalTokens
     }, 'Glossary generation completed and stored successfully')
     
+    // Complete request timing
+    requestTimer.end({
+      documentId,
+      entityCount: validatedResponse.entities.length,
+      tokensUsed: llmResult.usage.totalTokens,
+      correlationId
+    })
+    
     return NextResponse.json({
       ...validatedResponse,
       cached: false,
@@ -194,6 +203,7 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const correlationId = generateCorrelationId()
   const requestLogger = createRequestLogger('/api/glossary', correlationId)
+  const requestTimer = createTimer(requestLogger, 'glossary-delete-request')
   
   try {
     const body = await request.json()
@@ -223,6 +233,12 @@ export async function DELETE(request: NextRequest) {
       correlationId,
       documentId
     }, 'Glossary enhancement deleted successfully')
+    
+    // Complete request timing
+    requestTimer.end({
+      documentId,
+      correlationId
+    })
     
     return NextResponse.json({ success: true })
   } catch (error) {

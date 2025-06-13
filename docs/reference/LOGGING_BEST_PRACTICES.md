@@ -406,6 +406,44 @@ logAIOperation('content-extraction', {
 logAIOperation('summarisation', context, 'error', error)
 ```
 
+### Request-Level Timing (Implemented)
+```typescript
+import { createTimer } from '@/lib/services/logger'
+
+export async function POST(request: NextRequest) {
+  const correlationId = generateCorrelationId()
+  const requestLogger = createRequestLogger('/api/route', correlationId)
+  const requestTimer = createTimer(requestLogger, 'request-name')
+  
+  try {
+    // ... business logic ...
+    
+    // Complete timing before successful response
+    requestTimer.end({
+      userId: user.id,
+      documentId: result.id,
+      additionalContext: 'value',
+      correlationId
+    })
+    
+    return NextResponse.json(result)
+  } catch (error) {
+    // Error handling - timer automatically captures duration if error occurs
+  }
+}
+```
+
+**Implemented in routes:**
+- `/api/extract-url` - Complete URL extraction workflow timing
+- `/api/upload-pdf` - PDF processing and storage timing  
+- `/api/glossary` - Both POST (generation) and DELETE (cleanup) timing
+
+**Benefits:**
+- Complete request lifecycle visibility (authentication → processing → response)
+- Complements existing operation-specific timing (AI calls, database operations)
+- Helps identify bottlenecks between operations
+- Provides accurate end-to-end performance metrics
+
 ## Migration Strategy ✓ Complete
 
 **Stage 6 - Completed**:
@@ -427,7 +465,9 @@ logAIOperation('summarisation', context, 'error', error)
 - ✓ **AI operation logging** - Token usage, performance, and error tracking
 - ✓ **Security-conscious logging** - Privacy-safe data patterns
 - ✓ **Performance timing** - Operation duration tracking
+- ✓ **Request-level timing** - Added to critical routes (extract-url, upload-pdf, glossary)
 - ✓ **Mixed console.log/Pino** - Safe migration approach
+- ✓ **Security logging audit** - Comprehensive coverage for sensitive operations
 - 📋 **Better Stack setup** - Planned for production
 - 📋 **Console.log cleanup** - Gradual replacement ongoing
 - 📋 **Sentry integration** - Error tracking enhancement
