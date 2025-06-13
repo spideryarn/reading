@@ -105,6 +105,7 @@ At the end of stages:
 In later stages:
 - Add actions to update relevant `docs/reference/*.md` evergreen docs (see `docs/instructions/WRITE_EVERGREEN_DOC.md`). If you think we need a new evergreen-doc, ask the user
 - Add actions to tidy up tests (e.g. remove redundant ones, consolidate into fewer, higher-coverage, integration tests optimised for catching regressions), and any other helpful polish
+- Add actions to update logging/monitoring if needed (see `docs/reference/LOGGING_BEST_PRACTICES.md`)
 
 As final actions:
 - Ask the user's permission to merge back (if we created a branch)
