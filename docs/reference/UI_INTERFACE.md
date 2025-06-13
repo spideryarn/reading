@@ -17,6 +17,7 @@ The Spideryarn Reading application features a **2-pane resizable layout** with t
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - overall application architecture
 - `docs/reference/UI_COMPONENTS.md`
 - `docs/reference/SHADCN_UI_REFERENCE.md`
+- `docs/reference/TOOL_HIGHLIGHT.md` - semantic highlighting system accessible via the Highlights tab
 
 ## Layout Structure
 
@@ -37,13 +38,14 @@ The application uses a **two-pane resizable layout** built with shadcn/ui Resiza
 - **Collapsible**: Ctrl+B keyboard shortcut, floating expand button when collapsed
 - **Scrollable**: `overflow-y-auto` with proper height constraints
 - **Component**: `UnifiedLeftPane` with consolidated functionality
-- **Tabs** (6 total):
+- **Tabs** (7 total):
   - **Original** - Document headings extracted from HTML
   - **AI-generated** - Semantically meaningful headings created by LLM analysis ✓
   - **Summary** - AI-generated document summary with collapsible content ✓
   - **Chat** - Interactive AI assistant for document discussion ✓
   - **Glossary** - AI-generated term definitions and explanations with click-to-scroll functionality ✓
   - **Search** - Full-text document search with debounced input, loading states, and click-to-navigate results with element selection ✓
+  - **Highlights** - AI-powered semantic highlighting with confidence-based visual intensity ✓
 
 ### 2. Right Pane - Document Viewer ✓
 - **Resizable width**: 70% default, expands to full width when left pane collapsed

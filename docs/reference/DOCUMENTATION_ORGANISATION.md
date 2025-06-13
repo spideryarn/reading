@@ -63,6 +63,7 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/VERCEL_AI_SDK_REFERENCE.md` - Vercel AI SDK integration patterns and usage
 - `docs/reference/TOOL_SUMMARISE.md` - AI summarise feature generating hierarchical summaries at multiple granularities
 - `docs/reference/TOOL_GLOSSARY.md` - Glossary feature extracting key entities from documents using LLM analysis
+- `docs/reference/TOOL_HIGHLIGHT.md` - Semantic highlighting system with confidence-based visual intensity and React-first architecture
 - `docs/reference/TOOL_HEADINGS.md` - AI-generated heading system for document structure enhancement
 - `docs/reference/TOOL_TWEET_THREAD_VIEW.md` - Tweet thread generation from document content
 - `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - @assistant-ui/react integration for chatbot interface
