@@ -142,7 +142,7 @@
   - [x] Remove orphaned test documents
   - [x] Clean up test-created enhancements
 - [x] Add cleanup script to package.json
-- [x] Document when/how to run cleanup (created `docs/reference/TESTING_CLEANUP.md`)
+- [x] Document when/how to run cleanup (created `docs/reference/TESTING_DATABASE_CLEANUP.md`)
 - [x] Git commit cleanup utilities (commit: c7ad73b)
 
 ### Stage: Sync changes across worktrees
