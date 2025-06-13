@@ -7,6 +7,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Loading } from '@/components/ui/loading'
+import { MarkdownRenderer } from '@/components/markdown-renderer'
 
 interface SummaryPaneProps {
   content: string
@@ -266,7 +267,9 @@ export function SummaryPane({
           </div>
         </div>
         {!isSummaryCollapsed && (
-          <p className="text-sm text-blue-700 leading-relaxed">{summary}</p>
+          <div className="prose prose-sm prose-blue max-w-none">
+            <MarkdownRenderer content={summary} />
+          </div>
         )}
       </div>
     )

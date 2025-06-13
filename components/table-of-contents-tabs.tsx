@@ -18,6 +18,7 @@ import { MultiSummaryPane } from './multi-summary-pane'
 import { Button } from '@/components/ui/button'
 import { Loading } from '@/components/ui/loading'
 import { AlertWithIcon } from '@/components/ui/alert'
+import { MarkdownRenderer } from '@/components/markdown-renderer'
 
 // Shared types
 interface BaseTabProps {
@@ -348,9 +349,7 @@ export function OriginalHeadingsTab({
       return (
         <div className="max-w-md p-4 text-sm bg-white border border-gray-200 rounded-lg shadow-lg">
           <div className="prose prose-sm prose-gray max-w-none">
-            <div className="whitespace-pre-wrap leading-relaxed text-gray-800 font-medium">
-              {cachedContent}
-            </div>
+            <MarkdownRenderer content={cachedContent} />
           </div>
         </div>
       )
@@ -852,9 +851,7 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
       return (
         <div className="max-w-md p-4 text-sm bg-white border border-gray-200 rounded-lg shadow-lg">
           <div className="prose prose-sm prose-gray max-w-none">
-            <div className="whitespace-pre-wrap leading-relaxed text-gray-800 font-medium">
-              {cachedContent}
-            </div>
+            <MarkdownRenderer content={cachedContent} />
           </div>
         </div>
       )
