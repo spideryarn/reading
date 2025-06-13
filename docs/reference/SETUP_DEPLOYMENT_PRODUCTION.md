@@ -137,9 +137,29 @@ TTL: 300
 ## Build & Deployment Process
 
 ### Automatic Deployments
-- **Production**: Deploys on push to `main` branch
+- **Production**: Database migrations run via GitHub Actions, then Vercel deploys on push to `main` branch
 - **Preview**: Creates preview deployments for pull requests
 - **Build time**: Typically 2-4 minutes for full build
+
+### Database Migration Workflow ✓
+GitHub Actions automatically handles database schema changes:
+
+1. **On push to main**: GitHub Actions runs database migrations first
+2. **Migration success**: Vercel deployment proceeds automatically
+3. **Migration failure**: Deployment stops, preventing schema/code mismatches
+
+**Required GitHub Secrets:**
+- `SUPABASE_ACCESS_TOKEN` - Personal access token from Supabase dashboard
+- `SUPABASE_DB_PASSWORD` - Project database password
+
+**Setup Instructions:**
+1. Go to [Supabase Access Tokens](https://supabase.com/dashboard/account/tokens)
+2. Generate new token for "GitHub Actions Production"
+3. Add secrets at [GitHub Repository Secrets](https://github.com/spideryarn/reading/settings/secrets/actions):
+   - Name: `SUPABASE_ACCESS_TOKEN`, Value: `sbp_your_token_here`
+   - Name: `SUPABASE_DB_PASSWORD`, Value: `your_database_password`
+
+**Workflow File:** `.github/workflows/deploy-production.yml`
 
 ### Build Requirements 🚧
 **Current temporary fixes for deployment:**

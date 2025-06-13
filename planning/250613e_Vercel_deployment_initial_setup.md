@@ -114,7 +114,14 @@ We have:
   - `CLAUDE.md` - Add deployment commands and production considerations
 - [ ] Create deployment section in README.md
 
-### Stage: Basic deployment workflow setup
+### ✅ Stage: Basic deployment workflow setup
+- ✅ Set up GitHub Actions for database migrations on main branch
+  - 📔 Created `.github/workflows/deploy-production.yml` for automatic migrations
+  - 📔 Migrations run before Vercel deploys to avoid schema/code mismatches
+  - 📔 Requires GitHub secrets: SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD
+  - 📔 Setup guide: Get SUPABASE_ACCESS_TOKEN from https://supabase.com/dashboard/account/tokens
+  - 📔 Add secrets at: https://github.com/spideryarn/reading/settings/secrets/actions
+  - 📔 Updated production deployment documentation with migration workflow
 - [ ] Document manual deployment process for emergencies
 - [ ] Create simple TypeScript health check script
   - Check main application endpoints
@@ -123,8 +130,8 @@ We have:
 - [ ] Plan future enhancements (but don't implement yet):
   - Staging environment with separate Supabase project
   - Deployment notifications
-  - Automated testing in CI/CD
-  - Database migration strategy
+  - Automated testing in CI/CD (tests + linting in PR workflow)
+  - Preview database branching with Supabase
 
 ### 🚧 Stage: Custom domain setup (www.spideryarn.com primary)
 - ✅ Research Vercel domain configuration best practices
