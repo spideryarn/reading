@@ -8,6 +8,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { TEST_USER_IDS } from '@/lib/testing/rls-test-context'
 import type { Database } from '@/lib/types/database'
+import jwt from 'jsonwebtoken'
 
 export type TestSupabaseClient = SupabaseClient<Database>
 
@@ -54,7 +55,6 @@ export class RealRLSTestSetup {
    * This creates a valid JWT token that Supabase will recognize for authentication
    */
   private createTestJWT(userId: string): string {
-    const jwt = require('jsonwebtoken')
     const secret = process.env.SUPABASE_JWT_SECRET!
     
     const payload = {

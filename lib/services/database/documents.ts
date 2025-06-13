@@ -7,7 +7,7 @@ import {
   getSignedDocumentUrl,
   StorageUploadResult 
 } from '@/lib/services/storage'
-import { logger, generateCorrelationId, createTimer } from '../logger'
+import { logger } from '../logger'
 
 // Create database-specific logger
 const dbLogger = logger.child({ component: 'database-documents' })
