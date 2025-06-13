@@ -1,25 +1,40 @@
 'use client'
 
 // Highlight management component for creating and managing persistent document highlights
-// Integrated with semantic search and stored in document_enhancements table
-// See planning/250610a_persistent_document_highlighting_mode.md for design decisions
+// Adapted from semantic search functionality in unified-left-pane.tsx
+// Treats semantic search results as persistent highlights rather than temporary search results
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
-import { MagnifyingGlass, HighlighterCircle, X, CircleNotch, Trash } from '@phosphor-icons/react'
+import { 
+  HighlighterCircle, 
+  X, 
+  CircleNotch, 
+  Trash, 
+  CaretDown,
+  Clock
+} from '@phosphor-icons/react'
+import { useDocumentCommunication } from '@/lib/context/document-communication-context'
+import { getSemanticHighlightClass, getSemanticHighlightIntensity } from '@/lib/utils/semantic-highlighting'
 
-// Highlight interface - will be moved to proper types file later
+// Highlight interface matching semantic search result structure
 interface Highlight {
   id: string
   criterion: string
-  ranges: Array<{
-    elementId: string
-    startOffset: number
-    endOffset: number
-    text: string
-  }>
-  confidence?: number
+  elementId: string
+  elementType: string
+  textExcerpt: string
+  confidence: number
+  reasoning: string
   createdAt: string
+}
+
+// Query history interface for caching previous searches
+interface QueryHistoryItem {
+  query: string
+  normalizedQuery: string
+  searchedAt: string
+  resultCount: number
 }
 
 interface HighlightManagementProps {
@@ -27,21 +42,29 @@ interface HighlightManagementProps {
 }
 
 export function HighlightManagement({ documentId }: HighlightManagementProps) {
-  // State management
+  const { actions } = useDocumentCommunication()
+  
+  // Core state
   const [criterion, setCriterion] = useState('')
   const [highlights, setHighlights] = useState<Highlight[]>([])
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isLoading] = useState(false)
-
-  // Ref for criterion input
+  const [isLoading, setIsLoading] = useState(false)
+  
+  // Cache state for highlighting operations
+  const [highlightsCached, setHighlightsCached] = useState(false)
+  const [highlightsCachedAt, setHighlightsCachedAt] = useState<string | null>(null)
+  
+  // Query history state
+  const [queryHistory, setQueryHistory] = useState<QueryHistoryItem[]>([])
+  const [showQueryHistory, setShowQueryHistory] = useState(false)
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
+  
+  // Sort state
+  const [sortByIntensity, setSortByIntensity] = useState(false) // false = position, true = intensity
+  
+  // Refs
   const criterionInputRef = useRef<HTMLInputElement>(null)
-
-  // Load existing highlights on mount
-  useEffect(() => {
-    // TODO: Implement loadHighlights function in next stage
-    // loadHighlights()
-  }, [documentId])
 
   // Auto-focus criterion input when component mounts
   useEffect(() => {
@@ -50,54 +73,255 @@ export function HighlightManagement({ documentId }: HighlightManagementProps) {
     }, 50)
   }, [])
 
-  // Create new highlight based on criterion
-  const createHighlight = async () => {
-    if (!criterion.trim()) return
+  // Apply semantic highlights to document elements
+  const applySemanticHighlights = useCallback((highlights: Highlight[]) => {
+    // First, clear any existing semantic highlights
+    clearSemanticHighlights()
+    
+    highlights.forEach(highlight => {
+      const element = document.querySelector(`[data-element-id="${highlight.elementId}"]`)
+      if (element) {
+        const highlightClass = getSemanticHighlightClass(highlight.confidence * 100)
+        element.classList.add(highlightClass)
+        element.setAttribute('data-semantic-highlight', 'true')
+        element.setAttribute('data-semantic-confidence', highlight.confidence.toString())
+      }
+    })
+  }, [])
 
-    setIsCreating(true)
+  // Clear all semantic highlights from document
+  const clearSemanticHighlights = useCallback(() => {
+    const highlightedElements = document.querySelectorAll('[data-semantic-highlight="true"]')
+    highlightedElements.forEach(element => {
+      // Remove all semantic highlight classes
+      element.classList.remove(
+        'semantic-highlight-very-low',
+        'semantic-highlight-low',
+        'semantic-highlight-medium',
+        'semantic-highlight-high',
+        'semantic-highlight-very-high',
+        'semantic-highlight-active'
+      )
+      element.removeAttribute('data-semantic-highlight')
+      element.removeAttribute('data-semantic-confidence')
+    })
+  }, [])
+
+  // Load existing highlights and query history on mount
+  useEffect(() => {
+    fetchQueryHistory()
+  }, [documentId])
+
+  // Clean up highlights when component unmounts
+  useEffect(() => {
+    return () => {
+      clearSemanticHighlights()
+    }
+  }, [clearSemanticHighlights])
+
+  // Fetch query history from API
+  const fetchQueryHistory = useCallback(async () => {
+    setIsLoadingHistory(true)
+    try {
+      const response = await fetch(`/api/semantic-search?documentId=${encodeURIComponent(documentId)}`)
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch query history')
+      }
+      
+      setQueryHistory(data.queries || [])
+      console.log(`[HighlightHistory] Fetched ${data.queries?.length || 0} historical queries`)
+    } catch (error) {
+      console.error('[HighlightHistory] Failed to fetch query history:', error)
+      // Don't show error to user - query history is nice-to-have
+      setQueryHistory([])
+    } finally {
+      setIsLoadingHistory(false)
+    }
+  }, [documentId])
+
+  // Create highlights using semantic search API
+  const createHighlights = useCallback(async (query: string) => {
+    // Clear any previous state
     setError(null)
+    setIsCreating(true)
+    setHighlightsCached(false)
+    setHighlightsCachedAt(null)
 
     try {
-      // TODO: Implement API call to create highlights using semantic search
-      // This will be implemented in Stage 3: API integration and highlighting logic
+      const response = await fetch('/api/semantic-search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          query,
+          documentId
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create highlights')
+      }
+
+      // Update cache status
+      setHighlightsCached(!!data.cached)
+      setHighlightsCachedAt(data.cachedAt || null)
+
+      // Convert semantic search results to highlight format
+      const newHighlights: Highlight[] = data.matches.map((match: {
+        elementId: string
+        confidence: number
+        reasoning: string
+        relevantText: string
+      }, index: number) => ({
+        id: `${query}-${match.elementId}-${index}`, // Generate unique ID
+        criterion: query,
+        elementId: match.elementId,
+        elementType: 'paragraph', // TODO: Get actual element type from elements
+        textExcerpt: match.relevantText || '',
+        confidence: match.confidence,
+        reasoning: match.reasoning,
+        createdAt: new Date().toISOString()
+      }))
+
+      // Apply semantic highlights to the document and scroll to first result
+      if (newHighlights.length > 0) {
+        applySemanticHighlights(newHighlights)
+        // Scroll to first highlight to show the results
+        actions.scrollToElement(newHighlights[0].elementId)
+      }
+
+      // Replace existing highlights with new ones (highlights are session-based)
+      setHighlights(newHighlights)
+      console.log(`[HighlightCreation] Created ${newHighlights.length} highlights for criterion: "${query}"`)
       
-      // Placeholder for now
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // TODO: Add the new highlight to state
-      console.log('Creating highlight for criterion:', criterion)
-      
-      // Clear criterion input
-      setCriterion('')
     } catch (error) {
-      console.error('Failed to create highlight:', error)
-      setError(error instanceof Error ? error.message : 'Failed to create highlight')
+      console.error('[HighlightCreation] Error creating highlights:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create highlights'
+      setError(errorMessage)
+      setHighlights([])
     } finally {
       setIsCreating(false)
+      // Refresh query history after highlight creation
+      fetchQueryHistory()
     }
-  }
+  }, [documentId, actions, fetchQueryHistory, applySemanticHighlights])
 
-  // Delete highlight
-  const deleteHighlight = async (highlightId: string) => {
-    try {
-      // TODO: Implement API call to delete highlight
-      console.log('Deleting highlight:', highlightId)
-      
-      // Remove from local state
-      setHighlights(prev => prev.filter(h => h.id !== highlightId))
-    } catch (error) {
-      console.error('Failed to delete highlight:', error)
-      setError(error instanceof Error ? error.message : 'Failed to delete highlight')
+  // Sort highlights function
+  const sortHighlights = useCallback((highlights: Highlight[], sortByIntensity: boolean) => {
+    return [...highlights].sort((a, b) => {
+      if (sortByIntensity) {
+        // Sort by confidence (intensity) - highest first
+        return b.confidence - a.confidence
+      } else {
+        // Sort by document position - would need element position data
+        // For now, sort by elementId as proxy
+        return a.elementId.localeCompare(b.elementId)
+      }
+    })
+  }, [])
+
+  // Memoized sorted highlights
+  const sortedHighlights = useMemo(() => {
+    return sortHighlights(highlights, sortByIntensity)
+  }, [highlights, sortByIntensity, sortHighlights])
+
+  // Filtered query history based on current criterion input
+  const filteredQueryHistory = useMemo(() => {
+    if (!criterion.trim()) {
+      return queryHistory
     }
-  }
+    
+    const searchLower = criterion.toLowerCase()
+    return queryHistory.filter(item => 
+      item.query.toLowerCase().includes(searchLower)
+    )
+  }, [queryHistory, criterion])
+
+  // Format date in unambiguous format: "2025-June-08 at 22:15"
+  const formatDate = useCallback((dateString: string) => {
+    const date = new Date(dateString)
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ]
+    
+    const year = date.getFullYear()
+    const month = monthNames[date.getMonth()]
+    const day = date.getDate().toString().padStart(2, '0')
+    const hours = date.getHours().toString().padStart(2, '0')
+    const minutes = date.getMinutes().toString().padStart(2, '0')
+    
+    return `${year}-${month}-${day} at ${hours}:${minutes}`
+  }, [])
+
+  // Handle criterion input changes
+  const handleCriterionChange = useCallback((value: string) => {
+    setCriterion(value)
+    
+    // Clear previous errors
+    setError(null)
+    
+    // Show history dropdown when focusing and typing
+    if (queryHistory.length > 0) {
+      setShowQueryHistory(true)
+    }
+    
+    // Don't auto-search - highlighting is manual trigger only
+    if (!value.trim()) {
+      setHighlights([])
+      setIsCreating(false)
+    }
+  }, [queryHistory.length])
+
+  // Trigger highlight creation
+  const triggerHighlightCreation = useCallback(() => {
+    if (criterion.trim()) {
+      createHighlights(criterion)
+    }
+  }, [criterion, createHighlights])
 
   // Handle Enter key in criterion input
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !isCreating) {
       e.preventDefault()
-      createHighlight()
+      triggerHighlightCreation()
+    } else if (e.key === 'Escape') {
+      setShowQueryHistory(false)
     }
-  }
+  }, [isCreating, triggerHighlightCreation])
+
+  // Handle clicking on a highlight to scroll to it and add active highlight effect
+  const handleHighlightClick = useCallback((highlight: Highlight) => {
+    // Remove any existing active highlight
+    const activeElements = document.querySelectorAll('.semantic-highlight-active')
+    activeElements.forEach(el => el.classList.remove('semantic-highlight-active'))
+    
+    // Add active highlight to the clicked element
+    const element = document.querySelector(`[data-element-id="${highlight.elementId}"]`)
+    if (element) {
+      element.classList.add('semantic-highlight-active')
+      // Remove active class after animation
+      setTimeout(() => {
+        element.classList.remove('semantic-highlight-active')
+      }, 1600) // Duration matches CSS animation
+    }
+    
+    actions.scrollToElement(highlight.elementId)
+  }, [actions])
+
+  // Clear all highlights
+  const clearHighlights = useCallback(() => {
+    clearSemanticHighlights()
+    setHighlights([])
+    setHighlightsCached(false)
+    setHighlightsCachedAt(null)
+    setError(null)
+  }, [clearSemanticHighlights])
 
   return (
     <div className="flex flex-col h-full">
@@ -108,7 +332,7 @@ export function HighlightManagement({ documentId }: HighlightManagementProps) {
           <h3 className="text-lg font-semibold text-gray-900">Document Highlights</h3>
         </div>
         <p className="text-sm text-gray-600">
-          Create persistent highlights based on specific criteria
+          Create semantic highlights based on specific criteria
         </p>
       </div>
 
@@ -120,9 +344,18 @@ export function HighlightManagement({ documentId }: HighlightManagementProps) {
               ref={criterionInputRef}
               type="text"
               value={criterion}
-              onChange={(e) => setCriterion(e.target.value)}
+              onChange={(e) => handleCriterionChange(e.target.value)}
+              onFocus={() => {
+                if (queryHistory.length > 0) {
+                  setShowQueryHistory(true)
+                }
+              }}
+              onBlur={() => {
+                // Delay hiding to allow clicking on dropdown items
+                setTimeout(() => setShowQueryHistory(false), 150)
+              }}
               onKeyDown={handleKeyDown}
-              placeholder="Enter highlighting criterion..."
+              placeholder="Enter criterion for highlighting..."
               className="w-full px-4 py-2 pl-10 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
             <HighlighterCircle 
@@ -132,16 +365,55 @@ export function HighlightManagement({ documentId }: HighlightManagementProps) {
             />
             {criterion && (
               <button
-                onClick={() => setCriterion('')}
+                onClick={() => {
+                  setCriterion('')
+                  setHighlights([])
+                  setHighlightsCached(false)
+                  setHighlightsCachedAt(null)
+                }}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 <X size={16} weight="bold" />
               </button>
             )}
+            
+            {/* Query history dropdown */}
+            {showQueryHistory && filteredQueryHistory.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                <div className="p-2">
+                  <div className="text-xs text-gray-500 font-medium mb-2 px-2">
+                    {criterion.trim() ? `Filtered searches (${filteredQueryHistory.length} of ${queryHistory.length})` : 'Recent searches'}
+                  </div>
+                  {filteredQueryHistory.map((historyItem, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setCriterion(historyItem.query)
+                        setShowQueryHistory(false)
+                        // Auto-trigger highlighting for historical query
+                        createHighlights(historyItem.query)
+                      }}
+                      className="w-full text-left px-2 py-2 text-sm rounded hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="truncate font-medium text-gray-900">
+                            {historyItem.query}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            {historyItem.resultCount} {historyItem.resultCount === 1 ? 'result' : 'results'} • {formatDate(historyItem.searchedAt)}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <Button
-            onClick={createHighlight}
+            onClick={triggerHighlightCreation}
             disabled={!criterion.trim() || isCreating}
             variant="default"
             size="sm"
@@ -150,11 +422,11 @@ export function HighlightManagement({ documentId }: HighlightManagementProps) {
             {isCreating ? (
               <>
                 <CircleNotch className="animate-spin mr-2" size={14} />
-                Finding matches...
+                Analyzing...
               </>
             ) : (
               <>
-                <MagnifyingGlass className="mr-2" size={14} weight="bold" />
+                <HighlighterCircle className="mr-2" size={14} weight="bold" />
                 Create Highlights
               </>
             )}
@@ -163,7 +435,7 @@ export function HighlightManagement({ documentId }: HighlightManagementProps) {
           {/* Example criteria */}
           {!criterion.trim() && !isCreating && (
             <div className="text-xs text-gray-500 space-y-1">
-              <div className="font-medium">Example criteria:</div>
+              <div className="font-medium">Try highlighting:</div>
               <div>• &quot;arguments supporting the main thesis&quot;</div>
               <div>• &quot;statistical evidence&quot;</div>
               <div>• &quot;counterarguments or objections&quot;</div>
@@ -176,7 +448,8 @@ export function HighlightManagement({ documentId }: HighlightManagementProps) {
       {error && (
         <div className="p-4 border-b border-gray-200">
           <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="text-red-700 text-sm">{error}</div>
+            <div className="text-red-700 text-sm font-medium">Highlighting failed:</div>
+            <div className="text-red-700 text-sm mt-1">{error}</div>
           </div>
         </div>
       )}
@@ -188,63 +461,116 @@ export function HighlightManagement({ documentId }: HighlightManagementProps) {
             <CircleNotch className="animate-spin text-gray-400 mb-2" size={24} weight="bold" />
             <div className="text-sm text-gray-500">Loading highlights...</div>
           </div>
-        ) : highlights.length === 0 ? (
+        ) : isCreating ? (
+          <div className="flex flex-col items-center justify-center py-8">
+            <CircleNotch className="animate-spin text-orange-400 mb-2" size={24} weight="bold" />
+            <div className="text-sm text-gray-500">
+              Analyzing document for highlights...
+            </div>
+          </div>
+        ) : criterion.trim() && highlights.length === 0 && !error ? (
+          <div className="text-sm text-gray-500 text-center py-8">
+            No matching content found for highlighting
+          </div>
+        ) : highlights.length > 0 ? (
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-sm text-gray-600">
+                {highlights.length} {highlights.length === 1 ? 'highlight' : 'highlights'} created for &quot;{criterion}&quot;
+              </div>
+              <div className="flex items-center gap-2">
+                {highlightsCached && (
+                  <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full font-medium">
+                    Loaded
+                  </span>
+                )}
+                {highlightsCachedAt && (
+                  <span 
+                    className="text-xs text-gray-500" 
+                    title={`Highlights were created at ${formatDate(highlightsCachedAt)}`}
+                  >
+                    <Clock size={12} weight="bold" className="inline mr-1" />
+                    {new Date(highlightsCachedAt).toLocaleTimeString()}
+                  </span>
+                )}
+                {highlights.length > 0 && (
+                  <button
+                    onClick={clearHighlights}
+                    className="text-xs text-gray-500 hover:text-red-600 transition-colors"
+                    title="Clear all highlights"
+                  >
+                    <Trash size={12} weight="bold" />
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            {/* Sort toggle - only show when there are multiple highlights */}
+            {highlights.length > 1 && (
+              <div className="mb-3">
+                <div className="flex bg-gray-50 p-1 rounded-lg">
+                  <button
+                    onClick={() => setSortByIntensity(false)}
+                    className={`flex-1 px-2 py-1 text-xs font-medium rounded transition-all ${
+                      !sortByIntensity 
+                        ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Position
+                  </button>
+                  <button
+                    onClick={() => setSortByIntensity(true)}
+                    className={`flex-1 px-2 py-1 text-xs font-medium rounded transition-all ${
+                      sortByIntensity 
+                        ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Intensity
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            <div className="space-y-2">
+              {sortedHighlights.map((highlight) => (
+                <div
+                  key={highlight.id}
+                  className="p-3 border border-gray-200 rounded-lg hover:bg-orange-50 cursor-pointer transition-colors hover:border-orange-300"
+                  onClick={() => handleHighlightClick(highlight)}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-gray-500 uppercase">
+                        {highlight.elementType}
+                      </span>
+                      <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
+                        {getSemanticHighlightIntensity(highlight.confidence * 100)} ({Math.round(highlight.confidence * 100)}%)
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-700 line-clamp-2 mb-2">
+                    {highlight.textExcerpt}
+                  </div>
+                  {highlight.reasoning && (
+                    <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded border-l-2 border-orange-200">
+                      <span className="font-medium">Match:</span> {highlight.reasoning}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
           <div className="flex flex-col items-center justify-center p-8 text-center">
             <div className="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center mb-4">
               <HighlighterCircle size={24} weight="bold" className="text-orange-400" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No Highlights Yet</h3>
             <p className="text-sm text-gray-600 max-w-sm">
-              Enter a criterion above to create your first persistent highlights in this document.
+              Enter a criterion above to create semantic highlights that identify relevant content in this document.
             </p>
-          </div>
-        ) : (
-          <div className="space-y-3 p-4">
-            {highlights.map((highlight) => (
-              <div
-                key={highlight.id}
-                className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-all duration-200"
-              >
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 text-sm mb-1">
-                      {highlight.criterion}
-                    </h4>
-                    <div className="text-xs text-gray-500">
-                      {highlight.ranges.length} {highlight.ranges.length === 1 ? 'highlight' : 'highlights'} • {new Date(highlight.createdAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => deleteHighlight(highlight.id)}
-                    className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                    title="Delete highlight"
-                  >
-                    <Trash size={14} weight="bold" />
-                  </button>
-                </div>
-                
-                {/* Show confidence if available */}
-                {highlight.confidence && (
-                  <div className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium w-fit mb-2">
-                    {Math.round(highlight.confidence * 100)}% relevance
-                  </div>
-                )}
-
-                {/* Range preview */}
-                <div className="space-y-1">
-                  {highlight.ranges.slice(0, 2).map((range, index) => (
-                    <div key={index} className="text-xs text-gray-600 bg-gray-50 p-2 rounded border-l-3 border-orange-200">
-                      {range.text.length > 100 ? range.text.substring(0, 100) + '...' : range.text}
-                    </div>
-                  ))}
-                  {highlight.ranges.length > 2 && (
-                    <div className="text-xs text-gray-500 font-medium">
-                      +{highlight.ranges.length - 2} more {highlight.ranges.length - 2 === 1 ? 'highlight' : 'highlights'}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
           </div>
         )}
       </div>

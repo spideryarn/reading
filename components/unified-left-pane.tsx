@@ -862,66 +862,6 @@ export function UnifiedLeftPane({
       <div className="flex flex-col h-full">
         {/* Pinned search input */}
         <div className="sticky top-0 bg-white z-10 p-4 border-b border-gray-200">
-          {/* Search Type Selection */}
-          <div className="mb-3">
-            <div className="flex bg-gray-100 p-1 rounded-lg">
-              <button
-                onClick={() => {
-                  setUseSemanticSearch(false)
-                  setSemanticSearchError(null)
-                  setSearchResults([])
-                  setSemanticSortByRelevance(false) // Reset sort to default (position)
-                  setSemanticSearchCached(false)
-                  setSemanticSearchCachedAt(null)
-                  if (markInstanceRef.current) {
-                    markInstanceRef.current.unmark()
-                  }
-                  // Auto-focus search input
-                  setTimeout(() => {
-                    searchInputRef.current?.focus()
-                  }, 50)
-                }}
-                className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all ${
-                  !useSemanticSearch 
-                    ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Text Search
-              </button>
-              <button
-                onClick={() => {
-                  setUseSemanticSearch(true)
-                  setSemanticSearchError(null)
-                  setSearchResults([])
-                  setSemanticSortByRelevance(false) // Reset sort to default (position)
-                  setSemanticSearchCached(false)
-                  setSemanticSearchCachedAt(null)
-                  if (markInstanceRef.current) {
-                    markInstanceRef.current.unmark()
-                  }
-                  // Auto-focus search input
-                  setTimeout(() => {
-                    searchInputRef.current?.focus()
-                  }, 50)
-                }}
-                className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all ${
-                  useSemanticSearch 
-                    ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Semantic Search
-              </button>
-            </div>
-            {/* Search type description */}
-            <p className="text-xs text-gray-500 mt-2">
-              {useSemanticSearch 
-                ? "Find content by meaning and concepts, not just exact words"
-                : "Find exact text matches with optional case sensitivity"
-              }
-            </p>
-          </div>
 
           <div className="relative">
             <input
@@ -929,24 +869,7 @@ export function UnifiedLeftPane({
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearchInputChange(e.target.value)}
-              onFocus={() => {
-                if (useSemanticSearch && queryHistory.length > 0) {
-                  setShowQueryHistory(true)
-                }
-              }}
-              onBlur={() => {
-                // Delay hiding to allow clicking on dropdown items
-                setTimeout(() => setShowQueryHistory(false), 150)
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && useSemanticSearch) {
-                  e.preventDefault()
-                  triggerSemanticSearch()
-                } else if (e.key === 'Escape') {
-                  setShowQueryHistory(false)
-                }
-              }}
-              placeholder={useSemanticSearch ? "Describe what you&apos;re looking for..." : "Search document..."}
+              placeholder="Search document..."
               className="w-full px-4 py-2 pl-10 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <MagnifyingGlass 
@@ -965,192 +888,66 @@ export function UnifiedLeftPane({
                   setSearchQuery('')
                   setSearchResults([])
                   setIsSearching(false)
-                  setSemanticSearchCached(false)
-                  setSemanticSearchCachedAt(null)
+                  if (markInstanceRef.current) {
+                    markInstanceRef.current.unmark()
+                  }
                 }}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 <X size={16} weight="bold" />
               </button>
             )}
+          </div>
+          
+          {/* Advanced options for text search */}
+          <div className="mt-3">
+            <button
+              onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+              className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              <CaretDown 
+                size={14} 
+                weight="bold" 
+                className={`transform transition-transform ${showAdvancedOptions ? 'rotate-180' : ''}`}
+              />
+              Advanced options
+            </button>
             
-            {/* Query history dropdown - only for semantic search */}
-            {useSemanticSearch && showQueryHistory && filteredQueryHistory.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-                <div className="p-2">
-                  <div className="text-xs text-gray-500 font-medium mb-2 px-2">
-                    {searchQuery.trim() ? `Filtered searches (${filteredQueryHistory.length} of ${queryHistory.length})` : 'Recent searches'}
-                  </div>
-                  {filteredQueryHistory.map((historyItem, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        setSearchQuery(historyItem.query)
-                        setShowQueryHistory(false)
-                        // Auto-trigger search for historical query
-                        performSemanticSearch(historyItem.query)
-                      }}
-                      className="w-full text-left px-2 py-2 text-sm rounded hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="truncate font-medium text-gray-900">
-                            {historyItem.query}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-0.5">
-                            {historyItem.resultCount} {historyItem.resultCount === 1 ? 'result' : 'results'} • {formatDate(historyItem.searchedAt)}
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+            {showAdvancedOptions && (
+              <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={caseSensitive}
+                    onChange={(e) => setCaseSensitive(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">
+                    Case sensitive
+                  </span>
+                </label>
               </div>
             )}
           </div>
-          
-          {/* Search action area */}
-          {useSemanticSearch && (
-            <div className="mt-3 space-y-2">
-              <Button
-                onClick={triggerSemanticSearch}
-                disabled={!searchQuery.trim() || isSearching}
-                variant="default"
-                size="sm"
-                className="w-full"
-              >
-                {isSearching ? (
-                  <>
-                    <CircleNotch className="animate-spin mr-2" size={14} />
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <MagnifyingGlass className="mr-2" size={14} weight="bold" />
-                    Search Semantically
-                  </>
-                )}
-              </Button>
-              
-              {/* Example queries for semantic search */}
-              {!searchQuery.trim() && !isSearching && (
-                <div className="text-xs text-gray-500 space-y-1">
-                  <div className="font-medium">Try searching for:</div>
-                  <div>• &quot;arguments against this theory&quot;</div>
-                  <div>• &quot;experimental evidence&quot;</div>
-                  <div>• &quot;main conclusion&quot;</div>
-                </div>
-              )}
-            </div>
-          )}
-          
-          {/* Advanced options - only show for text search */}
-          {!useSemanticSearch && (
-            <div className="mt-3">
-              <button
-                onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-                className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                <CaretDown 
-                  size={14} 
-                  weight="bold" 
-                  className={`transform transition-transform ${showAdvancedOptions ? 'rotate-180' : ''}`}
-                />
-                Advanced options
-              </button>
-              
-              {showAdvancedOptions && (
-                <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={caseSensitive}
-                      onChange={(e) => setCaseSensitive(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">
-                      Case sensitive
-                    </span>
-                  </label>
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Search results */}
         <div className="flex-1 overflow-y-auto px-4 pb-4">
-        {/* Show semantic search error if present */}
-        {semanticSearchError && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-start gap-2">
-              <div className="text-red-600 text-sm font-medium">Semantic search failed:</div>
-            </div>
-            <div className="text-red-700 text-sm mt-1">{semanticSearchError}</div>
-          </div>
-        )}
         
         {isSearching ? (
           <div className="flex flex-col items-center justify-center py-8">
             <CircleNotch className="animate-spin text-gray-400 mb-2" size={24} weight="bold" />
-            <div className="text-sm text-gray-500">
-              {useSemanticSearch ? 'Analyzing document semantically...' : 'Searching...'}
-            </div>
+            <div className="text-sm text-gray-500">Searching...</div>
           </div>
-        ) : searchQuery.trim() && searchResults.length === 0 && !semanticSearchError ? (
-          <div className="text-sm text-gray-500 text-center py-8">
-            {useSemanticSearch ? 'No semantically relevant content found' : 'No results found'}
-          </div>
+        ) : searchQuery.trim() && searchResults.length === 0 ? (
+          <div className="text-sm text-gray-500 text-center py-8">No results found</div>
         ) : searchResults.length > 0 ? (
           <div>
             <div className="flex items-center justify-between mb-3">
               <div className="text-sm text-gray-600">
-                {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found for {useSemanticSearch ? 'semantic' : 'exact'} &quot;{searchQuery}&quot;
+                {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found for &quot;{searchQuery}&quot;
               </div>
-              {useSemanticSearch && semanticSearchCached && (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full font-medium">
-                    Loaded
-                  </span>
-                  {semanticSearchCachedAt && (
-                    <span 
-                      className="text-xs text-gray-500" 
-                      title={`Query results for this semantic search were saved at ${formatDate(semanticSearchCachedAt)}`}
-                    >
-                      {new Date(semanticSearchCachedAt).toLocaleTimeString()}
-                    </span>
-                  )}
-                </div>
-              )}
             </div>
-            
-            {/* Sort toggle - only show for semantic search with results */}
-            {useSemanticSearch && searchResults.length > 1 && searchResults[0]?.searchType === 'semantic' && (
-              <div className="mb-3">
-                <div className="flex bg-gray-50 p-1 rounded-lg">
-                  <button
-                    onClick={() => setSemanticSortByRelevance(false)}
-                    className={`flex-1 px-2 py-1 text-xs font-medium rounded transition-all ${
-                      !semanticSortByRelevance 
-                        ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    Position
-                  </button>
-                  <button
-                    onClick={() => setSemanticSortByRelevance(true)}
-                    className={`flex-1 px-2 py-1 text-xs font-medium rounded transition-all ${
-                      semanticSortByRelevance 
-                        ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    Relevance
-                  </button>
-                </div>
-              </div>
-            )}
             
             <div className="space-y-2">
               {sortedSearchResults.map((result) => (
@@ -1167,26 +964,16 @@ export function UnifiedLeftPane({
                       <span className="text-xs font-medium text-gray-500 uppercase">
                         {result.elementType}
                       </span>
-                      {result.searchType === 'semantic' && result.confidence && (
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
-                          {Math.round(result.confidence * 100)}% match
-                        </span>
-                      )}
                     </div>
-                    {result.searchType === 'text' && result.matchCount > 1 && (
+                    {result.matchCount > 1 && (
                       <span className="text-xs text-gray-500">
                         {result.matchCount} matches
                       </span>
                     )}
                   </div>
-                  <div className="text-sm text-gray-700 line-clamp-2 mb-2">
+                  <div className="text-sm text-gray-800 leading-relaxed">
                     {result.textExcerpt}
                   </div>
-                  {result.searchType === 'semantic' && result.reasoning && (
-                    <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded border-l-2 border-blue-200">
-                      <span className="font-medium">Match:</span> {result.reasoning}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -1194,7 +981,7 @@ export function UnifiedLeftPane({
         ) : null}
         </div>
       </div>
-    ), [useSemanticSearch, searchQuery, isSearching, searchResults, semanticSearchError, semanticSearchCached, semanticSearchCachedAt, queryHistory, showQueryHistory, filteredQueryHistory, showAdvancedOptions, caseSensitive, isLoadingHistory, handleSearchInputChange, triggerSemanticSearch, performSemanticSearch, sortedSearchResults, actions])
+    ), [searchQuery, isSearching, searchResults, showAdvancedOptions, caseSensitive, handleSearchInputChange, actions])
 
 
   return (
