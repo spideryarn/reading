@@ -1,0 +1,94 @@
+import pino from 'pino'
+import { randomUUID } from 'crypto'
+
+// Configure logger for development vs production
+export const logger = pino({
+  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+  base: { 
+    env: process.env.NODE_ENV,
+    service: 'spideryarn-reading'
+  },
+  timestamp: pino.stdTimeFunctions.isoTime,
+  formatters: {
+    level: (label) => {
+      return { level: label }
+    }
+  },
+  // Pretty-printing for development, JSON for production and tests
+  ...(process.env.NODE_ENV === 'development' && {
+    transport: {
+      target: 'pino-pretty',
+      options: {
+        colorize: true,
+        levelFirst: true,
+        translateTime: 'SYS:standard',
+        ignore: 'pid,hostname'
+      }
+    }
+  })
+})
+
+// Feature-specific child loggers for better organization
+export const aiLogger = logger.child({ component: 'ai' })
+export const chatLogger = logger.child({ component: 'chat' })
+export const mutationLogger = logger.child({ component: 'mutation' })
+export const authLogger = logger.child({ component: 'auth' })
+export const uploadLogger = logger.child({ component: 'upload' })
+export const searchLogger = logger.child({ component: 'search' })
+
+// Utility functions for common logging patterns
+export function generateCorrelationId(): string {
+  return randomUUID()
+}
+
+export function createRequestLogger(path: string, correlationId?: string) {
+  return logger.child({ 
+    requestPath: path,
+    correlationId: correlationId || generateCorrelationId()
+  })
+}
+
+// Helper for timing operations
+export function createTimer(logger: pino.Logger, operation: string) {
+  const start = Date.now()
+  
+  return {
+    end: (additionalContext?: Record<string, any>) => {
+      const duration = Date.now() - start
+      logger.info({
+        operation,
+        duration,
+        ...additionalContext
+      }, `${operation} completed in ${duration}ms`)
+      return duration
+    }
+  }
+}
+
+// Helper for AI operation logging
+export function logAIOperation(
+  operation: string,
+  context: {
+    modelProvider?: string
+    tokensUsed?: number
+    cost?: number
+    userId?: string
+    documentId?: string
+    correlationId?: string
+  },
+  result: 'success' | 'error',
+  error?: Error
+) {
+  const logData = {
+    operation,
+    result,
+    ...context,
+    timestamp: new Date().toISOString()
+  }
+
+  if (result === 'error' && error) {
+    aiLogger.error({ ...logData, error: error.message }, `AI operation failed: ${operation}`)
+  } else {
+    aiLogger.info(logData, `AI operation completed: ${operation}`)
+  }
+}
