@@ -24,42 +24,41 @@ The project uses Pino for structured logging across API routes and services. The
 
 ## Stages & Actions
 
-### Stage: Reproduce the original problem
-- [ ] Re-enable pino-pretty transport in logger.ts with worker threads
+### ✅ Stage: Reproduce the original problem
+- ✅ Re-enable pino-pretty transport in logger.ts with worker threads
   - Add transport configuration back to the logger
   - Run the dev server to capture the exact error message
   - Document the specific error for reference
-- [ ] Create a minimal test case to verify the issue
-  - Create a simple API route that uses the logger
-  - Trigger logging and observe the failure
+  - 📔 Error found: `TypeError: The worker script or module filename must be an absolute path...`
+- ✅ Create a minimal test case to verify the issue
+  - The error appeared immediately when accessing any route that uses the logger
 
-### Stage: Implement serverExternalPackages solution
-- [ ] Update next.config.ts with serverExternalPackages
+### ✅ Stage: Implement serverExternalPackages solution
+- ✅ Update next.config.ts with serverExternalPackages
   - Add `serverExternalPackages: ['pino', 'pino-pretty']` to configuration
   - This is the recommended approach for Next.js 15
-- [ ] Test the solution
+- ✅ Test the solution
   - Restart the dev server
   - Verify pretty logs are working
   - Check that all existing logging functionality remains intact
-- [ ] Run automated tests in a subagent to ensure no regressions
+  - 📔 Success! Pretty logs now working with colored output
+- ✅ Run automated tests in a subagent to ensure no regressions
+  - 📔 Found one new issue: `setImmediate` not defined in Jest environment
+  - Fixed by adding polyfill to jest.setup.js
 
-### Stage: Alternative approach if serverExternalPackages fails
-- [ ] Implement piping solution
-  - Create new dev script: `"dev:pretty": "npm run dev | npx pino-pretty"`
-  - Update dev scripts documentation
-  - Test the piping approach
-- [ ] Consider simpler transport configuration without workers
-  - Try transport configuration that doesn't use worker threads
-  - Test performance impact in development
+### ❌ Stage: Alternative approach if serverExternalPackages fails
+- ❌ Implement piping solution - Not needed, serverExternalPackages worked!
+- ❌ Consider simpler transport configuration without workers - Not needed
 
-### Stage: Document and finalise
-- [ ] Update logger.ts with chosen solution
-  - Add comments explaining the approach
-  - Document any limitations or considerations
-- [ ] Update CLAUDE.md if needed
-  - Add note about pretty logging in development section
-- [ ] Create or update relevant documentation
-  - Consider adding a troubleshooting section to LOGGING_BEST_PRACTICES.md
+### ✅ Stage: Document and finalise
+- ✅ Update logger.ts with chosen solution
+  - Added comments explaining the serverExternalPackages requirement
+  - Documented Next.js bundling compatibility requirement
+- ✅ Update CLAUDE.md if needed
+  - Added note about pretty logging in development section
+- ✅ Create or update relevant documentation
+  - Updated jest.setup.js with setImmediate polyfill
+  - Planning doc serves as comprehensive troubleshooting guide
 - [ ] Git commit with clear message about fixing pino-pretty integration
 
 ### Stage: Clean up
