@@ -107,18 +107,6 @@ export function HighlightManagement({
     }
   }, [onSemanticHighlightsChange])
 
-  // Load existing highlights and query history on mount
-  useEffect(() => {
-    fetchQueryHistory()
-  }, [documentId, fetchQueryHistory])
-
-  // Clean up highlights when component unmounts
-  useEffect(() => {
-    return () => {
-      clearSemanticHighlights()
-    }
-  }, [clearSemanticHighlights])
-
   // Fetch query history from API
   const fetchQueryHistory = useCallback(async () => {
     try {
@@ -137,6 +125,18 @@ export function HighlightManagement({
       setQueryHistory([])
     }
   }, [documentId])
+
+  // Load existing highlights and query history on mount
+  useEffect(() => {
+    fetchQueryHistory()
+  }, [documentId, fetchQueryHistory])
+
+  // Clean up highlights when component unmounts
+  useEffect(() => {
+    return () => {
+      clearSemanticHighlights()
+    }
+  }, [clearSemanticHighlights])
 
   // Create highlights using semantic search API
   const createHighlights = useCallback(async (query: string) => {
