@@ -80,17 +80,17 @@ describe('extractCleanText', () => {
     })
 
     it('should handle null input gracefully', () => {
-      const result = extractCleanText(null as any)
+      const result = extractCleanText(null as unknown as string)
       expect(result).toBe('')
     })
 
     it('should handle undefined input gracefully', () => {
-      const result = extractCleanText(undefined as any)
+      const result = extractCleanText(undefined as unknown as string)
       expect(result).toBe('')
     })
 
     it('should handle non-string input gracefully', () => {
-      const result = extractCleanText(123 as any)
+      const result = extractCleanText(123 as unknown as string)
       expect(result).toBe('')
     })
 

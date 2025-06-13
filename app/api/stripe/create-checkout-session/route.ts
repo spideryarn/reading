@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/server'
 // import { createCheckoutSession } from '@/lib/services/stripe/subscriptions'
 import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
   const requestLogger = createRequestLogger('/api/stripe/create-checkout-session', correlationId)
@@ -53,9 +54,6 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       userEmail: user.email
     }, 'User authenticated for checkout session')
-
-    // Parse request body for custom URLs (optional)
-    const { successUrl, cancelUrl } = await request.json().catch(() => ({}))
 
     // TODO: Stripe customer creation temporarily disabled for deployment
     /*
