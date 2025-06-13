@@ -11,7 +11,7 @@ Comprehensive reference for extracting clean, readable content from academic pub
 - `docs/reference/DATABASE_SCHEMA.md` - Document storage structure and requirements
 - [Mozilla Readability GitHub](https://github.com/mozilla/readability) - Primary content extraction library
 - [Postlight Parser GitHub](https://github.com/postlight/parser) - Alternative extraction library
-- [Playwright Scraping Guide](https://www.zenrows.com/blog/playwright-scraping) - Modern browser automation approach
+- [Playwright Scraping Guide](https://www.zenrows.com/blog/playwright-scraping) - Modern browser automation approach (also applicable to Puppeteer)
 
 ## Principles and Key Decisions
 
@@ -66,30 +66,32 @@ Academic publishers increasingly use JavaScript for:
 - Single Page Application (SPA) architectures
 - Cookie consent and privacy warnings
 
-### Playwright vs Puppeteer (2024 Analysis)
+### Puppeteer vs Playwright (2024 Analysis)
 
-**Playwright (Recommended) ✓**
-- **Multi-browser**: Chromium, Firefox, WebKit support
-- **Performance**: Faster in most scenarios (2024 benchmarks)
-- **Language Support**: TypeScript, JavaScript, Python, Java, C#
-- **Academic Use**: Better for cross-publisher compatibility
-- **Installation**: `npm install playwright`
-
-**Puppeteer**
+**Puppeteer (Recommended) ✓**
 - **Browser Support**: Chromium only
 - **Performance**: Fastest for Chrome-specific scraping
 - **Language Support**: JavaScript/TypeScript only
 - **Use Case**: When targeting Chrome-optimised publisher sites
+- **Installation**: `npm install puppeteer`
+
+**Playwright**
+- **Multi-browser**: Chromium, Firefox, WebKit support
+- **Performance**: Faster in most scenarios (2024 benchmarks)
+- **Language Support**: TypeScript, JavaScript, Python, Java, C#
+- **Academic Use**: Better for cross-publisher compatibility
 
 ### Browser Automation Implementation Pattern
 
 ```typescript
-import { chromium } from 'playwright';
+import puppeteer from 'puppeteer';
+// Alternative: import { chromium } from 'playwright';
 import { Readability } from '@mozilla/readability';
 import { JSDOM } from 'jsdom';
 
 async function extractWithBrowser(url: string) {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await puppeteer.launch({ headless: true });
+  // Alternative: const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
   
   // Handle cookie consent and paywalls
@@ -321,7 +323,7 @@ export async function POST(request: Request) {
 
 **Mozilla Readability**: 50-200ms per document
 **Postlight Parser**: 100-300ms per document  
-**Playwright Extraction**: 2-5 seconds per document
+**Puppeteer/Playwright Extraction**: 2-5 seconds per document
 **LLM Processing**: 10-30 seconds per document (depending on length)
 
 ### Cost Breakdown
@@ -447,7 +449,7 @@ async function processExtractionQueue() {
 ### Library Documentation
 - [Mozilla Readability API Reference](https://github.com/mozilla/readability) - Complete API documentation and examples
 - [Postlight Parser Documentation](https://github.com/postlight/parser) - Usage examples and custom parser creation
-- [Playwright Web Scraping Guide](https://www.zenrows.com/blog/playwright-scraping) - Comprehensive tutorial for browser automation
+- [Playwright Web Scraping Guide](https://www.zenrows.com/blog/playwright-scraping) - Comprehensive tutorial for browser automation (concepts apply to Puppeteer as well)
 
 ### Market Analysis and Trends
 - [Intelligent Document Processing Statistics 2025](https://scoop.market.us/intelligent-document-processing-statistics/) - Market growth and technology trends
@@ -456,7 +458,7 @@ async function processExtractionQueue() {
 ### Technical Implementation Resources
 - [TypeScript Web Scraping Tutorial 2025](https://www.zenrows.com/blog/web-scraping-typescript) - Step-by-step TypeScript scraping guide
 - [LLM Research Papers: The 2024 List](https://magazine.sebastianraschka.com/p/llm-research-papers-the-2024-list) - Latest LLM developments for content processing
-- [Playwright vs Puppeteer 2024 Comparison](https://www.browserstack.com/guide/playwright-vs-puppeteer) - Detailed technical comparison
+- [Puppeteer vs Playwright 2024 Comparison](https://www.browserstack.com/guide/playwright-vs-puppeteer) - Detailed technical comparison
 
 ### Legal and Ethical Guidelines  
 - [Web Scraping for Research: Legal and Ethical Considerations](https://arxiv.org/html/2410.23432v1) - Academic perspective on scraping ethics

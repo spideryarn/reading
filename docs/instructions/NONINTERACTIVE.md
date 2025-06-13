@@ -16,7 +16,7 @@ Non-interactive mode (`claude -p`) allows Claude to execute tasks without human 
 **Non-interactive Claude cannot:**
 - Run the application (no access to `npm run dev`, browsers, or live servers)
 - Execute tests interactively (no access to test runners that require interaction)
-- Access MCP tools (Playwright browser automation, Supabase queries)
+- Access MCP tools (Puppeteer/Playwright browser automation, Supabase queries)
 - Commit changes to git (this should be handled externally)
 - Access running development servers or databases
 

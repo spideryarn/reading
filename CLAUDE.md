@@ -156,16 +156,30 @@ Test environment (`.env.test`):
 Template: `.env.example` (may not be current - check `.env.local` for active config)
 
 
+## Browser Automation
+
+**Puppeteer MCP (Preferred)**:
+- Use Puppeteer for browser automation tasks via MCP server
+- **Headless by default**: Always use `{"headless": true}` in launchOptions unless user specifically requests visual debugging
+- **Window size**: Set viewport in launchOptions and screenshot dimensions for proper page rendering:
+  - `defaultViewport: {"width": 1200, "height": 800}` in launchOptions for better page layout
+  - Use `width` and `height` parameters in screenshot calls (e.g., 1200x800)
+  - Default 800x600 is often too small for modern web layouts
+- Example: `mcp__puppeteer__puppeteer_navigate({url: "...", launchOptions: {"headless": true, "defaultViewport": {"width": 1200, "height": 800}}})`
+
+**Playwright**: Available as alternative, but prefer Puppeteer for MCP integration
+
+
 ## Context window, tasks, and subagents
 
 Use tasks whenever there's more than a couple of things to keep track of.
 
 Use subagents where appropriate:
-- e.g. for running a battery of tests, curl, Playwright/Puppeteer MCP or other browser automation, other verbose output, Git commits, any other verbose-output, and anywhere else where you think it's a good fit
+- e.g. for running a battery of tests, curl, Puppeteer/Playwright MCP or other browser automation, other verbose output, Git commits, any other verbose-output, and anywhere else where you think it's a good fit
 - They are especially valuable as a way to avoid filling up your context window
 - They are also a good fit for encapsulated & well-defined tasks, i.e. tasks that don't need the full context of the conversation so far, and/or where we only need a summary of what was done in order to proceed
 - Use subagents in parallel where possible (because this is faster), but only if there isn't a dependency between tasks (e.g. the output of this one is useful as input for the next)
-- Give them lots of background so that they can make good decisions, e.g. about goals, point them to relevant docs/code, what we've been changing, gotchas & things to avoid, relevant environment variables like $PORT for Playwright, using Jest for testing, the current date/time from `date`, and anything else that will help them to be effective but correct/careful.
+- Give them lots of background so that they can make good decisions, e.g. about goals, point them to relevant docs/code, what we've been changing, gotchas & things to avoid, relevant environment variables like $PORT for Puppeteer/Playwright, using Jest for testing, the current date/time from `date`, and anything else that will help them to be effective but correct/careful.
 - Tell subagents what to be cautious of, and to abort and provide feedback on what happened if there are problems or surprises (to avoid them going rogue and doing more harm than good)
 
 

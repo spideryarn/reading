@@ -245,8 +245,8 @@ export const anthropic = {
 ## Future Considerations (Appendix)
 
 ### Browser Automation Integration
-Consider integrating Playwright/Puppeteer tests for critical user journeys:
-- Use MCP Playwright for AI-assisted browser testing
+Consider integrating Puppeteer/Playwright tests for critical user journeys:
+- Use MCP Puppeteer (preferred) or Playwright for AI-assisted browser testing
 - Focus on happy path workflows only
 - Run separately from main test suite for performance
 - Generate tests using AI based on user stories

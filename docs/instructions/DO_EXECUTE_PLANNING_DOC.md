@@ -6,4 +6,4 @@ Start by reading relevant code & docs.
 
 Ask if you need to clarify anything, or if you have concerns.
 
-Use tasks and subagents (provided with lots of context), e.g. for curl/Playwright MCP, running tests, and any other encapsulated tasks. Follow instructions in TASKS_SUBAGENTS.md
+Use tasks and subagents (provided with lots of context), e.g. for curl/Puppeteer/Playwright MCP (preferring Puppeteer), running tests, and any other encapsulated tasks. Follow instructions in TASKS_SUBAGENTS.md
