@@ -98,14 +98,23 @@ The user has decided to separate these concerns cleanly: keep exact text search 
 - Maintained search result navigation and element scrolling functionality
 - Clean separation achieved: text search in Search tab, semantic analysis in Highlights tab
 
-### Stage: Enhance Highlights Visual Treatment
-- [ ] Implement confidence-based highlight intensity in CSS
-  - [ ] Create highlight CSS classes with opacity/color variations based on confidence scores
-  - [ ] Map confidence percentages (0-100%) to visual intensity levels
-  - [ ] Ensure highlights are visually distinct from text search highlights
-- [ ] Update highlight rendering to use confidence scores from semantic search results
-- [ ] Test highlight intensity variations across different confidence levels
-- [ ] Verify highlights display correctly across different document content types
+### Stage: Enhance Highlights Visual Treatment ✅ COMPLETED
+- [✅] Implement confidence-based highlight intensity in CSS
+  - [✅] Create highlight CSS classes with opacity/color variations based on confidence scores - Added 5 intensity levels using Spideryarn orange color scheme
+  - [✅] Map confidence percentages (0-100%) to visual intensity levels - Created utility functions in `lib/utils/semantic-highlighting.ts`
+  - [✅] Ensure highlights are visually distinct from text search highlights - Semantic highlights use orange theme vs yellow for text search
+- [✅] Update highlight rendering to use confidence scores from semantic search results - Updated HighlightManagement component to apply CSS classes to DOM elements
+- [✅] Test highlight intensity variations across different confidence levels - Created comprehensive tests for utility functions and DOM integration
+- [✅] Verify highlights display correctly across different document content types - Integration tests verify proper CSS class application and cleanup
+
+**Notes**:
+- Implemented 5 confidence-based intensity levels: Very Low (0-19%), Low (20-39%), Medium (40-59%), High (60-79%), Very High (80-100%)
+- Each level uses progressively stronger visual treatment: increased opacity, border thickness, font weight, padding, and subtle shadows
+- Semantic highlights use Spideryarn orange (#DB8A45) color scheme to distinguish from yellow text search highlights
+- Added hover effects and active highlight animation for better user interaction
+- Created utility functions for confidence-to-class mapping and intensity labels
+- Updated HighlightManagement component to apply/remove highlights on document elements using data-element-id selectors
+- Added comprehensive test coverage including unit tests and DOM integration tests
 
 ### Stage: Update Documentation & Tests
 - [ ] Create `docs/reference/TOOL_HIGHLIGHT.md` following `docs/instructions/WRITE_EVERGREEN_DOC.md`
