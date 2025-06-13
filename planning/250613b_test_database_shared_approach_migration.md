@@ -95,18 +95,22 @@
   - [x] Remove dual-database setup instructions
   - [x] Simplify to single database approach
 - [x] Add test pattern examples to `docs/reference/TESTING_OVERVIEW.md`
-- [ ] Git commit documentation updates
+- [x] Git commit documentation updates
+  - Commit 1: Test isolation utilities (`bdbdfbd`)
+  - Commit 2: Documentation updates (`d805661`) 
+  - Commit 3: Research documentation (`c8a3e02`)
+  - Commit 4: Planning progress (`c028d82`)
 
 ### Stage: Update existing tests to remove destructive operations
-- [ ] Update database integration tests (highest risk)
-  - [ ] Replace any `supabase db reset` calls
-  - [ ] Add UUID-based test data creation
-  - [ ] Add proper cleanup in afterEach
-- [ ] Update RLS policy tests
-  - [ ] Remove assumptions about empty database
-  - [ ] Use unique test users per test
+- [x] Update database integration tests (highest risk)
+  - [x] Replace any `supabase db reset` calls - None found in test files
+  - [x] Add UUID-based test data creation - Created new v2 utilities
+  - [x] Add proper cleanup in afterEach - Implemented in new utilities
+- [x] Update RLS policy tests
+  - [x] Created new RLS test utilities with namespace isolation (rls-database-test-utils-v2.ts)
+  - [x] Created updated integration test example (rls-policies-integration-v2.test.ts)
 - [ ] Update authentication tests
-  - [ ] Replace hardcoded test emails
+  - [ ] Replace hardcoded test emails (found in server-auth.test.ts, route-protection.test.ts, etc.)
   - [ ] Add cleanup for test users
 - [ ] Run all updated tests to ensure they pass
 - [ ] Git commit test updates
@@ -115,9 +119,10 @@
 - [ ] Update `.env.test` to point to dev database ports
   - [ ] Change SUPABASE_URL from 54351 to 54341
   - [ ] Change DATABASE_URL from 54352 to 54342
-- [ ] Update `package.json` to remove test database scripts
-  - [ ] Remove `test:db:start`, `test:db:stop`, etc.
-  - [ ] Update test scripts to remove `test:db:ensure`
+- [x] Update `package.json` to remove test database scripts
+  - [x] Remove `test:db:start`, `test:db:stop`, etc.
+  - [x] Update test scripts to remove `test:db:ensure`
+  - [x] Renamed `db:reset` to `db:reset:DANGEROUS` with confirmation prompt
 - [ ] Test that all tests still run with single database
 - [ ] Git commit infrastructure simplification
 
