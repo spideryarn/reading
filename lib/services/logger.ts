@@ -1,9 +1,10 @@
 import pino from 'pino'
 import { randomUUID } from 'crypto'
 
-// Configure logger for development vs production
+// Configure logger for development vs production vs test
 export const logger = pino({
-  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+  level: process.env.NODE_ENV === 'test' ? 'silent' :
+         process.env.NODE_ENV === 'production' ? 'info' : 'debug',
   base: { 
     env: process.env.NODE_ENV,
     service: 'spideryarn-reading'
@@ -14,10 +15,10 @@ export const logger = pino({
       return { level: label }
     }
   },
-  // Pretty-printed logs in development mode
+  // Pretty-printed logs in development mode only (skip in test for performance)
   // Note: Requires serverExternalPackages: ['pino', 'pino-pretty'] in next.config.ts
   // to handle worker thread compatibility with Next.js bundling
-  ...(process.env.NODE_ENV !== 'production' && {
+  ...(process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test' && {
     transport: {
       target: 'pino-pretty',
       options: {
