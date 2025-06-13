@@ -327,7 +327,7 @@ export default function AddDocumentPage() {
                 }`}
               >
                 <FilePdf size={16} className="inline mr-2" />
-                Upload PDF
+                Upload PDF or HTML
               </button>
             </div>
 
@@ -342,7 +342,7 @@ export default function AddDocumentPage() {
                 <div className="space-y-4">
                   <div>
                     <label htmlFor="url-input" className="block text-sm font-medium text-gray-700 mb-2">
-                      Website URL
+                      Website URL for HTML page or PDF
                     </label>
                     <input
                       ref={urlInputRef}
@@ -516,7 +516,7 @@ export default function AddDocumentPage() {
             {activeTab === 'pdf' && (
               <div className="space-y-6">
                 <h2 className="text-xl font-semibold text-gray-900">
-                  Upload PDF Document
+                  Upload PDF or HTML Document
                 </h2>
                 
                 <div className="space-y-6">
