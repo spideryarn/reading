@@ -1,7 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
-import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from './test-wrapper';
-import userEvent from '@testing-library/user-event';
 import { ResizableDocumentLayout } from '../resizable-document-layout';
 import type { DocumentElement } from '@/lib/types/document';
 

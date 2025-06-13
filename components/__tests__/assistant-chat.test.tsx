@@ -42,15 +42,20 @@ jest.mock('@assistant-ui/react', () => {
     AssistantRuntimeProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
     
     ThreadPrimitive: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       Root: ({ children, className }: any) => <div className={className}>{children}</div>,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       Viewport: ({ children, className }: any) => <div className={className}>{children}</div>,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       Empty: ({ children }: any) => {
         if (mockThread.messages.length === 0) return <div>{children}</div>;
         return null;
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       Messages: ({ components }: any) => {
         return (
           <div>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {mockThread.messages.map((msg: any, idx: number) => {
               const Component = msg.role === 'user' ? components.UserMessage : components.AssistantMessage;
               return <Component key={idx} />;
@@ -58,6 +63,7 @@ jest.mock('@assistant-ui/react', () => {
           </div>
         );
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       Suggestion: ({ children, prompt, autoSend, asChild, ...props }: any) => {
         const handleClick = () => {
           if (autoSend) {
@@ -82,12 +88,15 @@ jest.mock('@assistant-ui/react', () => {
     },
     
     MessagePrimitive: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       Root: ({ children }: any) => <div className="flex gap-3 mb-4">{children}</div>,
       Content: () => <div>Test message content</div>,
     },
     
     ComposerPrimitive: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       Root: ({ children, className }: any) => <div className={className}>{children}</div>,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       Input: ({ placeholder, className, ...props }: any) => (
         <textarea 
           placeholder={placeholder}
@@ -97,6 +106,7 @@ jest.mock('@assistant-ui/react', () => {
           {...props}
         />
       ),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       Send: ({ children, asChild, ...props }: any) => {
         const handleClick = () => mockComposer.send();
         if (asChild) {

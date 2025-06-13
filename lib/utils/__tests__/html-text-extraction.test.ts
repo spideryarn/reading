@@ -80,16 +80,19 @@ describe('extractCleanText', () => {
     })
 
     it('should handle null input gracefully', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = extractCleanText(null as any)
       expect(result).toBe('')
     })
 
     it('should handle undefined input gracefully', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = extractCleanText(undefined as any)
       expect(result).toBe('')
     })
 
     it('should handle non-string input gracefully', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = extractCleanText(123 as any)
       expect(result).toBe('')
     })

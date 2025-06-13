@@ -53,6 +53,7 @@ export function createTimer(logger: pino.Logger, operation: string) {
   const start = Date.now()
   
   return {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     end: (additionalContext?: Record<string, any>) => {
       const duration = Date.now() - start
       logger.info({

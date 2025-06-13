@@ -52,6 +52,7 @@ jest.mock('@/components/ui/button', () => ({
 // Mock Next.js Link component
 jest.mock('next/link', () => ({
   __esModule: true,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   default: ({ children, href, ...props }: any) => (
     <a href={href} {...props}>
       {children}
@@ -61,9 +62,13 @@ jest.mock('next/link', () => ({
 
 // Mock Phosphor icons
 jest.mock('@phosphor-icons/react/dist/ssr', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ArrowLeft: ({ size }: any) => <svg data-testid="arrow-left-icon" width={size} height={size} />,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   FileText: ({ size }: any) => <svg data-testid="file-text-icon" width={size} height={size} />,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Clock: ({ size }: any) => <svg data-testid="clock-icon" width={size} height={size} />,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Globe: ({ size }: any) => <svg data-testid="globe-icon" width={size} height={size} />,
 }))
 
@@ -140,10 +145,13 @@ describe('ProfilePage', () => {
     mockRedirect.mockImplementation(() => {})
     
     // Mock createClient to return a resolved promise
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockCreateClient.mockResolvedValue(mockSupabaseClient as any)
     
     // Mock service constructors
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     MockProfileService.mockImplementation(() => mockProfileService as any)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     MockDocumentService.mockImplementation(() => mockDocumentService as any)
     
     // Spy on console.error to verify error logging
@@ -211,6 +219,7 @@ describe('ProfilePage', () => {
         clientResolved = true
         return client
       })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockCreateClient.mockReturnValue(clientPromise as any)
 
       render(await ProfilePage())
@@ -444,6 +453,7 @@ describe('ProfilePage', () => {
 
     it('should handle authentication edge cases', async () => {
       // User object exists but is malformed (no id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const malformedUser = { ...mockUser, id: undefined as any }
       mockGetUser.mockResolvedValue({ user: malformedUser, error: null })
       mockProfileService.getByUserId.mockResolvedValue(null)

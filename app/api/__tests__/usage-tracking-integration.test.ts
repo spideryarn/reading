@@ -43,7 +43,6 @@ jest.mock('@/lib/prompts/templates/summarise', () => ({
 }))
 
 // Mock the prompt execution to return the correct structure
-const mockExecutePromptWithUsage = jest.fn()
 jest.mock('@/lib/prompts/templates/tweet-thread', () => ({
   ...jest.requireActual('@/lib/prompts/templates/tweet-thread'),
   tweetThreadPrompt: {

@@ -27,9 +27,11 @@ function createMockRequest(url: string, options: MockRequestOptions = {}) {
 
 // Helper to test API routes using next-test-api-route-handler
 async function testApiRoute(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   handler: any,
   options: TestApiOptions = {}
 ) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let responseBody: any;
   let responseStatus: number;
   let responseHeaders: Headers;

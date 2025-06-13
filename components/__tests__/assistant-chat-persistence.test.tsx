@@ -1,9 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { AssistantChat } from '../assistant-chat';
 import { usePersistentChat } from '@/src/lib/hooks/usePersistentChat';
-import type { Message } from '@assistant-ui/react';
 
 // Mock the persistent chat hook
 jest.mock('@/src/lib/hooks/usePersistentChat');
@@ -12,10 +10,14 @@ jest.mock('@/src/lib/hooks/usePersistentChat');
 jest.mock('@assistant-ui/react', () => ({
   AssistantRuntimeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   ThreadPrimitive: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Root: ({ children, className }: any) => <div className={className}>{children}</div>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Viewport: ({ children, className }: any) => <div className={className}>{children}</div>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Empty: ({ children }: any) => <div data-testid="thread-empty">{children}</div>,
-    Messages: ({ components }: any) => <div data-testid="thread-messages">Messages</div>,
+    Messages: () => <div data-testid="thread-messages">Messages</div>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Suggestion: ({ children, prompt, onClick, asChild }: any) => {
       if (asChild && children) {
         // Clone the child element and add our test props
@@ -30,13 +32,16 @@ jest.mock('@assistant-ui/react', () => ({
         </button>
       );
     },
-    If: ({ children, running }: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    If: ({ children }: any) => {
       // For testing, always render children to make them accessible
       return <>{children}</>;
     },
   },
   ComposerPrimitive: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Root: ({ children, className }: any) => <div className={className}>{children}</div>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Input: ({ placeholder, ...props }: any) => (
       <textarea
         data-testid="composer-input"
@@ -44,6 +49,7 @@ jest.mock('@assistant-ui/react', () => ({
         {...props}
       />
     ),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Send: ({ children, asChild }: any) => {
       if (asChild && children) {
         // Clone the child element and add our test props
@@ -53,20 +59,24 @@ jest.mock('@assistant-ui/react', () => ({
       }
       return <button data-testid="send-button">{children}</button>;
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Cancel: ({ children, asChild }: any) => {
       const Component = asChild ? children.type : 'button';
       return <Component data-testid="cancel-button">{asChild ? children.props.children : children}</Component>;
     },
   },
   MessagePrimitive: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Root: ({ children, className }: any) => <div className={className}>{children}</div>,
-    Content: ({ components }: any) => <div data-testid="message-content">Message content</div>,
+    Content: () => <div data-testid="message-content">Message content</div>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     If: ({ children, hasContent }: any) => (hasContent ? children : null),
   },
 }));
 
 // Mock @assistant-ui/react-markdown
 jest.mock('@assistant-ui/react-markdown', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   MarkdownText: ({ children }: any) => <div>{children}</div>,
 }));
 

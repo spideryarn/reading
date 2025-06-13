@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Test isolation utilities for shared database testing
  * 
@@ -108,9 +109,8 @@ export function clearTestTracking(namespace: string): void {
  * @param type - Optional type prefix
  * @returns UUID that includes namespace information
  */
-export function createTestId(namespace: string, type?: string): string {
+export function createTestId(): string {
   const uuid = uuidv4()
-  const prefix = type ? `${type}_${namespace}` : namespace
   // Store namespace info in a comment-like format that won't break UUID parsing
   // but allows us to identify test data if needed
   return uuid

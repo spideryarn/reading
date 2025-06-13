@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { ReactNode } from 'react';
 import { DocumentCommunicationProvider } from '@/lib/context/document-communication-context';
 import { MutationProvider } from '@/lib/context/mutation-context';
