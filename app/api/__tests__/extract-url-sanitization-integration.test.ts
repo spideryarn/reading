@@ -12,7 +12,6 @@
 import { POST } from '../extract-url/route'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
-import { AiCallService } from '@/lib/services/database/ai-calls'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/types/database'
 import { getTestNamespace, createTestEmail, createTestMetadata } from '@/lib/testing/test-isolation-utils'
@@ -102,7 +101,7 @@ describe('URL Extract API - Sanitization Integration', () => {
     await supabase.from('profiles').delete().eq('id', testUserId)
   })
 
-  const createRequest = (body: any): Request => {
+  const createRequest = (body: Record<string, unknown>): Request => {
     return new Request('http://localhost:3000/api/extract-url', {
       method: 'POST',
       headers: {
@@ -266,7 +265,6 @@ describe('URL Extract API - Sanitization Integration', () => {
 
     it('should preserve readability-extracted content with academic formatting', async () => {
       // Mock readability extraction returning academic content
-      const mockReadability = jest.requireActual('@/lib/utils/readability-extractor')
       
       // Create a properly structured academic article
       const readabilityContent = `

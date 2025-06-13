@@ -113,7 +113,7 @@ describe('Cross-API Sanitization Consistency', () => {
     return request
   }
 
-  const createUrlRequest = (body: any): Request => {
+  const createUrlRequest = (body: Record<string, unknown>): Request => {
     return new Request('http://localhost:3000/api/extract-url', {
       method: 'POST',
       headers: {

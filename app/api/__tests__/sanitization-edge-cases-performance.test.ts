@@ -24,8 +24,8 @@ describe('Sanitization Edge Cases and Performance', () => {
       const nonStringInputs = [123, {}, [], true, Symbol('test')]
       
       for (const input of nonStringInputs) {
-        expect(() => sanitizeAcademicContent(input as any)).toThrow('HTML content must be a string')
-        expect(() => sanitizeUserContent(input as any)).toThrow('HTML content must be a string')
+        expect(() => sanitizeAcademicContent(input as unknown as string)).toThrow('HTML content must be a string')
+        expect(() => sanitizeUserContent(input as unknown as string)).toThrow('HTML content must be a string')
       }
     })
 

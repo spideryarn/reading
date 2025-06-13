@@ -12,7 +12,6 @@
 import { POST } from '../upload-pdf/route'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
-import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getTestNamespace, createTestEmail, createTestMetadata } from '@/lib/testing/test-isolation-utils'
 import type { MockFileArrayBuffer, MockFormDataRequest } from './test-types'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -44,14 +43,12 @@ describe('PDF Upload API - Sanitization Integration', () => {
   const namespace = getTestNamespace('upload-pdf-sanitization')
   let supabase: SupabaseClient<Database>
   let documentService: DocumentService
-  let aiCallService: AiCallService
   let testUserId: string
 
   beforeAll(async () => {
     // Set up real database connection
     supabase = await createClient()
     documentService = new DocumentService(supabase)
-    aiCallService = new AiCallService(supabase)
     
     // Create a test user profile
     testUserId = `test-user-${namespace}`

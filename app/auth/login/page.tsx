@@ -3,6 +3,8 @@ import { AppHeader } from "@/components/app-header"
 import { LoginForm } from "@/components/auth/login-form"
 import { getUser } from "@/lib/auth/server-auth"
 
+export const dynamic = 'force-dynamic'
+
 interface LoginPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
