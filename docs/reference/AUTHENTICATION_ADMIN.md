@@ -185,9 +185,36 @@ See `lib/services/database/__tests__/rls-policies-real.test.ts` for complete tes
 - Granted admin access during database seeding
 - Used for development and testing scenarios
 
-## Usage Examples
+## UI Integration
 
-### Checking Admin Status in Components
+### Documents Page Admin View ✅
+
+The documents listing page (`app/documents/page.tsx`) provides different views based on admin status:
+
+**Regular Users**: See only their own documents with "Your Documents" heading
+**Admin Users**: See all system documents with:
+- "All Documents" heading instead of "Your Documents"
+- Admin badge indicator with Shield icon
+- Owner information displayed for each document (truncated user ID)
+
+**Implementation**:
+```typescript
+// Check admin status and fetch appropriate documents
+const { documents, isAdmin } = await getUserDocuments()
+
+// Admin users get all documents via documentService.list()
+// Regular users get filtered documents via documentService.getByUserId()
+
+// UI conditionally renders admin-specific elements
+{isAdmin && (
+  <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 rounded-md text-sm font-medium">
+    <Shield size={16} />
+    Admin View
+  </div>
+)}
+```
+
+### Admin Status Components
 
 ```typescript
 import { getCurrentUserAdminStatus } from '@/lib/auth/admin-utils'
