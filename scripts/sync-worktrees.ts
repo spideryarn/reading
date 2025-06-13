@@ -250,6 +250,9 @@ class SyncBranchesCommand extends Command {
     if (currentBranch === targetBranch) {
       // Use Git's built-in autostash to safely handle uncommitted changes
       // Git will stash changes before merge and reapply them afterward
+      // NOTE: This may occasionally report transient merge conflicts due to Git lock files,
+      // autostash timing issues, or concurrent operations. If the merge appears to fail
+      // but git status shows no conflicts, try running the sync again or merge manually.
       this.execGit(`merge --autostash ${sourceBranch}`, {
         errorMessage: `Merge conflicts during ${sourceBranch} → ${targetBranch}.`
       });
