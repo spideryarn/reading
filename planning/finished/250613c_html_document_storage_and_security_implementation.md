@@ -24,7 +24,7 @@ Implement comprehensive storage and security improvements for HTML document impo
 
 ## References
 
-- `docs/reference/WEBPAGE_CONTENT_EXTRACTION.md` - Current HTML extraction implementation and security gaps analysis
+- `docs/reference/WEBPAGE_HTML_CONTENT_EXTRACTION.md` - Current HTML extraction implementation and security gaps analysis
 - `docs/reference/WEBPAGE_HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md` - Comprehensive security and sanitization guide for academic HTML content
 - `planning/finished/250606a_pdf_Supabase_Storage_integration.md` - Completed PDF storage implementation to follow as pattern
 - `app/api/extract-url/route.ts:316` - Current URL extraction endpoint that needs storage integration
@@ -131,7 +131,7 @@ Based on user requirements and security analysis:
 
 ### Stage: Documentation and Deployment ✅ COMPLETED
 - [x] ✅ Update relevant documentation
-  - [x] ✅ Enhanced `docs/reference/WEBPAGE_CONTENT_EXTRACTION.md` with security improvements
+  - [x] ✅ Enhanced `docs/reference/WEBPAGE_HTML_CONTENT_EXTRACTION.md` with security improvements
   - [x] ✅ Document new HTML storage architecture and security measures
   - [x] ✅ Add troubleshooting guide for sanitization and storage issues
   - [x] ✅ Update API documentation for new HTML storage endpoints
