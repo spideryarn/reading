@@ -9,7 +9,7 @@ import { createUrlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { getModelConfig, AI_CONFIG } from '@/lib/config'
+import { getModelConfig, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
 import { generateSlug, generateHtmlFilename } from '@/lib/utils/slug'
 import { URL_EXTRACTION_CONFIG } from '@/lib/config'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
@@ -249,7 +249,7 @@ export async function POST(request: NextRequest) {
       extractionMethodUsed = 'ai-transcription'
       
       // Get model configuration for AI call tracking
-      const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as keyof typeof AI_CONFIG.MODELS
+      const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
       const modelConfig = getModelConfig(tierKey)
       
       // Create AI call record for tracking (before LLM processing)
@@ -414,7 +414,7 @@ export async function POST(request: NextRequest) {
     
     // Add AI-specific metadata if AI transcription was used
     if (extractionMethodUsed === 'ai-transcription') {
-      const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as keyof typeof AI_CONFIG.MODELS
+      const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
       const modelConfig = getModelConfig(tierKey)
       ;(uploadMetadata as typeof uploadMetadata & { model_used?: string }).model_used = modelConfig.modelId
     }
@@ -445,7 +445,7 @@ export async function POST(request: NextRequest) {
       htmlBlob, // Store original HTML content for re-processing
       htmlFilename, // URL-based filename (domain-and-path-slugified.html)
       uploadMetadata, // Upload metadata
-      extractionMethodUsed === 'ai-transcription' ? aiCall?.id : null // Link to AI call only for AI transcription
+      extractionMethodUsed === 'ai-transcription' ? aiCall?.id : undefined // Link to AI call only for AI transcription
     )
     
     console.log(`Step 7: Document created successfully with ID: ${document.id}`)

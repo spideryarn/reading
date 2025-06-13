@@ -3,7 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { validateAuth } from '@/lib/auth/server-auth'
 import { getCurrentUserAdminStatus } from '@/lib/auth/admin-utils'
-import type { Document } from '@/lib/types/database'
+import type { Database } from '@/lib/types/database'
+
+type Document = Database['public']['Tables']['documents']['Row']
 
 /**
  * API route to serve original HTML documents without any Spideryarn modifications.

@@ -7,7 +7,7 @@ import { glossaryPrompt, glossaryPromptInputSchema, glossaryResponseSchema } fro
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { getModelConfig, AI_CONFIG } from '@/lib/config'
+import { getModelConfig, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 
 export async function POST(request: NextRequest) {
@@ -46,12 +46,15 @@ export async function POST(request: NextRequest) {
     const enhancementService = new EnhancementService(supabase)
     const aiCallService = new AiCallService(supabase)
     
-    // Check if glossary already exists in database
-    const existingGlossary = await enhancementService.get(
-      documentId,
-      'glossary',
-      'default'
-    )
+    // Check if glossary already exists in database (only if documentId provided)
+    let existingGlossary = null
+    if (documentId) {
+      existingGlossary = await enhancementService.get(
+        documentId,
+        'glossary',
+        'default'
+      )
+    }
     
     if (existingGlossary) {
       // Validate cached data structure - fail fast if malformed
@@ -80,12 +83,12 @@ export async function POST(request: NextRequest) {
     console.log(`Processing glossary (${Math.round(content.length/1000)}k chars)`)
     
     // Resolve tier key to actual model details using config
-    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as keyof typeof AI_CONFIG.MODELS
+    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
     const modelConfig = getModelConfig(tierKey)
     
     // Create AI call record for tracking
     const aiCall = await aiCallService.startCall({
-      documentId,
+      documentId: documentId || undefined,
       provider: modelConfig.provider,
       modelId: modelConfig.modelId,
       prompt_type: 'glossary',
@@ -147,10 +150,11 @@ export async function POST(request: NextRequest) {
       finishReason: llmResult.finishReason
     })
     
-    // Store the glossary result in database
-    await enhancementService.storeGlossary(
-      documentId,
-      aiCall.id,
+    // Store the glossary result in database (only if documentId provided)
+    if (documentId) {
+      await enhancementService.storeGlossary(
+        documentId,
+        aiCall.id,
       {
         entities: validatedResponse.entities,
         metadata: {
@@ -161,6 +165,7 @@ export async function POST(request: NextRequest) {
         }
       }
     )
+    }
     
     requestLogger.info({
       correlationId,

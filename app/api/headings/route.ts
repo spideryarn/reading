@@ -8,7 +8,7 @@ import { headingsPrompt, headingsPromptInputSchema, headingsResponseSchema } fro
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { getModelConfig, AI_CONFIG } from '@/lib/config'
+import { getModelConfig, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer, mutationLogger } from '@/lib/services/logger'
 
 /**
@@ -210,12 +210,15 @@ export async function POST(request: NextRequest) {
     const enhancementService = new EnhancementService(supabase)
     const aiCallService = new AiCallService(supabase)
     
-    // Check if headings already exist in database
-    const existingHeadings = await enhancementService.get(
-      documentId,
-      'headings',
-      'default'
-    )
+    // Check if headings already exist in database (only if documentId provided)
+    let existingHeadings = null
+    if (documentId) {
+      existingHeadings = await enhancementService.get(
+        documentId,
+        'headings',
+        'default'
+      )
+    }
     
     if (existingHeadings) {
       // Validate cached data structure - fail fast if malformed
@@ -256,12 +259,12 @@ export async function POST(request: NextRequest) {
     }, 'HTML content preprocessed for headings generation')
     
     // Resolve tier key to actual model details using config
-    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as keyof typeof AI_CONFIG.MODELS
+    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
     const modelConfig = getModelConfig(tierKey)
     
     // Create AI call record for tracking
     const aiCall = await aiCallService.startCall({
-      documentId,
+      documentId: documentId || undefined,
       provider: modelConfig.provider,
       modelId: modelConfig.modelId,
       prompt_type: 'headings',
@@ -361,10 +364,11 @@ export async function POST(request: NextRequest) {
       'success'
     )
     
-    // Store the headings result in database
-    await enhancementService.storeHeadings(
-      documentId,
-      aiCall.id,
+    // Store the headings result in database (only if documentId provided)
+    if (documentId) {
+      await enhancementService.storeHeadings(
+        documentId,
+        aiCall.id,
       {
         items: validatedResponse.headings,
         metadata: {
@@ -375,6 +379,7 @@ export async function POST(request: NextRequest) {
         }
       }
     )
+    }
     
     mutationLogger.info({
       documentId,

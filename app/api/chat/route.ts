@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         issues: validationResult.error.issues.map(issue => ({
           path: issue.path.join('.'),
           message: issue.message,
-          received: issue.received
+          received: 'received' in issue ? issue.received : undefined
         }))
       }
       

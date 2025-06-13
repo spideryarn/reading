@@ -4,7 +4,7 @@ import { LoginForm } from "@/components/auth/login-form"
 import { getUser } from "@/lib/auth/server-auth"
 
 interface LoginPageProps {
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
@@ -12,7 +12,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   
   // If user is already logged in, redirect them
   if (user) {
-    const nextUrl = typeof searchParams.next === 'string' ? searchParams.next : null
+    const params = await searchParams
+    const nextUrl = typeof params.next === 'string' ? params.next : null
     
     // Basic validation: ensure it's a relative URL to prevent open redirects
     if (nextUrl && nextUrl.startsWith('/') && !nextUrl.startsWith('//') && !nextUrl.startsWith('/auth/')) {
