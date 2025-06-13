@@ -44,6 +44,8 @@ interface HighlightManagementProps {
   elements: DocumentElement[]
   semanticHighlights?: SemanticHighlight[]
   onSemanticHighlightsChange?: (highlights: SemanticHighlight[]) => void
+  activeElementId?: string
+  onActiveElementChange?: (elementId: string | null) => void
 }
 
 // Semantic highlight interface (matching the one used in other components)
@@ -56,7 +58,9 @@ export function HighlightManagement({
   documentId, 
   elements, 
   semanticHighlights = [],
-  onSemanticHighlightsChange 
+  onSemanticHighlightsChange,
+  activeElementId,
+  onActiveElementChange
 }: HighlightManagementProps) {
   const { actions } = useDocumentCommunication()
   
@@ -297,24 +301,21 @@ export function HighlightManagement({
     }
   }, [isCreating, triggerHighlightCreation])
 
-  // Handle clicking on a highlight to scroll to it and add active highlight effect
+  // Handle clicking on a highlight to scroll to it and set active highlight via React state
   const handleHighlightClick = useCallback((highlight: Highlight) => {
-    // Remove any existing active highlight
-    const activeElements = document.querySelectorAll('.semantic-highlight-active')
-    activeElements.forEach(el => el.classList.remove('semantic-highlight-active'))
-    
-    // Add active highlight to the clicked element
-    const element = document.querySelector(`[data-element-id="${highlight.elementId}"]`)
-    if (element) {
-      element.classList.add('semantic-highlight-active')
-      // Remove active class after animation
+    // Set active element via React state (no DOM manipulation)
+    if (onActiveElementChange) {
+      onActiveElementChange(highlight.elementId)
+      
+      // Clear active state after animation duration
       setTimeout(() => {
-        element.classList.remove('semantic-highlight-active')
+        onActiveElementChange(null)
       }, 1600) // Duration matches CSS animation
     }
     
+    // Scroll to element using robust existing system
     actions.scrollToElement(highlight.elementId)
-  }, [actions])
+  }, [actions, onActiveElementChange])
 
   // Clear all highlights
   const clearHighlights = useCallback(() => {

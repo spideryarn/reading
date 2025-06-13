@@ -66,6 +66,10 @@ interface ResizableDocumentLayoutProps {
   // Semantic highlighting
   semanticHighlights?: SemanticHighlight[]
   onSemanticHighlightsChange?: (highlights: SemanticHighlight[]) => void
+  
+  // Active highlight element (for pulse animation)
+  activeElementId?: string | null
+  onActiveElementChange?: (elementId: string | null) => void
 }
 
 // Inner component that uses the document communication context
@@ -87,7 +91,9 @@ function ResizableDocumentLayoutInner({
   onElementVisibilityChange,
   onElementClick,
   semanticHighlights = [],
-  onSemanticHighlightsChange
+  onSemanticHighlightsChange,
+  activeElementId,
+  onActiveElementChange
 }: ResizableDocumentLayoutProps) {
   const { actions, state } = useDocumentCommunication()
   const [, setScrollTarget] = useState<{ id: string; timestamp: number } | null>(null)
@@ -343,6 +349,8 @@ function ResizableDocumentLayoutInner({
               documentContext={documentContext}
               semanticHighlights={semanticHighlights}
               onSemanticHighlightsChange={onSemanticHighlightsChange}
+              activeElementId={activeElementId}
+              onActiveElementChange={onActiveElementChange}
             />
             </div>
           </div>
@@ -371,6 +379,7 @@ function ResizableDocumentLayoutInner({
               onElementVisibilityChange={onElementVisibilityChange}
               onElementClick={handleElementClick}
               semanticHighlights={semanticHighlights}
+              activeElementId={activeElementId}
             />
           </div>
         </ResizablePanel>

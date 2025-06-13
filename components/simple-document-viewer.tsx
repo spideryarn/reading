@@ -26,6 +26,7 @@ interface SimpleDocumentViewerProps {
   onElementVisibilityChange?: (elementId: string, isVisible: boolean) => void
   onElementClick?: (element: DocumentElement) => void
   semanticHighlights?: SemanticHighlight[]
+  activeElementId?: string | null
 }
 
 export function SimpleDocumentViewer({
@@ -34,7 +35,8 @@ export function SimpleDocumentViewer({
   onElementSelect,
   onElementVisibilityChange,
   onElementClick,
-  semanticHighlights = []
+  semanticHighlights = [],
+  activeElementId
 }: SimpleDocumentViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const elementRefs = useRef<Map<string, HTMLDivElement>>(new Map())
@@ -124,6 +126,9 @@ export function SimpleDocumentViewer({
       ? getSemanticHighlightClass(semanticHighlight.confidence * 100)
       : ''
     
+    // Active highlight class for pulse animation (React-based, no DOM manipulation)
+    const activeHighlightClass = activeElementId === element.id ? 'semantic-highlight-active' : ''
+    
     return (
       <div
         key={element.id}
@@ -136,6 +141,7 @@ export function SimpleDocumentViewer({
           ${layoutStyles}
           ${highlightClass}
           ${semanticHighlightClass}
+          ${activeHighlightClass}
           ${isSelected ? 'bg-blue-50 border-l-4 border-blue-500 -ml-4 pl-4' : ''}
           ${element.attributes?.['data-ai-generated'] === 'true' ? 'bg-green-50 border-l-4 border-green-500 -ml-4 pl-4' : ''}
           transition-colors duration-200

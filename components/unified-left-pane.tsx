@@ -86,6 +86,10 @@ interface UnifiedLeftPaneProps {
   // Semantic highlighting
   semanticHighlights?: SemanticHighlight[]
   onSemanticHighlightsChange?: (highlights: SemanticHighlight[]) => void
+  
+  // Active highlight element (for pulse animation)
+  activeElementId?: string | null
+  onActiveElementChange?: (elementId: string | null) => void
 }
 
 // Get icon component for entity type
@@ -337,7 +341,9 @@ export function UnifiedLeftPane({
   onResetGlossary,
   documentContext,
   semanticHighlights = [],
-  onSemanticHighlightsChange
+  onSemanticHighlightsChange,
+  activeElementId,
+  onActiveElementChange
 }: UnifiedLeftPaneProps) {
   const { actions, state } = useDocumentCommunication()
   
@@ -759,8 +765,10 @@ export function UnifiedLeftPane({
       elements={elements}
       semanticHighlights={semanticHighlights}
       onSemanticHighlightsChange={onSemanticHighlightsChange}
+      activeElementId={activeElementId}
+      onActiveElementChange={onActiveElementChange}
     />
-  ), [documentId, elements, semanticHighlights, onSemanticHighlightsChange])
+  ), [documentId, elements, semanticHighlights, onSemanticHighlightsChange, activeElementId, onActiveElementChange])
 
   const renderGlossaryTab = useCallback(() => {
     if (!showGlossary) {
