@@ -106,13 +106,10 @@ We have:
 - [ ] Check performance metrics in Vercel dashboard
 - [ ] Set up basic monitoring/alerts
 
-### Stage: Documentation updates
-- [ ] Create new evergreen docs:
-  - `docs/reference/DEPLOYMENT_OVERVIEW.md` - Deployment architecture and setup
-  - `docs/reference/DEPLOYMENT_CHECKLIST.md` - Pre and post deployment verification steps
-  - `docs/reference/DEPLOYMENT_TROUBLESHOOTING.md` - Common issues and solutions
+### ✅ Stage: Documentation updates
+- ✅ Create new evergreen docs:
+  - 📔 Created `docs/reference/SETUP_DEPLOYMENT_PRODUCTION.md` - Comprehensive deployment guide with domain setup, environment configuration, and troubleshooting
 - [ ] Update existing docs:
-  - `docs/reference/SETUP.md` - Add production deployment section
   - `docs/reference/AUTHENTICATION_SETUP.md` - Add Vercel-specific OAuth configuration
   - `CLAUDE.md` - Add deployment commands and production considerations
 - [ ] Create deployment section in README.md
@@ -129,29 +126,33 @@ We have:
   - Automated testing in CI/CD
   - Database migration strategy
 
-### 🚧 Stage: Custom domain setup (spideryarn.com)
-- [ ] Research Vercel domain configuration best practices
-  - Determine optimal subdomain strategy (www vs apex)
-  - Plan redirect strategy (apex → www, http → https)
-  - Review SSL certificate management
-- [ ] Configure DNS settings
-  - Add A/AAAA records pointing to Vercel
-  - Configure CNAME for www subdomain
-  - Verify domain ownership
+### 🚧 Stage: Custom domain setup (www.spideryarn.com primary)
+- ✅ Research Vercel domain configuration best practices
+  - 📔 **Decision**: www.spideryarn.com as primary with apex redirect
+  - 📔 **DNS Provider**: Namecheap
+  - 📔 **Method**: Use individual DNS records (A + CNAME)
+  - 📔 **SSL**: Automatic via Vercel Let's Encrypt
+- [ ] Configure Namecheap DNS settings
+  - Add A record: Host `@`, Value `76.76.21.21`, TTL `300`
+  - Add CNAME record: Host `www`, Value `cname.vercel-dns.com`, TTL `300`
+  - Add CAA record: Host `@`, Value `0 issue "letsencrypt.org"`, TTL `300`
+  - Wait for DNS propagation (1-6 hours typically)
 - [ ] Update Vercel project settings
-  - Add custom domain: spideryarn.com
-  - Configure redirects (determine www preference)
-  - Verify SSL certificate provisioning
+  - Add custom domain: www.spideryarn.com (primary)
+  - Add custom domain: spideryarn.com (redirect to www)
+  - Verify SSL certificate provisioning (5-15 min after DNS)
 - [ ] Update application configuration
-  - Update NEXTAUTH_URL environment variable
-  - Update Google OAuth redirect URLs
-  - Update Supabase Auth settings
+  - Update NEXTAUTH_URL to https://www.spideryarn.com
+  - Verify Google OAuth redirect URLs include:
+    - https://www.spideryarn.com/auth/callback
+    - https://spideryarn.com/auth/callback (for redirect coverage)
+  - Update Supabase Auth site URL to https://www.spideryarn.com
 - [ ] Test domain functionality
-  - Verify domain resolves correctly
-  - Test authentication flows
-  - Verify all redirects work properly
+  - Verify apex domain redirects to www
+  - Test authentication flows on both domains
+  - Verify SSL certificates work properly
 - [ ] Document domain configuration
-  - DNS records and settings
+  - DNS records for future reference
   - Rollback procedures if needed
 
 ### Stage: Wrap up initial deployment
