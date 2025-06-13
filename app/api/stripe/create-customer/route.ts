@@ -1,12 +1,11 @@
 /**
- * Create Stripe Checkout session API route
- * Handles subscription checkout flow
+ * Create Stripe customer API route
+ * Used during user signup to create Stripe customers
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getOrCreateStripeCustomer } from '@/lib/services/stripe/customers'
-import { createCheckoutSession } from '@/lib/services/stripe/subscriptions'
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,14 +28,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Parse request body for custom URLs (optional)
-    const { successUrl, cancelUrl } = await request.json().catch(() => ({}))
+    // Parse optional full name from request body
+    const { fullName } = await request.json().catch(() => ({}))
 
-    // Get or create Stripe customer
+    // Create or get existing Stripe customer
     const { customer, error: customerError } = await getOrCreateStripeCustomer(
       user.id,
       user.email!,
-      user.user_metadata?.full_name
+      fullName
     )
 
     if (customerError || !customer) {
@@ -47,28 +46,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create checkout session
-    const { sessionId, url, error: sessionError } = await createCheckoutSession(
-      customer.id,
-      successUrl,
-      cancelUrl
-    )
-
-    if (sessionError || !url) {
-      console.error('Failed to create checkout session:', sessionError)
-      return NextResponse.json(
-        { error: 'Failed to create checkout session' },
-        { status: 500 }
-      )
-    }
-
     return NextResponse.json({ 
-      sessionId, 
-      url,
-      customerId: customer.id 
+      customerId: customer.id,
+      success: true 
     })
   } catch (error) {
-    console.error('Error in create-checkout-session:', error)
+    console.error('Error in create-customer:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
