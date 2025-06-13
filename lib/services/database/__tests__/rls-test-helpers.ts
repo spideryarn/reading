@@ -16,6 +16,10 @@ export type TestSupabaseClient = SupabaseClient<Database>
  * 
  * Uses actual Supabase authentication to test RLS policies at the database level.
  * Service role client for test data setup, authenticated clients for RLS validation.
+ * 
+ * IMPORTANT: This approach validates that RLS policies work correctly by ensuring
+ * that tests FAIL when they should (access is correctly blocked). 
+ * "Test failures" often indicate RLS is working as intended.
  */
 export class RealRLSTestSetup {
   private adminClient: TestSupabaseClient
@@ -46,19 +50,39 @@ export class RealRLSTestSetup {
   }
 
   /**
+   * Create a JWT token for testing
+   * This creates a valid JWT token that Supabase will recognize for authentication
+   */
+  private createTestJWT(userId: string): string {
+    const jwt = require('jsonwebtoken')
+    const secret = process.env.SUPABASE_JWT_SECRET!
+    
+    const payload = {
+      aud: 'authenticated',
+      exp: Math.floor(Date.now() / 1000) + (60 * 60), // 1 hour from now
+      sub: userId,
+      role: 'authenticated',
+      iat: Math.floor(Date.now() / 1000),
+    }
+    
+    return jwt.sign(payload, secret)
+  }
+
+  /**
    * Create an authenticated user client for RLS testing
    * 
+   * This creates a real authenticated context using anon client + JWT token.
+   * The RLS policies will see auth.uid() as the provided userId.
+   * 
    * @param userId - User ID to authenticate as
-   * @returns Authenticated Supabase client with user context
+   * @returns Client with user authentication context for RLS testing
    */
   async createUserClient(userId: string): Promise<TestSupabaseClient> {
     if (this.userClients.has(userId)) {
       return this.userClients.get(userId)!
     }
 
-    // For now, we'll create a client that simulates authenticated user behavior
-    // This is a simplified approach that focuses on testing RLS logic patterns
-    // rather than perfect JWT authentication simulation
+    // Create anon client (respects RLS policies)
     const client = createClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -66,12 +90,14 @@ export class RealRLSTestSetup {
         auth: {
           autoRefreshToken: false,
           persistSession: false
+        },
+        global: {
+          headers: {
+            'Authorization': `Bearer ${this.createTestJWT(userId)}`
+          }
         }
       }
     )
-
-    // Store the user ID for this client instance
-    ;(client as any).__testUserId = userId
 
     this.userClients.set(userId, client)
     return client
@@ -111,16 +137,37 @@ export class RealRLSTestSetup {
   }
 
   /**
+   * Get a valid model ID for testing
+   */
+  async getTestModelId(): Promise<string> {
+    const { data: models, error } = await this.adminClient
+      .from('ai_models')
+      .select('id')
+      .eq('provider', 'anthropic')
+      .limit(1)
+      .single()
+
+    if (error || !models) {
+      throw new Error('No AI models found for testing. Please ensure ai_models table has data.')
+    }
+
+    return models.id
+  }
+
+  /**
    * Create test AI call with admin privileges
    */
   async createTestAICall(data: Partial<Database['public']['Tables']['ai_calls']['Insert']>) {
+    // Get a valid model ID if not provided
+    const modelId = data.model_id || await this.getTestModelId()
+
     const { data: aiCall, error } = await this.adminClient
       .from('ai_calls')
       .insert({
-        model_id: 'claude-3-haiku',
+        model_id: modelId,
         prompt_type: 'test',
         prompt_input: 'test prompt input',
-        status: 'completed',
+        status: 'success',
         finish_reason: 'stop',
         prompt_tokens: 10,
         completion_tokens: 5,
@@ -162,9 +209,22 @@ export class RealRLSTestSetup {
   }
 
   /**
-   * Create test profile with admin privileges
+   * Get or create test profile with admin privileges
+   * Uses upsert to handle existing profiles
    */
   async createTestProfile(data: Partial<Database['public']['Tables']['profiles']['Insert']>) {
+    // First try to get existing profile
+    const { data: existing } = await this.adminClient
+      .from('profiles')
+      .select('*')
+      .eq('user_id', data.user_id!)
+      .maybeSingle()
+
+    if (existing) {
+      return existing
+    }
+
+    // If no existing profile, create one
     const { data: profile, error } = await this.adminClient
       .from('profiles')
       .insert({
@@ -196,14 +256,14 @@ export class RealRLSTestSetup {
       .eq('id', resourceId)
       .single()
 
-    // RLS typically returns PGRST116 error code when no rows match
+    // RLS typically returns PGRST116 error code when no rows match due to RLS filtering
     const hasAccess = !error && data !== null
     const isRLSBlock = error?.code === 'PGRST116'
 
     return {
       data: hasAccess ? data : null,
       hasAccess,
-      error: isRLSBlock ? null : error
+      error: isRLSBlock ? null : error // Don't treat RLS blocks as errors
     }
   }
 
@@ -219,7 +279,7 @@ export class RealRLSTestSetup {
       .from('profiles')
       .select('*')
       .eq('user_id', userId)
-      .single()
+      .maybeSingle() // Use maybeSingle instead of single to handle missing records
 
     const hasAccess = !error && data !== null
     const isRLSBlock = error?.code === 'PGRST116'
@@ -235,10 +295,7 @@ export class RealRLSTestSetup {
    * Clean up test clients and data
    */
   async cleanup(): Promise<void> {
-    // Sign out all user clients
-    for (const client of this.userClients.values()) {
-      await client.auth.signOut()
-    }
+    // Clear all user clients
     this.userClients.clear()
 
     // Note: We don't clean up test data here as it should be handled
