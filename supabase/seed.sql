@@ -46,11 +46,13 @@ BEGIN
   END IF;
 END $$;
 
--- Create system user profile
-INSERT INTO profiles (user_id, preferences) VALUES (
+-- Create system user profile with admin access
+INSERT INTO profiles (user_id, preferences, is_admin) VALUES (
   '00000000-0000-0000-0000-000000000001'::uuid,
-  '{"type": "system", "description": "Mock system user for development"}'::jsonb
-) ON CONFLICT (user_id) DO NOTHING;
+  '{"type": "system", "description": "Mock system user for development"}'::jsonb,
+  NOW()
+) ON CONFLICT (user_id) DO UPDATE SET 
+  is_admin = COALESCE(profiles.is_admin, NOW());
 
 -- Insert additional test user (greg@gregdetre.com)
 INSERT INTO auth.users (id, email, email_confirmed_at, created_at, updated_at) VALUES
