@@ -49,7 +49,7 @@ We have:
 - ✅ Create new Vercel team/organization for Spideryarn
   - 📔 New project created with Next.js framework preset
 
-### 🚧 Stage: Initial Vercel deployment
+### ✅ Stage: Initial Vercel deployment
 - ✅ Connect GitHub repository to Vercel
   - 📔 Repository https://github.com/spideryarn/reading imported successfully
   - 📔 Framework preset: Next.js auto-detected and configured
@@ -62,9 +62,13 @@ We have:
   - 📔 Added ANTHROPIC_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, Google OAuth credentials
   - 📔 Skipped LLM_MODEL to use application default (anthropic-balanced in production)
   - 📔 Created .env.prod template and docs/reference/SETUP_SECRETS_AND_ENVIRONMENT_VARIABLES.md
-- [ ] Deploy to `[project].vercel.app` domain
-  - 📔 Deployment attempted without git push (expected to fail until source code is available)
-- [ ] Verify basic functionality works
+- ✅ Deploy to `[project].vercel.app` domain
+  - 📔 Build initially failed due to ESLint violations and auth page dynamic rendering issues
+  - 📔 Fixed auth pages (/auth/signup, /auth/profile) by adding `export const dynamic = 'force-dynamic'`
+  - 📔 Deployment URL: https://spideryarn-reading-ijkw89kji-greg-detre.vercel.app/
+- ❓ Verify basic functionality works
+  - 📔 **ISSUE**: Deployment URL showing Vercel login page instead of application
+  - 📔 **TODO**: Investigate deployment status and access configuration
 
 ### Stage: Supabase integration setup
 - [ ] Install Vercel-Supabase integration from Vercel Marketplace
@@ -125,11 +129,30 @@ We have:
   - Automated testing in CI/CD
   - Database migration strategy
 
-### Stage: Custom domain preparation (future phase)
+### 🚧 Stage: Custom domain setup (spideryarn.com)
 - [ ] Research Vercel domain configuration best practices
-- [ ] Plan redirect strategy (apex → www, http → https)
-- [ ] Document DNS changes needed
-- [ ] Schedule domain migration for stable phase
+  - Determine optimal subdomain strategy (www vs apex)
+  - Plan redirect strategy (apex → www, http → https)
+  - Review SSL certificate management
+- [ ] Configure DNS settings
+  - Add A/AAAA records pointing to Vercel
+  - Configure CNAME for www subdomain
+  - Verify domain ownership
+- [ ] Update Vercel project settings
+  - Add custom domain: spideryarn.com
+  - Configure redirects (determine www preference)
+  - Verify SSL certificate provisioning
+- [ ] Update application configuration
+  - Update NEXTAUTH_URL environment variable
+  - Update Google OAuth redirect URLs
+  - Update Supabase Auth settings
+- [ ] Test domain functionality
+  - Verify domain resolves correctly
+  - Test authentication flows
+  - Verify all redirects work properly
+- [ ] Document domain configuration
+  - DNS records and settings
+  - Rollback procedures if needed
 
 ### Stage: Wrap up initial deployment
 - [ ] Review and document lessons learned
