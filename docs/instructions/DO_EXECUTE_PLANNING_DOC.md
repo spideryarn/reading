@@ -1,4 +1,4 @@
-Do the next stage of the planning doc.
+Now work on the next stage of the planning doc.
 
 If the planning doc is currently stored in `planning/later/` or `planning/discarded/`, first move it to `planning/` (to signal that it's in progress).
 
