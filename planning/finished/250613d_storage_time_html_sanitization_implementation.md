@@ -141,7 +141,7 @@ Implement storage-time HTML sanitization for all document imports (both PDF and 
 
 ### Stage: Documentation and Deployment ✅ COMPLETED
 - [x] **Update documentation to reflect storage-time sanitization**
-  - [x] Update `docs/reference/WEBPAGE_CONTENT_EXTRACTION.md` with new sanitization timing
+  - [x] Update `docs/reference/WEBPAGE_HTML_CONTENT_EXTRACTION.md` with new sanitization timing
   - [x] Document the storage architecture (raw in Storage, sanitized in DB)
   - [x] Add troubleshooting guide for sanitization import failures
   - [x] Update API documentation for import endpoints

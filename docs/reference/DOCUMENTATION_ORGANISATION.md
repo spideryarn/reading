@@ -83,7 +83,7 @@ Available evergreen documentation in `docs/` organised by category:
 ### Content Processing & Search
 - `docs/reference/TOOL_SEARCH_TEXT.md` - Cross-element text search functionality using Mark.js with DOM-based highlighting
 - `docs/reference/PDF_TO_HTML_CONVERSION_OVERVIEW.md` - PDF processing and HTML conversion overview
-- `docs/reference/WEBPAGE_CONTENT_EXTRACTION.md` - Web content extraction and processing
+- `docs/reference/WEBPAGE_HTML_CONTENT_EXTRACTION.md` - Web content extraction and processing
 - `docs/reference/OPTIMAL_TEXT_FORMATTING.md` - Text formatting standards and typography
 
 ### Strategic Vision & Business

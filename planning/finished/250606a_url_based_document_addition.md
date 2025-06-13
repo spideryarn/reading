@@ -10,7 +10,7 @@ Desired behaviour: Transform the upload page into a unified "Add Document" inter
 
 ## References
 
-- `docs/WEBPAGE_CONTENT_EXTRACTION.md` - Comprehensive guide for webpage extraction approaches and academic publisher handling
+- `docs/WEBPAGE_HTML_CONTENT_EXTRACTION.md` - Comprehensive guide for webpage extraction approaches and academic publisher handling
 - `planning/later/250530h_pdf_to_html_conversion_implementation.md` - Current PDF processing implementation for architectural patterns
 - `docs/LLM_PROMPT_TEMPLATES.md` - Nunjucks + Zod template system for LLM calls
 - `lib/services/database/documents.ts` - Document service layer with CRUD operations
@@ -196,7 +196,7 @@ Ready to proceed with Testing and Validation stage.
   - [x] Add user guidance for paywall/subscription content
 - [x] Update documentation
   - [ ] Update `docs/reference/ARCHITECTURE_OVERVIEW.md` with URL extraction flow
-  - [x] Update `docs/WEBPAGE_CONTENT_EXTRACTION.md` with implementation details
+  - [x] Update `docs/WEBPAGE_HTML_CONTENT_EXTRACTION.md` with implementation details
   - [x] Document new configuration options and API endpoints in `lib/config.ts`
 
 ### Stage: Provider Selection UI ✅
