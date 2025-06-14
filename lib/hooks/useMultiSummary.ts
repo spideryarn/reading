@@ -148,7 +148,7 @@ export function useMultiSummary(
   
   // Auto-load cached summaries or generate new ones on mount
   useEffect(() => {
-    if (autoLoad && documentId && content && !isGenerated && !isLoading) {
+    if (autoLoad && documentId && content && !isGenerated && !isLoading && !error) {
       fetchCachedSummaries().then((cached) => {
         if (cached?.summaries) {
           setSummaries(cached.summaries)
@@ -160,7 +160,7 @@ export function useMultiSummary(
         }
       })
     }
-  }, [autoLoad, documentId, content, isGenerated, isLoading, fetchCachedSummaries, generateSummaries])
+  }, [autoLoad, documentId, content, isGenerated, isLoading, error, fetchCachedSummaries, generateSummaries])
   
   return {
     // Data state
