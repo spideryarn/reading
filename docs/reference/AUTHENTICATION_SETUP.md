@@ -37,6 +37,8 @@ npx supabase status
 
 ### 2. Environment Variables
 
+**NEVER modify, overwrite, or delete** `.env.*` files without explicit user permission
+
 Create `.env.local` file with local Supabase credentials:
 
 ```bash

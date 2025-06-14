@@ -26,6 +26,8 @@ Environment variable configuration for Spideryarn Reading, covering client-side 
 
 ## Environment Files
 
+**NEVER modify, overwrite, or delete** `.env.*` files without explicit user permission
+
 ### Local Development
 - **File**: `.env.local` (not committed to git)
 - **Purpose**: Local development with Supabase local instance

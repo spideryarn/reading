@@ -143,6 +143,8 @@ For password reset functionality:
 
 ### Environment Variables (.env.local)
 
+**NEVER modify, overwrite, or delete** `.env.*` files without explicit user permission
+
 Complete environment setup:
 
 ```bash

@@ -235,6 +235,8 @@ The project includes a complete authentication system using Supabase Auth with N
 
 ## Environment Variables
 
+**NEVER modify, overwrite, or delete** `.env.*` files without explicit user permission
+
 Key variables in `.env.local`:
 - `ANTHROPIC_API_KEY` - Required for AI features
 - `PORT` - Dev server port

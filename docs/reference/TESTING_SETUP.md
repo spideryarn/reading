@@ -41,6 +41,8 @@ Jest is configured in `jest.config.js` with Next.js integration:
 
 ## Environment Variables in Tests
 
+**NEVER modify, overwrite, or delete** `.env.*` files without explicit user permission
+
 The project follows Next.js best practices for loading environment variables during testing.
 
 ### Setup Instructions
