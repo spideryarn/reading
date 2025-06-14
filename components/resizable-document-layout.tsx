@@ -77,6 +77,7 @@ interface ResizableDocumentLayoutProps {
   documentSourceUrl?: string | null
   aiHeadingsGenerated?: boolean
   summaryGenerated?: boolean
+  glossaryGenerated?: boolean
   ownerEmail?: string
   isPublic?: boolean | null
 }
@@ -108,6 +109,7 @@ function ResizableDocumentLayoutInner({
   documentSourceUrl,
   aiHeadingsGenerated = false,
   summaryGenerated = false,
+  glossaryGenerated = false,
   ownerEmail,
   isPublic = false
 }: ResizableDocumentLayoutProps) {
@@ -356,7 +358,9 @@ function ResizableDocumentLayoutInner({
               documentSourceUrl={documentSourceUrl}
               aiHeadingsGenerated={aiHeadingsGenerated}
               summaryGenerated={summaryGenerated}
+              glossaryGenerated={glossaryGenerated}
               ownerEmail={ownerEmail}
+              isPublic={isPublic}
             />
             </div>
           </div>

@@ -65,6 +65,7 @@ export default async function DocumentPage({ params }: PageProps) {
         documentSourceUrl={doc.source_url}
         aiHeadingsGenerated={enhancementFlags.aiHeadingsGenerated}
         summaryGenerated={enhancementFlags.summaryGenerated}
+        glossaryGenerated={enhancementFlags.glossaryGenerated}
         ownerEmail={user.email}
         isPublic={doc.is_public}
       />

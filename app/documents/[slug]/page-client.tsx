@@ -43,6 +43,7 @@ interface DocumentPageClientProps {
   documentSourceUrl?: string | null
   aiHeadingsGenerated?: boolean
   summaryGenerated?: boolean
+  glossaryGenerated?: boolean
   ownerEmail?: string
   isPublic?: boolean | null
 }
@@ -59,6 +60,7 @@ export default function DocumentPageClient({
   documentSourceUrl,
   aiHeadingsGenerated = false,
   summaryGenerated = false,
+  glossaryGenerated = false,
   ownerEmail,
   isPublic = false
 }: DocumentPageClientProps) {
@@ -270,6 +272,7 @@ export default function DocumentPageClient({
         documentSourceUrl={documentSourceUrl}
         aiHeadingsGenerated={aiHeadingsGenerated}
         summaryGenerated={summaryGenerated}
+        glossaryGenerated={glossaryGenerated}
         ownerEmail={ownerEmail}
         isPublic={isPublic}
       />

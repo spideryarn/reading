@@ -194,6 +194,12 @@ Actions:
 - All Processing Status indicators now accurately reflect database state
 - Build successful with no TypeScript errors
 - Solution is reusable and extensible for future enhancement types
+- **CRITICAL FIX**: Found and fixed missing `glossaryGenerated` prop threading:
+  - Added `glossaryGenerated` prop to DocumentPageClient interface and parameters
+  - Added prop threading through ResizableDocumentLayout component
+  - Added prop to UnifiedLeftPane interface and replaced runtime computation with database flag
+  - Fixed MetadataPanel to correctly show "Generated" when glossary exists in database
+  - Completed the entire prop chain from page.tsx → DocumentPageClient → ResizableDocumentLayout → UnifiedLeftPane → MetadataPanel
 
 ### Stage 6: Document Statistics Cleanup
 **Goal**: Remove redundant metrics and improve information density

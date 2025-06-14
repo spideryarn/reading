@@ -101,6 +101,7 @@ interface UnifiedLeftPaneProps {
   documentSourceUrl?: string | null
   aiHeadingsGenerated?: boolean
   summaryGenerated?: boolean
+  glossaryGenerated?: boolean
   ownerEmail?: string
   isPublic?: boolean | null
 }
@@ -409,6 +410,7 @@ export function UnifiedLeftPane({
   documentSourceUrl,
   aiHeadingsGenerated = false,
   summaryGenerated = false,
+  glossaryGenerated = false,
   ownerEmail,
   isPublic
 }: UnifiedLeftPaneProps) {
@@ -848,7 +850,7 @@ export function UnifiedLeftPane({
       documentCreatedAt={documentCreatedAt}
       documentSourceUrl={documentSourceUrl}
       elements={elements}
-      glossaryGenerated={showGlossary && glossaryEntities.length > 0}
+      glossaryGenerated={glossaryGenerated}
       glossaryLoading={isLoadingGlossary}
       aiHeadingsGenerated={aiHeadingsGenerated}
       summaryGenerated={summaryGenerated}
