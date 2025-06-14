@@ -15,7 +15,7 @@ This mode is intended for moments when we pause feature work to check our archit
 1. **Scan** the target area (component, API route, service) for non-determinism, silent failures, and coupling.
 2. **Record findings** in the relevant planning doc under a new appendix section (prefix with "(Discuss with the user …)"). Make sure you provide enough detail for someone else to successfully implement
 3. **Prioritise** findings into stages (A, B, C…) with task lists following `WRITE_PLANNING_DOC.md`.
-4. **Implement** each stage sequentially, ensuring tests pass after every stage. Commit with messages per `docs/instructions/DO_GIT_COMMITS.md`.
+4. **Implement** each stage sequentially, ensuring tests pass after every stage. Commit with messages per `docs/instructions/GIT_COMMIT_CHANGES.md`.
 5. **Update documentation** – if a pattern is generally useful, refine this evergreen doc.
 
 ## Maintenance

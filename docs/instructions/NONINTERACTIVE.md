@@ -6,7 +6,7 @@ Non-interactive mode (`claude -p`) allows Claude to execute tasks without human 
 ## See Also
 
 - `docs/instructions/WRITE_PLANNING_DOC.md` - Creating structured task documents
-- `docs/instructions/DO_GIT_COMMITS.md` - Git workflow practices
+- `docs/instructions/GIT_COMMIT_CHANGES.md` - Git workflow practices
 - `docs/reference/CODING_PRINCIPLES.md` - Development principles
 - `planning/` - Example planning documents
 

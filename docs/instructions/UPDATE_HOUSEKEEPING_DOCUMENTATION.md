@@ -9,7 +9,7 @@ This document describes the process for keeping project documentation up-to-date
 - `docs/instructions/WRITE_EVERGREEN_DOC.md` - Guidelines for writing evergreen documentation
 - `docs/instructions/WRITE_PLANNING_DOC.md` - Guidelines for ephemeral planning documents
 - `docs/instructions/UPDATE_CLAUDE_INSTRUCTIONS.md` - Maintaining CLAUDE.md as part of housekeeping
-- `docs/instructions/DO_GIT_COMMITS.md` - How to commit documentation updates
+- `docs/instructions/GIT_COMMIT_CHANGES.md` - How to commit documentation updates
 
 ## When to Update Documentation
 
@@ -61,7 +61,7 @@ Agree a plan with the user, and execute it, defaulting to highest-priority first
 
 - Use tasks and subagents, following instructions in `docs/instructions/TASKS_SUBAGENTS.md`
 
-- Commit in batches (following `docs/instructions/DO_GIT_COMMITS.md`), using subagents.
+- Commit in batches (following `docs/instructions/GIT_COMMIT_CHANGES.md`), using subagents.
 
 
 ### Step 4: Review
@@ -112,7 +112,7 @@ After completing the main documentation updates:
 # Instead of duplicating prompt template info
 see `docs/reference/LLM_PROMPT_TEMPLATES.md` for prompt template architecture
 ```
-### Step 6: Suggest a commit to the user (following `docs/instructions/DO_GIT_COMMITS.md`)
+### Step 6: Suggest a commit to the user (following `docs/instructions/GIT_COMMIT_CHANGES.md`)
 
 
 ## Documentation Quality Checklist

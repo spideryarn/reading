@@ -255,7 +255,7 @@ This document provides a comprehensive template for creating new tools in Spider
   - [ ] Code review focusing on consistency with existing patterns
   - [ ] Test with real user scenarios and edge cases
   - [ ] Verify all documentation is accurate and complete
-  - [ ] Git commit following `docs/instructions/DO_GIT_COMMITS.md`
+  - [ ] Git commit following `docs/instructions/GIT_COMMIT_CHANGES.md`
 
 ## Component Template Structure
 
