@@ -1,5 +1,5 @@
 // UI components for chat loading and error states
-// Uses Phosphor icons per docs/STYLING.md patterns
+// Uses Phosphor icons per docs/STYLING_OVERVIEW.md patterns
 
 import { CircleNotch, Warning } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'

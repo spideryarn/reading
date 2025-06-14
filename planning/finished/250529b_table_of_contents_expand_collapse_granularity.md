@@ -22,7 +22,7 @@ The ToC has two tabs (Original and AI-generated) that currently use duplicate re
 - `docs/TABLE_OF_CONTENTS_PANE.md` - Current ToC architecture and features documentation
 - `components/table-of-contents.tsx` - Main ToC component with duplicated rendering logic in `renderOriginalTab()` and `renderAiGeneratedTab()`
 - `components/tab-container.tsx` - Shared tabbed interface component used by ToC
-- `docs/STYLING.md` - UI patterns including expand/collapse button styling (up/down arrows used in Summary tab)
+- `docs/STYLING_OVERVIEW.md` - UI patterns including expand/collapse button styling (up/down arrows used in Summary tab)
 - Screenshot showing current ToC interface with hierarchical heading display
 
 ## Principles, key decisions

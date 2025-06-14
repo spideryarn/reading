@@ -16,7 +16,7 @@ In later stages, we plan to replace simple collapsed text with AI-generated summ
 - Related features:
   - `docs/MUTATIONS.md` - Document transformation system
   - `planning/250529a_ai_collapse_expand_summaries.md` - AI summaries for collapsed blocks
-- Styling: `docs/STYLING.md`, Phosphor icons
+- Styling: `docs/STYLING_OVERVIEW.md`, Phosphor icons
 
 ## Principles, key decisions
 
@@ -53,7 +53,7 @@ In 'collapsed mode', only show the first line (or the first N characters/words),
   - Use CSS transitions for height changes
   - Maintain scroll position during collapse/expand
 
-- [ ] Document in `docs/STYLING.md`:
+- [ ] Document in `docs/STYLING_OVERVIEW.md`:
   - Expand/collapse arrow patterns
   - Button styling conventions
 

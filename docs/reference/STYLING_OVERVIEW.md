@@ -1,14 +1,22 @@
-# Styling
+# Styling Overview
 
-CSS and visual styling configuration for the Spideryarn Reading application.
+Overview of CSS and visual styling configuration for the Spideryarn Reading application, with links to specialized styling documentation for specific topics.
 
 ## See also
 
+### Specialized Styling Documentation
+- `docs/reference/STYLING_COLORS_FONTS.md` - Complete color system, typography, and theme configuration
+- `docs/reference/STYLING_ICONS.md` - Phosphor Icons usage patterns, SSR compatibility, and sizing standards
+- `docs/reference/STYLING_TOOLTIPS.md` - Tooltip styling patterns and implementation with default light theme
+- `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - shadcn/ui component library integration guide
+- `docs/reference/STYLING_OVERLAPPING_TEXT_HIGHLIGHTS.md` - Advanced highlighting implementation with CSS Custom Highlight API
+- `docs/reference/STYLING_COLLAPSIBLE.md` - Comprehensive guide for expand/collapse component patterns
+
+### Implementation Files
 - `lib/config.ts` - UI configuration including theme settings
 - `app/globals.css` - Global CSS variables and base styles
 - `tailwind.config.js` - Tailwind CSS configuration (if exists)
 - `docs/reference/UI_COMPONENTS.md` - shadcn/ui component reference and usage
-- `docs/reference/STYLING_COLLAPSIBLE.md` - Comprehensive guide for expand/collapse component patterns
 - `/design` - Live design reference showing all components and colours
 
 ## Principles, key decisions
@@ -20,30 +28,12 @@ CSS and visual styling configuration for the Spideryarn Reading application.
 
 ## Theme configuration
 
-Theme mode is controlled by `UI_CONFIG.FORCE_LIGHT_MODE` in `lib/config.ts`. Currently set to `true` to force light mode application-wide.
+Core theme system overview - see `docs/reference/STYLING_COLORS_FONTS.md` for complete details.
 
-The CSS variables in `app/globals.css` define the colour scheme:
-
-```css
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --spideryarn-orange: #DB8A45;
-}
-```
-
-### Brand colours
-
-- **Spideryarn Orange**: `#DB8A45` - Available as `text-spideryarn-orange` class
-
-Dark mode CSS exists but is commented out until theming is properly implemented.
-
-## Typography
-
-- **Primary font**: Arial, Helvetica, sans-serif (set in `body` element)
-- **Geist fonts**: Available via CSS variables `--font-geist-sans` and `--font-geist-mono`
-- **Trebuchet MS**: Available as `font-trebuchet` class for logo/branding text
-- **Monospace**: Use `font-mono` class for technical data like model IDs, API responses, and configuration values
+- **Light mode only**: Currently enforced via `UI_CONFIG.FORCE_LIGHT_MODE` in `lib/config.ts`
+- **CSS custom properties**: Comprehensive theme system in `app/globals.css`
+- **Brand color**: Spideryarn Orange `#DB8A45` used consistently across components
+- **Typography**: Geist font family with Trebuchet for branding and monospace for technical content
 
 ## Tailwind CSS v4 (Beta)
 
@@ -61,45 +51,13 @@ We use Tailwind CSS v4 beta, which has significant differences from v3:
 
 ## Third-party styling
 
-### Radix UI tooltips
+### Radix UI Integration
 
-Tooltips use Radix UI primitives with custom styling applied via Tailwind classes. The tooltip content is styled with:
-
-- `bg-white border border-gray-200 rounded-lg shadow-lg` for the container
-- `font-semibold text-gray-900 text-sm` for titles
-- `text-gray-700 text-sm leading-relaxed` for descriptions
-- `text-xs text-gray-500 font-mono` for keyboard shortcuts
-
-This provides consistent styling with the application theme and design system.
+Tooltips, dialogs, and other interactive components use Radix UI primitives with custom Tailwind styling. See `docs/reference/STYLING_TOOLTIPS.md` for comprehensive tooltip styling patterns.
 
 ## Icons
 
-### Phosphor Icons
-
-The project uses Phosphor Icons (`@phosphor-icons/react`) for consistent iconography.
-
-**Basic usage:**
-```tsx
-import { ArrowRight, House, MagnifyingGlass } from '@phosphor-icons/react'
-
-// Default (regular weight, 24px)
-<ArrowRight />
-
-// With custom size and weight
-<House size={32} weight="bold" />
-
-// With custom colour
-<MagnifyingGlass size={20} color="#666" />
-```
-
-**Available weights:** `thin`, `light`, `regular`, `bold`, `fill`, `duotone`
-
-**SSR compatibility:** For Next.js server components, use SSR imports:
-```tsx
-import { ArrowRight } from '@phosphor-icons/react/dist/ssr'
-```
-
-**Browse icons:** https://phosphoricons.com/
+The project uses Phosphor Icons (`@phosphor-icons/react`) for consistent iconography across all components. See `docs/reference/STYLING_ICONS.md` for complete usage patterns, SSR compatibility, and sizing standards.
 
 ## UI Patterns
 
@@ -163,9 +121,7 @@ const [showContent, setShowContent] = useState(false)
 
 ### Expand/Collapse Buttons
 
-Use Phosphor `CaretDown`/`CaretUp` icons for expand/collapse functionality. 
-
-**See `docs/reference/STYLING_COLLAPSIBLE.md`** for comprehensive patterns, implementation examples, responsive behaviour, and accessibility guidelines for all collapsible components.
+Use Phosphor `CaretDown`/`CaretUp` icons for expand/collapse functionality. See `docs/reference/STYLING_COLLAPSIBLE.md` for comprehensive patterns and `docs/reference/STYLING_ICONS.md` for icon-specific guidance.
 
 ## Static assets
 

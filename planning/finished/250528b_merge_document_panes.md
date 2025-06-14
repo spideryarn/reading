@@ -19,7 +19,7 @@ The goal is to merge these two panes into a single, double-wide **Document** pan
   - `docs/TABLE_OF_CONTENTS_PANE.md` - ToC scroll functionality
   - `docs/TOOL_GLOSSARY.md` - Glossary click-to-scroll
   - `docs/MUTATIONS.md` - Document transformation system
-- Styling: `docs/STYLING.md`, Phosphor icons
+- Styling: `docs/STYLING_OVERVIEW.md`, Phosphor icons
 
 ## Principles, key decisions
 

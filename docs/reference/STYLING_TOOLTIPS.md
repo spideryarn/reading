@@ -5,20 +5,42 @@ Comprehensive guide to tooltip styling patterns and implementations in the Spide
 ## See also
 
 - `components/ui/tooltip.tsx` - shadcn/ui tooltip component implementation
-- `docs/reference/STYLING.md` - General styling configuration and patterns
-- `docs/reference/SHADCN_UI_REFERENCE.md` - shadcn/ui component reference
+- `docs/reference/STYLING_OVERVIEW.md` - General styling system overview
+- `docs/reference/STYLING_COLORS_FONTS.md` - Colour palette and typography system
+- `docs/reference/STYLING_ICONS.md` - Icon usage patterns and conventions
+- `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - shadcn/ui component reference
 - `planning/finished/250526a_ToC_hierarchical_summary_tooltips.md` - Historical decision context for ToC tooltip implementation
+- `components/table-of-contents-tabs.tsx` - Default tooltip pattern implementation
 - `components/unified-left-pane.tsx` - Search result tooltip implementations
 - `components/heading-tree.tsx` - Hierarchical heading tooltip usage
 - `components/vertical-icon-nav.tsx` - Navigation tooltip patterns
 
 ## Principles, key decisions
 
+- **Default Style**: ToC-heading summary tooltips define our standard tooltip appearance (light background, nice margins/padding, subtle grey arrow)
 - **Radix UI Foundation**: All tooltips use `@radix-ui/react-tooltip` primitives via shadcn/ui
-- **Consistent Visual Language**: Two main styling approaches - default orange theme and custom white theme
-- **Content-Aware Styling**: Heavy content tooltips use white backgrounds, simple tooltips use primary theme
+- **Content-First Design**: Our default white theme with clean borders is optimised for readable content
+- **Consistent Visual Language**: Standard light theme for content, primary orange theme for simple interactions
 - **Accessibility First**: Radix UI ensures proper ARIA attributes and keyboard navigation
 - **Performance**: Tooltips are positioned with `z-50` to avoid z-index conflicts
+
+## When to Use Which Pattern
+
+**Default Choice**: Use the **Default Light Content Theme** for most tooltips. This provides the best readability and follows our established design language.
+
+**Use Default Light Content Theme when:**
+- Displaying content, summaries, or detailed information
+- Showing search results or contextual data
+- Need good readability and content space
+- Want consistency with ToC-heading tooltips (our design standard)
+
+**Use Simple Primary Theme only when:**
+- Very brief labels or single-word descriptions
+- Icon tooltips with minimal text
+- Want to maintain visual hierarchy (less prominent than content tooltips)
+- Space is severely constrained
+
+**Special State Patterns** (loading, error, dark) should follow the default light theme structure but adapt colours and content as needed.
 
 ## Tooltip Component Architecture
 
@@ -37,18 +59,42 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 </Tooltip>
 ```
 
-**Default Styling Features:**
-- Background: `bg-primary` (Spideryarn orange `#DB8A45`)
-- Text: `text-primary-foreground` (light text on dark background)
+**Standard Framework Features:**
+- Built on Radix UI primitives for accessibility
 - Animation: Fade and zoom transitions with directional slides
-- Arrow: Automatic with matching primary colours
+- Arrow: Automatic positioning with theme-matched colours
 - Typography: `text-xs` with balanced text wrapping
+- Z-index: `z-50` for proper layering
+
+**Note**: The actual default styling follows the Light Content Theme pattern below, not the shadcn/ui component defaults.
 
 ## Styling Patterns
 
-### 1. Default Primary Theme ✓
+### 1. Default Light Content Theme ✓ (STANDARD)
 
-**Usage**: Simple tooltips, icons, navigation elements
+**Usage**: ToC-heading summaries, content tooltips, detailed information (this is our default)
+
+```tsx
+<TooltipContent className="max-w-md text-left bg-white border border-gray-200 rounded-lg shadow-lg p-4">
+  <div className="text-xs text-gray-700 leading-relaxed">
+    Detailed content...
+  </div>
+</TooltipContent>
+```
+
+**Styling Characteristics (Standard Pattern):**
+- Background: `bg-white` (light, clean)
+- Border: `border border-gray-200` (subtle grey border)
+- Shadow: `shadow-lg` (nice depth)
+- Padding: `p-4` (generous margins/padding)
+- Max width: `max-w-md`
+- Text: `text-gray-700` (readable grey)
+- Arrow: `fill-gray-200` (subtle grey arrow pointing to element)
+- Border radius: `rounded-lg`
+
+### 2. Simple Primary Theme ✓
+
+**Usage**: Simple tooltips, icons, brief labels (use sparingly)
 
 ```tsx
 <TooltipContent>
@@ -63,27 +109,6 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 - Font: `text-xs`
 - Border radius: `rounded-md`
 - Arrow: `bg-primary fill-primary`
-
-### 2. Content-Heavy White Theme ✓
-
-**Usage**: Search results, document content, detailed information
-
-```tsx
-<TooltipContent className="max-w-md text-left bg-white border border-gray-200 rounded-lg shadow-lg p-4">
-  <div className="text-xs text-gray-700 leading-relaxed">
-    Detailed content...
-  </div>
-</TooltipContent>
-```
-
-**Styling Characteristics:**
-- Background: `bg-white`
-- Border: `border border-gray-200`
-- Shadow: `shadow-lg`
-- Padding: `p-4`
-- Max width: `max-w-md`
-- Text: `text-gray-700`
-- Arrow: `fill-gray-200` or `fill-gray-300`
 
 ### 3. Loading State Pattern ✓
 
@@ -273,7 +298,28 @@ Used for "hover to load" states.
 
 ## Implementation Examples
 
-### Basic Icon Tooltip
+### Default Content Tooltip (Standard Pattern)
+
+```tsx
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+
+<Tooltip>
+  <TooltipTrigger>
+    <button>Table of Contents Heading</button>
+  </TooltipTrigger>
+  <TooltipContent 
+    side="right" 
+    className="max-w-md text-left bg-white border border-gray-200 rounded-lg shadow-lg p-4"
+    sideOffset={8}
+  >
+    <div className="text-xs text-gray-700 leading-relaxed">
+      Content summary or detailed information...
+    </div>
+  </TooltipContent>
+</Tooltip>
+```
+
+### Simple Icon Tooltip
 
 ```tsx
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -284,26 +330,7 @@ import { Info } from '@phosphor-icons/react'
     <Info size={16} />
   </TooltipTrigger>
   <TooltipContent>
-    Information about this feature
-  </TooltipContent>
-</Tooltip>
-```
-
-### Content-Rich Tooltip
-
-```tsx
-<Tooltip>
-  <TooltipTrigger>
-    <button>Search Result</button>
-  </TooltipTrigger>
-  <TooltipContent 
-    side="right" 
-    className="max-w-md text-left bg-white border border-gray-200 rounded-lg shadow-lg p-4"
-    sideOffset={8}
-  >
-    <div className="text-xs text-gray-700 leading-relaxed">
-      <HighlightedSearchText text={content} query={query} />
-    </div>
+    Brief information
   </TooltipContent>
 </Tooltip>
 ```
@@ -388,30 +415,30 @@ const getCachedContent = (key: string) => {
 
 ## Common Patterns
 
-### 1. Search Result Tooltips
+### 1. ToC Summary Tooltips (Default Standard)
 
-- White background with gray border
-- Context-aware content with highlighting
+- Light background with subtle grey border (`bg-white border-gray-200`)
+- Generous padding for readability (`p-4`)
+- Grey arrow pointing to element (`fill-gray-200`)
+- AI-generated content with markdown support
 - Right-side positioning with offset
-- Maximum width constraint
+- Maximum width constraint (`max-w-md`)
 
-### 2. Navigation Tooltips
+### 2. Search Result Tooltips
+
+- Uses default light theme pattern
+- Context-aware content with highlighting
+- Same styling as ToC tooltips for consistency
+
+### 3. Navigation Tooltips
 
 - Structured information (title, description, shortcut)
+- Uses default light theme pattern
 - Consistent typography hierarchy
-- Gray arrow styling
-- Compact padding
 
-### 3. Content Generation Tooltips
+### 4. Simple Icon Tooltips
 
-- Multiple states (loading, error, success)
-- AI-generated content rendering
-- Markdown support
-- Caching for performance
-
-### 4. Icon Tooltips
-
-- Default primary theme
+- Primary orange theme for brevity
 - Minimal content
 - Standard positioning
 - Quick show/hide
@@ -420,17 +447,20 @@ const getCachedContent = (key: string) => {
 
 ### Planned Enhancements 📋
 
-- **Dark mode support**: Extend current patterns for dark theme
+- **Dark mode support**: Extend default light theme for dark mode variants
 - **Mobile optimization**: Touch-friendly tooltip behaviour
 - **Performance monitoring**: Track tooltip render performance
 - **Content size limits**: Automatic truncation for very long content
+- **Theme consistency**: Ensure all tooltips follow default light pattern unless specifically required
 
 ### Maintenance Notes
 
-- Update arrow colours when changing tooltip backgrounds
+- **Default first**: Use standard light theme (`bg-white border-gray-200 shadow-lg p-4`) unless specific requirements dictate otherwise
+- Update arrow colours when changing tooltip backgrounds (standard: `fill-gray-200`)
 - Test positioning with different viewport sizes
 - Verify accessibility when adding new tooltip patterns
 - Keep animation durations consistent across the application
+- Maintain consistency with ToC tooltip styling as the baseline pattern
 
 ## Troubleshooting
 

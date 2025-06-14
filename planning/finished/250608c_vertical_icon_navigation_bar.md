@@ -12,7 +12,7 @@ Currently, the unified left pane displays navigation options as a vertical list 
 
 - `docs/reference/UNIFIED_LEFT_PANE.md` - Current left pane architecture and features
 - `docs/reference/UI_COMPONENTS.md` - Available UI components and patterns
-- `docs/reference/STYLING.md` - Phosphor icons usage and styling guidelines
+- `docs/reference/STYLING_OVERVIEW.md` - Phosphor icons usage and styling guidelines
 - `docs/reference/CROSS_PANE_COMMUNICATION.md` - State management for pane interactions
 - `components/unified-left-pane.tsx` - Current implementation to be modified
 - `components/tab-container.tsx` - Existing tab container that may be reused/modified

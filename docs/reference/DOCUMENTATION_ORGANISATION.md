@@ -37,7 +37,7 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/archive/TESTING_DATABASE_SUPABASE_OPTIONS_RESEARCH.md` - Historical research on different test database approaches for Supabase local development
 - `docs/reference/TESTING_AUTHENTICATION.md` - Redirect to AUTHENTICATION_TESTING.md for authentication testing patterns
 - `docs/reference/COMMAND_LINE_SCRIPTS.md` - Guidelines for writing command-line scripts using shell scripts or TypeScript/Clipanion
-- `docs/reference/STYLING.md` - CSS and visual styling configuration including theme settings, Phosphor icons usage, and loading/error button patterns
+- `docs/reference/STYLING_OVERVIEW.md` - Overview of CSS and visual styling configuration with links to specialized styling documentation ⭐ **Start here for styling**
 - `docs/reference/GIT_WORKTREES.md` - Multi-worktree development setup using hub-and-spoke model
 - `docs/reference/SITE_ORGANISATION.md` - Application routes, component hierarchy, and navigation patterns (may be outdated)
 
@@ -75,6 +75,10 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/UI_COMPONENTS.md` - Available UI components and usage patterns
 - `docs/reference/UI_INTERFACE.md` - Multi-pane layout with tabbed navigation architecture
 - `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - shadcn/ui component library integration and customisation
+- `docs/reference/STYLING_COLORS_FONTS.md` - Complete color system, typography hierarchy, and theme configuration
+- `docs/reference/STYLING_ICONS.md` - Phosphor Icons usage patterns, SSR compatibility, and sizing standards
+- `docs/reference/STYLING_TOOLTIPS.md` - Tooltip styling patterns with default light theme and implementation examples
+- `docs/reference/STYLING_COLLAPSIBLE.md` - Comprehensive guide for expand/collapse component patterns
 - `docs/reference/STYLING_OVERLAPPING_TEXT_HIGHLIGHTS.md` - Comprehensive guide for implementing overlapping text highlighting using CSS Custom Highlight API and Mark.js fallbacks ⭐ **Essential for highlighting features**
 - `docs/reference/UNIFIED_LEFT_PANE.md` - Architecture of unified left pane with tabbed interface, ToC, and tooltip summaries
 - `docs/reference/COMMAND_PALETTE.md` - Command palette implementation and usage
