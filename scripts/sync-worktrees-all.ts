@@ -132,7 +132,7 @@ class SyncAllWorktreesCommand extends Command {
       const worktrees = this.parseWorktreeList(worktreeOutput);
       
       // Filter for worktree branches and main
-      const worktreePaths = worktrees
+      const standardWorktrees = worktrees
         .filter(wt => wt.branch && /^(worktree\d+|main)$/.test(wt.branch))
         .sort((a, b) => {
           // Put main first, then sort worktrees numerically
@@ -141,7 +141,12 @@ class SyncAllWorktreesCommand extends Command {
           return a.branch!.localeCompare(b.branch!);
         });
       
-      const worktreeOnlyPaths = worktreePaths.filter(wt => wt.branch !== 'main');
+      // Track worktrees that are skipped due to non-standard branches
+      const nonStandardWorktrees = worktrees
+        .filter(wt => wt.branch && !/^(worktree\d+|main)$/.test(wt.branch))
+        .sort((a, b) => a.branch!.localeCompare(b.branch!));
+      
+      const worktreeOnlyPaths = standardWorktrees.filter(wt => wt.branch !== 'main');
       
       if (worktreeOnlyPaths.length === 0) {
         throw new UsageError('No worktree branches found. Create worktree branches first.');
@@ -247,13 +252,18 @@ class SyncAllWorktreesCommand extends Command {
       this.log(`\n📤 Step 2: Distributing main to all worktrees...`, this.colors.bright);
       
       let allSuccess = true;
-      const results: Array<{ branch: string; success: boolean; error?: string; skipped?: boolean }> = [];
+      const results: Array<{ branch: string; success: boolean; error?: string; skipped?: boolean; skipReason?: string }> = [];
       
       // If ignoring dirty, add skipped results for dirty worktrees
       if (this.ignoreDirty) {
         for (const wt of dirtyWorktrees) {
           results.push({ branch: wt.branch!, success: true, skipped: true });
         }
+      }
+      
+      // Add skipped results for non-standard branch worktrees
+      for (const wt of nonStandardWorktrees) {
+        results.push({ branch: wt.branch!, success: true, skipped: true, skipReason: 'non-standard branch' });
       }
       
       // Only sync clean worktrees
@@ -330,7 +340,11 @@ class SyncAllWorktreesCommand extends Command {
         if (result.skipped) {
           icon = '⏭️';
           color = this.colors.yellow;
-          suffix = ' (skipped - dirty)';
+          if (result.skipReason === 'non-standard branch') {
+            suffix = ' (skipped - non-standard branch)';
+          } else {
+            suffix = ' (skipped - dirty)';
+          }
         } else if (result.success) {
           icon = '✅';
           color = this.colors.green;
