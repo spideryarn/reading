@@ -122,6 +122,81 @@ npm test app/api/__tests__/chat.test.ts app/api/__tests__/summarise.test.ts
 - Unexpected latency in test runs
 - API usage showing up in Anthropic dashboard during testing
 
+## Supabase + Jest ESM Module Issues
+
+### Issue Description
+
+**Problem**: Jest encounters "Cannot use import statement outside a module" errors when running tests that import Supabase packages.
+
+**Root Cause**: Supabase's `@supabase/realtime-js` and related packages use ESM (ES Modules) imports, but Jest by default runs in CommonJS mode. This creates a module format mismatch.
+
+**Common Error Messages**:
+```
+Cannot use import statement outside a module
+SyntaxError: Unexpected token 'export'
+Module parse failed: Unexpected token
+```
+
+### Solution: Async Jest Configuration
+
+**Fixed Configuration Pattern** (`jest.config.js`):
+```javascript
+const nextJest = require('next/jest')
+
+const createJestConfig = nextJest({
+  dir: './',
+})
+
+const customJestConfig = {
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  testEnvironment: 'jsdom',
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/$1',
+  },
+}
+
+// Use async configuration for proper ESM handling
+module.exports = async () => ({
+  ...(await createJestConfig(customJestConfig)()),
+  
+  // Transform ESM packages to CommonJS for Jest compatibility
+  transformIgnorePatterns: [
+    'node_modules/(?!(@supabase|@supabase/.*|@assistant-ui|cheerio|nanoid|htmlparser2|domhandler|domutils|dom-serializer|entities|parse5|parse5-htmlparser2-tree-adapter|@assistant-ui/react-markdown|slug)/)'
+  ]
+})
+```
+
+### Key Configuration Elements
+
+1. **Async Configuration**: Export an async function instead of a plain object
+2. **transformIgnorePatterns**: Tell Jest to transform specific ESM packages
+3. **Package List**: Include all Supabase and related ESM packages
+
+### Packages Requiring ESM Transform
+
+**Supabase packages**:
+- `@supabase/*` - All Supabase packages
+- `@supabase/realtime-js` - Main culprit for ESM errors
+
+**Related ESM packages**:
+- `cheerio` - HTML parsing (used by our HTML processing)
+- `nanoid` - ID generation
+- HTML parsing utilities: `htmlparser2`, `domhandler`, `domutils`, etc.
+
+### Testing the Fix
+
+**Verify configuration works**:
+```bash
+# Run full test suite
+npm test
+
+# Run specific Supabase-dependent tests
+npm test lib/services/database/
+npm test lib/services/__tests__/html-document-processor.test.ts
+```
+
+**No more ESM errors**: Tests should run without "Cannot use import statement" errors.
+
 ## Database Testing Issues
 
 ### Common Problems
@@ -136,7 +211,9 @@ npm test app/api/__tests__/chat.test.ts app/api/__tests__/summarise.test.ts
    - Check environment variables are correctly loaded
    - Ensure test database permissions
 
-3. **Test data pollution**:
+3. **ESM module errors** (now fixed with async Jest configuration above)
+
+4. **Test data pollution**:
    - Consider using separate test database
    - Implement proper test cleanup procedures
 

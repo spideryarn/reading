@@ -32,7 +32,7 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/LOGGING_BEST_PRACTICES.md` - Comprehensive logging guide covering library choices (Pino vs Winston), Vercel observability, and production monitoring strategies
 - `docs/reference/TESTING_OVERVIEW.md` - Testing approach documentation covering Jest with React Testing Library setup, test structure, and current test coverage
 - `docs/reference/TESTING_SETUP.md` - Test configuration and environment setup including Jest, .env.test, and module resolution
-- `docs/reference/TESTING_TROUBLESHOOTING.md` - Known testing issues, workarounds, and debugging strategies including NextRequest mocking problems
+- `docs/reference/TESTING_TROUBLESHOOTING.md` - Known testing issues, workarounds, and debugging strategies including NextRequest mocking and Supabase ESM module solutions
 - `docs/reference/TESTING_DATABASE.md` - Database-specific testing patterns and integration testing strategies
 - `docs/reference/archive/TESTING_DATABASE_SUPABASE_OPTIONS_RESEARCH.md` - Historical research on different test database approaches for Supabase local development
 - `docs/reference/TESTING_AUTHENTICATION.md` - Redirect to AUTHENTICATION_TESTING.md for authentication testing patterns
@@ -89,6 +89,8 @@ Available evergreen documentation in `docs/` organised by category:
 ### Content Processing & Search
 - `docs/reference/TOOL_SEARCH_TEXT.md` - Cross-element text search functionality using Mark.js with DOM-based highlighting
 - `docs/reference/UPLOAD.md` - Comprehensive document upload and import system reference covering all ingestion methods ⭐ **Essential for content import**
+- `docs/reference/UPLOAD_HTML_SANITISATION_AND_PRETTIFICATION.md` - Comprehensive guide for HTML sanitisation and prettification with academic content preservation
+- `docs/reference/HTML_DOCUMENT_PROCESSOR.md` - Shared HTML processing service documentation for DRY architecture
 - `docs/reference/PDF_TO_HTML_CONVERSION_OVERVIEW.md` - PDF processing and HTML conversion overview
 - `docs/reference/WEBPAGE_HTML_CONTENT_EXTRACTION.md` - Web content extraction and processing
 - `docs/reference/OPTIMAL_TEXT_FORMATTING.md` - Text formatting standards and typography

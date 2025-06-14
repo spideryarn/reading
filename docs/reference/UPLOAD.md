@@ -10,6 +10,8 @@ This document provides a comprehensive reference for the document upload and imp
 - `docs/reference/PDF_TO_HTML_LLM_APPROACHES.md` - LLM-based PDF processing methods currently implemented
 - `docs/reference/WEBPAGE_HTML_CONTENT_EXTRACTION.md` - URL extraction implementation with Readability and AI transcription
 - `docs/reference/WEBPAGE_HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md` - Security and sanitization for HTML content
+- `docs/reference/UPLOAD_HTML_SANITISATION_AND_PRETTIFICATION.md` - Comprehensive sanitisation and prettification guide
+- `docs/reference/HTML_DOCUMENT_PROCESSOR.md` - Shared HTML processing service documentation
 - `planning/finished/250606a_url_based_document_addition.md` - URL extraction feature implementation decisions
 - `planning/finished/250613c_html_document_storage_and_security_implementation.md` - HTML storage and security improvements
 - `app/api/upload-pdf/route.ts` - PDF upload API implementation
@@ -127,10 +129,11 @@ The system should support four ingestion scenarios:
    - Apply appropriate method
    - Handle errors gracefully
 
-4. Sanitization
-   - Apply HTML sanitization
-   - Preserve academic content
-   - Ensure XSS protection
+4. Shared HTML Processing Pipeline
+   - HTML Sanitization (DOMPurify with academic config)
+   - HTML Prettification (js-beautify, feature flag controlled)
+   - Text Extraction (DOM-based clean extraction)
+   - Upload Metadata Generation
 
 5. Database Storage
    - Create document record
@@ -142,6 +145,15 @@ The system should support four ingestion scenarios:
    - Redirect to viewer
    - Show clear errors
 ```
+
+### Shared Processing Service
+
+All upload APIs (upload-pdf, extract-url, upload-html) use the shared HTML processing pipeline provided by `lib/services/html-document-processor.ts`. This eliminates code duplication and ensures consistent processing:
+
+- **DRY Architecture**: Single implementation for post-HTML processing
+- **Consistent Security**: Uniform sanitisation across all upload methods
+- **Feature Parity**: All uploads get prettification, logging, and error handling
+- **Maintainability**: Changes to processing logic apply to all upload types
 
 ### File Size Limits
 
@@ -169,6 +181,10 @@ interface UploadMetadata {
   processing_time_ms?: number
   file_size_bytes?: number
   model_used?: string
+  // HTML processing metadata
+  html_size_bytes: number
+  plaintext_size_bytes: number
+  prettification_enabled: boolean
   // URL-specific
   content_size_kb?: number
   extracted_size_kb?: number
@@ -318,5 +334,9 @@ Typical processing times:
 - Readability extraction: 50-400ms
 - AI transcription: 10-30 seconds
 - PDF conversion: 15-45 seconds
-- HTML sanitization: <100ms
+- HTML sanitization: 5-15ms
+- HTML prettification: 7-10ms
+- Text extraction: 2-5ms
 - Storage upload: 1-5 seconds
+
+**Note**: HTML processing overhead (sanitisation + prettification + text extraction) averages <25ms total.
