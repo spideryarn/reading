@@ -121,6 +121,28 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
     }
   }, [signOut, router])
 
+  // --- New: close palette on Escape once the input is already empty ---
+  const handleGlobalEscape = useCallback(
+    (event: KeyboardEvent) => {
+      if (!open) return
+      if (event.key === 'Escape') {
+        // If focus is inside the CommandInput, only close when the input is empty.
+        const active = document.activeElement as HTMLInputElement | null
+        const isCmdkInput = active?.getAttribute('data-slot') === 'command-input'
+
+        event.preventDefault()
+        setOpen(false)
+      }
+    },
+    [open, setOpen]
+  )
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleGlobalEscape)
+    return () => window.removeEventListener('keydown', handleGlobalEscape)
+  }, [handleGlobalEscape])
+  // --- End new code ---
+
   // Define all commands
   const commands: Command[] = [
     // Navigation commands matching existing tabs
@@ -325,13 +347,13 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
       
       if (correctModifier && event.key.toLowerCase() === 'k') {
         event.preventDefault()
-        setOpen(prev => !prev)
+        setOpen(!open)
       }
     }
     
     document.addEventListener('keydown', handleKeydown)
     return () => document.removeEventListener('keydown', handleKeydown)
-  }, [isMac, setOpen])
+  }, [isMac, setOpen, open])
 
   // Individual shortcut handlers for numbered navigation
   useEffect(() => {
