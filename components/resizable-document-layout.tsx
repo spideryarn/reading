@@ -384,7 +384,7 @@ function ResizableDocumentLayoutInner({
       {/* Vertical icon navigation - always visible */}
       <div className="absolute top-0 left-0 z-10 h-full">
         <VerticalIconNav
-          activeTab={state.activeTab}
+          activeTab={state.activeTabId}
           onTabClick={handleIconNavTabClick}
           onToggleCollapse={handleToggleCollapse}
           onCommandPaletteToggle={handleCommandPaletteToggle}
