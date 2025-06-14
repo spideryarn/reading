@@ -6,7 +6,7 @@
 
 import { 
   Article, Robot, ListBullets, ChatCircle, 
-  BookOpen, MagnifyingGlass, SidebarSimple, Terminal, HighlighterCircle 
+  BookOpen, MagnifyingGlass, SidebarSimple, Terminal, HighlighterCircle, Tag
 } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -15,7 +15,7 @@ import { useState, useEffect } from 'react'
 
 // Navigation item definition
 interface NavigationItem {
-  id: 'original' | 'ai-generated' | 'summary' | 'chat' | 'glossary' | 'search' | 'highlights'
+  id: 'original' | 'ai-generated' | 'summary' | 'chat' | 'glossary' | 'search' | 'highlights' | 'metadata'
   label: string
   icon: React.ComponentType<{ size?: number; weight?: string; className?: string }>
   tooltip: {
@@ -96,6 +96,15 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
     tooltip: {
       title: 'Highlights',
       description: 'Create and manage persistent highlights based on criteria'
+    }
+  },
+  {
+    id: 'metadata',
+    label: 'Metadata',
+    icon: Tag,
+    tooltip: {
+      title: 'Document Metadata',
+      description: 'View document information and statistics'
     }
   }
 ]

@@ -39,6 +39,10 @@ interface DocumentPageClientProps {
   slug: string
   storagePath: string | null
   originalFileType: string | null
+  documentCreatedAt: string
+  documentSourceUrl?: string | null
+  aiHeadingsGenerated?: boolean
+  summaryGenerated?: boolean
 }
 
 export default function DocumentPageClient({ 
@@ -48,7 +52,11 @@ export default function DocumentPageClient({
   initialTitle, 
   slug,
   storagePath,
-  originalFileType
+  originalFileType,
+  documentCreatedAt,
+  documentSourceUrl,
+  aiHeadingsGenerated = false,
+  summaryGenerated = false
 }: DocumentPageClientProps) {
   const mutatedDocument = useDocument() // Get mutated document from context
   const [selectedElement, setSelectedElement] = useState<DocumentElement | null>(null)
@@ -253,6 +261,11 @@ export default function DocumentPageClient({
         onSemanticHighlightsChange={setSemanticHighlights}
         activeElementId={activeElementId}
         onActiveElementChange={setActiveElementId}
+        documentTitle={currentTitle}
+        documentCreatedAt={documentCreatedAt}
+        documentSourceUrl={documentSourceUrl}
+        aiHeadingsGenerated={aiHeadingsGenerated}
+        summaryGenerated={summaryGenerated}
       />
       </div>
     </div>
