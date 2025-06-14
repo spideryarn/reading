@@ -1,16 +1,16 @@
 # Content Fidelity Testing Framework
 
-This document describes the comprehensive testing framework for validating HTML content extraction fidelity in the Spideryarn Reading application. The framework ensures that URL-based document extraction preserves content accurately without modification, abridgment, or loss.
+Manual evaluation framework for validating HTML/PDF content extraction quality in Spideryarn Reading.
 
 ## Overview
 
-The content fidelity testing framework addresses the critical challenge of ensuring that AI-powered HTML content extraction maintains the integrity of academic and complex documents. It provides:
+**Purpose**: Ensure AI-powered content extraction preserves academic documents accurately.
 
-- **Realistic test documents** with complex edge cases
-- **Automated fidelity validation** comparing original vs extracted content
-- **Detailed quality metrics** and scoring
-- **Visual analysis tools** for content comparison
-- **Actionable recommendations** for improving extraction quality
+**Key Features**:
+- Small dataset of high-value test documents
+- Manual evaluation runs (not CI/CD)
+- Focus on critical content preservation
+- Metrics: Levenshtein distance, structural fidelity, noise removal
 
 ## Key Components
 
@@ -54,41 +54,24 @@ npm test -- extract-url-content-fidelity
 - Structural hierarchy maintenance
 - Data accuracy for numerical content
 
-### 3. Content Analysis Tool (`scripts/analyze-content-fidelity.ts`)
+### 3. Evaluation Metrics
 
-Command-line tool for detailed content analysis and reporting:
+**Primary Metrics**:
+- **Levenshtein Distance**: Character-level accuracy
+- **Content Similarity**: Word-based Jaccard similarity
+- **Structural Integrity**: Element preservation rate
+- **Critical Check Pass Rate**: Must-have content preservation
 
-```bash
-# Analyze all test documents and generate report
-npm run analyze-fidelity test-documents
+## Usage
 
-# Generate JSON report
-npm run analyze-fidelity test-documents --output ./fidelity-report.json
-
-# Generate Markdown report
-npm run analyze-fidelity test-documents --output ./fidelity-report.md --format markdown
-```
-
-## Usage Examples
-
-### Running Basic Fidelity Tests
+### Running Manual Evaluation
 
 ```bash
-# Run all content fidelity tests
+# Run static content fidelity test (real AI extraction)
+npm test -- extract-url-content-fidelity-static
+
+# Run simulated fidelity tests
 npm test -- extract-url-content-fidelity
-
-# Run with verbose output to see detailed check results
-npm test -- extract-url-content-fidelity --verbose
-```
-
-### Generating Comprehensive Analysis
-
-```bash
-# Analyze test documents and output detailed report
-npm run analyze-fidelity test-documents --output ./reports/fidelity-analysis.json
-
-# View quick summary in terminal
-npm run analyze-fidelity test-documents
 ```
 
 ### Creating Custom Test Documents
@@ -277,36 +260,16 @@ npm test -- extract-url-content-fidelity
 npm run analyze-fidelity test-documents
 ```
 
-## Continuous Integration
+## Evaluation Dataset
 
-The content fidelity tests can be integrated into CI/CD pipelines:
+### Current Examples
+1. **Academic Paper with Math**: Complex LaTeX equations, tables, citations
+2. **News Article with Ads**: Multi-column layout, heavy advertising
 
-```yaml
-# .github/workflows/content-fidelity.yml
-name: Content Fidelity Tests
-on: [push, pull_request]
-
-jobs:
-  fidelity-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      - name: Install dependencies
-        run: npm ci
-      - name: Run content fidelity tests
-        run: npm test -- extract-url-content-fidelity
-      - name: Generate fidelity report
-        run: npm run analyze-fidelity test-documents --output ./fidelity-report.json
-      - name: Upload fidelity report
-        uses: actions/upload-artifact@v3
-        with:
-          name: fidelity-report
-          path: fidelity-report.json
-```
+### Planned Additions
+- PDF with footnotes and margins
+- Malformed HTML edge cases
+- Multi-language academic content
 
 ## Best Practices
 
@@ -367,6 +330,7 @@ jobs:
 
 ## Related Documentation
 
+- [`docs/reference/LLM_EVALUATION_FRAMEWORKS_FOR_CONTENT_EXTRACTION.md`](./LLM_EVALUATION_FRAMEWORKS_FOR_CONTENT_EXTRACTION.md) - Evaluation framework analysis and recommendations
 - [`docs/reference/UPLOAD.md`](./UPLOAD.md) - Overall upload system architecture
 - [`docs/reference/TESTING_DATABASE.md`](./TESTING_DATABASE.md) - Database testing patterns
 - [`docs/reference/WEBPAGE_HTML_CONTENT_EXTRACTION.md`](./WEBPAGE_HTML_CONTENT_EXTRACTION.md) - HTML extraction implementation
