@@ -9,7 +9,6 @@
 // in favour of React Context for better type safety and React integration.
 
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
-import { useToolUrlState } from '@/lib/tools/hooks/use-tool-url-state'
 import { AssistantChat } from './assistant-chat'
 import { HighlightManagement } from './highlight-management'
 import { MetadataPanel } from './tools/MetadataPanel'
@@ -103,7 +102,6 @@ interface UnifiedLeftPaneProps {
   aiHeadingsGenerated?: boolean
   summaryGenerated?: boolean
   ownerEmail?: string
-  isPublic?: boolean | null
 }
 
 // Get icon component for entity type
@@ -410,13 +408,9 @@ export function UnifiedLeftPane({
   documentSourceUrl,
   aiHeadingsGenerated = false,
   summaryGenerated = false,
-  ownerEmail,
-  isPublic = false
+  ownerEmail
 }: UnifiedLeftPaneProps) {
   const { actions, state } = useDocumentCommunication()
-  
-  // Initialize URL state hook
-  const { state: urlState } = useToolUrlState()
   
   // Auto-load glossary when glossary tab is activated
   useEffect(() => {
@@ -474,9 +468,9 @@ export function UnifiedLeftPane({
     }
     
     return () => {
-      // Clean up highlights on unmount
+      // Clean up search highlights on unmount (preserve glossary highlights)
       if (markInstanceRef.current) {
-        markInstanceRef.current.unmark()
+        markInstanceRef.current.unmark({ className: 'search-highlight' })
       }
     }
   }, [])
@@ -489,9 +483,9 @@ export function UnifiedLeftPane({
       searchTimeoutRef.current = null
     }
     
-    // Clear previous highlights
+    // Clear previous search highlights (preserve glossary highlights)
     if (markInstanceRef.current) {
-      markInstanceRef.current.unmark()
+      markInstanceRef.current.unmark({ className: 'search-highlight' })
     }
     
     // Handle whitespace-only queries
@@ -763,10 +757,10 @@ export function UnifiedLeftPane({
   const handleSearchInputChange = useCallback((value: string) => {
     setSearchQuery(value)
     
-    // Clear previous errors and highlights
+    // Clear previous errors and search highlights
     setSemanticSearchError(null)
     if (!value.trim() && markInstanceRef.current) {
-      markInstanceRef.current.unmark()
+      markInstanceRef.current.unmark({ className: 'search-highlight' })
     }
     
     // For semantic search, show history dropdown when focusing and typing
@@ -857,10 +851,8 @@ export function UnifiedLeftPane({
       aiHeadingsGenerated={aiHeadingsGenerated}
       summaryGenerated={summaryGenerated}
       ownerEmail={ownerEmail}
-      isPublic={isPublic}
-      documentId={documentId}
     />
-  ), [documentTitle, documentCreatedAt, documentSourceUrl, elements, showGlossary, glossaryEntities.length, isLoadingGlossary, aiHeadingsGenerated, summaryGenerated, ownerEmail, isPublic, documentId])
+  ), [documentTitle, documentCreatedAt, documentSourceUrl, elements, showGlossary, glossaryEntities.length, isLoadingGlossary, aiHeadingsGenerated, summaryGenerated, ownerEmail])
 
   const renderGlossaryTab = useCallback(() => {
     if (!showGlossary) {
@@ -1008,7 +1000,7 @@ export function UnifiedLeftPane({
                   setSearchResults([])
                   setIsSearching(false)
                   if (markInstanceRef.current) {
-                    markInstanceRef.current.unmark()
+                    markInstanceRef.current.unmark({ className: 'search-highlight' })
                   }
                 }}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"

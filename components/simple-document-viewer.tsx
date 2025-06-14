@@ -5,7 +5,7 @@
 // Part of the ResizablePanelGroup architecture
 // Supports semantic highlighting display - see docs/reference/TOOL_HIGHLIGHT.md for highlighting system details
 
-import { useRef, useEffect, useCallback } from 'react'
+import React, { useRef, useEffect, useCallback, useMemo } from 'react'
 import type { DocumentElement } from '@/lib/types/document'
 import { MarkdownRenderer } from './markdown-renderer'
 import { useElementVisibility } from '@/lib/hooks/useElementVisibility'
@@ -42,6 +42,19 @@ interface SimpleDocumentViewerProps {
   // Glossary highlighting props
   glossaryEntities?: Entity[]
 }
+
+// Memoised helpers to keep innerHTML stable across re-renders
+const MemoisedMarkdownRenderer = React.memo(MarkdownRenderer)
+
+const MemoisedHtml = React.memo(function MemoisedHtml({ html }: { html: string }) {
+  const htmlObject = useMemo(() => ({ __html: html }), [html])
+  return <div dangerouslySetInnerHTML={htmlObject} />
+})
+
+const MemoisedInlineHtml = React.memo(function MemoisedInlineHtml({ html }: { html: string }) {
+  const htmlObject = useMemo(() => ({ __html: html }), [html])
+  return <span dangerouslySetInnerHTML={htmlObject} />
+})
 
 export function SimpleDocumentViewer({
   elements,
@@ -268,18 +281,18 @@ export function SimpleDocumentViewer({
             <div className={textStyles}>
               {/* Render content based on type */}
               {element.attributes?.['data-markdown'] === 'true' ? (
-                <MarkdownRenderer content={element.content} />
+                <MemoisedMarkdownRenderer content={element.content} />
               ) : isListItem ? (
                 <span className="flex items-start">
                   <span className="mr-2">{element.parent_id && elements.find(e => e.id === element.parent_id)?.tag_name === 'ol' ? `${depth + 1}.` : '•'}</span>
-                  <span dangerouslySetInnerHTML={{ __html: element.content }} />
+                  <MemoisedInlineHtml html={element.content} />
                 </span>
               ) : element.tag_name === 'text' || DocumentParser.INLINE_ELEMENTS.has(element.tag_name) ? (
                 // For text nodes and inline elements, render as plain text
                 element.content
               ) : (
-                // For block elements, content is pre-sanitized at storage time
-                <div dangerouslySetInnerHTML={{ __html: element.content }} />
+                // For block elements, content is pre-sanitized at storage time but we memoise to preserve highlights
+                <MemoisedHtml html={element.content} />
               )}
             </div>
           )}
