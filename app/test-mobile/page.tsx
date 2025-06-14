@@ -1,4 +1,7 @@
-import ResizableDocumentLayout from '@/components/resizable-document-layout'
+import { ResizableDocumentLayout } from '@/components/resizable-document-layout'
+
+// Force dynamic rendering to avoid useSearchParams SSG issues
+export const dynamic = 'force-dynamic'
 
 // Simple test page for mobile screenshots
 export default function TestMobilePage() {
