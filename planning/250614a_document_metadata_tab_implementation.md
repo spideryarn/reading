@@ -201,16 +201,23 @@ Actions:
   - Fixed MetadataPanel to correctly show "Generated" when glossary exists in database
   - Completed the entire prop chain from page.tsx → DocumentPageClient → ResizableDocumentLayout → UnifiedLeftPane → MetadataPanel
 
-### Stage 6: Document Statistics Cleanup
+### Stage 6: Document Statistics Cleanup ✅ COMPLETE
 **Goal**: Remove redundant metrics and improve information density
 
 Actions:
-- [ ] **Remove character count from Document Statistics**
+- [x] **Remove character count from Document Statistics**
   - Character count provides little value compared to word count
   - Reduces visual clutter in the statistics grid
-- [ ] **Remove element count from Document Statistics**  
+- [x] **Remove element count from Document Statistics**  
   - Element count is an internal technical metric not useful to users
   - Simplify statistics to focus on user-relevant metrics
+
+**Implementation Notes**:
+- Cleaned up Document Statistics section to show only Words and Reading Time
+- Changed grid from 2x2 (4 cards) to 1x2 (2 cards) layout for better visual balance
+- Removed characterCount and elementCount from documentStats calculation
+- Maintained existing styling and hover effects for remaining cards
+- Build successful with no TypeScript errors
 
 ### Stage 7: Enhanced Reading Time Calculation
 **Goal**: Implement research-backed reading time estimation with readability adjustments

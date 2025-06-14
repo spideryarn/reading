@@ -46,7 +46,6 @@ export function MetadataPanel({
   // Calculate document statistics
   const documentStats = useMemo(() => {
     let totalWords = 0
-    let totalCharacters = 0
     let fullText = ''
     
     elements.forEach(element => {
@@ -54,7 +53,6 @@ export function MetadataPanel({
         const cleanText = extractCleanText(element.content)
         const words = cleanText.split(/\s+/).filter(word => word.length > 0)
         totalWords += words.length
-        totalCharacters += cleanText.length
         fullText += cleanText + ' '
       }
     })
@@ -64,9 +62,7 @@ export function MetadataPanel({
     
     return {
       wordCount: totalWords,
-      characterCount: totalCharacters,
       readingTime: readingTimeMinutes,
-      elementCount: elements.length,
       fullText: fullText.trim()
     }
   }, [elements])
@@ -270,30 +266,6 @@ export function MetadataPanel({
                 </div>
                 <div className="text-xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
                   {documentStats.readingTime} <span className="text-sm font-medium text-slate-600">min</span>
-                </div>
-              </div>
-              
-              <div className="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 hover:shadow-md transition-all duration-200 hover:border-slate-300">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center">
-                    <Hash size={14} weight="bold" className="text-white" />
-                  </div>
-                  <span className="text-xs font-medium text-slate-600 uppercase tracking-wider">Characters</span>
-                </div>
-                <div className="text-xl font-bold text-slate-900 group-hover:text-purple-700 transition-colors">
-                  {documentStats.characterCount.toLocaleString()}
-                </div>
-              </div>
-              
-              <div className="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 hover:shadow-md transition-all duration-200 hover:border-slate-300">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center">
-                    <FileText size={14} weight="bold" className="text-white" />
-                  </div>
-                  <span className="text-xs font-medium text-slate-600 uppercase tracking-wider">Elements</span>
-                </div>
-                <div className="text-xl font-bold text-slate-900 group-hover:text-orange-700 transition-colors">
-                  {documentStats.elementCount}
                 </div>
               </div>
             </div>
