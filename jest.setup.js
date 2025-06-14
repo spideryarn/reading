@@ -2,6 +2,31 @@ import '@testing-library/jest-dom';
 import { existsSync } from 'fs';
 import path from 'path';
 
+// Mock Next.js headers for tests that use cookies/headers outside request context
+jest.mock('next/headers', () => ({
+  cookies: jest.fn(() => ({
+    get: jest.fn(),
+    set: jest.fn(),
+    has: jest.fn(() => false),
+    delete: jest.fn(),
+    clear: jest.fn(),
+    getAll: jest.fn(() => []),
+    toString: jest.fn(() => '')
+  })),
+  headers: jest.fn(() => ({
+    get: jest.fn(),
+    has: jest.fn(() => false),
+    set: jest.fn(),
+    delete: jest.fn(),
+    append: jest.fn(),
+    getSetCookie: jest.fn(() => []),
+    forEach: jest.fn(),
+    entries: jest.fn(() => []),
+    keys: jest.fn(() => []),
+    values: jest.fn(() => [])
+  }))
+}));
+
 // Validate .env.test exists - tests should abort if missing
 const envTestPath = path.join(process.cwd(), '.env.test');
 if (!existsSync(envTestPath)) {

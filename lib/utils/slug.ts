@@ -18,7 +18,15 @@ import slug from 'slug'
  * // Returns: 'cafe-restaurant-munchen'
  */
 export function generateSlug(text: string): string {
-  return slug(text)
+  const trimmed = text.trim()
+  if (!trimmed) return ''
+  
+  return slug(trimmed, {
+    replacement: '-',
+    remove: /[*+~.()'"!:@]/g,
+    lower: true,
+    strict: true
+  })
 }
 
 /**
@@ -65,8 +73,13 @@ export function generateHtmlFilename(url: string): string {
       .replace(/\.(html|htm|php|aspx?)$/i, '') // Remove web extensions
       .replace(/\/$/, '') // Remove trailing slash
     
-    // Generate slug and ensure it's not too long (max 200 chars for filesystem compatibility)
-    const slugified = generateSlug(cleanPath)
+    // Generate slug with proper Unicode handling and ensure it's not too long (max 200 chars for filesystem compatibility)
+    const slugified = slug(cleanPath, {
+      replacement: '-',
+      remove: /[*+~.()'"!:@]/g,
+      lower: true,
+      strict: true
+    })
     const truncated = slugified.length > 200 ? slugified.substring(0, 200) : slugified
     
     return `${truncated}.html`
