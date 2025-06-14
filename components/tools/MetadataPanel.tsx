@@ -110,21 +110,21 @@ export function MetadataPanel({
   // Processing status helper
   const getStatusIcon = (isGenerated: boolean, isLoading: boolean = false) => {
     if (isLoading) {
-      return <CircleNotch size={16} weight="bold" className="animate-spin text-blue-600" />
+      return <CircleNotch size={16} weight="bold" className="animate-spin text-amber-600" />
     }
     if (isGenerated) {
-      return <CheckCircle size={16} weight="bold" className="text-green-600" />
+      return <CheckCircle size={16} weight="bold" className="text-emerald-600" />
     }
-    return <XCircle size={16} weight="bold" className="text-gray-400" />
+    return <XCircle size={16} weight="bold" className="text-slate-400" />
   }
   
-  // Get color class for readability score
+  // Get enhanced color class for readability score
   const getReadabilityColor = (score: number): string => {
-    if (score >= 80) return 'bg-green-100 text-green-800 border-green-200'
-    if (score >= 60) return 'bg-blue-100 text-blue-800 border-blue-200'
-    if (score >= 50) return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-    if (score >= 30) return 'bg-orange-100 text-orange-800 border-orange-200'
-    return 'bg-red-100 text-red-800 border-red-200'
+    if (score >= 80) return 'bg-emerald-50 text-emerald-700 border-emerald-200 ring-1 ring-emerald-100'
+    if (score >= 60) return 'bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-blue-100'
+    if (score >= 50) return 'bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-amber-100'
+    if (score >= 30) return 'bg-orange-50 text-orange-700 border-orange-200 ring-1 ring-orange-100'
+    return 'bg-red-50 text-red-700 border-red-200 ring-1 ring-red-100'
   }
   
   // Handle privacy toggle with optimistic updates
@@ -160,108 +160,139 @@ export function MetadataPanel({
   }
   
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-slate-50/30">
       {/* Header */}
-      <div className="flex-shrink-0 p-4 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900">Document Metadata</h2>
-        <p className="text-sm text-gray-600 mt-1">
-          Information and statistics about this document
+      <div className="flex-shrink-0 p-6 border-b border-slate-200 bg-white">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center">
+            <FileText size={16} weight="bold" className="text-white" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900">Document Metadata</h2>
+        </div>
+        <p className="text-sm text-slate-600 leading-relaxed">
+          Comprehensive information and analytics about this document
         </p>
       </div>
       
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="p-4 space-y-6">
+        <div className="p-6 space-y-6">
           {/* Document Information Section */}
           <section>
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">
+            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <div className="w-1 h-4 bg-gradient-to-b from-slate-400 to-slate-500 rounded-full"></div>
               Document Information
             </h3>
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <FileText size={20} weight="duotone" className="text-gray-400 mt-0.5" />
-                <div className="flex-1">
-                  <div className="text-sm text-gray-600">Title</div>
-                  <div className="font-medium text-gray-900">{documentTitle}</div>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <Calendar size={20} weight="duotone" className="text-gray-400 mt-0.5" />
-                <div className="flex-1">
-                  <div className="text-sm text-gray-600">Uploaded</div>
-                  <div className="font-medium text-gray-900" title={formattedDate.absolute}>
-                    {formattedDate.relative}
-                  </div>
-                </div>
-              </div>
-              
-              {documentSourceUrl && (
-                <div className="flex items-start gap-3">
-                  <Hash size={20} weight="duotone" className="text-gray-400 mt-0.5" />
-                  <div className="flex-1">
-                    <div className="text-sm text-gray-600">Source</div>
-                    <div className="font-medium text-gray-900 break-all">
-                      {fileType}
-                      {documentSourceUrl.startsWith('http') && (
-                        <a 
-                          href={documentSourceUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="ml-2 text-blue-600 hover:text-blue-800 text-sm"
-                        >
-                          View original
-                        </a>
-                      )}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="divide-y divide-slate-100">
+                <div className="p-4 hover:bg-slate-50/50 transition-colors">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center flex-shrink-0">
+                      <FileText size={18} weight="bold" className="text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Title</div>
+                      <div className="font-semibold text-slate-900 text-sm leading-relaxed">{documentTitle}</div>
                     </div>
                   </div>
                 </div>
-              )}
+                
+                <div className="p-4 hover:bg-slate-50/50 transition-colors">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center flex-shrink-0">
+                      <Calendar size={18} weight="bold" className="text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Uploaded</div>
+                      <div className="font-semibold text-slate-900 text-sm" title={formattedDate.absolute}>
+                        {formattedDate.relative}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1">{formattedDate.absolute}</div>
+                    </div>
+                  </div>
+                </div>
+                
+                {documentSourceUrl && (
+                  <div className="p-4 hover:bg-slate-50/50 transition-colors">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center flex-shrink-0">
+                        <Hash size={18} weight="bold" className="text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Source</div>
+                        <div className="font-semibold text-slate-900 text-sm break-all">
+                          {fileType}
+                        </div>
+                        {documentSourceUrl.startsWith('http') && (
+                          <a 
+                            href={documentSourceUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline transition-colors"
+                          >
+                            View original
+                            <Hash size={12} weight="bold" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </section>
           
           {/* Document Statistics Section */}
           <section>
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">
+            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <div className="w-1 h-4 bg-gradient-to-b from-slate-400 to-slate-500 rounded-full"></div>
               Document Statistics
             </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <ChartBar size={16} weight="duotone" className="text-gray-500" />
-                  <span className="text-sm text-gray-600">Word Count</span>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 hover:shadow-md transition-all duration-200 hover:border-slate-300">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center">
+                    <ChartBar size={14} weight="bold" className="text-white" />
+                  </div>
+                  <span className="text-xs font-medium text-slate-600 uppercase tracking-wider">Words</span>
                 </div>
-                <div className="text-lg font-semibold text-gray-900">
+                <div className="text-xl font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
                   {documentStats.wordCount.toLocaleString()}
                 </div>
               </div>
               
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <Clock size={16} weight="duotone" className="text-gray-500" />
-                  <span className="text-sm text-gray-600">Reading Time</span>
+              <div className="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 hover:shadow-md transition-all duration-200 hover:border-slate-300">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center">
+                    <Clock size={14} weight="bold" className="text-white" />
+                  </div>
+                  <span className="text-xs font-medium text-slate-600 uppercase tracking-wider">Read Time</span>
                 </div>
-                <div className="text-lg font-semibold text-gray-900">
-                  {documentStats.readingTime} min
+                <div className="text-xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                  {documentStats.readingTime} <span className="text-sm font-medium text-slate-600">min</span>
                 </div>
               </div>
               
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <Hash size={16} weight="duotone" className="text-gray-500" />
-                  <span className="text-sm text-gray-600">Characters</span>
+              <div className="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 hover:shadow-md transition-all duration-200 hover:border-slate-300">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center">
+                    <Hash size={14} weight="bold" className="text-white" />
+                  </div>
+                  <span className="text-xs font-medium text-slate-600 uppercase tracking-wider">Characters</span>
                 </div>
-                <div className="text-lg font-semibold text-gray-900">
+                <div className="text-xl font-bold text-slate-900 group-hover:text-purple-700 transition-colors">
                   {documentStats.characterCount.toLocaleString()}
                 </div>
               </div>
               
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <FileText size={16} weight="duotone" className="text-gray-500" />
-                  <span className="text-sm text-gray-600">Elements</span>
+              <div className="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 hover:shadow-md transition-all duration-200 hover:border-slate-300">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center">
+                    <FileText size={14} weight="bold" className="text-white" />
+                  </div>
+                  <span className="text-xs font-medium text-slate-600 uppercase tracking-wider">Elements</span>
                 </div>
-                <div className="text-lg font-semibold text-gray-900">
+                <div className="text-xl font-bold text-slate-900 group-hover:text-orange-700 transition-colors">
                   {documentStats.elementCount}
                 </div>
               </div>
@@ -270,46 +301,75 @@ export function MetadataPanel({
           
           {/* Processing Status Section */}
           <section>
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">
+            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <div className="w-1 h-4 bg-gradient-to-b from-slate-400 to-slate-500 rounded-full"></div>
               Processing Status
             </h3>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <BookOpen size={16} weight="duotone" className="text-gray-600" />
-                  <span className="text-sm font-medium text-gray-700">Glossary</span>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="divide-y divide-slate-100">
+                <div className="p-4 hover:bg-slate-50/50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center">
+                        <BookOpen size={14} weight="bold" className="text-white" />
+                      </div>
+                      <span className="text-sm font-semibold text-slate-700">Glossary</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(glossaryGenerated, glossaryLoading)}
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                        glossaryLoading 
+                          ? 'bg-amber-50 text-amber-700' 
+                          : glossaryGenerated 
+                            ? 'bg-emerald-50 text-emerald-700' 
+                            : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        {glossaryLoading ? 'Generating...' : glossaryGenerated ? 'Generated' : 'Not generated'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(glossaryGenerated, glossaryLoading)}
-                  <span className="text-xs text-gray-600">
-                    {glossaryLoading ? 'Generating...' : glossaryGenerated ? 'Generated' : 'Not generated'}
-                  </span>
+                
+                <div className="p-4 hover:bg-slate-50/50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center">
+                        <Robot size={14} weight="bold" className="text-white" />
+                      </div>
+                      <span className="text-sm font-semibold text-slate-700">AI Headings</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(aiHeadingsGenerated)}
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                        aiHeadingsGenerated 
+                          ? 'bg-emerald-50 text-emerald-700' 
+                          : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        {aiHeadingsGenerated ? 'Generated' : 'Not generated'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Robot size={16} weight="duotone" className="text-gray-600" />
-                  <span className="text-sm font-medium text-gray-700">AI Headings</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(aiHeadingsGenerated)}
-                  <span className="text-xs text-gray-600">
-                    {aiHeadingsGenerated ? 'Generated' : 'Not generated'}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <ListBullets size={16} weight="duotone" className="text-gray-600" />
-                  <span className="text-sm font-medium text-gray-700">Summary</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(summaryGenerated)}
-                  <span className="text-xs text-gray-600">
-                    {summaryGenerated ? 'Generated' : 'Not generated'}
-                  </span>
+                
+                <div className="p-4 hover:bg-slate-50/50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center">
+                        <ListBullets size={14} weight="bold" className="text-white" />
+                      </div>
+                      <span className="text-sm font-semibold text-slate-700">Summary</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(summaryGenerated)}
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                        summaryGenerated 
+                          ? 'bg-emerald-50 text-emerald-700' 
+                          : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        {summaryGenerated ? 'Generated' : 'Not generated'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -318,47 +378,50 @@ export function MetadataPanel({
           {/* Reading Difficulty Section */}
           {readabilityMetrics && (
             <section>
-              <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <div className="w-1 h-4 bg-gradient-to-b from-slate-400 to-slate-500 rounded-full"></div>
                 Reading Difficulty
               </h3>
               <div className="space-y-4">
                 {/* Flesch Reading Ease */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <GraduationCap size={20} weight="duotone" className="text-gray-600" />
-                      <span className="text-sm font-medium text-gray-700">Reading Ease Score</span>
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 hover:shadow-md transition-all duration-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center">
+                        <GraduationCap size={18} weight="bold" className="text-white" />
+                      </div>
+                      <span className="text-sm font-semibold text-slate-700">Reading Ease Score</span>
                     </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getReadabilityColor(readabilityMetrics.fleschReadingEase.score)}`}>
+                    <span className={`px-3 py-1.5 rounded-full text-sm font-bold ${getReadabilityColor(readabilityMetrics.fleschReadingEase.score)}`}>
                       {readabilityMetrics.fleschReadingEase.score}
                     </span>
                   </div>
-                  <div className="space-y-1">
-                    <div className="text-sm font-medium text-gray-900">
+                  <div className="space-y-2">
+                    <div className="text-sm font-semibold text-slate-900">
                       {readabilityMetrics.fleschReadingEase.interpretation.difficulty}
                     </div>
-                    <div className="text-xs text-gray-600">
+                    <div className="text-sm text-slate-600 leading-relaxed">
                       {readabilityMetrics.fleschReadingEase.interpretation.description}
                     </div>
-                    <div className="text-xs text-gray-500 italic">
+                    <div className="text-xs text-slate-500 italic bg-slate-50 px-3 py-2 rounded-lg">
                       Similar to: {readabilityMetrics.fleschReadingEase.interpretation.comparison}
                     </div>
                   </div>
                 </div>
                 
                 {/* Flesch-Kincaid Grade Level */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <GraduationCap size={20} weight="duotone" className="text-gray-600" />
-                      <span className="text-sm font-medium text-gray-700">Grade Level</span>
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 hover:shadow-md transition-all duration-200">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center">
+                      <GraduationCap size={18} weight="bold" className="text-white" />
                     </div>
+                    <span className="text-sm font-semibold text-slate-700">Grade Level</span>
                   </div>
-                  <div className="space-y-1">
-                    <div className="text-sm font-medium text-gray-900">
+                  <div className="space-y-2">
+                    <div className="text-lg font-bold text-slate-900">
                       {readabilityMetrics.fleschKincaidGradeLevel.interpretation}
                     </div>
-                    <div className="text-xs text-gray-600">
+                    <div className="text-sm text-slate-600 leading-relaxed bg-slate-50 px-3 py-2 rounded-lg">
                       Education level needed to understand this document
                     </div>
                   </div>
@@ -369,54 +432,67 @@ export function MetadataPanel({
           
           {/* Access & Sharing Section */}
           <section>
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">
+            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <div className="w-1 h-4 bg-gradient-to-b from-slate-400 to-slate-500 rounded-full"></div>
               Access & Sharing
             </h3>
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <LockSimple size={20} weight="duotone" className="text-gray-400 mt-0.5" />
-                <div className="flex-1">
-                  <div className="text-sm text-gray-600">Privacy</div>
-                  <div className="flex items-center gap-3 mt-1">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={currentIsPublic}
-                        onChange={handlePrivacyToggle}
-                        disabled={isUpdating}
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                      />
-                      <span className="text-sm font-medium text-gray-900">
-                        {currentIsPublic ? 'Public' : 'Private'}
-                      </span>
-                      {isUpdating && (
-                        <CircleNotch size={14} weight="bold" className="animate-spin text-blue-600" />
-                      )}
-                    </label>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {currentIsPublic 
-                      ? 'Anyone can access this document' 
-                      : 'Only you can access this document'
-                    }
-                  </div>
-                  {updateError && (
-                    <div className="text-xs text-red-600 mt-1">
-                      {updateError}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="divide-y divide-slate-100">
+                <div className="p-4 hover:bg-slate-50/50 transition-colors">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center flex-shrink-0">
+                      <LockSimple size={18} weight="bold" className="text-white" />
                     </div>
-                  )}
-                </div>
-              </div>
-              
-              {ownerEmail && (
-                <div className="flex items-start gap-3">
-                  <User size={20} weight="duotone" className="text-gray-400 mt-0.5" />
-                  <div className="flex-1">
-                    <div className="text-sm text-gray-600">Owner</div>
-                    <div className="font-medium text-gray-900">{ownerEmail}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Privacy Setting</div>
+                      <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-3 cursor-pointer group">
+                          <div className="relative">
+                            <input
+                              type="checkbox"
+                              checked={currentIsPublic}
+                              onChange={handlePrivacyToggle}
+                              disabled={isUpdating}
+                              className="w-5 h-5 text-blue-600 bg-white border-2 border-slate-300 rounded focus:ring-blue-500 focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            />
+                          </div>
+                          <span className="text-sm font-semibold text-slate-900 group-hover:text-blue-700 transition-colors">
+                            {currentIsPublic ? 'Public' : 'Private'}
+                          </span>
+                          {isUpdating && (
+                            <CircleNotch size={16} weight="bold" className="animate-spin text-amber-600" />
+                          )}
+                        </label>
+                      </div>
+                      <div className="text-xs text-slate-500 mt-2 leading-relaxed bg-slate-50 px-3 py-2 rounded-lg">
+                        {currentIsPublic 
+                          ? '🌐 Anyone can access this document with the link' 
+                          : '🔒 Only you can access this document'
+                        }
+                      </div>
+                      {updateError && (
+                        <div className="text-xs text-red-600 mt-2 bg-red-50 px-3 py-2 rounded-lg border border-red-200">
+                          {updateError}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              )}
+                
+                {ownerEmail && (
+                  <div className="p-4 hover:bg-slate-50/50 transition-colors">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center flex-shrink-0">
+                        <User size={18} weight="bold" className="text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Document Owner</div>
+                        <div className="font-semibold text-slate-900 text-sm">{ownerEmail}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </section>
         </div>

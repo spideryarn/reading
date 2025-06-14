@@ -102,6 +102,7 @@ interface UnifiedLeftPaneProps {
   aiHeadingsGenerated?: boolean
   summaryGenerated?: boolean
   ownerEmail?: string
+  isPublic?: boolean | null
 }
 
 // Get icon component for entity type
@@ -408,7 +409,8 @@ export function UnifiedLeftPane({
   documentSourceUrl,
   aiHeadingsGenerated = false,
   summaryGenerated = false,
-  ownerEmail
+  ownerEmail,
+  isPublic
 }: UnifiedLeftPaneProps) {
   const { actions, state } = useDocumentCommunication()
   
@@ -851,8 +853,10 @@ export function UnifiedLeftPane({
       aiHeadingsGenerated={aiHeadingsGenerated}
       summaryGenerated={summaryGenerated}
       ownerEmail={ownerEmail}
+      isPublic={isPublic}
+      documentId={documentId}
     />
-  ), [documentTitle, documentCreatedAt, documentSourceUrl, elements, showGlossary, glossaryEntities.length, isLoadingGlossary, aiHeadingsGenerated, summaryGenerated, ownerEmail])
+  ), [documentTitle, documentCreatedAt, documentSourceUrl, elements, showGlossary, glossaryEntities.length, isLoadingGlossary, aiHeadingsGenerated, summaryGenerated, ownerEmail, isPublic, documentId])
 
   const renderGlossaryTab = useCallback(() => {
     if (!showGlossary) {
