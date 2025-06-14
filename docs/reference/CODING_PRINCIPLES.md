@@ -6,7 +6,7 @@ see also:
 - `docs/reference/TESTING_OVERVIEW.md` - Testing approach and patterns
 
 - Prioritise code that's simple, easy-to-understand, debuggable, and readable.
-- This is a prototype with no users yet. We want to develop fast and experiment, so we can figure out which features are most valuable.
+- This is early-stage development with AI-first methods. We want to develop fast and experiment using AI agents, so we can figure out which features are most valuable. The comprehensive documentation, typing, and testing infrastructure exists to support AI productivity and prevent regressions.
 - Fix the root cause rather than putting on a band-aid. Avoid fallbacks & defaults - better to fail if input assumptions aren't being met.
 - **Never implement silent data modifications**: No truncation, silent filtering, or quiet data transformations without explicit user consent. If data doesn't fit constraints, fail clearly with a descriptive error rather than modifying it silently.
 - **Always err on the side of caution**: Be especially careful about any operations that could affect databases, production systems, or user data. When in doubt, ask for explicit permission first.
