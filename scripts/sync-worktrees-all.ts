@@ -252,7 +252,7 @@ class SyncAllWorktreesCommand extends Command {
       this.log(`\n📤 Step 2: Distributing main to all worktrees...`, this.colors.bright);
       
       let allSuccess = true;
-      const results: Array<{ branch: string; success: boolean; error?: string; skipped?: boolean; skipReason?: string }> = [];
+      const results: Array<{ branch: string; success: boolean; error?: string; skipped?: boolean; skipReason?: string; path?: string }> = [];
       
       // If ignoring dirty, add skipped results for dirty worktrees
       if (this.ignoreDirty) {
@@ -263,7 +263,13 @@ class SyncAllWorktreesCommand extends Command {
       
       // Add skipped results for non-standard branch worktrees
       for (const wt of nonStandardWorktrees) {
-        results.push({ branch: wt.branch!, success: true, skipped: true, skipReason: 'non-standard branch' });
+        results.push({ 
+          branch: wt.branch!, 
+          success: true, 
+          skipped: true, 
+          skipReason: 'non-standard branch',
+          path: wt.path
+        });
       }
       
       // Only sync clean worktrees
@@ -341,7 +347,8 @@ class SyncAllWorktreesCommand extends Command {
           icon = '⏭️';
           color = this.colors.yellow;
           if (result.skipReason === 'non-standard branch') {
-            suffix = ' (skipped - non-standard branch)';
+            const folderName = result.path ? basename(result.path) : 'unknown';
+            suffix = ` (skipped - non-standard branch in ${folderName}/)`;
           } else {
             suffix = ' (skipped - dirty)';
           }
