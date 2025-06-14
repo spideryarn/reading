@@ -255,62 +255,67 @@ export function VerticalIconNav({
         const isActive = activeTab === item.id
         
         return (
-          <Tooltip.Provider key={item.id} delayDuration={600}>
-            <Tooltip.Root>
-              <Tooltip.Trigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onTabClick(item.id)}
-                  className={cn(
-                    'h-12 w-12 rounded-none border-0',
-                    'flex items-center justify-center',
-                    'text-gray-600 hover:text-gray-900',
-                    'hover:bg-gray-50',
-                    'transition-colors duration-200',
-                    'focus:ring-2 focus:ring-blue-500 focus:ring-inset',
-                    isActive && [
-                      'bg-orange-50 text-orange-700', // Spideryarn orange theme
-                      'border-r-2 border-orange-500',
-                      'hover:bg-orange-100 hover:text-orange-800'
-                    ]
-                  )}
-                  aria-label={`${item.tooltip.title}: ${item.tooltip.description}`}
-                >
-                  <Icon 
-                    size={20} 
-                    weight="duotone" 
-                    className="transition-colors duration-200"
-                  />
-                </Button>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content
-                  side="right"
-                  align="center"
-                  sideOffset={8}
-                  className="z-50 max-w-xs"
-                >
-                  <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-                    <div className="font-semibold text-gray-900 text-sm mb-1">
-                      {item.tooltip.title}
+          <div key={item.id}>
+            {/* Add gap before metadata icon */}
+            {item.id === 'metadata' && <div className="h-3" />}
+            
+            <Tooltip.Provider delayDuration={600}>
+              <Tooltip.Root>
+                <Tooltip.Trigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onTabClick(item.id)}
+                    className={cn(
+                      'h-12 w-12 rounded-none border-0',
+                      'flex items-center justify-center',
+                      'text-gray-600 hover:text-gray-900',
+                      'hover:bg-gray-50',
+                      'transition-colors duration-200',
+                      'focus:ring-2 focus:ring-blue-500 focus:ring-inset',
+                      isActive && [
+                        'bg-orange-50 text-orange-700', // Spideryarn orange theme
+                        'border-r-2 border-orange-500',
+                        'hover:bg-orange-100 hover:text-orange-800'
+                      ]
+                    )}
+                    aria-label={`${item.tooltip.title}: ${item.tooltip.description}`}
+                  >
+                    <Icon 
+                      size={20} 
+                      weight="duotone" 
+                      className="transition-colors duration-200"
+                    />
+                  </Button>
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content
+                    side="right"
+                    align="center"
+                    sideOffset={8}
+                    className="z-50 max-w-xs"
+                  >
+                    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                      <div className="font-semibold text-gray-900 text-sm mb-1">
+                        {item.tooltip.title}
+                      </div>
+                      <div className="text-gray-700 text-sm leading-relaxed mb-2">
+                        {item.tooltip.description}
+                      </div>
+                      <div className="text-xs text-gray-500 font-mono">
+                        Press {shortcutText} to toggle sidebar
+                      </div>
                     </div>
-                    <div className="text-gray-700 text-sm leading-relaxed mb-2">
-                      {item.tooltip.description}
-                    </div>
-                    <div className="text-xs text-gray-500 font-mono">
-                      Press {shortcutText} to toggle sidebar
-                    </div>
-                  </div>
-                  <Tooltip.Arrow 
-                    className="fill-gray-200" 
-                    width={12} 
-                    height={6}
-                  />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
-          </Tooltip.Provider>
+                    <Tooltip.Arrow 
+                      className="fill-gray-200" 
+                      width={12} 
+                      height={6}
+                    />
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
+            </Tooltip.Provider>
+          </div>
         )
       })}
     </div>
