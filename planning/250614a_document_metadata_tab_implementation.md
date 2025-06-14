@@ -105,13 +105,32 @@ Actions:
 - Updated multi-summary display to show word counts instead of character counts
 
 
-### Stage 4: Editable Metadata Fields
-**Goal**: Allow users to add/edit certain metadata fields
+### Stage 4: Editable Privacy Toggle
+**Goal**: Allow users to toggle document privacy status with smooth UX
+
+**Key Decisions**:
+- Use direct Supabase client updates (no API endpoint needed)
+- Checkbox UI pattern for simple on/off toggle
+- Optimistic updates with error recovery
+- Visual feedback: loading state + success/error states
+- Later: helpful tooltip and clear error messages
 
 Actions:
-- [ ] User can toggle whether document is private or public. Autosaves with some kind of visual feedback.
-- [ ] Create API endpoint for metadata updates? Or can we do this with Supabase js? Discuss with user before proceeding
-- [ ] Add optimistic UI updates with error handling?
+- [ ] Add checkbox toggle for `is_public` field in Access & Sharing section
+  - Use standard HTML checkbox with label
+  - Show current state clearly
+  - Add loading state during update
+- [ ] Implement optimistic update pattern with Supabase client
+  - Update UI immediately on click
+  - Call `supabase.from('documents').update({ is_public: newValue }).eq('id', documentId)`
+  - Revert UI state if update fails
+- [ ] Add error handling and user feedback
+  - Show loading spinner/disabled state during update
+  - Display success confirmation (subtle)
+  - Clear error messages if update fails
+- [ ] Stop & review functionality with user
+- [ ] Later enhancement: Add helpful tooltip explaining privacy implications
+- [ ] Later enhancement: Improve visual feedback (toast notifications, better loading states)
 
 ### Stage 5: LLM-Extracted Metadata
 **Goal**: Use AI to extract missing metadata from document content
@@ -194,6 +213,6 @@ Actions:
 ---
 
 *Created: 14 June 2025*  
-*Last Updated: 14 June 2025 - Stage 2 Complete*  
-*Status: 🟢 In Progress - Stages 1-2 Complete, Ready for Stage 3 or 4*  
-*Next Review: After Stage 3 or 4 completion*
+*Last Updated: 14 June 2025 - Stage 4 planning complete*  
+*Status: 🟢 In Progress - Stages 1-2 Complete, Stage 4 ready for implementation*  
+*Next Review: After Stage 4 completion*

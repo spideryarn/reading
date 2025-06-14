@@ -44,6 +44,7 @@ interface DocumentPageClientProps {
   aiHeadingsGenerated?: boolean
   summaryGenerated?: boolean
   ownerEmail?: string
+  isPublic?: boolean | null
 }
 
 export default function DocumentPageClient({ 
@@ -58,7 +59,8 @@ export default function DocumentPageClient({
   documentSourceUrl,
   aiHeadingsGenerated = false,
   summaryGenerated = false,
-  ownerEmail
+  ownerEmail,
+  isPublic = false
 }: DocumentPageClientProps) {
   const mutatedDocument = useDocument() // Get mutated document from context
   const [selectedElement, setSelectedElement] = useState<DocumentElement | null>(null)
@@ -269,6 +271,7 @@ export default function DocumentPageClient({
         aiHeadingsGenerated={aiHeadingsGenerated}
         summaryGenerated={summaryGenerated}
         ownerEmail={ownerEmail}
+        isPublic={isPublic}
       />
       </div>
     </div>
