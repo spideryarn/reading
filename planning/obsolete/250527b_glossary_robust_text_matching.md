@@ -1,5 +1,7 @@
 # Glossary Robust Text Matching with Regex Word Boundaries
 
+**⚠️ OBSOLETE**: This planning document has been superseded by `planning/250614a_glossary_multi_occurrence_navigation.md` which implements multi-occurrence navigation using Mark.js instead of regex. The insights from this document regarding word boundaries and test cases have been incorporated into the new plan.
+
 ## Goal
 
 Improve the glossary click-to-scroll functionality by replacing simple substring matching with robust regex-based word boundary matching. This will prevent false matches (e.g., "AI" matching "PAID") while building toward future HTML highlighting capabilities.
