@@ -129,10 +129,16 @@ export function VerticalIconNav({
   return (
     <div 
       className={cn(
+        'vertical-icon-nav', // Custom CSS class for scrollbar styling
         'flex flex-col bg-white border-r border-gray-200',
         'w-12 min-w-12 max-w-12', // Fixed 48px width (12 * 4px = 48px)
+        'h-full overflow-y-auto', // Enable vertical scrolling
         className
       )}
+      style={{
+        scrollbarWidth: 'thin', // Firefox: thin scrollbar
+        scrollbarColor: '#d1d5db transparent', // Firefox: thumb color and track color
+      }}
       role="navigation"
       aria-label="Document navigation"
     >
@@ -190,7 +196,7 @@ export function VerticalIconNav({
       </Tooltip.Provider>
       
       {/* Gap after collapse button */}
-      <div className="h-3" />
+      <div className="h-4" />
       
       {/* Command palette trigger - second position */}
       {onCommandPaletteToggle && (

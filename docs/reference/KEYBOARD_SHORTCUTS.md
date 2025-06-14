@@ -53,7 +53,7 @@ Available when viewing a document:
 **Component**: `ResizableDocumentLayout`  
 **Implementation**: `components/resizable-document-layout.tsx` lines 235-251
 
-When the left pane is collapsed, the vertical icon navigation rail appears. When expanded, the text-based tab navigation is shown.
+The vertical icon navigation rail is always visible and serves as the primary navigation interface. The rail is scrollable to ensure all navigation options remain accessible in constrained viewports.
 
 ## Implementation Patterns
 
