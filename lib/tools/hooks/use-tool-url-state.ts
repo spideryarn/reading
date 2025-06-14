@@ -52,20 +52,22 @@ export function useToolUrlState(): UseToolUrlStateReturn {
   })
   
   // Sync URL tab state to context when URL changes
+  // This handles browser navigation (back/forward) and direct URL changes
   useEffect(() => {
     if (urlState.tab && urlState.tab !== contextState.activeTabId) {
       actions.setActiveTab(urlState.tab)
     }
-  }, [urlState.tab, contextState.activeTabId, actions])
+  }, [urlState.tab]) // Remove contextState.activeTabId from deps to prevent loops
   
   // Sync context tab state to URL when context changes
+  // This handles programmatic tab changes (clicking tabs)
   useEffect(() => {
     if (contextState.activeTabId && contextState.activeTabId !== urlState.tab) {
       setUrlState({ tab: contextState.activeTabId as TabValue }, {
         history: 'push' // Tab changes should push history
       })
     }
-  }, [contextState.activeTabId, urlState.tab, setUrlState])
+  }, [contextState.activeTabId]) // Remove urlState.tab from deps to prevent loops
   
   // Debounced search update (300ms)
   const debouncedSetSearch = useMemo(
