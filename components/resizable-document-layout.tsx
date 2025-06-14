@@ -178,29 +178,31 @@ function ResizableDocumentLayoutInner({
     }
   }, [elements, onElementClick, actions])
   
-  // Handle left pane collapse toggle with size persistence
+  // Toggle handler that leverages react-resizable-panels built-in collapse/expand
   const handleToggleCollapse = useCallback(() => {
+    if (!leftPanelRef.current) return
+
     if (isLeftPaneCollapsed) {
-      // Expanding: restore the saved size first, then show content
-      if (leftPanelRef.current) {
-        leftPanelRef.current.resize(savedLeftPaneSize)
+      // Expand – restore previous size (or default if none recorded)
+      if (typeof (leftPanelRef.current as any).expand === 'function') {
+        ;(leftPanelRef.current as any).expand()
+        if (savedLeftPaneSize !== 0) {
+          leftPanelRef.current.resize(savedLeftPaneSize)
+        }
+      } else {
+        leftPanelRef.current.resize(savedLeftPaneSize || 30)
       }
-      setTimeout(() => {
-        setIsLeftPaneCollapsed(false)
-      }, 50) // Small delay to let panel resize first
+      setIsLeftPaneCollapsed(false)
     } else {
-      // Collapsing: hide content first, then collapse panel
-      if (leftPanelRef.current) {
-        const currentSize = leftPanelRef.current.getSize()
-        setSavedLeftPaneSize(currentSize)
+      // Collapse – remember current size then collapse fully
+      const currentSize = leftPanelRef.current.getSize()
+      setSavedLeftPaneSize(currentSize)
+      if (typeof (leftPanelRef.current as any).collapse === 'function') {
+        ;(leftPanelRef.current as any).collapse()
+      } else {
+        leftPanelRef.current.resize(0)
       }
       setIsLeftPaneCollapsed(true)
-      // Delay panel collapse until after content animation (300ms + buffer)
-      setTimeout(() => {
-        if (leftPanelRef.current) {
-          leftPanelRef.current.resize(0)
-        }
-      }, 350)
     }
   }, [isLeftPaneCollapsed, savedLeftPaneSize])
 
@@ -214,11 +216,16 @@ function ResizableDocumentLayoutInner({
     // First expand the left pane if it's collapsed
     if (isLeftPaneCollapsed) {
       if (leftPanelRef.current) {
-        leftPanelRef.current.resize(savedLeftPaneSize)
+        if (typeof (leftPanelRef.current as any).expand === 'function') {
+          ;(leftPanelRef.current as any).expand()
+          if (savedLeftPaneSize !== 0) {
+            leftPanelRef.current.resize(savedLeftPaneSize)
+          }
+        } else {
+          leftPanelRef.current.resize(savedLeftPaneSize || 30)
+        }
       }
-      setTimeout(() => {
-        setIsLeftPaneCollapsed(false)
-      }, 50) // Small delay to let panel resize first
+      setIsLeftPaneCollapsed(false)
     }
     
     // Then switch to the selected tab using context action
@@ -309,9 +316,11 @@ function ResizableDocumentLayoutInner({
         {/* Left pane - Unified navigation and tools */}
         <ResizablePanel 
           ref={leftPanelRef}
-          defaultSize={savedLeftPaneSize} 
-          minSize={20} 
+          defaultSize={savedLeftPaneSize}
+          minSize={20}
           maxSize={50}
+          collapsedSize={0}
+          collapsible
           className="h-full"
           style={{ 
             overflow: 'hidden'
@@ -348,7 +357,6 @@ function ResizableDocumentLayoutInner({
               aiHeadingsGenerated={aiHeadingsGenerated}
               summaryGenerated={summaryGenerated}
               ownerEmail={ownerEmail}
-              isPublic={isPublic}
             />
             </div>
           </div>
@@ -369,7 +377,7 @@ function ResizableDocumentLayoutInner({
           defaultSize={70}
           className="h-full relative"
         >
-          <div className="h-full pl-16">
+          <div className={`h-full ${isLeftPaneCollapsed ? 'pl-0' : 'pl-16'}`}>
             <SimpleDocumentViewer
               elements={elements}
               selectedElement={selectedElement}
