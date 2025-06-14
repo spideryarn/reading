@@ -131,7 +131,7 @@ export function VerticalIconNav({
       className={cn(
         'vertical-icon-nav', // Custom CSS class for scrollbar styling
         'flex flex-col bg-white border-r border-gray-200',
-        'w-12 min-w-12 max-w-12', // Fixed 48px width (12 * 4px = 48px)
+        'w-10 min-w-10 max-w-10 sm:w-12 sm:min-w-12 sm:max-w-12', // Responsive width: 40px mobile, 48px desktop
         'h-full overflow-y-auto', // Enable vertical scrolling
         className
       )}
@@ -151,7 +151,7 @@ export function VerticalIconNav({
               size="icon"
               onClick={onToggleCollapse}
               className={cn(
-                'h-12 w-12 rounded-none border-0',
+                'h-10 w-10 sm:h-12 sm:w-12 rounded-none border-0',
                 'flex items-center justify-center',
                 'text-gray-600 hover:text-gray-900',
                 'hover:bg-gray-50',
@@ -161,7 +161,7 @@ export function VerticalIconNav({
               aria-label={`Toggle sidebar (${shortcutText})`}
             >
               <SidebarSimple 
-                size={20} 
+                size={18} 
                 weight="duotone" 
                 className="transition-colors duration-200"
               />
@@ -208,7 +208,7 @@ export function VerticalIconNav({
                 size="icon"
                 onClick={onCommandPaletteToggle}
                 className={cn(
-                  'h-12 w-12 rounded-none border-0',
+                  'h-10 w-10 sm:h-12 sm:w-12 rounded-none border-0',
                   'flex items-center justify-center',
                   'text-gray-600 hover:text-gray-900',
                   'hover:bg-gray-50',
@@ -218,7 +218,7 @@ export function VerticalIconNav({
                 aria-label="Open command palette (Cmd+K / Ctrl+K)"
               >
                 <Terminal 
-                  size={20} 
+                  size={18} 
                   weight="duotone" 
                   className="transition-colors duration-200"
                 />
@@ -273,7 +273,7 @@ export function VerticalIconNav({
                     size="icon"
                     onClick={() => onTabClick(item.id)}
                     className={cn(
-                      'h-12 w-12 rounded-none border-0',
+                      'h-10 w-10 sm:h-12 sm:w-12 rounded-none border-0',
                       'flex items-center justify-center',
                       'text-gray-600 hover:text-gray-900',
                       'hover:bg-gray-50',
@@ -288,7 +288,7 @@ export function VerticalIconNav({
                     aria-label={`${item.tooltip.title}: ${item.tooltip.description}`}
                   >
                     <Icon 
-                      size={20} 
+                      size={18} 
                       weight="duotone" 
                       className="transition-colors duration-200"
                     />

@@ -32,7 +32,7 @@ export function AppHeader({
       "bg-white/90 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50",
       className
     )} style={{ height: 'var(--header-height)' }}>
-      <div className="px-6 h-full">
+      <div className="px-3 sm:px-6 h-full">
         <div className="flex items-center justify-between h-full max-w-7xl mx-auto">
           <div className="flex items-center gap-8 min-w-0 flex-1">
             <Link 
@@ -46,9 +46,9 @@ export function AppHeader({
                 width={32}
                 height={32}
                 style={{ width: "auto", height: "auto" }}
-                className="drop-shadow-md h-8 w-8"
+                className="drop-shadow-md h-6 w-6 sm:h-8 sm:w-8"
               />
-              <span className="text-xl font-semibold text-spideryarn-orange font-trebuchet">
+              <span className="hidden sm:inline text-xl font-semibold text-spideryarn-orange font-trebuchet">
                 Spideryarn
               </span>
             </Link>
@@ -60,9 +60,9 @@ export function AppHeader({
                   {backLink && (
                     <Link 
                       href={backLink}
-                      className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors text-sm font-medium flex-shrink-0"
+                      className="flex items-center gap-1 sm:gap-2 text-gray-500 hover:text-gray-700 transition-colors text-xs sm:text-sm font-medium flex-shrink-0"
                     >
-                      <ArrowLeft size={16} />
+                      <ArrowLeft size={14} className="sm:w-4 sm:h-4" />
                       {backText}
                     </Link>
                   )}
@@ -70,14 +70,14 @@ export function AppHeader({
                     titleLink ? (
                       <Link 
                         href={titleLink} 
-                        className="text-lg font-medium text-gray-800 hover:text-gray-600 transition-colors truncate leading-tight cursor-help"
+                        className="text-sm sm:text-lg font-medium text-gray-800 hover:text-gray-600 transition-colors truncate leading-tight cursor-help"
                         title={title}
                       >
                         {title}
                       </Link>
                     ) : (
                       <h1 
-                        className="text-lg font-medium text-gray-800 truncate leading-tight cursor-help"
+                        className="text-sm sm:text-lg font-medium text-gray-800 truncate leading-tight cursor-help"
                         title={title}
                       >
                         {title}

@@ -278,6 +278,78 @@ body {
             font-size: 0.875rem;
             line-height: 1.25rem;
         }
+        
+        /* Reduce padding and margins on mobile */
+        .mobile-compact {
+            padding: 0.5rem;
+        }
+        
+        /* Hide left pane by default on mobile */
+        .mobile-hide-left-pane {
+            display: none;
+        }
+        
+        /* Reduce font sizes for better mobile fit */
+        .mobile-heading-size h1 {
+            font-size: 1.5rem;
+            line-height: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .mobile-heading-size h2 {
+            font-size: 1.25rem;
+            line-height: 1.75rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .mobile-heading-size h3 {
+            font-size: 1.125rem;
+            line-height: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .mobile-body-text {
+            font-size: 0.875rem;
+            line-height: 1.5rem;
+        }
+        
+        /* Reduce header height on mobile */
+        :root {
+            --header-height: 3rem;
+        }
+    }
+    
+    /* Landscape mobile (short screens) */
+    @media (max-height: 500px) {
+        /* Even more compact spacing for landscape */
+        .landscape-compact {
+            padding: 0.25rem;
+        }
+        
+        /* Smaller header in landscape */
+        :root {
+            --header-height: 2.5rem;
+        }
+        
+        /* Reduce all vertical spacing */
+        .landscape-spacing * {
+            margin-top: 0.25rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .landscape-spacing h1,
+        .landscape-spacing h2,
+        .landscape-spacing h3 {
+            margin-top: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+    }
+    
+    /* Tablet breakpoint */
+    @media (min-width: 641px) and (max-width: 1024px) {
+        .tablet-optimized {
+            padding: 1.5rem;
+        }
     }
 
     .aui-message-content {

@@ -112,11 +112,32 @@ function ResizableDocumentLayoutInner({
   isPublic = false
 }: ResizableDocumentLayoutProps) {
   const { actions, state } = useDocumentCommunication()
+  
+  // Check if we're on a mobile device
+  const [isMobile, setIsMobile] = useState(false)
+  const [isLandscape, setIsLandscape] = useState(false)
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 640)
+      setIsLandscape(window.innerHeight <= 500)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+  
   const [isLeftPaneCollapsed, setIsLeftPaneCollapsed] = useState(false)
   const [savedLeftPaneSize, setSavedLeftPaneSize] = useState(30) // Remember the last size
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
   const leftPanelRef = useRef<ImperativePanelHandle>(null)
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Update collapsed state when mobile status changes
+  useEffect(() => {
+    setIsLeftPaneCollapsed(isMobile)
+  }, [isMobile])
   
   // Handle heading clicks from ToC
   const handleHeadingClick = useCallback((headingText: string, headingId?: string) => {
@@ -331,7 +352,7 @@ function ResizableDocumentLayoutInner({
               isLeftPaneCollapsed ? 'panel-collapsed' : 'panel-expanded'
             }`}
           >
-            <div className="pl-16 h-full">
+            <div className="pl-10 sm:pl-16 h-full">
               <UnifiedLeftPane
               content={html}
               elements={elements}
@@ -377,7 +398,7 @@ function ResizableDocumentLayoutInner({
           defaultSize={70}
           className="h-full relative"
         >
-          <div className={`h-full ${isLeftPaneCollapsed ? 'pl-0' : 'pl-16'}`}>
+          <div className={`h-full ${isLeftPaneCollapsed ? 'pl-0' : 'pl-16'} ${isMobile ? 'mobile-compact mobile-heading-size mobile-body-text' : ''} ${isLandscape ? 'landscape-compact landscape-spacing' : ''}`}>
             <SimpleDocumentViewer
               elements={elements}
               selectedElement={selectedElement}

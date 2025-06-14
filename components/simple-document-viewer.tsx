@@ -257,34 +257,34 @@ export function SimpleDocumentViewer({
     const isBlockquote = element.tag_name === 'blockquote'
     
     // Typography styles based on element type
-    let textStyles = 'text-gray-700'
+    let textStyles = 'text-sm sm:text-base text-gray-700'
     if (isHeading) {
       const level = parseInt(element.tag_name.substring(1))
       const headingSizes = {
-        1: 'text-3xl font-bold text-gray-900',
-        2: 'text-2xl font-semibold text-gray-800',
-        3: 'text-xl font-semibold text-gray-800',
-        4: 'text-lg font-medium text-gray-700',
-        5: 'text-base font-medium text-gray-700',
-        6: 'text-sm font-medium text-gray-600'
+        1: 'text-2xl sm:text-3xl font-bold text-gray-900',
+        2: 'text-xl sm:text-2xl font-semibold text-gray-800',
+        3: 'text-lg sm:text-xl font-semibold text-gray-800',
+        4: 'text-base sm:text-lg font-medium text-gray-700',
+        5: 'text-sm sm:text-base font-medium text-gray-700',
+        6: 'text-xs sm:text-sm font-medium text-gray-600'
       }
       textStyles = headingSizes[level as keyof typeof headingSizes] || textStyles
     } else if (isListItem) {
-      textStyles = 'text-gray-700'
+      textStyles = 'text-sm sm:text-base text-gray-700'
     } else if (isBlockquote) {
-      textStyles = 'text-gray-600 italic'
+      textStyles = 'text-sm sm:text-base text-gray-600 italic'
     }
     
     // Layout styles
     let layoutStyles = ''
     if (isHeading) {
-      layoutStyles = 'mb-4 mt-6'
+      layoutStyles = 'mb-2 sm:mb-4 mt-3 sm:mt-6'
     } else if (isParagraph) {
-      layoutStyles = 'mb-4'
+      layoutStyles = 'mb-2 sm:mb-4'
     } else if (isList) {
-      layoutStyles = 'mb-4 ml-4'
+      layoutStyles = 'mb-2 sm:mb-4 ml-2 sm:ml-4'
     } else if (isBlockquote) {
-      layoutStyles = 'mb-4 pl-4 border-l-4 border-gray-300'
+      layoutStyles = 'mb-2 sm:mb-4 pl-2 sm:pl-4 border-l-2 sm:border-l-4 border-gray-300'
     }
     
     // Highlight target element with animation
@@ -396,7 +396,7 @@ export function SimpleDocumentViewer({
       className="h-full overflow-y-auto bg-white"
       onClick={handleContainerClick}
     >
-      <div id="document-viewer" className="max-w-4xl mx-auto p-8">
+      <div id="document-viewer" className="max-w-4xl mx-auto p-4 sm:p-6 md:p-8">
         {/* Render root elements */}
         {elements
           .filter(element => !element.parent_id)
