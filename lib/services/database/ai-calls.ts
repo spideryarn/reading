@@ -21,6 +21,7 @@ export interface CreateAiCallOptions {
   documentId?: string
   provider: 'anthropic' | 'google'
   modelId: string
+  version: string
   prompt_type: PromptType
   input_data?: JsonObject
   extra?: JsonObject
@@ -29,6 +30,7 @@ export interface CreateAiCallOptions {
 export interface SimpleCreateAiCallOptions {
   provider: 'anthropic' | 'google'
   modelId: string
+  version: string
   promptTokens?: number | null
   completionTokens?: number | null
   totalTokens?: number | null
@@ -40,18 +42,19 @@ export class AiCallService {
   constructor(private supabase: SupabaseClient<Database>) {}
 
   /**
-   * Look up model UUID by provider and model ID
+   * Look up model UUID by provider, model ID, and version
    */
-  async getModelUuidByProviderAndId(provider: string, modelId: string): Promise<string> {
+  async getModelUuidByProviderAndId(provider: string, modelId: string, version: string): Promise<string> {
     const { data, error } = await this.supabase
       .from('ai_models')
       .select('id')
       .eq('provider', provider)
       .eq('model_id', modelId)
+      .eq('version', version)
       .single()
     
     if (error || !data) {
-      throw new Error(`Model not found: provider='${provider}', model_id='${modelId}'. Check that the model exists in the ai_models table.`)
+      throw new Error(`Model not found: provider='${provider}', model_id='${modelId}', version='${version}'. Check that the model exists in the ai_models table.`)
     }
     
     return data.id
@@ -61,8 +64,8 @@ export class AiCallService {
    * Start tracking an AI call
    */
   async startCall(options: CreateAiCallOptions): Promise<AiCall> {
-    // Look up model UUID by provider and model ID
-    const modelUuid = await this.getModelUuidByProviderAndId(options.provider, options.modelId)
+    // Look up model UUID by provider, model ID, and version
+    const modelUuid = await this.getModelUuidByProviderAndId(options.provider, options.modelId, options.version)
 
     const aiCall: Omit<AiCallInsert, 'id' | 'created_at' | 'updated_at'> = {
       document_id: options.documentId || null,
@@ -326,8 +329,8 @@ export class AiCallService {
    * Simple create method for completed AI calls (used by API routes)
    */
   async create(options: SimpleCreateAiCallOptions): Promise<AiCall> {
-    // Look up model UUID by provider and model ID
-    const modelUuid = await this.getModelUuidByProviderAndId(options.provider, options.modelId)
+    // Look up model UUID by provider, model ID, and version
+    const modelUuid = await this.getModelUuidByProviderAndId(options.provider, options.modelId, options.version)
 
     const aiCall: Omit<AiCallInsert, 'id' | 'created_at' | 'updated_at'> = {
       document_id: null, // No document association for this simple method

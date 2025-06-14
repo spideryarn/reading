@@ -13,7 +13,7 @@ import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { DocumentParser } from '@/lib/services/document-parser'
-import { getModelConfig, AI_CONFIG } from '@/lib/config'
+import { getModelConfig, getModelVersion, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
 import { normalizeSemanticSearchQuery } from '@/lib/utils/semantic-search'
 import { 
   formatDocumentForSemanticSearch, 
@@ -288,14 +288,16 @@ export async function POST(request: NextRequest) {
     }
     
     // Resolve tier key to actual model details using config
-    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as keyof typeof AI_CONFIG.MODELS
+    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
     const modelConfig = getModelConfig(tierKey)
+    const modelVersion = getModelVersion(tierKey)
     
     // Create AI call record for tracking
     const aiCall = await aiCallService.startCall({
       documentId,
       provider: modelConfig.provider,
       modelId: modelConfig.modelId,
+      version: modelVersion,
       prompt_type: 'semantic-search',
       input_data: { 
         query,

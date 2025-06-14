@@ -103,6 +103,20 @@ export function getModelConfig(key: ProviderTierKey = AI_CONFIG.DEFAULT_MODEL) {
   return config
 }
 
+// Get model version from provider-tier key for database lookup
+// Extracts version from model ID and appends -thinking if thinking mode is enabled
+export function getModelVersion(key: ProviderTierKey = AI_CONFIG.DEFAULT_MODEL): string {
+  const config = getModelConfig(key)
+  
+  // Extract version from model ID
+  // Format: model-name-version -> version
+  const parts = config.modelId.split('-')
+  const version = parts[parts.length - 1] // Last part is version
+  
+  // Append -thinking if thinking mode is enabled
+  return config.thinking ? `${version}-thinking` : version
+}
+
 // Content summarisation configuration
 export const SUMMARY_CONFIG = {
   // Minimum number of characters required to generate an AI summary
