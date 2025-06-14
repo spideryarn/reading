@@ -403,7 +403,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Validate extraction method
-    if (!['readability', 'ai-transcription', 'ai-dom'].includes(extractionMethod)) {
+    if (!['as-is', 'readability', 'ai-transcription', 'ai-dom'].includes(extractionMethod)) {
       return new NextResponse('Invalid extraction method', { status: 400 })
     }
     
@@ -546,7 +546,25 @@ export async function POST(request: NextRequest) {
     let extractionMethodUsed: string
     let aiCall: { id: string } | null = null // Track AI call for AI transcription method
     
-    if (extractionMethod === 'readability') {
+    if (extractionMethod === 'as-is') {
+      // As-is extraction - preserve complete webpage with security sanitization
+      console.log('Using as-is extraction (minimal processing)')
+      requestLogger.info({ extractionMethod: 'as-is' }, 'Starting as-is extraction')
+      extractionMethodUsed = 'as-is'
+      
+      const startTime = Date.now()
+      // Use the raw HTML content directly, sanitization will be applied later
+      extractedHtml = htmlContent
+      
+      const extractionTime = Date.now() - startTime
+      console.log(`As-is extraction completed in ${extractionTime}ms`)
+      requestLogger.info({
+        extractionMethod: 'as-is',
+        extractionTimeMs: extractionTime,
+        contentLength: extractedHtml.length
+      }, 'As-is extraction completed successfully')
+      
+    } else if (extractionMethod === 'readability') {
       // Mozilla Readability extraction - fast and reliable
       console.log('Using Mozilla Readability for extraction')
       requestLogger.info({ extractionMethod: 'readability' }, 'Starting Mozilla Readability extraction')

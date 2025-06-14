@@ -19,7 +19,7 @@ export default function AddDocumentPage() {
   const [url, setUrl] = useState('')
   const [isExtractingUrl, setIsExtractingUrl] = useState(false)
   const [urlError, setUrlError] = useState<string>('')
-  const [extractionMethod, setExtractionMethod] = useState<'readability' | 'ai-transcription' | 'ai-dom'>('readability')
+  const [extractionMethod, setExtractionMethod] = useState<'as-is' | 'readability' | 'ai-transcription' | 'ai-dom'>('readability')
   const [urlProvider, setUrlProvider] = useState<'claude' | 'gemini'>('claude')
   
   // PDF state
@@ -400,9 +400,25 @@ export default function AddDocumentPage() {
                         <input
                           type="radio"
                           name="extractionMethod"
+                          value="as-is"
+                          checked={extractionMethod === 'as-is'}
+                          onChange={(e) => setExtractionMethod(e.target.value as 'as-is' | 'readability' | 'ai-transcription' | 'ai-dom')}
+                          disabled={isExtractingUrl}
+                          className="mt-0.5 mr-3 text-orange-600 focus:ring-orange-500"
+                        />
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900">Use As-Is (Complete Page)</div>
+                          <div className="text-xs text-gray-500">Preserves the entire webpage including navigation, styling, and layout. Security sanitization applied. Fastest option.</div>
+                        </div>
+                      </label>
+                      
+                      <label className="flex items-start cursor-pointer">
+                        <input
+                          type="radio"
+                          name="extractionMethod"
                           value="readability"
                           checked={extractionMethod === 'readability'}
-                          onChange={(e) => setExtractionMethod(e.target.value as 'readability' | 'ai-transcription' | 'ai-dom')}
+                          onChange={(e) => setExtractionMethod(e.target.value as 'as-is' | 'readability' | 'ai-transcription' | 'ai-dom')}
                           disabled={isExtractingUrl}
                           className="mt-0.5 mr-3 text-orange-600 focus:ring-orange-500"
                         />
@@ -418,7 +434,7 @@ export default function AddDocumentPage() {
                           name="extractionMethod"
                           value="ai-transcription"
                           checked={extractionMethod === 'ai-transcription'}
-                          onChange={(e) => setExtractionMethod(e.target.value as 'readability' | 'ai-transcription' | 'ai-dom')}
+                          onChange={(e) => setExtractionMethod(e.target.value as 'as-is' | 'readability' | 'ai-transcription' | 'ai-dom')}
                           disabled={isExtractingUrl}
                           className="mt-0.5 mr-3 text-orange-600 focus:ring-orange-500"
                         />
@@ -434,7 +450,7 @@ export default function AddDocumentPage() {
                           name="extractionMethod"
                           value="ai-dom"
                           checked={extractionMethod === 'ai-dom'}
-                          onChange={(e) => setExtractionMethod(e.target.value as 'readability' | 'ai-transcription' | 'ai-dom')}
+                          onChange={(e) => setExtractionMethod(e.target.value as 'as-is' | 'readability' | 'ai-transcription' | 'ai-dom')}
                           disabled={isExtractingUrl}
                           className="mt-0.5 mr-3 text-orange-600 focus:ring-orange-500"
                         />
