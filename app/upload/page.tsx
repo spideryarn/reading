@@ -107,9 +107,12 @@ export default function AddDocumentPage() {
       })
 
       if (!response.ok) {
-        // Try to parse JSON error response first
+        // Read response body as text first (can only be read once)
+        const responseText = await response.text()
+        
+        // Try to parse as JSON
         try {
-          const errorData = await response.json()
+          const errorData = JSON.parse(responseText)
           if (errorData.error === 'readability_failed' && errorData.suggested_method) {
             // Special handling for Readability failures - suggest alternative method
             setUrlError(`${errorData.message} Click here to try AI Transcription instead.`)
@@ -118,9 +121,8 @@ export default function AddDocumentPage() {
             setUrlError(errorData.message || 'URL extraction failed')
           }
         } catch {
-          // Fallback to text if JSON parsing fails
-          const errorText = await response.text()
-          setUrlError(errorText || 'URL extraction failed')
+          // If JSON parsing fails, use the raw text
+          setUrlError(responseText || 'URL extraction failed')
         }
         return
       }

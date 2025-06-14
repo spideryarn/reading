@@ -37,6 +37,11 @@ export default async function DocumentPage({ params }: PageProps) {
     return <div className="p-8">Document not found</div>
   }
 
+  // Get enhancement flags from the document_enhancements table
+  const supabase = await createClient()
+  const documentService = new DocumentService(supabase)
+  const enhancementFlags = await documentService.getEnhancementFlags(doc.id)
+
   // Get HTML content from database
   const html = doc.html_content
   const markdownContent = doc.plaintext_content
@@ -58,8 +63,9 @@ export default async function DocumentPage({ params }: PageProps) {
         originalFileType={doc.original_file_type}
         documentCreatedAt={doc.created_at}
         documentSourceUrl={doc.source_url}
-        aiHeadingsGenerated={doc.ai_headings_generated}
-        summaryGenerated={doc.summary_generated}
+        aiHeadingsGenerated={enhancementFlags.aiHeadingsGenerated}
+        summaryGenerated={enhancementFlags.summaryGenerated}
+        glossaryGenerated={enhancementFlags.glossaryGenerated}
         ownerEmail={user.email}
         isPublic={doc.is_public}
       />
