@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from 'ai'
 import { getModel } from '@/lib/services/llm-provider'
-import { AI_CONFIG, getModelConfig } from '@/lib/config'
+import { AI_CONFIG, getModelConfig, getModelVersion, type ProviderTierKey } from '@/lib/config'
 import { chatPromptInputSchema } from '@/lib/prompts/templates/chat'
 import { renderChatSystemPrompt } from '@/lib/prompts/templates/chat-system'
 import { createClient } from '@/lib/supabase/server'
@@ -134,7 +134,9 @@ export async function POST(request: NextRequest) {
       try {
         const supabase = await createClient()
         const chatService = new ChatService(supabase)
-        const modelConfig = getModelConfig()
+        const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
+        const modelConfig = getModelConfig(tierKey)
+        const modelVersion = getModelVersion(tierKey)
         
         // Create title from first user message
         const title = messages[0].content;
@@ -174,11 +176,14 @@ export async function POST(request: NextRequest) {
       try {
         const supabase = await createClient()
         const aiCallService = new AiCallService(supabase)
-        const modelConfig = getModelConfig()
+        const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
+        const modelConfig = getModelConfig(tierKey)
+        const modelVersion = getModelVersion(tierKey)
         
         const aiCall = await aiCallService.create({
           provider: modelConfig.provider,
           modelId: modelConfig.modelId,
+          version: modelVersion,
           promptTokens: result.usage?.promptTokens || null,
           completionTokens: result.usage?.completionTokens || null,
           totalTokens: result.usage?.totalTokens || null,

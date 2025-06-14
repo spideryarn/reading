@@ -211,6 +211,8 @@ All AI calls are tracked in the `ai_calls` table with:
 - **Performance tracking**: Response time, finish reason, model used
 - **Usage analytics**: Query document usage stats and costs
 
+**Important**: The `ai_models` table requires three parameters (`provider`, `model_id`, `version`) to uniquely identify models. Always include the `version` parameter when calling `aiCallService.startCall()` or `aiCallService.create()` to avoid "Model not found" errors.
+
 ### Cost Calculation Example
 
 ```sql
@@ -242,7 +244,7 @@ import { executePromptWithUsage } from '@/lib/prompts/types'
 import { myFeaturePrompt } from '@/lib/prompts/templates/my-feature'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { createClient } from '@/lib/supabase/server'
-import { getModelConfig } from '@/lib/config'
+import { getModelConfig, getModelVersion } from '@/lib/config'
 
 export async function POST(request: NextRequest) {
   try {
@@ -252,12 +254,14 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient()
     const aiCallService = new AiCallService(supabase)
     const modelConfig = getModelConfig()
+    const modelVersion = getModelVersion() // Get version for model lookup
     
     // Create AI call record for tracking
     const aiCall = await aiCallService.startCall({
       documentId: body.documentId,
       provider: modelConfig.provider,
       modelId: modelConfig.modelId,
+      version: modelConfig.version,  // Required - do not omit
       prompt_type: 'my-feature',
       input_data: { content_length: body.content?.length || 0 }
     })

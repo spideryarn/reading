@@ -7,7 +7,7 @@ import { summarisePrompt, getMaxTokensForGranularity, getGranularityInstruction 
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { getModelConfig, AI_CONFIG } from '@/lib/config'
+import { getModelConfig, getModelVersion, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
 import { createRequestLogger, createTimer, logAIOperation, generateCorrelationId } from '@/lib/services/logger'
 
 export async function GET(request: NextRequest) {
@@ -191,8 +191,9 @@ export async function POST(request: NextRequest) {
     }
     
     // Resolve tier key to actual model details using config
-    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as keyof typeof AI_CONFIG.MODELS
+    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
     const modelConfig = getModelConfig(tierKey)
+    const modelVersion = getModelVersion(tierKey)
     
     // Start tracking AI call for metrics
     let aiCall
@@ -201,6 +202,7 @@ export async function POST(request: NextRequest) {
         documentId,
         provider: modelConfig.provider,
         modelId: modelConfig.modelId,
+        version: modelVersion,
         prompt_type: 'summarise',
         input_data: { 
           content_length: content.length,

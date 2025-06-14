@@ -10,7 +10,7 @@ import { createPdfToHtmlPrompt } from '@/lib/prompts/templates/pdf-to-html-direc
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { getModelConfig, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
+import { getModelConfig, getModelVersion, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
 import { generateSlug, generateHtmlFilename } from '@/lib/utils/slug'
 import { URL_EXTRACTION_CONFIG } from '@/lib/config'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
@@ -180,12 +180,14 @@ async function processPdfFromUrl(
   // Get model configuration for AI call tracking
   const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
   const modelConfig = getModelConfig(tierKey)
+  const modelVersion = getModelVersion(tierKey)
   
   // Create AI call record for tracking (before LLM processing)
   const startTime = Date.now()
   const aiCall = await aiCallService.startCall({
     provider: modelConfig.provider,
     modelId: modelConfig.modelId,
+    version: modelVersion,
     prompt_type: 'pdf-to-html',
     input_data: {
       source_url: sourceUrl,
@@ -612,12 +614,14 @@ export async function POST(request: NextRequest) {
       // Get model configuration for AI call tracking
       const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
       const modelConfig = getModelConfig(tierKey)
+      const modelVersion = getModelVersion(tierKey)
       
       // Create AI call record for tracking (before LLM processing)
       const startTime = Date.now()
       aiCall = await aiCallService.startCall({
         provider: modelConfig.provider,
         modelId: modelConfig.modelId,
+        version: modelVersion,
         prompt_type: 'url-to-html',
         input_data: {
           source_url: url,

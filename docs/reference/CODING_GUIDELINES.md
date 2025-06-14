@@ -186,6 +186,7 @@ import { Warning, Info } from "@phosphor-icons/react"
 ### AI Integration
 - Use Vercel AI SDK Core (`generateText`, `streamText`) for LLM calls
 - Follow multi-provider pattern in `lib/services/llm-provider.ts`
+- Always include `version` parameter when using `aiCallService.startCall()` or `create()`
 - See `docs/reference/VERCEL_AI_SDK_REFERENCE.md` for detailed patterns
 
 ### Chat UI

@@ -9,7 +9,7 @@ import { createUrlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { getModelConfig, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
+import { getModelConfig, getModelVersion, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
 import { generateSlug } from '@/lib/utils/slug'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
 import { validateAuth } from '@/lib/auth/server-auth'
@@ -173,12 +173,14 @@ export async function POST(request: NextRequest) {
       // Get model configuration for AI call tracking
       const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
       const modelConfig = getModelConfig(tierKey)
+      const modelVersion = getModelVersion(tierKey)
       
       // Create AI call record for tracking (before LLM processing)
       const startTime = Date.now()
       aiCall = await aiCallService.startCall({
         provider: modelConfig.provider,
         modelId: modelConfig.modelId,
+        version: modelVersion,
         prompt_type: 'url-to-html', // Reuse URL-to-HTML prompt template for HTML content extraction
         input_data: {
           file_name: htmlFile.name,
