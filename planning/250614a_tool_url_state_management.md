@@ -37,44 +37,46 @@ Currently, Spideryarn Reading tools maintain state only in memory. Users cannot 
 ## Stages & Actions
 
 ### Stage: Preparation and sync
-- [ ] Run `./scripts/sync-worktrees.ts` to pull latest changes from main
-- [ ] Review current tool implementations to understand state patterns
+- [x] Run `./scripts/sync-worktrees.ts` to pull latest changes from main
+- [x] Review current tool implementations to understand state patterns
 
 ### Stage: Install and setup nuqs
-- [ ] Install nuqs library: `npm install nuqs`
-- [ ] Create `lib/tools/url-state-types.ts` with URL parameter types
-  - [ ] Define tab enum values
-  - [ ] Define parameter types for each tool
-  - [ ] Create type-safe parsers
-- [ ] Configure nuqs in app layout if needed
+- [x] Install nuqs library: `npm install nuqs`
+- [x] Create `lib/tools/url-state-types.ts` with URL parameter types
+  - [x] Define tab enum values
+  - [x] Define parameter types for each tool
+  - [x] Create type-safe parsers
+- [x] Configure nuqs in app layout if needed
 
 ### Stage: Create URL state utilities
-- [ ] Create `lib/tools/url-state.ts` for URL management
-  - [ ] URL to state parsing utilities
-  - [ ] State to URL generation helpers
-  - [ ] History management utilities (push vs replace logic)
-  - [ ] Legacy URL migration adapter
-- [ ] Create `lib/tools/hooks/use-tool-url-state.ts` hook
-  - [ ] Integrate with nuqs parsers
-  - [ ] Bidirectional state sync with DocumentCommunicationContext
-  - [ ] Debouncing logic for search/typing
-  - [ ] Throttling logic for scroll position
-- [ ] Write tests for URL state utilities
-- [ ] Run tests
+- [x] Create `lib/tools/url-state.ts` for URL management
+  - [x] URL to state parsing utilities
+  - [x] State to URL generation helpers
+  - [x] History management utilities (push vs replace logic)
+  - [x] Legacy URL migration adapter
+- [x] Create `lib/tools/hooks/use-tool-url-state.ts` hook
+  - [x] Integrate with nuqs parsers
+  - [x] Bidirectional state sync with DocumentCommunicationContext
+  - [x] Debouncing logic for search/typing
+  - [x] Throttling logic for scroll position
+- [x] Write tests for URL state utilities
+- [x] Run tests
 
 ### Stage: Enhance DocumentCommunicationContext
-- [ ] Update `lib/contexts/document-communication-context.tsx`
-  - [ ] Add URL state synchronization
-  - [ ] Maintain backwards compatibility
-  - [ ] Connect activeTab to URL parameter
-  - [ ] Add methods for tool-specific state updates
-- [ ] Update context tests
-- [ ] Run all tests
+- [x] Update `lib/contexts/document-communication-context.tsx`
+  - [x] Add URL state synchronization
+  - [x] Maintain backwards compatibility
+  - [x] Connect activeTab to URL parameter
+  - [x] Add methods for tool-specific state updates
+- [x] Update context tests
+- [x] Run all tests
 
 ### Stage: Simple implementation - Tab state
-- [ ] Add basic tab parameter to document pages
-  - [ ] Update document page component to read URL state
-  - [ ] Sync activeTab with URL ?tab= parameter
+- [x] Add basic tab parameter to document pages
+  - [x] Update document page component to read URL state
+  - [x] Sync activeTab with URL ?tab= parameter
+  - [ ] **Integration Issue**: Find where VerticalIconNav handles tab clicks
+  - [ ] Connect tab click handlers to URL state updates
   - [ ] Test tab switching updates URL
   - [ ] Test browser back/forward navigation
 - [ ] Implement push vs replace logic for tab changes
@@ -131,11 +133,13 @@ Currently, Spideryarn Reading tools maintain state only in memory. Users cannot 
   - [ ] Conflicting states
 
 ### Stage: Documentation
-- [ ] Create `docs/reference/TOOL_URL_STATE.md`
+- [ ] Create `docs/reference/ARCHITECTURE_URL_STATE.md` , as per `WRITE_EVERGREEN_DOC.md`
   - [ ] Document URL parameter schema
   - [ ] Provide examples for each tool
   - [ ] History management guidelines
   - [ ] Migration guide for bookmarks
+  - [ ] **Add nuqs v2 note**: Document that no provider is needed for Next.js App Router
+  - [ ] **Add search pattern**: Document the submitted flag pattern and rationale
 - [ ] Update existing tool documentation with URL examples
 
 ### Stage: Testing and validation
@@ -148,6 +152,14 @@ Currently, Spideryarn Reading tools maintain state only in memory. Users cannot 
   - [ ] Measure impact of URL updates
   - [ ] Verify debouncing works correctly
   - [ ] Check for memory leaks
+
+### Stage: Research and refinement
+- [ ] Research URL state best practices (use subagent)
+  - [ ] How do other Next.js apps handle complex URL state?
+  - [ ] Find cleaner patterns for search submission handling
+  - [ ] Research browser history UX patterns and user expectations
+- [ ] Refine search submission pattern if better approach found
+- [ ] Clean up TypeScript 'any' types in URL state code
 
 ### Stage: Final review
 - [ ] Code review with focus on:
@@ -289,3 +301,50 @@ function shouldPushForChange(changes: Record<string, any>): boolean {
 - `planning/250614b_unified_tool_registry_architecture.md` - Tool architecture that can leverage URL state
 - `planning/250614c_llm_tool_function_calling.md` - LLM integration that uses URL state
 - Original unified planning doc (to be deleted): `planning/250613c_unified_tool_architecture_url_state_llm_integration.md`
+
+## Appendix: Implementation Surprises & Issues
+
+### Major Issues
+None identified - all surprises were minor and resolved during implementation.
+
+### Minor Issues & Observations
+
+1. **nuqs v2 Provider Not Required** (Resolved)
+   - Expected to need NuqsProvider wrapper in layout
+   - v2 works directly with Next.js App Router
+   - Simplified implementation but should be documented
+
+2. **Search Query History Complexity** (Needs refinement)
+   - `shouldPushHistory` requires special handling for search submission
+   - Current solution uses a `submitted` flag that gets stripped
+   - Works but feels hacky - may need cleaner approach later
+
+3. **Tab Click Handler Location** (Integration pending)
+   - Tab switching handled in VerticalIconNav, not unified-left-pane
+   - Requires tracing through component hierarchy
+   - More complex integration than initially anticipated
+
+4. **TypeScript 'any' Types in Tests** (Technical debt)
+   - Multiple instances of `any` types in URL state code
+   - Works but reduces type safety
+   - Should be cleaned up for better maintainability
+
+### Documentation Needs
+
+1. **nuqs v2 Integration Pattern**
+   - Document that no provider is needed for Next.js App Router
+   - Add to TOOL_URL_STATE.md when created
+
+2. **Search Submission Pattern**
+   - Document the submitted flag pattern for search
+   - Explain push vs replace decision logic clearly
+
+### Research Opportunities
+
+1. **URL State Best Practices**
+   - Research how other Next.js apps handle complex URL state
+   - Look for cleaner patterns for search submission handling
+
+2. **Browser History UX Patterns**
+   - Research user expectations for back/forward with tool states
+   - Validate our push/replace decisions against common patterns
