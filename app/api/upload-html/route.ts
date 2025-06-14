@@ -172,6 +172,7 @@ export async function POST(request: NextRequest) {
       // Create AI call record for tracking (before LLM processing)
       const startTime = Date.now()
       aiCall = await aiCallService.startCall({
+        userId: user.id,
         provider: modelConfig.provider,
         modelId: modelConfig.modelId,
         version: modelVersion,

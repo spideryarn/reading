@@ -14,6 +14,7 @@ import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelConfig, getModelVersion, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
+import { validateAuth } from '@/lib/auth/server-auth'
 
 export async function GET(request: NextRequest) {
   const correlationId = generateCorrelationId()
@@ -116,6 +117,9 @@ export async function POST(request: NextRequest) {
   const overallTimer = createTimer(requestLogger, 'multi-dimensional-summary-generation')
   
   try {
+    // Validate authentication first
+    const user = await validateAuth()
+    
     const { content, documentId } = await request.json()
     
     if (!content || typeof content !== 'string') {
@@ -135,6 +139,7 @@ export async function POST(request: NextRequest) {
     }
     
     requestLogger.info({
+      userId: user.id,
       documentId,
       contentLength: content.length
     }, 'Multi-dimensional summary generation request initiated')
@@ -174,6 +179,7 @@ export async function POST(request: NextRequest) {
     let aiCall
     try {
       aiCall = await aiCallService.startCall({
+        userId: user.id,
         documentId,
         provider: modelConfig.provider,
         modelId: modelConfig.modelId,
@@ -225,6 +231,7 @@ export async function POST(request: NextRequest) {
         {
           modelProvider: modelConfig.provider,
           tokensUsed: summaryResult.usage?.totalTokens,
+          userId: user.id,
           documentId,
           correlationId
         },
@@ -250,6 +257,7 @@ export async function POST(request: NextRequest) {
         'multi-dimensional-summary-generation',
         {
           modelProvider: modelConfig.provider,
+          userId: user.id,
           documentId,
           correlationId
         },
@@ -396,6 +404,12 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Error generating multi-dimensional summary:', error)
+    
+    // Handle authentication errors
+    if (error instanceof Error && (error.message.includes('Authentication failed') || error.message.includes('User not authenticated'))) {
+      return new NextResponse('Authentication required', { status: 401 })
+    }
+    
     requestLogger.error({
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined

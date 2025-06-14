@@ -183,6 +183,7 @@ async function processPdfFromUrl(
   // Create AI call record for tracking (before LLM processing)
   const startTime = Date.now()
   const aiCall = await aiCallService.startCall({
+    userId: user.id,  // Pass user ID for RLS
     provider: modelConfig.provider,
     modelId: modelConfig.modelId,
     version: modelVersion,
@@ -587,6 +588,7 @@ export async function POST(request: NextRequest) {
       // Create AI call record for tracking (before LLM processing)
       const startTime = Date.now()
       aiCall = await aiCallService.startCall({
+        userId: user.id,  // Pass user ID for RLS
         provider: modelConfig.provider,
         modelId: modelConfig.modelId,
         version: modelVersion,

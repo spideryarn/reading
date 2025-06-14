@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
           documentId,
           modelId: modelUuid,
           title,
-          userId: '00000000-0000-0000-0000-000000000001' // Mock system user
+          userId: user?.id || '00000000-0000-0000-0000-000000000001' // Use actual user or system user
         });
         
         finalThreadId = newThread.id;
@@ -181,6 +181,7 @@ export async function POST(request: NextRequest) {
         const modelVersion = getModelVersion(tierKey)
         
         const aiCall = await aiCallService.create({
+          userId: user?.id || '00000000-0000-0000-0000-000000000001', // Use system user if not authenticated
           provider: modelConfig.provider,
           modelId: modelConfig.modelId,
           version: modelVersion,
@@ -207,6 +208,7 @@ export async function POST(request: NextRequest) {
         logAIOperation('chat', {
           modelProvider: modelConfig.provider,
           tokensUsed: result.usage?.totalTokens,
+          userId: user?.id,
           documentId,
           correlationId,
           cost: result.usage?.totalTokens ? result.usage.totalTokens * 0.000003 : undefined // Rough cost estimate

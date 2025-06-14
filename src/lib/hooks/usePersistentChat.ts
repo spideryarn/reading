@@ -175,16 +175,14 @@ export function usePersistentChat({
           console.log('[Persistent Chat] Thread created:', returnedThreadId);
         }
         
-        // Save user and assistant messages (fire and forget)
+        // Save user and assistant messages (sequential to avoid race condition)
         if (returnedThreadId || threadId) {
           const currentThreadId = returnedThreadId || threadId;
           const userMessage = conversationHistory[conversationHistory.length - 1];
           
-          // Save user message
-          saveMessage(currentThreadId, 'user', userMessage.content);
-          
-          // Save assistant response
-          saveMessage(currentThreadId, 'assistant', response, data.aiCallId);
+          // Save user message first, then assistant response sequentially
+          await saveMessage(currentThreadId, 'user', userMessage.content);
+          await saveMessage(currentThreadId, 'assistant', response, data.aiCallId);
         }
         
         return {
