@@ -13,6 +13,7 @@ import { DocumentParser } from '@/lib/services/document-parser'
 import { getSemanticHighlightClass } from '@/lib/utils/semantic-highlighting'
 import Mark from 'mark.js'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 // Semantic highlight interface
 interface SemanticHighlight {
@@ -163,9 +164,10 @@ export function SimpleDocumentViewer({
             const entity = termToEntityMap.get(matchedText.toLowerCase())
             
             if (entity) {
-              // Store entity reference for click handling
+              // Store entity reference for click handling and tooltip data
               element.setAttribute('data-glossary-entity', entity.name)
-              element.setAttribute('title', entity.brief_explanation)
+              element.setAttribute('data-glossary-explanation', entity.brief_explanation)
+              element.setAttribute('data-glossary-long-explanation', entity.long_explanation || '')
               element.style.cursor = 'pointer'
               
               // Add click handler
@@ -180,6 +182,63 @@ export function SimpleDocumentViewer({
       }
     }, 10)
   }, [glossaryEntities, handleGlossaryClick])
+  
+  // Add event listeners for custom tooltip handling on glossary highlights
+  useEffect(() => {
+    const container = document.getElementById('document-viewer')
+    if (!container) return
+    
+    const handleMouseEnter = (event: Event) => {
+      const target = event.target as HTMLElement
+      if (target.classList.contains('highlight-glossary')) {
+        const explanation = target.getAttribute('data-glossary-explanation')
+        const longExplanation = target.getAttribute('data-glossary-long-explanation')
+        const entityName = target.getAttribute('data-glossary-entity')
+        
+        if (explanation || longExplanation) {
+          // Create tooltip element
+          const tooltip = document.createElement('div')
+          tooltip.className = 'glossary-tooltip fixed z-50 max-w-md text-left bg-white border border-gray-200 rounded-lg shadow-lg p-4'
+          tooltip.innerHTML = `
+            <div class="text-xs text-gray-700 leading-relaxed">
+              ${longExplanation || explanation}
+            </div>
+          `
+          
+          // Position tooltip
+          const rect = target.getBoundingClientRect()
+          tooltip.style.left = `${rect.right + 8}px`
+          tooltip.style.top = `${rect.top}px`
+          
+          // Add to DOM
+          document.body.appendChild(tooltip)
+          target.setAttribute('data-tooltip-id', 'glossary-tooltip')
+        }
+      }
+    }
+    
+    const handleMouseLeave = (event: Event) => {
+      const target = event.target as HTMLElement
+      if (target.classList.contains('highlight-glossary')) {
+        const existingTooltip = document.querySelector('.glossary-tooltip')
+        if (existingTooltip) {
+          existingTooltip.remove()
+        }
+        target.removeAttribute('data-tooltip-id')
+      }
+    }
+    
+    container.addEventListener('mouseenter', handleMouseEnter, true)
+    container.addEventListener('mouseleave', handleMouseLeave, true)
+    
+    return () => {
+      container.removeEventListener('mouseenter', handleMouseEnter, true)
+      container.removeEventListener('mouseleave', handleMouseLeave, true)
+      // Clean up any remaining tooltips
+      const existingTooltips = document.querySelectorAll('.glossary-tooltip')
+      existingTooltips.forEach(tooltip => tooltip.remove())
+    }
+  }, [glossaryEntities])
   
   // Render an individual element based on its type
   const renderElement = (element: DocumentElement, depth: number = 0) => {
@@ -355,22 +414,23 @@ export function SimpleDocumentViewer({
           animation: highlight 2s ease-out;
         }
         
-        /* Glossary highlight styles */
-        .highlight-glossary {
-          border-bottom: 1px dotted #6B7280;
+        :global(.highlight-glossary) {
+          background-color: transparent; /* remove native <mark> highlight */
+          color: inherit; /* preserve surrounding text colour */
+          border-bottom: 1px dotted #DB8A45; /* faint orange dotted underline */
           cursor: help;
           transition: all 0.2s ease;
         }
         
-        .highlight-glossary::after {
+        :global(.highlight-glossary)::after {
           content: "📖";
           font-size: 0.75em;
           vertical-align: super;
           margin-left: 2px;
         }
         
-        .highlight-glossary:hover {
-          background-color: rgba(107, 114, 128, 0.1);
+        :global(.highlight-glossary):hover {
+          background-color: rgba(219, 138, 69, 0.1);
           border-radius: 2px;
           padding: 1px 2px;
         }
