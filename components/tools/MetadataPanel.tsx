@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { 
   FileText, Clock, Calendar, Hash, 
   ChartBar, Robot, ListBullets, BookOpen,
@@ -11,6 +11,7 @@ import { formatDistanceToNow } from 'date-fns'
 import type { DocumentElement } from '@/lib/types/document'
 import { extractCleanText } from '@/lib/utils/html-text-extraction'
 import { calculateReadabilityMetrics } from '@/lib/utils/readability-metrics'
+import { createClient } from '@/lib/supabase/client'
 
 interface MetadataPanelProps {
   documentTitle: string
@@ -24,6 +25,9 @@ interface MetadataPanelProps {
   summaryGenerated?: boolean
   // Owner information
   ownerEmail?: string
+  // Privacy and document ID for editing
+  isPublic?: boolean | null
+  documentId: string
 }
 
 export function MetadataPanel({
@@ -35,7 +39,9 @@ export function MetadataPanel({
   glossaryLoading = false,
   aiHeadingsGenerated = false,
   summaryGenerated = false,
-  ownerEmail
+  ownerEmail,
+  isPublic = false,
+  documentId
 }: MetadataPanelProps) {
   // Calculate document statistics
   const documentStats = useMemo(() => {
@@ -72,6 +78,11 @@ export function MetadataPanel({
     }
     return calculateReadabilityMetrics(documentStats.fullText)
   }, [documentStats.fullText])
+  
+  // Privacy toggle state
+  const [currentIsPublic, setCurrentIsPublic] = useState(isPublic ?? false)
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [updateError, setUpdateError] = useState<string | null>(null)
   
   // Format creation date
   const formattedDate = useMemo(() => {
@@ -114,6 +125,38 @@ export function MetadataPanel({
     if (score >= 50) return 'bg-yellow-100 text-yellow-800 border-yellow-200'
     if (score >= 30) return 'bg-orange-100 text-orange-800 border-orange-200'
     return 'bg-red-100 text-red-800 border-red-200'
+  }
+  
+  // Handle privacy toggle with optimistic updates
+  const handlePrivacyToggle = async () => {
+    const newValue = !currentIsPublic
+    setIsUpdating(true)
+    setUpdateError(null)
+    
+    // Optimistic update
+    setCurrentIsPublic(newValue)
+    
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('documents')
+        .update({ is_public: newValue })
+        .eq('id', documentId)
+      
+      if (error) {
+        // Revert optimistic update on error
+        setCurrentIsPublic(!newValue)
+        setUpdateError('Failed to update privacy setting. Please try again.')
+        console.error('Privacy update failed:', error)
+      }
+    } catch (err) {
+      // Revert optimistic update on error
+      setCurrentIsPublic(!newValue)
+      setUpdateError('An unexpected error occurred. Please try again.')
+      console.error('Privacy update error:', err)
+    } finally {
+      setIsUpdating(false)
+    }
   }
   
   return (
@@ -334,8 +377,34 @@ export function MetadataPanel({
                 <LockSimple size={20} weight="duotone" className="text-gray-400 mt-0.5" />
                 <div className="flex-1">
                   <div className="text-sm text-gray-600">Privacy</div>
-                  <div className="font-medium text-gray-900">Private</div>
-                  <div className="text-xs text-gray-500 mt-1">Only you can access this document</div>
+                  <div className="flex items-center gap-3 mt-1">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={currentIsPublic}
+                        onChange={handlePrivacyToggle}
+                        disabled={isUpdating}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                      <span className="text-sm font-medium text-gray-900">
+                        {currentIsPublic ? 'Public' : 'Private'}
+                      </span>
+                      {isUpdating && (
+                        <CircleNotch size={14} weight="bold" className="animate-spin text-blue-600" />
+                      )}
+                    </label>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {currentIsPublic 
+                      ? 'Anyone can access this document' 
+                      : 'Only you can access this document'
+                    }
+                  </div>
+                  {updateError && (
+                    <div className="text-xs text-red-600 mt-1">
+                      {updateError}
+                    </div>
+                  )}
                 </div>
               </div>
               

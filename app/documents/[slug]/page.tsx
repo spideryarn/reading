@@ -61,6 +61,7 @@ export default async function DocumentPage({ params }: PageProps) {
         aiHeadingsGenerated={doc.ai_headings_generated}
         summaryGenerated={doc.summary_generated}
         ownerEmail={user.email}
+        isPublic={doc.is_public}
       />
     </MutationProvider>
   )

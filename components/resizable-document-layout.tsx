@@ -78,6 +78,7 @@ interface ResizableDocumentLayoutProps {
   aiHeadingsGenerated?: boolean
   summaryGenerated?: boolean
   ownerEmail?: string
+  isPublic?: boolean | null
 }
 
 // Inner component that uses the document communication context
@@ -107,7 +108,8 @@ function ResizableDocumentLayoutInner({
   documentSourceUrl,
   aiHeadingsGenerated = false,
   summaryGenerated = false,
-  ownerEmail
+  ownerEmail,
+  isPublic = false
 }: ResizableDocumentLayoutProps) {
   const { actions, state } = useDocumentCommunication()
   const [isLeftPaneCollapsed, setIsLeftPaneCollapsed] = useState(false)
@@ -346,6 +348,7 @@ function ResizableDocumentLayoutInner({
               aiHeadingsGenerated={aiHeadingsGenerated}
               summaryGenerated={summaryGenerated}
               ownerEmail={ownerEmail}
+              isPublic={isPublic}
             />
             </div>
           </div>
