@@ -35,10 +35,13 @@ const customJestConfig = {
     '!jest.config.js',
     '!jest.setup.js'
   ],
-  coverageReporters: ['text', 'lcov', 'html'],
-  transformIgnorePatterns: [
-    '/node_modules/(?!(@assistant-ui|cheerio|nanoid|htmlparser2|domhandler|domutils|dom-serializer|entities|parse5|parse5-htmlparser2-tree-adapter|@assistant-ui/react-markdown|slug|@supabase.*)/)'
-  ]
+  coverageReporters: ['text', 'lcov', 'html']
 };
 
-module.exports = createJestConfig(customJestConfig);
+// Export async configuration to override Next.js defaults for Supabase ESM support
+module.exports = async () => ({
+  ...(await createJestConfig(customJestConfig)()),
+  transformIgnorePatterns: [
+    'node_modules/(?!(@supabase|@supabase/.*|@assistant-ui|cheerio|nanoid|htmlparser2|domhandler|domutils|dom-serializer|entities|parse5|parse5-htmlparser2-tree-adapter|@assistant-ui/react-markdown|slug)/)'
+  ]
+});

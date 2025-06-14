@@ -7,13 +7,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { createUrlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
 import { createClient } from '@/lib/supabase/server'
-import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelConfig, getModelVersion, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
-import { generateSlug } from '@/lib/utils/slug'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
 import { validateAuth } from '@/lib/auth/server-auth'
-import { sanitizeAcademicContent } from '@/lib/utils/html-sanitizer'
+import { processHtmlToDocument, handleSanitizationError } from '@/lib/services/html-document-processor'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 
 export async function POST(request: NextRequest) {
@@ -91,11 +89,7 @@ export async function POST(request: NextRequest) {
 
     // Initialize Supabase client and services
     const supabase = await createClient()
-    const documentService = new DocumentService(supabase)
     const aiCallService = new AiCallService(supabase)
-
-    // Generate slug for the document
-    const slug = generateSlug(title)
     
     console.log(`Step 1: Processing HTML content using ${processingMethod} method...`)
     requestLogger.info({
@@ -264,62 +258,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log('Step 2: HTML processing completed, sanitizing content...')
+    console.log('Step 2: HTML processing completed, processing through shared pipeline...')
     requestLogger.info({
       correlationId,
-      step: 'html-sanitization',
+      step: 'html-processing-complete',
       processingMethod: processingMethodUsed,
       processedSizeKb: Math.round(processedHtml.length / 1024)
-    }, 'HTML processing completed, starting sanitization')
+    }, 'HTML processing completed, starting shared pipeline')
 
-    // Sanitize processed HTML content before storage (always applied for security)
-    let sanitizedHtml: string
-    try {
-      sanitizedHtml = sanitizeAcademicContent(processedHtml)
-      console.log(`Sanitized HTML content (${sanitizedHtml.length} chars from ${processedHtml.length} chars)`)
-      requestLogger.info({
-        correlationId,
-        step: 'sanitization-complete',
-        sanitizedLength: sanitizedHtml.length,
-        originalLength: processedHtml.length
-      }, 'HTML sanitization completed successfully')
-    } catch (sanitizationError) {
-      console.error('HTML sanitization failed:', sanitizationError)
-      requestLogger.error({
-        correlationId,
-        step: 'sanitization-failed',
-        error: sanitizationError instanceof Error ? sanitizationError.message : 'Unknown sanitization error'
-      }, 'HTML sanitization failed')
-      throw new Error(`Content sanitization failed: ${sanitizationError instanceof Error ? sanitizationError.message : 'Unknown sanitization error'}`)
-    }
-
-    console.log('Step 3: Extracting plaintext from sanitized content...')
-    requestLogger.info({
-      correlationId,
-      step: 'plaintext-extraction',
-      sanitizedLength: sanitizedHtml.length
-    }, 'Starting plaintext extraction from sanitized content')
-
-    // Extract plaintext from sanitized HTML for search and word count
-    const plaintext = sanitizedHtml
-      .replace(/<[^>]*>/g, ' ') // Remove HTML tags
-      .replace(/\s+/g, ' ') // Normalize whitespace
-      .trim()
-
-    console.log('Step 4: Creating document with storage integration...')
-    requestLogger.info({
-      correlationId,
-      step: 'document-creation',
-      plaintextLength: plaintext.length,
-      wordCount: plaintext.split(/\s+/).length,
-      slug
-    }, 'Starting document creation with storage integration')
-    
-    // Prepare upload metadata
-    const uploadMetadata = {
-      extraction_method: processingMethodUsed,
-      provider_used: processingMethodUsed === 'ai-transcription' ? provider : null,
-      upload_source: 'html-upload', // New source type for HTML file uploads
+    // Prepare HTML-specific metadata fields
+    const htmlMetadata = {
       content_size_kb: Math.round(htmlContent.length / 1024),
       processed_size_kb: Math.round(processedHtml.length / 1024),
       processing_method: processingMethod
@@ -329,25 +277,30 @@ export async function POST(request: NextRequest) {
     if (processingMethodUsed === 'ai-transcription') {
       const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
       const modelConfig = getModelConfig(tierKey)
-      ;(uploadMetadata as typeof uploadMetadata & { model_used?: string }).model_used = modelConfig.modelId
+      ;(htmlMetadata as typeof htmlMetadata & { model_used?: string }).model_used = modelConfig.modelId
     }
 
-    // Create document with storage integration using authenticated user
-    const { document, storageResult } = await documentService.createWithStorage(
-      user.id,
+    // Process HTML through shared pipeline (sanitization, text extraction, document creation)
+    const { document, storageResult } = await processHtmlToDocument(
+      processedHtml,
       {
         title,
-        html_content: sanitizedHtml, // Use sanitized HTML 
-        plaintext_content: plaintext,
-        slug,
-        source_url: null, // No source URL for file uploads
-        is_public: isPublic,
-        word_count: plaintext.split(/\s+/).length
+        sourceUrl: null, // HTML uploads don't have source URLs
+        isPublic,
+        originalFile: htmlFile,
+        filename: htmlFile.name,
+        provider: processingMethodUsed === 'ai-transcription' ? provider : undefined,
+        correlationId,
+        aiCallId: processingMethodUsed === 'ai-transcription' ? aiCall?.id : undefined
       },
-      htmlFile, // Original HTML file for storage
-      htmlFile.name, // Original filename
-      uploadMetadata, // Upload metadata
-      processingMethodUsed === 'ai-transcription' ? aiCall?.id : undefined // Link to AI call only for AI transcription
+      {
+        extractionMethod: processingMethodUsed,
+        uploadSource: 'html-upload',
+        logger: requestLogger,
+        userId: user.id,
+        supabase
+      },
+      htmlMetadata
     )
 
     console.log(`Step 5: Document created successfully with ID: ${document.id}`)
@@ -473,14 +426,9 @@ export async function POST(request: NextRequest) {
       }
 
       if (error.message.includes('Content sanitization failed') || error.message.includes('sanitization')) {
-        // Provide specific error messages based on sanitization failure type
-        if (error.message.includes('too large')) {
-          return new NextResponse('HTML processing failed: Generated content is too large to process safely', { status: 413 })
-        }
-        if (error.message.includes('invalid result')) {
-          return new NextResponse('HTML processing failed: Content sanitization produced invalid results', { status: 422 })
-        }
-        return new NextResponse('HTML processing failed: Content could not be safely processed for security reasons', { status: 422 })
+        // Use shared error handling for sanitization failures
+        const sanitizationError = handleSanitizationError(error, 'html-upload')
+        return new NextResponse(sanitizationError.message, { status: sanitizationError.status })
       }
       
       return new NextResponse(`Processing error: ${error.message}`, { status: 500 })
