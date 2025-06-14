@@ -8,14 +8,13 @@ import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { createUrlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
 import { createPdfToHtmlPrompt } from '@/lib/prompts/templates/pdf-to-html-direct'
 import { createClient } from '@/lib/supabase/server'
-import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelConfig, getModelVersion, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
 import { generateSlug, generateHtmlFilename } from '@/lib/utils/slug'
 import { URL_EXTRACTION_CONFIG } from '@/lib/config'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
 import { validateAuth } from '@/lib/auth/server-auth'
-import { sanitizeAcademicContent } from '@/lib/utils/html-sanitizer'
+import { processHtmlToDocument, handleSanitizationError } from '@/lib/services/html-document-processor'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 import { detectAndAnalyzeContent, isPdfContentType } from '@/lib/utils/content-type-detection'
 
@@ -165,7 +164,6 @@ async function processPdfFromUrl(
   isPublic: boolean,
   user: any,
   supabase: any,
-  documentService: DocumentService,
   aiCallService: AiCallService,
   requestLogger: any,
   correlationId: string
@@ -244,85 +242,38 @@ async function processPdfFromUrl(
     tokensUsed: htmlResult.usage.totalTokens
   }, 'PDF to HTML conversion completed successfully')
 
-  // Sanitize HTML content before storage
-  let sanitizedHtml: string
-  try {
-    sanitizedHtml = sanitizeAcademicContent(htmlResult.text)
-    console.log(`Sanitized HTML content (${sanitizedHtml.length} chars from ${htmlResult.text.length} chars)`)
-    requestLogger.info({
-      correlationId,
-      step: 'sanitization-complete',
-      sanitizedLength: sanitizedHtml.length,
-      originalLength: htmlResult.text.length
-    }, 'HTML sanitization completed successfully')
-  } catch (sanitizationError) {
-    console.error('HTML sanitization failed:', sanitizationError)
-    requestLogger.error({
-      correlationId,
-      step: 'sanitization-failed',
-      error: sanitizationError instanceof Error ? sanitizationError.message : 'Unknown sanitization error'
-    }, 'HTML sanitization failed')
-    throw new Error(`Content sanitization failed: ${sanitizationError instanceof Error ? sanitizationError.message : 'Unknown sanitization error'}`)
-  }
-
-  console.log('Step 5: Extracting plaintext from sanitized content...')
-  requestLogger.info({
-    correlationId,
-    step: 'plaintext-extraction',
-    sanitizedLength: sanitizedHtml.length
-  }, 'Starting plaintext extraction from sanitized content')
-
-  // Extract plaintext from sanitized HTML for search and word count
-  const plaintext = sanitizedHtml
-    .replace(/<[^>]*>/g, ' ') // Remove HTML tags
-    .replace(/\s+/g, ' ') // Normalize whitespace
-    .trim()
-
-  // Generate final slug from the title
-  const finalSlug = generateSlug(defaultTitle)
-
-  console.log('Step 6: Creating document with database integration...')
-  requestLogger.info({
-    correlationId,
-    step: 'document-creation',
-    plaintextLength: plaintext.length,
-    wordCount: plaintext.split(/\s+/).length,
-    slug: finalSlug
-  }, 'Starting document creation with storage integration')
-  
-  // Prepare upload metadata for URL→PDF path
-  const uploadMetadata = {
-    extraction_method: 'ai-transcription',
-    provider_used: provider,
-    upload_source: 'url-pdf', // New source type for URL→PDF flow
-    processing_time_ms: processingTime,
-    file_size_bytes: pdfBuffer.length,
-    model_used: modelConfig.modelId,
-    original_url: sourceUrl,
-    content_type_detected: 'application/pdf',
-    auto_detected: true
-  }
-
-  // Create document with storage integration
-  // Store the original PDF for reprocessing capabilities
+  // Process HTML through shared pipeline (sanitization, text extraction, document creation)
   const pdfBlob = new Blob([pdfBuffer], { type: 'application/pdf' })
   const pdfFilename = generateHtmlFilename(sourceUrl).replace('.html', '.pdf')
   
-  const { document, storageResult } = await documentService.createWithStorage(
-    user.id,
+  const { document, storageResult } = await processHtmlToDocument(
+    htmlResult.text,
     {
       title: defaultTitle,
-      html_content: sanitizedHtml,
-      plaintext_content: plaintext,
-      slug: finalSlug,
-      source_url: sourceUrl,
-      is_public: isPublic,
-      word_count: plaintext.split(/\s+/).length
+      sourceUrl: sourceUrl,
+      isPublic,
+      originalFile: pdfBlob,
+      filename: pdfFilename,
+      provider,
+      correlationId,
+      aiCallId: aiCall.id
     },
-    pdfBlob, // Original PDF for storage
-    pdfFilename, // URL-based filename for PDF
-    uploadMetadata, // Upload metadata with URL→PDF tracking
-    aiCall.id // Link to AI call
+    {
+      extractionMethod: 'ai-transcription',
+      uploadSource: 'url-pdf',
+      logger: requestLogger,
+      userId: user.id,
+      supabase
+    },
+    {
+      // URL→PDF-specific metadata fields
+      processing_time_ms: processingTime,
+      file_size_bytes: pdfBuffer.length,
+      model_used: modelConfig.modelId,
+      original_url: sourceUrl,
+      content_type_detected: 'application/pdf',
+      auto_detected: true
+    }
   )
 
   console.log(`Step 7: Document created successfully with ID: ${document.id}`)
@@ -467,7 +418,6 @@ export async function POST(request: NextRequest) {
     
     // Initialize Supabase client and services (needed for both PDF and HTML paths)
     const supabase = await createClient()
-    const documentService = new DocumentService(supabase)
     const aiCallService = new AiCallService(supabase)
     
     // Route based on detected content type
@@ -500,7 +450,7 @@ export async function POST(request: NextRequest) {
       }
       
       // Process PDF using the same logic as upload-pdf route
-      return await processPdfFromUrl(url, pdfBuffer, provider, providedTitle, isPublic, user, supabase, documentService, aiCallService, requestLogger, correlationId)
+      return await processPdfFromUrl(url, pdfBuffer, provider, providedTitle, isPublic, user, supabase, aiCallService, requestLogger, correlationId)
     } else {
       // Handle HTML content - existing webpage extraction logic
       console.log('Step 2: HTML detected, fetching webpage content...')
@@ -738,103 +688,56 @@ export async function POST(request: NextRequest) {
       extractedSizeKb: Math.round(extractedHtml.length / 1024)
     }, 'Content extraction completed, starting sanitization')
 
-    // Sanitize extracted HTML content before storage
-    let sanitizedHtml: string
-    try {
-      sanitizedHtml = sanitizeAcademicContent(extractedHtml)
-      console.log(`Sanitized HTML content (${sanitizedHtml.length} chars from ${extractedHtml.length} chars)`)
-      requestLogger.info({
-        step: 4,
-        sanitizedSizeKb: Math.round(sanitizedHtml.length / 1024),
-        originalSizeKb: Math.round(extractedHtml.length / 1024)
-      }, 'Content sanitization completed successfully')
-    } catch (sanitizationError) {
-      console.error('HTML sanitization failed:', sanitizationError)
-      requestLogger.error({
-        step: 4,
-        error: sanitizationError instanceof Error ? sanitizationError.message : 'Unknown sanitization error'
-      }, 'HTML sanitization failed')
-      throw new Error(`Content sanitization failed: ${sanitizationError instanceof Error ? sanitizationError.message : 'Unknown sanitization error'}`)
-    }
-
-    console.log('Step 6: Extracting plaintext from sanitized content...')
-    requestLogger.info({
-      step: 6,
-      sanitizedSizeKb: Math.round(sanitizedHtml.length / 1024)
-    }, 'Starting plaintext extraction from sanitized content')
-    
-    // Extract plaintext from sanitized HTML for search and word count
-    const plaintext = sanitizedHtml
-      .replace(/<[^>]*>/g, ' ') // Remove HTML tags
-      .replace(/\s+/g, ' ') // Normalize whitespace
-      .trim()
-    
     // Extract title from extracted HTML if not provided
     const titleMatch = extractedHtml.match(/<title>(.*?)<\/title>/i) || extractedHtml.match(/<h1[^>]*>(.*?)<\/h1>/i)
     const extractedTitle = titleMatch ? titleMatch[1].replace(/<[^>]*>/g, '').trim() : null
     const finalTitle = providedTitle || extractedTitle || defaultTitle
     
-    // Generate final slug from the actual title (not the default title)
-    const finalSlug = generateSlug(finalTitle)
+    console.log('Step 6: Processing HTML through shared pipeline...')
     
-    console.log('Step 7: Creating document with database integration...')
-    requestLogger.info({
-      step: 7,
-      finalTitle,
-      finalSlug,
-      wordCount: plaintext.split(/\s+/).length,
-      isPublic
-    }, 'Creating document with database integration')
+    // Process HTML through shared pipeline (sanitization, text extraction, document creation)
+    const htmlBlob = new Blob([htmlContent], { type: 'text/html; charset=utf-8' })
+    const htmlFilename = generateHtmlFilename(url)
     
-    // Prepare upload metadata based on extraction method
-    const uploadMetadata = {
-      extraction_method: extractionMethodUsed,
-      provider_used: extractionMethodUsed === 'ai-transcription' ? provider : null,
-      upload_source: 'url', // Direct HTML extraction from URL
+    // Prepare URL-specific metadata fields
+    const urlMetadata = {
       content_size_kb: Math.round(htmlContent.length / 1024),
       extracted_size_kb: Math.round(extractedHtml.length / 1024),
       content_type_detected: contentDetection.contentType,
       auto_detected: true,
       // Storage-related metadata for debugging
-      storage_mime_type: 'text/html; charset=utf-8', // MIME type used for storage
-      storage_base_mime_type: 'text/html', // Base MIME type after parsing
-      storage_mime_parameters: 'charset=utf-8' // MIME type parameters
+      storage_mime_type: 'text/html; charset=utf-8',
+      storage_base_mime_type: 'text/html',
+      storage_mime_parameters: 'charset=utf-8'
     }
     
     // Add AI-specific metadata if AI transcription was used
     if (extractionMethodUsed === 'ai-transcription') {
       const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
       const modelConfig = getModelConfig(tierKey)
-      ;(uploadMetadata as typeof uploadMetadata & { model_used?: string }).model_used = modelConfig.modelId
+      ;(urlMetadata as typeof urlMetadata & { model_used?: string }).model_used = modelConfig.modelId
     }
     
-    // Create document in database with original HTML storage (following PDF storage pattern)
-    // Store raw HTML content before any processing for re-processing capabilities
-    const htmlBlob = new Blob([htmlContent], { type: 'text/html; charset=utf-8' })
-    const htmlFilename = generateHtmlFilename(url)
-    
-    console.log(`Storing original HTML as: ${htmlFilename} (${(htmlContent.length / 1024).toFixed(1)} KB)`)
-    requestLogger.info({
-      htmlFilename,
-      originalSizeKb: Math.round(htmlContent.length / 1024),
-      extractedSizeKb: Math.round(extractedHtml.length / 1024)
-    }, 'Storing original HTML content for re-processing')
-    
-    const { document } = await documentService.createWithStorage(
-      user.id,
+    const { document } = await processHtmlToDocument(
+      extractedHtml,
       {
         title: finalTitle,
-        html_content: sanitizedHtml, // Use sanitized HTML instead of raw extracted HTML
-        plaintext_content: plaintext,
-        slug: finalSlug,
-        source_url: url,
-        is_public: isPublic,
-        word_count: plaintext.split(/\s+/).length
+        sourceUrl: url,
+        isPublic,
+        originalFile: htmlBlob,
+        filename: htmlFilename,
+        provider: extractionMethodUsed === 'ai-transcription' ? provider : undefined,
+        correlationId,
+        aiCallId: extractionMethodUsed === 'ai-transcription' ? aiCall?.id : undefined
       },
-      htmlBlob, // Store original HTML content for re-processing
-      htmlFilename, // URL-based filename (domain-and-path-slugified.html)
-      uploadMetadata, // Upload metadata
-      extractionMethodUsed === 'ai-transcription' ? aiCall?.id : undefined // Link to AI call only for AI transcription
+      {
+        extractionMethod: extractionMethodUsed,
+        uploadSource: 'url',
+        logger: requestLogger,
+        userId: user.id,
+        supabase
+      },
+      urlMetadata
     )
     
     console.log(`Step 8: Document created successfully with ID: ${document.id}`)
@@ -946,14 +849,9 @@ export async function POST(request: NextRequest) {
       }
 
       if (error.message.includes('Content sanitization failed') || error.message.includes('sanitization')) {
-        // Provide specific error messages based on sanitization failure type
-        if (error.message.includes('too large')) {
-          return new NextResponse('Web page import failed: Extracted content is too large to process safely', { status: 413 })
-        }
-        if (error.message.includes('invalid result')) {
-          return new NextResponse('Web page import failed: Content sanitization produced invalid results', { status: 422 })
-        }
-        return new NextResponse('Web page import failed: Content could not be safely processed for security reasons', { status: 422 })
+        // Use shared error handling for sanitization failures
+        const sanitizationError = handleSanitizationError(error, 'url')
+        return new NextResponse(sanitizationError.message, { status: sanitizationError.status })
       }
       
       return new NextResponse(`Processing error: ${error.message}`, { status: 500 })

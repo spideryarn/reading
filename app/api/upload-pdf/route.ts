@@ -7,12 +7,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { createPdfToHtmlPrompt } from '@/lib/prompts/templates/pdf-to-html-direct'
 import { createClient } from '@/lib/supabase/server'
-import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelConfig, getModelVersion, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
-import { generateSlug } from '@/lib/utils/slug'
 import { validateAuth } from '@/lib/auth/server-auth'
-import { sanitizeAcademicContent } from '@/lib/utils/html-sanitizer'
+import { processHtmlToDocument, handleSanitizationError } from '@/lib/services/html-document-processor'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 
 export async function POST(request: NextRequest) {
@@ -89,11 +87,7 @@ export async function POST(request: NextRequest) {
 
     // Initialize Supabase client and services
     const supabase = await createClient()
-    const documentService = new DocumentService(supabase)
     const aiCallService = new AiCallService(supabase)
-
-    // Generate slug for the document
-    const slug = generateSlug(title)
 
     // Create provider-specific prompt template with appropriate model configuration
     const promptTemplate = createPdfToHtmlPrompt(provider)
@@ -157,7 +151,7 @@ export async function POST(request: NextRequest) {
       finishReason: htmlResult.finishReason
     })
 
-    console.log('Step 2: HTML conversion completed, sanitizing content...')
+    console.log('Step 2: HTML conversion completed, processing through shared pipeline...')
     
     requestLogger.info({
       correlationId,
@@ -167,106 +161,40 @@ export async function POST(request: NextRequest) {
       tokensUsed: htmlResult.usage.totalTokens
     }, 'PDF to HTML conversion completed successfully')
 
-    // Sanitize HTML content before storage
-    let sanitizedHtml: string
-    try {
-      sanitizedHtml = sanitizeAcademicContent(htmlResult.text)
-      console.log(`Sanitized HTML content (${sanitizedHtml.length} chars from ${htmlResult.text.length} chars)`)
-      requestLogger.info({
-        correlationId,
-        step: 'sanitization-complete',
-        sanitizedLength: sanitizedHtml.length,
-        originalLength: htmlResult.text.length
-      }, 'HTML sanitization completed successfully')
-    } catch (sanitizationError) {
-      console.error('HTML sanitization failed:', sanitizationError)
-      requestLogger.error({
-        correlationId,
-        step: 'sanitization-failed',
-        error: sanitizationError instanceof Error ? sanitizationError.message : 'Unknown sanitization error'
-      }, 'HTML sanitization failed')
-      throw new Error(`Content sanitization failed: ${sanitizationError instanceof Error ? sanitizationError.message : 'Unknown sanitization error'}`)
-    }
-
-    console.log('Step 3: Extracting plaintext from sanitized content...')
-    
-    requestLogger.info({
-      correlationId,
-      step: 'plaintext-extraction',
-      sanitizedLength: sanitizedHtml.length
-    }, 'Starting plaintext extraction from sanitized content')
-
-    // Extract plaintext from sanitized HTML for search and word count
-    const plaintext = sanitizedHtml
-      .replace(/<[^>]*>/g, ' ') // Remove HTML tags
-      .replace(/\s+/g, ' ') // Normalize whitespace
-      .trim()
-
-    console.log('Step 4: Creating document with storage integration...')
-    
-    requestLogger.info({
-      correlationId,
-      step: 'document-creation',
-      plaintextLength: plaintext.length,
-      wordCount: plaintext.split(/\s+/).length,
-      slug
-    }, 'Starting document creation with storage integration')
-    
-    // Prepare upload metadata
-    const uploadMetadata = {
-      extraction_method: 'ai-transcription',
-      provider_used: provider,
-      upload_source: 'pdf',
-      processing_time_ms: processingTime,
-      file_size_bytes: pdfBuffer.length,
-      model_used: modelConfig.modelId
-    }
-
-    // Create document with storage integration using authenticated user
-    const { document, storageResult } = await documentService.createWithStorage(
-      user.id,
+    // Process HTML through shared pipeline (sanitization, text extraction, document creation)
+    const { document, storageResult } = await processHtmlToDocument(
+      htmlResult.text,
       {
         title,
-        html_content: sanitizedHtml, // Use sanitized HTML instead of raw AI output
-        plaintext_content: plaintext,
-        slug,
-        source_url: null,
-        is_public: isPublic,
-        word_count: plaintext.split(/\s+/).length
+        sourceUrl: null, // PDF uploads don't have source URLs
+        isPublic,
+        originalFile: pdfFile,
+        filename: pdfFile.name,
+        provider,
+        correlationId,
+        aiCallId: aiCall.id
       },
-      pdfFile, // Original file for storage
-      pdfFile.name, // Original filename
-      uploadMetadata, // Upload metadata
-      aiCall.id // Link to AI call
+      {
+        extractionMethod: 'ai-transcription',
+        uploadSource: 'pdf',
+        logger: requestLogger,
+        userId: user.id,
+        supabase
+      },
+      {
+        // PDF-specific metadata fields
+        processing_time_ms: processingTime,
+        file_size_bytes: pdfBuffer.length,
+        model_used: modelConfig.modelId
+      }
     )
 
-    console.log(`Step 5: Document created successfully with ID: ${document.id}`)
-    
-    requestLogger.info({
-      correlationId,
-      step: 'document-created',
-      documentId: document.id,
-      documentSlug: document.slug,
-      hasOriginalFile: !!storageResult
-    }, 'Document created successfully')
+    console.log(`Step 3: Document created successfully with ID: ${document.id}`)
     
     if (storageResult) {
-      console.log(`Step 5: Original PDF stored at: ${storageResult.path}`)
-      
-      requestLogger.info({
-        correlationId,
-        step: 'storage-complete',
-        storagePath: storageResult.path,
-        storageSize: storageResult.size
-      }, 'Original PDF stored successfully')
+      console.log(`Step 3: Original PDF stored at: ${storageResult.path}`)
     } else {
-      console.warn('Step 5: Storage upload failed, but document was created without original file')
-      
-      requestLogger.warn({
-        correlationId,
-        step: 'storage-failed',
-        documentId: document.id
-      }, 'Storage upload failed, document created without original file')
+      console.warn('Step 3: Storage upload failed, but document was created without original file')
     }
 
     // Complete request timing
@@ -349,14 +277,9 @@ export async function POST(request: NextRequest) {
       }
 
       if (error.message.includes('Content sanitization failed') || error.message.includes('sanitization')) {
-        // Provide specific error messages based on sanitization failure type
-        if (error.message.includes('too large')) {
-          return new NextResponse('PDF processing failed: Generated content is too large to process safely', { status: 413 })
-        }
-        if (error.message.includes('invalid result')) {
-          return new NextResponse('PDF processing failed: Content sanitization produced invalid results', { status: 422 })
-        }
-        return new NextResponse('PDF processing failed: Content could not be safely processed for security reasons', { status: 422 })
+        // Use shared error handling for sanitization failures
+        const sanitizationError = handleSanitizationError(error, 'pdf')
+        return new NextResponse(sanitizationError.message, { status: sanitizationError.status })
       }
       
       return new NextResponse(`Processing error: ${error.message}`, { status: 500 })
