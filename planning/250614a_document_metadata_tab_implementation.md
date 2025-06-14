@@ -164,7 +164,82 @@ Actions:
 - Improved status indicators with conditional color coding and rounded badges
 - Enhanced privacy toggle with better visual feedback and emoji indicators
 
-### Stage 5: LLM-Extracted Metadata
+### Stage 5: Critical Bug Fixes & Data Integrity ✅ COMPLETE
+**Goal**: Fix broken Processing Status and ensure fail-fast error handling
+
+**Critical Issues Identified**:
+- Processing Status indicators read from non-existent database fields (`ai_headings_generated`, `summary_generated`)
+- These fields were removed when moving to `document_enhancements` table but code still references them
+- Values default to `false`, showing "Not generated" even when data exists
+- Violates CODING_PRINCIPLES.md: "Fix the root cause rather than putting on a band-aid"
+
+Actions:
+- [x] **URGENT: Fix Processing Status data source**
+  - Replace database queries from non-existent `documents.ai_headings_generated` and `documents.summary_generated` fields
+  - Update `page.tsx` to query `document_enhancements` table for `type = 'headings'` and `type = 'summary'` records
+  - Create helper function in DocumentService or EnhancementService to check enhancement existence
+  - Return boolean flags based on actual database state, not UI interaction state
+- [x] **Full metadata audit for silent failures**
+  - Review all metadata fields in MetadataPanel for similar issues
+  - Check if any other database fields are referenced but don't exist
+  - Ensure all calculations and data sources are actually working as intended
+  - Add proper error boundaries and fail-fast validation
+
+**Implementation Notes**:
+- Created three generalizable methods in DocumentService:
+  - `getExistingEnhancementTypes()`: Returns Set of all enhancement types (most flexible)
+  - `hasEnhancement()`: Check for specific enhancement type (simple boolean check)
+  - `getEnhancementFlags()`: Backward-compatible method for UI components
+- Updated `page.tsx` to use `getEnhancementFlags()` instead of non-existent database fields
+- All Processing Status indicators now accurately reflect database state
+- Build successful with no TypeScript errors
+- Solution is reusable and extensible for future enhancement types
+
+### Stage 6: Document Statistics Cleanup
+**Goal**: Remove redundant metrics and improve information density
+
+Actions:
+- [ ] **Remove character count from Document Statistics**
+  - Character count provides little value compared to word count
+  - Reduces visual clutter in the statistics grid
+- [ ] **Remove element count from Document Statistics**  
+  - Element count is an internal technical metric not useful to users
+  - Simplify statistics to focus on user-relevant metrics
+
+### Stage 7: Enhanced Reading Time Calculation
+**Goal**: Implement research-backed reading time estimation with readability adjustments
+
+**Current Issue**: Simple 225 WPM calculation doesn't account for document complexity
+
+Actions:
+- [ ] **Replace basic reading time calculation with complexity-adjusted algorithm**
+  - Update from fixed 225 WPM to research-backed 238 WPM base (Brysbaert 2019 meta-analysis)
+  - Integrate Flesch Reading Ease score adjustments:
+    - 90-100 (Very Easy): 0.8× base time
+    - 80-89 (Easy): 0.9× base time
+    - 70-79 (Fairly Easy): 1.0× base time
+    - 60-69 (Standard): 1.1× base time
+    - 50-59 (Fairly Difficult): 1.2× base time
+    - 30-49 (Difficult): 1.4× base time
+    - 0-29 (Very Difficult): 1.6× base time
+  - Apply Flesch-Kincaid Grade Level multipliers:
+    - Grade 1-6: 0.9× base time
+    - Grade 7-9: 1.0× base time
+    - Grade 10-12: 1.1× base time
+    - Grade 13-16 (College): 1.3× base time
+    - Grade 17+ (Graduate): 1.5× base time
+- [ ] **Add comprehensive reading time tooltip**
+  - Explain calculation method used
+  - Show: word count, base speed, readability adjustments, final adjusted speed
+  - Include disclaimer about individual variation
+  - Format: "Reading Time: X minutes\n\nCalculated using:\n• Word count: X,XXX words\n• Base reading speed: 238 WPM (research average)\n• Flesch Reading Ease: XX (X difficulty)\n• Grade Level: X.X (X level)\n• Adjusted speed: XXX WPM\n\nThis estimate accounts for text complexity and may vary based on your reading speed and familiarity with the content."
+- [ ] **Create enhanced reading time utility**
+  - Move calculation logic to dedicated utility function
+  - Return detailed breakdown for tooltip display
+  - Ensure memoization for performance
+  - Add unit tests for various readability scenarios
+
+### Stage 8: LLM-Extracted Metadata
 **Goal**: Use AI to extract missing metadata from document content
 
 Actions:
@@ -245,6 +320,6 @@ Actions:
 ---
 
 *Created: 14 June 2025*  
-*Last Updated: 14 June 2025 - Enhanced visual design complete (Stage 4.5)*  
-*Status: 🟢 In Progress - Stages 1-2-4-4.5 Complete, Stage 5 ready for implementation*  
-*Next Review: After Stage 5 planning*
+*Last Updated: 14 June 2025 - Critical bug fixes and improvements planned (Stages 5-7)*  
+*Status: 🔴 Critical Issues - Stages 1-2-4-4.5 Complete, Stage 5 (Bug Fixes) URGENT*  
+*Next Review: After Stage 5 critical fixes*

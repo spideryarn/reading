@@ -678,4 +678,56 @@ export class DocumentService {
 
     return data
   }
+
+  /**
+   * Check which enhancement types exist for a document
+   * Returns a Set of enhancement types that exist in the database
+   */
+  async getExistingEnhancementTypes(documentId: string): Promise<Set<string>> {
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(documentId)) {
+      return new Set()
+    }
+
+    // Query for all enhancement types
+    const { data, error } = await this.supabase
+      .from('document_enhancements')
+      .select('type')
+      .eq('document_id', documentId)
+
+    if (error) {
+      throw new Error(`Failed to fetch enhancement types: ${error.message}`)
+    }
+
+    // Return set of existing types
+    return new Set(data?.map(row => row.type) || [])
+  }
+
+  /**
+   * Check if specific enhancement types exist for a document
+   * Returns flags indicating whether each enhancement type exists
+   * This is a convenience method for backward compatibility and UI components
+   */
+  async getEnhancementFlags(documentId: string): Promise<{
+    aiHeadingsGenerated: boolean
+    summaryGenerated: boolean
+    glossaryGenerated: boolean
+  }> {
+    const existingTypes = await this.getExistingEnhancementTypes(documentId)
+    
+    return {
+      aiHeadingsGenerated: existingTypes.has('headings'),
+      summaryGenerated: existingTypes.has('summary'),
+      glossaryGenerated: existingTypes.has('glossary')
+    }
+  }
+
+  /**
+   * Check if a specific enhancement type exists for a document
+   */
+  async hasEnhancement(documentId: string, enhancementType: string): Promise<boolean> {
+    const existingTypes = await this.getExistingEnhancementTypes(documentId)
+    return existingTypes.has(enhancementType)
+  }
 }
