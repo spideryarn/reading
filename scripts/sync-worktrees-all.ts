@@ -328,8 +328,9 @@ class SyncAllWorktreesCommand extends Command {
           if (result.output) {
             this.context.stdout.write(result.output.split('\n').map(line => '      ' + line).join('\n') + '\n');
           }
-          results.push({ branch: worktree.branch!, success: false, error: result.error });
-          allSuccess = false;
+          this.log(`\n🛑 Stopping immediately due to merge conflict or sync failure.`, this.colors.red);
+          this.log(`   Fix the issues in ${worktree.branch} and try again.`, this.colors.yellow);
+          return 1;
         }
       }
   
