@@ -296,7 +296,7 @@ Coding & infrastructure:
 - `docs/reference/COMMAND_LINE_SCRIPTS.md` - Guidelines for writing command-line scripts using shell scripts or TypeScript/Clipanion
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture and implementation details
 - `docs/reference/ARCHITECTURE_DECISIONS.md` - Key architectural decisions including framework choices, data structures, storage approach, and MVP features
-- `docs/reference/STYLING.md` - CSS and visual styling configuration including theme settings, Phosphor icons usage, and loading/error button patterns
+- `docs/reference/STYLING_OVERVIEW.md` - CSS and visual styling configuration including theme settings, Phosphor icons usage, and loading/error button patterns
 - `docs/reference/SETUP.md` - Development environment setup guide including Node.js, Supabase, Git worktree configuration, and common commands
 - `docs/reference/SITE_ORGANISATION.md` - Documents the hierarchical, document-centric architecture including application routes, component hierarchy, and navigation patterns. (May be out of date)
 - `docs/reference/TESTING_OVERVIEW.md` - Testing approach documentation covering Jest with React Testing Library setup, test structure, and current test coverage

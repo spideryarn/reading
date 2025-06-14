@@ -188,7 +188,7 @@ const getTooltipContent = (headingText: string): JSX.Element
 
 ## Loading and Error States
 
-Follows standardised pattern documented in `docs/reference/STYLING.md`:
+Follows standardised pattern documented in `docs/reference/STYLING_OVERVIEW.md`:
 
 - **Generate Button**: Phosphor icons for consistent UI
 - **Loading**: Spinner animation with disabled state

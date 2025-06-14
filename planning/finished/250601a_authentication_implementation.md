@@ -23,7 +23,7 @@ This builds on the completed database implementation and leverages the existing 
 - `supabase/config.toml` - Local Supabase configuration with auth settings enabled
 - `docs/STYLING_SHADCN_UI_REFERENCE.md` - Component library installation and usage patterns
 - `docs/CODING_GUIDELINES.md` - TypeScript, React, and testing patterns to follow
-- `docs/STYLING.md` - CSS and visual styling configuration for UI consistency
+- `docs/STYLING_OVERVIEW.md` - CSS and visual styling configuration for UI consistency
 - `components/app-header.tsx` - Main header component requiring auth UI integration
 - [Supabase Auth with Next.js App Router](https://supabase.com/docs/guides/auth/auth-helpers/nextjs) - Official documentation for auth implementation
 - [shadcn/ui Authentication Examples](https://ui.shadcn.com/examples/authentication) - Reference UI patterns for auth forms

@@ -4,7 +4,7 @@ Comprehensive guide to implementing shadcn/ui component library in the Spideryar
 
 ## See also
 
-- `docs/reference/STYLING.md` - Current CSS and visual styling configuration
+- `docs/reference/STYLING_OVERVIEW.md` - Current CSS and visual styling configuration
 - `docs/reference/UI_INTERFACE.md`
 - `docs/reference/UI_COMPONENTS.md`
 - `docs/reference/CODING_PRINCIPLES.md` - Development principles prioritising simplicity and rapid prototyping

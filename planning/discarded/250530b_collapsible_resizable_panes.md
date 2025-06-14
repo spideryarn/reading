@@ -24,7 +24,7 @@ User requirements:
 - `app/documents/[slug]/page-client.tsx` - Current layout coordination and state management
 - `components/document-viewer.tsx` - Middle and right pane implementation using CSS Grid
 - `components/table-of-contents.tsx` - Left pane implementation
-- `docs/STYLING.md` - Phosphor icons usage and current styling patterns
+- `docs/STYLING_OVERVIEW.md` - Phosphor icons usage and current styling patterns
 - [shadcn/ui Resizable component](https://ui.shadcn.com/docs/components/resizable) - Built on react-resizable-panels
 
 ## Principles & Key Decisions
@@ -139,7 +139,7 @@ User requirements:
 ### Stage 6: Documentation & Cleanup
 - [ ] Update evergreen documentation
   - [ ] Revise `docs/UI_INTERFACE.md` to reflect new resizable architecture
-  - [ ] Update `docs/STYLING.md` if new patterns were introduced
+  - [ ] Update `docs/STYLING_OVERVIEW.md` if new patterns were introduced
   - [ ] Add section to `CLAUDE.md` about using ResizablePanelGroup for future layouts
 - [ ] Code cleanup and optimisation
   - [ ] Remove any dead CSS Grid code
