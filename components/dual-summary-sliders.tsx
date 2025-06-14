@@ -5,7 +5,9 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { CaretDown, CaretUp } from '@phosphor-icons/react'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import type { ExpertiseLevel, LengthLevel } from '@/lib/prompts/templates/multi-summarise'
 
 interface DualSummarySlidersProps {
@@ -36,6 +38,20 @@ export function DualSummarySliders({
   className = ''
 }: DualSummarySlidersProps) {
   const [isExpanded, setIsExpanded] = useState(true)
+  
+  // Responsive behavior: collapse on small screens
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 768px)')
+    
+    const handleScreenChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      setIsExpanded(!e.matches) // Collapse on small screens
+    }
+    
+    handleScreenChange(mediaQuery) // Set initial state
+    mediaQuery.addEventListener('change', handleScreenChange)
+    
+    return () => mediaQuery.removeEventListener('change', handleScreenChange)
+  }, [])
   
   // Get current indices for slider positioning
   const expertiseIndex = EXPERTISE_OPTIONS.findIndex(opt => opt.value === expertiseLevel)
@@ -80,15 +96,22 @@ export function DualSummarySliders({
             {EXPERTISE_OPTIONS[expertiseIndex]?.label} · {LENGTH_OPTIONS[lengthIndex]?.label}
           </span>
           <div className="flex items-center gap-2">
-            {isExpanded ? (
-              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {isExpanded ? (
+                  <CaretUp size={16} className="text-gray-500 hover:text-gray-700" />
+                ) : (
+                  <CaretDown size={16} className="text-gray-500 hover:text-gray-700" />
+                )}
+              </TooltipTrigger>
+              <TooltipContent 
+                side="top" 
+                className="bg-white border border-gray-200 text-gray-700 text-sm px-3 py-2 rounded-lg shadow-lg"
+                sideOffset={4}
+              >
+                {isExpanded ? 'Collapse' : 'Expand'}
+              </TooltipContent>
+            </Tooltip>
           </div>
         </button>
       </div>
