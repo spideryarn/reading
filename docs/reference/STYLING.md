@@ -8,6 +8,7 @@ CSS and visual styling configuration for the Spideryarn Reading application.
 - `app/globals.css` - Global CSS variables and base styles
 - `tailwind.config.js` - Tailwind CSS configuration (if exists)
 - `docs/reference/UI_COMPONENTS.md` - shadcn/ui component reference and usage
+- `docs/reference/STYLING_COLLAPSIBLE.md` - Comprehensive guide for expand/collapse component patterns
 - `/design` - Live design reference showing all components and colours
 
 ## Principles, key decisions
@@ -162,7 +163,9 @@ const [showContent, setShowContent] = useState(false)
 
 ### Expand/Collapse Buttons
 
-Use Phosphor `CaretDown`/`CaretUp` icons for expand/collapse functionality. See `components/summary-pane.tsx` (Summary button) and `components/heading-tree.tsx` (ToC headings) for examples.
+Use Phosphor `CaretDown`/`CaretUp` icons for expand/collapse functionality. 
+
+**See `docs/reference/STYLING_COLLAPSIBLE.md`** for comprehensive patterns, implementation examples, responsive behaviour, and accessibility guidelines for all collapsible components.
 
 ## Static assets
 

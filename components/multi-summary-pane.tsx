@@ -11,6 +11,7 @@ import { AlertWithIcon } from '@/components/ui/alert'
 import { MarkdownRenderer } from '@/components/markdown-renderer'
 import { DualSummarySliders } from '@/components/dual-summary-sliders'
 import { useMultiSummary } from '@/lib/hooks/useMultiSummary'
+import { countWords } from '@/lib/utils/text-statistics'
 import { CircleNotch, TrashSimple } from '@phosphor-icons/react'
 
 interface MultiSummaryPaneProps {
@@ -137,7 +138,7 @@ export function MultiSummaryPane({
                    lengthLevel === 'single_short_paragraph' ? 'Standard' : 'Detailed'}
                 </h3>
                 <p className="text-xs text-gray-500">
-                  {isCached ? 'Cached summary' : 'Generated summary'} · {currentSummary.length} characters
+                  {isCached ? 'Cached summary' : 'Generated summary'} · {countWords(currentSummary)} words
                 </p>
               </div>
               

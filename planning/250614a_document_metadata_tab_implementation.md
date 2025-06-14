@@ -92,6 +92,7 @@ Actions:
 
 **Implementation Notes**:
 - Created `lib/utils/readability-metrics.ts` with comprehensive readability calculations
+- Created `lib/utils/text-statistics.ts` with reusable word counting utilities (consistent word boundary detection)
 - Added Reading Difficulty section to MetadataPanel with:
   - Flesch Reading Ease score with color-coded badge (green/blue/yellow/orange/red)
   - User-friendly difficulty interpretation and comparison benchmarks
@@ -101,6 +102,7 @@ Actions:
   - Owner email address
 - Full test suite created for readability calculations
 - Successfully integrated owner email through component hierarchy
+- Updated multi-summary display to show word counts instead of character counts
 
 
 ### Stage 4: Editable Metadata Fields
