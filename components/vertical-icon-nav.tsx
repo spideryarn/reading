@@ -44,15 +44,16 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
       description: 'View the unmodified source document with original headings'
     }
   },
-  {
-    id: 'ai-generated',
-    label: 'AI-generated',
-    icon: Robot,
-    tooltip: {
-      title: 'AI-Generated',
-      description: 'View document with AI-enhanced headings and structure'
-    }
-  },
+  // Temporarily hidden due to bug - uncomment to restore
+  // {
+  //   id: 'ai-generated',
+  //   label: 'AI-generated',
+  //   icon: Robot,
+  //   tooltip: {
+  //     title: 'AI-Generated',
+  //     description: 'View document with AI-enhanced headings and structure'
+  //   }
+  // },
   {
     id: 'summary',
     label: 'Summary',
