@@ -25,9 +25,16 @@ export interface StorageUploadResult {
   mimeType: string
 }
 
-export interface StorageError extends Error {
+export class StorageError extends Error {
   code?: string
   statusCode?: number
+  
+  constructor(message: string, code?: string, statusCode?: number) {
+    super(message)
+    this.name = 'StorageError'
+    this.code = code
+    this.statusCode = statusCode
+  }
 }
 
 /**
