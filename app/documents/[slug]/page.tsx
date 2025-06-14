@@ -27,7 +27,7 @@ export default async function DocumentPage({ params }: PageProps) {
   const { slug } = await params
   
   // Require authentication for document access
-  await requireAuth({
+  const user = await requireAuth({
     returnTo: `/documents/${slug}`
   })
   
@@ -60,6 +60,7 @@ export default async function DocumentPage({ params }: PageProps) {
         documentSourceUrl={doc.source_url}
         aiHeadingsGenerated={doc.ai_headings_generated}
         summaryGenerated={doc.summary_generated}
+        ownerEmail={user.email}
       />
     </MutationProvider>
   )

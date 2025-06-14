@@ -4,14 +4,15 @@ import React, { useMemo } from 'react'
 import { 
   FileText, Clock, Calendar, Hash, 
   ChartBar, Robot, ListBullets, BookOpen,
-  CircleNotch, CheckCircle, XCircle
+  CircleNotch, CheckCircle, XCircle,
+  GraduationCap, LockSimple, User
 } from '@phosphor-icons/react'
 import { formatDistanceToNow } from 'date-fns'
 import type { DocumentElement } from '@/lib/types/document'
 import { extractCleanText } from '@/lib/utils/html-text-extraction'
+import { calculateReadabilityMetrics } from '@/lib/utils/readability-metrics'
 
 interface MetadataPanelProps {
-  documentId: string
   documentTitle: string
   documentCreatedAt: string
   documentSourceUrl?: string | null
@@ -21,10 +22,11 @@ interface MetadataPanelProps {
   glossaryLoading?: boolean
   aiHeadingsGenerated?: boolean
   summaryGenerated?: boolean
+  // Owner information
+  ownerEmail?: string
 }
 
 export function MetadataPanel({
-  documentId,
   documentTitle,
   documentCreatedAt,
   documentSourceUrl,
@@ -32,12 +34,14 @@ export function MetadataPanel({
   glossaryGenerated = false,
   glossaryLoading = false,
   aiHeadingsGenerated = false,
-  summaryGenerated = false
+  summaryGenerated = false,
+  ownerEmail
 }: MetadataPanelProps) {
   // Calculate document statistics
   const documentStats = useMemo(() => {
     let totalWords = 0
     let totalCharacters = 0
+    let fullText = ''
     
     elements.forEach(element => {
       if (element.content) {
@@ -45,6 +49,7 @@ export function MetadataPanel({
         const words = cleanText.split(/\s+/).filter(word => word.length > 0)
         totalWords += words.length
         totalCharacters += cleanText.length
+        fullText += cleanText + ' '
       }
     })
     
@@ -55,9 +60,18 @@ export function MetadataPanel({
       wordCount: totalWords,
       characterCount: totalCharacters,
       readingTime: readingTimeMinutes,
-      elementCount: elements.length
+      elementCount: elements.length,
+      fullText: fullText.trim()
     }
   }, [elements])
+  
+  // Calculate readability metrics
+  const readabilityMetrics = useMemo(() => {
+    if (documentStats.fullText.length === 0) {
+      return null
+    }
+    return calculateReadabilityMetrics(documentStats.fullText)
+  }, [documentStats.fullText])
   
   // Format creation date
   const formattedDate = useMemo(() => {
@@ -91,6 +105,15 @@ export function MetadataPanel({
       return <CheckCircle size={16} weight="bold" className="text-green-600" />
     }
     return <XCircle size={16} weight="bold" className="text-gray-400" />
+  }
+  
+  // Get color class for readability score
+  const getReadabilityColor = (score: number): string => {
+    if (score >= 80) return 'bg-green-100 text-green-800 border-green-200'
+    if (score >= 60) return 'bg-blue-100 text-blue-800 border-blue-200'
+    if (score >= 50) return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+    if (score >= 30) return 'bg-orange-100 text-orange-800 border-orange-200'
+    return 'bg-red-100 text-red-800 border-red-200'
   }
   
   return (
@@ -246,6 +269,85 @@ export function MetadataPanel({
                   </span>
                 </div>
               </div>
+            </div>
+          </section>
+          
+          {/* Reading Difficulty Section */}
+          {readabilityMetrics && (
+            <section>
+              <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">
+                Reading Difficulty
+              </h3>
+              <div className="space-y-4">
+                {/* Flesch Reading Ease */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <GraduationCap size={20} weight="duotone" className="text-gray-600" />
+                      <span className="text-sm font-medium text-gray-700">Reading Ease Score</span>
+                    </div>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getReadabilityColor(readabilityMetrics.fleschReadingEase.score)}`}>
+                      {readabilityMetrics.fleschReadingEase.score}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm font-medium text-gray-900">
+                      {readabilityMetrics.fleschReadingEase.interpretation.difficulty}
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      {readabilityMetrics.fleschReadingEase.interpretation.description}
+                    </div>
+                    <div className="text-xs text-gray-500 italic">
+                      Similar to: {readabilityMetrics.fleschReadingEase.interpretation.comparison}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Flesch-Kincaid Grade Level */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <GraduationCap size={20} weight="duotone" className="text-gray-600" />
+                      <span className="text-sm font-medium text-gray-700">Grade Level</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm font-medium text-gray-900">
+                      {readabilityMetrics.fleschKincaidGradeLevel.interpretation}
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      Education level needed to understand this document
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+          
+          {/* Access & Sharing Section */}
+          <section>
+            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">
+              Access & Sharing
+            </h3>
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <LockSimple size={20} weight="duotone" className="text-gray-400 mt-0.5" />
+                <div className="flex-1">
+                  <div className="text-sm text-gray-600">Privacy</div>
+                  <div className="font-medium text-gray-900">Private</div>
+                  <div className="text-xs text-gray-500 mt-1">Only you can access this document</div>
+                </div>
+              </div>
+              
+              {ownerEmail && (
+                <div className="flex items-start gap-3">
+                  <User size={20} weight="duotone" className="text-gray-400 mt-0.5" />
+                  <div className="flex-1">
+                    <div className="text-sm text-gray-600">Owner</div>
+                    <div className="font-medium text-gray-900">{ownerEmail}</div>
+                  </div>
+                </div>
+              )}
             </div>
           </section>
         </div>

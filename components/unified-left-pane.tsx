@@ -101,6 +101,7 @@ interface UnifiedLeftPaneProps {
   documentSourceUrl?: string | null
   aiHeadingsGenerated?: boolean
   summaryGenerated?: boolean
+  ownerEmail?: string
 }
 
 // Get icon component for entity type
@@ -406,7 +407,8 @@ export function UnifiedLeftPane({
   documentCreatedAt,
   documentSourceUrl,
   aiHeadingsGenerated = false,
-  summaryGenerated = false
+  summaryGenerated = false,
+  ownerEmail
 }: UnifiedLeftPaneProps) {
   const { actions, state } = useDocumentCommunication()
   
@@ -834,12 +836,12 @@ export function UnifiedLeftPane({
       onSemanticHighlightsChange={onSemanticHighlightsChange}
       activeElementId={activeElementId}
       onActiveElementChange={onActiveElementChange}
+      isActive={state.activeTabId === 'highlights'}
     />
-  ), [documentId, elements, semanticHighlights, onSemanticHighlightsChange, activeElementId, onActiveElementChange])
+  ), [documentId, elements, semanticHighlights, onSemanticHighlightsChange, activeElementId, onActiveElementChange, state.activeTabId])
   
   const renderMetadataTab = useCallback(() => (
     <MetadataPanel
-      documentId={documentId}
       documentTitle={documentTitle}
       documentCreatedAt={documentCreatedAt}
       documentSourceUrl={documentSourceUrl}
@@ -848,8 +850,9 @@ export function UnifiedLeftPane({
       glossaryLoading={isLoadingGlossary}
       aiHeadingsGenerated={aiHeadingsGenerated}
       summaryGenerated={summaryGenerated}
+      ownerEmail={ownerEmail}
     />
-  ), [documentId, documentTitle, documentCreatedAt, documentSourceUrl, elements, showGlossary, glossaryEntities.length, isLoadingGlossary, aiHeadingsGenerated, summaryGenerated])
+  ), [documentTitle, documentCreatedAt, documentSourceUrl, elements, showGlossary, glossaryEntities.length, isLoadingGlossary, aiHeadingsGenerated, summaryGenerated, ownerEmail])
 
   const renderGlossaryTab = useCallback(() => {
     if (!showGlossary) {

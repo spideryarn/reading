@@ -43,6 +43,7 @@ interface DocumentPageClientProps {
   documentSourceUrl?: string | null
   aiHeadingsGenerated?: boolean
   summaryGenerated?: boolean
+  ownerEmail?: string
 }
 
 export default function DocumentPageClient({ 
@@ -56,7 +57,8 @@ export default function DocumentPageClient({
   documentCreatedAt,
   documentSourceUrl,
   aiHeadingsGenerated = false,
-  summaryGenerated = false
+  summaryGenerated = false,
+  ownerEmail
 }: DocumentPageClientProps) {
   const mutatedDocument = useDocument() // Get mutated document from context
   const [selectedElement, setSelectedElement] = useState<DocumentElement | null>(null)
@@ -266,6 +268,7 @@ export default function DocumentPageClient({
         documentSourceUrl={documentSourceUrl}
         aiHeadingsGenerated={aiHeadingsGenerated}
         summaryGenerated={summaryGenerated}
+        ownerEmail={ownerEmail}
       />
       </div>
     </div>

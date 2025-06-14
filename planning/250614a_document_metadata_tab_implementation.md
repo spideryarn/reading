@@ -76,52 +76,40 @@ Actions:
 - Processing status shows glossary, AI headings, and summary generation states
 - Word count and reading time calculated from extracted element text
 
-### Stage 2: Reading Difficulty Metrics
+### Stage 2: Reading Difficulty Metrics ✅ COMPLETE
 **Goal**: Add readability scoring to help users gauge document complexity
 
 Actions:
-- [ ] Create utility functions for readability calculations:
+- [x] Create utility functions for readability calculations:
   - Flesch Reading Ease
   - Flesch-Kincaid Grade Level
-- [ ] Add readability section to metadata panel
-- [ ] Display scores with user-friendly interpretations:
+- [x] Add readability section to metadata panel
+- [x] Display scores with user-friendly interpretations:
   - Grade level (e.g., "12th grade")
   - Difficulty category (e.g., "Fairly Difficult")
   - Comparison benchmark (e.g., "Similar to academic journals")
-- [ ] Add visual indicator (colour-coded badge or meter)
-- [ ] Cache calculations for performance
+- [x] Add visual indicator (colour-coded badge or meter)
 
-### Stage 3: Enhanced Processing Status
-**Goal**: Provide detailed visibility into AI processing and costs
+**Implementation Notes**:
+- Created `lib/utils/readability-metrics.ts` with comprehensive readability calculations
+- Added Reading Difficulty section to MetadataPanel with:
+  - Flesch Reading Ease score with color-coded badge (green/blue/yellow/orange/red)
+  - User-friendly difficulty interpretation and comparison benchmarks
+  - Flesch-Kincaid Grade Level with education level description
+- Also added Access & Sharing section showing:
+  - Privacy status (currently all documents are private)
+  - Owner email address
+- Full test suite created for readability calculations
+- Successfully integrated owner email through component hierarchy
 
-Actions:
-- [ ] Query `ai_calls` table for document-specific usage
-- [ ] Aggregate token usage by operation type
-- [ ] Display processing timeline:
-  - Upload timestamp
-  - Each AI operation timestamp
-  - Processing duration
-- [ ] Show generation status for each feature:
-  - ✅ Glossary generated (cached)
-  - ⏳ Summary in progress
-  - ❌ AI headings not generated
-- [ ] Add cost estimation based on token usage
 
 ### Stage 4: Editable Metadata Fields
 **Goal**: Allow users to add/edit certain metadata fields
 
 Actions:
-- [ ] Add database migration for user-editable fields:
-  - Custom title override
-  - User notes/description
-  - Tags/categories
-- [ ] Implement edit mode UI:
-  - Edit button to toggle mode
-  - Form inputs for editable fields
-  - Save/cancel actions
-- [ ] Create API endpoint for metadata updates
-- [ ] Add optimistic UI updates with error handling
-- [ ] Implement field validation
+- [ ] User can toggle whether document is private or public. Autosaves with some kind of visual feedback.
+- [ ] Create API endpoint for metadata updates? Or can we do this with Supabase js? Discuss with user before proceeding
+- [ ] Add optimistic UI updates with error handling?
 
 ### Stage 5: LLM-Extracted Metadata
 **Goal**: Use AI to extract missing metadata from document content
@@ -140,31 +128,6 @@ Actions:
 - [ ] Handle multiple authors and complex attribution
 - [ ] Cache extracted data to avoid re-processing
 
-### Stage 6: Advanced Metrics & Insights
-**Goal**: Provide deeper document analysis and insights
-
-Actions:
-- [ ] Implement advanced readability metrics:
-  - Gunning Fog Index
-  - SMOG Index
-  - Coleman-Liau Index
-- [ ] Add document structure analysis:
-  - Section count and average length
-  - Heading density
-  - List/table usage
-- [ ] Create reading time estimates by section
-- [ ] Add vocabulary complexity analysis
-- [ ] Implement domain detection (academic, technical, general)
-
-### Stage 7: Sharing & Permissions UI
-**Goal**: Surface and manage document sharing status
-
-Actions:
-- [ ] Display current privacy status prominently
-- [ ] Add sharing configuration UI (when sharing feature exists)
-- [ ] Show access history/audit log
-- [ ] Implement permission management interface
-- [ ] Add public URL generation (future feature)
 
 ## UI/UX Design Decisions
 
@@ -229,6 +192,6 @@ Actions:
 ---
 
 *Created: 14 June 2025*  
-*Last Updated: 14 June 2025 - Stage 1 Complete*  
-*Status: 🟢 In Progress - Stage 1 Complete, Ready for Stage 2*  
-*Next Review: After Stage 2 completion*
+*Last Updated: 14 June 2025 - Stage 2 Complete*  
+*Status: 🟢 In Progress - Stages 1-2 Complete, Ready for Stage 3 or 4*  
+*Next Review: After Stage 3 or 4 completion*
