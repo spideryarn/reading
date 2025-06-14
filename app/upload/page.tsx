@@ -364,13 +364,13 @@ export default function AddDocumentPage() {
                   </div>
 
                   {/* Privacy Setting */}
-                  <div className="flex items-center space-x-3 py-4 border border-gray-200 rounded-lg px-4 bg-gray-50">
+                  <div className="flex items-center space-x-4 py-4 border-2 border-gray-300 rounded-lg px-4 bg-white shadow-sm hover:border-gray-400 transition-colors">
                     <Checkbox
                       id="privacy-setting"
                       checked={isPublic}
                       onCheckedChange={(checked) => setIsPublic(checked === true)}
                       disabled={isExtractingUrl}
-                      className="data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                      className="size-5 border-2 border-gray-400 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500 data-[state=unchecked]:border-gray-400 data-[state=unchecked]:bg-white"
                     />
                     <div className="flex-1">
                       <label
@@ -594,13 +594,13 @@ export default function AddDocumentPage() {
                   </div>
 
                   {/* Privacy Setting */}
-                  <div className="flex items-center space-x-3 py-4 border border-gray-200 rounded-lg px-4 bg-gray-50">
+                  <div className="flex items-center space-x-4 py-4 border-2 border-gray-300 rounded-lg px-4 bg-white shadow-sm hover:border-gray-400 transition-colors">
                     <Checkbox
                       id="privacy-setting-pdf"
                       checked={isPublic}
                       onCheckedChange={(checked) => setIsPublic(checked === true)}
                       disabled={isUploading}
-                      className="data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                      className="size-5 border-2 border-gray-400 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500 data-[state=unchecked]:border-gray-400 data-[state=unchecked]:bg-white"
                     />
                     <div className="flex-1">
                       <label
