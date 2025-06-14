@@ -344,7 +344,7 @@ function ResizableDocumentLayoutInner({
         {/* Right pane - Document viewer */}
         <ResizablePanel 
           defaultSize={70}
-          className="h-full"
+          className="h-full relative"
         >
           <div className="h-full pl-16">
             <SimpleDocumentViewer
@@ -355,6 +355,7 @@ function ResizableDocumentLayoutInner({
               onElementClick={handleElementClick}
               semanticHighlights={semanticHighlights}
               activeElementId={activeElementId}
+              glossaryEntities={glossaryEntities}
             />
           </div>
         </ResizablePanel>

@@ -85,6 +85,47 @@ Note: `.env.local` is explicitly NOT loaded during tests to ensure reproducible 
 ### Planned Additions
 - **next-test-api-route-handler**: 📋 Planned solution for Next.js API route testing
 
+### Browser Automation Testing
+
+**Puppeteer MCP Integration**: For end-to-end testing and browser automation
+
+**⚠️ CRITICAL - Port Configuration**:
+- **Always check `.env.local`**: Different Git worktrees use different ports (3001, 3002, 3003, etc.)
+- **Never assume port 3000**: The default port is often different in worktree setups
+- **Check before every test**: Port configuration must be verified before navigation
+
+**Test Credentials**:
+- **Email**: hello@spideryarn.com
+- **Password**: ASDFasdf1
+- **Source**: Defined in `supabase/seed.sql`
+
+**Puppeteer Testing Pattern**:
+```javascript
+// Always check port before navigation
+const envContent = await fs.readFile('.env.local', 'utf8')
+const portMatch = envContent.match(/^PORT=(.+)$/m)
+const port = portMatch ? portMatch[1] : '3000'
+
+// Navigate with correct port
+await mcp__puppeteer__puppeteer_navigate({
+  url: `http://localhost:${port}/`,
+  launchOptions: {
+    headless: true,
+    defaultViewport: { width: 1200, height: 800 }
+  }
+})
+
+// Login for authenticated tests
+await mcp__puppeteer__puppeteer_fill({
+  selector: 'input[type="email"]',
+  value: 'hello@spideryarn.com'
+})
+await mcp__puppeteer__puppeteer_fill({
+  selector: 'input[type="password"]',
+  value: 'ASDFasdf1'
+})
+```
+
 ### LLM API Cost Prevention
 
 **Critical**: Ensure all LLM API calls are mocked in tests to prevent cost explosion:

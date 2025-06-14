@@ -75,6 +75,7 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/UI_COMPONENTS.md` - Available UI components and usage patterns
 - `docs/reference/UI_INTERFACE.md` - Multi-pane layout with tabbed navigation architecture
 - `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - shadcn/ui component library integration and customisation
+- `docs/reference/STYLING_OVERLAPPING_TEXT_HIGHLIGHTS.md` - Comprehensive guide for implementing overlapping text highlighting using CSS Custom Highlight API and Mark.js fallbacks ⭐ **Essential for highlighting features**
 - `docs/reference/UNIFIED_LEFT_PANE.md` - Architecture of unified left pane with tabbed interface, ToC, and tooltip summaries
 - `docs/reference/COMMAND_PALETTE.md` - Command palette implementation and usage
 - `docs/reference/CROSS_PANE_COMMUNICATION.md` - Inter-pane communication patterns and architecture
@@ -147,6 +148,7 @@ See `planning/later/` for deferred features and future enhancements.
 **For newcomers**: Start with README.md → VISION.md → ARCHITECTURE_OVERVIEW.md → SETUP.md
 **For developers**: Focus on CODING_PRINCIPLES.md → CODING_GUIDELINES.md → TESTING_OVERVIEW.md → TESTING_SETUP.md
 **For AI features**: Begin with LLM_PROMPT_TEMPLATES.md → TOOL_SUMMARISE.md → TOOL_GLOSSARY.md
+**For highlighting work**: Use STYLING_OVERLAPPING_TEXT_HIGHLIGHTS.md → TOOL_SEARCH_TEXT.md → TOOL_HIGHLIGHT.md
 **For documentation work**: Use WRITE_EVERGREEN_DOC.md → UPDATE_HOUSEKEEPING_DOCUMENTATION.md
 
 ⭐ Marks essential starting points for different development areas.

@@ -5,7 +5,9 @@ The glossary feature extracts key entities from documents using LLM analysis and
 ## See also
 
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide to creating and using LLM prompt templates
+- `docs/reference/STYLING_OVERLAPPING_TEXT_HIGHLIGHTS.md` - Comprehensive guide for implementing overlapping text highlighting to enable glossary + search highlight combinations
 - `planning/250526e_glossary_feature.md` - Implementation planning and progress tracking
+- `planning/250613f_glossary_hyperlinks_implementation.md` - Glossary hyperlink implementation planning with highlighting considerations
 - `lib/prompts/templates/glossary.ts` - Entity schema and prompt configuration  
 - `lib/prompts/templates/glossary.njk` - LLM prompt template for entity extraction
 - `/api/glossary/route.ts` - API endpoint for generating glossaries
