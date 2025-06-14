@@ -15,6 +15,8 @@ export interface DocumentCommunicationState {
   highlightedTerm: string | null
   activeTabId: string
   documentSlug: string | null
+  // URL state synchronization
+  urlStateEnabled: boolean
 }
 
 // Actions interface for document communication
@@ -23,6 +25,9 @@ export interface DocumentCommunicationActions {
   highlightTerm: (term: string | null) => void
   setActiveTab: (tabId: string) => void
   scrollToElement: (elementId: string) => void
+  // URL state synchronization
+  setUrlStateEnabled: (enabled: boolean) => void
+  notifyUrlStateChange: (changes: Record<string, any>) => void
 }
 
 // Combined context type
@@ -54,7 +59,8 @@ export function DocumentCommunicationProvider({ children }: DocumentCommunicatio
     currentPosition: null,
     highlightedTerm: null,
     activeTabId: 'original',
-    documentSlug: getDocumentSlug()
+    documentSlug: getDocumentSlug(),
+    urlStateEnabled: true // Enable URL state by default
   })
 
   // Update document slug when URL changes
@@ -134,6 +140,22 @@ export function DocumentCommunicationProvider({ children }: DocumentCommunicatio
       
       if (process.env.NODE_ENV === 'development') {
         console.log('[DocumentComm] Scroll to element:', elementId, element ? 'found' : 'not found')
+      }
+    },
+    
+    setUrlStateEnabled: (enabled: boolean) => {
+      setState(prev => ({ ...prev, urlStateEnabled: enabled }))
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[DocumentComm] URL state enabled:', enabled)
+      }
+    },
+    
+    notifyUrlStateChange: (changes: Record<string, any>) => {
+      // This is mainly for logging and future extensions
+      // The actual URL state is managed by the useToolUrlState hook
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[DocumentComm] URL state changed:', changes)
       }
     }
   }), [])

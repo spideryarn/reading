@@ -9,6 +9,7 @@
 // in favour of React Context for better type safety and React integration.
 
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
+import { useToolUrlState } from '@/lib/tools/hooks/use-tool-url-state'
 import { AssistantChat } from './assistant-chat'
 import { HighlightManagement } from './highlight-management'
 import { MetadataPanel } from './tools/MetadataPanel'
@@ -411,6 +412,9 @@ export function UnifiedLeftPane({
   ownerEmail
 }: UnifiedLeftPaneProps) {
   const { actions, state } = useDocumentCommunication()
+  
+  // Initialize URL state hook
+  const { state: urlState } = useToolUrlState()
   
   // Auto-load glossary when glossary tab is activated
   useEffect(() => {
