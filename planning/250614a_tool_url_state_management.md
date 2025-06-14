@@ -75,22 +75,23 @@ Currently, Spideryarn Reading tools maintain state only in memory. Users cannot 
 - [x] Add basic tab parameter to document pages
   - [x] Update document page component to read URL state
   - [x] Sync activeTab with URL ?tab= parameter
-  - [ ] **Integration Issue**: Find where VerticalIconNav handles tab clicks
-  - [ ] Connect tab click handlers to URL state updates
-  - [ ] Test tab switching updates URL
-  - [ ] Test browser back/forward navigation
-- [ ] Implement push vs replace logic for tab changes
-- [ ] Test with all existing tabs
+  - [x] **Integration Issue**: Found DocumentCommunicationProvider location issue
+  - [x] Connect tab click handlers to URL state updates
+  - [x] Test tab switching updates URL
+  - [x] Test browser back/forward navigation
+- [x] Implement push vs replace logic for tab changes
+- [x] Test with all existing tabs
 
-### Stage: Tool state - Glossary
-- [ ] Add glossary-specific URL parameters
-  - [ ] Add ?term= parameter for highlighted term
-  - [ ] Update GlossaryPanel to read from URL state
-  - [ ] Sync term selection with URL
-- [ ] Test glossary URL state
-  - [ ] Share link with specific term
-  - [ ] Browser navigation preserves term
-  - [ ] Clear term updates URL
+### Stage: Tool state - Glossary ✅ COMPLETED
+- [x] Add glossary-specific URL parameters
+  - [x] Add ?term= parameter for highlighted term
+  - [x] Update GlossaryDisplay to read from URL state using useGlossaryUrlState hook
+  - [x] Sync term selection with URL (both search input and entity clicks)
+- [x] Test glossary URL state
+  - [x] Share link with specific term
+  - [x] Browser navigation preserves term
+  - [x] Clear term updates URL
+  - [x] Verified bidirectional synchronization working
 
 ### Stage: Complex state - Search
 - [ ] Add search-specific URL parameters
@@ -304,8 +305,31 @@ function shouldPushForChange(changes: Record<string, any>): boolean {
 
 ## Appendix: Implementation Surprises & Issues
 
-### Major Issues
-None identified - all surprises were minor and resolved during implementation.
+### Major Issues Discovered & Resolved
+
+1. **React Infinite Loop in HeadingNodeComponent** (CRITICAL - Resolved)
+   - **Problem**: Adding URL state triggered infinite React re-renders
+   - **Root Cause**: `getTooltipContent` and `handleTooltipShow` functions not memoized
+   - **Impact**: Page crashes with "Maximum update depth exceeded" error
+   - **Solution**: Added `useCallback` with proper dependencies to both functions
+   - **Files**: `components/table-of-contents-tabs.tsx` (2 functions fixed)
+   - **Lesson**: Always memoize functions passed to child components in render loops
+
+2. **DocumentCommunicationProvider Context Error** (CRITICAL - Resolved)
+   - **Problem**: `useToolUrlState` called before provider initialization
+   - **Root Cause**: Hook called in `DocumentPageClient` but provider set up in `ResizableDocumentLayout`
+   - **Impact**: "useDocumentCommunication must be used within DocumentCommunicationProvider" error
+   - **Solution**: Moved `useToolUrlState` call to proper location inside provider
+   - **Files**: `app/documents/[slug]/page-client.tsx`, `components/resizable-document-layout.tsx`
+   - **Lesson**: Verify React context hierarchy before adding new hooks
+
+3. **Map Comparison Infinite Loop in Page Client** (CRITICAL - Resolved)  
+   - **Problem**: `setHeadingVisibility` created new Map objects causing endless re-renders
+   - **Root Cause**: Maps compared by reference, not content
+   - **Impact**: Secondary infinite loop in document page rendering
+   - **Solution**: Added Map content comparison before updating state
+   - **Files**: `app/documents/[slug]/page-client.tsx` (lines 138-178)
+   - **Lesson**: Always check if state actually changed before calling setState
 
 ### Minor Issues & Observations
 
@@ -319,15 +343,29 @@ None identified - all surprises were minor and resolved during implementation.
    - Current solution uses a `submitted` flag that gets stripped
    - Works but feels hacky - may need cleaner approach later
 
-3. **Tab Click Handler Location** (Integration pending)
-   - Tab switching handled in VerticalIconNav, not unified-left-pane
-   - Requires tracing through component hierarchy
-   - More complex integration than initially anticipated
+3. **Tab Click Handler Location** (Resolved)
+   - Tab switching handled through DocumentCommunicationContext actions
+   - URL synchronization works via useEffect bidirectional sync
+   - More elegant than initially anticipated - no direct handler modification needed
 
 4. **TypeScript 'any' Types in Tests** (Technical debt)
    - Multiple instances of `any` types in URL state code
    - Works but reduces type safety
    - Should be cleaned up for better maintainability
+
+### Performance & Stability Impact
+
+**Before fixes**: Page crashes immediately with infinite React loops
+**After fixes**: Page loads successfully, all URL state functionality working
+**Side effects discovered**: Some remaining JavaScript execution issues on complex DOM operations (separate from URL state)
+
+### Time Investment Analysis
+
+- **Expected complexity**: Medium (URL state integration)
+- **Actual complexity**: High (due to React performance issues)
+- **Time spent on core feature**: ~40% 
+- **Time spent on debugging React loops**: ~60%
+- **Overall assessment**: Feature delivered successfully, but React optimization revealed broader component performance issues
 
 ### Documentation Needs
 

@@ -50,6 +50,12 @@ CLAUDE.md serves as the primary orientation document for AI agents working on th
 ### Conciseness
 Keep CLAUDE.md focused and scannable. Each section should be 3-5 bullet points maximum. Use signposting rather than explanation.
 
+### Just the essentials
+CLAUDE.md should be focused on the most important, common, surprising, consequential, tips.
+
+For everything else, see "Signposting Over Duplication".
+
+
 ### Signposting Over Duplication
 Instead of explaining how something works, point to where the information lives:
 - "Database schema: `supabase/migrations/` and `docs/reference/DATABASE_SCHEMA.md`"

@@ -136,7 +136,6 @@ export default function DocumentPageClient({
   
   // Calculate heading visibility based on element visibility
   useEffect(() => {
-    
     const newHeadingVisibility = new Map<string, 'visible' | 'not-visible'>()
     
     // Check each heading
@@ -159,8 +158,23 @@ export default function DocumentPageClient({
       newHeadingVisibility.set(heading.id, isVisible ? 'visible' : 'not-visible')
     })
     
-    
-    setHeadingVisibility(newHeadingVisibility)
+    // Only update if the visibility actually changed
+    setHeadingVisibility(prev => {
+      // Check if the maps are actually different
+      if (prev.size !== newHeadingVisibility.size) {
+        return newHeadingVisibility
+      }
+      
+      // Compare each entry
+      for (const [key, value] of newHeadingVisibility.entries()) {
+        if (prev.get(key) !== value) {
+          return newHeadingVisibility
+        }
+      }
+      
+      // No changes, return the previous map to avoid re-render
+      return prev
+    })
   }, [elementVisibility, allHeadings, mutatedDocument])
   
   // Handle element clicks in the document viewer

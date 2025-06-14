@@ -31,6 +31,7 @@ import Mark from 'mark.js'
 import { extractCleanText } from '@/lib/utils/html-text-extraction'
 import { extractAllMatchContexts, generateTooltipContent } from '@/lib/utils/search-context-extraction'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useGlossaryUrlState } from '@/lib/tools/hooks/use-tool-url-state'
 
 // Semantic highlight interface
 interface SemanticHighlight {
@@ -168,11 +169,11 @@ function GlossaryDisplay({
   elements: DocumentElement[]
 }) {
   const { actions } = useDocumentCommunication()
-  const [searchTerm, setSearchTerm] = useState('')
+  const { term: searchTerm, setTerm: setSearchTerm } = useGlossaryUrlState()
   
   // Filter entities based on search term
-  const filterEntities = useCallback((entities: Entity[], searchTerm: string): Entity[] => {
-    if (!searchTerm.trim()) return entities
+  const filterEntities = useCallback((entities: Entity[], searchTerm?: string): Entity[] => {
+    if (!searchTerm?.trim()) return entities
     
     const term = searchTerm.toLowerCase()
     return entities.filter(entity => 
@@ -194,10 +195,7 @@ function GlossaryDisplay({
     return filterEntities(entities, searchTerm)
   }, [entities, searchTerm, filterEntities])
   
-  // Clear search when tab changes or entities reload
-  useEffect(() => {
-    setSearchTerm('')
-  }, [entities])
+  // Note: We don't clear search when entities reload since URL state should persist
   
   const findFirstOccurrence = (entity: Entity): string | null => {
     const searchTerms = [entity.name, ...entity.aliases]
@@ -220,6 +218,8 @@ function GlossaryDisplay({
   const handleEntityClick = (entity: Entity) => {
     const elementId = findFirstOccurrence(entity)
     if (elementId) {
+      // Set the term in URL state for shareable links and browser history
+      setSearchTerm(entity.name)
       // Use context action for both scrolling and position tracking
       actions.scrollToElement(elementId)
     }
@@ -232,10 +232,11 @@ function GlossaryDisplay({
         <div className="relative">
           <input
             type="text"
-            value={searchTerm}
+            value={searchTerm || ''}
             onChange={(e) => {
-              setSearchTerm(e.target.value)
-              debouncedFilter(e.target.value)
+              const value = e.target.value
+              setSearchTerm(value || null)
+              debouncedFilter()
             }}
             placeholder="Search glossary..."
             className="w-full px-4 py-2 pl-10 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -247,7 +248,7 @@ function GlossaryDisplay({
           />
           {searchTerm && (
             <button
-              onClick={() => setSearchTerm('')}
+              onClick={() => setSearchTerm(null)}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               <X size={16} weight="bold" />
@@ -256,7 +257,7 @@ function GlossaryDisplay({
         </div>
         
         {/* Results indicator */}
-        {searchTerm.trim() && (
+        {searchTerm?.trim() && (
           <div className="mt-2 text-sm text-gray-600">
             {filteredEntities.length === 0 ? (
               <span className="text-red-600">No matches found</span>
