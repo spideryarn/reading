@@ -101,7 +101,7 @@ At the end of stages:
 - Add actions to stop & review with user where appropriate, e.g. when we get to a good stopping point, to manually check changes to the user interface, etc.
 - Follow instructions in `docs/instructions/DEBRIEF_PROGRESS.md` to output a summary of where things stand
 - Update this planning doc with progress so far, log useful learnings/surprises/changes of plan/etc.
-- Git commit (following instructions in `docs/instructions/DO_GIT_COMMITS.md`, including use a subagent).
+- Git commit (following instructions in `docs/instructions/GIT_COMMIT_CHANGES.md`, including use a subagent).
 
 In later stages:
 - Add actions to update relevant `docs/reference/*.md` evergreen docs (see `docs/instructions/WRITE_EVERGREEN_DOC.md`). If you think we need a new evergreen-doc, ask the user

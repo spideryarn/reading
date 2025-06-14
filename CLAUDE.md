@@ -326,7 +326,7 @@ AI, features, machinery, interface:
 - `docs/reference/TOOL_SUMMARISE.md` - Documents the AI summarise feature that generates hierarchical summaries of document content using LLM analysis at multiple granularity levels
 
 Docs, modes, and admin:
-- `docs/instructions/DO_GIT_COMMITS.md` - Guidelines for Git commit best practices including batching changes, message format, and handling concurrent changes
+- `docs/instructions/GIT_COMMIT_CHANGES.md` - Guidelines for Git commit best practices including batching changes, message format, and handling concurrent changes
 - `docs/reference/PROJECT_STATUS.md` - Current development state overview showing implemented features (AI summaries, glossary, headings) and planned enhancements
 - `docs/instructions/SOUNDING_BOARD_MODE.md` - Instructions for collaborative discussion mode emphasising asking questions and suggesting alternatives rather than immediate implementation
 - `docs/instructions/WRITE_EVERGREEN_DOC.md` - Guidelines for writing evergreen documentation including structure, cross-references, status indicators, and maintenance practices
@@ -400,7 +400,7 @@ Use British spelling.
 
 ## Git
 
-Follow the instructions in `docs/instructions/DO_GIT_COMMITS.md`.
+Follow the instructions in `docs/instructions/GIT_COMMIT_CHANGES.md`.
 
 
 ## Date

@@ -143,7 +143,7 @@ Based on user requirements and security analysis:
   - [x] ✅ Confirm zero impact on existing documents and PDF functionality
 
 ### Stage: Git Commit and Finalization ✅ COMPLETED
-- [x] ✅ Use subagent for comprehensive Git commit following `docs/instructions/DO_GIT_COMMITS.md`
+- [x] ✅ Use subagent for comprehensive Git commit following `docs/instructions/GIT_COMMIT_CHANGES.md`
   - [x] ✅ Include storage implementation, security improvements, and documentation updates  
   - [x] ✅ Verify working tree is clean after commit (commit ff02f89)
   - [x] ✅ Include comprehensive commit message documenting security and storage improvements

@@ -22,7 +22,7 @@ Replace the current simulated RLS testing infrastructure with real database-leve
 - `docs/reference/AUTHENTICATION_TESTING.md` - Updated with RLS testing best practices and patterns from web research
 - `docs/instructions/UPDATE_HOUSEKEEPING_TESTS.md` - Integration-first approach, fewer high-coverage tests
 - `docs/instructions/WRITE_PLANNING_DOC.md` - Planning document structure and guidelines
-- `docs/instructions/DO_GIT_COMMITS.md` - Git commit best practices for this implementation
+- `docs/instructions/GIT_COMMIT_CHANGES.md` - Git commit best practices for this implementation
 - `lib/services/database/__tests__/rls-policies-integration.test.ts` - Current failing simulated RLS tests (9 tests, 5 failed, 4 passed)
 - `lib/services/database/__tests__/rls-policies-real.test.ts` - Experimental real authentication approach attempted
 - `lib/testing/rls-database-test-utils.ts` - Complex simulation infrastructure to be replaced
@@ -67,7 +67,7 @@ Replace the current simulated RLS testing infrastructure with real database-leve
   - 📔 **Authentication Gap**: No real auth context (`auth.uid()`) in tests - simulation logic incomplete for AI calls/enhancements
   - 📔 **Risk Assessment**: Test environment setup works, but need real authenticated clients for database-level RLS testing
   - 📔 **Validation Success**: Basic infrastructure test passes, existing TEST_USER_IDS functional
-- [ ] Git commit progress using subagent following `docs/instructions/DO_GIT_COMMITS.md`
+- [ ] Git commit progress using subagent following `docs/instructions/GIT_COMMIT_CHANGES.md`
 
 ### Stage: Core RLS Test Implementation
 - [ ] Create new real RLS testing infrastructure
@@ -85,7 +85,7 @@ Replace the current simulated RLS testing infrastructure with real database-leve
   - [ ] Use subagent to verify tests fail when RLS policies are bypassed/disabled
   - [ ] Test with both existing seed data users (system + Greg's test user)
 - [ ] Follow `docs/instructions/DEBRIEF_PROGRESS.md` to update this planning doc with progress
-- [ ] Git commit working real RLS tests using subagent following `docs/instructions/DO_GIT_COMMITS.md`
+- [ ] Git commit working real RLS tests using subagent following `docs/instructions/GIT_COMMIT_CHANGES.md`
 
 ### ✅ Schema & Data Fixes (COMPLETED)
 - [x] Fix immediate schema mismatches in existing tests
@@ -193,7 +193,7 @@ Replace the current simulated RLS testing infrastructure with real database-leve
   - [ ] Add examples to `CLAUDE.md` for future AI development
   - [ ] Document lessons learned and gotchas
 - [ ] Stop & review with user to confirm implementation meets requirements
-- [ ] Final git commit using subagent following `docs/instructions/DO_GIT_COMMITS.md`
+- [ ] Final git commit using subagent following `docs/instructions/GIT_COMMIT_CHANGES.md`
 - [ ] Move this planning doc to `planning/finished/` and commit (final action per planning guidelines)
 
 # Appendix

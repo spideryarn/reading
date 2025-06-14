@@ -110,7 +110,7 @@ Process and workflow documentation in `docs/instructions/`:
 - `docs/instructions/UPDATE_CLAUDE_INSTRUCTIONS.md` - Guidelines for maintaining CLAUDE.md for AI agents
 
 ### Development Process Instructions
-- `docs/instructions/DO_GIT_COMMITS.md` - Git commit best practices including batching changes and message format
+- `docs/instructions/GIT_COMMIT_CHANGES.md` - Git commit best practices including batching changes and message format
 - `docs/instructions/FIX_NPM_LINT_ISSUES.md` - Process for resolving linting and code quality issues
 - `docs/instructions/UPDATE_HOUSEKEEPING_TESTS.md` - Maintaining test quality and organisation
 - `docs/instructions/WRITE_UPDATE_CODING_GUIDELINES.md` - Process for updating coding standards

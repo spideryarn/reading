@@ -7,7 +7,7 @@ This document defines code quality standards and patterns to maintain consistenc
 - `docs/reference/CODING_PRINCIPLES.md` - High-level development principles and philosophy
 - `docs/reference/ARCHITECTURE_DECISIONS.md` - System architecture and technical decisions
 - `docs/reference/TESTING_OVERVIEW.md` - Testing approach and patterns
-- `docs/instructions/DO_GIT_COMMITS.md` - Git workflow and commit guidelines
+- `docs/instructions/GIT_COMMIT_CHANGES.md` - Git workflow and commit guidelines
 - `docs/reference/VERCEL_AI_SDK_REFERENCE.md` - Vercel AI SDK patterns and multi-provider support
 - `docs/reference/AI_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Chat UI implementation with @assistant-ui/react
 - `docs/reference/TOOL_SEARCH_TEXT.md` - Document search functionality using HTML text extraction

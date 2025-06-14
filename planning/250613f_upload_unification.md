@@ -163,7 +163,7 @@ The existing upload interface has a clean 2-tab design that should be preserved 
 
 ### Stage: Final review and merge
 - [ ] Use subagent to follow instructions in `docs/instructions/DEBRIEF_PROGRESS.md`
-- [ ] Git commit using subagent (follow `docs/instructions/DO_GIT_COMMITS.md`)
+- [ ] Git commit using subagent (follow `docs/instructions/GIT_COMMIT_CHANGES.md`)
 - [ ] Review with user and address any feedback
 - [ ] Move planning doc to `planning/finished/`
 - [ ] Final commit and merge

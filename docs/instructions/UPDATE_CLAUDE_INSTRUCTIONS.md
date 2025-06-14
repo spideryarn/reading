@@ -34,7 +34,7 @@ CLAUDE.md serves as the primary orientation document for AI agents working on th
 - **Specific domains** - Database, prompts, UI components documentation
 
 ### Operational Guidelines
-- **Git practices** - Reference to `docs/instructions/DO_GIT_COMMITS.md`
+- **Git practices** - Reference to `docs/instructions/GIT_COMMIT_CHANGES.md`
 - **Code style** - British spelling, existing patterns
 - **Environment setup** - Key variables and configuration
 

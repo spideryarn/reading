@@ -38,7 +38,7 @@ Bluesky offers a developer-friendly, free API with native threading support, mak
   - [ ] Add Bluesky credentials table or extend user profiles
   - [ ] Plan secure token storage approach
 - [ ] Update planning doc with technical findings
-- [ ] Commit foundation work (use subagent, follow `docs/instructions/DO_GIT_COMMITS.md`)
+- [ ] Commit foundation work (use subagent, follow `docs/instructions/GIT_COMMIT_CHANGES.md`)
 
 ### Stage: Authentication and Account Linking
 - [ ] Create Bluesky OAuth flow components
