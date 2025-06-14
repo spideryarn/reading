@@ -10,6 +10,7 @@ import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelConfig, getModelVersion, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer, mutationLogger } from '@/lib/services/logger'
+import { validateAuth } from '@/lib/auth/server-auth'
 
 /**
  * Remove all existing headings (h1-h6) from HTML content
@@ -177,10 +178,14 @@ export async function POST(request: NextRequest) {
   const requestLogger = createRequestLogger('/api/headings', correlationId)
   
   try {
+    // Validate authentication first
+    const user = await validateAuth()
+    
     const body = await request.json()
     
     requestLogger.info({
       method: 'POST',
+      userId: user.id,
       operation: 'headings_generation'
     }, 'Starting headings generation request')
     
@@ -265,6 +270,7 @@ export async function POST(request: NextRequest) {
     
     // Create AI call record for tracking
     const aiCall = await aiCallService.startCall({
+      userId: user.id,
       documentId: documentId || undefined,
       provider: modelConfig.provider,
       modelId: modelConfig.modelId,
@@ -360,6 +366,7 @@ export async function POST(request: NextRequest) {
       {
         modelProvider: modelConfig.provider,
         tokensUsed: llmResult.usage?.totalTokens,
+        userId: user.id,
         documentId,
         correlationId
       },
@@ -402,20 +409,17 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error generating headings:', error)
+    
+    // Handle authentication errors
+    if (error instanceof Error && (error.message.includes('Authentication failed') || error.message.includes('User not authenticated'))) {
+      return new NextResponse('Authentication required', { status: 401 })
+    }
+    
     requestLogger.error({
       error: error instanceof Error ? error.message : String(error),
       operation: 'headings_generation_error',
       correlationId
     }, 'Failed to generate headings')
-    
-    logAIOperation(
-      'headings_generation',
-      {
-        correlationId
-      },
-      'error',
-      error instanceof Error ? error : new Error(String(error))
-    )
     
     return NextResponse.json(
       { error: 'Failed to generate headings' },

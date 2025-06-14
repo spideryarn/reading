@@ -9,6 +9,7 @@ import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelConfig, getModelVersion, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
 import { createRequestLogger, createTimer, logAIOperation, generateCorrelationId } from '@/lib/services/logger'
+import { validateAuth } from '@/lib/auth/server-auth'
 
 export async function GET(request: NextRequest) {
   const correlationId = generateCorrelationId()
@@ -126,10 +127,14 @@ export async function POST(request: NextRequest) {
   const requestLogger = createRequestLogger('/api/summarise', correlationId)
   
   try {
+    // Validate authentication first
+    const user = await validateAuth()
+    
     const { content, granularity, documentId, sectionId } = await request.json()
     
     requestLogger.info({
       method: 'POST',
+      userId: user.id,
       documentId,
       granularity,
       sectionId,
@@ -199,6 +204,7 @@ export async function POST(request: NextRequest) {
     let aiCall
     try {
       aiCall = await aiCallService.startCall({
+        userId: user.id,
         documentId,
         provider: modelConfig.provider,
         modelId: modelConfig.modelId,
@@ -256,6 +262,7 @@ export async function POST(request: NextRequest) {
       logAIOperation('summarise', {
         modelProvider: modelConfig.provider,
         tokensUsed: summaryResult.usage?.totalTokens,
+        userId: user.id,
         documentId,
         correlationId,
         cost: summaryResult.usage?.totalTokens ? summaryResult.usage.totalTokens * 0.000003 : undefined // Rough cost estimate
@@ -311,6 +318,7 @@ export async function POST(request: NextRequest) {
       // Log failed AI operation
       logAIOperation('summarise', {
         modelProvider: modelConfig.provider,
+        userId: user.id,
         documentId,
         correlationId
       }, 'error', llmError instanceof Error ? llmError : new Error('Unknown LLM error'))
@@ -319,9 +327,14 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Error generating summary:', error)
+    
+    // Handle authentication errors
+    if (error instanceof Error && (error.message.includes('Authentication failed') || error.message.includes('User not authenticated'))) {
+      return new NextResponse('Authentication required', { status: 401 })
+    }
+    
     requestLogger.error({
       error: error instanceof Error ? error.message : 'Unknown error',
-      documentId,
       correlationId
     }, 'Failed to generate summary')
     return NextResponse.json(

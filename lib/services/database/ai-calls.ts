@@ -19,6 +19,7 @@ export interface AiCallMetrics {
 
 export interface CreateAiCallOptions {
   documentId?: string
+  userId: string  // Required for RLS
   provider: 'anthropic' | 'google'
   modelId: string
   version: string
@@ -28,6 +29,7 @@ export interface CreateAiCallOptions {
 }
 
 export interface SimpleCreateAiCallOptions {
+  userId: string  // Required for RLS
   provider: 'anthropic' | 'google'
   modelId: string
   version: string
@@ -69,6 +71,7 @@ export class AiCallService {
 
     const aiCall: Omit<AiCallInsert, 'id' | 'created_at' | 'updated_at'> = {
       document_id: options.documentId || null,
+      created_by: options.userId,  // Set created_by for RLS
       model_id: modelUuid,
       prompt_type: options.prompt_type,
       prompt_input: JSON.stringify(options.input_data || {}),
@@ -334,6 +337,7 @@ export class AiCallService {
 
     const aiCall: Omit<AiCallInsert, 'id' | 'created_at' | 'updated_at'> = {
       document_id: null, // No document association for this simple method
+      created_by: options.userId,  // Set created_by for RLS
       model_id: modelUuid,
       prompt_type: 'chat', // Default to chat for this simple interface
       prompt_input: JSON.stringify(options.requestData || {}),

@@ -22,6 +22,7 @@ import {
   estimateTokenCount 
 } from '@/lib/services/semantic-search-formatter'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
+import { validateAuth } from '@/lib/auth/server-auth'
 
 export async function GET(request: NextRequest) {
   const correlationId = generateCorrelationId()
@@ -122,6 +123,9 @@ export async function POST(request: NextRequest) {
   const requestLogger = createRequestLogger('/api/semantic-search', correlationId)
   
   try {
+    // Validate authentication first
+    const user = await validateAuth()
+    
     const body = await request.json()
     
     // Validate input
@@ -140,6 +144,7 @@ export async function POST(request: NextRequest) {
     const { query, documentId } = validationResult.data
     
     requestLogger.info({ 
+      userId: user.id,
       query: query.substring(0, 100) + (query.length > 100 ? '...' : ''), // Truncate query for privacy
       documentId,
       correlationId,
@@ -294,6 +299,7 @@ export async function POST(request: NextRequest) {
     
     // Create AI call record for tracking
     const aiCall = await aiCallService.startCall({
+      userId: user.id,
       documentId,
       provider: modelConfig.provider,
       modelId: modelConfig.modelId,
@@ -331,6 +337,7 @@ export async function POST(request: NextRequest) {
       logAIOperation('semantic-search', {
         modelProvider: modelConfig.provider,
         tokensUsed: llmResult.usage?.totalTokens,
+        userId: user.id,
         documentId,
         correlationId
       }, 'success')
@@ -348,6 +355,7 @@ export async function POST(request: NextRequest) {
       // Log AI operation failure
       logAIOperation('semantic-search', {
         modelProvider: modelConfig.provider,
+        userId: user.id,
         documentId,
         correlationId
       }, 'error', aiError instanceof Error ? aiError : new Error('Unknown AI error'))
@@ -534,6 +542,12 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('[SemanticSearch] Error processing semantic search:', error)
+    
+    // Handle authentication errors
+    if (error instanceof Error && (error.message.includes('Authentication failed') || error.message.includes('User not authenticated'))) {
+      return new NextResponse('Authentication required', { status: 401 })
+    }
+    
     requestLogger.error({ 
       error: error instanceof Error ? error.message : 'Unknown error',
       correlationId 

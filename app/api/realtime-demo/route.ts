@@ -12,9 +12,13 @@ import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { getModelConfig } from '@/lib/config'
+import { validateAuth } from '@/lib/auth/server-auth'
 
 export async function POST(request: NextRequest) {
   try {
+    // Validate authentication first
+    const user = await validateAuth()
+    
     const { documentId } = await request.json()
     
     if (!documentId) {
@@ -39,6 +43,7 @@ export async function POST(request: NextRequest) {
     const simulateEnhancements = async () => {
       // 1. Start with a summary (immediate)
       const summaryCall = await aiCallService.startCall({
+        userId: user.id,
         documentId,
         provider: modelConfig.provider,
         modelId: modelConfig.modelId,
@@ -88,6 +93,7 @@ export async function POST(request: NextRequest) {
       // 3. Generate glossary after 4 seconds
       setTimeout(async () => {
         const glossaryCall = await aiCallService.startCall({
+          userId: user.id,
           documentId,
           provider: modelConfig.provider,
           modelId: modelConfig.modelId,
@@ -133,6 +139,7 @@ export async function POST(request: NextRequest) {
       // 4. Generate headings after 6 seconds
       setTimeout(async () => {
         const headingsCall = await aiCallService.startCall({
+          userId: user.id,
           documentId,
           provider: modelConfig.provider,
           modelId: modelConfig.modelId,
@@ -206,6 +213,12 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Realtime demo error:', error)
+    
+    // Handle authentication errors
+    if (error instanceof Error && (error.message.includes('Authentication failed') || error.message.includes('User not authenticated'))) {
+      return new NextResponse('Authentication required', { status: 401 })
+    }
+    
     return NextResponse.json(
       { error: 'Failed to start realtime demo' },
       { status: 500 }

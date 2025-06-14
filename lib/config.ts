@@ -108,7 +108,12 @@ export function getModelConfig(key: ProviderTierKey = AI_CONFIG.DEFAULT_MODEL) {
 export function getModelVersion(key: ProviderTierKey = AI_CONFIG.DEFAULT_MODEL): string {
   const config = getModelConfig(key)
   
-  // Extract version from model ID
+  // Google models use 'latest' as version in the database
+  if (config.provider === 'google') {
+    return 'latest'
+  }
+  
+  // Extract version from model ID for Anthropic models
   // Format: model-name-version -> version
   const parts = config.modelId.split('-')
   const version = parts[parts.length - 1] // Last part is version

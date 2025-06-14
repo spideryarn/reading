@@ -9,6 +9,7 @@ import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelConfig, getModelVersion, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
+import { validateAuth } from '@/lib/auth/server-auth'
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
@@ -16,10 +17,14 @@ export async function POST(request: NextRequest) {
   const requestTimer = createTimer(requestLogger, 'glossary-request')
   
   try {
+    // Validate authentication first
+    const user = await validateAuth()
+    
     const body = await request.json()
     
     requestLogger.info({
       method: 'POST',
+      userId: user.id,
       correlationId
     }, 'Glossary generation request initiated')
     
@@ -89,6 +94,7 @@ export async function POST(request: NextRequest) {
     
     // Create AI call record for tracking
     const aiCall = await aiCallService.startCall({
+      userId: user.id,
       documentId: documentId || undefined,
       provider: modelConfig.provider,
       modelId: modelConfig.modelId,
@@ -119,6 +125,7 @@ export async function POST(request: NextRequest) {
     logAIOperation('glossary-generation', {
       modelProvider: modelConfig.provider,
       tokensUsed: llmResult.usage.totalTokens,
+      userId: user.id,
       documentId,
       correlationId
     }, 'success')
@@ -179,6 +186,7 @@ export async function POST(request: NextRequest) {
     
     // Complete request timing
     requestTimer.end({
+      userId: user.id,
       documentId,
       entityCount: validatedResponse.entities.length,
       tokensUsed: llmResult.usage.totalTokens,
@@ -192,6 +200,11 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error generating glossary:', error)
+    
+    // Handle authentication errors
+    if (error instanceof Error && (error.message.includes('Authentication failed') || error.message.includes('User not authenticated'))) {
+      return new NextResponse('Authentication required', { status: 401 })
+    }
     
     requestLogger.error({
       correlationId,
