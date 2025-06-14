@@ -42,6 +42,7 @@ interface SimpleDocumentViewerProps {
   activeElementId?: string | null
   // Glossary highlighting props
   glossaryEntities?: Entity[]
+  leftAligned?: boolean
 }
 
 // Memoised helpers to keep innerHTML stable across re-renders
@@ -65,7 +66,8 @@ export function SimpleDocumentViewer({
   onElementClick,
   semanticHighlights = [],
   activeElementId,
-  glossaryEntities = []
+  glossaryEntities = [],
+  leftAligned = false
 }: SimpleDocumentViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const elementRefs = useRef<Map<string, HTMLDivElement>>(new Map())
@@ -396,7 +398,12 @@ export function SimpleDocumentViewer({
       className="h-full overflow-y-auto bg-white"
       onClick={handleContainerClick}
     >
-      <div id="document-viewer" className="max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto p-3 sm:p-6 md:p-8 lg:px-8">
+      <div
+        id="document-viewer"
+        className={`max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl ${
+          leftAligned ? 'ml-12 mr-4 lg:ml-auto lg:mr-auto' : 'mx-auto'
+        } p-3 sm:p-6 md:p-8 lg:px-8`}
+      >
         {/* Render root elements */}
         {elements
           .filter(element => !element.parent_id)

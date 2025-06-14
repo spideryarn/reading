@@ -113,20 +113,10 @@ function ResizableDocumentLayoutInner({
 }: ResizableDocumentLayoutProps) {
   const { actions, state } = useDocumentCommunication()
   
-  // Check if we're on a mobile device
+  // Viewport flags – start with "desktop" defaults (avoids hydration mismatch).
+  // Real values are applied immediately after mount via the resize effect below.
   const [isMobile, setIsMobile] = useState(false)
   const [isLandscape, setIsLandscape] = useState(false)
-  
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 640)
-      setIsLandscape(window.innerHeight <= 500)
-    }
-    
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
   
   const [isLeftPaneCollapsed, setIsLeftPaneCollapsed] = useState(false)
   const [savedLeftPaneSize, setSavedLeftPaneSize] = useState(30) // Remember the last size
@@ -134,10 +124,43 @@ function ResizableDocumentLayoutInner({
   const leftPanelRef = useRef<ImperativePanelHandle>(null)
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
-  // Update collapsed state when mobile status changes
+  // Keep viewport + collapsed flags in sync with the real DOM state.
+  // 1. Detect current mobile / landscape breakpoints
+  // 2. Read the actual left-pane size via the ref to decide if it is
+  //    collapsed (size === 0). This covers cases where the resizable
+  //    library auto-collapses based on available space.
+  // 3. On very small screens (< 640 px) ensure the pane starts collapsed
+  //    to maximise reading width.
   useEffect(() => {
-    setIsLeftPaneCollapsed(isMobile)
-  }, [isMobile])
+    const syncLayout = () => {
+      const mobile = window.innerWidth <= 640
+      const landscape = window.innerHeight <= 500
+
+      setIsMobile(mobile)
+      setIsLandscape(landscape)
+
+      if (leftPanelRef.current) {
+        const currentSize = leftPanelRef.current.getSize()
+        const paneIsCollapsed = currentSize === 0
+        setIsLeftPaneCollapsed(paneIsCollapsed)
+
+        // Auto-collapse on very small view-ports if not already collapsed
+        if (mobile && !paneIsCollapsed) {
+          if (typeof (leftPanelRef.current as any).collapse === 'function') {
+            ;(leftPanelRef.current as any).collapse()
+          } else {
+            leftPanelRef.current.resize(0)
+          }
+          setIsLeftPaneCollapsed(true)
+        }
+      }
+    }
+
+    // Run once on mount and then on every resize.
+    syncLayout()
+    window.addEventListener('resize', syncLayout)
+    return () => window.removeEventListener('resize', syncLayout)
+  }, [])
   
   // Handle heading clicks from ToC
   const handleHeadingClick = useCallback((headingText: string, headingId?: string) => {
@@ -329,7 +352,12 @@ function ResizableDocumentLayoutInner({
     .substring(0, 10000) // Limit context size
   
   return (
-    <div className="relative h-full w-full">
+    // `suppressHydrationWarning` avoids React mismatch errors when the
+    // initial server-rendered markup (always desktop-oriented) differs from
+    // the client's first paint after we detect the actual viewport and toggle
+    // mobile / collapsed classes. The layout self-corrects immediately after
+    // mount, so this is safe and prevents the noisy red box in development.
+    <div suppressHydrationWarning className="relative h-full w-full">
         <ResizablePanelGroup 
           direction="horizontal" 
           className="h-full w-full"
@@ -408,6 +436,7 @@ function ResizableDocumentLayoutInner({
               semanticHighlights={semanticHighlights}
               activeElementId={activeElementId}
               glossaryEntities={glossaryEntities}
+              leftAligned={isLeftPaneCollapsed}
             />
           </div>
         </ResizablePanel>
