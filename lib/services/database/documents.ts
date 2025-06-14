@@ -340,11 +340,19 @@ export class DocumentService {
     // Upload to storage first if file provided
     if (originalFile) {
       try {
+        // Parse MIME type for metadata logging
+        const baseMimeType = originalFile.type?.split(';')[0]?.trim() || ''
+        const mimeTypeParameters = originalFile.type?.includes(';') 
+          ? originalFile.type.split(';').slice(1).map(p => p.trim()).join('; ') 
+          : null
+        
         dbLogger.info({
           operation: 'createWithStorage',
           documentId,
           fileSize: originalFile.size,
           fileType: originalFile.type,
+          baseMimeType,
+          mimeTypeParameters,
           filename: originalFilename
         }, 'Uploading original file to storage')
         
@@ -359,12 +367,19 @@ export class DocumentService {
         }, 'File uploaded to storage successfully')
       } catch (error) {
         // Log storage error but continue with document creation
+        const baseMimeType = originalFile.type?.split(';')[0]?.trim() || ''
+        const mimeTypeParameters = originalFile.type?.includes(';') 
+          ? originalFile.type.split(';').slice(1).map(p => p.trim()).join('; ') 
+          : null
+          
         dbLogger.warn({
           operation: 'createWithStorage',
           documentId,
-          error: error instanceof Error ? error.message : 'Unknown error',
           fileSize: originalFile.size,
-          fileType: originalFile.type
+          fileType: originalFile.type,
+          baseMimeType,
+          mimeTypeParameters,
+          error: error instanceof Error ? error.message : 'Unknown error'
         }, 'Storage upload failed, creating document without original file')
         
         console.warn('Storage upload failed, creating document without original file:', error)

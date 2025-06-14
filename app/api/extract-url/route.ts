@@ -794,7 +794,11 @@ export async function POST(request: NextRequest) {
       content_size_kb: Math.round(htmlContent.length / 1024),
       extracted_size_kb: Math.round(extractedHtml.length / 1024),
       content_type_detected: contentDetection.contentType,
-      auto_detected: true
+      auto_detected: true,
+      // Storage-related metadata for debugging
+      storage_mime_type: 'text/html; charset=utf-8', // MIME type used for storage
+      storage_base_mime_type: 'text/html', // Base MIME type after parsing
+      storage_mime_parameters: 'charset=utf-8' // MIME type parameters
     }
     
     // Add AI-specific metadata if AI transcription was used

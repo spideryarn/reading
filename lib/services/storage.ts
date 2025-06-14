@@ -57,9 +57,10 @@ export async function uploadDocumentFile(
     throw new StorageError(`File size ${file.size} exceeds maximum allowed size of ${MAX_FILE_SIZE} bytes`)
   }
   
-  // Validate MIME type
-  if (file.type && !ALLOWED_MIME_TYPES.includes(file.type)) {
-    throw new StorageError(`File type ${file.type} is not allowed. Allowed types: ${ALLOWED_MIME_TYPES.join(', ')}`)
+  // Validate MIME type (parse base type, ignoring parameters like charset)
+  const baseMimeType = file.type?.split(';')[0]?.trim() || ''
+  if (file.type && !ALLOWED_MIME_TYPES.includes(baseMimeType)) {
+    throw new StorageError(`File type ${baseMimeType} is not allowed. Allowed types: ${ALLOWED_MIME_TYPES.join(', ')}`)
   }
   
   // Determine filename
