@@ -4,7 +4,7 @@ import { tweetThreadPrompt, tweetThreadPromptInputSchema, tweetThreadResponseSch
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { getModelConfig } from '@/lib/config'
+import { getModelConfig, getModelVersion, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
 import { createRequestLogger, generateCorrelationId, logAIOperation } from '@/lib/services/logger'
 
 export async function GET(request: NextRequest) {
@@ -213,7 +213,9 @@ export async function POST(request: NextRequest) {
     }, 'Starting tweet thread generation')
 
     // Resolve tier to provider + modelId for database storage
-    const modelConfig = getModelConfig()
+    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
+    const modelConfig = getModelConfig(tierKey)
+    const modelVersion = getModelVersion(tierKey)
     
     // Generate tweet thread using LLM template
     const llmResult = await executePromptWithUsage(tweetThreadPrompt, {
@@ -277,6 +279,7 @@ export async function POST(request: NextRequest) {
     const aiCall = await aiCallService.create({
       provider: modelConfig.provider,
       modelId: modelConfig.modelId,
+      version: modelVersion,
       promptTokens: llmResult.usage.promptTokens,
       completionTokens: llmResult.usage.completionTokens,
       totalTokens: llmResult.usage.totalTokens,
