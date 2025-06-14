@@ -35,6 +35,7 @@ The database schema is defined and represented in several places:
 - [DATABASE_SUPABASE_STORAGE_REFERENCE.md](DATABASE_SUPABASE_STORAGE_REFERENCE.md) - File storage integration and patterns
 - [DATABASE_MIGRATIONS.md](DATABASE_MIGRATIONS.md) - Migration workflow
 - [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) - Design decisions
+- [LLM_TRACKING_TOKEN_USAGE_LOGGING.md](LLM_TRACKING_TOKEN_USAGE_LOGGING.md) - Comprehensive token usage tracking and cost management
 - [planning/250531a_database_storage_implementation.md](../planning/250531a_database_storage_implementation.md) - Implementation details
 
 ## Table Schemas

@@ -6,6 +6,7 @@ Practical logging guidance for Spideryarn Reading's prototype-to-production jour
 
 - `lib/services/logger.ts` - Current Pino logger implementation
 - `docs/reference/CODING_GUIDELINES.md` - Logging code standards
+- `docs/reference/LLM_TRACKING_TOKEN_USAGE_LOGGING.md` - Comprehensive token usage tracking and cost management
 - [Vercel Log Drains](https://vercel.com/docs/observability/log-drains) - Official documentation
 - [Better Stack Logs](https://betterstack.com/logs) - Log management service (formerly Logtail)
 - [Pino Documentation](https://getpino.io/) - Fast JSON logger for Node.js
