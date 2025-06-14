@@ -326,7 +326,7 @@ export default function AddDocumentPage() {
                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                <FilePdf size={16} className="inline mr-2" />
+                <Upload size={16} className="inline mr-2" />
                 Upload PDF or HTML
               </button>
             </div>
