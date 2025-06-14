@@ -11,6 +11,7 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { AssistantChat } from './assistant-chat'
 import { HighlightManagement } from './highlight-management'
+import { MetadataPanel } from './tools/MetadataPanel'
 import { CircleNotch, Book, Question, Calendar, ArrowCounterClockwise, MagnifyingGlass, X, CaretDown } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { AlertWithIcon } from '@/components/ui/alert'
@@ -93,6 +94,14 @@ interface UnifiedLeftPaneProps {
   // Active highlight element (for pulse animation)
   activeElementId?: string | null
   onActiveElementChange?: (elementId: string | null) => void
+  
+  // For metadata tab
+  documentTitle: string
+  documentCreatedAt: string
+  documentSourceUrl?: string | null
+  aiHeadingsGenerated?: boolean
+  summaryGenerated?: boolean
+  ownerEmail?: string
 }
 
 // Get icon component for entity type
@@ -393,7 +402,13 @@ export function UnifiedLeftPane({
   semanticHighlights = [],
   onSemanticHighlightsChange,
   activeElementId,
-  onActiveElementChange
+  onActiveElementChange,
+  documentTitle,
+  documentCreatedAt,
+  documentSourceUrl,
+  aiHeadingsGenerated = false,
+  summaryGenerated = false,
+  ownerEmail
 }: UnifiedLeftPaneProps) {
   const { actions, state } = useDocumentCommunication()
   
@@ -821,8 +836,23 @@ export function UnifiedLeftPane({
       onSemanticHighlightsChange={onSemanticHighlightsChange}
       activeElementId={activeElementId}
       onActiveElementChange={onActiveElementChange}
+      isActive={state.activeTabId === 'highlights'}
     />
-  ), [documentId, elements, semanticHighlights, onSemanticHighlightsChange, activeElementId, onActiveElementChange])
+  ), [documentId, elements, semanticHighlights, onSemanticHighlightsChange, activeElementId, onActiveElementChange, state.activeTabId])
+  
+  const renderMetadataTab = useCallback(() => (
+    <MetadataPanel
+      documentTitle={documentTitle}
+      documentCreatedAt={documentCreatedAt}
+      documentSourceUrl={documentSourceUrl}
+      elements={elements}
+      glossaryGenerated={showGlossary && glossaryEntities.length > 0}
+      glossaryLoading={isLoadingGlossary}
+      aiHeadingsGenerated={aiHeadingsGenerated}
+      summaryGenerated={summaryGenerated}
+      ownerEmail={ownerEmail}
+    />
+  ), [documentTitle, documentCreatedAt, documentSourceUrl, elements, showGlossary, glossaryEntities.length, isLoadingGlossary, aiHeadingsGenerated, summaryGenerated, ownerEmail])
 
   const renderGlossaryTab = useCallback(() => {
     if (!showGlossary) {
@@ -1113,6 +1143,9 @@ export function UnifiedLeftPane({
         </div>
         <div style={{ display: state.activeTabId === 'highlights' ? 'block' : 'none' }} className="h-full">
           {renderHighlightsTab()}
+        </div>
+        <div style={{ display: state.activeTabId === 'metadata' ? 'block' : 'none' }} className="h-full">
+          {renderMetadataTab()}
         </div>
       </div>
     </div>

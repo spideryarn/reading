@@ -70,6 +70,14 @@ interface ResizableDocumentLayoutProps {
   // Active highlight element (for pulse animation)
   activeElementId?: string | null
   onActiveElementChange?: (elementId: string | null) => void
+  
+  // Document metadata (for metadata tab)
+  documentTitle: string
+  documentCreatedAt: string
+  documentSourceUrl?: string | null
+  aiHeadingsGenerated?: boolean
+  summaryGenerated?: boolean
+  ownerEmail?: string
 }
 
 // Inner component that uses the document communication context
@@ -93,7 +101,13 @@ function ResizableDocumentLayoutInner({
   semanticHighlights = [],
   onSemanticHighlightsChange,
   activeElementId,
-  onActiveElementChange
+  onActiveElementChange,
+  documentTitle,
+  documentCreatedAt,
+  documentSourceUrl,
+  aiHeadingsGenerated = false,
+  summaryGenerated = false,
+  ownerEmail
 }: ResizableDocumentLayoutProps) {
   const { actions, state } = useDocumentCommunication()
   const [isLeftPaneCollapsed, setIsLeftPaneCollapsed] = useState(false)
@@ -326,6 +340,12 @@ function ResizableDocumentLayoutInner({
               onSemanticHighlightsChange={onSemanticHighlightsChange}
               activeElementId={activeElementId}
               onActiveElementChange={onActiveElementChange}
+              documentTitle={documentTitle}
+              documentCreatedAt={documentCreatedAt}
+              documentSourceUrl={documentSourceUrl}
+              aiHeadingsGenerated={aiHeadingsGenerated}
+              summaryGenerated={summaryGenerated}
+              ownerEmail={ownerEmail}
             />
             </div>
           </div>

@@ -29,6 +29,8 @@ import {
   SignOut,
   TwitterLogo,
   FileText,
+  Tag,
+  HighlighterCircle,
 } from '@phosphor-icons/react'
 
 // Command definition interfaces
@@ -176,6 +178,24 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
       action: () => actions.setActiveTab('search'),
       icon: MagnifyingGlass,
     },
+    {
+      id: 'nav-highlights',
+      name: 'Highlights',
+      keywords: ['highlights', 'mark', 'annotate', 'select'],
+      shortcut: [isMac ? '⌘' : 'Ctrl', '7'],
+      category: NAVIGATION_CATEGORY,
+      action: () => actions.setActiveTab('highlights'),
+      icon: HighlighterCircle,
+    },
+    {
+      id: 'nav-metadata',
+      name: 'Document Metadata',
+      keywords: ['metadata', 'info', 'information', 'statistics', 'stats', 'details'],
+      shortcut: [isMac ? '⌘' : 'Ctrl', '8'],
+      category: NAVIGATION_CATEGORY,
+      action: () => actions.setActiveTab('metadata'),
+      icon: Tag,
+    },
 
     // Document-specific commands (only show when viewing a document)
     ...(documentSlug ? [
@@ -320,11 +340,11 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
       
       if (!correctModifier) return
 
-      // Handle numbered shortcuts (1-6 for navigation)
+      // Handle numbered shortcuts (1-8 for navigation)
       const number = parseInt(event.key)
-      if (number >= 1 && number <= 6) {
+      if (number >= 1 && number <= 8) {
         event.preventDefault()
-        const tabIds = ['original', 'ai-generated', 'summary', 'chat', 'glossary', 'search']
+        const tabIds = ['original', 'ai-generated', 'summary', 'chat', 'glossary', 'search', 'highlights', 'metadata']
         const tabId = tabIds[number - 1]
         if (tabId) {
           actions.setActiveTab(tabId)

@@ -45,6 +45,7 @@ interface HighlightManagementProps {
   onSemanticHighlightsChange?: (highlights: SemanticHighlight[]) => void
   activeElementId?: string
   onActiveElementChange?: (elementId: string | null) => void
+  isActive?: boolean
 }
 
 // Semantic highlight interface (matching the one used in other components)
@@ -57,7 +58,8 @@ export function HighlightManagement({
   documentId, 
   elements, 
   onSemanticHighlightsChange,
-  onActiveElementChange
+  onActiveElementChange,
+  isActive = false
 }: HighlightManagementProps) {
   const { actions } = useDocumentCommunication()
   
@@ -87,6 +89,15 @@ export function HighlightManagement({
       criterionInputRef.current?.focus()
     }, 50)
   }, [])
+
+  // Auto-focus criterion input when tab becomes active
+  useEffect(() => {
+    if (isActive) {
+      setTimeout(() => {
+        criterionInputRef.current?.focus()
+      }, 50)
+    }
+  }, [isActive])
 
   // Convert highlights to semantic highlights and update state
   const updateSemanticHighlights = useCallback((highlights: Highlight[]) => {
