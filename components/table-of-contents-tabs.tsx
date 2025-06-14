@@ -316,7 +316,7 @@ export function OriginalHeadingsTab({
     }
   }
 
-  const getTooltipContent = (elementId: string): JSX.Element => {
+  const getTooltipContent = useCallback((elementId: string): JSX.Element => {
     const isLoading = loadingStates.has(elementId)
     const cachedContent = contentCache.get(elementId)
     
@@ -375,9 +375,9 @@ export function OriginalHeadingsTab({
         </div>
       )
     }
-  }
+  }, [loadingStates, contentCache, elements, mutatedDocument, activeMutationType])
 
-  const handleTooltipShow = (elementId: string) => {
+  const handleTooltipShow = useCallback((elementId: string) => {
     if (!contentCache.has(elementId) && !loadingStates.has(elementId)) {
       // Only start summary generation if there's sufficient content
       if (hasSufficientContentForSummary(elementId, elements, mutatedDocument, activeMutationType)) {
@@ -395,7 +395,7 @@ export function OriginalHeadingsTab({
         })
       }
     }
-  }
+  }, [elements, mutatedDocument, activeMutationType, documentId])
 
   const toggleExpanded = (headingId: string) => {
     setCollapsedIds(prev => {
@@ -818,7 +818,7 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
     }
   }
 
-  const getTooltipContent = (elementId: string): JSX.Element => {
+  const getTooltipContent = useCallback((elementId: string): JSX.Element => {
     const isLoading = loadingStates.has(elementId)
     const cachedContent = contentCache.get(elementId)
     
@@ -877,9 +877,9 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
         </div>
       )
     }
-  }
+  }, [loadingStates, contentCache, elements, mutatedDocument, activeMutationType])
 
-  const handleTooltipShow = (elementId: string) => {
+  const handleTooltipShow = useCallback((elementId: string) => {
     if (!contentCache.has(elementId) && !loadingStates.has(elementId)) {
       // Only start summary generation if there's sufficient content
       if (hasSufficientContentForSummary(elementId, elements, mutatedDocument, activeMutationType)) {
@@ -897,7 +897,7 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
         })
       }
     }
-  }
+  }, [elements, mutatedDocument, activeMutationType, documentId])
 
   const toggleExpanded = (headingId: string) => {
     setCollapsedIds(prev => {

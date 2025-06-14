@@ -23,6 +23,7 @@ import { VerticalIconNav } from './vertical-icon-nav'
 import { CommandPalette } from './command-palette'
 import type { DocumentElement } from '@/lib/types/document'
 import { DocumentCommunicationProvider, useDocumentCommunication } from '@/lib/context/document-communication-context'
+import { useToolUrlState } from '@/lib/tools/hooks/use-tool-url-state'
 
 // Entity type (will be moved to proper types file later)
 interface Entity {
@@ -112,6 +113,7 @@ function ResizableDocumentLayoutInner({
   isPublic = false
 }: ResizableDocumentLayoutProps) {
   const { actions, state } = useDocumentCommunication()
+  const toolUrlState = useToolUrlState() // Sync URL state with DocumentCommunicationContext
   const [isLeftPaneCollapsed, setIsLeftPaneCollapsed] = useState(false)
   const [savedLeftPaneSize, setSavedLeftPaneSize] = useState(30) // Remember the last size
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
