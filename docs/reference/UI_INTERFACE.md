@@ -182,11 +182,9 @@ The **Search** tab provides advanced full-text document search with cross-elemen
 
 ## Future Enhancements 📋
 
-- **Vertical icon navigation** on far left (3-pane approach: icons | content | document)
-- **Responsive breakpoints** for mobile and tablet viewing
 - **Enhanced keyboard navigation** beyond Ctrl+B shortcut
 - **Pane memory**: Restore size preferences across sessions
-- **Mobile-optimized layout** with different responsive patterns
+- **Mobile-optimized layout** with different responsive patterns for touch interfaces
 
 ## Common Patterns
 
@@ -229,7 +227,7 @@ const renderTabName = () => (
 
 ## Limitations
 
-- **Mobile responsiveness** not yet optimized for smaller screens
+- **Mobile responsiveness** not yet optimized for smaller screens (though vertical icon rail is now fully scrollable for constrained viewports)
 - **ToC auto-scroll regression** needs fixing (Stage 5.1 unsuccessful attempt)
 - **Keyboard navigation** limited to Ctrl+B and basic tab functionality
 - **Screen reader support** could be enhanced with ARIA labels

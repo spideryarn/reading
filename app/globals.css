@@ -507,4 +507,24 @@ body {
         }
     }
 
+    /* Subtle scrollbar styling for vertical icon rail */
+    .vertical-icon-nav::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .vertical-icon-nav::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    .vertical-icon-nav::-webkit-scrollbar-thumb {
+        background-color: #d1d5db;
+        border-radius: 3px;
+        border: 1px solid transparent;
+        background-clip: content-box;
+    }
+    
+    .vertical-icon-nav::-webkit-scrollbar-thumb:hover {
+        background-color: #9ca3af;
+    }
+
 }

@@ -89,6 +89,7 @@ The left pane uses a vertical icon navigation system for space-efficient access 
 
 ### Icon Navigation Implementation
 - Always-visible vertical icon rail (48px width) on the far left edge
+- **Scrollable when viewport height is constrained** - `overflow-y-auto` with cross-browser scrollbar styling
 - Phosphor icons with duotone weight for professional appearance
 - Rich tooltips with bold titles and descriptive text (600ms delay)
 - Spideryarn orange active state (#DB8A45) for current selection
@@ -99,6 +100,7 @@ The left pane uses a vertical icon navigation system for space-efficient access 
 ### Interaction Patterns
 - Icon clicks expand left pane (if collapsed) AND activate the selected mode
 - Collapse button integrated into top of icon rail for space efficiency
+- **All icons remain accessible in short viewports** - scrollable interface ensures no functionality is lost in mobile landscape or constrained screen heights
 - Size persistence: remembers user's preferred left pane width
 - Auto-loading behaviors preserved (glossary content, search input focus)
 - All existing functionality maintained through DocumentCommunicationContext

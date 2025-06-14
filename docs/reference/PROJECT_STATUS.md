@@ -58,7 +58,7 @@ Spideryarn Reading is in active development with core AI features now implemente
 - **Tweet thread view** with copy-to-clipboard and social sharing (Bluesky integration planned)
 - **Chat interface** with assistant-ui primitives and document context integration
 - **Command palette** - Global keyboard shortcuts (Cmd/Ctrl+K) with categorised commands for quick navigation and tab switching
-- **Vertical icon navigation** - VSCode-style activity bar with tooltips for primary navigation sections
+- **Vertical icon navigation** - VSCode-style activity bar with tooltips for primary navigation sections, scrollable for constrained viewports
 - **shadcn/ui component library** - Standardized interactive components (Button, Dialog, Alert, Loading)
 - **Phosphor Icons SSR** - Server-side rendering compatible icon system
 

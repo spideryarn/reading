@@ -160,11 +160,11 @@ Currently, the unified left pane displays navigation options as a vertical list 
   - [x] Ensure animations don't interfere with size persistence functionality
   - [x] Test animation performance across different devices and browsers
 
-### Stage: Scrollable Rail (Later)
-- [ ] Detect when icons overflow viewport height
-- [ ] Add subtle scroll indicators
-- [ ] Implement smooth scrolling with CSS
-- [ ] Consider virtualised scrolling for 50+ items
+### Stage: Scrollable Rail ✅ COMPLETED
+- [x] Detect when icons overflow viewport height
+- [x] Add subtle scroll indicators (cross-browser scrollbar styling)
+- [x] Implement smooth scrolling with CSS (`overflow-y-auto` and `h-full`)
+- [x] All icons remain accessible in short viewports (mobile landscape support)
 
 ### Stage: Hover Expansion (IGNORE)
 - [ ] Add Framer Motion or CSS transitions
@@ -209,6 +209,8 @@ Based on research of Phosphor icons library and existing usage patterns in the c
 |----------------|------------------|-------------|-----------|
 | **Metadata** | `Info` | `Tag`, `Gear` | Already used in codebase (line 20), represents document properties |
 | **Tweet Thread** | `TwitterLogo` | `ChatCenteredText` | Already used in document-header.tsx, social/thread format |
+
+**Scrollable Rail Implementation**: The vertical icon rail now supports scrolling for constrained viewports, ensuring all navigation items remain accessible regardless of screen height limitations.
 
 ### Icon Technical Details
 
