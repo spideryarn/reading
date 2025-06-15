@@ -370,7 +370,7 @@ function ResizableDocumentLayoutInner({
           ref={leftPanelRef}
           defaultSize={savedLeftPaneSize}
           minSize={20}
-          maxSize={50}
+          maxSize={80}
           collapsedSize={0}
           collapsible
           className="h-full"
