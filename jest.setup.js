@@ -2,6 +2,12 @@ import '@testing-library/jest-dom';
 import { existsSync } from 'fs';
 import path from 'path';
 
+// Mock nuqs (ESM-only package)
+jest.mock('nuqs');
+
+// Mock server auth for API tests
+jest.mock('@/lib/auth/server-auth');
+
 // Mock Next.js headers for tests that use cookies/headers outside request context
 jest.mock('next/headers', () => ({
   cookies: jest.fn(() => ({

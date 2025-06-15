@@ -68,5 +68,26 @@ module.exports = {
       const React = require('react');
       return React.createElement('span', null, text);
     }
+  },
+  
+  // Mock useLocalRuntime hook with doGenerate method
+  useLocalRuntime: (adapter, options) => {
+    const messages = options?.initialMessages || [];
+    return {
+      thread: {
+        messages,
+        isRunning: false,
+      },
+      composer: {
+        send: jest.fn(),
+        text: '',
+        setText: jest.fn(),
+      },
+      doGenerate: jest.fn().mockResolvedValue({
+        content: [{ type: 'text', text: 'Mocked response' }]
+      }),
+      subscribe: jest.fn(),
+      unsubscribe: jest.fn(),
+    };
   }
 };
