@@ -12,6 +12,7 @@ import { ChatService } from '@/lib/services/database/chat';
 interface UsePersistentChatProps {
   documentId: string;
   documentContext: string;
+  conversationId?: string;
 }
 
 interface UsePersistentChatReturn {
@@ -25,7 +26,8 @@ interface UsePersistentChatReturn {
 
 export function usePersistentChat({ 
   documentId, 
-  documentContext 
+  documentContext,
+  conversationId 
 }: UsePersistentChatProps): UsePersistentChatReturn {
   // Start with isLoaded = true to avoid hanging loading state
   const [isLoaded] = useState(true);
@@ -44,11 +46,34 @@ export function usePersistentChat({
     }
 
     try {
-      // Look for existing thread for this document
-      const existingThreads = await chatService.listThreadsByDocument(documentId, 1);
+      let thread = null;
       
-      if (existingThreads.length > 0) {
-        const thread = existingThreads[0];
+      // If a specific conversation ID is provided from URL, try to load it
+      if (conversationId) {
+        try {
+          const specificThread = await chatService.getThread(conversationId);
+          // Verify the thread belongs to this document
+          if (specificThread && specificThread.document_id === documentId) {
+            thread = specificThread;
+            console.log('[Persistent Chat] Loaded specific conversation from URL:', conversationId);
+          } else {
+            console.log('[Persistent Chat] Conversation ID from URL not found or doesn\'t match document');
+          }
+        } catch (err) {
+          console.log('[Persistent Chat] Failed to load specific conversation:', err);
+        }
+      }
+      
+      // If no specific thread loaded, look for the most recent thread for this document
+      if (!thread) {
+        const existingThreads = await chatService.listThreadsByDocument(documentId, 1);
+        if (existingThreads.length > 0) {
+          thread = existingThreads[0];
+          console.log('[Persistent Chat] Loaded most recent conversation for document');
+        }
+      }
+      
+      if (thread) {
         setThreadId(thread.id);
         
         // Load conversation history
@@ -79,7 +104,7 @@ export function usePersistentChat({
       setMessages([]);
       setThreadId(null);
     }
-  }, [chatService, documentId]);
+  }, [chatService, documentId, conversationId]);
 
   // Refresh messages from database
   const refreshMessages = useCallback(async (): Promise<void> => {
@@ -207,7 +232,7 @@ export function usePersistentChat({
     }, [documentContext, threadId, documentId, saveMessage]),
   };
 
-  // Load messages on mount and when documentId changes
+  // Load messages on mount and when documentId or conversationId changes
   useEffect(() => {
     if (!documentId) {
       setMessages([]);
@@ -223,7 +248,7 @@ export function usePersistentChat({
     
     // Load messages for this document
     loadMessages();
-  }, [documentId, loadMessages]);
+  }, [documentId, conversationId, loadMessages]);
 
   // Initialize runtime with messages from state
   const runtime = useLocalRuntime(chatModelAdapter, {
