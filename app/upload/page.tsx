@@ -27,6 +27,7 @@ interface UnifiedUploadState {
   }
   ui: {
     isProcessing: boolean
+    processingMessage: string
     error: string
     isDragging: boolean
   }
@@ -49,6 +50,7 @@ export default function AddDocumentPage() {
     },
     ui: {
       isProcessing: false,
+      processingMessage: '',
       error: '',
       isDragging: false
     }
@@ -68,11 +70,50 @@ export default function AddDocumentPage() {
   }
 
   const isValidUrl = (urlString: string): boolean => {
+    if (!urlString || urlString.trim().length === 0) return false
+    
     try {
-      const url = new URL(urlString)
-      return url.protocol === 'http:' || url.protocol === 'https:'
+      const url = new URL(urlString.trim())
+      // Only allow http and https protocols
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+        return false
+      }
+      // Basic hostname validation
+      if (!url.hostname || url.hostname.length < 3) {
+        return false
+      }
+      return true
     } catch {
       return false
+    }
+  }
+
+  const validateUrlForSubmission = (urlString: string): { isValid: boolean; error?: string } => {
+    if (!urlString || urlString.trim().length === 0) {
+      return { isValid: false, error: 'Please enter a URL' }
+    }
+
+    const trimmed = urlString.trim()
+    
+    try {
+      const url = new URL(trimmed)
+      
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+        return { isValid: false, error: 'URL must use HTTP or HTTPS protocol' }
+      }
+      
+      if (!url.hostname || url.hostname.length < 3) {
+        return { isValid: false, error: 'Please enter a valid domain name' }
+      }
+      
+      // Check for common localhost patterns that might not work in production
+      if (url.hostname === 'localhost' || url.hostname.startsWith('127.') || url.hostname.startsWith('192.168.')) {
+        return { isValid: false, error: 'Local URLs are not supported. Please use a publicly accessible URL.' }
+      }
+      
+      return { isValid: true }
+    } catch {
+      return { isValid: false, error: 'Please enter a valid URL (e.g., https://example.com)' }
     }
   }
 
@@ -93,7 +134,8 @@ export default function AddDocumentPage() {
       },
       ui: {
         ...prev.ui,
-        error: '' // Clear errors on input change
+        error: '', // Clear errors on input change
+        processingMessage: '' // Clear processing message on input change
       }
     }))
   }
@@ -108,7 +150,8 @@ export default function AddDocumentPage() {
       },
       ui: {
         ...prev.ui,
-        error: '' // Clear errors on input change
+        error: '', // Clear errors on input change
+        processingMessage: '' // Clear processing message on input change
       }
     }))
   }
@@ -158,7 +201,7 @@ export default function AddDocumentPage() {
       default:
         return ['readability', 'ai-transcription'] // Default options
     }
-  }, [uploadState.input.type])
+  }, [uploadState.input])
 
   // Validation logic for processing method compatibility
   const validateProcessingMethod = (method: ProcessingMethod, inputType: InputType): {
@@ -192,6 +235,40 @@ export default function AddDocumentPage() {
     }
   }
 
+  // Get contextual processing message
+  const getProcessingMessage = (input: UnifiedUploadState['input'], processing: UnifiedUploadState['processing']): string => {
+    const { type, file } = input
+    const { method, provider } = processing
+    
+    if (input.url) {
+      switch (method) {
+        case 'readability':
+          return 'Extracting content with Mozilla Readability...'
+        case 'ai-transcription':
+          return `Transcribing content with ${provider === 'claude' ? 'Claude' : 'Gemini'}...`
+        default:
+          return 'Processing URL...'
+      }
+    } else if (file) {
+      if (type === 'pdf') {
+        return `Transcribing PDF with ${provider === 'claude' ? 'Claude' : 'Gemini'}...`
+      } else if (type === 'html') {
+        switch (method) {
+          case 'as-is':
+            return 'Processing HTML file...'
+          case 'readability':
+            return 'Extracting content with Mozilla Readability...'
+          case 'ai-transcription':
+            return `Transcribing HTML with ${provider === 'claude' ? 'Claude' : 'Gemini'}...`
+          default:
+            return 'Processing HTML file...'
+        }
+      }
+    }
+    
+    return 'Processing document...'
+  }
+
   // Drag and drop handlers
   const handleDragStart = () => {
     setUploadState(prev => ({
@@ -211,6 +288,17 @@ export default function AddDocumentPage() {
     handleFileChange(file)
   }
 
+  const handleValidationError = (error: string) => {
+    setUploadState(prev => ({
+      ...prev,
+      ui: {
+        ...prev.ui,
+        error,
+        processingMessage: '' // Clear processing message on validation error
+      }
+    }))
+  }
+
   // Auto-adjust processing method when input type changes
   useEffect(() => {
     const availableMethods = getAvailableProcessingMethods()
@@ -224,10 +312,16 @@ export default function AddDocumentPage() {
   const handleSubmit = async () => {
     const { input, processing } = uploadState
     
-    // Clear any previous errors
+    // Clear any previous errors and set processing state
+    const processingMessage = getProcessingMessage(input, processing)
     setUploadState(prev => ({
       ...prev,
-      ui: { ...prev.ui, error: '', isProcessing: true }
+      ui: { 
+        ...prev.ui, 
+        error: '', 
+        isProcessing: true,
+        processingMessage
+      }
     }))
 
     try {
@@ -245,9 +339,10 @@ export default function AddDocumentPage() {
       let response: Response
 
       if (input.url) {
-        // Handle URL submission
-        if (!isValidUrl(input.url)) {
-          throw new Error('Please enter a valid HTTP or HTTPS URL')
+        // Handle URL submission with enhanced validation
+        const urlValidation = validateUrlForSubmission(input.url)
+        if (!urlValidation.isValid) {
+          throw new Error(urlValidation.error)
         }
 
         response = await fetch('/api/extract-url', {
@@ -273,11 +368,15 @@ export default function AddDocumentPage() {
             body: formData
           })
         } else if (input.type === 'html') {
-          formData.append('processingMethod', processing.method)
-          formData.append('provider', processing.provider)
+          // Create new FormData for HTML upload with correct field name
+          const htmlFormData = new FormData()
+          htmlFormData.append('html', input.file)  // API expects 'html' field, not 'file'
+          htmlFormData.append('processingMethod', processing.method)
+          htmlFormData.append('provider', processing.provider)
+          htmlFormData.append('isPublic', processing.isPublic.toString())
           response = await fetch('/api/upload-html', {
             method: 'POST',
-            body: formData
+            body: htmlFormData
           })
         } else {
           throw new Error('Unsupported file type')
@@ -312,7 +411,8 @@ export default function AddDocumentPage() {
         ui: {
           ...prev.ui,
           error: error instanceof Error ? error.message : 'Unknown error occurred',
-          isProcessing: false
+          isProcessing: false,
+          processingMessage: ''
         }
       }))
     }
@@ -330,10 +430,10 @@ export default function AddDocumentPage() {
     <div className="min-h-screen">
       <AppHeader title="Add Document" backLink="/read" backText="Documents" />
       
-      <main className="max-w-4xl mx-auto px-8 py-8">
-        <div className="space-y-8">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="space-y-6 sm:space-y-8">
           {/* Smart Input Interface */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm">
             <div className="space-y-6">
               <h2 className="text-xl font-semibold text-gray-900">
                 Add Document
@@ -345,6 +445,7 @@ export default function AddDocumentPage() {
                 onUrlChange={handleUrlChange}
                 onFileChange={handleFileChange}
                 onFileDrop={handleFileDrop}
+                onValidationError={handleValidationError}
                 placeholder={getPlaceholder()}
                 error={uploadState.ui.error}
                 isProcessing={uploadState.ui.isProcessing}
@@ -370,12 +471,12 @@ export default function AddDocumentPage() {
                 <Button
                   onClick={handleSubmit}
                   disabled={!canSubmit() || uploadState.ui.isProcessing}
-                  className="px-8 py-2"
+                  className="px-6 sm:px-8 py-2 w-full sm:w-auto"
                 >
                   {uploadState.ui.isProcessing ? (
                     <>
                       <CircleNotch size={16} className="animate-spin mr-2" />
-                      Processing...
+                      {uploadState.ui.processingMessage || 'Processing...'}
                     </>
                   ) : (
                     'Add Document'
