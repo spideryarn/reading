@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { ResizableDocumentLayout } from '@/components/resizable-document-layout'
 import { AppHeader } from '@/components/app-header'
 import { DocumentHeaderActions } from '@/components/document-header-actions'
@@ -85,6 +85,47 @@ export default function DocumentPageClient({
   // Active highlight element state (for active pulse animation)
   const [activeElementId, setActiveElementId] = useState<string | null>(null)
   
+  // ----------------------------------------------
+  // Fix A: Batch element-visibility updates so we
+  // trigger at most one React state change per frame
+  // ----------------------------------------------
+  const pendingVisibilityUpdates = useRef<Map<string, boolean>>(new Map())
+  const frameScheduled = useRef(false)
+
+  const flushVisibilityUpdates = useCallback(() => {
+    setElementVisibility(prev => {
+      if (pendingVisibilityUpdates.current.size === 0) {
+        frameScheduled.current = false
+        return prev
+      }
+      const next = new Map(prev)
+      for (const [id, visible] of pendingVisibilityUpdates.current.entries()) {
+        if (visible) {
+          next.set(id, true)
+        } else {
+          next.delete(id)
+        }
+      }
+      pendingVisibilityUpdates.current.clear()
+      frameScheduled.current = false
+      return next
+    })
+  }, [])
+
+  // This callback is passed to DocumentViewer
+  const handleElementVisibilityChange = useCallback((elementId: string, isVisible: boolean) => {
+    pendingVisibilityUpdates.current.set(elementId, isVisible)
+    if (!frameScheduled.current) {
+      frameScheduled.current = true
+      if (typeof window !== 'undefined' && window.requestAnimationFrame) {
+        window.requestAnimationFrame(flushVisibilityUpdates)
+      } else {
+        // Fallback for server-side or test environments
+        flushVisibilityUpdates()
+      }
+    }
+  }, [flushVisibilityUpdates])
+  
   // Real-time document subscription
   useEffect(() => {
     console.log(`[Real-time PoC] Setting up document subscription for: ${documentId}`)
@@ -123,61 +164,40 @@ export default function DocumentPageClient({
     return extractHeadingElements(mutatedDocument)
   }, [mutatedDocument])
   
-  // Handle element visibility changes from DocumentViewer
-  const handleElementVisibilityChange = useCallback((elementId: string, isVisible: boolean) => {
-    setElementVisibility(prev => {
-      const next = new Map(prev)
-      if (isVisible) {
-        next.set(elementId, true)
-      } else {
-        next.delete(elementId)
-      }
-      return next
-    })
-  }, [])
-  
-  // Calculate heading visibility based on element visibility
+  // ----------------------------------------------
+  // Fix B: Recalculate heading-visibility only when
+  // element visibility membership actually changes
+  // ----------------------------------------------
+  const elementVisibilityKey = useMemo(() => {
+    // Keys sorted for stable string
+    return Array.from(elementVisibility.keys()).sort().join(',')
+  }, [elementVisibility])
+
   useEffect(() => {
+    if (elementVisibility.size === 0) return // nothing visible yet
+
     const newHeadingVisibility = new Map<string, 'visible' | 'not-visible'>()
-    
-    // Check each heading
+
     allHeadings.forEach(heading => {
-      // Find the actual DocumentElement that corresponds to this heading
-      const headingElement = mutatedDocument.find(el => el.id === heading.elementId)
-      
+      const headingElement = mutatedDocument.find(el => el.id === heading.id)
       if (!headingElement) {
-        // If we can't find the heading element, mark as not visible
         newHeadingVisibility.set(heading.id, 'not-visible')
         return
       }
-      
-      // Get all elements that belong to this heading (heading + its section)
       const headingElements = getHeadingAndSectionElements(headingElement, mutatedDocument)
-      
-      // Check if any element in the heading's section is visible
-      const isVisible = headingElements.some(element => elementVisibility.has(element.id))
-      
+      const isVisible = headingElements.some(el => elementVisibility.has(el.id))
       newHeadingVisibility.set(heading.id, isVisible ? 'visible' : 'not-visible')
     })
-    
-    // Only update if the visibility actually changed
+
     setHeadingVisibility(prev => {
-      // Check if the maps are actually different
-      if (prev.size !== newHeadingVisibility.size) {
-        return newHeadingVisibility
+      if (prev.size !== newHeadingVisibility.size) return newHeadingVisibility
+      for (const [k, v] of newHeadingVisibility.entries()) {
+        if (prev.get(k) !== v) return newHeadingVisibility
       }
-      
-      // Compare each entry
-      for (const [key, value] of newHeadingVisibility.entries()) {
-        if (prev.get(key) !== value) {
-          return newHeadingVisibility
-        }
-      }
-      
-      // No changes, return the previous map to avoid re-render
       return prev
     })
-  }, [elementVisibility, allHeadings, mutatedDocument])
+  // Depend on keyed string, not the Map reference
+  }, [elementVisibilityKey, allHeadings, mutatedDocument])
   
   // Handle element clicks in the document viewer
   const handleElementClick = useCallback((element: DocumentElement) => {
