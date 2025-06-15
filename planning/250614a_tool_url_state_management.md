@@ -93,17 +93,22 @@ Currently, Spideryarn Reading tools maintain state only in memory. Users cannot 
   - [x] Clear term updates URL
   - [x] Verified bidirectional synchronization working
 
-### Stage: Complex state - Search
-- [ ] Add search-specific URL parameters
-  - [ ] Add ?q= for search query
-  - [ ] Add ?type= for search type (text/semantic)
-  - [ ] Add ?case= for case sensitivity
-  - [ ] Implement 300ms debouncing for query updates
-- [ ] Update search implementation in unified-left-pane.tsx
-  - [ ] Read initial state from URL
-  - [ ] Update URL on search changes
-  - [ ] Handle empty query state
-- [ ] Test search URL state thoroughly
+### Stage: Complex state - Search ✅ COMPLETED
+- [x] Add search-specific URL parameters
+  - [x] Add ?q= for search query
+  - [x] Add ?type= for search type (text/semantic)
+  - [x] Add ?case= for case sensitivity
+  - [x] Implement 300ms debouncing for query updates
+- [x] Update search implementation in unified-left-pane.tsx
+  - [x] Read initial state from URL using useSearchUrlState hook
+  - [x] Update URL on search changes with proper debouncing
+  - [x] Handle empty query state
+  - [x] Add Enter key submit with history push
+- [x] Test search URL state thoroughly
+  - [x] Verified debouncing works (300ms)
+  - [x] Verified push vs replace history logic
+  - [x] Verified case sensitivity toggle
+  - [x] Verified state persistence
 
 ### Stage: Additional tool states
 - [ ] Add summary parameters (?level=brief|moderate|detailed)
