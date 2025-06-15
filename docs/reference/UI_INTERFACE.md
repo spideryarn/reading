@@ -18,6 +18,7 @@ The Spideryarn Reading application features a **2-pane resizable layout** with t
 - `docs/reference/UI_COMPONENTS.md`
 - `docs/reference/STYLING_SHADCN_UI_REFERENCE.md`
 - `docs/reference/TOOL_HIGHLIGHT.md` - semantic highlighting system accessible via the Highlights tab
+- `docs/reference/STYLING_MOBILE_PLATFORM_DETECTION.md` - mobile device detection and responsive design system for UI adaptation
 
 ## Layout Structure
 
@@ -167,6 +168,7 @@ The **Search** tab provides advanced full-text document search with cross-elemen
 - **Consistent padding** and spacing throughout (`p-4`)
 - **ResizablePanelGroup layout** ensures proper height distribution and overflow handling
 - **Keyboard accessibility** with Ctrl+B shortcut for quick pane toggling
+- **Mobile adaptations** use device detection to auto-collapse left pane and optimize touch interactions (see `docs/reference/STYLING_MOBILE_PLATFORM_DETECTION.md`)
 
 ## State Management Flow
 

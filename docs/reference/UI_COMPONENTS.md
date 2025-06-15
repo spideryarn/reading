@@ -13,6 +13,7 @@ The project uses a hybrid approach combining:
 
 - `docs/reference/UI_INTERFACE.md`
 - `docs/reference/STYLING_SHADCN_UI_REFERENCE.md`
+- `docs/reference/STYLING_MOBILE_PLATFORM_DETECTION.md` - mobile responsive design patterns affecting component behavior
 
 
 ## Component Library: shadcn/ui
