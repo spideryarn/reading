@@ -88,6 +88,7 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/CROSS_PANE_COMMUNICATION.md` - Inter-pane communication patterns and architecture
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - Application keyboard shortcuts and navigation
 - `docs/reference/MUTATIONS.md` - Reversible document transformation system for applying/reverting changes
+- `docs/reference/ARCHITECTURE_URL_STATE.md` - URL-based state management for shareable tool states and browser history navigation ⭐ **Essential for tool state persistence**
 
 ### Content Processing & Search
 - `docs/reference/TOOL_SEARCH_TEXT.md` - Cross-element text search functionality using Mark.js with DOM-based highlighting

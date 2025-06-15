@@ -11,6 +11,7 @@ The text search feature provides intelligent full-text search with context-aware
 - `docs/reference/CODING_GUIDELINES.md#html-text-extraction` - HTML text extraction utility documentation
 - `docs/reference/TOOL_HIGHLIGHT.md` - semantic highlighting system for AI-powered highlighting (complementary to text search)
 - `docs/reference/STYLING_OVERLAPPING_TEXT_HIGHLIGHTS.md` - Comprehensive guide for implementing overlapping text highlighting with Mark.js limitations and CSS Custom Highlight API solutions
+- `docs/reference/ARCHITECTURE_URL_STATE.md` - URL state management for shareable search states (e.g., `?tab=search&q=consciousness&type=text`)
 - `lib/utils/html-text-extraction.ts` - HTML text extraction implementation
 - `components/unified-left-pane.tsx` - Search UI, Mark.js integration, and HighlightedSearchText component
 - `components/simple-document-viewer.tsx` - Document rendering with highlighting support
@@ -144,6 +145,22 @@ User Input → Debounced Search (300ms) → Mark.js DOM Search → Context Extra
    - Collapsible section below search input
    - Case sensitivity toggle (default: false)
    - Designed for future expansion (regex, whole word, semantic search, etc.)
+
+### URL State Integration
+
+Search integrates with URL state management for shareable and bookmarkable searches:
+
+- **Query parameter**: `?tab=search&q=QUERY` - Automatically runs search when loading
+- **Search type**: `?type=text|semantic` - Specifies search type (default: text)
+- **Case sensitivity**: `?case=true|false` - Preserves case sensitivity setting
+- **History management**: 
+  - Typing updates URL with replace (no history pollution)
+  - Pressing Enter pushes to history (creates navigation point)
+- **Debouncing**: 300ms delay before URL updates to avoid excessive history entries
+
+Example URLs:
+- `/read/my-doc?tab=search&q=consciousness` - Simple text search
+- `/read/my-doc?tab=search&q=blockchain&type=semantic&case=true` - Semantic search with case sensitivity
 
 ### Key Code Components
 

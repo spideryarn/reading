@@ -20,6 +20,7 @@ Currently, Spideryarn Reading tools maintain state only in memory. Users cannot 
 
 - `docs/reference/CROSS_PANE_COMMUNICATION.md` - Current state management via DocumentCommunicationContext
 - `docs/reference/UNIFIED_LEFT_PANE.md` - Tab system that will sync with URL state
+- `docs/reference/ARCHITECTURE_URL_STATE.md` - Complete architectural documentation of URL state system
 - `components/unified-left-pane.tsx` - Main pane implementation
 - `lib/contexts/document-communication-context.tsx` - Central state management to enhance
 - `planning/250614b_unified_tool_registry_architecture.md` - Future tool architecture (optional dependency)
@@ -151,15 +152,21 @@ Currently, Spideryarn Reading tools maintain state only in memory. Users cannot 
   - [ ] Missing document
   - [ ] Conflicting states
 
-### Stage: Documentation
-- [ ] Create `docs/reference/ARCHITECTURE_URL_STATE.md` , as per `WRITE_EVERGREEN_DOC.md`
-  - [ ] Document URL parameter schema
-  - [ ] Provide examples for each tool
-  - [ ] History management guidelines
-  - [ ] Migration guide for bookmarks
-  - [ ] **Add nuqs v2 note**: Document that no provider is needed for Next.js App Router
-  - [ ] **Add search pattern**: Document the submitted flag pattern and rationale
-- [ ] Update existing tool documentation with URL examples
+### Stage: Documentation ✅ COMPLETED
+- [x] Create `docs/reference/ARCHITECTURE_URL_STATE.md` , as per `WRITE_EVERGREEN_DOC.md`
+  - [x] Document URL parameter schema
+  - [x] Provide examples for each tool
+  - [x] History management guidelines
+  - [x] Migration guide for bookmarks
+  - [x] **Add nuqs v2 note**: Document that no provider is needed for Next.js App Router
+  - [x] **Add search pattern**: Document the submitted flag pattern and rationale
+- [x] Update existing tool documentation with URL examples
+  - [x] Updated TOOL_GLOSSARY.md with URL state section
+  - [x] Updated TOOL_SEARCH_TEXT.md with URL state integration section
+  - [x] Updated TOOL_SUMMARISE.md with multi-dimensional URL state section
+- [x] Add cross-references to ARCHITECTURE_URL_STATE.md in key files
+  - [x] Updated DOCUMENTATION_ORGANISATION.md
+  - [x] Added references in implementation files via subagent
 
 ### Stage: Testing and validation
 - [ ] Use subagent for comprehensive testing
@@ -357,18 +364,13 @@ function shouldPushForChange(changes: Record<string, any>): boolean {
 6. ✅ **Tool state - Glossary** - Term highlighting via URL
 7. ✅ **Complex state - Search** - Query, type, and case sensitivity
 8. ✅ **Additional tool states** - All tools (summary, chat, highlights) now have URL state
-
-#### Ready to Start
-- **Documentation** - Should be prioritized to capture implementation patterns
+9. ✅ **Documentation** - Comprehensive ARCHITECTURE_URL_STATE.md created and tool docs updated
 
 #### Remaining Work
-1. **Chat state** (?conversation=id) - Medium complexity
-2. **Highlights state** (?highlight=criteria) - Medium complexity  
-3. **History management refinement** - Low complexity
-4. **Migration and edge cases** - Medium complexity
-5. **Documentation** - Low complexity
-6. **Testing and validation** - High value but blocked by Puppeteer
-7. **Research and refinement** - Optional improvements
+1. **History management refinement** - Mostly complete, may just need documentation
+2. **Migration and edge cases** - Lower priority, core functionality working
+3. **Testing and validation** - High value but blocked by Puppeteer issues
+4. **Research and refinement** - Optional improvements
 
 ### Cost/Benefit Analysis
 
@@ -513,7 +515,77 @@ With all tool states now implemented, we should:
 - Browser history navigation works as expected
 - Consistent implementation patterns across all tools
 
-#### Next Steps
-1. **Prioritize documentation** - Capture the patterns while fresh
-2. **Create manual testing checklist** - Work around Puppeteer limitations
-3. **Consider deferring edge cases** - Core functionality is solid
+### Journal - June 15, 2025 (Documentation Complete)
+
+#### Documentation Implementation
+- **Completed**: Created comprehensive URL state documentation
+- **Time spent**: ~30 minutes
+- **Complexity**: Low - clear patterns to document
+
+#### Documentation Created
+1. **ARCHITECTURE_URL_STATE.md**: 
+   - Complete architectural guide with principles, patterns, and examples
+   - Includes URL parameter schema for all tools
+   - History management strategy clearly documented
+   - Implementation patterns with code examples
+   - Gotchas and best practices section
+   - Migration guide for moving from local to URL state
+
+2. **Tool Documentation Updates**:
+   - TOOL_GLOSSARY.md: Added URL state persistence section
+   - TOOL_SEARCH_TEXT.md: Added URL state integration section with history management details
+   - TOOL_SUMMARISE.md: Added multi-dimensional URL state section
+   - DOCUMENTATION_ORGANISATION.md: Added reference to new architecture doc
+
+3. **Cross-references Added**:
+   - Strategic references added to 11 key files via subagent
+   - Core implementation files now reference the architecture doc
+   - Related documentation properly linked
+
+#### Final Status
+**URL state implementation is now complete**:
+- ✅ All 6 tools have URL state
+- ✅ Comprehensive documentation created
+- ✅ Cross-references established
+- ✅ Implementation patterns captured for future use
+
+The only remaining items are optional refinements and testing improvements blocked by tooling issues.
+
+### Final Implementation Summary
+
+#### Total Time Investment
+- **Core implementation**: ~5 hours across multiple sessions
+- **Documentation**: ~30 minutes
+- **Total**: ~5.5 hours (well within initial 6-8 hour estimate)
+
+#### Value Delivered
+1. **User-facing benefits**:
+   - Shareable links for any tool state
+   - Browser history that "just works"
+   - Bookmarkable document views
+   - Clean, readable URLs
+
+2. **Developer benefits**:
+   - Type-safe URL state management with nuqs
+   - Consistent patterns across all tools
+   - Comprehensive documentation
+   - Easy to extend for new tools
+
+#### Technical Debt & Future Work
+1. **Testing gap**: Puppeteer issues preventing automated testing
+   - Consider alternative E2E testing approach
+   - Manual testing checklist as temporary measure
+
+2. **Minor refinements**:
+   - Some TypeScript 'any' types remain
+   - Edge cases (URL length limits) not handled
+   - Legacy URL migration not implemented
+
+#### Lessons Learned
+1. **Infrastructure investment pays off**: The initial stages building utilities and hooks made later implementations trivial
+2. **React performance gotchas**: Infinite loop issues required careful memoization
+3. **Documentation is valuable**: Even "simple" features benefit from comprehensive docs
+4. **Testing tooling matters**: Puppeteer issues are becoming a recurring blocker
+
+#### Recommendation
+The feature is production-ready. The remaining items are low-priority refinements that can be addressed as needed. Focus should shift to other high-value features while this implementation proves itself in real usage.

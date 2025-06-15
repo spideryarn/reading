@@ -1,0 +1,240 @@
+# URL State Management
+
+URL-based state management enables shareable, bookmarkable document views with tool configurations using the nuqs library for type-safe parameter handling.
+
+## See also
+
+- `lib/tools/url-state-types.ts` - URL parameter type definitions and constants
+- `lib/tools/hooks/use-tool-url-state.ts` - React hooks for URL state management
+- `lib/contexts/document-communication-context.tsx` - Central state management integration
+- `planning/250614a_tool_url_state_management.md` - Implementation planning and decisions
+- [nuqs documentation](https://github.com/47ng/nuqs) - Type-safe URL state library
+
+## Principles & Key Decisions
+
+- **Human-readable URLs** - No base64 encoding; important parameters on the left
+- **Progressive enhancement** - URL state added to existing tools without breaking changes
+- **nuqs v2 integration** - No provider needed for Next.js App Router
+- **Push vs Replace history** - Push for significant navigation, replace for UI state changes
+- **Bidirectional synchronization** - URL and component state stay in sync automatically
+
+## URL Parameter Schema
+
+### Base Structure
+```
+/read/[document-slug]?tab=TOOL&TOOL_PARAMS
+```
+
+### Tab Parameter
+Controls which tool pane is active in the unified left pane:
+- `?tab=original` - Original document view
+- `?tab=ai-generated` - AI-generated headings
+- `?tab=summary` - Hierarchical summaries
+- `?tab=chat` - Chat assistant
+- `?tab=glossary` - Document glossary
+- `?tab=search` - Search interface
+- `?tab=highlights` - Semantic highlights
+
+### Tool-Specific Parameters
+
+#### Glossary
+- `?term=TERM` - Highlighted glossary term
+- Example: `/read/my-doc?tab=glossary&term=quantum`
+
+#### Search
+- `?q=QUERY` - Search query text
+- `?type=text|semantic` - Search type (default: text)
+- `?case=true|false` - Case sensitivity (default: false)
+- Example: `/read/my-doc?tab=search&q=consciousness&type=semantic`
+
+#### Summary
+- `?expertise=beginner|intermediate|expert` - User expertise level
+- `?length=sentence_or_two|single_short_paragraph|page` - Summary length preference
+- Example: `/read/my-doc?tab=summary&expertise=beginner&length=sentence_or_two`
+
+#### Chat
+- `?conversation=THREAD_ID` - Persistent conversation thread
+- Example: `/read/my-doc?tab=chat&conversation=5a5f283e-10d3-481d-af98-837056312b90`
+
+#### Highlights
+- `?highlight=CRITERION` - Semantic highlight criterion
+- Example: `/read/my-doc?tab=highlights&highlight=technical+terms`
+
+## Implementation Patterns
+
+### Using URL State Hooks
+
+Each tool has a dedicated hook for managing its URL state:
+
+```typescript
+// Search tool
+import { useSearchUrlState } from '@/lib/tools/hooks/use-tool-url-state'
+
+function SearchTool() {
+  const { 
+    searchQuery, 
+    searchType, 
+    caseSensitive, 
+    setSearchQuery,
+    setSearchType,
+    setCaseSensitive,
+    submitSearch 
+  } = useSearchUrlState()
+  
+  // Component uses URL state directly
+  return (
+    <input 
+      value={searchQuery || ''} 
+      onChange={e => setSearchQuery(e.target.value)}
+    />
+  )
+}
+```
+
+### History Management Strategy
+
+The system uses intelligent push vs replace decisions:
+
+| Action | Strategy | Rationale |
+|--------|----------|-----------|
+| Tab change | Push | Users expect Back to return to previous tab |
+| Search submit | Push | Completed searches are navigation points |
+| Search typing | Replace | Don't pollute history with keystrokes |
+| Term selection | Push | Specific content navigation |
+| UI preferences | Replace | Transient state changes |
+
+### Search Pattern with Debouncing
+
+Search implements a special pattern to handle real-time typing vs deliberate submission:
+
+```typescript
+// In use-tool-url-state.ts
+const debouncedSetSearch = useMemo(
+  () => debounce((query: string) => {
+    setState({ q: query }, { history: 'replace' })
+  }, 300),
+  [setState]
+)
+
+const submitSearch = useCallback(() => {
+  if (state.q?.trim()) {
+    // Use special flag to trigger push history
+    setState({ ...state, submitted: true }, { history: 'push' })
+    // Remove flag after push
+    setState(current => {
+      const { submitted, ...rest } = current
+      return rest
+    }, { history: 'replace' })
+  }
+}, [state, setState])
+```
+
+## Integration with DocumentCommunicationContext
+
+The URL state system integrates seamlessly with the existing state management:
+
+```typescript
+// In document page component
+const { activeTab } = useToolUrlState()
+const { actions } = useDocumentCommunication()
+
+// Sync URL state to context
+useEffect(() => {
+  if (activeTab && activeTab !== currentTab) {
+    actions.setActiveTab(activeTab)
+  }
+}, [activeTab])
+```
+
+## Common Patterns
+
+### Auto-loading from URL
+
+Tools automatically load content when URL parameters are present:
+
+```typescript
+// In HighlightManagement component
+useEffect(() => {
+  if (highlightCriterion && highlightCriterion !== criterion) {
+    setCriterion(highlightCriterion)
+    // Auto-trigger highlight creation
+    if (highlightCriterion.trim()) {
+      createHighlights(highlightCriterion)
+    }
+  }
+}, [highlightCriterion, criterion, createHighlights])
+```
+
+### Clearing URL State
+
+When clearing tool state, also clear URL parameters:
+
+```typescript
+const clearHighlights = useCallback(() => {
+  // Clear component state
+  setHighlights([])
+  // Clear URL state
+  setHighlight(null)
+}, [setHighlight])
+```
+
+## Gotchas & Best Practices
+
+1. **React Infinite Loops** - Always memoize callbacks passed to child components when using URL state
+2. **Context Hierarchy** - Ensure URL state hooks are called within appropriate React context providers
+3. **Map Comparisons** - When syncing Maps to URL state, compare content not references
+4. **TypeScript Types** - Use nuqs parsers for type safety instead of manual parsing
+5. **Empty States** - Handle null/undefined URL parameters gracefully with defaults
+
+## Limitations
+
+- URL length limits may affect very long search queries or criteria
+- Browser history size limits could impact heavy users
+- Some special characters require URL encoding
+
+## Migration Guide
+
+### From Local State to URL State
+
+1. Replace `useState` with appropriate URL state hook:
+```typescript
+// Before
+const [searchQuery, setSearchQuery] = useState('')
+
+// After
+const { searchQuery, setSearchQuery } = useSearchUrlState()
+```
+
+2. Handle null/undefined from URL:
+```typescript
+// Provide defaults for URL parameters
+value={searchQuery || ''}
+```
+
+3. Update clear/reset logic to include URL:
+```typescript
+// Also clear URL when resetting state
+const handleClear = () => {
+  setLocalState('')
+  setUrlParam(null)
+}
+```
+
+## Future Enhancements
+
+- Server-side state storage for complex states exceeding URL limits
+- Analytics integration to track URL parameter usage
+- Batch URL updates for complex multi-parameter changes
+- URL shortening service for sharing very long URLs
+- Migration utilities for legacy bookmark formats
+
+## Testing Checklist
+
+When implementing URL state for a tool:
+- [ ] URL updates when interacting with tool
+- [ ] Tool loads correctly from bookmarked URL
+- [ ] Browser back/forward navigation works
+- [ ] Clearing tool state clears URL
+- [ ] Special characters handled correctly
+- [ ] No infinite render loops
+- [ ] State syncs bidirectionally

@@ -187,7 +187,7 @@ This document provides a comprehensive template for creating new tools in Spider
 
 - [ ] **Implement granularity controls (if applicable)**
   - [ ] Add sliders or toggles for detail levels
-  - [ ] Preserve user preferences in session storage
+  - [ ] Preserve user preferences in session storage (or URL state - see `docs/reference/ARCHITECTURE_URL_STATE.md`)
   - [ ] Update tool output based on granularity selection
   - [ ] Test all granularity levels
 

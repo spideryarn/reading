@@ -2,6 +2,7 @@
 
 // Hook for managing tool URL state with nuqs
 // Provides bidirectional sync between URL and DocumentCommunicationContext
+// See docs/reference/ARCHITECTURE_URL_STATE.md for complete URL state architecture
 
 import { useCallback, useMemo, useEffect } from 'react'
 import { useQueryStates, parseAsString, parseAsStringEnum, parseAsBoolean } from 'nuqs'

@@ -7,6 +7,9 @@
 // Cross-pane communication: This component uses DocumentCommunicationContext
 // to update document position state when users click elements. The old custom
 // DOM event dispatching was removed in favour of React Context patterns.
+//
+// URL state management: Integrates tool URL state hooks for persistence
+// See docs/reference/ARCHITECTURE_URL_STATE.md for URL state architecture
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useMediaQuery } from 'react-responsive'

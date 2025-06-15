@@ -5,6 +5,7 @@ The AI summarise feature generates hierarchical summaries of document content us
 ## See also
 
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide to creating and using LLM prompt templates
+- `docs/reference/ARCHITECTURE_URL_STATE.md` - URL state management for shareable summary states (e.g., `?tab=summary&expertise=beginner&length=sentence_or_two`)
 - `planning/250526a_ToC_hierarchical_summary_tooltips.md` - Implementation of ToC tooltip summaries with hierarchical content extraction
 - `planning/250525b_debugging_summary.md` - Debugging and fixing the content pipeline from HTML to AI summarisation
 - `lib/prompts/templates/summarise.ts` - Schema configuration and granularity options for summarisation prompts
@@ -73,6 +74,16 @@ For Table of Contents tooltips, the system extracts hierarchical content by:
 1. **Loading**: Click "Generate summary" button in document summary pane
 2. **Display**: Full summary with configurable granularity
 3. **Error states**: Clear error messages when generation fails
+
+### Multi-dimensional summary (URL state)
+The summary tab now supports URL state for multi-dimensional configuration:
+
+- **Expertise level**: `?expertise=beginner|intermediate|expert` - Adjusts technical depth
+- **Length preference**: `?length=sentence_or_two|single_short_paragraph|page` - Controls summary length
+- **Persistent state**: URL parameters preserve user preferences across sessions
+- **Shareable views**: Users can share specific summary configurations via URL
+
+Example URL: `/read/my-doc?tab=summary&expertise=beginner&length=sentence_or_two`
 
 ### ToC tooltip summaries
 1. **Trigger**: Hover over any heading in Table of Contents

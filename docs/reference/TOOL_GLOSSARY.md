@@ -6,6 +6,7 @@ The glossary feature extracts key entities from documents using LLM analysis and
 
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide to creating and using LLM prompt templates
 - `docs/reference/STYLING_OVERLAPPING_TEXT_HIGHLIGHTS.md` - Comprehensive guide for implementing overlapping text highlighting to enable glossary + search highlight combinations
+- `docs/reference/ARCHITECTURE_URL_STATE.md` - URL state management for shareable glossary states (e.g., `?tab=glossary&term=quantum`)
 - `planning/250526e_glossary_feature.md` - Implementation planning and progress tracking
 - `planning/250613f_glossary_hyperlinks_implementation.md` - Glossary hyperlink implementation planning with highlighting considerations
 - `lib/prompts/templates/glossary.ts` - Entity schema and prompt configuration  
@@ -67,6 +68,16 @@ The glossary includes client-side search functionality for quick entity lookup:
 - **Clear functionality**: X button to clear search and return to full list
 - **Empty state**: "No matches found" message with helpful guidance
 - **Auto-clear**: Search resets when switching between documents/tabs
+
+### URL State Persistence
+
+The glossary integrates with URL state management for shareable views:
+
+- **Selected term**: `?tab=glossary&term=TERM` - Automatically highlights the specified term when loading
+- **Bookmark support**: Users can bookmark specific glossary terms for later reference
+- **Browser history**: Clicking glossary entities updates URL for browser back/forward navigation
+
+Example URL: `/read/my-doc?tab=glossary&term=quantum` - Opens glossary with "quantum" term highlighted
 
 ## Current features
 

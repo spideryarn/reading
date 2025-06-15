@@ -16,6 +16,7 @@ The unified left pane provides comprehensive document navigation and AI-powered 
 - `docs/reference/UI_INTERFACE.md` - 2-pane resizable layout documentation
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - prompt template system for AI features
 - `docs/reference/TOOL_HIGHLIGHT.md` - semantic highlighting feature accessible via the Highlights tab
+- `docs/reference/ARCHITECTURE_URL_STATE.md` - URL state management for persistent tool state across sessions
 - `docs/reference/STYLING_MOBILE_PLATFORM_DETECTION.md` - mobile device detection affecting left pane auto-collapse behaviour
 - `planning/250608c_vertical_icon_navigation_bar.md` - vertical icon navigation implementation
 - `planning/250526g_ai_generated_headings.md` - AI headings implementation details
