@@ -10,9 +10,13 @@ import {
   TAB_VALUES, 
   SEARCH_TYPES, 
   SUMMARY_LEVELS,
+  EXPERTISE_LEVELS,
+  LENGTH_LEVELS,
   TabValue,
   SearchType,
   SummaryLevel,
+  ExpertiseLevel,
+  LengthLevel,
   ToolUrlState
 } from '../url-state-types'
 import { shouldPushHistory } from '../url-state'
@@ -23,6 +27,8 @@ import { throttle } from '@/lib/utils/throttle'
 const tabParser = parseAsStringEnum<TabValue>(TAB_VALUES).withDefault('original')
 const searchTypeParser = parseAsStringEnum<SearchType>(SEARCH_TYPES).withDefault('text')
 const summaryLevelParser = parseAsStringEnum<SummaryLevel>(SUMMARY_LEVELS)
+const expertiseLevelParser = parseAsStringEnum<ExpertiseLevel>(EXPERTISE_LEVELS).withDefault('intermediate')
+const lengthLevelParser = parseAsStringEnum<LengthLevel>(LENGTH_LEVELS).withDefault('single_short_paragraph')
 const booleanParser = parseAsBoolean.withDefault(false)
 const stringParser = parseAsString
 
@@ -46,6 +52,8 @@ export function useToolUrlState(): UseToolUrlStateReturn {
     type: searchTypeParser,
     case: booleanParser,
     level: summaryLevelParser,
+    expertise: expertiseLevelParser,
+    length: lengthLevelParser,
     highlight: stringParser,
     conversation: stringParser,
     scroll: stringParser
@@ -124,6 +132,8 @@ export function useToolUrlState(): UseToolUrlStateReturn {
       type: 'text',
       case: false,
       level: null,
+      expertise: 'intermediate',
+      length: 'single_short_paragraph',
       highlight: null,
       conversation: null,
       scroll: null
@@ -140,6 +150,8 @@ export function useToolUrlState(): UseToolUrlStateReturn {
     type: urlState.type,
     case: urlState.case,
     level: urlState.level || undefined,
+    expertise: urlState.expertise,
+    length: urlState.length,
     highlight: urlState.highlight || undefined,
     conversation: urlState.conversation || undefined,
     scroll: urlState.scroll || undefined
@@ -201,8 +213,20 @@ export function useSummaryUrlState() {
     setState({ level })
   }, [setState])
   
+  const setExpertiseLevel = useCallback((expertise: ExpertiseLevel) => {
+    setState({ expertise })
+  }, [setState])
+  
+  const setLengthLevel = useCallback((length: LengthLevel) => {
+    setState({ length })
+  }, [setState])
+  
   return {
     level: state.level || 'moderate',
-    setLevel
+    setLevel,
+    expertiseLevel: state.expertise || 'intermediate',
+    lengthLevel: state.length || 'single_short_paragraph',
+    setExpertiseLevel,
+    setLengthLevel
   }
 }

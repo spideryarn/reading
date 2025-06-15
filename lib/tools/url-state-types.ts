@@ -19,9 +19,16 @@ export type TabValue = typeof TAB_VALUES[number]
 export const SEARCH_TYPES = ['text', 'semantic'] as const
 export type SearchType = typeof SEARCH_TYPES[number]
 
-// Summary detail levels
+// Summary detail levels - deprecated in favor of multi-dimensional summary
 export const SUMMARY_LEVELS = ['brief', 'moderate', 'detailed'] as const
 export type SummaryLevel = typeof SUMMARY_LEVELS[number]
+
+// Multi-dimensional summary parameters
+export const EXPERTISE_LEVELS = ['beginner', 'intermediate', 'expert'] as const
+export type ExpertiseLevel = typeof EXPERTISE_LEVELS[number]
+
+export const LENGTH_LEVELS = ['sentence_or_two', 'single_short_paragraph', 'page'] as const
+export type LengthLevel = typeof LENGTH_LEVELS[number]
 
 // URL parameter type definitions
 export interface ToolUrlState {
@@ -36,8 +43,12 @@ export interface ToolUrlState {
   type?: SearchType // Search type (text or semantic)
   case?: boolean // Case sensitive search
   
-  // Summary parameters
+  // Summary parameters (deprecated single dimension)
   level?: SummaryLevel // Summary detail level
+  
+  // Multi-dimensional summary parameters
+  expertise?: ExpertiseLevel // Expertise level (beginner, intermediate, expert)
+  length?: LengthLevel // Summary length (sentence_or_two, single_short_paragraph, page)
   
   // Chat parameters
   conversation?: string // Conversation ID for chat state

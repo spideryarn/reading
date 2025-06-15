@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import type { ExpertiseLevel, LengthLevel } from '@/lib/prompts/templates/multi-summarise'
+import { useSummaryUrlState } from '@/lib/tools/hooks/use-tool-url-state'
 
 export interface MultiSummaryData {
   beginner: {
@@ -54,9 +55,8 @@ export function useMultiSummary(
   // Summary data
   const [summaries, setSummaries] = useState<MultiSummaryData | null>(null)
   
-  // Selection state
-  const [expertiseLevel, setExpertiseLevel] = useState<ExpertiseLevel>('intermediate')
-  const [lengthLevel, setLengthLevel] = useState<LengthLevel>('single_short_paragraph')
+  // Get URL state for expertise and length levels
+  const { expertiseLevel, lengthLevel, setExpertiseLevel, setLengthLevel } = useSummaryUrlState()
   
   // Loading and error state
   const [isLoading, setIsLoading] = useState(false)

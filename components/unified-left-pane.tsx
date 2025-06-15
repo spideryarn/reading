@@ -31,7 +31,7 @@ import Mark from 'mark.js'
 import { extractCleanText } from '@/lib/utils/html-text-extraction'
 import { extractAllMatchContexts, generateTooltipContent } from '@/lib/utils/search-context-extraction'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { useGlossaryUrlState } from '@/lib/tools/hooks/use-tool-url-state'
+import { useGlossaryUrlState, useSearchUrlState } from '@/lib/tools/hooks/use-tool-url-state'
 
 // Semantic highlight interface
 interface SemanticHighlight {
@@ -433,13 +433,22 @@ export function UnifiedLeftPane({
     }
   }, [state.activeTabId])
   
-  // Search state
-  const [searchQuery, setSearchQuery] = useState('')
+  // Search URL state management
+  const {
+    query: searchQuery,
+    searchType,
+    caseSensitive,
+    setSearch: setSearchQuery,
+    submitSearch,
+    setSearchType,
+    setCaseSensitive
+  } = useSearchUrlState()
+  
+  // Local search state (results and UI state)
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [isSearching, setIsSearching] = useState(false)
-  const [caseSensitive, setCaseSensitive] = useState(false)
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false)
-  const [useSemanticSearch] = useState(false)
+  const useSemanticSearch = searchType === 'semantic'
   // const [semanticSearchError] = useState<string | null>(null)
   const [semanticSortByRelevance] = useState(false) // false = position, true = relevance
   // Cache state for semantic search
@@ -587,7 +596,7 @@ export function UnifiedLeftPane({
   
   // Re-run search when case sensitivity changes - only for text search
   useEffect(() => {
-    if (searchQuery.trim() && !useSemanticSearch) {
+    if (searchQuery?.trim() && !useSemanticSearch) {
       performSearch(searchQuery)
     }
   }, [caseSensitive, searchQuery, performSearch, useSemanticSearch])
@@ -762,15 +771,9 @@ export function UnifiedLeftPane({
   const handleSearchInputChange = useCallback((value: string) => {
     setSearchQuery(value)
     
-    // Clear previous errors and search highlights
-    setSemanticSearchError(null)
+    // Clear previous search highlights when query is empty
     if (!value.trim() && markInstanceRef.current) {
       markInstanceRef.current.unmark({ className: 'search-highlight' })
-    }
-    
-    // For semantic search, show history dropdown when focusing and typing
-    if (useSemanticSearch && queryHistory.length > 0) {
-      setShowQueryHistory(true)
     }
     
     // Use appropriate search type
@@ -784,7 +787,7 @@ export function UnifiedLeftPane({
       // Continue with regular debounced text search
       debouncedSearch(value)
     }
-  }, [useSemanticSearch, debouncedSearch, queryHistory.length])
+  }, [useSemanticSearch, debouncedSearch, setSearchQuery])
 
   // Manual semantic search trigger
   // const triggerSemanticSearch = useCallback(() => {
@@ -985,8 +988,13 @@ export function UnifiedLeftPane({
             <input
               ref={searchInputRef}
               type="text"
-              value={searchQuery}
+              value={searchQuery || ''}
               onChange={(e) => handleSearchInputChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchQuery?.trim()) {
+                  submitSearch(searchQuery)
+                }
+              }}
               placeholder="Search document..."
               className="w-full px-4 py-2 pl-10 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
@@ -1057,7 +1065,7 @@ export function UnifiedLeftPane({
             <CircleNotch className="animate-spin text-gray-400 mb-2" size={24} weight="bold" />
             <div className="text-sm text-gray-500">Searching...</div>
           </div>
-        ) : searchQuery.trim() && searchResults.length === 0 ? (
+        ) : searchQuery?.trim() && searchResults.length === 0 ? (
           <div className="text-sm text-gray-500 text-center py-8">No results found</div>
         ) : searchResults.length > 0 ? (
           <div>
