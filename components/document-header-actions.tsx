@@ -22,7 +22,7 @@ export function DocumentHeaderActions({ slug, storagePath, originalFileType }: D
             className="text-gray-600 hover:text-gray-900"
           >
             <Link 
-              href={`/api/documents/${slug}/download`}
+              href={`/api/read/${slug}/download`}
               title={originalFileType === 'application/pdf' ? "Download original PDF" : "Download original file"}
               target="_blank"
               rel="noopener noreferrer"
@@ -37,7 +37,7 @@ export function DocumentHeaderActions({ slug, storagePath, originalFileType }: D
             className="text-gray-600 hover:text-gray-900"
           >
             <Link 
-              href={`/api/documents/${slug}/original`}
+              href={`/api/read/${slug}/original`}
               title="View original HTML"
               target="_blank"
               rel="noopener noreferrer"
@@ -54,7 +54,7 @@ export function DocumentHeaderActions({ slug, storagePath, originalFileType }: D
           className="text-gray-600 hover:text-gray-900"
         >
           <Link 
-            href={`/documents/${slug}/tweets`}
+            href={`/read/${slug}/tweets`}
             title="View as tweet thread"
             target="_blank"
             rel="noopener noreferrer"

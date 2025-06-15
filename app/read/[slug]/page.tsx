@@ -28,7 +28,7 @@ export default async function DocumentPage({ params }: PageProps) {
   
   // Require authentication for document access
   const user = await requireAuth({
-    returnTo: `/documents/${slug}`
+    returnTo: `/read/${slug}`
   })
   
   const doc = await getDocumentBySlug(slug)

@@ -130,7 +130,7 @@ export default function AddDocumentPage() {
       const result = await response.json()
       if (result.success) {
         // Navigate to the document page using the slug
-        router.push(`/documents/${result.document.slug}`)
+        router.push(`/read/${result.document.slug}`)
       } else {
         // Handle unsuccessful results
         setUrlError(result.message || 'URL extraction failed')
@@ -265,7 +265,7 @@ export default function AddDocumentPage() {
         }
 
         const result = await response.json()
-        router.push(`/documents/${result.document.slug}`)
+        router.push(`/read/${result.document.slug}`)
       } else if (isSelectedFileHtml(selectedFile)) {
         // Handle HTML file upload - route to new HTML API
         const formData = new FormData()
@@ -289,7 +289,7 @@ export default function AddDocumentPage() {
         }
 
         const result = await response.json()
-        router.push(`/documents/${result.document.slug}`)
+        router.push(`/read/${result.document.slug}`)
       } else {
         throw new Error('Unsupported file type')
       }
@@ -302,7 +302,7 @@ export default function AddDocumentPage() {
 
   return (
     <div className="min-h-screen">
-      <AppHeader title="Add Document" backLink="/documents" backText="Documents" />
+      <AppHeader title="Add Document" backLink="/read" backText="Documents" />
       
       <main className="max-w-4xl mx-auto px-8 py-8">
         <div className="space-y-8">

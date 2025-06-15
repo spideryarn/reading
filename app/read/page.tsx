@@ -52,7 +52,7 @@ export default async function DocumentsPage() {
     <div className="min-h-screen">
       <AppHeader 
         title="Documents" 
-        logoLink="/documents"
+        logoLink="/read"
         actions={
           <div>
             <Button asChild variant="orange" size="sm">
@@ -110,7 +110,7 @@ export default async function DocumentsPage() {
                   className="flex items-center p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <Link
-                    href={`/documents/${slug}`}
+                    href={`/read/${slug}`}
                     className="flex-1 min-w-0"
                   >
                     <h3 className="font-medium">{doc.title}</h3>

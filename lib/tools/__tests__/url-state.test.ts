@@ -118,19 +118,19 @@ describe('URL State Utilities', () => {
   
   describe('createUrlWithState', () => {
     it('should update existing URL with new state', () => {
-      const currentUrl = 'http://localhost:3000/documents/test-doc?tab=original'
+      const currentUrl = 'http://localhost:3000/read/test-doc?tab=original'
       const changes = { tab: 'glossary' as const, term: 'test' }
       
       const newUrl = createUrlWithState(currentUrl, changes)
       const url = new URL(newUrl)
       
-      expect(url.pathname).toBe('/documents/test-doc')
+      expect(url.pathname).toBe('/read/test-doc')
       expect(url.searchParams.get('tab')).toBe('glossary')
       expect(url.searchParams.get('term')).toBe('test')
     })
     
     it('should clear parameters when value is null', () => {
-      const currentUrl = 'http://localhost:3000/documents/test-doc?tab=search&q=test'
+      const currentUrl = 'http://localhost:3000/read/test-doc?tab=search&q=test'
       const changes = { q: null as any }
       
       const newUrl = createUrlWithState(currentUrl, changes)
@@ -141,7 +141,7 @@ describe('URL State Utilities', () => {
     })
     
     it('should clear all other params when clearOthers is true', () => {
-      const currentUrl = 'http://localhost:3000/documents/test-doc?tab=search&q=test&type=semantic'
+      const currentUrl = 'http://localhost:3000/read/test-doc?tab=search&q=test&type=semantic'
       const changes = { tab: 'original' as const }
       
       const newUrl = createUrlWithState(currentUrl, changes, { clearOthers: true })
@@ -213,13 +213,13 @@ describe('URL State Utilities', () => {
   
   describe('truncateUrlIfNeeded', () => {
     it('should not truncate short URLs', () => {
-      const url = 'http://localhost:3000/documents/test?tab=glossary'
+      const url = 'http://localhost:3000/read/test?tab=glossary'
       const result = truncateUrlIfNeeded(url, 2000)
       expect(result).toBe(url)
     })
     
     it('should remove low priority params first', () => {
-      const baseUrl = 'http://localhost:3000/documents/test'
+      const baseUrl = 'http://localhost:3000/read/test'
       const params = new URLSearchParams({
         tab: 'search',
         q: 'important query',
@@ -238,7 +238,7 @@ describe('URL State Utilities', () => {
     })
     
     it('should truncate long query parameter if needed', () => {
-      const baseUrl = 'http://localhost:3000/documents/test'
+      const baseUrl = 'http://localhost:3000/read/test'
       const veryLongQuery = 'a'.repeat(2000)
       const url = `${baseUrl}?tab=search&q=${veryLongQuery}`
       

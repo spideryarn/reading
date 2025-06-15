@@ -134,7 +134,7 @@ return <ProtectedContent user={user} />
 export default async function DocumentPage({ params }: { params: { slug: string } }) {
   // Require authentication, redirect if not logged in
   const user = await requireAuth({
-    returnTo: `/documents/${params.slug}`
+    returnTo: `/read/${params.slug}`
   })
   
   // User is guaranteed to be authenticated here

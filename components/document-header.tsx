@@ -41,7 +41,7 @@ export function DocumentHeader({ title, slug }: DocumentHeaderProps) {
             className="text-gray-600 hover:text-gray-900"
           >
             <Link 
-              href={`/documents/${slug}/tweets`}
+              href={`/read/${slug}/tweets`}
               title="View as tweet thread"
             >
               <TwitterLogo size={16} />
@@ -54,7 +54,7 @@ export function DocumentHeader({ title, slug }: DocumentHeaderProps) {
             className="text-gray-600 hover:text-gray-900"
           >
             <Link 
-              href={`/api/documents/${slug}/original`}
+              href={`/api/read/${slug}/original`}
               title="View original HTML"
             >
               <File size={16} />

@@ -357,7 +357,7 @@ it('should enforce authentication on protected routes', async () => {
     render(<ProtectedDocumentPage params={{ slug: 'test-doc' }} />)
   }).rejects.toThrow('NEXT_REDIRECT')
   
-  expect(redirect).toHaveBeenCalledWith('/auth/login?next=/documents/test-doc')
+  expect(redirect).toHaveBeenCalledWith('/auth/login?next=/read/test-doc')
 })
 ```
 

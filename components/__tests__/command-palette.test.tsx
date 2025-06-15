@@ -274,7 +274,7 @@ describe('CommandPalette', () => {
 
       // Test Ctrl+D for documents
       fireEvent.keyDown(document, { key: 'd', ctrlKey: true })
-      expect(mockRouter.push).toHaveBeenCalledWith('/documents')
+      expect(mockRouter.push).toHaveBeenCalledWith('/read')
 
       // Test Ctrl+U for upload
       fireEvent.keyDown(document, { key: 'u', ctrlKey: true })
@@ -324,7 +324,7 @@ describe('CommandPalette', () => {
       const documentsCommand = screen.getByText('Documents List').closest('[data-testid="command-item"]')
       fireEvent.click(documentsCommand!)
 
-      expect(mockRouter.push).toHaveBeenCalledWith('/documents')
+      expect(mockRouter.push).toHaveBeenCalledWith('/read')
 
       // Dialog should close after command execution
       await waitFor(() => {
@@ -775,7 +775,7 @@ describe('CommandPalette', () => {
       fireEvent.click(tweetCommand)
 
       await waitFor(() => {
-        expect(mockRouter.push).toHaveBeenCalledWith('/documents/test-document-slug/tweets')
+        expect(mockRouter.push).toHaveBeenCalledWith('/read/test-document-slug/tweets')
       })
 
       // Clear mocks and test original document command
@@ -787,7 +787,7 @@ describe('CommandPalette', () => {
       fireEvent.click(originalCommand)
 
       await waitFor(() => {
-        expect(mockWindowOpen).toHaveBeenCalledWith('/api/documents/test-document-slug/original', '_blank', 'noopener,noreferrer')
+        expect(mockWindowOpen).toHaveBeenCalledWith('/api/read/test-document-slug/original', '_blank', 'noopener,noreferrer')
       })
     })
   })

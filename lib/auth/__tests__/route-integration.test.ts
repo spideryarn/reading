@@ -58,7 +58,7 @@ describe('Route Protection Integration Tests', () => {
 
   describe('Document Route Protection Flow', () => {
     it('should demonstrate complete authentication flow for document access', async () => {
-      // Simulate unauthenticated user trying to access /documents/test-doc
+      // Simulate unauthenticated user trying to access /read/test-doc
       const { createServerClient } = await import('@supabase/ssr')
       const { cookies } = await import('next/headers')
       
@@ -80,7 +80,7 @@ describe('Route Protection Integration Tests', () => {
       ;(createServerClient as jest.Mock).mockReturnValue(mockSupabaseClient)
 
       // User tries to access protected route
-      await requireAuth({ returnTo: '/documents/test-doc' })
+      await requireAuth({ returnTo: '/read/test-doc' })
 
       // Should redirect to login with returnTo parameter
       expect(mockRedirect).toHaveBeenCalledWith('/auth/login?next=%2Fdocuments%2Ftest-doc')
@@ -202,10 +202,10 @@ describe('Route Protection Integration Tests', () => {
   describe('Redirect URL Security Integration', () => {
     it('should handle safe redirect after login', () => {
       // User comes from login page with safe redirect
-      const searchParams = new URLSearchParams('next=/documents/test-doc')
+      const searchParams = new URLSearchParams('next=/read/test-doc')
       const redirectUrl = getRedirectUrl(searchParams)
 
-      expect(redirectUrl).toBe('/documents/test-doc')
+      expect(redirectUrl).toBe('/read/test-doc')
     })
 
     it('should prevent malicious redirects after login', () => {
@@ -221,7 +221,7 @@ describe('Route Protection Integration Tests', () => {
       const searchParams = new URLSearchParams('next=%2Fdocuments%2Ftest-doc%2Ftweets')
       const redirectUrl = getRedirectUrl(searchParams)
 
-      expect(redirectUrl).toBe('/documents/test-doc/tweets')
+      expect(redirectUrl).toBe('/read/test-doc/tweets')
     })
   })
 
@@ -315,9 +315,9 @@ describe('Route Protection Integration Tests', () => {
 
   describe('Real-world Route Scenarios', () => {
     it('should handle document page access flow', async () => {
-      // 1. User visits /documents/test-doc (protected)
-      // 2. Gets redirected to /auth/login?next=/documents/test-doc
-      // 3. After login, gets redirected back to /documents/test-doc
+      // 1. User visits /read/test-doc (protected)
+      // 2. Gets redirected to /auth/login?next=/read/test-doc
+      // 3. After login, gets redirected back to /read/test-doc
 
       const { createServerClient } = await import('@supabase/ssr')
       const { cookies } = await import('next/headers')
@@ -341,13 +341,13 @@ describe('Route Protection Integration Tests', () => {
       
       ;(createServerClient as jest.Mock).mockReturnValue(unauthenticatedClient)
       
-      await requireAuth({ returnTo: '/documents/test-doc' })
+      await requireAuth({ returnTo: '/read/test-doc' })
       expect(mockRedirect).toHaveBeenCalledWith('/auth/login?next=%2Fdocuments%2Ftest-doc')
 
       // Step 2: After login, redirect processing
-      const loginParams = new URLSearchParams('next=/documents/test-doc')
+      const loginParams = new URLSearchParams('next=/read/test-doc')
       const redirectUrl = getRedirectUrl(loginParams)
-      expect(redirectUrl).toBe('/documents/test-doc')
+      expect(redirectUrl).toBe('/read/test-doc')
 
       // Step 3: Authenticated access
       const mockUser = {
@@ -399,7 +399,7 @@ describe('Route Protection Integration Tests', () => {
       ;(cookies as jest.Mock).mockResolvedValue(mockCookieStore)
       ;(createServerClient as jest.Mock).mockReturnValue(mockSupabaseClient)
 
-      await requireAuth({ returnTo: '/documents/test-doc/tweets' })
+      await requireAuth({ returnTo: '/read/test-doc/tweets' })
       expect(mockRedirect).toHaveBeenCalledWith('/auth/login?next=%2Fdocuments%2Ftest-doc%2Ftweets')
     })
 

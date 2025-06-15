@@ -14,7 +14,7 @@ interface RouteContext {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   const correlationId = generateCorrelationId()
-  const requestLogger = createRequestLogger('/api/documents/[slug]/download', correlationId)
+  const requestLogger = createRequestLogger('/api/read/[slug]/download', correlationId)
   
   try {
     // Validate authentication first
@@ -163,7 +163,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 // Alternative endpoint for direct file access via signed URL
 export async function HEAD(request: NextRequest, context: RouteContext) {
   const correlationId = generateCorrelationId()
-  const requestLogger = createRequestLogger('/api/documents/[slug]/download', correlationId)
+  const requestLogger = createRequestLogger('/api/read/[slug]/download', correlationId)
   
   try {
     // Validate authentication first

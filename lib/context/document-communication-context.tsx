@@ -50,7 +50,7 @@ export function DocumentCommunicationProvider({ children }: DocumentCommunicatio
   const getDocumentSlug = (): string | null => {
     if (typeof window === 'undefined') return null
     const pathname = window.location.pathname
-    const match = pathname.match(/\/documents\/([^\/]+)/)
+    const match = pathname.match(/\/read\/([^\/]+)/)
     return match ? match[1] : null
   }
 

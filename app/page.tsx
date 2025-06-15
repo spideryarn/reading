@@ -14,7 +14,7 @@ export default function Home() {
           variant="blue"
           size="lg"
         >
-          <Link href="/documents">
+          <Link href="/read">
             Browse Documents
           </Link>
         </Button>

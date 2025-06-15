@@ -476,7 +476,7 @@ export const DocumentApiSecurity = {
   testGetDocument: async (handler: (request: Request) => Promise<Response>, documentId: string, owner: TestUserKey) => {
     // Owner should access successfully
     const ownerResponse = await testSecureApiRoute(handler, {
-      url: `/api/documents/${documentId}`,
+      url: `/api/read/${documentId}`,
       auth: { user: owner },
       expectedStatus: 200,
     })
@@ -485,7 +485,7 @@ export const DocumentApiSecurity = {
     // Non-owner should get 404
     const nonOwner = owner === 'USER_A' ? 'USER_B' : 'USER_A'
     const nonOwnerResponse = await testSecureApiRoute(handler, {
-      url: `/api/documents/${documentId}`,
+      url: `/api/read/${documentId}`,
       auth: { user: nonOwner },
       expectedStatus: 404,
     })
@@ -499,7 +499,7 @@ export const DocumentApiSecurity = {
     // Non-owner should not be able to delete
     const nonOwner = owner === 'USER_A' ? 'USER_B' : 'USER_A'
     const nonOwnerResponse = await testSecureApiRoute(handler, {
-      url: `/api/documents/${documentId}`,
+      url: `/api/read/${documentId}`,
       method: 'DELETE',
       auth: { user: nonOwner },
       expectedStatus: 404,
@@ -508,7 +508,7 @@ export const DocumentApiSecurity = {
 
     // Owner should be able to delete
     const ownerResponse = await testSecureApiRoute(handler, {
-      url: `/api/documents/${documentId}`,
+      url: `/api/read/${documentId}`,
       method: 'DELETE',
       auth: { user: owner },
       expectedStatus: 200,

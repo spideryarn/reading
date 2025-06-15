@@ -469,7 +469,7 @@ const document = findDocumentBySlug(documents, targetSlug)
 ```typescript
 // Document URL generation
 const documentSlug = generateSlug(document.title)
-const url = `/documents/${documentSlug}`
+const url = `/read/${documentSlug}`
 
 // Slug-to-document mapping
 const foundDoc = findDocumentBySlug(allDocuments, urlSlug)

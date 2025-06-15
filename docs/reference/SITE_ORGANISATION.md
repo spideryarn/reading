@@ -34,7 +34,7 @@ Spideryarn Reading is a database-driven, user-centric AI document analysis appli
 ├── Document discovery (for authenticated users)
 └── Authentication prompts for anonymous users
 
-/documents/[slug]/share
+/read/[slug]/share
 ├── Public document sharing (no authentication required)
 ├── Read-only document viewer
 └── SEO-friendly for public content
@@ -72,22 +72,22 @@ Spideryarn Reading is a database-driven, user-centric AI document analysis appli
 └── Session termination and cleanup
 ```
 
-### **Protected Document Routes** (`/documents/*`)
+### **Protected Document Routes** (`/read/*`)
 ```
-/documents
+/read
 ├── User's document library
 ├── Upload workflow entry point
 ├── Document management and deletion
 └── Requires authentication
 
-/documents/[slug]
+/read/[slug]
 ├── Interactive document viewer
 ├── Two-pane resizable layout (navigation/tools + document)
 ├── AI-powered features (summaries, headings, glossary, chat)
 ├── User ownership validation
 └── Full document analysis workflow
 
-/documents/[slug]/tweets
+/read/[slug]/tweets
 ├── AI-generated Twitter thread view
 ├── Thread editing and management
 └── Social media integration features
@@ -308,11 +308,11 @@ Spideryarn Reading is a database-driven, user-centric AI document analysis appli
 5. **Interaction**: Chat, search, and navigation within document viewer
 
 ### **Reading & Analysis Experience**
-1. **Document Selection**: Browse library at `/documents`
+1. **Document Selection**: Browse library at `/read`
 2. **Interface Setup**: Two-pane layout with customisable panel sizes
 3. **Navigation**: Table of contents, AI headings, or search-based navigation
 4. **AI Assistance**: Chat queries, summaries, glossary lookups
-5. **Sharing**: Public sharing via `/documents/[slug]/share` URLs
+5. **Sharing**: Public sharing via `/read/[slug]/share` URLs
 
 ### **Command-Driven Interaction**
 - **Global Command Palette** (Cmd+K): Quick access to all features

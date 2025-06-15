@@ -187,7 +187,7 @@ import { AppHeader } from '@/components/app-header'
 // With navigation
 <AppHeader 
   title="Tweet Thread" 
-  backLink="/documents/example"
+  backLink="/read/example"
   backText="Back to Document"
 />
 

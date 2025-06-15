@@ -28,7 +28,7 @@ export default async function TweetThreadPage({ params }: PageProps) {
   
   // Require authentication for tweet thread access
   await requireAuth({
-    returnTo: `/documents/${slug}/tweets`
+    returnTo: `/read/${slug}/tweets`
   })
   
   const doc = await getDocumentBySlug(slug)
@@ -44,8 +44,8 @@ export default async function TweetThreadPage({ params }: PageProps) {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50">
       <AppHeader 
         title={`${doc.title} - Tweet Thread`}
-        titleLink={`/documents/${slug}`}
-        logoLink="/documents"
+        titleLink={`/read/${slug}`}
+        logoLink="/read"
       />
 
       {/* Content */}
@@ -53,7 +53,7 @@ export default async function TweetThreadPage({ params }: PageProps) {
         {/* Back Button */}
         <div className="mb-8">
           <Link 
-            href={`/documents/${slug}`}
+            href={`/read/${slug}`}
             className="inline-flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-gray-900 px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 hover:border-gray-300 transition-all duration-200"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

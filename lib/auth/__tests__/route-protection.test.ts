@@ -131,7 +131,7 @@ describe('Route Protection Utilities', () => {
         error: null,
       })
 
-      await requireAuth({ returnTo: '/documents/test-doc' })
+      await requireAuth({ returnTo: '/read/test-doc' })
 
       expect(mockRedirect).toHaveBeenCalledWith('/auth/login?next=%2Fdocuments%2Ftest-doc')
     })

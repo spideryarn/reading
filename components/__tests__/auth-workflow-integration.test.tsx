@@ -492,7 +492,7 @@ describe('Authentication Workflow Integration', () => {
       const user = userEvent.setup()
       
       mockSearchParams.get.mockImplementation((key) => 
-        key === 'redirectTo' ? '/documents' : null
+        key === 'redirectTo' ? '/read' : null
       )
       
       mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
@@ -509,7 +509,7 @@ describe('Authentication Workflow Integration', () => {
       await user.click(submitButton!)
 
       await waitFor(() => {
-        expect(mockRouter.push).toHaveBeenCalledWith('/documents')
+        expect(mockRouter.push).toHaveBeenCalledWith('/read')
       })
     })
   })

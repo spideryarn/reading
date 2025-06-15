@@ -31,7 +31,7 @@ Spideryarn Reading uses Supabase Auth with Next.js App Router for secure user re
 
 **Route Protection Philosophy**:
 - Flexible protection for specific routes while leaving others public
-- SEO-friendly public routes like `/documents/[slug]/share`
+- SEO-friendly public routes like `/read/[slug]/share`
 - User experience with `/auth/login?next=/protected/route` redirects
 - Proper 401 status codes for bots accessing protected routes
 
@@ -66,7 +66,7 @@ Spideryarn Reading uses Supabase Auth with Next.js App Router for secure user re
 
 ## Application Integration
 
-**Document Access**: User-scoped documents with `created_by` ownership and public sharing via `/documents/[slug]/share`
+**Document Access**: User-scoped documents with `created_by` ownership and public sharing via `/read/[slug]/share`
 
 **User Profiles**: Automatic profile creation, profile page with document listings, header dropdown navigation
 
@@ -76,7 +76,7 @@ Spideryarn Reading uses Supabase Auth with Next.js App Router for secure user re
 
 **Local Development**: `npx supabase start` → `npm run dev`
 
-**Testing**: Email auth at `/auth/login`, OAuth flow, protected routes at `/documents/[slug]`, profile at `/auth/profile`
+**Testing**: Email auth at `/auth/login`, OAuth flow, protected routes at `/read/[slug]`, profile at `/auth/profile`
 
 **Production**: See `docs/reference/AUTHENTICATION_SETUP.md` for Supabase dashboard, OAuth, and domain configuration
 

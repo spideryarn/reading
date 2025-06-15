@@ -227,7 +227,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
         keywords: ['tweet', 'thread', 'twitter', 'social', 'x'],
         shortcut: [isMac ? '⌘' : 'Ctrl', 'T'],
         category: DOCUMENT_ACTIONS_CATEGORY,
-        action: () => navigateWithErrorHandling(`/documents/${documentSlug}/tweets`),
+        action: () => navigateWithErrorHandling(`/read/${documentSlug}/tweets`),
         icon: TwitterLogo,
       },
       {
@@ -238,7 +238,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
         category: DOCUMENT_ACTIONS_CATEGORY,
         action: () => {
           // Open in new tab like the existing View Original button
-          window.open(`/api/documents/${documentSlug}/original`, '_blank', 'noopener,noreferrer')
+          window.open(`/api/read/${documentSlug}/original`, '_blank', 'noopener,noreferrer')
         },
         icon: FileText,
       },
@@ -251,7 +251,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
       keywords: ['documents', 'list', 'library', 'home'],
       shortcut: [isMac ? '⌘' : 'Ctrl', 'D'],
       category: APP_NAVIGATION_CATEGORY,
-      action: () => navigateWithErrorHandling('/documents'),
+      action: () => navigateWithErrorHandling('/read'),
       icon: House,
     },
     {
@@ -377,7 +377,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
       switch (event.key.toLowerCase()) {
         case 'd':
           event.preventDefault()
-          navigateWithErrorHandling('/documents')
+          navigateWithErrorHandling('/read')
           break
         case 'u':
           event.preventDefault()
