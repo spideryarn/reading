@@ -368,11 +368,15 @@ export default function AddDocumentPage() {
             body: formData
           })
         } else if (input.type === 'html') {
-          formData.append('processingMethod', processing.method)
-          formData.append('provider', processing.provider)
+          // Create new FormData for HTML upload with correct field name
+          const htmlFormData = new FormData()
+          htmlFormData.append('html', input.file)  // API expects 'html' field, not 'file'
+          htmlFormData.append('processingMethod', processing.method)
+          htmlFormData.append('provider', processing.provider)
+          htmlFormData.append('isPublic', processing.isPublic.toString())
           response = await fetch('/api/upload-html', {
             method: 'POST',
-            body: formData
+            body: htmlFormData
           })
         } else {
           throw new Error('Unsupported file type')
