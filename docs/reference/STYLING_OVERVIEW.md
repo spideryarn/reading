@@ -11,6 +11,7 @@ Overview of CSS and visual styling configuration for the Spideryarn Reading appl
 - `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - shadcn/ui component library integration guide
 - `docs/reference/STYLING_OVERLAPPING_TEXT_HIGHLIGHTS.md` - Advanced highlighting implementation with CSS Custom Highlight API
 - `docs/reference/STYLING_COLLAPSIBLE.md` - Comprehensive guide for expand/collapse component patterns
+- `docs/reference/STYLING_MOBILE_PLATFORM_DETECTION.md` - Mobile device detection and responsive design system
 
 ### Implementation Files
 - `lib/config.ts` - UI configuration including theme settings
