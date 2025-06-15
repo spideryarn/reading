@@ -8,6 +8,7 @@ import type {
 } from '@/lib/types/database'
 import type { PromptUsage } from '@/lib/prompts/types'
 import type { JsonObject } from '@/lib/types/json'
+import { parseModelString } from '@/lib/config/models'
 
 export interface AiCallMetrics {
   promptTokens: number
@@ -17,6 +18,7 @@ export interface AiCallMetrics {
   latencyMs: number
 }
 
+// DEPRECATED: Use CreateAiCallWithModelStringOptions instead
 export interface CreateAiCallOptions {
   documentId?: string
   userId: string  // Required for RLS
@@ -28,11 +30,33 @@ export interface CreateAiCallOptions {
   extra?: JsonObject
 }
 
+// NEW: Model string-based interface
+export interface CreateAiCallWithModelStringOptions {
+  documentId?: string
+  userId: string  // Required for RLS
+  modelString: string  // e.g., "anthropic:claude-3-5-haiku:20241022"
+  prompt_type: PromptType
+  input_data?: JsonObject
+  extra?: JsonObject
+}
+
+// DEPRECATED: Use SimpleCreateAiCallWithModelStringOptions instead
 export interface SimpleCreateAiCallOptions {
   userId: string  // Required for RLS
   provider: 'anthropic' | 'google'
   modelId: string
   version: string
+  promptTokens?: number | null
+  completionTokens?: number | null
+  totalTokens?: number | null
+  requestData?: JsonObject
+  responseData?: JsonObject
+}
+
+// NEW: Model string-based simple interface
+export interface SimpleCreateAiCallWithModelStringOptions {
+  userId: string  // Required for RLS
+  modelString: string  // e.g., "anthropic:claude-3-5-haiku:20241022"
   promptTokens?: number | null
   completionTokens?: number | null
   totalTokens?: number | null
@@ -63,7 +87,7 @@ export class AiCallService {
   }
 
   /**
-   * Start tracking an AI call
+   * Start tracking an AI call (DEPRECATED - use startCallWithModelString)
    */
   async startCall(options: CreateAiCallOptions): Promise<AiCall> {
     // Look up model UUID by provider, model ID, and version
@@ -73,6 +97,38 @@ export class AiCallService {
       document_id: options.documentId || null,
       created_by: options.userId,  // Set created_by for RLS
       model_id: modelUuid,
+      prompt_type: options.prompt_type,
+      prompt_input: JSON.stringify(options.input_data || {}),
+      prompt_template: null,
+      status: 'pending',
+      extra: options.extra || {},
+    }
+
+    const { data, error } = await this.supabase
+      .from('ai_calls')
+      .insert(aiCall)
+      .select()
+      .single()
+
+    if (error) {
+      throw new Error(`Failed to create AI call: ${error.message}`)
+    }
+
+    return data
+  }
+
+  /**
+   * Start tracking an AI call using model string
+   */
+  async startCallWithModelString(options: CreateAiCallWithModelStringOptions): Promise<AiCall> {
+    // Validate and parse model string
+    const parsedModel = parseModelString(options.modelString)
+
+    const aiCall: Omit<AiCallInsert, 'id' | 'created_at' | 'updated_at'> = {
+      document_id: options.documentId || null,
+      created_by: options.userId,  // Set created_by for RLS
+      model_string: options.modelString,  // Store model string directly
+      model_id: null, // Not used with model strings
       prompt_type: options.prompt_type,
       prompt_input: JSON.stringify(options.input_data || {}),
       prompt_template: null,
@@ -329,7 +385,7 @@ export class AiCallService {
   }
 
   /**
-   * Simple create method for completed AI calls (used by API routes)
+   * Simple create method for completed AI calls (DEPRECATED - use createWithModelString)
    */
   async create(options: SimpleCreateAiCallOptions): Promise<AiCall> {
     // Look up model UUID by provider, model ID, and version
@@ -339,6 +395,42 @@ export class AiCallService {
       document_id: null, // No document association for this simple method
       created_by: options.userId,  // Set created_by for RLS
       model_id: modelUuid,
+      prompt_type: 'chat', // Default to chat for this simple interface
+      prompt_input: JSON.stringify(options.requestData || {}),
+      prompt_template: null,
+      status: 'success', // Mark as completed immediately
+      completed_at: new Date().toISOString(),
+      prompt_tokens: options.promptTokens,
+      completion_tokens: options.completionTokens,
+      total_tokens: options.totalTokens,
+      extra: options.responseData || {},
+    }
+
+    const { data, error } = await this.supabase
+      .from('ai_calls')
+      .insert(aiCall)
+      .select()
+      .single()
+
+    if (error) {
+      throw new Error(`Failed to create AI call: ${error.message}`)
+    }
+
+    return data
+  }
+
+  /**
+   * Simple create method for completed AI calls using model string
+   */
+  async createWithModelString(options: SimpleCreateAiCallWithModelStringOptions): Promise<AiCall> {
+    // Validate and parse model string
+    const parsedModel = parseModelString(options.modelString)
+
+    const aiCall: Omit<AiCallInsert, 'id' | 'created_at' | 'updated_at'> = {
+      document_id: null, // No document association for this simple method
+      created_by: options.userId,  // Set created_by for RLS
+      model_string: options.modelString,  // Store model string directly
+      model_id: null, // Not used with model strings
       prompt_type: 'chat', // Default to chat for this simple interface
       prompt_input: JSON.stringify(options.requestData || {}),
       prompt_template: null,
