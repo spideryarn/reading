@@ -2,7 +2,7 @@
  * Test suite for HTML sanitization functionality
  * 
  * Tests XSS protection while ensuring academic content preservation
- * Based on research in docs/reference/WEBPAGE_HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md
+ * Based on research in docs/reference/HTML_SANITISATION_AND_PRETTIFICATION.md
  */
 
 import { 

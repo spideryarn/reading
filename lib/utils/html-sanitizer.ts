@@ -8,7 +8,7 @@
  * - Citation formatting and cross-references
  * - Academic typography and semantic markup
  * 
- * Based on research in docs/reference/WEBPAGE_HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md
+ * Based on research in docs/reference/HTML_SANITISATION_AND_PRETTIFICATION.md
  */
 
 import DOMPurify from 'isomorphic-dompurify';

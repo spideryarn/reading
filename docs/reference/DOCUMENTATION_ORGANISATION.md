@@ -57,7 +57,7 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/AUTHENTICATION_DATABASE.md` - Database integration and Row Level Security for authentication
 - `docs/reference/AUTHENTICATION_SECURITY.md` - Security practices and troubleshooting for authentication
 - `docs/reference/AUTHENTICATION_TESTING.md` - Testing authentication flows and security
-- `docs/reference/WEBPAGE_HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md` - Comprehensive guide for HTML sanitization balancing XSS protection with academic content preservation ⭐ **Essential for content security**
+- `docs/reference/HTML_SANITISATION_AND_PRETTIFICATION.md` - Comprehensive guide for HTML sanitisation and prettification balancing XSS protection with academic content preservation ⭐ **Essential for content security**
 
 ### AI Features & Implementation
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide for creating AI/LLM calls using Nunjucks + Zod template system ⭐ **Essential for AI features**
@@ -92,10 +92,8 @@ Available evergreen documentation in `docs/` organised by category:
 ### Content Processing & Search
 - `docs/reference/TOOL_SEARCH_TEXT.md` - Cross-element text search functionality using Mark.js with DOM-based highlighting
 - `docs/reference/UPLOAD.md` - Comprehensive document upload and import system reference covering all ingestion methods ⭐ **Essential for content import**
-- `docs/reference/UPLOAD_HTML_SANITISATION_AND_PRETTIFICATION.md` - Comprehensive guide for HTML sanitisation and prettification with academic content preservation
-- `docs/reference/HTML_DOCUMENT_PROCESSOR.md` - Shared HTML processing service documentation for DRY architecture
+- `docs/reference/HTML_CONTENT_PROCESSING_OVERVIEW.md` - Complete HTML content processing pipeline including extraction, sanitisation, and quality assurance ⭐ **Essential for web content**
 - `docs/reference/PDF_TO_HTML_CONVERSION_OVERVIEW.md` - PDF processing and HTML conversion overview
-- `docs/reference/WEBPAGE_HTML_CONTENT_EXTRACTION.md` - Web content extraction and processing
 - `docs/reference/OPTIMAL_TEXT_FORMATTING.md` - Text formatting standards and typography
 
 ### Strategic Vision & Business

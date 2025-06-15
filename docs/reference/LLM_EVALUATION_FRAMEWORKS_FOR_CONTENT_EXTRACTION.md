@@ -391,6 +391,6 @@ Community consensus: Start with **DeepEval** for better DX or **Ragas** for unli
 - Evaluation run time: <2 minutes
 
 ## Related Documentation
-- [`docs/reference/WEBPAGE_HTML_CONTENT_FIDELITY_TESTING.md`](./WEBPAGE_HTML_CONTENT_FIDELITY_TESTING.md) - Manual testing framework implementation
+- [`docs/reference/HTML_CONTENT_PROCESSING_OVERVIEW.md`](./HTML_CONTENT_PROCESSING_OVERVIEW.md) - Comprehensive HTML processing guide including content fidelity testing
 - [`docs/reference/TESTING_OVERVIEW.md`](./TESTING_OVERVIEW.md) - General testing approach
 - [`app/api/__tests__/extract-url-content-fidelity-static.test.ts`](../../app/api/__tests__/extract-url-content-fidelity-static.test.ts) - Static test implementation example
