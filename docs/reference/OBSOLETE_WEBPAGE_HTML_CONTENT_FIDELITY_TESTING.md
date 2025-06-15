@@ -334,5 +334,5 @@ npm run analyze-fidelity test-documents
 - [`docs/reference/UPLOAD.md`](./UPLOAD.md) - Overall upload system architecture
 - [`docs/reference/TESTING_DATABASE.md`](./TESTING_DATABASE.md) - Database testing patterns
 - [`docs/reference/WEBPAGE_HTML_CONTENT_EXTRACTION.md`](./WEBPAGE_HTML_CONTENT_EXTRACTION.md) - HTML extraction implementation
-- [`docs/reference/WEBPAGE_HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md`](./WEBPAGE_HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md) - Content sanitization
+- [`docs/reference/HTML_SANITISATION_AND_PRETTIFICATION.md`](./HTML_SANITISATION_AND_PRETTIFICATION.md) - Content sanitisation and prettification
 - [`lib/prompts/templates/url-to-html.njk`](../../lib/prompts/templates/url-to-html.njk) - AI extraction prompt template
