@@ -89,6 +89,48 @@ npx playwright test tests/document-upload.spec.ts
 - **Single browser instance**: Cannot test multi-tab scenarios
 - **Slower than Playwright** in benchmarks
 
+### Cypress vs Playwright: Detailed Comparison
+
+**Architecture Differences:**
+- **Cypress**: Runs inside the browser, giving direct access to DOM and browser APIs
+- **Playwright**: Controls browser externally via DevTools Protocol (like Puppeteer)
+
+**Code Comparison - Same Login Test:**
+
+```javascript
+// Cypress
+it('should login', () => {
+  cy.visit('/login')
+  cy.get('#username').type('testuser@example.com')
+  cy.get('#password').type('password123')
+  cy.get('#login-button').click()
+  cy.get('#dashboard').should('be.visible')
+})
+
+// Playwright
+test('should login', async ({ page }) => {
+  await page.goto('/login')
+  await page.fill('#username', 'testuser@example.com')
+  await page.fill('#password', 'password123')
+  await page.click('#login-button')
+  await expect(page.locator('#dashboard')).toBeVisible()
+})
+```
+
+**Key Differences:**
+- **Command syntax**: Cypress uses chainable commands, Playwright uses async/await
+- **Typing behavior**: Cypress `type()` simulates real keystrokes, Playwright `fill()` instantly sets value
+- **Assertions**: Cypress uses `.should()`, Playwright uses `expect()`
+- **Automatic waiting**: Both tools wait automatically, but Playwright waits longer (30s vs 4s default)
+
+**Developer Experience:**
+- **Cypress**: Superior debugging with time-travel, real-time execution view, automatic screenshots
+- **Playwright**: Better for CI/CD, faster execution, but debugging requires more setup
+
+**For AI-Assisted Development:**
+- **Cypress**: More verbose output, slower execution (5-10s per test)
+- **Playwright**: Minimal output options, faster execution (2-5s per test), better for context window management
+
 ### Puppeteer
 
 **Strengths:**
