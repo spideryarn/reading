@@ -25,6 +25,7 @@ see also:
 - Aim to keep changes minimal, and focused on the task at hand.
 - Try to keep things concise, don't over-engineer.
 - Remember YAGNI - but at the same time, it can be useful to understand the overall vision for the product, because that may inform the current design/architecture decisions.
+- If tests are failing, try and understand why. Be wary about removing/modifying the tests just to make them pass. If in doubt, stop & discuss with the user.
 - Keep documentation etc up-to-date as you go.
 - When picking 3rd-party libraries, prefer ones with large communities (so there will be lots of pretraining data for LLMs).
 - If you notice other things that should be changed/updated, ask/suggest to the user.
