@@ -520,6 +520,12 @@ body {
         }
     }
 
+    /* Touch target minimum size for accessibility */
+    .touch-target {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
     /* Element highlight animation for ToC/search navigation */
     .animate-highlight {
         animation: element-highlight 2s ease-out;
