@@ -307,6 +307,7 @@ Coding & infrastructure:
 - `docs/reference/TESTING_SETUP.md` - Test configuration and environment setup
 - `docs/reference/TESTING_TROUBLESHOOTING.md` - Known testing issues and workarounds
 - `docs/reference/TESTING_DATABASE.md` - Database-specific testing patterns including real RLS testing guide with security validation
+- `docs/reference/TESTING_WITH_BROWSER_AUTOMATION.md` - Browser automation options (Playwright recommended over Puppeteer MCP) for E2E testing
 - `docs/reference/UI_INTERFACE.md` - Documents the multi-pane layout with tabbed navigation including four-pane structure, tab system architecture, and scrolling fixes. See related docs below in "AI, features, machinery, interface" section.
 
 Database:
