@@ -21,6 +21,8 @@ import {
   ToolUrlState
 } from '../url-state-types'
 import { shouldPushHistory } from '../url-state'
+import { validateUrlState, logValidationErrors, type ValidationError } from '../url-validation'
+import { showUrlValidationWarnings } from '@/components/global-url-warnings'
 import { debounce } from '@/lib/utils/debounce'
 import { throttle } from '@/lib/utils/throttle'
 
@@ -72,49 +74,71 @@ export function useToolUrlState(): UseToolUrlStateReturn {
   // This handles programmatic tab changes (clicking tabs)
   useEffect(() => {
     if (contextState.activeTabId && contextState.activeTabId !== urlState.tab) {
-      setUrlState({ tab: contextState.activeTabId as TabValue }, {
-        history: 'push' // Tab changes should push history
-      })
+      setState({ tab: contextState.activeTabId as TabValue })
     }
-  }, [contextState.activeTabId]) // Remove urlState.tab from deps to prevent loops
+  }, [contextState.activeTabId, setState]) // Remove urlState.tab from deps to prevent loops
   
-  // Debounced search update (300ms)
-  const debouncedSetSearch = useMemo(
-    () => debounce((query: string) => {
-      setUrlState({ q: query || null }, {
-        history: 'replace' // Typing doesn't push history
-      })
-    }, 300),
-    [setUrlState]
-  )
-  
-  // Throttled scroll update (1000ms)
-  const throttledSetScroll = useMemo(
-    () => throttle((elementId: string) => {
-      setUrlState({ scroll: elementId || null }, {
-        history: 'replace' // Scroll position doesn't push history
-      })
-    }, 1000),
-    [setUrlState]
-  )
-  
-  // Main setState function with history management
-  const setState = useCallback((updates: Partial<ToolUrlState>) => {
-    // Determine history strategy
-    const shouldPush = shouldPushHistory(updates)
+  // Validate initial URL state on mount and URL changes
+  useEffect(() => {
+    const currentState: ToolUrlState = {
+      tab: urlState.tab,
+      term: urlState.term || undefined,
+      q: urlState.q || undefined,
+      type: urlState.type,
+      case: urlState.case,
+      level: urlState.level || undefined,
+      expertise: urlState.expertise || undefined,
+      length: urlState.length || undefined,
+      conversation: urlState.conversation || undefined,
+      highlight: urlState.highlight || undefined,
+      scroll: urlState.scroll || undefined
+    }
     
-    // Handle special case for search submission
-    if ('q' in updates && (updates as any).submitted) {
-      // Remove the submitted flag before setting state
-      const { submitted, ...cleanUpdates } = updates as any
-      setUrlState(cleanUpdates, {
-        history: 'push' // Search submission pushes history
-      })
-      return
+    const validation = validateUrlState(currentState)
+    
+    if (!validation.isValid) {
+      // Log validation errors for debugging
+      logValidationErrors(validation.errors, 'Initial URL validation')
+      
+      // Show user-facing warning
+      showUrlValidationWarnings(validation.errors)
+      
+      // Apply sanitized values to URL
+      setState(validation.sanitized, { skipValidation: true, forceHistory: 'replace' })
     }
+  }, [
+    urlState.tab, urlState.term, urlState.q, urlState.type, urlState.case,
+    urlState.level, urlState.expertise, urlState.length, urlState.conversation,
+    urlState.highlight, urlState.scroll, setState
+  ])
+  
+  // Main setState function with history management and validation
+  const setState = useCallback((updates: Partial<ToolUrlState>, options?: { forceHistory?: 'push' | 'replace'; skipValidation?: boolean }) => {
+    let finalUpdates = updates
+    
+    // Validate parameters unless explicitly skipped
+    if (!options?.skipValidation) {
+      const validation = validateUrlState(updates)
+      
+      if (!validation.isValid) {
+        // Log validation errors for debugging
+        logValidationErrors(validation.errors, 'URL state update')
+        
+        // Show user-facing warning
+        showUrlValidationWarnings(validation.errors)
+        
+        // Use sanitized values instead of original updates
+        finalUpdates = validation.sanitized
+      }
+    }
+    
+    // Use forced history option if provided, otherwise determine from updates
+    const shouldPush = options?.forceHistory === 'push' ? true : 
+                      options?.forceHistory === 'replace' ? false :
+                      shouldPushHistory(finalUpdates)
     
     // Convert undefined values to null for nuqs (null removes the param)
-    const nuqsUpdates = Object.entries(updates).reduce((acc, [key, value]) => {
+    const nuqsUpdates = Object.entries(finalUpdates).reduce((acc, [key, value]) => {
       acc[key as keyof ToolUrlState] = value === undefined ? null : value
       return acc
     }, {} as Record<keyof ToolUrlState, any>)
@@ -123,6 +147,23 @@ export function useToolUrlState(): UseToolUrlStateReturn {
       history: shouldPush ? 'push' : 'replace'
     })
   }, [setUrlState])
+  
+  // Debounced search update (300ms)
+  const debouncedSetSearch = useMemo(
+    () => debounce((query: string) => {
+      setState({ q: query || undefined })
+    }, 300),
+    [setState]
+  )
+  
+  // Throttled scroll update (1000ms)
+  const throttledSetScroll = useMemo(
+    () => throttle((elementId: string) => {
+      setState({ scroll: elementId || undefined })
+    }, 1000),
+    [setState]
+  )
+  
   
   // Clear all URL state
   const clearState = useCallback(() => {
@@ -184,8 +225,14 @@ export function useGlossaryUrlState() {
 export function useSearchUrlState() {
   const { state, setState, setSearch } = useToolUrlState()
   
+  // Search typing update (debounced, replace history)  
+  const updateSearch = useCallback((query: string) => {
+    setSearch(query) // Use the debounced version from useToolUrlState
+  }, [setSearch])
+  
+  // Search submission (immediate, push history)
   const submitSearch = useCallback((query: string) => {
-    setState({ q: query, submitted: true } as any)
+    setState({ q: query || undefined }, { forceHistory: 'push' })
   }, [setState])
   
   const setSearchType = useCallback((type: SearchType) => {
@@ -200,8 +247,8 @@ export function useSearchUrlState() {
     query: state.q,
     searchType: state.type || 'text',
     caseSensitive: state.case || false,
-    setSearch, // Debounced typing update
-    submitSearch, // Push history on submit
+    updateSearch, // Typing updates (replaces history)
+    submitSearch, // Submission (pushes history)
     setSearchType,
     setCaseSensitive
   }
