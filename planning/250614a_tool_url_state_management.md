@@ -1,5 +1,15 @@
 # Tool URL State Management
 
+
+<!--- ADDENDUM 2025-06-15 --------------------------------------------------
+ℹ️ A new planning doc proposes making the URL **the single source of truth for
+tab state** to eliminate bi-directional sync loops.  See
+`planning/250615a_url_state_single_source_of_truth.md` for the complete plan and
+migration stages.  The remainder of this document remains accurate except where
+it refers to two-way URL ↔ context synchronisation, which is now superseded.
+-------------------------------------------------------------------- -->
+
+
 ## Goal
 
 Implement URL-based state management for document tools to enable:
