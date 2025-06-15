@@ -151,11 +151,11 @@ const isDesktop = useMediaQuery({ minWidth: 1025 })
 3. Remove old window.innerWidth checks
 4. Update any conditional styling to use library patterns
 
-### Stage 5: Test Updates
-1. Run existing tests to identify failures
-2. Update test utilities to mock `react-responsive`
-3. Add tests for touch detection logic
-4. Verify all components work correctly
+### Stage 5: Test Updates (Simplified Scope)
+1. Run existing tests to identify any failures from react-responsive usage
+2. Add basic mock for `react-responsive` in test setup if needed
+3. Ensure existing component tests still pass
+4. Skip extensive touch detection tests - library is well-tested
 
 ### Stage 6: Documentation
 1. Update `STYLING_MOBILE_PLATFORM_DETECTION.md`
@@ -189,13 +189,18 @@ const isDesktop = useMediaQuery({ minWidth: 1025 })
 **Complexity Assessment:**
 - Stages 1-3: Low complexity, smooth implementation
 - Stage 4 (Global Migration): Medium complexity - need to find all instances
-- Stage 5 (Tests): Medium complexity - mocking library in tests
+- Stage 5 (Tests): Low complexity - basic mocking only, no extensive touch tests needed
 - Stage 6 (Documentation): Low complexity
 
 **Cost/Benefit Analysis:**
 - Benefits are significant: Better touch device support, cleaner code, reactive updates
 - Costs have been minimal: ~15KB bundle size, straightforward migration
 - Recommendation: Continue with remaining stages
+
+**Stage 5 Scope Reduction:**
+- Decided to simplify test scope - extensive touch detection tests aren't needed
+- The react-responsive library is well-tested and we're using it in straightforward ways
+- Focus on ensuring existing tests don't break rather than adding new touch-specific tests
 
 ## Technical Notes
 
