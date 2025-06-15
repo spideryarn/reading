@@ -4,6 +4,7 @@
 // Adapted from semantic search functionality in unified-left-pane.tsx
 // Treats semantic search results as persistent highlights rather than temporary search results
 // See docs/reference/TOOL_HIGHLIGHT.md for complete semantic highlighting system documentation
+// See docs/reference/ARCHITECTURE_URL_STATE.md for URL state persistence
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'

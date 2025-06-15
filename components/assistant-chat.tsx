@@ -1,5 +1,8 @@
 'use client';
 
+// Assistant chat component with URL state persistence
+// See docs/reference/ARCHITECTURE_URL_STATE.md for URL state management
+
 import { 
   ThreadPrimitive, 
   ComposerPrimitive, 

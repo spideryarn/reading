@@ -1,5 +1,6 @@
 // URL state type definitions for document tools
 // Provides type-safe URL parameter handling with nuqs library
+// See docs/reference/ARCHITECTURE_URL_STATE.md for complete URL state architecture
 
 // Tab values - matches the activeTabId values in unified-left-pane.tsx
 export const TAB_VALUES = [

@@ -16,6 +16,7 @@ export interface DocumentCommunicationState {
   activeTabId: string
   documentSlug: string | null
   // URL state synchronization
+  // See docs/reference/ARCHITECTURE_URL_STATE.md for URL state integration
   urlStateEnabled: boolean
 }
 

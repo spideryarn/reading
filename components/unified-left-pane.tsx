@@ -7,6 +7,9 @@
 // Cross-pane communication: This component uses DocumentCommunicationContext
 // for all inter-component communication. The old DOM event system was removed
 // in favour of React Context for better type safety and React integration.
+//
+// URL state management: Integrates with tool URL state hooks for persistence
+// See docs/reference/ARCHITECTURE_URL_STATE.md for URL state architecture
 
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { AssistantChat } from './assistant-chat'
