@@ -387,3 +387,106 @@ The LLM Model Management Simplification project has achieved 100% completion wit
 - **System Reliability**: Zero data loss during migration with comprehensive validation
 
 **Production Ready**: The system is fully operational and ready for production deployment with all legacy systems cleanly transitioned to the new model string approach.
+
+## Post-Implementation Issues & Findings (2025-06-15)
+
+### Critical Discovery
+After marking the project complete, production usage revealed **incomplete migration** causing 500 errors when generating summaries. Investigation showed:
+
+1. **Service Layer Not Updated**: While API routes were migrated, the database service layer still contains joins to the non-existent `ai_models` table relationship
+2. **Incomplete Schema Migration**: `chat_threads` table still has `model_id` column and foreign key constraint
+3. **Database Types Out of Sync**: TypeScript types show both old and new columns exist
+
+### Root Cause Analysis
+The migration focused on API routes but missed updating:
+- Database service queries that join with `ai_models`
+- Chat functionality that still uses `model_id`
+- Test files that expect `ai_models` relationships
+- Database types regeneration after final migration
+
+### Impact
+- **500 Errors**: Any query with `ai_calls(*, ai_models(*))` fails with "Could not find relationship" error
+- **Broken Features**: Multi-summarise, headings generation, chat thread creation
+- **User Experience**: Frontend retry loops potentially causing React update depth warnings
+
+## Remediation Stages
+
+### Stage 10: Fix Critical Service Layer Issues ✅ COMPLETED
+Fix the immediate 500 errors by updating service layer queries.
+
+- [x] Update EnhancementService queries (2 occurrences)
+  - [x] Line 66: Remove `ai_models(*)` from enhancement get query
+  - [x] Line 95: Remove `ai_models(*)` from getByDocument query
+- [x] Update AiCallService queries (5 occurrences)
+  - [ ] Remove `getModelUuidByProviderAndId()` method entirely (kept for now - still used)
+  - [x] Update `getById()` method - remove `ai_models(*)`
+  - [x] Update `list()` method - remove `ai_models(*)`
+  - [x] Update `getDocumentUsageStats()` - remove `ai_models(*)` and update cost calculation
+  - [x] Update `getRecentCalls()` - remove `ai_models(*)`
+- [x] Update ChatService queries (4 occurrences)
+  - [x] Update `getThread()` - remove `ai_models(*)`
+  - [x] Update `listThreadsByDocument()` - remove `ai_models(*)`
+  - [x] Update `getMessages()` - remove nested `ai_models(*)` from ai_calls join
+  - [x] Update `getRecentThreads()` - remove `ai_models(*)`
+- [x] Test that summary generation works again - Build passes!
+
+### Stage 11: Fix Chat Thread Model Management
+Update chat functionality to use model strings instead of model IDs.
+
+- [ ] Update ChatService interface
+  - [ ] Change `CreateThreadOptions` to use `modelString` instead of `modelId`
+  - [ ] Update `createThread()` to store `model_string`
+- [ ] Update `/api/chat/route.ts`
+  - [ ] Remove `getModelUuidByProviderAndId()` usage
+  - [ ] Pass model string directly to thread creation
+- [ ] Create database migration for chat_threads
+  - [ ] Drop foreign key constraint `chat_threads_model_id_fkey`
+  - [ ] Drop `model_id` column
+  - [ ] Make `model_string` NOT NULL
+- [ ] Test chat functionality end-to-end
+
+### Stage 12: Update Test Files
+Fix all test files that reference the old model system.
+
+- [ ] Update enhancement tests
+  - [ ] Fix mock in `enhancements-semantic-search.test.ts`
+- [ ] Update AI calls tests
+  - [ ] Fix `ai-calls-cost-calculation.test.ts` mocks and logic
+- [ ] Update RLS test utilities
+  - [ ] Change `getTestModelId()` to return model string
+- [ ] Update database schema tests
+  - [ ] Remove `ai_models` table tests
+- [ ] Fix any other test references
+
+### Stage 13: Complete Database Cleanup
+Remove all traces of the old model system from the database.
+
+- [ ] Create migration to drop `ai_models` table
+  - [ ] Verify no remaining foreign key references
+  - [ ] Drop table with CASCADE if needed
+- [ ] Regenerate database types
+  - [ ] Run `npm run db:types`
+  - [ ] Fix any TypeScript errors from updated types
+- [ ] Verify all queries work without `ai_models`
+
+### Stage 14: Final Validation & Cleanup
+Ensure the system is fully migrated and stable.
+
+- [ ] Run full test suite and fix any failures
+- [ ] Manual testing of all AI features
+  - [ ] PDF upload with AI extraction
+  - [ ] URL extraction
+  - [ ] Summary generation
+  - [ ] Chat functionality
+  - [ ] Glossary generation
+- [ ] Remove any remaining deprecated code
+- [ ] Update error handling for model-related operations
+- [ ] Performance testing to confirm improvements
+
+### Stage 15: Documentation Update
+Update documentation to reflect the complete migration.
+
+- [ ] Update this planning document with lessons learned
+- [ ] Create troubleshooting guide for model string issues
+- [ ] Update any API documentation
+- [ ] Move planning doc to finished folder

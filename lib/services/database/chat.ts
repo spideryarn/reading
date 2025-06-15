@@ -65,7 +65,7 @@ export class ChatService {
 
     const { data, error } = await this.supabase
       .from('chat_threads')
-      .select('*, ai_models(*), documents(title)')
+      .select('*, documents(title)')
       .eq('id', id)
       .single()
 
@@ -109,7 +109,7 @@ export class ChatService {
   ): Promise<ChatThread[]> {
     const { data, error } = await this.supabase
       .from('chat_threads')
-      .select('*, ai_models(*)')
+      .select('*')
       .eq('document_id', documentId)
       .order('created_at', { ascending: false })
       .limit(limit)
@@ -175,7 +175,7 @@ export class ChatService {
 
     const { data, error } = await this.supabase
       .from('chat_messages')
-      .select('*, ai_calls(*, ai_models(*))')
+      .select('*, ai_calls(*)')
       .eq('thread_id', threadId)
       .order('sequence_number', { ascending: true })
 
@@ -228,7 +228,7 @@ export class ChatService {
   ): Promise<ChatThread[]> {
     let query = this.supabase
       .from('chat_threads')
-      .select('*, documents(title), ai_models(*)')
+      .select('*, documents(title)')
 
     if (options?.userId) {
       query = query.eq('user_id', options.userId)

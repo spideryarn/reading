@@ -63,7 +63,7 @@ export class EnhancementService {
 
     let query = this.supabase
       .from('document_enhancements')
-      .select('*, ai_calls(*, ai_models(*))')
+      .select('*, ai_calls(*)')
       .eq('document_id', documentId)
       .eq('type', type)
 
@@ -92,7 +92,7 @@ export class EnhancementService {
   async getByDocument(documentId: string): Promise<DocumentEnhancement[]> {
     const { data, error } = await this.supabase
       .from('document_enhancements')
-      .select('*, ai_calls(*, ai_models(*))')
+      .select('*, ai_calls(*)')
       .eq('document_id', documentId)
       .order('created_at', { ascending: true })
 

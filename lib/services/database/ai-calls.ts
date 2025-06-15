@@ -8,6 +8,7 @@ import type {
 } from '@/lib/types/database'
 import type { PromptUsage } from '@/lib/prompts/types'
 import type { JsonObject } from '@/lib/types/json'
+import { getModelConfig } from '@/lib/config/models'
 import { parseModelString } from '@/lib/config/models'
 
 export interface AiCallMetrics {
@@ -241,7 +242,7 @@ export class AiCallService {
   async getById(id: string): Promise<AiCall | null> {
     const { data, error } = await this.supabase
       .from('ai_calls')
-      .select('*, ai_models(*)')
+      .select('*')
       .eq('id', id)
       .single()
 
@@ -266,7 +267,7 @@ export class AiCallService {
     limit?: number
     offset?: number
   }): Promise<AiCall[]> {
-    let query = this.supabase.from('ai_calls').select('*, ai_models(*)')
+    let query = this.supabase.from('ai_calls').select('*')
 
     if (options?.documentId) {
       query = query.eq('document_id', options.documentId)
@@ -312,7 +313,7 @@ export class AiCallService {
   }> {
     const { data, error } = await this.supabase
       .from('ai_calls')
-      .select('*, ai_models(*)')
+      .select('*')
       .eq('document_id', documentId)
       .eq('status', 'success')
 
@@ -332,14 +333,21 @@ export class AiCallService {
     const stats = data.reduce(
       (acc, call) => {
         const tokens = call.total_tokens || 0
-        const model = call.ai_models as Database['public']['Tables']['ai_models']['Row'] | null
 
-        // Calculate cost if model has pricing info
+        // Calculate cost using model string configuration
         let cost = 0
-        if (model && call.prompt_tokens && call.completion_tokens) {
-          cost = 
-            (call.prompt_tokens * (model.input_token_cost || 0)) +
-            (call.completion_tokens * (model.output_token_cost || 0))
+        if (call.model_string && call.prompt_tokens && call.completion_tokens) {
+          try {
+            const modelConfig = getModelConfig(call.model_string)
+            if (modelConfig.pricing) {
+              // Convert from per 1M tokens to per token cost
+              cost = 
+                (call.prompt_tokens * modelConfig.pricing.inputPer1M / 1_000_000) +
+                (call.completion_tokens * modelConfig.pricing.outputPer1M / 1_000_000)
+            }
+          } catch (e) {
+            // Model not found in config, skip cost calculation
+          }
         }
 
         acc.totalCalls++
@@ -372,7 +380,7 @@ export class AiCallService {
   async getRecentCalls(limit: number = 10): Promise<AiCall[]> {
     const { data, error } = await this.supabase
       .from('ai_calls')
-      .select('*, ai_models(*), documents(title)')
+      .select('*, documents(title)')
       .order('created_at', { ascending: false })
       .limit(limit)
 
