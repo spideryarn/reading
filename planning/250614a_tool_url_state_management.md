@@ -111,7 +111,11 @@ Currently, Spideryarn Reading tools maintain state only in memory. Users cannot 
   - [x] Verified state persistence
 
 ### Stage: Additional tool states
-- [ ] Add summary parameters (?level=brief|moderate|detailed)
+- [x] Add summary parameters (?expertise=beginner|intermediate|expert&length=sentence_or_two|single_short_paragraph|page)
+  - [x] Updated URL state types to support multi-dimensional summary
+  - [x] Added expertise and length parsers to use-tool-url-state.ts
+  - [x] Updated useSummaryUrlState hook with new parameters
+  - [x] Integrated URL state into useMultiSummary hook
 - [ ] Add chat state (?conversation=id)
 - [ ] Add highlights state (?highlight=criteria)
 - [ ] Test each tool's URL integration
@@ -309,6 +313,80 @@ function shouldPushForChange(changes: Record<string, any>): boolean {
 - Original unified planning doc (to be deleted): `planning/250613c_unified_tool_architecture_url_state_llm_integration.md`
 
 ## Appendix: Implementation Surprises & Issues
+
+### Journal - June 15, 2025
+
+#### Multi-dimensional Summary URL State Implementation
+- **Completed**: Successfully integrated URL state for multi-dimensional summary with expertise and length parameters
+- **Time spent**: ~30 minutes (much faster than previous stages due to existing infrastructure)
+- **Complexity**: Low - the groundwork from earlier stages made this straightforward
+
+#### Key Observations
+1. **Infrastructure pays off**: The URL state utilities and hooks created in earlier stages made adding new tool states very easy
+2. **Type safety helps**: TypeScript caught potential issues early, ensuring correct parameter types
+3. **Pattern established**: Clear pattern now exists for adding URL state to any tool
+
+#### Minor Issues Encountered
+1. **Parameter naming**: Had to decide between single `level` parameter vs. separate `expertise` and `length` parameters
+   - Chose separate parameters for clarity and flexibility
+   - Old `level` parameter kept for backwards compatibility but marked as deprecated
+
+2. **Default values**: Needed to ensure sensible defaults (intermediate/single_short_paragraph) match user expectations
+
+3. **Testing limitations**: Puppeteer issues continue to prevent automated UI testing
+   - This is becoming a recurring blocker for verification
+   - Manual testing required for each feature
+
+### Progress Summary (as of June 15, 2025)
+
+#### Completed Stages
+1. ✅ **Preparation and sync** - Initial setup
+2. ✅ **Install and setup nuqs** - Library integration  
+3. ✅ **Create URL state utilities** - Core infrastructure
+4. ✅ **Enhance DocumentCommunicationContext** - State synchronization
+5. ✅ **Simple implementation - Tab state** - Basic tab switching
+6. ✅ **Tool state - Glossary** - Term highlighting via URL
+7. ✅ **Complex state - Search** - Query, type, and case sensitivity
+8. ✅ **Additional tool states - Summary** - Multi-dimensional parameters
+
+#### In Progress
+- **Additional tool states** - Chat and highlights remain
+
+#### Remaining Work
+1. **Chat state** (?conversation=id) - Medium complexity
+2. **Highlights state** (?highlight=criteria) - Medium complexity  
+3. **History management refinement** - Low complexity
+4. **Migration and edge cases** - Medium complexity
+5. **Documentation** - Low complexity
+6. **Testing and validation** - High value but blocked by Puppeteer
+7. **Research and refinement** - Optional improvements
+
+### Cost/Benefit Analysis
+
+#### Benefits Achieved
+- ✅ Shareable links for all major tools (glossary, search, summary)
+- ✅ Browser history navigation works intuitively
+- ✅ Clean, human-readable URLs
+- ✅ Minimal performance impact (debouncing/throttling implemented)
+- ✅ Type-safe implementation reduces bugs
+
+#### Remaining Benefits
+- Chat state persistence (conversation continuity)
+- Highlights sharing (collaborative annotation)
+- Better history UX with refined push/replace logic
+- Legacy URL migration for existing bookmarks
+
+#### Costs
+- **Development time**: ~4-5 hours so far, ~2-3 hours remaining
+- **Complexity**: Added URL state layer, but well-encapsulated
+- **Testing debt**: Accumulating due to Puppeteer issues
+- **Maintenance**: More parameters to maintain and document
+
+#### Recommendation
+Continue with remaining tool states (chat, highlights) as the pattern is now well-established and implementation is straightforward. However, we should:
+1. Address Puppeteer testing issues separately
+2. Consider manual testing checklist for URL features
+3. Delay extensive refinement stages until core features are complete
 
 ### Major Issues Discovered & Resolved
 
