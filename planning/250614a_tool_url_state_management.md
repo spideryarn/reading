@@ -589,3 +589,421 @@ The only remaining items are optional refinements and testing improvements block
 
 #### Recommendation
 The feature is production-ready. The remaining items are low-priority refinements that can be addressed as needed. Focus should shift to other high-value features while this implementation proves itself in real usage.
+
+## Appendix: Questions & Decisions Remaining to Discuss
+
+### Critical Architectural Questions
+
+#### 1. History Management - Is Current Implementation Actually Complete?
+
+**Current State Analysis**:
+- Planning doc claims history management is "mostly complete, may just need documentation"
+- However, the centralized `shouldPushForChange()` function shown in examples is NOT implemented in actual codebase
+- Each tool currently handles history decisions independently and inconsistently
+- No centralized decision matrix exists in the code
+
+**Specific Concerns**:
+- **Inconsistent UX**: Different tools may have different history behaviors
+- **Maintenance burden**: History logic scattered across multiple components
+- **Future tool integration**: New tools might implement different patterns
+
+**Questions for Discussion**:
+1. Should we implement the centralized history decision matrix before considering this complete?
+2. Is the current ad-hoc per-tool approach acceptable, or does it create UX inconsistencies?
+3. How important is consistent history behavior across all tools?
+
+**Implementation Options**:
+- **Option A**: Implement centralized `shouldPushForChange()` function as documented in examples
+- **Option B**: Document current per-tool approach as the standard pattern
+- **Option C**: Defer until tool registry provides standardized execution framework
+
+#### 2. Testing Infrastructure - Blocking Future Development?
+
+**Current Situation**:
+- Puppeteer issues are preventing automated UI testing across multiple features
+- Manual testing doesn't scale and misses edge cases
+- URL state is particularly prone to edge cases that automated testing would catch
+- Upcoming tool registry and LLM integration will compound testing needs
+
+**Risk Assessment**:
+- **High Risk**: Manual testing gaps could introduce regressions
+- **Development Velocity**: Testing blockers slow down all future features
+- **Technical Debt**: Testing debt is accumulating across the codebase
+
+**Alternative Testing Approaches**:
+1. **Playwright**: Mentioned in docs as preferred over Puppeteer MCP
+2. **Cypress**: Popular E2E testing framework with good Next.js support
+3. **Unit tests**: Test URL state logic without browser automation
+4. **Integration tests**: Test hooks and utilities in isolation
+5. **Manual testing checklist**: Structured approach as temporary measure
+
+**Questions for Discussion**:
+1. Should we prioritize fixing testing infrastructure before continuing with new features?
+2. What's the acceptable level of manual testing vs automated testing?
+3. Which testing framework should we standardize on?
+
+#### 3. Migration & Edge Cases - Real User Risks?
+
+**Identified Gaps**:
+- **URL length limits**: 2048 character limit could be exceeded with complex states
+- **Invalid parameters**: No validation for malformed URLs or invalid parameter values
+- **Legacy bookmarks**: Users with existing bookmarks could get broken experiences
+- **Error handling**: Components could crash on invalid URL states
+
+**Specific Failure Scenarios**:
+- URL: `?conversation=invalid-uuid-format` → Could crash chat component
+- URL: `?term=very+long+search+term...` → Could exceed URL length limits
+- URL: `?type=invalid-search-type` → Could break search functionality
+- Legacy URL formats from before URL state implementation
+
+**Risk Assessment**:
+- **User Experience**: Broken links and crashes harm user trust
+- **Support Burden**: Invalid URLs generate support requests
+- **SEO/Sharing**: Broken shared links reduce viral adoption
+
+**Questions for Discussion**:
+1. How robust should URL validation be? (Fail-safe vs fail-fast)
+2. Do we have existing users with bookmarks that need legacy support?
+3. Should we implement URL versioning for future migrations?
+4. What's the acceptable level of graceful degradation?
+
+#### 4. Architectural Alignment with Upcoming Projects
+
+**Tool Registry Integration Opportunities**:
+- Registry's `ToolParams` interface could standardize URL state handling
+- `executeTool()` function could automatically manage URL updates
+- Tool metadata could declare supported URL parameters
+- Central validation could be implemented once in the registry
+
+**LLM Function Calling Dependencies**:
+- LLMs will generate URLs to invoke specific tool states
+- URL parameters become part of each tool's "API"
+- Stability and validation become critical for LLM reliability
+- Error handling needs to be robust for programmatic access
+
+**Integration Questions**:
+1. Should we delay tool registry until URL state edge cases are resolved?
+2. Or should we design the registry to abstract URL state complexity?
+3. How should tools declare their URL parameter schemas?
+4. Should URL state validation be centralized in the registry?
+
+### Cost/Benefit Analysis of Remaining Work
+
+#### High Value, Low Effort Items
+1. **Unit tests for URL state hooks** - Doesn't require browser automation, catches logic errors
+2. **Basic URL parameter validation** - Prevents component crashes, improves robustness
+3. **Document existing history behavior** - Clarifies current patterns for future development
+
+#### Medium Value Items
+1. **Centralized history management** - Improves UX consistency but requires refactoring
+2. **Legacy URL adapter** - Important if existing user base exists, otherwise low priority
+3. **URL length handling** - Edge case until you hit it, then critical
+
+#### Lower Value Items
+1. **TypeScript 'any' cleanup** - Code quality improvement, not user-facing
+2. **Research into "better" patterns** - Current implementation works adequately
+3. **Advanced error recovery** - Nice-to-have unless error rates are high
+
+#### Blocked Items
+1. **Comprehensive E2E testing** - High value but blocked by testing infrastructure
+2. **Performance optimization** - Can't measure without proper testing tools
+
+### Strategic Recommendations
+
+#### Immediate Priorities (Before Next Project)
+1. **Resolve testing infrastructure decision** - Affects all future development
+2. **Add basic URL validation** - Prevent crashes with minimal effort
+3. **Document current history patterns** - Establish baseline for consistency
+
+#### Medium-term Considerations (During Tool Registry)
+1. **Integrate URL state with registry architecture** - Avoid duplicate work
+2. **Centralize validation in registry** - Single source of truth
+3. **Standardize tool parameter schemas** - Enable LLM integration
+
+#### Long-term Considerations (Post-LLM Integration)
+1. **URL versioning strategy** - Future-proof for schema changes
+2. **Analytics on URL patterns** - Understand actual usage
+3. **Performance optimization** - Based on real usage data
+
+### Decisions Made (Based on CODING_PRINCIPLES.md)
+
+**User Input Received**:
+- Zero users, no backwards compatibility needed
+- Invalid URLs should show warning dialog + console logs
+- Prioritize robustness over performance
+- Keep things simple/clean
+- Follow "fix root cause" and "raise errors early, clearly & fatally" principles
+
+**Key Architectural Decisions**:
+
+#### 1. History Management: Centralize Everything
+**Decision**: Implement Option A - Route all URL state changes through central function
+- Remove all direct `setUrlState` calls with hardcoded history decisions
+- Enhance central `setState` function to handle debouncing/throttling properly
+- Fix the double-handling of tab changes (lines 75-77 vs central logic)
+
+**Rationale**: Follows "fix root cause" principle - inconsistent application is the root problem
+
+#### 2. Search Submission: Separate Methods Pattern
+**Decision**: Implement Option A - Replace submitted flag with dedicated methods
+- `updateSearch(query)` - debounced, replaces history
+- `submitSearch(query)` - immediate, pushes history  
+- `setSearchPreference(options)` - replaces history
+
+**Rationale**: Type-safe, clear intent, eliminates hacky flag patterns
+
+#### 3. Edge Cases: Fail Fast with Clear Errors
+**Decision**: Implement comprehensive validation with warning dialogs
+- Invalid parameters → Clear error message + console.warn + fallback to defaults
+- URL length limits → Error dialog + console.warn (no silent truncation)
+- Malformed UUIDs → Warning dialog + console.log + clear parameter
+
+**Rationale**: Follows "raise errors early, clearly & fatally" and "never implement silent data modifications"
+
+### Implementation Plan - Refined Priority Actions
+
+#### Stage: Fix Inconsistent Application (HIGH PRIORITY)
+- [ ] Create centralized history management function
+  - [ ] Enhanced `setState` function that handles all timing concerns
+  - [ ] Remove direct `setUrlState` calls from tab sync (lines 75-77)
+  - [ ] Remove direct `setUrlState` calls from debounced search (lines 82-87)
+  - [ ] Route everything through central decision matrix
+- [ ] Add comprehensive unit tests for centralized function
+- [ ] Verify all tools use consistent patterns
+
+#### Stage: Replace Submitted Flag Pattern (HIGH PRIORITY)  
+- [ ] Create separate methods in URL state hooks:
+  - [ ] `updateSearch(query)` - debounced typing updates
+  - [ ] `submitSearch(query)` - Enter key / button submissions
+  - [ ] `setSearchPreference(options)` - case sensitivity, search type
+- [ ] Update search implementation in unified-left-pane.tsx
+  - [ ] Replace `submitSearch(searchQuery)` calls with new pattern
+  - [ ] Update Enter key handler to use dedicated submission method
+- [ ] Remove all `submitted` flag usage and `(changes as any)` casting
+- [ ] Add TypeScript tests for new API
+
+#### Stage: Robust Error Handling (HIGH PRIORITY)
+- [ ] Create URL validation utility with clear error reporting:
+  - [ ] `validateUrlState(state)` - returns validation result with specific errors
+  - [ ] Warning dialog component for invalid URL parameters  
+  - [ ] Console logging for all validation failures
+  - [ ] Graceful fallback to defaults after warning user
+- [ ] Add validation to each URL state hook:
+  - [ ] Tab values validation with fallback to 'original'
+  - [ ] Search type validation with fallback to 'text'  
+  - [ ] UUID format validation for conversation IDs
+  - [ ] Length limits for string parameters (with error, no silent truncation)
+- [ ] Create error boundary for URL state related crashes
+- [ ] Add validation tests covering all edge cases
+
+#### Stage: URL Length Monitoring (MEDIUM PRIORITY)
+- [ ] Add URL length monitoring to central setState function
+  - [ ] Warning when URL approaches 1900 characters
+  - [ ] Error dialog when URL would exceed 2048 characters
+  - [ ] Clear error message explaining which parameters to reduce
+- [ ] Add unit tests for URL length scenarios
+
+#### Stage: Documentation Updates (HIGH PRIORITY)
+- [ ] Update `docs/reference/ARCHITECTURE_URL_STATE.md` with new patterns:
+  - [ ] Document centralized history management approach
+  - [ ] Update search API examples with new separate methods pattern
+  - [ ] Add error handling and validation section
+  - [ ] Update decision matrix with action context information
+  - [ ] Add troubleshooting section for invalid URL scenarios
+- [ ] Update tool-specific documentation:
+  - [ ] `docs/reference/TOOL_SEARCH_TEXT.md` - Update with new search API methods
+  - [ ] `docs/reference/TOOL_GLOSSARY.md` - Update error handling examples
+  - [ ] `docs/reference/TOOL_SUMMARISE.md` - Update validation patterns  
+  - [ ] `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Update conversation ID validation
+- [ ] Update `docs/reference/CODING_GUIDELINES.md`:
+  - [ ] Add section on URL state patterns
+  - [ ] Document error handling standards for URL validation
+  - [ ] Add examples of proper validation vs silent fallbacks
+- [ ] Create `docs/reference/ERROR_HANDLING_URL_STATE.md`:
+  - [ ] Document validation patterns and error dialog usage
+  - [ ] Provide examples of proper error messages
+  - [ ] Console logging standards for debugging
+  - [ ] Integration with error boundaries
+- [ ] Update `docs/reference/TESTING_OVERVIEW.md`:
+  - [ ] Add section on URL state testing patterns
+  - [ ] Document unit test requirements for validation logic
+  - [ ] Integration testing approach for URL state
+- [ ] Update cross-references in implementation files:
+  - [ ] Add references to ERROR_HANDLING_URL_STATE.md in validation utilities
+  - [ ] Update comments in use-tool-url-state.ts with new patterns
+
+#### Stage: Integration Testing (DEFERRED)
+- [ ] Fix testing infrastructure (Puppeteer issues)
+- [ ] Create comprehensive integration tests for URL state
+- [ ] Manual testing checklist as interim measure
+
+### Appendix: Detailed Implementation Specifications
+
+#### A. Centralized History Management Implementation
+
+**New Central Function Signature**:
+```typescript
+interface HistoryAction {
+  type: 'user-input' | 'submission' | 'sync' | 'programmatic'
+  timing?: 'immediate' | 'debounced' | 'throttled'
+  source?: 'typing' | 'click' | 'enter-key' | 'api' | 'url-navigation'
+}
+
+const setState = useCallback((
+  updates: Partial<ToolUrlState>, 
+  action?: HistoryAction
+) => {
+  // Handle timing (debouncing/throttling) within central function
+  // Make history decisions based on action context
+  // Eliminate all bypass patterns
+}, [setUrlState])
+```
+
+**Migration Pattern**:
+```typescript
+// OLD: Direct setUrlState calls
+setUrlState({ tab: newTab }, { history: 'push' })
+
+// NEW: Through central function  
+setState({ tab: newTab }, { type: 'user-input', source: 'click' })
+```
+
+#### B. Search Methods API Specification
+
+**New Hook Interface**:
+```typescript
+export function useSearchUrlState() {
+  return {
+    // State
+    query: string | undefined,
+    searchType: SearchType,
+    caseSensitive: boolean,
+    
+    // Typing updates (debounced, replace history)
+    updateSearch: (query: string) => void,
+    
+    // Submissions (immediate, push history)  
+    submitSearch: (query: string) => void,
+    
+    // Preferences (immediate, replace history)
+    setSearchType: (type: SearchType) => void,
+    setCaseSensitive: (sensitive: boolean) => void,
+    
+    // Clear all
+    clearSearch: () => void
+  }
+}
+```
+
+**Usage Examples**:
+```typescript
+// Typing in input field
+<input onChange={(e) => updateSearch(e.target.value)} />
+
+// Enter key or search button
+<input onKeyDown={(e) => e.key === 'Enter' && submitSearch(query)} />
+
+// Search type toggle
+<select onChange={(e) => setSearchType(e.target.value)} />
+```
+
+#### C. Error Handling Specification
+
+**Validation Function**:
+```typescript
+interface ValidationResult {
+  isValid: boolean
+  errors: Array<{
+    parameter: string
+    value: any
+    error: string
+    fallback: any
+  }>
+  sanitized: ToolUrlState
+}
+
+function validateUrlState(state: ToolUrlState): ValidationResult {
+  const errors = []
+  const sanitized = { ...state }
+  
+  // Validate each parameter with specific error messages
+  if (state.tab && !isValidTabValue(state.tab)) {
+    errors.push({
+      parameter: 'tab',
+      value: state.tab,
+      error: `Invalid tab "${state.tab}". Must be one of: ${TAB_VALUES.join(', ')}`,
+      fallback: 'original'
+    })
+    sanitized.tab = 'original'
+  }
+  
+  // ... other validations
+  
+  return {
+    isValid: errors.length === 0,
+    errors,
+    sanitized
+  }
+}
+```
+
+**Error Dialog Component**:
+```typescript
+function InvalidUrlWarning({ errors }: { errors: ValidationError[] }) {
+  return (
+    <Dialog>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Invalid URL Parameters</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2">
+          <p>Some URL parameters were invalid and have been corrected:</p>
+          <ul className="list-disc pl-6 space-y-1">
+            {errors.map(error => (
+              <li key={error.parameter}>
+                <strong>{error.parameter}</strong>: {error.error}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+```
+
+#### D. Testing Strategy
+
+**Unit Tests Required**:
+- Central history decision logic with all timing scenarios
+- Search methods API with debouncing/submission distinctions  
+- URL validation with all parameter types and edge cases
+- Error handling with fallback behaviors
+
+**Integration Tests (Manual Initially)**:
+- All tools work with centralized system
+- Browser history navigation functions correctly
+- Error dialogs appear for invalid URLs
+- Console logging works for debugging
+
+### Risk Assessment
+
+**Implementation Risks**:
+- **Timing changes**: Debouncing/throttling behavior might change during centralization
+- **React re-render loops**: Centralized function needs careful dependency management
+- **Breaking changes**: New search API requires updating all callsites
+- **Documentation drift**: Multiple docs need updates and could get out of sync
+
+**Mitigation Strategies**:
+- Implement incrementally with thorough testing at each step
+- Maintain backward compatibility during transition period
+- Add comprehensive logging for debugging timing issues
+- Update documentation in parallel with implementation (not after)
+- Add cross-references between related docs to catch inconsistencies
+
+**Success Criteria**:
+- All URL state changes go through central decision matrix
+- No more `(changes as any)` type casting anywhere
+- Clear error messages for all invalid URL scenarios  
+- Console logs provide actionable debugging information
+- No performance degradation from additional validation
