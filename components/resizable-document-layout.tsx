@@ -9,6 +9,7 @@
 // DOM event dispatching was removed in favour of React Context patterns.
 
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { useMediaQuery } from 'react-responsive'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { ImperativePanelHandle } from 'react-resizable-panels'
 import { UnifiedLeftPane } from './unified-left-pane'
@@ -117,53 +118,39 @@ function ResizableDocumentLayoutInner({
   const { actions, state } = useDocumentCommunication()
   const toolUrlState = useToolUrlState() // Sync URL state with DocumentCommunicationContext
   
-  // Viewport flags – start with "desktop" defaults (avoids hydration mismatch).
-  // Real values are applied immediately after mount via the resize effect below.
-  const [isMobile, setIsMobile] = useState(false)
-  const [isLandscape, setIsLandscape] = useState(false)
+  // Viewport detection using react-responsive
+  const isMobile = useMediaQuery({ maxWidth: 640 })
+  const isLandscape = useMediaQuery({ maxHeight: 500 })
+  
+  // Touch capability detection
+  const canHover = useMediaQuery({ query: '(hover: hover)' })
+  const hasTouch = useMediaQuery({ query: '(pointer: coarse)' })
+  
+  // State management
   const [isLeftPaneCollapsed, setIsLeftPaneCollapsed] = useState(false)
   const [savedLeftPaneSize, setSavedLeftPaneSize] = useState(30) // Remember the last size
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
   const leftPanelRef = useRef<ImperativePanelHandle>(null)
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
-  // Keep viewport + collapsed flags in sync with the real DOM state.
-  // 1. Detect current mobile / landscape breakpoints
-  // 2. Read the actual left-pane size via the ref to decide if it is
-  //    collapsed (size === 0). This covers cases where the resizable
-  //    library auto-collapses based on available space.
-  // 3. On very small screens (< 640 px) ensure the pane starts collapsed
-  //    to maximise reading width.
+  // Keep collapsed state in sync with panel state and handle auto-collapse on mobile
   useEffect(() => {
-    const syncLayout = () => {
-      const mobile = window.innerWidth <= 640
-      const landscape = window.innerHeight <= 500
+    if (leftPanelRef.current) {
+      const currentSize = leftPanelRef.current.getSize()
+      const paneIsCollapsed = currentSize === 0
+      setIsLeftPaneCollapsed(paneIsCollapsed)
 
-      setIsMobile(mobile)
-      setIsLandscape(landscape)
-
-      if (leftPanelRef.current) {
-        const currentSize = leftPanelRef.current.getSize()
-        const paneIsCollapsed = currentSize === 0
-        setIsLeftPaneCollapsed(paneIsCollapsed)
-
-        // Auto-collapse on very small view-ports if not already collapsed
-        if (mobile && !paneIsCollapsed) {
-          if (typeof (leftPanelRef.current as any).collapse === 'function') {
-            ;(leftPanelRef.current as any).collapse()
-          } else {
-            leftPanelRef.current.resize(0)
-          }
-          setIsLeftPaneCollapsed(true)
+      // Auto-collapse on mobile if not already collapsed
+      if (isMobile && !paneIsCollapsed) {
+        if (typeof (leftPanelRef.current as any).collapse === 'function') {
+          ;(leftPanelRef.current as any).collapse()
+        } else {
+          leftPanelRef.current.resize(0)
         }
+        setIsLeftPaneCollapsed(true)
       }
     }
-
-    // Run once on mount and then on every resize.
-    syncLayout()
-    window.addEventListener('resize', syncLayout)
-    return () => window.removeEventListener('resize', syncLayout)
-  }, [])
+  }, [isMobile]) // React to mobile state changes
   
   // Handle heading clicks from ToC
   const handleHeadingClick = useCallback((headingText: string, headingId?: string) => {
