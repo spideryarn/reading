@@ -230,3 +230,29 @@ export function useSummaryUrlState() {
     setLengthLevel
   }
 }
+
+export function useChatUrlState() {
+  const { state, setState } = useToolUrlState()
+  
+  const setConversation = useCallback((conversationId: string | null) => {
+    setState({ conversation: conversationId || undefined })
+  }, [setState])
+  
+  return {
+    conversationId: state.conversation,
+    setConversation
+  }
+}
+
+export function useHighlightsUrlState() {
+  const { state, setState } = useToolUrlState()
+  
+  const setHighlight = useCallback((criterion: string | null) => {
+    setState({ highlight: criterion || undefined })
+  }, [setState])
+  
+  return {
+    highlightCriterion: state.highlight,
+    setHighlight
+  }
+}

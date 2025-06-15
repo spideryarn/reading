@@ -12,6 +12,8 @@ import { User, Robot, PaperPlaneTilt, CircleNotch, ArrowClockwise } from '@phosp
 import { usePersistentChat } from '@/src/lib/hooks/usePersistentChat';
 import { Button } from '@/components/ui/button'
 import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
+import { useChatUrlState } from '@/lib/tools/hooks/use-tool-url-state';
+import { useEffect } from 'react';
 
 interface AssistantChatProps {
   documentId: string;
@@ -152,10 +154,20 @@ function Thread() {
 }
 
 export function AssistantChat({ documentId, documentContext }: AssistantChatProps) {
+  const { conversationId, setConversation } = useChatUrlState();
+  
   const { runtime, isLoaded, threadId, error, isRefreshing, refreshMessages } = usePersistentChat({ 
     documentId, 
-    documentContext 
+    documentContext,
+    conversationId
   });
+  
+  // Sync threadId to URL when it changes
+  useEffect(() => {
+    if (threadId && threadId !== conversationId) {
+      setConversation(threadId);
+    }
+  }, [threadId, conversationId, setConversation]);
 
   // Show loading state while initializing
   if (!isLoaded) {

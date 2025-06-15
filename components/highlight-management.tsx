@@ -16,6 +16,7 @@ import {
 } from '@phosphor-icons/react'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
 import { getSemanticHighlightIntensity } from '@/lib/utils/semantic-highlighting'
+import { useHighlightsUrlState } from '@/lib/tools/hooks/use-tool-url-state'
 import type { DocumentElement } from '@/lib/types/document'
 
 // Highlight interface matching semantic search result structure
@@ -63,8 +64,11 @@ export function HighlightManagement({
 }: HighlightManagementProps) {
   const { actions } = useDocumentCommunication()
   
-  // Core state
-  const [criterion, setCriterion] = useState('')
+  // URL state for highlight criterion
+  const { highlightCriterion, setHighlight } = useHighlightsUrlState()
+  
+  // Core state - initialize criterion from URL if available
+  const [criterion, setCriterion] = useState(highlightCriterion || '')
   const [highlights, setHighlights] = useState<Highlight[]>([])
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -219,6 +223,17 @@ export function HighlightManagement({
     }
   }, [documentId, actions, fetchQueryHistory, updateSemanticHighlights])
 
+  // Load highlights from URL criterion when component mounts or URL changes
+  useEffect(() => {
+    if (highlightCriterion && highlightCriterion !== criterion) {
+      setCriterion(highlightCriterion)
+      // Auto-trigger highlight creation for URL criterion
+      if (highlightCriterion.trim()) {
+        createHighlights(highlightCriterion)
+      }
+    }
+  }, [highlightCriterion, criterion, createHighlights])
+
   // Sort highlights function
   const sortHighlights = useCallback((highlights: Highlight[], sortByIntensity: boolean) => {
     return [...highlights].sort((a, b) => {
@@ -291,8 +306,10 @@ export function HighlightManagement({
   const triggerHighlightCreation = useCallback(() => {
     if (criterion.trim()) {
       createHighlights(criterion)
+      // Update URL with the highlight criterion
+      setHighlight(criterion)
     }
-  }, [criterion, createHighlights])
+  }, [criterion, createHighlights, setHighlight])
 
   // Handle Enter key in criterion input
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -327,7 +344,10 @@ export function HighlightManagement({
     setHighlightsCached(false)
     setHighlightsCachedAt(null)
     setError(null)
-  }, [clearSemanticHighlights])
+    setCriterion('')
+    // Clear URL state
+    setHighlight(null)
+  }, [clearSemanticHighlights, setHighlight])
 
   return (
     <div className="flex flex-col h-full">
@@ -398,6 +418,8 @@ export function HighlightManagement({
                         setShowQueryHistory(false)
                         // Auto-trigger highlighting for historical query
                         createHighlights(historyItem.query)
+                        // Update URL with the selected historical query
+                        setHighlight(historyItem.query)
                       }}
                       className="w-full text-left px-2 py-2 text-sm rounded hover:bg-gray-50 transition-colors"
                     >

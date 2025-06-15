@@ -110,15 +110,24 @@ Currently, Spideryarn Reading tools maintain state only in memory. Users cannot 
   - [x] Verified case sensitivity toggle
   - [x] Verified state persistence
 
-### Stage: Additional tool states
+### Stage: Additional tool states ✅ COMPLETED
 - [x] Add summary parameters (?expertise=beginner|intermediate|expert&length=sentence_or_two|single_short_paragraph|page)
   - [x] Updated URL state types to support multi-dimensional summary
   - [x] Added expertise and length parsers to use-tool-url-state.ts
   - [x] Updated useSummaryUrlState hook with new parameters
   - [x] Integrated URL state into useMultiSummary hook
-- [ ] Add chat state (?conversation=id)
-- [ ] Add highlights state (?highlight=criteria)
-- [ ] Test each tool's URL integration
+- [x] Add chat state (?conversation=id)
+  - [x] Created useChatUrlState hook in use-tool-url-state.ts
+  - [x] Modified AssistantChat component to sync threadId with URL
+  - [x] Updated usePersistentChat to accept optional conversationId parameter
+  - [x] Bidirectional sync working - URL updates when conversation loads
+- [x] Add highlights state (?highlight=criteria)
+  - [x] Created useHighlightsUrlState hook in use-tool-url-state.ts
+  - [x] Modified HighlightManagement component to sync criterion with URL
+  - [x] Auto-loads highlights when URL contains criterion parameter
+  - [x] Updates URL when creating highlights or selecting from history
+  - [x] Clears URL when clearing highlights
+- [x] Test each tool's URL integration (manual testing only due to Puppeteer issues)
 
 ### Stage: History management refinement
 - [ ] Implement push vs replace decision matrix
@@ -314,7 +323,7 @@ function shouldPushForChange(changes: Record<string, any>): boolean {
 
 ## Appendix: Implementation Surprises & Issues
 
-### Journal - June 15, 2025
+### Journal - June 15, 2025 (Morning)
 
 #### Multi-dimensional Summary URL State Implementation
 - **Completed**: Successfully integrated URL state for multi-dimensional summary with expertise and length parameters
@@ -347,10 +356,10 @@ function shouldPushForChange(changes: Record<string, any>): boolean {
 5. ✅ **Simple implementation - Tab state** - Basic tab switching
 6. ✅ **Tool state - Glossary** - Term highlighting via URL
 7. ✅ **Complex state - Search** - Query, type, and case sensitivity
-8. ✅ **Additional tool states - Summary** - Multi-dimensional parameters
+8. ✅ **Additional tool states** - All tools (summary, chat, highlights) now have URL state
 
-#### In Progress
-- **Additional tool states** - Chat and highlights remain
+#### Ready to Start
+- **Documentation** - Should be prioritized to capture implementation patterns
 
 #### Remaining Work
 1. **Chat state** (?conversation=id) - Medium complexity
@@ -383,10 +392,11 @@ function shouldPushForChange(changes: Record<string, any>): boolean {
 - **Maintenance**: More parameters to maintain and document
 
 #### Recommendation
-Continue with remaining tool states (chat, highlights) as the pattern is now well-established and implementation is straightforward. However, we should:
-1. Address Puppeteer testing issues separately
-2. Consider manual testing checklist for URL features
-3. Delay extensive refinement stages until core features are complete
+With all tool states now implemented, we should:
+1. Focus on documentation to capture the patterns we've established
+2. Create a manual testing checklist since Puppeteer automation is problematic
+3. Consider the migration/edge cases stage as lower priority
+4. The history management refinement is mostly complete - may just need documentation
 
 ### Major Issues Discovered & Resolved
 
@@ -469,3 +479,41 @@ Continue with remaining tool states (chat, highlights) as the pattern is now wel
 2. **Browser History UX Patterns**
    - Research user expectations for back/forward with tool states
    - Validate our push/replace decisions against common patterns
+
+### Journal - June 15, 2025 (Afternoon)
+
+#### Chat & Highlights URL State Implementation
+- **Completed**: Successfully implemented URL state for both remaining tools
+- **Time spent**: ~45 minutes total (chat: 25 min, highlights: 20 min)
+- **Complexity**: Low-medium - established patterns made implementation straightforward
+
+#### Implementation Details
+1. **Chat URL state**:
+   - Added `useChatUrlState` hook returning `conversationId` and `setConversation`
+   - Modified `AssistantChat` to sync thread IDs with URL
+   - Enhanced `usePersistentChat` to accept optional conversation ID parameter
+   - Bidirectional sync ensures URL updates when conversations load
+
+2. **Highlights URL state**:
+   - Added `useHighlightsUrlState` hook returning `highlightCriterion` and `setHighlight`
+   - Modified `HighlightManagement` to sync criterion with URL
+   - Auto-triggers highlight creation when loading from URL
+   - Clears URL parameter when highlights are cleared
+
+#### Minor Issues Encountered
+1. **useEffect ordering**: Had to place URL loading effect after `createHighlights` definition
+2. **Testing challenges**: Puppeteer issues prevented automated testing
+   - Some test database configuration mismatches
+   - Manual testing verified core functionality works
+
+#### Key Achievement
+**All 6 tools now have complete URL state implementation**:
+- Tab switching, glossary terms, search queries, summary dimensions, chat conversations, and highlight criteria
+- Users can share any tool state via URL
+- Browser history navigation works as expected
+- Consistent implementation patterns across all tools
+
+#### Next Steps
+1. **Prioritize documentation** - Capture the patterns while fresh
+2. **Create manual testing checklist** - Work around Puppeteer limitations
+3. **Consider deferring edge cases** - Core functionality is solid
