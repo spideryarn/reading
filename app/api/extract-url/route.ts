@@ -9,7 +9,7 @@ import { createUrlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
 import { createPdfToHtmlPrompt } from '@/lib/prompts/templates/pdf-to-html-direct'
 import { createClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { getModelConfig, getModelVersion, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
+import { AI_CONFIG, getModelForAICall } from '@/lib/config'
 import { generateSlug, generateHtmlFilename } from '@/lib/utils/slug'
 import { URL_EXTRACTION_CONFIG } from '@/lib/config'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
@@ -176,23 +176,19 @@ async function processPdfFromUrl(
   const providerDisplayName = provider === 'gemini' ? 'Gemini 1.5 Pro' : 'Claude 4 Sonnet'
   
   // Get model configuration for AI call tracking
-  const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
-  const modelConfig = getModelConfig(tierKey)
-  const modelVersion = getModelVersion(tierKey)
+  const { modelString, config: modelConfig } = getModelForAICall()
   
   // Create AI call record for tracking (before LLM processing)
   const startTime = Date.now()
-  const aiCall = await aiCallService.startCall({
+  const aiCall = await aiCallService.startCallWithModelString({
     userId: user.id,  // Pass user ID for RLS
-    provider: modelConfig.provider,
-    modelId: modelConfig.modelId,
-    version: modelVersion,
+    modelString: modelString,
     prompt_type: 'pdf-to-html',
     input_data: {
       source_url: sourceUrl,
       file_size_bytes: pdfBuffer.length,
       provider_requested: provider,
-      tier_used: tierKey
+      model_used: modelString
     }
   })
   
@@ -201,7 +197,7 @@ async function processPdfFromUrl(
     correlationId,
     step: 'pdf-to-html-conversion',
     provider: providerDisplayName,
-    modelId: modelConfig.modelId,
+    modelString: modelString,
     aiCallId: aiCall.id
   }, 'Starting PDF to HTML conversion using AI')
 
@@ -270,7 +266,7 @@ async function processPdfFromUrl(
       // URL→PDF-specific metadata fields
       processing_time_ms: processingTime,
       file_size_bytes: pdfBuffer.length,
-      model_used: modelConfig.modelId,
+      model_used: modelString,
       original_url: sourceUrl,
       content_type_detected: 'application/pdf',
       auto_detected: true
@@ -581,23 +577,19 @@ export async function POST(request: NextRequest) {
       extractionMethodUsed = 'ai-transcription'
       
       // Get model configuration for AI call tracking
-      const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
-      const modelConfig = getModelConfig(tierKey)
-      const modelVersion = getModelVersion(tierKey)
+      const { modelString, config: modelConfig } = getModelForAICall()
       
       // Create AI call record for tracking (before LLM processing)
       const startTime = Date.now()
-      aiCall = await aiCallService.startCall({
+      aiCall = await aiCallService.startCallWithModelString({
         userId: user.id,  // Pass user ID for RLS
-        provider: modelConfig.provider,
-        modelId: modelConfig.modelId,
-        version: modelVersion,
+        modelString: modelString,
         prompt_type: 'url-to-html',
         input_data: {
           source_url: url,
           content_size_bytes: htmlContent.length,
           provider_requested: provider,
-          tier_used: tierKey
+          model_used: modelString
         }
       })
       
@@ -715,9 +707,8 @@ export async function POST(request: NextRequest) {
     
     // Add AI-specific metadata if AI transcription was used
     if (extractionMethodUsed === 'ai-transcription') {
-      const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
-      const modelConfig = getModelConfig(tierKey)
-      ;(urlMetadata as typeof urlMetadata & { model_used?: string }).model_used = modelConfig.modelId
+      const { modelString } = getModelForAICall()
+      ;(urlMetadata as typeof urlMetadata & { model_used?: string }).model_used = modelString
     }
     
     const { document } = await processHtmlToDocument(

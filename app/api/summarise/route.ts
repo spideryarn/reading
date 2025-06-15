@@ -7,7 +7,7 @@ import { summarisePrompt, getMaxTokensForGranularity, getGranularityInstruction 
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { getModelConfig, getModelVersion, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
+import { AI_CONFIG, getModelForAICall } from '@/lib/config'
 import { createRequestLogger, createTimer, logAIOperation, generateCorrelationId } from '@/lib/services/logger'
 import { validateAuth } from '@/lib/auth/server-auth'
 
@@ -195,26 +195,22 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Resolve tier key to actual model details using config
-    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
-    const modelConfig = getModelConfig(tierKey)
-    const modelVersion = getModelVersion(tierKey)
+    // Get model configuration for AI call tracking
+    const { modelString, config: modelConfig } = getModelForAICall()
     
     // Start tracking AI call for metrics
     let aiCall
     try {
-      aiCall = await aiCallService.startCall({
+      aiCall = await aiCallService.startCallWithModelString({
         userId: user.id,
         documentId,
-        provider: modelConfig.provider,
-        modelId: modelConfig.modelId,
-        version: modelVersion,
+        modelString: modelString,
         prompt_type: 'summarise',
         input_data: { 
           content_length: content.length,
           granularity,
           section_id: sectionId,
-          tier_used: tierKey
+          model_used: modelString
         }
       })
     } catch (aiCallError) {
@@ -232,7 +228,7 @@ export async function POST(request: NextRequest) {
       requestLogger.info({
         aiCallId: aiCall.id,
         modelProvider: modelConfig.provider,
-        modelId: modelConfig.modelId,
+        modelString: modelString,
         contentLength: content.length,
         granularity,
         sectionId
@@ -279,7 +275,7 @@ export async function POST(request: NextRequest) {
               granularity,
               sectionId,
               generatedAt: new Date().toISOString(),
-              modelUsed: modelConfig.modelId
+              modelUsed: modelString
             }
           },
           cacheKey

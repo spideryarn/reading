@@ -13,7 +13,7 @@ import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { DocumentParser } from '@/lib/services/document-parser'
-import { getModelConfig, getModelVersion, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
+import { AI_CONFIG, getModelForAICall } from '@/lib/config'
 import { normalizeSemanticSearchQuery } from '@/lib/utils/semantic-search'
 import { 
   formatDocumentForSemanticSearch, 
@@ -292,25 +292,21 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Resolve tier key to actual model details using config
-    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
-    const modelConfig = getModelConfig(tierKey)
-    const modelVersion = getModelVersion(tierKey)
+    // Get model configuration for AI call tracking
+    const { modelString, config: modelConfig } = getModelForAICall()
     
     // Create AI call record for tracking
-    const aiCall = await aiCallService.startCall({
+    const aiCall = await aiCallService.startCallWithModelString({
       userId: user.id,
       documentId,
-      provider: modelConfig.provider,
-      modelId: modelConfig.modelId,
-      version: modelVersion,
+      modelString: modelString,
       prompt_type: 'semantic-search',
       input_data: { 
         query,
         content_length: annotatedContent.length,
         elements_count: stats.meaningfulElements,
         estimated_tokens: estimatedTokens,
-        tier_used: tierKey
+        model_used: modelString
       }
     })
     
@@ -328,7 +324,7 @@ export async function POST(request: NextRequest) {
       const aiDuration = aiTimer.end({
         documentId,
         modelProvider: modelConfig.provider,
-        modelId: modelConfig.modelId,
+        modelString: modelString,
         tokensUsed: llmResult.usage?.totalTokens,
         correlationId
       })
@@ -346,7 +342,7 @@ export async function POST(request: NextRequest) {
         documentId,
         aiCallId: aiCall.id,
         modelProvider: modelConfig.provider,
-        modelId: modelConfig.modelId,
+        modelString: modelString,
         tokensUsed: llmResult.usage?.totalTokens,
         duration: aiDuration,
         correlationId 
