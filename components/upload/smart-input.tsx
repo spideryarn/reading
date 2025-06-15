@@ -12,6 +12,7 @@ interface SmartInputProps {
   onUrlChange: (url: string) => void
   onFileChange: (file: File | null) => void
   onFileDrop: (file: File) => void
+  onValidationError: (error: string) => void
   placeholder: string
   error: string
   isProcessing: boolean
@@ -25,6 +26,7 @@ export function SmartInput({
   onUrlChange,
   onFileChange,
   onFileDrop,
+  onValidationError,
   placeholder,
   error,
   isProcessing,
@@ -62,15 +64,47 @@ export function SmartInput({
 
     const files = Array.from(e.dataTransfer.files)
     if (files.length > 0) {
-      onFileDrop(files[0]) // Take the first file
+      const file = files[0]
+      // Validate file type before dropping
+      if (validateFileType(file)) {
+        onFileDrop(file)
+      }
     }
+  }
+
+  // File validation helper
+  const validateFileType = (file: File): boolean => {
+    const allowedTypes = ['application/pdf', 'text/html']
+    const allowedExtensions = ['.pdf', '.html', '.htm']
+    const maxSize = 50 * 1024 * 1024 // 50MB limit
+    
+    // Check file size
+    if (file.size > maxSize) {
+      onValidationError(`File size (${(file.size / 1024 / 1024).toFixed(1)}MB) exceeds the 50MB limit`)
+      return false
+    }
+    
+    const isValidType = allowedTypes.includes(file.type)
+    const isValidExtension = allowedExtensions.some(ext => 
+      file.name.toLowerCase().endsWith(ext)
+    )
+    
+    if (!isValidType && !isValidExtension) {
+      onValidationError(`Unsupported file type: ${file.name}. Please select a PDF or HTML file.`)
+      return false
+    }
+    
+    return true
   }
 
   // Handle file input change
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files && files.length > 0) {
-      onFileChange(files[0])
+      const file = files[0]
+      if (validateFileType(file)) {
+        onFileChange(file)
+      }
     }
   }
 
@@ -116,14 +150,14 @@ export function SmartInput({
     <div className="space-y-2">
       {/* Smart Input Area */}
       <div
-        className={`relative border-2 border-dashed rounded-lg transition-all duration-200 ${
+        className={`relative border-2 border-dashed rounded-lg transition-all duration-300 ease-in-out ${
           isDragging
-            ? 'border-orange-400 bg-orange-50'
+            ? 'border-orange-400 bg-orange-50 scale-[1.02] shadow-lg'
             : error
             ? 'border-red-300 bg-red-50'
             : value.type
-            ? 'border-green-300 bg-green-50'
-            : 'border-gray-300 bg-gray-50 hover:border-gray-400'
+            ? 'border-green-300 bg-green-50 shadow-sm'
+            : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
         } ${!value.url && !value.file ? 'cursor-pointer' : ''}`}
         onDragOver={handleDragOver}
         onDragEnter={handleDragEnter}
@@ -131,14 +165,14 @@ export function SmartInput({
         onDrop={handleDrop}
         onClick={handleClick}
       >
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {/* File display when file is selected */}
           {value.file && (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                {getInputIcon()}
-                <div>
-                  <p className="font-medium text-gray-900">{value.file.name}</p>
+            <div className="flex items-center justify-between animate-in fade-in duration-300">
+              <div className="flex items-center space-x-3 min-w-0 flex-1">
+                <div className="transition-all duration-200">{getInputIcon()}</div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-gray-900 truncate">{value.file.name}</p>
                   <p className="text-sm text-gray-500">
                     {(value.file.size / 1024 / 1024).toFixed(2)} MB • {value.type?.toUpperCase()}
                   </p>
@@ -149,7 +183,7 @@ export function SmartInput({
                   e.stopPropagation()
                   handleClear()
                 }}
-                className="p-1 rounded-full hover:bg-gray-200 transition-colors"
+                className="p-1 rounded-full hover:bg-gray-200 transition-all duration-200 hover:scale-110"
                 disabled={isProcessing}
               >
                 <X size={16} className="text-gray-500" />
@@ -159,16 +193,16 @@ export function SmartInput({
 
           {/* URL input when no file is selected */}
           {!value.file && (
-            <div className="flex items-center space-x-3">
-              {getInputIcon()}
-              <div className="flex-1">
+            <div className="flex items-center space-x-3 animate-in fade-in duration-300">
+              <div className="transition-all duration-200">{getInputIcon()}</div>
+              <div className="flex-1 min-w-0">
                 <input
                   type="url"
                   value={value.url}
                   onChange={(e) => onUrlChange(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder={placeholder}
-                  className="w-full bg-transparent border-none outline-none text-gray-900 placeholder-gray-500"
+                  className="w-full bg-transparent border-none outline-none text-gray-900 placeholder-gray-500 text-sm sm:text-base transition-colors duration-200 focus:placeholder-gray-400"
                   disabled={isProcessing}
                 />
               </div>
@@ -178,7 +212,7 @@ export function SmartInput({
                     e.stopPropagation()
                     handleClear()
                   }}
-                  className="p-1 rounded-full hover:bg-gray-200 transition-colors"
+                  className="p-1 rounded-full hover:bg-gray-200 transition-all duration-200 hover:scale-110"
                   disabled={isProcessing}
                 >
                   <X size={16} className="text-gray-500" />
@@ -189,13 +223,13 @@ export function SmartInput({
 
           {/* Helper text */}
           {!value.url && !value.file && !isDragging && (
-            <p className="text-center text-sm text-gray-500 mt-4">
+            <p className="text-center text-xs sm:text-sm text-gray-500 mt-4">
               Enter a URL above or drag and drop PDF/HTML files here
             </p>
           )}
 
           {isDragging && (
-            <p className="text-center text-sm text-orange-600 mt-4">
+            <p className="text-center text-xs sm:text-sm text-orange-600 mt-4">
               Drop your file here
             </p>
           )}
