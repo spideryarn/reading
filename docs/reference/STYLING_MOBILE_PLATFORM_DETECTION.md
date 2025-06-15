@@ -246,3 +246,152 @@ useEffect(() => {
 - Touch vs hover detection 📋
 - Enhanced media query hooks 📋
 - Device context provider 📋
+
+## Appendix: Mobile Detection Best Practices Research (2024)
+
+This appendix documents research conducted on 15 June 2025 regarding current best practices for mobile detection in React applications and touch interaction support for UI components.
+
+### React Mobile Detection Best Practices
+
+Based on community research and library analysis, the following approaches are recommended for mobile detection in React applications:
+
+#### 1. Custom useMediaQuery Hook
+
+The most performant approach leverages the `window.matchMedia` API:
+
+```javascript
+const useMediaQuery = (query) => {
+  const [matches, setMatches] = useState(false)
+  
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(query)
+    const handleChange = (event) => setMatches(event.matches)
+    
+    // Set initial value
+    setMatches(mediaQuery.matches)
+    
+    // Listen for changes
+    mediaQuery.addEventListener('change', handleChange)
+    
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [query])
+  
+  return matches
+}
+```
+
+**Key benefits**:
+- Observes document for media query changes instead of polling
+- Optimised performance using 'change' event
+- React 18+ can use `useSyncExternalStore` for better integration
+
+#### 2. Library Options
+
+**react-responsive** (Recommended):
+- Version: 10.0.1 (as of 2024)
+- 1400+ projects using it in production
+- Well-maintained with TypeScript support
+- Installation: `npm i react-responsive`
+
+**Material-UI useMediaQuery**:
+- Integrated with MUI theme system
+- Supports SSR with hydration handling
+- Includes testing utilities
+
+#### 3. Common Mobile Detection Patterns
+
+```javascript
+// Basic breakpoints
+const isMobile = useMediaQuery('(max-width: 768px)')
+const isTablet = useMediaQuery('(min-width: 769px) and (max-width: 992px)')
+const isDesktop = useMediaQuery('(min-width: 993px)')
+
+// Advanced detection
+const isRetina = useMediaQuery('(min-resolution: 2dppx)')
+const isPortrait = useMediaQuery('(orientation: portrait)')
+const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
+```
+
+#### 4. Server-Side Rendering Considerations
+
+For SSR environments like Next.js:
+
+```javascript
+const useMediaQuery = (query, defaultMatches = false) => {
+  const [matches, setMatches] = useState(defaultMatches)
+  
+  useEffect(() => {
+    // Only run on client
+    if (typeof window === 'undefined') return
+    
+    const mediaQuery = window.matchMedia(query)
+    setMatches(mediaQuery.matches)
+    // ... rest of implementation
+  }, [query])
+  
+  return matches
+}
+```
+
+**Double-render solution**: First render with `defaultMatches` (server value), second render with resolved client value. Trade-off: slower but prevents hydration mismatches.
+
+#### 5. Testing Considerations
+
+- jsdom doesn't support `matchMedia` by default
+- Use `css-mediaquery` polyfill for testing
+- Mock `window.matchMedia` in test environment
+
+### Touch Interaction Support Research
+
+#### Radix UI Tooltip Limitations
+
+Research into Radix UI tooltip capabilities reveals significant limitations for mobile/touch interfaces:
+
+**Key findings**:
+1. **No touch support**: Radix tooltips are designed for hover/focus only (WAI-ARIA compliance)
+2. **Expected behaviour**: The Radix team considers lack of touch support as "expected behavior"
+3. **No long press**: No built-in support for long press triggers
+4. **Mobile incompatibility**: Tooltips won't open on tap/touch events
+
+**Radix team recommendations**:
+- Use **Toggletip pattern** for click-based interactions
+- Consider **Popover component** for mobile-friendly alternatives
+- Implement custom solutions for touch-specific needs
+
+#### Alternative Patterns for Mobile Tooltips
+
+1. **Info Icon Approach** (Recommended):
+   - Add visible (i) icon next to interactive elements
+   - Tap icon to show information in modal/popover
+   - Clear visual affordance for touch users
+   - Better accessibility and discoverability
+
+2. **Custom Long Press Implementation**:
+   - Requires manual touch event handling
+   - Track touch duration with timers
+   - Show custom modal/popover (not Radix Tooltip)
+   - Complex implementation with potential issues
+
+3. **Hybrid Approach**:
+   - Desktop: Hover tooltips with Radix UI
+   - Mobile: Tap-based info icons or popovers
+   - Detected via media queries or touch capability
+
+### Recommendations for Spideryarn
+
+Based on this research:
+
+1. **Implement custom useMediaQuery hook** for consistent mobile detection
+2. **Use info icon pattern** for mobile tooltip alternatives
+3. **Consider react-responsive** if more complex responsive logic needed
+4. **Avoid Radix tooltips on mobile** - use Popover or Dialog instead
+5. **Test with real devices** and browser DevTools device mode
+
+### Resources
+
+- [useHooks useMediaQuery](https://usehooks.com/usemediaquery)
+- [Material-UI Media Queries](https://mui.com/material-ui/react-use-media-query/)
+- [react-responsive npm](https://www.npmjs.com/package/react-responsive)
+- [Radix UI Tooltip Docs](https://www.radix-ui.com/primitives/docs/components/tooltip)
+- [Radix UI GitHub Issues #2589](https://github.com/radix-ui/primitives/issues/2589) - Touch support discussion
+- [CSS Media Queries Level 4](https://www.w3.org/TR/mediaqueries-4/) - Latest spec
