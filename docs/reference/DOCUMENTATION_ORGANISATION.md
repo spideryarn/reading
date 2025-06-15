@@ -91,9 +91,8 @@ Available evergreen documentation in `docs/` organised by category:
 ### Content Processing & Search
 - `docs/reference/TOOL_SEARCH_TEXT.md` - Cross-element text search functionality using Mark.js with DOM-based highlighting
 - `docs/reference/UPLOAD.md` - Comprehensive document upload and import system reference covering all ingestion methods ⭐ **Essential for content import**
-- `docs/reference/HTML_DOCUMENT_PROCESSOR.md` - Shared HTML processing service documentation for DRY architecture
+- `docs/reference/HTML_CONTENT_PROCESSING_OVERVIEW.md` - Complete HTML content processing pipeline including extraction, sanitisation, and quality assurance ⭐ **Essential for web content**
 - `docs/reference/PDF_TO_HTML_CONVERSION_OVERVIEW.md` - PDF processing and HTML conversion overview
-- `docs/reference/WEBPAGE_HTML_CONTENT_EXTRACTION.md` - Web content extraction and processing
 - `docs/reference/OPTIMAL_TEXT_FORMATTING.md` - Text formatting standards and typography
 
 ### Strategic Vision & Business
