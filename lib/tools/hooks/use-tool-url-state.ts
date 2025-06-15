@@ -62,6 +62,30 @@ export function useToolUrlState(): UseToolUrlStateReturn {
     scroll: stringParser
   })
   
+  // ---- setState moved up to avoid use-before-define ----
+  const setState = useCallback((updates: Partial<ToolUrlState>, options?: { forceHistory?: 'push' | 'replace'; skipValidation?: boolean }) => {
+    let finalUpdates = updates
+    if (!options?.skipValidation) {
+      const validation = validateUrlState(updates)
+      if (!validation.isValid) {
+        logValidationErrors(validation.errors, 'URL state update')
+        showUrlValidationWarnings(validation.errors)
+        finalUpdates = validation.sanitized
+      }
+    }
+    const shouldPush = options?.forceHistory === 'push'
+      ? true
+      : options?.forceHistory === 'replace'
+      ? false
+      : shouldPushHistory(finalUpdates)
+    const nuqsUpdates = Object.entries(finalUpdates).reduce((acc, [key, value]) => {
+      acc[key as keyof ToolUrlState] = value === undefined ? null : value
+      return acc
+    }, {} as Record<keyof ToolUrlState, any>)
+    setUrlState(nuqsUpdates, { history: shouldPush ? 'push' : 'replace' })
+  }, [setUrlState])
+  // ------------------------------------------------------
+  
   // Sync URL tab state to context when URL changes
   // This handles browser navigation (back/forward) and direct URL changes
   useEffect(() => {
@@ -111,42 +135,6 @@ export function useToolUrlState(): UseToolUrlStateReturn {
     urlState.level, urlState.expertise, urlState.length, urlState.conversation,
     urlState.highlight, urlState.scroll, setState
   ])
-  
-  // Main setState function with history management and validation
-  const setState = useCallback((updates: Partial<ToolUrlState>, options?: { forceHistory?: 'push' | 'replace'; skipValidation?: boolean }) => {
-    let finalUpdates = updates
-    
-    // Validate parameters unless explicitly skipped
-    if (!options?.skipValidation) {
-      const validation = validateUrlState(updates)
-      
-      if (!validation.isValid) {
-        // Log validation errors for debugging
-        logValidationErrors(validation.errors, 'URL state update')
-        
-        // Show user-facing warning
-        showUrlValidationWarnings(validation.errors)
-        
-        // Use sanitized values instead of original updates
-        finalUpdates = validation.sanitized
-      }
-    }
-    
-    // Use forced history option if provided, otherwise determine from updates
-    const shouldPush = options?.forceHistory === 'push' ? true : 
-                      options?.forceHistory === 'replace' ? false :
-                      shouldPushHistory(finalUpdates)
-    
-    // Convert undefined values to null for nuqs (null removes the param)
-    const nuqsUpdates = Object.entries(finalUpdates).reduce((acc, [key, value]) => {
-      acc[key as keyof ToolUrlState] = value === undefined ? null : value
-      return acc
-    }, {} as Record<keyof ToolUrlState, any>)
-    
-    setUrlState(nuqsUpdates, {
-      history: shouldPush ? 'push' : 'replace'
-    })
-  }, [setUrlState])
   
   // Debounced search update (300ms)
   const debouncedSetSearch = useMemo(
