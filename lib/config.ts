@@ -1,8 +1,18 @@
 // Central configuration for the application
 
+import { 
+  MODEL_TIERS, 
+  getModelStringFromTier, 
+  getModelConfig as getModelConfigByString,
+  parseModelString,
+  DEFAULT_MODEL_STRING,
+  type ModelTierKey 
+} from './config/models'
+
 // Provider-tier model keys for easy configuration
 // Format: {provider}-{tier} where tier is cheap/balanced/expensive
 // Special variant: anthropic-balanced-thinking for Sonnet 4 with thinking mode
+// DEPRECATED: Use explicit model strings instead (provider:model:version[:thinking])
 export type ProviderTierKey = 
   | 'anthropic-cheap' 
   | 'anthropic-balanced' 
@@ -105,6 +115,7 @@ export function getModelConfig(key: ProviderTierKey = AI_CONFIG.DEFAULT_MODEL) {
 
 // Get model version from provider-tier key for database lookup
 // Extracts version from model ID and appends -thinking if thinking mode is enabled
+// DEPRECATED: Use getModelStringFromEnvironment() instead
 export function getModelVersion(key: ProviderTierKey = AI_CONFIG.DEFAULT_MODEL): string {
   const config = getModelConfig(key)
   
@@ -120,6 +131,40 @@ export function getModelVersion(key: ProviderTierKey = AI_CONFIG.DEFAULT_MODEL):
   
   // Append -thinking if thinking mode is enabled
   return config.thinking ? `${version}-thinking` : version
+}
+
+// NEW MODEL STRING SYSTEM
+// Get model string from environment variable or default
+// Supports both tier keys (anthropic-cheap) and direct model strings (anthropic:claude-3-5-haiku:20241022)
+export function getModelStringFromEnvironment(): string {
+  const envModel = process.env.LLM_MODEL || 'anthropic-balanced'
+  
+  // Check if it's a tier key first
+  if (envModel in MODEL_TIERS) {
+    return getModelStringFromTier(envModel as ModelTierKey)
+  }
+  
+  // Check if it's already a model string
+  try {
+    parseModelString(envModel)
+    return envModel
+  } catch {
+    // If parsing fails, treat as tier key and throw error if not found
+    throw new Error(`Invalid LLM_MODEL: ${envModel}. Use tier key (anthropic-cheap) or model string (anthropic:claude-3-5-haiku:20241022)`)
+  }
+}
+
+// Get model configuration from environment
+export function getModelConfigFromEnvironment() {
+  const modelString = getModelStringFromEnvironment()
+  return getModelConfigByString(modelString)
+}
+
+// Get model string and config for AI calls
+export function getModelForAICall(): { modelString: string, config: any } {
+  const modelString = getModelStringFromEnvironment()
+  const config = getModelConfigByString(modelString)
+  return { modelString, config }
 }
 
 // Content summarisation configuration
