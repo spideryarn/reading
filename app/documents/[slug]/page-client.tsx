@@ -257,6 +257,7 @@ export default function DocumentPageClient({
       <AppHeader 
         title={currentTitle}
         titleLink={`/documents/${slug}`}
+        logoLink="/documents"
         actions={<DocumentHeaderActions slug={slug} storagePath={storagePath} originalFileType={originalFileType} />}
       />
       <div className="flex-1 overflow-hidden">

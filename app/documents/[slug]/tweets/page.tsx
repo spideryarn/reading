@@ -45,6 +45,7 @@ export default async function TweetThreadPage({ params }: PageProps) {
       <AppHeader 
         title={`${doc.title} - Tweet Thread`}
         titleLink={`/documents/${slug}`}
+        logoLink="/documents"
       />
 
       {/* Content */}

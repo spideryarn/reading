@@ -52,6 +52,7 @@ export default async function DocumentsPage() {
     <div className="min-h-screen">
       <AppHeader 
         title="Documents" 
+        logoLink="/documents"
         actions={
           <div>
             <Button asChild variant="orange" size="sm">

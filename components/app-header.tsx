@@ -15,6 +15,7 @@ interface AppHeaderProps {
   backText?: string
   actions?: React.ReactNode
   className?: string
+  logoLink?: string
 }
 
 export function AppHeader({ 
@@ -23,7 +24,8 @@ export function AppHeader({
   backLink, 
   backText = "Back",
   actions, 
-  className 
+  className,
+  logoLink
 }: AppHeaderProps) {
   const { user, loading } = useAuth()
 
@@ -36,7 +38,7 @@ export function AppHeader({
         <div className="flex items-center justify-between h-full max-w-7xl mx-auto">
           <div className="flex items-center gap-8 min-w-0 flex-1">
             <Link 
-              href="/" 
+              href={logoLink || "/"} 
               className="flex items-center space-x-3 transition-transform duration-200 hover:scale-105 flex-shrink-0"
               aria-label="Return to homepage"
             >
