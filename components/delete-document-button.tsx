@@ -88,7 +88,12 @@ export function DeleteDocumentButton({
       </Button>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
+        <DialogContent onKeyDown={(e) => {
+          if (e.key === 'Enter' && !isDeleting) {
+            e.preventDefault()
+            handleDeleteConfirm()
+          }
+        }}>
           <DialogHeader>
             <DialogTitle>Delete Document</DialogTitle>
             <DialogDescription>
