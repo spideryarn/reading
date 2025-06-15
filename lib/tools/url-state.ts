@@ -69,13 +69,26 @@ export function shouldPushHistory(changes: Partial<ToolUrlState>, isUserAction =
     return true
   }
   
-  // Regular search query changes (typing) should not push
+  // Check if any change is in the push set, excluding 'q' which needs special handling
+  // Also exclude undefined values which represent clearing parameters
+  const hasNavigationChange = changeKeys.some(key => 
+    PUSH_HISTORY_CHANGES.has(key) && 
+    key !== 'q' && 
+    changes[key as keyof ToolUrlState] !== undefined
+  )
+  
+  // If there are navigation parameters (non-search), they take precedence
+  if (hasNavigationChange) {
+    return true
+  }
+  
+  // Regular search query changes (typing) should not push when no navigation changes
   if ('q' in changes && !(changes as any).submitted) {
     return false
   }
   
-  // Check if any change is in the push set
-  return changeKeys.some(key => PUSH_HISTORY_CHANGES.has(key))
+  // No push-worthy changes found
+  return false
 }
 
 // Create a new URL with updated parameters

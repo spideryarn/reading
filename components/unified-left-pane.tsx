@@ -441,7 +441,7 @@ export function UnifiedLeftPane({
     query: searchQuery,
     searchType,
     caseSensitive,
-    setSearch: setSearchQuery,
+    updateSearch,
     submitSearch,
     setSearchType,
     setCaseSensitive
@@ -772,7 +772,7 @@ export function UnifiedLeftPane({
 
   // Modify the existing search handler to support both search types
   const handleSearchInputChange = useCallback((value: string) => {
-    setSearchQuery(value)
+    updateSearch(value)
     
     // Clear previous search highlights when query is empty
     if (!value.trim() && markInstanceRef.current) {
@@ -790,7 +790,7 @@ export function UnifiedLeftPane({
       // Continue with regular debounced text search
       debouncedSearch(value)
     }
-  }, [useSemanticSearch, debouncedSearch, setSearchQuery])
+  }, [useSemanticSearch, debouncedSearch, updateSearch])
 
   // Manual semantic search trigger
   // const triggerSemanticSearch = useCallback(() => {
@@ -1014,7 +1014,7 @@ export function UnifiedLeftPane({
                     clearTimeout(searchTimeoutRef.current)
                     searchTimeoutRef.current = null
                   }
-                  setSearchQuery('')
+                  updateSearch('')
                   setSearchResults([])
                   setIsSearching(false)
                   if (markInstanceRef.current) {
