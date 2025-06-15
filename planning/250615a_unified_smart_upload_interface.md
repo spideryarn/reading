@@ -42,31 +42,33 @@ This creates unnecessary cognitive load and complexity. Users need to choose bet
 
 ## Stages & Actions
 
-### Stage: Research and Validation
-- [ ] Run `./scripts/sync-worktrees.ts` in subagent to sync latest changes
-- [ ] Research similar "smart input" patterns in other applications
-  - Look at file upload interfaces that handle both URLs and files
-  - Study drag-and-drop zones that also accept text input
-- [ ] Validate technical feasibility of URL file type detection
-  - Test URL detection for PDFs vs HTML pages
-  - Verify current backend handles PDF URL detection correctly
-- [ ] Review current state management complexity
-  - Map all current state variables in upload page
-  - Identify which states can be consolidated or eliminated
+### ✅ Stage: Research and Validation
+- ✅ Run `./scripts/sync-worktrees.ts` in subagent to sync latest changes
+  - 📔 Successfully synced from main branch to worktree6, no conflicts
+- ✅ Research similar "smart input" patterns in other applications
+  - 📔 Found comprehensive patterns: progressive enhancement, multi-modal interfaces, drag-and-drop with fallbacks
+  - 📔 Best practices include visual feedback, accessibility support, and unified state management
+- ✅ Validate technical feasibility of URL file type detection
+  - 📔 System already has robust content type detection in `lib/utils/content-type-detection.ts`
+  - 📔 PDF URL detection and processing fully functional in extract-url API
+  - 📔 `detectAndAnalyzeContent()` provides comprehensive content analysis
+- ✅ Review current state management complexity
+  - 📔 Detailed analysis reveals significant dual-tree complexity with provider state duplication
+  - 📔 Clear consolidation opportunities identified (see Appendix: Detailed State Analysis)
 
-### Stage: Design and Architecture
-- [ ] Design unified state structure
-  - Create single state object for input (URL or file)
-  - Design processing options state that updates based on input type
-  - Plan validation logic for incompatible option combinations
-- [ ] Design smart input component interface
-  - Single input field with placeholder text that changes based on context
-  - File drop zone that overlays or integrates with text input
-  - Clear visual feedback for input type detection
-- [ ] Create processing options display logic
-  - Map input types to available processing methods
-  - Design conditional rendering for provider selection
-  - Plan validation error messages for incompatible selections
+### ✅ Stage: Design and Architecture
+- ✅ Design unified state structure
+  - 📔 Created `UnifiedUploadState` interface consolidating dual-tree complexity
+  - 📔 Single input source with auto-detection, contextual processing options
+  - 📔 Eliminates provider state duplication (see Appendix: Unified State Design)
+- ✅ Design smart input component interface
+  - 📔 `SmartInput` component with dynamic placeholders and visual feedback
+  - 📔 Mutual exclusivity between URL and file input with clear state transitions
+  - 📔 Accessibility-first design with keyboard navigation support
+- ✅ Create processing options display logic
+  - 📔 Input type mapping to available methods with validation on submit
+  - 📔 Contextual rendering based on detected input type
+  - 📔 Clear error messages for incompatible selections (see Appendix: Processing Logic)
 
 ### Stage: Implementation - Core Smart Input
 - [ ] Create new unified state management
@@ -214,3 +216,136 @@ Key decisions from user:
 - Validate incompatible processing options on submit with clear error messages
 - Preserve existing error handling sophistication
 - Simplify provider selection to "Claude Sonnet" and "Gemini (for longer docs)"
+
+### Detailed State Analysis (Research Results)
+
+#### Current Dual-Tree Complexity
+**URL State Tree** (`app/upload/page.tsx` lines 18-23):
+- `url`, `isExtractingUrl`, `urlError`, `extractionMethod`, `urlProvider`
+
+**PDF/HTML State Tree** (lines 26-35):
+- `selectedFile`, `isUploading`, `convertedHtml`, `error`, `isDragging`
+- `selectedProvider`, `htmlProcessingMethod`, `htmlProvider`
+
+**Key Problems Identified:**
+- Provider state duplication: 3 separate provider states for similar functionality
+- Processing method states duplicated despite similar patterns
+- Error handling patterns inconsistent between flows
+- Complex conditional logic throughout (lines 709-714, 727-732)
+- Tab-based UI creates artificial separation
+
+#### Consolidation Opportunities
+- Single provider state replaces three separate states
+- Unified processing method enum for all content types
+- Single error state with contextual messaging
+- Removal of `activeTab` state with smart input detection
+- `convertedHtml` preview can be handled differently
+
+### Unified State Design (Architecture Results)
+
+#### Core State Structure
+```typescript
+interface UnifiedUploadState {
+  input: {
+    url: string
+    file: File | null
+    type: 'url' | 'pdf' | 'html' | null  // Auto-detected
+  }
+  processing: {
+    method: ProcessingMethod
+    provider: 'claude' | 'gemini'
+    isPublic: boolean
+  }
+  ui: {
+    isProcessing: boolean
+    error: string
+    isDragging: boolean
+  }
+}
+
+type ProcessingMethod = 'as-is' | 'readability' | 'ai-transcription'
+```
+
+#### State Transition Logic
+```typescript
+// Mutual exclusivity enforcement
+onUrlChange(url) {
+  setState(prev => ({
+    ...prev,
+    input: { url, file: null, type: detectUrlType(url) }
+  }))
+}
+
+onFileChange(file) {
+  setState(prev => ({
+    ...prev,
+    input: { url: "", file, type: detectFileType(file) }
+  }))
+}
+```
+
+### Smart Input Component Design
+
+#### Component Interface
+```tsx
+<SmartInput
+  value={input}
+  onChange={handleInputChange}
+  onDrop={handleFileDrop}
+  error={ui.error}
+  isProcessing={ui.isProcessing}
+  placeholder={getContextualPlaceholder(input.type)}
+/>
+```
+
+#### Visual Design Features
+- Dynamic placeholder text based on input state
+- Border color changes during drag-over states
+- Icon indicators for URL/PDF/HTML content types
+- File dialog trigger on click when no URL present
+- Screen reader friendly with proper ARIA labels
+
+### Processing Logic Design
+
+#### Input Type → Methods Mapping
+```typescript
+const PROCESSING_METHODS = {
+  url: {
+    html: ['as-is', 'readability', 'ai-transcription'],
+    pdf: ['ai-transcription']
+  },
+  html: ['as-is', 'readability', 'ai-transcription'],
+  pdf: ['ai-transcription']
+} as const
+```
+
+#### Validation Logic
+```typescript
+function validateProcessingSelection(
+  input: UnifiedInput, 
+  method: ProcessingMethod
+): ValidationResult {
+  if (input.type === 'pdf' && ['as-is', 'readability'].includes(method)) {
+    return {
+      isValid: false,
+      error: "PDF documents require AI transcription. Readability and As-is are only available for HTML content.",
+      suggestedMethod: 'ai-transcription'
+    }
+  }
+  return { isValid: true }
+}
+```
+
+### Technical Feasibility Validation Results
+
+#### Existing Infrastructure Ready
+- `lib/utils/content-type-detection.ts` provides robust URL content type detection
+- `detectAndAnalyzeContent()` function handles PDF vs HTML URL analysis
+- Extract-URL API already processes both HTML and PDF URLs seamlessly
+- File type detection helpers already exist (`isSelectedFilePdf`, `isSelectedFileHtml`)
+
+#### Smart Input Patterns Research
+- Progressive enhancement approach is industry standard
+- Multi-modal interfaces (URL + file + drag-drop) are well-established
+- Visual feedback and accessibility support are critical success factors
+- Unified state management reduces complexity and improves maintainability
