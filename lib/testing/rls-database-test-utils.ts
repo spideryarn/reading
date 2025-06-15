@@ -211,16 +211,13 @@ export class RLSTestSetup {
     // Ensure test users exist before creating AI calls
     await this.ensureTestUsers()
 
-    // Get valid model ID if string was provided
-    let modelId = data.model_id
-    if (typeof modelId === 'string') {
-      modelId = await this.getTestModelId()
-    }
+    // Use model_string instead of model_id
+    const modelString = data.model_string || 'anthropic:claude-3-5-haiku:20241022'
 
     // Map test data to actual schema
     const mappedData = {
       id: data.id,
-      model_id: modelId || await this.getTestModelId(),
+      model_string: modelString,
       document_id: data.document_id,
       created_by: data.created_by,
       prompt_type: data.prompt_type,
@@ -236,7 +233,9 @@ export class RLSTestSetup {
       reasoning_tokens: data.reasoning_tokens || null,
       latency_ms: data.latency_ms || 1000,
       finish_reason: data.finish_reason || 'stop',
-      extra: data.extra || {}
+      extra: data.extra || {},
+      extra_usage: data.extra_usage || null,
+      completed_at: data.completed_at || new Date().toISOString()
     }
 
     const { data: aiCall, error } = await this.adminClient

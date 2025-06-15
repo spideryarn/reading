@@ -21,11 +21,12 @@ describe('Database Schema Tests', () => {
   let testAiCallId: string;
   let testThreadId: string;
   let testModelId: string;
+  const testModelString = 'anthropic:claude-3-5-haiku:20241022';
 
   beforeAll(async () => {
     supabase = createClient();
     
-    // Get a test AI model ID (claude-3-5-haiku)
+    // Get a test AI model ID for chat threads (until migration is applied)
     const { data: models } = await supabase
       .from('ai_models')
       .select('id')
@@ -166,7 +167,7 @@ describe('Database Schema Tests', () => {
 
     it('should create an AI call record', async () => {
       const aiCall = {
-        model_id: testModelId,
+        model_string: testModelString,
         document_id: testDocumentId,
         prompt_type: 'summarise',
         prompt_input: 'Test prompt input',
@@ -190,7 +191,7 @@ describe('Database Schema Tests', () => {
 
     it('should track token usage and response details', async () => {
       const aiCall = {
-        model_id: testModelId,
+        model_string: testModelString,
         document_id: testDocumentId,
         prompt_type: 'chat',
         prompt_input: 'Test prompt',
@@ -220,7 +221,7 @@ describe('Database Schema Tests', () => {
 
     it('should enforce status check constraint', async () => {
       const invalidCall = {
-        model_id: testModelId,
+        model_string: testModelString,
         prompt_type: 'chat',
         prompt_input: 'Test',
         status: 'invalid_status' // Invalid status

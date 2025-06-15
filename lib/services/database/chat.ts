@@ -9,9 +9,19 @@ import type {
 } from '@/lib/types/database'
 import type { JsonObject } from '@/lib/types/json'
 
+// DEPRECATED: Use CreateThreadWithModelStringOptions instead
 export interface CreateThreadOptions {
   documentId: string
   modelId: string
+  title?: string
+  userId?: string
+  extra?: JsonObject
+}
+
+// NEW: Model string-based interface
+export interface CreateThreadWithModelStringOptions {
+  documentId: string
+  modelString: string  // e.g., "anthropic:claude-3-5-haiku:20241022"
   title?: string
   userId?: string
   extra?: JsonObject
@@ -29,9 +39,15 @@ export class ChatService {
   constructor(private supabase: SupabaseClient<Database>) {}
 
   /**
-   * Create a new chat thread
+   * Create a new chat thread (DEPRECATED - use createThreadWithModelString)
    */
-  async createThread(options: CreateThreadOptions): Promise<ChatThread> {
+  async createThread(options: CreateThreadOptions | CreateThreadWithModelStringOptions): Promise<ChatThread> {
+    // Check if this is the new model string format
+    if ('modelString' in options) {
+      return this.createThreadWithModelString(options);
+    }
+    
+    // Legacy model_id approach
     const thread: Omit<ChatThreadInsert, 'id' | 'created_at' | 'updated_at'> = {
       document_id: options.documentId,
       model_id: options.modelId,
@@ -43,6 +59,32 @@ export class ChatService {
     const { data, error } = await this.supabase
       .from('chat_threads')
       .insert(thread)
+      .select()
+      .single()
+
+    if (error) {
+      throw new Error(`Failed to create chat thread: ${error.message}`)
+    }
+
+    return data
+  }
+
+  /**
+   * Create a new chat thread using model string
+   */
+  async createThreadWithModelString(options: CreateThreadWithModelStringOptions): Promise<ChatThread> {
+    const thread: Omit<ChatThreadInsert, 'id' | 'created_at' | 'updated_at'> & { model_string?: string } = {
+      document_id: options.documentId,
+      model_id: null,  // Set to null when using model_string
+      model_string: options.modelString,  // Store model string directly
+      title: options.title || 'New Chat',
+      created_by: options.userId || null,
+      extra: options.extra || {},
+    }
+
+    const { data, error } = await this.supabase
+      .from('chat_threads')
+      .insert(thread as any)
       .select()
       .single()
 

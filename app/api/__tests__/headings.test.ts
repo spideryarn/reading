@@ -8,14 +8,15 @@ import { createMockRequest } from './test-helpers'
 import type { MockSupabaseClient } from './test-types'
 
 // Mock the dependencies
-jest.mock('@/lib/prompts/types')
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn()
 }))
-jest.mock('@/lib/services/database/enhancements')
-jest.mock('@/lib/services/database/ai-calls')
 jest.mock('@/lib/config', () => ({
   getModelConfig: jest.fn(() => ({ provider: 'anthropic', modelId: 'claude-3-haiku' })),
+  getModelForAICall: jest.fn(() => ({ 
+    modelString: 'anthropic:claude-3-5-haiku:20241022',
+    config: { provider: 'anthropic', modelId: 'claude-3-5-haiku', version: '20241022' }
+  })),
   AI_CONFIG: { DEFAULT_MODEL: 'haiku' }
 }))
 jest.mock('@/lib/prompts/templates/headings', () => ({
@@ -34,32 +35,22 @@ jest.mock('@/lib/prompts/templates/headings', () => ({
   }
 }))
 
-const mockExecutePrompt = executePrompt as jest.MockedFunction<typeof executePrompt>
-
-// Import after mocking to get mocked versions
-import { headingsPromptInputSchema, headingsResponseSchema } from '@/lib/prompts/templates/headings'
-
-// Mock the services after importing them
+// Import services and mocked modules
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
+import { executePromptWithUsage, setMockResponse } from '@/lib/prompts/types'
+import { headingsPromptInputSchema, headingsResponseSchema } from '@/lib/prompts/templates/headings'
+import { validateAuth } from '@/lib/auth/server-auth'
 
 const mockCreateClient = createClient as jest.MockedFunction<typeof createClient>
-const mockEnhancementService = {
-  get: jest.fn(),
-  storeHeadings: jest.fn(),
-  delete: jest.fn()
-}
-const mockAiCallService = {
-  startCall: jest.fn(),
-  completeCall: jest.fn()
-}
-
-// Mock service constructors
-;(EnhancementService as jest.Mock).mockImplementation(() => mockEnhancementService)
-;(AiCallService as jest.Mock).mockImplementation(() => mockAiCallService)
+const mockExecutePromptWithUsage = executePromptWithUsage as jest.MockedFunction<typeof executePromptWithUsage>
+const mockValidateAuth = validateAuth as jest.MockedFunction<typeof validateAuth>
 
 describe('/api/headings', () => {
+  let mockEnhancementService: EnhancementService
+  let mockAiCallService: AiCallService
+
   beforeEach(() => {
     jest.clearAllMocks()
     // Reset environment variables
@@ -68,13 +59,38 @@ describe('/api/headings', () => {
     jest.spyOn(console, 'log').mockImplementation()
     jest.spyOn(console, 'error').mockImplementation()
     
-    // Reset all service mocks to their defaults
+    // Set up Supabase client mock
     mockCreateClient.mockResolvedValue({} as MockSupabaseClient)
-    mockEnhancementService.get.mockResolvedValue(null) // No cached headings by default
-    mockEnhancementService.storeHeadings.mockResolvedValue({})
-    mockEnhancementService.delete.mockResolvedValue(true)
-    mockAiCallService.startCall.mockResolvedValue({ id: 'test-ai-call-id' })
-    mockAiCallService.completeCall.mockResolvedValue({})
+    
+    // Set up auth mock - default to authenticated user
+    mockValidateAuth.mockResolvedValue({
+      id: 'test-user-id',
+      email: 'test@example.com',
+      app_metadata: {},
+      user_metadata: {},
+      aud: 'authenticated',
+      created_at: new Date().toISOString()
+    } as any)
+    
+    // Get mocked service instances
+    mockEnhancementService = new EnhancementService({} as any)
+    mockAiCallService = new AiCallService({} as any)
+    
+    // Set default mock return values
+    jest.spyOn(mockEnhancementService, 'get').mockResolvedValue(null) // No cached headings by default
+    jest.spyOn(mockEnhancementService, 'storeHeadings').mockResolvedValue({} as any)
+    jest.spyOn(mockEnhancementService, 'delete').mockResolvedValue(true)
+    jest.spyOn(mockAiCallService, 'startCallWithModelString').mockResolvedValue({ 
+      id: 'test-ai-call-id',
+      document_id: null,
+      created_by: 'test-user-id',
+      model_string: 'anthropic:claude-3-5-haiku:20241022',
+      prompt_type: 'headings',
+      status: 'pending',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    } as any)
+    jest.spyOn(mockAiCallService, 'completeCall').mockResolvedValue({} as any)
   })
 
   afterEach(() => {
@@ -107,7 +123,15 @@ describe('/api/headings', () => {
       })
       
       // Mock LLM response
-      mockExecutePrompt.mockResolvedValueOnce(JSON.stringify(mockHeadingsResponse))
+      mockExecutePromptWithUsage.mockResolvedValueOnce({
+        text: JSON.stringify(mockHeadingsResponse),
+        usage: {
+          promptTokens: 100,
+          completionTokens: 200,
+          totalTokens: 300
+        },
+        finishReason: 'stop'
+      })
       
       // Mock response validation
       ;(headingsResponseSchema.parse as jest.Mock).mockReturnValueOnce(mockHeadingsResponse)
@@ -128,7 +152,7 @@ describe('/api/headings', () => {
       })
       
       // Verify that existing headings were removed before passing to LLM
-      const executePromptCall = mockExecutePrompt.mock.calls[0]
+      const executePromptCall = mockExecutePromptWithUsage.mock.calls[0]
       const cleanedHtml = executePromptCall[1].html_content
       const $ = cheerio.load(cleanedHtml)
       expect($('h1, h2, h3, h4, h5, h6').length).toBe(0)
@@ -151,7 +175,11 @@ describe('/api/headings', () => {
         data: { html_content: inputHtml }
       })
       
-      mockExecutePrompt.mockResolvedValueOnce('{"headings": []}')
+      mockExecutePromptWithUsage.mockResolvedValueOnce({
+        text: '{"headings": []}',
+        usage: { promptTokens: 100, completionTokens: 200, totalTokens: 300 },
+        finishReason: 'stop'
+      })
       ;(headingsResponseSchema.parse as jest.Mock).mockReturnValueOnce({ headings: [] })
 
       const request = createMockRequest('http://localhost:3000/api/headings', {
@@ -161,7 +189,7 @@ describe('/api/headings', () => {
 
       await POST(request)
 
-      const executePromptCall = mockExecutePrompt.mock.calls[0]
+      const executePromptCall = mockExecutePromptWithUsage.mock.calls[0]
       const cleanedHtml = executePromptCall[1].html_content
       const $ = cheerio.load(cleanedHtml)
       
@@ -183,7 +211,11 @@ describe('/api/headings', () => {
         data: { html_content: inputHtml }
       })
       
-      mockExecutePrompt.mockResolvedValueOnce('{"headings": []}')
+      mockExecutePromptWithUsage.mockResolvedValueOnce({
+        text: '{"headings": []}',
+        usage: { promptTokens: 100, completionTokens: 200, totalTokens: 300 },
+        finishReason: 'stop'
+      })
       ;(headingsResponseSchema.parse as jest.Mock).mockReturnValueOnce({ headings: [] })
 
       const request = createMockRequest('http://localhost:3000/api/headings', {
@@ -193,7 +225,7 @@ describe('/api/headings', () => {
 
       await POST(request)
 
-      const executePromptCall = mockExecutePrompt.mock.calls[0]
+      const executePromptCall = mockExecutePromptWithUsage.mock.calls[0]
       const cleanedHtml = executePromptCall[1].html_content
       const $ = cheerio.load(cleanedHtml)
       
@@ -223,7 +255,11 @@ describe('/api/headings', () => {
           success: true,
           data: { html_content: '<p>Test</p>', documentId: 'test-doc-id' }
         })
-        mockExecutePrompt.mockResolvedValueOnce(mdResponse)
+        mockExecutePromptWithUsage.mockResolvedValueOnce({
+          text: mdResponse,
+          usage: { promptTokens: 100, completionTokens: 200, totalTokens: 300 },
+          finishReason: 'stop'
+        })
         ;(headingsResponseSchema.parse as jest.Mock).mockReturnValueOnce(mockHeadingsResponse)
 
         const request = createMockRequest('http://localhost:3000/api/headings', {
@@ -254,7 +290,11 @@ describe('/api/headings', () => {
           data: { html_content: `<p>Test with ${provider}</p>` }
         })
         
-        mockExecutePrompt.mockResolvedValueOnce('{"headings": []}')
+        mockExecutePromptWithUsage.mockResolvedValueOnce({
+        text: '{"headings": []}',
+        usage: { promptTokens: 100, completionTokens: 200, totalTokens: 300 },
+        finishReason: 'stop'
+      })
         ;(headingsResponseSchema.parse as jest.Mock).mockReturnValueOnce({ headings: [] })
 
         const request = createMockRequest('http://localhost:3000/api/headings', {
@@ -299,7 +339,7 @@ describe('/api/headings', () => {
         error: 'Invalid request body',
         details: mockError
       })
-      expect(mockExecutePrompt).not.toHaveBeenCalled()
+      expect(mockExecutePromptWithUsage).not.toHaveBeenCalled()
     })
 
     it('should return 500 when LLM fails', async () => {
@@ -309,7 +349,7 @@ describe('/api/headings', () => {
         data: { html_content: '<p>Test</p>', documentId: 'test-doc-id' }
       })
       
-      mockExecutePrompt.mockRejectedValueOnce(new Error('LLM API error'))
+      mockExecutePromptWithUsage.mockRejectedValueOnce(new Error('LLM API error'))
 
       const request = createMockRequest('http://localhost:3000/api/headings', {
         method: 'POST',
@@ -331,7 +371,11 @@ describe('/api/headings', () => {
         data: { html_content: '<p>Test</p>' }
       })
       
-      mockExecutePrompt.mockResolvedValueOnce('invalid json')
+      mockExecutePromptWithUsage.mockResolvedValueOnce({
+        text: 'invalid json',
+        usage: { promptTokens: 100, completionTokens: 200, totalTokens: 300 },
+        finishReason: 'stop'
+      })
 
       const request = createMockRequest('http://localhost:3000/api/headings', {
         method: 'POST',
@@ -353,7 +397,11 @@ describe('/api/headings', () => {
         data: { html_content: '<p>Test</p>' }
       })
       
-      mockExecutePrompt.mockResolvedValueOnce('{"invalid": "response"}')
+      mockExecutePromptWithUsage.mockResolvedValueOnce({
+        text: '{"invalid": "response"}',
+        usage: { promptTokens: 100, completionTokens: 200, totalTokens: 300 },
+        finishReason: 'stop'
+      })
       ;(headingsResponseSchema.parse as jest.Mock).mockImplementationOnce(() => {
         throw new Error('Invalid response schema')
       })
@@ -395,7 +443,11 @@ describe('/api/headings', () => {
         data: { html_content: '<p>Content 1</p><p>Content 2</p>', documentId: 'test-doc-id' }
       })
       
-      mockExecutePrompt.mockResolvedValueOnce(JSON.stringify(mockHeadingsResponse))
+      mockExecutePromptWithUsage.mockResolvedValueOnce({
+        text: JSON.stringify(mockHeadingsResponse),
+        usage: { promptTokens: 100, completionTokens: 200, totalTokens: 300 },
+        finishReason: 'stop'
+      })
       ;(headingsResponseSchema.parse as jest.Mock).mockReturnValueOnce(mockHeadingsResponse)
 
       const request = createMockRequest('http://localhost:3000/api/headings', {

@@ -8,6 +8,14 @@ jest.mock('nuqs');
 // Mock server auth for API tests
 jest.mock('@/lib/auth/server-auth');
 
+// Mock database services to use mock implementations
+jest.mock('@/lib/services/database/ai-calls');
+jest.mock('@/lib/services/database/enhancements');
+jest.mock('@/lib/services/database/documents');
+
+// Mock prompts module for LLM call mocking
+jest.mock('@/lib/prompts/types');
+
 // Mock Next.js headers for tests that use cookies/headers outside request context
 jest.mock('next/headers', () => ({
   cookies: jest.fn(() => ({
@@ -149,3 +157,35 @@ global.IntersectionObserver = class IntersectionObserver {
     this.callback(entries, this);
   }
 };
+
+// Global test cleanup hooks
+beforeEach(() => {
+  // Clear all mock implementations to ensure clean state
+  jest.clearAllMocks();
+  
+  // Reset mock service states
+  const { AiCallService } = require('@/lib/services/database/ai-calls');
+  const { EnhancementService } = require('@/lib/services/database/enhancements');
+  const { DocumentService } = require('@/lib/services/database/documents');
+  const { clearMockExecutions } = require('@/lib/prompts/types');
+  
+  // Clear mock data stores
+  if (AiCallService.clearMockCalls) {
+    AiCallService.clearMockCalls();
+  }
+  if (EnhancementService.clearMockEnhancements) {
+    EnhancementService.clearMockEnhancements();
+  }
+  if (DocumentService.clearMockDocuments) {
+    DocumentService.clearMockDocuments();
+  }
+  if (clearMockExecutions) {
+    clearMockExecutions();
+  }
+  
+  // Reset auth mocks
+  const { resetAuthMocks } = require('@/lib/auth/server-auth');
+  if (resetAuthMocks) {
+    resetAuthMocks();
+  }
+});
