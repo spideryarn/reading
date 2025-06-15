@@ -70,7 +70,7 @@ const result = await executePrompt(myFeaturePrompt, {
 const result = await generateText({
   model: getModel(),
   messages: conversationHistory, // Array of user/assistant messages
-  maxTokens: AI_CONFIG.DEFAULT_MAX_TOKENS
+  maxTokens: config.maxOutputTokens
 })
 ```
 
@@ -123,8 +123,8 @@ export const myFeaturePrompt = loadPromptTemplateFromCaller(
   'my-feature.njk',
   myFeatureSchema,
   {
-    // model: usually omitted to use global default from AI_CONFIG
-    maxTokens: 1024,                       // optional, defaults to AI_CONFIG.DEFAULT_MAX_TOKENS
+    // model: determined by getModelForAICall() from environment
+    maxTokens: 1024,                       // optional, defaults to model's maxOutputTokens
     temperature: 0,                        // optional, defaults to AI_CONFIG.DEFAULT_TEMPERATURE
   }
 )
@@ -191,25 +191,25 @@ const result = await executeMultimodalPromptWithUsage(myPrompt, data)
 
 ## Model Configuration
 
-AI model settings use a provider-tier system centralised in `/lib/config.ts` (see [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) for rationale):
+AI model settings use a **model string** system with configuration centralised in `/lib/config/models.ts` (see [MODEL_STRING_CONFIGURATION.md](MODEL_STRING_CONFIGURATION.md) for details):
 
 ```typescript
-// Provider-tier model keys for easy configuration
-// Format: {provider}-{tier} where tier is cheap/balanced/expensive
-export type ProviderTierKey = 
-  | 'anthropic-cheap' 
-  | 'anthropic-balanced' 
-  | 'anthropic-expensive'
-  | 'google-cheap' 
-  | 'google-balanced' 
-  | 'google-expensive'
+// Model string format: provider:model:version[:thinking]
+// Examples: 'anthropic:claude-3-5-haiku:20241022', 'google:gemini-2.0-flash:latest'
 
 export const AI_CONFIG = {
-  DEFAULT_MODEL: (process.env.LLM_MODEL || 'google-cheap') as ProviderTierKey,
   DEFAULT_TEMPERATURE: 0,
   DEFAULT_MAX_TOKENS: 1024,
 } as const
+
+// Get model configuration from environment
+import { getModelForAICall } from '@/lib/config'
+const { modelString, config } = getModelForAICall()
 ```
+
+**Environment Variable Support:**
+- **Tier keys**: `LLM_MODEL=anthropic-cheap` (backwards compatible)
+- **Model strings**: `LLM_MODEL=anthropic:claude-3-5-haiku:20241022` (recommended)
 
 ### Multi-Provider Support
 

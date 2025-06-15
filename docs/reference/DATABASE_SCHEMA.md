@@ -8,9 +8,10 @@ This document provides concise descriptions of all tables in the Spideryarn Read
 
 **Key Design Decisions:**
 - **Single-row documents**: Store full HTML + plaintext rather than decomposing into elements
-- **Comprehensive AI tracking**: Full token usage, latency, and response metadata
+- **Comprehensive AI tracking**: Full token usage, latency, and response metadata with direct model string storage
 - **Flexible enhancements**: JSONB storage for AI-generated content with type-specific structures
 - **Real-time ready**: Optimised for live updates on document enhancements and chat
+- **Model string approach**: Direct model identification without database dependencies (as of June 2025)
 
 ## Schema Locations
 
@@ -19,6 +20,9 @@ The database schema is defined and represented in several places:
 1. **SQL Migration** (Source of Truth):
    - `supabase/migrations/20250531235026_comprehensive_storage_schema.sql` - Initial comprehensive schema
    - `supabase/migrations/20250608120000_add_upload_metadata_fields.sql` - Upload metadata tracking fields
+   - `supabase/migrations/20250615023410_add_model_string_column.sql` - Add model_string column to ai_calls
+   - `supabase/migrations/20250615023551_populate_model_string_data.sql` - Populate model_string from legacy data
+   - `supabase/migrations/20250615120000_finalize_model_string_migration.sql` - Complete migration to model_string system
    - Contains CREATE TABLE statements, indexes, triggers, and initial data
 
 2. **TypeScript Types** (Auto-generated):
@@ -40,29 +44,41 @@ The database schema is defined and represented in several places:
 
 ## Table Schemas
 
-### **`ai_models`** - AI Provider Models
+### **`ai_models`** - ⚠️ DEPRECATED (Legacy Table)
 
-**Purpose**: Reference table for AI models with capabilities and pricing
+**Status**: This table is deprecated as of June 2025 and will be removed in a future migration. Model configuration is now handled entirely through configuration files.
 
-**Key Fields**:
-- `provider`: AI provider (anthropic, google, openai)
-- `model_id` + `version`: Unique model identifier and release version
-- `context_window`, `max_output_tokens`: Token limits
-- `supports_thinking`: Whether model supports reasoning tokens
-- Cost fields: `input_cost_per_1k`, `output_cost_per_1k` (basic pricing only)
-- `extra`: JSONB for provider-specific metadata
+**Migration**: The system has transitioned from UUID-based model lookups to direct model string storage. See the **Model String System** section below for current approach.
 
-**Tier Key Architecture**:
-- **Config-based resolution**: Tier keys (e.g., 'google-cheap', 'anthropic-balanced') are managed in `lib/config.ts`
-- **Database storage**: Only stores provider+model_id combinations for tracking and metadata
-- **API flow**: Routes resolve tier keys to provider+model_id using config, then look up model UUID in database
-- **Benefits**: Single source of truth for tier management, eliminates redundancy, easier model configuration
+**Legacy Purpose**: Previously stored AI provider models with capabilities and pricing, but this created unnecessary database dependencies and maintenance overhead.
 
-**Design Notes**: 
-- Pre-seeded with known models, unique on (provider, model_id, version)
-- Tier information removed from database - now managed purely in config
-- Pricing intentionally simplified - complex caching/reasoning costs handled elsewhere
-- Designed to be extended rather than comprehensive
+## Model String System
+
+**Current Approach** (as of June 2025): The system now uses direct model string storage instead of database lookups.
+
+**Model String Format**: `provider:model:version[:thinking]`
+
+**Examples**:
+- `anthropic:claude-3-5-haiku:20241022`
+- `anthropic:claude-sonnet-4:20250514:thinking`
+- `google:gemini-2.0-flash:latest`
+
+**Benefits**:
+- **Performance**: Eliminates database lookups on every AI call
+- **Debugging**: Human-readable model identifiers in SQL queries
+- **Maintenance**: All model configuration in version-controlled files
+- **Flexibility**: Easy to add new models without database migrations
+
+**Configuration**:
+- **Model metadata**: Defined in `lib/config/models.ts`
+- **Environment variables**: `LLM_MODEL` supports both tier keys and direct model strings
+- **Backwards compatibility**: Tier keys like `anthropic-cheap` still work during transition
+
+**Implementation**:
+- Model strings stored directly in `ai_calls.model_string` column
+- No foreign key dependencies on model tables
+- Format validation enforced at database level
+- Indexed for query performance
 
 ### **`documents`** - Document Storage
 
@@ -98,7 +114,7 @@ The database schema is defined and represented in several places:
 **Purpose**: Comprehensive tracking of all AI API calls with usage analytics
 
 **Key Fields**:
-- `model_id`: References ai_models table
+- `model_string`: Direct model identifier (format: `provider:model:version[:thinking]`)
 - `document_id`: Optional document context
 - `prompt_type`: Operation type (chat, summarise, glossary, headings, tweet-thread, other)
 - `prompt_template`: Template name (e.g., 'summarise')
@@ -124,6 +140,7 @@ The database schema is defined and represented in several places:
 - Stores extracted fields rather than raw API response (avoids serialisation issues)
 - Token fields align with Vercel AI SDK structure
 - Real-time updates for call status tracking
+- Model strings provide direct identification without database joins
 
 ### **`document_enhancements`** - AI-Generated Content
 
@@ -131,7 +148,7 @@ The database schema is defined and represented in several places:
 
 **Key Fields**:
 - `document_id`: Parent document
-- `ai_call_id`: Links to generating AI call (and thus model)
+- `ai_call_id`: Links to generating AI call (contains model_string for traceability)
 - `type`: Enhancement category (summary, glossary, headings, tweet-thread, other)
 - `subtype`: Further classification (e.g., 'paragraph' vs 'sentence' summaries)
 - `content`: JSONB with type-specific structure
@@ -158,7 +175,7 @@ The database schema is defined and represented in several places:
 
 **Key Fields**:
 - `document_id`: Document being discussed
-- `model_id`: AI model for this conversation
+- `model_id`: ⚠️ Legacy field - will migrate to model_string in future update
 - `title`: Thread title (default 'New Chat')
 - `created_by`: Thread creator
 - `extra`: JSONB for thread metadata
@@ -167,6 +184,7 @@ The database schema is defined and represented in several places:
 - Each thread tied to one document and one AI model
 - Permanent lifecycle (no auto-expiry)
 - Real-time updates for multi-tab chat sync
+- Note: Chat threads still use legacy model_id field - migration to model_string planned
 
 ### **`chat_messages`** - Individual Messages
 
