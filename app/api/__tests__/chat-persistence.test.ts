@@ -1,7 +1,7 @@
 import { POST } from '../chat/route';
 import { generateText } from 'ai';
 import { getModel } from '@/lib/services/llm-provider';
-import { getModelConfig } from '@/lib/config';
+import { getModelConfig, getModelForAICall } from '@/lib/config';
 import { createClient } from '@/lib/supabase/server';
 import { AiCallService } from '@/lib/services/database/ai-calls';
 
@@ -43,6 +43,7 @@ describe('Chat API Route with Persistence', () => {
   const mockGenerateText = generateText as jest.Mock;
   const mockGetModel = getModel as jest.Mock;
   const mockGetModelConfig = getModelConfig as jest.Mock;
+  const mockGetModelForAICall = getModelForAICall as jest.Mock;
   const mockCreateClient = createClient as jest.Mock;
   const mockAiCallService = {
     create: jest.fn(),
@@ -61,6 +62,15 @@ describe('Chat API Route with Persistence', () => {
     mockGetModelConfig.mockReturnValue({
       provider: 'anthropic',
       modelId: 'claude-3-5-haiku-20241022',
+    });
+    mockGetModelForAICall.mockReturnValue({
+      modelString: 'anthropic:claude-3-5-haiku:20241022',
+      config: {
+        provider: 'anthropic',
+        modelName: 'claude-3-5-haiku',
+        version: '20241022',
+        thinking: false,
+      }
     });
     mockCreateClient.mockResolvedValue(mockSupabaseClient);
     (AiCallService as jest.Mock).mockImplementation(() => mockAiCallService);

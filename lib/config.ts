@@ -162,9 +162,17 @@ export function getModelConfigFromEnvironment() {
 
 // Get model string and config for AI calls
 export function getModelForAICall(): { modelString: string, config: any } {
-  const modelString = getModelStringFromEnvironment()
-  const config = getModelConfigByString(modelString)
-  return { modelString, config }
+  try {
+    const modelString = getModelStringFromEnvironment()
+    const config = getModelConfigByString(modelString)
+    return { modelString, config }
+  } catch (error) {
+    // Fallback to default if there's any error
+    console.error('Error in getModelForAICall, falling back to default:', error)
+    const fallbackModelString = DEFAULT_MODEL_STRING
+    const fallbackConfig = getModelConfigByString(fallbackModelString)
+    return { modelString: fallbackModelString, config: fallbackConfig }
+  }
 }
 
 // Content summarisation configuration

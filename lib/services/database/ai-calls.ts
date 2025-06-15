@@ -128,7 +128,6 @@ export class AiCallService {
       document_id: options.documentId || null,
       created_by: options.userId,  // Set created_by for RLS
       model_string: options.modelString,  // Store model string directly
-      model_id: null, // Not used with model strings
       prompt_type: options.prompt_type,
       prompt_input: JSON.stringify(options.input_data || {}),
       prompt_template: null,
@@ -430,7 +429,6 @@ export class AiCallService {
       document_id: null, // No document association for this simple method
       created_by: options.userId,  // Set created_by for RLS
       model_string: options.modelString,  // Store model string directly
-      model_id: null, // Not used with model strings
       prompt_type: 'chat', // Default to chat for this simple interface
       prompt_input: JSON.stringify(options.requestData || {}),
       prompt_template: null,
