@@ -4,13 +4,18 @@ This document covers the comprehensive device detection and responsive design sy
 
 ## See also
 
-- `components/resizable-document-layout.tsx` - Main implementation of device detection and responsive layout logic
+- `components/resizable-document-layout.tsx` - Main implementation with react-responsive
+- `components/heading-tree.tsx` - Touch-aware tooltips with info icons for mobile
+- `components/test-media-query.tsx` - Test component demonstrating react-responsive capabilities
 - `app/globals.css` - CSS responsive utilities and mobile-specific styling classes
 - `app/test-mobile/page.tsx` - Test page for mobile layout validation and debugging
+- `app/test-responsive/page.tsx` - Test page for react-responsive functionality
+- `planning/250615a_migrate_to_react_responsive.md` - Migration planning and implementation details
 - `docs/reference/STYLING_OVERVIEW.md` - General styling configuration and theme settings
 - `docs/reference/UI_INTERFACE.md` - Multi-pane layout architecture and responsive design patterns
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - Overall system architecture including responsive design approach
 - [CSS Media Queries Level 4](https://www.w3.org/TR/mediaqueries-4/) - Web standards for interaction media features
+- [react-responsive npm](https://www.npmjs.com/package/react-responsive) - Library documentation
 
 ## Principles and Key Decisions
 
@@ -20,21 +25,26 @@ This document covers the comprehensive device detection and responsive design sy
 
 **Multi-breakpoint strategy**: Uses both pixel-based breakpoints (640px, 1024px) and capability-based detection (touch, hover) for comprehensive device adaptation.
 
+**React-responsive library**: Migrated from manual window.innerWidth detection to react-responsive (v10.0.1) for reactive, performant media query handling with built-in SSR support.
+
 ## Current Implementation ✓
 
 ### Device Detection Logic
 
-The system implements comprehensive device detection in `components/resizable-document-layout.tsx`:
+The system uses **react-responsive** library for reactive device detection across components:
 
 ```typescript
+import { useMediaQuery } from 'react-responsive'
+
 // Mobile detection
-const isMobile = window.innerWidth <= 640
+const isMobile = useMediaQuery({ maxWidth: 640 })
 
 // Landscape detection  
-const isLandscape = window.innerHeight <= 500
+const isLandscape = useMediaQuery({ maxHeight: 500 })
 
-// Platform detection (for keyboard shortcuts)
-const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
+// Touch capability detection
+const canHover = useMediaQuery({ query: '(hover: hover)' })
+const hasTouch = useMediaQuery({ query: '(pointer: coarse)' })
 ```
 
 **Breakpoints**:
@@ -42,6 +52,11 @@ const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
 - **Landscape mobile**: ≤500px height  
 - **Tablet**: 641px - 1024px width
 - **Desktop**: >1024px width
+
+**Implementation locations**:
+- `components/resizable-document-layout.tsx` - Main responsive layout with auto-collapse logic
+- `components/heading-tree.tsx` - Touch-aware tooltips with info icons for mobile
+- `components/test-media-query.tsx` - Test component demonstrating all capabilities
 
 ### Responsive Layout Adaptations
 
@@ -86,14 +101,20 @@ Comprehensive responsive styling system in `app/globals.css`:
 **Keyboard shortcuts**: 
 - Mac: ⌘+K for command palette
 - Windows/Linux: Ctrl+K for command palette
+- Platform detection still uses `navigator.platform` for keyboard shortcuts
 
-**Hydration handling**: Uses `suppressHydrationWarning` to prevent SSR/client detection mismatches.
+**Touch/hover adaptation**:
+- Desktop: Hover tooltips using Radix UI
+- Touch devices: Info icons with modal dialogs
+- Detected via `(hover: hover)` media query
 
-## Modern Enhancements (Available but Not Implemented)
+**Hydration handling**: Uses `suppressHydrationWarning` to prevent SSR/client detection mismatches in test components.
+
+## Modern Enhancements (Now Implemented) ✓
 
 ### Touch vs Hover Detection
 
-Modern CSS Media Queries Level 4 provide capability-based detection:
+The system now uses react-responsive to leverage CSS Media Queries Level 4 for capability-based detection:
 
 ```css
 /* Hover-capable devices (mouse/trackpad) */
@@ -119,27 +140,24 @@ Modern CSS Media Queries Level 4 provide capability-based detection:
 - `coarse` - Finger touch (less precise)
 - `none` - No pointing device
 
-### Enhanced Media Query Hook
+### React-Responsive Implementation ✓
 
-Reusable hook for responsive design:
+The system now uses react-responsive for all media query needs:
 
 ```typescript
-'use client'
-export function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState<boolean | null>(null)
-  
-  useEffect(() => {
-    const mediaQueryList = window.matchMedia(query)
-    const handleChange = (e: MediaQueryListEvent) => setMatches(e.matches)
-    
-    mediaQueryList.addEventListener('change', handleChange)
-    setMatches(mediaQueryList.matches)
-    
-    return () => mediaQueryList.removeEventListener('change', handleChange)
-  }, [query])
-  
-  return matches
-}
+import { useMediaQuery } from 'react-responsive'
+
+// Direct usage in components
+const isMobile = useMediaQuery({ maxWidth: 640 })
+const isTablet = useMediaQuery({ minWidth: 641, maxWidth: 1024 })
+const isDesktop = useMediaQuery({ minWidth: 1025 })
+
+// Touch capability detection  
+const canHover = useMediaQuery({ query: '(hover: hover)' })
+const hasTouch = useMediaQuery({ query: '(pointer: coarse)' })
+
+// High-DPI detection
+const isRetina = useMediaQuery({ query: '(min-resolution: 2dppx)' })
 ```
 
 ### Device Context Provider
@@ -159,20 +177,21 @@ const DeviceContext = createContext({
 
 ## Implementation Patterns
 
-### SSR-Safe Detection
+### SSR-Safe Detection ✓
 
 **Problem**: `window` object unavailable during server-side rendering
-**Solution**: Client-side detection with fallback defaults
+**Solution**: react-responsive handles SSR automatically with hydration safety
 
 ```typescript
-const [isMobile, setIsMobile] = useState(false) // Safe default
+// react-responsive provides SSR-safe detection out of the box
+const isMobile = useMediaQuery({ maxWidth: 640 })
 
-useEffect(() => {
-  const checkMobile = () => setIsMobile(window.innerWidth <= 640)
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
-  return () => window.removeEventListener('resize', checkMobile)
-}, [])
+// For SSR with specific defaults, use the third parameter
+const isMobile = useMediaQuery(
+  { maxWidth: 640 }, 
+  undefined, 
+  { defaultMatches: false } // SSR default value
+)
 ```
 
 ### Preventing Layout Shifts
@@ -217,35 +236,42 @@ useEffect(() => {
 
 ## Current Limitations
 
-**Missing capabilities**:
-- Touch vs hover detection (CSS-only, no JavaScript API)
-- Browser detection utilities
-- Screen density/DPI detection
+**Resolved**:
+- ✓ Touch vs hover detection (implemented via react-responsive)
+- ✓ Screen density/DPI detection (available via react-responsive)
+- ✓ SSR hydration safety (handled by react-responsive)
+
+**Remaining limitations**:
+- Browser detection utilities (beyond platform detection)
 - Device orientation lock detection
+- Battery status or connection speed detection
 
 **Edge cases**:
-- Hybrid devices with multiple input methods
+- Hybrid devices with multiple input methods (partially addressed)
 - Browser zoom affecting breakpoint detection  
-- Device rotation event handling
+- Device rotation event handling (reactive but not explicitly tracked)
 
 ## Future Enhancements 📋
 
-1. **Implement touch/hover CSS media queries** for better touch UX
-2. **Create reusable device detection hooks** to replace inline checks
+1. ✓ ~~Implement touch/hover CSS media queries~~ (completed with react-responsive)
+2. ✓ ~~Create reusable device detection hooks~~ (using react-responsive directly)
 3. **Add device context provider** for centralised state management
 4. **Enhance gesture support** for document navigation
 5. **Implement adaptive loading** based on device capabilities
+6. **Add orientation change handling** for better landscape support
+7. **Implement reduced motion preferences** for accessibility
 
 ## Status Summary
 
-- Device detection logic ✓
+- Device detection logic ✓ (migrated to react-responsive)
 - Responsive CSS utilities ✓  
 - Platform-specific features ✓
 - Auto-adaptive layouts ✓
 - SSR-safe implementation ✓
-- Touch vs hover detection 📋
-- Enhanced media query hooks 📋
-- Device context provider 📋
+- Touch vs hover detection ✓ (implemented with react-responsive)
+- Enhanced media query hooks ✓ (using react-responsive)
+- Device context provider 📋 (future enhancement)
+- Touch-aware UI components ✓ (tooltips adapt to touch devices)
 
 ## Appendix: Mobile Detection Best Practices Research (2024)
 
