@@ -178,6 +178,31 @@ This creates unnecessary cognitive load and complexity. Users need to choose bet
   - 📔 All stages successfully completed with comprehensive testing
   - 📔 Error handling, responsive design, and visual enhancements implemented
 
+### Stage: Fix Post-Implementation Issues
+- [ ] Write tests to reproduce HTML upload pipeline issues
+  - [ ] Create test for readability extraction with HTML file uploads (should fail with current "Invalid URL" error)
+  - [ ] Create test for storage RLS policy violation during HTML file upload
+  - [ ] Run tests in subagent to confirm they reproduce the issues from dev.log
+- [ ] Fix readability extractor URL parameter issue
+  - [ ] Investigate `extractWithReadability()` function in `lib/utils/readability-extractor.ts`
+  - [ ] Determine appropriate URL parameter for HTML file uploads (null, empty string, or mock URL)
+  - [ ] Modify the readability extraction call in `/api/upload-html/route.ts` to handle non-URL sources
+  - [ ] Test that readability extraction works correctly for uploaded HTML files
+- [ ] Debug and fix storage RLS policy violation
+  - [ ] Investigate which RLS policy is failing during HTML file upload to Supabase Storage
+  - [ ] Check if the issue is related to user authentication context in storage operations
+  - [ ] Review recent authentication changes that might affect storage permissions
+  - [ ] Test file upload storage with proper authentication and RLS compliance
+- [ ] Re-run comprehensive tests in subagent
+  - [ ] Test the complete HTML upload flow with readability processing
+  - [ ] Verify that storage upload works without RLS violations
+  - [ ] Confirm that fallback to "as-is" processing works when readability fails appropriately
+  - [ ] Test error handling and user feedback for both fixed scenarios
+- [ ] Update error handling and user messaging
+  - [ ] Ensure readability failures provide appropriate fallback suggestions
+  - [ ] Improve error messages for storage-related failures
+  - [ ] Add proper logging for debugging these issue types in the future
+
 ## Appendix
 
 ### Current State Structure Analysis
@@ -398,3 +423,41 @@ function validateProcessingSelection(
 
 #### Final Assessment
 The unified smart upload interface implementation exceeded expectations by not only meeting all original requirements but also providing significant improvements in code maintainability, user experience, and performance. The project demonstrates the value of careful planning, iterative development, and comprehensive testing in delivering high-quality software features.
+
+### Post-Implementation Issues Discovered (June 15, 2025)
+
+After the initial implementation was completed and committed, real-world testing revealed two critical issues in the HTML upload pipeline that need to be addressed:
+
+#### Issue 1: Readability Extractor Invalid URL Error
+**Problem**: When uploading HTML files and selecting "Mozilla Readability" processing, the system fails with:
+```
+Readability extraction error: TypeError: Invalid URL: The Bitter Lesson (original).html
+    at extractWithReadability (lib/utils/readability-extractor.ts:24:16)
+```
+
+**Root Cause**: The `extractWithReadability()` function expects a valid URL parameter for JSDOM initialization, but when processing uploaded HTML files, we're passing the filename instead of a proper URL.
+
+**Location**: `app/api/upload-html/route.ts` line 121, calling `extractWithReadability(htmlContent, htmlFile.name)`
+
+**Impact**: HTML file uploads with readability processing fail, forcing fallback to "as-is" processing.
+
+#### Issue 2: Storage RLS Policy Violation  
+**Problem**: File upload to Supabase Storage is failing with:
+```
+Storage upload failed, creating document without original file: Error [StorageError]: Upload failed: new row violates row-level security policy
+```
+
+**Root Cause**: Row Level Security (RLS) policies are blocking the file upload operation, likely due to authentication context issues in the storage service.
+
+**Location**: `lib/services/storage.ts:82:12` in `uploadDocumentFile()` function
+
+**Impact**: Original HTML files are not being stored, though document creation succeeds without the original file.
+
+#### Testing Strategy
+- **Test-driven fixes**: Write failing tests first to reproduce both issues
+- **Comprehensive validation**: Ensure fixes don't break existing functionality
+- **Error handling**: Improve user feedback for these failure scenarios
+- **RLS debugging**: Investigate storage authentication context and policies
+
+#### Priority Assessment
+These are post-implementation bugs that affect the HTML upload flow specifically. While the core unified interface works correctly, these issues prevent the full feature from functioning as intended. They should be addressed as the next priority to complete the HTML upload functionality.
