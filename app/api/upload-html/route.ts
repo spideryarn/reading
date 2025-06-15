@@ -8,7 +8,7 @@ import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { createUrlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
 import { createClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { getModelConfig, getModelVersion, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
+import { AI_CONFIG, getModelForAICall } from '@/lib/config'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
 import { validateAuth } from '@/lib/auth/server-auth'
 import { processHtmlToDocument, handleSanitizationError } from '@/lib/services/html-document-processor'
@@ -165,23 +165,19 @@ export async function POST(request: NextRequest) {
       processingMethodUsed = 'ai-transcription'
       
       // Get model configuration for AI call tracking
-      const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
-      const modelConfig = getModelConfig(tierKey)
-      const modelVersion = getModelVersion(tierKey)
+      const { modelString, config: modelConfig } = getModelForAICall()
       
       // Create AI call record for tracking (before LLM processing)
       const startTime = Date.now()
-      aiCall = await aiCallService.startCall({
+      aiCall = await aiCallService.startCallWithModelString({
         userId: user.id,
-        provider: modelConfig.provider,
-        modelId: modelConfig.modelId,
-        version: modelVersion,
+        modelString: modelString,
         prompt_type: 'url-to-html', // Reuse URL-to-HTML prompt template for HTML content extraction
         input_data: {
           file_name: htmlFile.name,
           content_size_bytes: htmlContent.length,
           provider_requested: provider,
-          tier_used: tierKey
+          model_used: modelString
         }
       })
       
@@ -276,9 +272,8 @@ export async function POST(request: NextRequest) {
     
     // Add AI-specific metadata if AI transcription was used
     if (processingMethodUsed === 'ai-transcription') {
-      const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
-      const modelConfig = getModelConfig(tierKey)
-      ;(htmlMetadata as typeof htmlMetadata & { model_used?: string }).model_used = modelConfig.modelId
+      const { modelString } = getModelForAICall()
+      ;(htmlMetadata as typeof htmlMetadata & { model_used?: string }).model_used = modelString
     }
 
     // Process HTML through shared pipeline (sanitization, text extraction, document creation)

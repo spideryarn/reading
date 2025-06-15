@@ -7,7 +7,7 @@ import { glossaryPrompt, glossaryPromptInputSchema, glossaryResponseSchema } fro
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { getModelConfig, getModelVersion, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
+import { AI_CONFIG, getModelForAICall } from '@/lib/config'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 import { validateAuth } from '@/lib/auth/server-auth'
 
@@ -87,23 +87,19 @@ export async function POST(request: NextRequest) {
     // Debug: Log content length
     console.log(`Processing glossary (${Math.round(content.length/1000)}k chars)`)
     
-    // Resolve tier key to actual model details using config
-    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
-    const modelConfig = getModelConfig(tierKey)
-    const modelVersion = getModelVersion(tierKey)
+    // Get model configuration for AI call tracking
+    const { modelString, config: modelConfig } = getModelForAICall()
     
     // Create AI call record for tracking
-    const aiCall = await aiCallService.startCall({
+    const aiCall = await aiCallService.startCallWithModelString({
       userId: user.id,
       documentId: documentId || undefined,
-      provider: modelConfig.provider,
-      modelId: modelConfig.modelId,
-      version: modelVersion,
+      modelString: modelString,
       prompt_type: 'glossary',
       input_data: { 
         content_length: content.length,
         already_entities_count: already_entities?.length || 0,
-        tier_used: tierKey
+        model_used: modelString
       }
     })
     
@@ -111,7 +107,7 @@ export async function POST(request: NextRequest) {
       correlationId,
       documentId,
       modelProvider: modelConfig.provider,
-      modelId: modelConfig.modelId,
+      modelString: modelString,
       aiCallId: aiCall.id
     }, 'Starting AI glossary generation')
     
@@ -170,7 +166,7 @@ export async function POST(request: NextRequest) {
           content_length: content.length,
           entities_count: validatedResponse.entities.length,
           tier_used: tierKey,
-          model_used: modelConfig.modelId
+          model_used: modelString
         }
       }
     )

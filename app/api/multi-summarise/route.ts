@@ -12,7 +12,7 @@ import {
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { getModelConfig, getModelVersion, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
+import { AI_CONFIG, getModelForAICall } from '@/lib/config'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 import { validateAuth } from '@/lib/auth/server-auth'
 
@@ -163,33 +163,28 @@ export async function POST(request: NextRequest) {
     
     requestLogger.info({ documentId }, 'No existing summary found, proceeding with generation')
     
-    // Resolve tier key to actual model details using config
-    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
-    const modelConfig = getModelConfig(tierKey)
-    const modelVersion = getModelVersion(tierKey)
+    // Get model configuration for AI call tracking
+    const { modelString, config: modelConfig } = getModelForAICall()
     
     requestLogger.info({
       documentId,
-      tierKey,
-      modelProvider: modelConfig.provider,
-      modelId: modelConfig.modelId
+      modelString,
+      modelProvider: modelConfig.provider
     }, 'Configured AI model for multi-dimensional summary generation')
     
     // Create AI call tracking for the single multi-summary generation
     let aiCall
     try {
-      aiCall = await aiCallService.startCall({
+      aiCall = await aiCallService.startCallWithModelString({
         userId: user.id,
         documentId,
-        provider: modelConfig.provider,
-        modelId: modelConfig.modelId,
-        version: modelVersion,
+        modelString: modelString,
         prompt_type: 'multi-summarise',
         input_data: { 
           content_length: content.length,
           approach: 'single-prompt-structured-output',
           combinations_count: 9,
-          tier_used: tierKey
+          model_used: modelString
         }
       })
     } catch (aiCallError) {
@@ -198,7 +193,7 @@ export async function POST(request: NextRequest) {
         documentId,
         error: aiCallError instanceof Error ? aiCallError.message : 'Unknown error',
         modelProvider: modelConfig.provider,
-        modelId: modelConfig.modelId
+        modelString: modelString
       }, 'Failed to initialize AI call tracking')
       return NextResponse.json(
         { error: 'Failed to initialize AI call tracking' },
@@ -250,7 +245,7 @@ export async function POST(request: NextRequest) {
         aiCallId: aiCall.id,
         error: summaryError instanceof Error ? summaryError.message : 'Unknown error',
         modelProvider: modelConfig.provider,
-        modelId: modelConfig.modelId
+        modelString: modelString
       }, 'Failed to generate multi-dimensional summary')
       
       logAIOperation(
@@ -354,8 +349,7 @@ export async function POST(request: NextRequest) {
         parsedSummaries,
         {
           generatedAt: new Date().toISOString(),
-          modelUsed: modelConfig.modelId,
-          tierUsed: tierKey,
+          modelUsed: modelString,
           approach: 'single-prompt-structured-output'
         }
       )

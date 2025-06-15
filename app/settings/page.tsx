@@ -1,9 +1,13 @@
-import { PROVIDER_TIER_MODELS, getModelConfig } from '@/lib/config'
+import { getModelConfigFromEnvironment, getModelStringFromEnvironment } from '@/lib/config'
+import { getAvailableModels, parseModelString } from '@/lib/config/models'
 import { AppHeader } from '@/components/app-header'
 import { Footer } from '@/components/footer'
 
 export default function SettingsPage() {
-  const modelConfig = getModelConfig()
+  const modelString = getModelStringFromEnvironment()
+  const modelConfig = getModelConfigFromEnvironment()
+  const parsedModel = parseModelString(modelString)
+  const availableModels = getAvailableModels()
   
   return (
     <div className="min-h-screen">
@@ -28,10 +32,10 @@ export default function SettingsPage() {
               
               <div>
                 <label className="block text-sm font-medium text-gray-600 mb-1">
-                  Model ID
+                  Model String
                 </label>
                 <div className="font-mono text-gray-900 bg-gray-50 px-3 py-2 rounded border">
-                  {modelConfig.modelId}
+                  {modelString}
                 </div>
               </div>
               
@@ -70,36 +74,56 @@ export default function SettingsPage() {
               Available Models
             </h2>
             <div className="space-y-4">
-              {Object.entries(PROVIDER_TIER_MODELS).map(([key, config]) => (
-                <div 
-                  key={key}
-                  className={`border rounded-lg p-4 ${
-                    config.modelId === modelConfig.modelId
-                      ? 'border-orange-300 bg-orange-50' 
-                      : 'border-gray-200'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="font-mono text-lg font-medium text-gray-900">
-                      {config.modelId}
-                      {config.modelId === modelConfig.modelId && (
-                        <span className="ml-2 text-sm font-normal text-orange-600 bg-orange-100 px-2 py-1 rounded">
-                          Current
-                        </span>
-                      )}
+              {Object.entries(availableModels).map(([provider, models]) => 
+                models.map((model) => {
+                  const isCurrentModel = model.modelName === parsedModel.modelName && 
+                                        model.provider === parsedModel.provider &&
+                                        model.version === parsedModel.version &&
+                                        model.thinking === parsedModel.thinking
+                  
+                  return (
+                    <div 
+                      key={`${model.provider}-${model.modelName}-${model.version}${model.thinking ? '-thinking' : ''}`}
+                      className={`border rounded-lg p-4 ${
+                        isCurrentModel
+                          ? 'border-orange-300 bg-orange-50' 
+                          : 'border-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-mono text-lg font-medium text-gray-900">
+                          {model.modelName}
+                          {model.thinking && (
+                            <span className="ml-2 text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded">
+                              Thinking
+                            </span>
+                          )}
+                          {isCurrentModel && (
+                            <span className="ml-2 text-sm font-normal text-orange-600 bg-orange-100 px-2 py-1 rounded">
+                              Current
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-500 capitalize">
+                          {model.provider}
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-600 mb-2">
+                        {model.description}
+                      </div>
+                      <div className="flex gap-4 text-xs text-gray-500">
+                        <span>Context: {model.contextWindow.toLocaleString()}</span>
+                        <span>Version: {model.version}</span>
+                        {model.pricing && (
+                          <span>
+                            Input: ${model.pricing.inputPer1M}/1M tokens
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-500 capitalize">
-                      {config.provider}
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-600 mb-2">
-                    {config.description}
-                  </div>
-                  <div className="flex gap-4 text-xs text-gray-500">
-                    <span>Context: {config.contextWindow.toLocaleString()}</span>
-                  </div>
-                </div>
-              ))}
+                  )
+                })
+              ).flat()}
             </div>
           </div>
         </div>

@@ -8,7 +8,7 @@ import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { createPdfToHtmlPrompt } from '@/lib/prompts/templates/pdf-to-html-direct'
 import { createClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { getModelConfig, getModelVersion, AI_CONFIG, type ProviderTierKey } from '@/lib/config'
+import { AI_CONFIG, getModelForAICall } from '@/lib/config'
 import { validateAuth } from '@/lib/auth/server-auth'
 import { processHtmlToDocument, handleSanitizationError } from '@/lib/services/html-document-processor'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
@@ -94,23 +94,19 @@ export async function POST(request: NextRequest) {
     const providerDisplayName = provider === 'gemini' ? 'Gemini 1.5 Pro' : 'Claude 4 Sonnet'
     
     // Get model configuration for AI call tracking
-    const tierKey = (process.env.LLM_MODEL || AI_CONFIG.DEFAULT_MODEL) as ProviderTierKey
-    const modelConfig = getModelConfig(tierKey)
-    const modelVersion = getModelVersion(tierKey)
+    const { modelString, config: modelConfig } = getModelForAICall()
     
     // Create AI call record for tracking (before LLM processing)
     const startTime = Date.now()
-    const aiCall = await aiCallService.startCall({
+    const aiCall = await aiCallService.startCallWithModelString({
       userId: user.id,  // Pass user ID for RLS
-      provider: modelConfig.provider,
-      modelId: modelConfig.modelId,
-      version: modelVersion,
+      modelString: modelString,
       prompt_type: 'pdf-to-html',
       input_data: {
         file_name: pdfFile.name,
         file_size_bytes: pdfBuffer.length,
         provider_requested: provider,
-        tier_used: tierKey
+        model_used: modelString
       }
     })
     
@@ -120,7 +116,7 @@ export async function POST(request: NextRequest) {
       correlationId,
       step: 'pdf-to-html-conversion',
       provider: providerDisplayName,
-      modelId: modelConfig.modelId,
+      modelString: modelString,
       aiCallId: aiCall.id
     }, 'Starting PDF to HTML conversion using AI')
 
@@ -186,7 +182,7 @@ export async function POST(request: NextRequest) {
         // PDF-specific metadata fields
         processing_time_ms: processingTime,
         file_size_bytes: pdfBuffer.length,
-        model_used: modelConfig.modelId
+        model_used: modelString
       }
     )
 

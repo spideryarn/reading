@@ -11,7 +11,7 @@ import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { EnhancementService } from '@/lib/services/database/enhancements'
-import { getModelConfig } from '@/lib/config'
+import { getModelForAICall } from '@/lib/config'
 import { validateAuth } from '@/lib/auth/server-auth'
 
 export async function POST(request: NextRequest) {
@@ -36,17 +36,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Document not found' }, { status: 404 })
     }
 
-    // Get model config for demo (use anthropic-cheap)
-    const modelConfig = getModelConfig('anthropic-cheap')
+    // Get model configuration for AI call tracking
+    const { modelString, config: modelConfig } = getModelForAICall()
 
     // Simulate generating multiple enhancements over time
     const simulateEnhancements = async () => {
       // 1. Start with a summary (immediate)
-      const summaryCall = await aiCallService.startCall({
+      const summaryCall = await aiCallService.startCallWithModelString({
         userId: user.id,
         documentId,
-        provider: modelConfig.provider,
-        modelId: modelConfig.modelId,
+        modelString: modelString,
         prompt_type: 'summarise',
         input_data: { content_length: document.plaintext_content?.length || 0 }
       })
@@ -92,11 +91,10 @@ export async function POST(request: NextRequest) {
 
       // 3. Generate glossary after 4 seconds
       setTimeout(async () => {
-        const glossaryCall = await aiCallService.startCall({
+        const glossaryCall = await aiCallService.startCallWithModelString({
           userId: user.id,
           documentId,
-          provider: modelConfig.provider,
-          modelId: modelConfig.modelId,
+          modelString: modelString,
           prompt_type: 'glossary',
           input_data: { content_length: document.plaintext_content?.length || 0 }
         })
@@ -138,11 +136,10 @@ export async function POST(request: NextRequest) {
 
       // 4. Generate headings after 6 seconds
       setTimeout(async () => {
-        const headingsCall = await aiCallService.startCall({
+        const headingsCall = await aiCallService.startCallWithModelString({
           userId: user.id,
           documentId,
-          provider: modelConfig.provider,
-          modelId: modelConfig.modelId,
+          modelString: modelString,
           prompt_type: 'headings',
           input_data: { content_length: document.plaintext_content?.length || 0 }
         })
