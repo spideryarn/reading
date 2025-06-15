@@ -16,7 +16,7 @@ import * as promptTypes from '@/lib/prompts/types'
 import * as supabaseServer from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { EnhancementService } from '@/lib/services/database/enhancements'
-import { getModelConfig } from '@/lib/config'
+import { getModelConfig, getModelForAICall } from '@/lib/config'
 import { tweetThreadPromptInputSchema, tweetThreadResponseSchema } from '@/lib/prompts/templates/tweet-thread'
 import type { MockSupabaseClient, MockAiCallService, MockEnhancementService, MockAiCall } from './test-types'
 import type { ModelConfig } from '@/lib/config'
@@ -66,6 +66,7 @@ jest.mock('@/lib/prompts/templates/tweet-thread', () => ({
 const mockPromptTypes = promptTypes as jest.Mocked<typeof promptTypes>
 const mockSupabaseServer = supabaseServer as jest.Mocked<typeof supabaseServer>
 const mockGetModelConfig = getModelConfig as jest.MockedFunction<typeof getModelConfig>
+const mockGetModelForAICall = getModelForAICall as jest.MockedFunction<typeof getModelForAICall>
 const mockTweetThreadInputSchema = tweetThreadPromptInputSchema as jest.Mocked<typeof tweetThreadPromptInputSchema>
 const mockTweetThreadResponseSchema = tweetThreadResponseSchema as jest.Mocked<typeof tweetThreadResponseSchema>
 
@@ -102,6 +103,16 @@ describe('API Routes Usage Tracking Integration', () => {
       modelId: 'claude-3-haiku-20240307',
       name: 'Claude 3 Haiku'
     } as ModelConfig)
+    
+    mockGetModelForAICall.mockReturnValue({
+      modelString: 'anthropic:claude-3-5-haiku:20241022',
+      config: {
+        provider: 'anthropic',
+        modelName: 'claude-3-5-haiku',
+        version: '20241022',
+        thinking: false,
+      }
+    })
     
     // Setup executePromptWithUsage mock with proper structure
     mockPromptTypes.executePromptWithUsage.mockResolvedValue({

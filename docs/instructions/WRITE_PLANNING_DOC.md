@@ -8,6 +8,8 @@ Aim to keep these concise, but emphasise & clearly capture all the decisions, re
 
 Update this doc regularly to keep the actions up-to-date. When you change it, make minimal, focused changes, based on new user input.
 
+Make sure you have clarity with the user about edge cases, i.e. which ones we want to address, and what we think the right answer should be. If in doubt, stop and ask questions.
+
 Ultrathink.
 
 Use todo lists to help you keep track of everything required for generating a planning doc.
@@ -95,6 +97,9 @@ Upfront preparatory actions:
 Early stages:
 - Explicitly add tasks for writing some automated, low-level unit tests, often before writing code. Explicitly add tasks for re-running the automated tests before ending each stage (in a subagent) if you think it will be helpful. see `docs/reference/TESTING_OVERVIEW.md` for philosophy and `docs/reference/TESTING_SETUP.md` for configuration
 - Add actions to search the web where appropriate, e.g. determining best practices, making use of 3rd-party libraries, etc
+
+At the beginning of stages:
+- Update our tests with new edge cases, as we add new functionality and layer in complexity. These edge cases should have been agreed/prioritised with the user, otherwise stop to discuss them.
 
 At the end of stages:
 - If doing UI-related changes, add an end-of-stage action to check things look ok with Puppeteer MCP in a subagent (provided with rich description of the background/approach to take/success criteria).

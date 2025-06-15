@@ -76,6 +76,9 @@ Type checking and linting:
   - Prefer using a subagent for running tests to avoid filling the context window
   - Current test health: ~71% pass rate due to NextRequest mocking issues (see `docs/reference/TESTING_TROUBLESHOOTING.md`)
 
+⚠️ **IMPORTANT**: If tests are failing, try and understand why. Be wary about removing/modifying the tests just to make them pass.
+
+
 ## Test Database Approach - IMPORTANT
 
 ⚠️ **CRITICAL**: We use a **shared database** approach for testing, following Supabase's official recommendations. Tests run against the same local development database, NOT a separate test database.

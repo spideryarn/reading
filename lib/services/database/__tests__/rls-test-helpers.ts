@@ -137,34 +137,24 @@ export class RealRLSTestSetup {
   }
 
   /**
-   * Get a valid model ID for testing
+   * Get a valid model string for testing
    */
-  async getTestModelId(): Promise<string> {
-    const { data: models, error } = await this.adminClient
-      .from('ai_models')
-      .select('id')
-      .eq('provider', 'anthropic')
-      .limit(1)
-      .single()
-
-    if (error || !models) {
-      throw new Error('No AI models found for testing. Please ensure ai_models table has data.')
-    }
-
-    return models.id
+  getTestModelString(): string {
+    // Use a standard test model string instead of database lookup
+    return 'anthropic:claude-3-5-haiku:20241022'
   }
 
   /**
    * Create test AI call with admin privileges
    */
   async createTestAICall(data: Partial<Database['public']['Tables']['ai_calls']['Insert']>) {
-    // Get a valid model ID if not provided
-    const modelId = data.model_id || await this.getTestModelId()
+    // Use model string instead of model_id
+    const modelString = data.model_string || this.getTestModelString()
 
     const { data: aiCall, error } = await this.adminClient
       .from('ai_calls')
       .insert({
-        model_id: modelId,
+        model_string: modelString,
         prompt_type: 'test',
         prompt_input: 'test prompt input',
         status: 'success',
