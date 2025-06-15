@@ -76,6 +76,12 @@ Type checking and linting:
   - Prefer using a subagent for running tests to avoid filling the context window
   - Current test health: ~71% pass rate due to NextRequest mocking issues (see `docs/reference/TESTING_TROUBLESHOOTING.md`)
 
+**Important for Claude Code users:**
+- **IDE integration:** When using Claude Code within VS Code/Cursor/JetBrains, ESLint and TypeScript diagnostics are automatically shared
+- **CLI usage:** When running Claude Code from command line, you MUST explicitly run `npm run lint` and `npm run build` to get diagnostic feedback
+- **New stricter rules:** We've implemented context-aware linting (stricter for production code, lenient for tests) to catch errors early in AI development
+- **Linting for AI-first development:** See `docs/reference/SETUP_FOR_AI_FIRST_CODING.md` for comprehensive AI linting strategies
+
 ⚠️ **IMPORTANT**: If tests are failing, try and understand why. If they're failing for systemic reasons, we should discuss how to fix that. Be wary about removing/modifying the tests just to make them pass. If in doubt, stop & discuss with the user.
 
 

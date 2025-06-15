@@ -21,7 +21,7 @@ import {
   ToolUrlState
 } from '../url-state-types'
 import { shouldPushHistory } from '../url-state'
-import { validateUrlState, logValidationErrors, type ValidationError } from '../url-validation'
+import { validateUrlState, logValidationErrors } from '../url-validation'
 import { showUrlValidationWarnings } from '@/components/global-url-warnings'
 import { debounce } from '@/lib/utils/debounce'
 import { throttle } from '@/lib/utils/throttle'

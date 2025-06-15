@@ -13,6 +13,12 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+    
+    // Additional strict checks for AI-first development
+    "exactOptionalPropertyTypes": true,
+    "useDefineForClassFields": true,
+    "noUncheckedIndexedAccess": true,
+    
     "plugins": [
       {
         "name": "next"

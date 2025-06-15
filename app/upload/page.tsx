@@ -57,18 +57,7 @@ export default function AddDocumentPage() {
   })
   
 
-  // Input type detection functions
-  const detectInputType = (value: string | File | null): InputType => {
-    if (!value) return null
-    if (typeof value === 'string') {
-      if (isValidUrl(value)) return 'url'
-      return null // Invalid URL
-    }
-    if (value.type === 'application/pdf') return 'pdf'
-    if (isHtmlFile(value)) return 'html'
-    return null // Unsupported file type
-  }
-
+  // Helper functions - defined before use
   const isValidUrl = (urlString: string): boolean => {
     if (!urlString || urlString.trim().length === 0) return false
     
@@ -121,6 +110,18 @@ export default function AddDocumentPage() {
     return file.type === 'text/html' || 
            file.name.toLowerCase().endsWith('.html') || 
            file.name.toLowerCase().endsWith('.htm')
+  }
+
+  // Input type detection function
+  const detectInputType = (value: string | File | null): InputType => {
+    if (!value) return null
+    if (typeof value === 'string') {
+      if (isValidUrl(value)) return 'url'
+      return null // Invalid URL
+    }
+    if (value.type === 'application/pdf') return 'pdf'
+    if (isHtmlFile(value)) return 'html'
+    return null // Unsupported file type
   }
 
   // State update functions with mutual exclusivity

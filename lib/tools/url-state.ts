@@ -1,7 +1,7 @@
 // URL state management utilities for document tools
 // Handles URL to state parsing, state to URL generation, and history management
 
-import { ToolUrlState, URL_PARAM_NAMES, PUSH_HISTORY_CHANGES, REPLACE_HISTORY_CHANGES } from './url-state-types'
+import { ToolUrlState, URL_PARAM_NAMES, PUSH_HISTORY_CHANGES } from './url-state-types'
 
 // Parse URL search params into tool state
 export function parseUrlToState(searchParams: URLSearchParams): ToolUrlState {

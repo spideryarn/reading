@@ -74,7 +74,7 @@ export default function SettingsPage() {
               Available Models
             </h2>
             <div className="space-y-4">
-              {Object.entries(availableModels).map(([provider, models]) => 
+              {Object.entries(availableModels).map(([, models]) => 
                 models.map((model) => {
                   const isCurrentModel = model.modelName === parsedModel.modelName && 
                                         model.provider === parsedModel.provider &&
