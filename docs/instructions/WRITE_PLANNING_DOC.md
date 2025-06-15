@@ -79,7 +79,7 @@ Structuring:
 - Start with a really simple working v1, and gradually layer in complexity, ending each stage with passing tests and working code.
 - Try to surface potential risks early. For example, if the whole plan rests on the library being able to do X, let's do a quick trial to make sure that works).
 - Try to organise the stages so that we frontload the business value, so that we could stop partway. For example, get it working for the primary/most valuable use-case first.
-- Include subtasks with clear acceptance criteria
+- Include actions with clear acceptance criteria
 - If there are actions that the user needs to do, add those in too, so we can track progress and remind the user.
 
 Formatting:
@@ -87,7 +87,7 @@ Formatting:
 - Use `[ ]` and `[x]` checkboxes to indicate todo/done.
 - Refer to specific docs, files/functions, examples, links, etc, so it's clear exactly what needs to be done
 - If there are caveats, snippets, examples, or other rich detail that won't fit in a couple of sentences, add a section in the Appendix and reference it from the action
-- Explicitly say to use subagents for encapsulated tasks or where the task will create a lot of verbose content, e.g. checking for errors or browser console output with Puppeteer/Playwright MCP (preferring Puppeteer), doing research
+- Explicitly say to use subagents for encapsulated work, or where it will create a lot of verbose content, e.g. checking for errors or browser console output with Puppeteer/Playwright MCP (preferring Puppeteer), doing research
 - Make sure the actions are described clearly enough and with enough detail/context that someone else could implement correctly
 
 Upfront preparatory actions:
@@ -95,17 +95,18 @@ Upfront preparatory actions:
 - If this is a major piece of work, ask the user whether we should have an early action to create a `yyMMdd[letter]_complex_project` Git branch (and move over any changes). If so, then add a final action to merge that back into `main`.
 
 Early stages:
-- Explicitly add tasks for writing some automated, low-level unit tests, often before writing code. Explicitly add tasks for re-running the automated tests before ending each stage (in a subagent) if you think it will be helpful. see `docs/reference/TESTING_OVERVIEW.md` for philosophy and `docs/reference/TESTING_SETUP.md` for configuration
-- Add actions to search the web where appropriate, e.g. determining best practices, making use of 3rd-party libraries, etc
+- Add actions to search the web for research where appropriate, e.g. determining best practices, making use of 3rd-party libraries, etc
 
 At the beginning of stages:
-- Update our tests with new edge cases, as we add new functionality and layer in complexity. These edge cases should have been agreed/prioritised with the user, otherwise stop to discuss them.
+- Add an action to write some tests (i.e. before writing code), or to update tests with new edge cases (as we add new functionality and layer in complexity). Edge cases should have been agreed/prioritised with the user, otherwise stop to discuss them.
 
-At the end of stages:
-- If doing UI-related changes, add an end-of-stage action to check things look ok with Puppeteer MCP in a subagent (provided with rich description of the background/approach to take/success criteria).
-- Add actions to stop & review with user where appropriate, e.g. when we get to a good stopping point, to manually check changes to the user interface, etc.
+At the end of stage (where appropriate):
+- If doing UI-related changes, add an end-of-stage action to check things look ok with Puppeteer MCP (in a subagent, provided with rich description of the background/approach to take/success criteria).
+- Add action to run the linter/build, and make changes in response as you see fit.
+- Add action to re-run the tests (in a subagent) if you think it will be helpful. see `docs/reference/TESTING_OVERVIEW.md` for philosophy and `docs/reference/TESTING_SETUP.md` for configuration
 - Follow instructions in `docs/instructions/DEBRIEF_PROGRESS.md` to output a summary of where things stand
 - Update this planning doc with progress so far, log useful learnings/surprises/changes of plan/etc.
+- Add an action to stop & review with user where appropriate, e.g. when we get to a good stopping point, to manually check changes to the user interface, etc.
 - Git commit (following instructions in `docs/instructions/GIT_COMMIT_CHANGES.md`, including use a subagent).
 
 In later stages:
@@ -114,6 +115,7 @@ In later stages:
 - Add actions to update logging/monitoring if needed (see `docs/reference/LOGGING_BEST_PRACTICES.md`)
 
 As final actions:
+- Consolidate our tests. Consider removing low-level ones that will be brittle or that we don't need, and adding one or two high-coverage, integration tests that will catch important regressions.
 - Ask the user's permission to merge back (if we created a branch)
 - Move the doc to `planning/finished/` and commit.
 
@@ -128,7 +130,7 @@ Example stages & action (no need to include the words `TODO` or `DONE` explicitl
 
 ### ✅ This stage has already been completed
   - ✅ This action has already been completed
-    - 📔 You could journal about useful/unexpected discoveries when you update progress on completed tasks
+    - 📔 You could journal about useful/unexpected discoveries when you update progress on completed actions
   - ❌ This action has failed/been skipped
 ```
 
