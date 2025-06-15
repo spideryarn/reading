@@ -8,7 +8,7 @@ import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { createUrlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
 import { createClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { AI_CONFIG, getModelForAICall } from '@/lib/config'
+import { getModelForAICall } from '@/lib/config'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
 import { validateAuth } from '@/lib/auth/server-auth'
 import { processHtmlToDocument, handleSanitizationError } from '@/lib/services/html-document-processor'
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
       processingMethodUsed = 'ai-transcription'
       
       // Get model configuration for AI call tracking
-      const { modelString, config: modelConfig } = getModelForAICall()
+      const { modelString } = getModelForAICall()
       
       // Create AI call record for tracking (before LLM processing)
       const startTime = Date.now()

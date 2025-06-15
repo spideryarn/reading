@@ -48,8 +48,7 @@ export type Database = {
           finish_reason: string | null
           id: string
           latency_ms: number | null
-          model_id: string
-          model_string: string | null
+          model_string: string
           prompt_input: string
           prompt_template: string | null
           prompt_tokens: number | null
@@ -72,8 +71,7 @@ export type Database = {
           finish_reason?: string | null
           id?: string
           latency_ms?: number | null
-          model_id: string
-          model_string?: string | null
+          model_string: string
           prompt_input: string
           prompt_template?: string | null
           prompt_tokens?: number | null
@@ -96,8 +94,7 @@ export type Database = {
           finish_reason?: string | null
           id?: string
           latency_ms?: number | null
-          model_id?: string
-          model_string?: string | null
+          model_string?: string
           prompt_input?: string
           prompt_template?: string | null
           prompt_tokens?: number | null
@@ -113,13 +110,6 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ai_calls_model_id_fkey"
-            columns: ["model_id"]
-            isOneToOne: false
-            referencedRelation: "ai_models"
             referencedColumns: ["id"]
           },
         ]

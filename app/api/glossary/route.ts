@@ -7,7 +7,7 @@ import { glossaryPrompt, glossaryPromptInputSchema, glossaryResponseSchema } fro
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { AI_CONFIG, getModelForAICall } from '@/lib/config'
+import { getModelForAICall } from '@/lib/config'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 import { validateAuth } from '@/lib/auth/server-auth'
 

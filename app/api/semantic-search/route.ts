@@ -13,7 +13,7 @@ import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { DocumentParser } from '@/lib/services/document-parser'
-import { AI_CONFIG, getModelForAICall } from '@/lib/config'
+import { getModelForAICall } from '@/lib/config'
 import { normalizeSemanticSearchQuery } from '@/lib/utils/semantic-search'
 import { 
   formatDocumentForSemanticSearch, 

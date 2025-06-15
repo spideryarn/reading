@@ -9,8 +9,8 @@ import { createUrlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
 import { createPdfToHtmlPrompt } from '@/lib/prompts/templates/pdf-to-html-direct'
 import { createClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { AI_CONFIG, getModelForAICall } from '@/lib/config'
-import { generateSlug, generateHtmlFilename } from '@/lib/utils/slug'
+import { getModelForAICall } from '@/lib/config'
+import { generateHtmlFilename } from '@/lib/utils/slug'
 import { URL_EXTRACTION_CONFIG } from '@/lib/config'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
 import { validateAuth } from '@/lib/auth/server-auth'
@@ -577,7 +577,7 @@ export async function POST(request: NextRequest) {
       extractionMethodUsed = 'ai-transcription'
       
       // Get model configuration for AI call tracking
-      const { modelString, config: modelConfig } = getModelForAICall()
+      const { modelString } = getModelForAICall()
       
       // Create AI call record for tracking (before LLM processing)
       const startTime = Date.now()

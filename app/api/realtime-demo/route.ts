@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get model configuration for AI call tracking
-    const { modelString, config: modelConfig } = getModelForAICall()
+    const { modelString } = getModelForAICall()
 
     // Simulate generating multiple enhancements over time
     const simulateEnhancements = async () => {
