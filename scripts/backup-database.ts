@@ -1,5 +1,13 @@
 #!/usr/bin/env npx tsx
 
+/**
+ * Database backup script for Spideryarn Reading
+ * 
+ * Creates timestamped PostgreSQL database backups using pg_dump.
+ * See docs/reference/DATABASE_BACKUP.md for complete backup strategy,
+ * limitations, and restoration procedures.
+ */
+
 import { Cli, Command, Option, UsageError } from 'clipanion';
 import { config } from 'dotenv';
 import { resolve, basename } from 'path';
