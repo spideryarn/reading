@@ -1,12 +1,10 @@
 'use client'
 
-// URL validation warning dialog component
-// Displays clear error messages for invalid URL parameters
-// Follows CODING_PRINCIPLES.md: "raise errors early, clearly & fatally"
+// Simple URL validation warning toast
+// Quick-and-dirty implementation for user feedback
 
 import { useState, useEffect } from 'react'
 import { AlertTriangle, X } from '@phosphor-icons/react/dist/ssr'
-import { AlertWithIcon } from '@/components/ui/alert'
 import type { ValidationError } from '@/lib/tools/url-validation'
 
 interface UrlValidationWarningProps {

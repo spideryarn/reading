@@ -1070,15 +1070,16 @@ All critical architectural issues identified in "Questions & Decisions Remaining
 
 ### What's Left to Do
 
-**Optional Enhancements (Not Blocking)**:
-1. **Warning dialog integration** - Add `UrlValidationWarning` component to layout for user-facing error display
-2. **Documentation updates** - Update `docs/reference/ARCHITECTURE_URL_STATE.md` with final implementation details
+**Recently Completed Enhancements**:
+1. **✅ Warning dialog integration** - Added `GlobalUrlWarnings` component to layout for user-facing error display
+2. **✅ Documentation updates** - Updated `docs/reference/ARCHITECTURE_URL_STATE.md` with final implementation details
+
+**Optional Future Enhancements**:
 3. **Performance monitoring** - Add metrics for validation performance in production
 
 **Cost/Benefit Analysis**:
-- **High value completed**: Core URL state management is production-ready and robust
-- **Medium value remaining**: User-facing error dialogs would improve UX but aren't critical
-- **Low value remaining**: Additional documentation polish
+- **High value completed**: Core URL state management is production-ready and robust with user-facing error handling
+- **Low value remaining**: Performance monitoring and additional polish
 
 ### Journal Entries
 
@@ -1087,6 +1088,8 @@ All critical architectural issues identified in "Questions & Decisions Remaining
 **2025-06-15 11:00** - Fixed logic by reordering navigation check before search-only check
 **2025-06-15 11:15** - Fixed undefined value handling for parameter clearing scenarios
 **2025-06-15 11:30** - All 33 tests passing, build and lint successful
+**2025-06-15 11:45** - Added quick-and-dirty global warning toast system for user feedback
+**2025-06-15 11:50** - Updated architecture documentation with final implementation status
 
 **Key Learning**: Mixed parameter updates (e.g., `{tab: 'search', q: 'query'}`) require careful precedence logic where navigation parameters take priority over search typing behavior.
 

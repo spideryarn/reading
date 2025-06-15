@@ -22,6 +22,7 @@ import {
 } from '../url-state-types'
 import { shouldPushHistory } from '../url-state'
 import { validateUrlState, logValidationErrors, type ValidationError } from '../url-validation'
+import { showUrlValidationWarnings } from '@/components/global-url-warnings'
 import { debounce } from '@/lib/utils/debounce'
 import { throttle } from '@/lib/utils/throttle'
 
@@ -99,11 +100,11 @@ export function useToolUrlState(): UseToolUrlStateReturn {
       // Log validation errors for debugging
       logValidationErrors(validation.errors, 'Initial URL validation')
       
+      // Show user-facing warning
+      showUrlValidationWarnings(validation.errors)
+      
       // Apply sanitized values to URL
       setState(validation.sanitized, { skipValidation: true, forceHistory: 'replace' })
-      
-      // TODO: Show validation warning to user
-      // This will be implemented when we add the warning component to the layout
     }
   }, [
     urlState.tab, urlState.term, urlState.q, urlState.type, urlState.case,
@@ -123,11 +124,11 @@ export function useToolUrlState(): UseToolUrlStateReturn {
         // Log validation errors for debugging
         logValidationErrors(validation.errors, 'URL state update')
         
+        // Show user-facing warning
+        showUrlValidationWarnings(validation.errors)
+        
         // Use sanitized values instead of original updates
         finalUpdates = validation.sanitized
-        
-        // TODO: Show validation warning to user
-        // This will be implemented when we add the warning component to the layout
       }
     }
     
