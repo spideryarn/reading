@@ -49,6 +49,7 @@ export type Database = {
           id: string
           latency_ms: number | null
           model_id: string
+          model_string: string | null
           prompt_input: string
           prompt_template: string | null
           prompt_tokens: number | null
@@ -72,6 +73,7 @@ export type Database = {
           id?: string
           latency_ms?: number | null
           model_id: string
+          model_string?: string | null
           prompt_input: string
           prompt_template?: string | null
           prompt_tokens?: number | null
@@ -95,6 +97,7 @@ export type Database = {
           id?: string
           latency_ms?: number | null
           model_id?: string
+          model_string?: string | null
           prompt_input?: string
           prompt_template?: string | null
           prompt_tokens?: number | null
