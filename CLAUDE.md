@@ -76,7 +76,7 @@ Type checking and linting:
   - Prefer using a subagent for running tests to avoid filling the context window
   - Current test health: ~71% pass rate due to NextRequest mocking issues (see `docs/reference/TESTING_TROUBLESHOOTING.md`)
 
-⚠️ **IMPORTANT**: If tests are failing, try and understand why. Be wary about removing/modifying the tests just to make them pass.
+⚠️ **IMPORTANT**: If tests are failing, try and understand why. If they're failing for systemic reasons, we should discuss how to fix that. Be wary about removing/modifying the tests just to make them pass. If in doubt, stop & discuss with the user.
 
 
 ## Test Database Approach - IMPORTANT
