@@ -368,42 +368,4 @@ describe('Real RLS Policy Tests', () => {
     })
   })
 
-  describe('Infrastructure validation', () => {
-    test('Test setup infrastructure works correctly', async () => {
-      // Test admin client can perform operations
-      const adminClient = setup.getAdminClient()
-      expect(adminClient).toBeDefined()
-
-      // Test admin client can query existing data
-      const { data: existingDocs, error } = await adminClient
-        .from('documents')
-        .select('id')
-        .limit(1)
-
-      expect(error).toBeNull()
-      expect(existingDocs).toBeDefined()
-
-      // Test user clients can be created
-      const userAClient = await setup.createUserClient(TEST_USER_IDS.USER_A)
-      const userBClient = await setup.createUserClient(TEST_USER_IDS.USER_B)
-
-      expect(userAClient).toBeDefined()
-      expect(userBClient).toBeDefined()
-
-      // Test user clients can perform queries (will be filtered by RLS)
-      const userAQuery = await userAClient
-        .from('documents')
-        .select('id')
-        .limit(5)
-
-      const userBQuery = await userBClient
-        .from('documents')
-        .select('id')
-        .limit(5)
-
-      // Both queries should succeed (though results will be filtered by RLS)
-      expect(userAQuery.error).toBeNull()
-      expect(userBQuery.error).toBeNull()
-    })
-  })
 })

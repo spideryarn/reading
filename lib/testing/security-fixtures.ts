@@ -100,8 +100,7 @@ export const SECURITY_TEST_ENHANCEMENTS = {
  */
 export const SECURITY_TEST_AI_CALLS = {
   USER_A_AI_CALL: {
-    provider: 'anthropic',
-    model_id: 'claude-3-haiku-20240307',
+    model_string: 'anthropic:claude-3-5-haiku:20241022',
     prompt_type: 'headings',
     input_data: {
       document_title: 'User A Document',
@@ -122,8 +121,7 @@ export const SECURITY_TEST_AI_CALLS = {
   },
 
   USER_B_AI_CALL: {
-    provider: 'google', 
-    model_id: 'gemini-1.5-pro',
+    model_string: 'google:gemini-2.0-flash:latest',
     prompt_type: 'summarize',
     input_data: {
       document_title: 'User B Document',
