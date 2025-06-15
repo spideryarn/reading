@@ -7,7 +7,7 @@ Comprehensive guide for HTML security and formatting in Spideryarn Reading, cove
 - `docs/reference/CODING_PRINCIPLES.md` - Development principles emphasising security and early error detection
 - `docs/reference/ARCHITECTURE_DECISIONS.md` - Key architectural decisions including security considerations
 - `docs/reference/UPLOAD.md` - General document upload and import system reference
-- `docs/reference/HTML_DOCUMENT_PROCESSOR.md` - Shared processing service documentation
+- `docs/reference/HTML_CONTENT_PROCESSING_OVERVIEW.md` - Comprehensive HTML processing guide including shared processing service documentation
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Template system for AI-generated content requiring sanitisation
 - `docs/reference/AUTHENTICATION_SECURITY.md` - Broader security practices and troubleshooting
 - `lib/utils/html-sanitizer.ts` - Sanitisation implementation
