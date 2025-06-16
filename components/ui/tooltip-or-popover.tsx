@@ -55,17 +55,24 @@ export function TooltipOrPopover({
   const longPressProps = useLongPress(() => setPopoverOpen(true), { delay: 500 })
   
   // Discoverability styling (faint dotted underline matching glossary pattern)
-  const indicatorStyle = showIndicator ? {
-    cursor: 'help',
-    transition: 'all 0.2s ease'
-  } : {}
+  const indicatorStyle = showIndicator
+    ? {
+        borderBottom: '1px dotted #DB8A45',
+        cursor: 'help',
+        transition: 'all 0.2s ease'
+      }
+    : {}
   
   if (canHover) {
     // Desktop path: Use standard tooltip with hover
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <span style={indicatorStyle} className={triggerClassName ?? className}>
+          <span
+            suppressHydrationWarning
+            style={indicatorStyle}
+            className={triggerClassName ?? className}
+          >
             {children}
           </span>
         </TooltipTrigger>
@@ -85,8 +92,9 @@ export function TooltipOrPopover({
   return (
     <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
       <PopoverTrigger asChild>
-        <span 
-          style={indicatorStyle} 
+        <span
+          suppressHydrationWarning
+          style={indicatorStyle}
           className={triggerClassName ?? className}
           {...longPressProps}
         >

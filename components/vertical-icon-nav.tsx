@@ -11,7 +11,7 @@ import {
 import type { IconProps } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import * as Tooltip from '@radix-ui/react-tooltip'
+import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 import { useState, useEffect } from 'react'
 
 // Navigation item definition
@@ -145,114 +145,94 @@ export function VerticalIconNav({
       aria-label="Document navigation"
     >
       {/* Collapse button at top */}
-      <Tooltip.Provider delayDuration={600}>
-        <Tooltip.Root>
-          <Tooltip.Trigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onToggleCollapse}
-              className={cn(
-                'h-10 w-10 sm:h-12 sm:w-12 rounded-none border-0',
-                'flex items-center justify-center',
-                'text-gray-600 hover:text-gray-900',
-                'hover:bg-gray-50',
-                'transition-colors duration-200',
-                'focus:ring-2 focus:ring-blue-500 focus:ring-inset'
-              )}
-              aria-label={`Toggle sidebar (${shortcutText})`}
-            >
-              <SidebarSimple 
-                size={18} 
-                weight="duotone" 
-                className="transition-colors duration-200"
-              />
-            </Button>
-          </Tooltip.Trigger>
-          <Tooltip.Portal>
-            <Tooltip.Content
-              side="right"
-              align="center"
-              sideOffset={8}
-              className="z-50 max-w-xs"
-            >
-              <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-                <div className="font-semibold text-gray-900 text-sm mb-1">
-                  Toggle Sidebar
-                </div>
-                <div className="text-gray-700 text-sm leading-relaxed mb-2">
-                  Collapse or expand the navigation panel
-                </div>
-                <div className="text-xs text-gray-500 font-mono">
-                  Press {shortcutText} to toggle
-                </div>
-              </div>
-              <Tooltip.Arrow 
-                className="fill-gray-200" 
-                width={12} 
-                height={6}
-              />
-            </Tooltip.Content>
-          </Tooltip.Portal>
-        </Tooltip.Root>
-      </Tooltip.Provider>
+      <TooltipOrPopover
+        content={
+          <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+            <div className="font-semibold text-gray-900 text-sm mb-1">
+              Toggle Sidebar
+            </div>
+            <div className="text-gray-700 text-sm leading-relaxed mb-2">
+              Collapse or expand the navigation panel
+            </div>
+            <div className="text-xs text-gray-500 font-mono">
+              Press {shortcutText} to toggle
+            </div>
+          </div>
+        }
+        side="right"
+        align="center"
+        sideOffset={8}
+        showIndicator={false}
+        contentClassName="p-0 bg-transparent border-0 shadow-none"
+      >
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggleCollapse}
+          className={cn(
+            'h-10 w-10 sm:h-12 sm:w-12 rounded-none border-0',
+            'flex items-center justify-center',
+            'text-gray-600 hover:text-gray-900',
+            'hover:bg-gray-50',
+            'transition-colors duration-200',
+            'focus:ring-2 focus:ring-blue-500 focus:ring-inset'
+          )}
+          aria-label={`Toggle sidebar (${shortcutText})`}
+        >
+          <SidebarSimple 
+            size={18} 
+            weight="duotone" 
+            className="transition-colors duration-200"
+          />
+        </Button>
+      </TooltipOrPopover>
       
       {/* Gap after collapse button */}
       <div className="h-4" />
       
       {/* Command palette trigger - second position */}
       {onCommandPaletteToggle && (
-        <Tooltip.Provider delayDuration={600}>
-          <Tooltip.Root>
-            <Tooltip.Trigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onCommandPaletteToggle}
-                className={cn(
-                  'h-10 w-10 sm:h-12 sm:w-12 rounded-none border-0',
-                  'flex items-center justify-center',
-                  'text-gray-600 hover:text-gray-900',
-                  'hover:bg-gray-50',
-                  'transition-colors duration-200',
-                  'focus:ring-2 focus:ring-blue-500 focus:ring-inset'
-                )}
-                aria-label="Open command palette (Cmd+K / Ctrl+K)"
-              >
-                <Terminal 
-                  size={18} 
-                  weight="duotone" 
-                  className="transition-colors duration-200"
-                />
-              </Button>
-            </Tooltip.Trigger>
-            <Tooltip.Portal>
-              <Tooltip.Content
-                side="right"
-                align="center"
-                sideOffset={8}
-                className="z-50 max-w-xs"
-              >
-                <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-                  <div className="font-semibold text-gray-900 text-sm mb-1">
-                    Command Palette
-                  </div>
-                  <div className="text-gray-700 text-sm leading-relaxed mb-2">
-                    Quick access to navigation and actions
-                  </div>
-                  <div className="text-xs text-gray-500 font-mono">
-                    Press {commandShortcutText} to open
-                  </div>
-                </div>
-                <Tooltip.Arrow 
-                  className="fill-gray-200" 
-                  width={12} 
-                  height={6}
-                />
-              </Tooltip.Content>
-            </Tooltip.Portal>
-          </Tooltip.Root>
-        </Tooltip.Provider>
+        <TooltipOrPopover
+          content={
+            <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+              <div className="font-semibold text-gray-900 text-sm mb-1">
+                Command Palette
+              </div>
+              <div className="text-gray-700 text-sm leading-relaxed mb-2">
+                Quick access to navigation and actions
+              </div>
+              <div className="text-xs text-gray-500 font-mono">
+                Press {commandShortcutText} to open
+              </div>
+            </div>
+          }
+          side="right"
+          align="center"
+          sideOffset={8}
+          showIndicator={false}
+          contentClassName="p-0 bg-transparent border-0 shadow-none"
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onCommandPaletteToggle}
+            className={cn(
+              'h-10 w-10 sm:h-12 sm:w-12 rounded-none border-0',
+              'flex items-center justify-center',
+              'text-gray-600 hover:text-gray-900',
+              'hover:bg-gray-50',
+              'transition-colors duration-200',
+              'focus:ring-2 focus:ring-blue-500 focus:ring-inset'
+            )}
+            aria-label="Open command palette (Cmd+K / Ctrl+K)"
+          >
+            <Terminal 
+              size={18} 
+              weight="duotone" 
+              className="transition-colors duration-200"
+            />
+          </Button>
+        </TooltipOrPopover>
       )}
       
       {/* Gap before navigation items */}
@@ -267,62 +247,52 @@ export function VerticalIconNav({
             {/* Add gap before metadata icon */}
             {item.id === 'metadata' && <div className="h-3" />}
             
-            <Tooltip.Provider delayDuration={600}>
-              <Tooltip.Root>
-                <Tooltip.Trigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onTabClick(item.id)}
-                    className={cn(
-                      'h-10 w-10 sm:h-12 sm:w-12 rounded-none border-0',
-                      'flex items-center justify-center',
-                      'text-gray-600 hover:text-gray-900',
-                      'hover:bg-gray-50',
-                      'transition-colors duration-200',
-                      'focus:ring-2 focus:ring-blue-500 focus:ring-inset',
-                      isActive && [
-                        'bg-orange-50 text-orange-700', // Spideryarn orange theme
-                        'border-r-2 border-orange-500',
-                        'hover:bg-orange-100 hover:text-orange-800'
-                      ]
-                    )}
-                    aria-label={`${item.tooltip.title}: ${item.tooltip.description}`}
-                  >
-                    <Icon 
-                      size={18} 
-                      weight="duotone" 
-                      className="transition-colors duration-200"
-                    />
-                  </Button>
-                </Tooltip.Trigger>
-                <Tooltip.Portal>
-                  <Tooltip.Content
-                    side="right"
-                    align="center"
-                    sideOffset={8}
-                    className="z-50 max-w-xs"
-                  >
-                    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-                      <div className="font-semibold text-gray-900 text-sm mb-1">
-                        {item.tooltip.title}
-                      </div>
-                      <div className="text-gray-700 text-sm leading-relaxed mb-2">
-                        {item.tooltip.description}
-                      </div>
-                      <div className="text-xs text-gray-500 font-mono">
-                        Press {shortcutText} to toggle sidebar
-                      </div>
-                    </div>
-                    <Tooltip.Arrow 
-                      className="fill-gray-200" 
-                      width={12} 
-                      height={6}
-                    />
-                  </Tooltip.Content>
-                </Tooltip.Portal>
-              </Tooltip.Root>
-            </Tooltip.Provider>
+            <TooltipOrPopover
+              content={
+                <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                  <div className="font-semibold text-gray-900 text-sm mb-1">
+                    {item.tooltip.title}
+                  </div>
+                  <div className="text-gray-700 text-sm leading-relaxed mb-2">
+                    {item.tooltip.description}
+                  </div>
+                  <div className="text-xs text-gray-500 font-mono">
+                    Press {shortcutText} to toggle sidebar
+                  </div>
+                </div>
+              }
+              side="right"
+              align="center"
+              sideOffset={8}
+              showIndicator={false}
+              contentClassName="p-0 bg-transparent border-0 shadow-none"
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onTabClick(item.id)}
+                className={cn(
+                  'h-10 w-10 sm:h-12 sm:w-12 rounded-none border-0',
+                  'flex items-center justify-center',
+                  'text-gray-600 hover:text-gray-900',
+                  'hover:bg-gray-50',
+                  'transition-colors duration-200',
+                  'focus:ring-2 focus:ring-blue-500 focus:ring-inset',
+                  isActive && [
+                    'bg-orange-50 text-orange-700', // Spideryarn orange theme
+                    'border-r-2 border-orange-500',
+                    'hover:bg-orange-100 hover:text-orange-800'
+                  ]
+                )}
+                aria-label={`${item.tooltip.title}: ${item.tooltip.description}`}
+              >
+                <Icon 
+                  size={18} 
+                  weight="duotone" 
+                  className="transition-colors duration-200"
+                />
+              </Button>
+            </TooltipOrPopover>
           </div>
         )
       })}

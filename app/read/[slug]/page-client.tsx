@@ -278,8 +278,8 @@ export default function DocumentPageClient({
     <div className="h-screen flex flex-col">
       <AppHeader 
         title={currentTitle}
-        titleLink={`/documents/${slug}`}
-        logoLink="/documents"
+        titleLink={`/read/${slug}`}
+        logoLink="/read"
         actions={<DocumentHeaderActions slug={slug} storagePath={storagePath} originalFileType={originalFileType} />}
       />
       <div className="flex-1 overflow-hidden">

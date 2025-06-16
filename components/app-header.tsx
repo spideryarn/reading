@@ -47,7 +47,6 @@ export function AppHeader({
                 alt="Spideryarn logo"
                 width={32}
                 height={32}
-                style={{ width: "auto", height: "auto" }}
                 className="drop-shadow-md h-6 w-6 sm:h-8 sm:w-8"
               />
               <span className="hidden sm:inline text-xl font-semibold text-spideryarn-orange font-trebuchet">

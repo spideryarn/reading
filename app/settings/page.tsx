@@ -11,7 +11,7 @@ export default function SettingsPage() {
   
   return (
     <div className="min-h-screen">
-      <AppHeader title="Settings" backLink="/documents" backText="Documents" />
+      <AppHeader title="Settings" backLink="/read" backText="Documents" />
       
       <main className="max-w-4xl mx-auto px-8 py-8">
         <div className="space-y-8">
