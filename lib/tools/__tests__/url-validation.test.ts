@@ -45,8 +45,8 @@ describe('URL State Validation', () => {
 
       expect(result.isValid).toBe(false)
       expect(result.errors).toHaveLength(1)
-      expect(result.errors[0].parameter).toBe('tab')
-      expect(result.errors[0].error).toContain('Invalid tab')
+      expect(result.errors[0]!.parameter).toBe('tab')
+      expect(result.errors[0]!.error).toContain('Invalid tab')
       expect(result.sanitized.tab).toBe('original')
     })
 
@@ -95,7 +95,7 @@ describe('URL State Validation', () => {
 
       expect(result.isValid).toBe(false)
       expect(result.errors).toHaveLength(1)
-      expect(result.errors[0].parameter).toBe('type')
+      expect(result.errors[0]!.parameter).toBe('type')
       expect(result.sanitized.type).toBe('text')
     })
 
@@ -108,7 +108,7 @@ describe('URL State Validation', () => {
 
       expect(result.isValid).toBe(false)
       expect(result.errors).toHaveLength(1)
-      expect(result.errors[0].parameter).toBe('case')
+      expect(result.errors[0]!.parameter).toBe('case')
       expect(result.sanitized.case).toBe(false)
     })
 
@@ -121,8 +121,8 @@ describe('URL State Validation', () => {
 
       expect(result.isValid).toBe(false)
       expect(result.errors).toHaveLength(1)
-      expect(result.errors[0].parameter).toBe('conversation')
-      expect(result.errors[0].error).toContain('valid UUID format')
+      expect(result.errors[0]!.parameter).toBe('conversation')
+      expect(result.errors[0]!.error).toContain('valid UUID format')
       expect(result.sanitized.conversation).toBeUndefined()
     })
 
@@ -135,8 +135,8 @@ describe('URL State Validation', () => {
 
       expect(result.isValid).toBe(false)
       expect(result.errors).toHaveLength(1)
-      expect(result.errors[0].parameter).toBe('scroll')
-      expect(result.errors[0].error).toContain('valid element ID')
+      expect(result.errors[0]!.parameter).toBe('scroll')
+      expect(result.errors[0]!.error).toContain('valid element ID')
       expect(result.sanitized.scroll).toBeUndefined()
     })
 
@@ -189,6 +189,27 @@ describe('URL State Validation', () => {
       expect(result.sanitized.term).toBeUndefined()
       expect(result.sanitized.q).toBeUndefined()
       expect(result.sanitized.highlight).toBeUndefined()
+    })
+
+    it('should treat null values as cleared parameters without errors', () => {
+      const nullState: any = {
+        term: null,
+        q: null,
+        conversation: null,
+        highlight: null,
+        scroll: null
+      }
+
+      const result = validateUrlState(nullState)
+
+      expect(result.isValid).toBe(true)
+      expect(result.errors).toHaveLength(0)
+      // Sanitized object should NOT include cleared parameters
+      expect(result.sanitized).not.toHaveProperty('term')
+      expect(result.sanitized).not.toHaveProperty('q')
+      expect(result.sanitized).not.toHaveProperty('conversation')
+      expect(result.sanitized).not.toHaveProperty('highlight')
+      expect(result.sanitized).not.toHaveProperty('scroll')
     })
   })
 

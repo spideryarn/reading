@@ -222,9 +222,7 @@ function GlossaryDisplay({
   const handleEntityClick = (entity: Entity) => {
     const elementId = findFirstOccurrence(entity)
     if (elementId) {
-      // Set the term in URL state for shareable links and browser history
-      setSearchTerm(entity.name)
-      // Use context action for both scrolling and position tracking
+      // Scroll to the first occurrence without altering the current glossary search input
       actions.scrollToElement(elementId)
     }
   }

@@ -48,7 +48,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
   }
 
   // Validate term parameter (glossary term)
-  if (state.term !== undefined) {
+  if (state.term != null) {
     if (typeof state.term !== 'string') {
       errors.push({
         parameter: 'term',
@@ -58,7 +58,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
       })
     } else if (state.term.length === 0) {
       // Empty string is valid (clears the term)
-      sanitized.term = undefined
+      delete sanitized.term
     } else if (state.term.length > 200) {
       errors.push({
         parameter: 'term',
@@ -73,7 +73,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
   }
 
   // Validate search query parameter
-  if (state.q !== undefined) {
+  if (state.q != null) {
     if (typeof state.q !== 'string') {
       errors.push({
         parameter: 'q',
@@ -83,7 +83,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
       })
     } else if (state.q.length === 0) {
       // Empty string is valid (clears the search)
-      sanitized.q = undefined
+      delete sanitized.q
     } else if (state.q.length > 500) {
       errors.push({
         parameter: 'q',
@@ -98,7 +98,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
   }
 
   // Validate search type parameter
-  if (state.type !== undefined) {
+  if (state.type != null) {
     if (typeof state.type !== 'string' || !SEARCH_TYPES.includes(state.type as any)) {
       errors.push({
         parameter: 'type',
@@ -113,7 +113,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
   }
 
   // Validate case sensitivity parameter
-  if (state.case !== undefined) {
+  if (state.case != null) {
     if (typeof state.case !== 'boolean') {
       errors.push({
         parameter: 'case',
@@ -128,7 +128,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
   }
 
   // Validate summary level parameter (deprecated)
-  if (state.level !== undefined) {
+  if (state.level != null) {
     if (typeof state.level !== 'string' || !SUMMARY_LEVELS.includes(state.level as any)) {
       errors.push({
         parameter: 'level',
@@ -143,7 +143,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
   }
 
   // Validate expertise level parameter
-  if (state.expertise !== undefined) {
+  if (state.expertise != null) {
     if (typeof state.expertise !== 'string' || !EXPERTISE_LEVELS.includes(state.expertise as any)) {
       errors.push({
         parameter: 'expertise',
@@ -158,7 +158,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
   }
 
   // Validate length level parameter
-  if (state.length !== undefined) {
+  if (state.length != null) {
     if (typeof state.length !== 'string' || !LENGTH_LEVELS.includes(state.length as any)) {
       errors.push({
         parameter: 'length',
@@ -173,7 +173,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
   }
 
   // Validate conversation ID parameter
-  if (state.conversation !== undefined) {
+  if (state.conversation != null) {
     if (typeof state.conversation !== 'string') {
       errors.push({
         parameter: 'conversation',
@@ -183,7 +183,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
       })
     } else if (state.conversation.length === 0) {
       // Empty string is valid (clears the conversation)
-      sanitized.conversation = undefined
+      delete sanitized.conversation
     } else if (!UUID_REGEX.test(state.conversation)) {
       errors.push({
         parameter: 'conversation',
@@ -197,7 +197,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
   }
 
   // Validate highlight criteria parameter
-  if (state.highlight !== undefined) {
+  if (state.highlight != null) {
     if (typeof state.highlight !== 'string') {
       errors.push({
         parameter: 'highlight',
@@ -207,7 +207,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
       })
     } else if (state.highlight.length === 0) {
       // Empty string is valid (clears highlights)
-      sanitized.highlight = undefined
+      delete sanitized.highlight
     } else if (state.highlight.length > 200) {
       errors.push({
         parameter: 'highlight',
@@ -222,7 +222,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
   }
 
   // Validate scroll position parameter
-  if (state.scroll !== undefined) {
+  if (state.scroll != null) {
     if (typeof state.scroll !== 'string') {
       errors.push({
         parameter: 'scroll',
@@ -232,7 +232,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
       })
     } else if (state.scroll.length === 0) {
       // Empty string is valid (clears scroll position)
-      sanitized.scroll = undefined
+      delete sanitized.scroll
     } else if (!ELEMENT_ID_REGEX.test(state.scroll)) {
       errors.push({
         parameter: 'scroll',
