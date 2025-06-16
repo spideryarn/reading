@@ -15,7 +15,10 @@ interface MockRequestOptions {
 
 // Legacy helper for backward compatibility with existing tests
 function createMockRequest(url: string, options: MockRequestOptions = {}) {
-  return new Request(url, {
+  // Convert relative URLs to full URLs
+  const fullUrl = url.startsWith('http') ? url : `http://localhost:3000${url}`;
+  
+  return new Request(fullUrl, {
     method: options.method || 'GET',
     headers: {
       'content-type': 'application/json',

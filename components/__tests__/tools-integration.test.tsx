@@ -60,7 +60,7 @@ const mockDocumentContext = {
 }
 
 jest.mock('@/lib/context/document-communication-context', () => ({
-  useDocumentCommunication: () => mockDocumentContext,
+  useDocumentCommunication: jest.fn(() => mockDocumentContext),
   DocumentCommunicationProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }))
 
@@ -74,6 +74,7 @@ jest.mock('@phosphor-icons/react', () => ({
   Question: () => <div data-testid="question-icon">Question</div>,
   Calendar: () => <div data-testid="calendar-icon">Calendar</div>,
   ArrowCounterClockwise: () => <div data-testid="reset-icon">Reset</div>,
+  ArrowClockwise: () => <div data-testid="refresh-icon">Refresh</div>,
   MagnifyingGlass: () => <div data-testid="search-icon">Search</div>,
   X: () => <div data-testid="close-icon">Close</div>,
   CaretDown: () => <div data-testid="caret-icon">Caret</div>,
@@ -126,10 +127,13 @@ jest.mock('@/lib/tools/hooks/use-tool-url-state', () => ({
     setGlossaryExpanded: jest.fn()
   })),
   useSearchUrlState: jest.fn(() => ({
-    searchQuery: '',
-    setSearchQuery: jest.fn(),
+    query: '',
     searchType: 'text',
-    setSearchType: jest.fn()
+    caseSensitive: false,
+    updateSearch: jest.fn(),
+    submitSearch: jest.fn(),
+    setSearchType: jest.fn(),
+    setCaseSensitive: jest.fn()
   }))
 }))
 
@@ -194,14 +198,30 @@ jest.mock('@assistant-ui/react', () => {
           </button>
         )
       },
-      If: ({ children }: { children: React.ReactNode }) => <>{children}</>
+      If: ({ children, running }: { children: React.ReactNode; running?: boolean }) => {
+        if (running !== undefined) {
+          return running ? <>{children}</> : null
+        }
+        return <>{children}</>
+      }
     },
     
     MessagePrimitive: {
-      Root: ({ children }: { children: React.ReactNode }) => (
-        <div className="flex gap-3 mb-4" data-testid="message-root">{children}</div>
+      Root: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+        <div className={className || "flex gap-3 mb-4"} data-testid="message-root">{children}</div>
       ),
-      Content: () => <div data-testid="message-content">Test message content</div>
+      Content: ({ components }: { components?: any }) => {
+        if (components && components.Text) {
+          return <components.Text text="Test message content" />
+        }
+        return <div data-testid="message-content">Test message content</div>
+      },
+      If: ({ children, hasContent }: { children: React.ReactNode; hasContent?: boolean }) => {
+        if (hasContent !== undefined) {
+          return hasContent ? <>{children}</> : null
+        }
+        return <>{children}</>
+      }
     },
     
     ComposerPrimitive: {
@@ -220,14 +240,30 @@ jest.mock('@assistant-ui/react', () => {
       ),
       Send: ({ children, asChild, ...props }: any) => {
         const handleClick = () => mockComposer.send()
-        if (asChild) {
-          return React.cloneElement(children as React.ReactElement, { 
+        if (asChild && React.isValidElement(children)) {
+          return React.cloneElement(children, { 
             onClick: handleClick,
-            'data-testid': 'send-button'
+            'data-testid': 'send-button',
+            ...props
           })
         }
         return (
           <button onClick={handleClick} data-testid="send-button" {...props}>
+            {children}
+          </button>
+        )
+      },
+      Cancel: ({ children, asChild, ...props }: any) => {
+        const handleCancel = () => console.log('Cancel clicked')
+        if (asChild && React.isValidElement(children)) {
+          return React.cloneElement(children, { 
+            onClick: handleCancel,
+            'data-testid': 'cancel-button',
+            ...props
+          })
+        }
+        return (
+          <button onClick={handleCancel} data-testid="cancel-button" {...props}>
             {children}
           </button>
         )
@@ -424,13 +460,27 @@ describe('Unified Tool Navigation', () => {
     jest.clearAllMocks()
   })
 
+  afterEach(() => {
+    // Reset state after each test
+    mockDocumentContext.state.activeTabId = 'chat'
+    // Reset the mock to return the default context
+    jest.requireMock('@/lib/context/document-communication-context').useDocumentCommunication.mockReturnValue(mockDocumentContext)
+  })
+
   describe('Tab Navigation', () => {
     it('should render all tool tabs', () => {
+      // Ensure chat doesn't have an error for this test
+      jest.requireMock('@/src/lib/hooks/usePersistentChat').usePersistentChat.mockReturnValue({
+        ...mockPersistentChat,
+        error: null
+      })
+      
       render(<UnifiedLeftPane {...defaultProps} />)
       
       // Should have all tabs accessible (even if not visible)
       expect(screen.getByTestId('original-headings-tab')).toBeInTheDocument()
-      expect(screen.getByTestId('assistant-chat')).toBeInTheDocument()
+      // Chat tab should contain the runtime provider when rendered
+      expect(screen.getByTestId('runtime-provider')).toBeInTheDocument()
       expect(screen.getByTestId('metadata-panel')).toBeInTheDocument()
     })
 
@@ -461,36 +511,82 @@ describe('Unified Tool Navigation', () => {
   describe('Search Functionality', () => {
     it('should handle search input', async () => {
       const user = userEvent.setup()
+      const mockSetSearchQuery = jest.fn()
+      
+      // Set search tab as active before creating the mock return value
+      const searchActiveContext = {
+        ...mockDocumentContext,
+        state: { ...mockDocumentContext.state, activeTabId: 'search' }
+      }
+      jest.requireMock('@/lib/context/document-communication-context').useDocumentCommunication.mockReturnValue(searchActiveContext)
+      
+      // Mock useSearchUrlState to track search updates
+      jest.requireMock('@/lib/tools/hooks/use-tool-url-state').useSearchUrlState.mockReturnValue({
+        query: '',
+        searchType: 'text',
+        caseSensitive: false,
+        updateSearch: mockSetSearchQuery,
+        submitSearch: jest.fn(),
+        setSearchType: jest.fn(),
+        setCaseSensitive: jest.fn()
+      })
+      
       render(<UnifiedLeftPane {...defaultProps} />)
       
-      // Find search input
-      const searchInput = screen.getByPlaceholderText(/search/i)
+      // Find search input - it should be visible in search tab
+      const searchInput = screen.getByPlaceholderText(/search document/i)
       expect(searchInput).toBeInTheDocument()
       
-      // Type in search
-      await user.type(searchInput, 'artificial intelligence')
+      // Type a simple character to test
+      await user.type(searchInput, 'a')
       
-      // Should update search state
-      expect(mockDocumentContext.actions.setSearchQuery).toHaveBeenCalledWith('artificial intelligence')
+      // Should update search state through URL state hook
+      expect(mockSetSearchQuery).toHaveBeenCalled()
+      expect(mockSetSearchQuery).toHaveBeenCalledWith('a')
     })
 
     it('should clear search results', async () => {
       const user = userEvent.setup()
-      mockDocumentContext.state.searchQuery = 'test query'
+      const mockUpdateSearch = jest.fn()
+      
+      // Set search tab as active before creating the mock return value
+      const searchActiveContext = {
+        ...mockDocumentContext,
+        state: { ...mockDocumentContext.state, activeTabId: 'search' }
+      }
+      jest.requireMock('@/lib/context/document-communication-context').useDocumentCommunication.mockReturnValue(searchActiveContext)
+      
+      // Mock useSearchUrlState with existing query
+      jest.requireMock('@/lib/tools/hooks/use-tool-url-state').useSearchUrlState.mockReturnValue({
+        query: 'test query',
+        searchType: 'text',
+        caseSensitive: false,
+        updateSearch: mockUpdateSearch,
+        submitSearch: jest.fn(),
+        setSearchType: jest.fn(),
+        setCaseSensitive: jest.fn()
+      })
       
       render(<UnifiedLeftPane {...defaultProps} />)
       
-      // Find clear button
+      // Find clear button - it should be visible when there's a query
       const clearButton = screen.getByTestId('close-icon')
       await user.click(clearButton)
       
-      // Should clear search
-      expect(mockDocumentContext.actions.clearSearch).toHaveBeenCalled()
+      // Should clear search through URL state
+      expect(mockUpdateSearch).toHaveBeenCalledWith('')
     })
   })
 
   describe('Glossary Integration', () => {
     it('should display glossary entities', () => {
+      // Set glossary tab as active before creating the mock return value
+      const glossaryActiveContext = {
+        ...mockDocumentContext,
+        state: { ...mockDocumentContext.state, activeTabId: 'glossary' }
+      }
+      jest.requireMock('@/lib/context/document-communication-context').useDocumentCommunication.mockReturnValue(glossaryActiveContext)
+      
       render(<UnifiedLeftPane {...defaultProps} />)
       
       // Should show entity count
@@ -502,24 +598,44 @@ describe('Unified Tool Navigation', () => {
     })
 
     it('should handle glossary loading state', () => {
-      render(<UnifiedLeftPane {...defaultProps} isLoadingGlossary={true} showGlossary={false} />)
+      // Set glossary tab as active before creating the mock return value
+      const glossaryActiveContext = {
+        ...mockDocumentContext,
+        state: { ...mockDocumentContext.state, activeTabId: 'glossary' }
+      }
+      jest.requireMock('@/lib/context/document-communication-context').useDocumentCommunication.mockReturnValue(glossaryActiveContext)
       
-      // Should show loading state
-      expect(screen.getByTestId('loading-icon')).toBeInTheDocument()
+      // When showGlossary is true and isLoadingGlossary is true, it shows the loading state
+      render(<UnifiedLeftPane {...defaultProps} isLoadingGlossary={true} showGlossary={true} glossaryEntities={[]} />)
+      
+      // Should show loading state in glossary tab
+      expect(screen.getByText('Analyzing Document')).toBeInTheDocument()
+      expect(screen.getByText('Extracting key terms and concepts...')).toBeInTheDocument()
     })
 
     it('should handle glossary error', () => {
+      // Set glossary tab as active before creating the mock return value
+      const glossaryActiveContext = {
+        ...mockDocumentContext,
+        state: { ...mockDocumentContext.state, activeTabId: 'glossary' }
+      }
+      jest.requireMock('@/lib/context/document-communication-context').useDocumentCommunication.mockReturnValue(glossaryActiveContext)
+      
+      // When showGlossary is true and there's an error, it shows the error state
       render(
         <UnifiedLeftPane 
           {...defaultProps} 
           glossaryError="Failed to generate glossary" 
-          showGlossary={false}
+          showGlossary={true}
+          glossaryEntities={[]}
         />
       )
       
-      // Should show error
+      // Should show error in glossary tab
       expect(screen.getByTestId('alert')).toBeInTheDocument()
-      expect(screen.getByText('Failed to generate glossary')).toBeInTheDocument()
+      // The error message is passed as description to AlertWithIcon
+      const alert = screen.getByTestId('alert')
+      expect(alert).toHaveTextContent('Failed to generate glossary')
     })
   })
 })

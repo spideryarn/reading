@@ -70,33 +70,39 @@ const mockGetModelForAICall = getModelForAICall as jest.MockedFunction<typeof ge
 const mockTweetThreadInputSchema = tweetThreadPromptInputSchema as jest.Mocked<typeof tweetThreadPromptInputSchema>
 const mockTweetThreadResponseSchema = tweetThreadResponseSchema as jest.Mocked<typeof tweetThreadResponseSchema>
 
-// Mock classes
-const mockAiCallService: MockAiCallService & { failCall: jest.Mock } = {
-  startCall: jest.fn(),
-  completeCall: jest.fn(),
-  failCall: jest.fn(),
-}
-
-const mockEnhancementService: MockEnhancementService & { upsert: jest.Mock } = {
-  get: jest.fn(),
-  storeSummary: jest.fn(),
-  storeHeadings: jest.fn(),
-  delete: jest.fn(),
-  upsert: jest.fn(),
-}
-
 const mockSupabaseClient: MockSupabaseClient = {
   // Mock client methods as needed
 }
 
 describe('API Routes Usage Tracking Integration', () => {
+  let mockAiCallService: AiCallService
+  let mockEnhancementService: EnhancementService
+
   beforeEach(() => {
     jest.clearAllMocks()
     
+    // Clear any persisted mock data
+    if ('clearMockEnhancements' in EnhancementService) {
+      (EnhancementService as any).clearMockEnhancements()
+    }
+    
     // Setup common mocks
     mockSupabaseServer.createClient.mockResolvedValue(mockSupabaseClient)
-    ;(AiCallService as jest.MockedClass<typeof AiCallService>).mockImplementation(() => mockAiCallService as unknown as AiCallService)
-    ;(EnhancementService as jest.MockedClass<typeof EnhancementService>).mockImplementation(() => mockEnhancementService as unknown as EnhancementService)
+    
+    // Create service instances
+    mockAiCallService = new AiCallService(mockSupabaseClient)
+    mockEnhancementService = new EnhancementService(mockSupabaseClient)
+    
+    // Set up service method spies
+    jest.spyOn(mockAiCallService, 'startCall').mockResolvedValue('test-ai-call-id')
+    jest.spyOn(mockAiCallService, 'completeCall').mockResolvedValue({} as any)
+    jest.spyOn(mockAiCallService, 'failCall').mockResolvedValue({} as any)
+    
+    jest.spyOn(mockEnhancementService, 'get').mockResolvedValue(null)
+    jest.spyOn(mockEnhancementService, 'storeSummary').mockResolvedValue({} as any)
+    jest.spyOn(mockEnhancementService, 'storeHeadings').mockResolvedValue({} as any)
+    jest.spyOn(mockEnhancementService, 'delete').mockResolvedValue(undefined)
+    jest.spyOn(mockEnhancementService, 'upsert').mockResolvedValue({} as any)
     
     mockGetModelConfig.mockReturnValue({
       provider: 'anthropic',

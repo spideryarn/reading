@@ -43,18 +43,6 @@ import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 
 const mockCreateClient = createClient as jest.MockedFunction<typeof createClient>
-const mockEnhancementService = {
-  get: jest.fn(),
-  upsert: jest.fn(),
-  delete: jest.fn()
-}
-const mockAiCallService = {
-  create: jest.fn()
-}
-
-// Mock service constructors
-;(EnhancementService as jest.Mock).mockImplementation(() => mockEnhancementService)
-;(AiCallService as jest.Mock).mockImplementation(() => mockAiCallService)
 
 // Import after mocking to get mocked versions
 import { tweetThreadPromptInputSchema, tweetThreadResponseSchema } from '@/lib/prompts/templates/tweet-thread'
@@ -128,17 +116,32 @@ const mockLLMResponse = {
 }
 
 describe('/api/tweet-thread', () => {
+  let mockEnhancementService: EnhancementService
+  let mockAiCallService: AiCallService
+
   beforeEach(() => {
     jest.clearAllMocks()
     // Mock console methods to reduce noise in tests
     jest.spyOn(console, 'log').mockImplementation()
     jest.spyOn(console, 'error').mockImplementation()
     
+    // Clear any persisted mock data
+    if ('clearMockEnhancements' in EnhancementService) {
+      (EnhancementService as any).clearMockEnhancements()
+    }
+    
     // Set up database service mocks
-    mockCreateClient.mockResolvedValue({} as MockSupabaseClient)
-    mockEnhancementService.get.mockResolvedValue(null) // No cached tweet thread by default
-    mockEnhancementService.upsert.mockResolvedValue({})
-    mockAiCallService.create.mockResolvedValue({ id: 'test-ai-call-id' })
+    const mockSupabaseClient = {} as MockSupabaseClient
+    mockCreateClient.mockResolvedValue(mockSupabaseClient)
+    
+    // Create service instances
+    mockEnhancementService = new EnhancementService(mockSupabaseClient)
+    mockAiCallService = new AiCallService(mockSupabaseClient)
+    
+    // Set up service method spies
+    jest.spyOn(mockEnhancementService, 'get').mockResolvedValue(null) // No cached tweet thread by default
+    jest.spyOn(mockEnhancementService, 'upsert').mockResolvedValue({} as any)
+    jest.spyOn(mockAiCallService, 'create').mockResolvedValue({ id: 'test-ai-call-id' } as any)
   })
 
   afterEach(() => {

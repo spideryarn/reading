@@ -1,4 +1,8 @@
 /**
+ * @jest-environment node
+ */
+
+/**
  * Enhanced Tests for Semantic Search API Endpoint
  * 
  * These tests fill gaps in the existing semantic-search.test.ts by focusing on:
@@ -9,6 +13,15 @@
  * 5. Integration with EnhancementService
  */
 
+// Mock auth modules first, before any imports
+jest.mock('@/lib/auth/server-auth', () => ({
+  getUser: jest.fn(),
+  validateAuth: jest.fn(),
+  getUserId: jest.fn(),
+  checkAdminAccess: jest.fn(),
+  getSession: jest.fn()
+}))
+
 import { GET, POST } from '../semantic-search/route'
 import { createMockRequest } from './test-helpers'
 import { createClient } from '@/lib/supabase/server'
@@ -18,19 +31,78 @@ import { EnhancementService } from '@/lib/services/database/enhancements'
 import { executePromptWithUsage } from '@/lib/prompts/types'
 import type { MockSupabaseClient, MockDocumentService, MockAiCallService, MockEnhancementService, MockAiCall } from './test-types'
 import type { Database } from '@/lib/types/database'
+import { authTestScenarios, defaultTestUser } from '@/lib/testing/auth-test-helpers'
+import { semanticSearchApiInputSchema } from '@/lib/prompts/templates/semantic-search'
+import { validateAuth } from '@/lib/auth/server-auth'
 
 // Mock the external dependencies
 jest.mock('@/lib/supabase/server')
 jest.mock('@/lib/services/database/documents')
-jest.mock('@/lib/services/database/ai-calls')
-jest.mock('@/lib/services/database/enhancements')
+jest.mock('@/lib/services/database/ai-calls', () => ({
+  AiCallService: jest.fn()
+}))
+jest.mock('@/lib/services/database/enhancements', () => {
+  const mockGet = jest.fn()
+  const mockUpsert = jest.fn()
+  const mockGetByDocument = jest.fn()
+  return {
+    EnhancementService: jest.fn().mockImplementation(() => ({
+      get: mockGet,
+      upsert: mockUpsert,
+      getByDocument: mockGetByDocument
+    }))
+  }
+})
 jest.mock('@/lib/prompts/types')
+jest.mock('@/lib/services/semantic-search-formatter')
+jest.mock('@/lib/prompts/templates/semantic-search', () => ({
+  semanticSearchPrompt: {
+    name: 'semantic-search',
+    description: 'Test semantic search prompt',
+    schema: {},
+    templatePath: 'test.njk',
+    modelConfig: {}
+  },
+  semanticSearchApiInputSchema: {
+    safeParse: jest.fn()
+  },
+  semanticSearchResponseSchema: {
+    parse: jest.fn()
+  }
+}))
+jest.mock('@/lib/services/document-parser', () => ({
+  DocumentParser: jest.fn().mockImplementation(() => ({
+    parse: jest.fn().mockReturnValue([
+      { id: 'elem_p_1', type: 'paragraph', text: 'This is test content for semantic analysis.' }
+    ])
+  }))
+}))
+jest.mock('@/lib/config', () => ({
+  getModelConfig: jest.fn(() => ({ provider: 'anthropic', modelId: 'claude-3-haiku' })),
+  getModelForAICall: jest.fn(() => ({ 
+    modelString: 'anthropic:claude-3-5-haiku:20241022',
+    config: { provider: 'anthropic', modelId: 'claude-3-5-haiku', version: '20241022' }
+  })),
+  AI_CONFIG: { DEFAULT_MODEL: 'haiku' }
+}))
+jest.mock('@/lib/utils/semantic-search', () => ({
+  normalizeSemanticSearchQuery: jest.fn(query => query.toLowerCase().trim())
+}))
+jest.mock('@/lib/services/logger', () => ({
+  createRequestLogger: jest.fn(() => ({
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn()
+  })),
+  generateCorrelationId: jest.fn(() => 'test-correlation-id'),
+  logAIOperation: jest.fn(),
+  createTimer: jest.fn(() => ({ end: jest.fn() }))
+}))
 
 const mockCreateClient = createClient as jest.MockedFunction<typeof createClient>
-const MockDocumentService = DocumentService as jest.MockedClass<typeof DocumentService>
-const MockAiCallService = AiCallService as jest.MockedClass<typeof AiCallService>
-const MockEnhancementService = EnhancementService as jest.MockedClass<typeof EnhancementService>
 const mockExecutePromptWithUsage = executePromptWithUsage as jest.MockedFunction<typeof executePromptWithUsage>
+const mockValidateAuth = validateAuth as jest.MockedFunction<typeof validateAuth>
 
 // Sample test data
 const sampleDocument: Database['public']['Tables']['documents']['Row'] = {
@@ -105,14 +177,26 @@ const sampleQueryHistory = [
 ]
 
 describe('/api/semantic-search - Enhanced Coverage', () => {
-  let mockDocumentService: MockDocumentService
-  let mockAiCallService: MockAiCallService
-  let mockEnhancementService: MockEnhancementService
+  let mockDocumentService: DocumentService
+  let mockAiCallService: AiCallService
+  let mockEnhancementService: EnhancementService
   let mockSupabase: MockSupabaseClient
 
   beforeEach(() => {
     // Reset all mocks
     jest.clearAllMocks()
+    
+    // Setup default mock behavior for validation
+    const { semanticSearchApiInputSchema } = require('@/lib/prompts/templates/semantic-search')
+    semanticSearchApiInputSchema.safeParse.mockReturnValue({
+      success: true,
+      data: { query: 'test query', documentId: 'doc-123' }
+    })
+    
+    // Clear any persisted mock data
+    if ('clearMockEnhancements' in EnhancementService) {
+      (EnhancementService as any).clearMockEnhancements()
+    }
     
     // Mock Supabase client with query builder
     const mockQuery = {
@@ -129,27 +213,52 @@ describe('/api/semantic-search - Enhanced Coverage', () => {
     }
     mockCreateClient.mockResolvedValue(mockSupabase)
     
-    // Mock DocumentService
-    mockDocumentService = {
-      getById: jest.fn(),
-      getElements: jest.fn(),
-    }
-    MockDocumentService.mockImplementation(() => mockDocumentService as DocumentService)
+    // Create service instances
+    mockDocumentService = new DocumentService(mockSupabase)
+    mockAiCallService = new AiCallService(mockSupabase)
+    mockEnhancementService = new EnhancementService(mockSupabase)
     
-    // Mock AiCallService  
-    mockAiCallService = {
-      startCall: jest.fn(),
-      completeCall: jest.fn(),
-    }
-    MockAiCallService.mockImplementation(() => mockAiCallService as AiCallService)
+    // Set up service method spies
+    jest.spyOn(mockDocumentService, 'getById').mockResolvedValue(sampleDocument)
     
-    // Mock EnhancementService
-    mockEnhancementService = {
-      get: jest.fn(),
-      upsert: jest.fn(),
-      getByDocument: jest.fn(),
-    }
-    MockEnhancementService.mockImplementation(() => mockEnhancementService as EnhancementService)
+    const { AiCallService: MockAiCallService } = require('@/lib/services/database/ai-calls')
+    // Ensure the mock returns the expected value
+    MockAiCallService.mockImplementation(() => ({
+      startCallWithModelString: jest.fn().mockResolvedValue({ id: 'ai-call-123' }),
+      completeCall: jest.fn().mockResolvedValue(undefined),
+      failCall: jest.fn().mockResolvedValue(undefined)
+    }))
+    
+    // Setup EnhancementService mock
+    const { EnhancementService: MockEnhancementService } = require('@/lib/services/database/enhancements')
+    const mockGet = jest.fn().mockResolvedValue(null)
+    const mockUpsert = jest.fn().mockResolvedValue(sampleCachedEnhancement)
+    const mockGetByDocument = jest.fn().mockResolvedValue([])
+    MockEnhancementService.mockImplementation(() => ({
+      get: mockGet,
+      upsert: mockUpsert,
+      getByDocument: mockGetByDocument
+    }))
+    
+    // Store references for test assertions
+    mockEnhancementService._mockGet = mockGet
+    mockEnhancementService._mockUpsert = mockUpsert
+    
+    // Mock formatDocumentForSemanticSearch
+    jest.mocked(require('@/lib/services/semantic-search-formatter').formatDocumentForSemanticSearch).mockReturnValue(
+      '[elem_p_1] This is test content for semantic analysis.\n'
+    )
+    
+    // Mock validation 
+    jest.mocked(require('@/lib/services/semantic-search-formatter').validateSemanticSearchElementIds).mockReturnValue(['elem_p_1'])
+    jest.mocked(require('@/lib/services/semantic-search-formatter').getDocumentStats).mockReturnValue({
+      totalElements: 2,
+      meaningfulElements: 2
+    })
+    jest.mocked(require('@/lib/services/semantic-search-formatter').estimateTokenCount).mockReturnValue(150)
+    
+    // Setup auth mock - default to authenticated user
+    mockValidateAuth.mockResolvedValue(defaultTestUser)
     
     // Mock successful LLM response by default
     mockExecutePromptWithUsage.mockResolvedValue({
@@ -171,11 +280,6 @@ describe('/api/semantic-search - Enhanced Coverage', () => {
       },
       finishReason: 'completed'
     })
-    
-    // Mock AI call tracking
-    mockAiCallService.startCall.mockResolvedValue({ id: 'ai-call-123' } as MockAiCall)
-    mockAiCallService.completeCall.mockResolvedValue(undefined)
-    mockEnhancementService.upsert.mockResolvedValue(sampleCachedEnhancement)
   })
 
   describe('GET endpoint - Query History', () => {
@@ -278,7 +382,7 @@ describe('/api/semantic-search - Enhanced Coverage', () => {
 
   describe('POST endpoint - Cache Behavior', () => {
     it('should return cached results when available', async () => {
-      mockEnhancementService.get.mockResolvedValue(sampleCachedEnhancement)
+      mockEnhancementService._mockGet.mockResolvedValue(sampleCachedEnhancement)
       
       const request = createMockRequest('http://localhost:3000/api/semantic-search', {
         method: 'POST',
@@ -291,6 +395,10 @@ describe('/api/semantic-search - Enhanced Coverage', () => {
       const response = await POST(request)
       const data = await response.json()
       
+      if (response.status !== 200) {
+        console.error('Response error:', JSON.stringify(data, null, 2))
+        console.error('Response status:', response.status)
+      }
       expect(response.status).toBe(200)
       expect(data.cached).toBe(true)
       expect(data.cachedAt).toBe(sampleCachedEnhancement.created_at)
@@ -308,7 +416,7 @@ describe('/api/semantic-search - Enhanced Coverage', () => {
         ...sampleCachedEnhancement,
         content: null // Invalid content
       }
-      mockEnhancementService.get.mockResolvedValue(malformedEnhancement)
+      mockEnhancementService._mockGet.mockResolvedValue(malformedEnhancement)
       
       const request = createMockRequest('http://localhost:3000/api/semantic-search', {
         method: 'POST',
@@ -333,7 +441,7 @@ describe('/api/semantic-search - Enhanced Coverage', () => {
           matches: 'not an array' // Invalid matches
         }
       }
-      mockEnhancementService.get.mockResolvedValue(invalidEnhancement)
+      mockEnhancementService._mockGet.mockResolvedValue(invalidEnhancement)
       
       const request = createMockRequest('http://localhost:3000/api/semantic-search', {
         method: 'POST',
@@ -353,7 +461,7 @@ describe('/api/semantic-search - Enhanced Coverage', () => {
 
   describe('POST endpoint - Token Limits', () => {
     it('should reject documents that exceed token limit', async () => {
-      mockEnhancementService.get.mockResolvedValue(null) // No cache
+      mockEnhancementService._mockGet.mockResolvedValue(null) // No cache
       mockDocumentService.getById.mockResolvedValue({
         ...sampleDocument,
         html_content: '<p>' + 'a'.repeat(200000) + '</p>' // Very large content
@@ -377,7 +485,7 @@ describe('/api/semantic-search - Enhanced Coverage', () => {
     })
 
     it('should handle empty document content', async () => {
-      mockEnhancementService.get.mockResolvedValue(null)
+      mockEnhancementService._mockGet.mockResolvedValue(null)
       mockDocumentService.getById.mockResolvedValue({
         ...sampleDocument,
         html_content: '' // Empty content
@@ -399,7 +507,7 @@ describe('/api/semantic-search - Enhanced Coverage', () => {
     })
 
     it('should handle document with null html_content', async () => {
-      mockEnhancementService.get.mockResolvedValue(null)
+      mockEnhancementService._mockGet.mockResolvedValue(null)
       mockDocumentService.getById.mockResolvedValue({
         ...sampleDocument,
         html_content: null
@@ -423,7 +531,7 @@ describe('/api/semantic-search - Enhanced Coverage', () => {
 
   describe('POST endpoint - Cache Storage', () => {
     it('should store results in cache after successful search', async () => {
-      mockEnhancementService.get.mockResolvedValue(null) // No cache initially
+      mockEnhancementService._mockGet.mockResolvedValue(null) // No cache initially
       mockDocumentService.getById.mockResolvedValue(sampleDocument)
       
       const request = createMockRequest('http://localhost:3000/api/semantic-search', {
@@ -441,7 +549,7 @@ describe('/api/semantic-search - Enhanced Coverage', () => {
       expect(data.cached).toBe(false)
       
       // Verify cache was stored
-      expect(mockEnhancementService.upsert).toHaveBeenCalledWith({
+      expect(mockEnhancementService._mockUpsert).toHaveBeenCalledWith({
         documentId: 'doc-123',
         aiCallId: 'ai-call-123',
         type: 'semantic-search',
@@ -457,9 +565,9 @@ describe('/api/semantic-search - Enhanced Coverage', () => {
     })
 
     it('should continue processing when cache storage fails', async () => {
-      mockEnhancementService.get.mockResolvedValue(null)
+      mockEnhancementService._mockGet.mockResolvedValue(null)
       mockDocumentService.getById.mockResolvedValue(sampleDocument)
-      mockEnhancementService.upsert.mockRejectedValue(new Error('Cache storage failed'))
+      mockEnhancementService._mockUpsert.mockRejectedValue(new Error('Cache storage failed'))
       
       const request = createMockRequest('http://localhost:3000/api/semantic-search', {
         method: 'POST',
@@ -477,13 +585,13 @@ describe('/api/semantic-search - Enhanced Coverage', () => {
       expect(data.cached).toBe(false)
       
       // Should have attempted to cache
-      expect(mockEnhancementService.upsert).toHaveBeenCalled()
+      expect(mockEnhancementService._mockUpsert).toHaveBeenCalled()
     })
   })
 
   describe('POST endpoint - AI Call Tracking', () => {
     it('should track AI calls with proper metadata', async () => {
-      mockEnhancementService.get.mockResolvedValue(null)
+      mockEnhancementService._mockGet.mockResolvedValue(null)
       mockDocumentService.getById.mockResolvedValue(sampleDocument)
       
       const request = createMockRequest('http://localhost:3000/api/semantic-search', {
@@ -496,17 +604,17 @@ describe('/api/semantic-search - Enhanced Coverage', () => {
       
       await POST(request)
       
-      expect(mockAiCallService.startCall).toHaveBeenCalledWith({
+      expect(mockAiCallService.startCallWithModelString).toHaveBeenCalledWith({
+        userId: defaultTestUser.id,
         documentId: 'doc-123',
-        provider: expect.any(String),
-        modelId: expect.any(String),
+        modelString: expect.any(String),
         prompt_type: 'semantic-search',
         input_data: expect.objectContaining({
           query: 'machine learning concepts',
           content_length: expect.any(Number),
           elements_count: expect.any(Number),
           estimated_tokens: expect.any(Number),
-          tier_used: expect.any(String)
+          model_used: expect.any(String)
         })
       })
       
@@ -523,7 +631,7 @@ describe('/api/semantic-search - Enhanced Coverage', () => {
     })
 
     it('should complete AI call even when LLM fails', async () => {
-      mockEnhancementService.get.mockResolvedValue(null)
+      mockEnhancementService._mockGet.mockResolvedValue(null)
       mockDocumentService.getById.mockResolvedValue(sampleDocument)
       mockExecutePromptWithUsage.mockRejectedValue(new Error('LLM failed'))
       
@@ -538,8 +646,57 @@ describe('/api/semantic-search - Enhanced Coverage', () => {
       const response = await POST(request)
       
       expect(response.status).toBe(500)
-      expect(mockAiCallService.startCall).toHaveBeenCalled()
+      expect(mockAiCallService.startCallWithModelString).toHaveBeenCalled()
       // AI call completion is not called when LLM fails early
+    })
+  })
+
+  describe('Authentication Tests', () => {
+    it('should return 401 when not authenticated', async () => {
+      // Setup auth to fail
+      authTestScenarios.authFailure('User not authenticated')
+
+      // Mock validation to succeed (but it won't be reached)
+      ;(semanticSearchApiInputSchema.safeParse as jest.Mock).mockReturnValueOnce({
+        success: true,
+        data: { query: 'test query', documentId: 'doc-123' }
+      })
+
+      const request = createMockRequest('http://localhost:3000/api/semantic-search', {
+        method: 'POST',
+        body: {
+          query: 'test query',
+          documentId: 'doc-123'
+        }
+      })
+
+      const response = await POST(request)
+      expect(response.status).toBe(401)
+      
+      const text = await response.text()
+      expect(text).toContain('User not authenticated')
+    })
+
+    it('should check auth before input validation', async () => {
+      // Setup auth to fail
+      authTestScenarios.authFailure()
+
+      const request = createMockRequest('http://localhost:3000/api/semantic-search', {
+        method: 'POST',
+        body: {} // Invalid body that would normally trigger validation error
+      })
+
+      const response = await POST(request)
+      // Should get 401 (auth error) instead of 400 (validation error)
+      expect(response.status).toBe(401)
+      
+      // Verify that validation was never called
+      expect(semanticSearchApiInputSchema.safeParse).not.toHaveBeenCalled()
+    })
+
+    afterEach(() => {
+      // Reset auth to succeed for other tests
+      authTestScenarios.businessLogic()
     })
   })
 })
