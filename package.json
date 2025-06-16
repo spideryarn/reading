@@ -11,6 +11,9 @@
         "test": "jest",
         "test:watch": "jest --watch",
         "test:coverage": "jest --coverage",
+        "test:e2e": "playwright test",
+        "test:e2e:ui": "playwright test --ui",
+        "test:e2e:debug": "playwright test --debug",
         "db:types": "supabase gen types typescript --local > lib/types/database.ts",
         "db:reset:DANGEROUS": "echo '⚠️  WARNING: This will DELETE ALL DATA! Type YES to continue:' && read confirm && [ \"$confirm\" = \"YES\" ] && supabase db reset && npm run db:types",
         "db:backup": "./scripts/backup-database.ts",
@@ -76,6 +79,7 @@
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3",
+        "@playwright/test": "^1.53.0",
         "@tailwindcss/postcss": "^4",
         "@tailwindcss/typography": "^0.5.16",
         "@testing-library/jest-dom": "^6.6.3",
