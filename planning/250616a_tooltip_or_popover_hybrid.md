@@ -407,7 +407,7 @@ The following checklist captures hard-won lessons from early migrations and shou
 
 ### Layout & Stacking Contexts
 
-* Because both Tooltip and Popover portal into `document.body`, parent elements with `transform`, `filter` or `perspective` can create a new stacking context and hide the overlay. Either remove those props or add `position: relative; z-index: X` to the parent.
+* Because both Tooltip and Popover portal into `document.body`, any ancestor with `transform`, `filter`, `perspective`, or `will-change` starts a new stacking context and can clip the overlay. **Fix**: remove the property *or* add `position: relative; z-index: 0` (or higher) to that ancestor.
 * Avoid nested `TooltipOrPopover` on the same DOM node; Radix will warn about duplicated triggers. Wrap each trigger around its own element.
 
 ### Testing Considerations

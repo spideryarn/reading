@@ -55,10 +55,13 @@ export function TooltipOrPopover({
   const longPressProps = useLongPress(() => setPopoverOpen(true), { delay: 500 })
   
   // Discoverability styling (faint dotted underline matching glossary pattern)
-  const indicatorStyle = showIndicator ? {
-    cursor: 'help',
-    transition: 'all 0.2s ease'
-  } : {}
+  const indicatorStyle = showIndicator
+    ? {
+        borderBottom: '1px dotted #DB8A45',
+        cursor: 'help',
+        transition: 'all 0.2s ease'
+      }
+    : {}
   
   if (canHover) {
     // Desktop path: Use standard tooltip with hover
