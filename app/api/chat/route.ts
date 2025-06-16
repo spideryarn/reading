@@ -138,18 +138,10 @@ export async function POST(request: NextRequest) {
         // Create title from first user message
         const title = messages[0].content;
         
-        // Get model UUID for thread creation (using existing model configuration)
-        const aiCallService = new AiCallService(supabase)
-        const modelUuid = await aiCallService.getModelUuidByProviderAndId(
-          modelConfig.provider, 
-          modelConfig.modelName,
-          modelConfig.version
-        );
-        
-        // Create new thread
+        // Create new thread using model string
         const newThread = await chatService.createThread({
           documentId,
-          modelId: modelUuid,
+          modelString: modelString,
           title,
           userId: user?.id || '00000000-0000-0000-0000-000000000001' // Use actual user or system user
         });

@@ -430,20 +430,25 @@ Fix the immediate 500 errors by updating service layer queries.
   - [x] Update `getRecentThreads()` - remove `ai_models(*)`
 - [x] Test that summary generation works again - Build passes!
 
-### Stage 11: Fix Chat Thread Model Management
+### Stage 11: Fix Chat Thread Model Management ✅ COMPLETED
 Update chat functionality to use model strings instead of model IDs.
 
-- [ ] Update ChatService interface
-  - [ ] Change `CreateThreadOptions` to use `modelString` instead of `modelId`
-  - [ ] Update `createThread()` to store `model_string`
-- [ ] Update `/api/chat/route.ts`
-  - [ ] Remove `getModelUuidByProviderAndId()` usage
-  - [ ] Pass model string directly to thread creation
-- [ ] Create database migration for chat_threads
-  - [ ] Drop foreign key constraint `chat_threads_model_id_fkey`
-  - [ ] Drop `model_id` column
-  - [ ] Make `model_string` NOT NULL
-- [ ] Test chat functionality end-to-end
+- [x] Update ChatService interface
+  - [x] Change `CreateThreadOptions` to use `modelString` instead of `modelId`
+  - [x] Update `createThread()` to store `model_string`
+  - [x] Remove deprecated `createThreadWithModelString()` method
+- [x] Update `/api/chat/route.ts`
+  - [x] Remove `getModelUuidByProviderAndId()` usage
+  - [x] Pass model string directly to thread creation
+- [x] Create database migration for chat_threads
+  - [x] Add `model_string` column with format validation
+  - [x] Migrate existing data from `model_id` relationships (1 record migrated)
+  - [x] Drop foreign key constraint `chat_threads_model_id_fkey`
+  - [x] Drop `model_id` column
+  - [x] Make `model_string` NOT NULL
+  - [x] Add performance index for `model_string` queries
+- [x] Regenerate database types with updated schema
+- [x] Test compilation and linting - both pass successfully
 
 ### Stage 12: Update Test Files
 Fix all test files that reference the old model system.

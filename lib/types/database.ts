@@ -220,7 +220,7 @@ export type Database = {
           document_id: string | null
           extra: Json | null
           id: string
-          model_id: string | null
+          model_string: string
           title: string | null
           updated_at: string | null
         }
@@ -230,7 +230,7 @@ export type Database = {
           document_id?: string | null
           extra?: Json | null
           id?: string
-          model_id?: string | null
+          model_string: string
           title?: string | null
           updated_at?: string | null
         }
@@ -240,7 +240,7 @@ export type Database = {
           document_id?: string | null
           extra?: Json | null
           id?: string
-          model_id?: string | null
+          model_string?: string
           title?: string | null
           updated_at?: string | null
         }
@@ -250,13 +250,6 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "chat_threads_model_id_fkey"
-            columns: ["model_id"]
-            isOneToOne: false
-            referencedRelation: "ai_models"
             referencedColumns: ["id"]
           },
         ]
