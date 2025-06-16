@@ -186,10 +186,9 @@ function HeadingNodeComponent({
                 ? 'ring-1 ring-blue-200 bg-blue-50/50 shadow-sm' 
                 : 'hover:shadow-sm'
             }`}
-            onClick={() => {
-              handleTooltipShow(node.elementId)
-              onHeadingClick(node)
-            }}
+            onClick={() => onHeadingClick(node)}
+            onMouseEnter={() => handleTooltipShow(node.elementId)}
+            onFocus={() => handleTooltipShow(node.elementId)}
             data-heading-id={node.id}
           >
             <div className="flex items-center justify-between">

@@ -62,7 +62,6 @@ export function TooltipOrPopover({
           side={side} 
           align={align} 
           sideOffset={sideOffset}
-          className="z-50 max-w-md bg-white border border-gray-200 rounded-lg shadow-lg p-4"
         >
           {content}
         </TooltipContent>
@@ -86,7 +85,6 @@ export function TooltipOrPopover({
         side={side} 
         align={align} 
         sideOffset={sideOffset}
-        className="z-50 max-w-md bg-white border border-gray-200 rounded-lg shadow-lg p-4"
       >
         {content}
       </PopoverContent>
