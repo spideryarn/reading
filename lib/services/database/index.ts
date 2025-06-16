@@ -14,17 +14,11 @@ export type {
   Document,
   DocumentInsert,
   DocumentUpdate,
-  AiModel,
   AiCall,
   AiCallInsert,
   DocumentEnhancement,
   DocumentEnhancementInsert,
   ChatThread,
   ChatMessage,
-  Profile,
-  AiProvider,
-  PromptType,
-  CallStatus,
-  EnhancementType,
-  MessageRole
+  Profile
 } from '@/lib/types/database'
