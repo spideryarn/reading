@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from 'react'
 import { CaretDown, CaretUp } from '@phosphor-icons/react'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 import type { ExpertiseLevel, LengthLevel } from '@/lib/prompts/templates/multi-summarise'
 
 interface DualSummarySlidersProps {
@@ -96,22 +96,20 @@ export function DualSummarySliders({
             {EXPERTISE_OPTIONS[expertiseIndex]?.label} · {LENGTH_OPTIONS[lengthIndex]?.label}
           </span>
           <div className="flex items-center gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                {isExpanded ? (
-                  <CaretUp size={16} className="text-gray-500 hover:text-gray-700" />
-                ) : (
-                  <CaretDown size={16} className="text-gray-500 hover:text-gray-700" />
-                )}
-              </TooltipTrigger>
-              <TooltipContent 
-                side="top" 
-                className="bg-white border border-gray-200 text-gray-700 text-sm px-3 py-2 rounded-lg shadow-lg"
-                sideOffset={4}
-              >
-                {isExpanded ? 'Collapse' : 'Expand'}
-              </TooltipContent>
-            </Tooltip>
+            <TooltipOrPopover
+              content={isExpanded ? 'Collapse' : 'Expand'}
+              side="top"
+              align="center"
+              sideOffset={4}
+              showIndicator={false}
+              contentClassName="bg-white border border-gray-200 text-gray-700 text-sm px-3 py-2 rounded-lg shadow-lg"
+            >
+              {isExpanded ? (
+                <CaretUp size={16} className="text-gray-500 hover:text-gray-700" />
+              ) : (
+                <CaretDown size={16} className="text-gray-500 hover:text-gray-700" />
+              )}
+            </TooltipOrPopover>
           </div>
         </button>
       </div>

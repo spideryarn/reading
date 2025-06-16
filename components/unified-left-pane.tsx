@@ -33,7 +33,7 @@ import { useDocumentCommunication } from '@/lib/context/document-communication-c
 import Mark from 'mark.js'
 import { extractCleanText } from '@/lib/utils/html-text-extraction'
 import { extractAllMatchContexts, generateTooltipContent } from '@/lib/utils/search-context-extraction'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 import { useGlossaryUrlState, useSearchUrlState } from '@/lib/tools/hooks/use-tool-url-state'
 
 // Semantic highlight interface
@@ -1105,22 +1105,23 @@ export function UnifiedLeftPane({
                         const tooltipContent = generateTooltipContent(result.fullText, searchQuery, 500, caseSensitive)
                         
                         return (
-                          <Tooltip key={index}>
-                            <TooltipTrigger asChild>
-                              <div className="pl-3 border-l-2 border-orange-200 bg-orange-50 py-2 px-3 rounded-r cursor-help hover:bg-orange-100 transition-colors duration-150">
-                                <HighlightedSearchText text={context.text} query={searchQuery} caseSensitive={caseSensitive} />
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent 
-                              side="right" 
-                              className="max-w-md text-left bg-white border border-gray-200 rounded-lg shadow-lg p-4"
-                              sideOffset={8}
-                            >
+                          <TooltipOrPopover 
+                            key={index}
+                            content={
                               <div className="text-xs text-gray-700 leading-relaxed">
                                 <HighlightedSearchText text={tooltipContent} query={searchQuery} caseSensitive={caseSensitive} />
                               </div>
-                            </TooltipContent>
-                          </Tooltip>
+                            }
+                            side="right"
+                            align="start"
+                            sideOffset={8}
+                            showIndicator={false}
+                            contentClassName="max-w-md text-left bg-white border border-gray-200 rounded-lg shadow-lg p-4"
+                          >
+                            <div className="pl-3 border-l-2 border-orange-200 bg-orange-50 py-2 px-3 rounded-r cursor-help hover:bg-orange-100 transition-colors duration-150">
+                              <HighlightedSearchText text={context.text} query={searchQuery} caseSensitive={caseSensitive} />
+                            </div>
+                          </TooltipOrPopover>
                         )
                       })}
                     </div>
