@@ -154,20 +154,11 @@ export class RLSTestSetup {
   }
 
   /**
-   * Get a valid model ID for testing (uses first available model)
+   * Get a valid model string for testing
+   * @deprecated Use direct model string: 'anthropic:claude-3-5-haiku:20241022'
    */
-  async getTestModelId(): Promise<string> {
-    const { data: models, error } = await this.adminClient
-      .from('ai_models')
-      .select('id')
-      .limit(1)
-      .single()
-
-    if (error || !models) {
-      throw new Error('No AI models found for testing. Database may not be properly initialized.')
-    }
-
-    return models.id
+  getTestModelString(): string {
+    return 'anthropic:claude-3-5-haiku:20241022'
   }
 
   /**

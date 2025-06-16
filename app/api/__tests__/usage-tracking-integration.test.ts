@@ -106,8 +106,16 @@ describe('API Routes Usage Tracking Integration', () => {
     
     mockGetModelConfig.mockReturnValue({
       provider: 'anthropic',
-      modelId: 'claude-3-haiku-20240307',
-      name: 'Claude 3 Haiku'
+      modelName: 'claude-3-5-haiku',
+      version: '20241022',
+      thinking: false,
+      contextWindow: 200_000,
+      outputTokens: 8192,
+      description: 'Claude 3.5 Haiku - cost-effective',
+      pricing: {
+        inputPer1M: 1.00,
+        outputPer1M: 5.00
+      }
     } as ModelConfig)
     
     mockGetModelForAICall.mockReturnValue({
@@ -193,8 +201,7 @@ describe('API Routes Usage Tracking Integration', () => {
       // Verify AI call was started with correct metadata
       expect(mockAiCallService.startCall).toHaveBeenCalledWith({
         documentId: 'doc-456',
-        provider: 'anthropic',
-        modelId: 'claude-3-haiku-20240307',
+        modelString: 'anthropic:claude-3-5-haiku:20241022',
         prompt_type: 'summarise',
         input_data: {
           content_length: expect.any(Number),
@@ -237,7 +244,7 @@ describe('API Routes Usage Tracking Integration', () => {
             granularity: 'detailed',
             sectionId: undefined,
             generatedAt: expect.any(String),
-            modelUsed: 'claude-3-haiku-20240307'
+            modelUsed: 'anthropic:claude-3-5-haiku:20241022'
           }
         },
         'detailed'
@@ -400,8 +407,7 @@ describe('API Routes Usage Tracking Integration', () => {
 
       // Verify AI call was created with usage metadata
       expect(mockAiCallService.create).toHaveBeenCalledWith({
-        provider: 'anthropic',
-        modelId: 'claude-3-haiku-20240307',
+        modelString: 'anthropic:claude-3-5-haiku:20241022',
         promptTokens: 300,
         completionTokens: 250,
         totalTokens: 550,

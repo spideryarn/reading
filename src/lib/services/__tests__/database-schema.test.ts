@@ -20,20 +20,10 @@ describe('Database Schema Tests', () => {
   let testDocumentId: string;
   let testAiCallId: string;
   let testThreadId: string;
-  let testModelId: string;
   const testModelString = 'anthropic:claude-3-5-haiku:20241022';
 
   beforeAll(async () => {
     supabase = createClient();
-    
-    // Get a test AI model ID for chat threads (until migration is applied)
-    const { data: models } = await supabase
-      .from('ai_models')
-      .select('id')
-      .eq('model_id', 'claude-3-5-haiku-20241022')
-      .single();
-    
-    testModelId = models?.id;
   });
 
   // Clean up test data after each test
@@ -53,43 +43,8 @@ describe('Database Schema Tests', () => {
     }
   });
 
-  describe('ai_models table', () => {
-    it('should have pre-seeded AI models', async () => {
-      const { data, error } = await supabase
-        .from('ai_models')
-        .select('*')
-        .order('provider', { ascending: true });
-
-      expect(error).toBeNull();
-      expect(data).toBeDefined();
-      expect(data?.length).toBeGreaterThanOrEqual(6); // At least 6 models from migration
-      
-      // Check for specific providers
-      const providers = [...new Set(data?.map(m => m.provider))];
-      expect(providers).toContain('anthropic');
-      expect(providers).toContain('google');
-    });
-
-    // Commented out: RLS policies block INSERT before unique constraint check
-    // See planning/finished/250531a_database_storage_implementation.md - Test Failure Analysis #1
-    it.skip('should enforce unique constraint on provider/model_id/version', async () => {
-      const existingModel = {
-        provider: 'anthropic',
-        model_id: 'claude-3-5-haiku-20241022',
-        version: '20241022',
-        display_name: 'Duplicate Model',
-        context_window: 100000,
-        max_output_tokens: 4096
-      };
-
-      const { error } = await supabase
-        .from('ai_models')
-        .insert(existingModel);
-
-      expect(error).toBeDefined();
-      expect(error?.code).toBe('23505'); // Unique violation
-    });
-  });
+  // ai_models table tests removed - table deprecated in favor of model strings
+  // See: LLM Model Management Simplification (Stage 12 test updates)
 
   describe('documents table', () => {
     it('should create a document with required fields', async () => {
@@ -357,7 +312,7 @@ describe('Database Schema Tests', () => {
         .from('chat_threads')
         .insert({
           document_id: testDocumentId,
-          model_id: testModelId,
+          model_string: testModelString,
           title: 'Test Chat Thread'
         })
         .select()
@@ -401,7 +356,7 @@ describe('Database Schema Tests', () => {
         .from('chat_threads')
         .insert({
           document_id: testDocumentId,
-          model_id: testModelId
+          model_string: testModelString
         })
         .select()
         .single();
@@ -438,7 +393,7 @@ describe('Database Schema Tests', () => {
         .from('chat_threads')
         .insert({
           document_id: testDocumentId,
-          model_id: testModelId
+          model_string: testModelString
         })
         .select()
         .single();
@@ -497,7 +452,7 @@ describe('Database Schema Tests', () => {
       const { data: aiCall } = await supabase
         .from('ai_calls')
         .insert({
-          model_id: testModelId,
+          model_string: testModelString,
           document_id: testDocumentId,
           prompt_type: 'glossary',
           prompt_input: 'Extract glossary',
@@ -545,7 +500,7 @@ describe('Database Schema Tests', () => {
       const { data: aiCall } = await supabase
         .from('ai_calls')
         .insert({
-          model_id: testModelId,
+          model_string: testModelString,
           document_id: testDocumentId,
           prompt_type: 'summary',
           prompt_input: 'Summarise',

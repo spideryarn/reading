@@ -177,7 +177,7 @@ describe('AiCallService - Usage Tracking', () => {
       const mockResponse: AiCall = {
         id: integrationCallId,
         document_id: documentId,
-        model_id: mockModelUuid,
+        model_string: 'anthropic:claude-3-5-haiku:20241022',
         prompt_type: 'summarise',
         prompt_input: '{}',
         prompt_template: null,
@@ -192,21 +192,23 @@ describe('AiCallService - Usage Tracking', () => {
         finish_reason: 'stop',
         error_message: null,
         error_code: null,
-        extra: {}
+        extra: {},
+        created_by: null,
+        latency_ms: null,
+        extra_usage: null,
+        response_text: null
       }
       
       // Mock calls
       mockSupabaseClient.single = jest.fn()
-        .mockResolvedValueOnce({ data: { id: mockModelUuid }, error: null })
         .mockResolvedValueOnce({ data: { ...mockResponse, status: 'pending' }, error: null })
         .mockResolvedValueOnce({ data: mockResponse, error: null })
 
       mockSupabaseClient.insert = jest.fn(() => mockSupabaseClient)
 
-      const startedCall = await aiCallService.startCall({
+      const startedCall = await aiCallService.startCallWithModelString({
         documentId,
-        provider: 'anthropic',
-        modelId: 'claude-3-haiku',
+        modelString: 'anthropic:claude-3-5-haiku:20241022',
         prompt_type: 'summarise',
         input_data: { content_length: 1000 }
       })
@@ -234,10 +236,7 @@ describe('AiCallService - Usage Tracking', () => {
           total_tokens: 1500,
           reasoning_tokens: 200,
           prompt_type: 'chat',
-          ai_models: {
-            input_token_cost: 0.000001,
-            output_token_cost: 0.000002,
-          }
+          model_string: 'anthropic:claude-3-5-haiku:20241022'
         }
       ]
 
@@ -252,7 +251,7 @@ describe('AiCallService - Usage Tracking', () => {
 
       expect(result.totalCalls).toBe(1)
       expect(result.totalTokens).toBe(1500)
-      expect(result.totalCost).toBe(0.002)
+      expect(result.totalCost).toBe(0.0035) // 1000 * $1/1M + 500 * $5/1M = $0.001 + $0.0025
     })
 
   })
