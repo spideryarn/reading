@@ -11,7 +11,7 @@ import {
   CommandList,
   CommandShortcut,
 } from '@/components/ui/command'
-import { useDocumentCommunication, useDocumentSlug } from '@/lib/context/document-communication-context'
+import { useDocumentSlug } from '@/lib/context/document-communication-context'
 import { useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
 import { useAuth } from '@/lib/context/auth-context'
 import {
@@ -128,9 +128,6 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
       if (!open) return
       if (event.key === 'Escape') {
         // If focus is inside the CommandInput, only close when the input is empty.
-        const active = document.activeElement as HTMLInputElement | null
-        const isCmdkInput = active?.getAttribute('data-slot') === 'command-input'
-
         event.preventDefault()
         setOpen(false)
       }

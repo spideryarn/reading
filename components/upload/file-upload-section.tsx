@@ -8,7 +8,6 @@ interface FileUploadSectionProps {
   onChange: (file: File | null) => void
   onDrop: (file: File) => void
   onValidationError: (error: string) => void
-  isActive: boolean
   isDisabled: boolean
   isProcessing: boolean
   isDragging: boolean
@@ -22,7 +21,6 @@ export function FileUploadSection({
   onChange,
   onDrop,
   onValidationError,
-  isActive,
   isDisabled,
   isProcessing,
   isDragging,

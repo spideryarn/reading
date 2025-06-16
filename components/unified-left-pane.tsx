@@ -418,6 +418,9 @@ export function UnifiedLeftPane({
 }: UnifiedLeftPaneProps) {
   const { actions, state } = useDocumentCommunication()
   
+  // Ref for search input to enable auto-focus
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  
   // Auto-load glossary when glossary tab is activated
   useEffect(() => {
     if (state.activeTabId === 'glossary' && !showGlossary && !isLoadingGlossary) {
@@ -441,7 +444,6 @@ export function UnifiedLeftPane({
     caseSensitive,
     updateSearch,
     submitSearch,
-    setSearchType,
     setCaseSensitive
   } = useSearchUrlState()
   
@@ -456,14 +458,13 @@ export function UnifiedLeftPane({
   // const [semanticSearchCached] = useState(false)
   // const [semanticSearchCachedAt] = useState<string | null>(null)
   
-  // Query history for semantic search
-  const [queryHistory] = useState<Array<{
-    query: string
-    normalizedQuery: string
-    searchedAt: string
-    resultCount: number
-  }>>([])
-  // const [showQueryHistory] = useState(false)
+  // Query history for semantic search - currently unused but kept for future implementation
+  // const [queryHistory] = useState<Array<{
+  //   query: string
+  //   normalizedQuery: string
+  //   searchedAt: string
+  //   resultCount: number
+  // }>>([])
   // const [isLoadingHistory] = useState(false)
   
   // Store timeout ID to cancel pending searches
@@ -471,9 +472,6 @@ export function UnifiedLeftPane({
   
   // Mark.js instance
   const markInstanceRef = useRef<Mark | null>(null)
-  
-  // Ref for search input to enable auto-focus
-  const searchInputRef = useRef<HTMLInputElement>(null)
   
   // Initialize Mark.js when component mounts
   useEffect(() => {

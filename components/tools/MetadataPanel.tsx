@@ -5,7 +5,7 @@ import {
   FileText, Clock, Calendar, Hash, 
   ChartBar, Robot, ListBullets, BookOpen,
   CircleNotch, CheckCircle, XCircle,
-  GraduationCap, LockSimple, User, PencilSimple, Trash
+  GraduationCap, LockSimple, User, PencilSimple
 } from '@phosphor-icons/react'
 import { formatDistanceToNow } from 'date-fns'
 import type { DocumentElement } from '@/lib/types/document'
@@ -187,25 +187,6 @@ export function MetadataPanel({
     setTitleError(null)
   }
   
-  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      saveTitle()
-    } else if (e.key === 'Escape') {
-      e.preventDefault()
-      cancelEditingTitle()
-    }
-  }
-  
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTitle = e.target.value
-    setEditedTitle(newTitle)
-    
-    // Real-time validation
-    const error = validateDocumentTitle(newTitle)
-    setTitleError(error)
-  }
-  
   const saveTitle = async () => {
     // Sanitize and validate
     const sanitized = sanitizeDocumentTitle(editedTitle)
@@ -264,6 +245,25 @@ export function MetadataPanel({
     } finally {
       setIsSavingTitle(false)
     }
+  }
+  
+  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      saveTitle()
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      cancelEditingTitle()
+    }
+  }
+  
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTitle = e.target.value
+    setEditedTitle(newTitle)
+    
+    // Real-time validation
+    const error = validateDocumentTitle(newTitle)
+    setTitleError(error)
   }
   
   return (

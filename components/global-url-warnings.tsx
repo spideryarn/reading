@@ -9,7 +9,6 @@ import { X } from "@phosphor-icons/react/dist/ssr/X"
 import type { ValidationError } from '@/lib/tools/url-validation'
 
 // Global state for warnings
-let globalWarnings: ValidationError[] = []
 let globalSetWarnings: ((warnings: ValidationError[]) => void) | null = null
 
 // Function to show warnings from anywhere in the app

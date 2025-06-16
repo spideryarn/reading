@@ -12,8 +12,8 @@ import {
   HighlighterCircle, 
   X, 
   CircleNotch, 
-  Trash, 
-  Clock
+  Clock,
+  Trash
 } from '@phosphor-icons/react'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
 import { getSemanticHighlightIntensity } from '@/lib/utils/semantic-highlighting'

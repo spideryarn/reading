@@ -36,6 +36,31 @@ export function SmartInput({
 }: SmartInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // File validation helper
+  const validateFileType = (file: File): boolean => {
+    const allowedTypes = ['application/pdf', 'text/html']
+    const allowedExtensions = ['.pdf', '.html', '.htm']
+    const maxSize = 50 * 1024 * 1024 // 50MB limit
+    
+    // Check file size
+    if (file.size > maxSize) {
+      onValidationError(`File size (${(file.size / 1024 / 1024).toFixed(1)}MB) exceeds the 50MB limit`)
+      return false
+    }
+    
+    const isValidType = allowedTypes.includes(file.type)
+    const isValidExtension = allowedExtensions.some(ext => 
+      file.name.toLowerCase().endsWith(ext)
+    )
+    
+    if (!isValidType && !isValidExtension) {
+      onValidationError(`Unsupported file type: ${file.name}. Please select a PDF or HTML file.`)
+      return false
+    }
+    
+    return true
+  }
+
   // Handle drag and drop events
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -70,31 +95,6 @@ export function SmartInput({
         onFileDrop(file)
       }
     }
-  }
-
-  // File validation helper
-  const validateFileType = (file: File): boolean => {
-    const allowedTypes = ['application/pdf', 'text/html']
-    const allowedExtensions = ['.pdf', '.html', '.htm']
-    const maxSize = 50 * 1024 * 1024 // 50MB limit
-    
-    // Check file size
-    if (file.size > maxSize) {
-      onValidationError(`File size (${(file.size / 1024 / 1024).toFixed(1)}MB) exceeds the 50MB limit`)
-      return false
-    }
-    
-    const isValidType = allowedTypes.includes(file.type)
-    const isValidExtension = allowedExtensions.some(ext => 
-      file.name.toLowerCase().endsWith(ext)
-    )
-    
-    if (!isValidType && !isValidExtension) {
-      onValidationError(`Unsupported file type: ${file.name}. Please select a PDF or HTML file.`)
-      return false
-    }
-    
-    return true
   }
 
   // Handle file input change

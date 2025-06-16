@@ -27,18 +27,19 @@ export const TabContainer = forwardRef<TabContainerRef, TabContainerProps>(
   ({ tabs, defaultTab, className = '', title, orientation = 'horizontal' }, ref) => {
     const contentRef = useRef<HTMLDivElement>(null)
     
+    // Validate defaultTab - if it's invalid or doesn't exist in tabs, use first tab
+    const initialTab = defaultTab && tabs.some(tab => tab.id === defaultTab) 
+      ? defaultTab 
+      : tabs[0]?.id || ''
+    
+    const [activeTab, setActiveTab] = useState<string>(initialTab)
+    
     useImperativeHandle(ref, () => ({
       getContentContainer: () => contentRef.current,
       setActiveTab: (tabId: string) => {
         setActiveTab(prev => (tabs.some(t => t.id === tabId) ? tabId : prev))
       }
     }), [tabs])
-  // Validate defaultTab - if it's invalid or doesn't exist in tabs, use first tab
-  const initialTab = defaultTab && tabs.some(tab => tab.id === defaultTab) 
-    ? defaultTab 
-    : tabs[0]?.id || ''
-  
-  const [activeTab, setActiveTab] = useState<string>(initialTab)
 
   const handleTabClick = (tab: Tab) => {
     setActiveTab(tab.id)

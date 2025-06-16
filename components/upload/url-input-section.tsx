@@ -5,7 +5,6 @@ import { Link as LinkIcon, X } from '@phosphor-icons/react'
 interface UrlInputSectionProps {
   value: string
   onChange: (url: string) => void
-  onValidationError: (error: string) => void
   isActive: boolean
   isDisabled: boolean
   isProcessing: boolean
@@ -15,7 +14,6 @@ interface UrlInputSectionProps {
 export function UrlInputSection({
   value,
   onChange,
-  onValidationError,
   isActive,
   isDisabled,
   isProcessing,

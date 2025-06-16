@@ -12,9 +12,7 @@ import { useElementVisibility } from '@/lib/hooks/useElementVisibility'
 import { DocumentParser } from '@/lib/services/document-parser'
 import { getSemanticHighlightClass } from '@/lib/utils/semantic-highlighting'
 import Mark from 'mark.js'
-import { useDocumentCommunication } from '@/lib/context/document-communication-context'
 import { useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 // Semantic highlight interface
 interface SemanticHighlight {
@@ -196,7 +194,6 @@ export function SimpleDocumentViewer({
       if (target.classList.contains('highlight-glossary')) {
         const explanation = target.getAttribute('data-glossary-explanation')
         const longExplanation = target.getAttribute('data-glossary-long-explanation')
-        const entityName = target.getAttribute('data-glossary-entity')
         
         if (explanation || longExplanation) {
           // Create tooltip element
