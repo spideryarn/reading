@@ -65,7 +65,11 @@ export function TooltipOrPopover({
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <span style={indicatorStyle} className={triggerClassName ?? className}>
+          <span
+            suppressHydrationWarning
+            style={indicatorStyle}
+            className={triggerClassName ?? className}
+          >
             {children}
           </span>
         </TooltipTrigger>
@@ -85,8 +89,9 @@ export function TooltipOrPopover({
   return (
     <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
       <PopoverTrigger asChild>
-        <span 
-          style={indicatorStyle} 
+        <span
+          suppressHydrationWarning
+          style={indicatorStyle}
           className={triggerClassName ?? className}
           {...longPressProps}
         >
