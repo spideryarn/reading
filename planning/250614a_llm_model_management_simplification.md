@@ -483,7 +483,44 @@ Ensure the system is fully migrated and stable.
 - [ ] Update error handling for model-related operations
 - [ ] Performance testing to confirm improvements
 
-### Stage 15: Documentation Update
+### Stage 15: Deprecate Tier Key System
+Remove tier key backwards compatibility for simplicity.
+
+- [ ] Remove `PROVIDER_TIER_MODELS` from `lib/config.ts`
+- [ ] Remove tier key support from `getModelForAICall()`
+- [ ] Update environment variable validation to only accept model strings
+- [ ] Remove tier key examples from documentation
+- [ ] Update error messages to suggest model string format
+
+### Stage 16: Implement Strict Model String Validation
+Add app-level validation that fails early and clearly.
+
+- [ ] Create `validateModelString()` function in `lib/config/models.ts`
+  - [ ] Validate against available models in configuration
+  - [ ] Check for whitespace and case inconsistencies
+  - [ ] Enforce provider-specific naming patterns
+- [ ] Add validation to environment variable parsing
+- [ ] Add validation to API request handling
+- [ ] Add validation to database service methods
+- [ ] Update error messages to be descriptive and actionable
+
+### Stage 17: Add Price-per-Token Persistence
+Store pricing snapshots for accurate historical cost reporting.
+
+- [ ] Create database migration for ai_calls pricing fields
+  - [ ] Add `input_price_per_token` DECIMAL column
+  - [ ] Add `output_price_per_token` DECIMAL column
+  - [ ] Add `pricing_snapshot_at` TIMESTAMP column
+- [ ] Update AiCallService to store pricing on every call
+  - [ ] Capture prices from model configuration at call time
+  - [ ] Store pricing snapshot timestamp
+- [ ] Backfill existing ai_calls with current pricing
+  - [ ] Script to populate pricing for historical records
+  - [ ] Mark backfilled records with appropriate timestamp
+- [ ] Update cost calculation methods to use stored prices
+- [ ] Update reporting queries to use historical pricing
+
+### Stage 18: Documentation Update & Project Completion
 Update documentation to reflect the complete migration.
 
 - [ ] Update this planning document with lessons learned
