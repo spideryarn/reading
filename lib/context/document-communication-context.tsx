@@ -165,7 +165,7 @@ export function DocumentCommunicationProvider({ children }: DocumentCommunicatio
         console.log('[DocumentComm] URL state changed:', changes)
       }
     }
-  }), [])
+  }), [state.urlStateEnabled])
 
   // Memoize context value
   const contextValue = useMemo<DocumentCommunicationContextType>(() => ({

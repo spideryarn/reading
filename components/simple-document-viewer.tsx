@@ -75,7 +75,6 @@ export function SimpleDocumentViewer({
   
   // Glossary highlighting
   const glossaryMarkInstanceRef = useRef<Mark | null>(null)
-  const { actions } = useDocumentCommunication()
   const navigateToTab = useNavigateToTab()
   
   // Element visibility tracking

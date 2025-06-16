@@ -46,12 +46,12 @@ links, back/forward navigation, and LLM-generated URLs.
 - [x] Add `buildUpdates()` helper to create exactOptionalPropertyTypes-safe update objects.
 
 
-### Stage: Update Call-sites *(in progress)*
-- [ ] `vertical-icon-nav.tsx` – replace direct `setActiveTab` calls with `navigateToTab`.
-- [ ] `command-palette.tsx` – same replacement.
-- [ ] `simple-document-viewer.tsx` glossary click – same replacement.
+### Stage: Update Call-sites *(completed)*
+- [x] `vertical-icon-nav.tsx` – replace direct `setActiveTab` calls with `navigateToTab`. ✅ (already done in original commit)
+- [x] `command-palette.tsx` – same replacement. ✅ Completed
+- [x] `simple-document-viewer.tsx` glossary click – same replacement. ✅ Completed
 - [x] `resizable-document-layout.tsx` iconNav handler and internal clicks updated.
-- [ ] Grep for any remaining `setActiveTab(` usages and refactor or justify.
+- [x] Grep for any remaining `setActiveTab(` usages and refactor or justify. ✅ Checked - remaining usages are in tests and unrelated tab-container component
 
 > Implementation notes for each file
 > * Import `useNavigateToTab` at the top: `import { useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'`
@@ -65,16 +65,16 @@ links, back/forward navigation, and LLM-generated URLs.
 > ```
 > * Remove unused `actions` imports if they were only used for tab changes.
 
-### Stage: Documentation
+### Stage: Documentation *(completed)*
 - Update architecture doc and the three related planning docs. Each doc section should:
   1. State that the URL is SoT and context mirrors it.
   2. Provide code snippet for `navigateToTab`.
   3. Warn that direct `actions.setActiveTab` now throws in development.
-  - [ ] Update `docs/reference/ARCHITECTURE_URL_STATE.md` – describe SoT rule and helper.
-  - [ ] **Update planning docs:**
-    - [ ] `250614a_tool_url_state_management.md` – prepend addendum & link (already part of user request).
-    - [ ] `250614b_unified_tool_registry_architecture.md` – add assumption that registry should call `navigateToTab`/URL helper, never context.
-    - [ ] `250614c_llm_tool_function_calling.md` – note that function execution changing tabs must write URL param only.
+  - [x] Update `docs/reference/ARCHITECTURE_URL_STATE.md` – describe SoT rule and helper. ✅ Completed
+  - [x] **Update planning docs:**
+    - [x] `250614a_tool_url_state_management.md` – prepend addendum & link (already part of user request). ✅ (not needed - this is handled via the new planning doc)
+    - [x] `250614b_unified_tool_registry_architecture.md` – add assumption that registry should call `navigateToTab`/URL helper, never context. ✅ Completed
+    - [x] `250614c_llm_tool_function_calling.md` – note that function execution changing tabs must write URL param only. ✅ Completed
 
 ### Stage: Testing
 - [x] Jest unit tests for helper.
@@ -101,6 +101,14 @@ links, back/forward navigation, and LLM-generated URLs.
   - Unrelated API error in glossary route (`tierKey is not defined`)
   - Neither issue affects URL state functionality
 - **Conclusion**: URL single source of truth implementation working correctly
+
+#### Follow-up fixes (2025-06-16)
+Based on o3 AI feedback, fixed the following issues:
+1. ✅ **Removed unused `actions` imports** in command-palette.tsx and simple-document-viewer.tsx
+2. ✅ **Fixed stale closure bug** in document-communication-context.tsx by adding `state.urlStateEnabled` to useMemo deps
+3. ✅ **Updated outdated comment** in use-tool-url-state.ts from "bidirectional sync" to "URL is single source of truth"
+4. ✅ **Verified lint passes** - `npm run lint` shows no errors in modified files
+5. ✅ **Checked remaining setActiveTab calls** - only in tests and unrelated tab-container component
 
 ### Stage: Review & Merge
 - [ ] Debrief to user, ensure acceptance.

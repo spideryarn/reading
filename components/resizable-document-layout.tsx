@@ -351,11 +351,14 @@ function ResizableDocumentLayoutInner({
     // mount, so this is safe and prevents the noisy red box in development.
     <div suppressHydrationWarning className="relative h-full w-full">
         <ResizablePanelGroup 
+          id="doc-panel-group"
           direction="horizontal" 
           className="h-full w-full"
         >
         {/* Left pane - Unified navigation and tools */}
         <ResizablePanel 
+          id="left-pane"
+          order={1}
           ref={leftPanelRef}
           defaultSize={savedLeftPaneSize}
           minSize={20}
@@ -390,15 +393,15 @@ function ResizableDocumentLayoutInner({
               documentContext={documentContext}
               semanticHighlights={semanticHighlights}
               {...(onSemanticHighlightsChange ? { onSemanticHighlightsChange } : {})}
-              activeElementId={activeElementId}
-              onActiveElementChange={onActiveElementChange}
+              {...(activeElementId !== undefined ? { activeElementId: activeElementId ?? null } : {})}
+              {...(onActiveElementChange ? { onActiveElementChange } : {})}
               documentTitle={documentTitle}
               documentCreatedAt={documentCreatedAt}
-              documentSourceUrl={documentSourceUrl}
+              {...(documentSourceUrl !== undefined ? { documentSourceUrl } : {})}
               aiHeadingsGenerated={aiHeadingsGenerated}
               summaryGenerated={summaryGenerated}
               glossaryGenerated={glossaryGenerated}
-              ownerEmail={ownerEmail}
+              {...(ownerEmail ? { ownerEmail } : {})}
               isPublic={isPublic}
             />
             </div>
@@ -407,6 +410,7 @@ function ResizableDocumentLayoutInner({
         
         {/* Resize handle - always present but hidden when collapsed */}
         <ResizableHandle 
+          id="resize-handle"
           withHandle={!isLeftPaneCollapsed}
           className={`w-1 transition-all duration-300 ${
             isLeftPaneCollapsed 
@@ -417,6 +421,8 @@ function ResizableDocumentLayoutInner({
         
         {/* Right pane - Document viewer */}
         <ResizablePanel 
+          id="right-pane"
+          order={2}
           defaultSize={70}
           className="h-full relative"
         >

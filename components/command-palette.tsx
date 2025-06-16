@@ -89,7 +89,6 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
   // Use external control if provided, otherwise use internal state
   const open = externalOpen !== undefined ? externalOpen : internalOpen
   const setOpen = onOpenChange || setInternalOpen
-  const { actions } = useDocumentCommunication()
   const documentSlug = useDocumentSlug()
   const router = useRouter()
   const { user, signOut } = useAuth()
