@@ -23,8 +23,8 @@ export interface DocumentCommunicationState {
 // Actions interface for document communication
 export interface DocumentCommunicationActions {
   setCurrentPosition: (elementId: string, scrollOffset?: number) => void
-  highlightTerm: (term: string | null) => void
-  setActiveTab: (tabId: string) => void
+  highlightTerm: (term: string | null | undefined) => void
+  setActiveTab: (tabId: string, internal?: boolean) => void
   scrollToElement: (elementId: string) => void
   // URL state synchronization
   setUrlStateEnabled: (enabled: boolean) => void
@@ -100,19 +100,25 @@ export function DocumentCommunicationProvider({ children }: DocumentCommunicatio
       }
     },
     
-    highlightTerm: (term: string | null) => {
-      setState(prev => ({ ...prev, highlightedTerm: term }))
+    highlightTerm: (term: string | null | undefined) => {
+      setState(prev => ({ ...prev, highlightedTerm: term ?? null }))
       
       if (process.env.NODE_ENV === 'development') {
         console.log('[DocumentComm] Term highlighted:', term)
       }
     },
     
-    setActiveTab: (tabId: string) => {
+    setActiveTab: (tabId: string, internal = false) => {
+      const urlStateEnabled = state.urlStateEnabled
+      // Guard: URL is single source of truth
+      if (!internal && urlStateEnabled && process.env.NODE_ENV === 'development') {
+        throw new Error('[DocumentComm] setActiveTab called directly while URL-state is enabled. Use navigateToTab() instead.')
+      }
+
       setState(prev => ({ ...prev, activeTabId: tabId }))
-      
+
       if (process.env.NODE_ENV === 'development') {
-        console.log('[DocumentComm] Active tab changed:', tabId)
+        console.log('[DocumentComm] Active tab changed:', tabId, internal ? '(internal)' : '')
       }
     },
     

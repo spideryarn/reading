@@ -27,7 +27,7 @@ import { VerticalIconNav } from './vertical-icon-nav'
 import { CommandPalette } from './command-palette'
 import type { DocumentElement } from '@/lib/types/document'
 import { DocumentCommunicationProvider, useDocumentCommunication } from '@/lib/context/document-communication-context'
-import { useToolUrlState } from '@/lib/tools/hooks/use-tool-url-state'
+import { useToolUrlState, useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
 
 // Entity type (will be moved to proper types file later)
 interface Entity {
@@ -120,6 +120,7 @@ function ResizableDocumentLayoutInner({
 }: ResizableDocumentLayoutProps) {
   const { actions, state } = useDocumentCommunication()
   const toolUrlState = useToolUrlState() // Sync URL state with DocumentCommunicationContext
+  const navigateToTab = useNavigateToTab()
   
   // Viewport detection using react-responsive
   const isMobile = useMediaQuery({ maxWidth: 640 })
@@ -209,10 +210,8 @@ function ResizableDocumentLayoutInner({
     }
     
     const nearestHeading = findNearestHeading(element)
-    if (nearestHeading && nearestHeading.id) {
-      // Update document position in context
-      actions.setCurrentPosition(nearestHeading.id)
-    }
+    if (!nearestHeading || !nearestHeading.id) return
+    actions.setCurrentPosition(nearestHeading.id)
   }, [elements, onElementClick, actions])
   
   // Toggle handler that leverages react-resizable-panels built-in collapse/expand
@@ -266,8 +265,8 @@ function ResizableDocumentLayoutInner({
     }
     
     // Then switch to the selected tab using context action
-    actions.setActiveTab(tabId)
-  }, [isLeftPaneCollapsed, savedLeftPaneSize, actions])
+    navigateToTab(tabId as any)
+  }, [isLeftPaneCollapsed, savedLeftPaneSize, navigateToTab])
 
   // Handle document scroll to detect current heading
   const handleDocumentScroll = useCallback(() => {
@@ -286,23 +285,23 @@ function ResizableDocumentLayoutInner({
       if (headings.length === 0) return
 
       // Find the heading that's currently visible (or most recently passed)
-      let currentHeading: Element | null = null
+      let currentHeading: Element | undefined = undefined
       const viewportTop = window.scrollY || document.documentElement.scrollTop
       const viewportMiddle = viewportTop + (window.innerHeight / 3) // Check 1/3 down the viewport
 
       for (let i = headings.length - 1; i >= 0; i--) {
-        const heading = headings[i]
-        const rect = heading.getBoundingClientRect()
+        const headingEl = headings[i]!
+        const rect = headingEl.getBoundingClientRect()
         const absoluteTop = rect.top + viewportTop
 
         if (absoluteTop <= viewportMiddle) {
-          currentHeading = heading
+          currentHeading = headingEl
           break
         }
       }
 
       // If we found a current heading, update the context
-      if (currentHeading && currentHeading.id) {
+      if (currentHeading?.id) {
         actions.setCurrentPosition(currentHeading.id)
       }
     }, 150) // 150ms debounce
@@ -379,7 +378,7 @@ function ResizableDocumentLayoutInner({
               elements={elements}
               documentId={documentId}
               markdownContent={markdownContent}
-              headingVisibility={headingVisibility}
+              {...(headingVisibility ? { headingVisibility } : {})}
               glossaryEntities={glossaryEntities}
               isLoadingGlossary={isLoadingGlossary}
               showGlossary={showGlossary}
@@ -387,10 +386,10 @@ function ResizableDocumentLayoutInner({
               glossaryCached={glossaryCached}
               onHeadingClick={handleHeadingClick}
               onLoadGlossary={onLoadGlossary}
-              onResetGlossary={onResetGlossary}
+              {...(onResetGlossary ? { onResetGlossary } : {})}
               documentContext={documentContext}
               semanticHighlights={semanticHighlights}
-              onSemanticHighlightsChange={onSemanticHighlightsChange}
+              {...(onSemanticHighlightsChange ? { onSemanticHighlightsChange } : {})}
               activeElementId={activeElementId}
               onActiveElementChange={onActiveElementChange}
               documentTitle={documentTitle}
@@ -424,12 +423,12 @@ function ResizableDocumentLayoutInner({
           <div className={`h-full ${isLeftPaneCollapsed ? 'pl-0' : 'pl-16'} ${isMobile ? 'mobile-compact mobile-heading-size mobile-body-text' : ''} ${isLandscape ? 'landscape-compact landscape-spacing' : ''}`}>
             <SimpleDocumentViewer
               elements={elements}
-              selectedElement={selectedElement}
-              onElementSelect={onElementSelect}
-              onElementVisibilityChange={onElementVisibilityChange}
+              {...(selectedElement !== undefined ? { selectedElement } : {})}
+              {...(onElementSelect ? { onElementSelect } : {})}
+              {...(onElementVisibilityChange ? { onElementVisibilityChange } : {})}
               onElementClick={handleElementClick}
-              semanticHighlights={semanticHighlights}
-              activeElementId={activeElementId}
+              {...(semanticHighlights ? { semanticHighlights } : {})}
+              {...(activeElementId !== undefined ? { activeElementId: activeElementId ?? null } : {})}
               glossaryEntities={glossaryEntities}
               leftAligned={isLeftPaneCollapsed}
             />

@@ -26,19 +26,28 @@ import { showUrlValidationWarnings } from '@/components/global-url-warnings'
 import { debounce } from '@/lib/utils/debounce'
 import { throttle } from '@/lib/utils/throttle'
 
+// Utility: construct a Partial<ToolUrlState> but omit the key when value is undefined
+function buildUpdates<K extends keyof ToolUrlState>(
+  key: K,
+  value: ToolUrlState[K] | undefined
+): Partial<ToolUrlState> {
+  return value === undefined ? {} : { [key]: value } as Partial<ToolUrlState>
+}
+
 // Parser definitions for nuqs
-const tabParser = parseAsStringEnum<TabValue>(TAB_VALUES).withDefault('original')
-const searchTypeParser = parseAsStringEnum<SearchType>(SEARCH_TYPES).withDefault('text')
-const summaryLevelParser = parseAsStringEnum<SummaryLevel>(SUMMARY_LEVELS)
-const expertiseLevelParser = parseAsStringEnum<ExpertiseLevel>(EXPERTISE_LEVELS).withDefault('intermediate')
-const lengthLevelParser = parseAsStringEnum<LengthLevel>(LENGTH_LEVELS).withDefault('single_short_paragraph')
+// Cast readonly const arrays to mutable arrays expected by nuqs helper
+const tabParser = parseAsStringEnum<TabValue>([...TAB_VALUES] as TabValue[]).withDefault('original')
+const searchTypeParser = parseAsStringEnum<SearchType>([...SEARCH_TYPES] as SearchType[]).withDefault('text')
+const summaryLevelParser = parseAsStringEnum<SummaryLevel>([...SUMMARY_LEVELS] as SummaryLevel[])
+const expertiseLevelParser = parseAsStringEnum<ExpertiseLevel>([...EXPERTISE_LEVELS] as ExpertiseLevel[]).withDefault('intermediate')
+const lengthLevelParser = parseAsStringEnum<LengthLevel>([...LENGTH_LEVELS] as LengthLevel[]).withDefault('single_short_paragraph')
 const booleanParser = parseAsBoolean.withDefault(false)
 const stringParser = parseAsString
 
 // Hook return type
 interface UseToolUrlStateReturn {
   state: ToolUrlState
-  setState: (updates: Partial<ToolUrlState>) => void
+  setState: (updates: Partial<ToolUrlState>, options?: { forceHistory?: 'push' | 'replace'; skipValidation?: boolean }) => void
   setSearch: (query: string) => void
   setScroll: (elementId: string) => void
   clearState: () => void
@@ -90,33 +99,27 @@ export function useToolUrlState(): UseToolUrlStateReturn {
   // This handles browser navigation (back/forward) and direct URL changes
   useEffect(() => {
     if (urlState.tab && urlState.tab !== contextState.activeTabId) {
-      actions.setActiveTab(urlState.tab)
+      actions.setActiveTab(urlState.tab, true)
     }
   }, [urlState.tab]) // Remove contextState.activeTabId from deps to prevent loops
   
-  // Sync context tab state to URL when context changes
-  // This handles programmatic tab changes (clicking tabs)
-  useEffect(() => {
-    if (contextState.activeTabId && contextState.activeTabId !== urlState.tab) {
-      setState({ tab: contextState.activeTabId as TabValue })
-    }
-  }, [contextState.activeTabId, setState]) // Remove urlState.tab from deps to prevent loops
-  
   // Validate initial URL state on mount and URL changes
   useEffect(() => {
-    const currentState: ToolUrlState = {
-      tab: urlState.tab,
-      term: urlState.term || undefined,
-      q: urlState.q || undefined,
-      type: urlState.type,
-      case: urlState.case,
-      level: urlState.level || undefined,
-      expertise: urlState.expertise || undefined,
-      length: urlState.length || undefined,
-      conversation: urlState.conversation || undefined,
-      highlight: urlState.highlight || undefined,
-      scroll: urlState.scroll || undefined
-    }
+    // Build object omitting undefined values to satisfy exactOptionalPropertyTypes
+    const currentState: ToolUrlState = (() => {
+      const s: ToolUrlState = { tab: urlState.tab }
+      if (urlState.term) s.term = urlState.term
+      if (urlState.q) s.q = urlState.q
+      if (urlState.type !== undefined) s.type = urlState.type
+      if (urlState.case !== undefined) s.case = urlState.case
+      if (urlState.level) s.level = urlState.level
+      if (urlState.expertise) s.expertise = urlState.expertise
+      if (urlState.length) s.length = urlState.length
+      if (urlState.conversation) s.conversation = urlState.conversation
+      if (urlState.highlight) s.highlight = urlState.highlight
+      if (urlState.scroll) s.scroll = urlState.scroll
+      return s
+    })()
     
     const validation = validateUrlState(currentState)
     
@@ -137,18 +140,18 @@ export function useToolUrlState(): UseToolUrlStateReturn {
   ])
   
   // Debounced search update (300ms)
-  const debouncedSetSearch = useMemo(
-    () => debounce((query: string) => {
-      setState({ q: query || undefined })
-    }, 300),
+  const debouncedSetSearch = useMemo< (q: string) => void>(
+    () => (debounce((query: any) => {
+      setState(buildUpdates('q', query || undefined))
+    }, 300) as (q: string) => void),
     [setState]
   )
   
   // Throttled scroll update (1000ms)
   const throttledSetScroll = useMemo(
-    () => throttle((elementId: string) => {
-      setState({ scroll: elementId || undefined })
-    }, 1000),
+    () => (throttle((elementId: any) => {
+      setState(buildUpdates('scroll', elementId || undefined))
+    }, 1000) as (id: string) => void),
     [setState]
   )
   
@@ -172,20 +175,21 @@ export function useToolUrlState(): UseToolUrlStateReturn {
     })
   }, [setUrlState])
   
-  // Combine URL state into single object
-  const state: ToolUrlState = useMemo(() => ({
-    tab: urlState.tab,
-    term: urlState.term || undefined,
-    q: urlState.q || undefined,
-    type: urlState.type,
-    case: urlState.case,
-    level: urlState.level || undefined,
-    expertise: urlState.expertise,
-    length: urlState.length,
-    highlight: urlState.highlight || undefined,
-    conversation: urlState.conversation || undefined,
-    scroll: urlState.scroll || undefined
-  }), [urlState])
+  // Build state object omitting undefined to satisfy exactOptionalPropertyTypes
+  const state = useMemo<ToolUrlState>(() => {
+    const s: ToolUrlState = { tab: urlState.tab }
+    if (urlState.term) s.term = urlState.term
+    if (urlState.q) s.q = urlState.q
+    if (urlState.type !== undefined) s.type = urlState.type
+    if (urlState.case !== undefined) s.case = urlState.case
+    if (urlState.level) s.level = urlState.level
+    if (urlState.expertise) s.expertise = urlState.expertise
+    if (urlState.length) s.length = urlState.length
+    if (urlState.highlight) s.highlight = urlState.highlight
+    if (urlState.conversation) s.conversation = urlState.conversation
+    if (urlState.scroll) s.scroll = urlState.scroll
+    return s
+  }, [urlState])
   
   return {
     state,
@@ -201,7 +205,7 @@ export function useGlossaryUrlState() {
   const { state, setState } = useToolUrlState()
   
   const setTerm = useCallback((term: string | null) => {
-    setState({ term: term || undefined })
+    setState(buildUpdates('term', term || undefined))
   }, [setState])
   
   return {
@@ -220,7 +224,7 @@ export function useSearchUrlState() {
   
   // Search submission (immediate, push history)
   const submitSearch = useCallback((query: string) => {
-    setState({ q: query || undefined }, { forceHistory: 'push' })
+    setState(buildUpdates('q', query || undefined), { forceHistory: 'push' })
   }, [setState])
   
   const setSearchType = useCallback((type: SearchType) => {
@@ -271,7 +275,7 @@ export function useChatUrlState() {
   const { state, setState } = useToolUrlState()
   
   const setConversation = useCallback((conversationId: string | null) => {
-    setState({ conversation: conversationId || undefined })
+    setState(buildUpdates('conversation', conversationId || undefined))
   }, [setState])
   
   return {
@@ -284,11 +288,21 @@ export function useHighlightsUrlState() {
   const { state, setState } = useToolUrlState()
   
   const setHighlight = useCallback((criterion: string | null) => {
-    setState({ highlight: criterion || undefined })
+    setState(buildUpdates('highlight', criterion || undefined))
   }, [setState])
   
   return {
     highlightCriterion: state.highlight,
     setHighlight
   }
+}
+
+// Convenience hook for simple tab navigation via URL (single-source-of-truth)
+export function useNavigateToTab() {
+  // Call useToolUrlState only once to avoid nested hooks issue
+  const { setState } = useToolUrlState()
+  const navigate = useCallback((tab: TabValue) => {
+    setState({ tab }, { forceHistory: 'push' })
+  }, [setState])
+  return navigate
 }

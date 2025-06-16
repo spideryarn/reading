@@ -1,5 +1,7 @@
 # URL-State Single Source-of-Truth for Tool Tabs
 
+(written by o3)
+
 ## Goal & Context
 
 We have experienced infinite-loop render bugs caused by two-way synchronisation between
@@ -36,44 +38,56 @@ links, back/forward navigation, and LLM-generated URLs.
 
 ## Stages & Actions
 
-### Stage: Preparation
-- [ ] `./scripts/sync-worktrees.ts` to pull latest `main` (**sub-agent**).
-- [ ] Create a feature branch `250615a_url_state_sot` (ask user before merge).
-- [ ] Write this planning doc (you are here) and reference in old doc.
-
 ### Stage: Refactor `useToolUrlState`
-- [ ] Remove the *context → URL* effect.
-- [ ] Keep *URL → context* effect.
-- [ ] Add dev-mode guard inside `actions.setActiveTab` to noop/throw when called directly if `urlStateEnabled`.
-- [ ] Expose `navigateToTab(tabId, opts?)` helper that internally calls `setState({ tab: tabId })`.
-- [ ] Unit tests for no re-entrant loops (33 tests exist – extend).
+- [x] Remove the *context → URL* effect.
+- [x] Keep *URL → context* effect.
+- [x] Add dev-mode guard inside `actions.setActiveTab` to throw when called directly if `urlStateEnabled`.
+- [x] Expose `navigateToTab(tabId)` helper that internally calls `setState({ tab })`.
+- [x] Add `buildUpdates()` helper to create exactOptionalPropertyTypes-safe update objects.
 
-### Stage: Update Call-sites
-- [ ] `vertical-icon-nav.tsx` – replace `actions.setActiveTab` with `navigateToTab`.
+
+### Stage: Update Call-sites *(in progress)*
+- [ ] `vertical-icon-nav.tsx` – replace direct `setActiveTab` calls with `navigateToTab`.
 - [ ] `command-palette.tsx` – same replacement.
 - [ ] `simple-document-viewer.tsx` glossary click – same replacement.
-- [ ] `resizable-document-layout.tsx` iconNav handler – same replacement.
-- [ ] Search in repo for any remaining `setActiveTab(` calls; update or consciously ignore tests.
+- [x] `resizable-document-layout.tsx` iconNav handler and internal clicks updated.
+- [ ] Grep for any remaining `setActiveTab(` usages and refactor or justify.
 
-### Stage: Guard & Fallbacks
-- [ ] If `urlStateEnabled === false` (future SSR use-case) keep old behaviour.
-- [ ] Warn in console if mismatch detected (URL ≠ context) after update.
+> Implementation notes for each file
+> * Import `useNavigateToTab` at the top: `import { useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'`
+> * Inside the component call `const navigateToTab = useNavigateToTab()` once.
+> * Replace callback bodies:
+> ```ts
+> // OLD
+> actions.setActiveTab('summary')
+> // NEW
+> navigateToTab('summary')
+> ```
+> * Remove unused `actions` imports if they were only used for tab changes.
 
 ### Stage: Documentation
-- [ ] Update `docs/reference/ARCHITECTURE_URL_STATE.md` – describe SoT rule and helper.
-- [ ] **Update planning docs:**
-  - [ ] `250614a_tool_url_state_management.md` – prepend addendum & link (already part of user request).
-  - [ ] `250614b_unified_tool_registry_architecture.md` – add assumption that registry should call `navigateToTab`/URL helper, never context.
-  - [ ] `250614c_llm_tool_function_calling.md` – note that function execution changing tabs must write URL param only.
+- Update architecture doc and the three related planning docs. Each doc section should:
+  1. State that the URL is SoT and context mirrors it.
+  2. Provide code snippet for `navigateToTab`.
+  3. Warn that direct `actions.setActiveTab` now throws in development.
+  - [ ] Update `docs/reference/ARCHITECTURE_URL_STATE.md` – describe SoT rule and helper.
+  - [ ] **Update planning docs:**
+    - [ ] `250614a_tool_url_state_management.md` – prepend addendum & link (already part of user request).
+    - [ ] `250614b_unified_tool_registry_architecture.md` – add assumption that registry should call `navigateToTab`/URL helper, never context.
+    - [ ] `250614c_llm_tool_function_calling.md` – note that function execution changing tabs must write URL param only.
 
 ### Stage: Testing
 - [ ] Jest unit tests for helper.
+  - Unit: extend existing 33 tests with one new test that calls `actions.setActiveTab('x')` and asserts it throws when `urlStateEnabled===true`.
 - [ ] Manual browser test (or Playwright MCP) verifying:
   - Tab switching updates URL.
   - Back/forward restores context.
   - No 'Active tab changed' spam.
+  - E2E (manual or Playwright):
+    - Navigate via icon bar, via command-palette shortcut, via glossary click; ensure URL updates and Back arrow returns to previous tab without console spam.
 
 ### Stage: Review & Merge
 - [ ] Debrief to user, ensure acceptance.
 - [ ] Squash-merge feature branch following `GIT_COMMIT_CHANGES.md`.
-- [ ] Move this planning doc to `planning/finished/`. 
+- [ ] Move this planning doc to `planning/finished/`.
+ 
