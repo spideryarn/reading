@@ -86,6 +86,8 @@ describe('HTML Upload Critical Issues Demonstration', () => {
 
     it('ROOT CAUSE: JSDOM requires valid URLs, not filenames', () => {
       // This demonstrates the underlying JSDOM issue
+      // Dynamic import required for Jest mocking
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { JSDOM } = require('jsdom')
       
       console.log('\n=== DEMONSTRATING ROOT CAUSE ===')

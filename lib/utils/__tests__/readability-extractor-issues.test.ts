@@ -106,6 +106,8 @@ describe('Readability Extractor Invalid URL Issue', () => {
   describe('JSDOM URL Validation Behavior', () => {
     it('should demonstrate JSDOM URL requirement', () => {
       // Import JSDOM directly to show the underlying issue
+      // Dynamic import required for Jest mocking
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { JSDOM } = require('jsdom')
       
       // This should fail - JSDOM requires valid URL
@@ -117,6 +119,8 @@ describe('Readability Extractor Invalid URL Issue', () => {
     })
 
     it('should show JSDOM works with valid URLs', () => {
+      // Dynamic import required for Jest mocking
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { JSDOM } = require('jsdom')
       
       // This should work - JSDOM accepts valid URLs
@@ -128,6 +132,8 @@ describe('Readability Extractor Invalid URL Issue', () => {
     })
 
     it('should show JSDOM works with data URLs', () => {
+      // Dynamic import required for Jest mocking
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { JSDOM } = require('jsdom')
       
       // This should work - JSDOM accepts data URLs

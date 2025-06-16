@@ -5,8 +5,7 @@
 import {
   formatDocumentForSemanticSearch,
   validateSemanticSearchElementIds,
-  getDocumentStats,
-  estimateTokenCount
+  getDocumentStats
 } from '../semantic-search-formatter'
 import type { DocumentElement } from '@/lib/types/document'
 

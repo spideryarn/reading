@@ -1,6 +1,5 @@
 import { 
   getHeadingSectionElements, 
-  getHeadingAndSectionElements,
   findParentHeading,
   extractHeadingElements
 } from '../heading-section-detector'

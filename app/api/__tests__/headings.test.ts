@@ -95,11 +95,11 @@ jest.mock('@/lib/prompts/types', () => ({
 }))
 
 // Import route and helpers AFTER all mocks are set up
-import { POST, GET, DELETE } from '../headings/route'
+import { POST } from '../headings/route'
 import * as cheerio from 'cheerio'
 import { createMockRequest } from './test-helpers'
 import type { MockSupabaseClient } from './test-types'
-import { authTestScenarios, defaultTestUser } from '@/lib/testing/auth-test-helpers'
+import { authTestScenarios } from '@/lib/testing/auth-test-helpers'
 import { validateAuth } from '@/lib/auth/server-auth'
 
 // Import services and mocked modules
@@ -115,7 +115,6 @@ const mockValidateAuth = validateAuth as jest.MockedFunction<typeof validateAuth
 
 describe('/api/headings', () => {
   let mockEnhancementService: EnhancementService
-  let mockAiCallService: AiCallService
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -127,6 +126,8 @@ describe('/api/headings', () => {
     // jest.spyOn(console, 'error').mockImplementation()
     
     // Setup default mock behavior for validation
+    // Dynamic import required for Jest mocking
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { headingsPromptInputSchema, headingsResponseSchema } = require('@/lib/prompts/templates/headings')
     headingsPromptInputSchema.safeParse.mockReturnValue({
       success: true,
@@ -429,6 +430,8 @@ describe('/api/headings', () => {
   describe('error cases', () => {
     it('should return 400 for invalid input', async () => {
       // Reset to default safeParse behavior
+      // Dynamic import required for Jest mocking
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { headingsPromptInputSchema } = require('@/lib/prompts/templates/headings')
       headingsPromptInputSchema.safeParse.mockClear()
       const mockError = {
@@ -486,6 +489,8 @@ describe('/api/headings', () => {
     })
 
     it('should return 500 for invalid JSON from LLM', async () => {
+      // Dynamic import required for Jest mocking
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { headingsPromptInputSchema } = require('@/lib/prompts/templates/headings')
       headingsPromptInputSchema.safeParse.mockReturnValueOnce({
         success: true,

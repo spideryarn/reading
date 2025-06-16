@@ -15,7 +15,7 @@ import { POST as ChatPOST } from '../chat/route'
 import { POST as SummarisePOST } from '../summarise/route'
 import { POST as GlossaryPOST } from '../glossary/route'
 import { createMockRequest } from './test-helpers'
-import { authTestScenarios, defaultTestUser } from '@/lib/testing/auth-test-helpers'
+import { authTestScenarios } from '@/lib/testing/auth-test-helpers'
 
 // ========== API TOOLS INTEGRATION TESTS ==========
 

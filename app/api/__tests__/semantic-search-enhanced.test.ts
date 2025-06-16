@@ -29,9 +29,9 @@ import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { executePromptWithUsage } from '@/lib/prompts/types'
-import type { MockSupabaseClient, MockDocumentService, MockAiCallService, MockEnhancementService, MockAiCall } from './test-types'
+import type { MockSupabaseClient } from './test-types'
 import type { Database } from '@/lib/types/database'
-import { authTestScenarios, defaultTestUser } from '@/lib/testing/auth-test-helpers'
+import { authTestScenarios } from '@/lib/testing/auth-test-helpers'
 import { semanticSearchApiInputSchema } from '@/lib/prompts/templates/semantic-search'
 import { validateAuth } from '@/lib/auth/server-auth'
 
@@ -187,6 +187,8 @@ describe('/api/semantic-search - Enhanced Coverage', () => {
     jest.clearAllMocks()
     
     // Setup default mock behavior for validation
+    // Dynamic import required for Jest mocking
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { semanticSearchApiInputSchema } = require('@/lib/prompts/templates/semantic-search')
     semanticSearchApiInputSchema.safeParse.mockReturnValue({
       success: true,
@@ -221,6 +223,8 @@ describe('/api/semantic-search - Enhanced Coverage', () => {
     // Set up service method spies
     jest.spyOn(mockDocumentService, 'getById').mockResolvedValue(sampleDocument)
     
+    // Dynamic import required for Jest mocking
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { AiCallService: MockAiCallService } = require('@/lib/services/database/ai-calls')
     // Ensure the mock returns the expected value
     MockAiCallService.mockImplementation(() => ({
@@ -230,6 +234,8 @@ describe('/api/semantic-search - Enhanced Coverage', () => {
     }))
     
     // Setup EnhancementService mock
+    // Dynamic import required for Jest mocking
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { EnhancementService: MockEnhancementService } = require('@/lib/services/database/enhancements')
     const mockGet = jest.fn().mockResolvedValue(null)
     const mockUpsert = jest.fn().mockResolvedValue(sampleCachedEnhancement)
@@ -245,16 +251,20 @@ describe('/api/semantic-search - Enhanced Coverage', () => {
     mockEnhancementService._mockUpsert = mockUpsert
     
     // Mock formatDocumentForSemanticSearch
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     jest.mocked(require('@/lib/services/semantic-search-formatter').formatDocumentForSemanticSearch).mockReturnValue(
       '[elem_p_1] This is test content for semantic analysis.\n'
     )
     
     // Mock validation 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     jest.mocked(require('@/lib/services/semantic-search-formatter').validateSemanticSearchElementIds).mockReturnValue(['elem_p_1'])
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     jest.mocked(require('@/lib/services/semantic-search-formatter').getDocumentStats).mockReturnValue({
       totalElements: 2,
       meaningfulElements: 2
     })
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     jest.mocked(require('@/lib/services/semantic-search-formatter').estimateTokenCount).mockReturnValue(150)
     
     // Setup auth mock - default to authenticated user

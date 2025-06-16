@@ -18,7 +18,7 @@ import { AiCallService } from '@/lib/services/database/ai-calls'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { getModelConfig, getModelForAICall } from '@/lib/config'
 import { tweetThreadPromptInputSchema, tweetThreadResponseSchema } from '@/lib/prompts/templates/tweet-thread'
-import type { MockSupabaseClient, MockAiCallService, MockEnhancementService, MockAiCall } from './test-types'
+import type { MockSupabaseClient, MockAiCall } from './test-types'
 import type { ModelConfig } from '@/lib/config'
 
 // Mock external dependencies

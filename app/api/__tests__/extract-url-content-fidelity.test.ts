@@ -19,8 +19,7 @@ import {
   generateAllTestDocuments, 
   type TestDocument, 
   type ContentCheck,
-  extractTextContent,
-  countElementsInHtml 
+  extractTextContent
 } from '@/lib/testing/html-content-fidelity-generator'
 import { JSDOM } from 'jsdom'
 

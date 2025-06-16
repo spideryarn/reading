@@ -75,7 +75,7 @@ import { EnhancementService } from '@/lib/services/database/enhancements'
 import { executePromptWithUsage } from '@/lib/prompts/types'
 import type { MockSupabaseClient } from './test-types'
 import type { Database } from '@/lib/types/database'
-import { authTestScenarios, defaultTestUser } from '@/lib/testing/auth-test-helpers'
+import { authTestScenarios } from '@/lib/testing/auth-test-helpers'
 import { semanticSearchApiInputSchema, semanticSearchResponseSchema } from '@/lib/prompts/templates/semantic-search'
 import { formatDocumentForSemanticSearch } from '@/lib/services/semantic-search-formatter'
 

@@ -173,6 +173,8 @@ describe('HTML Prettifier', () => {
     const { 
       ACADEMIC_TEST_SAMPLES, 
       PRESERVATION_TEST_CASES 
+    // Dynamic import required for Jest test data
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     } = require('./academic-content-samples')
 
     it('should preserve arXiv LaTeXML mathematical notation', () => {

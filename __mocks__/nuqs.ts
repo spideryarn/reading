@@ -2,6 +2,8 @@
 // This provides test-compatible implementations of nuqs functions
 
 // Mock React state
+// Dynamic import required for Jest mocking
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { useState } = require('react')
 
 export const parseAsString = {

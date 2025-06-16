@@ -82,7 +82,6 @@ import { defaultTestUser } from '@/lib/testing/auth-test-helpers'
 // Import mocked modules
 import { createClient } from '@/lib/supabase/server'
 import { ChatService } from '@/lib/services/database/chat'
-import { AiCallService } from '@/lib/services/database/ai-calls'
 import { chatPromptInputSchema } from '@/lib/prompts/templates/chat'
 import { streamText } from 'ai'
 
@@ -91,7 +90,7 @@ const mockStreamText = streamText as jest.MockedFunction<typeof streamText>
 
 // Helper to create a mock text stream
 function createMockStream(chunks: string[], delayMs: number = 10) {
-  let index = 0
+  const index = 0
   const encoder = new TextEncoder()
   
   return new ReadableStream({
@@ -127,6 +126,8 @@ describe('Chat API - Streaming Functionality', () => {
     mockCreateClient.mockResolvedValue(mockSupabaseClient)
     
     // Setup default auth mock - chat API uses getUser which returns {user, error}
+    // Dynamic import required for Jest mocking
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { getUser } = require('@/lib/auth/server-auth')
     getUser.mockResolvedValue({ user: defaultTestUser, error: null })
     
@@ -397,6 +398,8 @@ describe('Chat API - Streaming Functionality', () => {
       })
 
       // Mock rate limit error from AI provider
+      // Dynamic import required for Jest mocking
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { generateText } = require('ai')
       generateText.mockRejectedValue({
         name: 'RateLimitError',

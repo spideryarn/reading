@@ -79,11 +79,11 @@ jest.mock('@/lib/prompts/types', () => ({
 }))
 
 // Import route and helpers AFTER all mocks are set up
-import { POST, GET, DELETE } from '../headings/route'
+import { POST } from '../headings/route'
 import * as cheerio from 'cheerio'
 import { createMockRequest } from './test-helpers'
 import type { MockSupabaseClient } from './test-types'
-import { authTestScenarios, defaultTestUser } from '@/lib/testing/auth-test-helpers'
+import { authTestScenarios } from '@/lib/testing/auth-test-helpers'
 
 // Import services and mocked modules
 import { createClient } from '@/lib/supabase/server'

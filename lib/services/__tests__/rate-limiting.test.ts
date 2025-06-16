@@ -4,7 +4,6 @@
 import { generateText } from 'ai'
 import { getModel } from '../llm-provider'
 import { getModelForAICall } from '@/lib/config'
-import { AiCallService } from '../database/ai-calls'
 import { createClient } from '@/lib/supabase/server'
 import { getTestNamespace, createTestUser } from '@/lib/testing/test-isolation-utils'
 

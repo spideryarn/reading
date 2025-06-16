@@ -13,8 +13,7 @@ jest.mock('@/lib/auth/server-auth', () => ({
 
 import { POST } from '../route'
 import { createMockRequest } from '../../__tests__/test-helpers'
-import { authTestScenarios, defaultTestUser } from '@/lib/testing/auth-test-helpers'
-import { NextResponse } from 'next/server'
+import { authTestScenarios } from '@/lib/testing/auth-test-helpers'
 
 // Mock other dependencies
 jest.mock('@/lib/supabase/server', () => ({

@@ -144,7 +144,7 @@ describe('HTML Upload Pipeline Issue Reproduction', () => {
         expect(responseData.error).toBe('readability_failed')
         expect(responseData.message).toContain('Mozilla Readability could not extract content')
         expect(responseData.suggested_method).toBe('ai-transcription')
-      } catch (parseError) {
+      } catch (_parseError) {
         // If JSON parsing fails, check the raw text
         console.log('Response is not JSON, checking text content:', responseText.substring(0, 200))
         expect(responseText).toContain('readability') // Should mention readability in some form
@@ -156,6 +156,8 @@ describe('HTML Upload Pipeline Issue Reproduction', () => {
 
     it('should demonstrate the root cause: filename passed as URL to JSDOM', async () => {
       // This test directly tests the readability-extractor to show the exact issue
+      // Dynamic import required for Jest mocking
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { extractWithReadability } = require('@/lib/utils/readability-extractor')
       
       const testHtml = `
@@ -200,6 +202,8 @@ describe('HTML Upload Pipeline Issue Reproduction', () => {
 
     it('should demonstrate storage authentication context issue', async () => {
       // Test the storage service directly with authentication issues
+      // Dynamic import required for Jest mocking
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { uploadOriginalFile } = require('@/lib/services/storage')
       
       // Create a test file
@@ -277,7 +281,7 @@ describe('HTML Upload Pipeline Issue Reproduction', () => {
         const responseData = JSON.parse(responseText)
         expect(responseData.success).toBe(false)
         expect(responseData.error).toBe('readability_failed')
-      } catch (parseError) {
+      } catch (_parseError) {
         // If JSON parsing fails, check for readability-related content
         console.log('Response is text, not JSON:', responseText.substring(0, 200))
         expect(responseText).toContain('readability')

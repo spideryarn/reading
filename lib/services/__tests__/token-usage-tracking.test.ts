@@ -264,7 +264,7 @@ describe('Token Usage Tracking', () => {
         total_tokens: 1500,
       }
       
-      let cost = 0
+      const cost = 0
       try {
         const config = getModelConfig(call.model_string)
         // This won't execute due to error

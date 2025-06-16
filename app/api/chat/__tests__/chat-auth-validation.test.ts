@@ -75,12 +75,11 @@ jest.mock('@/lib/services/logger', () => ({
 // Import route and helpers AFTER all mocks are set up
 import { POST } from '../route'
 import { createMockRequest } from '../../__tests__/test-helpers'
-import { authTestScenarios, defaultTestUser } from '@/lib/testing/auth-test-helpers'
+import { authTestScenarios } from '@/lib/testing/auth-test-helpers'
 
 // Import mocked modules
 import { createClient } from '@/lib/supabase/server'
 import { ChatService } from '@/lib/services/database/chat'
-import { AiCallService } from '@/lib/services/database/ai-calls'
 import { chatPromptInputSchema } from '@/lib/prompts/templates/chat'
 import { generateText } from 'ai'
 
@@ -109,6 +108,8 @@ describe('Chat API - Auth vs Validation Testing', () => {
     mockCreateClient.mockResolvedValue(mockSupabaseClient)
     
     // Setup default auth mock - chat API uses getUser which returns {user, error}
+    // Dynamic import required for Jest mocking
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { getUser } = require('@/lib/auth/server-auth')
     getUser.mockResolvedValue({ user: defaultTestUser, error: null })
     
@@ -214,7 +215,9 @@ describe('Chat API - Auth vs Validation Testing', () => {
   describe('Authentication Tests', () => {
     it('should handle missing user gracefully', async () => {
       // Chat API uses getUser which returns {user, error} - it doesn't throw
-      const { getUser } = require('@/lib/auth/server-auth')
+      // Dynamic import required for Jest mocking
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { getUser } = require('@/lib/auth/server-auth')
       getUser.mockResolvedValue({ user: null, error: new Error('Not authenticated') })
 
       // Mock validation to succeed
@@ -241,6 +244,8 @@ describe('Chat API - Auth vs Validation Testing', () => {
       expect(response.status).toBe(200)
       
       // Verify user was null in logging
+      // Dynamic import required for Jest mocking
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { createRequestLogger } = require('@/lib/services/logger')
       const loggerCalls = createRequestLogger.mock.calls
       expect(loggerCalls.length).toBeGreaterThan(0)
@@ -248,7 +253,9 @@ describe('Chat API - Auth vs Validation Testing', () => {
 
     it('should work without authentication', async () => {
       // Chat API should work even without user
-      const { getUser } = require('@/lib/auth/server-auth')
+      // Dynamic import required for Jest mocking
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { getUser } = require('@/lib/auth/server-auth')
       getUser.mockResolvedValue({ user: null, error: null })
 
       const request = createMockRequest('/api/chat', {
@@ -335,7 +342,9 @@ describe('Chat API - Auth vs Validation Testing', () => {
   describe('Error Priority Testing', () => {
     it('should validate input regardless of auth status', async () => {
       // Chat API doesn't require auth, so validation always happens
-      const { getUser } = require('@/lib/auth/server-auth')
+      // Dynamic import required for Jest mocking
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { getUser } = require('@/lib/auth/server-auth')
       getUser.mockResolvedValue({ user: null, error: null })
 
       // Mock validation to fail

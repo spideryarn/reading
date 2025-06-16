@@ -6,6 +6,8 @@ jest.mock('react-responsive', () => ({
   useMediaQuery: jest.fn()
 }))
 
+// Dynamic import required for Jest mocking
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const mockUseMediaQuery = require('react-responsive').useMediaQuery
 
 describe('useCanHover', () => {

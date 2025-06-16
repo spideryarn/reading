@@ -5,7 +5,6 @@
 import React from 'react'
 import { renderHook, act } from '@testing-library/react'
 import { usePersistentChat } from '../usePersistentChat'
-import { createClient } from '@/lib/supabase/client'
 import { ChatService } from '@/lib/services/database/chat'
 import type { ChatThread, ChatMessage } from '@/lib/types/database'
 

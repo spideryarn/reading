@@ -33,6 +33,8 @@ jest.mock('@/lib/utils/slug', () => ({
 // Mock the server Supabase client to use the browser client for tests
 jest.mock('@/lib/supabase/server', () => ({
   createClient: () => {
+    // Dynamic import required for Jest mocking
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { createClient } = require('@/lib/supabase/client')
     return createClient()
   }
@@ -59,7 +61,6 @@ const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>
 describe('Static Content Fidelity Test', () => {
   const namespace = getTestNamespace('static-fidelity')
   let supabase: SupabaseClient<Database>
-  let documentService: DocumentService
   let testUserId: string
 
   // Static test document with complex academic content
@@ -246,7 +247,6 @@ describe('Static Content Fidelity Test', () => {
   beforeAll(async () => {
     // Set up real database connection
     supabase = createClient()
-    documentService = new DocumentService(supabase)
     
     // Create a test user profile
     testUserId = `test-user-${namespace}`
