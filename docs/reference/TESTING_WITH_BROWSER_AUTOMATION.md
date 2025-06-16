@@ -197,6 +197,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Document Search', () => {
   test.beforeEach(async ({ page }) => {
     // Login once, reuse session
+    // Credentials defined in supabase/seed.sql
     await page.goto('/auth/login');
     await page.fill('[name="email"]', 'hello@spideryarn.com');
     await page.fill('[name="password"]', 'ASDFasdf1');
@@ -303,23 +304,248 @@ test.describe('Feature', () => {
 await page.click('[data-testid="submit-button"]');
 ```
 
-### 3. Minimal Output for AI Agents
+### 3. Authentication State Management (2025 Best Practices)
+
+#### Robust Authentication Helper
+```typescript
+// tests/helpers/robust-auth.ts
+export class RobustAuthManager {
+  constructor(private page: Page) {}
+  
+  async loginAs(userRole: 'admin' | 'user' = 'user', options: {
+    forceReauth?: boolean;
+    skipStateCheck?: boolean;
+  } = {}) {
+    const authFile = `playwright/.auth/${userRole}.json`;
+    
+    // Skip if already authenticated and not forcing
+    if (!options.forceReauth && !options.skipStateCheck) {
+      if (await this.isAlreadyAuthenticated()) {
+        return;
+      }
+    }
+    
+    // Clear any existing state for fresh auth
+    await this.clearAuthState();
+    
+    // Perform login with credentials from supabase/seed.sql
+    await this.performLogin(userRole);
+    
+    // Save authentication state with IndexedDB for Supabase
+    await this.page.context().storageState({ 
+      path: authFile,
+      indexedDB: true 
+    });
+    
+    // Verify authentication worked
+    await this.verifyAuthentication();
+  }
+  
+  private async performLogin(userRole: string) {
+    const credentials = this.getCredentials(userRole);
+    
+    await this.page.goto('/login');
+    await this.page.fill('[data-testid="email"]', credentials.email);
+    await this.page.fill('[data-testid="password"]', credentials.password);
+    await this.page.click('[data-testid="login-button"]');
+    
+    // Wait for successful authentication
+    await expect(this.page).toHaveURL(/\/(dashboard|documents)/);
+  }
+  
+  private getCredentials(userRole: string) {
+    // Credentials defined in supabase/seed.sql
+    const credentials = {
+      user: { email: 'hello@spideryarn.com', password: 'ASDFasdf1' },
+      admin: { email: 'hello@spideryarn.com', password: 'ASDFasdf1' } // Admin flag set in profiles table
+    };
+    return credentials[userRole as keyof typeof credentials];
+  }
+  
+  private async isAlreadyAuthenticated(): Promise<boolean> {
+    try {
+      await this.page.goto('/documents');
+      return !this.page.url().includes('/login');
+    } catch {
+      return false;
+    }
+  }
+  
+  private async clearAuthState() {
+    await this.page.context().clearCookies();
+    await this.page.evaluate(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+    });
+  }
+  
+  private async verifyAuthentication() {
+    // Verify user is actually logged in
+    const response = await this.page.request.get('/api/user/profile');
+    if (response.status() !== 200) {
+      throw new Error('Authentication verification failed');
+    }
+  }
+}
+```
+
+#### Setup Project with Dependencies (Recommended)
+```typescript
+// tests/auth.setup.ts
+import { test as setup, expect } from '@playwright/test';
+
+const authFile = 'playwright/.auth/user.json';
+
+setup('authenticate', async ({ page }) => {
+  // Robust login that handles database resets
+  await page.goto('/login');
+  
+  // Credentials from supabase/seed.sql
+  await page.fill('[data-testid="email"]', 'hello@spideryarn.com');
+  await page.fill('[data-testid="password"]', 'ASDFasdf1');
+  await page.click('[data-testid="login-button"]');
+  
+  // Wait for successful authentication
+  await expect(page).toHaveURL(/\/(dashboard|documents)/);
+  
+  // Save authentication state with IndexedDB for Supabase
+  await page.context().storageState({ 
+    path: authFile,
+    indexedDB: true  // Critical for Supabase auth persistence
+  });
+});
+```
+
+### 4. Database Reset Resilience
+
+#### Auto-Recovery from Database Resets
+```typescript
+// Handle database resets gracefully
+export async function withDatabaseResetRecovery<T>(
+  page: Page,
+  operation: () => Promise<T>,
+  maxRetries = 1
+): Promise<T> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      if (attempt === maxRetries) throw error;
+      
+      // Check if error indicates auth/database issue
+      if (isAuthError(error) || isDatabaseResetError(error)) {
+        const auth = new RobustAuthManager(page);
+        await auth.loginAs('user', { forceReauth: true });
+        continue;
+      }
+      
+      throw error;
+    }
+  }
+  throw new Error('Max retries exceeded');
+}
+
+function isAuthError(error: any): boolean {
+  return error.message?.includes('401') || 
+         error.message?.includes('Unauthorized') ||
+         error.message?.includes('authentication');
+}
+
+function isDatabaseResetError(error: any): boolean {
+  return error.message?.includes('relation') ||
+         error.message?.includes('does not exist') ||
+         error.message?.includes('database');
+}
+```
+
+### 5. Parallel Testing Considerations (⚠️ Critical)
+
+#### Warning: Shared Database Approach
+Your current shared database with namespace-based isolation may **not be safe** for parallel execution without modifications.
+
+#### Safe Parallel Configuration
+```typescript
+// playwright.config.ts - Conservative approach
+export default defineConfig({
+  // Start with sequential execution until isolation is validated
+  workers: 1, // or process.env.CI ? 1 : 2 for limited parallel
+  
+  // Alternative: Worker-aware namespacing
+  use: {
+    // Pass worker index to tests for namespace isolation
+    workerIndex: ({ }, use, testInfo) => use(testInfo.workerIndex),
+  },
+});
+```
+
+#### Worker-Aware Test Isolation (If Enabling Parallel)
+```typescript
+// Modify test isolation utils for parallel safety
+export function getTestNamespace(prefix: string, workerIndex?: number): string {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(7);
+  const worker = workerIndex !== undefined ? `-w${workerIndex}` : '';
+  return `test-${prefix}-${timestamp}${worker}-${random}`;
+}
+
+// In tests
+test('document upload', async ({ page }, testInfo) => {
+  const namespace = getTestNamespace('upload', testInfo.workerIndex);
+  // Rest of test logic...
+});
+```
+
+### 6. Minimal Output for AI Agents
 ```typescript
 // Configure concise reporters
 reporter: [['list', { printSteps: false }]]
 ```
 
-### 4. Parallel Execution
+### 7. Environment Handling
 ```typescript
-// Leverage Playwright's built-in parallelization
-fullyParallel: true
-```
-
-### 5. Environment Handling
-```typescript
-// Read port from environment
+// Read port from environment (.env.local or .env.test)
 const port = process.env.PORT || 3000;
 baseURL: `http://localhost:${port}`
+```
+
+### 8. Reliability Best Practices (2025)
+
+#### Auto-Waiting and Selectors
+```typescript
+// Use role-based locators (most reliable)
+await page.getByRole('button', { name: 'Upload Document' }).click();
+
+// Use data-testid for custom elements
+await page.getByTestId('search-input').fill('query');
+
+// Avoid CSS selectors (brittle)
+// await page.click('.btn-primary'); // Don't do this
+```
+
+#### Timeouts for AI Operations
+```typescript
+// Configure longer timeouts for AI-heavy operations
+await expect(page.getByTestId('ai-summary')).toBeVisible({ 
+  timeout: 30000 // 30 seconds for AI processing
+});
+
+// Wait for API responses
+await page.waitForResponse(resp => 
+  resp.url().includes('/api/ai/summarize') && resp.status() === 200,
+  { timeout: 45000 }
+);
+```
+
+#### Error Recovery Patterns
+```typescript
+// Retry pattern for flaky operations
+await expect(async () => {
+  await page.getByTestId('upload-button').click();
+  await expect(page.getByText('Upload successful')).toBeVisible();
+}).toPass({ 
+  intervals: [1000, 2000, 5000],
+  timeout: 30000 
+});
 ```
 
 ## Performance Comparison
