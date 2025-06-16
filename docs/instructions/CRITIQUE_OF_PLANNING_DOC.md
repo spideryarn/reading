@@ -4,4 +4,6 @@ Review progress, evaluate the approach taken so far, and what's proposed for the
 
 Explore, investigate, search the web, ask for clarification, discuss, critique, make proposals.
 
+Suggest tips/guidelines we can add that will avoid potential issues.
+
 If the user has asked you to, update the planning document (e.g. with an Appendix "Critique of planning doc). But don't make any changes to the code beyond that critique.
