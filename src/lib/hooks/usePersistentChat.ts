@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { 
-  useLocalRuntime, 
   type ChatModelAdapter,
   type ThreadMessageLike,
 } from "@assistant-ui/react";
@@ -16,12 +15,14 @@ interface UsePersistentChatProps {
 }
 
 interface UsePersistentChatReturn {
-  runtime: ReturnType<typeof useLocalRuntime>;
+  chatModelAdapter: ChatModelAdapter;
+  initialMessages: ThreadMessageLike[];
   isLoaded: boolean;
   threadId: string | null;
   error: string | null;
   isRefreshing: boolean;
   refreshMessages: () => Promise<void>;
+  runtimeKey: number;
 }
 
 export function usePersistentChat({ 
@@ -35,6 +36,7 @@ export function usePersistentChat({
   const [threadId, setThreadId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [messages, setMessages] = useState<ThreadMessageLike[]>([]);
+  const [runtimeKey, setRuntimeKey] = useState(0);
   const chatService = useMemo(() => new ChatService(createClient()), []);
 
   // Load messages from database and update state
@@ -88,6 +90,7 @@ export function usePersistentChat({
         }));
 
         setMessages(threadMessages);
+        setRuntimeKey((k) => k + 1);
         console.log('[Persistent Chat] Loaded conversation:', {
           threadId: thread.id,
           messageCount: threadMessages.length
@@ -96,6 +99,7 @@ export function usePersistentChat({
         // No existing thread
         setThreadId(null);
         setMessages([]);
+        setRuntimeKey((k) => k + 1);
         console.log('[Persistent Chat] No existing thread found for document:', documentId);
       }
     } catch (err) {
@@ -103,6 +107,7 @@ export function usePersistentChat({
       setError(`Failed to load chat history: ${err instanceof Error ? err.message : 'Unknown error'}`);
       setMessages([]);
       setThreadId(null);
+      setRuntimeKey((k) => k + 1);
     }
   }, [chatService, documentId, conversationId]);
 
@@ -127,12 +132,9 @@ export function usePersistentChat({
     if (!chatService || !threadId) return;
 
     try {
-      await chatService.addMessage({
-        threadId,
-        role,
-        content,
-        aiCallId
-      });
+      // Build message payload, omitting aiCallId if undefined to satisfy exactOptionalPropertyTypes
+      const messagePayload = aiCallId ? { threadId, role, content, aiCallId } : { threadId, role, content };
+      await chatService.addMessage(messagePayload as any);
       
       console.log('[Persistent Chat] Message saved:', {
         threadId,
@@ -158,8 +160,8 @@ export function usePersistentChat({
       const conversationHistory = messages.map(msg => ({
         role: msg.role as 'user' | 'assistant',
         content: Array.isArray(msg.content)
-          ? (msg.content.find((part: unknown) => (part as { type: string }).type === 'text') as { text: string })?.text ?? ''
-          : (msg.content as string) || ''
+          ? (msg.content.find((part: any) => (part as { type: string }).type === 'text') as { text: string })?.text ?? ''
+          : (msg.content as unknown as string) || ''
       }));
 
       // Make API call
@@ -205,8 +207,10 @@ export function usePersistentChat({
           const currentThreadId = returnedThreadId || threadId;
           const userMessage = conversationHistory[conversationHistory.length - 1];
           
-          // Save user message first, then assistant response sequentially
-          await saveMessage(currentThreadId, 'user', userMessage.content);
+          if (userMessage) {
+            // Save user message first, then assistant response sequentially
+            await saveMessage(currentThreadId, 'user', userMessage.content);
+          }
           await saveMessage(currentThreadId, 'assistant', response, data.aiCallId);
         }
         
@@ -250,17 +254,14 @@ export function usePersistentChat({
     loadMessages();
   }, [documentId, conversationId, loadMessages]);
 
-  // Initialize runtime with messages from state
-  const runtime = useLocalRuntime(chatModelAdapter, {
-    initialMessages: messages
-  });
-
   return {
-    runtime,
+    chatModelAdapter,
+    initialMessages: messages,
     isLoaded,
     threadId,
     error,
     isRefreshing,
-    refreshMessages
+    refreshMessages,
+    runtimeKey,
   };
 }
