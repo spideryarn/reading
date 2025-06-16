@@ -974,28 +974,28 @@ const VirtualThread = ({ messages }) => {
 };
 ```
 
-## Database Persistence Patterns ⚠️
+## Database Persistence ✅
 
-The Spideryarn Reading application implements comprehensive conversation persistence using Supabase PostgreSQL with the assistant-ui library's **ThreadHistoryAdapter** system for seamless conversation restoration.
+The Spideryarn Reading application implements conversation persistence using Supabase PostgreSQL with a direct state management approach that works reliably with assistant-ui.
 
-### Overview
+### Current Implementation Approach
 
-- **Approach**: ThreadHistoryAdapter-based persistence with assistant-ui managing UI state  
-- **Thread Model**: One thread per document with automatic thread creation
-- **History Loading**: Uses `ThreadHistoryAdapter.load()` to restore conversations on runtime initialization
-- **Error Handling**: Fail-fast approach with detailed error reporting
-- **Current Status**: ⚠️ Under development - experiencing loading state issues
+- **Strategy**: Direct state management using `initialMessages` prop
+- **Thread Model**: One or more threads per document with URL-addressable conversations
+- **History Loading**: Database messages loaded and converted to `ThreadMessageLike` format
+- **Runtime Management**: Uses `runtimeKey` to force remounts when data changes
+- **Status**: ✅ **Working and stable**
 
 ### Database Schema
 
 The persistence system uses two main tables:
 
 ```sql
--- Chat threads (one per document)
+-- Chat threads (multiple per document supported)
 CREATE TABLE chat_threads (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   document_id UUID NOT NULL REFERENCES documents(id),
-  model_id UUID NOT NULL REFERENCES models(id),
+  model_string TEXT NOT NULL, -- Direct model string storage
   title TEXT NOT NULL,
   user_id UUID NOT NULL REFERENCES auth.users(id),
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -1013,395 +1013,234 @@ CREATE TABLE chat_messages (
 );
 ```
 
-### Core Implementation: usePersistentChat Hook with ThreadHistoryAdapter
+### Core Implementation: usePersistentChat Hook
 
-The `usePersistentChat` hook uses assistant-ui's built-in ThreadHistoryAdapter system for proper persistence integration:
+The `usePersistentChat` hook uses direct state management for reliable persistence:
 
 ```typescript
 // src/lib/hooks/usePersistentChat.ts
-import { useLocalRuntime, type ThreadMessageLike } from "@assistant-ui/react";
-
 export function usePersistentChat({ 
   documentId, 
-  documentContext 
+  documentContext,
+  conversationId 
 }: UsePersistentChatProps) {
-  const [isLoaded, setIsLoaded] = useState(false);
+  // Start with isLoaded = true to avoid hanging loading state
+  const [isLoaded] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
-  // Synchronous service initialization (critical for adapter timing)
+  const [messages, setMessages] = useState<ThreadMessageLike[]>([]);
+  const [runtimeKey, setRuntimeKey] = useState(0);
   const chatService = useMemo(() => new ChatService(createClient()), []);
 
-  // ThreadHistoryAdapter - assistant-ui's official persistence mechanism
-  const historyAdapter: ThreadHistoryAdapter = useMemo(() => ({
-    // Called once when runtime initializes - loads existing conversation
-    async load() {
-      if (!chatService) return { messages: [] };
+  // Load messages from database and update state
+  const loadMessages = useCallback(async () => {
+    // Load thread based on conversationId (from URL) or most recent for document
+    const thread = conversationId 
+      ? await chatService.getThread(conversationId)
+      : (await chatService.listThreadsByDocument(documentId, 1))[0];
+    
+    if (thread) {
+      setThreadId(thread.id);
+      const dbMessages = await chatService.getThreadMessages(thread.id);
+      
+      // Convert to ThreadMessageLike format
+      const threadMessages: ThreadMessageLike[] = dbMessages.map(msg => ({
+        id: msg.id,
+        role: msg.role as 'user' | 'assistant',
+        content: [{ type: 'text' as const, text: msg.content }],
+        createdAt: new Date(msg.created_at)
+      }));
 
-      try {
-        const existingId = await findOrCreateThread();
-        if (existingId) {
-          setThreadId(existingId);
-          const history = await loadConversationHistory(existingId);
-          setIsLoaded(true); // Mark as loaded
-          return { messages: history };
-        }
-        setIsLoaded(true);
-        return { messages: [] };
-      } catch (err) {
-        console.error('[Persistent Chat] History load error:', err);
-        setError('Failed to load chat history');
-        setIsLoaded(true);
-        return { messages: [] };
-      }
-    },
+      setMessages(threadMessages);
+      setRuntimeKey((k) => k + 1); // Force runtime remount
+    }
+  }, [chatService, documentId, conversationId]);
 
-    // Called automatically by runtime when new messages are added
-    async append(message) {
-      if (!chatService || !threadId) return;
-
-      const getText = (msg: ThreadMessageLike) => {
-        if (Array.isArray(msg.content)) {
-          return (msg.content as any).find((p: any) => p.type === 'text')?.text || '';
-        }
-        return (msg.content as any) || '';
-      };
-
-      await chatService.addMessage({
-        threadId,
-        role: message.role as 'user' | 'assistant',
-        content: getText(message),
+  // Chat model adapter with database persistence
+  const chatModelAdapter: ChatModelAdapter = {
+    run: async ({ messages, abortSignal }) => {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: conversationHistory,
+          documentContext,
+          ...(threadId ? { threadId } : {}),
+          documentId
+        }),
+        signal: abortSignal,
       });
-    },
-  }), [chatService, threadId, findOrCreateThread, loadConversationHistory]);
 
-  // Create runtime with history adapter
-  const runtime = useLocalRuntime(chatModelAdapter, {
-    adapters: { history: historyAdapter as any }
-  });
+      const data = await response.json();
+      
+      // Update thread ID if server created a new one
+      if (data.threadId && !threadId) {
+        setThreadId(data.threadId);
+      }
+      
+      // Save messages to database (fire and forget)
+      if (data.threadId || threadId) {
+        const currentThreadId = data.threadId || threadId;
+        await saveMessage(currentThreadId, 'user', userMessage.content);
+        await saveMessage(currentThreadId, 'assistant', data.response, data.aiCallId);
+      }
+      
+      return {
+        content: [{ type: "text" as const, text: data.response }]
+      };
+    }
+  };
 
-  return { runtime, isLoaded, threadId, error };
+  return {
+    chatModelAdapter,
+    initialMessages: messages,
+    isLoaded,
+    threadId,
+    error,
+    isRefreshing,
+    refreshMessages: loadMessages,
+    runtimeKey,
+  };
 }
 ```
 
-### Known Issues ⚠️
+### Key Features
 
-**Current Problem**: The chat interface hangs on "Loading conversation..." indefinitely after implementing ThreadHistoryAdapter.
+#### 1. Direct State Management
+- Uses `initialMessages` prop to seed the runtime with conversation history
+- `runtimeKey` forces runtime remounts when data changes
+- No complex adapter patterns - simple and reliable
 
-**Root Cause**: The `isLoaded` state is set inside the `historyAdapter.load()` method, but the loading state in the UI never resolves properly.
+#### 2. URL State Integration
+- Conversations are URL-addressable via `conversationId` parameter
+- Automatic URL updates when new threads are created
+- Specific conversations can be bookmarked and shared
 
-**Suspected Issues**:
-1. **Timing Race Condition**: `historyAdapter.load()` may be called before `chatService` is ready
-2. **Async State Management**: Setting `isLoaded` inside the adapter may not trigger UI updates properly  
-3. **Runtime Lifecycle**: assistant-ui may have specific expectations about when adapters complete
-4. **Service Initialization**: Even with synchronous service creation, there may be Supabase connection delays
+#### 3. Thread Management
+- Multiple conversations per document supported
+- Automatic thread creation on first message
+- Thread titles auto-generated from first user message
 
-### Key Persistence Features
-
-#### 1. Automatic Thread Management
-
-- **Thread Discovery**: Finds existing threads for the current document on mount
-- **Lazy Creation**: Creates new threads server-side on first message
-- **Title Generation**: Auto-generates thread titles from first user message (50 char limit)
-- **Model Tracking**: Associates threads with specific AI models for usage analytics
-
-#### 2. Conversation History Restoration
-
-```typescript
-// Convert database messages to ThreadMessageLike format
-const threadMessages: ThreadMessageLike[] = history.map(msg => ({
-  id: msg.id,
-  role: msg.role as 'user' | 'assistant',
-  content: msg.content.find(part => part.type === 'text')?.text || '',
-  createdAt: msg.createdAt
-}));
-
-setInitialMessages(threadMessages);
-```
-
-#### 3. Thread Isolation by Document
-
-- Each document maintains its own conversation thread
-- Switching documents resets chat state and loads the appropriate thread
-- Clean separation prevents context bleeding between documents
-
-```typescript
-// Reset on document change
-useEffect(() => {
-  setInitialMessages([]);
-  setMessagesLoaded(false);
-  setThreadId(null);
-}, [documentId]);
-```
-
-#### 4. Server-Side Thread Creation
-
-The API route handles thread creation when no `threadId` is provided:
-
-```typescript
-// app/api/chat/route.ts
-let finalThreadId = threadId;
-if (!threadId && messages.length === 1 && messages[0].role === 'user' && documentId) {
-  const title = userMessage.length > 50 
-    ? userMessage.substring(0, 47) + '...'
-    : userMessage;
-  
-  const newThread = await chatService.createThread({
-    documentId,
-    modelId: modelUuid,
-    title,
-    userId: '00000000-0000-0000-0000-000000000001' // Mock system user
-  });
-  
-  finalThreadId = newThread.id;
-}
-```
-
-### Database Services
-
-#### ChatService Methods
+#### 4. Database Services
 
 ```typescript
 // lib/services/database/chat.ts
 class ChatService {
-  // Find existing thread for document
-  async listThreadsByDocument(documentId: string, limit = 10): Promise<ChatThread[]>
-  
-  // Create new conversation thread
+  async listThreadsByDocument(documentId: string): Promise<ChatThread[]>
+  async getThread(threadId: string): Promise<ChatThread | null>
   async createThread(options: CreateThreadOptions): Promise<ChatThread>
-  
-  // Add message to thread
   async addMessage(options: AddMessageOptions): Promise<ChatMessage>
-  
-  // Load conversation history
   async getThreadMessages(threadId: string): Promise<ChatMessage[]>
 }
 ```
 
-#### AI Call Tracking Integration
-
-```typescript
-// Tracks LLM usage for analytics
-const aiCall = await aiCallService.create({
-  provider: modelConfig.provider,
-  modelId: modelConfig.modelId,
-  promptTokens: result.usage?.promptTokens || null,
-  completionTokens: result.usage?.completionTokens || null,
-  totalTokens: result.usage?.totalTokens || null,
-  requestData: {
-    messages: messages.map(m => ({ role: m.role, content: m.content })),
-    documentContext: documentContext?.substring(0, 1000) + '...',
-    threadId: finalThreadId
-  },
-  responseData: { response }
-});
-```
-
-### Implementation Best Practices
-
-#### 1. Fail-Fast Error Handling
-
-Following our coding principles, the system fails immediately with clear error messages rather than falling back to degraded modes:
-
-```typescript
-// No silent fallbacks - surface errors clearly
-if (!chatService || !currentModelId) {
-  throw new Error('Chat persistence services not initialized');
-}
-```
-
-#### 2. Comprehensive Logging
-
-```typescript
-console.log('[Persistent Chat] Loaded conversation history:', {
-  threadId: existingThreadId,
-  messageCount: threadMessages.length
-});
-```
-
-#### 3. Type Safety
-
-Full TypeScript integration with proper interfaces for all persistence operations:
-
-```typescript
-interface UsePersistentChatProps {
-  documentId: string;
-  documentContext: string;
-}
-
-interface UsePersistentChatReturn {
-  runtime: ReturnType<typeof useLocalRuntime>;
-  isLoaded: boolean;
-  threadId: string | null;
-  error: string | null;
-}
-```
-
-### Usage in Components
-
-Replace the basic `useChatRuntime` with `usePersistentChat`:
+### Component Integration
 
 ```typescript
 // components/assistant-chat.tsx
-import { usePersistentChat } from '@/src/lib/hooks/usePersistentChat';
-
-export function AssistantChat({ documentId }: { documentId: string }) {
-  const documentContext = getDocumentContext();
-  const { runtime, isLoaded, threadId, error } = usePersistentChat({ 
-    documentId, 
-    documentContext 
-  });
-
-  if (error) {
-    return <div className="text-red-500">Error: {error}</div>;
-  }
-
-  if (!isLoaded) {
-    return <div>Loading conversation...</div>;
-  }
+export function AssistantChat({ documentId, documentContext }: AssistantChatProps) {
+  const { conversationId, setConversation } = useChatUrlState();
+  
+  const { chatModelAdapter, initialMessages, isLoaded, threadId, error, isRefreshing, refreshMessages, runtimeKey } =
+    usePersistentChat({ documentId, documentContext, conversationId });
+  
+  // Sync threadId to URL when it changes
+  useEffect(() => {
+    if (threadId && threadId !== conversationId) {
+      setConversation(threadId);
+    }
+  }, [threadId, conversationId, setConversation]);
 
   return (
-    <div className="flex flex-col h-full">
-      {threadId && (
-        <div className="text-xs text-muted-foreground p-2 border-b">
-          ✓ Conversation saved • Thread: {threadId.slice(0, 8)}
+    <div className="h-full flex flex-col">
+      {/* Chat header with persistence status and refresh */}
+      <div className="px-4 py-2 bg-blue-50 border-b border-blue-100 flex items-center justify-between">
+        <div className="text-xs text-blue-700">
+          {threadId ? (
+            <>✓ Conversation saved • Thread: {threadId.slice(-8)}</>
+          ) : (
+            <span>Ready to chat</span>
+          )}
         </div>
-      )}
-      <AssistantRuntimeProvider runtime={runtime}>
-        <Thread />
-      </AssistantRuntimeProvider>
+        <Button onClick={refreshMessages} disabled={isRefreshing}>
+          <ArrowClockwise className={isRefreshing ? "animate-spin" : ""} />
+          {isRefreshing ? "Refreshing..." : "Refresh"}
+        </Button>
+      </div>
+      
+      <ChatRuntime key={runtimeKey} adapter={chatModelAdapter} initialMessages={initialMessages} />
     </div>
   );
 }
 ```
 
-### Testing Strategy
-
-Comprehensive test coverage includes:
-
-- **Hook testing**: `src/lib/hooks/__tests__/usePersistentChat.test.ts`
-- **Component testing**: `components/__tests__/assistant-chat.test.tsx` 
-- **API testing**: `app/api/__tests__/chat-persistence.test.ts`
-- **Database integration**: Service-level tests for ChatService and AiCallService
-
-### Performance Considerations
-
-- **Lazy Loading**: Messages only loaded when chat tab is accessed
-- **One Thread Per Document**: Prevents conversation bloat
-- **Background Persistence**: UI remains responsive during database operations
-- **Efficient Queries**: Optimized database queries with proper indexing
-
-### Migration and Backwards Compatibility
-
-The persistence system is designed to be additive:
-- Existing chat functionality continues to work without persistence
-- New conversations automatically gain persistence capabilities
-- Graceful degradation if database is unavailable
-
 ## Current Implementation Status
 
-As of database persistence completion, the Spideryarn Reading application has successfully integrated assistant-ui with comprehensive conversation persistence capabilities:
+**Status**: ✅ **Complete and Fully Operational**
 
-### Implemented Components ✓
+The Spideryarn Reading application has successfully integrated assistant-ui with reliable conversation persistence using a direct state management approach.
+
+### Implemented Components ✅
 
 1. **`components/assistant-chat.tsx`** - Main chat component using assistant-ui primitives
-   - Uses `ThreadPrimitive`, `ComposerPrimitive`, and `MessagePrimitive`
+   - Beautiful chat interface with message bubbles and loading states
    - Custom `UserMessage` and `AssistantMessage` components with Phosphor icons
-   - Thread suggestions for empty state with common document questions
-   - **NEW**: Integrated with `usePersistentChat` hook for database persistence
-   - **NEW**: Shows persistence indicators and thread IDs in UI
+   - Thread suggestions for empty state with document-specific prompts
+   - Integrated with `usePersistentChat` hook for database persistence
+   - Persistence status indicators and refresh functionality in header
+   - URL state integration for shareable conversation links
 
-2. **`src/lib/hooks/usePersistentChat.ts`** ✓ - Advanced persistence hook extending useLocalRuntime
-   - Uses `initialMessages` option for conversation history restoration
-   - Transparent background persistence with database synchronization
+2. **`src/lib/hooks/usePersistentChat.ts`** ✅ - Production-ready persistence hook
+   - Direct state management using `initialMessages` and `runtimeKey`
+   - URL-based conversation loading via `conversationId` parameter
    - Automatic thread discovery and creation
    - Document-specific conversation isolation
    - Comprehensive error handling with fail-fast approach
+   - Background message persistence with fire-and-forget strategy
 
-3. **`app/api/chat/route.ts`** ✓ - Enhanced API route with thread management
+3. **`app/api/chat/route.ts`** ✅ - Enhanced API route with full thread management
    - Server-side thread creation for first messages
    - AI call tracking integration for usage analytics
-   - Enhanced error reporting with structured validation
+   - Model string integration (post-model management simplification)
    - Thread ID management and response tracking
 
-4. **Database Services** ✓ - Complete persistence layer
+4. **Database Services** ✅ - Complete persistence layer
    - `lib/services/database/chat.ts` - ChatService for thread and message management
-   - `lib/services/database/ai-calls.ts` - AI call tracking and model management
-   - Supabase integration with proper error handling
+   - Full CRUD operations with proper error handling
+   - Model string storage (no more UUID foreign key lookups)
+   - Supabase integration with Row Level Security
 
-5. **`components/simple-chat.tsx`** ⚠️ - Legacy implementation (deprecated)
-   - Basic chat UI without assistant-ui for comparison
-   - Should be removed in favor of persistent chat implementation
+### Key Architecture Decisions ✅
 
-### Key Implementation Decisions ✓
+1. **Direct State Management**: Abandoned ThreadHistoryAdapter for reliable `initialMessages` approach
+2. **URL State Integration**: Conversations are URL-addressable and shareable
+3. **Multiple Threads Per Document**: Supports multiple conversations per document
+4. **Runtime Key Strategy**: Forces runtime remounts when conversation data changes
+5. **Fire-and-Forget Persistence**: UI remains responsive during database operations
+6. **Model String Storage**: Direct model string storage eliminates database lookup overhead
 
-1. **Runtime Approach**: Using `useLocalRuntime` with `initialMessages` for conversation restoration
-2. **Persistence Strategy**: Transparent background persistence with assistant-ui managing UI state
-3. **Thread Model**: One thread per document with automatic creation and discovery
-4. **Error Handling**: Fail-fast approach with detailed error reporting and validation
-5. **Document Context**: Automatically passed with each message (10k character limit)
-6. **Testing**: Comprehensive test coverage for hooks, components, and API routes
-
-### Integration Points ✓
-
-- **API Route**: `/api/chat` with full LLM integration (Claude Sonnet 4/Gemini 2.0 Flash)
-- **Database**: Supabase PostgreSQL with `chat_threads` and `chat_messages` tables
-- **Tab System**: Chat integrated as second tab in Tools pane with persistence indicators
-- **Document Context**: Extracted via `getDocumentContext()` with thread isolation
-- **Styling**: Consistent with existing Tailwind design system and shadcn/ui components
-- **State Management**: Uses `usePersistentChat` hook with database synchronization
-- **Authentication**: Integrated with user authentication for conversation ownership
-- **Testing**: Unit tests in multiple locations covering full persistence flow
-
-### Persistence Features ✓
+### Current Features ✅
 
 - **Conversation Restoration**: Full chat history loaded on page refresh
-- **Thread Management**: Automatic thread creation and discovery per document
-- **Database Storage**: PostgreSQL storage with proper indexing and relationships
-- **Error Recovery**: Graceful handling of database failures with detailed logging
-- **Performance**: Lazy loading and efficient queries for optimal user experience
-- **Analytics**: AI call tracking for usage monitoring and cost analysis
-
-### Current Status Summary
-
-The chat persistence implementation is **partially complete** with **active debugging required**:
-
-- ✅ **Database Schema**: Complete with proper relationships and constraints
-- ✅ **API Integration**: Full thread management and AI call tracking  
-- ⚠️ **ThreadHistoryAdapter**: Implemented but causing loading state hangs
-- ⚠️ **UI Loading States**: Infinite "Loading conversation..." spinner issue
-- ✅ **Error Handling**: Comprehensive validation and error reporting
-- ✅ **Testing**: Unit and integration tests covering full persistence flow
-- ✅ **Documentation**: Complete implementation guide with known issues documented
-
-### Debugging Approaches Attempted
-
-1. **Initial Implementation**: Used `initialMessages` prop with timing-based loading
-   - **Issue**: React hooks order violations due to conditional runtime creation
-   
-2. **Manual Message Appending**: Used `runtime.append()` to add loaded messages  
-   - **Issue**: Messages didn't persist or display correctly on refresh
-   
-3. **ThreadHistoryAdapter (Current)**: Implemented assistant-ui's official persistence pattern
-   - **Issue**: UI hangs on "Loading conversation..." indefinitely
-   - **Root Cause**: `isLoaded` state management inside async adapter methods
-
-### Recommended Next Steps
-
-1. **Investigate ThreadHistoryAdapter Lifecycle**: Research how assistant-ui expects adapters to signal completion
-2. **Separate Loading State Management**: Move `isLoaded` state outside of adapter methods
-3. **Add Adapter Debugging**: Log adapter method calls and completion timing
-4. **Consider Alternative Approaches**: Conditional component rendering or external state management
-5. **Consult Library Documentation**: Review assistant-ui docs for async loading patterns
+- **URL Addressability**: Specific conversations can be bookmarked and shared
+- **Thread Management**: Multiple conversations per document with automatic creation
+- **Real-time Persistence**: Messages save to database automatically
+- **Error Recovery**: Graceful handling of database failures with clear error messages
+- **Refresh Functionality**: Manual refresh button to reload conversation from database
+- **Performance**: Lazy loading and efficient queries
+- **Analytics**: Full AI call tracking for usage monitoring
 
 ### Future Enhancements 📋
 
 Potential improvements for future iterations:
-- Multi-thread support per document for conversation branching
-- Conversation export/import functionality
-- Advanced search across conversation history
-- Conversation sharing and collaboration features
-- Performance optimizations for very long conversations
+- **Clear Button**: Add clear chat functionality for starting fresh conversations
+- **Conversation Export**: Export chat history in various formats (PDF, Markdown, etc.)
+- **Advanced Search**: Search across conversation history within and across documents  
+- **Conversation Sharing**: Share specific conversations with collaboration features
+- **Performance Optimizations**: Virtual scrolling for very long conversations
+- **Voice Input**: Speech-to-text integration for voice messages
+- **Thread Forking**: Create new conversation branches from any point
 
 ## Useful Resources
 
@@ -1415,10 +1254,9 @@ Potential improvements for future iterations:
 
 ### Internal Code References
 - **Implementation**: `components/assistant-chat.tsx` - Main chat component
-- **Hook**: `src/lib/hooks/useChatRuntime.ts` - Runtime management
+- **Hook**: `src/lib/hooks/usePersistentChat.ts` - Persistence management
 - **API Route**: `app/api/chat/route.ts` - Backend integration point
-- **Tests**: `src/lib/hooks/__tests__/useChatRuntime.test.ts` - Runtime testing
-- **Legacy Component**: `components/simple-chat.tsx` - Temporary comparison implementation
+- **Database Service**: `lib/services/database/chat.ts` - Thread and message management
 
 ## Tips for Next.js Integration
 

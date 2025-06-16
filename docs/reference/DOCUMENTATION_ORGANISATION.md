@@ -71,8 +71,6 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/TOOL_HEADINGS.md` - AI-generated heading system for document structure enhancement
 - `docs/reference/TOOL_TWEET_THREAD_VIEW.md` - Tweet thread generation from document content
 - `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - @assistant-ui/react integration for chatbot interface
-- `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_PERSISTENCE_DEBUGGING.md` - Debugging guide for chat persistence
-- `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_DATABASE_PERSISTENCE.md` - Database persistence for chat conversations
 
 ### UI Components & Interface
 - `docs/reference/UI_COMPONENTS.md` - Available UI components and usage patterns
