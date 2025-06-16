@@ -111,7 +111,5 @@ Based on o3 AI feedback, fixed the following issues:
 5. ✅ **Checked remaining setActiveTab calls** - only in tests and unrelated tab-container component
 
 ### Stage: Review & Merge
-- [ ] Debrief to user, ensure acceptance.
-- [ ] Squash-merge feature branch following `GIT_COMMIT_CHANGES.md`.
 - [ ] Move this planning doc to `planning/finished/`.
  
