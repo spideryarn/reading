@@ -19,7 +19,7 @@ URL-based state management enables shareable, bookmarkable document views with t
 - **Progressive enhancement** - URL state added to existing tools without breaking changes
 - **nuqs v2 integration** - No provider needed for Next.js App Router
 - **Push vs Replace history** - Push for significant navigation, replace for UI state changes
-- **Bidirectional synchronization** - URL and component state stay in sync automatically
+- **Single source of truth** - URL is the authoritative source; context mirrors it read-only (as of 2025-06-15)
 
 ## URL Parameter Schema
 
@@ -134,19 +134,52 @@ const submitSearch = useCallback(() => {
 
 ## Integration with DocumentCommunicationContext
 
-The URL state system integrates seamlessly with the existing state management:
+**⚠️ Important (as of 2025-06-15)**: The URL is now the single source of truth for tab state. The context mirrors the URL read-only to prevent infinite render loops.
+
+### URL as Single Source of Truth
+
+To prevent infinite loops from bidirectional synchronization:
+- **URL → Context**: Automatic sync (read-only mirror)
+- **Context → URL**: Prevented by development guard
+- **Navigation**: Use `useNavigateToTab()` hook instead of `actions.setActiveTab()`
 
 ```typescript
-// In document page component
-const { activeTab } = useToolUrlState()
-const { actions } = useDocumentCommunication()
+// CORRECT: Navigate via URL
+import { useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
 
-// Sync URL state to context
+function MyComponent() {
+  const navigateToTab = useNavigateToTab()
+  
+  return (
+    <button onClick={() => navigateToTab('summary')}>
+      Go to Summary
+    </button>
+  )
+}
+
+// INCORRECT: Will throw error in development
+function BadComponent() {
+  const { actions } = useDocumentCommunication()
+  
+  return (
+    <button onClick={() => actions.setActiveTab('summary')}> // ❌ Error!
+      Go to Summary
+    </button>
+  )
+}
+```
+
+### Internal Synchronization
+
+The `useToolUrlState` hook handles the one-way sync:
+
+```typescript
+// In use-tool-url-state.ts
 useEffect(() => {
-  if (activeTab && activeTab !== currentTab) {
-    actions.setActiveTab(activeTab)
+  if (urlState.tab && urlState.tab !== contextState.activeTabId) {
+    actions.setActiveTab(urlState.tab, true) // true = internal flag
   }
-}, [activeTab])
+}, [urlState.tab])
 ```
 
 ## Common Patterns
@@ -183,11 +216,12 @@ const clearHighlights = useCallback(() => {
 
 ## Gotchas & Best Practices
 
-1. **React Infinite Loops** - Always memoize callbacks passed to child components when using URL state
-2. **Context Hierarchy** - Ensure URL state hooks are called within appropriate React context providers
-3. **Map Comparisons** - When syncing Maps to URL state, compare content not references
-4. **TypeScript Types** - Use nuqs parsers for type safety instead of manual parsing
-5. **Empty States** - Handle null/undefined URL parameters gracefully with defaults
+1. **Single Source of Truth** - Always navigate tabs via `useNavigateToTab()`, never `actions.setActiveTab()`
+2. **React Infinite Loops** - URL is the source of truth; context only mirrors it to prevent loops
+3. **Context Hierarchy** - Ensure URL state hooks are called within appropriate React context providers
+4. **Map Comparisons** - When syncing Maps to URL state, compare content not references
+5. **TypeScript Types** - Use nuqs parsers for type safety instead of manual parsing
+6. **Empty States** - Handle null/undefined URL parameters gracefully with defaults
 
 ## Limitations
 
@@ -280,5 +314,5 @@ When implementing URL state for a tool:
 - [x] Special characters handled correctly
 - [x] Invalid parameters show appropriate warnings
 - [x] History behavior follows navigation vs preference rules
-- [ ] No infinite render loops
-- [ ] State syncs bidirectionally
+- [x] No infinite render loops (URL as single source prevents this)
+- [x] State syncs unidirectionally (URL → Context only)

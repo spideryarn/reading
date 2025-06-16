@@ -308,9 +308,11 @@ const glossaryTool: Tool = {
   
   execute: async (params) => {
     if (params.action === 'open') {
+      // NOTE: As of 2025-06-15, use navigateToTab() for tab changes
+      // See planning/250615a_url_state_single_source_of_truth.md
       return {
-        type: 'state-change',
-        stateChanges: { activeTab: 'glossary' }
+        type: 'navigation',
+        navigation: { tab: 'glossary' }
       }
     }
     

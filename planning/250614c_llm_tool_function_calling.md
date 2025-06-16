@@ -35,6 +35,7 @@ We need a system that generates function schemas from tool definitions and safel
 4. **Security by default** - Sanitize inputs, rate limit, audit trail
 5. **Graceful degradation** - Chat works even if function calling fails
 6. **User consent** - Show what AI will do before execution (initially)
+7. **URL-based navigation** - Tab changes must use URL state (see `planning/250615a_url_state_single_source_of_truth.md`)
 
 ## Stages & Actions
 

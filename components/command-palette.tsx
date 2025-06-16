@@ -12,6 +12,7 @@ import {
   CommandShortcut,
 } from '@/components/ui/command'
 import { useDocumentCommunication, useDocumentSlug } from '@/lib/context/document-communication-context'
+import { useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
 import { useAuth } from '@/lib/context/auth-context'
 import {
   Article,
@@ -92,6 +93,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
   const documentSlug = useDocumentSlug()
   const router = useRouter()
   const { user, signOut } = useAuth()
+  const navigateToTab = useNavigateToTab()
 
   // Platform detection for keyboard shortcuts
   const isMac = typeof window !== 'undefined' && 
@@ -152,7 +154,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
       keywords: ['document', 'original', 'source', 'raw'],
       shortcut: [isMac ? '⌘' : 'Ctrl', '1'],
       category: NAVIGATION_CATEGORY,
-      action: () => actions.setActiveTab('original'),
+      action: () => navigateToTab('original'),
       icon: Article,
     },
     {
@@ -161,7 +163,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
       keywords: ['ai', 'generated', 'enhanced', 'headings'],
       shortcut: [isMac ? '⌘' : 'Ctrl', '2'],
       category: NAVIGATION_CATEGORY,
-      action: () => actions.setActiveTab('ai-generated'),
+      action: () => navigateToTab('ai-generated'),
       icon: Robot,
     },
     {
@@ -170,7 +172,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
       keywords: ['summary', 'summarize', 'overview', 'brief'],
       shortcut: [isMac ? '⌘' : 'Ctrl', '3'],
       category: NAVIGATION_CATEGORY,
-      action: () => actions.setActiveTab('summary'),
+      action: () => navigateToTab('summary'),
       icon: ListBullets,
     },
     {
@@ -179,7 +181,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
       keywords: ['chat', 'ask', 'question', 'discuss'],
       shortcut: [isMac ? '⌘' : 'Ctrl', '4'],
       category: NAVIGATION_CATEGORY,
-      action: () => actions.setActiveTab('chat'),
+      action: () => navigateToTab('chat'),
       icon: ChatCircle,
     },
     {
@@ -188,7 +190,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
       keywords: ['glossary', 'terms', 'definitions', 'concepts'],
       shortcut: [isMac ? '⌘' : 'Ctrl', '5'],
       category: NAVIGATION_CATEGORY,
-      action: () => actions.setActiveTab('glossary'),
+      action: () => navigateToTab('glossary'),
       icon: BookOpen,
     },
     {
@@ -197,7 +199,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
       keywords: ['search', 'find', 'locate', 'text'],
       shortcut: [isMac ? '⌘' : 'Ctrl', '6'],
       category: NAVIGATION_CATEGORY,
-      action: () => actions.setActiveTab('search'),
+      action: () => navigateToTab('search'),
       icon: MagnifyingGlass,
     },
     {
@@ -206,7 +208,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
       keywords: ['highlights', 'mark', 'annotate', 'select'],
       shortcut: [isMac ? '⌘' : 'Ctrl', '7'],
       category: NAVIGATION_CATEGORY,
-      action: () => actions.setActiveTab('highlights'),
+      action: () => navigateToTab('highlights'),
       icon: HighlighterCircle,
     },
     {
@@ -215,7 +217,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
       keywords: ['metadata', 'info', 'information', 'statistics', 'stats', 'details'],
       shortcut: [isMac ? '⌘' : 'Ctrl', '8'],
       category: NAVIGATION_CATEGORY,
-      action: () => actions.setActiveTab('metadata'),
+      action: () => navigateToTab('metadata'),
       icon: Tag,
     },
 
@@ -369,7 +371,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
         const tabIds = ['original', 'ai-generated', 'summary', 'chat', 'glossary', 'search', 'highlights', 'metadata']
         const tabId = tabIds[number - 1]
         if (tabId) {
-          actions.setActiveTab(tabId)
+          navigateToTab(tabId as any)
         }
       }
 
@@ -392,7 +394,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
 
     document.addEventListener('keydown', handleNumberedShortcuts)
     return () => document.removeEventListener('keydown', handleNumberedShortcuts)
-  }, [isMac, actions, navigateWithErrorHandling])
+  }, [isMac, navigateToTab, navigateWithErrorHandling])
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>

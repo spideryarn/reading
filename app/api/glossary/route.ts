@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
         metadata: {
           content_length: content.length,
           entities_count: validatedResponse.entities.length,
-          tier_used: tierKey,
+          tier_used: modelString,
           model_used: modelString
         }
       }
