@@ -31,11 +31,11 @@ BEGIN
       '00000000-0000-0000-0000-000000000000'::uuid,
       'authenticated',
       'authenticated',
-      'hello@spideryarn.com',
+      'systemtest@spideryarn.com',
       crypt('ASDFasdf1', gen_salt('bf')),
       NOW(),
       '{"provider": "email", "providers": ["email"]}'::jsonb,
-      '{"name": "System User", "description": "Mock user for development foreign key constraints"}'::jsonb,
+      '{"name": "System Test User", "description": "Mock user for development foreign key constraints"}'::jsonb,
       NOW(),
       NOW(),
       '',
@@ -53,6 +53,59 @@ INSERT INTO profiles (user_id, preferences, is_admin) VALUES (
   NULL  -- No admin access to ensure RLS tests work correctly
 ) ON CONFLICT (user_id) DO UPDATE SET 
   preferences = EXCLUDED.preferences;
+
+-- Insert admin user (hello@spideryarn.com)
+DO $$
+BEGIN
+  -- Check if the admin user already exists
+  IF NOT EXISTS (
+    SELECT 1 FROM auth.users 
+    WHERE email = 'hello@spideryarn.com'
+  ) THEN
+    -- Insert admin user
+    INSERT INTO auth.users (
+      id,
+      instance_id,
+      aud,
+      role,
+      email,
+      encrypted_password,
+      email_confirmed_at,
+      raw_app_meta_data,
+      raw_user_meta_data,
+      created_at,
+      updated_at,
+      confirmation_token,
+      recovery_token,
+      email_change_token_new,
+      email_change
+    ) VALUES (
+      gen_random_uuid(),
+      '00000000-0000-0000-0000-000000000000'::uuid,
+      'authenticated',
+      'authenticated',
+      'hello@spideryarn.com',
+      crypt('ASDFasdf1', gen_salt('bf')),
+      NOW(),
+      '{"provider": "email", "providers": ["email"]}'::jsonb,
+      '{"name": "Admin User"}'::jsonb,
+      NOW(),
+      NOW(),
+      '',
+      '',
+      '',
+      ''
+    );
+  END IF;
+END $$;
+
+-- Create admin user profile with admin access
+INSERT INTO profiles (user_id, preferences, is_admin) 
+SELECT id, '{"type": "admin"}'::jsonb, true
+FROM auth.users 
+WHERE email = 'hello@spideryarn.com'
+ON CONFLICT (user_id) DO UPDATE SET 
+  is_admin = true;
 
 -- Insert additional test user (greg@gregdetre.com)
 INSERT INTO auth.users (id, email, email_confirmed_at, created_at, updated_at) VALUES

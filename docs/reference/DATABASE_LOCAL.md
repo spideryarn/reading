@@ -20,7 +20,7 @@ SELECT provider, model_id FROM ai_models;
 
 ## Fallback: psql CLI
 
-If MCP unavailable, use `psql` with connection string from `.env.local`:
+If MCP unavailable or if you need to make changes, use `psql` with connection string from `.env.local`:
 
 ```bash
 # Extract DATABASE_URL from .env.local

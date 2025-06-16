@@ -1,16 +1,9 @@
--- Fix duplicate RLS policies and security vulnerabilities
--- This migration removes duplicate policies that were causing user isolation failures
--- and fixes the security vulnerability in AI calls policy
+-- Fix security vulnerability in AI calls policy
+-- This migration fixes the security vulnerability where any authenticated user
+-- could access document-independent AI calls
 
 -- =====================================================
--- FIX 1: Remove duplicate AI calls policy
--- =====================================================
--- The "Users can access AI calls for owned documents" policy was recreated
--- after the admin migration, causing duplicate policies that break isolation
-DROP POLICY IF EXISTS "Users can access AI calls for owned documents" ON ai_calls;
-
--- =====================================================
--- FIX 2: Fix security vulnerability in admin AI calls policy
+-- FIX: Fix security vulnerability in admin AI calls policy
 -- =====================================================
 -- The current policy allows ANY authenticated user to access document-independent
 -- AI calls. We need to properly check creator ownership.
