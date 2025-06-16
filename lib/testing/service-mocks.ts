@@ -21,6 +21,8 @@ import type { SupabaseClient } from '@supabase/supabase-js'
  * ```
  */
 export function getMockAiCallService(): AiCallService {
+  // Dynamic import required for Jest mocking
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { AiCallService } = require('@/lib/services/database/ai-calls')
   return new AiCallService({} as SupabaseClient)
 }
@@ -35,6 +37,8 @@ export function getMockAiCallService(): AiCallService {
  * ```
  */
 export function getMockEnhancementService(): EnhancementService {
+  // Dynamic import required for Jest mocking
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { EnhancementService } = require('@/lib/services/database/enhancements')
   return new EnhancementService({} as SupabaseClient)
 }
@@ -49,6 +53,8 @@ export function getMockEnhancementService(): EnhancementService {
  * ```
  */
 export function getMockDocumentService(): DocumentService {
+  // Dynamic import required for Jest mocking
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { DocumentService } = require('@/lib/services/database/documents')
   return new DocumentService({} as SupabaseClient)
 }
@@ -59,8 +65,12 @@ export function getMockDocumentService(): DocumentService {
  * but can be manually called if needed
  */
 export function clearAllMockServiceData(): void {
+  // Dynamic imports required for Jest mocking
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { AiCallService } = require('@/lib/services/database/ai-calls')
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { EnhancementService } = require('@/lib/services/database/enhancements')
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { DocumentService } = require('@/lib/services/database/documents')
   
   AiCallService.clearMockCalls()

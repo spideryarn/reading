@@ -503,28 +503,3 @@ export const Constants = {
   },
 } as const
 
-// Convenience type exports
-export type Document = Database['public']['Tables']['documents']['Row']
-export type DocumentInsert = Database['public']['Tables']['documents']['Insert']
-export type DocumentUpdate = Database['public']['Tables']['documents']['Update']
-
-export type AiCall = Database['public']['Tables']['ai_calls']['Row']
-export type AiCallInsert = Database['public']['Tables']['ai_calls']['Insert']
-
-export type DocumentEnhancement = Database['public']['Tables']['document_enhancements']['Row']
-export type DocumentEnhancementInsert = Database['public']['Tables']['document_enhancements']['Insert']
-
-export type ChatThread = Database['public']['Tables']['chat_threads']['Row']
-export type ChatThreadInsert = Database['public']['Tables']['chat_threads']['Insert']
-export type ChatMessage = Database['public']['Tables']['chat_messages']['Row']
-export type ChatMessageInsert = Database['public']['Tables']['chat_messages']['Insert']
-
-export type Profile = Database['public']['Tables']['profiles']['Row']
-export type ProfileInsert = Database['public']['Tables']['profiles']['Insert']
-export type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
-
-// String literal types (inferred from usage)
-export type PromptType = string
-export type CallStatus = string
-export type EnhancementType = string
-export type MessageRole = string

@@ -253,7 +253,7 @@ export function validateModelString(modelString: string): boolean {
 export function getAvailableModels(): Record<string, ModelConfig[]> {
   const grouped: Record<string, ModelConfig[]> = {}
   
-  for (const [modelString, config] of Object.entries(MODEL_DEFINITIONS)) {
+  for (const config of Object.values(MODEL_DEFINITIONS)) {
     if (!grouped[config.provider]) {
       grouped[config.provider] = []
     }

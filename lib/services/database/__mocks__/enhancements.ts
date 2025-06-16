@@ -1,25 +1,9 @@
 // Mock for enhancements service module to use in tests
 import type { 
   DocumentEnhancement, 
-  DocumentEnhancementInsert,
-  EnhancementType,
-  JsonObject 
+  EnhancementType
 } from '@/lib/types/database'
 import type { CreateEnhancementOptions } from '../enhancements'
-
-// Default mock enhancement
-const createMockEnhancement = (overrides?: Partial<DocumentEnhancement>): DocumentEnhancement => ({
-  id: 'mock-enhancement-id',
-  document_id: 'mock-document-id',
-  ai_call_id: 'mock-ai-call-id',
-  type: 'headings' as EnhancementType,
-  subtype: 'default',
-  content: {},
-  extra: {},
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-  ...overrides
-})
 
 export class EnhancementService {
   // Mock storage for tracking enhancements

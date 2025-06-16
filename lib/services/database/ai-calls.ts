@@ -122,8 +122,8 @@ export class AiCallService {
    * Start tracking an AI call using model string
    */
   async startCallWithModelString(options: CreateAiCallWithModelStringOptions): Promise<AiCall> {
-    // Validate and parse model string
-    const parsedModel = parseModelString(options.modelString)
+    // Validate model string
+    parseModelString(options.modelString)
 
     const aiCall: Omit<AiCallInsert, 'id' | 'created_at' | 'updated_at'> = {
       document_id: options.documentId || null,
@@ -345,7 +345,7 @@ export class AiCallService {
                 (call.prompt_tokens * modelConfig.pricing.inputPer1M / 1_000_000) +
                 (call.completion_tokens * modelConfig.pricing.outputPer1M / 1_000_000)
             }
-          } catch (e) {
+          } catch {
             // Model not found in config, skip cost calculation
           }
         }
@@ -430,8 +430,8 @@ export class AiCallService {
    * Simple create method for completed AI calls using model string
    */
   async createWithModelString(options: SimpleCreateAiCallWithModelStringOptions): Promise<AiCall> {
-    // Validate and parse model string
-    const parsedModel = parseModelString(options.modelString)
+    // Validate model string
+    parseModelString(options.modelString)
 
     const aiCall: Omit<AiCallInsert, 'id' | 'created_at' | 'updated_at'> = {
       document_id: null, // No document association for this simple method

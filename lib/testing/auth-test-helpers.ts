@@ -89,6 +89,8 @@ export const authTestScenarios = {
    */
   businessLogic: () => {
     const validateAuth = setupValidateAuthMock({ shouldSucceed: true })
+    // Dynamic import assignment - necessary for test mocking
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require('@/lib/auth/server-auth').validateAuth = validateAuth
     return validateAuth
   },
@@ -101,6 +103,8 @@ export const authTestScenarios = {
       shouldSucceed: false, 
       errorMessage 
     })
+    // Dynamic import assignment - necessary for test mocking
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require('@/lib/auth/server-auth').validateAuth = validateAuth
     return validateAuth
   },
@@ -114,6 +118,8 @@ export const authTestScenarios = {
       shouldSucceed: true, 
       user: fullUser as User 
     })
+    // Dynamic import assignment - necessary for test mocking
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require('@/lib/auth/server-auth').validateAuth = validateAuth
     return { validateAuth, user: fullUser }
   },

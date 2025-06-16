@@ -3,30 +3,9 @@ import type {
   Document, 
   DocumentInsert, 
   DocumentUpdate,
-  Database,
-  JsonObject
+  Database
 } from '@/lib/types/database'
 import type { StorageUploadResult } from '@/lib/services/storage'
-
-// Default mock document
-const createMockDocument = (overrides?: Partial<Document>): Document => ({
-  id: 'mock-document-id',
-  title: 'Mock Document',
-  original_url: null,
-  url_source: null,
-  created_by: 'mock-user-id',
-  html_content: '<p>Mock content</p>',
-  plaintext_content: 'Mock content',
-  word_count: 2,
-  is_public: false,
-  storage_path: null,
-  original_file_type: null,
-  upload_metadata: null,
-  upload_ai_call_id: null,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-  ...overrides
-})
 
 export class DocumentService {
   // Mock storage for tracking documents

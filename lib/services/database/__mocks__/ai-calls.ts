@@ -1,10 +1,8 @@
 // Mock for ai-calls service module to use in tests
 import type { 
   AiCall, 
-  AiCallInsert,
   CallStatus,
-  PromptType,
-  JsonObject 
+  PromptType
 } from '@/lib/types/database'
 import type { PromptUsage } from '@/lib/prompts/types'
 import type {
@@ -53,7 +51,8 @@ export class AiCallService {
   }
 
   // DEPRECATED: Old method for backward compatibility
-  async getModelUuidByProviderAndId(provider: string, modelId: string, version: string): Promise<string> {
+  async getModelUuidByProviderAndId(): Promise<string> {
+    // Mock implementation - ignores parameters
     return 'mock-model-uuid'
   }
 

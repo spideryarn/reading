@@ -81,7 +81,6 @@ export async function uploadDocumentFile(
     
     if (error) {
       const env = detectEnvironment()
-      const errorMessage = `Upload failed: ${error.message}`
       
       // Environment-aware error handling
       if (shouldThrowStorageError(error.message)) {
