@@ -330,11 +330,11 @@ export class DocumentService {
     originalFilename?: string,
     uploadMetadata?: Record<string, string | number | boolean | null>,
     uploadAiCallId?: string
-  ): Promise<{ document: Document; storageResult?: StorageUploadResult }> {
+  ): Promise<{ document: Document; storageResult?: StorageUploadResult | null }> {
     // Generate document ID early so we can use it for storage path
     const documentId = crypto.randomUUID()
     
-    let storageResult: StorageUploadResult | undefined
+    let storageResult: StorageUploadResult | null | undefined
     let storagePath: string | null = null
     
     // Upload to storage first if file provided
@@ -357,14 +357,24 @@ export class DocumentService {
         }, 'Uploading original file to storage')
         
         storageResult = await uploadDocumentFile(originalFile, documentId, originalFilename)
-        storagePath = storageResult.path
         
-        dbLogger.info({
-          operation: 'createWithStorage',
-          documentId,
-          storagePath,
-          uploadedSize: storageResult.size
-        }, 'File uploaded to storage successfully')
+        if (storageResult) {
+          storagePath = storageResult.path
+          
+          dbLogger.info({
+            operation: 'createWithStorage',
+            documentId,
+            storagePath,
+            uploadedSize: storageResult.size
+          }, 'File uploaded to storage successfully')
+        } else {
+          // Storage upload failed but was handled gracefully (e.g., local dev without RLS policies)
+          dbLogger.info({
+            operation: 'createWithStorage',
+            documentId,
+            reason: 'Storage upload failed gracefully (expected in some environments)'
+          }, 'Document will be created without original file storage')
+        }
       } catch (error) {
         // Log storage error but continue with document creation
         const baseMimeType = originalFile.type?.split(';')[0]?.trim() || ''
