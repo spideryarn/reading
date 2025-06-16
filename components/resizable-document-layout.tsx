@@ -27,7 +27,7 @@ import { VerticalIconNav } from './vertical-icon-nav'
 import { CommandPalette } from './command-palette'
 import type { DocumentElement } from '@/lib/types/document'
 import { DocumentCommunicationProvider, useDocumentCommunication } from '@/lib/context/document-communication-context'
-import { useToolUrlState, useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
+import { useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
 
 // Entity type (will be moved to proper types file later)
 interface Entity {
@@ -119,16 +119,11 @@ function ResizableDocumentLayoutInner({
   isPublic = false
 }: ResizableDocumentLayoutProps) {
   const { actions, state } = useDocumentCommunication()
-  const toolUrlState = useToolUrlState() // Sync URL state with DocumentCommunicationContext
   const navigateToTab = useNavigateToTab()
   
   // Viewport detection using react-responsive
   const isMobile = useMediaQuery({ maxWidth: 640 })
   const isLandscape = useMediaQuery({ maxHeight: 500 })
-  
-  // Touch capability detection
-  const canHover = useMediaQuery({ query: '(hover: hover)' })
-  const hasTouch = useMediaQuery({ query: '(pointer: coarse)' })
   
   // State management
   const [isLeftPaneCollapsed, setIsLeftPaneCollapsed] = useState(false)

@@ -5,9 +5,10 @@
 // See planning/250608c_vertical_icon_navigation_bar.md for design decisions
 
 import { 
-  Article, Robot, ListBullets, ChatCircle, 
+  Article, ListBullets, ChatCircle, 
   BookOpen, MagnifyingGlass, SidebarSimple, Terminal, HighlighterCircle, Tag
 } from '@phosphor-icons/react'
+import type { IconProps } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import * as Tooltip from '@radix-ui/react-tooltip'
@@ -17,7 +18,7 @@ import { useState, useEffect } from 'react'
 interface NavigationItem {
   id: 'original' | 'ai-generated' | 'summary' | 'chat' | 'glossary' | 'search' | 'highlights' | 'metadata'
   label: string
-  icon: React.ComponentType<{ size?: number; weight?: string; className?: string }>
+  icon: React.ComponentType<IconProps>
   tooltip: {
     title: string
     description: string
