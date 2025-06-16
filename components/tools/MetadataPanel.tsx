@@ -1,17 +1,19 @@
 'use client'
 
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useRef, useEffect } from 'react'
 import { 
   FileText, Clock, Calendar, Hash, 
   ChartBar, Robot, ListBullets, BookOpen,
   CircleNotch, CheckCircle, XCircle,
-  GraduationCap, LockSimple, User
+  GraduationCap, LockSimple, User, PencilSimple
 } from '@phosphor-icons/react'
 import { formatDistanceToNow } from 'date-fns'
 import type { DocumentElement } from '@/lib/types/document'
 import { extractCleanText } from '@/lib/utils/html-text-extraction'
 import { calculateReadabilityMetrics } from '@/lib/utils/readability-metrics'
 import { createClient } from '@/lib/supabase/client'
+import { Input } from '@/components/ui/input'
+import { sanitizeDocumentTitle, validateDocumentTitle, MAX_TITLE_LENGTH } from '@/lib/utils/document-title'
 
 interface MetadataPanelProps {
   documentTitle: string
@@ -79,6 +81,14 @@ export function MetadataPanel({
   const [currentIsPublic, setCurrentIsPublic] = useState(isPublic ?? false)
   const [isUpdating, setIsUpdating] = useState(false)
   const [updateError, setUpdateError] = useState<string | null>(null)
+  
+  // Title editing state
+  const [isEditingTitle, setIsEditingTitle] = useState(false)
+  const [editedTitle, setEditedTitle] = useState(documentTitle)
+  const [currentTitle, setCurrentTitle] = useState(documentTitle)
+  const [titleError, setTitleError] = useState<string | null>(null)
+  const [isSavingTitle, setIsSavingTitle] = useState(false)
+  const titleInputRef = useRef<HTMLInputElement>(null)
   
   // Format creation date
   const formattedDate = useMemo(() => {
@@ -155,6 +165,106 @@ export function MetadataPanel({
     }
   }
   
+  // Focus input when entering edit mode
+  useEffect(() => {
+    if (isEditingTitle && titleInputRef.current) {
+      titleInputRef.current.focus()
+      titleInputRef.current.select()
+    }
+  }, [isEditingTitle])
+  
+  // Handle title editing
+  const startEditingTitle = () => {
+    setIsEditingTitle(true)
+    setEditedTitle(currentTitle)
+    setTitleError(null)
+  }
+  
+  const cancelEditingTitle = () => {
+    setIsEditingTitle(false)
+    setEditedTitle(currentTitle)
+    setTitleError(null)
+  }
+  
+  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      saveTitle()
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      cancelEditingTitle()
+    }
+  }
+  
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTitle = e.target.value
+    setEditedTitle(newTitle)
+    
+    // Real-time validation
+    const error = validateDocumentTitle(newTitle)
+    setTitleError(error)
+  }
+  
+  const saveTitle = async () => {
+    // Sanitize and validate
+    const sanitized = sanitizeDocumentTitle(editedTitle)
+    const error = validateDocumentTitle(sanitized)
+    
+    if (error) {
+      setTitleError(error)
+      return
+    }
+    
+    // Don't save if unchanged
+    if (sanitized === currentTitle) {
+      setIsEditingTitle(false)
+      return
+    }
+    
+    setIsSavingTitle(true)
+    setTitleError(null)
+    
+    // Optimistic update
+    const previousTitle = currentTitle
+    setCurrentTitle(sanitized)
+    setIsEditingTitle(false)
+    
+    // Broadcast to the rest of the app so, e.g., the AppHeader can update
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('document-title-updated', { detail: sanitized }))
+    }
+    
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('documents')
+        .update({ title: sanitized })
+        .eq('id', documentId)
+      
+      if (error) {
+        // Revert optimistic update on error
+        setCurrentTitle(previousTitle)
+        setTitleError('Failed to update title. Please try again.')
+        setIsEditingTitle(true)
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('document-title-updated', { detail: previousTitle }))
+        }
+        console.error('Title update failed:', error)
+      }
+    } catch (err) {
+      // Revert optimistic update on error
+      setCurrentTitle(previousTitle)
+      setTitleError('An unexpected error occurred. Please try again.')
+      setIsEditingTitle(true)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('document-title-updated', { detail: previousTitle }))
+      }
+      console.error('Title update error:', err)
+    } finally {
+      setIsSavingTitle(false)
+    }
+  }
+  
   return (
     <div className="flex flex-col h-full bg-slate-50/30">
       {/* Header */}
@@ -188,7 +298,47 @@ export function MetadataPanel({
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Title</div>
-                      <div className="font-semibold text-slate-900 text-sm leading-relaxed">{documentTitle}</div>
+                      <div className="flex items-center gap-2">
+                        {isEditingTitle ? (
+                          <div className="flex-1">
+                            <Input
+                              ref={titleInputRef}
+                              type="text"
+                              value={editedTitle}
+                              onChange={handleTitleChange}
+                              onKeyDown={handleTitleKeyDown}
+                              onBlur={saveTitle}
+                              disabled={isSavingTitle}
+                              className="font-semibold text-slate-900 text-sm h-7 px-2 py-0"
+                              maxLength={MAX_TITLE_LENGTH}
+                            />
+                            {titleError && (
+                              <div className="text-xs text-red-600 mt-1">
+                                {titleError}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <>
+                            <div 
+                              className="font-semibold text-slate-900 text-sm leading-relaxed flex-1 cursor-pointer hover:text-blue-700 transition-colors"
+                              onClick={startEditingTitle}
+                            >
+                              {currentTitle}
+                            </div>
+                            <button
+                              onClick={startEditingTitle}
+                              className="p-1 rounded hover:bg-slate-200 transition-colors"
+                              aria-label="Edit title"
+                            >
+                              <PencilSimple size={14} className="text-slate-500" />
+                            </button>
+                          </>
+                        )}
+                        {isSavingTitle && (
+                          <CircleNotch size={14} weight="bold" className="animate-spin text-amber-600" />
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

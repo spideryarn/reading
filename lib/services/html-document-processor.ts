@@ -14,6 +14,7 @@ import { sanitizeAcademicContent } from '@/lib/utils/html-sanitizer'
 import { extractCleanText } from '@/lib/utils/html-text-extraction'
 import { prettifyAcademicHtmlSafe } from '@/lib/utils/html-prettifier'
 import { generateSlug } from '@/lib/utils/slug'
+import { sanitizeDocumentTitle } from '@/lib/utils/document-title'
 import type { Logger } from '@/lib/services/logger'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
@@ -101,13 +102,18 @@ export async function processHtmlToDocument(
   additionalMetadata: AdditionalMetadata = {}
 ): Promise<ProcessedDocument> {
   const { logger, userId, extractionMethod, uploadSource, supabase } = options
-  const { correlationId, title, sourceUrl, isPublic, originalFile, filename, aiCallId } = metadata
+  const { correlationId, sourceUrl, isPublic, originalFile, filename, aiCallId } = metadata
+
+  // Sanitize the document title first
+  const sanitizedTitle = sanitizeDocumentTitle(metadata.title)
 
   // Step 1: Sanitize HTML content and extract plaintext
   logger.info({
     correlationId,
     step: 'html-sanitization',
-    contentLength: htmlContent.length
+    contentLength: htmlContent.length,
+    originalTitle: metadata.title,
+    sanitizedTitle
   }, 'Starting HTML sanitization and text extraction')
 
   const { sanitizedHtml, prettifiedHtml, plaintext } = await sanitizeAndExtractText(
@@ -125,7 +131,7 @@ export async function processHtmlToDocument(
     wordCount: plaintext.split(/\s+/).length
   }, 'Preparing document for storage')
 
-  const slug = generateSlug(title)
+  const slug = generateSlug(sanitizedTitle)
   const wordCount = plaintext.split(/\s+/).length
 
   // Step 3: Generate upload metadata with source-specific fields
@@ -150,7 +156,7 @@ export async function processHtmlToDocument(
   const { document, storageResult } = await documentService.createWithStorage(
     userId,
     {
-      title,
+      title: sanitizedTitle,
       html_content: prettifiedHtml,
       plaintext_content: plaintext,
       slug,
