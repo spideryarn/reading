@@ -355,7 +355,14 @@ function ResizableDocumentLayoutInner({
           id="left-pane"
           order={1}
           ref={leftPanelRef}
-          defaultSize={savedLeftPaneSize}
+          /*
+           * defaultSize should only be used for the initial mount. Updating it on
+           * each render forces the underlying `react-resizable-panels` library to
+           * unregister and re-register the panel which can trigger an infinite loop.
+           * We still remember user changes in `savedLeftPaneSize`, but only use that
+           * value when we imperatively resize/expand the pane.
+           */
+          defaultSize={30}
           minSize={20}
           maxSize={80}
           collapsedSize={0}

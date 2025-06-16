@@ -421,7 +421,7 @@ export function OriginalHeadingsTab({
     if (commState.currentPosition?.elementId && commState.activeTabId === 'original') {
       scrollTimeoutRef.current = setTimeout(() => {
         const tocElement = document.querySelector(
-          `[data-heading-id="${commState.currentPosition.elementId}"]`
+          `[data-heading-id="${commState.currentPosition!.elementId}"]`
         )
         if (tocElement) {
           ;(tocElement as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -554,6 +554,8 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
         setAiHeadings(existingHeadings)
         setShowHeadings(true)
         setIsLoaded(true)
+        // Stop the loading spinner – we're done
+        setIsLoadingHeadings(false)
         return
       }
       
@@ -579,6 +581,9 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
         // Clear AI-generated collapsed state when cached headings are loaded
         setCollapsedIds(new Set())
         
+        // Stop the loading spinner – we're done
+        setIsLoadingHeadings(false)
+        
         console.log('Successfully applied cached headings')
       } else {
         throw new Error(result.error || 'Failed to apply cached headings mutation')
@@ -593,6 +598,7 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
   // Core headings generation logic without state management
   const generateHeadingsFromAPI = useCallback(async (isRegeneration = false) => {
       console.log('generateHeadingsFromAPI called, isRegeneration:', isRegeneration)
+      console.log('Content available:', !!content, 'Elements available:', elements?.length || 0)
       
       // Check if there's already an active mutation
       if (mutationState.activeMutation?.type === 'insert-headings' && !isRegeneration) {
@@ -605,6 +611,8 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
         setAiHeadings(existingHeadings)
         setShowHeadings(true)
         setIsLoaded(true)
+        // Stop the loading spinner – nothing more to do
+        setIsLoadingHeadings(false)
         return
       }
       
@@ -624,10 +632,17 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
             return `<${el.tag_name} id="${el.id}"${attrString} />`
           }
         }).join('\n')
-      } else {
+      } else if (content) {
         // Fallback to original content if no elements
         htmlWithIds = content
+      } else {
+        // No content available - fail explicitly
+        const error = new Error('Cannot generate headings: No content or elements available')
+        console.error('generateHeadingsFromAPI error:', error)
+        throw error
       }
+      
+      console.log('Sending POST /api/headings with content length:', htmlWithIds.length)
       
       const response = await fetch('/api/headings', {
         method: 'POST',
@@ -641,11 +656,20 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
       })
 
       if (!response.ok) {
-        throw new Error(`API failed: ${response.status}`)
+        const errorText = await response.text()
+        const error = new Error(`API failed with status ${response.status}: ${errorText}`)
+        console.error('Headings API error:', error)
+        throw error
       }
 
       const data = await response.json()
       console.log('Generate headings response:', data)
+      
+      if (!data.headings || data.headings.length === 0) {
+        const error = new Error('API returned no headings')
+        console.error('Empty headings response:', data)
+        throw error
+      }
       
       // Generate mutation from API response
       const mutation = generateHeadingMutation({
@@ -669,6 +693,8 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
         
         // Clear AI-generated collapsed state when new headings are generated
         setCollapsedIds(new Set())
+        // Stop the loading spinner now that we have headings
+        setIsLoadingHeadings(false)
       } else {
         throw new Error(result.error || 'Failed to apply mutation')
       }
@@ -683,9 +709,10 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
       await generateHeadingsFromAPI()
     } catch (error) {
       console.error('Error generating headings:', error)
-      setHeadingsError(error instanceof Error ? error.message : 'Failed to generate headings')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate headings'
+      console.error('Setting headings error in handleGenerateHeadings:', errorMessage)
+      setHeadingsError(errorMessage)
       setShowHeadings(true)  // Show the error state instead of keeping the button
-    } finally {
       setIsLoadingHeadings(false)
     }
   }
@@ -782,19 +809,24 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
       } catch (error) {
         console.error('Error in loadHeadings:', error)
         if (!isCancelled) {
-          setHeadingsError(`Failed to load headings: ${error instanceof Error ? error.message : 'Unknown error'}`)
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+          console.error('Setting headings error:', errorMessage)
+          setHeadingsError(`Failed to load headings: ${errorMessage}`)
           setShowHeadings(true)
-        }
-      } finally {
-        if (!isCancelled) {
           setIsLoadingHeadings(false)
         }
       }
     }
     
-    // Only load if we haven't already loaded headings
+    // Only load if we haven't already loaded headings AND we have content
     if (!showHeadings && !isLoadingHeadings && aiHeadings.length === 0 && !hasInitialized) {
-      loadHeadings()
+      // Check if we have content to work with
+      if ((elements && elements.length > 0) || content) {
+        console.log('Content/elements available, loading headings')
+        loadHeadings()
+      } else {
+        console.log('Waiting for content/elements before loading headings')
+      }
     }
     
     // Cleanup function to cancel any in-flight requests
@@ -802,7 +834,7 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
       console.log('AIGeneratedHeadingsTab unmounting')
       isCancelled = true
     }
-  }, [documentId, isLoadingHeadings, showHeadings, aiHeadings.length, hasInitialized, applyCachedHeadings, generateHeadingsFromAPI])
+  }, [documentId, isLoadingHeadings, showHeadings, aiHeadings.length, hasInitialized, applyCachedHeadings, generateHeadingsFromAPI, content, elements])
 
   const handleHeadingClick = (heading: Heading) => {
     if (onHeadingClick) {
@@ -926,7 +958,7 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
     if (commState.currentPosition?.elementId && commState.activeTabId === 'ai-generated') {
       scrollTimeoutRef.current = setTimeout(() => {
         const tocElement = document.querySelector(
-          `[data-heading-id="${commState.currentPosition.elementId}"]`
+          `[data-heading-id="${commState.currentPosition!.elementId}"]`
         )
         if (tocElement) {
           ;(tocElement as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -945,6 +977,19 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
   }, [showHeadings, commState.currentPosition, commState.activeTabId])
 
   if (!showHeadings) {
+    // Check if we're waiting for content
+    if (!content && (!elements || elements.length === 0)) {
+      return (
+        <div className="p-4">
+          <AlertWithIcon 
+            variant="info"
+            title="Waiting for document content"
+            description="Document content is still loading. AI headings will be available once the document is ready."
+          />
+        </div>
+      )
+    }
+    
     return (
       <div className="p-4">
         <Button
@@ -972,11 +1017,21 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
       {isLoadingHeadings ? (
         <Loading text="Generating headings..." spinnerSize={20} />
       ) : headingsError ? (
-        <AlertWithIcon 
-          variant="warning"
-          title="Failed to generate headings"
-          description={headingsError}
-        />
+        <div className="space-y-4">
+          <AlertWithIcon 
+            variant="warning"
+            title="Failed to generate headings"
+            description={headingsError}
+          />
+          <Button
+            onClick={handleGenerateHeadings}
+            variant="outline"
+            size="full"
+            className="text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100"
+          >
+            Try again
+          </Button>
+        </div>
       ) : aiHeadings.length > 0 ? (
         <>
           {isLoaded && (

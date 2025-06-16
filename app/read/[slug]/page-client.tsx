@@ -126,39 +126,6 @@ export default function DocumentPageClient({
     }
   }, [flushVisibilityUpdates])
   
-  // Real-time document subscription
-  useEffect(() => {
-    console.log(`[Real-time PoC] Setting up document subscription for: ${documentId}`)
-    
-    const supabase = createClient()
-    const subscription = subscribeToDocument(
-      supabase,
-      documentId,
-      (payload) => {
-        console.log('[Real-time PoC] Document updated:', payload)
-        
-        // Update the title if it changed
-        if (payload.eventType === 'UPDATE' && payload.new?.title) {
-          console.log(`[Real-time PoC] Title changing from "${currentTitle}" to "${payload.new.title}"`)
-          setCurrentTitle(payload.new.title)
-          
-          // Also update the browser tab title
-          if (typeof window !== 'undefined') {
-            document.title = `${payload.new.title} - Spideryarn`
-          }
-        }
-      }
-    )
-    
-    console.log('[Real-time PoC] Subscription established')
-    
-    // Cleanup subscription on unmount
-    return () => {
-      console.log('[Real-time PoC] Cleaning up document subscription')
-      subscription.unsubscribe()
-    }
-  }, [documentId, currentTitle])
-  
   // Extract all headings (both original and AI-generated)
   const allHeadings = useMemo(() => {
     return extractHeadingElements(mutatedDocument)
@@ -272,6 +239,41 @@ export default function DocumentPageClient({
     }
   }
 
+  // Subscribe to TITLE updates once (on mount)
+  useEffect(() => {
+    const supabase = createClient()
+
+    const subscription = subscribeToDocument(supabase, documentId, (payload) => {
+      if (payload.eventType === 'UPDATE' && payload.new?.title) {
+        setCurrentTitle(payload.new.title)
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [documentId])
+
+  // Keep the browser tab title in sync
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.title = `${currentTitle} - Spideryarn`
+    }
+  }, [currentTitle])
+
+  // Listen for local title updates dispatched by MetadataPanel so the header
+  // updates instantly without waiting for the realtime feed.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const newTitle = (e as CustomEvent<string>).detail
+      if (typeof newTitle === 'string') {
+        setCurrentTitle(newTitle)
+      }
+    }
+    window.addEventListener('document-title-updated', handler)
+    return () => window.removeEventListener('document-title-updated', handler)
+  }, [])
+
   return (
     <div className="h-screen flex flex-col">
       <AppHeader 
@@ -304,11 +306,11 @@ export default function DocumentPageClient({
         onActiveElementChange={setActiveElementId}
         documentTitle={currentTitle}
         documentCreatedAt={documentCreatedAt}
-        documentSourceUrl={documentSourceUrl}
+        documentSourceUrl={documentSourceUrl ?? null}
         aiHeadingsGenerated={aiHeadingsGenerated}
         summaryGenerated={summaryGenerated}
         glossaryGenerated={glossaryGenerated}
-        ownerEmail={ownerEmail}
+        {...(ownerEmail ? { ownerEmail } : {})}
         isPublic={isPublic}
       />
       </div>
