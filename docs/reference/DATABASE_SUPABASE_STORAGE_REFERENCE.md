@@ -418,17 +418,38 @@ Policies validate ownership through storage path format:
 - **Security**: Prevents cross-user file access at storage level
 
 ### Environment Limitations
+
 **Local Development**:
-- Storage RLS policies don't work in local Supabase (known limitation)
-- File uploads fail gracefully, documents created without original files
-- Environment-aware error handling prevents user-facing errors
+- **Storage RLS Issue**: Storage RLS policies fail in local Supabase with error: "must be owner of relation objects"
+- **Root Cause**: The `storage.objects` table is owned by `supabase_storage_admin` role, not `postgres` user
+- **Detection Method**: Migrations check for `supabase_admin` role existence to identify local environment:
+  ```sql
+  -- Check if we're in local development
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'supabase_admin') THEN
+    RAISE NOTICE 'Local environment detected - storage RLS policies will be skipped';
+    RETURN;
+  END IF;
+  ```
+- **Graceful Handling**: 
+  - Migration shows NOTICE instead of failing
+  - File uploads fail silently with graceful degradation
+  - Documents are created successfully without original files
+  - No user-facing errors displayed
+- **Security**: Application-layer security validation still enforced via service role
 
 **Cloud/Production**:
-- Full RLS policy enforcement active
-- Storage failures surface as user errors (unexpected problems)
-- Complete original file storage functionality
+- **Full RLS Support**: Storage policies work correctly with proper role ownership
+- **Policy Enforcement**: All RLS policies active and enforced at database level
+- **Error Handling**: Storage failures surface as user errors for debugging
+- **Complete Functionality**: Full original file storage and retrieval capabilities
 
-See `docs/reference/ENVIRONMENT_DETECTION.md` for environment-aware error handling patterns.
+**Testing Implications**:
+- Local tests cannot verify storage RLS policies directly
+- Use application-layer testing for document access control
+- Production deployment required for full RLS policy testing
+- Consider mocking storage operations in test suites
+
+See `docs/reference/ENVIRONMENT_DETECTION.md` for comprehensive environment-aware error handling patterns.
 
 ## Testing Strategies
 

@@ -35,6 +35,13 @@ The project uses Supabase Row Level Security (RLS) to enforce data access polici
 
 **Path Structure**: `documents/{document-uuid}/original/{filename}`
 
+**Local Development Limitations**:
+- **Known Issue**: Storage RLS policies fail in local Supabase with "must be owner of relation objects" error
+- **Root Cause**: The `storage.objects` table is owned by `supabase_storage_admin` role, not `postgres`
+- **Detection**: Migrations check for `supabase_admin` role existence to identify local environment
+- **Handling**: Graceful degradation - local environment shows warnings, production enforces policies
+- **Impact**: Local testing requires application-layer security validation only
+
 **Future RLS Policies** (when real authentication implemented):
 ```sql
 -- Allow authenticated users to upload to their document folders
@@ -79,6 +86,7 @@ USING (
 - Document ownership validated at application layer in `DocumentService`
 - Bucket is private by default (requires authentication)
 - File paths include document UUID for ownership correlation
+- Local environment requires application-only security due to storage ownership constraints
 
 ### documents
 
@@ -98,6 +106,21 @@ USING (
 - `is_public`: Boolean enabling public read access
 - `storage_path`: Reference to original file in Supabase Storage
 
+### profiles
+
+**Purpose**: User profile information and administrative access control.
+
+**Key Security Fields**:
+- `id`: UUID linking to auth.users
+- `is_admin`: Nullable timestamp - NULL means not admin, timestamp shows when they became admin
+- `created_at`, `updated_at`: Standard audit fields
+
+**Admin Status Implementation**:
+- **Field Type**: `timestamptz` (not boolean) - provides audit trail of when admin rights were granted
+- **NULL = Not Admin**: Default state for all users
+- **Timestamp = Admin**: Records exact time of admin privilege grant
+- **Usage Pattern**: Check with `IS NOT NULL` for admin status, timestamp for audit purposes
+
 ### Other Tables
 
 **Status**: RLS enabled on all tables as per initial migration (`20250531235026_comprehensive_storage_schema.sql`)
@@ -108,7 +131,6 @@ USING (
 - `ai_models`, `ai_calls` - AI service usage tracking
 - `document_enhancements` - AI-generated content (summaries, headings, etc.)
 - `chat_threads`, `chat_messages` - Document-based conversations
-- `profiles` - User profile information
 
 ## Security Best Practices
 

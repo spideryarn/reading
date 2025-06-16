@@ -101,11 +101,11 @@ END $$;
 
 -- Create admin user profile with admin access
 INSERT INTO profiles (user_id, preferences, is_admin) 
-SELECT id, '{"type": "admin"}'::jsonb, true
+SELECT id, '{"type": "admin"}'::jsonb, NOW()
 FROM auth.users 
 WHERE email = 'hello@spideryarn.com'
 ON CONFLICT (user_id) DO UPDATE SET 
-  is_admin = true;
+  is_admin = NOW();
 
 -- Insert additional test user (greg@gregdetre.com)
 INSERT INTO auth.users (id, email, email_confirmed_at, created_at, updated_at) VALUES
