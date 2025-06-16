@@ -5,7 +5,7 @@ import {
   FileText, Clock, Calendar, Hash, 
   ChartBar, Robot, ListBullets, BookOpen,
   CircleNotch, CheckCircle, XCircle,
-  GraduationCap, LockSimple, User, PencilSimple
+  GraduationCap, LockSimple, User, PencilSimple, Trash
 } from '@phosphor-icons/react'
 import { formatDistanceToNow } from 'date-fns'
 import type { DocumentElement } from '@/lib/types/document'
@@ -14,6 +14,7 @@ import { calculateReadabilityMetrics } from '@/lib/utils/readability-metrics'
 import { createClient } from '@/lib/supabase/client'
 import { Input } from '@/components/ui/input'
 import { sanitizeDocumentTitle, validateDocumentTitle, MAX_TITLE_LENGTH } from '@/lib/utils/document-title'
+import { DeleteDocumentButton } from '@/components/delete-document-button'
 
 interface MetadataPanelProps {
   documentTitle: string
@@ -614,6 +615,32 @@ export function MetadataPanel({
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+          </section>
+
+          {/* Document Actions Section */}
+          <section>
+            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <div className="w-1 h-4 bg-gradient-to-b from-red-400 to-red-500 rounded-full"></div>
+              Document Actions
+            </h3>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="p-4 hover:bg-slate-50/50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-slate-700 mb-1">Delete Document</div>
+                    <div className="text-xs text-slate-500">Permanently remove this document and all associated data</div>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <DeleteDocumentButton
+                      documentId={documentId}
+                      documentTitle={currentTitle}
+                      variant="text"
+                      className="bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </section>

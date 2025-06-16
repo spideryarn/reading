@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -18,12 +19,14 @@ interface DeleteDocumentButtonProps {
   documentId: string
   documentTitle: string
   className?: string
+  variant?: 'icon' | 'text'
 }
 
 export function DeleteDocumentButton({ 
   documentId, 
   documentTitle, 
-  className 
+  className,
+  variant = 'icon'
 }: DeleteDocumentButtonProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -40,24 +43,23 @@ export function DeleteDocumentButton({
     setDeleteError(null)
 
     try {
-      const response = await fetch('/api/delete-document', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ documentId }),
-      })
+      const supabase = createClient()
       
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to delete document')
+      // Delete document using Supabase client - RLS handles authorization
+      const { error } = await supabase
+        .from('documents')
+        .delete()
+        .eq('id', documentId)
+      
+      if (error) {
+        throw new Error(error.message || 'Failed to delete document')
       }
 
       // Close dialog
       setDeleteDialogOpen(false)
       
-      // Refresh the page to update the document list
-      router.refresh()
+      // Redirect to /read page
+      router.push('/read')
       
     } catch (error) {
       const errorMessage = error instanceof Error 
@@ -78,13 +80,23 @@ export function DeleteDocumentButton({
   return (
     <>
       <Button
-        variant="ghost"
-        size="icon-sm"
+        variant={variant === 'icon' ? 'ghost' : 'destructive'}
+        size={variant === 'icon' ? 'icon-sm' : 'default'}
         onClick={handleDeleteClick}
-        className={`text-red-600 hover:text-red-700 hover:bg-red-50 ${className || ''}`}
+        className={variant === 'icon' 
+          ? `text-red-600 hover:text-red-700 hover:bg-red-50 ${className || ''}` 
+          : className || ''
+        }
         title={`Delete "${documentTitle}"`}
       >
-        <Trash size={16} />
+        {variant === 'icon' ? (
+          <Trash size={16} />
+        ) : (
+          <>
+            <Trash size={16} className="mr-2" />
+            Delete
+          </>
+        )}
       </Button>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
