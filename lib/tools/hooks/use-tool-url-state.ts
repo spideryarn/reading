@@ -26,12 +26,15 @@ import { showUrlValidationWarnings } from '@/components/global-url-warnings'
 import { debounce } from '@/lib/utils/debounce'
 import { throttle } from '@/lib/utils/throttle'
 
-// Utility: construct a Partial<ToolUrlState> but omit the key when value is undefined
+// Utility: construct a Partial<ToolUrlState>.
+// When value is undefined, we include the key with null to explicitly clear the URL parameter.
+// This ensures that clearing inputs (e.g., glossary search) actually removes the corresponding
+// query parameter instead of leaving the previous value intact.
 function buildUpdates<K extends keyof ToolUrlState>(
   key: K,
   value: ToolUrlState[K] | undefined
 ): Partial<ToolUrlState> {
-  return value === undefined ? {} : { [key]: value } as Partial<ToolUrlState>
+  return { [key]: value === undefined ? null : value } as Partial<ToolUrlState>
 }
 
 // Parser definitions for nuqs
