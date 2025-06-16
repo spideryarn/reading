@@ -35,8 +35,10 @@ test.describe('Document Upload Flow', () => {
       // Verify upload page loads correctly
       await expect(page.locator('h2:has-text("Add Document")')).toBeVisible();
       
-      // Step 2: Enter a test URL (using a reliable public URL)
-      const testUrl = 'https://example.com'; // Simple, reliable page
+      // Step 2: Enter a test URL (using Apache.org with unique parameter to avoid naming conflicts)
+      const timestamp = Date.now()
+      const random = Math.random().toString(36).substring(7)
+      const testUrl = `https://httpd.apache.org/?test=${timestamp}-${random}`; // Use apache.org with unique parameters
       await page.fill('input[type="url"]', testUrl);
       
       // Wait for URL processing to update
@@ -63,13 +65,14 @@ test.describe('Document Upload Flow', () => {
       });
       
       // Step 7: Verify document content is displayed
-      await expect(page.locator('[data-testid="document-content"], .document-content, main')).toBeVisible({
+      // Look for typical Apache content or any heading/paragraph content
+      await expect(page.locator('text=Apache').or(page.locator('h1, h2, p')).first()).toBeVisible({
         timeout: 10000
       });
       
       // Step 8: Verify basic AI features are present
-      // Check for table of contents or navigation
-      await expect(page.locator('text=Table of Contents, nav, text=Navigation').first()).toBeVisible({
+      // Check for sidebar with document navigation features
+      await expect(page.locator('text=Showing levels').or(page.locator('[data-testid="sidebar"]')).first()).toBeVisible({
         timeout: 10000
       });
       
