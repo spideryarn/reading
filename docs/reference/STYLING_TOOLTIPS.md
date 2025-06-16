@@ -44,9 +44,35 @@ Comprehensive guide to tooltip styling patterns and implementations in the Spide
 
 ## Tooltip Component Architecture
 
+### TooltipOrPopover Component (`components/ui/tooltip-or-popover.tsx`) ✓ RECOMMENDED
+
+**New universal component for touch-friendly tooltips** (replaces direct tooltip usage):
+
+```tsx
+import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
+
+<TooltipOrPopover
+  content={<div>Tooltip content</div>}
+  side="right"
+  align="start"
+  sideOffset={4}
+  showIndicator={true}
+  contentClassName="p-0 bg-transparent border-0 shadow-none"
+>
+  <button>Trigger element</button>
+</TooltipOrPopover>
+```
+
+**Key Features:**
+- **Cross-device compatibility**: Tooltip on desktop hover, popover on touch long-press
+- **Visual consistency**: Identical appearance across devices
+- **Touch accessibility**: 500ms long-press triggers popover on touch devices
+- **Device detection**: Uses robust `(hover: hover)` and `(pointer: fine)` media queries
+- **Discoverability**: Optional faint dotted underline (`showIndicator={true}`)
+
 ### Base Component (`components/ui/tooltip.tsx`)
 
-The shadcn/ui tooltip component provides the foundation:
+The shadcn/ui tooltip component provides the foundation (used internally by TooltipOrPopover):
 
 ```tsx
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
@@ -179,20 +205,33 @@ Content returned by `getTooltipContent()` can override styling with custom conta
 
 ### Navigation Tooltips
 
-Multi-level information hierarchy:
+Multi-level information hierarchy using TooltipOrPopover component:
 
 ```tsx
-<div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-  <div className="font-semibold text-gray-900 text-sm mb-1">
-    Title
-  </div>
-  <div className="text-gray-700 text-sm leading-relaxed mb-2">
-    Description
-  </div>
-  <div className="text-xs text-gray-500 font-mono">
-    Keyboard shortcut
-  </div>
-</div>
+import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
+
+<TooltipOrPopover
+  content={
+    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+      <div className="font-semibold text-gray-900 text-sm mb-1">
+        Title
+      </div>
+      <div className="text-gray-700 text-sm leading-relaxed mb-2">
+        Description
+      </div>
+      <div className="text-xs text-gray-500 font-mono">
+        Keyboard shortcut
+      </div>
+    </div>
+  }
+  side="right"
+  align="center"
+  sideOffset={8}
+  showIndicator={false}
+  contentClassName="p-0 bg-transparent border-0 shadow-none"
+>
+  <Button>{/* button content */}</Button>
+</TooltipOrPopover>
 ```
 
 **Typography Hierarchy:**
@@ -305,6 +344,56 @@ Used for "hover to load" states.
 - **Colour**: Matches tooltip background (`fill-gray-200`, `fill-gray-900`)
 - **Size**: `12x6` or `size-2.5` (10px)
 - **Positioning**: Automatic via Radix UI
+
+## Migration Guide
+
+### Migrating from Radix Tooltips to TooltipOrPopover
+
+**Before (old pattern):**
+```tsx
+import * as Tooltip from '@radix-ui/react-tooltip'
+
+<Tooltip.Provider delayDuration={600}>
+  <Tooltip.Root>
+    <Tooltip.Trigger asChild>
+      <Button>Trigger</Button>
+    </Tooltip.Trigger>
+    <Tooltip.Portal>
+      <Tooltip.Content side="right" className="z-50 max-w-xs">
+        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+          Tooltip content
+        </div>
+        <Tooltip.Arrow className="fill-gray-200" />
+      </Tooltip.Content>
+    </Tooltip.Portal>
+  </Tooltip.Root>
+</Tooltip.Provider>
+```
+
+**After (new pattern):**
+```tsx
+import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
+
+<TooltipOrPopover
+  content={
+    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+      Tooltip content
+    </div>
+  }
+  side="right"
+  sideOffset={8}
+  showIndicator={false}
+  contentClassName="p-0 bg-transparent border-0 shadow-none"
+>
+  <Button>Trigger</Button>
+</TooltipOrPopover>
+```
+
+**Migration benefits:**
+- Touch device compatibility with long-press
+- Reduced code complexity
+- Consistent cross-device experience
+- No need for Provider wrapping
 
 ## Implementation Examples
 

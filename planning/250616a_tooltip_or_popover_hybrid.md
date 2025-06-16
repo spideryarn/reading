@@ -32,66 +32,66 @@
 
 ## Stages & Actions
 
-### Stage: Preparation & Setup
-- [ ] Review current tooltip usage patterns in `docs/reference/STYLING_TOOLTIPS.md`
-- [ ] Install shadcn/ui Popover component: `printf "\n" | npx shadcn@latest add popover --force`
+### Stage: Preparation & Setup ✅ COMPLETED
+- [x] Review current tooltip usage patterns in `docs/reference/STYLING_TOOLTIPS.md`
+- [x] Install shadcn/ui Popover component: `printf "\n" | npx shadcn@latest add popover --force`
 
-### Stage: Core Component Development
-- [ ] Create robust input capability detection in `lib/hooks/use-can-hover.ts`
-  - [ ] Use both `(hover: hover)` AND `(pointer: fine)` media queries for better detection
-  - [ ] Handle mixed-input devices (iPad + trackpad, convertibles)
-  - [ ] Export `useCanHover()` helper for consistent usage across components
-  - [ ] Consider always enabling long-press path regardless of hover detection
-- [ ] Create robust `useLongPress` hook in `lib/hooks/use-long-press.ts`
-  - [ ] **Use pointer events** (not touch events) for broader input support (touch, pen, future)
-  - [ ] Start setTimeout on `pointerdown`, clear on `pointerup`, `pointercancel`, `pointermove` beyond threshold
-  - [ ] Call `preventDefault()` on `contextmenu` to block OS long-press menu
-  - [ ] Clean up timer in `useEffect` teardown
-  - [ ] Expose boolean `active` flag and event props for reusability
-  - [ ] Set 500ms default delay with configurable option
-- [ ] Create `TooltipOrPopover` component in `components/ui/tooltip-or-popover.tsx`
-  - [ ] Use new `useCanHover()` helper for consistent input detection
-  - [ ] Desktop path: Render standard Tooltip component
-  - [ ] Touch path: Render Popover with long-press trigger
-  - [ ] Match exact tooltip styling from `docs/reference/STYLING_TOOLTIPS.md` default pattern
-  - [ ] Add faint dotted underline to indicate interactive elements (follow glossary pattern)
-- [ ] Create generalized tooltip discoverability styling
-  - [ ] Add `border-bottom: 1px dotted #DB8A45` (faint orange, matches glossary highlighting)
-  - [ ] Include `cursor: help` and smooth `transition: all 0.2s ease`
-  - [ ] Apply to all tooltip trigger elements
-- [ ] Write comprehensive tests for both hooks
-  - [ ] Test pointer event sequences for useLongPress
-  - [ ] Test input capability detection for useCanHover
-  - [ ] Test movement cancellation and cleanup
-  - [ ] Test mixed-input device scenarios
-- [ ] Run linter and fix any issues: `npm run lint`
+### Stage: Core Component Development ✅ COMPLETED
+- [x] Create robust input capability detection in `lib/hooks/use-can-hover.ts`
+  - [x] Use both `(hover: hover)` AND `(pointer: fine)` media queries for better detection
+  - [x] Handle mixed-input devices (iPad + trackpad, convertibles)
+  - [x] Export `useCanHover()` helper for consistent usage across components
+  - [x] Consider always enabling long-press path regardless of hover detection
+- [x] Create robust `useLongPress` hook in `lib/hooks/use-long-press.ts`
+  - [x] **Use pointer events** (not touch events) for broader input support (touch, pen, future)
+  - [x] Start setTimeout on `pointerdown`, clear on `pointerup`, `pointercancel`, `pointermove` beyond threshold
+  - [x] Call `preventDefault()` on `contextmenu` to block OS long-press menu
+  - [x] Clean up timer in `useEffect` teardown
+  - [x] Expose boolean `active` flag and event props for reusability
+  - [x] Set 500ms default delay with configurable option
+- [x] Create `TooltipOrPopover` component in `components/ui/tooltip-or-popover.tsx`
+  - [x] Use new `useCanHover()` helper for consistent input detection
+  - [x] Desktop path: Render standard Tooltip component
+  - [x] Touch path: Render Popover with long-press trigger
+  - [x] Match exact tooltip styling from `docs/reference/STYLING_TOOLTIPS.md` default pattern
+  - [x] Add faint dotted underline to indicate interactive elements (follow glossary pattern)
+- [x] Create generalized tooltip discoverability styling
+  - [x] Add `border-bottom: 1px dotted #DB8A45` (faint orange, matches glossary highlighting)
+  - [x] Include `cursor: help` and smooth `transition: all 0.2s ease`
+  - [x] Apply to all tooltip trigger elements
+- [x] Write comprehensive tests for both hooks
+  - [x] Test pointer event sequences for useLongPress
+  - [x] Test input capability detection for useCanHover
+  - [x] Test movement cancellation and cleanup
+  - [x] Test mixed-input device scenarios
+- [x] Run linter and fix any issues: `npm run lint`
 
-### Stage: HeadingTree Migration
-- [ ] Update `components/heading-tree.tsx` to use TooltipOrPopover
-  - [ ] Remove all info icon imports and logic
-  - [ ] Remove modal state management
-  - [ ] Replace Tooltip.Root with TooltipOrPopover
-  - [ ] Add faint dotted underline to heading text elements with tooltips
-  - [ ] Preserve exact content and styling
-- [ ] Test with Puppeteer MCP (use subagent)
-  - [ ] Desktop: Verify hover tooltips still work
-  - [ ] Touch mode: Verify long-press shows styled popover
-  - [ ] Check visual consistency between modes
-  - [ ] Verify dotted underlines provide proper discoverability hints
-- [ ] Update tests if needed
-- [ ] Run linter: `npm run lint`
-- [ ] Commit changes (use subagent following `docs/instructions/GIT_COMMIT_CHANGES.md`)
+### Stage: HeadingTree Migration ✅ COMPLETED
+- [x] Update `components/heading-tree.tsx` to use TooltipOrPopover
+  - [x] Remove all info icon imports and logic
+  - [x] Remove modal state management
+  - [x] Replace Tooltip.Root with TooltipOrPopover
+  - [x] Add faint dotted underline to heading text elements with tooltips
+  - [x] Preserve exact content and styling
+- [x] Test with Puppeteer MCP (use subagent)
+  - [x] Desktop: Verify hover tooltips still work
+  - [x] Touch mode: Verify long-press shows styled popover
+  - [x] Check visual consistency between modes
+  - [x] Verify dotted underlines provide proper discoverability hints
+- [x] Update tests if needed
+- [x] Run linter: `npm run lint`
+- [x] Commit changes (use subagent following `docs/instructions/GIT_COMMIT_CHANGES.md`)
 
-### Stage: High Priority Navigation Migration [PARALLELIZABLE]
-- [ ] Migrate VerticalIconNav tooltips (assign to subagent with full context)
-  - [ ] Replace 10 navigation tooltips in `components/vertical-icon-nav.tsx`
-  - [ ] Add faint dotted underlines to navigation icons with tooltips
-  - [ ] Maintain rich content structure (title, description, shortcuts)
-  - [ ] Test all navigation items work on touch
-  - [ ] Special attention to keyboard shortcut display
-- [ ] Run component tests
-- [ ] Visual check with Puppeteer MCP (subagent)
-- [ ] Run linter and build checks
+### Stage: High Priority Navigation Migration ✅ COMPLETED
+- [x] Migrate VerticalIconNav tooltips (assign to subagent with full context)
+  - [x] Replace 10 navigation tooltips in `components/vertical-icon-nav.tsx`
+  - [x] Add faint dotted underlines to navigation icons with tooltips
+  - [x] Maintain rich content structure (title, description, shortcuts)
+  - [x] Test all navigation items work on touch
+  - [x] Special attention to keyboard shortcut display
+- [x] Run component tests
+- [x] Visual check with Puppeteer MCP (subagent)
+- [x] Run linter and build checks
 
 ### Stage: Medium Priority Content Migrations [PARALLELIZABLE]
 - [ ] Migrate search result tooltips (assign to subagent)
@@ -561,3 +561,13 @@ import { TooltipOrPopover } from "@/components/ui/tooltip-or-popover"
 - 📔 **Enhanced Technical Approach**: Incorporated o3 AI feedback on pointer events and input detection
 - 📔 **Discoverability Solution**: Added faint dotted underline pattern (matching glossary highlighting)
 - 📔 **Robust Implementation**: Updated with `useCanHover()` and improved `useLongPress()` specifications
+
+### 2025-06-16 (Implementation Phase)
+- 🚀 **Stages 1-3 COMPLETED**: Core infrastructure and HeadingTree migration
+- 🚀 **Stage 4 COMPLETED**: VerticalIconNav migration
+  - Migrated all 10 navigation tooltips to TooltipOrPopover
+  - Tested hover functionality with Puppeteer MCP
+  - Verified visual consistency and content structure
+  - Updated STYLING_TOOLTIPS.md with migration guide and new patterns
+- ✅ **Touch-friendly navigation achieved**: All navigation tooltips now support long-press on touch devices
+- 📚 **Documentation enhanced**: Added TooltipOrPopover component guide and migration examples
