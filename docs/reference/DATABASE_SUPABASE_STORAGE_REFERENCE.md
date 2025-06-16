@@ -9,6 +9,7 @@ Comprehensive guide to implementing file storage in Spideryarn Reading using Sup
 - `supabase/migrations/20250531235026_comprehensive_storage_schema.sql` - Database schema with `storage_path` field
 - `lib/types/database.ts` - TypeScript definitions for documents table including storage references
 - `docs/reference/DATABASE_SCHEMA.md` - Complete database schema documentation
+- `docs/reference/ENVIRONMENT_DETECTION.md` - Environment-aware error handling for storage RLS limitations
 - [Supabase Storage Documentation](https://supabase.com/docs/guides/storage) - Official Supabase Storage documentation
 
 ## Principles, key decisions
@@ -389,6 +390,45 @@ async function cleanupOrphanedFiles() {
   }
 }
 ```
+
+## Row Level Security (RLS) Policies ✓
+
+### Storage RLS Implementation
+Storage objects use separate RLS policies from database tables. Migration `20250615140000_add_storage_rls_policies.sql` creates comprehensive policies for the `documents` bucket.
+
+### Policy Structure
+```sql
+-- Users can upload files for documents they own
+CREATE POLICY "Users can upload files for owned documents" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    bucket_id = 'documents' AND
+    EXISTS (
+      SELECT 1 FROM documents 
+      WHERE documents.id::text = split_part(name, '/', 1)
+      AND documents.created_by = auth.uid()
+    )
+  );
+```
+
+### Path-Based Ownership
+Policies validate ownership through storage path format:
+- **Path Format**: `{document-uuid}/original/{filename}`
+- **Validation**: Extract document UUID from path, check ownership via documents table
+- **Security**: Prevents cross-user file access at storage level
+
+### Environment Limitations
+**Local Development**:
+- Storage RLS policies don't work in local Supabase (known limitation)
+- File uploads fail gracefully, documents created without original files
+- Environment-aware error handling prevents user-facing errors
+
+**Cloud/Production**:
+- Full RLS policy enforcement active
+- Storage failures surface as user errors (unexpected problems)
+- Complete original file storage functionality
+
+See `docs/reference/ENVIRONMENT_DETECTION.md` for environment-aware error handling patterns.
 
 ## Testing Strategies
 
