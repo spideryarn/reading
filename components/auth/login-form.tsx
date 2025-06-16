@@ -120,6 +120,7 @@ export function LoginForm() {
                     type="email"
                     placeholder="Enter your email"
                     autoComplete="email"
+                    autoFocus
                     {...field}
                   />
                 </FormControl>
