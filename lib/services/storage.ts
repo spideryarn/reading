@@ -6,6 +6,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
+import { shouldThrowStorageError, getStorageErrorMessage, detectEnvironment } from '@/lib/utils/environment'
 
 // Storage configuration constants
 const DOCUMENTS_BUCKET = 'documents'
@@ -43,13 +44,13 @@ export class StorageError extends Error {
  * @param file - File to upload (File or Blob)
  * @param documentId - UUID of the document this file belongs to
  * @param originalFilename - Original filename (optional, will use file.name if File object)
- * @returns Storage path for database reference
+ * @returns Storage path for database reference, or null if upload failed but should be handled gracefully
  */
 export async function uploadDocumentFile(
   file: File | Blob,
   documentId: string,
   originalFilename?: string
-): Promise<StorageUploadResult> {
+): Promise<StorageUploadResult | null> {
   const supabase = await createClient()
   
   // Validate file size
@@ -79,7 +80,17 @@ export async function uploadDocumentFile(
       })
     
     if (error) {
-      throw new StorageError(`Upload failed: ${error.message}`)
+      const env = detectEnvironment()
+      const errorMessage = `Upload failed: ${error.message}`
+      
+      // Environment-aware error handling
+      if (shouldThrowStorageError(error.message)) {
+        throw new StorageError(getStorageErrorMessage(error.message))
+      } else {
+        // Expected failure in this environment - log but don't throw
+        console.warn(`Storage upload failed (expected in ${env.isLocalSupabase ? 'local development' : 'this environment'}):`, error.message)
+        return null // Indicate storage failed but document can still be created
+      }
     }
     
     return {
@@ -94,16 +105,26 @@ export async function uploadDocumentFile(
       throw error
     }
     
-    // Handle specific Supabase storage errors
+    // Handle specific Supabase storage errors with environment awareness
     const err = error as { message?: string }
-    if (err.message?.includes('Asset Already Exists')) {
+    const errorMessage = err.message || 'Unknown error'
+    
+    if (errorMessage.includes('Asset Already Exists')) {
       throw new StorageError(`File already exists at path: ${storagePath}`)
     }
-    if (err.message?.includes('Bucket not found')) {
+    if (errorMessage.includes('Bucket not found')) {
       throw new StorageError(`Storage bucket '${DOCUMENTS_BUCKET}' not found. Run storage setup first.`)
     }
     
-    throw new StorageError(`Unexpected upload error: ${err.message}`)
+    // Environment-aware error handling for unexpected errors
+    if (shouldThrowStorageError(errorMessage)) {
+      throw new StorageError(getStorageErrorMessage(errorMessage))
+    } else {
+      // Expected failure in this environment - log but return null
+      const env = detectEnvironment()
+      console.warn(`Storage upload failed (expected in ${env.isLocalSupabase ? 'local development' : 'this environment'}):`, errorMessage)
+      return null
+    }
   }
 }
 

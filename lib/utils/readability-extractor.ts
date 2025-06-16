@@ -8,7 +8,7 @@ import { JSDOM } from 'jsdom'
 /**
  * Extract main article content from HTML using Mozilla Readability
  * @param html - Raw HTML content
- * @param url - Source URL for better extraction context
+ * @param url - Source URL for better extraction context (can be filename for uploaded files)
  * @returns Extracted article content or null if extraction fails
  */
 export function extractWithReadability(html: string, url: string): {
@@ -20,9 +20,21 @@ export function extractWithReadability(html: string, url: string): {
   siteName: string | null
 } | null {
   try {
+    // JSDOM requires a valid URL, so if we get a filename or invalid URL,
+    // we create a mock URL for local file processing
+    let validUrl: string
+    try {
+      // Test if the provided url is valid
+      new URL(url)
+      validUrl = url
+    } catch {
+      // If not a valid URL (e.g., filename), create a mock local URL
+      validUrl = `file://localhost/${url}`
+    }
+    
     // Create a DOM from the HTML
     const dom = new JSDOM(html, {
-      url,
+      url: validUrl,
       // Disable script execution for security
       runScripts: 'outside-only',
       pretendToBeVisual: true,
