@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
       try {
         const extractResult = await executeMultimodalPromptWithUsage(promptTemplate, {
           htmlContent,
-          sourceUrl: htmlFile.name // Use filename as source identifier
+          sourceUrl: `file://uploaded/${htmlFile.name}` // Use file:// URL scheme for uploaded file
         })
         processedHtml = extractResult.text
         

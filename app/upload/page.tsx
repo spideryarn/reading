@@ -6,7 +6,8 @@ import { AppHeader } from '@/components/app-header'
 import { Footer } from '@/components/footer'
 import { CircleNotch } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
-import { SmartInput } from '@/components/upload/smart-input'
+import { UrlInputSection } from '@/components/upload/url-input-section'
+import { FileUploadSection } from '@/components/upload/file-upload-section'
 import { ProcessingOptions } from '@/components/upload/processing-options'
 
 // Unified state types for smart upload interface
@@ -220,21 +221,6 @@ export default function AddDocumentPage() {
     return { isValid: true }
   }
 
-  // Get contextual placeholder text
-  const getPlaceholder = (): string => {
-    const { type, file } = uploadState.input
-    
-    if (file) {
-      return `${file.name} (${type?.toUpperCase()}) selected`
-    }
-    
-    switch (type) {
-      case 'url':
-        return 'Web page or PDF URL detected'
-      default:
-        return 'Enter URL or drag files here'
-    }
-  }
 
   // Get contextual processing message
   const getProcessingMessage = (input: UnifiedUploadState['input'], processing: UnifiedUploadState['processing']): string => {
@@ -440,19 +426,40 @@ export default function AddDocumentPage() {
                 Add Document
               </h2>
               
-              {/* Smart Input Component */}
-              <SmartInput
-                value={uploadState.input}
-                onUrlChange={handleUrlChange}
-                onFileChange={handleFileChange}
-                onFileDrop={handleFileDrop}
+              {/* URL Input Section */}
+              <UrlInputSection
+                value={uploadState.input.url}
+                onChange={handleUrlChange}
                 onValidationError={handleValidationError}
-                placeholder={getPlaceholder()}
-                error={uploadState.ui.error}
+                isActive={!uploadState.input.file}
+                isDisabled={!!uploadState.input.file}
+                isProcessing={uploadState.ui.isProcessing}
+                error={uploadState.input.url ? uploadState.ui.error : undefined}
+              />
+              
+              {/* Divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-white px-4 text-sm font-medium text-gray-500">OR</span>
+                </div>
+              </div>
+              
+              {/* File Upload Section */}
+              <FileUploadSection
+                file={uploadState.input.file}
+                onChange={handleFileChange}
+                onDrop={handleFileDrop}
+                onValidationError={handleValidationError}
+                isActive={!uploadState.input.url}
+                isDisabled={!!uploadState.input.url}
                 isProcessing={uploadState.ui.isProcessing}
                 isDragging={uploadState.ui.isDragging}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
+                error={uploadState.input.file ? uploadState.ui.error : undefined}
               />
               
               {/* Processing Options */}
