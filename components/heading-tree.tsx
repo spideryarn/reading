@@ -1,9 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import * as Tooltip from '@radix-ui/react-tooltip'
-import { CaretRight, CaretDown, CaretUp, Info } from '@phosphor-icons/react'
-import { useMediaQuery } from 'react-responsive'
+import { CaretRight, CaretDown, CaretUp } from '@phosphor-icons/react'
+import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 
 // Types
 export interface Heading {
@@ -28,7 +27,7 @@ interface HeadingTreeProps {
   headings: Heading[]
   themeColors: ThemeColors
   onHeadingClick: (heading: Heading) => void
-  getTooltipContent: (elementId: string) => JSX.Element
+  getTooltipContent: (elementId: string) => React.ReactNode
   handleTooltipShow: (elementId: string) => void
   collapsedIds: Set<string>
   onToggleExpanded: (headingId: string) => void
@@ -147,16 +146,13 @@ function HeadingNodeComponent({
   node: HeadingNode
   themeColors: ThemeColors
   onHeadingClick: (heading: Heading) => void
-  getTooltipContent: (elementId: string) => JSX.Element
+  getTooltipContent: (elementId: string) => React.ReactNode
   handleTooltipShow: (elementId: string) => void
   collapsedIds: Set<string>
   onToggleExpanded: (headingId: string) => void
   granularityLevel: number
   headingVisibility?: Map<string, 'visible' | 'not-visible'>
 }) {
-  // Touch capability detection
-  const canHover = useMediaQuery({ query: '(hover: hover)' })
-  const [showInfoModal, setShowInfoModal] = useState(false)
   const hasChildren = node.children.length > 0
   const isExpanded = !collapsedIds.has(node.id)
   
@@ -176,165 +172,65 @@ function HeadingNodeComponent({
   return (
     <>
       <div className={`flex items-center ${getIndentClass(node.level)}`}>
-        {canHover ? (
-          // Desktop with hover support - use tooltip
-          <Tooltip.Provider delayDuration={500}>
-            <Tooltip.Root onOpenChange={(open) => {
-              if (open) handleTooltipShow(node.elementId)
-            }}>
-              <Tooltip.Trigger asChild>
-                <div
-                  className={`cursor-pointer rounded-lg px-3 py-3 transition-all duration-150 group flex-1 ${
-                    themeColors.hover
-                  } ${
-                    isVisible 
-                      ? 'ring-1 ring-blue-200 bg-blue-50/50 shadow-sm' 
-                      : 'hover:shadow-sm'
-                  }`}
-                  onClick={() => onHeadingClick(node)}
-                  data-heading-id={node.id}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <span className={`${getTextSizeClass(node.level)} leading-relaxed ${
-                        isVisible 
-                          ? 'text-blue-900' 
-                          : `text-gray-800 ${themeColors.text}`
-                      }`}>
-                        {node.text}
-                      </span>
-                      {displayHiddenCount && (
-                        <span className="ml-2 text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 font-medium">
-                          +{displayHiddenCount}
-                        </span>
-                      )}
-                    </div>
-                    
-                    {/* Expand/collapse button for non-leaf nodes - moved to right */}
-                    {hasChildren && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onToggleExpanded(node.id)
-                        }}
-                        className="ml-2 p-1 rounded-md hover:bg-gray-100 transition-all duration-150 flex-shrink-0"
-                        aria-expanded={isExpanded}
-                        aria-label={isExpanded ? 'Collapse section' : 'Expand section'}
-                      >
-                        {isExpanded ? (
-                          <CaretDown size={16} className="text-gray-500 hover:text-gray-700" />
-                        ) : (
-                          <CaretRight size={16} className="text-gray-500 hover:text-gray-700" />
-                        )}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content
-                  side="right"
-                  align="start"
-                  sideOffset={4}
-                  className="z-50 max-w-md"
-                >
-                  {getTooltipContent(node.elementId)}
-                  <Tooltip.Arrow 
-                    className="fill-gray-300" 
-                    width={12} 
-                    height={6}
-                  />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
-          </Tooltip.Provider>
-        ) : (
-          // Touch device - use info icon and modal
-          <div className="flex items-center flex-1 gap-2">
-            <div
-              className={`cursor-pointer rounded-lg px-3 py-3 transition-all duration-150 group flex-1 ${
-                themeColors.hover
-              } ${
-                isVisible 
-                  ? 'ring-1 ring-blue-200 bg-blue-50/50 shadow-sm' 
-                  : 'hover:shadow-sm'
-              }`}
-              onClick={() => onHeadingClick(node)}
-              data-heading-id={node.id}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <span className={`${getTextSizeClass(node.level)} leading-relaxed ${
-                    isVisible 
-                      ? 'text-blue-900' 
-                      : `text-gray-800 ${themeColors.text}`
-                  }`}>
-                    {node.text}
+        <TooltipOrPopover
+          content={getTooltipContent(node.elementId)}
+          side="right"
+          align="start"
+          sideOffset={4}
+          showIndicator={false}
+          contentClassName="relative z-10 p-0 bg-transparent border-0 shadow-none"
+        >
+          <div
+            className={`cursor-pointer rounded-lg px-3 py-3 transition-all duration-150 group flex-1 ${
+              themeColors.hover
+            } ${
+              isVisible 
+                ? 'ring-1 ring-blue-200 bg-blue-50/50 shadow-sm' 
+                : 'hover:shadow-sm'
+            }`}
+            onClick={() => onHeadingClick(node)}
+            onMouseEnter={() => handleTooltipShow(node.elementId)}
+            onFocus={() => handleTooltipShow(node.elementId)}
+            data-heading-id={node.id}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <span className={`${getTextSizeClass(node.level)} leading-relaxed ${
+                  isVisible 
+                    ? 'text-blue-900' 
+                    : `text-gray-800 ${themeColors.text}`
+                }`}>
+                  {node.text}
+                </span>
+                {displayHiddenCount && (
+                  <span className="ml-2 text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 font-medium">
+                    +{displayHiddenCount}
                   </span>
-                  {displayHiddenCount && (
-                    <span className="ml-2 text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 font-medium">
-                      +{displayHiddenCount}
-                    </span>
-                  )}
-                </div>
-                
-                {/* Expand/collapse button for non-leaf nodes */}
-                {hasChildren && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onToggleExpanded(node.id)
-                    }}
-                    className="ml-2 p-1 rounded-md hover:bg-gray-100 transition-all duration-150 flex-shrink-0"
-                    aria-expanded={isExpanded}
-                    aria-label={isExpanded ? 'Collapse section' : 'Expand section'}
-                  >
-                    {isExpanded ? (
-                      <CaretDown size={16} className="text-gray-500 hover:text-gray-700" />
-                    ) : (
-                      <CaretRight size={16} className="text-gray-500 hover:text-gray-700" />
-                    )}
-                  </button>
                 )}
               </div>
+              
+              {/* Expand/collapse button for non-leaf nodes - moved to right */}
+              {hasChildren && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onToggleExpanded(node.id)
+                  }}
+                  className="ml-2 p-1 rounded-md hover:bg-gray-100 transition-all duration-150 flex-shrink-0"
+                  aria-expanded={isExpanded}
+                  aria-label={isExpanded ? 'Collapse section' : 'Expand section'}
+                >
+                  {isExpanded ? (
+                    <CaretDown size={16} className="text-gray-500 hover:text-gray-700" />
+                  ) : (
+                    <CaretRight size={16} className="text-gray-500 hover:text-gray-700" />
+                  )}
+                </button>
+              )}
             </div>
-            
-            {/* Info icon for touch devices */}
-            <button
-              onClick={() => {
-                handleTooltipShow(node.elementId)
-                setShowInfoModal(true)
-              }}
-              className="p-2 rounded-md hover:bg-gray-100 transition-all duration-150 flex-shrink-0 touch-target"
-              aria-label="Show summary"
-            >
-              <Info size={20} className="text-gray-500 hover:text-gray-700" />
-            </button>
           </div>
-        )}
+        </TooltipOrPopover>
       </div>
-      
-      {/* Modal for touch devices - positioned absolutely */}
-      {showInfoModal && !canHover && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setShowInfoModal(false)}>
-          <div 
-            className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-y-auto p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-lg font-semibold">{node.text}</h3>
-              <button
-                onClick={() => setShowInfoModal(false)}
-                className="p-1 rounded hover:bg-gray-100"
-                aria-label="Close"
-              >
-                <span className="text-gray-500 text-xl">×</span>
-              </button>
-            </div>
-            {getTooltipContent(node.elementId)}
-          </div>
-        </div>
-      )}
       
       {/* Render children only if expanded */}
       {hasChildren && isExpanded && (

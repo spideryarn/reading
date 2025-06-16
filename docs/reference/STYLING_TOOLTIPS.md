@@ -26,21 +26,21 @@ Comprehensive guide to tooltip styling patterns and implementations in the Spide
 
 ## When to Use Which Pattern
 
-**Default Choice**: Use the **Default Light Content Theme** for most tooltips. This provides the best readability and follows our established design language.
+**Default Choice**: Use the **Default Clean Theme** for all tooltips. This provides clean, consistent styling and follows shadcn/ui patterns.
 
-**Use Default Light Content Theme when:**
-- Displaying content, summaries, or detailed information
-- Showing search results or contextual data
-- Need good readability and content space
-- Want consistency with ToC-heading tooltips (our design standard)
+**Use Default Clean Theme when:**
+- Any tooltip content (this is the universal choice)
+- Content will provide its own styling if needed
+- Want consistent appearance across the app
+- Following TooltipOrPopover patterns
 
-**Use Simple Primary Theme only when:**
-- Very brief labels or single-word descriptions
-- Icon tooltips with minimal text
-- Want to maintain visual hierarchy (less prominent than content tooltips)
-- Space is severely constrained
+**Rich Content Override**: 
+- Content itself can include custom styling containers for special cases
+- ToC summaries use white containers with markdown rendering
+- Loading/error states use custom styled containers
+- This approach separates content styling from tooltip wrapper styling
 
-**Special State Patterns** (loading, error, dark) should follow the default light theme structure but adapt colours and content as needed.
+**Special State Patterns** (loading, error, dark) are handled by the content itself, not the tooltip wrapper.
 
 ## Tooltip Component Architecture
 
@@ -66,33 +66,43 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 - Typography: `text-xs` with balanced text wrapping
 - Z-index: `z-50` for proper layering
 
-**Note**: The actual default styling follows the Light Content Theme pattern below, not the shadcn/ui component defaults.
+**Note**: The default styling uses shadcn/ui component defaults for clean, minimal appearance. Rich content can override with custom styling as needed.
 
 ## Styling Patterns
 
-### 1. Default Light Content Theme ✓ (STANDARD)
+### 1. Default Clean Theme ✓ (STANDARD)
 
-**Usage**: ToC-heading summaries, content tooltips, detailed information (this is our default)
+**Usage**: All tooltips including ToC-heading summaries, navigation tooltips, and detailed information (this is our default)
 
 ```tsx
-<TooltipContent className="max-w-md text-left bg-white border border-gray-200 rounded-lg shadow-lg p-4">
-  <div className="text-xs text-gray-700 leading-relaxed">
+<TooltipContent>
+  <div className="max-w-md p-4 text-xs text-gray-700 leading-relaxed bg-white border border-gray-200 rounded-lg shadow-lg">
     Detailed content...
   </div>
 </TooltipContent>
 ```
 
 **Styling Characteristics (Standard Pattern):**
-- Background: `bg-white` (light, clean)
-- Border: `border border-gray-200` (subtle grey border)
-- Shadow: `shadow-lg` (nice depth)
-- Padding: `p-4` (generous margins/padding)
-- Max width: `max-w-md`
-- Text: `text-gray-700` (readable grey)
-- Arrow: `fill-gray-200` (subtle grey arrow pointing to element)
+- Uses shadcn/ui default tooltip styling for clean, minimal appearance
+- Background: `bg-white`
+- Text: `text-gray-700`
+- Padding: `p-4` (generous for readability)
+- Border: `border border-gray-200`
 - Border radius: `rounded-lg`
+- Shadow: `shadow-lg`
+- Arrow: `fill-gray-200` (matches border)
 
-### 2. Simple Primary Theme ✓
+**For Rich Content (ToC summaries):**
+Content returned by `getTooltipContent()` can override styling with custom containers:
+```tsx
+<div className="max-w-md p-4 text-sm bg-white border border-gray-200 rounded-lg shadow-lg">
+  <div className="prose prose-sm prose-gray max-w-none">
+    <MarkdownRenderer content={content} />
+  </div>
+</div>
+```
+
+### 2. Simple Primary Theme ✓ (Legacy Optional)
 
 **Usage**: Simple tooltips, icons, brief labels (use sparingly)
 
@@ -103,8 +113,8 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 ```
 
 **Styling Characteristics:**
-- Background: `bg-primary` (Spideryarn orange)
-- Text: `text-primary-foreground`
+- Background: `bg-primary` (Spideryarn orange, legacy optional)
+- Text: `text-primary-foreground` (white text)
 - Padding: `px-3 py-1.5`
 - Font: `text-xs`
 - Border radius: `rounded-md`
