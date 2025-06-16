@@ -13,6 +13,16 @@ interface TooltipOrPopoverProps {
   align?: 'start' | 'center' | 'end'
   sideOffset?: number
   showIndicator?: boolean
+  /**
+   * Tailwind classes applied to the trigger span. Alias "className" kept for back-compat.
+   */
+  triggerClassName?: string
+  /**
+   * Tailwind classes applied to TooltipContent / PopoverContent. Useful for removing default
+   * border/shadow when the supplied content already has its own container styling.
+   */
+  contentClassName?: string
+  /** @deprecated Use triggerClassName instead */
   className?: string
 }
 
@@ -35,7 +45,9 @@ export function TooltipOrPopover({
   align = 'start',
   sideOffset = 4,
   showIndicator = true,
-  className
+  triggerClassName,
+  contentClassName,
+  className // deprecated
 }: TooltipOrPopoverProps) {
   const canHover = useCanHover()
   const [popoverOpen, setPopoverOpen] = useState(false)
@@ -44,7 +56,6 @@ export function TooltipOrPopover({
   
   // Discoverability styling (faint dotted underline matching glossary pattern)
   const indicatorStyle = showIndicator ? {
-    borderBottom: '1px dotted #DB8A45',
     cursor: 'help',
     transition: 'all 0.2s ease'
   } : {}
@@ -54,7 +65,7 @@ export function TooltipOrPopover({
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <span style={indicatorStyle} className={className}>
+          <span style={indicatorStyle} className={triggerClassName ?? className}>
             {children}
           </span>
         </TooltipTrigger>
@@ -62,6 +73,7 @@ export function TooltipOrPopover({
           side={side} 
           align={align} 
           sideOffset={sideOffset}
+          className={contentClassName}
         >
           {content}
         </TooltipContent>
@@ -75,7 +87,7 @@ export function TooltipOrPopover({
       <PopoverTrigger asChild>
         <span 
           style={indicatorStyle} 
-          className={className}
+          className={triggerClassName ?? className}
           {...longPressProps}
         >
           {children}
@@ -85,6 +97,7 @@ export function TooltipOrPopover({
         side={side} 
         align={align} 
         sideOffset={sideOffset}
+        className={contentClassName}
       >
         {content}
       </PopoverContent>

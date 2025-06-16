@@ -27,7 +27,7 @@ interface HeadingTreeProps {
   headings: Heading[]
   themeColors: ThemeColors
   onHeadingClick: (heading: Heading) => void
-  getTooltipContent: (elementId: string) => JSX.Element
+  getTooltipContent: (elementId: string) => React.ReactNode
   handleTooltipShow: (elementId: string) => void
   collapsedIds: Set<string>
   onToggleExpanded: (headingId: string) => void
@@ -146,7 +146,7 @@ function HeadingNodeComponent({
   node: HeadingNode
   themeColors: ThemeColors
   onHeadingClick: (heading: Heading) => void
-  getTooltipContent: (elementId: string) => JSX.Element
+  getTooltipContent: (elementId: string) => React.ReactNode
   handleTooltipShow: (elementId: string) => void
   collapsedIds: Set<string>
   onToggleExpanded: (headingId: string) => void
@@ -177,6 +177,8 @@ function HeadingNodeComponent({
           side="right"
           align="start"
           sideOffset={4}
+          showIndicator={false}
+          contentClassName="relative z-10 p-0 bg-transparent border-0 shadow-none"
         >
           <div
             className={`cursor-pointer rounded-lg px-3 py-3 transition-all duration-150 group flex-1 ${
