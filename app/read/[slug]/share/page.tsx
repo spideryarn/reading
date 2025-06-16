@@ -34,7 +34,7 @@ export default async function DocumentSharePage({ params }: PageProps) {
         <AppHeader 
           title="Document Not Found"
           titleLink="/"
-          logoLink="/documents"
+          logoLink="/read"
         />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -64,13 +64,13 @@ export default async function DocumentSharePage({ params }: PageProps) {
     <div className="h-screen flex flex-col">
       <AppHeader 
         title={`${doc.title} (Shared)`}
-        titleLink={`/documents/${slug}/share`}
-        logoLink="/documents"
+        titleLink={`/read/${slug}/share`}
+        logoLink="/read"
         actions={
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <span>📤 Shared Document</span>
             <a 
-              href={`/documents/${slug}`}
+              href={`/read/${slug}`}
               className="text-orange-600 hover:text-orange-700 font-medium"
             >
               Log in to access full features
