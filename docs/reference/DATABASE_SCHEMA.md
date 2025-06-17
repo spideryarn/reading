@@ -1,6 +1,6 @@
 # Database Schema Reference
 
-> ✅ **UPDATED** - This documentation reflects the current database schema as of January 2025.
+> ✅ **UPDATED** - This documentation reflects the current database schema as of June 2025.
 
 ## Overview
 
@@ -23,12 +23,15 @@ The database schema is defined and represented in several places:
    - `supabase/migrations/20250615023410_add_model_string_column.sql` - Add model_string column to ai_calls
    - `supabase/migrations/20250615023551_populate_model_string_data.sql` - Populate model_string from legacy data
    - `supabase/migrations/20250615120000_finalize_model_string_migration.sql` - Complete migration to model_string system
+   - `supabase/migrations/20250616161300_migrate_chat_threads_to_model_string.sql` - Migrate chat_threads to model_string
+   - `supabase/migrations/20250616161430_drop_ai_models_table.sql` - Remove legacy ai_models table
    - Contains CREATE TABLE statements, indexes, triggers, and initial data
 
 2. **TypeScript Types** (Auto-generated):
    - `lib/types/database.ts`
    - Generated from Supabase schema using `npm run db:types`
    - Provides type-safe interfaces for all tables
+   - Updated to reflect model_string system (no ai_models table)
 
 3. **Service Layer** (Database API):
    - `lib/services/database/` - Clean API for database operations
@@ -44,11 +47,11 @@ The database schema is defined and represented in several places:
 
 ## Table Schemas
 
-### **`ai_models`** - ⚠️ DEPRECATED (Legacy Table)
+### **`ai_models`** - ❌ REMOVED (June 2025)
 
-**Status**: This table is deprecated as of June 2025 and will be removed in a future migration. Model configuration is now handled entirely through configuration files.
+**Status**: This table has been completely removed as of June 2025. Model configuration is now handled entirely through configuration files using the model string system.
 
-**Migration**: The system has transitioned from UUID-based model lookups to direct model string storage. See the **Model String System** section below for current approach.
+**Migration Complete**: The system has successfully transitioned from UUID-based model lookups to direct model string storage. All existing data was migrated with 100% data integrity.
 
 **Legacy Purpose**: Previously stored AI provider models with capabilities and pricing, but this created unnecessary database dependencies and maintenance overhead.
 
@@ -175,7 +178,7 @@ The database schema is defined and represented in several places:
 
 **Key Fields**:
 - `document_id`: Document being discussed
-- `model_id`: ⚠️ Legacy field - will migrate to model_string in future update
+- `model_string`: AI model used for this thread (format: `provider:model:version[:thinking]`)
 - `title`: Thread title (default 'New Chat')
 - `created_by`: Thread creator
 - `extra`: JSONB for thread metadata
@@ -184,7 +187,7 @@ The database schema is defined and represented in several places:
 - Each thread tied to one document and one AI model
 - Permanent lifecycle (no auto-expiry)
 - Real-time updates for multi-tab chat sync
-- Note: Chat threads still use legacy model_id field - migration to model_string planned
+- Uses model_string system for consistent model identification
 
 ### **`chat_messages`** - Individual Messages
 
@@ -273,4 +276,6 @@ npm run db:reset    # Reset DB and regenerate types
 - Comprehensive token tracking for cost analysis and debugging
 - Real-time ready architecture for live updates
 
-**Implementation**: January 2025 - comprehensive schema with AI tracking, chat, and enhancement storage
+**Implementation**: 
+- January 2025 - comprehensive schema with AI tracking, chat, and enhancement storage
+- June 2025 - model string migration completed, ai_models table removed, direct model identification system

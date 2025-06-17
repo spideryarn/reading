@@ -117,18 +117,10 @@ INSERT INTO public.profiles (id, user_id, preferences, created_at, updated_at) V
 ('1cecbe4f-8eb7-4007-bb89-f2c37a761dbe', '7bfcabea-690c-4754-936d-1a194f4244c2', '{}', '2025-06-03T23:18:01.590Z', '2025-06-03T23:18:01.590Z')
 ON CONFLICT (user_id) DO NOTHING;
 
--- Insert AI models (based on lib/config.ts)
--- Tier keys are now managed in lib/config.ts, not stored in database
-INSERT INTO public.ai_models (provider, model_id, version, display_name, description, context_window, max_output_tokens, supports_thinking, extra) VALUES
--- Anthropic models
-('anthropic', 'claude-3-5-haiku-20241022', '20241022', 'Claude 3.5 Haiku', 'Fast and cost-effective', 200000, 8192, false, '{}'),
-('anthropic', 'claude-sonnet-4-20250514', '20250514', 'Claude Sonnet 4', 'Balanced performance and cost', 200000, 8192, false, '{}'),
-('anthropic', 'claude-sonnet-4-20250514', '20250514-thinking', 'Claude Sonnet 4 (Thinking)', 'Advanced reasoning mode', 200000, 8192, true, '{}'),
-('anthropic', 'claude-opus-4-20250514', '20250514', 'Claude Opus 4', 'Highest capability', 200000, 8192, false, '{}'),
--- Google models
-('google', 'gemini-2.0-flash', 'latest', 'Gemini 2.0 Flash', 'Fast and cost-effective (stable)', 1000000, 8192, false, '{}'),
-('google', 'gemini-2.5-pro', 'latest', 'Gemini 2.5 Pro', 'Balanced performance', 1000000, 8192, false, '{}')
-ON CONFLICT (provider, model_id, version) DO NOTHING;
+-- AI models are now managed in code via lib/config/models.ts
+-- The ai_models table has been removed as part of the model string migration
+-- Model configuration is handled via model strings in format: provider:model:version[:thinking]
+-- Examples: anthropic:claude-3-5-haiku:20241022, google:gemini-2.0-flash:latest
 
 -- Insert test document for database integration testing
 INSERT INTO documents (title, slug, html_content, plaintext_content, created_by, is_public) VALUES (
