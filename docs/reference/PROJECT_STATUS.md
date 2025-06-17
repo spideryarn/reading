@@ -30,7 +30,7 @@ Spideryarn Reading is in active development with core AI features now implemente
 - **AI-generated headings** - Semantic document structure generation for better navigation
 - **Tweet thread generation** - AI-powered conversion of documents to Twitter thread format
 - **Multi-LLM provider support** - Anthropic Claude and Google Gemini via Vercel AI SDK
-- **Advanced chat interface** - Full @assistant-ui integration with document context
+- **Advanced chat interface** - Full @assistant-ui integration with document context (requires authentication)
 - **Prompt template system** - Nunjucks templates with Zod validation (`lib/prompts/templates/`)
 - **Semantic highlighting** - AI-powered highlighting based on criteria with confidence-based visual intensity
 

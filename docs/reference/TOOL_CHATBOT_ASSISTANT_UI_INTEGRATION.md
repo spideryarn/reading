@@ -4,6 +4,8 @@
 
 This document provides comprehensive technical guidance for integrating the @assistant-ui/react library into the Spideryarn Reading application to create a chatbot interface within the Tools pane. This guide includes detailed code examples, best practices, common pitfalls, and Next.js-specific integration patterns.
 
+**⚠️ Authentication Requirement**: Chat functionality requires user authentication. Users must be logged in to use the chat feature. This ensures proper data isolation through Row Level Security (RLS) policies that tie chat threads to the authenticated user.
+
 > This document supports the implementation plan outlined in [planning/250527a_chatbot_interface_assistant_ui.md](/planning/250527a_chatbot_interface_assistant_ui.md).
 
 **Related Documentation:**

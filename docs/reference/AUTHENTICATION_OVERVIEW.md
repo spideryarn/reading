@@ -68,6 +68,8 @@ Spideryarn Reading uses Supabase Auth with Next.js App Router for secure user re
 
 **Document Access**: User-scoped documents with `created_by` ownership and public sharing via `/read/[slug]/share`
 
+**Chat Feature**: Requires authentication - chat threads are user-scoped with no anonymous access allowed
+
 **User Profiles**: Automatic profile creation, profile page with document listings, header dropdown navigation
 
 **Database**: RLS policies for data isolation, PostgreSQL triggers for profile creation, document ownership patterns

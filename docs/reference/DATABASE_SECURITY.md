@@ -130,7 +130,7 @@ USING (
 **Tables with RLS**:
 - `ai_models`, `ai_calls` - AI service usage tracking
 - `document_enhancements` - AI-generated content (summaries, headings, etc.)
-- `chat_threads`, `chat_messages` - Document-based conversations
+- `chat_threads`, `chat_messages` - Document-based conversations (**Authentication Required** - no anonymous access)
 
 ## Security Best Practices
 
