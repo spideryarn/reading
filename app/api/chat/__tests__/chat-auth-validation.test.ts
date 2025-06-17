@@ -75,7 +75,7 @@ jest.mock('@/lib/services/logger', () => ({
 // Import route and helpers AFTER all mocks are set up
 import { POST } from '../route'
 import { createMockRequest } from '../../__tests__/test-helpers'
-import { authTestScenarios } from '@/lib/testing/auth-test-helpers'
+import { defaultTestUser } from '@/lib/testing/auth-test-helpers'
 
 // Import mocked modules
 import { createClient } from '@/lib/supabase/server'
@@ -107,11 +107,11 @@ describe('Chat API - Auth vs Validation Testing', () => {
     // Setup default mocks
     mockCreateClient.mockResolvedValue(mockSupabaseClient)
     
-    // Setup default auth mock - chat API uses getUser which returns {user, error}
+    // Setup default auth mock - chat API now uses validateAuth
     // Dynamic import required for Jest mocking
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { getUser } = require('@/lib/auth/server-auth')
-    getUser.mockResolvedValue({ user: defaultTestUser, error: null })
+    const { validateAuth } = require('@/lib/auth/server-auth')
+    validateAuth.mockResolvedValue(defaultTestUser)
     
     // Services are already mocked at module level
   })
@@ -251,12 +251,12 @@ describe('Chat API - Auth vs Validation Testing', () => {
       expect(loggerCalls.length).toBeGreaterThan(0)
     })
 
-    it('should work without authentication', async () => {
-      // Chat API should work even without user
+    it('should require authentication', async () => {
+      // Chat API now requires authentication
       // Dynamic import required for Jest mocking
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { getUser } = require('@/lib/auth/server-auth')
-      getUser.mockResolvedValue({ user: null, error: null })
+    const { validateAuth } = require('@/lib/auth/server-auth')
+      validateAuth.mockRejectedValue(new Error('Authentication required'))
 
       const request = createMockRequest('/api/chat', {
         method: 'POST',
@@ -268,7 +268,7 @@ describe('Chat API - Auth vs Validation Testing', () => {
       })
 
       const response = await POST(request)
-      expect(response.status).toBe(200)
+      expect(response.status).toBe(401)
     })
   })
 

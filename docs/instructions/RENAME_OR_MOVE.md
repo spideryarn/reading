@@ -6,6 +6,7 @@
   - Do the rename/move
     - Prefer to use `git mv` rather than `mv`, where appropriate. Or if there is a special tool for doing the move (e.g. a syntactically-aware refactoring tool, use that)
   - Search carefully for all the places that refer to each file, and update them appropriately.
+    - Use **Fastmod** for updating references across the codebase (see `docs/reference/FASTMOD_FIND_REPLACE.md`)
     - Be careful not to break/disrupt functionality.
 
 - IMPORTANT: If in doubt, or you notice any issues/surprises/complications stop and ask.

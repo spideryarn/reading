@@ -7,6 +7,7 @@ Guidelines for writing command-line scripts in the Spideryarn Reading codebase, 
 - `docs/instructions/GIT_WORKTREES.md` - Example of well-documented script usage (sync-worktrees scripts)
 - `scripts/sync-worktrees.ts` - Example Clipanion implementation with comprehensive help and error handling
 - `scripts/` - Directory containing all project scripts
+- `docs/reference/FASTMOD_FIND_REPLACE.md` - Fastmod tool for codebase refactoring
 - https://github.com/arcanis/clipanion - Clipanion documentation for TypeScript CLI tools
 
 ## When to Use Shell Scripts vs Clipanion
@@ -33,6 +34,42 @@ Use Clipanion (`.ts`) for:
 Examples:
 - `scripts/sync-worktrees.ts` - Complex Git operations with multiple modes
 - `scripts/import-static-documents.ts` - Database operations with error handling
+
+## External Tools for Script Integration
+
+### Fastmod for Codebase Refactoring
+
+**Fastmod** is the preferred tool for find-replace operations across the codebase:
+
+```bash
+# Interactive mode (recommended for scripts)
+fastmod "old-string" "new-string" .
+
+# Automated mode (use in scripts with caution)
+fastmod --accept-all --print-changed-files "old" "new" .
+```
+
+**Script Integration Pattern**:
+```typescript
+import { execSync } from 'child_process';
+
+// Run fastmod and capture changed files
+try {
+  const result = execSync(
+    `fastmod --accept-all --print-changed-files "${oldString}" "${newString}" .`,
+    { encoding: 'utf8' }
+  );
+  
+  const changedFiles = result.trim().split('\n').filter(Boolean);
+  this.context.stdout.write(`Updated ${changedFiles.length} files\n`);
+  
+  return 0;
+} catch (error) {
+  throw new UsageError(`Fastmod failed: ${error.message}`);
+}
+```
+
+See `docs/reference/FASTMOD_FIND_REPLACE.md` for complete usage guide.
 
 ## Setting Up Clipanion Scripts
 

@@ -11,23 +11,23 @@ import { createClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { ChatService } from '@/lib/services/database/chat'
 import { createRequestLogger, createTimer, logAIOperation, generateCorrelationId } from '@/lib/services/logger'
-import { getUser } from '@/lib/auth/server-auth'
+import { validateAuth } from '@/lib/auth/server-auth'
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
   const requestLogger = createRequestLogger('/api/chat', correlationId)
   
   try {
-    // Get user context for logging (optional - chat can work without auth)
-    const { user } = await getUser()
+    // Validate authentication (required for chat)
+    const user = await validateAuth()
     
     const body = await request.json()
     // Note: 'body' is only accessible within this try block scope
     
     requestLogger.info({
       method: 'POST',
-      userId: user?.id,
-      userEmail: user?.email,
+      userId: user.id,
+      userEmail: user.email,
       bodyKeys: Object.keys(body),
       hasMessages: !!body.messages,
       hasDocumentContext: !!body.documentContext
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
           documentId,
           modelString: modelString,
           title,
-          userId: user?.id || '00000000-0000-0000-0000-000000000001' // Use actual user or system user
+          userId: user.id
         });
         
         finalThreadId = newThread.id;
@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
         const aiCallService = new AiCallService(supabase)
         
         const aiCall = await aiCallService.createWithModelString({
-          userId: user?.id || '00000000-0000-0000-0000-000000000001', // Use system user if not authenticated
+          userId: user.id,
           modelString: modelString,
           promptTokens: result.usage?.promptTokens || null,
           completionTokens: result.usage?.completionTokens || null,
@@ -193,7 +193,7 @@ export async function POST(request: NextRequest) {
         logAIOperation('chat', {
           modelProvider: modelConfig.provider,
           tokensUsed: result.usage?.totalTokens,
-          userId: user?.id,
+          userId: user.id,
           documentId,
           correlationId,
           cost: result.usage?.totalTokens ? result.usage.totalTokens * 0.000003 : undefined // Rough cost estimate

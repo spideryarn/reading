@@ -124,6 +124,7 @@ describe('My Feature', () => {
 Debugging resources:
 - Current logs: `tail dev.log`
 - Browser debugging: Playwright MCP (console logs, network requests, screenshots)
+- Codebase refactoring: Fastmod (`fastmod "old" "new" .`) - see `docs/reference/FASTMOD_FIND_REPLACE.md`
 - Test files: `src/lib/*/tests/` and `components/__tests__/`
 - Database: `supabase/migrations/` and `docs/reference/DATABASE_*.md`
 - Architecture: `docs/reference/ARCHITECTURE_OVERVIEW.md` and `docs/reference/ARCHITECTURE_DECISIONS.md`
