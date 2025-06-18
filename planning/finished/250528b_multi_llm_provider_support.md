@@ -127,7 +127,7 @@ Use tasks and subagents where appropriate, especially for curl, tests, and Playw
 - [x] Update `lib/services/llm-provider.ts` to parse provider from model key
   - [x] Extract provider from model key (e.g., `anthropic-cheap` → `anthropic`)
   - [x] Update `getModel()` function to handle new format
-- [x] Create new doc `docs/LLM_MODELS_REFERENCE.md` with:
+- [x] Create new doc `docs/LLM_MODEL_CONFIGURATION.md` with:
   - [x] Table of all available models with pricing
   - [x] Context window sizes (1M tokens for Gemini 2.5, 200K for Claude)
   - [x] Performance characteristics and use cases
@@ -194,7 +194,7 @@ Use tasks and subagents where appropriate, especially for curl, tests, and Playw
 - [x] Update `docs/SETUP.md` with new environment variable requirements - Not needed, covered by .env.example
 - [x] Add provider switching instructions to `README.md` - Not needed, simple env var switch
 - [x] Update `.env.example` with new Gemini configuration options
-- [x] Create troubleshooting section for provider-specific issues - Added to docs/LLM_MODELS_REFERENCE.md
+- [x] Create troubleshooting section for provider-specific issues - Added to docs/LLM_MODEL_CONFIGURATION.md
 - [x] Update this planning document with final implementation notes and lessons learned
 - [x] Move this doc into `planning/finished/` - Ready for completion
 - [x] Git commit all changes following `docs/GIT_COMMITS.md` guidelines - Multiple commits made

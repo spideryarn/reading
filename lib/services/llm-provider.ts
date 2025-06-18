@@ -3,7 +3,8 @@
 
 import { anthropic as anthropicProvider } from '@ai-sdk/anthropic'
 import { google as googleProvider } from '@ai-sdk/google'
-import { AI_CONFIG, getModelConfig, type ProviderTierKey } from '@/lib/config'
+import { getModelStringFromEnvironment, getModelConfigFromEnvironment } from '@/lib/config'
+import { parseModelString } from '@/lib/config/models'
 
 // Provider initialization with API key configuration
 const providers = {
@@ -33,34 +34,39 @@ export function getProvider(providerName: 'anthropic' | 'google') {
   return providerFactory()
 }
 
-// Get a model instance using provider-tier key
-export function getModel(providerTierKey: ProviderTierKey = AI_CONFIG.DEFAULT_MODEL) {
-  const modelConfig = getModelConfig(providerTierKey)
-  const providerInstance = getProvider(modelConfig.provider)
+// Get a model instance using model string from environment
+export function getModel() {
+  const modelString = getModelStringFromEnvironment()
+  const parsedModel = parseModelString(modelString)
+  const modelConfig = getModelConfigFromEnvironment()
+  const providerInstance = getProvider(parsedModel.provider)
   
   // Configure thinking mode for Anthropic models if enabled
   const modelOptions: Record<string, unknown> = {}
-  if (modelConfig.provider === 'anthropic' && modelConfig.thinking) {
+  if (parsedModel.provider === 'anthropic' && parsedModel.thinking) {
     modelOptions.thinking = true
   }
   
-  return providerInstance(modelConfig.modelId, modelOptions)
+  return providerInstance(parsedModel.modelName, modelOptions)
 }
 
 // Helper to get provider and model configuration together
-export function getLLMConfig(providerTierKey: ProviderTierKey = AI_CONFIG.DEFAULT_MODEL) {
-  const modelConfig = getModelConfig(providerTierKey)
-  const providerInstance = getProvider(modelConfig.provider)
+export function getLLMConfig() {
+  const modelString = getModelStringFromEnvironment()
+  const parsedModel = parseModelString(modelString)
+  const modelConfig = getModelConfigFromEnvironment()
+  const providerInstance = getProvider(parsedModel.provider)
   
   return {
-    providerTierKey,
-    provider: modelConfig.provider,
-    modelId: modelConfig.modelId,
+    modelString,
+    provider: parsedModel.provider,
+    modelName: parsedModel.modelName,
+    version: parsedModel.version,
     description: modelConfig.description,
     contextWindow: modelConfig.contextWindow,
     outputTokens: modelConfig.outputTokens,
-    thinking: modelConfig.thinking,
+    thinking: parsedModel.thinking,
     providerInstance,
-    modelInstance: getModel(providerTierKey),
+    modelInstance: getModel(),
   }
 }

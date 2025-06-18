@@ -10,7 +10,7 @@ see:
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` for current system architecture
 - `docs/reference/ARCHITECTURE_DECISIONS.md` for key architectural decisions and rationale
 - `docs/reference/LOGGING_BEST_PRACTICES.md` for comprehensive logging and observability guidance
-- `docs/reference/MODEL_STRING_CONFIGURATION.md` for AI model configuration and usage patterns
+- `docs/reference/LLM_MODEL_CONFIGURATION.md` for AI model configuration and usage patterns
 - `docs/instructions/GIT_COMMITS.md` for using Git
 
 ## Project Overview
@@ -253,12 +253,12 @@ The project includes a complete authentication system using Supabase Auth with N
 Key variables in `.env.local`:
 - `ANTHROPIC_API_KEY` - Required for AI features
 - `PORT` - Dev server port
-- `LLM_MODEL` - supports tier keys (`anthropic-cheap`, `google-balanced`) or model strings (`anthropic:claude-3-5-haiku:20241022`), defaults to Claude Sonnet 4, but we usually override to Haiku for development
+- `LLM_MODEL` - uses model strings (`anthropic:claude-3-5-haiku:20241022`, `google:gemini-2.0-flash:latest`), defaults to Claude Sonnet 4, but we usually override to Haiku for development
 - Supabase connection details (see `docs/reference/SETUP.md`)
 
 Test environment (`.env.test`):
 - Currently mirrors `.env.local` for simplicity (shared database approach)
-- Best practice: Use cheaper LLM models (`LLM_MODEL=anthropic-cheap` or `LLM_MODEL=google:gemini-2.0-flash:latest`) for cost efficiency
+- Best practice: Use cheaper LLM models (`LLM_MODEL=anthropic:claude-3-5-haiku:20241022` or `LLM_MODEL=google:gemini-2.0-flash:latest`) for cost efficiency
 - See `docs/reference/TESTING_SETUP.md` for setup instructions
 
 Template: `.env.example` (may not be current - check `.env.local` for active config)

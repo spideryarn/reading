@@ -44,6 +44,28 @@ jest.mock('@/lib/supabase/server', () => ({
 jest.mock('@/lib/services/database/ai-calls', () => ({
   AiCallService: jest.fn().mockImplementation(() => ({
     startCall: jest.fn().mockResolvedValue('mock-ai-call-id'),
+    startCallWithModelString: jest.fn().mockResolvedValue({
+      id: 'mock-ai-call-id',
+      document_id: null,
+      created_by: 'mock-user-id',
+      model_string: 'anthropic:claude-3-5-haiku:20241022',
+      prompt_type: 'url-to-html',
+      status: 'pending',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      completed_at: null,
+      prompt_tokens: null,
+      completion_tokens: null,
+      total_tokens: null,
+      reasoning_tokens: null,
+      finish_reason: null,
+      error_message: null,
+      error_code: null,
+      extra: {},
+      prompt_input: '{}',
+      prompt_template: null,
+      model_id: null
+    }),
     updateCall: jest.fn().mockResolvedValue(undefined),
     completeCall: jest.fn().mockResolvedValue(undefined),
     getModelUuidByProviderAndId: jest.fn().mockResolvedValue('mock-model-uuid')

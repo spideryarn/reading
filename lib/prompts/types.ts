@@ -3,8 +3,9 @@ import nunjucks from 'nunjucks'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import { generateText } from 'ai'
-import { AI_CONFIG, type ProviderTierKey } from '@/lib/config'
+import { AI_CONFIG, getModelStringFromEnvironment } from '@/lib/config'
 import { getModel } from '@/lib/services/llm-provider'
+import { parseModelString } from '@/lib/config/models'
 
 // Types for enhanced prompt execution with usage metadata
 export interface PromptUsage {
@@ -35,10 +36,9 @@ export interface PromptTemplate<T extends z.ZodSchema> {
   schema: T
   templatePath: string
   modelConfig?: {
-    model?: ProviderTierKey
+    modelString?: string
     temperature?: number
     maxTokens?: number
-    thinking?: boolean
   }
 }
 
@@ -47,10 +47,9 @@ export function loadPromptTemplate<T extends z.ZodSchema>(
   templatePath: string,
   schema: T,
   modelConfig?: {
-    model?: ProviderTierKey
+    modelString?: string
     temperature?: number
     maxTokens?: number
-    thinking?: boolean
   }
 ): PromptTemplate<T> {
   // Load template content at module load time for better performance
@@ -70,10 +69,9 @@ export function loadPromptTemplateFromCaller<T extends z.ZodSchema>(
   templateName: string,
   schema: T,
   modelConfig?: {
-    model?: ProviderTierKey
+    modelString?: string
     temperature?: number
     maxTokens?: number
-    thinking?: boolean
   }
 ): PromptTemplate<T> {
   // Build absolute path using process.cwd() + relative path
@@ -95,12 +93,8 @@ async function executePromptInternal<T extends z.ZodSchema>(
   const prompt = env.renderString(templateContent, validated)
   
   // Get the appropriate model based on configuration
-  // If thinking mode is explicitly set in template config, use anthropic-balanced-thinking
-  let providerTierKey = template.modelConfig?.model || AI_CONFIG.DEFAULT_MODEL
-  if (template.modelConfig?.thinking && providerTierKey === 'anthropic-balanced') {
-    providerTierKey = 'anthropic-balanced-thinking'
-  }
-  const model = getModel(providerTierKey)
+  const modelString = template.modelConfig?.modelString || getModelStringFromEnvironment()
+  const model = getModel()
   
   // Execute with Vercel AI SDK Core
   const result = await generateText({
@@ -171,10 +165,9 @@ export interface MultimodalPromptTemplate<T extends z.ZodSchema> {
   schema: T
   templatePath: string
   modelConfig?: {
-    model?: ProviderTierKey
+    modelString?: string
     temperature?: number
     maxTokens?: number
-    thinking?: boolean
   }
 }
 
@@ -187,11 +180,8 @@ async function executeMultimodalPromptInternal<T extends z.ZodSchema>(
   const validated = template.schema.parse(variables)
   
   // Get the appropriate model based on configuration
-  let providerTierKey = template.modelConfig?.model || AI_CONFIG.DEFAULT_MODEL
-  if (template.modelConfig?.thinking && providerTierKey === 'anthropic-balanced') {
-    providerTierKey = 'anthropic-balanced-thinking'
-  }
-  const model = getModel(providerTierKey)
+  const modelString = template.modelConfig?.modelString || getModelStringFromEnvironment()
+  const model = getModel()
   
   // Check if variables contain messages (multimodal), PDF buffer, or just need prompt rendering
   let messages: Array<{ role: string; content: string | Array<{ type: string; text?: string; image?: string; data?: Buffer; mimeType?: string }> }> = []
@@ -272,10 +262,9 @@ export function loadMultimodalPromptTemplateFromCaller<T extends z.ZodSchema>(
   templateName: string,
   schema: T,
   modelConfig?: {
-    model?: ProviderTierKey
+    modelString?: string
     temperature?: number
     maxTokens?: number
-    thinking?: boolean
   }
 ): MultimodalPromptTemplate<T> {
   // Build absolute path using process.cwd() + relative path
@@ -289,10 +278,9 @@ export function loadMultimodalPromptTemplate<T extends z.ZodSchema>(
   templatePath: string,
   schema: T,
   modelConfig?: {
-    model?: ProviderTierKey
+    modelString?: string
     temperature?: number
     maxTokens?: number
-    thinking?: boolean
   }
 ): MultimodalPromptTemplate<T> {
   // Load template content at module load time for better performance

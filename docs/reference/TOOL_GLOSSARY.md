@@ -30,7 +30,7 @@ The system supports multiple LLM providers (Claude and Gemini) for analysing doc
 - Search the web if needed for accurate information
 - Return entities ordered by first occurrence in the document
 
-**Multi-Provider Support**: Uses the centralised provider-tier system from `lib/config.ts`. Switch models using the `LLM_MODEL` environment variable (e.g., `google-cheap` for development, `anthropic-balanced` for production). See [docs/reference/LLM_MODELS_REFERENCE.md](LLM_MODELS_REFERENCE.md) for model comparison.
+**Multi-Provider Support**: Uses the centralised provider-tier system from `lib/config.ts`. Switch models using the `LLM_MODEL` environment variable (e.g., `google-cheap` for development, `anthropic-balanced` for production). See [docs/reference/LLM_MODEL_CONFIGURATION.md](LLM_MODEL_CONFIGURATION.md) for model comparison.
 
 ## Entity schema
 
