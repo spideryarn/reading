@@ -26,13 +26,9 @@ The application uses a **two-pane resizable layout** built with shadcn/ui Resiza
 
 ### Document Header ✓
 - **Fixed height**: 3rem minimum (`min-h-[3rem]`)
-- **Background**: White with bottom border
-- **Content**: Document title (left) and action buttons (right)
-- **Action Buttons**:
-  - **Settings** - Shows configuration dialog with LLM parameters ✓
-  - **Download/View Original** - PDF icon for stored PDF files (download), File icon for HTML documents (view original) ✓
-  - **Tweet Thread** - Convert document to tweet thread format ✓
-- **Settings Dialog**: Modal overlay showing current AI model, temperature, max tokens, and UI configuration
+- **Background**: White with bottom border  
+- **Content**: Document title only (clean, minimal design)
+- **Action Buttons**: None - all functionality moved to vertical icon rail for better organization
 
 ### 1. Left Pane - Unified Navigation & Tools ✓
 - **Resizable width**: 30% default (20-50% range)
@@ -47,6 +43,8 @@ The application uses a **two-pane resizable layout** built with shadcn/ui Resiza
   - **Glossary** - AI-generated term definitions and explanations with click-to-scroll functionality ✓
   - **Search** - Full-text document search with debounced input, loading states, and click-to-navigate results with element selection ✓
   - **Highlights** - AI-powered semantic highlighting with confidence-based visual intensity ✓
+- **Additional Actions** (via vertical icon rail):
+  - **Tweet Thread** - Convert document to Twitter thread format for social sharing (opens in new window) ✓
 
 ### 2. Right Pane - Document Viewer ✓
 - **Resizable width**: 70% default, expands to full width when left pane collapsed
