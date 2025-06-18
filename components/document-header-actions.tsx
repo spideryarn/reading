@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Gear, TwitterLogo } from '@phosphor-icons/react'
+import { TwitterLogo } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 
 interface DocumentHeaderActionsProps {
@@ -27,22 +27,6 @@ export function DocumentHeaderActions({ slug, storagePath, originalFileType }: D
             rel="noopener noreferrer"
           >
             <TwitterLogo size={16} />
-          </Link>
-        </Button>
-        
-        {/* Settings */}
-        <Button
-          asChild
-          variant="ghost"
-          className="text-gray-600 hover:text-gray-900"
-        >
-          <Link 
-            href="/settings"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Settings"
-          >
-            <Gear size={16} />
           </Link>
         </Button>
       </div>

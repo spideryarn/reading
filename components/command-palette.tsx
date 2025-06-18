@@ -262,13 +262,13 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
       icon: Upload,
     },
     {
-      id: 'app-settings',
-      name: 'Settings',
-      keywords: ['settings', 'preferences', 'config'],
+      id: 'app-models',
+      name: 'Models',
+      keywords: ['models', 'ai', 'llm', 'settings', 'config'],
       shortcut: [isMac ? '⌘' : 'Ctrl', ','],
       category: APP_NAVIGATION_CATEGORY,
       action: () => navigateWithErrorHandling('/settings'),
-      icon: Gear,
+      icon: Robot,
     },
 
     // Account commands (conditional based on auth state)

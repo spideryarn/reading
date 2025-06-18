@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { Card } from '@/components/ui/card'
-import { User as UserIcon, SignOut, CaretDown } from '@phosphor-icons/react'
+import { User as UserIcon, SignOut, CaretDown, Robot } from '@phosphor-icons/react'
 
 interface ProfileDropdownProps {
   user: User
@@ -98,6 +98,17 @@ export function ProfileDropdown({ user }: ProfileDropdownProps) {
               >
                 <UserIcon size={16} />
                 Profile
+              </Link>
+              
+              <Link 
+                href="/settings"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+              >
+                <Robot size={16} />
+                Models
               </Link>
               
               <button
