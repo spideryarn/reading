@@ -31,7 +31,7 @@ The system supports multiple LLM providers (Claude and Gemini) for analysing doc
 - Ensure headings are concise but informative
 - Return headings in structured format for document insertion
 
-**Multi-Provider Support**: Uses the centralised provider-tier system from `lib/config.ts`. Switch models using the `LLM_MODEL` environment variable (e.g., `google-cheap` for development, `anthropic-balanced` for production). See [docs/reference/LLM_MODELS_REFERENCE.md](LLM_MODELS_REFERENCE.md) for model comparison.
+**Multi-Provider Support**: Uses the centralised provider-tier system from `lib/config.ts`. Switch models using the `LLM_MODEL` environment variable (e.g., `google-cheap` for development, `anthropic-balanced` for production). See [docs/reference/LLM_MODEL_CONFIGURATION.md](LLM_MODEL_CONFIGURATION.md) for model comparison.
 
 ## Content pipeline
 

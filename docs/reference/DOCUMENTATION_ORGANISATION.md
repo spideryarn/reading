@@ -62,7 +62,7 @@ Available evergreen documentation in `docs/` organised by category:
 
 ### AI Features & Implementation
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide for creating AI/LLM calls using Nunjucks + Zod template system ⭐ **Essential for AI features**
-- `docs/reference/LLM_MODELS_REFERENCE.md` - LLM model configuration and provider integration
+- `docs/reference/LLM_MODEL_CONFIGURATION.md` - LLM model configuration and provider integration
 - `docs/reference/LLM_TRACKING_TOKEN_USAGE_LOGGING.md` - Comprehensive guide for tracking LLM token usage and costs across AI operations
 - `docs/reference/VERCEL_AI_SDK_REFERENCE.md` - Vercel AI SDK integration patterns and usage
 - `docs/reference/TOOL_SUMMARISE.md` - AI summarise feature generating hierarchical summaries at multiple granularities

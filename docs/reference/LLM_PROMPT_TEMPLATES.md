@@ -191,7 +191,7 @@ const result = await executeMultimodalPromptWithUsage(myPrompt, data)
 
 ## Model Configuration
 
-AI model settings use a **model string** system with configuration centralised in `/lib/config/models.ts` (see [MODEL_STRING_CONFIGURATION.md](MODEL_STRING_CONFIGURATION.md) for details):
+AI model settings use a **model string** system with configuration centralised in `/lib/config/models.ts` (see [LLM_MODEL_CONFIGURATION.md](LLM_MODEL_CONFIGURATION.md) for details):
 
 ```typescript
 // Model string format: provider:model:version[:thinking]
@@ -244,7 +244,7 @@ export const myFeaturePrompt = loadPromptTemplateFromCaller(
 )
 ```
 
-**For detailed model comparison, see [docs/reference/LLM_MODELS_REFERENCE.md](LLM_MODELS_REFERENCE.md)**
+**For detailed model comparison, see [docs/reference/LLM_MODEL_CONFIGURATION.md](LLM_MODEL_CONFIGURATION.md)**
 
 **This centralised approach ensures:**
 - Consistent AI behaviour across all features

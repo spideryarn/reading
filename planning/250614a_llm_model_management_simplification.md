@@ -132,12 +132,12 @@ Key changes:
   - [x] Document new model_string format and benefits
   - [x] Deprecate ai_models table documentation
 - [x] Create new model configuration documentation
-  - [x] Create comprehensive `docs/reference/MODEL_STRING_CONFIGURATION.md`
+  - [x] Create comprehensive `docs/reference/LLM_MODEL_CONFIGURATION.md`
   - [x] Document model string format, configuration patterns, and API usage
   - [x] Add migration guides and troubleshooting
 - [x] Update legacy documentation references
   - [x] Update CLAUDE.md with new LLM_MODEL configuration
-  - [x] Deprecate `docs/reference/LLM_MODELS_REFERENCE.md` with migration guide
+  - [x] Deprecate `docs/reference/LLM_MODEL_CONFIGURATION.md` with migration guide
   - [x] Update `docs/reference/LLM_PROMPT_TEMPLATES.md` to use new model system
 
 ### Stage: Final Review & Deployment Preparation
@@ -360,8 +360,8 @@ The model string migration is now complete and fully operational. The system has
 
 **Documentation Updates Completed:**
 - ✅ **Database Schema**: Updated `DATABASE_SCHEMA.md` to reflect model_string system with deprecation notices for legacy ai_models table
-- ✅ **Comprehensive Reference**: Created `MODEL_STRING_CONFIGURATION.md` with complete API patterns, configuration examples, and migration guides
-- ✅ **Legacy Migration**: Updated `LLM_MODELS_REFERENCE.md` to deprecated status with clear migration paths
+- ✅ **Comprehensive Reference**: Created `LLM_MODEL_CONFIGURATION.md` with complete API patterns, configuration examples, and migration guides
+- ✅ **Legacy Migration**: Updated `LLM_MODEL_CONFIGURATION.md` to deprecated status with clear migration paths
 - ✅ **Prompt Templates**: Updated `LLM_PROMPT_TEMPLATES.md` to use new model configuration approach
 - ✅ **Claude Instructions**: Updated `CLAUDE.md` to reflect new LLM_MODEL variable flexibility
 
@@ -512,7 +512,7 @@ Remove tier key backwards compatibility for simplicity.
 - [x] Remove `MODEL_TIERS` and `ModelTierKey` from `lib/config/models.ts`
 - [x] Update `lib/services/llm-provider.ts` to use model strings only
 - [x] Update `lib/prompts/types.ts` to remove tier key parameters
-- [x] Update documentation in `MODEL_STRING_CONFIGURATION.md` and `CLAUDE.md`
+- [x] Update documentation in `LLM_MODEL_CONFIGURATION.md` and `CLAUDE.md`
 - [x] Verify build and lint pass successfully
 
 ### Stage 16: Implement Strict Model String Validation
@@ -529,6 +529,8 @@ Add app-level validation that fails early and clearly.
 
 ### Stage 17: Add Price-per-Token Persistence
 Store pricing snapshots for accurate historical cost reporting.
+
+STOP AND DISCUSS WITH USER - should we also add a column for total calculated price? Is this something Vercel AI SDK does for us? Do we already have this?
 
 - [ ] Create database migration for ai_calls pricing fields
   - [ ] Add `input_price_per_token` DECIMAL column

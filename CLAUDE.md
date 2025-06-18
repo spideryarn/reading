@@ -10,7 +10,7 @@ see:
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` for current system architecture
 - `docs/reference/ARCHITECTURE_DECISIONS.md` for key architectural decisions and rationale
 - `docs/reference/LOGGING_BEST_PRACTICES.md` for comprehensive logging and observability guidance
-- `docs/reference/MODEL_STRING_CONFIGURATION.md` for AI model configuration and usage patterns
+- `docs/reference/LLM_MODEL_CONFIGURATION.md` for AI model configuration and usage patterns
 - `docs/instructions/GIT_COMMITS.md` for using Git
 
 ## Project Overview

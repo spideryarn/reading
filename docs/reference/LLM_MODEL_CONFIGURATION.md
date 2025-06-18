@@ -1,10 +1,10 @@
-# Model String Configuration Reference
+# LLM Model Configuration Reference
 
 > ✅ **CURRENT** - This documentation reflects the model string system implemented in June 2025.
 
 ## Overview
 
-The Spideryarn Reading application uses a **model string** approach for AI model configuration, replacing the previous UUID-based database lookup system. This provides better performance, easier debugging, and simplified maintenance.
+The Spideryarn Reading application uses a **model string** approach for AI model configuration, replacing the previous tier-based UUID system. This provides better performance, easier debugging, and simplified maintenance.
 
 **Key Benefits:**
 - **Performance**: Eliminates database lookups on every AI call
@@ -229,6 +229,36 @@ WHERE model_string LIKE '%:thinking';
 - **No Joins**: Direct string storage eliminates model table joins
 - **Human Readable**: SQL queries show actual model names
 
+## Available Models Reference
+
+### Current Models
+
+| Model String | Name | Input Price* | Output Price* | Context | Use Case |
+|--------------|------|--------------|---------------|---------|----------|
+| `google:gemini-2.0-flash:latest` | Gemini 2.0 Flash | TBA** | TBA** | 1M tokens | **Development** - Fast, large context |
+| `google:gemini-2.5-pro:latest` | Gemini 2.5 Pro | $1.25/M† | $10/M† | 1M tokens | Production alternative |
+| `anthropic:claude-3-5-haiku:20241022` | Claude 3.5 Haiku | $0.80/M | $4/M | 200K tokens | Development, simple tasks |
+| `anthropic:claude-sonnet-4:20250514` | Claude Sonnet 4 | $3/M | $15/M | 200K tokens | **Production** - Reliable |
+| `anthropic:claude-sonnet-4:20250514:thinking` | Claude Sonnet 4 (Thinking) | $3/M | $15/M | 200K tokens | **Complex Analysis** - Advanced reasoning |
+| `anthropic:claude-opus-4:latest` | Claude Opus 4 | $15/M | $75/M | 200K tokens | Maximum quality |
+
+*Per million tokens  
+**Gemini Flash pricing TBA  
+†Higher pricing ($2.50/M input, $15/M output) for prompts >200K tokens
+
+### Tier Key Mapping
+
+For backwards compatibility, the following tier keys are still supported:
+
+| Tier Key | Maps To |
+|----------|---------|
+| `google-cheap` | `google:gemini-2.0-flash:latest` |
+| `google-balanced` | `google:gemini-2.5-pro:latest` |
+| `anthropic-cheap` | `anthropic:claude-3-5-haiku:20241022` |
+| `anthropic-balanced` | `anthropic:claude-sonnet-4:20250514` |
+| `anthropic-balanced-thinking` | `anthropic:claude-sonnet-4:20250514:thinking` |
+| `anthropic-expensive` | `anthropic:claude-opus-4:latest` |
+
 ## Adding New Models
 
 ### 1. Add Model Configuration
@@ -290,9 +320,21 @@ LLM_MODEL=openai-balanced npm run dev
 LLM_MODEL=openai:gpt-4:latest npm run dev
 ```
 
-## Migration Notes
+## Migration from Legacy System
 
-### From Legacy System
+### Migration Overview
+
+**Legacy System** (Deprecated as of June 2025):
+- Tier keys like `anthropic-cheap`, `google-balanced`
+- UUID-based model lookups in `ai_models` database table
+- Complex resolution through database queries
+
+**Current System**:
+- Direct model strings like `anthropic:claude-3-5-haiku:20241022`
+- Configuration-based model metadata in `lib/config/models.ts`
+- No database dependencies for model resolution
+
+### Code Migration Examples
 
 **Before** (UUID-based):
 ```typescript
@@ -316,12 +358,25 @@ const aiCall = await AiCallService.startCallWithModelString({
 })
 ```
 
-### Backwards Compatibility
+### Environment Variable Migration
 
-During transition, both approaches work:
-- Environment variables accept tier keys or model strings
-- Model metadata available through both systems
-- Database stores model_string directly
+```bash
+# Old (still works for backwards compatibility)
+LLM_MODEL=anthropic-cheap
+
+# New (recommended)
+LLM_MODEL=anthropic:claude-3-5-haiku:20241022
+```
+
+### Why the Migration Was Necessary
+
+The legacy UUID-based system had several issues:
+- **Performance Impact**: Required database lookups on every AI call
+- **Debugging Difficulty**: Opaque UUIDs in database made troubleshooting hard
+- **Complex Maintenance**: Model metadata split between config and database
+- **Difficult Extension**: Adding new models required database migrations
+
+The new model string system eliminates these issues while maintaining backwards compatibility during transition.
 
 ## Troubleshooting
 

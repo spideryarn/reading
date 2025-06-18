@@ -134,7 +134,7 @@ Complete the database integration for Spideryarn Reading by connecting existing 
       - `app/api/glossary/route.ts` - Added config-based tier resolution, proper error handling for malformed cached data
       - `lib/services/database/ai-calls.ts` - Removed tier key logic, updated interface to use provider+modelId lookup  
       - `lib/services/database/enhancements.ts` - Fixed data structure for entities array storage
-      - `docs/LLM_MODELS_REFERENCE.md` - Updated architecture documentation
+      - `docs/LLM_MODEL_CONFIGURATION.md` - Updated architecture documentation
       - `supabase/seed.sql` - Removed tier information from ai_models data
     - 📔 **Benefits**: Eliminates redundancy, config is single source of truth, simpler tier management, easier to add new models
     - 📔 **Testing**: Verified glossary generation working correctly with entities extracted and properly stored in database

@@ -69,7 +69,7 @@ For Vercel deployment, manually configure these in the Vercel dashboard:
 **Development**: `LLM_MODEL=google-cheap` (Gemini Flash - fast and cost-effective)  
 **Production**: `LLM_MODEL=anthropic-balanced` (Claude Sonnet 4 - quality and performance)
 
-See `docs/reference/LLM_MODELS_REFERENCE.md` for complete model comparison and configuration options.
+See `docs/reference/LLM_MODEL_CONFIGURATION.md` for complete model comparison and configuration options.
 
 ---
 
