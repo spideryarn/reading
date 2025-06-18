@@ -458,6 +458,20 @@ export function UnifiedLeftPane({
     setCaseSensitive
   } = useSearchUrlState()
   
+  // --- Local state for the search input value ---------------------------------
+  // We keep a local, immediate value so that the input feels responsive. The URL
+  // (single-source-of-truth) is still updated via the debounced `updateSearch`
+  // call, but the input itself is no longer bound directly to that debounced
+  // state. When the URL state changes for external reasons (e.g. browser
+  // navigation) we synchronise the local value here.
+  const [searchInputValue, setSearchInputValue] = useState(searchQuery || '')
+
+  // Sync local input when the URL-driven query changes (e.g. back/forward
+  // navigation or programmatic updates).
+  useEffect(() => {
+    setSearchInputValue(searchQuery || '')
+  }, [searchQuery])
+  
   // Local search state (results and UI state)
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -779,6 +793,10 @@ export function UnifiedLeftPane({
 
   // Modify the existing search handler to support both search types
   const handleSearchInputChange = useCallback((value: string) => {
+    // Update the fast local state so characters appear immediately.
+    setSearchInputValue(value)
+
+    // Persist to URL state (debounced inside updateSearch).
     updateSearch(value)
     
     // Clear previous search highlights when query is empty
@@ -1002,11 +1020,11 @@ export function UnifiedLeftPane({
             <input
               ref={searchInputRef}
               type="text"
-              value={searchQuery || ''}
+              value={searchInputValue}
               onChange={(e) => handleSearchInputChange(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && searchQuery?.trim()) {
-                  submitSearch(searchQuery)
+                if (e.key === 'Enter' && searchInputValue.trim()) {
+                  submitSearch(searchInputValue)
                 }
               }}
               placeholder="Search document..."
@@ -1017,7 +1035,7 @@ export function UnifiedLeftPane({
               weight="bold" 
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
             />
-            {searchQuery && (
+            {searchInputValue && (
               <button
                 onClick={() => {
                   // Cancel any pending search
@@ -1025,6 +1043,7 @@ export function UnifiedLeftPane({
                     clearTimeout(searchTimeoutRef.current)
                     searchTimeoutRef.current = null
                   }
+                  setSearchInputValue('')
                   updateSearch('')
                   setSearchResults([])
                   setIsSearching(false)
@@ -1079,13 +1098,13 @@ export function UnifiedLeftPane({
             <CircleNotch className="animate-spin text-gray-400 mb-2" size={24} weight="bold" />
             <div className="text-sm text-gray-500">Searching...</div>
           </div>
-        ) : searchQuery?.trim() && searchResults.length === 0 ? (
+        ) : searchInputValue?.trim() && searchResults.length === 0 ? (
           <div className="text-sm text-gray-500 text-center py-8">No results found</div>
         ) : searchResults.length > 0 ? (
           <div>
             <div className="flex items-center justify-between mb-3">
               <div className="text-sm text-gray-600">
-                {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found for &quot;{searchQuery}&quot;
+                {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found for &quot;{searchInputValue}&quot;
               </div>
             </div>
             
@@ -1115,14 +1134,14 @@ export function UnifiedLeftPane({
                     <div className="space-y-2">
                       {result.contexts.map((context, index) => {
                         // Generate tooltip content showing full paragraph with highlighted match
-                        const tooltipContent = generateTooltipContent(result.fullText, searchQuery, 500, caseSensitive)
+                        const tooltipContent = generateTooltipContent(result.fullText, searchInputValue, 500, caseSensitive)
                         
                         return (
                           <TooltipOrPopover 
                             key={index}
                             content={
                               <div className="text-xs text-gray-700 leading-relaxed">
-                                <HighlightedSearchText text={tooltipContent} query={searchQuery} caseSensitive={caseSensitive} />
+                                <HighlightedSearchText text={tooltipContent} query={searchInputValue} caseSensitive={caseSensitive} />
                               </div>
                             }
                             side="right"
@@ -1132,7 +1151,7 @@ export function UnifiedLeftPane({
                             contentClassName="max-w-md text-left bg-white border border-gray-200 rounded-lg shadow-lg p-4"
                           >
                             <div className="pl-3 border-l-2 border-orange-200 bg-orange-50 py-2 px-3 rounded-r cursor-help hover:bg-orange-100 transition-colors duration-150">
-                              <HighlightedSearchText text={context.text} query={searchQuery} caseSensitive={caseSensitive} />
+                              <HighlightedSearchText text={context.text} query={searchInputValue} caseSensitive={caseSensitive} />
                             </div>
                           </TooltipOrPopover>
                         )
@@ -1146,7 +1165,7 @@ export function UnifiedLeftPane({
         ) : null}
         </div>
       </div>
-    ), [searchQuery, isSearching, searchResults, showAdvancedOptions, caseSensitive, handleSearchInputChange, actions, sortedSearchResults])
+    ), [searchInputValue, isSearching, searchResults, showAdvancedOptions, caseSensitive, handleSearchInputChange, actions, sortedSearchResults])
 
 
   return (
