@@ -65,11 +65,11 @@ try {
   
   return 0;
 } catch (error) {
-  throw new UsageError(`Fastmod failed: ${error.message}`);
+  throw new UsageError(`sd failed: ${error.message}`);
 }
 ```
 
-See `docs/reference/FASTMOD_FIND_REPLACE.md` for complete usage guide.
+See `docs/reference/SD_FIND_REPLACE.md` for complete sd usage guide.
 
 ## Setting Up Clipanion Scripts
 

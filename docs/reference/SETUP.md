@@ -6,12 +6,12 @@
 - npm or yarn
 - Anthropic API key
 - Supabase CLI (install with `npm install -g supabase`)
-- Fastmod (for codebase refactoring): `brew install fastmod` or `cargo install fastmod`
+- sd (for codebase refactoring): `brew install sd` or `cargo install sd`
 
 ## See also
 
 - `docs/reference/SETUP_SECRETS_AND_ENVIRONMENT_VARIABLES.md` - Environment variable security and production configuration
-- `docs/reference/FASTMOD_FIND_REPLACE.md` - Fastmod usage guide for codebase refactoring
+- `docs/reference/SD_FIND_REPLACE.md` - sd usage guide for codebase refactoring
 
 
 ## GitHub repo
