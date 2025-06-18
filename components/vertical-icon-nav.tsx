@@ -6,7 +6,7 @@
 
 import { 
   Article, ListBullets, ChatCircle, 
-  BookOpen, MagnifyingGlass, SidebarSimple, Terminal, HighlighterCircle, Tag
+  BookOpen, MagnifyingGlass, SidebarSimple, Terminal, HighlighterCircle, Tag, TwitterLogo
 } from '@phosphor-icons/react'
 import type { IconProps } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
@@ -16,7 +16,7 @@ import { useState, useEffect } from 'react'
 
 // Navigation item definition
 interface NavigationItem {
-  id: 'original' | 'ai-generated' | 'summary' | 'chat' | 'glossary' | 'search' | 'highlights' | 'metadata'
+  id: 'original' | 'ai-generated' | 'summary' | 'chat' | 'glossary' | 'search' | 'highlights' | 'tweet-thread' | 'metadata'
   label: string
   icon: React.ComponentType<IconProps>
   tooltip: {
@@ -98,6 +98,15 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
     tooltip: {
       title: 'Highlights',
       description: 'Create and manage persistent highlights based on criteria'
+    }
+  },
+  {
+    id: 'tweet-thread',
+    label: 'Tweet Thread',
+    icon: TwitterLogo,
+    tooltip: {
+      title: 'Tweet Thread',
+      description: 'Convert document to Twitter thread format for social sharing'
     }
   },
   {

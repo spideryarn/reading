@@ -255,6 +255,12 @@ function ResizableDocumentLayoutInner({
 
   // Handle icon navigation tab clicks - expand left pane and switch to tab
   const handleIconNavTabClick = useCallback((tabId: string) => {
+    // Special handling for tweet-thread: open in new window
+    if (tabId === 'tweet-thread') {
+      window.open(`/read/${slug}/tweets`, '_blank', 'noopener,noreferrer')
+      return
+    }
+    
     // First expand the left pane if it's collapsed
     if (isLeftPaneCollapsed) {
       if (leftPanelRef.current) {
@@ -272,7 +278,7 @@ function ResizableDocumentLayoutInner({
     
     // Then switch to the selected tab using context action
     navigateToTab(tabId as any)
-  }, [isLeftPaneCollapsed, savedLeftPaneSize, navigateToTab])
+  }, [isLeftPaneCollapsed, savedLeftPaneSize, navigateToTab, slug])
 
   // Handle document scroll to detect current heading
   const handleDocumentScroll = useCallback(() => {
