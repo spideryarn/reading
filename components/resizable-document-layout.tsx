@@ -85,6 +85,13 @@ interface ResizableDocumentLayoutProps {
   glossaryGenerated?: boolean
   ownerEmail?: string
   isPublic?: boolean | null
+  slug: string
+  storagePath: string | null
+  originalFileType?: string | null
+  uploadMetadata?: {
+    content_size_kb?: number
+    [key: string]: any
+  } | null
 }
 
 // Inner component that uses the document communication context
@@ -116,7 +123,11 @@ function ResizableDocumentLayoutInner({
   summaryGenerated = false,
   glossaryGenerated = false,
   ownerEmail,
-  isPublic = false
+  isPublic = false,
+  slug,
+  storagePath,
+  originalFileType,
+  uploadMetadata
 }: ResizableDocumentLayoutProps) {
   const { actions, state } = useDocumentCommunication()
   const navigateToTab = useNavigateToTab()
@@ -405,6 +416,10 @@ function ResizableDocumentLayoutInner({
               glossaryGenerated={glossaryGenerated}
               {...(ownerEmail ? { ownerEmail } : {})}
               isPublic={isPublic}
+              slug={slug}
+              storagePath={storagePath}
+              originalFileType={originalFileType}
+              uploadMetadata={uploadMetadata}
             />
             </div>
           </div>

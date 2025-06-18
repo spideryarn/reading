@@ -5,7 +5,8 @@ import {
   FileText, Clock, Calendar, Hash, 
   ChartBar, Robot, ListBullets, BookOpen,
   CircleNotch, CheckCircle, XCircle,
-  GraduationCap, LockSimple, User, PencilSimple
+  GraduationCap, LockSimple, User, PencilSimple,
+  File, FilePdf, ArrowSquareOut, Download
 } from '@phosphor-icons/react'
 import { formatDistanceToNow } from 'date-fns'
 import type { DocumentElement } from '@/lib/types/document'
@@ -31,6 +32,15 @@ interface MetadataPanelProps {
   // Privacy and document ID for editing
   isPublic?: boolean | null
   documentId: string
+  // Document access props for View Original functionality
+  slug: string
+  storagePath: string | null
+  originalFileType?: string | null
+  // Upload metadata for file size info
+  uploadMetadata?: {
+    content_size_kb?: number
+    [key: string]: any
+  } | null
 }
 
 export function MetadataPanel({
@@ -44,7 +54,11 @@ export function MetadataPanel({
   summaryGenerated = false,
   ownerEmail,
   isPublic = false,
-  documentId
+  documentId,
+  slug,
+  storagePath,
+  originalFileType,
+  uploadMetadata
 }: MetadataPanelProps) {
   // Calculate document statistics
   const documentStats = useMemo(() => {
@@ -106,13 +120,46 @@ export function MetadataPanel({
     }
   }, [documentCreatedAt])
   
-  // Determine file type from source URL or default
-  const fileType = useMemo(() => {
-    if (!documentSourceUrl) return 'Document'
-    if (documentSourceUrl.endsWith('.pdf')) return 'PDF Document'
-    if (documentSourceUrl.startsWith('http')) return 'Web Page'
-    return 'Document'
+  // Extract file size from upload metadata 
+  const fileSize = useMemo(() => {
+    if (uploadMetadata?.content_size_kb) {
+      const sizeKB = uploadMetadata.content_size_kb
+      if (sizeKB < 1024) {
+        return `${sizeKB} KB`
+      } else {
+        return `${(sizeKB / 1024).toFixed(1)} MB`
+      }
+    }
+    return null
+  }, [uploadMetadata])
+  
+  // Determine if document title should be a hyperlink
+  const titleHref = useMemo(() => {
+    // Only make title a hyperlink if document was extracted from a URL
+    return documentSourceUrl?.startsWith('http') ? documentSourceUrl : null
   }, [documentSourceUrl])
+  
+  // Determine if upload timestamp should be a download link
+  const uploadHref = useMemo(() => {
+    // Only make upload timestamp a download link if we have an original file
+    return storagePath ? `/api/read/${slug}/download` : null
+  }, [storagePath, slug])
+  
+  // Determine file type from source URL, storage path, or original file type
+  const fileType = useMemo(() => {
+    // For uploaded files (with storage path), use original file type
+    if (storagePath && originalFileType) {
+      if (originalFileType === 'application/pdf') return 'PDF Document'
+      if (originalFileType === 'text/html') return 'HTML Document'
+      return 'Document'
+    }
+    // For URL-extracted documents
+    if (documentSourceUrl) {
+      if (documentSourceUrl.endsWith('.pdf')) return 'PDF Document'
+      if (documentSourceUrl.startsWith('http')) return 'Web Page'
+    }
+    return 'Document'
+  }, [documentSourceUrl, storagePath, originalFileType])
   
   // Processing status helper
   const getStatusIcon = (isGenerated: boolean, isLoading: boolean = false) => {
@@ -321,11 +368,21 @@ export function MetadataPanel({
                           </div>
                         ) : (
                           <>
-                            <div 
-                              className="font-semibold text-slate-900 text-sm leading-relaxed flex-1 cursor-pointer hover:text-blue-700 transition-colors"
-                              onClick={startEditingTitle}
-                            >
-                              {currentTitle}
+                            <div className="font-semibold text-slate-900 text-sm leading-relaxed flex-1">
+                              {titleHref ? (
+                                <a 
+                                  href={titleHref}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:text-blue-700 hover:underline transition-colors inline-flex items-center gap-1"
+                                  title={`View original source: ${titleHref}`}
+                                >
+                                  {currentTitle}
+                                  <ArrowSquareOut size={12} weight="bold" className="text-blue-500" />
+                                </a>
+                              ) : (
+                                currentTitle
+                              )}
                             </div>
                             <button
                               onClick={startEditingTitle}
@@ -350,16 +407,38 @@ export function MetadataPanel({
                       <Calendar size={18} weight="bold" className="text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Uploaded</div>
-                      <div className="font-semibold text-slate-900 text-sm" title={formattedDate.absolute}>
-                        {formattedDate.relative}
+                      <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Added</div>
+                      <div className="space-y-1">
+                        {uploadHref ? (
+                          <a 
+                            href={uploadHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-semibold text-blue-600 hover:text-blue-700 text-sm border-b border-dotted border-blue-400 hover:border-blue-600 transition-colors inline-flex items-center gap-1"
+                            title={`Download Spideryarn's backup of original file • ${formattedDate.absolute}`}
+                          >
+                            {formattedDate.relative}
+                            <Download size={12} weight="bold" className="text-blue-500" />
+                          </a>
+                        ) : (
+                          <div 
+                            className="font-semibold text-slate-900 text-sm border-b border-dotted border-gray-400 cursor-help inline-block" 
+                            title={formattedDate.absolute}
+                          >
+                            {formattedDate.relative}
+                          </div>
+                        )}
+                        {fileSize && (
+                          <div className="text-xs text-slate-600">
+                            {fileSize}
+                          </div>
+                        )}
                       </div>
-                      <div className="text-xs text-slate-500 mt-1">{formattedDate.absolute}</div>
                     </div>
                   </div>
                 </div>
                 
-                {documentSourceUrl && (
+                {(documentSourceUrl || storagePath) && (
                   <div className="p-4 hover:bg-slate-50/50 transition-colors">
                     <div className="flex items-start gap-4">
                       <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center flex-shrink-0">
@@ -368,19 +447,23 @@ export function MetadataPanel({
                       <div className="flex-1 min-w-0">
                         <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Source</div>
                         <div className="font-semibold text-slate-900 text-sm break-all">
-                          {fileType}
+                          {documentSourceUrl?.startsWith('http') ? (
+                            <>
+                              {fileType} <a 
+                                href={documentSourceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-700 hover:underline transition-colors inline-flex items-center gap-1"
+                                title={`View original source: ${documentSourceUrl}`}
+                              >
+                                extracted
+                                <ArrowSquareOut size={12} weight="bold" className="text-blue-500" />
+                              </a>
+                            </>
+                          ) : (
+                            <>{fileType} uploaded</>
+                          )}
                         </div>
-                        {documentSourceUrl.startsWith('http') && (
-                          <a 
-                            href={documentSourceUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline transition-colors"
-                          >
-                            View original
-                            <Hash size={12} weight="bold" />
-                          </a>
-                        )}
                       </div>
                     </div>
                   </div>

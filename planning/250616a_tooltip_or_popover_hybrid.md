@@ -102,6 +102,10 @@
   - [x] Update expand/collapse tooltips (lines 99-114)
   - [x] Simple content migration with dynamic content support
 - [x] Run linter checks (passed with no new issues)
+- [ ] Migrate MetadataPanel upload date tooltip
+  - [ ] Convert basic tooltip in `components/tools/MetadataPanel.tsx` (line 369) to TooltipOrPopover
+  - [ ] Remove manual styling (dotted underline, title attribute) since TooltipOrPopover handles this
+  - [ ] Simple content: exact datetime info from formattedDate.absolute
 - [ ] Commit changes
 
 ### Stage: Low Priority Migrations [PARALLELIZABLE]

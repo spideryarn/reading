@@ -108,6 +108,13 @@ interface UnifiedLeftPaneProps {
   glossaryGenerated?: boolean
   ownerEmail?: string
   isPublic?: boolean | null
+  slug: string
+  storagePath: string | null
+  originalFileType?: string | null
+  uploadMetadata?: {
+    content_size_kb?: number
+    [key: string]: any
+  } | null
 }
 
 // Get icon component for entity type
@@ -414,7 +421,11 @@ export function UnifiedLeftPane({
   summaryGenerated = false,
   glossaryGenerated = false,
   ownerEmail,
-  isPublic
+  isPublic,
+  slug,
+  storagePath,
+  originalFileType,
+  uploadMetadata
 }: UnifiedLeftPaneProps) {
   const { actions, state } = useDocumentCommunication()
   
@@ -860,8 +871,12 @@ export function UnifiedLeftPane({
       ownerEmail={ownerEmail}
       isPublic={isPublic}
       documentId={documentId}
+      slug={slug}
+      storagePath={storagePath}
+      originalFileType={originalFileType}
+      uploadMetadata={uploadMetadata}
     />
-  ), [documentTitle, documentCreatedAt, documentSourceUrl, elements, showGlossary, glossaryEntities.length, isLoadingGlossary, aiHeadingsGenerated, summaryGenerated, ownerEmail, isPublic, documentId])
+  ), [documentTitle, documentCreatedAt, documentSourceUrl, elements, showGlossary, glossaryEntities.length, isLoadingGlossary, aiHeadingsGenerated, summaryGenerated, ownerEmail, isPublic, documentId, slug, storagePath, originalFileType, uploadMetadata])
 
   const renderGlossaryTab = useCallback(() => {
     if (!showGlossary) {

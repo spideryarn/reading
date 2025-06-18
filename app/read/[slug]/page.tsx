@@ -61,6 +61,7 @@ export default async function DocumentPage({ params }: PageProps) {
         slug={slug}
         storagePath={doc.storage_path}
         originalFileType={doc.original_file_type}
+        uploadMetadata={doc.upload_metadata}
         documentCreatedAt={doc.created_at}
         documentSourceUrl={doc.source_url}
         aiHeadingsGenerated={enhancementFlags.aiHeadingsGenerated}

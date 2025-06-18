@@ -39,6 +39,7 @@ interface DocumentPageClientProps {
   slug: string
   storagePath: string | null
   originalFileType: string | null
+  uploadMetadata?: any
   documentCreatedAt: string
   documentSourceUrl?: string | null
   aiHeadingsGenerated?: boolean
@@ -56,6 +57,7 @@ export default function DocumentPageClient({
   slug,
   storagePath,
   originalFileType,
+  uploadMetadata,
   documentCreatedAt,
   documentSourceUrl,
   aiHeadingsGenerated = false,
@@ -312,6 +314,10 @@ export default function DocumentPageClient({
         glossaryGenerated={glossaryGenerated}
         {...(ownerEmail ? { ownerEmail } : {})}
         isPublic={isPublic}
+        slug={slug}
+        storagePath={storagePath}
+        originalFileType={originalFileType}
+        uploadMetadata={uploadMetadata}
       />
       </div>
     </div>
