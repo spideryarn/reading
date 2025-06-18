@@ -100,36 +100,33 @@ export const MODEL_TIERS = {
 
 **Purpose**: Set the default model for the application
 
-**Supported Formats:**
-1. **Tier Key**: `LLM_MODEL=anthropic-cheap`
-2. **Model String**: `LLM_MODEL=anthropic:claude-3-5-haiku:20241022`
+**Supported Format:**
+- **Model String**: `LLM_MODEL=provider:model:version[:thinking]`
 
 **Examples:**
 ```bash
-# Using tier key (recommended for convenience)
-LLM_MODEL=anthropic-cheap
-
-# Using direct model string (recommended for precision)
+# Anthropic models
+LLM_MODEL=anthropic:claude-3-5-haiku:20241022
 LLM_MODEL=anthropic:claude-sonnet-4:20250514:thinking
 
-# Using Google models
+# Google models
 LLM_MODEL=google:gemini-2.0-flash:latest
+LLM_MODEL=google:gemini-2.5-pro:latest
 ```
 
-**Resolution Order:**
-1. Check if value is a tier key in `MODEL_TIERS`
-2. If tier key found, resolve to model string
-3. If not tier key, validate as model string directly
-4. If validation fails, throw error
+**Validation:**
+1. Parse model string format using `parseModelString()`
+2. Validate against available models in `MODEL_DEFINITIONS`
+3. If validation fails, throw descriptive error
 
-**Fallback**: Defaults to `anthropic-balanced` if not set
+**Fallback**: Defaults to `anthropic:claude-sonnet-4:20250514` if not set
 
 ### Development vs Production
 
 **Development** (`.env.local`):
 ```bash
 # Use cheaper models for development
-LLM_MODEL=anthropic-cheap
+LLM_MODEL=anthropic:claude-3-5-haiku:20241022
 # or
 LLM_MODEL=google:gemini-2.0-flash:latest
 ```
@@ -137,9 +134,9 @@ LLM_MODEL=google:gemini-2.0-flash:latest
 **Production** (deployed environment):
 ```bash
 # Use balanced models for production
-LLM_MODEL=anthropic-balanced
-# or
 LLM_MODEL=anthropic:claude-sonnet-4:20250514
+# or
+LLM_MODEL=google:gemini-2.5-pro:latest
 ```
 
 ## API Usage Patterns

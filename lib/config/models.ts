@@ -159,20 +159,6 @@ export const MODEL_DEFINITIONS: Record<string, ModelConfig> = {
   */
 }
 
-// Model tier aliases for easier configuration
-export const MODEL_TIERS = {
-  // Anthropic tiers
-  'anthropic-cheap': 'anthropic:claude-3-5-haiku:20241022',
-  'anthropic-balanced': 'anthropic:claude-sonnet-4:20250514',
-  'anthropic-balanced-thinking': 'anthropic:claude-sonnet-4:20250514:thinking',
-  'anthropic-expensive': 'anthropic:claude-opus-4:20250514',
-  // Google tiers
-  'google-cheap': 'google:gemini-2.0-flash:latest',
-  'google-balanced': 'google:gemini-2.5-flash:latest',
-  'google-expensive': 'google:gemini-2.5-pro:latest',
-} as const
-
-export type ModelTierKey = keyof typeof MODEL_TIERS
 
 // Parse model string into components
 export interface ParsedModelString {
@@ -230,14 +216,6 @@ export function getModelConfig(modelString: string): ModelConfig {
   return config
 }
 
-// Get model string from tier key (for backwards compatibility during transition)
-export function getModelStringFromTier(tierKey: ModelTierKey): string {
-  const modelString = MODEL_TIERS[tierKey]
-  if (!modelString) {
-    throw new Error(`Unknown tier key: ${tierKey}. Available tiers: ${Object.keys(MODEL_TIERS).join(', ')}`)
-  }
-  return modelString
-}
 
 // Validate model string format
 export function validateModelString(modelString: string): boolean {

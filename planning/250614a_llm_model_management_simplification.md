@@ -501,14 +501,19 @@ Ensure the system is fully migrated and stable.
 - [ ] Update error handling for model-related operations
 - [ ] Performance testing to confirm improvements
 
-### Stage 15: Deprecate Tier Key System
+### Stage 15: Deprecate Tier Key System ✅ COMPLETED
 Remove tier key backwards compatibility for simplicity.
 
-- [ ] Remove `PROVIDER_TIER_MODELS` from `lib/config.ts`
-- [ ] Remove tier key support from `getModelForAICall()`
-- [ ] Update environment variable validation to only accept model strings
-- [ ] Remove tier key examples from documentation
-- [ ] Update error messages to suggest model string format
+- [x] Remove `PROVIDER_TIER_MODELS` from `lib/config.ts`
+- [x] Remove tier key support from `getModelForAICall()`
+- [x] Update environment variable validation to only accept model strings
+- [x] Remove tier key examples from documentation
+- [x] Update error messages to suggest model string format
+- [x] Remove `MODEL_TIERS` and `ModelTierKey` from `lib/config/models.ts`
+- [x] Update `lib/services/llm-provider.ts` to use model strings only
+- [x] Update `lib/prompts/types.ts` to remove tier key parameters
+- [x] Update documentation in `MODEL_STRING_CONFIGURATION.md` and `CLAUDE.md`
+- [x] Verify build and lint pass successfully
 
 ### Stage 16: Implement Strict Model String Validation
 Add app-level validation that fails early and clearly.
