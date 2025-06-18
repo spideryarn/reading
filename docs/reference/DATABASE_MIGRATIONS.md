@@ -92,6 +92,26 @@ CREATE INDEX idx_user_preferences_user_id ON user_preferences(user_id);
 - Do not try and apply to production, only operate in dev
 - **When in doubt, ask first** - if you're unsure whether an operation requires permission, always ask the user
 
+## ⚠️ CRITICAL: RLS Policy Considerations
+
+Before creating ANY new table or modifying existing tables:
+1. **STOP and discuss RLS requirements with the user** - Who should access this data?
+2. Consider access patterns: owners only, admins, public access, anonymous access
+3. Plan RLS policies BEFORE writing the migration
+4. Include RLS policies in the same migration as table creation
+5. Test policies with real RLS testing framework (`lib/testing/rls-database-test-utils.ts`)
+6. Document the security model in `docs/reference/DATABASE_SECURITY.md`
+
+**RLS Checklist for New Tables:**
+- [ ] Enable RLS: `ALTER TABLE table_name ENABLE ROW LEVEL SECURITY;`
+- [ ] Define policies for SELECT, INSERT, UPDATE, DELETE operations
+- [ ] Include admin bypass in policies where appropriate
+- [ ] Add indexes for columns used in RLS policy conditions
+- [ ] Write comprehensive RLS tests
+- [ ] Update security documentation
+
+See `planning/250618a_database_rls_security_comprehensive_review.md` for detailed RLS implementation patterns.
+
 
 ## TypeScript Type Generation
 
