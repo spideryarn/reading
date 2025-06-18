@@ -94,13 +94,13 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/UPLOAD.md` - Comprehensive document upload and import system reference covering all ingestion methods ⭐ **Essential for content import**
 - `docs/reference/HTML_CONTENT_PROCESSING_OVERVIEW.md` - Complete HTML content processing pipeline including extraction, sanitisation, and quality assurance ⭐ **Essential for web content**
 - `docs/reference/PDF_TO_HTML_CONVERSION_OVERVIEW.md` - PDF processing and HTML conversion overview
-- `docs/reference/OPTIMAL_TEXT_FORMATTING.md` - Text formatting standards and typography
+- `docs/reference/RESEARCH_ON_OPTIMAL_TEXT_FORMATTING.md` - Text formatting standards and typography
 
 ### Strategic Vision & Business
 - `docs/reference/VISION.md` - Comprehensive product vision including target users, business model, competitive positioning ⭐ **Important**
 - `docs/reference/PROJECT_STATUS.md` - Current development state showing implemented and planned features
 - `docs/reference/MARKETING_BRANDING.md` - Marketing strategy, branding guidelines, and positioning
-- `docs/reference/RESEARCH_POTENTIAL_LIBRARY_CHANGES_GOTCHAS.md` - Research notes on potential library changes and considerations
+- `docs/instructions/RESEARCH_POTENTIAL_LIBRARY_CHANGES_GOTCHAS.md` - Research notes on potential library changes and considerations
 
 ### Project Management & Meta
 - `docs/reference/OBSOLETE_ALTERNATIVE_VERSION.md` - Documentation of deprecated Python version for reference

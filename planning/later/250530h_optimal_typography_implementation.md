@@ -2,13 +2,13 @@
 
 ## Goal
 
-Implement the most critical typography recommendations from `docs/OPTIMAL_TEXT_FORMATTING.md` to enhance reading comprehension and comfort for academic documents in Spideryarn Reading. The goal is to establish research-backed text formatting as a competitive advantage for academic reading, prioritising comprehension over scanning speed.
+Implement the most critical typography recommendations from `docs/RESEARCH_ON_OPTIMAL_TEXT_FORMATTING.md` to enhance reading comprehension and comfort for academic documents in Spideryarn Reading. The goal is to establish research-backed text formatting as a competitive advantage for academic reading, prioritising comprehension over scanning speed.
 
 **Target outcome**: Users experience demonstrably better reading comfort and comprehension when reading complex academic papers, policy documents, and philosophy articles through Spideryarn compared to standard web reading experiences.
 
 ## Context
 
-Based on comprehensive research synthesis documented in `docs/OPTIMAL_TEXT_FORMATTING.md`, we have concrete recommendations for:
+Based on comprehensive research synthesis documented in `docs/RESEARCH_ON_OPTIMAL_TEXT_FORMATTING.md`, we have concrete recommendations for:
 - Line length: 60-65 characters optimal for academic comprehension
 - Typography: Georgia font at 17px for optimal screen reading
 - Line spacing: 1.4× ratio for academic content  
@@ -19,7 +19,7 @@ Current state: Spideryarn uses basic web typography without research-based optim
 
 ## References
 
-- `docs/OPTIMAL_TEXT_FORMATTING.md` - Complete research synthesis with implementation details
+- `docs/RESEARCH_ON_OPTIMAL_TEXT_FORMATTING.md` - Complete research synthesis with implementation details
 - `docs/STYLING_OVERVIEW.md` - Current CSS and visual styling configuration  
 - `app/globals.css` - Current CSS implementation that will be enhanced
 - `components/document-viewer.tsx` - Main document rendering component requiring typography updates
@@ -48,7 +48,7 @@ Current state: Spideryarn uses basic web typography without research-based optim
   - [ ] Identify components that need typography updates
 
 - [ ] Implement research-backed CSS typography system
-  - [ ] Create CSS custom properties for typography scale following the complete system in OPTIMAL_TEXT_FORMATTING.md
+  - [ ] Create CSS custom properties for typography scale following the complete system in RESEARCH_ON_OPTIMAL_TEXT_FORMATTING.md
   - [ ] Set Georgia as primary font with proper fallback stack
   - [ ] Implement 17px base font size with responsive scaling
   - [ ] Set 1.4 line-height for academic content
@@ -231,7 +231,7 @@ Current state: Spideryarn uses basic web typography without research-based optim
   - [ ] Document measurable improvements in reading comfort
 
 - [ ] Update evergreen documentation
-  - [ ] Update `docs/OPTIMAL_TEXT_FORMATTING.md` with implementation status
+  - [ ] Update `docs/RESEARCH_ON_OPTIMAL_TEXT_FORMATTING.md` with implementation status
   - [ ] Add implementation learnings and edge cases discovered
   - [ ] Update `docs/STYLING_OVERVIEW.md` with complete typography system documentation
 
