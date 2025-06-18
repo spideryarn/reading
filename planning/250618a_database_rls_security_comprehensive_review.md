@@ -103,12 +103,12 @@ Recent security review revealed significant gaps in RLS implementation:
   - ✅ Environment-aware with graceful local dev handling
   - ✅ Proper ownership validation through document UUID in path
   - ✅ Comprehensive documentation in `DATABASE_SUPABASE_STORAGE_REFERENCE.md`
-- [ ] **TODO**: Update storage policies to respect public documents (Phase 2)
+- [x] **COMPLETED**: Updated storage policies for public documents in `20250618000004_update_storage_rls_public_documents.sql`
   - Add policy for anonymous users to view files for public documents
   - Follow same pattern as document visibility inheritance
 
 ### Stage: Implement AI Calls RLS Policies
-- [ ] Create migration to add/update `ai_calls` RLS policies:
+- [x] ✅ ALREADY CORRECT - No migration needed, policy already implements requirements:
   ```sql
   -- Users can only see their own AI calls
   CREATE POLICY "Users can access own AI calls" ON ai_calls
@@ -123,7 +123,8 @@ Recent security review revealed significant gaps in RLS implementation:
 - [ ] Run linter and build checks
 
 ### Stage: Implement Profiles RLS Policies
-- [ ] Create migration for profiles RLS:
+- [x] Created migration `20250618000001_update_profiles_rls_admin_access.sql`
+- [x] Fixed recursion issue with `20250618000005_fix_profiles_admin_recursion.sql`:
   ```sql
   -- Users can only see their own profile
   CREATE POLICY "Users can access own profile" ON profiles
@@ -137,7 +138,7 @@ Recent security review revealed significant gaps in RLS implementation:
 - [ ] Verify admin override works correctly
 
 ### Stage: Implement Document Enhancements RLS Policies
-- [ ] Create migration for document_enhancements RLS:
+- [x] Create migration for document_enhancements RLS:
   ```sql
   -- Inherit document visibility
   CREATE POLICY "Access based on document visibility" ON document_enhancements
@@ -160,7 +161,8 @@ Recent security review revealed significant gaps in RLS implementation:
   - Admin access (all documents)
 
 ### Stage: Secure Chat Threads and Messages
-- [ ] Update chat_threads RLS to require authentication:
+- [x] ✅ ALREADY CORRECT - Policies already restrict to authenticated users
+- [x] Created migration `20250618000003_ensure_chat_authenticated_only.sql` to document:
   ```sql
   -- No anonymous access to chat
   CREATE POLICY "Authenticated users only" ON chat_threads
@@ -176,7 +178,7 @@ Recent security review revealed significant gaps in RLS implementation:
 - [ ] Test chat access patterns thoroughly
 
 ### Stage: Handle Document Visibility Changes (Public/Private Transitions)
-- [ ] **Current State**: RLS policies are ownership-only, don't check `is_public`
+- [x] **COMPLETED**: Updated documents and enhancements policies in migration `20250618000002_update_document_enhancements_public_access.sql`
   - Documents table only checks ownership
   - No anonymous access policies exist
   - Public documents aren't actually accessible to public
@@ -205,7 +207,7 @@ Recent security review revealed significant gaps in RLS implementation:
 - [ ] Reference this planning document as example
 
 ### Stage: Comprehensive RLS Testing
-- [ ] Extend existing RLS tests to cover all new policies
+- [x] Extended existing RLS tests to cover all new policies
 - [ ] Add specific test scenarios:
   - Public document access patterns
   - Enhancement visibility inheritance
