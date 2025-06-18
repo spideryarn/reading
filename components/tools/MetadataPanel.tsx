@@ -60,8 +60,14 @@ export function MetadataPanel({
   originalFileType,
   uploadMetadata
 }: MetadataPanelProps) {
-  // Calculate document statistics
-  const documentStats = useMemo(() => {
+  // Calculate document statistics (client-only to prevent hydration issues)
+  const [documentStats, setDocumentStats] = useState({
+    wordCount: 0,
+    readingTime: 0,
+    fullText: ''
+  })
+  
+  useEffect(() => {
     let totalWords = 0
     let fullText = ''
     
@@ -77,11 +83,11 @@ export function MetadataPanel({
     // Calculate reading time (225 words per minute)
     const readingTimeMinutes = Math.ceil(totalWords / 225)
     
-    return {
+    setDocumentStats({
       wordCount: totalWords,
       readingTime: readingTimeMinutes,
       fullText: fullText.trim()
-    }
+    })
   }, [elements])
   
   // Calculate readability metrics
@@ -172,13 +178,21 @@ export function MetadataPanel({
     return <XCircle size={16} weight="bold" className="text-slate-400" />
   }
   
-  // Get enhanced color class for readability score
+  // Get enhanced color class for readability score (0-100 scale)
   const getReadabilityColor = (score: number): string => {
     if (score >= 80) return 'bg-emerald-50 text-emerald-700 border-emerald-200 ring-1 ring-emerald-100'
     if (score >= 60) return 'bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-blue-100'
     if (score >= 50) return 'bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-amber-100'
     if (score >= 30) return 'bg-orange-50 text-orange-700 border-orange-200 ring-1 ring-orange-100'
     return 'bg-red-50 text-red-700 border-red-200 ring-1 ring-red-100'
+  }
+  
+  // Get color class for grade level (academic context)
+  const getGradeLevelColor = (gradeLevel: number): string => {
+    if (gradeLevel <= 8) return 'bg-emerald-50 text-emerald-700 border-emerald-200 ring-1 ring-emerald-100'  // Elementary/Middle school
+    if (gradeLevel <= 12) return 'bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-blue-100'  // High school
+    if (gradeLevel <= 16) return 'bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-amber-100'  // College/University
+    return 'bg-orange-50 text-orange-700 border-orange-200 ring-1 ring-orange-100'  // Graduate level
   }
   
   // Handle privacy toggle with optimistic updates
@@ -588,47 +602,59 @@ export function MetadataPanel({
                 <div className="w-1 h-4 bg-gradient-to-b from-slate-400 to-slate-500 rounded-full"></div>
                 Reading Difficulty
               </h3>
-              <div className="space-y-4">
-                {/* Flesch Reading Ease */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 hover:shadow-md transition-all duration-200">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center">
-                        <GraduationCap size={18} weight="bold" className="text-white" />
-                      </div>
-                      <span className="text-sm font-semibold text-slate-700">Reading Ease Score</span>
-                    </div>
-                    <span className={`px-3 py-1.5 rounded-full text-sm font-bold ${getReadabilityColor(readabilityMetrics.fleschReadingEase.score)}`}>
-                      {readabilityMetrics.fleschReadingEase.score}
-                    </span>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="text-sm font-semibold text-slate-900">
-                      {readabilityMetrics.fleschReadingEase.interpretation.difficulty}
-                    </div>
-                    <div className="text-sm text-slate-600 leading-relaxed">
-                      {readabilityMetrics.fleschReadingEase.interpretation.description}
-                    </div>
-                    <div className="text-xs text-slate-500 italic bg-slate-50 px-3 py-2 rounded-lg">
-                      Similar to: {readabilityMetrics.fleschReadingEase.interpretation.comparison}
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Flesch-Kincaid Grade Level */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 hover:shadow-md transition-all duration-200">
-                  <div className="flex items-center gap-3 mb-4">
+              
+              {/* Flesch-Kincaid Grade Level */}
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 hover:shadow-md transition-all duration-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center">
                       <GraduationCap size={18} weight="bold" className="text-white" />
                     </div>
-                    <span className="text-sm font-semibold text-slate-700">Grade Level</span>
+                    <span 
+                      className="text-sm font-semibold text-slate-700 border-b border-dotted border-slate-400 cursor-help" 
+                      title="Flesch-Kincaid Grade Level: Estimates the US education grade needed to understand this text. Based on sentence length and syllable count. Developed for the US Navy in 1975, widely used in academic publishing."
+                    >
+                      Grade Level
+                    </span>
                   </div>
-                  <div className="space-y-2">
-                    <div className="text-lg font-bold text-slate-900">
-                      {readabilityMetrics.fleschKincaidGradeLevel.interpretation}
-                    </div>
-                    <div className="text-sm text-slate-600 leading-relaxed bg-slate-50 px-3 py-2 rounded-lg">
+                  <span className={`px-3 py-1.5 rounded-full text-sm font-bold border ${getGradeLevelColor(readabilityMetrics.fleschKincaidGradeLevel.score)}`}>
+                    {readabilityMetrics.fleschKincaidGradeLevel.interpretation}
+                  </span>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="text-sm text-slate-600 leading-relaxed">
+                    <span 
+                      className="border-b border-dotted border-slate-400 cursor-help"
+                      title="This indicates the minimum education level typically needed for good comprehension. For academic content, Grade 12-16 is often appropriate for the intended expert audience."
+                    >
                       Education level needed to understand this document
+                    </span>
+                  </div>
+                  
+                  {/* Academic Context Information */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <div className="text-xs font-medium text-blue-800 mb-1">For Academic Content</div>
+                    <div className="text-xs text-blue-700 leading-relaxed">
+                      <span 
+                        className="border-b border-dotted border-blue-500 cursor-help"
+                        title="Academic research shows journal editors and researchers typically work with Grade 12-16 level content. Higher grades may indicate appropriate technical complexity rather than poor readability."
+                      >
+                        Grade 12-16 is typical for scholarly articles and technical documents
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Important Limitations */}
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <div className="text-xs font-medium text-amber-800 mb-1">Important Limitations</div>
+                    <div className="text-xs text-amber-700 leading-relaxed">
+                      <span 
+                        className="border-b border-dotted border-amber-600 cursor-help"
+                        title="Research shows readability formulas can vary by 5-6 grade levels on the same text. They only consider sentence length and syllable count, ignoring context, jargon, and reader expertise. Use as a rough guideline, not a definitive measure."
+                      >
+                        This is an estimate only. Formulas ignore context, specialized terminology, and reader expertise.
+                      </span>
                     </div>
                   </div>
                 </div>
