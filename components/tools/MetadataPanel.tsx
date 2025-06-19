@@ -11,7 +11,6 @@ import {
 import { formatDistanceToNow } from 'date-fns'
 import type { DocumentElement } from '@/lib/types/document'
 import { extractCleanText } from '@/lib/utils/html-text-extraction'
-import { calculateReadabilityMetrics } from '@/lib/utils/readability-metrics'
 import { createClient } from '@/lib/supabase/client'
 import { Input } from '@/components/ui/input'
 import { sanitizeDocumentTitle, validateDocumentTitle, MAX_TITLE_LENGTH } from '@/lib/utils/document-title'
@@ -90,13 +89,56 @@ export function MetadataPanel({
     })
   }, [elements])
   
-  // Calculate readability metrics
-  const readabilityMetrics = useMemo(() => {
-    if (documentStats.fullText.length === 0) {
-      return null
+  // Reading difficulty state
+  const [readingDifficulty, setReadingDifficulty] = useState<{
+    level: string
+    confidence: string
+    factors: string[]
+    method: 'llm' | 'smog'
+  } | null>(null)
+  const [isLoadingDifficulty, setIsLoadingDifficulty] = useState(false)
+  const [difficultyError, setDifficultyError] = useState<string | null>(null)
+  
+  // Assess reading difficulty on component mount
+  useEffect(() => {
+    const assessReadingDifficulty = async () => {
+      if (!documentStats.fullText || documentStats.fullText.length < 50) {
+        return
+      }
+      
+      setIsLoadingDifficulty(true)
+      setDifficultyError(null)
+      
+      try {
+        const response = await fetch('/api/reading-difficulty', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            content: documentStats.fullText,
+            documentId: documentId
+          })
+        })
+        
+        if (!response.ok) {
+          throw new Error('Failed to assess reading difficulty')
+        }
+        
+        const data = await response.json()
+        setReadingDifficulty(data)
+      } catch (error) {
+        console.error('Reading difficulty assessment failed:', error)
+        setDifficultyError('Unable to assess reading difficulty')
+      } finally {
+        setIsLoadingDifficulty(false)
+      }
     }
-    return calculateReadabilityMetrics(documentStats.fullText)
-  }, [documentStats.fullText])
+    
+    if (documentStats.fullText) {
+      assessReadingDifficulty()
+    }
+  }, [documentStats.fullText, documentId])
   
   // Privacy toggle state
   const [currentIsPublic, setCurrentIsPublic] = useState(isPublic ?? false)
@@ -187,12 +229,36 @@ export function MetadataPanel({
     return 'bg-red-50 text-red-700 border-red-200 ring-1 ring-red-100'
   }
   
-  // Get color class for grade level (academic context)
-  const getGradeLevelColor = (gradeLevel: number): string => {
-    if (gradeLevel <= 8) return 'bg-emerald-50 text-emerald-700 border-emerald-200 ring-1 ring-emerald-100'  // Elementary/Middle school
-    if (gradeLevel <= 12) return 'bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-blue-100'  // High school
-    if (gradeLevel <= 16) return 'bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-amber-100'  // College/University
-    return 'bg-orange-50 text-orange-700 border-orange-200 ring-1 ring-orange-100'  // Graduate level
+  // Get color class for academic difficulty level
+  const getAcademicLevelColor = (level: string): string => {
+    switch (level) {
+      case 'High school or below':
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200 ring-1 ring-emerald-100'
+      case 'Undergraduate':
+        return 'bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-blue-100'
+      case 'Masters/PhD':
+        return 'bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-amber-100'
+      case 'Post-doctoral/expert':
+        return 'bg-orange-50 text-orange-700 border-orange-200 ring-1 ring-orange-100'
+      default:
+        return 'bg-slate-50 text-slate-700 border-slate-200 ring-1 ring-slate-100'
+    }
+  }
+  
+  // Get description for academic difficulty level
+  const getAcademicLevelDescription = (level: string): string => {
+    switch (level) {
+      case 'High school or below':
+        return 'Accessible to high school students with basic academic literacy'
+      case 'Undergraduate':
+        return 'Appropriate for university students in their field of study'
+      case 'Masters/PhD':
+        return 'Requires graduate-level expertise and substantial background knowledge'
+      case 'Post-doctoral/expert':
+        return 'Demands expert-level domain knowledge and research experience'
+      default:
+        return 'Assessment unavailable'
+    }
   }
   
   // Handle privacy toggle with optimistic updates
@@ -596,71 +662,105 @@ export function MetadataPanel({
           </section>
           
           {/* Reading Difficulty Section */}
-          {readabilityMetrics && (
-            <section>
-              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <div className="w-1 h-4 bg-gradient-to-b from-slate-400 to-slate-500 rounded-full"></div>
-                Reading Difficulty
-              </h3>
-              
-              {/* Flesch-Kincaid Grade Level */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 hover:shadow-md transition-all duration-200">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center">
-                      <GraduationCap size={18} weight="bold" className="text-white" />
-                    </div>
-                    <span 
-                      className="text-sm font-semibold text-slate-700 border-b border-dotted border-slate-400 cursor-help" 
-                      title="Flesch-Kincaid Grade Level: Estimates the US education grade needed to understand this text. Based on sentence length and syllable count. Developed for the US Navy in 1975, widely used in academic publishing."
-                    >
-                      Grade Level
-                    </span>
-                  </div>
-                  <span className={`px-3 py-1.5 rounded-full text-sm font-bold border ${getGradeLevelColor(readabilityMetrics.fleschKincaidGradeLevel.score)}`}>
-                    {readabilityMetrics.fleschKincaidGradeLevel.interpretation}
-                  </span>
+          <section>
+            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <div className="w-1 h-4 bg-gradient-to-b from-slate-400 to-slate-500 rounded-full"></div>
+              Reading Difficulty
+            </h3>
+            
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 hover:shadow-md transition-all duration-200">
+              {isLoadingDifficulty ? (
+                <div className="flex items-center justify-center py-8">
+                  <CircleNotch size={24} weight="bold" className="animate-spin text-amber-600" />
+                  <span className="ml-3 text-sm text-slate-600">Analyzing document difficulty...</span>
                 </div>
-                
-                <div className="space-y-3">
-                  <div className="text-sm text-slate-600 leading-relaxed">
-                    <span 
-                      className="border-b border-dotted border-slate-400 cursor-help"
-                      title="This indicates the minimum education level typically needed for good comprehension. For academic content, Grade 12-16 is often appropriate for the intended expert audience."
-                    >
-                      Education level needed to understand this document
+              ) : difficultyError ? (
+                <div className="flex items-center justify-center py-8">
+                  <XCircle size={20} weight="bold" className="text-red-500" />
+                  <span className="ml-3 text-sm text-red-600">{difficultyError}</span>
+                </div>
+              ) : readingDifficulty ? (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center">
+                        <GraduationCap size={18} weight="bold" className="text-white" />
+                      </div>
+                      <span 
+                        className="text-sm font-semibold text-slate-700 border-b border-dotted border-slate-400 cursor-help" 
+                        title="Academic difficulty level assessed using AI analysis of vocabulary, concepts, and technical complexity. More comprehensive than traditional readability formulas."
+                      >
+                        Academic Level
+                      </span>
+                    </div>
+                    <span className={`px-3 py-1.5 rounded-full text-sm font-bold border ${getAcademicLevelColor(readingDifficulty.level)}`}>
+                      {readingDifficulty.level}
                     </span>
                   </div>
                   
-                  {/* Academic Context Information */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <div className="text-xs font-medium text-blue-800 mb-1">For Academic Content</div>
-                    <div className="text-xs text-blue-700 leading-relaxed">
+                  <div className="space-y-3">
+                    <div className="text-sm text-slate-600 leading-relaxed">
                       <span 
-                        className="border-b border-dotted border-blue-500 cursor-help"
-                        title="Academic research shows journal editors and researchers typically work with Grade 12-16 level content. Higher grades may indicate appropriate technical complexity rather than poor readability."
+                        className="border-b border-dotted border-slate-400 cursor-help"
+                        title={getAcademicLevelDescription(readingDifficulty.level)}
                       >
-                        Grade 12-16 is typical for scholarly articles and technical documents
+                        {getAcademicLevelDescription(readingDifficulty.level)}
                       </span>
                     </div>
-                  </div>
-                  
-                  {/* Important Limitations */}
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                    <div className="text-xs font-medium text-amber-800 mb-1">Important Limitations</div>
-                    <div className="text-xs text-amber-700 leading-relaxed">
+                    
+                    {/* Assessment Details */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <div className="text-xs font-medium text-blue-800 mb-1">Assessment Factors</div>
+                      <div className="text-xs text-blue-700 leading-relaxed space-y-1">
+                        {readingDifficulty.factors.map((factor, index) => (
+                          <div key={index} className="flex items-start gap-2">
+                            <span className="text-blue-500 mt-0.5">•</span>
+                            <span>{factor}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Confidence and Method */}
+                    <div className="flex items-center justify-between text-xs text-slate-500">
                       <span 
-                        className="border-b border-dotted border-amber-600 cursor-help"
-                        title="Research shows readability formulas can vary by 5-6 grade levels on the same text. They only consider sentence length and syllable count, ignoring context, jargon, and reader expertise. Use as a rough guideline, not a definitive measure."
+                        className="border-b border-dotted border-slate-400 cursor-help"
+                        title={readingDifficulty.method === 'llm' ? 
+                          'Assessment performed using AI analysis for comprehensive evaluation of text complexity.' :
+                          'Assessment performed using SMOG formula as fallback when AI analysis unavailable.'
+                        }
                       >
-                        This is an estimate only. Formulas ignore context, specialized terminology, and reader expertise.
+                        Method: {readingDifficulty.method === 'llm' ? 'AI Analysis' : 'SMOG Formula'}
+                      </span>
+                      <span 
+                        className="border-b border-dotted border-slate-400 cursor-help"
+                        title={`Confidence level: ${readingDifficulty.confidence}. High confidence indicates clear classification, medium suggests borderline complexity.`}
+                      >
+                        Confidence: {readingDifficulty.confidence}
                       </span>
                     </div>
+                    
+                    {/* International Context */}
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <div className="text-xs font-medium text-green-800 mb-1">International Context</div>
+                      <div className="text-xs text-green-700 leading-relaxed">
+                        <span 
+                          className="border-b border-dotted border-green-600 cursor-help"
+                          title="These academic levels are internationally recognized and map to education systems worldwide, unlike US grade-level scales."
+                        >
+                          Academic levels are applicable globally and suitable for international audiences
+                        </span>
+                      </div>
+                    </div>
                   </div>
+                </>
+              ) : (
+                <div className="flex items-center justify-center py-8">
+                  <span className="text-sm text-slate-600">No difficulty assessment available</span>
                 </div>
-              </div>
-            </section>
-          )}
+              )}
+            </div>
+          </section>
           
           {/* Access & Sharing Section */}
           <section>
