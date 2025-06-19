@@ -4,6 +4,8 @@ The Document Metadata Tab provides comprehensive information about uploaded docu
 
 ## See also
 
+- `docs/reference/RESEARCH_READING_DIFFICULTY_METRICS.md` - Comprehensive research on readability assessment for professional documents
+- `docs/reference/RESEARCH_ON_OPTIMAL_TEXT_FORMATTING.md` - Typography and reading research
 - `components/tools/MetadataPanel.tsx` - Main metadata tab component implementation
 - `lib/utils/readability-metrics.ts` - Readability calculation utilities (Flesch scores)
 - `lib/utils/text-statistics.ts` - Text analysis utilities for word counting
@@ -26,9 +28,10 @@ The Document Metadata Tab provides comprehensive information about uploaded docu
 - **Reading Time**: Research-based estimation (225 WPM baseline)
 
 ### Reading Difficulty Metrics ✅
-- **Flesch Reading Ease Score**: 0-100 scale with colour-coded badges
-- **User-friendly Interpretations**: Difficulty categories and comparison benchmarks
-- **Flesch-Kincaid Grade Level**: Educational level requirements
+- **Flesch-Kincaid Grade Level**: Educational level requirements with comprehensive tooltips
+- **Academic Context Guidelines**: Grade 12-16 typical for scholarly content
+- **Limitation Warnings**: Clear explanations of formula constraints and appropriate usage
+- **Color-coded Display**: Visual indication of complexity level for professional users
 
 ### AI Processing Status ✅
 - **Glossary Generation**: Shows if glossary has been created
