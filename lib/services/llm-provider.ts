@@ -22,10 +22,15 @@ const providers = {
     }
     return googleProvider
   },
+  // OpenAI integration is planned but not yet implemented. Calling this will
+  // throw a descriptive error so it's obvious what went wrong.
+  openai: () => {
+    throw new Error('OpenAI provider integration is not yet implemented')
+  },
 }
 
 // Get the provider instance based on provider name
-export function getProvider(providerName: 'anthropic' | 'google') {
+export function getProvider(providerName: 'anthropic' | 'google' | 'openai') {
   const providerFactory = providers[providerName]
   if (!providerFactory) {
     throw new Error(`Unknown provider: ${providerName}. Supported providers: ${Object.keys(providers).join(', ')}`)
@@ -46,8 +51,19 @@ export function getModel() {
   if (parsedModel.provider === 'anthropic' && parsedModel.thinking) {
     modelOptions.thinking = true
   }
-  
-  return providerInstance(parsedModel.modelName, modelOptions)
+
+  // Some providers (e.g., Anthropic) require the version suffix to be part of the
+  // model identifier (e.g., "claude-3-sonnet-20240229"). Our internal model string
+  // separates these into `modelName` and `version`, so we concatenate them when
+  // calling the provider. For providers that don't need this (or when `version`
+  // is "latest"), we pass the model name unchanged.
+  let providerModelName = parsedModel.modelName
+
+  if (parsedModel.provider === 'anthropic' && parsedModel.version !== 'latest' && !providerModelName.endsWith(parsedModel.version)) {
+    providerModelName = `${providerModelName}-${parsedModel.version}`
+  }
+
+  return providerInstance(providerModelName, modelOptions)
 }
 
 // Helper to get provider and model configuration together

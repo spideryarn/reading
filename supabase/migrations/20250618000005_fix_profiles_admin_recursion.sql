@@ -7,7 +7,7 @@
 
 -- Create a SECURITY DEFINER function that runs with elevated privileges
 -- This avoids the recursion issue by bypassing RLS for the admin check
-CREATE OR REPLACE FUNCTION auth.is_admin()
+CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -26,10 +26,10 @@ END;
 $$;
 
 -- Grant execute permission to authenticated users
-GRANT EXECUTE ON FUNCTION auth.is_admin() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
 
 -- Add comment explaining the function
-COMMENT ON FUNCTION auth.is_admin() IS 
+COMMENT ON FUNCTION public.is_admin() IS 
 'Security definer function to check if current user is admin. Avoids RLS recursion by running with elevated privileges.';
 
 -- =====================================================
@@ -46,7 +46,7 @@ CREATE POLICY "Users can access own profile" ON profiles
     -- Users can access their own profile
     user_id = auth.uid() OR
     -- Admins can access all profiles (using security definer function)
-    auth.is_admin()
+    public.is_admin()
   );
 
 -- =====================================================
@@ -63,21 +63,21 @@ CREATE POLICY "Anyone can view public documents" ON documents
   USING (
     created_by::uuid = auth.uid() OR
     is_public = true OR
-    auth.is_admin()
+    public.is_admin()
   );
 
 CREATE POLICY "Owners and admins can update documents" ON documents
   FOR UPDATE TO authenticated
   USING (
     created_by::uuid = auth.uid() OR
-    auth.is_admin()
+    public.is_admin()
   );
 
 CREATE POLICY "Owners and admins can delete documents" ON documents
   FOR DELETE TO authenticated
   USING (
     created_by::uuid = auth.uid() OR
-    auth.is_admin()
+    public.is_admin()
   );
 
 -- Update document_enhancements policies
@@ -95,7 +95,7 @@ CREATE POLICY "Access based on document visibility" ON document_enhancements
       AND (
         documents.created_by::uuid = auth.uid() OR
         documents.is_public = true OR
-        auth.is_admin()
+        public.is_admin()
       )
     )
   );
@@ -108,7 +108,7 @@ CREATE POLICY "Owners and admins can modify enhancements" ON document_enhancemen
       WHERE documents.id = document_enhancements.document_id
       AND (
         documents.created_by::uuid = auth.uid() OR
-        auth.is_admin()
+        public.is_admin()
       )
     )
   );
@@ -121,7 +121,7 @@ CREATE POLICY "Owners and admins can update enhancements" ON document_enhancemen
       WHERE documents.id = document_enhancements.document_id
       AND (
         documents.created_by::uuid = auth.uid() OR
-        auth.is_admin()
+        public.is_admin()
       )
     )
   );
@@ -134,7 +134,7 @@ CREATE POLICY "Owners and admins can delete enhancements" ON document_enhancemen
       WHERE documents.id = document_enhancements.document_id
       AND (
         documents.created_by::uuid = auth.uid() OR
-        auth.is_admin()
+        public.is_admin()
       )
     )
   );
@@ -155,7 +155,7 @@ CREATE POLICY "Owners and admins can access AI calls" ON ai_calls
         )
       )
     ) OR
-    auth.is_admin()
+    public.is_admin()
   );
 
 -- Update chat policies
@@ -170,7 +170,7 @@ CREATE POLICY "Owners and admins can access chat threads" ON chat_threads
       WHERE documents.id = chat_threads.document_id 
       AND documents.created_by::uuid = auth.uid()
     ) OR
-    auth.is_admin()
+    public.is_admin()
   );
 
 CREATE POLICY "Owners and admins can access chat messages" ON chat_messages
@@ -182,7 +182,7 @@ CREATE POLICY "Owners and admins can access chat messages" ON chat_messages
       WHERE chat_threads.id = chat_messages.thread_id 
       AND documents.created_by::uuid = auth.uid()
     ) OR
-    auth.is_admin()
+    public.is_admin()
   );
 
 -- =====================================================
@@ -193,11 +193,11 @@ CREATE POLICY "Owners and admins can access chat messages" ON chat_messages
 DO $$
 BEGIN
   RAISE NOTICE 'Fixed profiles admin recursion issue at %', NOW();
-  RAISE NOTICE 'Created auth.is_admin() security definer function';
+  RAISE NOTICE 'Created public.is_admin() security definer function';
   RAISE NOTICE 'Updated all RLS policies to use the new function';
   RAISE NOTICE 'Admin access should now work correctly without recursion';
 END $$;
 
 -- Test queries:
--- SELECT auth.is_admin(); -- Should return true/false based on current user
+-- SELECT public.is_admin(); -- Should return true/false based on current user
 -- SELECT * FROM profiles; -- Admin should see all profiles now

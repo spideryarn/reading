@@ -22,13 +22,13 @@ export interface ModelConfig {
 
 // Model definitions indexed by full model string
 export const MODEL_DEFINITIONS: Record<string, ModelConfig> = {
-  // Anthropic models
-  'anthropic:claude-3-5-haiku:20241022': {
+  // Anthropic models (valid as of 2024-03-07 release)
+  'anthropic:claude-3-haiku:20240307': {
     provider: 'anthropic',
-    modelName: 'claude-3-5-haiku',
-    version: '20241022',
+    modelName: 'claude-3-haiku',
+    version: '20240307',
     thinking: false,
-    description: 'Claude 3.5 Haiku - Fast and cost-effective',
+    description: 'Claude 3 Haiku – Fast and cost-effective',
     contextWindow: 200_000,
     outputTokens: 8192,
     pricing: {
@@ -36,12 +36,12 @@ export const MODEL_DEFINITIONS: Record<string, ModelConfig> = {
       outputPer1M: 5.00,
     },
   },
-  'anthropic:claude-sonnet-4:20250514': {
+  'anthropic:claude-3-sonnet:20240229': {
     provider: 'anthropic',
-    modelName: 'claude-sonnet-4',
-    version: '20250514',
+    modelName: 'claude-3-sonnet',
+    version: '20240229',
     thinking: false,
-    description: 'Claude Sonnet 4 - Balanced performance and cost',
+    description: 'Claude 3 Sonnet – Balanced performance and cost',
     contextWindow: 200_000,
     outputTokens: 8192,
     pricing: {
@@ -49,12 +49,12 @@ export const MODEL_DEFINITIONS: Record<string, ModelConfig> = {
       outputPer1M: 15.00,
     },
   },
-  'anthropic:claude-sonnet-4:20250514:thinking': {
+  'anthropic:claude-3-sonnet:20240229:thinking': {
     provider: 'anthropic',
-    modelName: 'claude-sonnet-4',
-    version: '20250514',
+    modelName: 'claude-3-sonnet',
+    version: '20240229',
     thinking: true,
-    description: 'Claude Sonnet 4 with Thinking Mode - Advanced reasoning',
+    description: 'Claude 3 Sonnet with Thinking Mode – Advanced reasoning',
     contextWindow: 200_000,
     outputTokens: 8192,
     pricing: {
@@ -62,12 +62,12 @@ export const MODEL_DEFINITIONS: Record<string, ModelConfig> = {
       outputPer1M: 15.00,
     },
   },
-  'anthropic:claude-opus-4:20250514': {
+  'anthropic:claude-3-opus:20240229': {
     provider: 'anthropic',
-    modelName: 'claude-opus-4',
-    version: '20250514',
+    modelName: 'claude-3-opus',
+    version: '20240229',
     thinking: false,
-    description: 'Claude Opus 4 - Highest capability',
+    description: 'Claude 3 Opus – Highest capability',
     contextWindow: 200_000,
     outputTokens: 8192,
     pricing: {
@@ -242,4 +242,4 @@ export function getAvailableModels(): Record<string, ModelConfig[]> {
 }
 
 // Default model configuration
-export const DEFAULT_MODEL_STRING = 'anthropic:claude-sonnet-4:20250514'
+export const DEFAULT_MODEL_STRING = 'anthropic:claude-3-haiku:20240307'

@@ -371,6 +371,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: boolean
       }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       reset_current_user_id: {
         Args: Record<PropertyKey, never>
         Returns: undefined

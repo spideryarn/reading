@@ -1,6 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
+// Helper to create a Supabase server client. `cookies()` is asynchronous, so
+// we keep this helper `async` and always `await createClient()` at call-sites.
 export async function createClient() {
   const cookieStore = await cookies()
 
