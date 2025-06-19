@@ -16,6 +16,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Input } from '@/components/ui/input'
 import { sanitizeDocumentTitle, validateDocumentTitle, MAX_TITLE_LENGTH } from '@/lib/utils/document-title'
 import { DeleteDocumentButton } from '@/components/delete-document-button'
+import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 
 interface MetadataPanelProps {
   documentTitle: string
@@ -435,12 +436,13 @@ export function MetadataPanel({
                             <Download size={12} weight="bold" className="text-blue-500" />
                           </a>
                         ) : (
-                          <div 
-                            className="font-semibold text-slate-900 text-sm border-b border-dotted border-gray-400 cursor-help inline-block" 
-                            title={formattedDate.absolute}
+                          <TooltipOrPopover 
+                            content={formattedDate.absolute}
+                            showIndicator={false}
+                            triggerClassName="font-semibold text-slate-900 text-sm inline-block"
                           >
                             {formattedDate.relative}
-                          </div>
+                          </TooltipOrPopover>
                         )}
                         {fileSize && (
                           <div className="text-xs text-slate-600">

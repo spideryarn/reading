@@ -3,7 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { Fragment } from 'react'
-import * as Tooltip from '@radix-ui/react-tooltip'
+import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 
 // Function to parse tweet text and style hashtags with enhanced interactions
 function parseHashtags(text: string) {
@@ -56,31 +56,26 @@ export function TweetCard({ tweet, totalTweets }: TweetCardProps) {
           {/* Thread progress indicator */}
           <div className="flex items-center justify-end mb-2 space-x-2">
             {/* Visual character limit indicator with tooltip */}
-            <Tooltip.Provider>
-              <Tooltip.Root>
-                <Tooltip.Trigger asChild>
-                  <div className="w-12 sm:w-16 h-1 bg-gray-200 rounded-full overflow-hidden cursor-help">
-                    <div 
-                      className={cn(
-                        "h-full transition-all duration-300 rounded-full",
-                        characterCount <= 200 ? "bg-green-400" :
-                        characterCount <= 250 ? "bg-amber-400" : "bg-red-400"
-                      )}
-                      style={{ width: `${Math.min((characterCount / 280) * 100, 100)}%` }}
-                    ></div>
-                  </div>
-                </Tooltip.Trigger>
-                <Tooltip.Portal>
-                  <Tooltip.Content className="bg-gray-900 text-white text-xs px-2 py-1 rounded shadow-lg">
-                    <span className="inline-flex items-center space-x-1">
-                      <span>✏️</span>
-                      <span>{characterCount} / 280 characters</span>
-                    </span>
-                    <Tooltip.Arrow className="fill-gray-900" />
-                  </Tooltip.Content>
-                </Tooltip.Portal>
-              </Tooltip.Root>
-            </Tooltip.Provider>
+            <TooltipOrPopover
+              content={
+                <span className="inline-flex items-center space-x-1">
+                  <span>✏️</span>
+                  <span>{characterCount} / 280 characters</span>
+                </span>
+              }
+              showIndicator={false}
+              triggerClassName="w-12 sm:w-16 h-1 bg-gray-200 rounded-full overflow-hidden cursor-help"
+              contentClassName="bg-gray-900 text-white text-xs px-2 py-1 rounded shadow-lg"
+            >
+              <div 
+                className={cn(
+                  "h-full transition-all duration-300 rounded-full",
+                  characterCount <= 200 ? "bg-green-400" :
+                  characterCount <= 250 ? "bg-amber-400" : "bg-red-400"
+                )}
+                style={{ width: `${Math.min((characterCount / 280) * 100, 100)}%` }}
+              ></div>
+            </TooltipOrPopover>
             
             <div className="text-xs text-gray-400 font-mono bg-gradient-to-r from-gray-50 to-gray-100 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-gray-200 transition-all duration-200 group-hover:from-blue-50 group-hover:to-blue-100 group-hover:border-blue-200 group-hover:text-blue-600">
               <span className="font-semibold">{tweet.number}</span>
