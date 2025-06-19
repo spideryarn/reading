@@ -415,3 +415,80 @@ See [CHATBOT_ASSISTANT_UI_INTEGRATION.md](CHATBOT_ASSISTANT_UI_INTEGRATION.md) f
 - **Real-time Interactions**: @assistant-ui/react integration
 
 All new **single-use AI features** should use the Nunjucks + Zod template system. **Interactive chat features** should follow the pattern established in `/api/chat` and `usePersistentChat`.
+
+## Advanced Patterns and Best Practices
+
+### JSON Output with Type Safety
+
+**Best Practice**: For structured data analysis, prefer JSON output and validate with Zod schemas. This provides stronger guarantees than text parsing.
+
+```nunjucks
+{# Example: reading-difficulty.njk #}
+Provide your assessment as a JSON object with this exact structure:
+
+<json_schema>
+{
+  "rationale": "This document requires graduate-level expertise due to dense theoretical terminology, complex methodological discussions, and assumptions of substantial background knowledge in the field. The writing style employs sophisticated academic discourse with technical jargon that would be inaccessible to undergraduate readers.",
+  "level": "High school or below" | "Undergraduate" | "Masters/PhD" | "Post-doctoral/expert",
+  "confidence": 0.95
+}
+</json_schema>
+
+Requirements:
+- `rationale`: evidence-based explanation of your classification, perhaps with examples
+- `level`: Exact string match from the four categories above  
+- `confidence`: Number between 0 and 1 representing your confidence in the assessment
+
+Be precise and evidence-based in your classification. Output only the JSON object, no additional text.
+```
+
+**Corresponding TypeScript Schema:**
+
+```typescript
+// Expected output format validation
+export const readingDifficultyOutputSchema = z.object({
+  rationale: z.string().min(10, 'Rationale must be at least 10 characters'),
+  level: z.enum(['High school or below', 'Undergraduate', 'Masters/PhD', 'Post-doctoral/expert']),
+  confidence: z.number().min(0).max(1)
+})
+
+// Utility function to parse LLM response
+export function parseReadingDifficultyResponse(response: string): ReadingDifficultyOutput {
+  try {
+    // Extract JSON from response (in case there's markdown formatting)
+    const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/) || response.match(/(\{[\s\S]*\})/)
+    const jsonString = jsonMatch ? jsonMatch[1] : response.trim()
+    
+    const parsed = JSON.parse(jsonString)
+    return readingDifficultyOutputSchema.parse(parsed)
+  } catch (error) {
+    throw new Error(`Failed to parse reading difficulty response: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
+}
+```
+
+### Key Benefits of JSON Output:
+
+1. **Type Safety**: Full TypeScript types from Zod schema validation
+2. **Robust Parsing**: Handles both plain JSON and markdown-wrapped responses  
+3. **Clear Structure**: Forces LLM to provide well-structured output
+4. **Error Handling**: Detailed error messages when parsing fails
+5. **Confidence Scores**: Use numeric confidence (0-1) rather than categorical levels
+
+### When to Use JSON vs Text Output:
+
+- **Use JSON**: For structured analysis, classification, extraction tasks
+- **Use Text**: For creative writing, long-form summaries, human-readable content
+
+### Confidence Scoring Best Practices:
+
+- **Use numeric scores (0-1)** instead of categorical levels like "High/Medium/Low"
+- **Put rationale first** in output structure to influence the LLM's reasoning process
+- **Allow flexible reasoning** in rationale fields - use single strings rather than structured lists to give LLMs freedom in how they present evidence and examples
+
+### Template Design for Structured Output:
+
+1. **Show exact JSON structure** in the prompt with realistic examples
+2. **Specify field requirements** clearly (types, ranges, validation rules)
+3. **Request "output only JSON"** to avoid extraneous text that complicates parsing
+4. **Use TypeScript union types** in JSON examples to show valid enum values

@@ -1,0 +1,39 @@
+You are an expert in academic text analysis and reading difficulty assessment. Analyze the following document for reading difficulty level.
+
+<document>
+{{ content }}
+</document>
+
+Consider these factors in your analysis:
+- Vocabulary sophistication and domain-specific terminology density
+- Conceptual complexity and assumed background knowledge required
+- Sentence structure complexity and argumentation depth  
+- Technical detail level and methodological requirements
+- Target audience expertise expectations
+
+Classify this document into ONE of these four academic difficulty levels:
+
+**High school or below**: Accessible to high school students with basic academic literacy. Clear explanations, common vocabulary, straightforward concepts.
+
+**Undergraduate**: Appropriate for university students in their field of study. Some specialized terminology, moderate conceptual complexity, assumes basic academic preparation.
+
+**Masters/PhD**: Requires graduate-level expertise in the domain. Dense terminology, complex arguments, assumes substantial background knowledge and research experience.
+
+**Post-doctoral/expert**: Demands expert-level domain knowledge. Cutting-edge concepts, highly specialized vocabulary, assumes deep professional expertise and current research familiarity.
+
+Provide your assessment as a JSON object with this exact structure:
+
+```json
+{
+  "rationale": "This document requires graduate-level expertise due to dense theoretical terminology, complex methodological discussions, and assumptions of substantial background knowledge in the field. The writing style employs sophisticated academic discourse with technical jargon that would be inaccessible to undergraduate readers.",
+  "level": "High school or below" | "Undergraduate" | "Masters/PhD" | "Post-doctoral/expert",
+  "confidence": 0.95
+}
+```
+
+Requirements:
+- `rationale`: Single string providing evidence-based explanation of your classification
+- `level`: Exact string match from the four categories above
+- `confidence`: Number between 0 and 1 representing your confidence in the assessment
+
+Be precise and evidence-based in your classification. Output only the JSON object, no additional text.
