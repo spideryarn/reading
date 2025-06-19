@@ -8,7 +8,7 @@ import type {
 } from '@/lib/types/database'
 import type { PromptUsage } from '@/lib/prompts/types'
 import type { JsonObject } from '@/lib/types/json'
-import { getModelConfig } from '@/lib/config/models'
+import { getModelConfig, validateModelStringStrict } from '@/lib/config/models'
 import { parseModelString } from '@/lib/config/models'
 
 export interface AiCallMetrics {
@@ -122,8 +122,11 @@ export class AiCallService {
    * Start tracking an AI call using model string
    */
   async startCallWithModelString(options: CreateAiCallWithModelStringOptions): Promise<AiCall> {
-    // Validate model string
-    parseModelString(options.modelString)
+    // Strict validation of model string
+    const validation = validateModelStringStrict(options.modelString)
+    if (!validation.valid) {
+      throw new Error(`Invalid model string for AI call: ${validation.error}`)
+    }
 
     const aiCall: Omit<AiCallInsert, 'id' | 'created_at' | 'updated_at'> = {
       document_id: options.documentId || null,
@@ -430,8 +433,11 @@ export class AiCallService {
    * Simple create method for completed AI calls using model string
    */
   async createWithModelString(options: SimpleCreateAiCallWithModelStringOptions): Promise<AiCall> {
-    // Validate model string
-    parseModelString(options.modelString)
+    // Strict validation of model string
+    const validation = validateModelStringStrict(options.modelString)
+    if (!validation.valid) {
+      throw new Error(`Invalid model string for AI call: ${validation.error}`)
+    }
 
     const aiCall: Omit<AiCallInsert, 'id' | 'created_at' | 'updated_at'> = {
       document_id: null, // No document association for this simple method

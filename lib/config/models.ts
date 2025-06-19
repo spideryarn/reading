@@ -217,7 +217,7 @@ export function getModelConfig(modelString: string): ModelConfig {
 }
 
 
-// Validate model string format
+// Validate model string format - basic syntax validation
 export function validateModelString(modelString: string): boolean {
   try {
     parseModelString(modelString)
@@ -225,6 +225,99 @@ export function validateModelString(modelString: string): boolean {
   } catch {
     return false
   }
+}
+
+// Strict validation that checks format AND availability in configuration
+export function validateModelStringStrict(modelString: string): { valid: boolean; error?: string } {
+  // First check for basic format issues
+  if (!modelString || typeof modelString !== 'string') {
+    return {
+      valid: false,
+      error: 'Model string must be a non-empty string'
+    }
+  }
+
+  // Check for whitespace or case issues
+  const trimmed = modelString.trim()
+  if (trimmed !== modelString) {
+    return {
+      valid: false,
+      error: `Model string contains leading/trailing whitespace: "${modelString}". Use "${trimmed}" instead.`
+    }
+  }
+
+  // Check basic format
+  let parsed: ParsedModelString
+  try {
+    parsed = parseModelString(modelString)
+  } catch (error) {
+    return {
+      valid: false,
+      error: error instanceof Error ? error.message : 'Invalid model string format'
+    }
+  }
+
+  // Validate provider-specific naming patterns first
+  if (parsed.provider === 'anthropic') {
+    if (!parsed.modelName.startsWith('claude-')) {
+      return {
+        valid: false,
+        error: `Anthropic model names must start with "claude-". Got: "${parsed.modelName}"`
+      }
+    }
+    
+    // Check version format for Anthropic (should be date like 20241022)
+    if (!/^\d{8}$/.test(parsed.version)) {
+      return {
+        valid: false,
+        error: `Anthropic model versions should be 8-digit dates (YYYYMMDD). Got: "${parsed.version}"`
+      }
+    }
+  } else if (parsed.provider === 'google') {
+    if (!parsed.modelName.startsWith('gemini-')) {
+      return {
+        valid: false,
+        error: `Google model names must start with "gemini-". Got: "${parsed.modelName}"`
+      }
+    }
+    
+    // Google models typically use "latest" or specific versions
+    if (!['latest', 'preview'].includes(parsed.version) && !/^\d+\.\d+$/.test(parsed.version)) {
+      return {
+        valid: false,
+        error: `Google model versions should be "latest", "preview", or version numbers (e.g., "1.0"). Got: "${parsed.version}"`
+      }
+    }
+  } else if (parsed.provider === 'openai') {
+    // OpenAI models typically don't have specific prefixes
+    if (!['latest', 'preview'].includes(parsed.version) && !/^\d{4}-\d{2}-\d{2}$/.test(parsed.version)) {
+      return {
+        valid: false,
+        error: `OpenAI model versions should be "latest", "preview", or date format (YYYY-MM-DD). Got: "${parsed.version}"`
+      }
+    }
+  }
+
+  // Check if model is available in configuration
+  if (!MODEL_DEFINITIONS[modelString]) {
+    const availableModels = Object.keys(MODEL_DEFINITIONS)
+    const sameProviderModels = availableModels.filter(m => m.startsWith(parsed.provider + ':'))
+    
+    let suggestion = ''
+    if (sameProviderModels.length > 0) {
+      suggestion = ` Available ${parsed.provider} models: ${sameProviderModels.join(', ')}`
+    } else {
+      const allProviders = [...new Set(availableModels.map(m => m.split(':')[0]))]
+      suggestion = ` Available providers: ${allProviders.join(', ')}`
+    }
+
+    return {
+      valid: false,
+      error: `Model "${modelString}" is not available in configuration.${suggestion}`
+    }
+  }
+
+  return { valid: true }
 }
 
 // Get all available models grouped by provider

@@ -515,17 +515,28 @@ Remove tier key backwards compatibility for simplicity.
 - [x] Update documentation in `LLM_MODEL_CONFIGURATION.md` and `CLAUDE.md`
 - [x] Verify build and lint pass successfully
 
-### Stage 16: Implement Strict Model String Validation
+### Stage 16: Implement Strict Model String Validation ✅ COMPLETED
 Add app-level validation that fails early and clearly.
 
-- [ ] Create `validateModelString()` function in `lib/config/models.ts`
-  - [ ] Validate against available models in configuration
-  - [ ] Check for whitespace and case inconsistencies
-  - [ ] Enforce provider-specific naming patterns
-- [ ] Add validation to environment variable parsing
-- [ ] Add validation to API request handling
-- [ ] Add validation to database service methods
-- [ ] Update error messages to be descriptive and actionable
+- [x] Create `validateModelStringStrict()` function in `lib/config/models.ts`
+  - [x] Validate against available models in configuration
+  - [x] Check for whitespace and case inconsistencies
+  - [x] Enforce provider-specific naming patterns (claude-, gemini- prefixes)
+  - [x] Validate version formats (8-digit dates for Anthropic, latest/version for Google)
+  - [x] Provide helpful error messages with suggestions
+- [x] Add validation to environment variable parsing
+  - [x] `getModelStringFromEnvironment()` validates LLM_MODEL on startup
+  - [x] Descriptive errors with current value and expected format
+- [x] Add validation to API request handling
+  - [x] `validateApiModelString()` helper for API routes
+  - [x] Comprehensive type checking and format validation
+- [x] Add validation to database service methods
+  - [x] `startCallWithModelString()` validates before database insertion
+  - [x] `createWithModelString()` validates for simple AI call creation
+- [x] Update error messages to be descriptive and actionable
+  - [x] Provider-specific naming pattern errors
+  - [x] Available model suggestions when model not found
+  - [x] Whitespace and format guidance
 
 ### Stage 17: Add Price-per-Token Persistence
 Store pricing snapshots for accurate historical cost reporting.
