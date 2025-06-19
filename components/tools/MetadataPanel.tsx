@@ -94,7 +94,6 @@ export function MetadataPanel({
     level: string
     confidence: string
     factors: string[]
-    method: 'llm' | 'smog'
   } | null>(null)
   const [isLoadingDifficulty, setIsLoadingDifficulty] = useState(false)
   const [difficultyError, setDifficultyError] = useState<string | null>(null)
@@ -721,16 +720,13 @@ export function MetadataPanel({
                       </div>
                     </div>
                     
-                    {/* Confidence and Method */}
+                    {/* Confidence */}
                     <div className="flex items-center justify-between text-xs text-slate-500">
                       <span 
                         className="border-b border-dotted border-slate-400 cursor-help"
-                        title={readingDifficulty.method === 'llm' ? 
-                          'Assessment performed using AI analysis for comprehensive evaluation of text complexity.' :
-                          'Assessment performed using SMOG formula as fallback when AI analysis unavailable.'
-                        }
+                        title="Assessment performed using AI analysis for comprehensive evaluation of text complexity, vocabulary sophistication, and conceptual requirements."
                       >
-                        Method: {readingDifficulty.method === 'llm' ? 'AI Analysis' : 'SMOG Formula'}
+                        Method: AI Analysis
                       </span>
                       <span 
                         className="border-b border-dotted border-slate-400 cursor-help"

@@ -20,7 +20,7 @@ export const readingDifficultyPrompt = loadPromptTemplateFromCaller(
   'reading-difficulty.njk',
   readingDifficultySchema,
   {
-    // Use balanced model for accuracy over speed
+    // Use balanced model for accuracy and reliability
     model: 'anthropic-balanced',
     maxTokens: 500, // Concise output expected
     temperature: 0.1, // Low temperature for consistent classification
@@ -30,13 +30,31 @@ export const readingDifficultyPrompt = loadPromptTemplateFromCaller(
 // Utility function to parse LLM response
 export function parseReadingDifficultyResponse(response: string): ReadingDifficultyOutput {
   try {
-    // Extract JSON from response (in case there's markdown formatting)
-    const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/) || response.match(/(\{[\s\S]*\})/)
-    const jsonString = jsonMatch ? jsonMatch[1] : response.trim()
+    const lines = response.trim().split('\n')
     
-    const parsed = JSON.parse(jsonString)
-    return readingDifficultyOutputSchema.parse(parsed)
+    const levelMatch = lines.find(line => line.startsWith('LEVEL:'))?.split('LEVEL:')[1]?.trim()
+    const confidenceMatch = lines.find(line => line.startsWith('CONFIDENCE:'))?.split('CONFIDENCE:')[1]?.trim()
+    const factorsMatch = lines.find(line => line.startsWith('FACTORS:'))?.split('FACTORS:')[1]?.trim()
+    
+    if (!levelMatch || !confidenceMatch || !factorsMatch) {
+      throw new Error(`Invalid reading difficulty response format. Expected LEVEL, CONFIDENCE, and FACTORS lines. Got: ${response}`)
+    }
+    
+    const factors = factorsMatch.split(';').map(f => f.trim()).filter(f => f.length > 0)
+    
+    if (factors.length < 2) {
+      throw new Error(`Expected at least 2 factors, got ${factors.length}: ${factorsMatch}`)
+    }
+    
+    return readingDifficultyOutputSchema.parse({
+      level: levelMatch,
+      confidence: confidenceMatch,
+      factors
+    })
   } catch (error) {
-    throw new Error(`Failed to parse reading difficulty response: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    if (error instanceof Error) {
+      throw new Error(`Failed to parse reading difficulty response: ${error.message}`)
+    }
+    throw new Error(`Failed to parse reading difficulty response: ${String(error)}`)
   }
 }
