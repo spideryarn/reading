@@ -3,6 +3,7 @@
 import { 
   getModelConfig as getModelConfigByString,
   parseModelString,
+  validateModelStringStrict,
   DEFAULT_MODEL_STRING
 } from './config/models'
 
@@ -29,13 +30,13 @@ export const AI_CONFIG = {
 export function getModelStringFromEnvironment(): string {
   const envModel = process.env.LLM_MODEL || DEFAULT_MODEL_STRING
   
-  // Validate that it's a proper model string
-  try {
-    parseModelString(envModel)
-    return envModel
-  } catch {
-    throw new Error(`Invalid LLM_MODEL: ${envModel}. Must use model string format (provider:model:version[:thinking]). Example: anthropic:claude-3-5-haiku:20241022`)
+  // Use strict validation to ensure model is both valid format and available
+  const validation = validateModelStringStrict(envModel)
+  if (!validation.valid) {
+    throw new Error(`Invalid LLM_MODEL environment variable: ${validation.error}. Current value: "${envModel}"`)
   }
+  
+  return envModel
 }
 
 // Get model configuration from environment
@@ -57,6 +58,28 @@ export function getModelForAICall(): { modelString: string, config: any } {
     const fallbackConfig = getModelConfigByString(fallbackModelString)
     return { modelString: fallbackModelString, config: fallbackConfig }
   }
+}
+
+// Helper function for API routes to validate model strings in request bodies
+export function validateApiModelString(modelString: unknown): { valid: true; modelString: string } | { valid: false; error: string } {
+  if (modelString === null || modelString === undefined) {
+    return { valid: false, error: 'Model string is required' }
+  }
+  
+  if (typeof modelString !== 'string') {
+    return { valid: false, error: `Model string must be a string, got ${typeof modelString}` }
+  }
+  
+  if (modelString === '') {
+    return { valid: false, error: 'Model string is required' }
+  }
+  
+  const validation = validateModelStringStrict(modelString)
+  if (!validation.valid) {
+    return { valid: false, error: `Invalid model string: ${validation.error}` }
+  }
+  
+  return { valid: true, modelString }
 }
 
 // Content summarisation configuration
