@@ -19,7 +19,8 @@
         "db:backup": "./scripts/backup-database.ts",
         "cleanup:test-data": "tsx scripts/cleanup-test-data.ts",
         "import-documents": "dotenv -e .env.local -- npx tsx scripts/import-static-documents.ts",
-        "analyze-fidelity": "dotenv -e .env.local -- npx tsx scripts/analyze-content-fidelity.ts"
+        "analyze-fidelity": "dotenv -e .env.local -- npx tsx scripts/analyze-content-fidelity.ts",
+        "deploy:production": "npm run build && git push origin main"
     },
     "dependencies": {
         "@ai-sdk/anthropic": "^1.2.12",
