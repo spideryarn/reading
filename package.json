@@ -4,6 +4,9 @@
     "private": true,
     "scripts": {
         "dev": "./scripts/dev-with-restart.sh",
+        "dev:daemon": "./scripts/dev-with-restart.sh --daemon",
+        "dev:stop": "./scripts/dev-with-restart.sh --stop", 
+        "dev:status": "./scripts/dev-with-restart.sh --status",
         "dev:safe": "PATH=\"/opt/homebrew/bin:$PATH\" dotenv -e .env.local -- next dev --turbopack > dev.log 2>&1",
         "build": "next build",
         "start": "next start",
