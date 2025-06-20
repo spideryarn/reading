@@ -29,5 +29,42 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    
+    // Test files and directories
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts", 
+    "**/*.spec.tsx",
+    "__tests__/**/*",
+    "__mocks__/**/*",
+    "tests/**/*",
+    "playwright/**/*",
+    "playwright.config.ts",
+    
+    // Development and build artifacts
+    "scripts/**/*",
+    "dev.log",
+    "*.log",
+    "*.tsbuildinfo",
+    "screenshots/**/*",
+    "playwright-report/**/*",
+    
+    // Documentation and planning
+    "docs/**/*",
+    "planning/**/*",
+    "README.md",
+    "CLAUDE.md",
+    
+    // Legacy and backup content
+    "backup/**/*",
+    "obsolete_alternative_version/**/*",
+    "gjdutils/**/*",
+    "static/examples/**/*",
+    
+    // Temporary files
+    "temp-*",
+    "test-*"
+  ]
 }
