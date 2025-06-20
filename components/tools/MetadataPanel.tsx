@@ -6,7 +6,7 @@ import {
   ChartBar, Robot, ListBullets, BookOpen,
   CircleNotch, CheckCircle, XCircle,
   GraduationCap, LockSimple, User, PencilSimple,
-  File, FilePdf, ArrowSquareOut, Download
+  File, FilePdf, ArrowSquareOut, Download, CaretDown
 } from '@phosphor-icons/react'
 import { formatDistanceToNow } from 'date-fns'
 import type { DocumentElement } from '@/lib/types/document'
@@ -98,6 +98,7 @@ export function MetadataPanel({
   } | null>(null)
   const [isLoadingDifficulty, setIsLoadingDifficulty] = useState(false)
   const [difficultyError, setDifficultyError] = useState<string | null>(null)
+  const [showAssessmentFactors, setShowAssessmentFactors] = useState(false)
   
   // Assess reading difficulty on component mount
   useEffect(() => {
@@ -694,32 +695,56 @@ export function MetadataPanel({
                         Academic Level
                       </span>
                     </div>
-                    <span className={`px-3 py-1.5 rounded-full text-sm font-bold border ${getAcademicLevelColor(readingDifficulty.level)}`}>
-                      {readingDifficulty.level}
-                    </span>
+                    <TooltipOrPopover
+                      content={
+                        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                          <div className="text-xs text-gray-700 leading-relaxed">
+                            {getAcademicLevelDescription(readingDifficulty.level)}
+                          </div>
+                        </div>
+                      }
+                      side="left"
+                      align="center"
+                      sideOffset={8}
+                      showIndicator={false}
+                      contentClassName="p-0 bg-transparent border-0 shadow-none"
+                    >
+                      <span className={`px-3 py-1.5 rounded-full text-sm font-bold border ${getAcademicLevelColor(readingDifficulty.level)} cursor-help`}>
+                        <span className="border-b border-dotted border-slate-400">
+                          {readingDifficulty.level}
+                        </span>
+                      </span>
+                    </TooltipOrPopover>
                   </div>
                   
                   <div className="space-y-3">
-                    <div className="text-sm text-slate-600 leading-relaxed">
-                      <span 
-                        className="border-b border-dotted border-slate-400 cursor-help"
-                        title={getAcademicLevelDescription(readingDifficulty.level)}
+                    {/* Assessment Details - Collapsible */}
+                    <div>
+                      <button
+                        onClick={() => setShowAssessmentFactors(!showAssessmentFactors)}
+                        className="flex items-center gap-2 text-xs text-slate-600 hover:text-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded px-1 py-0.5"
                       >
-                        {getAcademicLevelDescription(readingDifficulty.level)}
-                      </span>
-                    </div>
-                    
-                    {/* Assessment Details */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <div className="text-xs font-medium text-blue-800 mb-1">Assessment Factors</div>
-                      <div className="text-xs text-blue-700 leading-relaxed space-y-1">
-                        {readingDifficulty.factors.map((factor, index) => (
-                          <div key={index} className="flex items-start gap-2">
-                            <span className="text-blue-500 mt-0.5">•</span>
-                            <span>{factor}</span>
+                        <CaretDown 
+                          size={12} 
+                          className={`text-slate-400 transition-transform duration-200 ${
+                            showAssessmentFactors ? '' : '-rotate-90'
+                          }`} 
+                        />
+                        <span>Assessment Factors</span>
+                      </button>
+                      
+                      {showAssessmentFactors && (
+                        <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg p-3 animate-in slide-in-from-top-1 duration-200">
+                          <div className="text-xs text-blue-700 leading-relaxed space-y-1">
+                            {readingDifficulty.factors.map((factor, index) => (
+                              <div key={index} className="flex items-start gap-2">
+                                <span className="text-blue-500 mt-0.5">•</span>
+                                <span>{factor}</span>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      )}
                     </div>
                     
                     {/* Confidence */}
@@ -738,18 +763,6 @@ export function MetadataPanel({
                       </span>
                     </div>
                     
-                    {/* International Context */}
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                      <div className="text-xs font-medium text-green-800 mb-1">International Context</div>
-                      <div className="text-xs text-green-700 leading-relaxed">
-                        <span 
-                          className="border-b border-dotted border-green-600 cursor-help"
-                          title="These academic levels are internationally recognized and map to education systems worldwide, unlike US grade-level scales."
-                        >
-                          Academic levels are applicable globally and suitable for international audiences
-                        </span>
-                      </div>
-                    </div>
                   </div>
                 </>
               ) : (
