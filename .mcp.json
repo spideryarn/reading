@@ -1,10 +1,9 @@
 {
     "mcpServers": {
-        "puppeteer": {
+        "Playwright": {
             "command": "npx",
             "args": [
-                "-y",
-                "@modelcontextprotocol/server-puppeteer"
+                "@playwright/mcp@latest"
             ]
         },
         "Supabase_local": {

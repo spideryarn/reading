@@ -9,7 +9,12 @@ Comprehensive guide to tooltip styling patterns and implementations in the Spide
 - `docs/reference/STYLING_COLORS_FONTS.md` - Colour palette and typography system
 - `docs/reference/STYLING_ICONS.md` - Icon usage patterns and conventions
 - `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - shadcn/ui component reference
+- `docs/reference/STYLING_MOBILE_PLATFORM_DETECTION.md` - Touch device detection and responsive patterns
+- `components/ui/tooltip-or-popover.tsx` - Universal touch-friendly tooltip component
+- `lib/hooks/use-can-hover.ts` - Device hover capability detection
+- `lib/hooks/use-long-press.ts` - Touch long-press interaction hook
 - `planning/finished/250526a_ToC_hierarchical_summary_tooltips.md` - Historical decision context for ToC tooltip implementation
+- `planning/250616a_tooltip_or_popover_hybrid.md` - TooltipOrPopover implementation planning and testing
 - `components/table-of-contents-tabs.tsx` - Default tooltip pattern implementation
 - `components/unified-left-pane.tsx` - Search result tooltip implementations
 - `components/heading-tree.tsx` - Hierarchical heading tooltip usage
@@ -18,22 +23,30 @@ Comprehensive guide to tooltip styling patterns and implementations in the Spide
 
 ## Principles, key decisions
 
+- **Universal Device Support**: All tooltips work on both desktop (hover) and touch devices (long-press) via TooltipOrPopover component
 - **Default Style**: ToC-heading summary tooltips define our standard tooltip appearance (light background, nice margins/padding, subtle grey arrow)
-- **Radix UI Foundation**: All tooltips use `@radix-ui/react-tooltip` primitives via shadcn/ui
+- **Radix UI Foundation**: All tooltips use `@radix-ui/react-tooltip` and `@radix-ui/react-popover` primitives via shadcn/ui
 - **Content-First Design**: Our default white theme with clean borders is optimised for readable content
-- **Consistent Visual Language**: Standard light theme for content, primary orange theme for simple interactions
-- **Accessibility First**: Radix UI ensures proper ARIA attributes and keyboard navigation
-- **Performance**: Tooltips are positioned with `z-50` to avoid z-index conflicts
+- **Visual Consistency**: Touch popovers match desktop tooltips exactly for seamless cross-device experience
+- **Progressive Enhancement**: Desktop experience unchanged, touch devices get long-press popover functionality
+- **Accessibility First**: Radix UI ensures proper ARIA attributes, keyboard navigation, and screen reader compatibility
+- **Performance**: Tooltips are positioned with `z-50` to avoid z-index conflicts, with efficient device detection
 
 ## When to Use Which Pattern
 
-**Default Choice**: Use the **Default Clean Theme** for all tooltips. This provides clean, consistent styling and follows shadcn/ui patterns.
+**Default Choice**: Use **TooltipOrPopover** for all tooltips to ensure touch device compatibility. This provides clean, consistent styling and follows universal device support patterns.
 
-**Use Default Clean Theme when:**
-- Any tooltip content (this is the universal choice)
-- Content will provide its own styling if needed
-- Want consistent appearance across the app
-- Following TooltipOrPopover patterns
+**Use TooltipOrPopover when:**
+- Any tooltip content (this is the universal choice for new development)
+- Need touch device support with long-press interaction
+- Want consistent cross-device experience
+- Following modern accessibility patterns
+- Navigation tooltips, content summaries, help text
+
+**Use Direct Tooltip Component when:**
+- Legacy components not yet migrated
+- Specific desktop-only scenarios (rare)
+- Custom tooltip behaviour needed
 
 **Rich Content Override**: 
 - Content itself can include custom styling containers for special cases
@@ -45,9 +58,9 @@ Comprehensive guide to tooltip styling patterns and implementations in the Spide
 
 ## Tooltip Component Architecture
 
-### TooltipOrPopover Component (`components/ui/tooltip-or-popover.tsx`) ✓ RECOMMENDED
+### TooltipOrPopover Component (`components/ui/tooltip-or-popover.tsx`) ✓ **PREFERRED FOR ALL NEW DEVELOPMENT**
 
-**New universal component for touch-friendly tooltips** (replaces direct tooltip usage):
+**Universal component for cross-device tooltips** (replaces direct tooltip usage for touch compatibility):
 
 ```tsx
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
@@ -66,14 +79,17 @@ import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 
 **Key Features:**
 - **Cross-device compatibility**: Tooltip on desktop hover, popover on touch long-press
-- **Visual consistency**: Identical appearance across devices
+- **Visual consistency**: Identical appearance across devices using same Radix styling
 - **Touch accessibility**: 500ms long-press triggers popover on touch devices
-- **Device detection**: Uses robust `(hover: hover)` and `(pointer: fine)` media queries
-- **Discoverability**: Optional faint dotted underline (`showIndicator={true}`)
+- **Device detection**: Uses robust `(hover: hover)` and `(pointer: fine)` media queries via useCanHover hook
+- **Discoverability**: Optional faint dotted underline (`showIndicator={true}`) in Spideryarn orange
+- **Movement cancellation**: Long-press cancelled if user moves >10px (prevents accidental triggers while scrolling)
+- **Context menu prevention**: Blocks OS context menus during long-press interaction
+- **Memory safe**: Automatic timer cleanup on component unmount
 
 ### Base Component (`components/ui/tooltip.tsx`)
 
-The shadcn/ui tooltip component provides the foundation (used internally by TooltipOrPopover):
+The shadcn/ui tooltip component provides the foundation (used internally by TooltipOrPopover for desktop mode):
 
 ```tsx
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
@@ -93,7 +109,7 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 - Typography: `text-xs` with balanced text wrapping
 - Z-index: `z-50` for proper layering
 
-**Note**: The default styling uses shadcn/ui component defaults for clean, minimal appearance. Rich content can override with custom styling as needed.
+**Note**: The default styling uses shadcn/ui component defaults for clean, minimal appearance. Rich content can override with custom styling as needed. For cross-device compatibility, use TooltipOrPopover instead of direct tooltip usage.
 
 ## Styling Patterns
 
@@ -346,6 +362,162 @@ Used for "hover to load" states.
 - **Size**: `12x6` or `size-2.5` (10px)
 - **Positioning**: Automatic via Radix UI
 
+## TooltipOrPopover Usage Guide
+
+### Complete API Reference
+
+```tsx
+interface TooltipOrPopoverProps {
+  children: React.ReactNode          // Trigger element
+  content: React.ReactNode           // Tooltip/popover content
+  side?: 'top' | 'right' | 'bottom' | 'left'  // Positioning
+  align?: 'start' | 'center' | 'end' // Alignment
+  sideOffset?: number                // Distance from trigger (default: 4)
+  showIndicator?: boolean            // Dotted underline hint (default: true)
+  triggerClassName?: string          // CSS classes for trigger wrapper
+  contentClassName?: string          // CSS classes for content container
+}
+```
+
+### Device Detection Behavior
+
+**Desktop (hover-capable devices):**
+- Detected via `(hover: hover)` AND `(pointer: fine)` media queries
+- Renders standard Radix Tooltip with hover activation
+- Focus-based activation also available for keyboard users
+- Instant show/hide on hover/focus changes
+
+**Touch devices:**
+- Detected when hover/fine-pointer capabilities absent
+- Renders Radix Popover with long-press activation
+- 500ms delay before popover shows
+- Movement >10px cancels long-press (prevents accidental triggers while scrolling)
+- Tap outside or scroll away dismisses popover
+
+### Content Styling Patterns
+
+**Option 1: Custom Content Container (Recommended)**
+```tsx
+<TooltipOrPopover
+  content={
+    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-4">
+      <h3 className="font-semibold text-gray-900 mb-2">Title</h3>
+      <p className="text-gray-700 text-sm">Description content</p>
+    </div>
+  }
+  contentClassName="p-0 bg-transparent border-0 shadow-none"
+  showIndicator={false}
+>
+  <Button>Trigger</Button>
+</TooltipOrPopover>
+```
+
+**Option 2: Default Wrapper Styling**
+```tsx
+<TooltipOrPopover content="Simple tooltip text">
+  <Button>Trigger</Button>
+</TooltipOrPopover>
+```
+
+### Navigation Tooltip Pattern
+
+```tsx
+<TooltipOrPopover
+  content={
+    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+      <div className="font-semibold text-gray-900 text-sm mb-1">
+        Summary
+      </div>
+      <div className="text-gray-700 text-sm leading-relaxed mb-2">
+        Read hierarchical summaries at different detail levels
+      </div>
+      <div className="text-xs text-gray-500 font-mono">
+        Press Cmd+B to toggle sidebar
+      </div>
+    </div>
+  }
+  side="right"
+  align="center"
+  sideOffset={8}
+  showIndicator={false}
+  contentClassName="p-0 bg-transparent border-0 shadow-none"
+>
+  <Button aria-label="Summary: Read hierarchical summaries">
+    <BookOpen size={20} />
+  </Button>
+</TooltipOrPopover>
+```
+
+### Search Result Tooltip Pattern
+
+```tsx
+<TooltipOrPopover
+  content={
+    <div className="max-w-md p-4 text-sm bg-white border border-gray-200 rounded-lg shadow-lg">
+      <div className="text-gray-600 leading-relaxed">
+        Full paragraph context containing the search term with proper highlighting...
+      </div>
+    </div>
+  }
+  side="right"
+  sideOffset={8}
+  showIndicator={false}
+  contentClassName="p-0 bg-transparent border-0 shadow-none"
+>
+  <span className="search-result-snippet">Search result...</span>
+</TooltipOrPopover>
+```
+
+### Loading State Integration
+
+```tsx
+const [isLoading, setIsLoading] = useState(false)
+const [content, setContent] = useState('')
+
+const getTooltipContent = () => {
+  if (isLoading) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-4">
+        <div className="flex items-center space-x-3">
+          <CircleNotch size={16} className="animate-spin text-blue-500" />
+          <span className="text-gray-700 font-medium">Loading...</span>
+        </div>
+      </div>
+    )
+  }
+  
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-4">
+      <div className="text-gray-700 text-sm leading-relaxed">{content}</div>
+    </div>
+  )
+}
+
+<TooltipOrPopover
+  content={getTooltipContent()}
+  contentClassName="p-0 bg-transparent border-0 shadow-none"
+  onTrigger={() => setIsLoading(true)}
+>
+  <Button>AI Summary</Button>
+</TooltipOrPopover>
+```
+
+### Implementation Best Practices
+
+**DO:**
+- Use `contentClassName="p-0 bg-transparent border-0 shadow-none"` when content has its own container styling
+- Set `showIndicator={false}` for buttons and interactive elements that already have clear affordances
+- Provide comprehensive `aria-label` attributes for navigation buttons
+- Test on both desktop and touch devices
+- Use consistent content styling patterns across similar tooltip types
+
+**DON'T:**
+- Nest TooltipOrPopover components
+- Use with elements that already have click handlers (may interfere with long-press)
+- Forget to handle loading/error states in dynamic content
+- Override device detection behavior without good reason
+- Use overly complex animations in tooltip content
+
 ## Migration Guide
 
 ### Migrating from Radix Tooltips to TooltipOrPopover
@@ -398,7 +570,29 @@ import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 
 ## Implementation Examples
 
-### Default Content Tooltip (Standard Pattern)
+### Cross-Device Content Tooltip (Recommended Pattern)
+
+```tsx
+import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
+
+<TooltipOrPopover
+  content={
+    <div className="max-w-md p-4 text-sm bg-white border border-gray-200 rounded-lg shadow-lg">
+      <div className="text-xs text-gray-700 leading-relaxed">
+        Content summary or detailed information...
+      </div>
+    </div>
+  }
+  side="right"
+  sideOffset={8}
+  showIndicator={true}
+  contentClassName="p-0 bg-transparent border-0 shadow-none"
+>
+  <button>Table of Contents Heading</button>
+</TooltipOrPopover>
+```
+
+### Legacy Desktop-Only Tooltip (Migration Target)
 
 ```tsx
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -419,7 +613,18 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 </Tooltip>
 ```
 
-### Simple Icon Tooltip
+### Simple Icon Tooltip (Cross-Device)
+
+```tsx
+import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
+import { Info } from '@phosphor-icons/react'
+
+<TooltipOrPopover content="Brief information">
+  <Info size={16} />
+</TooltipOrPopover>
+```
+
+### Legacy Simple Icon Tooltip (Desktop-Only)
 
 ```tsx
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -460,27 +665,33 @@ const getTooltipContent = () => {
 
 ### Built-in Accessibility ✓
 
-Radix UI provides comprehensive accessibility:
+Radix UI provides comprehensive accessibility for both tooltip and popover modes:
 
-- **ARIA attributes**: Automatic `aria-describedby`, `role="tooltip"`
-- **Keyboard navigation**: ESC to close, focus management
-- **Screen reader support**: Proper semantic markup
-- **Delay handling**: Configurable `delayDuration` (default: 0ms)
+- **ARIA attributes**: Automatic `aria-describedby`, `role="tooltip"` (desktop) and `aria-expanded` (touch)
+- **Keyboard navigation**: ESC to close, focus management, Tab navigation through triggers
+- **Screen reader support**: Proper semantic markup and content announcements
+- **Focus management**: Focus remains on trigger, clear focus indicators
+- **Touch accessibility**: 44px minimum touch targets, long-press interaction
+- **Device detection**: Appropriate interaction mode based on device capabilities
 
 ### Custom Accessibility Enhancements
 
 ```tsx
-<TooltipProvider delayDuration={500}>
-  <Tooltip>
-    <TooltipTrigger aria-label="Detailed information">
-      <Info size={16} />
-    </TooltipTrigger>
-    <TooltipContent>
-      Extended tooltip content
-    </TooltipContent>
-  </Tooltip>
-</TooltipProvider>
+<TooltipOrPopover 
+  content="Extended tooltip content"
+  showIndicator={true}
+>
+  <button aria-label="Detailed information">
+    <Info size={16} />
+  </button>
+</TooltipOrPopover>
 ```
+
+**Accessibility Features:**
+- `aria-label` on trigger provides screen reader context
+- `showIndicator={true}` adds visual discoverability hint
+- Built-in focus management for keyboard users
+- Long-press interaction doesn't interfere with assistive technology
 
 ## Performance Considerations
 
@@ -548,19 +759,24 @@ const getCachedContent = (key: string) => {
 ### Planned Enhancements 📋
 
 - **Dark mode support**: Extend default light theme for dark mode variants
-- **Mobile optimization**: Touch-friendly tooltip behaviour
-- **Performance monitoring**: Track tooltip render performance
+- **Enhanced touch feedback**: Visual feedback during long-press delay
+- **Performance monitoring**: Track tooltip render performance across devices
 - **Content size limits**: Automatic truncation for very long content
 - **Theme consistency**: Ensure all tooltips follow default light pattern unless specifically required
+- **Migration completion**: Complete migration of all legacy tooltips to TooltipOrPopover
+- **Glossary tooltip integration**: Migrate complex glossary tooltips to unified system
 
 ### Maintenance Notes
 
-- **Default first**: Use standard light theme (`bg-white border-gray-200 shadow-lg p-4`) unless specific requirements dictate otherwise
+- **TooltipOrPopover first**: Use TooltipOrPopover for all new tooltips to ensure touch device compatibility
+- **Default styling**: Use standard light theme (`bg-white border-gray-200 shadow-lg p-4`) unless specific requirements dictate otherwise
+- **Cross-device testing**: Test on both desktop and touch devices, verify long-press timing
 - Update arrow colours when changing tooltip backgrounds (standard: `fill-gray-200`)
-- Test positioning with different viewport sizes
+- Test positioning with different viewport sizes and orientations
 - Verify accessibility when adding new tooltip patterns
 - Keep animation durations consistent across the application
 - Maintain consistency with ToC tooltip styling as the baseline pattern
+- Monitor performance with multiple tooltips on complex pages
 
 ## Troubleshooting
 
@@ -570,11 +786,18 @@ const getCachedContent = (key: string) => {
 2. **Arrow mismatch**: Update arrow `fill-*` class when changing background
 3. **Content overflow**: Use `max-w-md` or similar constraints
 4. **Animation performance**: Avoid complex animations in tooltip content
-5. **Mobile positioning**: Test tooltip positioning on small screens
+5. **Touch device positioning**: Test popover positioning on small screens and various orientations
+6. **Long-press interference**: Accidental triggers - adjust movement threshold in `use-long-press.ts` if needed
+7. **Hydration warnings**: Use `suppressHydrationWarning` on TooltipOrPopover trigger spans
+8. **Device detection issues**: Verify useCanHover hook behavior on mixed-input devices
 
 ### Debugging Tips
 
-- Use browser dev tools to inspect Radix UI data attributes
+- Use browser dev tools to inspect Radix UI data attributes for both tooltip and popover modes
 - Check for conflicting CSS that might override tooltip styles
-- Verify `TooltipProvider` is properly wrapping tooltip components
+- Verify `TooltipProvider` is properly wrapping tooltip components (auto-handled by TooltipOrPopover)
 - Test keyboard navigation (Tab, ESC) for accessibility compliance
+- Use Chrome DevTools device mode to simulate touch devices
+- Test long-press timing (default 500ms) and movement cancellation (10px threshold)
+- Check console for device detection and hook cleanup warnings
+- Verify visual consistency between desktop tooltip and touch popover modes
