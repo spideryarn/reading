@@ -282,7 +282,7 @@ export default function DocumentPageClient({
         title={currentTitle}
         titleLink={`/read/${slug}`}
         logoLink="/read"
-        actions={<DocumentHeaderActions slug={slug} storagePath={storagePath} originalFileType={originalFileType} />}
+        actions={<DocumentHeaderActions />}
       />
       <div className="flex-1 overflow-hidden">
         <ResizableDocumentLayout

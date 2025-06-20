@@ -23,7 +23,6 @@ import {
   MagnifyingGlass,
   House,
   Upload,
-  Gear,
   User,
   SignIn,
   UserPlus,

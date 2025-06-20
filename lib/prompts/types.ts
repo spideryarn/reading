@@ -3,9 +3,8 @@ import nunjucks from 'nunjucks'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import { generateText } from 'ai'
-import { AI_CONFIG, getModelStringFromEnvironment } from '@/lib/config'
+import { AI_CONFIG } from '@/lib/config'
 import { getModel } from '@/lib/services/llm-provider'
-import { parseModelString } from '@/lib/config/models'
 
 // Types for enhanced prompt execution with usage metadata
 export interface PromptUsage {
@@ -93,7 +92,6 @@ async function executePromptInternal<T extends z.ZodSchema>(
   const prompt = env.renderString(templateContent, validated)
   
   // Get the appropriate model based on configuration
-  const modelString = template.modelConfig?.modelString || getModelStringFromEnvironment()
   const model = getModel()
   
   // Execute with Vercel AI SDK Core
@@ -180,7 +178,6 @@ async function executeMultimodalPromptInternal<T extends z.ZodSchema>(
   const validated = template.schema.parse(variables)
   
   // Get the appropriate model based on configuration
-  const modelString = template.modelConfig?.modelString || getModelStringFromEnvironment()
   const model = getModel()
   
   // Check if variables contain messages (multimodal), PDF buffer, or just need prompt rendering

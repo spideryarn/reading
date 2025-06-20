@@ -43,7 +43,6 @@ export function getProvider(providerName: 'anthropic' | 'google' | 'openai') {
 export function getModel() {
   const modelString = getModelStringFromEnvironment()
   const parsedModel = parseModelString(modelString)
-  const modelConfig = getModelConfigFromEnvironment()
   const providerInstance = getProvider(parsedModel.provider)
   
   // Configure thinking mode for Anthropic models if enabled
