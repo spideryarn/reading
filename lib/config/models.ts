@@ -1,4 +1,3 @@
-// Model configuration system
 // Uses explicit model strings in format: provider:model:version[:thinking]
 // Use underscores for large numbers, e.g. 1_000_000
 //

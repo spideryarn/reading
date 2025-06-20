@@ -88,49 +88,8 @@ if (typeof fetch === 'undefined') {
     }
 }
 
-// Basic Request polyfill for imports - next-test-api-route-handler handles the runtime
-if (typeof Request === 'undefined') {
-    global.Request = class Request {
-        constructor(input, init = {}) {
-            this.url = typeof input === 'string' ? input : input.url;
-            this.method = init.method || 'GET';
-            this.headers = new Map(Object.entries(init.headers || {}));
-            this.body = init.body;
-        }
-    };
-}
-
-if (typeof Response === 'undefined') {
-    global.Response = class Response {
-        constructor(body, init = {}) {
-            this.body = body;
-            this.status = init.status || 200;
-            this.statusText = init.statusText || 'OK';
-            this._headers = new Map(Object.entries(init.headers || {}));
-        }
-
-        json() {
-            if (typeof this.body === 'string') {
-                return Promise.resolve(JSON.parse(this.body));
-            }
-            return Promise.resolve(this.body);
-        }
-
-        get headers() {
-            return {
-                get: (name) => {
-                    const lowerName = name.toLowerCase();
-                    for (const [key, value] of this._headers.entries()) {
-                        if (key.toLowerCase() === lowerName) {
-                            return value;
-                        }
-                    }
-                    return null;
-                }
-            };
-        }
-    };
-}
+// Removed custom Request/Response mocking - next-test-api-route-handler will handle this properly
+// The custom mocking was causing "Cannot set property url of NextRequest which has only a getter" errors
 
 // Mock IntersectionObserver globally for all tests
 global.IntersectionObserver = class IntersectionObserver {
