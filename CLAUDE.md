@@ -57,6 +57,7 @@ Next.js local dev server:
 Production deployment:
 - **Live URL**: https://www.spideryarn.com
 - **Documentation**: `docs/reference/SETUP_DEPLOYMENT_PRODUCTION.md`
+- **Streamlined deployment**: `npm run deploy:production` (builds locally + pushes to main)
 - **Auto-deployment**: Pushes to main trigger GitHub Actions migrations + Vercel deployment
 - **Status**: ✅ Fully operational with custom domain, SSL, Google SSO, and database integration
 

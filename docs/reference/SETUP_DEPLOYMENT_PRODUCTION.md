@@ -138,6 +138,7 @@ TTL: 300
 
 ### Automatic Deployments
 - **Production**: Database migrations run via GitHub Actions, then Vercel deploys on push to `main` branch
+- **Streamlined workflow**: Use `npm run deploy:production` to build locally and trigger deployment
 - **Preview**: Creates preview deployments for pull requests
 - **Build time**: Typically 2-4 minutes for full build
 
@@ -181,12 +182,15 @@ GitHub Actions automatically handles database schema changes:
 
 ### Deployment Commands
 ```bash
-# Local verification before deployment
+# Streamlined production deployment (recommended)
+npm run deploy:production  # Build + push to main (triggers auto-deployment)
+
+# Manual verification before deployment
 npm run build  # Test production build
 npm run lint   # Check code quality  
 npm test       # Run test suite
 
-# Vercel CLI (optional)
+# Vercel CLI (optional - for advanced use cases)
 vercel          # Deploy preview
 vercel --prod   # Deploy production
 vercel env pull # Sync environment variables
