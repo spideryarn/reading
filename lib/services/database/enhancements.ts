@@ -266,7 +266,6 @@ export class EnhancementService {
       return null
     }
     
-    // Validate the structure
     const content = enhancement.content as { summaries?: unknown }
     if (!content.summaries) {
       throw new Error(`Malformed multi-dimensional summary data: missing summaries field`)
