@@ -100,39 +100,15 @@ Type checking and linting:
 
 ## Test Database Approach - IMPORTANT
 
-⚠️ **CRITICAL**: We use a **shared database** approach for testing, following Supabase's official recommendations. Tests run against the same local development database, NOT a separate test database.
+⚠️ **CRITICAL**: We use a **shared database** approach for testing. Tests run against the same local development database.
 
-**Key Testing Rules**:
-- **NEVER reset the database** - this would destroy development data
-- **NEVER use `npm run db:reset:DANGEROUS`** unless explicitly authorized by the user (note: this also invalidates all Playwright auth files across all worktrees)
-- **NEVER delete all records** from tables (no `DELETE FROM table` without WHERE)
+**Key Rules**:
+- **NEVER reset the database** - destroys development data
+- **NEVER use `npm run db:reset:DANGEROUS`** without explicit user permission
 - **Use UUID-based test isolation** - all test data must be namespaced
+- **Clean up test data** using `getCleanupFunctions()` utilities
 
-**Required Test Pattern**:
-```typescript
-import { getTestNamespace, createTestUser, getCleanupFunctions } from '@/lib/testing/test-isolation-utils'
-
-describe('My Feature', () => {
-  const namespace = getTestNamespace('my-feature-test')
-  
-  afterEach(async () => {
-    // Clean up only test-namespaced data
-    const cleanup = getCleanupFunctions(namespace, supabase)
-    await cleanup.all()
-  })
-  
-  it('should do something', async () => {
-    // Create test data with namespace
-    const testUser = createTestUser(namespace)
-    
-    // Your test logic here
-    
-    // Cleanup happens automatically in afterEach
-  })
-})
-```
-
-**Complete Documentation**: See `docs/reference/TESTING_DATABASE.md` for comprehensive patterns, examples, and utilities.
+**Documentation**: See `docs/reference/TESTING_DATABASE.md` for comprehensive patterns and test isolation utilities.
 
 Debugging resources:
 - Current logs: `tail dev.log`
@@ -145,106 +121,46 @@ Debugging resources:
 
 ## Logging & Observability
 
-**Pino Structured Logging** (Stage 6 - Complete):
-- **Implementation**: Pino structured logging deployed across 11 critical API routes and 6 service files
-- **Mixed approach**: Pino added alongside existing console.log statements for safe migration
-- **Key utilities**: `createRequestLogger()`, `generateCorrelationId()`, `logAIOperation()`, `createTimer()`
-- **Security patterns**: Privacy-safe logging (IDs only, no sensitive content like API keys or full document content)
-- **Pretty logs in development**: Pino-pretty enabled for better developer experience (requires `serverExternalPackages` config in Next.js 15)
+**Current Implementation**:
+- Pino structured logging with request correlation tracking
+- Key utilities: `createRequestLogger()`, `generateCorrelationId()`, `logAIOperation()`, `createTimer()`
+- Privacy-safe patterns (IDs only, no sensitive content)
+- Mixed approach: Pino + console.log during migration
 
-**Current logging patterns**:
-```typescript
-// Standard API route pattern with request timing
-import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
-
-const correlationId = generateCorrelationId()
-const requestLogger = createRequestLogger('/api/route-name', correlationId)
-const requestTimer = createTimer(requestLogger, 'request-name')
-
-requestLogger.info({
-  userId: user.id,
-  documentId,
-  operation: 'ai-extraction',
-  correlationId
-}, 'Request initiated')
-
-// AI operations with token tracking
-logAIOperation('content-extraction', {
-  modelProvider: 'anthropic',
-  tokensUsed: result.usage.totalTokens,
-  userId: user.id,
-  documentId,
-  correlationId
-}, 'success')
-
-// Complete request timing at end
-requestTimer.end({ userId: user.id, documentId, correlationId })
-```
-
-**Mixed logging approach** (current):
-- **Console.log**: Still used for immediate development feedback
-- **Pino**: Added for structured production logging and correlation tracking
-- **Migration**: Gradual replacement of console.log with Pino loggers
-
-**Security & Privacy**:
-- **Safe**: Log user IDs, document IDs, operation metadata, token usage
-- **Private**: URL hostnames only (no query parameters), truncated search queries
-- **Never log**: API keys, full document content, personal data, payment information
-
-See `docs/reference/LOGGING_BEST_PRACTICES.md` for comprehensive patterns and examples.
+**Documentation**: See `docs/reference/LOGGING_BEST_PRACTICES.md` for comprehensive patterns and examples.
 
 
 ## Error Handling
 
-**Database Service Layer**: The database services now propagate errors instead of silently failing. This helps with debugging and ensures problems are noticed early:
+**Database Services**: Propagate errors instead of silently failing
 - Methods throw descriptive errors with context
-- "Not found" cases (error code PGRST116) return null instead of throwing
-- No more `console.error` + `return null` patterns
-- API routes should catch database errors and map to appropriate HTTP responses
+- "Not found" cases return null (don't throw)
+- API routes should catch and map to appropriate HTTP responses
 
-This follows our principle: "Raise errors early, clearly & fatally" (see `docs/reference/CODING_PRINCIPLES.md`)
+**Principle**: "Raise errors early, clearly & fatally" (see `docs/reference/CODING_PRINCIPLES.md`)
 
 
 ## Upload Metadata Tracking
 
-The system now tracks comprehensive metadata for all document uploads (PDF and URL-based):
+**Current Implementation**:
+- Upload metadata stored in `documents.upload_metadata` JSONB field
+- AI call traceability via `documents.upload_ai_call_id` foreign key
+- Implemented in PDF upload and URL extraction APIs
+- Enables debugging and processing optimization
 
-**Implementation Features**:
-- Upload metadata stored in `documents.upload_metadata` JSONB field (extraction method, provider, processing time, file sizes, etc.)
-- Full AI call traceability via `documents.upload_ai_call_id` foreign key to `ai_calls` table
-- Implemented across both PDF upload (`/api/upload-pdf`) and URL extraction (`/api/extract-url`) APIs
-- Enables debugging, analytics, and processing optimization
-
-**Database Integration**:
-- Migration: `supabase/migrations/20250608120000_add_upload_metadata_fields.sql`
-- Types: Auto-generated in `lib/types/database.ts`
-- Service: Updated `DocumentService.createWithStorage()` method to handle metadata
+**Files**: Migration `20250608120000_add_upload_metadata_fields.sql`, types in `lib/types/database.ts`
 
 
 ## Authentication System
 
-The project includes a complete authentication system using Supabase Auth with Next.js App Router:
-
-**Key Features**:
+**Current Implementation**: Supabase Auth with Next.js App Router
 - Email/password and Google OAuth authentication
-- Automatic user profile creation and document ownership tracking
 - Route protection with server-side validation
 - Long-lasting sessions (1 week) with automatic refresh
-- Password reset flow with Gmail SMTP
 - Profile management with dropdown navigation
 
-**Documentation**:
-- `docs/reference/AUTHENTICATION_OVERVIEW.md` - System architecture and flows
-- `docs/reference/AUTHENTICATION_SETUP.md` - Configuration and deployment guide
-- `docs/reference/AUTHENTICATION_UI.md` - UI components and forms
-- `docs/reference/AUTHENTICATION_DATABASE.md` - Database integration and RLS
-- `docs/reference/AUTHENTICATION_SECURITY.md` - Security practices and troubleshooting
-
-**Implementation Files**:
-- `lib/auth/` - Authentication utilities and server-side helpers
-- `components/auth/` - UI components (login, signup, profile dropdown)
-- `app/auth/` - Authentication pages and route handlers
-- `middleware.ts` - Session management and token refresh
+**Files**: `lib/auth/`, `components/auth/`, `app/auth/`, `middleware.ts`
+**Documentation**: See `docs/reference/AUTHENTICATION_*.md` for comprehensive guides
 
 
 ## Project Structure
@@ -279,49 +195,17 @@ Template: `.env.example` (may not be current - check `.env.local` for active con
 
 ## Browser Automation
 
-**Playwright E2E Testing (Primary for systematic testing)**:
-- Use `npm run test:e2e` for comprehensive E2E test suites
-- **Authentication setup required**: Run `npm run test:e2e:setup` in each worktree before first use
-- **Multi-worktree isolation**: Environment-aware authentication prevents conflicts across worktrees
-- **Recovery after DB reset**: Run `./scripts/setup-auth-all-worktrees.ts` to re-setup all environments
+**Playwright E2E Testing (Recommended)**:
+- Use `npm run test:e2e` for comprehensive test suites
+- **Setup required**: Run `npm run test:e2e:setup` in each worktree before first use
+- **Multi-worktree isolation**: Environment-aware authentication prevents conflicts
 
-**Puppeteer MCP (For interactive debugging)**:
-- Use Puppeteer for browser automation tasks via MCP server
-- **⚠️ CRITICAL - Port configuration**: Always check `.env.test` for the PORT variable before navigating. Different Git worktrees use different ports (3001, 3002, 3003, etc.), not the default 3000. This is essential for reliable testing.
-- **Multi-worktree authentication isolation**: Use environment-specific test users to prevent authentication conflicts:
-  - **Main repository** (port 3000): `hello@spideryarn.com` 
-  - **Worktree 1** (port 3001): `test-user1@spideryarn.com`
-  - **Worktree 2** (port 3002): `test-user2@spideryarn.com`
-  - **...through Worktree 6** (port 3006): `test-user6@spideryarn.com`
-  - All users share password: `ASDFasdf1` (from `supabase/seed.sql`)
-- **Headless by default**: Always use `{"headless": true}` in launchOptions unless user specifically requests visual debugging
-- **Window size**: Set viewport in launchOptions and screenshot dimensions for proper page rendering:
-  - `defaultViewport: {"width": 1200, "height": 800}` in launchOptions for better page layout
-  - Use `width` and `height` parameters in screenshot calls (e.g., 1200x800)
-  - Default 800x600 is often too small for modern web layouts
-- **Environment-aware automation example**: 
-  ```bash
-  # Check current environment
-  PORT=$(grep "^PORT=" .env.test | cut -d'=' -f2)
-  ENV_ID=$((PORT - 3000))
-  
-  # Use environment-specific credentials
-  if [ $ENV_ID -eq 0 ]; then
-    EMAIL="hello@spideryarn.com"
-  else
-    EMAIL="test-user${ENV_ID}@spideryarn.com"
-  fi
-  
-  # Navigate with correct port
-  mcp__puppeteer__puppeteer_navigate({url: "http://localhost:${PORT}/", launchOptions: {"headless": true, "defaultViewport": {"width": 1200, "height": 800}}})
-  ```
+**Playwright MCP (For interactive debugging)**:
+- **⚠️ CRITICAL**: Always check `.env.test` for PORT variable - different worktrees use different ports
+- **Multi-worktree auth**: Use environment-specific test users (test-user1@spideryarn.com, etc.)
+- **Configuration**: Use headless mode and 1200x800 viewport for reliable automation
 
-**Playwright (Recommended for comprehensive testing)**:
-- **Multi-worktree support**: Full isolation system implemented with environment-aware configuration
-- **Concurrent testing**: Run browser automation across multiple worktrees without conflicts
-- **File isolation**: Screenshots, auth states, and test results isolated by environment
-- **Enhanced namespace isolation**: Database operations use worktree-aware prefixes
-- See `docs/reference/TESTING_WITH_BROWSER_AUTOMATION.md` for comprehensive multi-worktree patterns
+**Documentation**: See `docs/reference/TESTING_WITH_BROWSER_AUTOMATION.md` for comprehensive patterns
 
 
 ## Context window, tasks, and subagents
@@ -329,123 +213,115 @@ Template: `.env.example` (may not be current - check `.env.local` for active con
 Use tasks whenever there's more than a couple of things to keep track of.
 
 Use subagents where appropriate:
-- e.g. for running a battery of tests, curl, Puppeteer/Playwright MCP or other browser automation, other verbose output, Git commits, any other verbose-output, and anywhere else where you think it's a good fit
-- They are especially valuable as a way to avoid filling up your context window
+- e.g. for running a battery of tests, checking lint/build, curl, Puppeteer/Playwright or other browser automation, other verbose output, Git commits, any other verbose-output, and anywhere else where you think it's a good fit
+- They are especially valuable as a way to avoid filling up your context window  
 - They are also a good fit for encapsulated & well-defined tasks, i.e. tasks that don't need the full context of the conversation so far, and/or where we only need a summary of what was done in order to proceed
 - Use subagents in parallel where possible (because this is faster), but only if there isn't a dependency between tasks (e.g. the output of this one is useful as input for the next)
-- Give them lots of background so that they can make good decisions, e.g. about goals, point them to relevant docs/code, what we've been changing, gotchas & things to avoid, relevant environment variables like $PORT for Puppeteer/Playwright, using Jest for testing, the current date/time from `date`, and anything else that will help them to be effective but correct/careful.
-- Tell subagents what to be cautious of, and to abort and provide feedback on what happened if there are problems or surprises (to avoid them going rogue and doing more harm than good)
+- **Give them lots of background** so that they can make good decisions, e.g. about goals, point them to relevant docs/code, what we've been changing, gotchas & things to avoid, relevant environment variables like $PORT for Puppeteer/Playwright, using Jest for testing, the current date/time from `date`, and anything else that will help them to be effective but correct/careful.
+- **Tell subagents what to be cautious of**, and to abort and provide feedback on what happened if there are problems or surprises (to avoid them going rogue and doing more harm than good)
+
+**See**: `docs/instructions/TASKS_SUBAGENTS.md` for detailed guidelines on effective subagent usage
 
 
 ## Documentation Reference
 
 see `docs/reference/DOCUMENTATION_ORGANISATION.md` for a comprehensive, navigational overview of all project documentation
 
-Available evergreen documentation in `docs/` - here are some of the most useful.
+Available evergreen documentation in `docs/` - comprehensive signposting by domain:
 
-Coding & infrastructure:
-- `docs/reference/CODING_PRINCIPLES.md` - Outlines development principles prioritising simplicity, readability, debugging, and rapid prototyping for early-stage development
-- `docs/reference/CODING_GUIDELINES.md` - Code quality standards including linting, TypeScript patterns, React best practices, and import conventions
-- `docs/reference/COMMAND_LINE_SCRIPTS.md` - Guidelines for writing command-line scripts using shell scripts or TypeScript/Clipanion
-- `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture and implementation details
-- `docs/reference/ARCHITECTURE_DECISIONS.md` - Key architectural decisions including framework choices, data structures, storage approach, and MVP features
-- `docs/reference/STYLING_OVERVIEW.md` - CSS and visual styling configuration including theme settings, Phosphor icons usage, and loading/error button patterns
-- `docs/reference/SETUP.md` - Development environment setup guide including Node.js, Supabase, Git worktree configuration, and common commands
-- `docs/reference/SITE_ORGANISATION.md` - Documents the hierarchical, document-centric architecture including application routes, component hierarchy, and navigation patterns. (May be out of date)
-- `docs/reference/TESTING_OVERVIEW.md` - Testing approach documentation covering Jest with React Testing Library setup, test structure, and current test coverage
-- `docs/reference/TESTING_SETUP.md` - Test configuration and environment setup
-- `docs/reference/TESTING_TROUBLESHOOTING.md` - Known testing issues and workarounds
-- `docs/reference/TESTING_DATABASE.md` - Database-specific testing patterns including real RLS testing guide with security validation
-- `docs/reference/TESTING_WITH_BROWSER_AUTOMATION.md` - Browser automation options (Playwright recommended over Puppeteer MCP) for E2E testing
-- `docs/reference/UI_INTERFACE.md` - Documents the multi-pane layout with tabbed navigation including four-pane structure, tab system architecture, and scrolling fixes. See related docs below in "AI, features, machinery, interface" section.
+**Instructions & Modes** (workflow guidance):
+- `docs/instructions/TASKS_SUBAGENTS.md` - Detailed subagent usage guidelines for context management
+- `docs/instructions/GIT_COMMIT_CHANGES.md` - Git commit best practices and batching changes
+- `docs/instructions/SOUNDING_BOARD_MODE.md` - Collaborative discussion mode guidelines
+- `docs/instructions/DETECTIVE_SCIENTIST_MODE.md` - Systematic investigation approach
+- `docs/instructions/DOCUMENT_RESEARCH.md` - Research methodology for documentation
+- `docs/instructions/UPDATE_HOUSEKEEPING_*.md` - Documentation and test maintenance processes
+- `docs/instructions/WRITE_*.md` - Guidelines for writing evergreen and planning documentation
 
-Database:
-- `docs/reference/DATABASE_OVERVIEW.md`
-- `docs/reference/DATABASE_MIGRATIONS.md` - Guide for managing database schema changes through Supabase migrations with timestamped SQL files
-- `docs/reference/DATABASE_SCHEMA.md` - Reference for both current (deprecated) schema and target schema showing the transition from element decomposition to single-row storage (VERY MUCH EVOLVING)
+**Core Development & Architecture**:
+- `docs/reference/CODING_PRINCIPLES.md` - **CRITICAL**: Core development philosophy for AI-first methods
+- `docs/reference/CODING_GUIDELINES.md` - **CRITICAL**: Code quality standards and TypeScript patterns
+- `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture and implementation
+- `docs/reference/ARCHITECTURE_DECISIONS.md` - Key architectural decisions and framework choices
+- `docs/reference/ARCHITECTURE_URL_STATE.md` - URL state management patterns
+- `docs/reference/SETUP*.md` - Development environment setup and configuration
+- `docs/reference/COMMAND_LINE_SCRIPTS.md` - Guidelines for CLI script development
+- `docs/reference/PROJECT_STATUS.md` - Current development state and implemented features
 
-**Row Level Security (RLS) Testing**:
+**Testing** (comprehensive testing ecosystem):
+- `docs/reference/TESTING_OVERVIEW.md` - Testing approach with Jest and React Testing Library
+- `docs/reference/TESTING_DATABASE.md` - **CRITICAL**: Real RLS testing patterns (use `RLSTestDatabase`)
+- `docs/reference/TESTING_WITH_BROWSER_AUTOMATION.md` - Playwright E2E testing (recommended)
+- `docs/reference/TESTING_AUTHENTICATION.md` - Auth testing patterns and utilities
+- `docs/reference/TESTING_TROUBLESHOOTING.md` - Known issues and workarounds
+- `docs/reference/TESTING_SETUP.md` - Test environment configuration
+- `docs/reference/TESTING_*.md` - Additional testing utilities and service mocks
+
+**Database & Security**:
+- `docs/reference/DATABASE_OVERVIEW.md` - Database architecture and patterns
+- `docs/reference/DATABASE_MIGRATIONS.md` - Schema change management with Supabase
+- `docs/reference/DATABASE_SCHEMA.md` - Current schema reference (evolving)
+- `docs/reference/DATABASE_SECURITY.md` - Security patterns and RLS implementation
+- `docs/reference/DATABASE_*.md` - Local setup, production, backup, and Supabase integration
+
+**Authentication System**:
+- `docs/reference/AUTHENTICATION_OVERVIEW.md` - System architecture and flows
+- `docs/reference/AUTHENTICATION_SETUP.md` - Configuration and deployment
+- `docs/reference/AUTHENTICATION_UI.md` - UI components and forms
+- `docs/reference/AUTHENTICATION_DATABASE.md` - Database integration and RLS
+- `docs/reference/AUTHENTICATION_SECURITY.md` - Security practices and troubleshooting
+- `docs/reference/AUTHENTICATION_*.md` - Admin features and testing patterns
+
+**UI, Styling & Components**:
+- `docs/reference/UI_INTERFACE.md` - Multi-pane layout with tabbed navigation
+- `docs/reference/UI_COMPONENTS.md` - Available components and usage patterns
+- `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - shadcn/ui integration guide
+- `docs/reference/STYLING_OVERVIEW.md` - CSS configuration and theme settings
+- `docs/reference/STYLING_*.md` - Colors, fonts, icons, highlighting, tooltips, mobile detection
+- `docs/reference/UNIFIED_LEFT_PANE.md` - Left pane architecture with ToC and AI features
+- `docs/reference/KEYBOARD_SHORTCUTS.md` - Application keyboard shortcuts
+
+**AI Features & Tools**:
+- `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - @assistant-ui/react integration
+- `docs/reference/TOOL_SUMMARISE.md` - AI summarization with hierarchical granularity
+- `docs/reference/TOOL_GLOSSARY.md` - Entity extraction and glossary generation
+- `docs/reference/TOOL_HEADINGS.md` - AI-generated heading system
+- `docs/reference/TOOL_*.md` - Search, highlighting, metadata, reading difficulty tools
+- `docs/reference/LLM_PROMPT_TEMPLATES.md` - Nunjucks + Zod template system
+- `docs/reference/LLM_MODEL_CONFIGURATION.md` - AI model configuration and usage
+- `docs/reference/LLM_*.md` - Token tracking, evaluation frameworks
+
+**Content Processing**:
+- `docs/reference/PDF_TO_HTML_*.md` - PDF conversion approaches (LLM, open source, paid services)
+- `docs/reference/HTML_*.md` - HTML content processing and sanitization
+- `docs/reference/MUTATIONS.md` - Reversible document transformation system
+- `docs/reference/UPLOAD.md` - Document upload and processing
+
+**Specialized & Research**:
+- `docs/reference/VISION.md` - Comprehensive product vision and strategy
+- `docs/reference/LOGGING_BEST_PRACTICES.md` - Pino structured logging patterns
+- `docs/reference/CROSS_PANE_COMMUNICATION.md` - Inter-pane messaging architecture
+- `docs/reference/RESEARCH_*.md` - Reading difficulty metrics and text formatting research
+- `docs/reference/VERCEL_AI_SDK_REFERENCE.md` - AI SDK integration patterns
+
+**Row Level Security (RLS) Testing - IMPORTANT**:
 - **ALWAYS use real RLS testing**: Use `RLSTestDatabase` class in `lib/testing/rls-database-test-utils.ts`
-- **AVOID simulation approaches**: Old simulation-based RLS tests have been deprecated for security reasons
-- **Essential for security**: Real RLS testing discovered and fixed critical vulnerabilities
-- **See**: `docs/reference/TESTING_DATABASE.md` for comprehensive real RLS testing patterns
-- **Example**: `lib/services/database/__tests__/rls-policies-real.test.ts` for reference implementation
+- **AVOID simulation approaches**: Old simulation-based tests deprecated for security
+- **Documentation**: `docs/reference/TESTING_DATABASE.md` for comprehensive patterns
 
-AI, features, machinery, interface:
-- `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Comprehensive technical guide for integrating the @assistant-ui/react library into the chatbot interface within the Tools pane
-- `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide for creating AI/LLM calls using the Nunjucks + Zod template system with type safety and validation
-- `docs/reference/MUTATIONS.md` - Documents the reversible document transformation system for applying/reverting changes like AI-generated headings and content filtering
-- `docs/reference/UNIFIED_LEFT_PANE.md` - Architecture and features of the unified left pane with tabbed interface, ToC, AI-generated headings, and tooltip summaries
-- `docs/reference/TOOL_GLOSSARY.md` - Documents the glossary feature that extracts key entities from documents using LLM analysis and displays them in a dedicated pane
-- `docs/reference/TOOL_SUMMARISE.md` - Documents the AI summarise feature that generates hierarchical summaries of document content using LLM analysis at multiple granularity levels
-
-Docs, modes, and admin:
-- `docs/instructions/GIT_COMMIT_CHANGES.md` - Guidelines for Git commit best practices including batching changes, message format, and handling concurrent changes
-- `docs/reference/PROJECT_STATUS.md` - Current development state overview showing implemented features (AI summaries, glossary, headings) and planned enhancements
-- `docs/instructions/SOUNDING_BOARD_MODE.md` - Instructions for collaborative discussion mode emphasising asking questions and suggesting alternatives rather than immediate implementation
-- `docs/instructions/WRITE_EVERGREEN_DOC.md` - Guidelines for writing evergreen documentation including structure, cross-references, status indicators, and maintenance practices
-- `docs/instructions/WRITE_PLANNING_DOC.md` - Guide for writing planning/project management documents with file naming conventions, structure, and stage-based action plans
-- `docs/instructions/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` - Process for keeping project documentation up-to-date including review steps, update patterns, and quality checklist
-- `docs/instructions/UPDATE_HOUSEKEEPING_TESTS.md` - Process for maintaining test quality and organisation while supporting rapid prototyping
-- `docs/instructions/UPDATE_CLAUDE_INSTRUCTIONS.md` - Guidelines for maintaining CLAUDE.md to help AI agents operate effectively on the Spideryarn Reading codebase
-
-
-Recent planning decisions & progress tracking of major features: `planning/*.md`
+**Recent Decisions & Planning**: `planning/*.md` for major feature progress tracking and architectural decisions
 
 
 ## UI Components & Styling
 
-The project uses **shadcn/ui** component library built on Radix UI primitives for consistent, accessible components.
-
-### When to use shadcn/ui vs raw Tailwind:
+**Components**: shadcn/ui component library built on Radix UI primitives
 - **Use shadcn/ui**: For interactive components (buttons, dialogs, forms, loading states)
 - **Use raw Tailwind**: For simple layouts, spacing, basic styling
+- **Available**: Button, Dialog, Alert, Loading (all with Spideryarn orange theme)
+- **Install new**: `printf "\n" | npx shadcn@latest add [component-name]`
 
-### Available Components:
-- `Button` - All variants with custom Spideryarn orange theme (`#DB8A45`)
-- `Dialog` - Accessible modals (custom dialog.tsx still used for compatibility)
-- `Alert` - Error and warning states
-- `Loading` - Standardised loading indicators with spinner
-- `Select`, `Checkbox` - Available but not currently used (YAGNI principle)
-
-### Adding New Components:
-```bash
-# Install new shadcn/ui component (non-interactive)
-printf "\n" | npx shadcn@latest add [component-name]
-
-# For React 19 compatibility, use --force if needed
-printf "\n" | npx shadcn@latest add [component-name] --force
-```
-
-### Component Customisation:
-- All components are copied to `components/ui/` and can be modified
-- Theme customisation in `app/globals.css` with OKLCH colour values
-- Primary colour set to Spideryarn orange: `hsl(30 62% 57%)`
-
-### Documentation:
-- `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - Complete installation and usage guide
-- `docs/reference/UI_COMPONENTS.md` - Available components and usage patterns
-
-### Phosphor Icons SSR Usage:
-For server components (without 'use client'), use SSR-compatible imports:
-```javascript
-// Server components - SSR imports
-import { Warning } from "@phosphor-icons/react/dist/ssr/Warning"
-import { Info } from "@phosphor-icons/react/dist/ssr/Info"
-```
-
-For client components (with 'use client'), use standard imports:
-```javascript
-// Client components - standard imports
-import { Warning, Info } from "@phosphor-icons/react"
-```
-
-Next.js optimization is configured in `next.config.ts`:
-```javascript
-experimental: {
-  optimizePackageImports: ["@phosphor-icons/react"],
-}
-```
+**Icons**: Phosphor icons with SSR support - use `/dist/ssr/` imports for server components
+**Documentation**: `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` and `docs/reference/UI_COMPONENTS.md`
 
 ## Style
 
