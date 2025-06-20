@@ -6,4 +6,6 @@ Explore, investigate, search the web, ask for clarification, discuss, critique, 
 
 Suggest tips/guidelines we can add that will avoid potential issues.
 
+Ignore waffle, don't state the obvious, don't say nice things just for the sake of it, and focus on important suggestions rather than exhaustive pernickitiness.
+
 If the user has asked you to, update the planning document (e.g. with an Appendix "Critique of planning doc). But don't make any changes to the code beyond that critique.
