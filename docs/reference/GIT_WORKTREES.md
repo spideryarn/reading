@@ -169,6 +169,8 @@ git push origin --delete experim  # If it was pushed
 ## Development Workflow
 
 ### Starting Development
+
+#### Interactive Development (Standard)
 1. Choose an available worktree for your task
 2. Start the development server:
    ```bash
@@ -176,6 +178,30 @@ git push origin --delete experim  # If it was pushed
    npm run dev
    ```
 3. Development server runs on the configured port (e.g., http://localhost:3002)
+
+#### AI-First Development with Background Server
+For AI agent automation where you want the dev server running in background:
+
+```bash
+# Start dev server as background daemon
+./scripts/dev-with-restart.sh --daemon
+
+# Check if daemon is running and healthy
+./scripts/dev-with-restart.sh --status
+
+# Stop the daemon
+./scripts/dev-with-restart.sh --stop
+```
+
+**Daemon Mode Features:**
+- **Background operation**: Frees up terminal for LLM agents
+- **Automatic restarts**: `--daemon` command restarts existing daemon if already running
+- **Health checking**: `--status` verifies both process existence and HTTP response
+- **Graceful shutdown**: Uses SIGTERM before SIGKILL for clean stops
+- **Worktree isolation**: Each worktree daemon uses independent PID tracking
+- **Log management**: Automatically rotates dev.log when it exceeds 10MB
+
+**PID File Location**: `.dev-server.pid` in each worktree directory (configurable via `SYR_DEVSERVER_PIDFILE` environment variable)
 
 ### Synchronisation Process
 
