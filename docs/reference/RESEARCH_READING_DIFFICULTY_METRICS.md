@@ -7,6 +7,7 @@
 **Review Date:** December 18, 2025  
 **Status:** Current  
 **Related Documents:** 
+- `docs/reference/TOOL_READING_DIFFICULTY.md` - AI-powered reading difficulty assessment implementation
 - `docs/reference/RESEARCH_ON_OPTIMAL_TEXT_FORMATTING.md` - Typography and reading research
 - `docs/reference/TOOL_METADATA_TAB.md` - Current implementation details
 - `lib/utils/readability-metrics.ts` - Technical implementation

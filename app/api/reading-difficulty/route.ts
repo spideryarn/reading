@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { extractCleanText } from '@/lib/utils/html-text-extraction'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
+import { getModelForAICall } from '@/lib/config'
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
@@ -49,39 +50,49 @@ export async function POST(request: NextRequest) {
       correlationId
     }, 'Reading difficulty analysis initiated')
 
-    // LLM assessment - fail fatally if this fails
+    // Model configuration for this AI call
+    const { modelString, config: modelConfig } = getModelForAICall()
+
+    // Start AI call tracking *before* the LLM call so we capture failures too
+    const aiCallService = new AiCallService(supabase)
+    const aiCall = await aiCallService.startCallWithModelString({
+      userId: user.id,
+      documentId: documentId || undefined,
+      modelString,
+      prompt_type: 'reading-difficulty-assessment',
+      input_data: {
+        content_length: cleanText.length,
+        model_used: modelString
+      }
+    })
+
+    // LLM assessment – may throw
     const llmResult = await executePromptWithUsage(readingDifficultyPrompt, {
       content: cleanText.substring(0, 8000) // Limit content length for LLM
     })
 
-    // Log AI operation
+    // Parse and validate response
+    const result = parseReadingDifficultyResponse(llmResult.text)
+
+    // Complete AI call tracking with usage metadata
+    await aiCallService.completeCall(aiCall.id, {
+      output_data: {
+        level: result.level,
+        confidence: result.confidence,
+        factors: [result.rationale]
+      },
+      usage: llmResult.usage,
+      finishReason: llmResult.finishReason
+    })
+
+    // Log AI operation (structured)
     logAIOperation('reading-difficulty-assessment', {
-      modelProvider: 'anthropic',
+      modelProvider: modelConfig.provider,
       tokensUsed: llmResult.usage.totalTokens,
       userId: user.id,
       documentId,
       correlationId
     }, 'success')
-
-    const result = parseReadingDifficultyResponse(llmResult.text)
-    
-    // Save AI call record
-    const aiCallService = new AiCallService(supabase)
-    const aiCall = await aiCallService.create({
-      prompt_type: 'reading-difficulty-assessment',
-      prompt_template: readingDifficultyPrompt.name,
-      prompt_input: cleanText.substring(0, 8000),
-      model_string: readingDifficultyPrompt.model,
-      response_text: llmResult.text,
-      prompt_tokens: llmResult.usage.promptTokens,
-      completion_tokens: llmResult.usage.completionTokens,
-      total_tokens: llmResult.usage.totalTokens,
-      reasoning_tokens: llmResult.usage.reasoningTokens || null,
-      status: 'completed',
-      finish_reason: 'stop',
-      created_by: user.id,
-      document_id: documentId || null
-    })
 
     // Store reading difficulty enhancement
     const enhancementService = new EnhancementService(supabase)
@@ -125,8 +136,10 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+
     requestLogger.error({
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: message,
       correlationId
     }, 'Reading difficulty assessment failed')
 
@@ -135,8 +148,10 @@ export async function POST(request: NextRequest) {
       status: 'error' 
     })
 
+    // Expose detailed error only in development; generic message otherwise
+    const isDev = process.env.NODE_ENV !== 'production'
     return NextResponse.json(
-      { error: 'Failed to assess reading difficulty' },
+      { error: isDev ? message : 'Failed to assess reading difficulty' },
       { status: 500 }
     )
   }

@@ -1,6 +1,7 @@
 import { getModelStringFromEnvironment } from '../../config'
 
 describe('getModelStringFromEnvironment', () => {
+  const originalAnthropicKey = process.env.ANTHROPIC_API_KEY
   const originalEnv = process.env.LLM_MODEL
 
   afterEach(() => {
@@ -8,6 +9,11 @@ describe('getModelStringFromEnvironment', () => {
       process.env.LLM_MODEL = originalEnv
     } else {
       delete process.env.LLM_MODEL
+    }
+    if (originalAnthropicKey !== undefined) {
+      process.env.ANTHROPIC_API_KEY = originalAnthropicKey
+    } else {
+      delete process.env.ANTHROPIC_API_KEY
     }
   })
 
@@ -37,11 +43,13 @@ describe('getModelStringFromEnvironment', () => {
 
   it('should accept valid model strings', () => {
     process.env.LLM_MODEL = 'anthropic:claude-3-5-haiku:20241022'
+    process.env.ANTHROPIC_API_KEY = 'test-key'
     expect(getModelStringFromEnvironment()).toBe('anthropic:claude-3-5-haiku:20241022')
   })
 
   it('should use default when no environment variable set', () => {
     delete process.env.LLM_MODEL
+    process.env.ANTHROPIC_API_KEY = 'test-key'
     expect(getModelStringFromEnvironment()).toBe('anthropic:claude-sonnet-4:20250514')
   })
 

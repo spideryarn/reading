@@ -10,6 +10,7 @@ Comprehensive guide for implementing consistent expand/collapse functionality ac
 - `components/heading-tree.tsx` - Hierarchical collapsible tree navigation implementation
 - `components/unified-left-pane.tsx` - Advanced options collapsible pattern
 - `components/auth/profile-dropdown.tsx` - Dropdown menu collapsible pattern
+- `docs/reference/TOOL_READING_DIFFICULTY.md` - Assessment factors collapsible implementation example
 
 ## Principles
 

@@ -32,8 +32,8 @@ The Spideryarn Reading application uses a **model string** approach for AI model
 anthropic:claude-3-5-haiku:20241022
 anthropic:claude-sonnet-4:20250514
 anthropic:claude-sonnet-4:20250514:thinking
-google:gemini-2.0-flash:latest
-google:gemini-1.5-pro:latest
+google:gemini-2.5-flash:latest
+google:gemini-2.5-pro:latest
 ```
 
 **Validation:**
@@ -85,7 +85,7 @@ export const MODEL_TIERS = {
   'anthropic-cheap': 'anthropic:claude-3-5-haiku:20241022',
   'anthropic-balanced': 'anthropic:claude-sonnet-4:20250514',
   'anthropic-balanced-thinking': 'anthropic:claude-sonnet-4:20250514:thinking',
-  'google-cheap': 'google:gemini-2.0-flash:latest',
+  'google-cheap': 'google:gemini-2.5-flash:latest',
   // ... more tiers
 }
 ```
@@ -110,7 +110,7 @@ LLM_MODEL=anthropic:claude-3-5-haiku:20241022
 LLM_MODEL=anthropic:claude-sonnet-4:20250514:thinking
 
 # Google models
-LLM_MODEL=google:gemini-2.0-flash:latest
+LLM_MODEL=google:gemini-2.5-flash:latest
 LLM_MODEL=google:gemini-2.5-pro:latest
 ```
 
@@ -235,7 +235,7 @@ WHERE model_string LIKE '%:thinking';
 
 | Model String | Name | Input Price* | Output Price* | Context | Use Case |
 |--------------|------|--------------|---------------|---------|----------|
-| `google:gemini-2.0-flash:latest` | Gemini 2.0 Flash | TBA** | TBA** | 1M tokens | **Development** - Fast, large context |
+| `google:gemini-2.5-flash:latest` | Gemini 2.0 Flash | TBA** | TBA** | 1M tokens | **Development** - Fast, large context |
 | `google:gemini-2.5-pro:latest` | Gemini 2.5 Pro | $1.25/M† | $10/M† | 1M tokens | Production alternative |
 | `anthropic:claude-3-5-haiku:20241022` | Claude 3.5 Haiku | $0.80/M | $4/M | 200K tokens | Development, simple tasks |
 | `anthropic:claude-sonnet-4:20250514` | Claude Sonnet 4 | $3/M | $15/M | 200K tokens | **Production** - Reliable |
@@ -246,18 +246,6 @@ WHERE model_string LIKE '%:thinking';
 **Gemini Flash pricing TBA  
 †Higher pricing ($2.50/M input, $15/M output) for prompts >200K tokens
 
-### Tier Key Mapping
-
-For backwards compatibility, the following tier keys are still supported:
-
-| Tier Key | Maps To |
-|----------|---------|
-| `google-cheap` | `google:gemini-2.0-flash:latest` |
-| `google-balanced` | `google:gemini-2.5-pro:latest` |
-| `anthropic-cheap` | `anthropic:claude-3-5-haiku:20241022` |
-| `anthropic-balanced` | `anthropic:claude-sonnet-4:20250514` |
-| `anthropic-balanced-thinking` | `anthropic:claude-sonnet-4:20250514:thinking` |
-| `anthropic-expensive` | `anthropic:claude-opus-4:latest` |
 
 ## Adding New Models
 
@@ -288,16 +276,6 @@ export const MODELS = {
 }
 ```
 
-### 2. Add Tier Key (Optional)
-
-Add to `lib/config.ts` if you want a convenient tier key:
-
-```typescript
-export const MODEL_TIERS = {
-  // ... existing tiers
-  'openai-balanced': 'openai:gpt-4:latest'
-}
-```
 
 ### 3. Update Provider Support
 
@@ -313,9 +291,6 @@ if (parsed.provider === 'openai') {
 ### 4. Test Configuration
 
 ```bash
-# Test with tier key
-LLM_MODEL=openai-balanced npm run dev
-
 # Test with direct model string
 LLM_MODEL=openai:gpt-4:latest npm run dev
 ```

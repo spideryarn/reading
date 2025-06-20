@@ -4,6 +4,7 @@ The Document Metadata Tab provides comprehensive information about uploaded docu
 
 ## See also
 
+- `docs/reference/TOOL_READING_DIFFICULTY.md` - AI-powered reading difficulty assessment feature documentation
 - `docs/reference/RESEARCH_READING_DIFFICULTY_METRICS.md` - Comprehensive research on readability assessment for professional documents
 - `docs/reference/RESEARCH_ON_OPTIMAL_TEXT_FORMATTING.md` - Typography and reading research
 - `components/tools/MetadataPanel.tsx` - Main metadata tab component implementation

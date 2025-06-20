@@ -27,6 +27,7 @@ Users need visibility into document metadata to understand context, source, and 
    - Flesch-Kincaid Grade Level (primary metric)
    - Flesch Reading Ease Score (0-100 scale)
    - Interpretation text (e.g., "College level", "Similar to Time Magazine")
+   - **Implementation Note**: See `docs/reference/TOOL_READING_DIFFICULTY.md` for final AI-powered assessment approach
 
 3. **AI Processing Status**
    - Glossary generation status

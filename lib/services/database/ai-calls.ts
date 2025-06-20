@@ -9,7 +9,6 @@ import type {
 import type { PromptUsage } from '@/lib/prompts/types'
 import type { JsonObject } from '@/lib/types/json'
 import { getModelConfig, validateModelStringStrict } from '@/lib/config/models'
-import { parseModelString } from '@/lib/config/models'
 
 export interface AiCallMetrics {
   promptTokens: number
@@ -19,19 +18,7 @@ export interface AiCallMetrics {
   latencyMs: number
 }
 
-// DEPRECATED: Use CreateAiCallWithModelStringOptions instead
-export interface CreateAiCallOptions {
-  documentId?: string
-  userId: string  // Required for RLS
-  provider: 'anthropic' | 'google'
-  modelId: string
-  version: string
-  prompt_type: PromptType
-  input_data?: JsonObject
-  extra?: JsonObject
-}
-
-// NEW: Model string-based interface
+// Model string-based interface
 export interface CreateAiCallWithModelStringOptions {
   documentId?: string
   userId: string  // Required for RLS
@@ -41,20 +28,7 @@ export interface CreateAiCallWithModelStringOptions {
   extra?: JsonObject
 }
 
-// DEPRECATED: Use SimpleCreateAiCallWithModelStringOptions instead
-export interface SimpleCreateAiCallOptions {
-  userId: string  // Required for RLS
-  provider: 'anthropic' | 'google'
-  modelId: string
-  version: string
-  promptTokens?: number | null
-  completionTokens?: number | null
-  totalTokens?: number | null
-  requestData?: JsonObject
-  responseData?: JsonObject
-}
-
-// NEW: Model string-based simple interface
+// Model string-based simple interface
 export interface SimpleCreateAiCallWithModelStringOptions {
   userId: string  // Required for RLS
   modelString: string  // e.g., "anthropic:claude-3-5-haiku:20241022"
@@ -67,56 +41,6 @@ export interface SimpleCreateAiCallWithModelStringOptions {
 
 export class AiCallService {
   constructor(private supabase: SupabaseClient<Database>) {}
-
-  /**
-   * Look up model UUID by provider, model ID, and version
-   */
-  async getModelUuidByProviderAndId(provider: string, modelId: string, version: string): Promise<string> {
-    const { data, error } = await this.supabase
-      .from('ai_models')
-      .select('id')
-      .eq('provider', provider)
-      .eq('model_id', modelId)
-      .eq('version', version)
-      .single()
-    
-    if (error || !data) {
-      throw new Error(`Model not found: provider='${provider}', model_id='${modelId}', version='${version}'. Check that the model exists in the ai_models table.`)
-    }
-    
-    return data.id
-  }
-
-  /**
-   * Start tracking an AI call (DEPRECATED - use startCallWithModelString)
-   */
-  async startCall(options: CreateAiCallOptions): Promise<AiCall> {
-    // Look up model UUID by provider, model ID, and version
-    const modelUuid = await this.getModelUuidByProviderAndId(options.provider, options.modelId, options.version)
-
-    const aiCall: Omit<AiCallInsert, 'id' | 'created_at' | 'updated_at'> = {
-      document_id: options.documentId || null,
-      created_by: options.userId,  // Set created_by for RLS
-      model_id: modelUuid,
-      prompt_type: options.prompt_type,
-      prompt_input: JSON.stringify(options.input_data || {}),
-      prompt_template: null,
-      status: 'pending',
-      extra: options.extra || {},
-    }
-
-    const { data, error } = await this.supabase
-      .from('ai_calls')
-      .insert(aiCall)
-      .select()
-      .single()
-
-    if (error) {
-      throw new Error(`Failed to create AI call: ${error.message}`)
-    }
-
-    return data
-  }
 
   /**
    * Start tracking an AI call using model string
@@ -277,7 +201,7 @@ export class AiCallService {
     }
 
     if (options?.aiModelId) {
-      query = query.eq('model_id', options.aiModelId)
+      query = query.eq('model_string', options.aiModelId)
     }
 
     if (options?.promptType) {
@@ -378,58 +302,6 @@ export class AiCallService {
   }
 
   /**
-   * Get recent AI calls across all documents
-   */
-  async getRecentCalls(limit: number = 10): Promise<AiCall[]> {
-    const { data, error } = await this.supabase
-      .from('ai_calls')
-      .select('*, documents(title)')
-      .order('created_at', { ascending: false })
-      .limit(limit)
-
-    if (error) {
-      throw new Error(`Failed to fetch recent calls: ${error.message}`)
-    }
-
-    return data || []
-  }
-
-  /**
-   * Simple create method for completed AI calls (DEPRECATED - use createWithModelString)
-   */
-  async create(options: SimpleCreateAiCallOptions): Promise<AiCall> {
-    // Look up model UUID by provider, model ID, and version
-    const modelUuid = await this.getModelUuidByProviderAndId(options.provider, options.modelId, options.version)
-
-    const aiCall: Omit<AiCallInsert, 'id' | 'created_at' | 'updated_at'> = {
-      document_id: null, // No document association for this simple method
-      created_by: options.userId,  // Set created_by for RLS
-      model_id: modelUuid,
-      prompt_type: 'chat', // Default to chat for this simple interface
-      prompt_input: JSON.stringify(options.requestData || {}),
-      prompt_template: null,
-      status: 'success', // Mark as completed immediately
-      completed_at: new Date().toISOString(),
-      prompt_tokens: options.promptTokens,
-      completion_tokens: options.completionTokens,
-      total_tokens: options.totalTokens,
-      extra: options.responseData || {},
-    }
-
-    const { data, error } = await this.supabase
-      .from('ai_calls')
-      .insert(aiCall)
-      .select()
-      .single()
-
-    if (error) {
-      throw new Error(`Failed to create AI call: ${error.message}`)
-    }
-
-    return data
-  }
-
-  /**
    * Simple create method for completed AI calls using model string
    */
   async createWithModelString(options: SimpleCreateAiCallWithModelStringOptions): Promise<AiCall> {
@@ -465,6 +337,23 @@ export class AiCallService {
     }
 
     return data
+  }
+
+  /**
+   * Get recent AI calls across all documents
+   */
+  async getRecentCalls(limit: number = 10): Promise<AiCall[]> {
+    const { data, error } = await this.supabase
+      .from('ai_calls')
+      .select('*, documents(title)')
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    if (error) {
+      throw new Error(`Failed to fetch recent calls: ${error.message}`)
+    }
+
+    return data || []
   }
 
   /**

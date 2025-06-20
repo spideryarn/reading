@@ -14,6 +14,7 @@ Comprehensive guide to tooltip styling patterns and implementations in the Spide
 - `components/unified-left-pane.tsx` - Search result tooltip implementations
 - `components/heading-tree.tsx` - Hierarchical heading tooltip usage
 - `components/vertical-icon-nav.tsx` - Navigation tooltip patterns
+- `docs/reference/TOOL_READING_DIFFICULTY.md` - Academic level tooltips implementation example
 
 ## Principles, key decisions
 

@@ -27,7 +27,7 @@ The unified left pane provides comprehensive document navigation and AI-powered 
 
 The ToC system is now integrated into the 2-pane architecture with simplified coordination:
 
-1. **UnifiedLeftPane** - contains ToC as tabs (Original, AI-generated) alongside Summary, Chat, Glossary, Search, and Highlights
+1. **UnifiedLeftPane** - contains ToC as tabs (Original, AI-generated) alongside Summary, Chat, Glossary, Search, Highlights, and Metadata
 2. **ResizableDocumentLayout** - manages cross-pane communication and scroll coordination
 3. **SimpleDocumentViewer** - displays elements and accepts external selection state
 

@@ -5,6 +5,7 @@ This document provides a comprehensive template for creating new tools in Spider
 ## See also
 
 - `docs/reference/TOOL_GLOSSARY.md` - Example of analysis tool implementation with LLM integration
+- `docs/reference/TOOL_READING_DIFFICULTY.md` - Example of AI-powered assessment tool with JSON output and UI enhancements
 - `docs/reference/TOOL_SEARCH_TEXT.md` - Example of search functionality with real-time UI updates
 - `docs/reference/TOOL_HIGHLIGHT.md` - Example of semantic highlighting with confidence-based visuals
 - `docs/reference/UNIFIED_LEFT_PANE.md` - Tab system architecture and vertical icon navigation
@@ -28,9 +29,9 @@ This document provides a comprehensive template for creating new tools in Spider
 ## Tool Categories and Characteristics
 
 ### Analysis Tools
-**Examples**: Glossary, Highlights, Search
+**Examples**: Glossary, Highlights, Search, Reading Difficulty Assessment
 - **Purpose**: Extract insights from document content
-- **LLM Integration**: Usually required for content analysis
+- **LLM Integration**: Usually required for content analysis (see [TOOL_READING_DIFFICULTY.md](TOOL_READING_DIFFICULTY.md) for AI-powered assessment example)
 - **Persistence**: Often cache results in document state
 - **UI Pattern**: Tab-based with loading states and result lists
 

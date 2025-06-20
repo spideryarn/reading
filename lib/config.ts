@@ -36,6 +36,40 @@ export function getModelStringFromEnvironment(): string {
     throw new Error(`Invalid LLM_MODEL environment variable: ${validation.error}. Current value: "${envModel}"`)
   }
   
+  // Additional startup check: ensure the corresponding provider API key is set
+  try {
+    // parseModelString is already imported at top
+    const { provider } = parseModelString(envModel)
+
+    // Map providers to their required API key environment variables
+    const providerKeyMap: Record<string, string> = {
+      anthropic: 'ANTHROPIC_API_KEY',
+      google: 'GOOGLE_GENERATIVE_AI_API_KEY',
+      openai: 'OPENAI_API_KEY',
+    }
+
+    const requiredEnvKey = providerKeyMap[provider]
+
+    if (!requiredEnvKey) {
+      throw new Error(`No API key mapping configured for provider "${provider}" – please update providerKeyMap in lib/config.ts`)
+    }
+
+    const keyValue = process.env[requiredEnvKey]
+    if (!keyValue) {
+      throw new Error(
+        `${requiredEnvKey} environment variable is required when using model "${envModel}". ` +
+        `Set ${requiredEnvKey} in your environment or change LLM_MODEL to use a provider ` +
+        `for which you have configured credentials.`
+      )
+    }
+  } catch (keyValidationError) {
+    // Re-throw with clear context
+    if (keyValidationError instanceof Error) {
+      throw keyValidationError
+    }
+    throw new Error(String(keyValidationError))
+  }
+  
   return envModel
 }
 

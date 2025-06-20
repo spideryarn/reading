@@ -7,9 +7,7 @@ import type {
 import type { PromptUsage } from '@/lib/prompts/types'
 import type {
   AiCallMetrics,
-  CreateAiCallOptions,
   CreateAiCallWithModelStringOptions,
-  SimpleCreateAiCallOptions,
   SimpleCreateAiCallWithModelStringOptions
 } from '../ai-calls'
 
@@ -54,24 +52,6 @@ export class AiCallService {
   async getModelUuidByProviderAndId(): Promise<string> {
     // Mock implementation - ignores parameters
     return 'mock-model-uuid'
-  }
-
-  // DEPRECATED: Old startCall method
-  async startCall(options: CreateAiCallOptions): Promise<AiCall> {
-    const aiCall = createMockAiCall({
-      id: AiCallService.generateId(),
-      document_id: options.documentId || null,
-      created_by: options.userId,
-      model_id: 'mock-model-uuid',
-      model_string: null,
-      prompt_type: options.prompt_type,
-      prompt_input: JSON.stringify(options.input_data || {}),
-      extra: options.extra || {},
-      status: 'pending'
-    })
-    
-    AiCallService.mockCalls.push(aiCall)
-    return aiCall
   }
 
   // NEW: Model string-based startCall
@@ -225,27 +205,6 @@ export class AiCallService {
     return AiCallService.mockCalls
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, limit)
-  }
-
-  // DEPRECATED: Simple create method
-  async create(options: SimpleCreateAiCallOptions): Promise<AiCall> {
-    const aiCall = createMockAiCall({
-      id: AiCallService.generateId(),
-      created_by: options.userId,
-      model_id: 'mock-model-uuid',
-      model_string: null,
-      prompt_type: 'chat',
-      prompt_input: JSON.stringify(options.requestData || {}),
-      status: 'success',
-      completed_at: new Date().toISOString(),
-      prompt_tokens: options.promptTokens || null,
-      completion_tokens: options.completionTokens || null,
-      total_tokens: options.totalTokens || null,
-      extra: options.responseData || {}
-    })
-    
-    AiCallService.mockCalls.push(aiCall)
-    return aiCall
   }
 
   // NEW: Simple create with model string

@@ -407,6 +407,7 @@ See [CHATBOT_ASSISTANT_UI_INTEGRATION.md](CHATBOT_ASSISTANT_UI_INTEGRATION.md) f
 - **Summarisation**: `/api/summarise` (see [TOOL_SUMMARISE.md](TOOL_SUMMARISE.md))
 - **Glossary Generation**: `/api/glossary` (see [TOOL_GLOSSARY.md](TOOL_GLOSSARY.md))
 - **Heading Generation**: `/api/headings`
+- **Reading Difficulty Assessment**: `/api/reading-difficulty` (see [TOOL_READING_DIFFICULTY.md](TOOL_READING_DIFFICULTY.md))
 - **Chat System Prompt**: `chat-system.njk` (initial message only)
 
 **Multi-Turn Chat** (Direct Vercel AI SDK):
@@ -424,6 +425,7 @@ All new **single-use AI features** should use the Nunjucks + Zod template system
 
 ```nunjucks
 {# Example: reading-difficulty.njk #}
+{# See docs/reference/TOOL_READING_DIFFICULTY.md for complete implementation #}
 Provide your assessment as a JSON object with this exact structure:
 
 <json_schema>
