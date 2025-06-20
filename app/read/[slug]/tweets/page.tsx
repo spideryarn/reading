@@ -4,13 +4,13 @@ import { AppHeader } from '@/components/app-header'
 import { requireAuth } from '@/lib/auth/route-protection'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
-import type { Document } from '@/lib/types/database'
+import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
 
 interface PageProps {
   params: Promise<{ slug: string }>
 }
 
-async function getDocumentBySlug(slug: string): Promise<Document | null> {
+async function getDocumentBySlug(slug: string): Promise<any | null> {
   const supabase = await createClient()
   const documentService = new DocumentService(supabase)
   
@@ -33,12 +33,43 @@ export default async function TweetThreadPage({ params }: PageProps) {
   
   const doc = await getDocumentBySlug(slug)
   
+  // Initialise structured logging for this request
+  const correlationId = generateCorrelationId()
+  const requestLogger = createRequestLogger('/read/[slug]/tweets', correlationId)
+
+  requestLogger.info({
+    slug,
+    correlationId,
+    found: Boolean(doc)
+  }, 'Tweet thread page request received')
+  
   if (!doc) {
+    requestLogger.error({
+      slug,
+      correlationId
+    }, 'Document not found when rendering tweet thread page')
     return <div className="p-8">Document not found</div>
   }
 
-  // Get content from database
-  const markdownContent = doc.plaintext_content || ''
+  const MIN_CHARS = 100
+
+  const documentContent = ((doc as any).plaintext_content || '').trim()
+
+  // Fail-fast if unexpectedly short (likely ingestion bug)
+  if (documentContent.length < MIN_CHARS) {
+    const errMsg = `Unexpectedly short plaintext_content for tweet thread (length=${documentContent.length}, expected > ${MIN_CHARS}). This suggests the document ingestion pipeline failed.`
+
+    requestLogger.error({
+      correlationId,
+      documentId: doc.id,
+      plaintextLength: documentContent.length,
+      wordCount: (doc as any).word_count || null,
+      slug,
+      title: doc.title
+    }, errMsg)
+
+    throw new Error(errMsg)
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50">
@@ -64,7 +95,7 @@ export default async function TweetThreadPage({ params }: PageProps) {
         </div>
         
         <TweetThreadPageClient 
-          documentContent={markdownContent} 
+          documentContent={documentContent} 
           documentTitle={doc.title}
           documentId={doc.id}
           slug={slug}
