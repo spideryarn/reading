@@ -35,7 +35,7 @@ npx supabase db push
 # Preview migrations without applying them
 npx supabase db push --local --dry-run
 
-# DO NOT RUN `npx supabase db reset` or `npm run db:reset` (resets entire database)
+# DO NOT RUN `npx supabase db reset` or `npm run db:reset:DANGEROUS` (resets entire database)
 
 # Check current migration status
 npx supabase status

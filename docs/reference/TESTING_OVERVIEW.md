@@ -108,7 +108,7 @@ describe('DocumentService', () => {
 
 **Critical Rules**:
 - ⛔ NEVER reset or truncate the database
-- ⛔ NEVER use `npm run db:reset` in tests
+- ⛔ NEVER use `npm run db:reset:DANGEROUS` in tests
 - ✅ ALWAYS use unique namespaces for test isolation
 - ✅ ALWAYS clean up test data in afterEach hooks
 - ✅ Use the provided test utilities for consistency

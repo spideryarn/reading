@@ -29,7 +29,7 @@ npm test        # Run test suite
 
 ```bash
 # DESTRUCTIVE COMMANDS - require explicit user permission:
-npm run db:reset     # Deletes all local database data
+npm run db:reset:DANGEROUS     # Deletes all local database data
 npx supabase db reset # Deletes all local database data
 npx supabase db push # Applies migrations to database
 npx supabase migration new # Creates new migration files

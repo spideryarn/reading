@@ -227,7 +227,7 @@ All schemas are automatically converted to TypeScript types via Supabase CLI:
 
 ```bash
 npm run db:types    # Generate types from current schema
-npm run db:reset    # Reset DB and regenerate types
+npm run db:reset:DANGEROUS    # Reset DB and regenerate types
 ```
 
 **Generated Types**: `lib/types/database.ts` provides full type safety for all tables, including helper types for inserts, updates, and enums.

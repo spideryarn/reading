@@ -82,7 +82,7 @@ The project includes generated TypeScript types for database operations:
 npm run db:types
 
 # Reset database and regenerate types
-npm run db:reset
+npm run db:reset:DANGEROUS
 ```
 
 **Type Safety**: All database queries use generated types from `lib/types/database.ts`, providing compile-time validation and autocomplete for table schemas, column types, and relationships.
@@ -154,7 +154,7 @@ subscribeToChatMessages()
 ### **Type-Safe Database Operations**
 
 1. **Make schema changes**: Create migrations using `npx supabase migration new feature_name`
-2. **Apply and generate types**: Run `npm run db:reset` to apply migrations and update TypeScript types
+2. **Apply and generate types**: Run `npm run db:reset:DANGEROUS` to apply migrations and update TypeScript types
 3. **Use generated types**: Import and use types from `lib/types/database.ts` in your code
 4. **Commit both**: Include migration files and updated types in git commits
 

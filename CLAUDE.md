@@ -62,7 +62,7 @@ Production deployment:
 
 Database operations:
 - `npm run db:types` - Regenerate TypeScript types from Supabase schema
-- ⛔ `npm run db:reset` - **DO NOT USE**: This command destroys ALL data including test and development data. Only use with explicit user permission in exceptional circumstances.
+- ⛔ `npm run db:reset:DANGEROUS` - **DO NOT USE**: This command destroys ALL data including test and development data. Only use with explicit user permission in exceptional circumstances.
 - `npx supabase db push` - **CAUTION**: Applies migrations to database (NEVER run without explicit user permission)
 
 ⚠️ **CRITICAL**: Always ask for explicit user permission before modifying the database, especially in major ways. When in doubt, err on the side of caution!
@@ -91,7 +91,7 @@ Type checking and linting:
 
 **Key Testing Rules**:
 - **NEVER reset the database** - this would destroy development data
-- **NEVER use `npm run db:reset`** unless explicitly authorized by the user
+- **NEVER use `npm run db:reset:DANGEROUS`** unless explicitly authorized by the user
 - **NEVER delete all records** from tables (no `DELETE FROM table` without WHERE)
 - **Use UUID-based test isolation** - all test data must be namespaced
 

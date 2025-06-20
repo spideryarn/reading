@@ -70,7 +70,7 @@ https://github.com/spideryarn/reading/
    
    This generates TypeScript types from your database schema into `lib/types/database.ts`. The types provide compile-time safety and autocomplete for database operations.
    
-   **Alternative**: Use `npm run db:reset` to reset the database and generate types in one command.
+   **Alternative**: Use `npm run db:reset:DANGEROUS` to reset the database and generate types in one command.
 
 6. **Start development server:**
    ```bash
@@ -314,11 +314,11 @@ npx supabase stop
 
 # Reset database (reapplies migrations and seeds)
 # ⚠️ DESTRUCTIVE: This deletes all data!
-npx supabase db reset
+npm run db:reset:DANGEROUS
 
 # Reset database and regenerate TypeScript types
 # ⚠️ DESTRUCTIVE: This deletes all data!
-npm run db:reset
+npm run db:reset:DANGEROUS
 
 # Generate TypeScript types only
 npm run db:types

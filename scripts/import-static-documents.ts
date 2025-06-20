@@ -104,6 +104,23 @@ class DocumentImporter {
   }
 
   /**
+   * Get hello@spideryarn.com user ID from database
+   */
+  private async getHelloUserIdFromDB(): Promise<string> {
+    const { data: user, error } = await this.supabase
+      .from('profiles')
+      .select('user_id')
+      .eq('user_id', '11111111-1111-1111-1111-111111111111')
+      .single()
+
+    if (error || !user) {
+      throw new Error('hello@spideryarn.com user not found in database. Make sure seed.sql has been run.')
+    }
+
+    return user.user_id
+  }
+
+  /**
    * Import a single document into the database
    */
   async importDocument(filename: string, title: string): Promise<ImportResult> {
@@ -136,13 +153,18 @@ class DocumentImporter {
         const existingDoc = existingDocs[0]
         console.log(`📄 Document "${title}" already exists with ID: ${existingDoc.id}, updating content...`)
         
-        // Update existing document with HTML content
+        // Get hello@spideryarn.com user ID
+        const helloUserId = await this.getHelloUserIdFromDB()
+        
+        // Update existing document with HTML content and ensure proper ownership
         const { error: updateError } = await this.supabase
           .from('documents')
           .update({
             html_content: htmlContent,
             plaintext_content: plaintextContent,
             word_count: wordCount,
+            created_by: helloUserId, // Ensure ownership by hello@spideryarn.com
+            is_public: true, // Ensure all imported documents are public
           })
           .eq('id', existingDoc.id)
 
@@ -163,7 +185,13 @@ class DocumentImporter {
       // Generate slug from title
       const slug = this.generateSlug(filename)
 
-      // Insert new document using system user ID
+      // Get hello@spideryarn.com user ID
+      const helloUserId = await this.getHelloUserIdFromDB()
+
+      // Special handling for Chalmers cropped document to ensure it's public
+      const isChalmersDoc = filename.includes('Chalmers') && filename.includes('cropped')
+
+      // Insert new document using hello@spideryarn.com user ID
       const { data: newDoc, error } = await this.supabase
         .from('documents')
         .insert({
@@ -173,8 +201,8 @@ class DocumentImporter {
           plaintext_content: plaintextContent,
           word_count: wordCount,
           language_code: 'en',
-          is_public: true,
-          created_by: '00000000-0000-0000-0000-000000000001', // System user from seed.sql
+          is_public: true, // All imported documents are public
+          created_by: helloUserId, // hello@spideryarn.com user from seed.sql
         })
         .select('id')
         .single()
