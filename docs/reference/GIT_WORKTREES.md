@@ -382,6 +382,60 @@ The sync script validates your worktree setup before running:
 
 The script fails fast with clear error messages to prevent unexpected behavior.
 
+## Browser Automation Isolation
+
+**Multi-Worktree Browser Testing Support** (June 2025):
+
+The project includes comprehensive isolation for browser automation across all 7 environments to prevent authentication conflicts, file overwrites, and database collisions during concurrent testing.
+
+### Authentication Isolation
+
+**Environment-Specific Test Users**:
+- **Main repository** (port 3000): `hello@spideryarn.com`
+- **Worktree 1** (port 3001): `test-user1@spideryarn.com`
+- **Worktree 2** (port 3002): `test-user2@spideryarn.com`
+- **...through Worktree 6** (port 3006): `test-user6@spideryarn.com`
+- All users share password: `ASDFasdf1` (from `supabase/seed.sql`)
+
+### File System Isolation
+
+**Directory Structure**:
+```
+playwright/
+├── .auth/
+│   ├── main-user.json              # Main repository auth
+│   ├── worktree1-user.json         # Worktree 1 auth
+│   └── ...worktree6-user.json      # Worktree 6 auth
+├── screenshots/
+│   ├── main/, worktree1/, ...worktree6/  # Isolated screenshots
+└── test-results/
+    ├── main/, worktree1/, ...worktree6/  # Isolated test results
+```
+
+### Database Namespace Isolation
+
+**Worktree-Aware Test Namespaces**:
+- Pattern: `test-main-{testname}-{timestamp}-{uuid}` for main
+- Pattern: `test-wt{N}-{testname}-{timestamp}-{uuid}` for worktrees
+- Prevents test data contamination across environments
+
+### Usage
+
+**Automatic Environment Detection**:
+```typescript
+// Environment detection based on PORT
+const envId = getCurrentEnvironmentId() // PORT - 3000 = environment ID
+const testUser = getCurrentEnvironmentTestUser() // Appropriate test user
+const paths = getCurrentEnvironmentPaths() // Isolated file paths
+```
+
+**Benefits**:
+- **Concurrent testing**: Run browser automation in multiple worktrees simultaneously
+- **No conflicts**: Authentication, files, and database data remain isolated
+- **Consistent experience**: Same test patterns work across all environments
+
+**Documentation**: See `docs/reference/TESTING_WITH_BROWSER_AUTOMATION.md` for comprehensive implementation details and usage patterns.
+
 ## Best Practices
 
 1. **Clean commits**: Commit frequently with clear messages
@@ -389,10 +443,11 @@ The script fails fast with clear error messages to prevent unexpected behavior.
 3. **Branch hygiene**: Delete feature branches after merging
 4. **Worktree purpose**: Track what each worktree is working on (your own system)
 5. **Database migrations**: Test migrations thoroughly before syncing
+6. **Browser automation**: Use environment-specific test users for concurrent testing
 
 ## Limitations
 
-- All worktrees share the same local Supabase instance
+- All worktrees share the same local Supabase instance (mitigated by namespace isolation)
 - Cannot checkout the same branch in multiple worktrees
 - Worktree branches are local-only (not pushed to origin)
 - Manual two-step process required for bidirectional sync (automated by sync-worktrees-all.ts)
