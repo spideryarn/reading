@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { POST } from '../tweet-thread/route'
+import * as tweetThreadRoute from '../tweet-thread/route'
 import { executePromptWithUsage } from '@/lib/prompts/types'
 import { createMockRequest } from './test-helpers'
 import type { MockSupabaseClient } from './test-types'
@@ -171,7 +171,7 @@ describe('/api/tweet-thread', () => {
       }
     })
 
-    const response = await POST(request)
+    const response = await tweetThreadRoute.POST(request)
     const data = await response.json()
 
     expect(response.status).toBe(200)
@@ -199,7 +199,7 @@ describe('/api/tweet-thread', () => {
       }
     })
 
-    const response = await POST(request)
+    const response = await tweetThreadRoute.POST(request)
     const data = await response.json()
 
     // Verify each tweet is within 280 character limit (Twitter standard)
@@ -223,7 +223,7 @@ describe('/api/tweet-thread', () => {
       }
     })
 
-    const response = await POST(request)
+    const response = await tweetThreadRoute.POST(request)
 
     expect(response.status).toBe(400)
     const data = await response.json()
@@ -244,7 +244,7 @@ describe('/api/tweet-thread', () => {
       }
     })
 
-    const response = await POST(request)
+    const response = await tweetThreadRoute.POST(request)
 
     expect(response.status).toBe(400)
     const data = await response.json()
@@ -268,7 +268,7 @@ describe('/api/tweet-thread', () => {
       }
     })
 
-    const response = await POST(request)
+    const response = await tweetThreadRoute.POST(request)
 
     expect(response.status).toBe(500)
     const data = await response.json()
@@ -295,7 +295,7 @@ describe('/api/tweet-thread', () => {
       }
     })
 
-    const response = await POST(request)
+    const response = await tweetThreadRoute.POST(request)
 
     expect(response.status).toBe(500)
     const data = await response.json()
@@ -339,7 +339,7 @@ describe('/api/tweet-thread', () => {
         }
       })
 
-      const response = await POST(request)
+      const response = await tweetThreadRoute.POST(request)
 
       // Should return 500 error due to validation failure
       expect(response.status).toBe(500)
@@ -383,7 +383,7 @@ describe('/api/tweet-thread', () => {
         }
       })
 
-      const response = await POST(request)
+      const response = await tweetThreadRoute.POST(request)
 
       // Should return 500 error, not crash the server
       expect(response.status).toBe(500)

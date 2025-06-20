@@ -66,7 +66,7 @@ jest.mock('@/lib/prompts/templates/semantic-search', () => ({
 }))
 
 // Import route and helpers AFTER all mocks are set up
-import { POST } from '../semantic-search/route'
+import * as semanticSearchRoute from '../semantic-search/route'
 import { createMockRequest } from './test-helpers'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
@@ -116,7 +116,7 @@ describe('Semantic Search - Highlighting Accuracy Tests', () => {
     
     // Set up service method spies
     jest.spyOn(mockDocumentService, 'getById').mockResolvedValue(null)
-    jest.spyOn(mockAiCallService, 'startCall').mockResolvedValue({ id: 'ai-call-123' } as any)
+    jest.spyOn(mockAiCallService, 'startCallWithModelString').mockResolvedValue({ id: 'ai-call-123' } as any)
     jest.spyOn(mockAiCallService, 'completeCall').mockResolvedValue(undefined as any)
     jest.spyOn(mockEnhancementService, 'get').mockResolvedValue(null)
     jest.spyOn(mockEnhancementService, 'upsert').mockResolvedValue({} as any)
@@ -223,7 +223,7 @@ describe('Semantic Search - Highlighting Accuracy Tests', () => {
         body: { query: 'machine learning', documentId: 'doc-123' }
       })
 
-      const response = await POST(request)
+      const response = await semanticSearchRoute.POST(request)
       expect(response.status).toBe(200)
 
       const data = await response.json()
@@ -302,7 +302,7 @@ describe('Semantic Search - Highlighting Accuracy Tests', () => {
         body: { query: 'artificial intelligence', documentId: 'doc-123' }
       })
 
-      const response = await POST(request)
+      const response = await semanticSearchRoute.POST(request)
       const data = await response.json()
 
       expect(data.matches).toHaveLength(3)
@@ -409,7 +409,7 @@ describe('Semantic Search - Highlighting Accuracy Tests', () => {
         body: { query: 'AI models', documentId: 'doc-123' }
       })
 
-      const response = await POST(request)
+      const response = await semanticSearchRoute.POST(request)
       const data = await response.json()
 
       expect(data.matches).toHaveLength(3)
@@ -514,7 +514,7 @@ describe('Semantic Search - Highlighting Accuracy Tests', () => {
         body: { query: 'computers', documentId: 'doc-123' }
       })
 
-      const response = await POST(request)
+      const response = await semanticSearchRoute.POST(request)
       const data = await response.json()
 
       expect(data.matches).toHaveLength(3)
@@ -607,7 +607,7 @@ describe('Semantic Search - Highlighting Accuracy Tests', () => {
         body: { query: 'machine learning deep learning', documentId: 'doc-123' }
       })
 
-      const response = await POST(request)
+      const response = await semanticSearchRoute.POST(request)
       const data = await response.json()
 
       expect(data.matches).toHaveLength(2)
@@ -689,7 +689,7 @@ describe('Semantic Search - Highlighting Accuracy Tests', () => {
         body: { query: 'machine learning', documentId: 'doc-123' }
       })
 
-      const response = await POST(request)
+      const response = await semanticSearchRoute.POST(request)
       const data = await response.json()
 
       expect(data.matches).toHaveLength(1)
@@ -766,7 +766,7 @@ describe('Semantic Search - Highlighting Accuracy Tests', () => {
         body: { query: 'C++', documentId: 'doc-123' }
       })
 
-      const response = await POST(request)
+      const response = await semanticSearchRoute.POST(request)
       const data = await response.json()
 
       expect(data.matches).toHaveLength(1)

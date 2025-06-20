@@ -18,7 +18,7 @@
  * addressing the underlying problems in the codebase.
  */
 
-import { POST } from '../route'
+import * as uploadHtmlRoute from '../route'
 import { getTestNamespace, createTestUser, getCleanupFunctions } from '@/lib/testing/test-isolation-utils'
 import { createClient } from '@/lib/supabase/server'
 import type { MockFileArrayBuffer, MockFormDataRequest } from '../../__tests__/test-types'
@@ -127,7 +127,7 @@ describe('HTML Upload Pipeline Issue Reproduction', () => {
       const request = createRequest(formData)
 
       // This reproduces the readability URL issue
-      const response = await POST(request)
+      const response = await uploadHtmlRoute.POST(request)
       
       // When readability fails due to Invalid URL, the API returns 422 with helpful error
       expect(response.status).toBe(422) // Unprocessable Entity
@@ -192,7 +192,7 @@ describe('HTML Upload Pipeline Issue Reproduction', () => {
       const formData = createHtmlFormData('test-storage.html', testHtmlContent, 'as-is', 'Storage Test')
       const request = createRequest(formData)
 
-      const response = await POST(request)
+      const response = await uploadHtmlRoute.POST(request)
       const responseText = getResponseText(response)
       
       // Should fail with service unavailable due to storage failure
@@ -270,7 +270,7 @@ describe('HTML Upload Pipeline Issue Reproduction', () => {
       const request = createRequest(formData)
 
       // This should fail at the readability step due to the Invalid URL issue
-      const response = await POST(request)
+      const response = await uploadHtmlRoute.POST(request)
       const responseText = getResponseText(response)
       
       // Should return 422 due to readability failure (the first issue we encounter)

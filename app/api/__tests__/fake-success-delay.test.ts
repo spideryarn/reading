@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { POST } from '../fake_success_delay/route';
+import * as fakeSuccessDelayRoute from '../fake_success_delay/route';
 import { createMockRequest } from './test-helpers';
 
 describe('/api/fake_success_delay', () => {
@@ -12,7 +12,7 @@ describe('/api/fake_success_delay', () => {
       method: 'POST'
     });
     
-    const response = await POST(request);
+    const response = await fakeSuccessDelayRoute.POST(request);
     const result = await response.json();
     
     const endTime = Date.now();

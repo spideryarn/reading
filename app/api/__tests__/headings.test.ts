@@ -95,11 +95,11 @@ jest.mock('@/lib/prompts/types', () => ({
 }))
 
 // Import route and helpers AFTER all mocks are set up
-import { POST } from '../headings/route'
+import * as headingsRoute from '../headings/route'
 import * as cheerio from 'cheerio'
 import { createMockRequest } from './test-helpers'
 import type { MockSupabaseClient } from './test-types'
-import { authTestScenarios } from '@/lib/testing/auth-test-helpers'
+import { authTestScenarios, defaultTestUser } from '@/lib/testing/auth-test-helpers'
 import { validateAuth } from '@/lib/auth/server-auth'
 
 // Import services and mocked modules
@@ -115,6 +115,7 @@ const mockValidateAuth = validateAuth as jest.MockedFunction<typeof validateAuth
 
 describe('/api/headings', () => {
   let mockEnhancementService: EnhancementService
+  let mockAiCallService: AiCallService
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -204,7 +205,7 @@ describe('/api/headings', () => {
         body: { html_content: inputHtml, documentId: 'test-doc-id' }
       })
 
-      const response = await POST(request)
+      const response = await headingsRoute.POST(request)
       const data = await response.json()
 
       if (response.status !== 200) {
@@ -257,7 +258,7 @@ describe('/api/headings', () => {
         body: { html_content: inputHtml }
       })
 
-      await POST(request)
+      await headingsRoute.POST(request)
 
       const executePromptCall = mockExecutePromptWithUsage.mock.calls[0]
       const cleanedHtml = executePromptCall[1].html_content
@@ -293,7 +294,7 @@ describe('/api/headings', () => {
         body: { html_content: inputHtml }
       })
 
-      await POST(request)
+      await headingsRoute.POST(request)
 
       const executePromptCall = mockExecutePromptWithUsage.mock.calls[0]
       const cleanedHtml = executePromptCall[1].html_content
@@ -337,7 +338,7 @@ describe('/api/headings', () => {
           body: { html_content: '<p>Test</p>', documentId: 'test-doc-id' }
         })
 
-        const response = await POST(request)
+        const response = await headingsRoute.POST(request)
         const data = await response.json()
 
         expect(response.status).toBe(200)
@@ -372,7 +373,7 @@ describe('/api/headings', () => {
           body: { html_content: `<p>Test with ${provider}</p>` }
         })
 
-        const response = await POST(request)
+        const response = await headingsRoute.POST(request)
 
         expect(response.status).toBe(200)
       }
@@ -395,7 +396,7 @@ describe('/api/headings', () => {
         body: { html_content: '<p>Test</p>', documentId: 'test-doc-id' }
       })
 
-      const response = await POST(request)
+      const response = await headingsRoute.POST(request)
       expect(response.status).toBe(401)
       
       const text = await response.text()
@@ -413,7 +414,7 @@ describe('/api/headings', () => {
         body: {} // Invalid body that would normally trigger validation error
       })
 
-      const response = await POST(request)
+      const response = await headingsRoute.POST(request)
       // Should get 401 (auth error) instead of 400 (validation error)
       expect(response.status).toBe(401)
       
@@ -454,7 +455,7 @@ describe('/api/headings', () => {
         body: { invalid: 'data' }
       })
 
-      const response = await POST(request)
+      const response = await headingsRoute.POST(request)
       const data = await response.json()
 
       expect(response.status).toBe(400)
@@ -479,7 +480,7 @@ describe('/api/headings', () => {
         body: { html_content: '<p>Test</p>', documentId: 'test-doc-id' }
       })
 
-      const response = await POST(request)
+      const response = await headingsRoute.POST(request)
       const data = await response.json()
 
       expect(response.status).toBe(500)
@@ -508,7 +509,7 @@ describe('/api/headings', () => {
         body: { html_content: '<p>Test</p>' }
       })
 
-      const response = await POST(request)
+      const response = await headingsRoute.POST(request)
       const data = await response.json()
 
       expect(response.status).toBe(500)
@@ -537,7 +538,7 @@ describe('/api/headings', () => {
         body: { html_content: '<p>Test</p>' }
       })
 
-      const response = await POST(request)
+      const response = await headingsRoute.POST(request)
       const data = await response.json()
 
       expect(response.status).toBe(500)
@@ -581,7 +582,7 @@ describe('/api/headings', () => {
         body: { html_content: '<p>Content 1</p><p>Content 2</p>', documentId: 'test-doc-id' }
       })
 
-      const response = await POST(request)
+      const response = await headingsRoute.POST(request)
       expect(response.status).toBe(200)
 
       // Check that console.log was called with hierarchy information

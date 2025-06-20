@@ -5,7 +5,7 @@
 import { testApiRoute } from '@/lib/testing/api-test-utils'
 import { authTestScenarios, createTestUser } from '@/lib/testing/auth-test-utils'
 import { getTestNamespace } from '@/lib/testing/test-isolation-utils'
-import { POST } from '../route'
+import * as chatRoute from '../route'
 
 // Mock auth modules first, before any imports
 jest.mock('@/lib/auth/server-auth', () => ({
@@ -172,7 +172,7 @@ describe('Chat API - Streaming Functionality', () => {
       } as any)
 
       const response = await testApiRoute({
-        handler: POST,
+        handler: chatRoute,
         url: '/api/chat',
         method: 'POST',
         body: {
@@ -206,7 +206,7 @@ describe('Chat API - Streaming Functionality', () => {
       mockStreamText.mockRejectedValue(new Error('Streaming failed'))
 
       const response = await testApiRoute({
-        handler: POST,
+        handler: chatRoute,
         url: '/api/chat',
         method: 'POST',
         body: {
@@ -262,7 +262,7 @@ describe('Chat API - Streaming Functionality', () => {
       })
 
       const response = await testApiRoute({
-        handler: POST,
+        handler: chatRoute,
         url: '/api/chat',
         method: 'POST',
         body: {
@@ -302,7 +302,7 @@ describe('Chat API - Streaming Functionality', () => {
       const startTime = Date.now()
 
       const response = await testApiRoute({
-        handler: POST,
+        handler: chatRoute,
         url: '/api/chat',
         method: 'POST',
         body: {
@@ -336,7 +336,7 @@ describe('Chat API - Streaming Functionality', () => {
       // Create multiple concurrent requests
       const requests = Array.from({ length: 5 }, (_, i) => 
         testApiRoute({
-          handler: POST,
+          handler: chatRoute,
           url: '/api/chat',
           method: 'POST',
           body: {
@@ -383,7 +383,7 @@ describe('Chat API - Streaming Functionality', () => {
       })
 
       const response = await testApiRoute({
-        handler: POST,
+        handler: chatRoute,
         url: '/api/chat',
         method: 'POST',
         body: {
@@ -419,7 +419,7 @@ describe('Chat API - Streaming Functionality', () => {
       })
 
       const response = await testApiRoute({
-        handler: POST,
+        handler: chatRoute,
         url: '/api/chat',
         method: 'POST',
         body: {
