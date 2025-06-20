@@ -165,8 +165,8 @@ export default function DocumentPageClient({
       }
       return prev
     })
-  // Depend on keyed string, not the Map reference
-  }, [elementVisibilityKey, allHeadings, mutatedDocument])
+  // Depend on keyed string, not the Map reference, but include elementVisibility for hook dependency
+  }, [elementVisibilityKey, allHeadings, mutatedDocument, elementVisibility])
   
   // Handle element clicks in the document viewer
   const handleElementClick = useCallback((element: DocumentElement) => {

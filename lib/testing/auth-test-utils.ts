@@ -6,6 +6,7 @@
  */
 
 import { type User } from '@supabase/supabase-js'
+import { validateAuth } from '@/lib/auth/server-auth'
 
 /**
  * Test user fixture with all required properties for authentication testing
@@ -69,7 +70,6 @@ export function createAnonymousUser(): null {
  * Should be called before running API route tests that require authentication
  */
 export function mockValidateAuth(user: TestUser | null = null): void {
-  const { validateAuth } = require('@/lib/auth/server-auth')
   
   if (user) {
     validateAuth.mockResolvedValue({
@@ -95,7 +95,6 @@ export function mockValidateAuth(user: TestUser | null = null): void {
  * Mocks authentication failure scenarios for testing error handling
  */
 export function mockAuthFailure(error: string = 'Authentication failed'): void {
-  const { validateAuth } = require('@/lib/auth/server-auth')
   
   validateAuth.mockRejectedValue(new Error(error))
 }
@@ -105,7 +104,6 @@ export function mockAuthFailure(error: string = 'Authentication failed'): void {
  * Should be called in test cleanup (afterEach) to ensure test isolation
  */
 export function resetAuthMocks(): void {
-  const { validateAuth } = require('@/lib/auth/server-auth')
   
   if (validateAuth && validateAuth.mockClear) {
     validateAuth.mockClear()

@@ -894,7 +894,7 @@ export function UnifiedLeftPane({
       originalFileType={originalFileType}
       uploadMetadata={uploadMetadata}
     />
-  ), [documentTitle, documentCreatedAt, documentSourceUrl, elements, showGlossary, glossaryEntities.length, isLoadingGlossary, aiHeadingsGenerated, summaryGenerated, ownerEmail, isPublic, documentId, slug, storagePath, originalFileType, uploadMetadata])
+  ), [documentTitle, documentCreatedAt, documentSourceUrl, elements, glossaryGenerated, isLoadingGlossary, aiHeadingsGenerated, summaryGenerated, ownerEmail, isPublic, documentId, slug, storagePath, originalFileType, uploadMetadata])
 
   const renderGlossaryTab = useCallback(() => {
     if (!showGlossary) {
@@ -1165,7 +1165,7 @@ export function UnifiedLeftPane({
         ) : null}
         </div>
       </div>
-    ), [searchInputValue, isSearching, searchResults, showAdvancedOptions, caseSensitive, handleSearchInputChange, actions, sortedSearchResults])
+    ), [searchInputValue, isSearching, searchResults, showAdvancedOptions, caseSensitive, setCaseSensitive, submitSearch, updateSearch, handleSearchInputChange, actions, sortedSearchResults])
 
 
   return (
