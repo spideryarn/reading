@@ -336,11 +336,13 @@ ${artifacts.length > 0 ? `- **Artifacts generated:** ${artifacts.length}` : ''}
   }
 
   private cleanText(text: string): string {
-    // Remove excessive whitespace and clean up formatting
+    // Remove excessive whitespace and clean up formatting while preserving paragraph structure
     return text
-      .replace(/\n\s*\n\s*\n/g, '\n\n') // Collapse multiple newlines
-      .replace(/^\s+|\s+$/g, '') // Trim
-      .replace(/\s+/g, ' '); // Normalise whitespace
+      .replace(/\n\s*\n\s*\n/g, '\n\n') // Collapse multiple newlines to double newlines
+      .replace(/^\s+|\s+$/g, '') // Trim start and end
+      .replace(/[ \t]+/g, ' ') // Normalize spaces and tabs to single spaces
+      .replace(/\n /g, '\n') // Remove spaces at start of lines
+      .replace(/ \n/g, '\n'); // Remove spaces at end of lines
   }
 
   private removeArtifacts(text: string): string {
