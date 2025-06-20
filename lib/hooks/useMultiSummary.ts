@@ -109,6 +109,21 @@ export function useMultiSummary(
       })
       
       if (!response.ok) {
+        let errorInfo: unknown = null
+        try {
+          errorInfo = await response.json()
+        } catch {
+          try {
+            errorInfo = await response.text()
+          } catch {
+            /* ignore */
+          }
+        }
+
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('Multi-summary generation failed', response.status, errorInfo)
+        }
+
         throw new Error(`Failed to generate summaries: ${response.status}`)
       }
       

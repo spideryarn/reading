@@ -14,7 +14,10 @@ Generate 9 different summaries of the following document, varying by expertise l
 - **single_short_paragraph**: ~200 tokens - Balanced summary in one paragraph
 - **page**: ~800 tokens - Detailed summary of about a page
 
-Provide only the JSON response below with all 9 summaries in Markdown format. Do not include any other text, explanations, or formatting outside the JSON:
+Provide only the JSON response below with all 9 summaries in Markdown format. **Make sure the JSON is strictly valid:**
+* Each string value **MUST NOT** contain unescaped line breaks – replace internal newlines with `\n`.
+* Do **NOT** add comments or extra keys.
+* Do **NOT** wrap keys or values in triple backticks inside the JSON.
 
 ```json
 {

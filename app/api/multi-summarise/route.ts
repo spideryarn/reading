@@ -244,6 +244,7 @@ export async function POST(request: NextRequest) {
         documentId,
         aiCallId: aiCall.id,
         error: summaryError instanceof Error ? summaryError.message : 'Unknown error',
+        fullError: summaryError,
         modelProvider: modelConfig.provider,
         modelString: modelString
       }, 'Failed to generate multi-dimensional summary')
@@ -260,10 +261,15 @@ export async function POST(request: NextRequest) {
         summaryError instanceof Error ? summaryError : new Error('Unknown summary generation error')
       )
       
-      return NextResponse.json(
-        { error: 'Failed to generate multi-dimensional summary' },
-        { status: 500 }
-      )
+      const responseBody: Record<string, unknown> = { error: 'Failed to generate multi-dimensional summary' }
+      if (process.env.NODE_ENV !== 'production') {
+        responseBody.debug = {
+          name: summaryError instanceof Error ? summaryError.name : 'unknown',
+          message: summaryError instanceof Error ? summaryError.message : String(summaryError),
+        }
+      }
+
+      return NextResponse.json(responseBody, { status: 500 })
     }
     
     // Parse and validate the structured JSON response
