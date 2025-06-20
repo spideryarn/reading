@@ -5,6 +5,8 @@ This document provides a comprehensive analysis of browser automation testing op
 ## See Also
 
 - `CLAUDE.md` - Current Puppeteer MCP usage and testing guidelines
+- `docs/reference/DEV_SERVER_AUTOMATION.md` - Enhanced dev server management with daemon mode for AI-first development and browser automation
+- `docs/reference/GIT_WORKTREES.md` - Multi-worktree browser automation isolation and authentication setup
 - `docs/reference/TESTING_OVERVIEW.md` - Current testing infrastructure using Jest and React Testing Library  
 - `docs/reference/TESTING_DATABASE.md` - Database testing patterns that could integrate with browser tests
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - System architecture to understand what needs testing

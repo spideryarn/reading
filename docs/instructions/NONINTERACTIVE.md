@@ -20,6 +20,8 @@ Non-interactive mode (`claude -p`) allows Claude to execute tasks without human 
 - Commit changes to git (this should be handled externally)
 - Access running development servers or databases
 
+**Note**: For interactive AI agent development with dev server management, see `docs/reference/DEV_SERVER_AUTOMATION.md` which provides background daemon mode for automation workflows.
+
 **Non-interactive Claude can:**
 - Read, write, and edit files
 - Perform static analysis of code

@@ -28,6 +28,7 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture and implementation details ⭐ **Essential**
 - `docs/reference/ARCHITECTURE_DECISIONS.md` - Key architectural decisions including framework choices, data structures, storage approach, and MVP features
 - `docs/reference/SETUP.md` - Development environment setup guide including Node.js, Supabase, Git worktree configuration ⭐ **Start here**
+- `docs/reference/DEV_SERVER_AUTOMATION.md` - Enhanced dev server management with background daemon mode for AI-first development and multi-worktree isolation ⭐ **Essential for AI agents**
 - `docs/reference/SETUP_DEPLOYMENT_PRODUCTION.md` - Production deployment guide covering Vercel setup, custom domain configuration, environment management, and troubleshooting ⭐ **Essential for deployment**
 - `docs/reference/ENVIRONMENT_DETECTION.md` - Environment-aware error handling for distinguishing between local development and cloud/production environments
 - `docs/reference/LOGGING_BEST_PRACTICES.md` - Comprehensive logging guide covering library choices (Pino vs Winston), Vercel observability, and production monitoring strategies
@@ -155,6 +156,7 @@ See `planning/later/` for deferred features and future enhancements.
 
 **For newcomers**: Start with README.md → VISION.md → ARCHITECTURE_OVERVIEW.md → SETUP.md
 **For developers**: Focus on CODING_PRINCIPLES.md → CODING_GUIDELINES.md → TESTING_OVERVIEW.md → TESTING_SETUP.md
+**For AI agents**: Essential reads: DEV_SERVER_AUTOMATION.md → GIT_WORKTREES.md → SETUP.md
 **For AI features**: Begin with LLM_PROMPT_TEMPLATES.md → TOOL_SUMMARISE.md → TOOL_GLOSSARY.md
 **For highlighting work**: Use STYLING_OVERLAPPING_TEXT_HIGHLIGHTS.md → TOOL_SEARCH_TEXT.md → TOOL_HIGHLIGHT.md
 **For documentation work**: Use WRITE_EVERGREEN_DOC.md → UPDATE_HOUSEKEEPING_DOCUMENTATION.md
