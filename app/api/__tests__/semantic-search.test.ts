@@ -11,22 +11,19 @@ import { createTestUser } from '@/lib/testing/auth-test-utils'
 import { getTestNamespace } from '@/lib/testing/test-isolation-utils'
 import * as semanticSearchRoute from '../semantic-search/route'
 import { createClient } from '@/lib/supabase/server'
-import { DocumentService } from '@/lib/services/database/documents'
-import { AiCallService } from '@/lib/services/database/ai-calls'
-import { executePrompt } from '@/lib/prompts/types'
-import type { MockSupabaseClient, MockDocumentService, MockAiCallService, MockAiCall } from './test-types'
+import { setupCommonServiceMocks, createMockDocument } from '@/lib/testing/service-mocks'
+import { executePromptWithUsage } from '@/lib/prompts/types'
 import type { Database } from '@/lib/types/database'
 
 // Mock the external dependencies
 jest.mock('@/lib/supabase/server')
 jest.mock('@/lib/services/database/documents')
 jest.mock('@/lib/services/database/ai-calls') 
+jest.mock('@/lib/services/database/enhancements')
 jest.mock('@/lib/prompts/types')
 
 const mockCreateClient = createClient as jest.MockedFunction<typeof createClient>
-const MockDocumentService = DocumentService as jest.MockedClass<typeof DocumentService>
-const MockAiCallService = AiCallService as jest.MockedClass<typeof AiCallService>
-const mockExecutePrompt = executePrompt as jest.MockedFunction<typeof executePrompt>
+const mockExecutePromptWithUsage = executePromptWithUsage as jest.MockedFunction<typeof executePromptWithUsage>
 
 // Sample test data
 const sampleDocument: Database['public']['Tables']['documents']['Row'] = {
@@ -88,49 +85,44 @@ const sampleLLMResponse = JSON.stringify({
 describe('/api/semantic-search', () => {
   const namespace = getTestNamespace('semantic-search')
   const testUser = createTestUser(namespace)
-  
-  let mockDocumentService: MockDocumentService
-  let mockAiCallService: MockAiCallService
-  let mockSupabase: MockSupabaseClient
 
   beforeEach(() => {
     // Reset all mocks
     jest.clearAllMocks()
     
-    // Mock Supabase client
-    mockSupabase = {}
-    mockCreateClient.mockResolvedValue(mockSupabase)
-    
-    // Mock DocumentService
-    mockDocumentService = {
-      getById: jest.fn(),
-      getElements: jest.fn(),
+    // Mock Supabase client with enhancement query support
+    const mockSupabase = {
+      from: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockResolvedValue({ data: [], error: null })
     }
-    MockDocumentService.mockImplementation(() => mockDocumentService as DocumentService)
-    
-    // Mock AiCallService  
-    mockAiCallService = {
-      startCall: jest.fn(),
-      completeCall: jest.fn(),
-    }
-    MockAiCallService.mockImplementation(() => mockAiCallService as AiCallService)
+    mockCreateClient.mockResolvedValue(mockSupabase as any)
     
     // Mock successful LLM response by default
-    mockExecutePrompt.mockResolvedValue(sampleLLMResponse)
-    
-    // Mock AI call tracking
-    mockAiCallService.startCall.mockResolvedValue({ id: 'ai-call-123' } as MockAiCall)
-    mockAiCallService.completeCall.mockResolvedValue(undefined)
+    mockExecutePromptWithUsage.mockResolvedValue({
+      text: sampleLLMResponse,
+      usage: { totalTokens: 100, promptTokens: 50, completionTokens: 50 },
+      finishReason: 'stop'
+    })
   })
 
   it('should process valid semantic search request successfully', async () => {
-    // Setup mocks
-    mockDocumentService.getById.mockResolvedValue(sampleDocument)
-    mockDocumentService.getElements.mockResolvedValue(sampleElements)
+    // Setup service mocks
+    const { aiCallService, enhancementService, documentService } = setupCommonServiceMocks()
+    
+    // Setup specific mocks for this test
+    const mockDocument = createMockDocument({
+      id: 'doc-123',
+      html_content: '<h1 id="elem_h1_1">Introduction to Quantum Physics</h1><p id="elem_p_2">Quantum mechanics describes the physical properties of nature.</p>'
+    })
+    
+    jest.spyOn(documentService, 'getById').mockResolvedValue(mockDocument)
+    jest.spyOn(enhancementService, 'get').mockResolvedValue(null) // No cached results
     
     // Execute
     const response = await testApiRoute({
-      handler: POST,
+      handler: semanticSearchRoute,
       url: '/api/semantic-search',
       method: 'POST',
       body: {
@@ -154,12 +146,12 @@ describe('/api/semantic-search', () => {
     expect(data.query).toBe('quantum physics')
     expect(data.documentId).toBe('doc-123')
     expect(data.stats).toBeDefined()
-    expect(data.aiCallId).toBe('ai-call-123')
+    expect(data.aiCallId).toBe('mock-ai-call-id')
   })
 
   it('should reject request with missing query', async () => {
     const response = await testApiRoute({
-      handler: POST,
+      handler: semanticSearchRoute,
       url: '/api/semantic-search',
       method: 'POST',
       body: {
@@ -177,7 +169,7 @@ describe('/api/semantic-search', () => {
 
   it('should reject request with missing documentId', async () => {
     const response = await testApiRoute({
-      handler: POST,
+      handler: semanticSearchRoute,
       url: '/api/semantic-search',
       method: 'POST',
       body: {
@@ -194,10 +186,14 @@ describe('/api/semantic-search', () => {
   })
 
   it('should return 404 for non-existent document', async () => {
-    mockDocumentService.getById.mockResolvedValue(null)
+    // Setup service mocks
+    const { documentService } = setupCommonServiceMocks()
+    
+    // Setup mocks for non-existent document
+    jest.spyOn(documentService, 'getById').mockResolvedValue(null)
     
     const response = await testApiRoute({
-      handler: POST,
+      handler: semanticSearchRoute,
       url: '/api/semantic-search',
       method: 'POST',
       body: {
@@ -213,12 +209,19 @@ describe('/api/semantic-search', () => {
     expect(data.error).toBe('Document not found')
   })
 
-  it('should return 404 for document with no elements', async () => {
-    mockDocumentService.getById.mockResolvedValue(sampleDocument)
-    mockDocumentService.getElements.mockResolvedValue([])
+  it('should return 400 for document with no HTML content', async () => {
+    // Setup service mocks
+    const { documentService } = setupCommonServiceMocks()
+    
+    // Mock document without HTML content
+    const emptyDocument = createMockDocument({
+      id: 'doc-123',
+      html_content: null
+    })
+    jest.spyOn(documentService, 'getById').mockResolvedValue(emptyDocument)
     
     const response = await testApiRoute({
-      handler: POST,
+      handler: semanticSearchRoute,
       url: '/api/semantic-search',
       method: 'POST',
       body: {
@@ -230,8 +233,8 @@ describe('/api/semantic-search', () => {
     
     const data = await response.json()
     
-    expect(response.status).toBe(404)
-    expect(data.error).toBe('No document elements found')
+    expect(response.status).toBe(400)
+    expect(data.error).toBe('Document has no HTML content for semantic analysis')
   })
 
   it('should handle empty semantic search results', async () => {
@@ -240,7 +243,7 @@ describe('/api/semantic-search', () => {
     mockExecutePrompt.mockResolvedValue(JSON.stringify({ matches: [] }))
     
     const response = await testApiRoute({
-      handler: POST,
+      handler: semanticSearchRoute,
       url: '/api/semantic-search',
       method: 'POST',
       body: {
@@ -281,7 +284,7 @@ describe('/api/semantic-search', () => {
     mockExecutePrompt.mockResolvedValue(responseWithInvalidIds)
     
     const response = await testApiRoute({
-      handler: POST,
+      handler: semanticSearchRoute,
       url: '/api/semantic-search',
       method: 'POST',
       body: {
@@ -304,7 +307,7 @@ describe('/api/semantic-search', () => {
     mockExecutePrompt.mockRejectedValue(new Error('LLM service unavailable'))
     
     const response = await testApiRoute({
-      handler: POST,
+      handler: semanticSearchRoute,
       url: '/api/semantic-search',
       method: 'POST',
       body: {
@@ -326,7 +329,7 @@ describe('/api/semantic-search', () => {
     mockExecutePrompt.mockResolvedValue('Invalid JSON response')
     
     const response = await testApiRoute({
-      handler: POST,
+      handler: semanticSearchRoute,
       url: '/api/semantic-search',
       method: 'POST',
       body: {
@@ -351,7 +354,7 @@ describe('/api/semantic-search', () => {
     mockExecutePrompt.mockResolvedValue(wrappedResponse)
     
     const response = await testApiRoute({
-      handler: POST,
+      handler: semanticSearchRoute,
       url: '/api/semantic-search',
       method: 'POST',
       body: {
