@@ -4,6 +4,8 @@ import { readingDifficultyPrompt, parseReadingDifficultyResponse } from '@/lib/p
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 import { createClient } from '@/lib/supabase/server'
 import { extractCleanText } from '@/lib/utils/html-text-extraction'
+import { EnhancementService } from '@/lib/services/database/enhancements'
+import { AiCallService } from '@/lib/services/database/ai-calls'
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
@@ -63,6 +65,43 @@ export async function POST(request: NextRequest) {
 
     const result = parseReadingDifficultyResponse(llmResult.text)
     
+    // Save AI call record
+    const aiCallService = new AiCallService(supabase)
+    const aiCall = await aiCallService.create({
+      prompt_type: 'reading-difficulty-assessment',
+      prompt_template: readingDifficultyPrompt.name,
+      prompt_input: cleanText.substring(0, 8000),
+      model_string: readingDifficultyPrompt.model,
+      response_text: llmResult.text,
+      prompt_tokens: llmResult.usage.promptTokens,
+      completion_tokens: llmResult.usage.completionTokens,
+      total_tokens: llmResult.usage.totalTokens,
+      reasoning_tokens: llmResult.usage.reasoningTokens || null,
+      status: 'completed',
+      finish_reason: 'stop',
+      created_by: user.id,
+      document_id: documentId || null
+    })
+
+    // Store reading difficulty enhancement
+    const enhancementService = new EnhancementService(supabase)
+    await enhancementService.upsert({
+      documentId: documentId || '',
+      aiCallId: aiCall.id,
+      type: 'reading_difficulty',
+      subtype: 'ai_assessment',
+      content: {
+        level: result.level,
+        confidence: result.confidence,
+        factors: [result.rationale]
+      },
+      extra: {
+        content_length: cleanText.length,
+        model_provider: 'anthropic',
+        assessment_version: '1.0'
+      }
+    })
+    
     requestLogger.info({
       userId: user.id,
       documentId,
@@ -70,7 +109,7 @@ export async function POST(request: NextRequest) {
       confidence: result.confidence,
       tokensUsed: llmResult.usage.totalTokens,
       correlationId
-    }, 'Reading difficulty assessment completed')
+    }, 'Reading difficulty assessment completed and stored')
 
     requestTimer.end({ 
       userId: user.id, 
@@ -81,8 +120,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       level: result.level,
-      confidence: result.confidence,
-      factors: result.factors
+      confidence: result.confidence >= 0.8 ? 'High' : result.confidence >= 0.6 ? 'Medium' : 'Low',
+      factors: [result.rationale] // Convert rationale to single-item factors array for UI compatibility
     })
 
   } catch (error) {

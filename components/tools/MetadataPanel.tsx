@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input'
 import { sanitizeDocumentTitle, validateDocumentTitle, MAX_TITLE_LENGTH } from '@/lib/utils/document-title'
 import { DeleteDocumentButton } from '@/components/delete-document-button'
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
+import { EnhancementService } from '@/lib/services/database/enhancements'
 
 interface MetadataPanelProps {
   documentTitle: string
@@ -111,6 +112,29 @@ export function MetadataPanel({
       setDifficultyError(null)
       
       try {
+        // First check if reading difficulty already exists in database
+        const supabase = createClient()
+        const enhancementService = new EnhancementService(supabase)
+        
+        const existingDifficulty = await enhancementService.get(
+          documentId, 
+          'reading_difficulty' as any, 
+          'ai_assessment'
+        )
+        
+        if (existingDifficulty) {
+          // Use cached result from database
+          const content = existingDifficulty.content as any
+          setReadingDifficulty({
+            level: content.level,
+            confidence: content.confidence >= 0.8 ? 'High' : content.confidence >= 0.6 ? 'Medium' : 'Low',
+            factors: content.factors || []
+          })
+          setIsLoadingDifficulty(false)
+          return
+        }
+        
+        // No cached result - make API call to generate new assessment
         const response = await fetch('/api/reading-difficulty', {
           method: 'POST',
           headers: {
