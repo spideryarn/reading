@@ -39,7 +39,7 @@ interface DocumentPageClientProps {
   slug: string
   storagePath: string | null
   originalFileType: string | null
-  uploadMetadata?: any
+  uploadMetadata?: Record<string, unknown>
   documentCreatedAt: string
   documentSourceUrl?: string | null
   aiHeadingsGenerated?: boolean
