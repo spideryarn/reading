@@ -693,9 +693,10 @@ await expect(async () => {
 
 ## Status Indicators
 
-- Playwright setup: 📋 **Planned**
-- Migration from Puppeteer MCP: 📋 **Planned**
-- Test coverage expansion: 📋 **Planned**
+- Playwright setup: ✅ **Complete** (June 2025)
+- Multi-worktree isolation: ✅ **Complete** (June 2025)
+- Migration from Puppeteer MCP: ✅ **Complete** (December 2024)
+- Test coverage expansion: 🚧 **In Progress**
 - CI/CD integration: 📋 **Planned**
 
 ## Appendix: Quick Reference
