@@ -84,10 +84,10 @@ export function createCurrentEnvironmentTestUser(): User {
     },
     aud: 'authenticated',
     created_at: new Date().toISOString(),
-    phone: null,
+    phone: '',
     confirmed_at: new Date().toISOString(),
     email_confirmed_at: new Date().toISOString(),
-    phone_confirmed_at: null,
+    phone_confirmed_at: '',
     last_sign_in_at: new Date().toISOString(),
     role: 'authenticated',
     updated_at: new Date().toISOString(),
@@ -117,10 +117,10 @@ export function createEnvironmentTestUser(envId: number): User {
     },
     aud: 'authenticated',
     created_at: new Date().toISOString(),
-    phone: null,
+    phone: '',
     confirmed_at: new Date().toISOString(),
     email_confirmed_at: new Date().toISOString(),
-    phone_confirmed_at: null,
+    phone_confirmed_at: '',
     last_sign_in_at: new Date().toISOString(),
     role: 'authenticated',
     updated_at: new Date().toISOString(),
@@ -141,7 +141,8 @@ export function getWorktreeTestNamespace(testName: string, envId?: number): stri
   const actualEnvId = envId ?? getCurrentEnvironmentId()
   const envPrefix = actualEnvId === 0 ? 'main' : `wt${actualEnvId}`
   const timestamp = Date.now()
-  const uuid = crypto.randomUUID().slice(0, 8)
+  // Use simple random string instead of crypto.randomUUID for compatibility
+  const uuid = Math.random().toString(36).substring(2, 10)
   return `test-${envPrefix}-${testName}-${timestamp}-${uuid}`
 }
 
@@ -200,6 +201,39 @@ export function validateEnvironmentSetup(): {
 }
 
 /**
+ * Generate environment-specific file paths for browser automation
+ * @param envId - Environment ID (0 for main, 1-6 for worktrees)
+ * @returns Object with all environment-specific paths
+ */
+export function getEnvironmentPaths(envId: number): {
+  envName: string
+  authFile: string
+  screenshotDir: string
+  testResultsDir: string
+} {
+  const envName = getEnvironmentName(envId)
+  return {
+    envName,
+    authFile: `playwright/.auth/${envName}-user.json`,
+    screenshotDir: `playwright/screenshots/${envName}/`,
+    testResultsDir: `playwright/test-results/${envName}/`
+  }
+}
+
+/**
+ * Get environment-specific paths for current environment
+ * @returns Object with current environment's paths
+ */
+export function getCurrentEnvironmentPaths(): {
+  envName: string
+  authFile: string
+  screenshotDir: string
+  testResultsDir: string
+} {
+  return getEnvironmentPaths(getCurrentEnvironmentId())
+}
+
+/**
  * Environment-aware test utilities combining worktree and auth helpers
  */
 export const worktreeAuthUtils = {
@@ -210,7 +244,8 @@ export const worktreeAuthUtils = {
     id: getCurrentEnvironmentId(),
     name: getEnvironmentName(getCurrentEnvironmentId()),
     testUser: getCurrentEnvironmentTestUser(),
-    mockUser: createCurrentEnvironmentTestUser()
+    mockUser: createCurrentEnvironmentTestUser(),
+    paths: getCurrentEnvironmentPaths()
   }),
   
   /**
@@ -220,7 +255,8 @@ export const worktreeAuthUtils = {
     id: envId,
     name: getEnvironmentName(envId),
     testUser: getTestUserForEnvironment(envId),
-    mockUser: createEnvironmentTestUser(envId)
+    mockUser: createEnvironmentTestUser(envId),
+    paths: getEnvironmentPaths(envId)
   }),
   
   /**
@@ -236,5 +272,15 @@ export const worktreeAuthUtils = {
   /**
    * Create namespace for specific environment
    */
-  createNamespaceFor: (testName: string, envId: number) => getWorktreeTestNamespace(testName, envId)
+  createNamespaceFor: (testName: string, envId: number) => getWorktreeTestNamespace(testName, envId),
+  
+  /**
+   * Get paths for current environment
+   */
+  getPaths: () => getCurrentEnvironmentPaths(),
+  
+  /**
+   * Get paths for specific environment
+   */
+  getPathsFor: (envId: number) => getEnvironmentPaths(envId)
 }
