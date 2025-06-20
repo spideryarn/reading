@@ -149,9 +149,28 @@ git push origin --delete experim  # If it was pushed
    - reading-worktree5: PORT=3005
    - reading-worktree6: PORT=3006
 
+6. **Set up browser automation authentication** (required for E2E testing):
+   ```bash
+   # From main directory, set up authentication in all worktrees
+   ./scripts/setup-auth-all-worktrees.ts
+   
+   # Or manually in each worktree:
+   cd ../reading-worktree1 && npm run test:e2e:setup
+   cd ../reading-worktree2 && npm run test:e2e:setup
+   # ... and so on for each worktree
+   ```
+   
+   This creates environment-specific authentication files for Playwright browser automation:
+   - `playwright/.auth/main-user.json` (main repository)
+   - `playwright/.auth/worktree1-user.json` through `worktree6-user.json`
+   
+   **Important**: These auth files are not in Git and must be recreated after database resets.
+
 ## Development Workflow
 
 ### Starting Development
+
+#### Interactive Development (Standard)
 1. Choose an available worktree for your task
 2. Start the development server:
    ```bash
@@ -159,6 +178,30 @@ git push origin --delete experim  # If it was pushed
    npm run dev
    ```
 3. Development server runs on the configured port (e.g., http://localhost:3002)
+
+#### AI-First Development with Background Server
+For AI agent automation where you want the dev server running in background:
+
+```bash
+# Start dev server as background daemon
+./scripts/dev-with-restart.sh --daemon
+
+# Check if daemon is running and healthy
+./scripts/dev-with-restart.sh --status
+
+# Stop the daemon
+./scripts/dev-with-restart.sh --stop
+```
+
+**Daemon Mode Features:**
+- **Background operation**: Frees up terminal for LLM agents
+- **Automatic restarts**: `--daemon` command restarts existing daemon if already running
+- **Health checking**: `--status` verifies both process existence and HTTP response
+- **Graceful shutdown**: Uses SIGTERM before SIGKILL for clean stops
+- **Worktree isolation**: Each worktree daemon uses independent PID tracking
+- **Log management**: Automatically rotates dev.log when it exceeds 10MB
+
+**PID File Location**: `.dev-server.pid` in each worktree directory (configurable via `SYR_DEVSERVER_PIDFILE` environment variable)
 
 ### Synchronisation Process
 
@@ -280,6 +323,21 @@ git log main..worktree1 --oneline
 git log worktree1..main --oneline
 ```
 
+### Browser Automation
+```bash
+# Set up authentication in all worktrees
+./scripts/setup-auth-all-worktrees.ts
+
+# Set up authentication in current worktree only
+npm run test:e2e:setup
+
+# Run E2E tests (requires auth setup first)
+npm run test:e2e
+
+# Check authentication files
+ls -la playwright/.auth/
+```
+
 ### Conflict Resolution
 
 #### Merge Conflicts
@@ -341,6 +399,36 @@ If a port is already in use:
 2. Ensure no duplicate ports across worktrees
 3. Kill any orphaned dev servers: `lsof -i :3002` and `kill <PID>`
 
+### Authentication File Issues
+If Playwright tests fail with authentication errors:
+
+**Missing auth files after database reset:**
+```bash
+# Recreate all authentication files
+./scripts/setup-auth-all-worktrees.ts
+
+# Or recreate for single worktree
+cd reading-worktree1 && npm run test:e2e:setup
+```
+
+**Environment validation errors:**
+```bash
+# Check environment configuration
+cd reading-worktree2
+PORT=$(grep "^PORT=" .env.test | cut -d'=' -f2)
+echo "Port: $PORT, Expected test user: test-user2@spideryarn.com"
+```
+
+**Auth files exist but tests still fail:**
+- Database may have been reset - auth files become stale
+- Delete specific auth file: `rm playwright/.auth/worktree2-user.json`
+- Re-run setup: `npm run test:e2e:setup`
+
+**Wrong test user for environment:**
+- Check PORT in `.env.test` matches worktree number
+- Worktree1 (PORT=3001) should use `test-user1@spideryarn.com`
+- Worktree6 (PORT=3006) should use `test-user6@spideryarn.com`
+
 ### Worktree Errors
 If "worktree already exists" error:
 ```bash
@@ -382,6 +470,60 @@ The sync script validates your worktree setup before running:
 
 The script fails fast with clear error messages to prevent unexpected behavior.
 
+## Browser Automation Isolation
+
+**Multi-Worktree Browser Testing Support** (June 2025):
+
+The project includes comprehensive isolation for browser automation across all 7 environments to prevent authentication conflicts, file overwrites, and database collisions during concurrent testing.
+
+### Authentication Isolation
+
+**Environment-Specific Test Users**:
+- **Main repository** (port 3000): `hello@spideryarn.com`
+- **Worktree 1** (port 3001): `test-user1@spideryarn.com`
+- **Worktree 2** (port 3002): `test-user2@spideryarn.com`
+- **...through Worktree 6** (port 3006): `test-user6@spideryarn.com`
+- All users share password: `ASDFasdf1` (from `supabase/seed.sql`)
+
+### File System Isolation
+
+**Directory Structure**:
+```
+playwright/
+├── .auth/
+│   ├── main-user.json              # Main repository auth
+│   ├── worktree1-user.json         # Worktree 1 auth
+│   └── ...worktree6-user.json      # Worktree 6 auth
+├── screenshots/
+│   ├── main/, worktree1/, ...worktree6/  # Isolated screenshots
+└── test-results/
+    ├── main/, worktree1/, ...worktree6/  # Isolated test results
+```
+
+### Database Namespace Isolation
+
+**Worktree-Aware Test Namespaces**:
+- Pattern: `test-main-{testname}-{timestamp}-{uuid}` for main
+- Pattern: `test-wt{N}-{testname}-{timestamp}-{uuid}` for worktrees
+- Prevents test data contamination across environments
+
+### Usage
+
+**Automatic Environment Detection**:
+```typescript
+// Environment detection based on PORT
+const envId = getCurrentEnvironmentId() // PORT - 3000 = environment ID
+const testUser = getCurrentEnvironmentTestUser() // Appropriate test user
+const paths = getCurrentEnvironmentPaths() // Isolated file paths
+```
+
+**Benefits**:
+- **Concurrent testing**: Run browser automation in multiple worktrees simultaneously
+- **No conflicts**: Authentication, files, and database data remain isolated
+- **Consistent experience**: Same test patterns work across all environments
+
+**Documentation**: See `docs/reference/TESTING_WITH_BROWSER_AUTOMATION.md` for comprehensive implementation details and usage patterns.
+
 ## Best Practices
 
 1. **Clean commits**: Commit frequently with clear messages
@@ -389,10 +531,11 @@ The script fails fast with clear error messages to prevent unexpected behavior.
 3. **Branch hygiene**: Delete feature branches after merging
 4. **Worktree purpose**: Track what each worktree is working on (your own system)
 5. **Database migrations**: Test migrations thoroughly before syncing
+6. **Browser automation**: Use environment-specific test users for concurrent testing
 
 ## Limitations
 
-- All worktrees share the same local Supabase instance
+- All worktrees share the same local Supabase instance (mitigated by namespace isolation)
 - Cannot checkout the same branch in multiple worktrees
 - Worktree branches are local-only (not pushed to origin)
 - Manual two-step process required for bidirectional sync (automated by sync-worktrees-all.ts)

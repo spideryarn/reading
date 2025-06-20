@@ -19,7 +19,6 @@
       "Bash(npx tsc:*)",
       "Bash(npx tsx:*)",
       "Bash(npx eslint:*)",
-      "Bash(npx supabase:*)",
       "Bash(lsof:*)",
       "Bash(pgrep:*)",
       "Bash(curl:*)",

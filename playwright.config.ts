@@ -1,13 +1,23 @@
 import { defineConfig, devices } from '@playwright/test';
 import * as dotenv from 'dotenv';
+import { getCurrentEnvironmentId, getEnvironmentName } from './lib/testing/worktree-auth-helpers';
 
 // Load environment variables from .env.test
 dotenv.config({ path: '.env.test' });
+
+// Generate environment-aware paths
+const envId = getCurrentEnvironmentId();
+const envName = getEnvironmentName(envId);
+const authFile = `playwright/.auth/${envName}-user.json`;
+const screenshotDir = `playwright/screenshots/${envName}/`;
+const testResultsDir = `playwright/test-results/${envName}/`;
 
 /**
  * Playwright configuration for Spideryarn Reading
  * 
  * Key Features:
+ * - Worktree-aware file paths for concurrent testing across environments
+ * - Environment-specific authentication state (${envName})
  * - Sequential execution initially (workers: 1) until namespace isolation validated
  * - Headless Chrome only for AI-friendly minimal output
  * - Port configuration from .env.test
@@ -38,7 +48,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. */
   use: {
     /* Base URL from environment variable (different ports per worktree) */
-    baseURL: `http://localhost:${process.env.PORT || 3002}`,
+    baseURL: `http://localhost:${process.env.PORT || 3000}`,
     
     /* Collect trace when retrying the failed test */
     trace: 'on-first-retry',
@@ -71,20 +81,20 @@ export default defineConfig({
       name: 'chromium',
       use: { 
         ...devices['Desktop Chrome'],
-        // Use the authentication state from setup
-        storageState: 'playwright/.auth/user.json',
+        // Use environment-specific authentication state
+        storageState: authFile,
       },
       dependencies: ['setup'],
     },
   ],
   
-  /* Folder for test artifacts */
-  outputDir: 'test-results/',
+  /* Environment-specific folder for test artifacts */
+  outputDir: testResultsDir,
   
   /* Run your local dev server before starting the tests */
   webServer: {
     command: 'npm run dev:safe',
-    port: Number(process.env.PORT || 3002),
+    port: Number(process.env.PORT || 3000),
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000, // Extended timeout for Next.js startup
     stdout: 'ignore', // Minimize output for AI agents

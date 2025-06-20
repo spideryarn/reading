@@ -1,15 +1,31 @@
 import { test as setup, expect } from '@playwright/test';
+import { getCurrentEnvironmentTestUser, getEnvironmentName, getCurrentEnvironmentId, validateEnvironmentSetup } from '../../lib/testing/worktree-auth-helpers';
 
-const authFile = 'playwright/.auth/user.json';
+// Strict environment validation - fail fast if misconfigured
+const validation = validateEnvironmentSetup();
+if (!validation.isValid) {
+  throw new Error(`Environment validation failed:\n${validation.errors.join('\n')}\n\nCurrent: PORT=${validation.port}, envId=${validation.envId}, envName=${validation.envName}`);
+}
+
+const envId = getCurrentEnvironmentId();
+const envName = getEnvironmentName(envId);
+const authFile = `playwright/.auth/${envName}-user.json`;
+const { email, password } = getCurrentEnvironmentTestUser();
 
 /**
- * Authentication Setup for Playwright Tests
+ * Worktree-Aware Authentication Setup for Playwright Tests
  * 
- * This setup project runs before all tests and creates an authenticated user session.
- * It handles database resets gracefully and uses credentials from supabase/seed.sql.
+ * This setup project runs before all tests and creates an authenticated user session
+ * using environment-specific test users to prevent auth conflicts across worktrees.
+ * 
+ * Environment: ${envName} (ID: ${envId})
+ * Test User: ${email}
+ * Auth File: ${authFile}
  */
 setup('authenticate', async ({ page }) => {
-  console.log('Setting up authentication...');
+  console.log(`Setting up authentication for ${envName} environment...`);
+  console.log(`Using test user: ${email}`);
+  console.log(`Auth file: ${authFile}`);
   
   // Navigate to login page
   await page.goto('/auth/login');
@@ -17,9 +33,9 @@ setup('authenticate', async ({ page }) => {
   // Wait for form to load
   await page.waitForLoadState('networkidle');
   
-  // Fill login form with credentials from supabase/seed.sql
-  await page.fill('input[name="email"]', 'hello@spideryarn.com');
-  await page.fill('input[name="password"]', 'ASDFasdf1');
+  // Fill login form with environment-specific credentials
+  await page.fill('input[name="email"]', email);
+  await page.fill('input[name="password"]', password);
   await page.click('button[type="submit"]');
   
   // Wait for successful authentication (redirect away from login)
@@ -65,5 +81,5 @@ setup('authenticate', async ({ page }) => {
     indexedDB: true  // Critical for Supabase auth persistence
   });
   
-  console.log('Authentication setup completed successfully');
+  console.log(`Authentication setup completed successfully for ${envName} environment`);
 });

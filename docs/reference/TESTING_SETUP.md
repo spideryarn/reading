@@ -89,24 +89,42 @@ Note: `.env.local` is explicitly NOT loaded during tests to ensure reproducible 
 
 ### Browser Automation Testing
 
-**Puppeteer MCP Integration**: For end-to-end testing and browser automation
+**Multi-Worktree Isolation Support** (June 2025):
+
+The project includes comprehensive browser automation isolation across all 7 environments (main + 6 worktrees) to prevent conflicts during concurrent testing.
 
 **⚠️ CRITICAL - Port Configuration**:
-- **Always check `.env.local`**: Different Git worktrees use different ports (3001, 3002, 3003, etc.)
+- **Always check `.env.test`**: Different Git worktrees use different ports (3001, 3002, 3003, etc.)
 - **Never assume port 3000**: The default port is often different in worktree setups
 - **Check before every test**: Port configuration must be verified before navigation
 
-**Test Credentials**:
-- **Email**: hello@spideryarn.com
-- **Password**: ASDFasdf1
+**Environment-Specific Test Credentials**:
+- **Main repository** (port 3000): `hello@spideryarn.com`
+- **Worktree 1** (port 3001): `test-user1@spideryarn.com`
+- **Worktree 2** (port 3002): `test-user2@spideryarn.com`
+- **...through Worktree 6** (port 3006): `test-user6@spideryarn.com`
+- **Password**: `ASDFasdf1` (all users)
 - **Source**: Defined in `supabase/seed.sql`
 
-**Puppeteer Testing Pattern**:
+**Automatic Environment Detection**:
+```typescript
+// Modern approach using worktree-auth-helpers
+import { getCurrentEnvironmentTestUser, getCurrentEnvironmentId } from '@/lib/testing/worktree-auth-helpers'
+
+const envId = getCurrentEnvironmentId() // PORT - 3000 = environment ID
+const { email, password } = getCurrentEnvironmentTestUser() // Environment-specific credentials
+```
+
+**Puppeteer Testing Pattern** (Environment-Aware):
 ```javascript
-// Always check port before navigation
-const envContent = await fs.readFile('.env.local', 'utf8')
+// Environment detection and navigation
+const envContent = await fs.readFile('.env.test', 'utf8')
 const portMatch = envContent.match(/^PORT=(.+)$/m)
 const port = portMatch ? portMatch[1] : '3000'
+const envId = parseInt(port) - 3000
+
+// Use environment-specific credentials
+const email = envId === 0 ? 'hello@spideryarn.com' : `test-user${envId}@spideryarn.com`
 
 // Navigate with correct port
 await mcp__puppeteer__puppeteer_navigate({
@@ -117,16 +135,22 @@ await mcp__puppeteer__puppeteer_navigate({
   }
 })
 
-// Login for authenticated tests
+// Login with environment-specific credentials
 await mcp__puppeteer__puppeteer_fill({
   selector: 'input[type="email"]',
-  value: 'hello@spideryarn.com'
+  value: email
 })
 await mcp__puppeteer__puppeteer_fill({
   selector: 'input[type="password"]',
   value: 'ASDFasdf1'
 })
 ```
+
+**Playwright Integration**:
+- **File isolation**: Screenshots, auth states, and test results isolated by environment
+- **Namespace isolation**: Database operations use worktree-aware prefixes
+- **Concurrent testing**: Multiple worktrees can run browser automation simultaneously
+- **Documentation**: See `docs/reference/TESTING_WITH_BROWSER_AUTOMATION.md` for comprehensive Playwright patterns
 
 ### LLM API Cost Prevention
 

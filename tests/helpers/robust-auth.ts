@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+import { getCurrentEnvironmentTestUser, getCurrentEnvironmentPaths } from '../../lib/testing/worktree-auth-helpers';
 
 export type UserRole = 'admin' | 'user';
 
@@ -20,7 +21,7 @@ export class RobustAuthManager {
   constructor(private page: Page) {}
   
   async loginAs(userRole: UserRole = 'user', options: AuthOptions = {}) {
-    const authFile = `playwright/.auth/${userRole}.json`;
+    const { authFile } = getCurrentEnvironmentPaths();
     
     // Skip if already authenticated and not forcing
     if (!options.forceReauth && !options.skipStateCheck) {
@@ -32,7 +33,7 @@ export class RobustAuthManager {
     // Clear any existing state for fresh auth
     await this.clearAuthState();
     
-    // Perform login with credentials from supabase/seed.sql
+    // Perform login with environment-specific credentials
     await this.performLogin(userRole);
     
     // Save authentication state with IndexedDB for Supabase
@@ -65,18 +66,12 @@ export class RobustAuthManager {
   }
   
   private getCredentials(userRole: UserRole) {
-    // Credentials defined in supabase/seed.sql
-    const credentials = {
-      user: { 
-        email: 'hello@spideryarn.com', 
-        password: 'ASDFasdf1' 
-      },
-      admin: { 
-        email: 'hello@spideryarn.com', 
-        password: 'ASDFasdf1' 
-      } // Admin flag set in profiles table
-    };
-    return credentials[userRole];
+    // Get environment-specific credentials from worktree-auth-helpers
+    const { email, password } = getCurrentEnvironmentTestUser();
+    
+    // Both user and admin use the same environment-specific credentials
+    // Admin privileges are set in the profiles table based on email
+    return { email, password };
   }
   
   private async isAlreadyAuthenticated(): Promise<boolean> {

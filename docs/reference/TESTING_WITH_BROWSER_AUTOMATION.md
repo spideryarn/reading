@@ -5,6 +5,8 @@ This document provides a comprehensive analysis of browser automation testing op
 ## See Also
 
 - `CLAUDE.md` - Current Puppeteer MCP usage and testing guidelines
+- `docs/reference/DEV_SERVER_AUTOMATION.md` - Enhanced dev server management with daemon mode for AI-first development and browser automation
+- `docs/reference/GIT_WORKTREES.md` - Multi-worktree browser automation isolation and authentication setup
 - `docs/reference/TESTING_OVERVIEW.md` - Current testing infrastructure using Jest and React Testing Library  
 - `docs/reference/TESTING_DATABASE.md` - Database testing patterns that could integrate with browser tests
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - System architecture to understand what needs testing
@@ -283,6 +285,66 @@ AI agents can leverage Playwright's auto-waiting and retry mechanisms to write m
 2. Error scenarios and edge cases
 3. Performance regression tests
 
+## Multi-Worktree Browser Automation Support
+
+**Worktree Isolation Implementation** (June 2025):
+- Environment-aware authentication with dedicated test users per worktree
+- File system isolation for browser automation artifacts  
+- Enhanced namespace isolation for database operations
+- Concurrent browser automation across 7 environments (main + 6 worktrees)
+
+**Environment Configuration**:
+```typescript
+// Environment Detection (from PORT)
+const envId = getCurrentEnvironmentId() // PORT - 3000 = environment ID
+const envName = getEnvironmentName(envId) // "main" or "worktree1-6"
+const testUser = getCurrentEnvironmentTestUser() // test-user{N}@spideryarn.com
+
+// File Path Isolation
+const paths = getCurrentEnvironmentPaths()
+// - authFile: `playwright/.auth/worktree6-user.json`
+// - screenshotDir: `playwright/screenshots/worktree6/`
+// - testResultsDir: `playwright/test-results/worktree6/`
+```
+
+**Test Users Per Environment**:
+- **Main repository** (port 3000): `hello@spideryarn.com`  
+- **Worktree 1** (port 3001): `test-user1@spideryarn.com`
+- **Worktree 2** (port 3002): `test-user2@spideryarn.com`
+- **...through Worktree 6** (port 3006): `test-user6@spideryarn.com`
+- All users share password: `ASDFasdf1`
+
+**Namespace Isolation Enhancement**:
+```typescript
+// Worktree-aware test namespaces
+const namespace = getWorktreeTestNamespace('auth-test')
+// Returns: "test-wt6-auth-test-1750415867301-f1xvpcnt" for worktree6
+// Returns: "test-main-auth-test-1750415867301-a412u7wg" for main
+
+// Use in test data creation
+const testUser = createTestUser(namespace)
+const testDoc = createTestDocument(namespace)
+```
+
+**Directory Structure**:
+```
+playwright/
+├── .auth/
+│   ├── main-user.json              # Main repository auth
+│   ├── worktree1-user.json         # Worktree 1 auth
+│   └── ...worktree6-user.json      # Worktree 6 auth  
+├── screenshots/
+│   ├── main/, worktree1/, ...worktree6/  # Isolated screenshots
+└── test-results/  
+    ├── main/, worktree1/, ...worktree6/  # Isolated test results
+```
+
+**Benefits**:
+- **No authentication conflicts** between concurrent environments
+- **File system isolation** prevents overwrites during parallel testing
+- **Database safety** with environment-aware namespacing
+- **Concurrent development** across multiple Git worktrees
+
 ## Current Implementation Status
 
 **Implemented** (December 2024):
@@ -292,18 +354,27 @@ AI agents can leverage Playwright's auto-waiting and retry mechanisms to write m
 - `tests/e2e/document-upload-flow.spec.ts` with 5 working test scenarios
 - npm scripts: `test:e2e`, `test:e2e:ui`, `test:e2e:debug`
 
+**Enhanced** (June 2025):
+- **Multi-worktree isolation system** for concurrent browser automation
+- **Environment-aware authentication helpers** in `lib/testing/worktree-auth-helpers.ts`
+- **Enhanced test isolation utilities** with worktree namespace support
+- **Robust authentication manager** updated for environment-specific credentials
+- **Comprehensive validation suite** confirming all isolation features work
+
 **Key Features Working**:
 - Sequential execution (`workers: 1`) for stable isolation
 - Extended timeouts for AI operations (30-45 seconds)
 - Authentication with IndexedDB persistence for Supabase
 - Form validation testing with real UI selectors
 - Database reset recovery patterns
+- **Multi-worktree concurrent testing** with full isolation
 
 **Test Coverage**:
 - ✅ Authentication flows (login, protected routes)
 - ✅ Upload form validation (empty, invalid URLs, localhost rejection)
 - ✅ Processing options (dynamic updates based on input type)
 - ✅ Navigation and header functionality
+- ✅ **Multi-worktree isolation** (authentication, file paths, database namespacing)
 - 🚧 End-to-end document processing (infrastructure ready)
 
 ## Best Practices for AI-Assisted Browser Testing
@@ -624,9 +695,10 @@ await expect(async () => {
 
 ## Status Indicators
 
-- Playwright setup: 📋 **Planned**
-- Migration from Puppeteer MCP: 📋 **Planned**
-- Test coverage expansion: 📋 **Planned**
+- Playwright setup: ✅ **Complete** (June 2025)
+- Multi-worktree isolation: ✅ **Complete** (June 2025)
+- Migration from Puppeteer MCP: ✅ **Complete** (December 2024)
+- Test coverage expansion: 🚧 **In Progress**
 - CI/CD integration: 📋 **Planned**
 
 ## Appendix: Quick Reference

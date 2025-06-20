@@ -49,10 +49,20 @@ Based on README.md, the following architecture decisions have been made:
 ## Build, testing, and debugging
 
 Next.js local dev server:
-- `npm run dev` - Regenerates DB types then starts dev server. User is already running this in a separate terminal. If you need them to restart it, ask them.
+- `npm run dev` - Regenerates DB types then starts dev server (foreground mode)
+- `npm run dev:daemon` - **AI agent automation**: Start/restart dev server in background with PID tracking
+- `npm run dev:status` - Check if daemon is running and healthy (process + HTTP response)
+- `npm run dev:stop` - Stop background daemon gracefully
 - `npm run dev:safe` - Starts dev server without type generation (fallback if DB is unavailable)
 - Logs: `dev.log` - Use `tail dev.log` to check recent output
 - URL: http://localhost:$PORT/ (configurable via PORT in `.env.local`)
+
+**AI-First Development Best Practices:**
+- **Use daemon mode for automation**: `npm run dev:daemon` allows LLM agents to manage dev server without blocking terminal
+- **Always check status first**: Run `npm run dev:status` before starting daemon to avoid conflicts
+- **Graceful cleanup**: Use `npm run dev:stop` rather than killing processes manually
+- **Worktree isolation**: Each worktree tracks its own daemon independently via `.dev-server.pid`
+- **Health verification**: Daemon mode checks both process existence AND HTTP response for true health status
 
 Production deployment:
 - **Live URL**: https://www.spideryarn.com
@@ -76,6 +86,8 @@ Type checking and linting:
   - When writing tests, use our Jest testing framework with React Testing Library
   - Prefer using a subagent for running tests to avoid filling the context window
   - Current test health: ~71% pass rate due to NextRequest mocking issues (see `docs/reference/TESTING_TROUBLESHOOTING.md`)
+- `npm run test:e2e` - Playwright E2E tests (requires auth setup first: `npm run test:e2e:setup`)
+- `npm run test:e2e:setup` - Set up Playwright authentication for current worktree
 
 **Important for Claude Code users:**
 - **IDE integration:** When using Claude Code within VS Code/Cursor/JetBrains, ESLint and TypeScript diagnostics are automatically shared
@@ -92,7 +104,7 @@ Type checking and linting:
 
 **Key Testing Rules**:
 - **NEVER reset the database** - this would destroy development data
-- **NEVER use `npm run db:reset:DANGEROUS`** unless explicitly authorized by the user
+- **NEVER use `npm run db:reset:DANGEROUS`** unless explicitly authorized by the user (note: this also invalidates all Playwright auth files across all worktrees)
 - **NEVER delete all records** from tables (no `DELETE FROM table` without WHERE)
 - **Use UUID-based test isolation** - all test data must be namespaced
 
@@ -267,24 +279,49 @@ Template: `.env.example` (may not be current - check `.env.local` for active con
 
 ## Browser Automation
 
-**Puppeteer MCP (Preferred)**:
+**Playwright E2E Testing (Primary for systematic testing)**:
+- Use `npm run test:e2e` for comprehensive E2E test suites
+- **Authentication setup required**: Run `npm run test:e2e:setup` in each worktree before first use
+- **Multi-worktree isolation**: Environment-aware authentication prevents conflicts across worktrees
+- **Recovery after DB reset**: Run `./scripts/setup-auth-all-worktrees.ts` to re-setup all environments
+
+**Puppeteer MCP (For interactive debugging)**:
 - Use Puppeteer for browser automation tasks via MCP server
-- **⚠️ CRITICAL - Port configuration**: Always check `.env.local` for the PORT variable before navigating. Different Git worktrees use different ports (3001, 3002, 3003, etc.), not the default 3000. This is essential for reliable testing.
-- **Test credentials**: Use hello@spideryarn.com with password 'ASDFasdf1' (from `supabase/seed.sql`)
+- **⚠️ CRITICAL - Port configuration**: Always check `.env.test` for the PORT variable before navigating. Different Git worktrees use different ports (3001, 3002, 3003, etc.), not the default 3000. This is essential for reliable testing.
+- **Multi-worktree authentication isolation**: Use environment-specific test users to prevent authentication conflicts:
+  - **Main repository** (port 3000): `hello@spideryarn.com` 
+  - **Worktree 1** (port 3001): `test-user1@spideryarn.com`
+  - **Worktree 2** (port 3002): `test-user2@spideryarn.com`
+  - **...through Worktree 6** (port 3006): `test-user6@spideryarn.com`
+  - All users share password: `ASDFasdf1` (from `supabase/seed.sql`)
 - **Headless by default**: Always use `{"headless": true}` in launchOptions unless user specifically requests visual debugging
 - **Window size**: Set viewport in launchOptions and screenshot dimensions for proper page rendering:
   - `defaultViewport: {"width": 1200, "height": 800}` in launchOptions for better page layout
   - Use `width` and `height` parameters in screenshot calls (e.g., 1200x800)
   - Default 800x600 is often too small for modern web layouts
-- **Port checking example**: 
+- **Environment-aware automation example**: 
   ```bash
-  # Always check .env.local first
-  PORT=$(grep "^PORT=" .env.local | cut -d'=' -f2)
-  # Then navigate with the correct port
+  # Check current environment
+  PORT=$(grep "^PORT=" .env.test | cut -d'=' -f2)
+  ENV_ID=$((PORT - 3000))
+  
+  # Use environment-specific credentials
+  if [ $ENV_ID -eq 0 ]; then
+    EMAIL="hello@spideryarn.com"
+  else
+    EMAIL="test-user${ENV_ID}@spideryarn.com"
+  fi
+  
+  # Navigate with correct port
   mcp__puppeteer__puppeteer_navigate({url: "http://localhost:${PORT}/", launchOptions: {"headless": true, "defaultViewport": {"width": 1200, "height": 800}}})
   ```
 
-**Playwright**: Available as alternative, but prefer Puppeteer for MCP integration
+**Playwright (Recommended for comprehensive testing)**:
+- **Multi-worktree support**: Full isolation system implemented with environment-aware configuration
+- **Concurrent testing**: Run browser automation across multiple worktrees without conflicts
+- **File isolation**: Screenshots, auth states, and test results isolated by environment
+- **Enhanced namespace isolation**: Database operations use worktree-aware prefixes
+- See `docs/reference/TESTING_WITH_BROWSER_AUTOMATION.md` for comprehensive multi-worktree patterns
 
 
 ## Context window, tasks, and subagents
