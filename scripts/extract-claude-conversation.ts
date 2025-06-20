@@ -13,6 +13,10 @@ interface ClaudeMessage {
     text?: string;
     thinking?: string;
     summaries?: Array<{ summary: string }>;
+    name?: string;
+    input?: any;
+    content?: any;
+    display_content?: any;
   }>;
   sender: 'human' | 'assistant';
   created_at: string;
@@ -191,26 +195,39 @@ class ExtractClaudeConversationCommand extends Command {
 
   private generateMarkdown(data: ConversationExport): string {
     const { conversation, artifacts } = data;
-    const conversationDate = new Date(conversation.created_at).toLocaleDateString('en-GB', {
+    const conversationStartDate = new Date(conversation.created_at);
+    const conversationDate = conversationStartDate.toLocaleDateString('en-GB', {
       year: 'numeric',
       month: 'long', 
       day: 'numeric'
     });
+    const conversationDateTime = conversationStartDate.toLocaleString('en-GB', {
+      year: 'numeric',
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    });
 
     const claudeUrl = `https://claude.ai/chat/${conversation.uuid}`;
+    const commandLineArgs = `--uuid ${conversation.uuid} --input ${this.inputFile}`;
     
     let markdown = `---
-Date: ${conversationDate}
+Date: ${conversationDateTime}
 Duration: ${this.estimateDuration(conversation)}
 Type: Research Review
 Status: Active
 Claude URL: ${claudeUrl}
+Extracted by: scripts/extract-claude-conversation.ts ${commandLineArgs}
+Source file: ${this.inputFile}
 Related Docs: []
 ---
 
 # ${conversation.name} - ${conversationDate}
 
-> **Original Claude.ai conversation:** [${claudeUrl}](${claudeUrl})
+> **Original Claude.ai conversation:** [${claudeUrl}](${claudeUrl})  
+> **Extracted from:** \`${this.inputFile}\` using \`scripts/extract-claude-conversation.ts ${commandLineArgs}\`
 
 ## Context & Goals
 
@@ -234,10 +251,10 @@ ${this.extractContextFromFirstMessages(conversation)}
         }
         markdown += `**User:** "${this.cleanText(message.text)}"\n\n`;
       } else {
-        // Assistant responses
-        const cleanedText = this.cleanText(this.removeArtifacts(message.text));
-        if (cleanedText.trim()) {
-          markdown += `${this.synthesiseAssistantResponse(cleanedText)}\n\n`;
+        // Assistant responses - extract complete response including content array
+        const completeResponse = this.extractCompleteClaudeResponse(message);
+        if (completeResponse.trim()) {
+          markdown += `${this.removeArtifacts(completeResponse)}\n\n`;
         }
       }
     }
@@ -268,10 +285,13 @@ ${artifact.content}
 
     markdown += `## Sources & References
 
-- Original conversation: [Claude.ai](${claudeUrl})
-- Export date: ${new Date().toLocaleDateString('en-GB')}
-- Total messages: ${conversation.chat_messages.length}
-${artifacts.length > 0 ? `- Artifacts generated: ${artifacts.length}` : ''}
+- **Original conversation:** [Claude.ai](${claudeUrl})
+- **Source file:** \`${this.inputFile}\`
+- **Extraction script:** \`scripts/extract-claude-conversation.ts ${commandLineArgs}\`
+- **Extraction date:** ${new Date().toLocaleString('en-GB')}
+- **Conversation created:** ${conversationDateTime}
+- **Total messages:** ${conversation.chat_messages.length}
+${artifacts.length > 0 ? `- **Artifacts generated:** ${artifacts.length}` : ''}
 
 ## Related Work
 
@@ -328,12 +348,39 @@ ${artifacts.length > 0 ? `- Artifacts generated: ${artifacts.length}` : ''}
     return text.replace(/<antArtifact[^>]*>[\s\S]*?<\/antArtifact>/g, '[Artifact generated - see Appendices]');
   }
 
-  private synthesiseAssistantResponse(text: string): string {
-    // Basic synthesis - in a real implementation, this could be more sophisticated
-    if (text.length > 500) {
-      const summary = this.truncateText(text, 300);
-      return `**Claude:** ${summary}... [Response condensed - see full context in original conversation]`;
+  private extractCompleteClaudeResponse(message: ClaudeMessage): string {
+    let response = '';
+    
+    // Check if the text field has actual content or just placeholder
+    if (message.text && !message.text.includes('This block is not supported') && message.text.trim()) {
+      response = message.text;
+    } else {
+      // Extract content from the content array
+      const textParts: string[] = [];
+      
+      for (const item of message.content || []) {
+        if (item.type === 'text' && item.text && item.text.trim()) {
+          textParts.push(item.text);
+        } else if (item.type === 'thinking' && item.thinking && item.thinking.trim()) {
+          // Include thinking content as it's often the actual response
+          textParts.push(item.thinking);
+        }
+        // Skip tool_use and tool_result as they're not the main response
+      }
+      
+      response = textParts.join('\n\n');
     }
+    
+    // If we still don't have meaningful content, return empty string to skip this message
+    if (!response.trim()) {
+      return '';
+    }
+    
+    return `**Claude:** ${this.cleanText(response)}`;
+  }
+
+  private synthesiseAssistantResponse(text: string): string {
+    // Return full assistant response - no truncation or condensation
     return `**Claude:** ${text}`;
   }
 
