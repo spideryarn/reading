@@ -149,6 +149,23 @@ git push origin --delete experim  # If it was pushed
    - reading-worktree5: PORT=3005
    - reading-worktree6: PORT=3006
 
+6. **Set up browser automation authentication** (required for E2E testing):
+   ```bash
+   # From main directory, set up authentication in all worktrees
+   ./scripts/setup-auth-all-worktrees.ts
+   
+   # Or manually in each worktree:
+   cd ../reading-worktree1 && npm run test:e2e:setup
+   cd ../reading-worktree2 && npm run test:e2e:setup
+   # ... and so on for each worktree
+   ```
+   
+   This creates environment-specific authentication files for Playwright browser automation:
+   - `playwright/.auth/main-user.json` (main repository)
+   - `playwright/.auth/worktree1-user.json` through `worktree6-user.json`
+   
+   **Important**: These auth files are not in Git and must be recreated after database resets.
+
 ## Development Workflow
 
 ### Starting Development
@@ -280,6 +297,21 @@ git log main..worktree1 --oneline
 git log worktree1..main --oneline
 ```
 
+### Browser Automation
+```bash
+# Set up authentication in all worktrees
+./scripts/setup-auth-all-worktrees.ts
+
+# Set up authentication in current worktree only
+npm run test:e2e:setup
+
+# Run E2E tests (requires auth setup first)
+npm run test:e2e
+
+# Check authentication files
+ls -la playwright/.auth/
+```
+
 ### Conflict Resolution
 
 #### Merge Conflicts
@@ -340,6 +372,36 @@ If a port is already in use:
 1. Check `.env.local` in each worktree for PORT settings
 2. Ensure no duplicate ports across worktrees
 3. Kill any orphaned dev servers: `lsof -i :3002` and `kill <PID>`
+
+### Authentication File Issues
+If Playwright tests fail with authentication errors:
+
+**Missing auth files after database reset:**
+```bash
+# Recreate all authentication files
+./scripts/setup-auth-all-worktrees.ts
+
+# Or recreate for single worktree
+cd reading-worktree1 && npm run test:e2e:setup
+```
+
+**Environment validation errors:**
+```bash
+# Check environment configuration
+cd reading-worktree2
+PORT=$(grep "^PORT=" .env.test | cut -d'=' -f2)
+echo "Port: $PORT, Expected test user: test-user2@spideryarn.com"
+```
+
+**Auth files exist but tests still fail:**
+- Database may have been reset - auth files become stale
+- Delete specific auth file: `rm playwright/.auth/worktree2-user.json`
+- Re-run setup: `npm run test:e2e:setup`
+
+**Wrong test user for environment:**
+- Check PORT in `.env.test` matches worktree number
+- Worktree1 (PORT=3001) should use `test-user1@spideryarn.com`
+- Worktree6 (PORT=3006) should use `test-user6@spideryarn.com`
 
 ### Worktree Errors
 If "worktree already exists" error:

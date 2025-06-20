@@ -1,5 +1,11 @@
 import { test as setup, expect } from '@playwright/test';
-import { getCurrentEnvironmentTestUser, getEnvironmentName, getCurrentEnvironmentId } from '../../lib/testing/worktree-auth-helpers';
+import { getCurrentEnvironmentTestUser, getEnvironmentName, getCurrentEnvironmentId, validateEnvironmentSetup } from '../../lib/testing/worktree-auth-helpers';
+
+// Strict environment validation - fail fast if misconfigured
+const validation = validateEnvironmentSetup();
+if (!validation.isValid) {
+  throw new Error(`Environment validation failed:\n${validation.errors.join('\n')}\n\nCurrent: PORT=${validation.port}, envId=${validation.envId}, envName=${validation.envName}`);
+}
 
 const envId = getCurrentEnvironmentId();
 const envName = getEnvironmentName(envId);

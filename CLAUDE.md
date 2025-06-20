@@ -75,6 +75,8 @@ Type checking and linting:
   - When writing tests, use our Jest testing framework with React Testing Library
   - Prefer using a subagent for running tests to avoid filling the context window
   - Current test health: ~71% pass rate due to NextRequest mocking issues (see `docs/reference/TESTING_TROUBLESHOOTING.md`)
+- `npm run test:e2e` - Playwright E2E tests (requires auth setup first: `npm run test:e2e:setup`)
+- `npm run test:e2e:setup` - Set up Playwright authentication for current worktree
 
 **Important for Claude Code users:**
 - **IDE integration:** When using Claude Code within VS Code/Cursor/JetBrains, ESLint and TypeScript diagnostics are automatically shared
@@ -91,7 +93,7 @@ Type checking and linting:
 
 **Key Testing Rules**:
 - **NEVER reset the database** - this would destroy development data
-- **NEVER use `npm run db:reset`** unless explicitly authorized by the user
+- **NEVER use `npm run db:reset:DANGEROUS`** unless explicitly authorized by the user (note: this also invalidates all Playwright auth files across all worktrees)
 - **NEVER delete all records** from tables (no `DELETE FROM table` without WHERE)
 - **Use UUID-based test isolation** - all test data must be namespaced
 
@@ -266,7 +268,13 @@ Template: `.env.example` (may not be current - check `.env.local` for active con
 
 ## Browser Automation
 
-**Puppeteer MCP (Preferred for interactive debugging)**:
+**Playwright E2E Testing (Primary for systematic testing)**:
+- Use `npm run test:e2e` for comprehensive E2E test suites
+- **Authentication setup required**: Run `npm run test:e2e:setup` in each worktree before first use
+- **Multi-worktree isolation**: Environment-aware authentication prevents conflicts across worktrees
+- **Recovery after DB reset**: Run `./scripts/setup-auth-all-worktrees.ts` to re-setup all environments
+
+**Puppeteer MCP (For interactive debugging)**:
 - Use Puppeteer for browser automation tasks via MCP server
 - **⚠️ CRITICAL - Port configuration**: Always check `.env.test` for the PORT variable before navigating. Different Git worktrees use different ports (3001, 3002, 3003, etc.), not the default 3000. This is essential for reliable testing.
 - **Multi-worktree authentication isolation**: Use environment-specific test users to prevent authentication conflicts:

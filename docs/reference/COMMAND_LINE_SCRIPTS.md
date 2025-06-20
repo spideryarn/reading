@@ -4,8 +4,9 @@ Guidelines for writing command-line scripts in the Spideryarn Reading codebase, 
 
 ## See also
 
-- `docs/instructions/GIT_WORKTREES.md` - Example of well-documented script usage (sync-worktrees scripts)
+- `docs/reference/GIT_WORKTREES.md` - Example of well-documented script usage (sync-worktrees and auth setup scripts)
 - `scripts/sync-worktrees.ts` - Example Clipanion implementation with comprehensive help and error handling
+- `scripts/setup-auth-all-worktrees.ts` - Multi-environment authentication setup script
 - `scripts/` - Directory containing all project scripts
 - `docs/reference/FASTMOD_FIND_REPLACE.md` - Fastmod tool for codebase refactoring
 - https://github.com/arcanis/clipanion - Clipanion documentation for TypeScript CLI tools
@@ -28,11 +29,13 @@ Use Clipanion (`.ts`) for:
 - Scripts with multiple/complex arguments
 - Scripts containing any significant logic (loops, conditionals, functions)
 - Scripts that need proper error handling and recovery
+- Multi-environment or multi-worktree operations
 - Scripts that would benefit from type safety
 - Scripts that parse or manipulate data structures
 
 Examples:
 - `scripts/sync-worktrees.ts` - Complex Git operations with multiple modes
+- `scripts/setup-auth-all-worktrees.ts` - Multi-environment browser automation setup
 - `scripts/import-static-documents.ts` - Database operations with error handling
 
 ## External Tools for Script Integration
