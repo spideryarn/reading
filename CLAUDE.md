@@ -49,10 +49,20 @@ Based on README.md, the following architecture decisions have been made:
 ## Build, testing, and debugging
 
 Next.js local dev server:
-- `npm run dev` - Regenerates DB types then starts dev server. User is already running this in a separate terminal. If you need them to restart it, ask them.
+- `npm run dev` - Regenerates DB types then starts dev server (foreground mode)
+- `npm run dev:daemon` - **AI agent automation**: Start/restart dev server in background with PID tracking
+- `npm run dev:status` - Check if daemon is running and healthy (process + HTTP response)
+- `npm run dev:stop` - Stop background daemon gracefully
 - `npm run dev:safe` - Starts dev server without type generation (fallback if DB is unavailable)
 - Logs: `dev.log` - Use `tail dev.log` to check recent output
 - URL: http://localhost:$PORT/ (configurable via PORT in `.env.local`)
+
+**AI-First Development Best Practices:**
+- **Use daemon mode for automation**: `npm run dev:daemon` allows LLM agents to manage dev server without blocking terminal
+- **Always check status first**: Run `npm run dev:status` before starting daemon to avoid conflicts
+- **Graceful cleanup**: Use `npm run dev:stop` rather than killing processes manually
+- **Worktree isolation**: Each worktree tracks its own daemon independently via `.dev-server.pid`
+- **Health verification**: Daemon mode checks both process existence AND HTTP response for true health status
 
 Production deployment:
 - **Live URL**: https://www.spideryarn.com
