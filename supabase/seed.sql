@@ -107,6 +107,76 @@ WHERE email = 'hello@spideryarn.com'
 ON CONFLICT (user_id) DO UPDATE SET 
   is_admin = NOW();
 
+-- Insert worktree-specific test users (test-user1 through test-user6)
+DO $$
+DECLARE
+  i INTEGER;
+  user_email VARCHAR;
+BEGIN
+  FOR i IN 1..6 LOOP
+    user_email := 'test-user' || i || '@spideryarn.com';
+    
+    -- Check if the user already exists
+    IF NOT EXISTS (
+      SELECT 1 FROM auth.users 
+      WHERE email = user_email
+    ) THEN
+      -- Insert worktree test user
+      INSERT INTO auth.users (
+        id,
+        instance_id,
+        aud,
+        role,
+        email,
+        encrypted_password,
+        email_confirmed_at,
+        raw_app_meta_data,
+        raw_user_meta_data,
+        created_at,
+        updated_at,
+        confirmation_token,
+        recovery_token,
+        email_change_token_new,
+        email_change
+      ) VALUES (
+        gen_random_uuid(),
+        '00000000-0000-0000-0000-000000000000'::uuid,
+        'authenticated',
+        'authenticated',
+        user_email,
+        crypt('ASDFasdf1', gen_salt('bf')),
+        NOW(),
+        '{"provider": "email", "providers": ["email"]}'::jsonb,
+        ('{"name": "Worktree ' || i || ' Test User"}')::jsonb,
+        NOW(),
+        NOW(),
+        '',
+        '',
+        '',
+        ''
+      );
+    END IF;
+  END LOOP;
+END $$;
+
+-- Create worktree user profiles (without admin access for proper testing)
+DO $$
+DECLARE
+  i INTEGER;
+  user_email VARCHAR;
+BEGIN
+  FOR i IN 1..6 LOOP
+    user_email := 'test-user' || i || '@spideryarn.com';
+    
+    INSERT INTO profiles (user_id, preferences, is_admin) 
+    SELECT id, ('{"type": "worktree_test", "worktree": ' || i || '}')::jsonb, NULL
+    FROM auth.users 
+    WHERE email = user_email
+    ON CONFLICT (user_id) DO UPDATE SET 
+      preferences = EXCLUDED.preferences;
+  END LOOP;
+END $$;
+
 -- Insert additional test user (greg@gregdetre.com)
 INSERT INTO auth.users (id, email, email_confirmed_at, created_at, updated_at) VALUES
 ('7bfcabea-690c-4754-936d-1a194f4244c2', 'greg@gregdetre.com', '2025-06-03T23:18:01.600Z', '2025-06-03T23:18:01.590Z', '2025-06-03T23:18:01.603Z')

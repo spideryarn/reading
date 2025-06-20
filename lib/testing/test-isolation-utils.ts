@@ -41,6 +41,26 @@ export function getTestNamespace(testName: string): string {
 }
 
 /**
+ * Generate a worktree-aware test namespace for isolating test data across environments
+ * This function integrates with worktree-auth-helpers.ts for multi-environment testing
+ * @param testName - Descriptive name for the test (e.g., 'auth-test', 'rls-policy-test')
+ * @param envId - Optional environment ID (0 for main, 1-6 for worktrees)
+ * @returns Environment-aware namespace string
+ */
+export function getWorktreeTestNamespace(testName: string, envId?: number): string {
+  // Get environment ID from PORT if not provided
+  const actualEnvId = envId ?? (() => {
+    const port = parseInt(process.env.PORT || '3000')
+    return port - 3000 // Returns 0 for main, 1-6 for worktrees
+  })()
+  
+  const envPrefix = actualEnvId === 0 ? 'main' : `wt${actualEnvId}`
+  const timestamp = Date.now()
+  const uuid = uuidv4().slice(0, 8)
+  return `test-${envPrefix}-${testName}-${timestamp}-${uuid}`
+}
+
+/**
  * Create a test-scoped email address
  * @param namespace - Test namespace from getTestNamespace()
  * @param prefix - Optional prefix for the email (default: 'user')
