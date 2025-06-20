@@ -1,4 +1,3 @@
-// Model configuration system
 // Uses explicit model strings in format: provider:model:version[:thinking]
 // Use underscores for large numbers, e.g. 1_000_000
 //
@@ -76,19 +75,6 @@ export const MODEL_DEFINITIONS: Record<string, ModelConfig> = {
     },
   },
   // Google models
-  'google:gemini-2.0-flash:latest': {
-    provider: 'google',
-    modelName: 'gemini-2.0-flash',
-    version: 'latest',
-    thinking: false,
-    description: 'Gemini 2.0 Flash - Fast and cost-effective',
-    contextWindow: 1_000_000,
-    outputTokens: 8192,
-    pricing: {
-      inputPer1M: 0.075,
-      outputPer1M: 0.30,
-    },
-  },
   'google:gemini-2.5-flash:latest': {
     provider: 'google',
     modelName: 'gemini-2.5-flash',

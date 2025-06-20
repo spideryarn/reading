@@ -1,9 +1,15 @@
 /**
+ * @jest-environment node
+ */
+
+/**
  * Tests for semantic search API endpoint
  */
 
-import { POST } from '../semantic-search/route'
-import { createMockRequest } from './test-helpers'
+import { testApiRoute } from '@/lib/testing/api-test-utils'
+import { createTestUser } from '@/lib/testing/auth-test-utils'
+import { getTestNamespace } from '@/lib/testing/test-isolation-utils'
+import * as semanticSearchRoute from '../semantic-search/route'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
@@ -80,6 +86,9 @@ const sampleLLMResponse = JSON.stringify({
 })
 
 describe('/api/semantic-search', () => {
+  const namespace = getTestNamespace('semantic-search')
+  const testUser = createTestUser(namespace)
+  
   let mockDocumentService: MockDocumentService
   let mockAiCallService: MockAiCallService
   let mockSupabase: MockSupabaseClient
@@ -119,17 +128,18 @@ describe('/api/semantic-search', () => {
     mockDocumentService.getById.mockResolvedValue(sampleDocument)
     mockDocumentService.getElements.mockResolvedValue(sampleElements)
     
-    // Create request
-    const request = createMockRequest('http://localhost:3000/api/semantic-search', {
+    // Execute
+    const response = await testApiRoute({
+      handler: POST,
+      url: '/api/semantic-search',
       method: 'POST',
       body: {
         query: 'quantum physics',
         documentId: 'doc-123'
-      }
+      },
+      user: testUser
     })
     
-    // Execute
-    const response = await POST(request)
     const data = await response.json()
     
     // Verify response
@@ -148,15 +158,17 @@ describe('/api/semantic-search', () => {
   })
 
   it('should reject request with missing query', async () => {
-    const request = createMockRequest('http://localhost:3000/api/semantic-search', {
+    const response = await testApiRoute({
+      handler: POST,
+      url: '/api/semantic-search',
       method: 'POST',
       body: {
         documentId: 'doc-123'
         // missing query
-      }
+      },
+      user: testUser
     })
     
-    const response = await POST(request)
     const data = await response.json()
     
     expect(response.status).toBe(400)
@@ -164,15 +176,17 @@ describe('/api/semantic-search', () => {
   })
 
   it('should reject request with missing documentId', async () => {
-    const request = createMockRequest('http://localhost:3000/api/semantic-search', {
+    const response = await testApiRoute({
+      handler: POST,
+      url: '/api/semantic-search',
       method: 'POST',
       body: {
         query: 'quantum physics'
         // missing documentId
-      }
+      },
+      user: testUser
     })
     
-    const response = await POST(request)
     const data = await response.json()
     
     expect(response.status).toBe(400)
@@ -182,15 +196,17 @@ describe('/api/semantic-search', () => {
   it('should return 404 for non-existent document', async () => {
     mockDocumentService.getById.mockResolvedValue(null)
     
-    const request = createMockRequest('http://localhost:3000/api/semantic-search', {
+    const response = await testApiRoute({
+      handler: POST,
+      url: '/api/semantic-search',
       method: 'POST',
       body: {
         query: 'test query',
         documentId: 'nonexistent-doc'
-      }
+      },
+      user: testUser
     })
     
-    const response = await POST(request)
     const data = await response.json()
     
     expect(response.status).toBe(404)
@@ -201,15 +217,17 @@ describe('/api/semantic-search', () => {
     mockDocumentService.getById.mockResolvedValue(sampleDocument)
     mockDocumentService.getElements.mockResolvedValue([])
     
-    const request = createMockRequest('http://localhost:3000/api/semantic-search', {
+    const response = await testApiRoute({
+      handler: POST,
+      url: '/api/semantic-search',
       method: 'POST',
       body: {
         query: 'test query',
         documentId: 'doc-123'
-      }
+      },
+      user: testUser
     })
     
-    const response = await POST(request)
     const data = await response.json()
     
     expect(response.status).toBe(404)
@@ -221,15 +239,17 @@ describe('/api/semantic-search', () => {
     mockDocumentService.getElements.mockResolvedValue(sampleElements)
     mockExecutePrompt.mockResolvedValue(JSON.stringify({ matches: [] }))
     
-    const request = createMockRequest('http://localhost:3000/api/semantic-search', {
+    const response = await testApiRoute({
+      handler: POST,
+      url: '/api/semantic-search',
       method: 'POST',
       body: {
         query: 'irrelevant query',
         documentId: 'doc-123'
-      }
+      },
+      user: testUser
     })
     
-    const response = await POST(request)
     const data = await response.json()
     
     expect(response.status).toBe(200)
@@ -260,15 +280,17 @@ describe('/api/semantic-search', () => {
     })
     mockExecutePrompt.mockResolvedValue(responseWithInvalidIds)
     
-    const request = createMockRequest('http://localhost:3000/api/semantic-search', {
+    const response = await testApiRoute({
+      handler: POST,
+      url: '/api/semantic-search',
       method: 'POST',
       body: {
         query: 'test query',
         documentId: 'doc-123'
-      }
+      },
+      user: testUser
     })
     
-    const response = await POST(request)
     const data = await response.json()
     
     expect(response.status).toBe(200)
@@ -281,15 +303,17 @@ describe('/api/semantic-search', () => {
     mockDocumentService.getElements.mockResolvedValue(sampleElements)
     mockExecutePrompt.mockRejectedValue(new Error('LLM service unavailable'))
     
-    const request = createMockRequest('http://localhost:3000/api/semantic-search', {
+    const response = await testApiRoute({
+      handler: POST,
+      url: '/api/semantic-search',
       method: 'POST',
       body: {
         query: 'test query',
         documentId: 'doc-123'
-      }
+      },
+      user: testUser
     })
     
-    const response = await POST(request)
     const data = await response.json()
     
     expect(response.status).toBe(500)
@@ -301,15 +325,17 @@ describe('/api/semantic-search', () => {
     mockDocumentService.getElements.mockResolvedValue(sampleElements)
     mockExecutePrompt.mockResolvedValue('Invalid JSON response')
     
-    const request = createMockRequest('http://localhost:3000/api/semantic-search', {
+    const response = await testApiRoute({
+      handler: POST,
+      url: '/api/semantic-search',
       method: 'POST',
       body: {
         query: 'test query',
         documentId: 'doc-123'
-      }
+      },
+      user: testUser
     })
     
-    const response = await POST(request)
     const data = await response.json()
     
     expect(response.status).toBe(500)
@@ -324,15 +350,17 @@ describe('/api/semantic-search', () => {
     const wrappedResponse = '```json\n' + sampleLLMResponse + '\n```'
     mockExecutePrompt.mockResolvedValue(wrappedResponse)
     
-    const request = createMockRequest('http://localhost:3000/api/semantic-search', {
+    const response = await testApiRoute({
+      handler: POST,
+      url: '/api/semantic-search',
       method: 'POST',
       body: {
         query: 'test query',
         documentId: 'doc-123'
-      }
+      },
+      user: testUser
     })
     
-    const response = await POST(request)
     const data = await response.json()
     
     expect(response.status).toBe(200)

@@ -2,6 +2,11 @@
  * @jest-environment node
  */
 
+import { testApiRoute } from '@/lib/testing/api-test-utils'
+import { authTestScenarios, createTestUser } from '@/lib/testing/auth-test-utils'
+import { getTestNamespace } from '@/lib/testing/test-isolation-utils'
+import { POST } from '../route'
+
 // Mock auth modules first, before any imports
 jest.mock('@/lib/auth/server-auth', () => ({
   getUser: jest.fn(),
@@ -74,11 +79,6 @@ jest.mock('ai', () => ({
   streamText: jest.fn()
 }))
 
-// Import route and helpers AFTER all mocks are set up
-import { POST } from '../route'
-import { createMockRequest } from '../../__tests__/test-helpers'
-import { defaultTestUser } from '@/lib/testing/auth-test-helpers'
-
 // Import mocked modules
 import { createClient } from '@/lib/supabase/server'
 import { ChatService } from '@/lib/services/database/chat'
@@ -106,6 +106,9 @@ function createMockStream(chunks: string[], delayMs: number = 10) {
 }
 
 describe('Chat API - Streaming Functionality', () => {
+  const namespace = getTestNamespace('chat-streaming')
+  const testUser = createTestUser(namespace)
+  
   const mockSupabaseClient: any = {
     auth: {
       getUser: jest.fn()
@@ -125,11 +128,8 @@ describe('Chat API - Streaming Functionality', () => {
     // Setup default mocks
     mockCreateClient.mockResolvedValue(mockSupabaseClient)
     
-    // Setup default auth mock - chat API uses getUser which returns {user, error}
-    // Dynamic import required for Jest mocking
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { getUser } = require('@/lib/auth/server-auth')
-    getUser.mockResolvedValue({ user: defaultTestUser, error: null })
+    // Setup auth for business logic testing by default
+    authTestScenarios.authenticated(namespace)
     
     // Mock console methods to reduce noise
     jest.spyOn(console, 'log').mockImplementation()
@@ -171,17 +171,18 @@ describe('Chat API - Streaming Functionality', () => {
         })
       } as any)
 
-      const request = createMockRequest('/api/chat', {
+      const response = await testApiRoute({
+        handler: POST,
+        url: '/api/chat',
         method: 'POST',
         body: {
           documentId: 'test-doc-id',
           messages: [{ role: 'user', content: 'Test question' }],
           documentContext: 'Test context',
           stream: true
-        }
+        },
+        user: testUser
       })
-
-      const response = await POST(request)
       
       // For streaming responses, the API would typically return a streaming response
       // In this test environment, we're verifying the streaming setup was called
@@ -204,17 +205,19 @@ describe('Chat API - Streaming Functionality', () => {
       // Mock streaming error
       mockStreamText.mockRejectedValue(new Error('Streaming failed'))
 
-      const request = createMockRequest('/api/chat', {
+      const response = await testApiRoute({
+        handler: POST,
+        url: '/api/chat',
         method: 'POST',
         body: {
           documentId: 'test-doc-id',
           messages: [{ role: 'user', content: 'Test question' }],
           documentContext: 'Test context',
           stream: true
-        }
+        },
+        user: testUser
       })
 
-      const response = await POST(request)
       expect(response.status).toBe(500)
       
       const data = await response.json()
@@ -258,20 +261,22 @@ describe('Chat API - Streaming Functionality', () => {
         })
       })
 
-      const request = createMockRequest('/api/chat', {
+      const response = await testApiRoute({
+        handler: POST,
+        url: '/api/chat',
         method: 'POST',
         body: {
           documentId: 'test-doc-id',
           messages: [{ role: 'user', content: 'Test question' }],
           documentContext: 'Test context',
           stream: true
-        }
+        },
+        user: testUser
       })
 
       // Abort after a short delay
       setTimeout(() => abortController.abort(), 50)
 
-      const response = await POST(request)
       expect(response.status).toBe(500)
     })
   })
@@ -296,16 +301,18 @@ describe('Chat API - Streaming Functionality', () => {
       // Track performance
       const startTime = Date.now()
 
-      const request = createMockRequest('/api/chat', {
+      const response = await testApiRoute({
+        handler: POST,
+        url: '/api/chat',
         method: 'POST',
         body: {
           documentId: 'test-doc-id',
           messages: largeConversationHistory,
           documentContext: 'Large document context'.repeat(100)
-        }
+        },
+        user: testUser
       })
 
-      const response = await POST(request)
       const endTime = Date.now()
 
       // Should complete within reasonable time (5 seconds)
@@ -328,18 +335,21 @@ describe('Chat API - Streaming Functionality', () => {
 
       // Create multiple concurrent requests
       const requests = Array.from({ length: 5 }, (_, i) => 
-        createMockRequest('/api/chat', {
+        testApiRoute({
+          handler: POST,
+          url: '/api/chat',
           method: 'POST',
           body: {
             documentId: `test-doc-${i}`,
             messages: [{ role: 'user', content: `Concurrent test ${i}` }],
             documentContext: 'Test context'
-          }
+          },
+          user: testUser
         })
       )
 
       // Process all requests concurrently
-      const responses = await Promise.all(requests.map(req => POST(req)))
+      const responses = await Promise.all(requests)
 
       // All requests should complete
       expect(responses).toHaveLength(5)
@@ -372,17 +382,19 @@ describe('Chat API - Streaming Functionality', () => {
         return Promise.resolve({ id: 'recovered-thread-id' })
       })
 
-      const request = createMockRequest('/api/chat', {
+      const response = await testApiRoute({
+        handler: POST,
+        url: '/api/chat',
         method: 'POST',
         body: {
           documentId: 'test-doc-id',
           messages: [{ role: 'user', content: 'Test question' }],
           documentContext: 'Test context'
-        }
+        },
+        user: testUser
       })
 
       // Should still process the request even if thread creation fails
-      const response = await POST(request)
       expect(response.status).toBe(200)
     })
 
@@ -406,16 +418,18 @@ describe('Chat API - Streaming Functionality', () => {
         message: 'Rate limit exceeded. Please try again later.'
       })
 
-      const request = createMockRequest('/api/chat', {
+      const response = await testApiRoute({
+        handler: POST,
+        url: '/api/chat',
         method: 'POST',
         body: {
           documentId: 'test-doc-id',
           messages: [{ role: 'user', content: 'Test question' }],
           documentContext: 'Test context'
-        }
+        },
+        user: testUser
       })
 
-      const response = await POST(request)
       expect(response.status).toBe(500)
       
       const data = await response.json()

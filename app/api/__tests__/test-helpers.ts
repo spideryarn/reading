@@ -29,8 +29,9 @@ function createMockRequest(url: string, options: MockRequestOptions = {}) {
 }
 
 // Helper to test API routes using next-test-api-route-handler
+// For Next.js 15 App Router, NTARH requires the entire route module, not individual handlers
 async function testApiRoute(
-  handler: (request: Request) => Promise<Response>,
+  routeModule: any, // The entire route module (e.g., import * as route from './route')
   options: TestApiOptions = {}
 ) {
   let responseBody: unknown;
@@ -38,7 +39,7 @@ async function testApiRoute(
   let responseHeaders: Headers;
 
   await testApiHandler({
-    appHandler: handler,
+    appHandler: routeModule, // Pass the entire route module
     url: options.url || '/api/test',
     test: async ({ fetch }) => {
       const response = await fetch({

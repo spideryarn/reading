@@ -2,6 +2,11 @@
  * @jest-environment node
  */
 
+import { testApiRoute } from '@/lib/testing/api-test-utils'
+import { authTestScenarios, createTestUser } from '@/lib/testing/auth-test-utils'
+import { getTestNamespace } from '@/lib/testing/test-isolation-utils'
+import * as extractUrlRoute from '../route'
+
 // Mock auth modules first, before any imports
 jest.mock('@/lib/auth/server-auth', () => ({
   getUser: jest.fn(),
@@ -10,10 +15,6 @@ jest.mock('@/lib/auth/server-auth', () => ({
   checkAdminAccess: jest.fn(),
   getSession: jest.fn()
 }))
-
-import { POST } from '../route'
-import { createMockRequest } from '../../__tests__/test-helpers'
-import { authTestScenarios } from '@/lib/testing/auth-test-helpers'
 
 // Mock other dependencies
 jest.mock('@/lib/supabase/server', () => ({
@@ -126,6 +127,9 @@ const mockProcessHtml = processHtmlToDocument as jest.MockedFunction<typeof proc
 const mockExecutePrompt = executeMultimodalPromptWithUsage as jest.MockedFunction<typeof executeMultimodalPromptWithUsage>
 
 describe('Extract URL API - Auth vs Validation Testing', () => {
+  const namespace = getTestNamespace('extract-url-auth-validation')
+  const testUser = createTestUser(namespace)
+  
   const mockSupabaseClient: any = {
     auth: {
       getUser: jest.fn()
@@ -139,92 +143,102 @@ describe('Extract URL API - Auth vs Validation Testing', () => {
     mockCreateClient.mockResolvedValue(mockSupabaseClient)
     
     // Setup auth for business logic testing by default
-    authTestScenarios.businessLogic()
+    authTestScenarios.authenticated(namespace)
     
     // AiCallService is already mocked at module level
   })
 
   describe('Input Validation Tests (Auth Succeeds)', () => {
     it('should return 400 for missing URL', async () => {
-      const request = createMockRequest('/api/extract-url', {
+      const response = await testApiRoute({
+        handler: extractUrlRoute,
+        url: '/api/extract-url',
         method: 'POST',
         body: {
           // url is missing
           provider: 'claude'
-        }
+        },
+        user: testUser
       })
 
-      const response = await POST(request)
       expect(response.status).toBe(400)
       
-      const text = await response.text()
-      expect(text).toContain('Invalid URL')
+      // Response body is already parsed by testApiRoute helper
+      expect(response.body).toContain('Invalid URL')
     })
 
     it('should return 400 for invalid URL format', async () => {
-      const request = createMockRequest('/api/extract-url', {
+      const response = await testApiRoute({
+        handler: extractUrlRoute,
+        url: '/api/extract-url',
         method: 'POST',
         body: {
           url: 'not-a-valid-url',
           provider: 'claude'
-        }
+        },
+        user: testUser
       })
 
-      const response = await POST(request)
       expect(response.status).toBe(400)
       
-      const text = await response.text()
-      expect(text).toContain('Invalid URL')
+      // Response body is already parsed by testApiRoute helper
+      expect(response.body).toContain('Invalid URL')
     })
 
     it('should return 400 for invalid provider', async () => {
-      const request = createMockRequest('/api/extract-url', {
+      const response = await testApiRoute({
+        handler: extractUrlRoute,
+        url: '/api/extract-url',
         method: 'POST',
         body: {
           url: 'https://example.com',
           provider: 'invalid-provider'
-        }
+        },
+        user: testUser
       })
 
-      const response = await POST(request)
       expect(response.status).toBe(400)
       
-      const text = await response.text()
-      expect(text).toContain('Invalid provider')
+      // Response body is already parsed by testApiRoute helper
+      expect(response.body).toContain('Invalid provider')
     })
 
     it('should return 400 for invalid extraction method', async () => {
-      const request = createMockRequest('/api/extract-url', {
+      const response = await testApiRoute({
+        handler: extractUrlRoute,
+        url: '/api/extract-url',
         method: 'POST',
         body: {
           url: 'https://example.com',
           provider: 'claude',
           extractionMethod: 'invalid-method'
-        }
+        },
+        user: testUser
       })
 
-      const response = await POST(request)
       expect(response.status).toBe(400)
       
-      const text = await response.text()
-      expect(text).toContain('Invalid extraction method')
+      // Response body is already parsed by testApiRoute helper
+      expect(response.body).toContain('Invalid extraction method')
     })
 
     it('should return 501 for AI DOM method', async () => {
-      const request = createMockRequest('/api/extract-url', {
+      const response = await testApiRoute({
+        handler: extractUrlRoute,
+        url: '/api/extract-url',
         method: 'POST',
         body: {
           url: 'https://example.com',
           provider: 'claude',
           extractionMethod: 'ai-dom'
-        }
+        },
+        user: testUser
       })
 
-      const response = await POST(request)
       expect(response.status).toBe(501)
       
-      const text = await response.text()
-      expect(text).toContain('experimental feature')
+      // Response body is already parsed by testApiRoute helper
+      expect(response.body).toContain('experimental feature')
     })
 
     it('should return 400 for unsupported content type', async () => {
@@ -237,64 +251,67 @@ describe('Extract URL API - Auth vs Validation Testing', () => {
         suggestedAction: 'Please provide a PDF or HTML URL'
       })
 
-      const request = createMockRequest('/api/extract-url', {
+      const response = await testApiRoute({
+        handler: extractUrlRoute,
+        url: '/api/extract-url',
         method: 'POST',
         body: {
           url: 'https://example.com/file.zip',
           provider: 'claude'
-        }
+        },
+        user: testUser
       })
 
-      const response = await POST(request)
       expect(response.status).toBe(400)
       
-      const text = await response.text()
-      expect(text).toContain('Unsupported content type')
+      // Response body is already parsed by testApiRoute helper
+      expect(response.body).toContain('Unsupported content type')
     })
   })
 
   describe('Authentication Tests', () => {
     it('should return 401 when user is not authenticated', async () => {
-      // Setup auth to fail
-      authTestScenarios.authFailure('User not authenticated')
-
-      const request = createMockRequest('/api/extract-url', {
+      const response = await testApiRoute({
+        handler: extractUrlRoute,
+        url: '/api/extract-url',
         method: 'POST',
         body: {
           url: 'https://example.com',
           provider: 'claude'
-        }
+        },
+        user: null
       })
 
-      const response = await POST(request)
       expect(response.status).toBe(401)
       
-      const text = await response.text()
-      expect(text).toContain('Authentication required')
+      // Response body is already parsed by testApiRoute helper
+      expect(response.body).toContain('Authentication required')
     })
 
     it('should return 401 for invalid credentials', async () => {
       // Setup auth to fail with specific error
       authTestScenarios.authFailure('Authentication failed: Invalid credentials')
 
-      const request = createMockRequest('/api/extract-url', {
+      const response = await testApiRoute({
+        handler: extractUrlRoute,
+        url: '/api/extract-url',
         method: 'POST',
         body: {
           url: 'https://example.com',
           provider: 'claude'
-        }
+        },
+        user: null
       })
 
-      const response = await POST(request)
       expect(response.status).toBe(401)
       
-      const text = await response.text()
-      expect(text).toContain('Authentication required')
+      // Response body is already parsed by testApiRoute helper
+      expect(response.body).toContain('Authentication required')
     })
 
     afterEach(() => {
       // Reset auth to succeed for other tests
-      authTestScenarios.businessLogic()
+      authTestScenarios.authenticated(namespace)
     })
   })
 
@@ -336,16 +353,18 @@ describe('Extract URL API - Auth vs Validation Testing', () => {
         storageResult: null
       })
 
-      const request = createMockRequest('/api/extract-url', {
+      const response = await testApiRoute({
+        handler: extractUrlRoute,
+        url: '/api/extract-url',
         method: 'POST',
         body: {
           url: 'https://example.com',
           provider: 'claude',
           extractionMethod: 'ai-transcription'
-        }
+        },
+        user: testUser
       })
 
-      const response = await POST(request)
       expect(response.status).toBe(201)
       
       const data = await response.json()
@@ -365,42 +384,42 @@ describe('Extract URL API - Auth vs Validation Testing', () => {
       // Mock fetch failure
       global.fetch = jest.fn().mockRejectedValue(new Error('Network error'))
 
-      const request = createMockRequest('/api/extract-url', {
+      const response = await testApiRoute({
+        handler: extractUrlRoute,
+        url: '/api/extract-url',
         method: 'POST',
         body: {
           url: 'https://example.com',
           provider: 'claude'
-        }
+        },
+        user: testUser
       })
 
-      const response = await POST(request)
       expect(response.status).toBe(400)
       
-      const text = await response.text()
-      expect(text).toContain('Network error')
+      // Response body is already parsed by testApiRoute helper
+      expect(response.body).toContain('Network error')
     })
   })
 
   describe('Error Priority Testing', () => {
     it('should check auth before input validation', async () => {
-      // Setup auth to fail
-      authTestScenarios.authFailure()
-
-      // Send request with invalid input that would normally trigger 400
-      const request = createMockRequest('/api/extract-url', {
+      const response = await testApiRoute({
+        handler: extractUrlRoute,
+        url: '/api/extract-url',
         method: 'POST',
         body: {
           url: 'not-a-valid-url', // Invalid URL
           provider: 'invalid-provider' // Invalid provider
-        }
+        },
+        user: null // No user = should get 401
       })
 
-      const response = await POST(request)
       // Should get 401 (auth error) instead of 400 (validation error)
       expect(response.status).toBe(401)
       
-      const text = await response.text()
-      expect(text).toContain('Authentication required')
+      // Response body is already parsed by testApiRoute helper
+      expect(response.body).toContain('Authentication required')
     })
   })
 })

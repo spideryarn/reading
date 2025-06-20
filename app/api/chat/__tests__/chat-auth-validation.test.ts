@@ -73,9 +73,10 @@ jest.mock('@/lib/services/logger', () => ({
 }))
 
 // Import route and helpers AFTER all mocks are set up
-import { POST } from '../route'
+import * as chatRoute from '../route'
+import { testApiRoute } from '@/lib/testing/api-test-utils'
 import { createMockRequest } from '../../__tests__/test-helpers'
-import { defaultTestUser } from '@/lib/testing/auth-test-helpers'
+import { authTestScenarios, createTestUser } from '@/lib/testing/auth-test-utils'
 
 // Import mocked modules
 import { createClient } from '@/lib/supabase/server'
@@ -107,11 +108,9 @@ describe('Chat API - Auth vs Validation Testing', () => {
     // Setup default mocks
     mockCreateClient.mockResolvedValue(mockSupabaseClient)
     
-    // Setup default auth mock - chat API now uses validateAuth
-    // Dynamic import required for Jest mocking
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { validateAuth } = require('@/lib/auth/server-auth')
-    validateAuth.mockResolvedValue(defaultTestUser)
+    // Setup default auth mock with new utilities
+    const testUser = createTestUser()
+    authTestScenarios.authenticated()
     
     // Services are already mocked at module level
   })
@@ -132,7 +131,9 @@ describe('Chat API - Auth vs Validation Testing', () => {
         }
       } as any)
 
-      const request = createMockRequest('/api/chat', {
+      const response = await testApiRoute({
+        handler: chatRoute,
+        url: '/api/chat',
         method: 'POST',
         body: {
           documentId: 'test-doc-id',
@@ -141,12 +142,11 @@ describe('Chat API - Auth vs Validation Testing', () => {
         }
       })
 
-      const response = await POST(request)
       expect(response.status).toBe(400)
-      
-      const data = await response.json()
-      expect(data.error).toBe('Invalid request format')
-      expect(data.code).toBe('VALIDATION_ERROR')
+      expect(response.body).toMatchObject({
+        error: 'Invalid request format',
+        code: 'VALIDATION_ERROR'
+      })
     })
 
     it('should return 400 for missing documentId', async () => {
@@ -252,13 +252,12 @@ describe('Chat API - Auth vs Validation Testing', () => {
     })
 
     it('should require authentication', async () => {
-      // Chat API now requires authentication
-      // Dynamic import required for Jest mocking
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { validateAuth } = require('@/lib/auth/server-auth')
-      validateAuth.mockRejectedValue(new Error('Authentication required'))
+      // Setup authentication failure scenario
+      authTestScenarios.authFailure('Authentication required')
 
-      const request = createMockRequest('/api/chat', {
+      const response = await testApiRoute({
+        handler: chatRoute,
+        url: '/api/chat',
         method: 'POST',
         body: {
           documentId: 'test-doc-id',
@@ -267,7 +266,6 @@ describe('Chat API - Auth vs Validation Testing', () => {
         }
       })
 
-      const response = await POST(request)
       expect(response.status).toBe(401)
     })
   })
