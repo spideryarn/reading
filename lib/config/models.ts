@@ -21,74 +21,78 @@ export interface ModelConfig {
 }
 
 // Model definitions indexed by full model string
+// 
+// This list is deliberately not exhaustive. We only want to include models that we want to use, often only the latest versions. 
+// Get explicit agreement from the user before adding new models.
 export const MODEL_DEFINITIONS: Record<string, ModelConfig> = {
-  // Anthropic models (valid as of 2024-03-07 release)
-  'anthropic:claude-3-haiku:20240307': {
+  // Anthropic models
+//   keep Haiku for now but commented out
+//   'anthropic:claude-3-haiku:20240307': {
+//     provider: 'anthropic',
+//     modelName: 'claude-3-haiku',
+//     version: '20240307',
+//     thinking: false,
+//     description: 'Claude 3 Haiku – Fast and cost-effective',
+//     contextWindow: 200_000,
+//     outputTokens: 8192,
+//     pricing: {
+//       inputPer1M: 1.00,
+//       outputPer1M: 5.00,
+//     },
+//   },
+  'anthropic:claude-sonnet-4:20250514': {
     provider: 'anthropic',
-    modelName: 'claude-3-haiku',
-    version: '20240307',
+    modelName: 'claude-sonnet-4',
+    version: '20250514',
     thinking: false,
-    description: 'Claude 3 Haiku – Fast and cost-effective',
+    description: 'Claude Sonnet 4 – Balanced performance and cost with frontier capabilities',
     contextWindow: 200_000,
-    outputTokens: 8192,
-    pricing: {
-      inputPer1M: 1.00,
-      outputPer1M: 5.00,
-    },
-  },
-  'anthropic:claude-3-sonnet:20240229': {
-    provider: 'anthropic',
-    modelName: 'claude-3-sonnet',
-    version: '20240229',
-    thinking: false,
-    description: 'Claude 3 Sonnet – Balanced performance and cost',
-    contextWindow: 200_000,
-    outputTokens: 8192,
+    outputTokens: 64_000,
     pricing: {
       inputPer1M: 3.00,
       outputPer1M: 15.00,
     },
   },
-  'anthropic:claude-3-sonnet:20240229:thinking': {
+  'anthropic:claude-sonnet-4:20250514:thinking': {
     provider: 'anthropic',
-    modelName: 'claude-3-sonnet',
-    version: '20240229',
+    modelName: 'claude-sonnet-4',
+    version: '20250514',
     thinking: true,
-    description: 'Claude 3 Sonnet with Thinking Mode – Advanced reasoning',
+    description: 'Claude Sonnet 4 with Thinking Mode – Advanced reasoning capabilities',
     contextWindow: 200_000,
-    outputTokens: 8192,
+    outputTokens: 64_000,
     pricing: {
       inputPer1M: 3.00,
       outputPer1M: 15.00,
     },
   },
-  'anthropic:claude-3-opus:20240229': {
+  'anthropic:claude-opus-4:20250514': {
     provider: 'anthropic',
-    modelName: 'claude-3-opus',
-    version: '20240229',
+    modelName: 'claude-opus-4',
+    version: '20250514',
     thinking: false,
-    description: 'Claude 3 Opus – Highest capability',
+    description: 'Claude Opus 4 – Highest capability, best coding model',
     contextWindow: 200_000,
-    outputTokens: 8192,
+    outputTokens: 32_000,
+    pricing: {
+      inputPer1M: 15.00,
+      outputPer1M: 75.00,
+    },
+  },
+  'anthropic:claude-opus-4:20250514:thinking': {
+    provider: 'anthropic',
+    modelName: 'claude-opus-4',
+    version: '20250514',
+    thinking: true,
+    description: 'Claude Opus 4 with Thinking Mode – Maximum capability with extended reasoning',
+    contextWindow: 200_000,
+    outputTokens: 32_000,
     pricing: {
       inputPer1M: 15.00,
       outputPer1M: 75.00,
     },
   },
   // Google models
-  'google:gemini-2.0-flash:latest': {
-    provider: 'google',
-    modelName: 'gemini-2.0-flash',
-    version: 'latest',
-    thinking: false,
-    description: 'Gemini 2.0 Flash - Fast and cost-effective',
-    contextWindow: 1_000_000,
-    outputTokens: 8192,
-    pricing: {
-      inputPer1M: 0.075,
-      outputPer1M: 0.30,
-    },
-  },
   'google:gemini-2.5-flash:latest': {
     provider: 'google',
     modelName: 'gemini-2.5-flash',
@@ -335,4 +339,4 @@ export function getAvailableModels(): Record<string, ModelConfig[]> {
 }
 
 // Default model configuration
-export const DEFAULT_MODEL_STRING = 'anthropic:claude-3-haiku:20240307'
+export const DEFAULT_MODEL_STRING = 'anthropic:claude-sonnet-4:20250514'
