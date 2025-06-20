@@ -12,6 +12,7 @@ discuss them.
 - If there are any cases where some web research might be beneficial, add actions in appropriate places to do that (probably with a subagent)
   
 Report out loud on:
+- Name of planning doc
 - Progress made, how things are going. Don't be smug.
 - Surprises/issues/complexity
 - What's left to do? How complex will it be? What do you think about the cost/benefit ratio?
