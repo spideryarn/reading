@@ -21,13 +21,20 @@ Currently, tools in Spideryarn Reading are implemented independently:
 
 We need a centralized system that treats tools as first-class citizens with standardized interfaces.
 
+**Update (2025-06-22)**: Since this planning doc was written:
+- URL state management has been fully implemented with centralized history management
+- URL is now the single source of truth for tab state (no more bidirectional sync)
+- All tools have URL state integration (glossary, search, summary, chat, highlights)
+- The tool registry architecture remains unimplemented but would integrate well with the existing URL state infrastructure
+
 ## References
 
 - `docs/reference/TOOL_TEMPLATE_FOR_CREATING_NEW.md` - Current best practices for tool creation
 - `docs/reference/COMMAND_PALETTE.md` - Command palette implementation
 - `docs/reference/UNIFIED_LEFT_PANE.md` - Tab system architecture
 - `components/command-palette.tsx` - Current hardcoded command implementation
-- `planning/250614a_tool_url_state_management.md` - URL state integration (complementary)
+- `planning/250614a_tool_url_state_management.md` - URL state integration (completed - see implementation debrief)
+- `planning/finished/250615a_url_state_single_source_of_truth.md` - URL as single source of truth (completed)
 - `planning/250614c_llm_tool_function_calling.md` - LLM integration (depends on this)
 
 ## Principles & Key Decisions
@@ -38,6 +45,7 @@ We need a centralized system that treats tools as first-class citizens with stan
 4. **Dynamic discovery** - Tools self-register, no hardcoding
 5. **Analytics-ready** - Build in tracking points even if no-op initially
 6. **Component isolation** - Tools remain independent React components
+7. **URL is single source of truth** - Tab navigation must use `navigateToTab()`, never direct context updates (see `planning/finished/250615a_url_state_single_source_of_truth.md`)
 
 ## Stages & Actions
 
@@ -90,11 +98,21 @@ We need a centralized system that treats tools as first-class citizens with stan
   - [ ] Result type checking
   - [ ] Error boundary for tool failures
   - [ ] Execution context injection
+  - [ ] Integration with navigateToTab() for tab navigation
+  - [ ] Handle URL state updates via existing hooks
 - [ ] Create standard tool actions
-  - [ ] 'open' - Activate tool tab/route
+  - [ ] 'open' - Activate tool tab/route (uses navigateToTab)
   - [ ] 'execute' - Run tool logic
   - [ ] 'refresh' - Force data refresh
   - [ ] 'close' - Cleanup and close
+- [ ] Implement executor navigation handling
+  ```typescript
+  // When tool returns navigation result
+  if (result.type === 'navigation' && result.navigation?.tab) {
+    const navigateToTab = getNavigateToTab() // Get from context/hook
+    navigateToTab(result.navigation.tab)
+  }
+  ```
 - [ ] Add execution tests
 
 ### Stage: Simple tool migration - Glossary
@@ -119,6 +137,7 @@ We need a centralized system that treats tools as first-class citizens with stan
 - [ ] Update `components/command-palette.tsx`
   - [ ] Import command generation
   - [ ] Merge generated and legacy commands
+  - [ ] Ensure all commands use navigateToTab() for tab changes
   - [ ] Test all shortcuts work
 - [ ] Add command generation tests
 
@@ -270,10 +289,10 @@ interface ToolResult {
   }
   navigation?: {
     url?: string
-    tab?: string
+    tab?: string  // Executor will use navigateToTab() internally
     external?: boolean
   }
-  stateChanges?: Record<string, any>
+  stateChanges?: Record<string, any>  // For URL state updates
   analytics?: Record<string, any>
 }
 ```
@@ -306,10 +325,16 @@ const glossaryTool: Tool = {
     })
   },
   
+  // URL state parameters (integrated with existing URL state system)
+  urlState: {
+    term: 'string'  // Syncs with ?term= parameter
+  },
+  
   execute: async (params) => {
     if (params.action === 'open') {
-      // NOTE: As of 2025-06-15, use navigateToTab() for tab changes
-      // See planning/250615a_url_state_single_source_of_truth.md
+      // NOTE: As of 2025-06-16, use navigateToTab() for tab changes
+      // See planning/finished/250615a_url_state_single_source_of_truth.md
+      // The executor will handle navigation via URL state
       return {
         type: 'navigation',
         navigation: { tab: 'glossary' }
@@ -381,6 +406,7 @@ const generatedCommands = Array.from(toolRegistry.values())
     description: tool.description,
     category: 'Tools',
     action: async () => {
+      // Executor will handle navigation via navigateToTab() internally
       await executeTool(tool.id, {
         action: 'open',
         context: getCurrentContext(),
@@ -424,10 +450,11 @@ const generatedCommands = Array.from(toolRegistry.values())
 3. **Performance overhead** - Profile registry lookups and optimize hot paths
 4. **Type safety gaps** - Use Zod for runtime validation of all inputs
 5. **Developer adoption** - Create excellent documentation and tooling
+6. **URL state conflicts** - Ensure registry respects URL as single source of truth
 
 ## Future Considerations
 
-- URL state integration (see `planning/250614a_tool_url_state_management.md`)
+- ~URL state integration~ ✅ Completed (see `planning/250614a_tool_url_state_management.md` implementation debrief)
 - LLM function calling (see `planning/250614c_llm_tool_function_calling.md`)
 - Plugin system for third-party tools
 - Tool marketplace or sharing mechanism
@@ -435,6 +462,9 @@ const generatedCommands = Array.from(toolRegistry.values())
 
 ## Related Documents
 
-- `planning/250614a_tool_url_state_management.md` - URL state that tools can leverage
+- `planning/250614a_tool_url_state_management.md` - URL state that tools can leverage (completed)
+- `planning/finished/250615a_url_state_single_source_of_truth.md` - URL as single source of truth (completed)
 - `planning/250614c_llm_tool_function_calling.md` - LLM integration built on this registry
+- `docs/reference/ARCHITECTURE_URL_STATE.md` - Comprehensive URL state documentation
+- `lib/tools/hooks/use-tool-url-state.ts` - Existing URL state hooks to integrate with
 - Original unified planning doc (to be deleted): `planning/250613c_unified_tool_architecture_url_state_llm_integration.md`
