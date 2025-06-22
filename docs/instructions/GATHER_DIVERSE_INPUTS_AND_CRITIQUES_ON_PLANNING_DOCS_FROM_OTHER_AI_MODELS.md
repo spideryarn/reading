@@ -34,8 +34,28 @@ Before running critique, user should specify what type of feedback is most valua
 - **Scope and prioritization** - Assess feature selection and MVP boundaries
 
 ### 3. Run External Critique
+
+**Standard command:**
 ```bash
 ./scripts/codex-with-env.sh planning/your-planning-doc.md
+```
+
+**For large/complex documents (recommended):**
+```bash
+# When using Claude Code CLI, use extended timeout for complex documents
+# Claude should use the Bash tool with timeout parameter: 1200000 (20 minutes)
+./scripts/codex-with-env.sh planning/your-planning-doc.md
+```
+
+**⚠️ Critical Timeout Settings:**
+- **Claude Code CLI Bash tool**: Use `"timeout": 1200000` parameter (20 minutes)
+- **Default timeout**: 2 minutes (120,000ms) - **insufficient for o3-pro**
+- **OpenAI o3-pro processing time**: Typically 6-15 minutes for complex documents
+- **Required for**: All planning document critiques
+
+**For Claude agents**: Always use extended timeout when running critique commands:
+```json
+{"command": "./scripts/codex-with-env.sh planning/doc.md", "timeout": 1200000}
 ```
 
 This generates:
