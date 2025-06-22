@@ -1,10 +1,11 @@
 import { DocumentParser } from '@/lib/services/document-parser'
 import DocumentPageClient from './page-client'
 import { MutationProvider } from '@/lib/context/mutation-context'
-import { requireAuth } from '@/lib/auth/route-protection'
+import { getAuthUser } from '@/lib/auth/route-protection'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import type { Document } from '@/lib/types/database'
+import { NotAuthorizedPage } from '@/components/not-authorized-page'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -26,15 +27,15 @@ async function getDocumentBySlug(slug: string): Promise<Document | null> {
 export default async function DocumentPage({ params }: PageProps) {
   const { slug } = await params
   
-  // Require authentication for document access
-  const user = await requireAuth({
-    returnTo: `/read/${slug}`
-  })
+  // Check authentication status without requiring it
+  const user = await getAuthUser()
   
   const doc = await getDocumentBySlug(slug)
   
+  // If document not found or not accessible, show not authorized page
+  // This conflates "not found" and "no permission" for security
   if (!doc) {
-    return <div className="p-8">Document not found</div>
+    return <NotAuthorizedPage userEmail={user?.email} slug={slug} />
   }
 
   // Get enhancement flags from the document_enhancements table
@@ -67,7 +68,7 @@ export default async function DocumentPage({ params }: PageProps) {
         aiHeadingsGenerated={enhancementFlags.aiHeadingsGenerated}
         summaryGenerated={enhancementFlags.summaryGenerated}
         glossaryGenerated={enhancementFlags.glossaryGenerated}
-        ownerEmail={user.email}
+        ownerEmail={user?.email}
         isPublic={doc.is_public}
       />
     </MutationProvider>
