@@ -173,10 +173,15 @@ export function mergeOverlappingContexts(
   const sorted = [...contexts].sort((a, b) => a.matchIndex - b.matchIndex)
   const merged: Array<{ text: string; matchIndex: number }> = []
   
-  let current = sorted[0]
+  if (sorted.length === 0) {
+    return merged
+  }
+  
+  let current = sorted[0]!
   
   for (let i = 1; i < sorted.length; i++) {
     const next = sorted[i]
+    if (!next) continue
     
     // Check if contexts overlap significantly
     // This is a simple heuristic - in practice, could be more sophisticated

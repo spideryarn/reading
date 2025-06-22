@@ -65,11 +65,11 @@ export function extractWithReadability(html: string, url: string): {
     // Readability returns content as HTML string
     return {
       title: article.title || '',
-      content: article.content, // This is already HTML
+      content: article.content || '', // This is already HTML
       textContent: article.textContent || '',
       excerpt: article.excerpt || '',
-      byline: article.byline,
-      siteName: article.siteName,
+      byline: article.byline || null,
+      siteName: article.siteName || null,
     }
   } catch (error) {
     console.error('Readability extraction error:', error)
@@ -112,5 +112,5 @@ function escapeHtml(text: string): string {
     '"': '&quot;',
     "'": '&#039;'
   }
-  return text.replace(/[&<>"']/g, m => map[m])
+  return text.replace(/[&<>"']/g, m => map[m] || m)
 }

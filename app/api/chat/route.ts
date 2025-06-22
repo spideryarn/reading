@@ -130,13 +130,13 @@ export async function POST(request: NextRequest) {
     
     // Handle thread creation for first message (if needed)
     let finalThreadId = threadId;
-    if (!threadId && messages.length === 1 && messages[0].role === 'user' && documentId) {
+    if (!threadId && messages.length === 1 && messages[0]?.role === 'user' && documentId) {
       try {
         const supabase = await createClient()
         const chatService = new ChatService(supabase)
         
         // Create title from first user message
-        const title = messages[0].content;
+        const title = messages[0]?.content || 'Untitled Chat';
         
         // Create new thread using model string
         const newThread = await chatService.createThread({
@@ -190,14 +190,27 @@ export async function POST(request: NextRequest) {
         })
         
         // Log successful AI operation
-        logAIOperation('chat', {
+        const costEstimate = result.usage?.totalTokens ? result.usage.totalTokens * 0.000003 : undefined
+        const logData: {
+          modelProvider: string
+          tokensUsed?: number
+          userId: string
+          documentId?: string
+          correlationId: string
+          cost?: number
+        } = {
           modelProvider: modelConfig.provider,
           tokensUsed: result.usage?.totalTokens,
           userId: user.id,
-          documentId,
-          correlationId,
-          cost: result.usage?.totalTokens ? result.usage.totalTokens * 0.000003 : undefined // Rough cost estimate
-        }, 'success')
+          correlationId
+        }
+        if (documentId) {
+          logData.documentId = documentId
+        }
+        if (costEstimate !== undefined) {
+          logData.cost = costEstimate
+        }
+        logAIOperation('chat', logData, 'success')
       } catch (err) {
         console.warn('[Chat API] Failed to track AI call:', err)
         // Don't fail the request if AI call tracking fails

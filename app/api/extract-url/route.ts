@@ -14,7 +14,7 @@ import { generateHtmlFilename } from '@/lib/utils/slug'
 import { URL_EXTRACTION_CONFIG } from '@/lib/config'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
 import { validateAuth } from '@/lib/auth/server-auth'
-import { processHtmlToDocument, handleSanitizationError } from '@/lib/services/html-document-processor'
+import { processHtmlToDocument, handleSanitizationError, type ProcessingMetadata } from '@/lib/services/html-document-processor'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 import { detectAndAnalyzeContent, isPdfContentType } from '@/lib/utils/content-type-detection'
 
@@ -163,7 +163,7 @@ async function processPdfFromUrl(
   providedTitle: string | undefined,
   isPublic: boolean,
   user: { id: string; email?: string },
-  supabase: ReturnType<typeof createClient>,
+  supabase: Awaited<ReturnType<typeof createClient>>,
   aiCallService: AiCallService,
   requestLogger: ReturnType<typeof createRequestLogger>,
   correlationId: string
@@ -172,7 +172,7 @@ async function processPdfFromUrl(
   const defaultTitle = providedTitle || `Document from ${urlObject.hostname}`
   
   // Create provider-specific prompt template with appropriate model configuration
-  const promptTemplate = createPdfToHtmlPrompt(provider)
+  const promptTemplate = createPdfToHtmlPrompt(provider as 'claude' | 'gemini')
   const providerDisplayName = provider === 'gemini' ? 'Gemini 1.5 Pro' : 'Claude 4 Sonnet'
   
   // Get model configuration for AI call tracking
@@ -684,7 +684,7 @@ export async function POST(request: NextRequest) {
 
     // Extract title from extracted HTML if not provided
     const titleMatch = extractedHtml.match(/<title>(.*?)<\/title>/i) || extractedHtml.match(/<h1[^>]*>(.*?)<\/h1>/i)
-    const extractedTitle = titleMatch ? titleMatch[1].replace(/<[^>]*>/g, '').trim() : null
+    const extractedTitle = titleMatch?.[1] ? titleMatch[1].replace(/<[^>]*>/g, '').trim() : null
     const finalTitle = providedTitle || extractedTitle || defaultTitle
     
     console.log('Step 6: Processing HTML through shared pipeline...')
@@ -711,18 +711,22 @@ export async function POST(request: NextRequest) {
       ;(urlMetadata as typeof urlMetadata & { model_used?: string }).model_used = modelString
     }
     
+    const processingMetadata: ProcessingMetadata = {
+      title: finalTitle,
+      sourceUrl: url,
+      isPublic,
+      originalFile: htmlBlob,
+      filename: htmlFilename,
+      provider: extractionMethodUsed === 'ai-transcription' ? provider : undefined,
+      correlationId
+    }
+    if (extractionMethodUsed === 'ai-transcription' && aiCall?.id) {
+      processingMetadata.aiCallId = aiCall.id
+    }
+    
     const { document } = await processHtmlToDocument(
       extractedHtml,
-      {
-        title: finalTitle,
-        sourceUrl: url,
-        isPublic,
-        originalFile: htmlBlob,
-        filename: htmlFilename,
-        provider: extractionMethodUsed === 'ai-transcription' ? provider : undefined,
-        correlationId,
-        aiCallId: extractionMethodUsed === 'ai-transcription' ? aiCall?.id : undefined
-      },
+      processingMetadata,
       {
         extractionMethod: extractionMethodUsed,
         uploadSource: 'url',

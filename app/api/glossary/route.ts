@@ -91,9 +91,8 @@ export async function POST(request: NextRequest) {
     const { modelString, config: modelConfig } = getModelForAICall()
     
     // Create AI call record for tracking
-    const aiCall = await aiCallService.startCallWithModelString({
+    const aiCallOptions: Parameters<typeof aiCallService.startCallWithModelString>[0] = {
       userId: user.id,
-      documentId: documentId || undefined,
       modelString: modelString,
       prompt_type: 'glossary',
       input_data: { 
@@ -101,7 +100,11 @@ export async function POST(request: NextRequest) {
         already_entities_count: already_entities?.length || 0,
         model_used: modelString
       }
-    })
+    }
+    if (documentId) {
+      aiCallOptions.documentId = documentId
+    }
+    const aiCall = await aiCallService.startCallWithModelString(aiCallOptions)
     
     requestLogger.info({
       correlationId,
@@ -118,13 +121,22 @@ export async function POST(request: NextRequest) {
     })
     
     // Log AI operation completion
-    logAIOperation('glossary-generation', {
+    const logData: {
+      modelProvider: string
+      tokensUsed: number
+      userId: string
+      documentId?: string
+      correlationId: string
+    } = {
       modelProvider: modelConfig.provider,
       tokensUsed: llmResult.usage.totalTokens,
       userId: user.id,
-      documentId,
       correlationId
-    }, 'success')
+    }
+    if (documentId) {
+      logData.documentId = documentId
+    }
+    logAIOperation('glossary-generation', logData, 'success')
     
     // Parse the JSON response from LLM (strip markdown code blocks if present)
     let jsonString = llmResult.text.trim()
@@ -157,11 +169,26 @@ export async function POST(request: NextRequest) {
     
     // Store the glossary result in database (only if documentId provided)
     if (documentId) {
+      // Clean entities to remove undefined properties for exactOptionalPropertyTypes compliance
+      const cleanedEntities = validatedResponse.entities.map(entity => {
+        const cleaned: any = {
+          name: entity.name,
+          ontology: entity.ontology,
+          aliases: entity.aliases,
+          brief_explanation: entity.brief_explanation
+        }
+        if (entity.long_explanation !== undefined) cleaned.long_explanation = entity.long_explanation
+        if (entity.datetime !== undefined) cleaned.datetime = entity.datetime
+        if (entity.url !== undefined) cleaned.url = entity.url
+        if (entity.extra !== undefined) cleaned.extra = entity.extra
+        return cleaned
+      })
+      
       await enhancementService.storeGlossary(
         documentId,
         aiCall.id,
       {
-        entities: validatedResponse.entities,
+        entities: cleanedEntities,
         metadata: {
           content_length: content.length,
           entities_count: validatedResponse.entities.length,
