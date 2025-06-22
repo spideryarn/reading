@@ -11,6 +11,9 @@ import { getCurrentUserAdminStatus } from '@/lib/auth/admin-utils'
 import type { Document } from '@/lib/types/database'
 import { Plus } from '@phosphor-icons/react/dist/ssr/Plus'
 import { Shield } from '@phosphor-icons/react/dist/ssr/Shield'
+import { Globe } from '@phosphor-icons/react/dist/ssr/Globe'
+import { Lock } from '@phosphor-icons/react/dist/ssr/Lock'
+import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 
 async function getUserDocuments(): Promise<{ documents: Document[]; isAdmin: boolean }> {
   const supabase = await createClient()
@@ -107,18 +110,50 @@ export default async function DocumentsPage() {
               return (
                 <div
                   key={doc.id}
-                  className="flex items-center p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center p-4 border rounded-lg transition-colors"
                 >
                   <Link
                     href={`/read/${slug}`}
-                    className="flex-1 min-w-0"
+                    className="flex-1 min-w-0 hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
                   >
-                    <h3 className="font-medium">{doc.title}</h3>
-                    <p className="text-sm text-gray-500">
-                      {doc.word_count ? `${doc.word_count.toLocaleString()} words` : 'No word count'}
-                      {doc.language_code && doc.language_code !== 'en' && ` • ${doc.language_code.toUpperCase()}`}
-                      {isAdmin && doc.created_by && ` • Owner: ${doc.created_by.slice(0, 8)}...`}
-                    </p>
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium">{doc.title}</h3>
+                        <p className="text-sm text-gray-500">
+                          {doc.word_count ? `${doc.word_count.toLocaleString()} words` : 'No word count'}
+                          {doc.language_code && doc.language_code !== 'en' && ` • ${doc.language_code.toUpperCase()}`}
+                          {isAdmin && doc.created_by && ` • Owner: ${doc.created_by.slice(0, 8)}...`}
+                        </p>
+                      </div>
+                      <div className="flex-shrink-0 ml-2">
+                        <TooltipOrPopover
+                          content={
+                            <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                              <div className="text-sm text-gray-700">
+                                {doc.is_public === true ? (
+                                  <>This document is <strong>public</strong> and can be viewed by anyone with the link.</>
+                                ) : (
+                                  <>This document is <strong>private</strong> and can only be viewed by you.</>
+                                )}
+                              </div>
+                            </div>
+                          }
+                          side="top"
+                          align="center"
+                          sideOffset={8}
+                          showIndicator={false}
+                          contentClassName="p-0 bg-transparent border-0 shadow-none"
+                        >
+                          <div className="p-1">
+                            {doc.is_public === true ? (
+                              <Globe size={16} className="text-green-600" />
+                            ) : (
+                              <Lock size={16} className="text-gray-500" />
+                            )}
+                          </div>
+                        </TooltipOrPopover>
+                      </div>
+                    </div>
                   </Link>
                   <div className="ml-4 flex-shrink-0">
                     <DeleteDocumentButton
