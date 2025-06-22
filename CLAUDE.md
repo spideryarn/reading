@@ -110,6 +110,17 @@ Type checking and linting:
 
 **Documentation**: See `docs/reference/TESTING_DATABASE.md` for comprehensive patterns and test isolation utilities.
 
+## Test Writing Guidance
+
+**Before writing tests**: Use a subagent to search for existing test coverage. This avoids context pollution and duplication.
+
+**Test hierarchy** (prefer higher on list):
+1. **E2E tests** (`e2e/*.spec.ts`) - One E2E test can replace many unit tests
+2. **Integration tests** - Test complete workflows, not individual functions
+3. **Unit tests** - Only for complex algorithms or critical business logic
+
+**Avoid testing**: Simple transformations, environment detection, logging, implementation details.
+
 Debugging resources:
 - Current logs: `tail dev.log`
 - Browser debugging: Playwright MCP (console logs, network requests, screenshots)
