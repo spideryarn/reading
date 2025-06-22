@@ -16,7 +16,7 @@ The user has decided to separate these concerns cleanly: keep exact text search 
 
 - `components/unified-left-pane.tsx` - Main left pane implementation with current search tab logic
 - `components/vertical-icon-nav.tsx` - Tab navigation definitions 
-- `docs/reference/UNIFIED_LEFT_PANE.md` - Current left pane architecture documentation
+- `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Current left pane architecture documentation
 - `docs/reference/AI_SUMMARISE.md` - Example of existing AI feature documentation pattern
 - `docs/reference/TOOL_HIGHLIGHT.md` - Complete documentation created for the semantic highlighting system
 - `docs/instructions/WRITE_EVERGREEN_DOC.md` - Guidelines for creating TOOL_HIGHLIGHT.md documentation
@@ -125,7 +125,7 @@ The user has decided to separate these concerns cleanly: keep exact text search 
   - [ ] Include confidence-based visual treatment
   - [ ] Note future features (prev/next navigation, multiple colors, user notes)
   - [ ] Reference relationship to simplified text search
-- [ ] Update `docs/reference/UNIFIED_LEFT_PANE.md` to reflect new tab organisation
+- [ ] Update `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` to reflect new tab organisation
 - [ ] Create/update integration tests for new tab structure
 - [ ] Update component tests to reflect separated functionality
 - [ ] Run full test suite to ensure no regressions

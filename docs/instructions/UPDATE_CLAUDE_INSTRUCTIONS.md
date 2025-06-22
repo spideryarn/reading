@@ -43,7 +43,7 @@ CLAUDE.md serves as the primary orientation document for AI agents working on th
 - **Detailed instructions** - These belong in specific domain docs
 - **Code examples** - Link to actual implementation files instead
 - **Duplicate information** - Always reference canonical source
-- **Step-by-step tutorials** - These belong in `docs/reference/SETUP.md`
+- **Step-by-step tutorials** - These belong in `docs/reference/SETUP_DEVELOPMENT_ENVIRONMENT.md`
 - **Non-critical** information
 - Information that is **rarely relevant** (in this case, include some kind of signpost that if you're about to do X it's important you first read Y...)
 

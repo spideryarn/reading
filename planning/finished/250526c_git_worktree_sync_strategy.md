@@ -129,7 +129,7 @@ git merge main           # Update current branch
 
 ### Documentation ✅
 
-- [x] Document the worktree setup process in docs/SETUP.md
+- [x] Document the worktree setup process in docs/SETUP_DEVELOPMENT_ENVIRONMENT.md
 - [x] Add usage instructions for the sync script
 - [x] Document the branch strategy (main vs experim)
 - [x] Add safety warnings about user-only operation

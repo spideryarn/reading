@@ -12,7 +12,7 @@ The Document Metadata Tab provides comprehensive information about uploaded docu
 - `lib/utils/text-statistics.ts` - Text analysis utilities for word counting
 - `lib/services/document-service.ts` - Database queries for document and enhancement data
 - `docs/reference/TOOL_TEMPLATE_FOR_CREATING_NEW.md` - General tool development patterns
-- `docs/reference/UNIFIED_LEFT_PANE.md` - Tab system architecture and integration
+- `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Tab system architecture and integration
 - `docs/reference/DATABASE_SCHEMA.md` - Document and enhancement table structures
 - `planning/250614a_document_metadata_tab_implementation.md` - Implementation planning and decisions
 

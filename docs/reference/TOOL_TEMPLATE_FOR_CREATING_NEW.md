@@ -8,9 +8,9 @@ This document provides a comprehensive template for creating new tools in Spider
 - `docs/reference/TOOL_READING_DIFFICULTY.md` - Example of AI-powered assessment tool with JSON output and UI enhancements
 - `docs/reference/TOOL_SEARCH_TEXT.md` - Example of search functionality with real-time UI updates
 - `docs/reference/TOOL_HIGHLIGHT.md` - Example of semantic highlighting with confidence-based visuals
-- `docs/reference/UNIFIED_LEFT_PANE.md` - Tab system architecture and vertical icon navigation
-- `docs/reference/CROSS_PANE_COMMUNICATION.md` - DocumentCommunicationContext integration patterns
-- `docs/reference/COMMAND_PALETTE.md` - Keyboard shortcut integration and command definitions
+- `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Tab system architecture and vertical icon navigation
+- `docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md` - DocumentCommunicationContext integration patterns
+- `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` - Keyboard shortcut integration and command definitions
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - AI-powered tool development with Nunjucks + Zod
 - `planning/250613c_unified_tool_architecture_url_state_llm_integration.md` - Future unified tool architecture vision
 - `components/unified-left-pane.tsx` - Main pane implementation for reference
@@ -248,7 +248,7 @@ This document provides a comprehensive template for creating new tools in Spider
 
 - [ ] **Update architecture documentation**
   - [ ] Add tool to `docs/reference/ARCHITECTURE_OVERVIEW.md`
-  - [ ] Update `docs/reference/UNIFIED_LEFT_PANE.md` if needed
+  - [ ] Update `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` if needed
   - [ ] Document any new architectural patterns introduced
   - [ ] Update API documentation if endpoints added
 

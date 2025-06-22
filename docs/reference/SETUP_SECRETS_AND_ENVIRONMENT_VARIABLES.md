@@ -4,8 +4,8 @@ Environment variable configuration for Spideryarn Reading, covering client-side 
 
 ## See also
 
-- `docs/reference/SETUP.md` - Complete development environment setup
-- `docs/reference/AUTHENTICATION_SETUP.md` - OAuth and authentication-specific environment variables
+- `docs/reference/SETUP_DEVELOPMENT_ENVIRONMENT.md` - Complete development environment setup
+- `docs/reference/AUTHENTICATION_SETUP_DEVELOPMENT_ENVIRONMENT.md` - OAuth and authentication-specific environment variables
 - `.env.local` - Local development environment variables (not committed to git)
 - `.env.example` - Template for environment variables
 

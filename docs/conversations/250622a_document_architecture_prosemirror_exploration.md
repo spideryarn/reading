@@ -5,10 +5,10 @@ Type: Decision-making
 Status: Active
 Claude URL: [Current conversation URL]
 Related Docs: 
-  - docs/reference/VISION.md - Product vision and target users
+  - docs/reference/VISION_PRODUCT_STRATEGY.md - Product vision and target users
   - docs/reference/PROJECT_STATUS.md - Current implementation state
-  - docs/reference/CROSS_PANE_COMMUNICATION.md - Current cross-pane patterns
-  - docs/reference/MUTATIONS.md - Reversible mutations system
+  - docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md - Current cross-pane patterns
+  - docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md - Reversible mutations system
   - docs/reference/UI_COMPONENTS.md - Component architecture
   - docs/conversations/250620a_spideryarn_prosemirror_suitability_questions.md - Initial ProseMirror exploration
   - docs/conversations/250620b_spideryarn_prosemirror_deep_research.md - Detailed requirements analysis

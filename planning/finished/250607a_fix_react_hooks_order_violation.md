@@ -19,7 +19,7 @@ The Spideryarn Reading application has a unified left pane with 6 tabs (Original
 - `components/tab-container.tsx` - Generic tab container component
 - `components/resizable-document-layout.tsx` - Parent of UnifiedLeftPane, handles callbacks
 - `docs/CODING_PRINCIPLES.md` - Emphasizes simplicity and robustness over performance
-- `docs/UNIFIED_LEFT_PANE.md` - Architecture documentation for the left pane
+- `docs/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Architecture documentation for the left pane
 
 ## Requirements
 

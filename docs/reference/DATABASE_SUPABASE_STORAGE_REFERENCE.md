@@ -9,7 +9,7 @@ Comprehensive guide to implementing file storage in Spideryarn Reading using Sup
 - `supabase/migrations/20250531235026_comprehensive_storage_schema.sql` - Database schema with `storage_path` field
 - `lib/types/database.ts` - TypeScript definitions for documents table including storage references
 - `docs/reference/DATABASE_SCHEMA.md` - Complete database schema documentation
-- `docs/reference/ENVIRONMENT_DETECTION.md` - Environment-aware error handling for storage RLS limitations
+- `docs/reference/ENVIRONMENT_DETECTION_RUNTIME_PATTERNS.md` - Environment-aware error handling for storage RLS limitations
 - [Supabase Storage Documentation](https://supabase.com/docs/guides/storage) - Official Supabase Storage documentation
 
 ## Principles, key decisions

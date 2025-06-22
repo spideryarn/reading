@@ -13,7 +13,7 @@ Implement visual indication in the Table of Contents pane to show which headings
 
 - `docs/TABLE_OF_CONTENTS_PANE.md` - Current ToC architecture with heading extraction and tooltip functionality
 - `docs/UI_INTERFACE.md` - 3-pane layout with Document pane architecture (recently updated)
-- `docs/MUTATIONS.md` - Document mutations system that affects heading structure 
+- `docs/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Document mutations system that affects heading structure 
 - `docs/CODING_PRINCIPLES.md` - Emphasizes simplicity, incremental development, and debugging
 - `components/table-of-contents.tsx` - Main ToC component with existing section detection logic in tooltip feature
 - `components/document-viewer.tsx` - Document pane that renders element tree

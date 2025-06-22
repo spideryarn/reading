@@ -30,7 +30,7 @@ The Spideryarn Reading app has a 2-pane layout with a unified left pane containi
 
 ## References
 
-- `docs/CROSS_PANE_COMMUNICATION.md` - Deep dive analysis of communication patterns with recommendations
+- `docs/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md` - Deep dive analysis of communication patterns with recommendations
 - `components/unified-left-pane.tsx` - Current implementation with DOM event listeners
 - `components/resizable-document-layout.tsx` - Event dispatching from document clicks
 - `docs/CODING_PRINCIPLES.md` - Emphasis on simplicity and debugging ease
@@ -134,7 +134,7 @@ Based on the moderate frequency of updates (every few seconds), React Context is
 
 ### Stage: Documentation and commit
 - [x] Update inline code comments explaining the pattern
-- [x] Update `docs/CROSS_PANE_COMMUNICATION.md` with implementation notes
+- [x] Update `docs/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md` with implementation notes
 - [x] Create concise migration guide for future similar refactors
 - [x] Use subagent to commit with appropriate message
 - [x] Follow `docs/DEBRIEF_PROGRESS.md` to summarize completion

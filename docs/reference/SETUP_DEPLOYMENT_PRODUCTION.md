@@ -4,9 +4,9 @@ This document covers deploying Spideryarn Reading to production using Vercel wit
 
 ## See also
 
-- `docs/reference/SETUP.md` - Development environment setup and local configuration
+- `docs/reference/SETUP_DEVELOPMENT_ENVIRONMENT.md` - Development environment setup and local configuration
 - `docs/reference/SETUP_SECRETS_AND_ENVIRONMENT_VARIABLES.md` - Environment variable security and configuration
-- `docs/reference/AUTHENTICATION_SETUP.md` - OAuth configuration for production domains
+- `docs/reference/AUTHENTICATION_SETUP_DEVELOPMENT_ENVIRONMENT.md` - OAuth configuration for production domains
 - `planning/250613e_Vercel_deployment_initial_setup.md` - Deployment planning and decision context
 - [Vercel Domains Documentation](https://vercel.com/docs/projects/domains) - Official Vercel domain configuration
 - [Namecheap DNS Management](https://www.namecheap.com/support/knowledgebase/article.aspx/9776/2237/how-to-create-a-subdomain-for-my-domain/) - DNS record configuration

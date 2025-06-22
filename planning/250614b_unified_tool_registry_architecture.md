@@ -30,8 +30,8 @@ We need a centralized system that treats tools as first-class citizens with stan
 ## References
 
 - `docs/reference/TOOL_TEMPLATE_FOR_CREATING_NEW.md` - Current best practices for tool creation
-- `docs/reference/COMMAND_PALETTE.md` - Command palette implementation
-- `docs/reference/UNIFIED_LEFT_PANE.md` - Tab system architecture
+- `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` - Command palette implementation
+- `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Tab system architecture
 - `components/command-palette.tsx` - Current hardcoded command implementation
 - `planning/250614a_tool_url_state_management.md` - URL state integration (completed - see implementation debrief)
 - `planning/finished/250615a_url_state_single_source_of_truth.md` - URL as single source of truth (completed)

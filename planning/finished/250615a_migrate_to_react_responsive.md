@@ -5,7 +5,7 @@
 **Priority**: Medium
 **Related Docs**: 
 - `docs/reference/STYLING_MOBILE_PLATFORM_DETECTION.md` - Current mobile detection implementation
-- `docs/reference/UNIFIED_LEFT_PANE.md` - ToC tooltip system that needs touch adaptation
+- `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - ToC tooltip system that needs touch adaptation
 - `components/resizable-document-layout.tsx` - Main detection implementation
 - `components/heading-tree.tsx` - Tooltip implementation needing touch support
 

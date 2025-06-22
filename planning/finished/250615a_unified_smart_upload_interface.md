@@ -14,7 +14,7 @@ This creates unnecessary cognitive load and complexity. Users need to choose bet
 
 ## References
 
-- `docs/reference/UPLOAD.md` - Comprehensive upload system documentation with current capabilities and processing pipeline
+- `docs/reference/UPLOAD_DOCUMENT_PROCESSING_PIPELINE.md` - Comprehensive upload system documentation with current capabilities and processing pipeline
 - `app/upload/page.tsx` - Current implementation with dual-tab interface and complex state management
 - `app/api/upload-pdf/route.ts` - PDF upload API endpoint
 - `app/api/extract-url/route.ts` - URL extraction API endpoint

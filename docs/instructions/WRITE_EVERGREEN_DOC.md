@@ -18,6 +18,23 @@ They should refer to one another, and avoid too much overlap in content, so that
 
 They should be written in Markdown, stored as `docs/reference/TOPIC_NAME.md` or `docs/instructions/TOPIC_NAME.md` as appropriate.
 
+## Filename Guidelines
+
+Choose descriptive filenames that clearly indicate the document's content:
+
+- **Be specific**: `UPLOAD_DOCUMENT_PROCESSING_PIPELINE.md` instead of just `UPLOAD.md`
+- **Include context**: `UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` instead of just `UNIFIED_LEFT_PANE.md`
+- **Expand acronyms**: `SD_STRING_DISPLACEMENT_FIND_REPLACE.md` instead of just `SD_FIND_REPLACE.md`
+- **Keep existing names**: Where possible, include the current name as a prefix (e.g., `SETUP_DEVELOPMENT_ENVIRONMENT.md` keeps `SETUP`)
+- **Group related docs**: Use similar prefixes so related docs sort together (e.g., all `DATABASE_*.md` files)
+- **Maintain prefix conventions**: Keep category prefixes (DATABASE_, TESTING_, AUTHENTICATION_, etc.)
+
+Good examples:
+- `DATABASE_SUPABASE_INTEGRATION_REFERENCE.md`
+- `TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
+- `TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md`
+- `AUTHENTICATION_SECURITY.md`
+
 
 ## Document structure
 

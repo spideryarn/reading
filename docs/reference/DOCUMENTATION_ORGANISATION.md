@@ -10,13 +10,13 @@
 
 **Start here for understanding the project:**
 - `README.md` - Project goals, features, and high-level overview
-- `docs/reference/VISION.md` - Comprehensive product vision and strategic direction  
+- `docs/reference/VISION_PRODUCT_STRATEGY.md` - Comprehensive product vision and strategic direction  
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture and implementation
 
 **Essential for development:**
 - `CLAUDE.md` - AI agent context and development instructions
 - `docs/reference/CODING_PRINCIPLES.md` - Core development philosophy and principles
-- `docs/reference/SETUP.md` - Development environment setup guide
+- `docs/reference/SETUP_DEVELOPMENT_ENVIRONMENT.md` - Development environment setup guide
 
 ## Evergreen Documentation Reference
 
@@ -27,11 +27,11 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/CODING_GUIDELINES.md` - Code quality standards including linting, TypeScript patterns, React best practices, and import conventions ⭐ **Essential**
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture and implementation details ⭐ **Essential**
 - `docs/reference/ARCHITECTURE_DECISIONS.md` - Key architectural decisions including framework choices, data structures, storage approach, and MVP features
-- `docs/reference/SETUP.md` - Development environment setup guide including Node.js, Supabase, Git worktree configuration ⭐ **Start here**
+- `docs/reference/SETUP_DEVELOPMENT_ENVIRONMENT.md` - Development environment setup guide including Node.js, Supabase, Git worktree configuration ⭐ **Start here**
 - `docs/reference/SETUP_DEV_SERVER_AUTOMATION.md` - Enhanced dev server management with background daemon mode for AI-first development and multi-worktree isolation ⭐ **Essential for AI agents**
 - `docs/reference/SETUP_DEPLOYMENT_PRODUCTION.md` - Production deployment guide covering Vercel setup, custom domain configuration, environment management, and troubleshooting ⭐ **Essential for deployment**
 - `docs/reference/SETUP_PYTHON.md` - Python environment setup and dependencies for critique generation features
-- `docs/reference/ENVIRONMENT_DETECTION.md` - Environment-aware error handling for distinguishing between local development and cloud/production environments
+- `docs/reference/ENVIRONMENT_DETECTION_RUNTIME_PATTERNS.md` - Environment-aware error handling for distinguishing between local development and cloud/production environments
 - `docs/reference/LOGGING_BEST_PRACTICES.md` - Comprehensive logging guide covering library choices (Pino vs Winston), Vercel observability, and production monitoring strategies
 - `docs/reference/TESTING_OVERVIEW.md` - Testing approach documentation covering Jest with React Testing Library setup, test structure, and current test coverage
 - `docs/reference/TESTING_SETUP.md` - Test configuration and environment setup including Jest, .env.test, and module resolution
@@ -43,7 +43,7 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/COMMAND_LINE_SCRIPTS.md` - Guidelines for writing command-line scripts using shell scripts or TypeScript/Clipanion
 - `docs/reference/STYLING_OVERVIEW.md` - Overview of CSS and visual styling configuration with links to specialized styling documentation ⭐ **Start here for styling**
 - `docs/reference/GIT_WORKTREES.md` - Multi-worktree development setup using hub-and-spoke model
-- `docs/reference/SITE_ORGANISATION.md` - Application routes, component hierarchy, and navigation patterns (may be outdated)
+- `docs/reference/SITE_ORGANISATION_WEBSITE_STRUCTURE.md` - Application routes, component hierarchy, and navigation patterns (may be outdated)
 
 ### Database
 - `docs/reference/DATABASE_OVERVIEW.md` - Database architecture and Supabase integration overview
@@ -85,24 +85,24 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/STYLING_COLLAPSIBLE.md` - Comprehensive guide for expand/collapse component patterns
 - `docs/reference/STYLING_MOBILE_PLATFORM_DETECTION.md` - Mobile device detection and responsive design system
 - `docs/reference/STYLING_OVERLAPPING_TEXT_HIGHLIGHTS.md` - Comprehensive guide for implementing overlapping text highlighting using CSS Custom Highlight API and Mark.js fallbacks ⭐ **Essential for highlighting features**
-- `docs/reference/UNIFIED_LEFT_PANE.md` - Architecture of unified left pane with tabbed interface, ToC, and tooltip summaries
-- `docs/reference/COMMAND_PALETTE.md` - Command palette implementation and usage
-- `docs/reference/CROSS_PANE_COMMUNICATION.md` - Inter-pane communication patterns and architecture
+- `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Architecture of unified left pane with tabbed interface, ToC, and tooltip summaries
+- `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` - Command palette implementation and usage
+- `docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md` - Inter-pane communication patterns and architecture
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - Application keyboard shortcuts and navigation
-- `docs/reference/MUTATIONS.md` - Reversible document transformation system for applying/reverting changes
+- `docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Reversible document transformation system for applying/reverting changes
 - `docs/reference/ARCHITECTURE_URL_STATE.md` - URL-based state management for shareable tool states and browser history navigation ⭐ **Essential for tool state persistence**
 
 ### Content Processing & Search
 - `docs/reference/TOOL_SEARCH_TEXT.md` - Cross-element text search functionality using Mark.js with DOM-based highlighting
-- `docs/reference/UPLOAD.md` - Comprehensive document upload and import system reference covering all ingestion methods ⭐ **Essential for content import**
+- `docs/reference/UPLOAD_DOCUMENT_PROCESSING_PIPELINE.md` - Comprehensive document upload and import system reference covering all ingestion methods ⭐ **Essential for content import**
 - `docs/reference/HTML_CONTENT_PROCESSING_OVERVIEW.md` - Complete HTML content processing pipeline including extraction, sanitisation, and quality assurance ⭐ **Essential for web content**
 - `docs/reference/PDF_TO_HTML_CONVERSION_OVERVIEW.md` - PDF processing and HTML conversion overview
 - `docs/reference/RESEARCH_ON_OPTIMAL_TEXT_FORMATTING.md` - Text formatting standards and typography
 
 ### Strategic Vision & Business
-- `docs/reference/VISION.md` - Comprehensive product vision including target users, business model, competitive positioning ⭐ **Important**
+- `docs/reference/VISION_PRODUCT_STRATEGY.md` - Comprehensive product vision including target users, business model, competitive positioning ⭐ **Important**
 - `docs/reference/PROJECT_STATUS.md` - Current development state showing implemented and planned features
-- `docs/reference/MARKETING_BRANDING.md` - Marketing strategy, branding guidelines, and positioning
+- `docs/reference/MARKETING_BRANDING_GUIDELINES.md` - Marketing strategy, branding guidelines, and positioning
 - `docs/instructions/RESEARCH_POTENTIAL_LIBRARY_CHANGES_GOTCHAS.md` - Research notes on potential library changes and considerations
 
 ### Project Management & Meta
@@ -155,9 +155,9 @@ See `planning/later/` for deferred features and future enhancements.
 
 ## Navigation Tips
 
-**For newcomers**: Start with README.md → VISION.md → ARCHITECTURE_OVERVIEW.md → SETUP.md
+**For newcomers**: Start with README.md → VISION_PRODUCT_STRATEGY.md → ARCHITECTURE_OVERVIEW.md → SETUP_DEVELOPMENT_ENVIRONMENT.md
 **For developers**: Focus on CODING_PRINCIPLES.md → CODING_GUIDELINES.md → TESTING_OVERVIEW.md → TESTING_SETUP.md
-**For AI agents**: Essential reads: SETUP_DEV_SERVER_AUTOMATION.md → GIT_WORKTREES.md → SETUP.md
+**For AI agents**: Essential reads: SETUP_DEV_SERVER_AUTOMATION.md → GIT_WORKTREES.md → SETUP_DEVELOPMENT_ENVIRONMENT.md
 **For AI features**: Begin with LLM_PROMPT_TEMPLATES.md → TOOL_SUMMARISE.md → TOOL_GLOSSARY.md
 **For highlighting work**: Use STYLING_OVERLAPPING_TEXT_HIGHLIGHTS.md → TOOL_SEARCH_TEXT.md → TOOL_HIGHLIGHT.md
 **For documentation work**: Use WRITE_EVERGREEN_DOC.md → UPDATE_HOUSEKEEPING_DOCUMENTATION.md

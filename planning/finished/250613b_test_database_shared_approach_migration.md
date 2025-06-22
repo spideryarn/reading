@@ -16,7 +16,7 @@
 
 - `docs/reference/TESTING_DATABASE_SUPABASE_OPTIONS_RESEARCH.md` - Detailed research comparing different approaches
 - `docs/reference/TESTING_DATABASE.md` - Current testing patterns that need updating
-- `docs/reference/TESTING_SETUP.md` - Test environment configuration to simplify
+- `docs/reference/TESTING_SETUP_DEVELOPMENT_ENVIRONMENT.md` - Test environment configuration to simplify
 - `docs/reference/GIT_WORKTREES.md` - Multi-worktree setup that benefits from shared database approach
 - https://supabase.com/docs/guides/local-development/testing/overview - Official Supabase testing recommendations
 
@@ -68,7 +68,7 @@
 
 **Documentation References to Update:**
 - CLAUDE.md - References to `npm run db:reset`
-- docs/reference/SETUP.md - Multiple references to database reset
+- docs/reference/SETUP_DEVELOPMENT_ENVIRONMENT.md - Multiple references to database reset
 - docs/reference/CODING_GUIDELINES.md - Mentions reset operations
 - docs/reference/DATABASE_OVERVIEW.md - References to reset commands
 
@@ -91,7 +91,7 @@
   - [x] Remove references to test database separation
   - [x] Add UUID-based isolation examples
   - [x] Include cleanup patterns
-- [x] Update `docs/reference/TESTING_SETUP.md`
+- [x] Update `docs/reference/TESTING_SETUP_DEVELOPMENT_ENVIRONMENT.md`
   - [x] Remove dual-database setup instructions
   - [x] Simplify to single database approach
 - [x] Add test pattern examples to `docs/reference/TESTING_OVERVIEW.md`

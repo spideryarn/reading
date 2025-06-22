@@ -152,7 +152,7 @@ shadcn/ui Command component built on cmdk library provides searchable command in
 **Usage:**
 Used exclusively by `components/command-palette.tsx` for the main command palette interface. Provides keyboard navigation, fuzzy search, and proper accessibility support.
 
-**See:** `docs/reference/COMMAND_PALETTE.md` for complete command palette implementation details
+**See:** `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` for complete command palette implementation details
 
 ## Page-Level Components
 
@@ -284,7 +284,7 @@ Comprehensive command palette implementation providing rapid access to all appli
 />
 ```
 
-**See:** `docs/reference/COMMAND_PALETTE.md` for complete implementation guide
+**See:** `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` for complete implementation guide
 
 ### Dialog (`components/dialog.tsx`)
 
@@ -478,7 +478,7 @@ Visit `/design` for a live, interactive design reference page showcasing all com
 
 ## Related Documentation
 
-- `docs/reference/COMMAND_PALETTE.md` - Complete command palette implementation guide
+- `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` - Complete command palette implementation guide
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - Keyboard shortcut patterns and platform detection
 - `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - Installation and technical reference
 - `docs/reference/STYLING_OVERVIEW.md` - Overall styling configuration and theme

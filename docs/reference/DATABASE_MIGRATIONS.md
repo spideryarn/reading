@@ -7,7 +7,7 @@ Database schema changes are managed through Supabase migrations - timestamped SQ
 📖 **Related Documentation:**
 - `docs/reference/DATABASE_OVERVIEW.md`
 - `docs/reference/DATABASE_SCHEMA.md`
-- `docs/reference/SETUP.md` - How to start Supabase locally
+- `docs/reference/SETUP_DEVELOPMENT_ENVIRONMENT.md` - How to start Supabase locally
 
 
 ## File Structure

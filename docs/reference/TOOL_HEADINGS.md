@@ -5,7 +5,7 @@ The AI headings feature generates relevant headings for document sections using 
 ## See also
 
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide to creating and using LLM prompt templates
-- `docs/reference/MUTATIONS.md` - Documents the reversible document transformation system
+- `docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Documents the reversible document transformation system
 - `planning/250526g_ai_generated_headings.md` - Implementation planning for AI-generated headings
 - `lib/prompts/templates/headings.ts` - Schema and prompt configuration for heading generation
 - `lib/prompts/templates/headings.njk` - LLM prompt template for heading generation

@@ -50,7 +50,7 @@ Research shows that standardized document formats significantly improve ML model
 **✅ Stage 8: Documentation and Rollout Preparation**
 - **Completed**: Created comprehensive documentation following evergreen documentation standards
 - **New Docs**: `UPLOAD_HTML_SANITISATION_AND_PRETTIFICATION.md`, `HTML_DOCUMENT_PROCESSOR.md`
-- **Updated Docs**: `UPLOAD.md`, `TESTING_TROUBLESHOOTING.md`, `DOCUMENTATION_ORGANISATION.md`
+- **Updated Docs**: `UPLOAD_DOCUMENT_PROCESSING_PIPELINE.md`, `TESTING_TROUBLESHOOTING.md`, `DOCUMENTATION_ORGANISATION.md`
 - **Coverage**: Configuration, troubleshooting, rollback procedures, before/after examples
 
 ### Implementation Quality Metrics - Final Results
@@ -85,7 +85,7 @@ Research shows that standardized document formats significantly improve ML model
 
 ## References
 
-- `docs/reference/UPLOAD.md` - Current document upload and sanitization documentation
+- `docs/reference/UPLOAD_DOCUMENT_PROCESSING_PIPELINE.md` - Current document upload and sanitization documentation
 - `docs/reference/WEBPAGE_HTML_SANITIZATION_FOR_ACADEMIC_CONTENT.md` - Security and sanitization for HTML content
 - `lib/utils/html-sanitizer.ts` - HTML sanitization implementation using DOMPurify
 - `app/api/upload-pdf/route.ts`, `app/api/extract-url/route.ts` - Upload API implementations that will be refactored to use shared pipeline
@@ -197,12 +197,12 @@ Research shows that standardized document formats significantly improve ML model
 ### Stage: Documentation and Rollout Preparation ✅ COMPLETED
 - [x] Create comprehensive documentation
   - [x] Create `docs/reference/UPLOAD_HTML_SANITISATION_AND_PRETTIFICATION.md` following `docs/instructions/WRITE_EVERGREEN_DOC.md`
-  - [x] Update `docs/reference/UPLOAD.md` to include prettification information
+  - [x] Update `docs/reference/UPLOAD_DOCUMENT_PROCESSING_PIPELINE.md` to include prettification information
   - [x] Document configuration options, troubleshooting, and rollback procedures
   - [x] Include before/after examples and visual comparisons
 
 - [x] Update existing documentation for DRY refactoring and prettification
-  - [x] Update `docs/reference/UPLOAD.md` to reflect new shared pipeline architecture
+  - [x] Update `docs/reference/UPLOAD_DOCUMENT_PROCESSING_PIPELINE.md` to reflect new shared pipeline architecture
   - [x] Create `docs/reference/HTML_DOCUMENT_PROCESSOR.md` documenting the new shared service
   - [x] Update `docs/reference/DOCUMENTATION_ORGANISATION.md` to include new documentation
   - [x] Add cross-references from related documents about upload APIs and HTML processing

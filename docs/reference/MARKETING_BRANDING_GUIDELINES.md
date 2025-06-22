@@ -1,4 +1,4 @@
-see VISION.md
+see VISION_PRODUCT_STRATEGY.md
 
 
 Spideryarn - to help us read more deeply & efficiently.

@@ -13,7 +13,7 @@
 
 - `docs/reference/SETUP_PYTHON.md` - Python dependencies for critique features (optional for most developers)
 - `docs/reference/SETUP_SECRETS_AND_ENVIRONMENT_VARIABLES.md` - Environment variable security and production configuration
-- `docs/reference/SD_FIND_REPLACE.md` - sd usage guide for codebase refactoring
+- `docs/reference/SD_STRING_DISPLACEMENT_FIND_REPLACE.md` - sd usage guide for codebase refactoring
 
 
 ## GitHub repo

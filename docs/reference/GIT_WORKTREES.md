@@ -7,7 +7,7 @@ Multi-worktree development setup for parallel feature development using a hub-an
 - `scripts/sync-worktrees.ts` - Branch synchronisation tool implementation (example of a well-structured Clipanion script)
 - `scripts/sync-worktrees-all.ts` - Wrapper script for automated two-way sync across all worktrees
 - `docs/reference/COMMAND_LINE_SCRIPTS.md` - Guidelines for writing command-line scripts like sync-worktrees.ts
-- `docs/reference/SETUP.md` - General development environment setup
+- `docs/reference/SETUP_DEVELOPMENT_ENVIRONMENT.md` - General development environment setup
 - `docs/instructions/GIT_COMMIT_CHANGES.md` - Git commit best practices for the project
 - `planning/finished/250526c_git_worktree_sync_strategy.md` - Historical decisions about worktree synchronisation (out of date)
 

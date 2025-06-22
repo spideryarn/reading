@@ -11,7 +11,7 @@ This document provides a comprehensive reference for the document upload and imp
 - `docs/reference/HTML_CONTENT_PROCESSING_OVERVIEW.md` - Comprehensive HTML processing guide including URL extraction, content processing, and fidelity testing
 - `docs/reference/HTML_SANITISATION_AND_PRETTIFICATION.md` - Comprehensive sanitisation and prettification guide with security and academic content preservation
 - `docs/reference/HTML_CONTENT_PROCESSING_OVERVIEW.md` - Comprehensive HTML processing guide including shared processing service documentation
-- `docs/reference/ENVIRONMENT_DETECTION.md` - Environment-aware error handling for storage RLS limitations
+- `docs/reference/ENVIRONMENT_DETECTION_RUNTIME_PATTERNS.md` - Environment-aware error handling for storage RLS limitations
 - `planning/finished/250606a_url_based_document_addition.md` - URL extraction feature implementation decisions
 - `planning/finished/250613c_html_document_storage_and_security_implementation.md` - HTML storage and security improvements
 - `app/api/upload-pdf/route.ts` - PDF upload API implementation

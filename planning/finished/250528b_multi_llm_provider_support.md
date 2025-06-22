@@ -191,7 +191,7 @@ Use tasks and subagents where appropriate, especially for curl, tests, and Playw
 
 **Stage 7: Documentation and Configuration**
 - [x] Update `docs/LLM_PROMPT_TEMPLATES.md` to document multi-provider support
-- [x] Update `docs/SETUP.md` with new environment variable requirements - Not needed, covered by .env.example
+- [x] Update `docs/SETUP_DEVELOPMENT_ENVIRONMENT.md` with new environment variable requirements - Not needed, covered by .env.example
 - [x] Add provider switching instructions to `README.md` - Not needed, simple env var switch
 - [x] Update `.env.example` with new Gemini configuration options
 - [x] Create troubleshooting section for provider-specific issues - Added to docs/LLM_MODEL_CONFIGURATION.md

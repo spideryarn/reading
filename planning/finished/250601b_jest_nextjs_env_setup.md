@@ -13,7 +13,7 @@ The main objectives are:
 ## References
 
 - `docs/reference/TESTING_OVERVIEW.md` - Current testing documentation with philosophy
-- `docs/reference/TESTING_SETUP.md` - Testing setup and configuration details
+- `docs/reference/TESTING_SETUP_DEVELOPMENT_ENVIRONMENT.md` - Testing setup and configuration details
 - `planning/finished/250531a_database_storage_implementation.md` - Database implementation with test failure analysis
 - `src/lib/services/__tests__/database-schema.test.ts` - Database tests that need environment variables
 - `jest.config.js` - Current Jest configuration
@@ -82,7 +82,7 @@ The main objectives are:
   - ✅ Added new "Environment Variables in Tests" section
 - [x] Add section about `.env.test` setup for new developers
   - ✅ Added comprehensive setup instructions in TESTING_OVERVIEW.md
-- [x] Update `docs/SETUP.md` if needed to mention `.env.test`
+- [x] Update `docs/SETUP_DEVELOPMENT_ENVIRONMENT.md` if needed to mention `.env.test`
   - ✅ Added "Test Environment Setup" section
 - [x] Add migration notes for existing developers
   - ✅ Included migration instructions in both docs

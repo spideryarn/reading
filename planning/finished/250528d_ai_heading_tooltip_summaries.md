@@ -12,7 +12,7 @@ Currently, hovering over an "Original" heading in the ToC shows a tooltip with a
 
 - `docs/TABLE_OF_CONTENTS_PANE.md` - Documents the ToC architecture including tooltip summarisation for original headings
 - `docs/TOOL_SUMMARISE.md` - Describes the AI summarisation feature including tooltip implementation details
-- `docs/MUTATIONS.md` - Explains the document mutation system used for applying AI-generated headings
+- `docs/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Explains the document mutation system used for applying AI-generated headings
 - `components/table-of-contents.tsx` - Current implementation with tooltip logic only in Original tab
 - `planning/250526g_ai_generated_headings.md` - Original AI headings implementation that didn't include tooltips
 - `lib/services/heading-mutation-generator.ts` - Generates mutations for inserting AI headings with deterministic IDs

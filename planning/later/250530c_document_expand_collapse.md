@@ -14,7 +14,7 @@ In later stages, we plan to replace simple collapsed text with AI-generated summ
 - Current implementation: `components/document-viewer.tsx`
 - Architecture docs: `docs/ARCHITECTURE.md`, `docs/UI_INTERFACE.md`
 - Related features:
-  - `docs/MUTATIONS.md` - Document transformation system
+  - `docs/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Document transformation system
   - `planning/250529a_ai_collapse_expand_summaries.md` - AI summaries for collapsed blocks
 - Styling: `docs/STYLING_OVERVIEW.md`, Phosphor icons
 
@@ -65,7 +65,7 @@ In 'collapsed mode', only show the first line (or the first N characters/words),
 
 **Objective**: Ensure the new Document pane works seamlessly with the mutations system.
 
-- [ ] Review `docs/MUTATIONS.md` implementation
+- [ ] Review `docs/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` implementation
 
 - [ ] Test with existing mutations:
   - AI-generated headings display correctly

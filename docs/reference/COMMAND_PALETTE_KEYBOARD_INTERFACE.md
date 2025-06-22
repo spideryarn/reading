@@ -8,7 +8,7 @@ The command palette provides keyboard-driven navigation and actions for power us
 - `planning/finished/250608e_command_palette_implementation.md` - Complete implementation planning and decision rationale
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - Platform detection patterns and shortcut conventions
 - `docs/reference/UI_COMPONENTS.md` - shadcn/ui Command component integration and usage patterns
-- `docs/reference/CROSS_PANE_COMMUNICATION.md` - DocumentCommunicationContext integration for navigation actions
+- `docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md` - DocumentCommunicationContext integration for navigation actions
 - `components/vertical-icon-nav.tsx` - Visual command palette access and icon integration
 - `components/resizable-document-layout.tsx` - Layout integration and keyboard shortcut handling
 
@@ -338,7 +338,7 @@ if (process.env.NODE_ENV === 'development') {
 
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - Complete keyboard shortcut reference (updated to include command palette)
 - `docs/reference/UI_COMPONENTS.md` - shadcn/ui component usage patterns
-- `docs/reference/CROSS_PANE_COMMUNICATION.md` - Context-based communication system
+- `docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md` - Context-based communication system
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - Overall application architecture
 - `planning/finished/250608e_command_palette_implementation.md` - Complete implementation history and decisions
 

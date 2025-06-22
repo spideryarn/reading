@@ -10,10 +10,10 @@ Currently, the unified left pane displays navigation options as a vertical list 
 
 ## References
 
-- `docs/reference/UNIFIED_LEFT_PANE.md` - Current left pane architecture and features
+- `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Current left pane architecture and features
 - `docs/reference/UI_COMPONENTS.md` - Available UI components and patterns
 - `docs/reference/STYLING_OVERVIEW.md` - Phosphor icons usage and styling guidelines
-- `docs/reference/CROSS_PANE_COMMUNICATION.md` - State management for pane interactions
+- `docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md` - State management for pane interactions
 - `components/unified-left-pane.tsx` - Current implementation to be modified
 - `components/tab-container.tsx` - Existing tab container that may be reused/modified
 
@@ -134,7 +134,7 @@ Currently, the unified left pane displays navigation options as a vertical list 
   - ✅ **Vertical icon navigation tests: 100% pass rate** - all 11 tests passing
   - ✅ Core implementation verified as solid and production-ready
   - ✅ Test failures are pre-existing issues unrelated to navigation changes
-- [x] Update `docs/reference/UNIFIED_LEFT_PANE.md` with new icon navigation
+- [x] Update `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` with new icon navigation
   - ✅ Updated document overview to reflect vertical icon navigation system
   - ✅ Added `components/vertical-icon-nav.tsx` to see-also references
   - ✅ Added `docs/reference/KEYBOARD_SHORTCUTS.md` and planning doc references

@@ -9,7 +9,7 @@ The HTML content processing system provides comprehensive extraction, sanitisati
 
 ## See Also
 
-- `docs/reference/UPLOAD.md` - Complete document upload system including PDF and HTML processing
+- `docs/reference/UPLOAD_DOCUMENT_PROCESSING_PIPELINE.md` - Complete document upload system including PDF and HTML processing
 - `docs/reference/HTML_SANITISATION_AND_PRETTIFICATION.md` - Detailed HTML sanitisation and prettification implementation
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - AI extraction prompt templates using Nunjucks + Zod
 - `docs/reference/TESTING_DATABASE.md` - Database testing patterns for content processing

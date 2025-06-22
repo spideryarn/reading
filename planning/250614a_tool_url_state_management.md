@@ -28,8 +28,8 @@ Currently, Spideryarn Reading tools maintain state only in memory. Users cannot 
 
 ## References
 
-- `docs/reference/CROSS_PANE_COMMUNICATION.md` - Current state management via DocumentCommunicationContext
-- `docs/reference/UNIFIED_LEFT_PANE.md` - Tab system that will sync with URL state
+- `docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md` - Current state management via DocumentCommunicationContext
+- `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Tab system that will sync with URL state
 - `docs/reference/ARCHITECTURE_URL_STATE.md` - Complete architectural documentation of URL state system
 - `components/unified-left-pane.tsx` - Main pane implementation
 - `lib/contexts/document-communication-context.tsx` - Central state management to enhance

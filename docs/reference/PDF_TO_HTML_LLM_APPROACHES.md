@@ -365,7 +365,7 @@ export async function convertPdfToHtmlLLM(pdfBuffer: Buffer): Promise<DocumentMu
 }
 ```
 
-**See Also**: `docs/reference/MUTATIONS.md` for complete mutation system documentation
+**See Also**: `docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` for complete mutation system documentation
 
 ### AI Call Tracking Integration
 

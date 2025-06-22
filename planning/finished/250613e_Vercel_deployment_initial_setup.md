@@ -15,8 +15,8 @@ We have:
 # References
 
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture with technology stack details
-- `docs/reference/SETUP.md` - Development environment setup including environment variables
-- `docs/reference/AUTHENTICATION_SETUP.md` - OAuth configuration including spideryarn.com redirect URLs
+- `docs/reference/SETUP_DEVELOPMENT_ENVIRONMENT.md` - Development environment setup including environment variables
+- `docs/reference/AUTHENTICATION_SETUP_DEVELOPMENT_ENVIRONMENT.md` - OAuth configuration including spideryarn.com redirect URLs
 - `https://github.com/spideryarn/hellozenno` - Previous project with deployment scripts for reference patterns
 
 # Principles & Key Decisions
@@ -111,7 +111,7 @@ We have:
 - ✅ Create new evergreen docs:
   - 📔 Created `docs/reference/SETUP_DEPLOYMENT_PRODUCTION.md` - Comprehensive deployment guide with domain setup, environment configuration, and troubleshooting
 - [ ] Update existing docs:
-  - `docs/reference/AUTHENTICATION_SETUP.md` - Add Vercel-specific OAuth configuration
+  - `docs/reference/AUTHENTICATION_SETUP_DEVELOPMENT_ENVIRONMENT.md` - Add Vercel-specific OAuth configuration
   - `CLAUDE.md` - Add deployment commands and production considerations
 - [ ] Create deployment section in README.md
 

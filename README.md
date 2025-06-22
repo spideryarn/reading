@@ -14,8 +14,8 @@ AI-assisted document reading and analysis tool for professionals working with no
 ## Documentation
 
 ### Getting Started
-- `docs/reference/SETUP.md` - Development environment setup
-- `docs/reference/VISION.md` - Product vision and strategic direction
+- `docs/reference/SETUP_DEVELOPMENT_ENVIRONMENT.md` - Development environment setup
+- `docs/reference/VISION_PRODUCT_STRATEGY.md` - Product vision and strategic direction
 
 ### Development  
 - `docs/reference/CODING_PRINCIPLES.md` - Development philosophy and principles

@@ -12,7 +12,7 @@ The Spideryarn Reading application features a **2-pane resizable layout** with t
 - `components/dialog.tsx` - reusable modal dialog component
 - `components/document-header.tsx` - document header with title and action buttons
 - `app/documents/[slug]/page-client.tsx` - main layout coordination and state management
-- `docs/reference/UNIFIED_LEFT_PANE.md` - detailed documentation of left pane functionality
+- `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - detailed documentation of left pane functionality
 - `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - shadcn/ui component usage patterns
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - overall application architecture
 - `docs/reference/UI_COMPONENTS.md`

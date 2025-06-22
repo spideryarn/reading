@@ -233,7 +233,7 @@ const handleElementClick = useCallback((element: DocumentElement) => {
   - [x] Rewrite `docs/UI_INTERFACE.md` for new 2-pane architecture
   - [x] Find and update docs still mentioning 3-pane layout
   - [x] Update `docs/TABLE_OF_CONTENTS_PANE.md` for unified pane integration
-  - [x] Update `docs/SITE_ORGANISATION.md` component hierarchy and user journey
+  - [x] Update `docs/SITE_ORGANISATION_WEBSITE_STRUCTURE.md` component hierarchy and user journey
   - [x] Update `docs/PROJECT_STATUS.md` layout description and next steps
   - [x] Fix `docs/DOCUMENTATION_ORGANISATION.md` reference
 - [x] Performance analysis

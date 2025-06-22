@@ -4,7 +4,7 @@ This document provides essential context for Claude instances working on the Spi
 
 see:
 - `README.md` for goals/intents/features
-- `docs/reference/VISION.md` for comprehensive product vision and strategic direction
+- `docs/reference/VISION_PRODUCT_STRATEGY.md` for comprehensive product vision and strategic direction
 - IMPORTANT: `docs/reference/CODING_PRINCIPLES.md`
 - IMPORTANT: `docs/reference/CODING_GUIDELINES.md` for code quality standards
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` for current system architecture
@@ -113,7 +113,7 @@ Type checking and linting:
 Debugging resources:
 - Current logs: `tail dev.log`
 - Browser debugging: Playwright MCP (console logs, network requests, screenshots)
-- Codebase refactoring: sd (`sd --preview --string-mode "old" "new" .`) - see `docs/reference/SD_FIND_REPLACE.md`
+- Codebase refactoring: sd (`sd --preview --string-mode "old" "new" .`) - see `docs/reference/SD_STRING_DISPLACEMENT_FIND_REPLACE.md`
 - Test files: `src/lib/*/tests/` and `components/__tests__/`
 - Database: `supabase/migrations/` and `docs/reference/DATABASE_*.md`
 - Architecture: `docs/reference/ARCHITECTURE_OVERVIEW.md` and `docs/reference/ARCHITECTURE_DECISIONS.md`
@@ -183,7 +183,7 @@ Key variables in `.env.local`:
 - `ANTHROPIC_API_KEY` - Required for AI features
 - `PORT` - Dev server port
 - `LLM_MODEL` - uses model strings (`anthropic:claude-3-5-haiku:20241022`, `google:gemini-2.0-flash:latest`), defaults to Claude Sonnet 4, but we usually override to Haiku for development
-- Supabase connection details (see `docs/reference/SETUP.md`)
+- Supabase connection details (see `docs/reference/SETUP_DEVELOPMENT_ENVIRONMENT.md`)
 
 Test environment (`.env.test`):
 - Currently mirrors `.env.local` for simplicity (shared database approach)
@@ -282,7 +282,7 @@ Available evergreen documentation in `docs/` - comprehensive signposting by doma
 - `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - shadcn/ui integration guide
 - `docs/reference/STYLING_OVERVIEW.md` - CSS configuration and theme settings
 - `docs/reference/STYLING_*.md` - Colors, fonts, icons, highlighting, tooltips, mobile detection
-- `docs/reference/UNIFIED_LEFT_PANE.md` - Architecture and features of the unified left pane with tabbed interface, ToC, AI-generated headings, and tooltip summaries
+- `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Architecture and features of the unified left pane with tabbed interface, ToC, AI-generated headings, and tooltip summaries
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - Application keyboard shortcuts
 
 **AI Features & Tools**:
@@ -298,13 +298,13 @@ Available evergreen documentation in `docs/` - comprehensive signposting by doma
 **Content Processing**:
 - `docs/reference/PDF_TO_HTML_*.md` - PDF conversion approaches (LLM, open source, paid services)
 - `docs/reference/HTML_*.md` - HTML content processing and sanitization
-- `docs/reference/MUTATIONS.md` - Documents the reversible document transformation system for applying/reverting changes like AI-generated headings and content filtering
-- `docs/reference/UPLOAD.md` - Document upload and processing
+- `docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Documents the reversible document transformation system for applying/reverting changes like AI-generated headings and content filtering
+- `docs/reference/UPLOAD_DOCUMENT_PROCESSING_PIPELINE.md` - Document upload and processing
 
 **Specialized & Research**:
-- `docs/reference/VISION.md` - Comprehensive product vision and strategy
+- `docs/reference/VISION_PRODUCT_STRATEGY.md` - Comprehensive product vision and strategy
 - `docs/reference/LOGGING_BEST_PRACTICES.md` - Pino structured logging patterns
-- `docs/reference/CROSS_PANE_COMMUNICATION.md` - Inter-pane messaging architecture
+- `docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md` - Inter-pane messaging architecture
 - `docs/reference/RESEARCH_*.md` - Reading difficulty metrics and text formatting research
 - `docs/reference/VERCEL_AI_SDK_REFERENCE.md` - AI SDK integration patterns
 

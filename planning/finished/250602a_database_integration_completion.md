@@ -88,7 +88,7 @@ Complete the database integration for Spideryarn Reading by connecting existing 
   - ✅ Move all `static/examples/*.html` files to obsolete directory
   - ✅ Verify existing functionality still works with database-loaded documents
   - ✅ Update any documentation references to static files
-    - 📔 Successfully moved 4 HTML files to archive. Found minor documentation references that may need updates in SITE_ORGANISATION.md and PROJECT_STATUS.md
+    - 📔 Successfully moved 4 HTML files to archive. Found minor documentation references that may need updates in SITE_ORGANISATION_WEBSITE_STRUCTURE.md and PROJECT_STATUS.md
 
 - ✅ Add slug column to documents table using subagent following migration best practices
   - ✅ Create new migration: `npx supabase migration new add_documents_slug_column`

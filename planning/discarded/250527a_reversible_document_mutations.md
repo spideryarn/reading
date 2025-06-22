@@ -76,7 +76,7 @@ And then revert back to the original document or try different transformations.
   - [x] Integrated with MutationProvider and context hooks
   - [x] Test suite for heading mutation generation (7 tests passing)
 - [x] Git commit, following `GIT_COMMITS.md`
-- [x] Document in new `docs/MUTATIONS.md` - follow `docs/WRITE_EVERGREEN_DOC.md` for this 
+- [x] Document in new `docs/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - follow `docs/WRITE_EVERGREEN_DOC.md` for this 
 
 ### Stage 4: Document Structure Integration
 - [x] Ensure mutations properly modify document structure for navigation
@@ -132,7 +132,7 @@ And then revert back to the original document or try different transformations.
       - Force component re-render after mutations complete
       - Add debugging to log which headings are clickable vs non-clickable
 - [ ] Update documentation
-  - [x] Created docs/MUTATIONS.md
+  - [x] Created docs/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md
   - [ ] Update ARCHITECTURE.md with mutation system overview
   - [ ] Add mutation examples to docs
 
@@ -475,7 +475,7 @@ This section provides a comprehensive reference to all key files, functions, and
 ### 5. Documentation
 
 **Main Documentation:**
-- `docs/MUTATIONS.md` - Primary mutation system documentation
+- `docs/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Primary mutation system documentation
   - Architecture overview and design decisions
   - Usage examples and code snippets
   - Implementation guide for new mutation types

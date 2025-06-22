@@ -18,7 +18,7 @@ Key requirements:
 
 - `docs/reference/PDF_TO_HTML_CONVERSION_OVERVIEW.md` - Comprehensive research on PDF conversion approaches, LLM capabilities, and implementation guidance
 - `docs/reference/ARCHITECTURE_DECISIONS.md` - Multi-provider LLM support and document storage architecture
-- `docs/MUTATIONS.md` - Document transformation system for integrating PDF imports (DISCUSS WITH USER BEFORE STARTING whether to make use of mutations)
+- `docs/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Document transformation system for integrating PDF imports (DISCUSS WITH USER BEFORE STARTING whether to make use of mutations)
 - `docs/LLM_PROMPT_TEMPLATES.md` - Standardized Nunjucks + Zod template system for LLM calls
 - `docs/CODING_PRINCIPLES.md` - Development principles prioritizing simplicity and rapid prototyping
 - `lib/services/llm-provider.ts` - Existing multi-provider LLM infrastructure

@@ -8,13 +8,13 @@ Implement a simple subscription payment system for Spideryarn Reading to enable 
 
 **Previous State**: The application had excellent cost tracking infrastructure and Supabase authentication, but no payment system. All AI features are currently free and unrestricted.
 
-**Business Model**: Professional subscription targeting $20/month, with a vision to serve universities, journals, and research companies paying for their employees (see `docs/reference/VISION.md`).
+**Business Model**: Professional subscription targeting $20/month, with a vision to serve universities, journals, and research companies paying for their employees (see `docs/reference/VISION_PRODUCT_STRATEGY.md`).
 
 **Start Simple Philosophy**: Begin with payment-required-for-AI-features, then evolve to freemium (first 10 documents free), then usage-based limits (N documents per month).
 
 ## References
 
-- `docs/reference/VISION.md` - Business model and target market ($20/month professional subscriptions)
+- `docs/reference/VISION_PRODUCT_STRATEGY.md` - Business model and target market ($20/month professional subscriptions)
 - `docs/reference/AUTHENTICATION_OVERVIEW.md` - Existing Supabase Auth system architecture
 - `docs/reference/DATABASE_SCHEMA.md` - Current database structure, including `public.profiles` table
 - `lib/services/database/ai-calls.ts` - Existing AI cost tracking infrastructure

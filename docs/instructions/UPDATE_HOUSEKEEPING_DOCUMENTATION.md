@@ -39,11 +39,12 @@ Use subagents where appropriate to maintain context window efficiency.
 Look for:
 - **Feature Status Mismatches** - Documentation says "not implemented" but code exists
 - **Architectural Drift** - Documentation describes old approaches superseded by new decisions
-- **Missing High-level Docs** - Missing high-level/overview evergreen/reference documentation, e.g. README, SETUP, ARCHITECTURE, PRODUCT VISION, CODING_PRINCIPLES/GUIDELINES, SITE_ORGANISATION.md, TESTING, UI_INTERFACE and/or STYLING/DESIGN/CSS, etc. These are just examples - use your judgment about which high-level docs would be most relevant to this particular codebase.
+- **Missing High-level Docs** - Missing high-level/overview evergreen/reference documentation, e.g. README, SETUP, ARCHITECTURE, PRODUCT VISION, CODING_PRINCIPLES/GUIDELINES, SITE_ORGANISATION_WEBSITE_STRUCTURE.md, TESTING, UI_INTERFACE and/or STYLING/DESIGN/CSS, etc. These are just examples - use your judgment about which high-level docs would be most relevant to this particular codebase.
 - **Missing Features** - New functionality not documented
 - **Broken Cross-References** - Links to renamed/removed files
 - **Duplicate Information** - Same content in multiple places (consolidate to one location)
 - **Incomplete Sections** - Placeholder or stub documentation
+- **Unclear Filenames** - Documentation files with ambiguous or overly brief names that don't clearly indicate content
 - **Not that useful** - Information that isn't very relevant or adding much. Either remove or make it more concise
 - **No longer useful** - Information that may have been useful in the past, but is out-of-date or no longer so useful. Either remove, make it more concise, or move into an Appendix as a historical record (if you think it still has some value as background)
 
@@ -111,6 +112,19 @@ After completing the main documentation updates:
 ```markdown
 # Instead of duplicating prompt template info
 see `docs/reference/LLM_PROMPT_TEMPLATES.md` for prompt template architecture
+```
+
+**Filename Clarification**
+```markdown
+# Before
+MUTATIONS.md
+SETUP.md
+SD_FIND_REPLACE.md
+
+# After (with git mv)
+MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md
+SETUP_DEVELOPMENT_ENVIRONMENT.md
+SD_STRING_DISPLACEMENT_FIND_REPLACE.md
 ```
 ### Step 6: Suggest a commit to the user (following `docs/instructions/GIT_COMMIT_CHANGES.md`)
 

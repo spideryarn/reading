@@ -9,7 +9,7 @@ Identify areas of our code where someone new to the codebase might get tripped u
 ### Stage: Background Research
 - Read foundational documentation:
     - `docs/reference/DOCUMENTATION_ORGANISATION.md`
-    - `docs/reference/SITE_ORGANISATION.md`
+    - `docs/reference/SITE_ORGANISATION_WEBSITE_STRUCTURE.md`
     - `docs/instructions/WRITE_DEEP_DIVE_AS_DOC.md`
     - `docs/instructions/UPDATE_CLAUDE_INSTRUCTIONS.md`
     - Other relevant code and documentation

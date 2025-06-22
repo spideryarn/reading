@@ -7,7 +7,7 @@ Comprehensive guide for implementing consistent iconography across the Spideryar
 - `docs/reference/STYLING_OVERVIEW.md` - Main styling guide including theme configuration and UI patterns
 - `docs/reference/STYLING_COLLAPSIBLE.md` - Icon patterns for expand/collapse functionality
 - `docs/reference/UI_COMPONENTS.md` - shadcn/ui components that use icons
-- `docs/reference/COMMAND_PALETTE.md` - Command palette icon implementation
+- `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` - Command palette icon implementation
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - Keyboard shortcut visual indicators
 - `components/ui/alert.tsx` - Alert component with contextual icons
 - `components/ui/spinner.tsx` - Loading spinner implementation

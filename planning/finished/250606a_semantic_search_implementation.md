@@ -36,7 +36,7 @@ The application currently has:
 - `planning/finished/250604b_document_search_functionality.md` - Initial search feature planning
 - `planning/finished/250605a_cross_element_text_search_implementation.md` - Cross-element search development
 - `planning/finished/250605b_cross_pane_communication_refactor.md` - **RECENT**: React Context migration for cross-pane communication
-- `docs/CROSS_PANE_COMMUNICATION.md` - **UPDATED**: DocumentCommunicationContext implementation details
+- `docs/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md` - **UPDATED**: DocumentCommunicationContext implementation details
 - `docs/LLM_PROMPT_TEMPLATES.md` - Standard pattern for LLM integration using Nunjucks + Zod
 - `components/unified-left-pane.tsx` - **UPDATED**: Search UI now uses DocumentCommunicationContext
 - `lib/context/document-communication-context.tsx` - **NEW**: React Context for element navigation and highlighting

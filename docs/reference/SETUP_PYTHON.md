@@ -4,7 +4,7 @@ Python dependencies and environment setup for Spideryarn Reading project feature
 
 ## See also
 
-- `docs/reference/SETUP.md` - Main project setup guide
+- `docs/reference/SETUP_DEVELOPMENT_ENVIRONMENT.md` - Main project setup guide
 - `scripts/o3-critique-as-api.ts` - Planning document critique tool that uses Python dependencies
 - `docs/instructions/GATHER_DIVERSE_INPUTS_AND_CRITIQUES_ON_PLANNING_DOCS_FROM_OTHER_AI_MODELS_API_APPROACH.md` - Critique workflow documentation
 

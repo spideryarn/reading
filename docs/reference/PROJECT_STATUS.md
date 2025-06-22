@@ -1,6 +1,6 @@
 # Project Status
 
-**see `docs/reference/VISION.md` for long-term strategic vision and target market**
+**see `docs/reference/VISION_PRODUCT_STRATEGY.md` for long-term strategic vision and target market**
 
 ## Current State (Early Prototype)
 
@@ -142,7 +142,7 @@ see also:
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture
 - `docs/reference/ARCHITECTURE_DECISIONS.md` - System design decisions and rationale
 - `docs/reference/AUTHENTICATION_OVERVIEW.md` - Authentication system architecture and flows
-- `docs/reference/UNIFIED_LEFT_PANE.md` - Unified left pane implementation details
+- `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Unified left pane implementation details
 - `docs/reference/TOOL_GLOSSARY.md` - Glossary feature documentation
-- `docs/reference/COMMAND_PALETTE.md` - Command palette implementation
+- `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` - Command palette implementation
 - `planning/250527a_reversible_document_mutations.md` - Upcoming mutations system

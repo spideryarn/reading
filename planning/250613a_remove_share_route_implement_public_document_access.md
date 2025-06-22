@@ -115,7 +115,7 @@ Remove the redundant `/share` route in favor of using the main document route (`
 - [ ] Update `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` to reflect authentication requirements
 - [ ] Update `docs/reference/TOOL_GLOSSARY.md` to document anonymous access to pre-generated content
 - [ ] Update `docs/reference/TOOL_SUMMARISE.md` to document anonymous access to existing summaries
-- [ ] Update `docs/reference/UNIFIED_LEFT_PANE.md` to document tool authentication patterns
+- [ ] Update `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` to document tool authentication patterns
 - [ ] Create or update documentation about public document access and tool tiering
 
 ### Stage: End-to-End Testing and Validation

@@ -17,7 +17,7 @@ Target behaviour:
 ## References
 
 - `planning/250528b_merge_document_panes.md` - Prerequisite merge of document panes (Stages 1-5 must be complete)
-- `docs/MUTATIONS.md` - Document transformation system that will power content replacement
+- `docs/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Document transformation system that will power content replacement
 - `lib/services/mutation-engine.ts` - Core mutation engine implementation
 - `lib/context/mutation-context.tsx` - State management for mutations
 - `components/document-viewer.tsx` - Document rendering component to be enhanced
@@ -223,7 +223,7 @@ Target behaviour:
 
 - [ ] Document API endpoints in appropriate location
 
-- [ ] Add examples to `docs/MUTATIONS.md`
+- [ ] Add examples to `docs/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md`
 
 - [ ] Create user guide for collapse/expand feature
 

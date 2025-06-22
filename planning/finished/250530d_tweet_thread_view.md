@@ -20,7 +20,7 @@ Key requirements from user:
 - `docs/CODING_PRINCIPLES.md` - Emphasises simple prototyping, gradual complexity
 - `docs/ARCHITECTURE.md` - Document storage and mutation system architecture
 - `docs/UI_INTERFACE.md` - Current multi-pane layout with tabs
-- `docs/MUTATIONS.md` - Existing document transformation system (not used for v1)
+- `docs/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Existing document transformation system (not used for v1)
 - `components/document-viewer.tsx` - Current document viewer implementation
 - `components/tab-container.tsx` - Reusable tab component
 - `planning/250530a_shadcn_ui_adoption.md` - Ongoing shadcn/ui adoption (assume completed)

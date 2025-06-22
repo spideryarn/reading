@@ -21,7 +21,7 @@ Comprehensive reference for keyboard shortcuts in the Spideryarn Reading applica
 
 The command palette provides rapid access to all navigation modes, document actions, and app-level functionality through fuzzy search. Includes 12 commands across 4 categories with full keyboard navigation support.
 
-**See**: `docs/reference/COMMAND_PALETTE.md` for complete reference
+**See**: `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` for complete reference
 
 ### Document Navigation Shortcuts
 
@@ -176,9 +176,9 @@ The implemented command palette follows these established patterns:
 
 ## Related Documentation
 
-- `docs/reference/COMMAND_PALETTE.md` - Complete command palette reference and implementation guide
+- `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` - Complete command palette reference and implementation guide
 - `docs/reference/UI_INTERFACE.md` - UI component interactions
-- `docs/reference/CROSS_PANE_COMMUNICATION.md` - Context-based communication patterns used by commands
+- `docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md` - Context-based communication patterns used by commands
 - `components/command-palette.tsx` - Main command palette implementation
 - `components/resizable-document-layout.tsx` - Sidebar toggle shortcut implementation
 - `components/vertical-icon-nav.tsx` - Icon navigation with tooltip shortcuts

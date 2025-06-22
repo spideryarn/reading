@@ -7,7 +7,7 @@ sd is a modern, intuitive find-replace CLI tool designed for safe codebase refac
 ## See Also
 
 - `docs/instructions/RENAME_OR_MOVE.md` - uses sd for updating file references
-- `docs/reference/SETUP.md` - installation instructions
+- `docs/reference/SETUP_DEVELOPMENT_ENVIRONMENT.md` - installation instructions
 - [sd GitHub](https://github.com/chmln/sd) - official documentation and source
 
 ## Key Benefits
