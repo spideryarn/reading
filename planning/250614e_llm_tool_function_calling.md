@@ -402,3 +402,4 @@ AI: [Calls search_document with type: "semantic", query: "technical terminology"
 ### Related
 - `planning/250614a_tool_url_state_management.md` - URL state integration
 - `planning/finished/250615a_url_state_single_source_of_truth.md` - URL as SoT
+- `planning/critiques/o3__CRITIQUE__OF__250614b_unified_tool_registry_architecture.md` - External review that informed the split approach

@@ -296,3 +296,4 @@ function isStale(entry: CacheEntry): boolean {
 - `planning/250614c_command_palette_dynamic_generation.md` - Command integration  
 - `planning/250614e_llm_tool_function_calling.md` - Next step building on this
 - `docs/reference/DATABASE_SECURITY.md` - Security patterns to maintain
+- `planning/critiques/o3__CRITIQUE__OF__250614b_unified_tool_registry_architecture.md` - External review that informed the split approach

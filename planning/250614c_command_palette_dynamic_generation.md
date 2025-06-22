@@ -250,3 +250,4 @@ function useCommands() {
 - `planning/250614b_unified_tool_registry_architecture.md` - Core registry implementation
 - `planning/250614d_tool_execution_framework.md` - Next step after this
 - `docs/reference/COMMAND_PALETTE.md` - Current documentation to update
+- `planning/critiques/o3__CRITIQUE__OF__250614b_unified_tool_registry_architecture.md` - External review that informed the split approach
