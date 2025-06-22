@@ -151,9 +151,9 @@ export default async function DocumentPage({ params }: { params: { slug: string 
 
 **Public Route Example**:
 ```typescript
-// app/documents/[slug]/share/page.tsx
-export default async function SharePage({ params }: { params: { slug: string } }) {
-  // No authentication required for sharing
+// Public routes do not require authentication
+export default async function PublicPage({ params }: { params: { slug: string } }) {
+  // No authentication required
   const document = await getDocumentBySlug(params.slug)
   
   if (!document || !document.is_public) {

@@ -24,7 +24,9 @@ We need a system that generates function schemas from tool definitions and safel
 - `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Current chat implementation
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Nunjucks + Zod template system
 - `lib/prompts/templates/chat.njk` - Chat prompt template to enhance
-- `planning/250614b_unified_tool_registry_architecture.md` - Tool registry (dependency)
+- `planning/250614b_unified_tool_registry_architecture.md` - Core tool registry (dependency)
+- `planning/250614c_command_palette_dynamic_generation.md` - Command generation (dependency)
+- `planning/250614d_tool_execution_framework.md` - Execution framework (dependency)
 - `planning/250614a_tool_url_state_management.md` - URL state for function results
 
 ## Principles & Key Decisions
@@ -35,12 +37,14 @@ We need a system that generates function schemas from tool definitions and safel
 4. **Security by default** - Sanitize inputs, rate limit, audit trail
 5. **Graceful degradation** - Chat works even if function calling fails
 6. **User consent** - Show what AI will do before execution (initially)
-7. **URL-based navigation** - Tab changes must use URL state (see `planning/250615a_url_state_single_source_of_truth.md`)
+7. **URL-based navigation** - Tab changes must use URL state (see `planning/finished/250615a_url_state_single_source_of_truth.md`)
 
 ## Stages & Actions
 
 ### Stage: Preparation and dependencies
-- [ ] Ensure tool registry from `planning/250614b_unified_tool_registry_architecture.md` is implemented
+- [ ] Ensure core tool registry (250614b) is implemented
+- [ ] Ensure command palette generation (250614c) is complete
+- [ ] Ensure execution framework (250614d) is operational
 - [ ] Review current chat implementation and prompt templates
 - [ ] Research Claude and Gemini function calling formats
 
@@ -390,6 +394,12 @@ AI: [Calls search_document with type: "semantic", query: "technical terminology"
 
 ## Related Documents
 
-- `planning/250614b_unified_tool_registry_architecture.md` - Tool registry this builds upon
-- `planning/250614a_tool_url_state_management.md` - URL state for function results
-- Original unified planning doc (to be deleted): `planning/250613c_unified_tool_architecture_url_state_llm_integration.md`
+### Prerequisites (must be completed first)
+- `planning/250614b_unified_tool_registry_architecture.md` - Core registry
+- `planning/250614c_command_palette_dynamic_generation.md` - Dynamic commands
+- `planning/250614d_tool_execution_framework.md` - Execution framework
+
+### Related
+- `planning/250614a_tool_url_state_management.md` - URL state integration
+- `planning/finished/250615a_url_state_single_source_of_truth.md` - URL as SoT
+- `planning/critiques/o3__CRITIQUE__OF__250614b_unified_tool_registry_architecture.md` - External review that informed the split approach

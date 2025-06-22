@@ -1,14 +1,18 @@
-# Unified Tool Registry Architecture
+# Core Tool Registry Implementation
+
+**Note**: This planning document has been split into focused stages:
+- **250614b** (this doc): Core registry + migrate all tools
+- **250614c**: Command palette dynamic generation  
+- **250614d**: Tool execution framework
+- **250614e**: LLM function calling integration
 
 ## Goal
 
-Create a unified tool architecture that:
-- Provides consistent interfaces for all document tools (glossary, summary, search, chat, etc.)
-- Enables dynamic tool discovery and registration
-- Standardizes tool implementation patterns
-- Integrates with command palette for keyboard shortcuts
-- Lays foundation for future analytics tracking
-- Maintains backwards compatibility during migration
+Implement a simple, clean tool registry that:
+- Provides type-safe tool registration and discovery
+- Migrates all existing tools to avoid "limbo state"
+- Maintains current functionality with zero user-facing changes
+- Sets foundation for command palette and execution improvements
 
 ## Context
 
@@ -35,17 +39,17 @@ We need a centralized system that treats tools as first-class citizens with stan
 - `components/command-palette.tsx` - Current hardcoded command implementation
 - `planning/250614a_tool_url_state_management.md` - URL state integration (completed - see implementation debrief)
 - `planning/finished/250615a_url_state_single_source_of_truth.md` - URL as single source of truth (completed)
-- `planning/250614c_llm_tool_function_calling.md` - LLM integration (depends on this)
+- `planning/250614e_llm_tool_function_calling.md` - LLM integration (depends on this)
 
 ## Principles & Key Decisions
 
-1. **Use "tool" as the unified term** - Even for navigation and transforms
-2. **Gradual migration** - New system coexists with old implementations
-3. **Type-safe interfaces** - Leverage TypeScript for tool definitions
-4. **Dynamic discovery** - Tools self-register, no hardcoding
-5. **Analytics-ready** - Build in tracking points even if no-op initially
-6. **Component isolation** - Tools remain independent React components
-7. **URL is single source of truth** - Tab navigation must use `navigateToTab()`, never direct context updates (see `planning/finished/250615a_url_state_single_source_of_truth.md`)
+1. **Simplicity first** - Basic Map-based registry, no over-engineering
+2. **All tools migrated** - Avoid dual systems or partial migration
+3. **Type-safe interfaces** - Leverage TypeScript and Zod validation
+4. **Test isolation** - Include resetRegistryForTests() from the start
+5. **Dev-time guards** - UNREGISTERED_TOOL_GUARD for early warnings
+6. **Components separate** - Tool metadata in registry, components imported separately
+7. **Zero user impact** - Pure refactoring, functionality unchanged
 
 ## Stages & Actions
 
@@ -91,29 +95,15 @@ We need a centralized system that treats tools as first-class citizens with stan
 - [ ] Write comprehensive tests for registry
 - [ ] Run tests
 
-### Stage: Tool execution framework
-- [ ] Create `lib/tools/executor.ts`
-  - [ ] executeTool() function
-  - [ ] Parameter validation against schemas
-  - [ ] Result type checking
-  - [ ] Error boundary for tool failures
-  - [ ] Execution context injection
-  - [ ] Integration with navigateToTab() for tab navigation
-  - [ ] Handle URL state updates via existing hooks
-- [ ] Create standard tool actions
-  - [ ] 'open' - Activate tool tab/route (uses navigateToTab)
-  - [ ] 'execute' - Run tool logic
-  - [ ] 'refresh' - Force data refresh
-  - [ ] 'close' - Cleanup and close
-- [ ] Implement executor navigation handling
-  ```typescript
-  // When tool returns navigation result
-  if (result.type === 'navigation' && result.navigation?.tab) {
-    const navigateToTab = getNavigateToTab() // Get from context/hook
-    navigateToTab(result.navigation.tab)
-  }
-  ```
-- [ ] Add execution tests
+### Stage: Test infrastructure
+- [ ] Create `lib/tools/testing/registry-test-utils.ts`
+  - [ ] resetRegistryForTests() function
+  - [ ] createTestRegistry() for isolated testing
+  - [ ] mockTool() helper for test tools
+- [ ] Update jest.setup.js
+  - [ ] Call resetRegistryForTests() in beforeEach
+  - [ ] Verify no registry pollution between tests
+- [ ] Write registry isolation tests
 
 ### Stage: Simple tool migration - Glossary
 - [ ] Create `lib/tools/implementations/glossary.ts`
@@ -128,79 +118,41 @@ We need a centralized system that treats tools as first-class citizens with stan
   - [ ] Verify existing functionality works
   - [ ] Test new standardized execution
 
-### Stage: Command palette integration
-- [ ] Create `lib/tools/command-generation.ts`
-  - [ ] generateCommands() from registry
-  - [ ] Map tool metadata to commands
-  - [ ] Handle keyboard shortcuts
-  - [ ] Support conditional visibility
-- [ ] Update `components/command-palette.tsx`
-  - [ ] Import command generation
-  - [ ] Merge generated and legacy commands
-  - [ ] Ensure all commands use navigateToTab() for tab changes
-  - [ ] Test all shortcuts work
-- [ ] Add command generation tests
+### Stage: Migration of all tools
+- [ ] Create tool implementation files:
+  - [ ] `lib/tools/implementations/chat.ts`
+  - [ ] `lib/tools/implementations/glossary.ts` 
+  - [ ] `lib/tools/implementations/search.ts`
+  - [ ] `lib/tools/implementations/summary.ts`
+  - [ ] `lib/tools/implementations/highlights.ts`
+  - [ ] `lib/tools/implementations/metadata.ts`
+  - [ ] `lib/tools/implementations/toc-original.ts`
+  - [ ] `lib/tools/implementations/toc-ai.ts`
+- [ ] Register all tools in `lib/tools/registry-loader.ts`
+- [ ] Add UNREGISTERED_TOOL_GUARD checks
+- [ ] Test each tool still works correctly
 
-### Stage: Analytics foundation
-- [ ] Create `lib/tools/analytics.ts`
-  - [ ] Define AnalyticsEvent interface
-  - [ ] Create no-op tracking function
-  - [ ] Add tracking points:
-    - [ ] Tool opened
-    - [ ] Tool executed
-    - [ ] Tool error
-    - [ ] Custom tool events
-  - [ ] Add TODO comments for future implementation
-- [ ] Integrate analytics with executor
-- [ ] Write tests for analytics calls
+### Stage: Documentation updates
+- [ ] Update `docs/reference/TOOL_TEMPLATE_FOR_CREATING_NEW.md`
+  - [ ] Add registry registration example
+  - [ ] Keep current patterns as primary approach
+  - [ ] Note that execution framework coming in 250614d
 
-### Stage: Complex tool migration - Search
-- [ ] Create `lib/tools/implementations/search.ts`
-  - [ ] Handle both text and semantic search
-  - [ ] Complex parameter schemas
-  - [ ] Maintain existing search logic
-- [ ] Update search to use registry
-- [ ] Test search functionality
-- [ ] Verify backwards compatibility
+### Stage: Validation and smoke tests
+- [ ] Verify all tools accessible via registry
+- [ ] Check no hardcoded tool references remain
+- [ ] Confirm command palette still works (hardcoded for now)
+- [ ] Test hot reload doesn't cause duplicate registrations
+- [ ] Ensure all existing functionality preserved
 
-### Stage: Additional tool migrations
-- [ ] Create implementation files for:
-  - [ ] Summary tool
-  - [ ] Chat tool
-  - [ ] Highlights tool
-  - [ ] Original ToC (navigation example)
-  - [ ] AI headings
-- [ ] Register all tools
-- [ ] Test each migration
-
-### Stage: Developer experience
-- [ ] Create `lib/tools/dev-tools.ts`
-  - [ ] Registry inspector for debugging
-  - [ ] Tool validation utilities
-  - [ ] Performance profiling helpers
-- [ ] Add development mode warnings
-  - [ ] Duplicate registrations
-  - [ ] Missing required fields
-  - [ ] Schema validation failures
-- [ ] Create CLI script for tool scaffolding
-
-### Stage: Documentation and examples
-- [ ] Create example tools
-  - [ ] Minimal tool example
-  - [ ] Complex tool with all features
-  - [ ] Navigation tool example
-- [ ] Update all existing TOOL_*.md docs
-- [ ] Create migration guide with step-by-step instructions
-- [ ] Document common patterns and anti-patterns
-
-### Stage: Testing and validation
-- [ ] Use subagent for comprehensive testing
-  - [ ] All tools work via registry
-  - [ ] Command palette integration complete
-  - [ ] No regressions in functionality
-  - [ ] Performance benchmarks
-- [ ] Manual testing of user flows
-- [ ] Edge case testing
+### Stage: Final review and commit
+- [ ] Code review checklist:
+  - [ ] All tools migrated
+  - [ ] Test utilities in place
+  - [ ] No user-facing changes
+  - [ ] Types properly exported
+- [ ] Update CLAUDE.md if needed
+- [ ] Git commit following guidelines
 
 ### Stage: Final review
 - [ ] Code review focusing on:
@@ -213,98 +165,45 @@ We need a centralized system that treats tools as first-class citizens with stan
 
 ## Tool Interface Design
 
-### Complete Tool Interface
+### Core Tool Interface (Simplified)
 
 ```typescript
 interface Tool {
   // Identity & Metadata
   id: string                    // Unique identifier (e.g., 'glossary')
   name: string                  // Display name (e.g., 'Glossary')
-  description: string           // For command palette and future LLM use
+  description: string           // For command palette and future use
   category: ToolCategory        // 'analysis' | 'navigation' | 'generation' | 'transform'
   icon: ComponentType          // Phosphor icon component
-  version: string              // Semver for compatibility
-  
-  // Execution
-  execute: (params: ToolParams) => Promise<ToolResult>
-  schema: {
-    required: z.ZodSchema      // Required parameters
-    optional: z.ZodSchema      // Optional parameters with defaults
-  }
   
   // UI Integration
-  component?: ComponentType<ToolComponentProps>  // React component
-  ui: {
-    type: 'tab' | 'route' | 'modal' | 'action'
-    route?: string             // For route-based tools
-    position?: 'left' | 'right' | 'center'
-  }
+  componentPath: string        // Path to lazy-load component
+  tabId: string                // ID for tab navigation
   shortcuts?: string[]         // Keyboard shortcuts
+  keywords?: string[]          // Additional search terms
   
   // Behavior Configuration
   requiresDocument: boolean    // Can only run with document context
   capabilities?: {
     search?: boolean          // Supports search within tool
     export?: boolean          // Can export data
-    print?: boolean           // Printable view
-  }
-  
-  // Performance & Analytics
-  cache?: {
-    enabled: boolean
-    ttl: number              // Time to live in seconds
-    key?: (params: ToolParams) => string
-  }
-  analytics?: {
-    track: boolean
-    events: string[]         // Custom event names
   }
 }
 
-interface ToolParams {
-  // Standard parameters
-  action: 'open' | 'execute' | 'refresh' | 'close'
-  context: {
-    documentId?: string
-    documentContent?: string
-    documentSlug?: string
-    user?: User
-  }
-  
-  // Tool-specific parameters
-  params?: Record<string, any>  // Validated by tool schema
-  
-  // Metadata
-  source?: 'user' | 'command-palette' | 'api' | 'url'
-  timestamp?: number
-}
+type ToolCategory = 'analysis' | 'navigation' | 'generation' | 'transform'
 
-interface ToolResult {
-  type: 'success' | 'error' | 'navigation' | 'state-change'
-  data?: any
-  error?: {
-    code: string
-    message: string
-    details?: any
-  }
-  navigation?: {
-    url?: string
-    tab?: string  // Executor will use navigateToTab() internally
-    external?: boolean
-  }
-  stateChanges?: Record<string, any>  // For URL state updates
-  analytics?: Record<string, any>
-}
+// Simple registry type
+type ToolRegistry = Map<string, Tool>
 ```
+
+**Note**: Execution logic, caching, and analytics will be added in planning/250614d_tool_execution_framework.md
 
 ### Registration Example
 
 ```typescript
 // lib/tools/implementations/glossary.ts
 import { registerTool } from '@/lib/tools/registry'
-import { GlossaryPanel } from '@/components/tools/GlossaryPanel'
-import { BookOpen } from '@phosphor-icons/react'
-import { z } from 'zod'
+import { BookOpen } from '@phosphor-icons/react/dist/ssr'
 
 const glossaryTool: Tool = {
   id: 'glossary',
@@ -312,79 +211,16 @@ const glossaryTool: Tool = {
   description: 'Extract and display key terms and concepts from the document',
   category: 'analysis',
   icon: BookOpen,
-  version: '1.0.0',
   
-  schema: {
-    required: z.object({
-      documentContent: z.string(),
-      documentId: z.string()
-    }),
-    optional: z.object({
-      term: z.string().optional(),
-      refresh: z.boolean().default(false)
-    })
-  },
-  
-  // URL state parameters (integrated with existing URL state system)
-  urlState: {
-    term: 'string'  // Syncs with ?term= parameter
-  },
-  
-  execute: async (params) => {
-    if (params.action === 'open') {
-      // NOTE: As of 2025-06-16, use navigateToTab() for tab changes
-      // See planning/finished/250615a_url_state_single_source_of_truth.md
-      // The executor will handle navigation via URL state
-      return {
-        type: 'navigation',
-        navigation: { tab: 'glossary' }
-      }
-    }
-    
-    // Existing glossary logic
-    const response = await fetch('/api/glossary', {
-      method: 'POST',
-      body: JSON.stringify({
-        documentId: params.context.documentId,
-        documentContent: params.context.documentContent,
-        ...params.params
-      })
-    })
-    
-    if (!response.ok) {
-      return {
-        type: 'error',
-        error: {
-          code: 'GLOSSARY_GENERATION_FAILED',
-          message: 'Failed to generate glossary'
-        }
-      }
-    }
-    
-    return {
-      type: 'success',
-      data: await response.json()
-    }
-  },
-  
-  component: GlossaryPanel,
-  ui: { type: 'tab' },
+  componentPath: '@/components/tools/GlossaryPanel',
+  tabId: 'glossary',
   shortcuts: ['Cmd+5', 'Ctrl+5'],
-  requiresDocument: true,
+  keywords: ['terms', 'definitions', 'concepts', 'vocabulary'],
   
+  requiresDocument: true,
   capabilities: {
     search: true,
     export: true
-  },
-  
-  cache: {
-    enabled: true,
-    ttl: 3600 // 1 hour
-  },
-  
-  analytics: {
-    track: true,
-    events: ['glossary_opened', 'glossary_generated', 'term_selected']
   }
 }
 
@@ -392,79 +228,122 @@ const glossaryTool: Tool = {
 registerTool(glossaryTool)
 ```
 
-### Command Generation Example
+### Registry Implementation
 
 ```typescript
-// Generated commands from registry
-const generatedCommands = Array.from(toolRegistry.values())
-  .filter(tool => tool.shortcuts && tool.shortcuts.length > 0)
-  .map(tool => ({
-    id: `tool-${tool.id}`,
-    name: tool.name,
-    icon: tool.icon,
-    shortcut: tool.shortcuts,
-    description: tool.description,
-    category: 'Tools',
-    action: async () => {
-      // Executor will handle navigation via navigateToTab() internally
-      await executeTool(tool.id, {
-        action: 'open',
-        context: getCurrentContext(),
-        source: 'command-palette'
-      })
-    },
-    isAvailable: () => !tool.requiresDocument || !!getCurrentDocument()
-  }))
+// lib/tools/registry.ts
+import type { Tool } from './types'
+
+const toolRegistry = new Map<string, Tool>()
+let registryLocked = false
+
+export function registerTool(tool: Tool): void {
+  if (registryLocked) {
+    throw new Error(`Cannot register tool after initialization: ${tool.id}`)
+  }
+  
+  if (toolRegistry.has(tool.id)) {
+    throw new Error(`Tool already registered: ${tool.id}`)
+  }
+  
+  // Validate tool has required fields
+  if (!tool.id || !tool.name || !tool.componentPath) {
+    throw new Error(`Invalid tool registration: missing required fields`)
+  }
+  
+  toolRegistry.set(tool.id, tool)
+}
+
+export function getTool(id: string): Tool | undefined {
+  const tool = toolRegistry.get(id)
+  
+  if (!tool && process.env.NODE_ENV === 'development') {
+    console.error(`UNREGISTERED_TOOL_GUARD: Attempted to access unregistered tool: ${id}`)
+  }
+  
+  return tool
+}
+
+export function getAllTools(): Tool[] {
+  return Array.from(toolRegistry.values())
+}
+
+// Lock registry after initial load to prevent late registrations
+export function lockRegistry(): void {
+  registryLocked = true
+}
+
+// Test utilities
+export function resetRegistryForTests(): void {
+  toolRegistry.clear()
+  registryLocked = false
+}
 ```
+
+### Usage Example (Current State)
+
+```typescript
+// In unified-left-pane.tsx or similar
+import { getTool } from '@/lib/tools/registry'
+
+// Check if tool exists before rendering
+const glossaryTool = getTool('glossary')
+if (!glossaryTool) {
+  console.error('Glossary tool not registered!')
+  return null
+}
+
+// Component still imported directly for now
+// (lazy loading and dynamic imports come later)
+import { GlossaryPanel } from '@/components/tools/GlossaryPanel'
+```
+
+**Note**: Dynamic command generation will be implemented in planning/250614c_command_palette_dynamic_generation.md
 
 ## Migration Strategy
 
-### Phase 1: Parallel Systems
-1. Implement registry alongside existing tools
-2. Migrate one simple tool (Glossary) as proof of concept
-3. Ensure no breaking changes to existing functionality
+### Single-Phase Migration
+1. Implement registry with all test utilities
+2. Migrate ALL tools at once to avoid dual systems
+3. Keep command palette hardcoded (for now)
+4. Zero user-facing changes
 
-### Phase 2: Gradual Migration
-1. Migrate tools one by one
-2. Update command palette to use both systems
-3. Maintain backwards compatibility throughout
-
-### Phase 3: Cleanup
-1. Remove old hardcoded commands
-2. Update all documentation
-3. Mark old patterns as deprecated
+This approach avoids "limbo state" and ensures clean architecture from day one.
 
 ## Success Criteria
 
-1. All existing tools work through the registry
-2. Adding new tools requires no changes to core infrastructure
-3. Command palette dynamically discovers tool shortcuts
-4. No performance degradation
-5. Clear migration path for existing tools
-6. Type-safe tool definitions with runtime validation
+1. All tools registered and accessible via getTool()
+2. Registry has test isolation utilities working
+3. UNREGISTERED_TOOL_GUARD warns on missing tools
+4. Hot reload doesn't cause duplicate registrations
+5. All existing functionality preserved
+6. Clean foundation for future enhancements
 
 ## Risks & Mitigations
 
-1. **Bundle size increase** - Implement lazy loading for tool components
-2. **Migration complexity** - Provide clear examples and maintain compatibility
-3. **Performance overhead** - Profile registry lookups and optimize hot paths
-4. **Type safety gaps** - Use Zod for runtime validation of all inputs
-5. **Developer adoption** - Create excellent documentation and tooling
-6. **URL state conflicts** - Ensure registry respects URL as single source of truth
+1. **Test registry pollution** - resetRegistryForTests() in jest.setup.js
+2. **Hot reload issues** - Registry lock after initialization
+3. **Missing tools** - UNREGISTERED_TOOL_GUARD dev warnings
+4. **Migration effort** - Mechanical but thorough testing needed
+5. **Type safety** - Simple types, validation at registration
 
 ## Future Considerations
 
-- ~URL state integration~ ✅ Completed (see `planning/250614a_tool_url_state_management.md` implementation debrief)
-- LLM function calling (see `planning/250614c_llm_tool_function_calling.md`)
-- Plugin system for third-party tools
-- Tool marketplace or sharing mechanism
-- Advanced analytics and usage tracking
+This planning doc focuses only on core registry. See:
+- `planning/250614c_command_palette_dynamic_generation.md` - Dynamic commands
+- `planning/250614d_tool_execution_framework.md` - Execution and caching
+- `planning/250614e_llm_tool_function_calling.md` - LLM integration
 
 ## Related Documents
 
-- `planning/250614a_tool_url_state_management.md` - URL state that tools can leverage (completed)
-- `planning/finished/250615a_url_state_single_source_of_truth.md` - URL as single source of truth (completed)
-- `planning/250614c_llm_tool_function_calling.md` - LLM integration built on this registry
-- `docs/reference/ARCHITECTURE_URL_STATE.md` - Comprehensive URL state documentation
-- `lib/tools/hooks/use-tool-url-state.ts` - Existing URL state hooks to integrate with
-- Original unified planning doc (to be deleted): `planning/250613c_unified_tool_architecture_url_state_llm_integration.md`
+### Prerequisites
+- `planning/250614a_tool_url_state_management.md` - URL state (completed)
+- `planning/finished/250615a_url_state_single_source_of_truth.md` - URL as SoT (completed)
+
+### Next Steps
+- `planning/250614c_command_palette_dynamic_generation.md` - Remove hardcoded commands
+- `planning/250614d_tool_execution_framework.md` - Unified execution
+- `planning/250614e_llm_tool_function_calling.md` - LLM integration
+
+### Critique
+- `planning/critiques/o3__CRITIQUE__OF__250614b_unified_tool_registry_architecture.md` - External review that informed this split

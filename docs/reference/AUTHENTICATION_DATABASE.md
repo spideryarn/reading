@@ -369,7 +369,7 @@ if (!canEdit) {
 - **Usage Analytics**: Aggregated and anonymized
 
 **Cross-User Data Access**:
-- **Public Documents**: Accessible via share URLs without authentication
+- **Public Documents**: Accessible without authentication when marked as public
 - **Shared Collections**: Future feature for collaborative document access
 - **Administrative Access**: Service role for system operations
 

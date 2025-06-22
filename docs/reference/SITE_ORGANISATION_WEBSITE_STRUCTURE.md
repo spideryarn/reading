@@ -33,11 +33,6 @@ Spideryarn Reading is a database-driven, user-centric AI document analysis appli
 ├── Landing page with app description
 ├── Document discovery (for authenticated users)
 └── Authentication prompts for anonymous users
-
-/read/[slug]/share
-├── Public document sharing (no authentication required)
-├── Read-only document viewer
-└── SEO-friendly for public content
 ```
 
 ### **Authentication Routes** (`/auth/*`)
@@ -312,7 +307,6 @@ Spideryarn Reading is a database-driven, user-centric AI document analysis appli
 2. **Interface Setup**: Two-pane layout with customisable panel sizes
 3. **Navigation**: Table of contents, AI headings, or search-based navigation
 4. **AI Assistance**: Chat queries, summaries, glossary lookups
-5. **Sharing**: Public sharing via `/read/[slug]/share` URLs
 
 ### **Command-Driven Interaction**
 - **Global Command Palette** (Cmd+K): Quick access to all features
