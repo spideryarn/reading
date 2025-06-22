@@ -124,6 +124,7 @@ Type checking and linting:
 Debugging resources:
 - Current logs: `tail dev.log`
 - Browser debugging: Playwright MCP (console logs, network requests, screenshots)
+- **E2E testing**: Always run `npm run dev:status || npm run dev:daemon` before E2E tests - dev server must be running
 - Codebase refactoring: sd (`sd --preview --string-mode "old" "new" .`) - see `docs/reference/SD_STRING_DISPLACEMENT_FIND_REPLACE.md`
 - Test files: `src/lib/*/tests/` and `components/__tests__/`
 - Database: `supabase/migrations/` and `docs/reference/DATABASE_*.md`
