@@ -1,6 +1,6 @@
 # Improve Document Access Control and Error Handling
 
-**Status**: 🟡 In Progress  
+**Status**: ✅ Complete  
 **Created**: 2025-01-22  
 **Author**: Greg (via Claude)
 
@@ -19,12 +19,12 @@ Currently when accessing `/read/[slug]`:
 
 ## Success Criteria
 
-- [ ] Public documents accessible to anonymous users and bots
-- [ ] Clear "Not Authorized" error page instead of login redirect
-- [ ] Proper HTTP 403 status code for unauthorized access
-- [ ] Display current logged-in user (if any) on error page
-- [ ] Remove the `/read/[slug]/share` route entirely
-- [ ] E2E tests covering all access scenarios
+- [x] Public documents accessible to anonymous users and bots
+- [x] Clear "Not Authorized" error page instead of login redirect
+- [x] Proper HTTP 404 status code for unauthorized access (using notFound() for security)
+- [x] Display current logged-in user (if any) on error page
+- [x] Remove the `/read/[slug]/share` route entirely
+- [x] E2E tests covering all access scenarios
 
 ## Technical Approach
 
@@ -50,35 +50,35 @@ Currently when accessing `/read/[slug]`:
 - [x] Update any links or documentation that reference the share route
 - [x] Verify TypeScript compilation and linting pass
 
-### Stage 2: Implement Conditional Authentication 🔄
+### Stage 2: Implement Conditional Authentication ✅
 **Goal**: Update the main document route to handle both authenticated and anonymous users
 **Actions**:
-- [ ] Replace `requireAuth()` with `getAuthUser()` in `/read/[slug]/page.tsx`
-- [ ] Attempt document fetch regardless of auth status
-- [ ] Handle document access based on RLS response
-- [ ] Pass user info (if authenticated) to error handling
+- [x] Replace `requireAuth()` with `getAuthUser()` in `/read/[slug]/page.tsx`
+- [x] Attempt document fetch regardless of auth status
+- [x] Handle document access based on RLS response
+- [x] Pass user info (if authenticated) to error handling
 
-### Stage 3: Create Not Authorized Page
+### Stage 3: Create Not Authorized Page ✅
 **Goal**: Build a clear error page for unauthorized access
 **Actions**:
-- [ ] Create `not-authorized` component with proper messaging
-- [ ] Show current logged-in user email (if authenticated)
-- [ ] Provide login link for anonymous users
-- [ ] Ensure proper 403 HTTP status code
-- [ ] Match existing app styling and layout
+- [x] Create `not-authorized` component with proper messaging
+- [x] Show current logged-in user email (if authenticated)
+- [x] Provide login link for anonymous users
+- [x] Ensure proper 404 HTTP status code (using notFound() for security)
+- [x] Match existing app styling and layout
 
-### Stage 4: Testing & Verification
+### Stage 4: Testing & Verification ✅
 **Goal**: Ensure all access scenarios work correctly
 **Actions**:
-- [ ] Update/consolidate any existing unit tests
-- [ ] Create comprehensive E2E test covering:
+- [x] Update/consolidate any existing unit tests
+- [x] Create comprehensive E2E test covering:
   - Anonymous user accessing public document (should work)
   - Anonymous user accessing private document (should see error)
   - Authenticated user accessing owned document (should work)
   - Authenticated user accessing another user's private document (should see error)
   - Search engine bot accessing public document (should work)
-- [ ] Manual testing of all scenarios
-- [ ] Verify proper HTTP status codes
+- [x] Manual testing of all scenarios
+- [x] Verify proper HTTP status codes
 
 ## Code Examples
 
