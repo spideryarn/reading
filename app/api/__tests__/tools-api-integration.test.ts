@@ -11,9 +11,9 @@ jest.mock('@/lib/auth/server-auth', () => ({
   getSession: jest.fn()
 }))
 
-import { POST as ChatPOST } from '../chat/route'
-import { POST as SummarisePOST } from '../summarise/route'
-import { POST as GlossaryPOST } from '../glossary/route'
+import * as chatRoute from '../chat/route'
+import * as summariseRoute from '../summarise/route'
+import * as glossaryRoute from '../glossary/route'
 import { createMockRequest } from './test-helpers'
 import { authTestScenarios } from '@/lib/testing/auth-test-helpers'
 
@@ -204,7 +204,7 @@ describe('Tool API Integration Tests', () => {
         }
       })
 
-      const response = await ChatPOST(request)
+      const response = await chatRoute.POST(request)
       expect(response.status).toBe(200)
 
       const data = await response.json()
@@ -239,7 +239,7 @@ describe('Tool API Integration Tests', () => {
         }
       })
 
-      const response = await ChatPOST(request)
+      const response = await chatRoute.POST(request)
       expect(response.status).toBe(400)
 
       const data = await response.json()
@@ -257,7 +257,7 @@ describe('Tool API Integration Tests', () => {
           }
         })
 
-        const response = await ChatPOST(request)
+        const response = await chatRoute.POST(request)
         // This should fail with validation error, not auth error
         expect(response.status).toBe(400)
         const data = await response.json()
@@ -279,7 +279,7 @@ describe('Tool API Integration Tests', () => {
           }
         })
 
-        const response = await ChatPOST(request)
+        const response = await chatRoute.POST(request)
         expect(response.status).toBe(401)
         const text = await response.text()
         expect(text).toContain('Authentication required')
@@ -316,7 +316,7 @@ describe('Tool API Integration Tests', () => {
         }
       })
 
-      const response = await ChatPOST(request)
+      const response = await chatRoute.POST(request)
       expect(response.status).toBe(500)
 
       const data = await response.json()
@@ -360,7 +360,7 @@ describe('Tool API Integration Tests', () => {
         }
       })
 
-      const response = await SummarisePOST(request)
+      const response = await summariseRoute.POST(request)
       expect(response.status).toBe(200)
 
       const data = await response.json()
@@ -399,7 +399,7 @@ describe('Tool API Integration Tests', () => {
         }
       })
 
-      const response = await SummarisePOST(request)
+      const response = await summariseRoute.POST(request)
       expect(response.status).toBe(200)
 
       const data = await response.json()
@@ -424,7 +424,7 @@ describe('Tool API Integration Tests', () => {
         }
       })
 
-      const response = await SummarisePOST(request)
+      const response = await summariseRoute.POST(request)
       expect(response.status).toBe(200)
 
       const data = await response.json()
@@ -445,7 +445,7 @@ describe('Tool API Integration Tests', () => {
         }
       })
 
-      const response = await SummarisePOST(request)
+      const response = await summariseRoute.POST(request)
       expect(response.status).toBe(500)
 
       const data = await response.json()
@@ -505,7 +505,7 @@ describe('Tool API Integration Tests', () => {
         }
       })
 
-      const response = await GlossaryPOST(request)
+      const response = await glossaryRoute.POST(request)
       expect(response.status).toBe(200)
 
       const data = await response.json()
@@ -549,7 +549,7 @@ describe('Tool API Integration Tests', () => {
         }
       })
 
-      const response = await GlossaryPOST(request)
+      const response = await glossaryRoute.POST(request)
       expect(response.status).toBe(200)
 
       const data = await response.json()
@@ -573,7 +573,7 @@ describe('Tool API Integration Tests', () => {
         }
       })
 
-      const response = await GlossaryPOST(request)
+      const response = await glossaryRoute.POST(request)
       expect(response.status).toBe(200)
 
       const data = await response.json()
@@ -596,7 +596,7 @@ describe('Tool API Integration Tests', () => {
         }
       })
 
-      const response = await GlossaryPOST(request)
+      const response = await glossaryRoute.POST(request)
       expect(response.status).toBe(500)
 
       const data = await response.json()
@@ -616,7 +616,7 @@ describe('Tool API Integration Tests', () => {
         }
       })
 
-      const response = await GlossaryPOST(request)
+      const response = await glossaryRoute.POST(request)
       expect(response.status).toBe(500)
 
       const data = await response.json()
@@ -644,7 +644,7 @@ describe('Tool API Integration Tests', () => {
         }
       })
 
-      const response = await ChatPOST(request)
+      const response = await chatRoute.POST(request)
       expect(response.status).toBe(401)
 
       const data = await response.json()
@@ -677,7 +677,7 @@ describe('Tool API Integration Tests', () => {
         }
       })
 
-      const response = await ChatPOST(request)
+      const response = await chatRoute.POST(request)
       expect(response.status).toBe(403)
 
       const data = await response.json()
@@ -704,7 +704,7 @@ describe('Tool API Integration Tests', () => {
         }
       })
 
-      const response = await ChatPOST(request)
+      const response = await chatRoute.POST(request)
       expect(response.status).toBe(404)
 
       const data = await response.json()

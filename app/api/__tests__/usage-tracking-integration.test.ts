@@ -9,8 +9,8 @@
  * database storage.
  */
 
-import { POST as summarisePost } from '../summarise/route'
-import { POST as tweetThreadPost } from '../tweet-thread/route'
+import * as summariseRoute from '../summarise/route'
+import * as tweetThreadRoute from '../tweet-thread/route'
 import { createMockRequest } from './test-helpers'
 import * as promptTypes from '@/lib/prompts/types'
 import * as supabaseServer from '@/lib/supabase/server'
@@ -186,7 +186,7 @@ describe('API Routes Usage Tracking Integration', () => {
         }
       })
 
-      const response = await summarisePost(request)
+      const response = await summariseRoute.POST(request)
       const responseData = await response.json()
 
       // Verify response structure
@@ -270,7 +270,7 @@ describe('API Routes Usage Tracking Integration', () => {
         }
       })
 
-      const response = await summarisePost(request)
+      const response = await summariseRoute.POST(request)
 
       expect(response.status).toBe(500)
 
@@ -309,7 +309,7 @@ describe('API Routes Usage Tracking Integration', () => {
         }
       })
 
-      const response = await summarisePost(request)
+      const response = await summariseRoute.POST(request)
       const responseData = await response.json()
 
       expect(responseData).toEqual({
@@ -380,7 +380,7 @@ describe('API Routes Usage Tracking Integration', () => {
         }
       })
 
-      const response = await tweetThreadPost(request)
+      const response = await tweetThreadRoute.POST(request)
       const responseData = await response.json()
 
       // Verify response structure
@@ -459,7 +459,7 @@ describe('API Routes Usage Tracking Integration', () => {
         }
       })
 
-      const response = await tweetThreadPost(request)
+      const response = await tweetThreadRoute.POST(request)
 
       expect(response.status).toBe(500)
       
@@ -514,7 +514,7 @@ describe('API Routes Usage Tracking Integration', () => {
         }
       })
 
-      const response = await tweetThreadPost(request)
+      const response = await tweetThreadRoute.POST(request)
       const responseData = await response.json()
 
       // Verify the markdown was properly stripped and JSON parsed
@@ -545,7 +545,7 @@ describe('API Routes Usage Tracking Integration', () => {
         }
       })
 
-      const response = await summarisePost(request)
+      const response = await summariseRoute.POST(request)
 
       expect(response.status).toBe(500)
     })
@@ -563,7 +563,7 @@ describe('API Routes Usage Tracking Integration', () => {
         }
       })
 
-      const response = await summarisePost(request)
+      const response = await summariseRoute.POST(request)
 
       expect(response.status).toBe(500)
     })
