@@ -172,7 +172,7 @@ export const executeMultimodalPromptWithUsage = jest.fn(async <T extends z.ZodSc
 })
 
 // Re-export for convenience
-export default {
+const mockPromptTypes = {
   loadPromptTemplate,
   loadPromptTemplateFromCaller,
   loadMultimodalPromptTemplate,
@@ -186,3 +186,5 @@ export default {
   clearMockExecutions,
   getMockExecutions
 }
+
+export default mockPromptTypes

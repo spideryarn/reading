@@ -10,7 +10,7 @@ interface PageProps {
   params: Promise<{ slug: string }>
 }
 
-async function getDocumentBySlug(slug: string): Promise<any | null> {
+async function getDocumentBySlug(slug: string): Promise<{ id: string; title: string; plaintext_content: string; word_count?: number } | null> {
   const supabase = await createClient()
   const documentService = new DocumentService(supabase)
   
@@ -53,7 +53,7 @@ export default async function TweetThreadPage({ params }: PageProps) {
 
   const MIN_CHARS = 100
 
-  const documentContent = ((doc as any).plaintext_content || '').trim()
+  const documentContent = (doc.plaintext_content || '').trim()
 
   // Fail-fast if unexpectedly short (likely ingestion bug)
   if (documentContent.length < MIN_CHARS) {
@@ -63,7 +63,7 @@ export default async function TweetThreadPage({ params }: PageProps) {
       correlationId,
       documentId: doc.id,
       plaintextLength: documentContent.length,
-      wordCount: (doc as any).word_count || null,
+      wordCount: doc.word_count || null,
       slug,
       title: doc.title
     }, errMsg)

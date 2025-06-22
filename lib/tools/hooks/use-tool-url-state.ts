@@ -104,7 +104,7 @@ export function useToolUrlState(): UseToolUrlStateReturn {
     if (urlState.tab && urlState.tab !== contextState.activeTabId) {
       actions.setActiveTab(urlState.tab, true)
     }
-  }, [urlState.tab]) // Remove contextState.activeTabId from deps to prevent loops
+  }, [urlState.tab, actions, contextState.activeTabId]) // Include actions and contextState.activeTabId
   
   // Validate initial URL state on mount and URL changes
   useEffect(() => {

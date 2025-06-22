@@ -395,7 +395,7 @@ export function OriginalHeadingsTab({
         })
       }
     }
-  }, [elements, mutatedDocument, activeMutationType, documentId])
+  }, [contentCache, loadingStates, elements, mutatedDocument, activeMutationType, documentId])
 
   const toggleExpanded = (headingId: string) => {
     setCollapsedIds(prev => {
@@ -929,7 +929,7 @@ export const AIGeneratedHeadingsTab = React.memo(function AIGeneratedHeadingsTab
         })
       }
     }
-  }, [elements, mutatedDocument, activeMutationType, documentId])
+  }, [contentCache, loadingStates, elements, mutatedDocument, activeMutationType, documentId])
 
   const toggleExpanded = (headingId: string) => {
     setCollapsedIds(prev => {

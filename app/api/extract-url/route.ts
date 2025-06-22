@@ -162,10 +162,10 @@ async function processPdfFromUrl(
   provider: string,
   providedTitle: string | undefined,
   isPublic: boolean,
-  user: any,
-  supabase: any,
+  user: { id: string; email?: string },
+  supabase: ReturnType<typeof createClient>,
   aiCallService: AiCallService,
-  requestLogger: any,
+  requestLogger: ReturnType<typeof createRequestLogger>,
   correlationId: string
 ): Promise<NextResponse> {
   const urlObject = new URL(sourceUrl)
