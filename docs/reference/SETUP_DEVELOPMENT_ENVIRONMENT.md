@@ -7,6 +7,7 @@
 - Anthropic API key (and/or OpenAI API key for critique features)
 - Supabase CLI (install with `npm install -g supabase`)
 - sd (for codebase refactoring): `brew install sd` or `cargo install sd`
+- code2prompt (for codebase context generation): `brew install code2prompt`
 - Python 3.7+ (for planning document critique features - installed automatically when needed)
 
 ## See also

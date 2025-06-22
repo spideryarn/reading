@@ -25,8 +25,8 @@
         "import-documents": "dotenv -e .env.local -- npx tsx scripts/import-static-documents.ts",
         "analyze-fidelity": "dotenv -e .env.local -- npx tsx scripts/analyze-content-fidelity.ts",
         "deploy:production": "npm run build && git push origin main",
-        "python:install": "pip install -r requirements.txt",
-        "python:check": "python --version && code2prompt --version",
+        "python:install": "echo 'No Python dependencies to install'",
+        "python:check": "python --version",
         "critique": "./scripts/o3-critique-as-api.ts"
     },
     "dependencies": {

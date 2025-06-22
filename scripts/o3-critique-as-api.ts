@@ -3,8 +3,11 @@
 /**
  * O3 Critique via Direct API - Automated Code Context Generation
  * 
- * Generates comprehensive codebase context using code2prompt, then sends to OpenAI o3 via direct API.
+ * Generates comprehensive codebase context using code2prompt (Rust version), then sends to OpenAI o3 via direct API.
  * This approach provides more reliable context gathering compared to agentic Codex CLI workflows.
+ * 
+ * Prerequisites:
+ * - Install code2prompt (Rust version): https://github.com/mufeedvh/code2prompt
  * 
  * Features:
  * - Automated file selection and filtering
@@ -37,8 +40,8 @@ class O3CritiqueCommand extends Command {
       It uses code2prompt to generate comprehensive codebase context, then sends everything
       to o3 via direct API for analysis.
       
-      The script automatically:
-      - Installs code2prompt if needed
+      The script:
+      - Requires code2prompt (Rust version) to be pre-installed
       - Generates filtered codebase context with optimal settings
       - Includes critique methodology and project documentation
       - Sends structured prompt to OpenAI o3 API
@@ -51,6 +54,7 @@ class O3CritiqueCommand extends Command {
       ['Use OpenAI o3 model', 'o3-critique --model openai:o3:latest planning/my-plan.md'],
       ['Use Claude for critique', 'o3-critique --model anthropic:claude-opus-4:20250514 planning/my-plan.md'],
       ['Include test files in context', 'o3-critique --include-tests planning/my-plan.md'],
+      ['Specify exact files to include', 'o3-critique --files app/api/route.ts --files lib/services/db.ts planning/my-plan.md'],
     ],
   });
 
@@ -59,7 +63,7 @@ class O3CritiqueCommand extends Command {
     description: 'Path to the planning document to critique',
   });
 
-  model = Option.String('--model', 'openai:o3-pro:latest', {
+  model = Option.String('--model', 'openai:o3:latest', {
     description: 'Model to use for critique (format: provider:model:version)',
   });
 
@@ -67,7 +71,11 @@ class O3CritiqueCommand extends Command {
     description: 'Include test files in the context (normally excluded)',
   });
 
-  maxTokens = Option.String('--max-tokens', '4000', {
+  files = Option.Array('--files', [], {
+    description: 'Specific files to include in the context (if not provided, uses default selection)',
+  });
+
+  maxTokens = Option.String('--max-tokens', '10000', {
     description: 'Maximum tokens for the response',
   });
 
@@ -83,15 +91,27 @@ class O3CritiqueCommand extends Command {
       // Validate inputs
       await this.validateInputs();
 
+      // Show output locations upfront
+      const docBasename = basename(this.planningDoc, '.md');
+      const timestamp = new Date().toISOString().slice(2, 16).replace(/[-:]/g, '').replace('T', '_');
+      const contextFile = `planning/critiques/CONTEXT_FOR__${docBasename}__${timestamp}.md`;
+      const outputFile = `planning/critiques/llm-api__CRITIQUE_OF__${docBasename}__${timestamp}.json`;
+      
+      this.context.stdout.write('\n📁 Output files will be saved to:\n');
+      this.context.stdout.write(`   Context: ${contextFile}\n`);
+      this.context.stdout.write(`   Critique: ${outputFile}\n`);
+      this.context.stdout.write(`   Model: ${this.model}\n\n`);
+
       // Generate comprehensive context
-      const contextFile = await this.generateContext();
+      const actualContextFile = await this.generateContext(docBasename, timestamp);
 
       // Send to LLM via unified system
-      const result = await this.sendToLLM(contextFile);
+      const result = await this.sendToLLM(actualContextFile);
 
       this.context.stdout.write(`\n✅ Critique completed successfully\n`);
-      this.context.stdout.write(`📄 Context file: ${contextFile}\n`);
-      this.context.stdout.write(`📄 Raw API response: ${result.outputFile}\n`);
+      this.context.stdout.write(`\n📄 Files saved:\n`);
+      this.context.stdout.write(`   Context: ${contextFile}\n`);
+      this.context.stdout.write(`   Critique: ${result.outputFile}\n`);
 
       if (this.verbose && result.usage) {
         this.context.stdout.write(`💰 Token usage: ${JSON.stringify(result.usage)}\n`);
@@ -129,20 +149,60 @@ class O3CritiqueCommand extends Command {
     // Note: API key validation will happen when the model is instantiated
     // This allows support for different providers (OpenAI, Anthropic, Google)
 
-    // Check if code2prompt is installed, install if needed
+    // Check if code2prompt is installed
     try {
       execSync('which code2prompt', { stdio: 'pipe' });
     } catch {
-      this.context.stdout.write('Installing code2prompt...\n');
-      try {
-        execSync('pip install code2prompt', { stdio: this.verbose ? 'inherit' : 'pipe' });
-      } catch (installError) {
-        throw new UsageError('Failed to install code2prompt. Please install manually: pip install code2prompt');
-      }
+      throw new UsageError(
+        'code2prompt not found. Please install the Rust version:\n' +
+        '  • macOS/Linux: curl -fsSL https://raw.githubusercontent.com/mufeedvh/code2prompt/main/install.sh | sh\n' +
+        '  • Or via Cargo: cargo install code2prompt\n' +
+        '  • See: https://github.com/mufeedvh/code2prompt for more options'
+      );
     }
   }
 
-  private async generateContext(): Promise<string> {
+  private getFilesToInclude(): string[] {
+    // If files were explicitly provided, use those
+    if (this.files && this.files.length > 0) {
+      // Validate that files exist
+      const validFiles = this.files.filter(file => {
+        const exists = existsSync(file);
+        if (!exists) {
+          this.context.stdout.write(`Warning: File not found, skipping: ${file}\n`);
+        }
+        return exists;
+      });
+      
+      if (validFiles.length === 0) {
+        throw new UsageError('None of the specified files exist');
+      }
+      
+      return validFiles;
+    }
+    
+    // Otherwise, use a sensible default set of key files
+    this.context.stdout.write('No specific files provided, using default key files...\n');
+    
+    // Default to key configuration and documentation files
+    const defaultFiles = [
+      'README.md',
+      'CLAUDE.md',
+      'package.json',
+      'tsconfig.json',
+      '.env.example',
+      'docs/reference/VISION.md',
+      'docs/reference/ARCHITECTURE_OVERVIEW.md',
+      'docs/reference/ARCHITECTURE_DECISIONS.md',
+      'docs/reference/CODING_PRINCIPLES.md',
+      'docs/reference/CODING_GUIDELINES.md',
+    ];
+    
+    // Filter to only existing files
+    return defaultFiles.filter(file => existsSync(file));
+  }
+
+  private async generateContext(docBasename: string, timestamp: string): Promise<string> {
     // Create critiques directory
     const critiquesDir = 'planning/critiques';
     if (!existsSync(critiquesDir)) {
@@ -150,27 +210,35 @@ class O3CritiqueCommand extends Command {
     }
 
     // Generate output filename
-    const docBasename = basename(this.planningDoc, '.md');
-    const timestamp = new Date().toISOString().slice(2, 16).replace(/[-:]/g, '').replace('T', '_');
     const contextFile = `${critiquesDir}/CONTEXT_FOR__${docBasename}__${timestamp}.md`;
 
-    this.context.stdout.write('Generating comprehensive codebase context with code2prompt...\n');
+    // Get files to include (either from command line or defaults)
+    const filesToInclude = this.getFilesToInclude();
+    
+    this.context.stdout.write(`Including ${filesToInclude.length} files in context\n`);
+    if (this.verbose) {
+      this.context.stdout.write('Files to include:\n');
+      filesToInclude.forEach(file => this.context.stdout.write(`  - ${file}\n`));
+    }
 
-    // Build command with .gitignore support and optional test exclusion
+    // Generate context with the selected files
+    this.context.stdout.write('Generating targeted codebase context with code2prompt...\n');
+
+    // Build command with explicit file list
     const baseCmd = [
       'code2prompt',
       '--path .',
       '--line-number',
       '--tokens',
-      '--gitignore .gitignore',  // Use .gitignore for automatic exclusions
-      '--filter "*.ts,*.tsx,*.js,*.jsx,*.md,*.json,*.sql,*.yml,*.yaml"',
-      `--output "${contextFile}"`
+      '--gitignore .gitignore',  // Still respect gitignore for basic exclusions
     ];
 
-    // Add test exclusions if not including tests
-    if (!this.includeTests) {
-      baseCmd.push('--exclude "*.test.*,*.spec.*,__tests__/*,tests/*"');
-    }
+    // Add each selected file as an include pattern
+    filesToInclude.forEach(file => {
+      baseCmd.push(`--include "${file}"`);
+    });
+
+    baseCmd.push(`--output "${contextFile}"`);
 
     const code2promptCmd = baseCmd.join(' ');
 
