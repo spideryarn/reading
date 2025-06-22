@@ -12,13 +12,13 @@ export const urlToHtmlOutputSchema = z.string().min(1).describe('Clean semantic 
 
 // Create URL to HTML prompt template with configurable provider
 export function createUrlToHtmlPrompt(provider: 'claude' | 'gemini' = 'claude') {
-  const modelTier = provider === 'gemini' ? 'google-balanced' : 'anthropic-balanced'
+  const modelString = provider === 'gemini' ? 'google:gemini-2.5-pro:latest' : 'anthropic:claude-sonnet-4:20250514'
   
   return loadMultimodalPromptTemplateFromCaller(
     'url-to-html.njk',
     urlToHtmlPromptInputSchema,
     {
-      model: modelTier,
+      model: modelString,
       temperature: 0, // Deterministic for content extraction
       maxTokens: 64000, // High limit for complex webpages and long content
     }
