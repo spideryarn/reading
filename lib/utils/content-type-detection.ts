@@ -32,7 +32,10 @@ export async function fetchContentType(url: string): Promise<string> {
     }
     
     // Get content type from response headers
-    const contentType = response.headers.get('content-type') || 'application/octet-stream'
+    const contentType = response.headers.get('content-type')
+    if (!contentType) {
+      return 'application/octet-stream'
+    }
     return contentType.toLowerCase().split(';')[0].trim() // Remove charset and parameters
     
   } catch (error) {
@@ -136,7 +139,7 @@ export async function detectAndAnalyzeContent(url: string): Promise<ContentDetec
     const isHtml = isHtmlContentType(contentType)
     const isSupported = isPdf || isHtml
     
-    let suggestedAction: ContentDetectionResult['suggestedAction']
+    let suggestedAction: ContentDetectionResult['suggestedAction'] = undefined
     let errorMessage: string | undefined
     
     if (!isSupported) {
@@ -150,14 +153,22 @@ export async function detectAndAnalyzeContent(url: string): Promise<ContentDetec
       }
     }
     
-    return {
+    const result: ContentDetectionResult = {
       contentType,
       isPdf,
       isHtml,
-      isSupported,
-      suggestedAction,
-      errorMessage
+      isSupported
     }
+    
+    if (suggestedAction !== undefined) {
+      result.suggestedAction = suggestedAction
+    }
+    
+    if (errorMessage !== undefined) {
+      result.errorMessage = errorMessage
+    }
+    
+    return result
   } catch (error) {
     return {
       contentType: 'unknown',

@@ -50,16 +50,23 @@ export interface AdditionalMetadata {
   // PDF-specific fields
   file_size_bytes?: number
   model_used?: string
+  processing_time_ms?: number
   
   // URL-specific fields
   content_size_kb?: number
   extracted_size_kb?: number
   content_type_detected?: string
   original_url?: string
+  auto_detected?: boolean
   
   // HTML-specific fields
   processed_size_kb?: number
   processing_method?: string
+  
+  // Storage-related metadata
+  storage_mime_type?: string
+  storage_base_mime_type?: string
+  storage_mime_parameters?: string
 }
 
 /**

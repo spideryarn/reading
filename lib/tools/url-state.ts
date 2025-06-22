@@ -1,15 +1,17 @@
 // URL state management utilities for document tools
 // Handles URL to state parsing, state to URL generation, and history management
 
-import { ToolUrlState, URL_PARAM_NAMES, PUSH_HISTORY_CHANGES } from './url-state-types'
+import { ToolUrlState, URL_PARAM_NAMES, PUSH_HISTORY_CHANGES, isValidTabValue, isValidSearchType, isValidSummaryLevel } from './url-state-types'
 
 // Parse URL search params into tool state
 export function parseUrlToState(searchParams: URLSearchParams): ToolUrlState {
   const state: ToolUrlState = {}
   
-  // Parse each parameter if present
+  // Parse each parameter if present using validation functions
   const tab = searchParams.get(URL_PARAM_NAMES.TAB)
-  if (tab) state.tab = tab as ToolUrlState['tab']
+  if (tab && isValidTabValue(tab)) {
+    state.tab = tab
+  }
   
   const term = searchParams.get(URL_PARAM_NAMES.TERM)
   if (term) state.term = term
@@ -18,13 +20,17 @@ export function parseUrlToState(searchParams: URLSearchParams): ToolUrlState {
   if (query) state.q = query
   
   const searchType = searchParams.get(URL_PARAM_NAMES.SEARCH_TYPE)
-  if (searchType) state.type = searchType as ToolUrlState['type']
+  if (searchType && isValidSearchType(searchType)) {
+    state.type = searchType
+  }
   
   const caseSensitive = searchParams.get(URL_PARAM_NAMES.CASE_SENSITIVE)
   if (caseSensitive) state.case = caseSensitive === 'true'
   
   const summaryLevel = searchParams.get(URL_PARAM_NAMES.SUMMARY_LEVEL)
-  if (summaryLevel) state.level = summaryLevel as ToolUrlState['level']
+  if (summaryLevel && isValidSummaryLevel(summaryLevel)) {
+    state.level = summaryLevel
+  }
   
   const conversation = searchParams.get(URL_PARAM_NAMES.CONVERSATION)
   if (conversation) state.conversation = conversation
@@ -219,7 +225,7 @@ export function truncateUrlIfNeeded(url: string, maxLength = 2000): string {
     if (url.length <= maxLength) break
     
     const paramToRemove = paramPriority[i]
-    if (params.has(paramToRemove)) {
+    if (paramToRemove && params.has(paramToRemove)) {
       params.delete(paramToRemove)
       urlObj.search = params.toString()
       url = urlObj.toString()
