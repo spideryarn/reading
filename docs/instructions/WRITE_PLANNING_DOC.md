@@ -21,21 +21,14 @@ see also: `docs/instructions/WRITE_EVERGREEN_DOC.md` for instructions on writing
 
 Planning docs should follow this naming format: `yyMMdd[letter]_description_in_normal_case.md`
 
-- Date prefix: `yyMMdd` format (e.g., `250526` for 26 May 2025)
-- Auto-incrementing letter: append a letter (a, b, c...) based on creation order within the same day
-  - First doc created on a given day gets `a`
-  - Second doc gets `b`, and so on
-  - This ensures files sort alphanumerically by creation date
-  - Sometimes we might end up with multiple docs with the same day and letter (e.g. `250526a`, e.g if multiple agents were working simultaneously in separate Git worktrees) - don't worry if this happens
-- Description: Use lowercase words separated by underscores
-  - Exception: Keep proper capitalisation for acronyms like `ToC` (Table of Contents) or proper names, e.g. `Vercel`
-  - Example: `250526a_ToC_hierarchical_summary_tooltips.md`
+- Use `./scripts/generate-sequential-datetime-prefix.ts planning/` to get the date prefix
+- Description: lowercase words separated by underscores (except proper names/acronyms like `ToC`, `Vercel`)
+- Example: `250526a_ToC_hierarchical_summary_tooltips.md`
 
 ## Creating the doc
 
 ### Process for starting the doc from scratch:
-- (Generating the filename should be done by an appropriately-instructed sub-agent)
-- Use MCP or run `date +"%y%m%d"` command first to get the current date for naming the file
+- Generate filename prefix using `./scripts/generate-sequential-datetime-prefix.ts planning/`
 - Store it in `planning/`
 - IMPORTANT Before writing the doc, make sure you have asked the user questions about their requirements to clarify key principles & decisions, following instructions in `docs/instructions/SOUNDING_BOARD_MODE.md`.
 

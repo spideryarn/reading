@@ -177,17 +177,11 @@ When capturing research findings:
 ### Naming Convention
 `yyMMdd[letter]_description_in_normal_case.md`
 
-Following the same format as planning docs:
-- Date prefix: `yyMMdd` format (e.g., `250616` for 16 June 2025)
-- Auto-incrementing letter: append a letter (a, b, c...) based on creation order within the same day
-  - First doc created on a given day gets `a`
-  - Second doc gets `b`, and so on
-  - This ensures files sort chronologically
-- Description: Use lowercase words separated by underscores
-  - Exception: Keep proper capitalisation for acronyms or proper names
-  - Example: `250616a_research_instructions_improvement.md`
+Use `./scripts/generate-sequential-datetime-prefix.ts docs/conversations/` to get the date prefix, then add description in lowercase words separated by underscores (except proper names/acronyms).
 
-**Generating the filename should be done by an appropriately-instructed subagent** using the current date from `date +"%y%m%d"` command.
+Example: `250616a_research_instructions_improvement.md`
+
+**Generate filename prefix using**: `./scripts/generate-sequential-datetime-prefix.ts docs/conversations/`
 
 ### Location
 Save to: `docs/conversations/`
