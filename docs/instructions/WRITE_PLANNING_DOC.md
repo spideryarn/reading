@@ -109,8 +109,12 @@ After creating the initial planning doc:
 
 At the end of stage (where appropriate):
 - If doing UI-related changes, add an end-of-stage action to check things look ok with Puppeteer MCP (in a subagent, provided with rich description of the background/approach to take/success criteria).
-- Add action to run the linter/build, and make changes in response as you see fit.
-- Add action to re-run the tests (in a subagent) if you think it will be helpful. see `docs/reference/TESTING_OVERVIEW.md` for philosophy and `docs/reference/TESTING_SETUP.md` for configuration
+- **Add health check actions** - Use judgment to include appropriate checks based on changes made:
+  - **TypeScript check** (`npm run build` or `tsc --noEmit`): Include when modifying TypeScript code, especially API routes, type definitions, or core logic
+  - **Linting** (`npm run lint`): Include when adding new files or significantly modifying existing code patterns
+  - **Testing** (re-run affected tests in subagent): Include when changing logic that has test coverage - see `docs/reference/TESTING_OVERVIEW.md` and `docs/reference/TESTING_SETUP.md`
+  - **Build verification** (`npm run build`): Reserve for major changes or final validation - builds can be time-consuming
+  - **Decision criteria**: Choose checks that are likely to catch regressions from the specific changes being made. For small isolated changes, lighter checks suffice. For core system changes, run comprehensive checks.
 - Follow instructions in `docs/instructions/DEBRIEF_PROGRESS.md` to output a summary of where things stand
 - Update this planning doc with progress so far, log useful learnings/surprises/changes of plan/etc.
 - Add an action to stop & review with user where appropriate, e.g. when we get to a good stopping point, to manually check changes to the user interface, etc.
@@ -122,6 +126,11 @@ In later stages:
 - Add actions to update logging/monitoring if needed (see `docs/reference/LOGGING_BEST_PRACTICES.md`)
 
 As final actions:
+- **Final health check** - Run comprehensive validation before completion:
+  - `npm run build` - Ensure TypeScript compilation succeeds and no build errors
+  - `npm run lint` - Verify code quality standards are met
+  - `npm test` - Confirm all tests pass (run in subagent if verbose)
+  - Only include checks that are relevant to the changes made during the project
 - Consolidate our tests. Consider removing low-level ones that will be brittle or that we don't need, and adding one or two high-coverage, integration tests that will catch important regressions.
 - Ask the user's permission to merge back (if we created a branch)
 - Move the doc to `planning/finished/` and commit.
