@@ -3,6 +3,8 @@
 **Status**: Living document - Update after adding/modifying E2E tests  
 **Purpose**: Simple coverage tracking to avoid overlap and identify gaps
 
+see: `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
+
 ## Current E2E Test Coverage
 
 ### 1. `auth.spec.ts` - Authentication Flows
@@ -51,6 +53,22 @@
 - ✅ Public/private document access
 - ✅ Document not found handling
 
+### 8. `document-access-control.spec.ts` - Access Control & Security
+- ✅ Anonymous user access to public documents
+- ✅ Anonymous user blocked from private documents (404)
+- ✅ Authenticated user access to owned documents
+- ✅ Authenticated user blocked from other users' private documents
+- ✅ Search engine bot access to public documents
+- ✅ Security-first error conflation (not found vs no permission)
+- ✅ HTTP status code consistency
+- ✅ Cross-document navigation access control
+
+### 9. `document-access-control-basic.spec.ts` - Access Control Smoke Tests
+- ✅ Anonymous application access
+- ✅ 404 handling for non-existent documents
+- ✅ Authentication system accessibility
+- ✅ Bot user agent handling
+
 ## Coverage Gaps (Not Yet Tested)
 
 ### High Priority
@@ -59,7 +77,6 @@
 - ❌ AI heading generation
 - ❌ Glossary generation and display
 - ❌ Summary generation (multiple levels)
-- ❌ Document sharing/permissions
 
 ### Medium Priority
 - ❌ Tweet thread generation
