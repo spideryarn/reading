@@ -1,4 +1,4 @@
-import slug from 'slug'
+import slug from 'slug';
 
 /**
  * Generate a URL-friendly slug from text using the `slug` library.
@@ -24,8 +24,7 @@ export function generateSlug(text: string): string {
   return slug(trimmed, {
     replacement: '-',
     remove: /[*+~.()'"!:@]/g,
-    lower: true,
-    strict: true
+    lower: true
   })
 }
 
@@ -77,8 +76,7 @@ export function generateHtmlFilename(url: string): string {
     const slugified = slug(cleanPath, {
       replacement: '-',
       remove: /[*+~()'"!:@]/g, // Keep dots for academic identifiers
-      lower: true,
-      strict: false // Allow dots and numbers in academic URLs
+      lower: true
     })
     const truncated = slugified.length > 200 ? slugified.substring(0, 200) : slugified
     
