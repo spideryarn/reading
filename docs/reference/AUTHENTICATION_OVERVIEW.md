@@ -31,7 +31,6 @@ Spideryarn Reading uses Supabase Auth with Next.js App Router for secure user re
 
 **Route Protection Philosophy**:
 - Flexible protection for specific routes while leaving others public
-- SEO-friendly public routes like `/read/[slug]/share`
 - User experience with `/auth/login?next=/protected/route` redirects
 - Proper 401 status codes for bots accessing protected routes
 
@@ -66,7 +65,7 @@ Spideryarn Reading uses Supabase Auth with Next.js App Router for secure user re
 
 ## Application Integration
 
-**Document Access**: User-scoped documents with `created_by` ownership and public sharing via `/read/[slug]/share`
+**Document Access**: User-scoped documents with `created_by` ownership
 
 **Chat Feature**: Requires authentication - chat threads are user-scoped with no anonymous access allowed
 

@@ -150,12 +150,6 @@ export default async function ProfilePage() {
                           <Link href={`/documents/${document.slug}`}>
                             <Button variant="outline" size="sm">View</Button>
                           </Link>
-                          
-                          {document.is_public && (
-                            <Link href={`/documents/${document.slug}/share`}>
-                              <Button variant="outline" size="sm">Share</Button>
-                            </Link>
-                          )}
                         </div>
                       </div>
                     </div>
