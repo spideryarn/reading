@@ -90,3 +90,4 @@ secrets/
 
 # dev server PID, see docs/reference/SETUP_DEV_SERVER_AUTOMATION.md
 .dev-server.pid
+.dev-server.lock
