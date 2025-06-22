@@ -22,9 +22,29 @@ Quick reference for AI agents and developers using browser automation testing in
 
 ## Quick Start for AI Agents
 
+### ⚠️ Prerequisites: Dev Server Must Be Running
+
+**CRITICAL**: E2E tests require a running development server. Always verify before running tests:
+
+```bash
+# 1. Check dev server status
+npm run dev:status
+
+# 2. If not running, start dev server daemon
+npm run dev:daemon
+
+# 3. Verify server is healthy and responding
+npm run dev:status
+
+# 4. Only then run E2E tests
+npx playwright test
+```
+
+**Why This Matters**: E2E tests interact with the actual application at `http://localhost:PORT`. Without a running dev server, tests will timeout waiting for pages to load.
+
 ### Essential Commands
 ```bash
-# Run all E2E tests
+# Run all E2E tests (dev server must be running first)
 npx playwright test
 
 # Run specific test file  
@@ -35,6 +55,15 @@ npx playwright test --grep "authentication"
 
 # Debug mode (only when needed)
 npx playwright test --debug
+```
+
+### AI Agent Workflow for E2E Testing
+```bash
+# Complete E2E testing workflow for AI agents
+npm run dev:status || npm run dev:daemon  # Ensure dev server running
+npm run dev:status                        # Verify health
+npm run test:e2e:setup                    # Setup authentication (if needed)
+npx playwright test                       # Run tests
 ```
 
 ### Current Implementation Status ✅
@@ -111,6 +140,32 @@ Each worktree uses environment-specific configuration:
 - Error conditions hard to trigger in E2E
 
 ## Common Issues & Solutions
+
+### Dev Server Not Running (Most Common Issue)
+
+**Symptoms**: 
+- Tests timeout waiting for login page elements
+- Authentication setup fails with timeout errors
+- Blank/loading pages in Playwright traces
+
+**Diagnosis**:
+```bash
+npm run dev:status  # Check if dev server is running
+curl -f http://localhost:$PORT/ 2>/dev/null && echo "✅ Server responding" || echo "❌ Server not responding"
+```
+
+**Solution**:
+```bash
+# Start dev server daemon (AI agent recommended)
+npm run dev:daemon
+
+# Verify server is healthy
+npm run dev:status
+
+# Should show: "✅ Daemon running and healthy (PID: XXXX, Port: YYYY)"
+```
+
+**For AI Agents**: Always run `npm run dev:status || npm run dev:daemon` before E2E tests to ensure server availability.
 
 ### Database Reset Recovery
 Tests include automatic recovery from database resets using `withDatabaseResetRecovery()` helper.
