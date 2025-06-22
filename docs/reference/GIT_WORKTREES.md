@@ -522,7 +522,7 @@ const paths = getCurrentEnvironmentPaths() // Isolated file paths
 - **No conflicts**: Authentication, files, and database data remain isolated
 - **Consistent experience**: Same test patterns work across all environments
 
-**Documentation**: See `docs/reference/TESTING_WITH_BROWSER_AUTOMATION.md` for comprehensive implementation details and usage patterns.
+**Documentation**: See `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md` for comprehensive implementation details and usage patterns.
 
 ## Best Practices
 

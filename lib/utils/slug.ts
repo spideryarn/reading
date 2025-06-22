@@ -76,9 +76,9 @@ export function generateHtmlFilename(url: string): string {
     // Generate slug with proper Unicode handling and ensure it's not too long (max 200 chars for filesystem compatibility)
     const slugified = slug(cleanPath, {
       replacement: '-',
-      remove: /[*+~.()'"!:@]/g,
+      remove: /[*+~()'"!:@]/g, // Keep dots for academic identifiers
       lower: true,
-      strict: true
+      strict: false // Allow dots and numbers in academic URLs
     })
     const truncated = slugified.length > 200 ? slugified.substring(0, 200) : slugified
     

@@ -205,7 +205,7 @@ Template: `.env.example` (may not be current - check `.env.local` for active con
 - **Multi-worktree auth**: Use environment-specific test users (test-user1@spideryarn.com, etc.)
 - **Configuration**: Use headless mode and 1200x800 viewport for reliable automation
 
-**Documentation**: See `docs/reference/TESTING_WITH_BROWSER_AUTOMATION.md` for comprehensive patterns
+**Documentation**: See `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md` for comprehensive patterns
 
 
 ## Context window, tasks, and subagents
@@ -255,7 +255,7 @@ Available evergreen documentation in `docs/` - comprehensive signposting by doma
 **Testing** (comprehensive testing ecosystem):
 - `docs/reference/TESTING_OVERVIEW.md` - Testing approach with Jest and React Testing Library
 - `docs/reference/TESTING_DATABASE.md` - **CRITICAL**: Real RLS testing patterns (use `RLSTestDatabase`)
-- `docs/reference/TESTING_WITH_BROWSER_AUTOMATION.md` - Playwright E2E testing (recommended)
+- `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md` - Playwright E2E testing (recommended)
 - `docs/reference/TESTING_AUTHENTICATION.md` - Auth testing patterns and utilities
 - `docs/reference/TESTING_TROUBLESHOOTING.md` - Known issues and workarounds
 - `docs/reference/TESTING_SETUP.md` - Test environment configuration

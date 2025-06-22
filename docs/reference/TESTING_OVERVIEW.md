@@ -10,7 +10,7 @@ This document describes the testing approach and philosophy for the Spideryarn R
 - `docs/reference/TESTING_TROUBLESHOOTING.md` - Known issues and workarounds
 - `docs/reference/TESTING_DATABASE.md` - Database-specific testing patterns and shared database approach
 - `docs/reference/TESTING_AUTHENTICATION.md` - Authentication testing patterns (→ AUTHENTICATION_TESTING.md)
-- `docs/reference/TESTING_WITH_BROWSER_AUTOMATION.md` - Browser automation and E2E testing options for AI-assisted development
+- `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md` - Browser automation and E2E testing options for AI-assisted development
 - `lib/testing/test-isolation-utils.ts` - Test isolation utilities for shared database
 - `docs/instructions/UPDATE_HOUSEKEEPING_TESTS.md` - Process for maintaining test quality and organisation
 - `planning/250608a_test_infrastructure_cleanup.md` - Example one-time test infrastructure cleanup

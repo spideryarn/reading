@@ -26,7 +26,7 @@ This creates conflicts when multiple environments attempt browser automation sim
 ## References
 
 - `docs/reference/GIT_WORKTREES.md` - Multi-worktree setup with port configuration
-- `docs/reference/TESTING_WITH_BROWSER_AUTOMATION.md` - Current browser automation approaches (Playwright vs Puppeteer MCP)
+- `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md` - Current browser automation approaches (Playwright vs Puppeteer MCP)
 - `docs/reference/TESTING_DATABASE.md` - Namespace-based test isolation patterns
 - `supabase/seed.sql` - Current test user definition
 - `lib/testing/test-isolation-utils.ts` - Existing namespace isolation utilities
@@ -95,7 +95,7 @@ This creates conflicts when multiple environments attempt browser automation sim
   - [x] Check database isolation with concurrent test data creation
     - 📔 Comprehensive validation test suite created with 10 test cases, all passing
 - [x] Update documentation
-  - [x] Update `docs/reference/TESTING_WITH_BROWSER_AUTOMATION.md` with worktree patterns
+  - [x] Update `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md` with worktree patterns
     - 📔 Added comprehensive multi-worktree section with configuration examples
   - [x] Add section to `docs/reference/GIT_WORKTREES.md` about browser automation
     - 📔 Skipped - not essential for Stage 2 completion
@@ -200,7 +200,7 @@ function getEnvironmentName(envId: number): string {
 
 **Authentication Manager Updates**: Modifying existing robust-auth.ts to use environment-specific credentials maintains backward compatibility while adding worktree awareness. The single `getCurrentEnvironmentTestUser()` call abstracts environment detection complexity.
 
-**Documentation Scalability**: The multi-worktree patterns documented in TESTING_WITH_BROWSER_AUTOMATION.md provide clear examples for future development. Including code samples and directory structures makes the implementation immediately usable.
+**Documentation Scalability**: The multi-worktree patterns documented in TESTING_BROWSER_AUTOMATION_OVERVIEW.md provide clear examples for future development. Including code samples and directory structures makes the implementation immediately usable.
 
 **Validation Test Design**: Creating a comprehensive test suite (10 test cases) during implementation validates all isolation features work together. This approach catches integration issues early and provides confidence for future changes.
 

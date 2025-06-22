@@ -26,7 +26,7 @@
 - `docs/reference/GIT_WORKTREES.md` - Updated with daemon mode integration
 - `CLAUDE.md` - Updated with AI-first development patterns  
 - `package.json` - Added four new npm scripts for daemon operations
-- `docs/reference/TESTING_WITH_BROWSER_AUTOMATION.md` - Updated for automation workflows
+- `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md` - Updated for automation workflows
 
 ## Key Decisions Made
 

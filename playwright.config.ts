@@ -42,7 +42,7 @@ export default defineConfig({
   /* Minimal output for AI agents */
   reporter: [
     ['list'], // Minimal output during development
-    ['json', { outputFile: 'test-results/results.json' }] // For parsing if needed
+    ['json', { outputFile: 'tests/test-results/results.json' }] // For parsing if needed
   ],
   
   /* Shared settings for all the projects below. */

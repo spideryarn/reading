@@ -8,7 +8,7 @@ export type MockSupabaseClient = Partial<SupabaseClient<Database>>
 
 // Mock service types
 export interface MockAiCallService {
-  startCall: jest.Mock
+  startCallWithModelString: jest.Mock
   completeCall: jest.Mock
 }
 

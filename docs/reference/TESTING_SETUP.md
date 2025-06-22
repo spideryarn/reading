@@ -150,7 +150,7 @@ await mcp__puppeteer__puppeteer_fill({
 - **File isolation**: Screenshots, auth states, and test results isolated by environment
 - **Namespace isolation**: Database operations use worktree-aware prefixes
 - **Concurrent testing**: Multiple worktrees can run browser automation simultaneously
-- **Documentation**: See `docs/reference/TESTING_WITH_BROWSER_AUTOMATION.md` for comprehensive Playwright patterns
+- **Documentation**: See `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md` for comprehensive Playwright patterns
 
 ### LLM API Cost Prevention
 

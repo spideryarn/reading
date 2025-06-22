@@ -877,7 +877,7 @@ This comprehensive test restructuring successfully transformed a high-maintenanc
 
 1. **Documentation Already Comprehensive** ✅
    - `TESTING_OVERVIEW.md` - Current philosophy and shared database approach
-   - `TESTING_WITH_BROWSER_AUTOMATION.md` - Complete Playwright guide 
+   - `TESTING_BROWSER_AUTOMATION_OVERVIEW.md` - Complete Playwright guide 
    - `TESTING_DATABASE.md` - Database testing patterns and RLS guide
    - Integration patterns well-established and documented
 
