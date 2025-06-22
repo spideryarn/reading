@@ -1,6 +1,6 @@
 # O3 Critique via Direct API - Automated Code Context Generation
 
-Automated approach for critiquing planning documents using OpenAI's o3 model with comprehensive codebase context generation via code2prompt.
+Automated approach for critiquing planning documents using OpenAI's o3 model with comprehensive codebase context generation via code2prompt (Rust version).
 
 ## See also
 
@@ -12,7 +12,7 @@ Automated approach for critiquing planning documents using OpenAI's o3 model wit
 
 ## Overview
 
-This approach addresses reliability issues with agentic Codex CLI workflows by using a single, comprehensive API call to OpenAI's o3 model. The script automatically gathers relevant codebase context using code2prompt and sends everything to o3 for analysis.
+This approach addresses reliability issues with agentic Codex CLI workflows by using a single, comprehensive API call to OpenAI's o3 model. The script gathers relevant codebase context using code2prompt (Rust version) and sends everything to o3 for analysis.
 
 **Key advantages over agentic approaches:**
 - **Reliability**: Single API call vs complex agentic workflow
@@ -26,17 +26,27 @@ This approach addresses reliability issues with agentic Codex CLI workflows by u
 ### Required Environment Variables
 - `OPENAI_API_KEY` in `.env.local` - Your OpenAI API key with o3 access
 
-### Automatic Dependencies
-The script automatically installs `code2prompt` if not present:
+### Required Dependencies
+The Rust version of code2prompt is required for the script to work:
 ```bash
-pip install code2prompt
+# Installation (via Homebrew - recommended)
+brew install code2prompt
+
+# Alternative installation methods:
+# Via install script: curl -fsSL https://raw.githubusercontent.com/mufeedvh/code2prompt/main/install.sh | sh
+# Via Cargo: cargo install code2prompt
+
+# Verify installation
+code2prompt --version  # Should show: code2prompt 3.0.2
 ```
 
+**Note**: For most developers, code2prompt should already be installed following the main setup guide in `docs/reference/SETUP.md`.
+
 ### System Requirements
-- Python 3.7+ (for code2prompt)
 - Node.js with TypeScript support (tsx)
 - curl (for API calls)
 - Git repository context
+- Rust toolchain (if installing code2prompt via Cargo)
 
 ## Basic Usage
 
@@ -148,8 +158,15 @@ The script displays token counts and estimated costs when using `--verbose` flag
 
 **"code2prompt not found"**
 ```bash
-# Script attempts automatic installation, but if it fails:
-pip install code2prompt
+# Install the Rust version of code2prompt:
+brew install code2prompt
+
+# Alternative methods:
+# curl -fsSL https://raw.githubusercontent.com/mufeedvh/code2prompt/main/install.sh | sh
+# cargo install code2prompt
+
+# Verify installation:
+code2prompt --version  # Should show: code2prompt 3.0.2
 ```
 
 **"API key missing for model [model]"**
@@ -241,5 +258,6 @@ This approach can serve as:
 ## Status
 
 ✅ **Implemented**: Basic automated critique with code2prompt integration
+✅ **Completed**: Rust version of code2prompt (v3.0.2) installed and verified
 📋 **Planned**: Template customization and multi-model support
 🚧 **In Progress**: Integration testing with real planning documents

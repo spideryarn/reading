@@ -3,8 +3,11 @@
 /**
  * O3 Critique via Direct API - Automated Code Context Generation
  * 
- * Generates comprehensive codebase context using code2prompt, then sends to OpenAI o3 via direct API.
+ * Generates comprehensive codebase context using code2prompt (Rust version), then sends to OpenAI o3 via direct API.
  * This approach provides more reliable context gathering compared to agentic Codex CLI workflows.
+ * 
+ * Prerequisites:
+ * - Install code2prompt (Rust version): https://github.com/mufeedvh/code2prompt
  * 
  * Features:
  * - Automated file selection and filtering
@@ -37,8 +40,8 @@ class O3CritiqueCommand extends Command {
       It uses code2prompt to generate comprehensive codebase context, then sends everything
       to o3 via direct API for analysis.
       
-      The script automatically:
-      - Installs code2prompt if needed
+      The script:
+      - Requires code2prompt (Rust version) to be pre-installed
       - Generates filtered codebase context with optimal settings
       - Includes critique methodology and project documentation
       - Sends structured prompt to OpenAI o3 API
@@ -146,16 +149,16 @@ class O3CritiqueCommand extends Command {
     // Note: API key validation will happen when the model is instantiated
     // This allows support for different providers (OpenAI, Anthropic, Google)
 
-    // Check if code2prompt is installed, install if needed
+    // Check if code2prompt is installed
     try {
       execSync('which code2prompt', { stdio: 'pipe' });
     } catch {
-      this.context.stdout.write('Installing code2prompt...\n');
-      try {
-        execSync('pip install code2prompt', { stdio: this.verbose ? 'inherit' : 'pipe' });
-      } catch (installError) {
-        throw new UsageError('Failed to install code2prompt. Please install manually: pip install code2prompt');
-      }
+      throw new UsageError(
+        'code2prompt not found. Please install the Rust version:\n' +
+        '  • macOS/Linux: curl -fsSL https://raw.githubusercontent.com/mufeedvh/code2prompt/main/install.sh | sh\n' +
+        '  • Or via Cargo: cargo install code2prompt\n' +
+        '  • See: https://github.com/mufeedvh/code2prompt for more options'
+      );
     }
   }
 

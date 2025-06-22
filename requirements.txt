@@ -1,6 +1,5 @@
 # Python dependencies for Spideryarn Reading project
-# Main dependency for automated planning document critique via LLM
-code2prompt==0.8.1
+# Currently no Python dependencies required
 
-# Dependencies will be automatically installed by critique script if missing
-# To install manually: pip install -r requirements.txt
+# Note: code2prompt has been removed in favor of the Rust version
+# To install the Rust version, see: https://github.com/mufeedvh/code2prompt
