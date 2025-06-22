@@ -116,7 +116,7 @@ export default async function DocumentsPage() {
                     href={`/read/${slug}`}
                     className="flex-1 min-w-0 hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
                   >
-                    <div className="flex items-start gap-2">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium">{doc.title}</h3>
                         <p className="text-sm text-gray-500">
@@ -125,37 +125,35 @@ export default async function DocumentsPage() {
                           {isAdmin && doc.created_by && ` • Owner: ${doc.created_by.slice(0, 8)}...`}
                         </p>
                       </div>
-                      <div className="flex-shrink-0 ml-2">
-                        <TooltipOrPopover
-                          content={
-                            <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-                              <div className="text-sm text-gray-700">
-                                {doc.is_public === true ? (
-                                  <>This document is <strong>public</strong> and can be viewed by anyone with the link.</>
-                                ) : (
-                                  <>This document is <strong>private</strong> and can only be viewed by you.</>
-                                )}
-                              </div>
-                            </div>
-                          }
-                          side="top"
-                          align="center"
-                          sideOffset={8}
-                          showIndicator={false}
-                          contentClassName="p-0 bg-transparent border-0 shadow-none"
-                        >
-                          <div className="p-1">
-                            {doc.is_public === true ? (
-                              <Globe size={16} className="text-green-600" />
-                            ) : (
-                              <Lock size={16} className="text-gray-500" />
-                            )}
-                          </div>
-                        </TooltipOrPopover>
-                      </div>
                     </div>
                   </Link>
-                  <div className="ml-4 flex-shrink-0">
+                  <div className="ml-4 flex items-center gap-2 flex-shrink-0">
+                    <TooltipOrPopover
+                      content={
+                        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                          <div className="text-sm text-gray-700">
+                            {doc.is_public === true ? (
+                              <>This document is <strong>public</strong> and can be viewed by anyone with the link.</>
+                            ) : (
+                              <>This document is <strong>private</strong> and can only be viewed by you.</>
+                            )}
+                          </div>
+                        </div>
+                      }
+                      side="top"
+                      align="center"
+                      sideOffset={8}
+                      showIndicator={false}
+                      contentClassName="p-0 bg-transparent border-0 shadow-none"
+                    >
+                      <div className="p-1">
+                        {doc.is_public === true ? (
+                          <Globe size={16} className="text-green-600" />
+                        ) : (
+                          <Lock size={16} className="text-gray-500" />
+                        )}
+                      </div>
+                    </TooltipOrPopover>
                     <DeleteDocumentButton
                       documentId={doc.id}
                       documentTitle={doc.title}
