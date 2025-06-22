@@ -103,10 +103,10 @@ export function ProcessingOptions({
               />
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-gray-900 text-sm sm:text-base">
-                  Claude Sonnet (recommended)
+                  Claude Sonnet
                 </div>
                 <div className="text-xs sm:text-sm text-gray-500 mt-1">
-                  Best for most documents, excellent quality
+                  Most accurate but slower, better for shorter documents
                 </div>
               </div>
             </label>
@@ -121,10 +121,10 @@ export function ProcessingOptions({
               />
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-gray-900 text-sm sm:text-base">
-                  Gemini (good for longer docs)
+                  Gemini 2.5 Pro (recommended)
                 </div>
                 <div className="text-xs sm:text-sm text-gray-500 mt-1">
-                  Better for very long documents with large context windows
+                  Fast processing with excellent quality and large context window
                 </div>
               </div>
             </label>

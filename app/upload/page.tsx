@@ -46,7 +46,7 @@ export default function AddDocumentPage() {
     },
     processing: {
       method: 'readability', // Default method
-      provider: 'claude',
+      provider: 'gemini',
       isPublic: false
     },
     ui: {
