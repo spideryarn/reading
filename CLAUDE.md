@@ -231,12 +231,16 @@ Available evergreen documentation in `docs/` - comprehensive signposting by doma
 
 **Instructions & Modes** (workflow guidance):
 - `docs/instructions/TASKS_SUBAGENTS.md` - Detailed subagent usage guidelines for context management
-- `docs/instructions/GIT_COMMIT_CHANGES.md` - Git commit best practices and batching changes
-- `docs/instructions/SOUNDING_BOARD_MODE.md` - Collaborative discussion mode guidelines
+- `docs/instructions/GIT_COMMIT_CHANGES.md` - Guidelines for Git commit best practices including batching changes, message format, and handling concurrent changes
+- `docs/instructions/SOUNDING_BOARD_MODE.md` - Instructions for collaborative discussion mode emphasising asking questions and suggesting alternatives rather than immediate implementation
 - `docs/instructions/DETECTIVE_SCIENTIST_MODE.md` - Systematic investigation approach
 - `docs/instructions/DOCUMENT_RESEARCH.md` - Research methodology for documentation
-- `docs/instructions/UPDATE_HOUSEKEEPING_*.md` - Documentation and test maintenance processes
-- `docs/instructions/WRITE_*.md` - Guidelines for writing evergreen and planning documentation
+- `docs/instructions/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` - Process for keeping project documentation up-to-date including review steps, update patterns, and quality checklist
+- `docs/instructions/UPDATE_HOUSEKEEPING_TESTS.md` - Process for maintaining test quality and organisation while supporting rapid prototyping
+- `docs/instructions/UPDATE_CLAUDE_INSTRUCTIONS.md` - Guidelines for maintaining CLAUDE.md to help AI agents operate effectively on the Spideryarn Reading codebase
+- `docs/instructions/WRITE_EVERGREEN_DOC.md` - Guidelines for writing evergreen documentation including structure, cross-references, status indicators, and maintenance practices
+- `docs/instructions/WRITE_PLANNING_DOC.md` - Guide for writing planning/project management documents with file naming conventions, structure, and stage-based action plans
+- `docs/instructions/GATHER_DIVERSE_INPUTS_AND_CRITIQUES_ON_PLANNING_DOCS_FROM_OTHER_AI_MODELS.md` - Process for obtaining external AI critiques of planning documents for quality assurance
 
 **Core Development & Architecture**:
 - `docs/reference/CODING_PRINCIPLES.md` - **CRITICAL**: Core development philosophy for AI-first methods
@@ -246,7 +250,7 @@ Available evergreen documentation in `docs/` - comprehensive signposting by doma
 - `docs/reference/ARCHITECTURE_URL_STATE.md` - URL state management patterns
 - `docs/reference/SETUP*.md` - Development environment setup and configuration
 - `docs/reference/COMMAND_LINE_SCRIPTS.md` - Guidelines for CLI script development
-- `docs/reference/PROJECT_STATUS.md` - Current development state and implemented features
+- `docs/reference/PROJECT_STATUS.md` - Current development state overview showing implemented features (AI summaries, glossary, headings) and planned enhancements
 
 **Testing** (comprehensive testing ecosystem):
 - `docs/reference/TESTING_OVERVIEW.md` - Testing approach with Jest and React Testing Library
@@ -278,23 +282,23 @@ Available evergreen documentation in `docs/` - comprehensive signposting by doma
 - `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - shadcn/ui integration guide
 - `docs/reference/STYLING_OVERVIEW.md` - CSS configuration and theme settings
 - `docs/reference/STYLING_*.md` - Colors, fonts, icons, highlighting, tooltips, mobile detection
-- `docs/reference/UNIFIED_LEFT_PANE.md` - Left pane architecture with ToC and AI features
+- `docs/reference/UNIFIED_LEFT_PANE.md` - Architecture and features of the unified left pane with tabbed interface, ToC, AI-generated headings, and tooltip summaries
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - Application keyboard shortcuts
 
 **AI Features & Tools**:
-- `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - @assistant-ui/react integration
-- `docs/reference/TOOL_SUMMARISE.md` - AI summarization with hierarchical granularity
-- `docs/reference/TOOL_GLOSSARY.md` - Entity extraction and glossary generation
+- `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Comprehensive technical guide for integrating the @assistant-ui/react library into the chatbot interface within the Tools pane
+- `docs/reference/TOOL_SUMMARISE.md` - Documents the AI summarise feature that generates hierarchical summaries of document content using LLM analysis at multiple granularity levels
+- `docs/reference/TOOL_GLOSSARY.md` - Documents the glossary feature that extracts key entities from documents using LLM analysis and displays them in a dedicated pane
 - `docs/reference/TOOL_HEADINGS.md` - AI-generated heading system
 - `docs/reference/TOOL_*.md` - Search, highlighting, metadata, reading difficulty tools
-- `docs/reference/LLM_PROMPT_TEMPLATES.md` - Nunjucks + Zod template system
-- `docs/reference/LLM_MODEL_CONFIGURATION.md` - AI model configuration and usage
+- `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide for creating AI/LLM calls using the Nunjucks + Zod template system with type safety and validation
+- `docs/reference/LLM_MODEL_CONFIGURATION.md` - AI model configuration and usage patterns
 - `docs/reference/LLM_*.md` - Token tracking, evaluation frameworks
 
 **Content Processing**:
 - `docs/reference/PDF_TO_HTML_*.md` - PDF conversion approaches (LLM, open source, paid services)
 - `docs/reference/HTML_*.md` - HTML content processing and sanitization
-- `docs/reference/MUTATIONS.md` - Reversible document transformation system
+- `docs/reference/MUTATIONS.md` - Documents the reversible document transformation system for applying/reverting changes like AI-generated headings and content filtering
 - `docs/reference/UPLOAD.md` - Document upload and processing
 
 **Specialized & Research**:
@@ -306,8 +310,10 @@ Available evergreen documentation in `docs/` - comprehensive signposting by doma
 
 **Row Level Security (RLS) Testing - IMPORTANT**:
 - **ALWAYS use real RLS testing**: Use `RLSTestDatabase` class in `lib/testing/rls-database-test-utils.ts`
-- **AVOID simulation approaches**: Old simulation-based tests deprecated for security
-- **Documentation**: `docs/reference/TESTING_DATABASE.md` for comprehensive patterns
+- **AVOID simulation approaches**: Old simulation-based RLS tests have been deprecated for security reasons
+- **Essential for security**: Real RLS testing discovered and fixed critical vulnerabilities
+- **See**: `docs/reference/TESTING_DATABASE.md` for comprehensive real RLS testing patterns
+- **Example**: `lib/services/database/__tests__/rls-policies-real.test.ts` for reference implementation
 
 **Recent Decisions & Planning**: `planning/*.md` for major feature progress tracking and architectural decisions
 

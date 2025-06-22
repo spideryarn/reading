@@ -83,7 +83,7 @@ https://github.com/spideryarn/reading/
 
    Navigate to e.g. http://localhost:3001/ (or your configured port)
 
-   **For AI agents**: Use background daemon mode for automation - see `docs/reference/DEV_SERVER_AUTOMATION.md` for comprehensive dev server management with daemon mode, health checking, and multi-worktree isolation.
+   **For AI agents**: Use background daemon mode for automation - see `docs/reference/SETUP_DEV_SERVER_AUTOMATION.md` for comprehensive dev server management with daemon mode, health checking, and multi-worktree isolation.
 
 7. **Verify setup:**
    ```bash
@@ -206,7 +206,7 @@ This includes:
 - Enhanced dev server automation with background daemon mode for AI-first development
 - Multi-worktree browser automation isolation for concurrent testing
 
-See also `docs/reference/DEV_SERVER_AUTOMATION.md` for comprehensive dev server management capabilities across all worktrees.
+See also `docs/reference/SETUP_DEV_SERVER_AUTOMATION.md` for comprehensive dev server management capabilities across all worktrees.
 
 ## Project Understanding
 

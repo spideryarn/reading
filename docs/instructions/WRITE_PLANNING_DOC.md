@@ -100,6 +100,13 @@ Early stages:
 At the beginning of stages:
 - Add an action to write some tests (i.e. before writing code), or to update tests with new edge cases (as we add new functionality and layer in complexity). Edge cases should have been agreed/prioritised with the user, otherwise stop to discuss them.
 
+After creating the initial planning doc:
+- **External critique stage**: Follow `docs/instructions/GATHER_DIVERSE_INPUTS_AND_CRITIQUES_ON_PLANNING_DOCS_FROM_OTHER_AI_MODELS.md` to get external AI model feedback
+  - Commit the initial planning doc first (pre-critique version)
+  - Run critique process and incorporate useful feedback
+  - Update planning doc with critique insights and revisions
+  - Commit the revised version
+
 At the end of stage (where appropriate):
 - If doing UI-related changes, add an end-of-stage action to check things look ok with Puppeteer MCP (in a subagent, provided with rich description of the background/approach to take/success criteria).
 - Add action to run the linter/build, and make changes in response as you see fit.
