@@ -122,7 +122,6 @@ At the end of stage (where appropriate):
 
 In later stages:
 - Add actions to update relevant `docs/reference/*.md` evergreen docs (see `docs/instructions/WRITE_EVERGREEN_DOC.md`). If you think we need a new evergreen-doc, ask the user
-- Add actions to tidy up tests (e.g. remove redundant ones, consolidate into fewer, higher-coverage, integration tests optimised for catching regressions), and any other helpful polish
 - Add actions to update logging/monitoring if needed (see `docs/reference/LOGGING_BEST_PRACTICES.md`)
 
 As final actions:
@@ -131,7 +130,11 @@ As final actions:
   - `npm run lint` - Verify code quality standards are met
   - `npm test` - Confirm all tests pass (run in subagent if verbose)
   - Only include checks that are relevant to the changes made during the project
-- Consolidate our tests. Consider removing low-level ones that will be brittle or that we don't need, and adding one or two high-coverage, integration tests that will catch important regressions.
+- **Test consolidation** - Use a subagent to:
+  - Search for all tests added during this work
+  - Identify redundant or low-level tests that will be brittle
+  - Consolidate into fewer, high-coverage integration or E2E tests
+  - Aim for net reduction in test count while maintaining coverage
 - Ask the user's permission to merge back (if we created a branch)
 - Move the doc to `planning/finished/` and commit.
 
