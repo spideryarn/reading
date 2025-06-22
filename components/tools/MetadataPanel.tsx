@@ -816,7 +816,7 @@ export function MetadataPanel({
                             />
                           </div>
                           <span className="text-sm font-semibold text-slate-900 group-hover:text-blue-700 transition-colors">
-                            {currentIsPublic ? 'Public' : 'Private'}
+                            Public?
                           </span>
                           {isUpdating && (
                             <CircleNotch size={16} weight="bold" className="animate-spin text-amber-600" />
