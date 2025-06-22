@@ -118,8 +118,7 @@ export const MODEL_DEFINITIONS: Record<string, ModelConfig> = {
       outputPer1M: 10.00,
     },
   },
-  // OpenAI models (commented out - API integration not yet implemented)
-  /*
+  // OpenAI models
   'openai:o3:latest': {
     provider: 'openai',
     modelName: 'o3',
@@ -159,7 +158,6 @@ export const MODEL_DEFINITIONS: Record<string, ModelConfig> = {
       outputPer1M: 80.00,
     },
   },
-  */
 }
 
 

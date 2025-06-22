@@ -5,7 +5,7 @@
     "scripts": {
         "dev": "./scripts/dev-with-restart.sh",
         "dev:daemon": "./scripts/dev-with-restart.sh --daemon",
-        "dev:stop": "./scripts/dev-with-restart.sh --stop", 
+        "dev:stop": "./scripts/dev-with-restart.sh --stop",
         "dev:status": "./scripts/dev-with-restart.sh --status",
         "dev:safe": "PATH=\"/opt/homebrew/bin:$PATH\" dotenv -e .env.local -- next dev --turbopack > dev.log 2>&1",
         "build": "next build",
@@ -29,6 +29,7 @@
     "dependencies": {
         "@ai-sdk/anthropic": "^1.2.12",
         "@ai-sdk/google": "^1.2.18",
+        "@ai-sdk/openai": "^1.3.22",
         "@anthropic-ai/sdk": "^0.52.0",
         "@assistant-ui/react": "^0.10.13",
         "@assistant-ui/react-markdown": "^0.10.4",

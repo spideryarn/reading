@@ -4,12 +4,14 @@
 
 - Node.js (latest LTS version)
 - npm or yarn
-- Anthropic API key
+- Anthropic API key (and/or OpenAI API key for critique features)
 - Supabase CLI (install with `npm install -g supabase`)
 - sd (for codebase refactoring): `brew install sd` or `cargo install sd`
+- Python 3.7+ (for planning document critique features - installed automatically when needed)
 
 ## See also
 
+- `docs/reference/SETUP_PYTHON.md` - Python dependencies for critique features (optional for most developers)
 - `docs/reference/SETUP_SECRETS_AND_ENVIRONMENT_VARIABLES.md` - Environment variable security and production configuration
 - `docs/reference/SD_FIND_REPLACE.md` - sd usage guide for codebase refactoring
 
@@ -31,7 +33,10 @@ https://github.com/spideryarn/reading/
 2. **Environment setup:**
    ```bash
    cp .env.example .env.local
-   # Add your ANTHROPIC_API_KEY to .env.local
+   # Add your API keys to .env.local:
+   # - ANTHROPIC_API_KEY (required for AI features)
+   # - OPENAI_API_KEY (optional, for critique features)
+   # - GOOGLE_GENERATIVE_AI_API_KEY (optional, for Gemini models)
    ```
 
 3. **Initialize Supabase (if not already done):**
