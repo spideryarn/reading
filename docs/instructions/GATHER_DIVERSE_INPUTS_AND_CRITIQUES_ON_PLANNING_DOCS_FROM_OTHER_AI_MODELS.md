@@ -6,7 +6,7 @@ Process for obtaining external critiques of planning documents using different A
 
 - `docs/instructions/WRITE_PLANNING_DOC.md` - Guidelines for writing planning documents (includes this critique stage)
 - `docs/instructions/CRITIQUE_OF_PLANNING_DOC.md` - Methodology for systematic planning document critique
-- `scripts/codex-with-env.sh` - Automated script for running OpenAI o3-pro critiques
+- `scripts/codex-with-env.sh` - Automated script for running OpenAI o3-pro critiques (promising but not working reliably right now - use scripts/o3-critique-as-api.ts instead)
 - `scripts/parse-critique-output.ts` - Parser for extracting clean critique text from raw model output
 
 ## Overview
@@ -35,27 +35,17 @@ Before running critique, user should specify what type of feedback is most valua
 
 ### 3. Run External Critique
 
-**Standard command:**
+**NOTE**: The codex-with-env.sh script is promising but not working reliably right now due to timeouts and broken function calls. Use scripts/o3-critique-as-api.ts instead:
+
+**Recommended command:**
 ```bash
-./scripts/codex-with-env.sh planning/your-planning-doc.md
+./scripts/o3-critique-as-api.ts planning/your-planning-doc.md
 ```
 
-**For large/complex documents (recommended):**
+**Legacy approach (not currently working):**
 ```bash
-# When using Claude Code CLI, use extended timeout for complex documents
-# Claude should use the Bash tool with timeout parameter: 1200000 (20 minutes)
+# This approach has reliability issues - use o3-critique-as-api.ts instead
 ./scripts/codex-with-env.sh planning/your-planning-doc.md
-```
-
-**⚠️ Critical Timeout Settings:**
-- **Claude Code CLI Bash tool**: Use `"timeout": 1200000` parameter (20 minutes)
-- **Default timeout**: 2 minutes (120,000ms) - **insufficient for o3-pro**
-- **OpenAI o3-pro processing time**: Typically 6-15 minutes for complex documents
-- **Required for**: All planning document critiques
-
-**For Claude agents**: Always use extended timeout when running critique commands:
-```json
-{"command": "./scripts/codex-with-env.sh planning/doc.md", "timeout": 1200000}
 ```
 
 This generates:

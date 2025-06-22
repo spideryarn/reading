@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# NOTE: This approach is promising but not working reliably right now due to
+# a mix of timeouts and broken function calls. Use scripts/o3-critique-as-api.ts instead.
+#
 # OpenAI Codex CLI wrapper for planning document critique using o3 model
 # Configured for read-only, non-interactive analysis with stdout output
 # Usage: ./scripts/codex-with-env.sh planning/your-planning-doc.md

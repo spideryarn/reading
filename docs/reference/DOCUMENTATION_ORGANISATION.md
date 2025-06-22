@@ -30,6 +30,7 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/SETUP.md` - Development environment setup guide including Node.js, Supabase, Git worktree configuration ⭐ **Start here**
 - `docs/reference/SETUP_DEV_SERVER_AUTOMATION.md` - Enhanced dev server management with background daemon mode for AI-first development and multi-worktree isolation ⭐ **Essential for AI agents**
 - `docs/reference/SETUP_DEPLOYMENT_PRODUCTION.md` - Production deployment guide covering Vercel setup, custom domain configuration, environment management, and troubleshooting ⭐ **Essential for deployment**
+- `docs/reference/SETUP_PYTHON.md` - Python environment setup and dependencies for critique generation features
 - `docs/reference/ENVIRONMENT_DETECTION.md` - Environment-aware error handling for distinguishing between local development and cloud/production environments
 - `docs/reference/LOGGING_BEST_PRACTICES.md` - Comprehensive logging guide covering library choices (Pino vs Winston), Vercel observability, and production monitoring strategies
 - `docs/reference/TESTING_OVERVIEW.md` - Testing approach documentation covering Jest with React Testing Library setup, test structure, and current test coverage

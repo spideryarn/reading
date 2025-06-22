@@ -3,6 +3,7 @@
 
 import { anthropic as anthropicProvider } from '@ai-sdk/anthropic'
 import { google as googleProvider } from '@ai-sdk/google'
+import { openai as openaiProvider } from '@ai-sdk/openai'
 import { getModelStringFromEnvironment, getModelConfigFromEnvironment } from '@/lib/config'
 import { parseModelString } from '@/lib/config/models'
 
@@ -22,10 +23,12 @@ const providers = {
     }
     return googleProvider
   },
-  // OpenAI integration is planned but not yet implemented. Calling this will
-  // throw a descriptive error so it's obvious what went wrong.
   openai: () => {
-    throw new Error('OpenAI provider integration is not yet implemented')
+    const apiKey = process.env.OPENAI_API_KEY
+    if (!apiKey) {
+      throw new Error('OPENAI_API_KEY environment variable is required for OpenAI provider')
+    }
+    return openaiProvider
   },
 }
 

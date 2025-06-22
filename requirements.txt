@@ -1,0 +1,6 @@
+# Python dependencies for Spideryarn Reading project
+# Main dependency for automated planning document critique via LLM
+code2prompt==0.8.1
+
+# Dependencies will be automatically installed by critique script if missing
+# To install manually: pip install -r requirements.txt
