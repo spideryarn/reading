@@ -20,6 +20,7 @@ Use this to capture conversations that are:
 - Specific terminology or framing the user prefers
 - Important constraints or criteria
 - Memorable insights or "aha" moments
+- Specific proposals, examples, and code snippets discussed
 
 **Synthesize and clean up:**
 - Rambling or repetitive exchanges
@@ -103,6 +104,8 @@ Use flexible structure based on conversation flow, but generally follow this pat
 
 ## Writing Guidelines
 
+*Note: Take inspiration from `docs/instructions/WRITE_EVERGREEN_DOC.md` for structure and clarity where applicable, but don't follow it slavishly - conversation docs have different goals and may need different approaches.*
+
 ### Capturing User Voice
 Use direct quotes to preserve the user's:
 - **Specific requirements**: "I want to make sure it cites better"
@@ -117,12 +120,14 @@ When summarizing rambling or repetitive sections:
 - **Organize chronologically or thematically**: Group related points together
 - **Preserve key terminology**: Use the user's preferred words for concepts
 - **Note evolution of thinking**: "Initially considered X, but shifted to Y because..."
+- **Include concrete details**: Preserve examples, code patterns, or technical approaches that illustrate key points
 
 ### Handling Technical Details
 - **Summarize research findings**: Focus on implications, not full details
 - **Link to sources**: Let readers dive deeper if needed  
 - **Preserve methodology**: How research was conducted or decisions were made
 - **Note tool outputs**: What data or results informed the conversation
+- **Include specifics**: Preserve key examples, data points, or code snippets that informed decisions
 
 ## Source and Citation Handling
 
@@ -145,6 +150,7 @@ When capturing research findings:
 - Note the research methodology (parallel agents, etc.)
 - Preserve key source URLs and assessment of credibility
 - Distinguish between authoritative sources and anecdotal evidence
+- Include specific examples, case studies, or data points that informed decisions
 
 ## Quality Guidelines
 
@@ -206,6 +212,7 @@ Focus on:
 - What criteria drove the decision
 - What concerns or trade-offs were discussed
 - The final decision and rationale
+- Specific proposals and examples that influenced the decision
 
 ### Exploratory Conversations  
 Focus on:
@@ -227,6 +234,7 @@ Focus on:
 - What key findings emerged
 - How findings were interpreted or applied
 - What gaps or follow-up research were identified
+- Specific examples, data points, or methodological insights that stood out
 
 ## Integration with Other Documentation
 
