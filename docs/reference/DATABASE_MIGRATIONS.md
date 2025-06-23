@@ -110,7 +110,7 @@ Before creating ANY new table or modifying existing tables:
 - [ ] Write comprehensive RLS tests
 - [ ] Update security documentation
 
-See `planning/250618a_database_rls_security_comprehensive_review.md` for detailed RLS implementation patterns.
+See `planning/finished/250618a_database_rls_security_comprehensive_review.md` for detailed RLS implementation patterns.
 
 
 ## TypeScript Type Generation
