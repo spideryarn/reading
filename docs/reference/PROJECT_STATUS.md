@@ -122,7 +122,6 @@ see `docs/reference/ARCHITECTURE_OVERVIEW.md` for detailed system architecture
 3. **Persistent AI content** - Store generated summaries/headings in Supabase
 4. **Enhanced document upload** - Support for additional file formats beyond PDF
 5. **Document expand/collapse** - Granular content visibility controls
-6. **Semantic search caching** - Cache and persist semantic search results
 
 ### Infrastructure Improvements
 1. **Background processing** - Move from frontend-driven to proper job queue
@@ -136,7 +135,6 @@ see `docs/reference/ARCHITECTURE_OVERVIEW.md` for detailed system architecture
 2. **Social media posting** - Complete Bluesky integration for tweet threads
 3. **Document visibility controls** - Add expand/collapse functionality for sections
 4. **Persist AI content** - Save generated summaries and headings to database
-5. **Semantic search caching** - Implement caching for semantic search results
 
 see also:
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture
