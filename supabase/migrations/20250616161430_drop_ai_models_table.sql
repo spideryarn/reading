@@ -10,7 +10,7 @@
 -- IMPACT: This is a final cleanup step - all functionality now uses model_string
 --
 -- Part of: Stage 13 Complete Database Cleanup
--- Planning: planning/250614a_llm_model_management_simplification.md
+-- Planning: planning/finished/250614a_llm_model_management_simplification.md
 -- Date: 2025-06-16
 
 -- Verify no foreign key constraints exist (safety check)

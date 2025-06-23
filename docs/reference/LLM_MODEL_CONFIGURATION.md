@@ -15,7 +15,7 @@ The Spideryarn Reading application uses a **model string** approach for AI model
 📖 **Related Documentation:**
 - `docs/reference/DATABASE_SCHEMA.md` - Database schema with model_string fields
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - AI/LLM call patterns using model strings
-- `planning/250614a_llm_model_management_simplification.md` - Migration planning and implementation
+- `planning/finished/250614a_llm_model_management_simplification.md` - Migration planning and implementation
 
 ## Model String Format
 
