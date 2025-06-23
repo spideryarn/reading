@@ -37,7 +37,7 @@ We need a centralized system that treats tools as first-class citizens with stan
 - `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` - Command palette implementation
 - `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Tab system architecture
 - `components/command-palette.tsx` - Current hardcoded command implementation
-- `planning/250614a_tool_url_state_management.md` - URL state integration (completed - see implementation debrief)
+- `planning/finished/250614a_tool_url_state_management.md` - URL state integration (completed - see implementation debrief)
 - `planning/finished/250615a_url_state_single_source_of_truth.md` - URL as single source of truth (completed)
 - `planning/250614e_llm_tool_function_calling.md` - LLM integration (depends on this)
 
@@ -337,7 +337,7 @@ This planning doc focuses only on core registry. See:
 ## Related Documents
 
 ### Prerequisites
-- `planning/250614a_tool_url_state_management.md` - URL state (completed)
+- `planning/finished/250614a_tool_url_state_management.md` - URL state (completed)
 - `planning/finished/250615a_url_state_single_source_of_truth.md` - URL as SoT (completed)
 
 ### Next Steps

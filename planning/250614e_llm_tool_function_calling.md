@@ -27,7 +27,7 @@ We need a system that generates function schemas from tool definitions and safel
 - `planning/250614b_unified_tool_registry_architecture.md` - Core tool registry (dependency)
 - `planning/250614c_command_palette_dynamic_generation.md` - Command generation (dependency)
 - `planning/250614d_tool_execution_framework.md` - Execution framework (dependency)
-- `planning/250614a_tool_url_state_management.md` - URL state for function results
+- `planning/finished/250614a_tool_url_state_management.md` - URL state for function results
 
 ## Principles & Key Decisions
 
@@ -400,6 +400,6 @@ AI: [Calls search_document with type: "semantic", query: "technical terminology"
 - `planning/250614d_tool_execution_framework.md` - Execution framework
 
 ### Related
-- `planning/250614a_tool_url_state_management.md` - URL state integration
+- `planning/finished/250614a_tool_url_state_management.md` - URL state integration
 - `planning/finished/250615a_url_state_single_source_of_truth.md` - URL as SoT
 - `planning/critiques/o3__CRITIQUE__OF__250614b_unified_tool_registry_architecture.md` - External review that informed the split approach
