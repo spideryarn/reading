@@ -1,5 +1,8 @@
 #!/usr/bin/env npx tsx
 
+// Extract Claude.ai conversations from JSON export to structured markdown
+
+
 import { Cli, Command, Option, UsageError } from 'clipanion';
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { resolve, dirname, basename } from 'path';

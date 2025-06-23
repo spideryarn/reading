@@ -9,7 +9,7 @@ This document describes the process for maintaining test quality and organisatio
 - `docs/reference/TESTING_TROUBLESHOOTING.md` - Known issues and debugging strategies  
 - `docs/instructions/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` - General housekeeping process pattern that inspired this approach
 - `docs/instructions/WRITE_PLANNING_DOC.md` - For creating one-time test cleanup planning documents
-- `docs/instructions/GIT_COMMITS.md` - How to commit test improvements
+- `docs/instructions/GIT_COMMIT_CHANGES.md` - How to commit test improvements
 - `planning/250608a_test_infrastructure_cleanup.md` - Example one-time infrastructure cleanup planning
 - `jest.config.js` & `jest.setup.js` - Jest configuration and test setup
 
@@ -157,7 +157,7 @@ Use subagents for diagnosis and repair of complex infrastructure issues.
 - Add troubleshooting notes for future issues
 
 **Commit Changes:**
-Use subagent following `docs/instructions/GIT_COMMITS.md` to commit test improvements in logical batches.
+Use subagent following `docs/instructions/GIT_COMMIT_CHANGES.md` to commit test improvements in logical batches.
 
 ## Implementation Approaches
 

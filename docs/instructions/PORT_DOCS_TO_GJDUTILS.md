@@ -2,21 +2,21 @@ This repo is about the Spideryarn reading app. But this task is about `gjdutils`
 
 Within it, we have cloned `gjdutils/` from https://github.com/gregdetre/gjdutils - this is my open source repository of useful scripts, snippets, and LLM prompts.
 
-Every so often I would like to take a look at `docs/*.md`, and examine whether there are any docs in there that could usefully be ported over to `gjdutils/docs/` to be shared with the wider world.
+Every so often I would like to take a look at `docs/instructions/*.md`, and examine whether there are any docs in there that could usefully be ported over to `gjdutils/docs/instructions/` to be shared with the wider world.
 
-I am actively improving & adding to `docs/` as I develop Spideryarn Reading, and so I would like to occasionally update `gjdutils/docs/` to include these improvements. The tricky part is that while some of the docs in this app's `docs/` are generic and could be of widespread utility (copied, perhaps with light modification), some of the docs in this app's `docs/` are specific to this app, and it wouldn't make sense to include them in `gjdutils/docs/`.
+I am actively improving & adding to `docs/instructions/` as I develop Spideryarn Reading, and so I would like to occasionally update `gjdutils/docs/instructions/` to include these improvements. The tricky part is that while some of the docs in this app's `docs/instructions/` are generic and could be of widespread utility (copied, perhaps with light modification), some of the docs in this app are specific to this app, and it wouldn't make sense to include them in the more general-purpose `gjdutils/docs/instructions/`.
 
-Use a subagent to gather information & compare what's in both `docs` folders, and then make a proposal for:
-- Docs that exist in both that we should compare, and see if there are any improvements from one to port/update in the other (probably from `docs` -> `gjdutils/docs`, but perhaps occasionally vice versa), e.g. `docs/instructions/WRITE_PLANNING_DOC.md` also exists as an older version as `gjdutils/docs/WRITE_PLANNING_DOC.md`.
-- Docs that only exist in `docs/` and should be added to `gjdutils/docs` (or perhaps even vice versa).
-- Docs that should be renamed in `gjdutils/docs` (because there's a better name in `docs/`).
+Use a subagent to gather information & compare what's in both `docs/instructions/` folders, and then make a proposal for:
+- Docs that exist in both that we should compare, and see if there are any improvements from one to port/update in the other (probably from this app -> gjdutils, but perhaps occasionally vice versa), e.g. `docs/instructions/WRITE_PLANNING_DOC.md` also exists as an older version as `gjdutils/docs/instructions/WRITE_PLANNING_DOC.md`.
+- Docs that only exist in `docs/instructions/` and should be added to `gjdutils/docs/instructions/` (or perhaps even vice versa).
+- Docs that should be renamed in `gjdutils/docs/instructions/` (because there's a better name in `docs/instructions/`).
 - Docs that should be removed (though probably there should be a good reason for this, e.g. there are duplicates, or we agree the doc is bad/out of date in some clear way).
 - Include this `docs/instructions/PORT_DOCS_TO_GJDUTILS.md` as an example of one we should port (so that other projects can also port their docs to become general/shareable)
 
-When porting from `docs/` -> `gjdutils/docs/`, remove/generalise any references that are specific to this app. This could vary case-by-case, so let's discuss.
+When porting from this app -> gjdutils:
+- Remove/generalise any references that are specific to this app.
+- De-emphasise terminology that's specific to Claude Code (e.g. `ultrathink` -> `think hard`, `subagents` -> `subagents/AI assistants if available`). This could vary case-by-case, so let's discuss.
 
 My guess is that many of the most relevant docs will be commands (e.g. `WRITE_PLANNING_DOCS`, `DEBRIEF_PROGRESS.md`) or modes (e.g. `SOUNDING_BOARD_MODE.md`), etc.
-
-Discuss your proposal with the user. Don't make changes until they have been agreed.
 
 Once agreed, use tasks and subagents (provided with rich context) to make the updates.
