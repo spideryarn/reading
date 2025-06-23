@@ -69,17 +69,20 @@ see: `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
 - ✅ Authentication system accessibility
 - ✅ Bot user agent handling
 
+### 9. `ai-tweet-thread-generation.spec.ts` - AI Tweet Thread Generation
+- ✅ Complete tweet thread generation workflow
+- ✅ Document upload and AI processing pipeline
+- ✅ Tweet thread generation with real LLM calls
+- ✅ Character limit validation and error handling
+- ✅ Copy/share functionality testing
+- ✅ Different content types (HTML upload, URL extraction)
+
 ## Coverage Gaps (Not Yet Tested)
 
 ### High Priority
-- ❌ AI chat conversation with real responses
 - ❌ Document deletion flow
-- ❌ AI heading generation
-- ❌ Glossary generation and display
-- ❌ Summary generation (multiple levels)
 
 ### Medium Priority
-- ❌ Tweet thread generation
 - ❌ Keyboard shortcuts (Cmd+K, etc.)
 - ❌ Cross-document navigation
 - ❌ Settings management
@@ -132,6 +135,58 @@ tests/e2e/
 - `/lib/auth/__tests__/admin-utils.test.ts` (125 lines) - Admin functionality
 
 **Justification**: Comprehensive E2E authentication tests (8 scenarios in `document-access-control.spec.ts` and `auth.spec.ts`) provide superior coverage to heavily mocked unit tests. Real RLS testing and admin utilities are security-critical and test actual database-level enforcement.
+
+### Phase 4: AI Features and Tools Consolidation (✅ Completed)
+**Completed**: 2025-06-23
+
+**Consolidation Summary**:
+- **Removed**: 3,005 lines of heavily mocked AI unit tests that were superseded by comprehensive E2E AI coverage
+- **Preserved**: 1,328 lines of algorithmic and utility tests
+- **Added**: 1 new E2E test for tweet thread generation (240 lines)
+
+**Files Removed**:
+- `/app/api/__tests__/tools-api-integration.test.ts` (713 lines) - Heavily mocked API integration
+- `/app/api/chat/__tests__/chat-streaming.test.ts` (439 lines) - Mocked streaming functionality
+- `/app/api/__tests__/headings.test.ts` (601 lines) - Heavily mocked headings generation
+- `/app/api/__tests__/tweet-thread.test.ts` (393 lines) - Mocked tweet generation
+- `/lib/services/__tests__/llm-provider-switching.test.ts` (424 lines) - Provider configuration tests
+- `/app/api/__tests__/headings-performance.test.ts` (435 lines) - Performance testing with mocks
+
+**Files Preserved** (Algorithmic Logic):
+- `/lib/services/__tests__/llm-provider.test.ts` (99 lines) - Core LLM provider configuration logic
+- `/lib/services/__tests__/heading-section-detector.test.ts` (111 lines) - Algorithmic heading detection
+- `/lib/services/database/__tests__/ai-calls-usage-tracking.test.ts` (257 lines) - Database tracking logic
+- Various tool URL state tests (861 lines) - URL state management algorithms
+
+**E2E Coverage Added**:
+- `/tests/e2e/ai-tweet-thread-generation.spec.ts` (240 lines) - Complete tweet thread workflow
+
+**Justification**: Existing E2E tests in `document-upload-processing-with-ai-integration.spec.ts` already provided comprehensive AI feature coverage (chat, headings, glossary, summary). The heavily mocked unit tests provided no additional value over real user workflow testing. Algorithmic and configuration logic preserved as unit tests.
+
+### Phase 3: Search Functionality Consolidation (✅ Completed)
+**Completed**: 2025-06-23
+
+**Consolidation Summary**:
+- **Removed**: 566 lines of redundant search API unit tests superseded by comprehensive E2E search coverage
+- **Preserved**: 618 lines of algorithmic and utility tests that E2E cannot effectively replace
+
+**E2E Search Coverage** (1,259 lines across 4 test files):
+- `document-search-navigation-workflow.spec.ts` (481 lines) - Complete search workflow with semantic AI
+- `search-with-highlight-validation.spec.ts` (236 lines) - Precise highlight validation and accuracy
+- `search-with-document-creation.spec.ts` (242 lines) - End-to-end document creation and search
+- `document-search-navigation-simplified.spec.ts` (300 lines) - Simplified search flow and edge cases
+
+**Files Removed**:
+- `/app/api/__tests__/semantic-search-consolidated.test.ts` (566 lines, 70 mocks) - Heavy API route mocking
+
+**Files Preserved** (Algorithmic Logic):
+- `/lib/utils/__tests__/search-context-extraction.test.ts` (286 lines) - Text context extraction algorithms
+- `/lib/utils/__tests__/semantic-search.test.ts` (56 lines) - String normalization utilities  
+- `/lib/prompts/templates/__tests__/semantic-search.test.ts` (167 lines) - Zod schema validation
+- `/lib/services/__tests__/semantic-search-formatter.test.ts` (109 lines) - Document formatting algorithms
+- `/lib/tools/__tests__/url-state*.test.ts` - URL parameter handling utilities
+
+**Justification**: E2E tests provide comprehensive coverage of search user experience including text search, semantic AI search, highlighting, navigation, and URL state management. Preserved tests cover pure algorithmic logic and utility functions that cannot be effectively tested through user interface interactions.
 
 ## Maintenance
 
