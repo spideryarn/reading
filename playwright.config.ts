@@ -86,6 +86,17 @@ export default defineConfig({
       },
       dependencies: ['setup'],
     },
+    
+    // Chrome tests without authentication (for error pages, public content, etc.)
+    {
+      name: 'chromium-no-auth',
+      testMatch: '**/error-page-testing.spec.ts',
+      use: { 
+        ...devices['Desktop Chrome'],
+        // No storageState - fresh context for each test
+        storageState: { cookies: [], origins: [] },
+      },
+    },
   ],
   
   /* Environment-specific folder for test artifacts */
