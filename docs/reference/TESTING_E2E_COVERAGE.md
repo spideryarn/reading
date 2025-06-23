@@ -81,6 +81,9 @@ see: `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
 
 ### High Priority
 - ❌ Document deletion flow
+- ❌ AI heading generation
+- ❌ Glossary generation and display
+- ❌ Summary generation (multiple levels)
 
 ### Medium Priority
 - ❌ Keyboard shortcuts (Cmd+K, etc.)
@@ -89,11 +92,19 @@ see: `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
 - ❌ Reading difficulty metrics
 - ❌ Highlight management
 
+### 10. `error-states.spec.ts` - Error Handling
+- ✅ Custom 404 page display and functionality
+- ✅ Custom 500 error page display and functionality  
+- ✅ Error page navigation (Go Home, Go Back buttons)
+- ✅ Error boundary handling of React component errors
+- ✅ Development error details display
+- ✅ Error page styling and layout consistency
+
 ### Low Priority
 - ❌ Export functionality
 - ❌ Print styling
 - ❌ Mobile responsive behavior
-- ❌ Error recovery flows
+- ❌ Error recovery flows (beyond basic error boundary)
 
 ## Quick Coverage Check
 
@@ -111,7 +122,8 @@ tests/e2e/
 ├── document-*.spec.ts        # Document operations
 ├── ai-*.spec.ts             # AI features (TODO)
 ├── navigation.spec.ts        # General navigation
-└── search-*.spec.ts         # Search variants
+├── search-*.spec.ts         # Search variants
+└── error-states.spec.ts     # Error handling and recovery
 ```
 
 ## Test Consolidation Progress
