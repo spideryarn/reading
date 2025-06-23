@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { PromptTemplate } from '../types'
+import { join } from 'path'
 
 // Schema for planning document critique inputs
 export const planningDocCritiqueSchema = z.object({
@@ -16,7 +17,7 @@ export const planningDocCritiqueTemplate: PromptTemplate<typeof planningDocCriti
   name: 'planning-doc-critique',
   description: 'Generate comprehensive critique of planning documents using codebase context',
   schema: planningDocCritiqueSchema,
-  templatePath: 'planning-doc-critique.njk',
+  templatePath: join(__dirname, 'planning-doc-critique.njk'),
   modelConfig: {
     temperature: 0.1,  // Low temperature for consistent, analytical responses
     maxTokens: 4000,   // Allow for comprehensive critique

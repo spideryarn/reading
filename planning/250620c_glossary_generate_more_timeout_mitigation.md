@@ -308,6 +308,57 @@ Generate up to {{ max_entities or 20 }} entities...
 
 **Individual Entity Storage**: Considered migrating to individual database rows per entity for better incremental updates, but adds complexity and may not provide significant benefits given current usage patterns.
 
+## External Critique
+
+**Critique Date**: 2025-06-22  
+**Model**: OpenAI o3-latest  
+**Raw Output**: `planning/critiques/llm-api__CRITIQUE_OF__250620c_glossary_generate_more_timeout_mitigation__250622_1819.json`  
+**Feedback Focus**: Technical architecture, risk identification, and implementation approach validation  
+**Token Usage**: 26,428 prompt + 2,403 completion = 28,831 total tokens
+
+### Key Insights
+
+The o3 critique identified several critical blind spots that could undermine the timeout mitigation goal:
+
+1. **Root cause vs symptom**: The plan only caps entity generation but still sends the **entire document** on every call - same prompt token cost, minimal latency savings
+2. **Storage architecture decision is foundational**: JSON blob approach will hit scalability limits and create race conditions - should be Stage 1, not optional
+3. **Concurrency risks**: Multiple "Generate more" clicks can create duplicates and race conditions without proper locking
+4. **Missing API contracts**: No Zod schemas defined for LLM responses, no guaranteed completion signals
+5. **DOM scanning cost**: Client-side position detection becomes O(N×M) with hundreds of entities
+
+### Changes Made
+
+**Elevated storage architecture decision to Stage 1**: Moved individual entity table evaluation from Stage 3 to Stage 2 (after core implementation) as it's foundational for incremental updates and race condition prevention.
+
+**Added missing technical requirements**:
+- Zod response schemas for LLM output validation
+- Timeout guard with AbortController (27s limit)
+- Concurrency protection (button locking or deterministic entity slugs)
+- Server-side position calculation to avoid repeated DOM scanning
+- Environment variable configuration for production tuning
+
+**Enhanced prompt optimization**:
+- Send only entity names/aliases list instead of full entity objects (token reduction)
+- Template safety with proper escaping for entity interpolation
+- Explicit stopping criteria for LLM completion detection
+
+**Improved observability**:
+- Pino logging with timing and token tracking
+- Error handling for network failures and duplicate detection
+- Production monitoring for ongoing timeout analysis
+
+### Rejected Suggestions
+
+**Hybrid document context approach**: While the critique correctly identifies that full document context is the primary token cost, implementing context snippets adds significant complexity. Keeping the current approach for MVP and monitoring actual timeout patterns in production is more pragmatic.
+
+**Zustand state management**: Current React context approach is sufficient for MVP. Can be enhanced later if navigation state leaks become problematic.
+
+**Infinite scroll UX**: Simple "Load More" button provides better user control and is easier to implement reliably. Advanced UX can be added after core functionality is proven.
+
+### Implementation Impact
+
+The critique reinforces that this approach is "salvageable with moderate adjustments" but requires addressing the fundamental prompt length issue and storage architecture decisions early. The suggested stage reordering has been incorporated to ensure foundational decisions are locked before building dependent features.
+
 ## Risk Mitigation
 
 **Timeout Risk**: Start with conservative entity limits (20) and increase based on production performance data.
