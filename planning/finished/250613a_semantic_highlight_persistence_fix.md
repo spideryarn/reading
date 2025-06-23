@@ -12,7 +12,7 @@ Fix two critical issues with the semantic highlighting system in the Highlights 
 
 ### Context
 
-The semantic highlighting system was implemented as part of the semantic search to highlights refactor (documented in `planning/250612a_semantic_search_to_highlights_refactor.md`). The complete system is now documented in `docs/reference/TOOL_HIGHLIGHT.md`. This system allows users to create AI-powered highlights based on semantic criteria (e.g., "arguments supporting the main thesis") with confidence-based visual intensity.
+The semantic highlighting system was implemented as part of the semantic search to highlights refactor (documented in `planning/finished/250612a_semantic_search_to_highlights_refactor.md`). The complete system is now documented in `docs/reference/TOOL_HIGHLIGHT.md`. This system allows users to create AI-powered highlights based on semantic criteria (e.g., "arguments supporting the main thesis") with confidence-based visual intensity.
 
 ### The Original Implementation
 
@@ -58,7 +58,7 @@ element.setAttribute('data-semantic-highlight', 'true')
 
 ### Codebase References
 
-- `planning/250612a_semantic_search_to_highlights_refactor.md` - Original refactor documentation
+- `planning/finished/250612a_semantic_search_to_highlights_refactor.md` - Original refactor documentation
 - `components/highlight-management.tsx` - Highlight creation and management logic
 - `components/simple-document-viewer.tsx` - Document rendering with element selection
 - `components/unified-left-pane.tsx` - Left pane tabs including highlights
