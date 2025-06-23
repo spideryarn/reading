@@ -111,6 +111,28 @@ tests/e2e/
 └── search-*.spec.ts         # Search variants
 ```
 
+## Test Consolidation Progress
+
+### Phase 1: Authentication and Authorization (✅ Completed)
+**Completed**: 2025-06-22
+
+**Consolidation Summary**:
+- **Removed**: 1,462 lines of redundant auth unit tests that were superseded by comprehensive E2E auth coverage
+- **Preserved**: 914 lines of security-critical tests (RLS policies, admin utilities)
+
+**Files Removed**:
+- `/components/__tests__/auth-user-workflows-integration.test.tsx` (272 lines)
+- `/lib/__tests__/auth-system-integration.test.tsx` (345 lines)  
+- `/app/api/chat/__tests__/chat-auth-validation.test.ts` (421 lines)
+- `/app/api/extract-url/__tests__/extract-url-auth-validation.test.ts` (424 lines)
+
+**Files Preserved** (Security-Critical):
+- `/lib/services/database/__tests__/rls-policies-real.test.ts` (370 lines) - Database security
+- `/lib/services/database/__tests__/rls-policies-extended.test.ts` (419 lines) - Extended RLS testing
+- `/lib/auth/__tests__/admin-utils.test.ts` (125 lines) - Admin functionality
+
+**Justification**: Comprehensive E2E authentication tests (8 scenarios in `document-access-control.spec.ts` and `auth.spec.ts`) provide superior coverage to heavily mocked unit tests. Real RLS testing and admin utilities are security-critical and test actual database-level enforcement.
+
 ## Maintenance
 
 - Update this file when adding new E2E tests
