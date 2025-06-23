@@ -74,7 +74,8 @@ Our test suite has grown organically with AI-first development, resulting in sig
   - 📔 All security-critical tests (RLS policies, admin utils) preserved and passing
   - 📔 Build and lint successful, no regressions detected
 - [x] Update `docs/reference/TESTING_E2E_COVERAGE.md` with consolidated coverage
-- [ ] Git commit changes with clear message about consolidation
+- [x] Git commit changes with clear message about consolidation
+  - 📔 Commit 3acc602: "refactor: consolidate E2E test coverage by removing 5,672 lines of redundant unit tests"
 
 ### Stage: Phase 2 - Document Upload and Processing Consolidation
 - [x] ~~Write E2E tests for document upload scenarios~~ - **ALREADY COMPLETE**
@@ -96,24 +97,33 @@ Our test suite has grown organically with AI-first development, resulting in sig
   - 📔 Preserved 60 lines of PDF validation utility functions (algorithmic logic)
 - [x] Verify upload functionality continues working
   - 📔 E2E upload tests pass, functionality maintained through comprehensive E2E coverage
-- [ ] Update E2E coverage documentation
-- [ ] Git commit consolidation changes
+- [x] Update E2E coverage documentation
+- [x] Git commit consolidation changes
+  - 📔 **INCLUDED IN MAIN COMMIT 3acc602** with Phase 1 and Phase 5
 
 ### Stage: Phase 3 - Search Functionality Consolidation
-- [ ] Write comprehensive E2E search tests:
-  - Basic text search with highlighting
-  - Semantic search with AI
-  - Search result navigation
-  - Cross-document search
-  - Search persistence
-- [ ] Consolidate 23+ search unit test files into E2E coverage
-- [ ] Keep only:
-  - Search algorithm optimisation tests
-  - Text extraction utility tests
-- [ ] Test search UI with various edge cases
-- [ ] Remove redundant search unit tests
-- [ ] Update coverage tracking
-- [ ] Git commit changes
+- [x] ~~Write comprehensive E2E search tests~~ - **ALREADY COMPLETE**
+  - 📔 Existing E2E tests provide comprehensive search coverage (1,259 lines across 4 test files)
+  - ✅ Basic text search with highlighting (document-search-navigation-workflow.spec.ts)
+  - ✅ Semantic search with AI integration (document-search-navigation-workflow.spec.ts)
+  - ✅ Search result navigation and URL state management (all search E2E tests)
+  - ✅ Precise highlight validation (search-with-highlight-validation.spec.ts)
+  - ✅ Search persistence and deep-linking (document-search-navigation-workflow.spec.ts)
+  - ✅ Edge case testing and error handling (document-search-navigation-simplified.spec.ts)
+- [x] **EXECUTED**: Consolidate search unit tests (566 lines removed)
+  - 📔 Removed app/api/__tests__/semantic-search-consolidated.test.ts (566 lines with 70 mocks)
+  - 📔 Heavy API route mocking fully superseded by E2E semantic search tests
+- [x] **PRESERVED**: Keep algorithmic and utility tests (618 lines kept):
+  - lib/utils/__tests__/search-context-extraction.test.ts (286 lines) - Text context algorithms
+  - lib/utils/__tests__/semantic-search.test.ts (56 lines) - String normalization utility
+  - lib/prompts/templates/__tests__/semantic-search.test.ts (167 lines) - Schema validation
+  - lib/services/__tests__/semantic-search-formatter.test.ts (109 lines) - Document formatting
+  - lib/tools/__tests__/url-state*.test.ts - URL parameter utilities
+- [x] Verify search functionality continues working through E2E coverage
+  - 📔 All preserved unit tests pass, testing algorithmic logic E2E cannot replace
+  - 📔 Comprehensive E2E coverage validates complete search user experience
+- [x] Update coverage tracking and documentation
+- [ ] Git commit consolidation changes
 
 ### Stage: Phase 4 - AI Features and Tools Consolidation
 - [ ] Write E2E tests for AI features:
@@ -151,8 +161,9 @@ Our test suite has grown organically with AI-first development, resulting in sig
 - [x] Verify UI functionality continues working
   - 📔 E2E search and navigation tests pass, UI workflows maintained through E2E coverage
 - [ ] Minor E2E enhancement needed for mutation workflows (noted for future)
-- [ ] Update coverage documentation  
-- [ ] Git commit integration test consolidation
+- [x] Update coverage documentation  
+- [x] Git commit integration test consolidation
+  - 📔 **INCLUDED IN MAIN COMMIT 3acc602** with Phase 1 and Phase 2
 
 ### Stage: External Review and Documentation
 - [ ] Follow `docs/instructions/GATHER_DIVERSE_INPUTS_AND_CRITIQUES_ON_PLANNING_DOCS_FROM_OTHER_AI_MODELS.md` for external critique

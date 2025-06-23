@@ -133,6 +133,31 @@ tests/e2e/
 
 **Justification**: Comprehensive E2E authentication tests (8 scenarios in `document-access-control.spec.ts` and `auth.spec.ts`) provide superior coverage to heavily mocked unit tests. Real RLS testing and admin utilities are security-critical and test actual database-level enforcement.
 
+### Phase 3: Search Functionality Consolidation (✅ Completed)
+**Completed**: 2025-06-23
+
+**Consolidation Summary**:
+- **Removed**: 566 lines of redundant search API unit tests superseded by comprehensive E2E search coverage
+- **Preserved**: 618 lines of algorithmic and utility tests that E2E cannot effectively replace
+
+**E2E Search Coverage** (1,259 lines across 4 test files):
+- `document-search-navigation-workflow.spec.ts` (481 lines) - Complete search workflow with semantic AI
+- `search-with-highlight-validation.spec.ts` (236 lines) - Precise highlight validation and accuracy
+- `search-with-document-creation.spec.ts` (242 lines) - End-to-end document creation and search
+- `document-search-navigation-simplified.spec.ts` (300 lines) - Simplified search flow and edge cases
+
+**Files Removed**:
+- `/app/api/__tests__/semantic-search-consolidated.test.ts` (566 lines, 70 mocks) - Heavy API route mocking
+
+**Files Preserved** (Algorithmic Logic):
+- `/lib/utils/__tests__/search-context-extraction.test.ts` (286 lines) - Text context extraction algorithms
+- `/lib/utils/__tests__/semantic-search.test.ts` (56 lines) - String normalization utilities  
+- `/lib/prompts/templates/__tests__/semantic-search.test.ts` (167 lines) - Zod schema validation
+- `/lib/services/__tests__/semantic-search-formatter.test.ts` (109 lines) - Document formatting algorithms
+- `/lib/tools/__tests__/url-state*.test.ts` - URL parameter handling utilities
+
+**Justification**: E2E tests provide comprehensive coverage of search user experience including text search, semantic AI search, highlighting, navigation, and URL state management. Preserved tests cover pure algorithmic logic and utility functions that cannot be effectively tested through user interface interactions.
+
 ## Maintenance
 
 - Update this file when adding new E2E tests
