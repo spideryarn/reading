@@ -10,7 +10,7 @@ URL-based state management enables shareable, bookmarkable document views with t
 - `lib/tools/url-validation.ts` - Parameter validation and error handling
 - `components/url-validation-warning.tsx` - User-facing validation error display
 - `lib/contexts/document-communication-context.tsx` - Central state management integration
-- `planning/250614a_tool_url_state_management.md` - Implementation planning and decisions
+- `planning/finished/250614a_tool_url_state_management.md` - Implementation planning and decisions
 - [nuqs documentation](https://github.com/47ng/nuqs) - Type-safe URL state library
 
 ## Principles & Key Decisions
