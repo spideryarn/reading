@@ -1,19 +1,24 @@
 #!/usr/bin/env npx tsx
 
 /**
- * O3 Critique via Direct API - Automated Code Context Generation
+ * O3 Critique via Direct API - Intelligent Planning Document Analysis
  * 
- * Generates comprehensive codebase context using code2prompt (Rust version), then sends to OpenAI o3 via direct API.
- * This approach provides more reliable context gathering compared to agentic Codex CLI workflows.
+ * Analyzes planning documents to intelligently identify relevant codebase files, then generates 
+ * targeted context using code2prompt and sends to OpenAI o3 (or other LLMs) via direct API.
+ * 
+ * The script reads the planning document, extracts explicitly referenced files, identifies 
+ * contextually relevant files based on the topic (e.g., glossary, auth, database), and 
+ * generates a focused context that helps the LLM provide better critique.
  * 
  * Prerequisites:
  * - Install code2prompt (Rust version): https://github.com/mufeedvh/code2prompt
  * 
  * Features:
- * - Automated file selection and filtering
+ * - Intelligent file selection based on planning document content
+ * - Automatic extraction of file paths mentioned in planning docs
+ * - Topic-aware contextual file identification (glossary, auth, database, etc.)
  * - Token counting and cost transparency
- * - Comprehensive codebase context generation
- * - Direct OpenAI API integration
+ * - Multi-provider LLM support (OpenAI, Anthropic, Google)
  * - Error handling and recovery guidance
  * 
  * See docs/instructions/GATHER_DIVERSE_INPUTS_AND_CRITIQUES_ON_PLANNING_DOCS_FROM_OTHER_AI_MODELS_API_APPROACH.md for complete usage guide.
@@ -24,8 +29,75 @@ import { config } from 'dotenv';
 import { execSync } from 'child_process';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { resolve, basename } from 'path';
-import { executePrompt } from '../lib/prompts/types';
+import { executePromptWithUsage, type PromptTemplate, type PromptExecutionResult } from '../lib/prompts/types';
 import { planningDocCritiqueTemplate, type PlanningDocCritiqueInput } from '../lib/prompts/templates/planning-doc-critique';
+import { generateText } from 'ai';
+import { getModelConfig, parseModelString } from '../lib/config/models';
+import { getProvider } from '../lib/services/llm-provider';
+import { getPrioritizedFiles } from '../lib/utils/intelligent-file-selection';
+import nunjucks from 'nunjucks';
+import { z } from 'zod';
+
+// Configure Nunjucks with same settings as the main prompt system
+const env = nunjucks.configure({
+  autoescape: false,
+  throwOnUndefined: true,
+  trimBlocks: true,
+  lstripBlocks: true,
+})
+
+// Custom function to execute prompts with a specific model string
+async function executePromptWithCustomModel<T extends z.ZodSchema>(
+  template: PromptTemplate<T>,
+  variables: z.infer<T>,
+  modelString: string
+): Promise<PromptExecutionResult> {
+  // Validate variables against schema
+  const validated = template.schema.parse(variables)
+  
+  // Load and render template
+  const templateContent = readFileSync(template.templatePath, 'utf-8')
+  const prompt = env.renderString(templateContent, validated)
+  
+  // Parse model string and get provider
+  const parsedModel = parseModelString(modelString)
+  const modelConfig = getModelConfig(modelString)
+  const providerInstance = getProvider(parsedModel.provider)
+  
+  // Configure thinking mode for Anthropic models if enabled
+  const modelOptions: Record<string, unknown> = {}
+  if (parsedModel.provider === 'anthropic' && parsedModel.thinking) {
+    modelOptions.thinking = true
+  }
+
+  // Build provider model name (same logic as llm-provider.ts)
+  let providerModelName = parsedModel.modelName
+  if (parsedModel.provider === 'anthropic' && parsedModel.version !== 'latest' && !providerModelName.endsWith(parsedModel.version)) {
+    providerModelName = `${providerModelName}-${parsedModel.version}`
+  }
+
+  const model = providerInstance(providerModelName, modelOptions)
+  
+  // Execute with Vercel AI SDK Core
+  const result = await generateText({
+    model,
+    prompt,
+    maxTokens: template.modelConfig?.maxTokens || modelConfig.maxOutputTokens || 4000,
+    temperature: template.modelConfig?.temperature ?? 0.1,
+  })
+  
+  // Return enhanced result with usage metadata
+  return {
+    text: result.text,
+    usage: {
+      promptTokens: result.usage?.promptTokens || 0,
+      completionTokens: result.usage?.completionTokens || 0,
+      totalTokens: result.usage?.totalTokens || 0,
+      reasoningTokens: result.usage?.reasoningTokens
+    },
+    finishReason: result.finishReason || 'stop'
+  }
+}
 
 class O3CritiqueCommand extends Command {
   static paths = [
@@ -181,26 +253,24 @@ class O3CritiqueCommand extends Command {
       return validFiles;
     }
     
-    // Otherwise, use a sensible default set of key files
-    this.context.stdout.write('No specific files provided, using default key files...\n');
+    // Otherwise, intelligently analyze the planning document to find relevant files
+    this.context.stdout.write('Analyzing planning document to identify relevant files...\n');
     
-    // Default to key configuration and documentation files
-    const defaultFiles = [
-      'README.md',
-      'CLAUDE.md',
-      'package.json',
-      'tsconfig.json',
-      '.env.example',
-      'docs/reference/VISION.md',
-      'docs/reference/ARCHITECTURE_OVERVIEW.md',
-      'docs/reference/ARCHITECTURE_DECISIONS.md',
-      'docs/reference/CODING_PRINCIPLES.md',
-      'docs/reference/CODING_GUIDELINES.md',
-    ];
+    const existingFiles = getPrioritizedFiles(this.planningDoc, {
+      includeTests: this.includeTests,
+      includeClaude: true // Always include CLAUDE.md for critique context
+    });
     
-    // Filter to only existing files
-    return defaultFiles.filter(file => existsSync(file));
+    this.context.stdout.write(`Found ${existingFiles.length} relevant files:\n`);
+    existingFiles.slice(0, 10).forEach(file => this.context.stdout.write(`  - ${file}\n`));
+    if (existingFiles.length > 10) {
+      this.context.stdout.write(`  ... and ${existingFiles.length - 10} more\n`);
+    }
+    
+    return existingFiles;
   }
+
+
 
   private async generateContext(docBasename: string, timestamp: string): Promise<string> {
     // Create critiques directory
@@ -227,10 +297,10 @@ class O3CritiqueCommand extends Command {
     // Build command with explicit file list
     const baseCmd = [
       'code2prompt',
-      '--path .',
-      '--line-number',
-      '--tokens',
-      '--gitignore .gitignore',  // Still respect gitignore for basic exclusions
+      '.',  // Path as positional argument
+      '--line-numbers',
+      '--tokens format',
+      // gitignore is respected by default, no need to specify
     ];
 
     // Add each selected file as an include pattern
@@ -238,7 +308,7 @@ class O3CritiqueCommand extends Command {
       baseCmd.push(`--include "${file}"`);
     });
 
-    baseCmd.push(`--output "${contextFile}"`);
+    baseCmd.push(`--output-file "${contextFile}"`);
 
     const code2promptCmd = baseCmd.join(' ');
 
@@ -296,15 +366,11 @@ class O3CritiqueCommand extends Command {
     };
 
     try {
-      // Use the unified LLM system with custom model and settings
-      const result = await executePrompt(
+      // Use custom function that supports model string parameter
+      const result = await executePromptWithCustomModel(
         planningDocCritiqueTemplate,
         promptInput,
-        {
-          modelString: this.model,
-          temperature: 0.1,
-          maxTokens: parseInt(this.maxTokens),
-        }
+        this.model
       );
 
       // Save detailed response including usage info

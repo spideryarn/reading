@@ -1,0 +1,6 @@
+{
+  "model": "openai:o3:latest",
+  "timestamp": "2025-06-22T18:15:39.413Z",
+  "planningDoc": "planning/250620c_glossary_generate_more_timeout_mitigation.md",
+  "contextFile": "planning/critiques/CONTEXT_FOR__250620c_glossary_generate_more_timeout_mitigation__250622_1814.md"
+}

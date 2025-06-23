@@ -1,18 +1,20 @@
-# O3 Critique via Direct API - Automated Code Context Generation
+# AI Model Critiques - API Approach
 
-Automated approach for critiquing planning documents using OpenAI's o3 model with comprehensive codebase context generation via code2prompt (Rust version).
+Automated approach for critiquing planning documents using direct API calls with comprehensive codebase context generation via code2prompt (Rust version).
 
 ## See also
 
+- `docs/instructions/GATHER_DIVERSE_INPUTS_AND_CRITIQUES_ON_PLANNING_DOCS_FROM_OTHER_AI_MODELS_OVERVIEW.md` - **Start here**: Core intent and workflow overview
 - `scripts/o3-critique-as-api.ts` - Implementation of the automated critique tool
-- `docs/instructions/GATHER_DIVERSE_INPUTS_AND_CRITIQUES_ON_PLANNING_DOCS_FROM_OTHER_AI_MODELS.md` - Original critique workflow documentation
-- `scripts/codex-with-env.sh` - Alternative agentic approach (promising but not working reliably right now)
-- `docs/instructions/CRITIQUE_OF_PLANNING_DOC.md` - Critique methodology used by o3
+- `docs/instructions/GATHER_DIVERSE_INPUTS_AND_CRITIQUES_ON_PLANNING_DOCS_FROM_OTHER_AI_MODELS_CODEX_CLI_APPROACH.md` - Alternative agentic approach
+- `docs/instructions/CRITIQUE_OF_PLANNING_DOC.md` - Critique methodology used by AI models
 - `docs/reference/COMMAND_LINE_SCRIPTS.md` - Script development guidelines and patterns
 
 ## Overview
 
-This approach addresses reliability issues with agentic Codex CLI workflows by using a single, comprehensive API call to OpenAI's o3 model. The script gathers relevant codebase context using code2prompt (Rust version) and sends everything to o3 for analysis.
+This document details the **API approach** for obtaining AI model critiques of planning documents. For context on why this critique process exists and the core workflow, see `docs/instructions/GATHER_DIVERSE_INPUTS_AND_CRITIQUES_ON_PLANNING_DOCS_FROM_OTHER_AI_MODELS_OVERVIEW.md`.
+
+This approach addresses reliability issues with agentic workflows by using a single, comprehensive API call to AI models. The script gathers relevant codebase context using code2prompt (Rust version) and sends everything for analysis.
 
 **Key advantages over agentic approaches:**
 - **Reliability**: Single API call vs complex agentic workflow
@@ -227,12 +229,16 @@ This approach can serve as:
 - **Complementary tool**: Use both approaches for different critique aspects
 
 ### Workflow Integration
+This approach implements the core workflow described in the overview document:
+
 1. **Write planning document** following `docs/instructions/WRITE_PLANNING_DOC.md`
 2. **Commit planning doc** (creates pre-critique baseline)
 3. **Run automated critique**: `./scripts/o3-critique-as-api.ts planning/doc.md`
-4. **Process critique response** using existing methodology
+4. **Process critique response** using methodology from overview
 5. **Update planning document** based on feedback
 6. **Commit revised version** with critique summary
+
+See the overview document for details on processing critique responses and incorporating feedback.
 
 ## Quality and Limitations
 
