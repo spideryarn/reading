@@ -7,12 +7,12 @@ interface NotAuthorizedPageProps {
   slug: string
 }
 
-export function NotAuthorizedPage({ userEmail, slug }: NotAuthorizedPageProps) {
+export function NotAuthorizedPage({ userEmail }: NotAuthorizedPageProps) {
   // Return 404-like response for security (conflates not found with no permission)
   notFound()
 }
 
-export function NotAuthorizedPageComponent({ userEmail, slug }: NotAuthorizedPageProps) {
+export function NotAuthorizedPageComponent({ userEmail }: NotAuthorizedPageProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       <AppHeader />
@@ -23,7 +23,7 @@ export function NotAuthorizedPageComponent({ userEmail, slug }: NotAuthorizedPag
               Document Not Available
             </h2>
             <p className="mt-4 text-base text-gray-600">
-              You don't have permission to view this document.
+              You don&apos;t have permission to view this document.
             </p>
             {userEmail ? (
               <div className="mt-6">
