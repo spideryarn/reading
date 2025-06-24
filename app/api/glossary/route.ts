@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
     if (documentId) {
       // Clean entities to remove undefined properties for exactOptionalPropertyTypes compliance
       const cleanedEntities = validatedResponse.entities.map(entity => {
-        const cleaned: Record<string, any> = {
+        const cleaned: Record<string, unknown> = {
           name: entity.name,
           ontology: entity.ontology,
           aliases: entity.aliases,

@@ -111,12 +111,14 @@ After creating the initial planning doc:
 
 At the end of stage (where appropriate):
 - If doing UI-related changes, add an end-of-stage action to check things look ok with Puppeteer MCP (in a subagent, provided with rich description of the background/approach to take/success criteria).
-- **Add health check actions** - Use judgment to include appropriate checks based on changes made:
-  - **TypeScript check** (`npm run build` or `tsc --noEmit`): Include when modifying TypeScript code, especially API routes, type definitions, or core logic
-  - **Linting** (`npm run lint`): Include when adding new files or significantly modifying existing code patterns (usually in a subagent with rich instructions about context so it can make good decisions)
-  - **Testing** (re-run affected tests in subagent): Include when changing logic that has test coverage - see `docs/reference/TESTING_OVERVIEW.md` and `docs/reference/TESTING_SETUP.md`
-  - **Build verification** (`npm run build`): Reserve for major changes or final validation - builds can be time-consuming
-  - **Decision criteria**: Choose checks that are likely to catch regressions from the specific changes being made. For small isolated changes, lighter checks suffice. For core system changes, run comprehensive checks.
+- **Add health check action**: `npm run check:health` (use subagent for >3 files with issues):
+  - **Default scope**: Checks files changed in this stage (git-aware) - catches cross-file impacts from your changes
+  - **For major refactors**: Use `npm run check:health --rigorous` (all files + test files)  
+  - **For quick iterations**: Use `npm run check:health --quick` (skip build verification)
+  - **For targeted fixes**: Use `npm run check:health --files src/modified/` (specific paths only)
+  - **Tool coverage**: Runs TypeScript, ESLint, and build checks sequentially - all provide complementary error detection
+  - **Orchestration**: File-based output with issue counts enables targeted subagent dispatch to address problems efficiently
+  - **Testing**: Re-run affected tests in subagent when changing logic with test coverage - see `docs/reference/TESTING_OVERVIEW.md` and `docs/reference/TESTING_SETUP.md`
 - Follow instructions in `docs/instructions/DEBRIEF_PROGRESS.md` to output a summary of where things stand
 - Update this planning doc with progress so far, log useful learnings/surprises/changes of plan/etc.
 - Add an action to stop & review with user where appropriate, e.g. when we get to a good stopping point, to manually check changes to the user interface, etc.

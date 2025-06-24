@@ -9,7 +9,10 @@ import {
   MessagePrimitive,
   AssistantRuntimeProvider, 
   useLocalRuntime,
+  type ChatModelAdapter,
+  type ThreadMessageLike,
 } from "@assistant-ui/react";
+import { type TextContentPartComponent } from "@assistant-ui/react/dist/types/ContentPartComponentTypes";
 import { User, Robot, PaperPlaneTilt, CircleNotch, ArrowClockwise } from '@phosphor-icons/react';
 import { usePersistentChat } from '@/src/lib/hooks/usePersistentChat';
 import { Button } from '@/components/ui/button'
@@ -59,7 +62,7 @@ const AssistantMessage = () => (
         <MessagePrimitive.If hasContent>
           <div className="prose prose-sm max-w-none prose-p:text-gray-800 prose-p:leading-relaxed prose-p:mb-4 prose-p:last:mb-0 prose-headings:text-gray-900 prose-code:text-gray-700 prose-code:bg-white prose-code:px-2 prose-code:py-1 prose-code:rounded prose-strong:text-gray-900 prose-li:mb-1 prose-ul:space-y-1 prose-ol:space-y-1 [&>*]:mb-3 [&>*:last-child]:mb-0">
             {/* Use @assistant-ui/react-markdown for full markdown support in AI responses */}
-            <MessagePrimitive.Content components={{ Text: MarkdownTextPrimitive as any }} />
+            <MessagePrimitive.Content components={{ Text: MarkdownTextPrimitive as TextContentPartComponent }} />
           </div>
         </MessagePrimitive.If>
       </div>
@@ -156,7 +159,7 @@ function Thread() {
 }
 
 // Runtime wrapper that remounts when key changes
-function ChatRuntime({ adapter, initialMessages }: { adapter: any; initialMessages: any }) {
+function ChatRuntime({ adapter, initialMessages }: { adapter: ChatModelAdapter; initialMessages: ThreadMessageLike[] }) {
   const runtime = useLocalRuntime(adapter, { initialMessages });
   return (
     <AssistantRuntimeProvider runtime={runtime}>
@@ -174,7 +177,7 @@ export function AssistantChat({ documentId, documentContext }: AssistantChatProp
     : { documentId, documentContext };
 
   const { chatModelAdapter, initialMessages, isLoaded, threadId, error, isRefreshing, refreshMessages, runtimeKey } =
-    usePersistentChat(persistentChatProps as any);
+    usePersistentChat(persistentChatProps);
   
   // Sync threadId to URL when it changes
   useEffect(() => {

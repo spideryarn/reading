@@ -3,6 +3,7 @@
  * Handles customer creation, retrieval, and Supabase integration
  */
 
+import Stripe from 'stripe'
 import { stripe } from './client'
 import { createClient } from '@/lib/supabase/server'
 import type { Database } from '@/lib/types/database'
@@ -21,7 +22,7 @@ export async function createStripeCustomer(
   userId: string,
   email: string,
   name?: string
-): Promise<{ customer: any; error?: string }> {
+): Promise<{ customer: Stripe.Customer | null; error?: string }> {
   const correlationId = generateCorrelationId()
   const timer = createTimer(stripeLogger, 'createStripeCustomer')
   
@@ -109,7 +110,7 @@ export async function getOrCreateStripeCustomer(
   userId: string,
   email: string,
   name?: string
-): Promise<{ customer: any; error?: string }> {
+): Promise<{ customer: Stripe.Customer | null; error?: string }> {
   const correlationId = generateCorrelationId()
   const timer = createTimer(stripeLogger, 'getOrCreateStripeCustomer')
   
@@ -154,7 +155,7 @@ export async function getOrCreateStripeCustomer(
       
       try {
         const customer = await stripe.customers.retrieve(profile.stripe_customer_id)
-        if (!customer.deleted) {
+        if (customer && !customer.deleted) {
           const duration = timer.end({
             userId,
             customerId: customer.id,

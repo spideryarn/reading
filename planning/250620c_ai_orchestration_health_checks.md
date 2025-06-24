@@ -17,17 +17,17 @@
 3. **Incremental linting**: Still valuable but less critical than for large codebases
 4. **Skip orchestration**: The complexity may not justify the benefits for 300 files
 
-**Decision Point**: Before implementing the full orchestration system below, consider whether simpler approaches (gradual error fixing, incremental linting) might be more appropriate for the actual project scale.
+**✅ DECISION MADE**: Implement `npm run check:health` using Clipanion TypeScript CLI - provides systematic health checking for planning document workflow integration.
 
 ---
 
 ## Goal, context
 
-The goal is to implement orchestration-friendly health check commands that allow AI agents to efficiently determine which detailed checks need to be run, reducing context window usage while improving error detection and process automation.
+**✅ UPDATED GOAL**: Implement a single `npm run check:health` command that integrates seamlessly into planning document workflows, providing orchestration-friendly output for routine health checking at the end of each development stage.
 
-**Current Problem**: AI agents running `npm run lint`, `npm run build`, and `tsc --noEmit` get overwhelmed with verbose output (276 ESLint issues, 283 TypeScript errors) making it difficult to prioritise and orchestrate sub-tasks effectively.
+**✅ REFINED PROBLEM**: Need a systematic approach to catch compile-time errors during development stages. Current ad-hoc approach leads to inconsistent checking and missed issues.
 
-**Desired Solution**: Implement summary commands that provide actionable intelligence for orchestration decisions, with detailed commands available for focused debugging by sub-agents.
+**✅ SOLUTION APPROACH**: Git-aware health checking with file-based orchestration output, designed for routine use rather than comprehensive error management.
 
 ## References
 
@@ -45,11 +45,12 @@ The goal is to implement orchestration-friendly health check commands that allow
 - **Context Window Efficiency**: Verbose output only when needed by focused sub-agents
 - **Error Prioritisation**: TypeScript errors are blocking (runtime safety), ESLint issues are non-blocking (code quality)
 
-**Key Technical Decisions**:
-- Use shell scripts for health check summaries with structured output
-- Maintain existing detailed commands for sub-agent use
-- Follow industry patterns: parallel execution, staged linting, progressive enhancement
-- Align with existing project structure and npm script conventions
+**✅ UPDATED KEY TECHNICAL DECISIONS**:
+- **Clipanion TypeScript CLI**: Complex argument handling, git integration, robust error handling
+- **Sequential execution**: Simple, reliable - TypeScript → ESLint → Build  
+- **Git-aware by default**: Check changed files (catches cross-file impacts)
+- **File-based orchestration output**: Issue counts per file for targeted subagent dispatch
+- **Routine workflow integration**: Single command for end-of-stage planning document actions
 
 **User Requirements**:
 - Catch potential errors/problems earlier in the development process
@@ -68,23 +69,29 @@ The goal is to implement orchestration-friendly health check commands that allow
   - 📔 Current state: 276 ESLint issues, 283 TypeScript errors, successful builds despite type errors
   - 📔 Confirmed: tsc --noEmit catches critical issues that Next.js build misses
 
-### Stage: Health Check Script Implementation
-- [ ] Create `scripts/health-check.sh` with structured summary output
-  - Implement error counting for TypeScript, ESLint, and build processes
-  - Include actionable status indicators (🔴 BLOCKING, 🟡 HIGH, ✅ OK)
-  - Provide priority guidance for orchestration decisions
-- [ ] Add npm script `check:health` to package.json
-- [ ] Test health check script with current codebase
-  - Verify error counts match manual runs
-  - Ensure script handles edge cases (no errors, command failures)
+### ✅ Stage: Design and Planning (COMPLETED)
+- [x] Design Clipanion CLI arguments and modes for health check tool
+  - 📔 **Default scope**: Git-aware (changed files since HEAD~1)
+  - 📔 **Modes**: `--rigorous` (all files + tests), `--quick` (skip build), `--files` (specific paths)
+  - 📔 **Tools**: TypeScript + ESLint + Build (sequential execution, all enabled by default)
+- [x] Plan file-based orchestration output format
+  - 📔 **Format**: File paths with issue counts per tool type
+  - 📔 **Orchestration**: Enables targeted subagent dispatch to specific files
+- [x] Update planning document workflow integration
+  - 📔 **Updated**: `docs/instructions/WRITE_PLANNING_DOC.md` with systematic health check approach
+  - 📔 **Integration**: Single `npm run check:health` action for end-of-stage checking
 
-### Stage: Detailed Check Script Organization
-- [ ] Add organized npm scripts for detailed checks:
-  - `check:types` - TypeScript type checking (`tsc --noEmit`)
-  - `check:lint` - ESLint detailed output
-  - `check:build` - Build process detailed output
-- [ ] Verify detailed scripts work correctly with current setup
-- [ ] Test integration between summary and detailed commands
+### Stage: Health Check CLI Implementation  
+- [ ] Create `scripts/check-health.ts` using Clipanion framework
+  - Implement CLI argument parsing (scope, modes, tool selection)
+  - Add git integration for changed file detection
+  - Implement sequential tool execution (TypeScript → ESLint → Build)
+  - Create file-based output with issue counts
+- [ ] Add npm script `check:health` to package.json
+- [ ] Test health check CLI with current codebase
+  - Verify git-aware file detection works correctly
+  - Ensure tool integration and error counting accuracy
+  - Test edge cases (no changes, tool failures)
 
 ### Stage: Documentation Updates
 - [ ] Update `CLAUDE.md` with new orchestration pattern

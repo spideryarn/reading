@@ -40,7 +40,7 @@ interface MetadataPanelProps {
   // Upload metadata for file size info
   uploadMetadata?: {
     content_size_kb?: number
-    [key: string]: any
+    [key: string]: unknown
   } | null
 }
 
@@ -118,13 +118,13 @@ export function MetadataPanel({
         
         const existingDifficulty = await enhancementService.get(
           documentId, 
-          'reading_difficulty' as any, 
+          'reading_difficulty', 
           'ai_assessment'
         )
         
         if (existingDifficulty) {
           // Use cached result from database
-          const content = existingDifficulty.content as any
+          const content = existingDifficulty.content as { level: string; confidence: number; factors: string[] }
           setReadingDifficulty({
             level: content.level,
             confidence: content.confidence >= 0.8 ? 'High' : content.confidence >= 0.6 ? 'Medium' : 'Low',

@@ -90,7 +90,7 @@ interface ResizableDocumentLayoutProps {
   originalFileType?: string | null
   uploadMetadata?: {
     content_size_kb?: number
-    [key: string]: any
+    [key: string]: unknown
   } | null
 }
 
@@ -152,8 +152,8 @@ function ResizableDocumentLayoutInner({
 
       // Auto-collapse on mobile if not already collapsed
       if (isMobile && !paneIsCollapsed) {
-        if (typeof (leftPanelRef.current as any).collapse === 'function') {
-          ;(leftPanelRef.current as any).collapse()
+        if (typeof (leftPanelRef.current as ImperativePanelHandle & { collapse?: () => void }).collapse === 'function') {
+          ;(leftPanelRef.current as ImperativePanelHandle & { collapse?: () => void }).collapse()
         } else {
           leftPanelRef.current.resize(0)
         }
@@ -226,8 +226,8 @@ function ResizableDocumentLayoutInner({
 
     if (isLeftPaneCollapsed) {
       // Expand – restore previous size (or default if none recorded)
-      if (typeof (leftPanelRef.current as any).expand === 'function') {
-        ;(leftPanelRef.current as any).expand()
+      if (typeof (leftPanelRef.current as ImperativePanelHandle & { expand?: () => void }).expand === 'function') {
+        ;(leftPanelRef.current as ImperativePanelHandle & { expand?: () => void }).expand()
         if (savedLeftPaneSize !== 0) {
           leftPanelRef.current.resize(savedLeftPaneSize)
         }

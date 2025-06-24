@@ -80,7 +80,7 @@ export function getModelConfigFromEnvironment() {
 }
 
 // Get model string and config for AI calls
-export function getModelForAICall(): { modelString: string, config: any } {
+export function getModelForAICall(): { modelString: string, config: import('./config/models').ModelConfig } {
   try {
     const modelString = getModelStringFromEnvironment()
     const config = getModelConfigByString(modelString)

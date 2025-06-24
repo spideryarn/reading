@@ -70,11 +70,35 @@ export interface AdditionalMetadata {
 }
 
 /**
+ * Upload metadata with base fields and flexible additional properties
+ */
+export interface UploadMetadata {
+  extraction_method: string
+  provider_used: string | null
+  upload_source: 'pdf' | 'url' | 'url-pdf' | 'html-upload'
+  // Allow additional fields from AdditionalMetadata
+  [key: string]: string | number | boolean | null | undefined
+}
+
+/**
+ * Error context object for processing failures
+ */
+export interface ErrorContext {
+  correlationId?: string
+  documentId?: string
+  userId?: string
+  step?: string
+  uploadSource?: string
+  contentLength?: number
+  [key: string]: string | number | boolean | null | undefined
+}
+
+/**
  * Result of HTML processing pipeline
  */
 export interface ProcessedDocument {
-  document: any // Database document record
-  storageResult?: any // Storage upload result
+  document: import('@/lib/types/database').Database['public']['Tables']['documents']['Row'] // Database document record
+  storageResult?: Record<string, unknown> // Storage upload result
 }
 
 /**
@@ -303,7 +327,7 @@ export function generateUploadMetadata(
   extractionMethod: string,
   provider?: string,
   additionalFields: AdditionalMetadata = {}
-): Record<string, any> {
+): UploadMetadata {
   // Base metadata common to all sources
   const baseMetadata = {
     extraction_method: extractionMethod,
@@ -332,7 +356,7 @@ export function generateUploadMetadata(
 export function createProcessingError(
   step: string,
   error: unknown,
-  context: Record<string, any> = {}
+  context: ErrorContext = {}
 ): Error {
   const errorMessage = error instanceof Error ? error.message : 'Unknown error'
   const contextInfo = Object.keys(context).length > 0 

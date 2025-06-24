@@ -47,6 +47,21 @@ const lengthLevelParser = parseAsStringEnum<LengthLevel>([...LENGTH_LEVELS] as L
 const booleanParser = parseAsBoolean.withDefault(false)
 const stringParser = parseAsString
 
+// Type for nuqs-compatible update object
+type NuqsUpdateObject = {
+  tab?: typeof TAB_VALUES[number] | null
+  term?: string | null
+  q?: string | null
+  type?: typeof SEARCH_TYPES[number] | null
+  case?: boolean | null
+  level?: typeof SUMMARY_LEVELS[number] | null
+  expertise?: typeof EXPERTISE_LEVELS[number] | null
+  length?: typeof LENGTH_LEVELS[number] | null
+  highlight?: string | null
+  conversation?: string | null
+  scroll?: string | null
+}
+
 // Hook return type
 interface UseToolUrlStateReturn {
   state: ToolUrlState
@@ -90,10 +105,11 @@ export function useToolUrlState(): UseToolUrlStateReturn {
       : options?.forceHistory === 'replace'
       ? false
       : shouldPushHistory(finalUpdates)
-    const nuqsUpdates = Object.entries(finalUpdates).reduce((acc, [key, value]) => {
-      acc[key as keyof ToolUrlState] = value === undefined ? null : value
-      return acc
-    }, {} as Record<keyof ToolUrlState, any>)
+    // Build the updates object with proper typing for nuqs
+    const nuqsUpdates: NuqsUpdateObject = {}
+    Object.entries(finalUpdates).forEach(([key, value]) => {
+      ;(nuqsUpdates as any)[key] = value === undefined ? null : value
+    })
     setUrlState(nuqsUpdates, { history: shouldPush ? 'push' : 'replace' })
   }, [setUrlState])
   // ------------------------------------------------------
@@ -143,18 +159,24 @@ export function useToolUrlState(): UseToolUrlStateReturn {
   ])
   
   // Debounced search update (300ms)
-  const debouncedSetSearch = useMemo< (q: string) => void>(
-    () => (debounce((query: any) => {
-      setState(buildUpdates('q', query || undefined))
-    }, 300) as (q: string) => void),
+  const debouncedSetSearch = useMemo<(q: string) => void>(
+    () => {
+      const updateQuery = (query: string) => {
+        setState(buildUpdates('q', query || undefined))
+      }
+      return debounce(updateQuery, 300)
+    },
     [setState]
   )
   
   // Throttled scroll update (1000ms)
   const throttledSetScroll = useMemo(
-    () => (throttle((elementId: any) => {
-      setState(buildUpdates('scroll', elementId || undefined))
-    }, 1000) as (id: string) => void),
+    () => {
+      const updateScroll = (elementId: string) => {
+        setState(buildUpdates('scroll', elementId || undefined))
+      }
+      return throttle(updateScroll, 1000)
+    },
     [setState]
   )
   

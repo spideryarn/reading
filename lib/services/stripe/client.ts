@@ -13,7 +13,7 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 })
 
 // Client-side Stripe instance (for frontend payment flows)
-let stripePromise: Promise<any>
+let stripePromise: ReturnType<typeof loadStripe>
 
 export const getStripe = () => {
   if (!stripePromise) {
