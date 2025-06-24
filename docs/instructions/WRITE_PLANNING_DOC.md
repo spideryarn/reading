@@ -128,6 +128,7 @@ As final actions:
   - Identify redundant or low-level tests that will be brittle
   - Consolidate into fewer, high-coverage integration or E2E tests
   - Aim for net reduction in test count while maintaining coverage
+- **Improvement opportunities** - If you discovered any improvement opportunities outside the scope of the planned work during implementation, discuss these with the user before finalising
 - Ask the user's permission to merge back (if we created a branch)
 - Move the doc to `planning/finished/` and commit.
 
