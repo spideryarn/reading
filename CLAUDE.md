@@ -79,6 +79,7 @@ Database operations:
 ⚠️ **CRITICAL**: Always ask for explicit user permission before modifying the database, especially in major ways. When in doubt, err on the side of caution!
 
 Type checking and linting:
+- `npm run check:health` - **Orchestration**: Git-aware health check (TypeScript + ESLint + Build)
 - `npm run build` - TypeScript compilation errors
 - `npm run lint` - ESLint code quality/style issues
 - `npm test` - Jest testing (`npm run test:coverage` for coverage)
@@ -91,9 +92,9 @@ Type checking and linting:
 
 **Important for Claude Code users:**
 - **IDE integration:** When using Claude Code within VS Code/Cursor/JetBrains, ESLint and TypeScript diagnostics are automatically shared
-- **CLI usage:** When running Claude Code from command line, you MUST explicitly run `npm run lint` and `npm run build` to get diagnostic feedback
+- **CLI usage:** When running Claude Code from command line, you MUST explicitly run `npm run lint` and `npm run build` to get diagnostic feedback OR use `npm run check:health` for orchestration-friendly summaries
 - **New stricter rules:** We've implemented context-aware linting (stricter for production code, lenient for tests) to catch errors early in AI development
-- **Linting for AI-first development:** See `docs/reference/SETUP_FOR_AI_FIRST_CODING.md` for comprehensive AI linting strategies
+- **Health check orchestration:** See `docs/reference/SETUP_FOR_AI_FIRST_CODING.md` for AI orchestration patterns and health checking workflows
 
 ⚠️ **IMPORTANT**: If tests are failing, try and understand why. If they're failing for systemic reasons, we should discuss how to fix that. Be wary about removing/modifying the tests just to make them pass. If in doubt, stop & discuss with the user.
 

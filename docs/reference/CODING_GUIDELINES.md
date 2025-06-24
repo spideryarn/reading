@@ -15,13 +15,45 @@ This document defines code quality standards and patterns to maintain consistenc
 
 ## Code Quality Checks
 
-Before committing code, always run these commands to ensure quality:
+### Orchestrated Health Checking
+
+For systematic quality checking with orchestration-friendly output, use:
+
+```bash
+npm run check:health              # Git-aware: check changed files since HEAD~1
+npm run check:health --rigorous   # All files including tests  
+npm run check:health --quick      # Skip build verification (faster iterations)
+npm run check:health --files src/lib/services/  # Specific file paths
+```
+
+The health check tool provides:
+- **Error prioritisation**: TypeScript/Build errors are blocking, ESLint is quality
+- **File-based output**: Enables targeted subagent dispatch for specific issues
+- **Git-aware detection**: Focuses on changed files to catch cross-file impacts
+- **Summary reporting**: Total issue counts and priority guidance
+
+### Individual Tool Commands
+
+For detailed diagnosis or when orchestration isn't needed:
 
 ```bash
 npm run lint    # Check for ESLint issues
 npm run build   # Check for TypeScript compilation errors
 npm test        # Run test suite
 ```
+
+### When to Use Which Approach
+
+- **Use `npm run check:health`** for:
+  - Planning document workflow integration
+  - End-of-stage systematic checking
+  - AI agent orchestration with summary output
+  - Quick assessment of overall codebase health
+
+- **Use individual commands** for:
+  - Detailed error investigation and fixing
+  - IDE integration and real-time feedback
+  - Specific tool configuration or debugging
 
 ## Database Operations Safety
 

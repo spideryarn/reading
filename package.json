@@ -11,6 +11,9 @@
         "build": "next build",
         "start": "next start",
         "lint": "next lint",
+        "check:health": "./scripts/check-health.ts",
+        "check:health:quick": "./scripts/check-health.ts --quick",
+        "check:health:rigorous": "./scripts/check-health.ts --rigorous",
         "test": "jest",
         "test:watch": "jest --watch",
         "test:coverage": "jest --coverage",
@@ -25,8 +28,6 @@
         "import-documents": "dotenv -e .env.local -- npx tsx scripts/import-static-documents.ts",
         "analyze-fidelity": "dotenv -e .env.local -- npx tsx scripts/analyze-content-fidelity.ts",
         "deploy:production": "npm run build && git push origin main",
-        "python:install": "echo 'No Python dependencies to install'",
-        "python:check": "python --version",
         "critique": "./scripts/o3-critique-as-api.ts"
     },
     "dependencies": {
