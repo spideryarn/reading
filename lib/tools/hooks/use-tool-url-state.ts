@@ -108,7 +108,8 @@ export function useToolUrlState(): UseToolUrlStateReturn {
     // Build the updates object with proper typing for nuqs
     const nuqsUpdates: NuqsUpdateObject = {}
     Object.entries(finalUpdates).forEach(([key, value]) => {
-      ;(nuqsUpdates as any)[key] = value === undefined ? null : value
+      // Type-safe assignment to nuqsUpdates
+      ;(nuqsUpdates as Record<string, unknown>)[key] = value === undefined ? null : value
     })
     setUrlState(nuqsUpdates, { history: shouldPush ? 'push' : 'replace' })
   }, [setUrlState])

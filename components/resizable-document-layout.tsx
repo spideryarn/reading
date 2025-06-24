@@ -28,6 +28,7 @@ import { CommandPalette } from './command-palette'
 import type { DocumentElement } from '@/lib/types/document'
 import { DocumentCommunicationProvider, useDocumentCommunication } from '@/lib/context/document-communication-context'
 import { useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
+import type { TabValue } from '@/lib/tools/url-state-types'
 
 // Entity type (will be moved to proper types file later)
 interface Entity {
@@ -239,8 +240,8 @@ function ResizableDocumentLayoutInner({
       // Collapse – remember current size then collapse fully
       const currentSize = leftPanelRef.current.getSize()
       setSavedLeftPaneSize(currentSize)
-      if (typeof (leftPanelRef.current as any).collapse === 'function') {
-        ;(leftPanelRef.current as any).collapse()
+      if (typeof (leftPanelRef.current as ImperativePanelHandle & { collapse?: () => void }).collapse === 'function') {
+        ;(leftPanelRef.current as ImperativePanelHandle & { collapse?: () => void }).collapse()
       } else {
         leftPanelRef.current.resize(0)
       }
@@ -264,8 +265,8 @@ function ResizableDocumentLayoutInner({
     // First expand the left pane if it's collapsed
     if (isLeftPaneCollapsed) {
       if (leftPanelRef.current) {
-        if (typeof (leftPanelRef.current as any).expand === 'function') {
-          ;(leftPanelRef.current as any).expand()
+        if (typeof (leftPanelRef.current as ImperativePanelHandle & { expand?: () => void }).expand === 'function') {
+          ;(leftPanelRef.current as ImperativePanelHandle & { expand?: () => void }).expand()
           if (savedLeftPaneSize !== 0) {
             leftPanelRef.current.resize(savedLeftPaneSize)
           }
@@ -277,7 +278,7 @@ function ResizableDocumentLayoutInner({
     }
     
     // Then switch to the selected tab using context action
-    navigateToTab(tabId as any)
+    navigateToTab(tabId as TabValue)
   }, [isLeftPaneCollapsed, savedLeftPaneSize, navigateToTab, slug])
 
   // Handle document scroll to detect current heading
