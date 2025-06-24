@@ -11,9 +11,8 @@
  * See planning/250620c_ai_orchestration_health_checks.md for implementation details.
  */
 
-import { Cli, Command, Option, UsageError } from 'clipanion';
+import { Cli, Command, Option } from 'clipanion';
 import { execSync } from 'child_process';
-import { resolve } from 'path';
 
 interface HealthCheckResult {
   tool: string;
@@ -24,10 +23,7 @@ interface HealthCheckResult {
 }
 
 class HealthCheckCommand extends Command {
-  static paths = [
-    ['check-health'],
-    Command.Default,
-  ];
+  static paths = [Command.Default];
 
   static usage = Command.Usage({
     description: 'Systematic health check for TypeScript, ESLint, and build issues',
@@ -62,17 +58,17 @@ class HealthCheckCommand extends Command {
     description: 'Specific file paths to check (overrides git-aware detection)',
   });
 
-  // Tool toggles
-  typescript = Option.Boolean('--typescript,--no-typescript', true, {
-    description: 'Run TypeScript checks (default: true)',
+  // Tool toggles (using separate flags to avoid parsing ambiguity)
+  noTypescript = Option.Boolean('--no-typescript', false, {
+    description: 'Skip TypeScript checks',
   });
 
-  eslint = Option.Boolean('--eslint,--no-eslint', true, {
-    description: 'Run ESLint checks (default: true)',
+  noEslint = Option.Boolean('--no-eslint', false, {
+    description: 'Skip ESLint checks',
   });
 
-  build = Option.Boolean('--build,--no-build', true, {
-    description: 'Run build checks (default: true)',
+  noBuild = Option.Boolean('--no-build', false, {
+    description: 'Skip build checks',
   });
 
   async execute(): Promise<number> {
@@ -92,15 +88,15 @@ class HealthCheckCommand extends Command {
       // Run checks sequentially
       const results: HealthCheckResult[] = [];
       
-      if (this.typescript) {
+      if (!this.noTypescript) {
         results.push(await this.runTypeScriptCheck(targetFiles));
       }
       
-      if (this.eslint) {
+      if (!this.noEslint) {
         results.push(await this.runESLintCheck(targetFiles));
       }
       
-      if (this.build && !this.quick) {
+      if (!this.noBuild && !this.quick) {
         results.push(await this.runBuildCheck());
       }
 
@@ -150,7 +146,15 @@ class HealthCheckCommand extends Command {
     } catch (error) {
       // Fallback: check all files if git detection fails
       this.context.stdout.write('⚠️  Git detection failed, checking all files\n');
-      return this.determineFileScope(); // Will hit rigorous mode fallback
+      try {
+        const allFiles = execSync(
+          'find . -name "*.ts" -o -name "*.tsx" | grep -v node_modules | grep -v .next',
+          { encoding: 'utf8', cwd: process.cwd() }
+        ).trim().split('\n').filter(Boolean);
+        return allFiles;
+      } catch (fallbackError) {
+        throw new Error(`Failed to find TypeScript files: ${fallbackError.message}`);
+      }
     }
   }
 
@@ -208,7 +212,7 @@ class HealthCheckCommand extends Command {
       // Parse ESLint output to count issues
       const errorOutput = error.stdout || error.stderr || error.message;
       const problemLines = errorOutput.split('\n').filter(line => 
-        line.includes('warning') || line.includes('error')
+        line.toLowerCase().includes('warning') || line.toLowerCase().includes('error')
       );
 
       return {

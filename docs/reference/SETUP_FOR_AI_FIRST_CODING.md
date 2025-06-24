@@ -163,6 +163,47 @@ npm run build                  # Verify TypeScript compilation
 npm test                       # Ensure functionality preserved
 ```
 
+## Health Check Orchestration
+
+**Problem:** AI agents need systematic error checking without verbose output cluttering context windows.
+
+**Solution:** Orchestration-friendly health checks that provide summary-first, detail-on-demand workflow.
+
+### Health Check Commands
+```bash
+# Basic usage (git-aware, checks changed files)
+npm run check:health
+
+# Quick iterations (skip build verification)
+npm run check:health:quick  
+
+# Comprehensive checking (all ~300 files)
+npm run check:health:rigorous
+
+# Advanced options (use -- separator)
+npm run check:health -- --files lib/utils/slug.ts    # Specific files
+npm run check:health -- --no-eslint                  # Skip ESLint
+npm run check:health -- --no-typescript              # Skip TypeScript
+npm run check:health -- --no-build                   # Skip build
+```
+
+### Orchestration Benefits
+- **Summary-first output:** Issue counts and priority guidance for AI decision-making
+- **Git-aware by default:** Checks changed files to catch cross-file impacts
+- **File-based targeting:** Enables focused subagent dispatch to problem areas
+- **Error prioritization:** TypeScript/Build errors marked as blocking vs ESLint quality issues
+
+### Usage Patterns
+```bash
+# Planning document stage-end checking
+npm run check:health              # Quick health overview
+# If issues found → dispatch subagents with suggested detailed commands
+
+# Development iterations  
+npm run check:health:quick        # Fast feedback during coding
+npm run lint                      # Detailed ESLint diagnostics when needed
+```
+
 ## Integration with Existing Workflows
 
 ### Planning Documents

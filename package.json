@@ -12,6 +12,8 @@
         "start": "next start",
         "lint": "next lint",
         "check:health": "./scripts/check-health.ts",
+        "check:health:quick": "./scripts/check-health.ts --quick",
+        "check:health:rigorous": "./scripts/check-health.ts --rigorous",
         "test": "jest",
         "test:watch": "jest --watch",
         "test:coverage": "jest --coverage",
