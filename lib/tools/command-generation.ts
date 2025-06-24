@@ -50,9 +50,10 @@
 
 import type { 
   Tool, 
-  CommandGenerationOptions, 
-  ConflictReport 
+  CommandGenerationOptions as BaseCommandGenerationOptions, 
+  ConflictReport as BaseConflictReport 
 } from './types'
+import * as React from 'react'
 import type { ComponentType } from 'react'
 
 /**
@@ -106,18 +107,9 @@ const CATEGORY_MAPPINGS: Record<Tool['category'], GeneratedCommandCategory> = {
 }
 
 /**
- * Enhanced command generation options
+ * Extended command generation options with navigation and context providers
  */
-export interface CommandGenerationOptions {
-  /** Enable conflict detection for shortcuts and keywords */
-  detectConflicts?: boolean
-  
-  /** Include disabled/unavailable tools */
-  includeDisabled?: boolean
-  
-  /** Custom keyword extraction function */
-  extractKeywords?: (tool: Tool) => string[]
-  
+export interface ExtendedCommandGenerationOptions extends BaseCommandGenerationOptions {
   /** Navigation function provider for actions */
   getNavigateToTab?: () => (tabId: string) => void
   
@@ -129,15 +121,9 @@ export interface CommandGenerationOptions {
 }
 
 /**
- * Conflict detection results for debugging
+ * Extended conflict detection results for debugging
  */
-export interface ConflictReport {
-  /** Shortcut conflicts: shortcut -> tool IDs */
-  shortcuts: Map<string, string[]>
-  
-  /** Keyword conflicts: keyword -> tool IDs */
-  keywords: Map<string, string[]>
-  
+export interface ExtendedConflictReport extends BaseConflictReport {
   /** Tool IDs with conflicts */
   toolsWithConflicts: Set<string>
 }
@@ -177,7 +163,7 @@ export function extractKeywordsFromTool(tool: Tool): string[] {
 /**
  * Detect conflicts between tools for shortcuts and keywords
  */
-export function detectToolConflicts(tools: Tool[]): ConflictReport {
+export function detectToolConflicts(tools: Tool[]): ExtendedConflictReport {
   const shortcutMap = new Map<string, string[]>()
   const keywordMap = new Map<string, string[]>()
   const conflictedTools = new Set<string>()
@@ -220,6 +206,7 @@ export function detectToolConflicts(tools: Tool[]): ConflictReport {
   return {
     shortcuts: shortcutConflicts,
     keywords: keywordConflicts,
+    duplicateIds: new Map(), // Currently not detecting ID conflicts
     toolsWithConflicts: conflictedTools
   }
 }
@@ -252,7 +239,7 @@ export function transformShortcuts(
  */
 export function generateCommandsFromRegistry(
   tools: Tool[],
-  options: CommandGenerationOptions = {}
+  options: ExtendedCommandGenerationOptions = {}
 ): GeneratedCommand[] {
   const {
     detectConflicts = true,
@@ -298,13 +285,17 @@ export function generateCommandsFromRegistry(
     }
     
     // Generate command
+    const transformedShortcuts = transformShortcuts(tool.shortcuts, isMac)
     const command: GeneratedCommand = {
       id: `nav-${tool.id}`, // Match existing pattern: nav-glossary, nav-summary, etc.
       name: tool.name,
       keywords: extractKeywords(tool),
-      shortcut: transformShortcuts(tool.shortcuts, isMac),
+      ...(transformedShortcuts && { shortcut: transformedShortcuts }),
       category: CATEGORY_MAPPINGS[tool.category],
-      icon: tool.icon,
+      icon: ({ size, className }: { size?: number; className?: string }) => {
+        const IconComponent = tool.icon
+        return React.createElement(IconComponent, { size, className } as any)
+      },
       action: () => {
         if (!getNavigateToTab) {
           throw new Error(

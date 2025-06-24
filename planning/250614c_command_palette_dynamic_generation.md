@@ -22,11 +22,12 @@ Currently, `components/command-palette.tsx` contains hardcoded definitions for e
 
 ## Principles & Key Decisions
 
-1. **Progressive enhancement** - Use feature flag for safe rollout
+1. **Direct replacement** - Replace hardcoded commands directly in branch
 2. **Conflict detection** - Fail loudly on duplicate shortcuts or keywords
 3. **Accessibility first** - Preserve fuzzy search with explicit keywords
 4. **Zero hardcoding** - All commands from registry after migration
-5. **Backwards compatible** - Same user experience, better maintenance
+5. **E2E testing** - Replace unit tests with comprehensive browser automation
+6. **Backwards compatible** - Same user experience, better maintenance
 
 ## Dependencies
 
@@ -50,16 +51,16 @@ Currently, `components/command-palette.tsx` contains hardcoded definitions for e
   - [x] Keyword generation from name/description
   - [x] Category mapping
 
-### Stage: Conflict detection implementation
-- [ ] Create conflict detection utilities
-  - [ ] detectShortcutConflicts() function
-  - [ ] detectKeywordConflicts() function
-  - [ ] Development mode warnings
-  - [ ] Throw errors in production for safety
-- [ ] Write comprehensive tests
-  - [ ] Test duplicate shortcuts
-  - [ ] Test similar keywords
-  - [ ] Test resolution strategies
+### Stage: Conflict detection implementation ✅ COMPLETED
+- [x] Create conflict detection utilities
+  - [x] detectShortcutConflicts() function
+  - [x] detectKeywordConflicts() function
+  - [x] Development mode warnings
+  - [x] Throw errors in production for safety
+- [x] Write comprehensive tests
+  - [x] Test duplicate shortcuts
+  - [x] Test similar keywords
+  - [x] Test resolution strategies
 
 ### Stage: Command generation implementation
 - [ ] Implement generateCommandsFromRegistry()
@@ -77,22 +78,10 @@ Currently, `components/command-palette.tsx` contains hardcoded definitions for e
   - [ ] Check keyboard shortcuts work
   - [ ] Test fuzzy search matches
 
-### Stage: Feature flag implementation
-- [ ] Add USE_REGISTRY_COMMANDS flag
-  - [ ] Environment variable support
-  - [ ] Default to false initially
-  - [ ] Document in .env.example
-- [ ] Create command source selector
-  - [ ] If flag true: use generated commands
-  - [ ] If flag false: use hardcoded commands
-  - [ ] Log which source is active
-- [ ] Test both modes work correctly
-
 ### Stage: Command palette integration
 - [ ] Update `components/command-palette.tsx`
   - [ ] Import command generation utilities
-  - [ ] Add registry command generation
-  - [ ] Implement source selection based on flag
+  - [ ] Replace hardcoded tool commands with registry generation
   - [ ] Ensure no performance regression
 - [ ] Preserve existing functionality
   - [ ] All shortcuts still work
@@ -100,14 +89,7 @@ Currently, `components/command-palette.tsx` contains hardcoded definitions for e
   - [ ] Categories maintained
   - [ ] Icons and descriptions preserved
 
-### Stage: Testing with flag disabled
-- [ ] Manual testing of all commands
-- [ ] Verify hardcoded path still works
-- [ ] Check no registry code runs when disabled
-- [ ] Performance benchmarks
-
-### Stage: Testing with flag enabled
-- [ ] Enable USE_REGISTRY_COMMANDS
+### Stage: Integration testing
 - [ ] Test all tool commands work
   - [ ] Keyboard shortcuts trigger correctly
   - [ ] Navigation uses navigateToTab()
@@ -126,23 +108,39 @@ Currently, `components/command-palette.tsx` contains hardcoded definitions for e
   - [ ] Keep only non-tool commands (settings, auth, etc.)
   - [ ] Update imports
   - [ ] Remove unused types
-- [ ] Set USE_REGISTRY_COMMANDS=true as default
-- [ ] Update tests
+- [ ] Update unit tests
   - [ ] Remove hardcoded command tests
   - [ ] Add "registry generates N commands" test
   - [ ] Test command count matches tool count
 
+### Stage: E2E test replacement
+- [ ] Create comprehensive command palette E2E test
+  - [ ] Test command palette opening (Cmd+K)
+  - [ ] Test tool command execution via search
+  - [ ] Test keyboard shortcuts for all tools
+  - [ ] Test fuzzy search functionality
+  - [ ] Test conditional command availability
+- [ ] Replace unit tests with E2E coverage
+  - [ ] Remove command generation unit tests (30 test cases)
+  - [ ] Keep only algorithmic/utility unit tests
+  - [ ] Update test documentation
+- [ ] Verify comprehensive coverage
+  - [ ] All command palette functionality tested via E2E
+  - [ ] Real user workflows validated
+  - [ ] Integration confidence established
+
 ### Stage: Documentation
 - [ ] Update command palette documentation
-- [ ] Document the feature flag
 - [ ] Add section to tool creation guide
 - [ ] Migration notes for custom commands
+- [ ] Update testing documentation
 
 ### Stage: Final validation
 - [ ] All commands work via registry
 - [ ] No hardcoded tool commands remain
 - [ ] Performance unchanged
 - [ ] Accessibility preserved
+- [ ] E2E tests provide comprehensive coverage
 - [ ] Git commit following guidelines
 
 ## Command Generation Example
@@ -210,21 +208,18 @@ export function generateCommandsFromRegistry(
 }
 ```
 
-## Feature Flag Usage
+## Integration Pattern
 
 ```typescript
 // components/command-palette.tsx
-const USE_REGISTRY_COMMANDS = process.env.NEXT_PUBLIC_USE_REGISTRY_COMMANDS === 'true'
-
 function useCommands() {
-  if (USE_REGISTRY_COMMANDS) {
-    // Generated from registry
-    const registryCommands = generateCommandsFromRegistry(toolRegistry)
-    return [...registryCommands, ...nonToolCommands]
-  } else {
-    // Legacy hardcoded
-    return [...hardcodedToolCommands, ...nonToolCommands]
-  }
+  // Generated from registry
+  const registryCommands = generateCommandsFromRegistry(toolRegistry, {
+    getNavigateToTab: () => navigateToTab,
+    getCurrentDocument: () => currentDocument,
+    isMac: navigator.platform.includes('Mac')
+  })
+  return [...registryCommands, ...nonToolCommands]
 }
 ```
 
@@ -234,16 +229,16 @@ function useCommands() {
 2. Zero hardcoded tool command definitions
 3. Shortcuts and fuzzy search work identically to before
 4. Conflict detection prevents duplicate shortcuts
-5. Feature flag enables safe rollout
+5. E2E tests provide comprehensive coverage
 6. No performance degradation
 
 ## Risks & Mitigations
 
-1. **Missing commands** - Comprehensive testing before removing hardcoded
+1. **Missing commands** - Comprehensive E2E testing before removing hardcoded
 2. **Shortcut conflicts** - Automated detection with clear errors
-3. **Search regression** - Explicit keywords field, extensive testing
+3. **Search regression** - Explicit keywords field, extensive E2E testing
 4. **Performance impact** - Benchmark before/after, optimize if needed
-5. **Rollback difficulty** - Feature flag allows instant rollback
+5. **Rollback difficulty** - Branch-based development allows easy revert
 
 ## Progress Journal
 
@@ -271,7 +266,14 @@ function useCommands() {
 - Existing `ConflictReport` type in registry - reused rather than duplicated
 - `CommandGenerationOptions` in types.ts - enhanced rather than redefined
 
-**Next Steps**: Stage 3 conflict detection is largely implemented, can move to comprehensive testing
+**Stage 3 (Conflict detection implementation)**: Completed successfully
+- Created comprehensive test suite for command generation utilities with 30 test cases
+- Verified conflict detection for shortcuts (throws errors) and keywords (logs warnings in dev mode)
+- Tested all edge cases: empty shortcuts, platform-specific transformations, keyword extraction
+- All conflict detection utilities working properly with fail-fast behavior for critical conflicts
+- Tests validate command structure, debug utilities, and error handling patterns
+
+**Next Steps**: Stage 4 command generation is already implemented, need to verify comprehensive functionality
 
 ## Related Documents
 
