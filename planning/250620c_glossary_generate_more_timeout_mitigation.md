@@ -149,25 +149,44 @@ The core idea is:
 
 **Ready for Stage 3**: Position tracking implementation can proceed - frontend Load More foundation is solid.
 
-### Stage: Position Tracking Implementation
-- [ ] Implement position-based entity ordering system
-  - Analyze existing `findFirstOccurrence` function in `components/unified-left-pane.tsx`
-  - Create utility function to batch-process entity positions after LLM generation
-  - Add `document_position` field to entity objects based on first occurrence
-  - Implement sorting by document position rather than LLM-provided order
-- [ ] Update entity merging logic for progressive loading
-  - Ensure new entities are inserted in correct document order
-  - Handle cases where entities have no findable occurrences
-  - Add position-based deduplication (same entity found at different positions)
-- [ ] Add position tracking to storage layer
-  - Store `document_position` metadata with each entity
-  - Update storage methods to preserve position information
-  - Ensure position data survives database round-trips
-- [ ] Test position tracking with complex documents
-  - Use subagent to test with scientific papers having many technical terms
-  - Verify entities appear in document order regardless of generation sequence
-  - Test edge cases: entities with no occurrences, duplicate names
-- [ ] Git commit position tracking improvements
+### Stage: Position Tracking Implementation ✅ **COMPLETED (2025-06-24)**
+- ✅ Implement position-based entity ordering system
+  - ✅ Analyze existing `findFirstOccurrence` function in `components/unified-left-pane.tsx`
+  - ✅ Create utility function to batch-process entity positions after LLM generation
+  - ✅ Add `document_position` field to entity objects based on first occurrence
+  - ✅ Implement sorting by document position rather than LLM-provided order
+- ✅ Update entity merging logic for progressive loading
+  - ✅ Ensure new entities are inserted in correct document order
+  - ✅ Handle cases where entities have no findable occurrences
+  - ✅ Add position-based deduplication (same entity found at different positions)
+- ✅ Add position tracking to storage layer
+  - ✅ Store `document_position` metadata with each entity
+  - ✅ Update storage methods to preserve position information
+  - ✅ Ensure position data survives database round-trips
+- ✅ Test position tracking with complex documents
+  - ✅ Use subagent to test with scientific papers having many technical terms
+  - ✅ Verify entities appear in document order regardless of generation sequence
+  - ✅ Test edge cases: entities with no occurrences, duplicate names
+- ✅ Git commit position tracking improvements
+
+**Stage 3 Completion Notes** (2025-06-24):
+- **Centralized Entity types**: Created `lib/types/entity.ts` with Entity and EntityWithPosition interfaces
+- **Position tracking utilities**: Implemented comprehensive utilities in `lib/utils/entity-position-tracking.ts`
+- **Integration complete**: Updated page-client.tsx, unified-left-pane.tsx, and related components
+- **Test coverage**: 21 comprehensive tests covering all position tracking scenarios
+- **Build validation**: All TypeScript compilation and linting checks pass
+- **Storage compatibility**: Existing `storeGlossary` function already supports position metadata (no changes needed)
+- **Progressive loading**: Entities now appear in document order during Load More operations
+
+**Stage 3 Technical Implementation**:
+- **findFirstOccurrence**: Case-insensitive entity detection with alias support
+- **calculateEntityPositions**: Batch position processing for multiple entities
+- **sortEntitiesByPosition**: Document-order sorting with null position handling
+- **processEntitiesForProgressive**: Complete pipeline for progressive glossary updates
+- **deduplicateEntities**: Name and alias-based duplicate prevention
+- **Entity type consolidation**: Removed duplicate interfaces across components
+
+**Ready for Stage 4**: Storage Architecture Evaluation can proceed - position tracking foundation is solid.
 
 ### Stage: Storage Architecture Evaluation and Migration
 - [ ] Evaluate current storage approach vs individual entity rows
