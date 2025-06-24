@@ -32,7 +32,7 @@ import {
   TEST_DATA
 } from '../testing/registry-test-utils'
 
-import type { Tool, ToolCategory } from '../types'
+// Test imports - types are imported in test utility functions
 
 describe('Tool Registry', () => {
   // Reset registry before each test to ensure isolation

@@ -251,6 +251,7 @@ export function createRealisticTestRegistry(): Tool[] {
  * Utility for testing registry cleanup
  */
 export function assertRegistryEmpty(): void {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const stats = require('../registry').getRegistryStats()
   
   if (stats.totalTools !== 0) {
@@ -267,6 +268,7 @@ export function assertRegistryEmpty(): void {
  * @returns Registry statistics for testing
  */
 export function getTestRegistryStats() {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   return require('../registry').getRegistryStats()
 }
 
@@ -293,6 +295,7 @@ export function createUrlStateTool(urlStateKeys: string[]): Tool {
  * @throws Error if tool not properly registered
  */
 export function verifyToolRegistration(toolId: string): void {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { getTool } = require('../registry')
   const tool = getTool(toolId)
   

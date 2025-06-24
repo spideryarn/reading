@@ -53,12 +53,9 @@ We need a centralized system that treats tools as first-class citizens with stan
 
 ## Stages & Actions
 
-### Stage: Preparation and sync
-- [ ] Run `./scripts/sync-worktrees.ts` to pull latest changes from main
-- [ ] Analyze existing tool implementations for common patterns
-
 ### Stage: Design documentation
-- [ ] Create `docs/reference/TOOL_ARCHITECTURE.md`
+- [ ] Analyze existing tool implementations for common patterns
+- [ ] Create `docs/reference/ARCHITECTURE_FOR_TOOLS.md`
   - [ ] Define Tool interface with all properties
   - [ ] Document tool categories (analysis, navigation, generation, transform)
   - [ ] Explain standard vs optional parameters

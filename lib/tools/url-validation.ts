@@ -6,9 +6,9 @@ import { ToolUrlState, TAB_VALUES, SEARCH_TYPES, SUMMARY_LEVELS, EXPERTISE_LEVEL
 
 export interface ValidationError {
   parameter: string
-  value: any
+  value: unknown
   error: string
-  fallback: any
+  fallback: unknown
 }
 
 export interface ValidationResult {
@@ -34,7 +34,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
 
   // Validate tab parameter
   if (state.tab !== undefined) {
-    if (typeof state.tab !== 'string' || !TAB_VALUES.includes(state.tab as any)) {
+    if (typeof state.tab !== 'string' || !TAB_VALUES.includes(state.tab)) {
       errors.push({
         parameter: 'tab',
         value: state.tab,
@@ -99,7 +99,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
 
   // Validate search type parameter
   if (state.type != null) {
-    if (typeof state.type !== 'string' || !SEARCH_TYPES.includes(state.type as any)) {
+    if (typeof state.type !== 'string' || !SEARCH_TYPES.includes(state.type)) {
       errors.push({
         parameter: 'type',
         value: state.type,
@@ -129,7 +129,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
 
   // Validate summary level parameter (deprecated)
   if (state.level != null) {
-    if (typeof state.level !== 'string' || !SUMMARY_LEVELS.includes(state.level as any)) {
+    if (typeof state.level !== 'string' || !SUMMARY_LEVELS.includes(state.level)) {
       errors.push({
         parameter: 'level',
         value: state.level,
@@ -144,7 +144,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
 
   // Validate expertise level parameter
   if (state.expertise != null) {
-    if (typeof state.expertise !== 'string' || !EXPERTISE_LEVELS.includes(state.expertise as any)) {
+    if (typeof state.expertise !== 'string' || !EXPERTISE_LEVELS.includes(state.expertise)) {
       errors.push({
         parameter: 'expertise',
         value: state.expertise,
@@ -159,7 +159,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
 
   // Validate length level parameter
   if (state.length != null) {
-    if (typeof state.length !== 'string' || !LENGTH_LEVELS.includes(state.length as any)) {
+    if (typeof state.length !== 'string' || !LENGTH_LEVELS.includes(state.length)) {
       errors.push({
         parameter: 'length',
         value: state.length,

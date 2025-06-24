@@ -71,7 +71,7 @@ export function shouldPushHistory(changes: Partial<ToolUrlState>, isUserAction =
   const changeKeys = Object.keys(changes)
   
   // Special case: search query with submitted flag
-  if ('q' in changes && (changes as any).submitted) {
+  if ('q' in changes && 'submitted' in changes && changes.submitted) {
     return true
   }
   
@@ -89,7 +89,7 @@ export function shouldPushHistory(changes: Partial<ToolUrlState>, isUserAction =
   }
   
   // Regular search query changes (typing) should not push when no navigation changes
-  if ('q' in changes && !(changes as any).submitted) {
+  if ('q' in changes && !('submitted' in changes && changes.submitted)) {
     return false
   }
   

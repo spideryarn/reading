@@ -201,6 +201,12 @@ export function validateTool(tool: any): ToolValidationResult {
   const errors: string[] = []
   const warnings: string[] = []
   
+  // Type guard for basic object structure
+  if (!tool || typeof tool !== 'object') {
+    errors.push('tool must be a non-null object')
+    return { isValid: false, errors, warnings }
+  }
+  
   // Required fields
   if (!tool.id || typeof tool.id !== 'string') {
     errors.push('id is required and must be a string')
@@ -307,15 +313,15 @@ export function detectConflicts(): ConflictReport {
   
   // Filter to only conflicts (multiple tools per key)
   const shortcutConflicts = new Map(
-    Array.from(shortcuts.entries()).filter(([_, tools]) => tools.length > 1)
+    Array.from(shortcuts.entries()).filter(([, tools]) => tools.length > 1)
   )
   
   const keywordConflicts = new Map(
-    Array.from(keywords.entries()).filter(([_, tools]) => tools.length > 1)
+    Array.from(keywords.entries()).filter(([, tools]) => tools.length > 1)
   )
   
   const idConflicts = new Map(
-    Array.from(duplicateIds.entries()).filter(([_, count]) => count > 1)
+    Array.from(duplicateIds.entries()).filter(([, count]) => count > 1)
   )
   
   return {

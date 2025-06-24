@@ -102,7 +102,7 @@ export interface Tool {
  */
 export interface ToolComponentProps {
   /** Current document if available */
-  document?: any // TODO: Replace with proper document type
+  document?: unknown // Document type varies by implementation
   
   /** Whether this tool's tab is currently active */
   isActive: boolean
@@ -195,13 +195,13 @@ export interface ToolExecutionContext {
     id: string
     title: string
     content: string
-    metadata: Record<string, any>
+    metadata: Record<string, unknown>
   }
   
   /** User context */
   user?: {
     id: string
-    preferences: Record<string, any>
+    preferences: Record<string, unknown>
   }
   
   /** Request metadata */
@@ -220,7 +220,7 @@ export interface ToolExecutionParams {
   action?: 'open' | 'execute' | 'refresh' | 'export'
   
   /** Tool-specific parameters */
-  [key: string]: any
+  [key: string]: unknown
 }
 
 /**
@@ -231,38 +231,41 @@ export interface ToolExecutionResult {
   type: 'navigation' | 'data' | 'error' | 'stream'
   
   /** Result data */
-  data?: any
+  data?: unknown
   
   /** Error information if type is 'error' */
   error?: {
     message: string
     code?: string
-    details?: Record<string, any>
+    details?: Record<string, unknown>
   }
   
   /** Metadata about the execution */
   metadata?: {
     executionTime: number
     cached: boolean
-    [key: string]: any
+    [key: string]: unknown
   }
 }
 
 /**
  * Type guard to check if an object is a valid Tool
  */
-export function isTool(obj: any): obj is Tool {
+export function isTool(obj: unknown): obj is Tool {
+  if (typeof obj !== 'object' || obj === null) {
+    return false
+  }
+  
+  const tool = obj as any
   return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    typeof obj.id === 'string' &&
-    typeof obj.name === 'string' &&
-    typeof obj.description === 'string' &&
-    typeof obj.category === 'string' &&
-    typeof obj.componentPath === 'string' &&
-    typeof obj.tabId === 'string' &&
-    typeof obj.requiresDocument === 'boolean' &&
-    (typeof obj.icon === 'function' || (typeof obj.icon === 'object' && obj.icon !== null))
+    typeof tool.id === 'string' &&
+    typeof tool.name === 'string' &&
+    typeof tool.description === 'string' &&
+    typeof tool.category === 'string' &&
+    typeof tool.componentPath === 'string' &&
+    typeof tool.tabId === 'string' &&
+    typeof tool.requiresDocument === 'boolean' &&
+    (typeof tool.icon === 'function' || (typeof tool.icon === 'object' && tool.icon !== null))
   )
 }
 

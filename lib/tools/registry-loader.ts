@@ -107,6 +107,7 @@ export async function registerToolFromPath(toolPath: string): Promise<void> {
  * Useful for catching configuration problems during development.
  */
 export function validateAllRegisteredTools(): void {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { getAllTools, validateTool } = require('./registry')
   const tools = getAllTools()
   
@@ -145,6 +146,7 @@ export function validateAllRegisteredTools(): void {
  * Useful for preventing user experience issues.
  */
 export function checkForToolConflicts(): void {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { detectConflicts } = require('./registry')
   const conflicts = detectConflicts()
   
@@ -152,7 +154,7 @@ export function checkForToolConflicts(): void {
   
   if (conflicts.shortcuts.size > 0) {
     console.error('❌ Shortcut conflicts detected:')
-    conflicts.shortcuts.forEach((tools, shortcut) => {
+    conflicts.shortcuts.forEach((tools: string[], shortcut: string) => {
       console.error(`   "${shortcut}" used by: ${tools.join(', ')}`)
     })
     hasConflicts = true
@@ -160,7 +162,7 @@ export function checkForToolConflicts(): void {
   
   if (conflicts.keywords.size > 0) {
     console.warn('⚠️  Keyword conflicts detected:')
-    conflicts.keywords.forEach((tools, keyword) => {
+    conflicts.keywords.forEach((tools: string[], keyword: string) => {
       console.warn(`   "${keyword}" used by: ${tools.join(', ')}`)
     })
     // Keywords conflicts are warnings, not errors
@@ -168,7 +170,7 @@ export function checkForToolConflicts(): void {
   
   if (conflicts.duplicateIds.size > 0) {
     console.error('❌ Duplicate tool IDs detected:')
-    conflicts.duplicateIds.forEach((count, toolId) => {
+    conflicts.duplicateIds.forEach((count: number, toolId: string) => {
       console.error(`   "${toolId}" registered ${count} times`)
     })
     hasConflicts = true
@@ -192,6 +194,7 @@ export async function reloadToolsForDevelopment(): Promise<void> {
     throw new Error('reloadToolsForDevelopment() is not available in production')
   }
   
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { resetRegistryForTests } = require('./registry')
   
   // Reset registry
@@ -209,12 +212,13 @@ export async function reloadToolsForDevelopment(): Promise<void> {
  * Useful for feature flags and gradual rollouts.
  */
 export function getProductionReadyTools() {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { getAllTools } = require('./registry')
   const tools = getAllTools()
   
   // For now, all registered tools are considered production ready
   // In the future, this could check for additional flags or validation
-  return tools.filter(tool => {
+  return tools.filter((tool: any) => {
     // Basic readiness checks
     return (
       tool.componentPath && 
@@ -227,11 +231,6 @@ export function getProductionReadyTools() {
 }
 
 /**
- * Export helper functions for external use
+ * All development tools are exported above as individual functions
+ * This allows for easy importing and testing of tool registry functionality
  */
-export {
-  loadAllTools,
-  validateAllRegisteredTools,
-  checkForToolConflicts,
-  getProductionReadyTools
-}
