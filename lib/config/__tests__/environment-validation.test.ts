@@ -24,7 +24,7 @@ describe('getModelStringFromEnvironment', () => {
   })
 
   it('should throw descriptive error for unknown model', () => {
-    process.env.LLM_MODEL = 'anthropic:claude-unknown:20241022'
+    process.env.LLM_MODEL = 'anthropic:claude-unknown:20250514'
     expect(() => getModelStringFromEnvironment()).toThrow('Invalid LLM_MODEL environment variable')
     expect(() => getModelStringFromEnvironment()).toThrow('not available in configuration')
   })
@@ -36,7 +36,7 @@ describe('getModelStringFromEnvironment', () => {
   })
 
   it('should throw descriptive error for whitespace issues', () => {
-    process.env.LLM_MODEL = ' anthropic:claude-3-5-haiku:20241022 '
+    process.env.LLM_MODEL = ' anthropic:claude-sonnet-4:20250514 '
     expect(() => getModelStringFromEnvironment()).toThrow('Invalid LLM_MODEL environment variable')
     expect(() => getModelStringFromEnvironment()).toThrow('whitespace')
   })
@@ -54,7 +54,7 @@ describe('getModelStringFromEnvironment', () => {
   })
 
   it('should reject provider-specific format violations', () => {
-    process.env.LLM_MODEL = 'anthropic:gpt-4:20241022'
+    process.env.LLM_MODEL = 'anthropic:gpt-4:20250514'
     expect(() => getModelStringFromEnvironment()).toThrow('Anthropic model names must start with "claude-"')
   })
 

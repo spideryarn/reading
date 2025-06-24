@@ -20,10 +20,10 @@ describe('validateModelStringStrict', () => {
     })
 
     it('should detect whitespace issues', () => {
-      const result = validateModelStringStrict(' anthropic:claude-3-5-haiku:20241022 ')
+      const result = validateModelStringStrict(' anthropic:claude-sonnet-4:20250514 ')
       expect(result.valid).toBe(false)
       expect(result.error).toContain('whitespace')
-      expect(result.error).toContain('anthropic:claude-3-5-haiku:20241022')
+      expect(result.error).toContain('anthropic:claude-sonnet-4:20250514')
     })
   })
 
@@ -50,7 +50,7 @@ describe('validateModelStringStrict', () => {
     })
 
     it('should accept valid models from configuration', () => {
-      const result = validateModelStringStrict('anthropic:claude-3-5-haiku:20241022')
+      const result = validateModelStringStrict('anthropic:claude-sonnet-4:20250514')
       expect(result.valid).toBe(true)
       expect(result.error).toBeUndefined()
     })
@@ -85,7 +85,7 @@ describe('validateModelStringStrict', () => {
       })
 
       it('should accept latest version', () => {
-        const result = validateModelStringStrict('google:gemini-2.0-flash:latest')
+        const result = validateModelStringStrict('google:gemini-2.5-flash:latest')
         expect(result.valid).toBe(true)
       })
 
@@ -106,23 +106,22 @@ describe('validateModelStringStrict', () => {
 
     describe('OpenAI models', () => {
       it('should accept latest version', () => {
-        // Note: This will fail availability check since OpenAI models are commented out
+        // OpenAI o3 model is now available in configuration
         const result = validateModelStringStrict('openai:o3:latest')
-        expect(result.valid).toBe(false)
-        expect(result.error).toContain('not available in configuration')
+        expect(result.valid).toBe(true)
       })
     })
   })
 
   describe('edge cases', () => {
     it('should provide helpful suggestions for wrong provider', () => {
-      const result = validateModelStringStrict('claude:claude-3-5-haiku:20241022')
+      const result = validateModelStringStrict('claude:claude-sonnet-4:20250514')
       expect(result.valid).toBe(false)
       expect(result.error).toContain('Unknown provider: claude')
     })
 
     it('should provide helpful suggestions for wrong model within provider', () => {
-      const result = validateModelStringStrict('anthropic:claude-unknown:20241022')
+      const result = validateModelStringStrict('anthropic:claude-unknown:20250514')
       expect(result.valid).toBe(false)
       expect(result.error).toContain('Available anthropic models')
     })
@@ -131,10 +130,10 @@ describe('validateModelStringStrict', () => {
 
 describe('parseModelString integration', () => {
   it('should work with valid model strings', () => {
-    const parsed = parseModelString('anthropic:claude-3-5-haiku:20241022')
+    const parsed = parseModelString('anthropic:claude-sonnet-4:20250514')
     expect(parsed.provider).toBe('anthropic')
-    expect(parsed.modelName).toBe('claude-3-5-haiku')
-    expect(parsed.version).toBe('20241022')
+    expect(parsed.modelName).toBe('claude-sonnet-4')
+    expect(parsed.version).toBe('20250514')
     expect(parsed.thinking).toBe(false)
   })
 
