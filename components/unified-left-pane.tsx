@@ -113,7 +113,7 @@ interface UnifiedLeftPaneProps {
   originalFileType?: string | null
   uploadMetadata?: {
     content_size_kb?: number
-    [key: string]: any
+    [key: string]: unknown
   } | null
 }
 

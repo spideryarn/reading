@@ -101,7 +101,7 @@ export function UrlValidationWarning({
 interface SimpleUrlWarningProps {
   parameter: string
   error: string
-  fallback?: any
+  fallback?: unknown
   onDismiss: () => void
 }
 

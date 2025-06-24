@@ -73,8 +73,8 @@ export interface AdditionalMetadata {
  * Result of HTML processing pipeline
  */
 export interface ProcessedDocument {
-  document: any // Database document record
-  storageResult?: any // Storage upload result
+  document: import('@/lib/types/database').Database['public']['Tables']['documents']['Row'] // Database document record
+  storageResult?: Record<string, unknown> // Storage upload result
 }
 
 /**
