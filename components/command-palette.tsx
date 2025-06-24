@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/command'
 import { useDocumentSlug } from '@/lib/context/document-communication-context'
 import { useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
+import { type TabValue } from '@/lib/tools/url-state-types'
 import { useAuth } from '@/lib/context/auth-context'
 import {
   Article,
@@ -366,7 +367,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
         const tabIds = ['original', 'ai-generated', 'summary', 'chat', 'glossary', 'search', 'highlights', 'metadata']
         const tabId = tabIds[number - 1]
         if (tabId) {
-          navigateToTab(tabId as any)
+          navigateToTab(tabId as TabValue)
         }
       }
 

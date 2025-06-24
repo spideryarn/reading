@@ -62,8 +62,13 @@ export function stateToUrlParams(state: ToolUrlState): URLSearchParams {
   return params
 }
 
+// Interface for changes that include metadata about the change
+interface UrlStateChanges extends Partial<ToolUrlState> {
+  submitted?: boolean
+}
+
 // Determine whether to push or replace history based on changes
-export function shouldPushHistory(changes: Partial<ToolUrlState>, isUserAction = true): boolean {
+export function shouldPushHistory(changes: Partial<ToolUrlState> | UrlStateChanges, isUserAction = true): boolean {
   // If not a user action (e.g., programmatic update), always replace
   if (!isUserAction) return false
   
@@ -71,7 +76,7 @@ export function shouldPushHistory(changes: Partial<ToolUrlState>, isUserAction =
   const changeKeys = Object.keys(changes)
   
   // Special case: search query with submitted flag
-  if ('q' in changes && 'submitted' in changes && changes.submitted) {
+  if ('q' in changes && 'submitted' in changes && (changes as UrlStateChanges).submitted) {
     return true
   }
   
@@ -89,7 +94,7 @@ export function shouldPushHistory(changes: Partial<ToolUrlState>, isUserAction =
   }
   
   // Regular search query changes (typing) should not push when no navigation changes
-  if ('q' in changes && !('submitted' in changes && changes.submitted)) {
+  if ('q' in changes && !('submitted' in changes && (changes as UrlStateChanges).submitted)) {
     return false
   }
   

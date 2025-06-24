@@ -220,38 +220,55 @@ Actions:
 - Maintained existing styling and hover effects for remaining cards
 - Build successful with no TypeScript errors
 
-### Stage 7: Enhanced Reading Time Calculation
-**Goal**: Implement research-backed reading time estimation with readability adjustments
+### Stage 7: Enhanced Reading Time Calculation ⚠️ RESEARCH COMPLETE - READY FOR IMPLEMENTATION
+**Goal**: Implement evidence-based reading time estimation using AI academic complexity levels
 
-**Current Issue**: Simple 225 WPM calculation doesn't account for document complexity
+**Research Foundation**: Comprehensive parallel research (June 2025) validates 2-5x reading speed variations for academic complexity. See `docs/reference/RESEARCH_READING_SPEED_COMPLEXITY_ADJUSTMENTS.md` for complete evidence base.
+
+**Evidence-Based Approach**: Use existing AI academic difficulty assessment with research-backed multipliers rather than traditional readability metrics (which were deliberately removed due to inferior accuracy).
+
+**Implementation Strategy**:
+- **Leverage existing AI assessment**: "High school or below", "Undergraduate", "Masters/PhD", "Post-doctoral/expert"
+- **Research-backed multipliers**: 1.0x, 0.80x, 0.65x, 0.55x respectively
+- **Confidence weighting**: Reduce adjustments for low-confidence AI assessments
+- **238 WPM baseline**: Replace current 225 WPM with Brysbaert 2019 meta-analysis standard
 
 Actions:
-- [ ] **Replace basic reading time calculation with complexity-adjusted algorithm**
-  - Update from fixed 225 WPM to research-backed 238 WPM base (Brysbaert 2019 meta-analysis)
-  - Integrate Flesch Reading Ease score adjustments:
-    - 90-100 (Very Easy): 0.8× base time
-    - 80-89 (Easy): 0.9× base time
-    - 70-79 (Fairly Easy): 1.0× base time
-    - 60-69 (Standard): 1.1× base time
-    - 50-59 (Fairly Difficult): 1.2× base time
-    - 30-49 (Difficult): 1.4× base time
-    - 0-29 (Very Difficult): 1.6× base time
-  - Apply Flesch-Kincaid Grade Level multipliers:
-    - Grade 1-6: 0.9× base time
-    - Grade 7-9: 1.0× base time
-    - Grade 10-12: 1.1× base time
-    - Grade 13-16 (College): 1.3× base time
-    - Grade 17+ (Graduate): 1.5× base time
-- [ ] **Add comprehensive reading time tooltip**
-  - Explain calculation method used
-  - Show: word count, base speed, readability adjustments, final adjusted speed
-  - Include disclaimer about individual variation
-  - Format: "Reading Time: X minutes\n\nCalculated using:\n• Word count: X,XXX words\n• Base reading speed: 238 WPM (research average)\n• Flesch Reading Ease: XX (X difficulty)\n• Grade Level: X.X (X level)\n• Adjusted speed: XXX WPM\n\nThis estimate accounts for text complexity and may vary based on your reading speed and familiarity with the content."
+- [ ] **Update baseline and implement AI-level multipliers**
+  - Update from 225 WPM to research-backed 238 WPM base (Brysbaert 2019 meta-analysis)
+  - Integrate AI academic level multipliers:
+    - "High school or below": 1.0× (238 WPM) - Accessible content maintains baseline
+    - "Undergraduate": 0.80× (190 WPM) - 20% reduction for academic vocabulary + cognitive load
+    - "Masters/PhD": 0.65× (155 WPM) - 35% reduction for complex syntax + specialized terminology  
+    - "Post-doctoral/expert": 0.55× (131 WPM) - 45% reduction for dense theoretical content
+  - Apply confidence weighting: `adjustedMultiplier = 1.0 - ((1.0 - multiplier) * confidenceWeight)`
+  - Use conservative fallback (0.80x) for unknown academic levels
 - [ ] **Create enhanced reading time utility**
-  - Move calculation logic to dedicated utility function
-  - Return detailed breakdown for tooltip display
-  - Ensure memoization for performance
-  - Add unit tests for various readability scenarios
+  - Move calculation logic to `lib/utils/enhanced-reading-time.ts`
+  - Integrate with existing AI reading difficulty data from MetadataPanel
+  - Return detailed breakdown for tooltip display including confidence adjustments
+  - Add comprehensive unit tests for all academic levels and confidence scenarios
+- [ ] **Add detailed reading time tooltip**
+  - Explain evidence-based calculation method
+  - Show: word count, base speed (238 WPM), academic level, confidence, final adjusted speed
+  - Include individual variation disclaimer
+  - Format: "Reading Time: X minutes\n\nCalculated using:\n• Word count: X,XXX words\n• Base reading speed: 238 WPM (research-backed)\n• Academic level: [level] (confidence: [high/medium/low])\n• Adjusted speed: XXX WPM\n\nThis estimate uses AI-powered complexity assessment and accounts for academic reading patterns. Individual reading speeds vary significantly."
+- [ ] **Performance optimization**
+  - Memoize calculation results to avoid recomputation
+  - Ensure minimal impact on MetadataPanel rendering performance
+  - Cache AI difficulty data integration
+
+**Technical Integration**:
+- Reading difficulty data already available in MetadataPanel via existing AI assessment
+- No additional API calls required - uses cached `document_enhancements` data
+- Maintains existing UI structure while enhancing calculation accuracy
+- Backwards compatible with documents that don't have reading difficulty assessments
+
+**Success Criteria**:
+- Reading time estimates reflect meaningful differences between academic complexity levels
+- Tooltip provides clear explanation of methodology without overwhelming users
+- Performance impact remains under 100ms for calculations
+- User feedback indicates improved reading time estimate usefulness
 
 ### Stage 8: LLM-Extracted Metadata
 **Goal**: Use AI to extract missing metadata from document content

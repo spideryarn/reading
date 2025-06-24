@@ -28,20 +28,8 @@ import { CommandPalette } from './command-palette'
 import type { DocumentElement } from '@/lib/types/document'
 import { DocumentCommunicationProvider, useDocumentCommunication } from '@/lib/context/document-communication-context'
 import { useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
-
-// Entity type (will be moved to proper types file later)
-interface Entity {
-  name: string
-  ontology: 'person' | 'place' | 'date' | 'theme' | 'event' | 
-           'reference' | 'object' | 'organization' | 'concept' | 
-           'definition' | 'other'
-  aliases: string[]
-  brief_explanation: string
-  long_explanation?: string
-  datetime?: string
-  url?: string
-  extra?: Record<string, unknown>
-}
+import type { TabValue } from '@/lib/tools/url-state-types'
+import type { Entity } from '@/lib/types/entity'
 
 interface ResizableDocumentLayoutProps {
   // Document data
@@ -90,7 +78,7 @@ interface ResizableDocumentLayoutProps {
   originalFileType?: string | null
   uploadMetadata?: {
     content_size_kb?: number
-    [key: string]: any
+    [key: string]: unknown
   } | null
 }
 
@@ -152,8 +140,8 @@ function ResizableDocumentLayoutInner({
 
       // Auto-collapse on mobile if not already collapsed
       if (isMobile && !paneIsCollapsed) {
-        if (typeof (leftPanelRef.current as any).collapse === 'function') {
-          ;(leftPanelRef.current as any).collapse()
+        if (typeof (leftPanelRef.current as ImperativePanelHandle & { collapse?: () => void }).collapse === 'function') {
+          ;(leftPanelRef.current as ImperativePanelHandle & { collapse?: () => void }).collapse()
         } else {
           leftPanelRef.current.resize(0)
         }
@@ -226,8 +214,8 @@ function ResizableDocumentLayoutInner({
 
     if (isLeftPaneCollapsed) {
       // Expand – restore previous size (or default if none recorded)
-      if (typeof (leftPanelRef.current as any).expand === 'function') {
-        ;(leftPanelRef.current as any).expand()
+      if (typeof (leftPanelRef.current as ImperativePanelHandle & { expand?: () => void }).expand === 'function') {
+        ;(leftPanelRef.current as ImperativePanelHandle & { expand?: () => void }).expand()
         if (savedLeftPaneSize !== 0) {
           leftPanelRef.current.resize(savedLeftPaneSize)
         }
@@ -239,8 +227,8 @@ function ResizableDocumentLayoutInner({
       // Collapse – remember current size then collapse fully
       const currentSize = leftPanelRef.current.getSize()
       setSavedLeftPaneSize(currentSize)
-      if (typeof (leftPanelRef.current as any).collapse === 'function') {
-        ;(leftPanelRef.current as any).collapse()
+      if (typeof (leftPanelRef.current as ImperativePanelHandle & { collapse?: () => void }).collapse === 'function') {
+        ;(leftPanelRef.current as ImperativePanelHandle & { collapse?: () => void }).collapse()
       } else {
         leftPanelRef.current.resize(0)
       }
@@ -264,8 +252,8 @@ function ResizableDocumentLayoutInner({
     // First expand the left pane if it's collapsed
     if (isLeftPaneCollapsed) {
       if (leftPanelRef.current) {
-        if (typeof (leftPanelRef.current as any).expand === 'function') {
-          ;(leftPanelRef.current as any).expand()
+        if (typeof (leftPanelRef.current as ImperativePanelHandle & { expand?: () => void }).expand === 'function') {
+          ;(leftPanelRef.current as ImperativePanelHandle & { expand?: () => void }).expand()
           if (savedLeftPaneSize !== 0) {
             leftPanelRef.current.resize(savedLeftPaneSize)
           }
@@ -277,7 +265,7 @@ function ResizableDocumentLayoutInner({
     }
     
     // Then switch to the selected tab using context action
-    navigateToTab(tabId as any)
+    navigateToTab(tabId as TabValue)
   }, [isLeftPaneCollapsed, savedLeftPaneSize, navigateToTab, slug])
 
   // Handle document scroll to detect current heading

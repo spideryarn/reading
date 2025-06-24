@@ -3,6 +3,7 @@
  * Handles subscription creation, updates, and status checks
  */
 
+import Stripe from 'stripe'
 import { stripe, STRIPE_CONFIG } from './client'
 import { updateUserSubscriptionStatus } from './customers'
 import { logger, generateCorrelationId, createTimer } from '../logger'
@@ -143,7 +144,7 @@ export async function createPortalSession(
  */
 export async function getSubscriptionDetails(
   subscriptionId: string
-): Promise<{ subscription: any; error?: string }> {
+): Promise<{ subscription: Stripe.Subscription | null; error?: string }> {
   const correlationId = generateCorrelationId()
   const timer = createTimer(stripeLogger, 'getSubscriptionDetails')
   
@@ -193,7 +194,7 @@ export async function getSubscriptionDetails(
  */
 export async function cancelSubscription(
   subscriptionId: string
-): Promise<{ subscription: any; error?: string }> {
+): Promise<{ subscription: Stripe.Subscription | null; error?: string }> {
   const correlationId = generateCorrelationId()
   const timer = createTimer(stripeLogger, 'cancelSubscription')
   
@@ -243,14 +244,14 @@ export async function cancelSubscription(
  * Process subscription webhook event
  */
 export async function processSubscriptionWebhook(
-  event: any
+  event: Stripe.Event
 ): Promise<{ success: boolean; error?: string }> {
   const correlationId = generateCorrelationId()
   const timer = createTimer(stripeLogger, 'processSubscriptionWebhook')
   
-  const subscription = event.data.object
+  const subscription = event.data.object as Stripe.Subscription
   const subscriptionId = subscription.id
-  const customerId = subscription.customer
+  const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id
   
   stripeLogger.info({
     operation: 'processSubscriptionWebhook',
@@ -278,7 +279,6 @@ export async function processSubscriptionWebhook(
         status = 'past_due'
         break
       case 'canceled':
-      case 'cancelled':
         status = 'canceled'
         break
       case 'unpaid':
@@ -373,7 +373,7 @@ export async function processSubscriptionWebhook(
  */
 export async function getCustomerSubscriptions(
   customerId: string
-): Promise<{ subscriptions: any[]; error?: string }> {
+): Promise<{ subscriptions: Stripe.Subscription[]; error?: string }> {
   const correlationId = generateCorrelationId()
   const timer = createTimer(stripeLogger, 'getCustomerSubscriptions')
   

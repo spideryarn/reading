@@ -2,12 +2,13 @@
 // See docs/TOOL_GLOSSARY.md for architecture and usage patterns
 
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { executePromptWithUsage } from '@/lib/prompts/types'
-import { glossaryPrompt, glossaryPromptInputSchema, glossaryResponseSchema } from '@/lib/prompts/templates/glossary'
+import { glossaryPrompt, glossaryPromptInputSchema, glossaryResponseSchema, entitySchema } from '@/lib/prompts/templates/glossary'
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { getModelForAICall } from '@/lib/config'
+import { getModelForAICall, GLOSSARY_CONFIG } from '@/lib/config'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 import { validateAuth } from '@/lib/auth/server-auth'
 
@@ -37,13 +38,22 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const { content, already_entities, documentId } = validationResult.data
+    const { content, already_entities, documentId, max_entities, existing_entities } = validationResult.data
+    
+    // Apply default entity limit if not specified
+    const entityLimit = max_entities || GLOSSARY_CONFIG.DEFAULT_ENTITY_LIMIT_PER_REQUEST
+    
+    // Enforce maximum limit for safety
+    const safeEntityLimit = Math.min(entityLimit, GLOSSARY_CONFIG.MAX_TOTAL_ENTITY_LIMIT)
     
     requestLogger.info({
       correlationId,
       documentId,
       contentLength: content.length,
-      alreadyEntitiesCount: already_entities?.length || 0
+      alreadyEntitiesCount: already_entities?.length || 0,
+      existingEntitiesCount: existing_entities?.length || 0,
+      entityLimit: safeEntityLimit,
+      generateMoreMode: !!existing_entities
     }, 'Starting glossary generation process')
     
     // Initialize database services
@@ -98,6 +108,9 @@ export async function POST(request: NextRequest) {
       input_data: { 
         content_length: content.length,
         already_entities_count: already_entities?.length || 0,
+        existing_entities_count: existing_entities?.length || 0,
+        entity_limit: safeEntityLimit,
+        generate_more_mode: !!existing_entities,
         model_used: modelString
       }
     }
@@ -117,7 +130,9 @@ export async function POST(request: NextRequest) {
     // Use real LLM processing - no fallback
     const llmResult = await executePromptWithUsage(glossaryPrompt, { 
       content,
-      already_entities 
+      already_entities,
+      max_entities: safeEntityLimit,
+      existing_entities
     })
     
     // Log AI operation completion
@@ -171,7 +186,7 @@ export async function POST(request: NextRequest) {
     if (documentId) {
       // Clean entities to remove undefined properties for exactOptionalPropertyTypes compliance
       const cleanedEntities = validatedResponse.entities.map(entity => {
-        const cleaned: any = {
+        const cleaned: Partial<z.infer<typeof entitySchema>> = {
           name: entity.name,
           ontology: entity.ontology,
           aliases: entity.aliases,

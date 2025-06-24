@@ -28,7 +28,7 @@ export interface DocumentCommunicationActions {
   scrollToElement: (elementId: string) => void
   // URL state synchronization
   setUrlStateEnabled: (enabled: boolean) => void
-  notifyUrlStateChange: (changes: Record<string, any>) => void
+  notifyUrlStateChange: (changes: Record<string, unknown>) => void
 }
 
 // Combined context type
@@ -158,7 +158,7 @@ export function DocumentCommunicationProvider({ children }: DocumentCommunicatio
       }
     },
     
-    notifyUrlStateChange: (changes: Record<string, any>) => {
+    notifyUrlStateChange: (changes: Record<string, unknown>) => {
       // This is mainly for logging and future extensions
       // The actual URL state is managed by the useToolUrlState hook
       if (process.env.NODE_ENV === 'development') {

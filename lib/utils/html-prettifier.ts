@@ -126,7 +126,7 @@ export function prettifyAcademicHtml(htmlContent: string): string {
  */
 export function prettifyAcademicHtmlSafe(
   htmlContent: string,
-  logger?: { warn: (data: any, message: string) => void },
+  logger?: { warn: (data: unknown, message: string) => void },
   correlationId?: string
 ): string {
   try {

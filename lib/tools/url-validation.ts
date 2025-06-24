@@ -2,7 +2,7 @@
 // Follows CODING_PRINCIPLES.md: "raise errors early, clearly & fatally"
 // See docs/reference/ARCHITECTURE_URL_STATE.md for URL state architecture
 
-import { ToolUrlState, TAB_VALUES, SEARCH_TYPES, SUMMARY_LEVELS, EXPERTISE_LEVELS, LENGTH_LEVELS } from './url-state-types'
+import { ToolUrlState, TAB_VALUES, SEARCH_TYPES, SUMMARY_LEVELS, EXPERTISE_LEVELS, LENGTH_LEVELS, TabValue, SearchType, SummaryLevel, ExpertiseLevel, LengthLevel } from './url-state-types'
 
 export interface ValidationError {
   parameter: string
@@ -34,7 +34,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
 
   // Validate tab parameter
   if (state.tab !== undefined) {
-    if (typeof state.tab !== 'string' || !TAB_VALUES.includes(state.tab)) {
+    if (typeof state.tab !== 'string' || !TAB_VALUES.includes(state.tab as TabValue)) {
       errors.push({
         parameter: 'tab',
         value: state.tab,
@@ -99,7 +99,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
 
   // Validate search type parameter
   if (state.type != null) {
-    if (typeof state.type !== 'string' || !SEARCH_TYPES.includes(state.type)) {
+    if (typeof state.type !== 'string' || !SEARCH_TYPES.includes(state.type as SearchType)) {
       errors.push({
         parameter: 'type',
         value: state.type,
@@ -129,7 +129,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
 
   // Validate summary level parameter (deprecated)
   if (state.level != null) {
-    if (typeof state.level !== 'string' || !SUMMARY_LEVELS.includes(state.level)) {
+    if (typeof state.level !== 'string' || !SUMMARY_LEVELS.includes(state.level as SummaryLevel)) {
       errors.push({
         parameter: 'level',
         value: state.level,
@@ -144,7 +144,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
 
   // Validate expertise level parameter
   if (state.expertise != null) {
-    if (typeof state.expertise !== 'string' || !EXPERTISE_LEVELS.includes(state.expertise)) {
+    if (typeof state.expertise !== 'string' || !EXPERTISE_LEVELS.includes(state.expertise as ExpertiseLevel)) {
       errors.push({
         parameter: 'expertise',
         value: state.expertise,
@@ -159,7 +159,7 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
 
   // Validate length level parameter
   if (state.length != null) {
-    if (typeof state.length !== 'string' || !LENGTH_LEVELS.includes(state.length)) {
+    if (typeof state.length !== 'string' || !LENGTH_LEVELS.includes(state.length as LengthLevel)) {
       errors.push({
         parameter: 'length',
         value: state.length,

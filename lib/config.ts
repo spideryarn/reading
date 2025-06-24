@@ -4,7 +4,8 @@ import {
   getModelConfig as getModelConfigByString,
   parseModelString,
   validateModelStringStrict,
-  DEFAULT_MODEL_STRING
+  DEFAULT_MODEL_STRING,
+  type ModelConfig
 } from './config/models'
 
 
@@ -80,7 +81,7 @@ export function getModelConfigFromEnvironment() {
 }
 
 // Get model string and config for AI calls
-export function getModelForAICall(): { modelString: string, config: any } {
+export function getModelForAICall(): { modelString: string, config: ModelConfig } {
   try {
     const modelString = getModelStringFromEnvironment()
     const config = getModelConfigByString(modelString)
@@ -121,6 +122,21 @@ export const SUMMARY_CONFIG = {
   // Minimum number of characters required to generate an AI summary
   // Sections with fewer characters will show "[too little text to summarise]"
   MIN_CONTENT_LENGTH_CHARS: 100,
+} as const
+
+// Glossary configuration for entity generation and timeout mitigation
+export const GLOSSARY_CONFIG = {
+  // Default number of entities to generate per LLM request
+  // Conservative limit to prevent timeout issues on complex documents
+  DEFAULT_ENTITY_LIMIT_PER_REQUEST: 20,
+  
+  // Maximum entities that can be requested in a single call
+  // Safety bound to prevent excessive token generation
+  MAX_TOTAL_ENTITY_LIMIT: 100,
+  
+  // Maximum entities per "Load More" request
+  // Batch size for incremental entity generation
+  MAX_ENTITIES_PER_REQUEST: 30,
 } as const
 
 // UI configuration

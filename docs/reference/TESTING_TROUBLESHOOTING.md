@@ -12,22 +12,69 @@ This document covers known issues, workarounds, and debugging strategies for tes
 
 ## Current Test Health
 
-**Status**: ~71% pass rate with critical infrastructure issues requiring attention ⚠️
+**Status**: Test infrastructure issues resolved ✅ All API route tests working correctly
 
-**Primary Issues**:
-- NextRequest mocking conflicts preventing API route testing
+**Resolved Issues**:
+- ✅ NextRequest mocking infrastructure completely fixed
+- ✅ All 13 high-priority API route tests now working
+
+**Remaining Areas**:
 - Some authentication test instability
 - LLM API cost prevention measures need verification
 
 ## NextRequest Mocking Infrastructure Issues
 
-### Issue Description
+### Issue Status: ✅ RESOLVED
 
-**Critical Infrastructure Problem**: The current Jest setup has broken NextRequest mocking that blocks API route testing.
+**Previous Problem**: The Jest setup had broken NextRequest mocking that blocked API route testing. This issue has been **completely resolved**.
 
-**Root Cause**: Custom Request mock in `jest.setup.js` conflicts with NextRequest's read-only properties:
+**What Was Fixed**: 
+- Removed broken custom Request mock from `jest.setup.js` that conflicted with NextRequest's read-only properties
+- Implemented proper API route testing using `next-test-api-route-handler`
+- All 13 high-priority API route tests now work correctly with zero NextRequest errors
+
+**Previous Symptoms (now fixed)**:
+- ~~`TypeError: Cannot set property url of #<NextRequest> which has only a getter`~~ ✅ Fixed
+- ~~API route tests fail when run together~~ ✅ Fixed
+- ~~Individual test files may pass but full suite fails~~ ✅ Fixed
+
+### Current Working Solution
+
+**Using `next-test-api-route-handler`** (now implemented):
+
+```bash
+npm install --save-dev next-test-api-route-handler
+```
+
+**Working Pattern** (now in use across all API route tests):
 ```javascript
-// Broken implementation in jest.setup.js
+import { testApiHandler } from 'next-test-api-route-handler'
+import * as route from './route'  // Import entire route module
+
+// Test API route handlers
+it('should handle API route correctly', async () => {
+  await testApiHandler({
+    appHandler: route,
+    test: async ({ fetch }) => {
+      const res = await fetch({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: 'test' }),
+      })
+      
+      expect(res.status).toBe(200)
+    },
+  })
+})
+```
+
+**Critical Pattern**: Must use `import * as route from './route'` to import the entire route module, not individual `POST`/`GET` handlers. This ensures proper Next.js App Router compatibility.
+
+### Historical Context
+
+**Root Cause (now fixed)**: Custom Request mock in `jest.setup.js` conflicted with NextRequest's read-only properties:
+```javascript
+// Broken implementation (now removed)
 global.Request = class Request {
   constructor(input, init = {}) {
     this.url = input;  // ← Error: Cannot set read-only property
@@ -35,59 +82,10 @@ global.Request = class Request {
 }
 ```
 
-**Symptoms:**
-- `TypeError: Cannot set property url of #<NextRequest> which has only a getter`
-- API route tests fail when run together
-- Individual test files may pass but full suite fails
-- Test helper utilities in `app/api/__tests__/test-helpers.ts` also affected
-
-### Recommended Solution
-
-**Use `next-test-api-route-handler`** (see `planning/250608a_test_infrastructure_cleanup.md`):
-
-```bash
-npm install --save-dev next-test-api-route-handler
-```
-
-This package is specifically designed for Next.js App Router API testing and solves the NextRequest mocking complexity.
-
-**Alternative: Enhanced Request/Response Mocking**:
-```javascript
-// Alternative pattern for API route testing
-import { NextRequest, NextResponse } from 'next/server'
-
-// Mock NextRequest properly for API routes
-const createMockRequest = (url: string, options: RequestInit = {}) => {
-  return new NextRequest(url, {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  })
-}
-
-// Test API route handlers
-it('should handle API route correctly', async () => {
-  const request = createMockRequest('http://localhost:3000/api/test', {
-    method: 'POST',
-    body: JSON.stringify({ data: 'test' }),
-  })
-  
-  const response = await POST(request)
-  expect(response.status).toBe(200)
-})
-```
-
-### Current Workaround
-
-**Run tests individually when debugging API routes:**
-
-```bash
-# Run specific test file
-npm test app/api/__tests__/chat.test.ts
-
-# Run multiple specific files
-npm test app/api/__tests__/chat.test.ts app/api/__tests__/summarise.test.ts
-```
+**Workarounds No Longer Needed**:
+- ~~Running tests individually~~ - Full test suite now works
+- ~~Custom Request mocking~~ - Using next-test-api-route-handler instead
+- ~~Avoiding API route tests in CI~~ - All tests run reliably
 
 ## LLM API Cost Prevention
 

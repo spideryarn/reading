@@ -4,6 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { 
   type ChatModelAdapter,
   type ThreadMessageLike,
+  type TextContentPart,
+  type ThreadUserContentPart,
+  type ThreadAssistantContentPart
 } from "@assistant-ui/react";
 import { createClient } from '@/lib/supabase/client';
 import { ChatService } from '@/lib/services/database/chat';
@@ -133,8 +136,10 @@ export function usePersistentChat({
 
     try {
       // Build message payload, omitting aiCallId if undefined to satisfy exactOptionalPropertyTypes
-      const messagePayload = aiCallId ? { threadId, role, content, aiCallId } : { threadId, role, content };
-      await chatService.addMessage(messagePayload as any);
+      const messagePayload = aiCallId 
+        ? { threadId, role, content, aiCallId } 
+        : { threadId, role, content };
+      await chatService.addMessage(messagePayload);
       
       console.log('[Persistent Chat] Message saved:', {
         threadId,
@@ -160,7 +165,9 @@ export function usePersistentChat({
       const conversationHistory = messages.map(msg => ({
         role: msg.role as 'user' | 'assistant',
         content: Array.isArray(msg.content)
-          ? (msg.content.find((part: any) => (part as { type: string }).type === 'text') as { text: string })?.text ?? ''
+          ? (msg.content.find((part: ThreadUserContentPart | ThreadAssistantContentPart): part is TextContentPart => 
+              part.type === 'text'
+            ) as TextContentPart)?.text ?? ''
           : (msg.content as unknown as string) || ''
       }));
 

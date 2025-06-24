@@ -61,24 +61,113 @@ if (typeof setImmediate === 'undefined') {
     global.clearImmediate = clearTimeout;
 }
 
-// Add fetch polyfill for next-test-api-route-handler
+// Add Response constructor mock for Jest environment
+if (typeof global.Response === 'undefined') {
+    global.Response = class Response {
+        constructor(body, init = {}) {
+            this.body = body;
+            this.status = init.status || 200;
+            this.statusText = init.statusText || 'OK';
+            this.headers = new Map();
+            this.ok = this.status >= 200 && this.status < 300;
+            
+            // Set headers from init
+            if (init.headers) {
+                if (init.headers instanceof Map) {
+                    this.headers = new Map(init.headers);
+                } else if (typeof init.headers === 'object') {
+                    Object.entries(init.headers).forEach(([key, value]) => {
+                        this.headers.set(key.toLowerCase(), value);
+                    });
+                }
+            }
+        }
+
+        async json() {
+            if (typeof this.body === 'string') {
+                return JSON.parse(this.body);
+            }
+            return this.body;
+        }
+
+        async text() {
+            return typeof this.body === 'string' ? this.body : JSON.stringify(this.body);
+        }
+
+        async blob() {
+            return new Blob([this.body]);
+        }
+
+        clone() {
+            return new Response(this.body, {
+                status: this.status,
+                statusText: this.statusText,
+                headers: this.headers
+            });
+        }
+    };
+}
+
+// Add Headers constructor mock for Jest environment
+if (typeof global.Headers === 'undefined') {
+    global.Headers = class Headers {
+        constructor(init = {}) {
+            this.map = new Map();
+            if (init instanceof Map) {
+                this.map = new Map(init);
+            } else if (typeof init === 'object') {
+                Object.entries(init).forEach(([key, value]) => {
+                    this.map.set(key.toLowerCase(), value);
+                });
+            }
+        }
+
+        get(name) {
+            return this.map.get(name.toLowerCase());
+        }
+
+        set(name, value) {
+            this.map.set(name.toLowerCase(), value);
+        }
+
+        has(name) {
+            return this.map.has(name.toLowerCase());
+        }
+
+        delete(name) {
+            this.map.delete(name.toLowerCase());
+        }
+
+        entries() {
+            return this.map.entries();
+        }
+
+        keys() {
+            return this.map.keys();
+        }
+
+        values() {
+            return this.map.values();
+        }
+
+        forEach(callback) {
+            this.map.forEach(callback);
+        }
+    };
+}
+
+// Add fetch polyfill for next-test-api-route-handler - use undici if available
 if (typeof fetch === 'undefined') {
     try {
         const { fetch } = require('undici');
         global.fetch = fetch;
     } catch (error) {
-        // Fallback working fetch mock for Supabase operations
+        // Basic fallback fetch mock only for cases where undici is unavailable
+        // Most tests should have access to undici, so this should rarely be used
         global.fetch = async (url, options = {}) => {
-            // Mock successful responses for common Supabase operations
-            if (url.includes('supabase') || url.includes('/rest/v1/')) {
-                return new Response(JSON.stringify({ data: [], error: null }), {
-                    status: 200,
-                    statusText: 'OK',
-                    headers: { 'content-type': 'application/json' }
-                });
-            }
-
-            // Default mock response for other requests
+            console.warn(`[jest.setup.js] Fallback fetch mock called for: ${url}`);
+            
+            // Default mock response for requests
             return new Response(JSON.stringify({ success: true }), {
                 status: 200,
                 statusText: 'OK',

@@ -35,25 +35,13 @@ import { extractCleanText } from '@/lib/utils/html-text-extraction'
 import { extractAllMatchContexts, generateTooltipContent } from '@/lib/utils/search-context-extraction'
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 import { useGlossaryUrlState, useSearchUrlState } from '@/lib/tools/hooks/use-tool-url-state'
+import type { Entity } from '@/lib/types/entity'
+import { findFirstOccurrence } from '@/lib/utils/entity-position-tracking'
 
 // Semantic highlight interface
 interface SemanticHighlight {
   elementId: string
   confidence: number
-}
-
-// Entity type (will be moved to proper types file later)
-interface Entity {
-  name: string
-  ontology: 'person' | 'place' | 'date' | 'theme' | 'event' | 
-           'reference' | 'object' | 'organization' | 'concept' | 
-           'definition' | 'other'
-  aliases: string[]
-  brief_explanation: string
-  long_explanation?: string
-  datetime?: string
-  url?: string
-  extra?: Record<string, unknown>
 }
 
 // Search result interface
@@ -87,6 +75,11 @@ interface UnifiedLeftPaneProps {
   onHeadingClick: (headingText: string, headingId?: string) => void
   onLoadGlossary: () => void
   onResetGlossary?: () => void
+  onLoadMoreGlossary?: () => void
+  
+  // Load More state
+  hasMoreEntities?: boolean
+  isLoadingMoreGlossary?: boolean
   
   // For chat context
   documentContext: string
@@ -113,7 +106,7 @@ interface UnifiedLeftPaneProps {
   originalFileType?: string | null
   uploadMetadata?: {
     content_size_kb?: number
-    [key: string]: any
+    [key: string]: unknown
   } | null
 }
 
@@ -208,26 +201,9 @@ function GlossaryDisplay({
   
   // Note: We don't clear search when entities reload since URL state should persist
   
-  const findFirstOccurrence = (entity: Entity): string | null => {
-    const searchTerms = [entity.name, ...entity.aliases]
-    const sortedElements = [...elements].sort((a, b) => a.position - b.position)
-    
-    for (const element of sortedElements) {
-      if (!element.content) continue
-      const content = element.content.toLowerCase()
-      
-      for (const term of searchTerms) {
-        if (content.includes(term.toLowerCase())) {
-          return element.id
-        }
-      }
-    }
-    
-    return null
-  }
   
   const handleEntityClick = (entity: Entity) => {
-    const elementId = findFirstOccurrence(entity)
+    const elementId = findFirstOccurrence(entity, elements)
     if (elementId) {
       // Scroll to the first occurrence without altering the current glossary search input
       actions.scrollToElement(elementId)
@@ -294,7 +270,7 @@ function GlossaryDisplay({
         ) : (
           <div className="space-y-4 p-4">
             {filteredEntities.map((entity, index) => {
-        const hasOccurrence = findFirstOccurrence(entity) !== null
+        const hasOccurrence = findFirstOccurrence(entity, elements) !== null
         
         return (
           <div 
@@ -409,6 +385,9 @@ export function UnifiedLeftPane({
   onHeadingClick,
   onLoadGlossary,
   onResetGlossary,
+  onLoadMoreGlossary,
+  hasMoreEntities = false,
+  isLoadingMoreGlossary = false,
   documentContext,
   semanticHighlights = [],
   onSemanticHighlightsChange,
@@ -995,6 +974,25 @@ export function UnifiedLeftPane({
               entities={glossaryEntities || []} 
               elements={elements}
             />
+            {hasMoreEntities && onLoadMoreGlossary && (
+              <div className="p-4 border-t border-gray-200">
+                <Button
+                  onClick={onLoadMoreGlossary}
+                  disabled={isLoadingMoreGlossary}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {isLoadingMoreGlossary ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-gray-600 mr-2" />
+                      Loading More...
+                    </>
+                  ) : (
+                    'Load More Entries'
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center p-8 text-center">
@@ -1009,7 +1007,7 @@ export function UnifiedLeftPane({
         )}
       </>
     )
-  }, [showGlossary, isLoadingGlossary, glossaryError, glossaryCached, glossaryEntities, elements, onLoadGlossary, onResetGlossary])
+  }, [showGlossary, isLoadingGlossary, glossaryError, glossaryCached, glossaryEntities, elements, onLoadGlossary, onResetGlossary, hasMoreEntities, isLoadingMoreGlossary, onLoadMoreGlossary])
 
   const renderSearchTab = useCallback(() => (
       <div className="flex flex-col h-full">

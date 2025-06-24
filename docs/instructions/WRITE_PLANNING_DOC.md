@@ -52,6 +52,14 @@ Don't include a `Date` section at the top since it's implicit from the filename.
 - If the goal is complex, break things down in detail about the desired behaviour.
 
 
+### User stories & acceptance criteria
+
+- Define what success looks like from the user's perspective
+- Include specific acceptance criteria that can be tested/verified
+- Avoid repetition, waffle, or stating the obvious - focus on distinctive requirements and edge cases
+- Use concrete examples where helpful
+
+
 ### References
 
 - Mention relevant evergreen docs (in `docs/`), other planning docs (in `planning/`), code files/functions, links, or anything else that could provide context, with a 1-sentence summary for each of what it's about/why it's relevant
@@ -81,7 +89,8 @@ Formatting:
 - Refer to specific docs, files/functions, examples, links, etc, so it's clear exactly what needs to be done
 - If there are caveats, snippets, examples, or other rich detail that won't fit in a couple of sentences, add a section in the Appendix and reference it from the action
 - Explicitly say to use subagents for encapsulated work, or where it will create a lot of verbose content, e.g. checking for errors or browser console output with Puppeteer/Playwright MCP (preferring Puppeteer), doing research
-- Make sure the actions are described clearly enough and with enough detail/context that someone else could implement correctly
+- Make sure the actions are described clearly enough and with enough detail/context that someone else could implement correctly.
+- It's fine for complicated, risky, or important actions to get an extra sentence or two of context if needed, or to reference snippets/examples/background in an Appendix below.
 
 Upfront preparatory actions:
 - Run `./scripts/sync-worktrees.ts` in a subagent to make sure we've pulled the latest changes from `main` before we start (to make merge conflicts less likely).
@@ -102,12 +111,14 @@ After creating the initial planning doc:
 
 At the end of stage (where appropriate):
 - If doing UI-related changes, add an end-of-stage action to check things look ok with Puppeteer MCP (in a subagent, provided with rich description of the background/approach to take/success criteria).
-- **Add health check actions** - Use judgment to include appropriate checks based on changes made:
-  - **TypeScript check** (`npm run build` or `tsc --noEmit`): Include when modifying TypeScript code, especially API routes, type definitions, or core logic
-  - **Linting** (`npm run lint`): Include when adding new files or significantly modifying existing code patterns
-  - **Testing** (re-run affected tests in subagent): Include when changing logic that has test coverage - see `docs/reference/TESTING_OVERVIEW.md` and `docs/reference/TESTING_SETUP.md`
-  - **Build verification** (`npm run build`): Reserve for major changes or final validation - builds can be time-consuming
-  - **Decision criteria**: Choose checks that are likely to catch regressions from the specific changes being made. For small isolated changes, lighter checks suffice. For core system changes, run comprehensive checks.
+- **Add health check action**: `npm run check:health` (use subagent for >3 files with issues):
+  - **Default scope**: Checks files changed in this stage (git-aware) - catches cross-file impacts from your changes
+  - **For major refactors**: Use `npm run check:health --rigorous` (all files + test files)  
+  - **For quick iterations**: Use `npm run check:health --quick` (skip build verification)
+  - **For targeted fixes**: Use `npm run check:health --files src/modified/` (specific paths only)
+  - **Tool coverage**: Runs TypeScript, ESLint, and build checks sequentially - all provide complementary error detection
+  - **Orchestration**: File-based output with issue counts enables targeted subagent dispatch to address problems efficiently
+  - **Testing**: Re-run affected tests in subagent when changing logic with test coverage - see `docs/reference/TESTING_OVERVIEW.md` and `docs/reference/TESTING_SETUP.md`
 - Follow instructions in `docs/instructions/DEBRIEF_PROGRESS.md` to output a summary of where things stand
 - Update this planning doc with progress so far, log useful learnings/surprises/changes of plan/etc.
 - Add an action to stop & review with user where appropriate, e.g. when we get to a good stopping point, to manually check changes to the user interface, etc.
@@ -128,6 +139,7 @@ As final actions:
   - Identify redundant or low-level tests that will be brittle
   - Consolidate into fewer, high-coverage integration or E2E tests
   - Aim for net reduction in test count while maintaining coverage
+- **Improvement opportunities** - If you discovered any improvement opportunities outside the scope of the planned work during implementation, discuss these with the user before finalising
 - Ask the user's permission to merge back (if we created a branch)
 - Move the doc to `planning/finished/` and commit.
 

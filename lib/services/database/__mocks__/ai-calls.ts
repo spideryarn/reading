@@ -5,6 +5,7 @@ import type {
   PromptType
 } from '@/lib/types/database'
 import type { PromptUsage } from '@/lib/prompts/types'
+import type { JsonObject } from '@/lib/types/json'
 import type {
   AiCallMetrics,
   CreateAiCallWithModelStringOptions,
@@ -70,6 +71,11 @@ export class AiCallService {
     
     AiCallService.mockCalls.push(aiCall)
     return aiCall
+  }
+
+  // Alias for startCallWithModelString - for backward compatibility with tests
+  async startCall(options: CreateAiCallWithModelStringOptions): Promise<AiCall> {
+    return this.startCallWithModelString(options)
   }
 
   // Complete an AI call
@@ -226,6 +232,11 @@ export class AiCallService {
     
     AiCallService.mockCalls.push(aiCall)
     return aiCall
+  }
+
+  // Alias for createWithModelString - for backward compatibility with tests  
+  async create(options: SimpleCreateAiCallWithModelStringOptions): Promise<AiCall> {
+    return this.createWithModelString(options)
   }
 
   // Extract metrics helper

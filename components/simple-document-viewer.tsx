@@ -13,22 +13,12 @@ import { DocumentParser } from '@/lib/services/document-parser'
 import { getSemanticHighlightClass } from '@/lib/utils/semantic-highlighting'
 import Mark from 'mark.js'
 import { useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
+import type { Entity } from '@/lib/types/entity'
 
 // Semantic highlight interface
 interface SemanticHighlight {
   elementId: string
   confidence: number
-}
-
-// Entity interface for glossary highlighting
-interface Entity {
-  name: string
-  ontology: 'person' | 'place' | 'date' | 'theme' | 'event' | 
-           'reference' | 'object' | 'organization' | 'concept' | 
-           'definition' | 'other'
-  aliases: string[]
-  brief_explanation: string
-  long_explanation?: string
 }
 
 interface SimpleDocumentViewerProps {
