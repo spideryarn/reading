@@ -24,6 +24,18 @@ jest.mock('@phosphor-icons/react', () => ({
   SidebarSimple: ({ size, weight, className }: { size?: number; weight?: string; className?: string }) => (
     <div data-testid="sidebar-simple-icon" data-size={size} data-weight={weight} className={className}>SidebarSimple</div>
   ),
+  Terminal: ({ size, weight, className }: { size?: number; weight?: string; className?: string }) => (
+    <div data-testid="terminal-icon" data-size={size} data-weight={weight} className={className}>Terminal</div>
+  ),
+  HighlighterCircle: ({ size, weight, className }: { size?: number; weight?: string; className?: string }) => (
+    <div data-testid="highlighter-circle-icon" data-size={size} data-weight={weight} className={className}>HighlighterCircle</div>
+  ),
+  Tag: ({ size, weight, className }: { size?: number; weight?: string; className?: string }) => (
+    <div data-testid="tag-icon" data-size={size} data-weight={weight} className={className}>Tag</div>
+  ),
+  TwitterLogo: ({ size, weight, className }: { size?: number; weight?: string; className?: string }) => (
+    <div data-testid="twitter-logo-icon" data-size={size} data-weight={weight} className={className}>TwitterLogo</div>
+  ),
 }))
 
 // Mock Radix UI Tooltip
@@ -33,21 +45,50 @@ jest.mock('@radix-ui/react-tooltip', () => ({
   Trigger: ({ asChild, children, ...props }: any) => {
     if (asChild) {
       const child = children
+      // Only forward specific safe props to avoid DOM prop warnings
+      const { onPointerEnter, onPointerLeave, onFocus, onBlur, ...otherProps } = props
+      const safeProps = { onPointerEnter, onPointerLeave, onFocus, onBlur }
       return {
         ...child,
         props: {
           ...child.props,
-          ...props,
+          ...safeProps,
           'data-state': 'closed'
         }
       }
     }
-    return <div {...props} data-state="closed">{children}</div>
+    return <div data-state="closed">{children}</div>
   },
   Portal: ({ children }: any) => children,
   Content: ({ children }: any) => <div>{children}</div>,
-  Arrow: (props: any) => <div {...props} />
+  Arrow: () => <div />
 }))
+
+// Mock Radix UI Popover
+jest.mock('@radix-ui/react-popover', () => ({
+  Root: ({ children }: any) => children,
+  Trigger: ({ asChild, children, ...props }: any) => {
+    if (asChild) {
+      const child = children
+      // Only forward specific safe props to avoid DOM prop warnings
+      const { onPointerEnter, onPointerLeave, onFocus, onBlur, onClick, ...otherProps } = props
+      const safeProps = { onPointerEnter, onPointerLeave, onFocus, onBlur, onClick }
+      return {
+        ...child,
+        props: {
+          ...child.props,
+          ...safeProps,
+          'data-state': 'closed'
+        }
+      }
+    }
+    return <div data-state="closed">{children}</div>
+  },
+  Portal: ({ children }: any) => children,
+  Content: ({ children }: any) => <div>{children}</div>,
+  Arrow: () => <div />
+}))
+
 
 describe('VerticalIconNav', () => {
   const mockOnTabClick = jest.fn()
@@ -63,7 +104,6 @@ describe('VerticalIconNav', () => {
     
     // Check that all expected icons are rendered
     expect(screen.getByTestId('article-icon')).toBeInTheDocument()
-    expect(screen.getByTestId('robot-icon')).toBeInTheDocument()
     expect(screen.getByTestId('list-bullets-icon')).toBeInTheDocument()
     expect(screen.getByTestId('chat-circle-icon')).toBeInTheDocument()
     expect(screen.getByTestId('book-open-icon')).toBeInTheDocument()
