@@ -123,6 +123,13 @@ describe('CommandPalette', () => {
     jest.clearAllMocks()
     ;(useRouter as jest.Mock).mockReturnValue(mockRouter)
     ;(useDocumentCommunication as jest.Mock).mockReturnValue({
+      state: {
+        currentPosition: null,
+        highlightedTerm: null,
+        activeTabId: 'original',
+        documentSlug: null,
+        urlStateEnabled: true
+      },
       actions: mockDocumentActions,
     })
     ;(useDocumentSlug as jest.Mock).mockReturnValue(null) // Default: no document context

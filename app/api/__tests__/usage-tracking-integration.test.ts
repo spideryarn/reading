@@ -16,7 +16,7 @@ import * as promptTypes from '@/lib/prompts/types'
 import * as supabaseServer from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { EnhancementService } from '@/lib/services/database/enhancements'
-import { getModelConfig, getModelForAICall } from '@/lib/config'
+import { getModelForAICall } from '@/lib/config'
 import { tweetThreadPromptInputSchema, tweetThreadResponseSchema } from '@/lib/prompts/templates/tweet-thread'
 import type { MockSupabaseClient, MockAiCall } from './test-types'
 import type { ModelConfig } from '@/lib/config'
@@ -65,7 +65,6 @@ jest.mock('@/lib/prompts/templates/tweet-thread', () => ({
 // Type the mocked modules
 const mockPromptTypes = promptTypes as jest.Mocked<typeof promptTypes>
 const mockSupabaseServer = supabaseServer as jest.Mocked<typeof supabaseServer>
-const mockGetModelConfig = getModelConfig as jest.MockedFunction<typeof getModelConfig>
 const mockGetModelForAICall = getModelForAICall as jest.MockedFunction<typeof getModelForAICall>
 const mockTweetThreadInputSchema = tweetThreadPromptInputSchema as jest.Mocked<typeof tweetThreadPromptInputSchema>
 const mockTweetThreadResponseSchema = tweetThreadResponseSchema as jest.Mocked<typeof tweetThreadResponseSchema>
@@ -94,7 +93,13 @@ describe('API Routes Usage Tracking Integration', () => {
     mockEnhancementService = new EnhancementService(mockSupabaseClient)
     
     // Set up service method spies
-    jest.spyOn(mockAiCallService, 'startCall').mockResolvedValue('test-ai-call-id')
+    jest.spyOn(mockAiCallService, 'startCall').mockResolvedValue({
+      id: 'test-ai-call-id',
+      document_id: null,
+      model_string: 'anthropic:claude-3-5-haiku:20241022',
+      prompt_type: 'chat',
+      status: 'pending'
+    } as any)
     jest.spyOn(mockAiCallService, 'completeCall').mockResolvedValue({} as any)
     jest.spyOn(mockAiCallService, 'failCall').mockResolvedValue({} as any)
     
@@ -104,20 +109,7 @@ describe('API Routes Usage Tracking Integration', () => {
     jest.spyOn(mockEnhancementService, 'delete').mockResolvedValue(undefined)
     jest.spyOn(mockEnhancementService, 'upsert').mockResolvedValue({} as any)
     
-    mockGetModelConfig.mockReturnValue({
-      provider: 'anthropic',
-      modelName: 'claude-3-5-haiku',
-      version: '20241022',
-      thinking: false,
-      contextWindow: 200_000,
-      outputTokens: 8192,
-      description: 'Claude 3.5 Haiku - cost-effective',
-      pricing: {
-        inputPer1M: 1.00,
-        outputPer1M: 5.00
-      }
-    } as ModelConfig)
-    
+    // Mock getModelForAICall to return model string and config
     mockGetModelForAICall.mockReturnValue({
       modelString: 'anthropic:claude-3-5-haiku:20241022',
       config: {
@@ -125,7 +117,14 @@ describe('API Routes Usage Tracking Integration', () => {
         modelName: 'claude-3-5-haiku',
         version: '20241022',
         thinking: false,
-      }
+        contextWindow: 200_000,
+        outputTokens: 8192,
+        description: 'Claude 3.5 Haiku - cost-effective',
+        pricing: {
+          inputPer1M: 1.00,
+          outputPer1M: 5.00
+        }
+      } as ModelConfig
     })
     
     // Setup executePromptWithUsage mock with proper structure
@@ -366,7 +365,7 @@ describe('API Routes Usage Tracking Integration', () => {
       mockPromptTypes.executePromptWithUsage.mockResolvedValue(mockTweetThreadResult)
       
       // Mock AI call service create method (used by tweet-thread route)
-      mockAiCallService.create = jest.fn().mockResolvedValue(mockAiCall as MockAiCall)
+      jest.spyOn(mockAiCallService, 'create').mockResolvedValue(mockAiCall as MockAiCall)
       
       // Mock enhancement storage
       mockEnhancementService.upsert.mockResolvedValue({} as { id: string })
@@ -502,7 +501,7 @@ describe('API Routes Usage Tracking Integration', () => {
       
       mockPromptTypes.executePromptWithUsage.mockResolvedValue(markdownWrappedResult)
       mockTweetThreadResponseSchema.parse.mockReturnValue(expectedParsedResponse)
-      mockAiCallService.create = jest.fn().mockResolvedValue(mockAiCall as MockAiCall)
+      jest.spyOn(mockAiCallService, 'create').mockResolvedValue(mockAiCall as MockAiCall)
       mockEnhancementService.upsert.mockResolvedValue({} as { id: string })
 
       const request = createMockRequest('http://localhost/api/tweet-thread', {
@@ -551,7 +550,7 @@ describe('API Routes Usage Tracking Integration', () => {
     })
 
     it('should handle model configuration errors', async () => {
-      mockGetModelConfig.mockImplementation(() => {
+      mockGetModelForAICall.mockImplementation(() => {
         throw new Error('Invalid model configuration')
       })
 

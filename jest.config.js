@@ -17,6 +17,9 @@ const customJestConfig = {
     '<rootDir>/node_modules/',
     '<rootDir>/obsolete_alternative_version/',
     '<rootDir>/backup/',
+    // Exclude Playwright E2E tests (they run separately via npm run test:e2e)
+    '<rootDir>/tests/e2e/',
+    '<rootDir>/e2e/',
     // Exclude helper/utility files that aren't tests
     '.*test-helpers\\.(ts|tsx|js)$',
     '.*visibility-test-utils\\.(ts|tsx|js)$',

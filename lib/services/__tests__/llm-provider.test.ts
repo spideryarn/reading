@@ -89,11 +89,11 @@ describe('LLM Provider Factory', () => {
 
 describe('Model Configuration', () => {
   it('should have consistent provider configuration', () => {
-    const anthropicConfig = getModelConfig('anthropic:claude-3-5-haiku:20241022')
+    const anthropicConfig = getModelConfig('anthropic:claude-sonnet-4:20250514')
     expect(anthropicConfig.provider).toBe('anthropic')
     expect(anthropicConfig.contextWindow).toBe(200_000)
     
-    const googleConfig = getModelConfig('google:gemini-2.0-flash:latest')
+    const googleConfig = getModelConfig('google:gemini-2.5-flash:latest')
     expect(googleConfig.provider).toBe('google')
     expect(googleConfig.contextWindow).toBe(1_000_000)
   })
