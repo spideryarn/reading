@@ -1,10 +1,18 @@
-You are helping the reader to understand this text. You must extract an exhaustive list of the most important entities in this text into a kind of glossary, which they can refer to if they need help as they are reading. They should be ordered according to which appears first in the text.
+{% if existing_entities %}
+You are helping the reader to understand this text. You must extract additional entities to add to an existing glossary. Generate {{ max_entities or 20 }} MORE entities that are not already covered by the existing entities listed below. They should be ordered according to which appears first in the text.
+{% else %}
+You are helping the reader to understand this text. You must extract the most important entities in this text into a kind of glossary, which they can refer to if they need help as they are reading. Generate up to {{ max_entities or 20 }} entities, focusing on the most important ones first. They should be ordered according to which appears first in the text.
+{% endif %}
 
 - An entity is something important to understanding this text. It's anything that might merit a Wikipedia page, a dictionary entry, an entry in the index of a book, new terminology, central idea, or anything that might confuse the reader.
 
 - An entity could be a person, place, reference material, concept, etc (see full list of ontology types below).
 
+{% if existing_entities %}
+- Focus on entities not yet covered by the existing glossary. Prioritise entities that are equally important to those already extracted.
+{% else %}
 - A longer/complex text will have many entities. A shorter/simpler text will have fewer entities.
+{% endif %}
 
 - If you need to look up accurate information about an entity (e.g. dates, facts, definitions), you should search the web to ensure accuracy.
 
@@ -64,7 +72,15 @@ For example, if the text is about the history of the United States, the response
 }
 ```
 
-{% if already_entities %}
+{% if existing_entities %}
+<existing_glossary_entities>
+This document already has the following entities in its glossary. DO NOT generate any entities that duplicate or significantly overlap with these:
+{% for entity in existing_entities %}
+- {{ entity.name }} ({{ entity.ontology }}){% if entity.aliases and entity.aliases.length > 0 %}, aliases: {{ entity.aliases | join(", ") }}{% endif %}
+  Brief: {{ entity.brief_explanation }}
+{% endfor %}
+</existing_glossary_entities>
+{% elif already_entities %}
 <already_extracted_entities>
 This text already has the following entities, so don't include any of these in your response:
 {% for entity in already_entities %}

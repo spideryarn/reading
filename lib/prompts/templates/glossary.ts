@@ -40,7 +40,9 @@ const glossaryPromptSchema = z.object({
     name: z.string(),
     aliases: z.array(z.string())
   })).optional(),
-  documentId: z.string().uuid().optional() // Optional for backward compatibility
+  documentId: z.string().uuid().optional(), // Optional for backward compatibility
+  max_entities: z.number().int().positive().optional(), // Maximum entities to generate
+  existing_entities: z.array(entitySchema).optional() // Full entity objects for "generate more" mode
 })
 
 // Load the glossary prompt template
