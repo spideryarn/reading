@@ -2,11 +2,15 @@
 
 ## Goal, context
 
-Production users experiencing 504 timeout errors when generating glossaries for complex documents with extensive terminology. This particularly affects scientific papers with high terminological density, where the glossary feature may need to generate dozens or hundreds of entities requiring thousands of LLM tokens.
+Production users experiencing 504 timeout errors when generating glossaries for complex documents with extensive terminology. This particularly affects scientific papers with high terminological density, where the glossary feature may need to generate dozens or hundreds of entities requiring thousands of LLM tokens. The user believes that the LLM response time is mostly driven by the number of *output* (rather than input) tokens.
 
 The solution implements a "generate more" approach that initially caps entity generation to a manageable number (20-50 entities), then allows users to request additional entities in subsequent API calls. This reduces initial timeout risk while preserving the full document context and Claude Sonnet quality the user prefers.
 
 The implementation modifies the existing glossary Nunjucks template with conditional logic for entity capping and incremental generation, providing a foundation for advanced features like relevance scoring and user-specified entity requests.
+
+The core idea is:
+- first time we call the glossary entity-generation, there are no existing entities
+- then thereafter, when we call 'load more', it feeds in the existing ones into the prompt template, so that the LLM knows not to bother re-creating those
 
 ## References
 
@@ -38,15 +42,12 @@ The implementation modifies the existing glossary Nunjucks template with conditi
 ## Stages & actions
 
 ### Stage: Preparation and Setup
-- [ ] Research best practices for LLM prompt engineering with conditional logic and entity limiting
-  - Use subagent to search for Nunjucks conditional template patterns
-  - Research entity extraction strategies for large documents
-  - Document findings in this planning doc
 
 ### Stage: Core Entity Capping Implementation
+- Use a subagent to research about Nunjucks syntax (including conditional template patterns), and write up in `docs/reference/NUNJUCKS_USAGE.md`, as per `docs/instructions/WRITE_EVERGREEN_DOC.md`
 - [ ] Add entity limit configuration to `lib/config.ts`
-  - Add `GLOSSARY_CONFIG` section with `DEFAULT_ENTITY_LIMIT: 20`
-  - Add `MAX_ENTITY_LIMIT: 100` for safety bounds
+  - Add `GLOSSARY_CONFIG` section with `DEFAULT_ENTITY_LIMIT_PER_REQUEST: 20`
+  - Add `MAX_TOTAL_ENTITY_LIMIT: 100` for safety bounds
   - Include configuration comments explaining purpose
 - [ ] Modify `lib/prompts/templates/glossary.ts` input schema
   - Add optional `max_entities` parameter to `glossaryPromptSchema`
@@ -60,7 +61,7 @@ The implementation modifies the existing glossary Nunjucks template with conditi
   - Add exclusion logic to prevent duplicate entities based on `existing_entities`
 - [ ] Modify `app/api/glossary/route.ts` for entity capping
   - Add `max_entities` parameter to request body validation
-  - Default to `GLOSSARY_CONFIG.DEFAULT_ENTITY_LIMIT` from config
+  - Default to `GLOSSARY_CONFIG.DEFAULT_ENTITY_LIMIT_PER_REQUEST` from config
   - Pass entity limit to LLM template
   - Update logging to track entity counts and limits
 - [ ] Write comprehensive tests for entity capping
@@ -100,12 +101,7 @@ The implementation modifies the existing glossary Nunjucks template with conditi
   - Test with various document types and sizes
 - [ ] Git commit frontend changes
 
-### Stage: Position Tracking and Storage Architecture
-- [ ] Evaluate current storage approach vs individual entity rows
-  - Analyze current `storeGlossary` method in `lib/services/database/enhancements.ts`
-  - Current approach: Single JSON blob in `document_enhancements.content`
-  - Consider alternative: Individual entity rows for better incremental updates
-  - Document trade-offs and make architectural decision (see Appendix for current analysis)
+### Stage: Position Tracking Implementation
 - [ ] Implement position-based entity ordering system
   - Analyze existing `findFirstOccurrence` function in `components/unified-left-pane.tsx`
   - Create utility function to batch-process entity positions after LLM generation
@@ -117,13 +113,39 @@ The implementation modifies the existing glossary Nunjucks template with conditi
   - Add position-based deduplication (same entity found at different positions)
 - [ ] Add position tracking to storage layer
   - Store `document_position` metadata with each entity
-  - Update `storeGlossary` to preserve position information
+  - Update storage methods to preserve position information
   - Ensure position data survives database round-trips
 - [ ] Test position tracking with complex documents
   - Use subagent to test with scientific papers having many technical terms
   - Verify entities appear in document order regardless of generation sequence
   - Test edge cases: entities with no occurrences, duplicate names
 - [ ] Git commit position tracking improvements
+
+### Stage: Storage Architecture Evaluation and Migration
+- [ ] Evaluate current storage approach vs individual entity rows
+  - Analyze current `storeGlossary` method in `lib/services/database/enhancements.ts`
+  - Current approach: Single JSON blob in `document_enhancements.content`
+  - Consider alternative: Individual entity rows for better incremental updates
+  - Document trade-offs and make architectural decision (see Appendix for current analysis)
+- [ ] Design individual entity storage schema if needed
+  - Create migration for `document_glossary_entities` table
+  - Include fields: `document_id`, `entity_name`, `aliases`, `brief_explanation`, `long_explanation`, `document_position`
+  - Add foreign key constraints and RLS policies
+  - Design indexes for performance (document_id, entity_name, document_position)
+- [ ] Implement storage migration if proceeding with individual rows
+  - Create database service methods for entity CRUD operations
+  - Update `storeGlossary` to work with individual entity rows
+  - Add batch operations for efficient entity loading
+  - Implement data migration from existing JSON blobs
+- [ ] Update API and frontend for new storage architecture
+  - Modify glossary API to work with individual entity operations
+  - Update frontend state management for incremental entity loading
+  - Ensure backward compatibility with existing cached glossaries
+- [ ] Test storage architecture changes
+  - Test entity creation, updates, and retrieval
+  - Verify performance with large glossaries
+  - Test data migration from existing documents
+- [ ] Git commit storage architecture changes
 
 ### Stage: Advanced Configuration and Intelligence
 - [ ] Expand `lib/config.ts` with advanced glossary configuration
@@ -154,28 +176,15 @@ The implementation modifies the existing glossary Nunjucks template with conditi
 - [ ] Implement user-specified entity requests
   - Add `requested_entities` parameter to template input schema
   - Modify Nunjucks template to prioritise requested entities
-  - Add frontend UI for entity search/request functionality
+  - Add frontend UI for entity search/request functionality, so that the user can type in a specific entity that they're confused about, and we generate a glossary entity (plus aliases) for that.
+    - Before starting on this stage, make a proposal for the user about how to deal with edge cases, e.g. what if the user asks for an entity that doesn't exist? Or one that we already have a very similar entity for? etc etc
 - [ ] Add configurable explanation levels
   - Implement `generate_long_explanations` parameter
   - Add conditional logic in template to skip long explanations when disabled
   - Add fallback logic to copy brief explanation to long explanation field
+  - Store this somewhere with the entity, so that we know we didn't generate a long explanation for that entity (so that we might know to regenerate them in future)
 - [ ] Test extended features with various scenarios
 - [ ] Git commit extended features
-
-### Stage: Production Monitoring and Optimization
-- [ ] Add comprehensive logging for timeout analysis
-  - Track entity generation times by document size
-  - Monitor entity counts vs processing time
-  - Log timeout occurrences with document characteristics
-- [ ] Implement performance monitoring
-  - Add timing logs for each stage of generation
-  - Track token usage patterns
-  - Monitor "Load More" usage frequency
-- [ ] Run performance tests with production-like documents
-  - Use subagent to test with various document types
-  - Validate timeout reduction effectiveness
-  - Test under load conditions
-- [ ] Git commit monitoring enhancements
 
 ### Stage: Documentation and Testing Refinement
 - [ ] Update `docs/reference/TOOL_GLOSSARY.md` with new functionality
@@ -195,25 +204,6 @@ The implementation modifies the existing glossary Nunjucks template with conditi
   - Test with various document sizes and complexities
   - Validate timeout mitigation effectiveness
 - [ ] Git commit documentation updates
-
-### Stage: Production Deployment and Validation
-- [ ] Deploy to production using `npm run deploy:production`
-- [ ] Monitor production metrics for timeout reduction
-  - Track 504 error frequency
-  - Monitor user engagement with "Load More"
-  - Validate performance improvements
-- [ ] Gather user feedback on new functionality
-  - Monitor support channels for related issues
-  - Track user behaviour analytics
-  - Document any unexpected usage patterns
-- [ ] Create production runbook for glossary timeout issues
-  - Document troubleshooting steps
-  - Add monitoring queries and alerts
-  - Include escalation procedures
-- [ ] Final validation and user acceptance
-  - Confirm timeout issues are resolved
-  - Validate entity quality maintained
-  - Ensure no regression in existing functionality
 
 ### Stage: Cleanup and Planning Doc Completion
 - [ ] Final test suite run and cleanup
@@ -273,8 +263,8 @@ Generate up to {{ max_entities or 20 }} entities...
 - Database: Maintain single enhancement record, update with additional entities
 
 **Configuration Values**:
-- `DEFAULT_ENTITY_LIMIT: 20` - Safe initial limit for timeout prevention
-- `MAX_ENTITY_LIMIT: 50` - Safety bound for single request
+- `DEFAULT_ENTITY_LIMIT_PER_REQUEST: 20` - Safe initial limit for timeout prevention
+- `MAX_TOTAL_ENTITY_LIMIT: 50` - Safety bound for single request
 - `MAX_ENTITIES_PER_REQUEST: 30` - Batch size for "Load More"
 
 ## Current Implementation Analysis
@@ -320,11 +310,7 @@ Generate up to {{ max_entities or 20 }} entities...
 
 The o3 critique identified several critical blind spots that could undermine the timeout mitigation goal:
 
-1. **Root cause vs symptom**: The plan only caps entity generation but still sends the **entire document** on every call - same prompt token cost, minimal latency savings
-2. **Storage architecture decision is foundational**: JSON blob approach will hit scalability limits and create race conditions - should be Stage 1, not optional
-3. **Concurrency risks**: Multiple "Generate more" clicks can create duplicates and race conditions without proper locking
 4. **Missing API contracts**: No Zod schemas defined for LLM responses, no guaranteed completion signals
-5. **DOM scanning cost**: Client-side position detection becomes O(N×M) with hundreds of entities
 
 ### Changes Made
 
@@ -347,24 +333,5 @@ The o3 critique identified several critical blind spots that could undermine the
 - Error handling for network failures and duplicate detection
 - Production monitoring for ongoing timeout analysis
 
-### Rejected Suggestions
 
-**Hybrid document context approach**: While the critique correctly identifies that full document context is the primary token cost, implementing context snippets adds significant complexity. Keeping the current approach for MVP and monitoring actual timeout patterns in production is more pragmatic.
 
-**Zustand state management**: Current React context approach is sufficient for MVP. Can be enhanced later if navigation state leaks become problematic.
-
-**Infinite scroll UX**: Simple "Load More" button provides better user control and is easier to implement reliably. Advanced UX can be added after core functionality is proven.
-
-### Implementation Impact
-
-The critique reinforces that this approach is "salvageable with moderate adjustments" but requires addressing the fundamental prompt length issue and storage architecture decisions early. The suggested stage reordering has been incorporated to ensure foundational decisions are locked before building dependent features.
-
-## Risk Mitigation
-
-**Timeout Risk**: Start with conservative entity limits (20) and increase based on production performance data.
-
-**Quality Risk**: Maintain full document context for all generation calls to preserve explanation quality.
-
-**UX Risk**: Ensure "Load More" functionality feels natural and doesn't disrupt existing workflow.
-
-**Cost Risk**: Monitor token usage patterns and adjust entity limits if costs become prohibitive.
