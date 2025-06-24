@@ -21,7 +21,7 @@ links, back/forward navigation, and LLM-generated URLs.
 
 ## References
 
-- `planning/250614a_tool_url_state_management.md` – original multi-tool URL state plan (to be updated)
+- `planning/finished/250614a_tool_url_state_management.md` – original multi-tool URL state plan (to be updated)
 - `components/unified-left-pane.tsx`, `components/vertical-icon-nav.tsx`, `components/command-palette.tsx` – primary tab-changing call-sites
 - `lib/tools/hooks/use-tool-url-state.ts` – bi-directional sync hook
 - `docs/reference/ARCHITECTURE_URL_STATE.md` – current architecture guide
