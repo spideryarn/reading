@@ -81,17 +81,20 @@
   - 📔 **Updated**: `docs/instructions/WRITE_PLANNING_DOC.md` with systematic health check approach
   - 📔 **Integration**: Single `npm run check:health` action for end-of-stage checking
 
-### Stage: Health Check CLI Implementation  
-- [ ] Create `scripts/check-health.ts` using Clipanion framework
-  - Implement CLI argument parsing (scope, modes, tool selection)
-  - Add git integration for changed file detection
-  - Implement sequential tool execution (TypeScript → ESLint → Build)
-  - Create file-based output with issue counts
-- [ ] Add npm script `check:health` to package.json
-- [ ] Test health check CLI with current codebase
-  - Verify git-aware file detection works correctly
-  - Ensure tool integration and error counting accuracy
-  - Test edge cases (no changes, tool failures)
+### ✅ Stage: Health Check CLI Implementation (COMPLETED)
+- [x] Create `scripts/check-health.ts` using Clipanion framework
+  - 📔 Implemented comprehensive CLI with Clipanion 4.0 following existing script patterns
+  - 📔 CLI argument parsing: --quick, --rigorous, --files, --no-typescript/eslint/build
+  - 📔 Git integration: detects changed files since HEAD~1, includes unstaged changes
+  - 📔 Sequential execution: TypeScript → ESLint → Build (with proper error handling)
+  - 📔 File-based orchestration output: issue counts per tool with command suggestions
+- [x] Add npm script `check:health` to package.json
+  - 📔 Added as `"check:health": "./scripts/check-health.ts"` in scripts section
+- [x] Test health check CLI with current codebase
+  - 📔 Git-aware detection working: correctly identifies TypeScript file changes
+  - 📔 Rigorous mode tested: processes 292 files, found 261 TypeScript issues
+  - 📔 Tool integration verified: TypeScript (261 errors), ESLint (clean), Build (fails due to TS errors)
+  - 📔 Edge cases handled: no changes detected returns clean exit
 
 ### Stage: Documentation Updates
 - [ ] Update `CLAUDE.md` with new orchestration pattern
