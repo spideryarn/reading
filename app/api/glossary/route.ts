@@ -2,8 +2,9 @@
 // See docs/TOOL_GLOSSARY.md for architecture and usage patterns
 
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { executePromptWithUsage } from '@/lib/prompts/types'
-import { glossaryPrompt, glossaryPromptInputSchema, glossaryResponseSchema } from '@/lib/prompts/templates/glossary'
+import { glossaryPrompt, glossaryPromptInputSchema, glossaryResponseSchema, entitySchema } from '@/lib/prompts/templates/glossary'
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
@@ -185,7 +186,7 @@ export async function POST(request: NextRequest) {
     if (documentId) {
       // Clean entities to remove undefined properties for exactOptionalPropertyTypes compliance
       const cleanedEntities = validatedResponse.entities.map(entity => {
-        const cleaned: Record<string, unknown> = {
+        const cleaned: Partial<z.infer<typeof entitySchema>> = {
           name: entity.name,
           ontology: entity.ontology,
           aliases: entity.aliases,

@@ -87,6 +87,11 @@ interface UnifiedLeftPaneProps {
   onHeadingClick: (headingText: string, headingId?: string) => void
   onLoadGlossary: () => void
   onResetGlossary?: () => void
+  onLoadMoreGlossary?: () => void
+  
+  // Load More state
+  hasMoreEntities?: boolean
+  isLoadingMoreGlossary?: boolean
   
   // For chat context
   documentContext: string
@@ -409,6 +414,9 @@ export function UnifiedLeftPane({
   onHeadingClick,
   onLoadGlossary,
   onResetGlossary,
+  onLoadMoreGlossary,
+  hasMoreEntities = false,
+  isLoadingMoreGlossary = false,
   documentContext,
   semanticHighlights = [],
   onSemanticHighlightsChange,
@@ -995,6 +1003,25 @@ export function UnifiedLeftPane({
               entities={glossaryEntities || []} 
               elements={elements}
             />
+            {hasMoreEntities && onLoadMoreGlossary && (
+              <div className="p-4 border-t border-gray-200">
+                <Button
+                  onClick={onLoadMoreGlossary}
+                  disabled={isLoadingMoreGlossary}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {isLoadingMoreGlossary ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-gray-600 mr-2" />
+                      Loading More...
+                    </>
+                  ) : (
+                    'Load More Entries'
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center p-8 text-center">
@@ -1009,7 +1036,7 @@ export function UnifiedLeftPane({
         )}
       </>
     )
-  }, [showGlossary, isLoadingGlossary, glossaryError, glossaryCached, glossaryEntities, elements, onLoadGlossary, onResetGlossary])
+  }, [showGlossary, isLoadingGlossary, glossaryError, glossaryCached, glossaryEntities, elements, onLoadGlossary, onResetGlossary, hasMoreEntities, isLoadingMoreGlossary, onLoadMoreGlossary])
 
   const renderSearchTab = useCallback(() => (
       <div className="flex flex-col h-full">

@@ -4,7 +4,8 @@ import {
   getModelConfig as getModelConfigByString,
   parseModelString,
   validateModelStringStrict,
-  DEFAULT_MODEL_STRING
+  DEFAULT_MODEL_STRING,
+  type ModelConfig
 } from './config/models'
 
 
@@ -80,7 +81,7 @@ export function getModelConfigFromEnvironment() {
 }
 
 // Get model string and config for AI calls
-export function getModelForAICall(): { modelString: string, config: import('./config/models').ModelConfig } {
+export function getModelForAICall(): { modelString: string, config: ModelConfig } {
   try {
     const modelString = getModelStringFromEnvironment()
     const config = getModelConfigByString(modelString)

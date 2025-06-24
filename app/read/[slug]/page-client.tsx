@@ -9,6 +9,7 @@ import { useDocument } from '@/lib/context/mutation-context'
 import { getHeadingAndSectionElements, extractHeadingElements } from '@/lib/services/heading-section-detector'
 import { createClient } from '@/lib/supabase/client'
 import { subscribeToDocument } from '@/lib/supabase/realtime'
+import { GLOSSARY_CONFIG } from '@/lib/config'
 
 // Define entity type (will be moved to a proper types file later)
 interface Entity {
@@ -73,6 +74,10 @@ export default function DocumentPageClient({
   const [showGlossary, setShowGlossary] = useState(false)
   const [glossaryError, setGlossaryError] = useState<string | null>(null)
   const [glossaryCached, setGlossaryCached] = useState(false)
+  
+  // Load More functionality state
+  const [hasMoreEntities, setHasMoreEntities] = useState(true)
+  const [isLoadingMoreGlossary, setIsLoadingMoreGlossary] = useState(false)
   
   // Real-time document title state
   const [currentTitle, setCurrentTitle] = useState(initialTitle)
@@ -194,6 +199,8 @@ export default function DocumentPageClient({
       setGlossaryCached(false)
       setShowGlossary(false)
       setGlossaryError(null)
+      setHasMoreEntities(true)
+      setIsLoadingMoreGlossary(false)
       
       console.log('Glossary reset successfully')
     } catch (error) {
@@ -214,7 +221,8 @@ export default function DocumentPageClient({
         },
         body: JSON.stringify({ 
           content: html,
-          documentId: documentId
+          documentId: documentId,
+          max_entities: GLOSSARY_CONFIG.DEFAULT_ENTITY_LIMIT_PER_REQUEST
         }),
       })
       
@@ -228,6 +236,11 @@ export default function DocumentPageClient({
       setGlossaryEntities(data.entities || [])
       setGlossaryCached(data.cached || false)
       setShowGlossary(true)
+      
+      // Determine if more entities might be available
+      // If we got exactly the limit, there might be more
+      const entitiesReceived = data.entities?.length || 0
+      setHasMoreEntities(!data.cached && entitiesReceived >= GLOSSARY_CONFIG.DEFAULT_ENTITY_LIMIT_PER_REQUEST)
     } catch (error) {
       console.error('Error fetching glossary:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate glossary'
@@ -238,6 +251,49 @@ export default function DocumentPageClient({
       setGlossaryCached(true)
     } finally {
       setIsLoadingGlossary(false)
+    }
+  }
+
+  // Fetch additional glossary entities when "Load More" is clicked
+  const fetchMoreGlossary = async () => {
+    setIsLoadingMoreGlossary(true)
+    setGlossaryError(null)
+    try {
+      const response = await fetch('/api/glossary', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          content: html,
+          documentId: documentId,
+          max_entities: GLOSSARY_CONFIG.MAX_ENTITIES_PER_REQUEST,
+          existing_entities: glossaryEntities // Pass current entities to avoid duplicates
+        }),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      const newEntities = data.entities || []
+      console.log(`Load More API response: ${newEntities.length} additional entities`)
+      
+      // Append new entities to existing ones
+      setGlossaryEntities(prev => [...prev, ...newEntities])
+      
+      // Update hasMoreEntities based on response
+      // If we got fewer entities than requested, no more available
+      setHasMoreEntities(newEntities.length >= GLOSSARY_CONFIG.MAX_ENTITIES_PER_REQUEST)
+      
+    } catch (error) {
+      console.error('Error fetching more glossary entries:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load more entries'
+      setGlossaryError(errorMessage)
+    } finally {
+      setIsLoadingMoreGlossary(false)
     }
   }
 
@@ -299,6 +355,9 @@ export default function DocumentPageClient({
         glossaryCached={glossaryCached}
         onLoadGlossary={fetchGlossary}
         onResetGlossary={resetGlossary}
+        hasMoreEntities={hasMoreEntities}
+        isLoadingMoreGlossary={isLoadingMoreGlossary}
+        onLoadMoreGlossary={fetchMoreGlossary}
         headingVisibility={headingVisibility}
         onElementVisibilityChange={handleElementVisibilityChange}
         onElementClick={handleElementClick}
