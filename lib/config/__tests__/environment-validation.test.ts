@@ -42,9 +42,9 @@ describe('getModelStringFromEnvironment', () => {
   })
 
   it('should accept valid model strings', () => {
-    process.env.LLM_MODEL = 'anthropic:claude-3-5-haiku:20241022'
+    process.env.LLM_MODEL = 'anthropic:claude-sonnet-4:20250514'
     process.env.ANTHROPIC_API_KEY = 'test-key'
-    expect(getModelStringFromEnvironment()).toBe('anthropic:claude-3-5-haiku:20241022')
+    expect(getModelStringFromEnvironment()).toBe('anthropic:claude-sonnet-4:20250514')
   })
 
   it('should use default when no environment variable set', () => {

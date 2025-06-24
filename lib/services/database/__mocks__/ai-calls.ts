@@ -5,6 +5,7 @@ import type {
   PromptType
 } from '@/lib/types/database'
 import type { PromptUsage } from '@/lib/prompts/types'
+import type { JsonObject } from '@/lib/types/json'
 import type {
   AiCallMetrics,
   CreateAiCallWithModelStringOptions,
