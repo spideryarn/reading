@@ -21,29 +21,42 @@ async function loadAllTools() {
   // Each file will register its tool during import
   
   try {
-    // Analysis tools - force re-registration with allowOverwrite
+    // Get registry functions - force re-registration with allowOverwrite
     const { registerTool } = await import('./registry')
+    
+    // Analysis tools
     const glossaryModule = await import('./implementations/glossary')
+    const metadataModule = await import('./implementations/metadata')
     
-    // Re-register in case it was cleared by tests
-    if (glossaryModule.default) {
-      registerTool(glossaryModule.default, { allowOverwrite: true })
+    // Navigation tools
+    const originalTocModule = await import('./implementations/toc-original')
+    const aiTocModule = await import('./implementations/toc-ai')
+    
+    // Interactive tools
+    const chatModule = await import('./implementations/chat')
+    const searchModule = await import('./implementations/search')
+    
+    // Generation tools
+    const summaryModule = await import('./implementations/summary')
+    const highlightsModule = await import('./implementations/highlights')
+    
+    // Re-register all tools in case they were cleared by tests
+    const toolModules = [
+      glossaryModule,
+      metadataModule,
+      originalTocModule,
+      aiTocModule,
+      chatModule,
+      searchModule,
+      summaryModule,
+      highlightsModule
+    ]
+    
+    for (const toolModule of toolModules) {
+      if (toolModule.default) {
+        registerTool(toolModule.default, { allowOverwrite: true })
+      }
     }
-    
-    // Navigation tools (to be implemented)
-    // await import('./implementations/original')
-    // await import('./implementations/ai-generated')
-    // await import('./implementations/summary')
-    
-    // Interactive tools (to be implemented)
-    // await import('./implementations/chat')
-    // await import('./implementations/search')
-    
-    // Generation tools (to be implemented)
-    // await import('./implementations/highlights')
-    
-    // Utility tools (to be implemented)
-    // await import('./implementations/metadata')
     
     console.log('✅ All tool implementations loaded successfully')
   } catch (error) {
