@@ -29,20 +29,7 @@ import type { DocumentElement } from '@/lib/types/document'
 import { DocumentCommunicationProvider, useDocumentCommunication } from '@/lib/context/document-communication-context'
 import { useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
 import type { TabValue } from '@/lib/tools/url-state-types'
-
-// Entity type (will be moved to proper types file later)
-interface Entity {
-  name: string
-  ontology: 'person' | 'place' | 'date' | 'theme' | 'event' | 
-           'reference' | 'object' | 'organization' | 'concept' | 
-           'definition' | 'other'
-  aliases: string[]
-  brief_explanation: string
-  long_explanation?: string
-  datetime?: string
-  url?: string
-  extra?: Record<string, unknown>
-}
+import type { Entity } from '@/lib/types/entity'
 
 interface ResizableDocumentLayoutProps {
   // Document data

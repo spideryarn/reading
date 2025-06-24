@@ -10,20 +10,8 @@ import { getHeadingAndSectionElements, extractHeadingElements } from '@/lib/serv
 import { createClient } from '@/lib/supabase/client'
 import { subscribeToDocument } from '@/lib/supabase/realtime'
 import { GLOSSARY_CONFIG } from '@/lib/config'
-
-// Define entity type (will be moved to a proper types file later)
-interface Entity {
-  name: string
-  ontology: 'person' | 'place' | 'date' | 'theme' | 'event' | 
-           'reference' | 'object' | 'organization' | 'concept' | 
-           'definition' | 'other'
-  aliases: string[]
-  brief_explanation: string
-  long_explanation?: string
-  datetime?: string
-  url?: string
-  extra?: Record<string, unknown>
-}
+import type { Entity } from '@/lib/types/entity'
+import { processEntitiesForProgressive, calculateEntityPositions, sortEntitiesByPosition, stripPositionMetadata } from '@/lib/utils/entity-position-tracking'
 
 // Semantic highlight interface
 interface SemanticHighlight {
@@ -233,7 +221,12 @@ export default function DocumentPageClient({
       
       const data = await response.json()
       console.log(`Glossary API response: ${data.entities?.length || 0} entities${data.cached ? ' (cached)' : ''}`)
-      setGlossaryEntities(data.entities || [])
+      
+      // Sort initial entities by document position
+      const entities = data.entities || []
+      const entitiesWithPositions = calculateEntityPositions(entities, mutatedDocument)
+      const sortedEntities = sortEntitiesByPosition(entitiesWithPositions)
+      setGlossaryEntities(stripPositionMetadata(sortedEntities))
       setGlossaryCached(data.cached || false)
       setShowGlossary(true)
       
@@ -281,8 +274,8 @@ export default function DocumentPageClient({
       const newEntities = data.entities || []
       console.log(`Load More API response: ${newEntities.length} additional entities`)
       
-      // Append new entities to existing ones
-      setGlossaryEntities(prev => [...prev, ...newEntities])
+      // Merge and sort entities by document position
+      setGlossaryEntities(prev => processEntitiesForProgressive(prev, newEntities, mutatedDocument))
       
       // Update hasMoreEntities based on response
       // If we got fewer entities than requested, no more available
