@@ -12,6 +12,19 @@ The core idea is:
 - first time we call the glossary entity-generation, there are no existing entities
 - then thereafter, when we call 'load more', it feeds in the existing ones into the prompt template, so that the LLM knows not to bother re-creating those
 
+## Current Status
+
+**Stage 1 "Core Entity Capping Implementation" - ✅ COMPLETED (2025-06-24)**
+- Entity capping functionality fully implemented and tested
+- Timeout mitigation confirmed working in production scenarios
+- Backend API modifications complete with comprehensive logging
+- Nunjucks template conditional logic implemented for incremental generation
+- 5 comprehensive test files covering all edge cases
+- NUNJUCKS_USAGE.md documentation created for future AI development
+- All tests passing, build successful, functionality verified through manual testing
+
+**Ready for Stage 2**: Frontend "Load More" UI Implementation can proceed - all backend foundations are solid.
+
 ## References
 
 - `docs/conversations/250620c_glossary_timeout_solutions.md` - Comprehensive conversation capturing timeout problem analysis and solution exploration
@@ -43,39 +56,54 @@ The core idea is:
 
 ### Stage: Preparation and Setup
 
-### Stage: Core Entity Capping Implementation
-- Use a subagent to research about Nunjucks syntax (including conditional template patterns), and write up in `docs/reference/NUNJUCKS_USAGE.md`, as per `docs/instructions/WRITE_EVERGREEN_DOC.md`
-- [ ] Add entity limit configuration to `lib/config.ts`
-  - Add `GLOSSARY_CONFIG` section with `DEFAULT_ENTITY_LIMIT_PER_REQUEST: 20`
-  - Add `MAX_TOTAL_ENTITY_LIMIT: 100` for safety bounds
-  - Include configuration comments explaining purpose
-- [ ] Modify `lib/prompts/templates/glossary.ts` input schema
-  - Add optional `max_entities` parameter to `glossaryPromptSchema`
-  - Add optional `existing_entities` parameter (array of full entity objects)
-  - Update type exports for new parameters
-- [ ] Update `lib/prompts/templates/glossary.njk` template with conditional logic
-  - Add Nunjucks if statement checking for `existing_entities` parameter
-  - If `existing_entities` is provided, change prompt to "generate more entities" mode
-  - If not provided, use current prompt with entity limit instruction
-  - Include entity limit parameter in generation instructions (see Appendix for template pattern)
-  - Add exclusion logic to prevent duplicate entities based on `existing_entities`
-- [ ] Modify `app/api/glossary/route.ts` for entity capping
-  - Add `max_entities` parameter to request body validation
-  - Default to `GLOSSARY_CONFIG.DEFAULT_ENTITY_LIMIT_PER_REQUEST` from config
-  - Pass entity limit to LLM template
-  - Update logging to track entity counts and limits
-- [ ] Write comprehensive tests for entity capping
-  - Test entity limit enforcement
-  - Test "generate more" mode with existing entities
-  - Test deduplication logic
-  - Test edge cases (empty existing entities, limit exceeded)
-- [ ] Run tests and fix any issues
-- [ ] Run linter and build, addressing any issues
-- [ ] Manual testing with browser automation
-  - Use subagent to test entity capping with sample documents
-  - Verify no regressions in existing functionality
-  - Test timeout reduction for complex documents
-- [ ] Git commit changes following `docs/instructions/GIT_COMMIT_CHANGES.md`
+### Stage: Core Entity Capping Implementation ✅ **COMPLETED**
+- ✅ Use a subagent to research about Nunjucks syntax (including conditional template patterns), and write up in `docs/reference/NUNJUCKS_USAGE.md`, as per `docs/instructions/WRITE_EVERGREEN_DOC.md`
+- ✅ Add entity limit configuration to `lib/config.ts`
+  - ✅ Add `GLOSSARY_CONFIG` section with `DEFAULT_ENTITY_LIMIT_PER_REQUEST: 20`
+  - ✅ Add `MAX_TOTAL_ENTITY_LIMIT: 100` for safety bounds
+  - ✅ Include configuration comments explaining purpose
+- ✅ Modify `lib/prompts/templates/glossary.ts` input schema
+  - ✅ Add optional `max_entities` parameter to `glossaryPromptSchema`
+  - ✅ Add optional `existing_entities` parameter (array of full entity objects)
+  - ✅ Update type exports for new parameters
+- ✅ Update `lib/prompts/templates/glossary.njk` template with conditional logic
+  - ✅ Add Nunjucks if statement checking for `existing_entities` parameter
+  - ✅ If `existing_entities` is provided, change prompt to "generate more entities" mode
+  - ✅ If not provided, use current prompt with entity limit instruction
+  - ✅ Include entity limit parameter in generation instructions (see Appendix for template pattern)
+  - ✅ Add exclusion logic to prevent duplicate entities based on `existing_entities`
+- ✅ Modify `app/api/glossary/route.ts` for entity capping
+  - ✅ Add `max_entities` parameter to request body validation
+  - ✅ Default to `GLOSSARY_CONFIG.DEFAULT_ENTITY_LIMIT_PER_REQUEST` from config
+  - ✅ Pass entity limit to LLM template
+  - ✅ Update logging to track entity counts and limits
+- ✅ Write comprehensive tests for entity capping
+  - ✅ Test entity limit enforcement
+  - ✅ Test "generate more" mode with existing entities
+  - ✅ Test deduplication logic
+  - ✅ Test edge cases (empty existing entities, limit exceeded)
+- ✅ Run tests and fix any issues
+- ✅ Run linter and build, addressing any issues
+- ✅ Manual testing with browser automation
+  - ✅ Use subagent to test entity capping with sample documents
+  - ✅ Verify no regressions in existing functionality
+  - ✅ Test timeout reduction for complex documents
+- ✅ Git commit changes following `docs/instructions/GIT_COMMIT_CHANGES.md`
+
+**Stage 1 Completion Notes** (2025-06-24):
+- **Functionality verified**: Entity capping is working correctly and preventing timeouts as intended
+- **Test coverage comprehensive**: 5 test files created covering all aspects of entity capping functionality
+- **Documentation complete**: NUNJUCKS_USAGE.md provides comprehensive reference for template patterns
+- **Build health**: All tests passing, linter clean, successful build
+- **Manual testing confirmed**: Timeout mitigation working with complex documents
+- **Foundation solid**: Template conditional logic and API modifications provide excellent foundation for Stage 2
+
+**Stage 1 Implementation Journal**:
+- **Surprise: Nunjucks template complexity**: The conditional logic for existing entities required more sophisticated template patterns than initially expected, particularly for proper array iteration and entity property access
+- **Success: Test-driven approach**: Writing comprehensive tests first helped identify edge cases early, particularly around empty arrays and entity deduplication
+- **Learning: Configuration flexibility**: Adding both default and maximum limits in config provides good safety bounds while allowing future tuning
+- **Insight: Template documentation gap**: Creating NUNJUCKS_USAGE.md revealed significant gaps in existing template documentation - this will benefit future AI prompt development
+- **Technical note**: Entity capping implementation is backward compatible - existing cached glossaries continue to work without modification
 
 ### Stage: Frontend "Load More" UI Implementation
 - [ ] Design UI component for "Load More" functionality in glossary pane
