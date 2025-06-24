@@ -100,7 +100,7 @@ export function getContextualFilesForTopic(
     baseFiles.unshift('CLAUDE.md');
   }
   
-  let contextualFiles: string[] = [];
+  const contextualFiles: string[] = [];
   
   // Glossary-related files
   if (docLower.includes('glossary')) {
