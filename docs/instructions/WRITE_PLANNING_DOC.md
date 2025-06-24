@@ -52,6 +52,14 @@ Don't include a `Date` section at the top since it's implicit from the filename.
 - If the goal is complex, break things down in detail about the desired behaviour.
 
 
+### User stories & acceptance criteria
+
+- Define what success looks like from the user's perspective
+- Include specific acceptance criteria that can be tested/verified
+- Avoid repetition, waffle, or stating the obvious - focus on distinctive requirements and edge cases
+- Use concrete examples where helpful
+
+
 ### References
 
 - Mention relevant evergreen docs (in `docs/`), other planning docs (in `planning/`), code files/functions, links, or anything else that could provide context, with a 1-sentence summary for each of what it's about/why it's relevant
