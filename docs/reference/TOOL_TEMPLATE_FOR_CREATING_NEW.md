@@ -4,6 +4,7 @@ This document provides a comprehensive template for creating new tools in Spider
 
 ## See also
 
+- `docs/reference/ARCHITECTURE_FOR_TOOLS.md` - **NEW**: Unified tool registry architecture and implementation patterns
 - `docs/reference/TOOL_GLOSSARY.md` - Example of analysis tool implementation with LLM integration
 - `docs/reference/TOOL_READING_DIFFICULTY.md` - Example of AI-powered assessment tool with JSON output and UI enhancements
 - `docs/reference/TOOL_SEARCH_TEXT.md` - Example of search functionality with real-time UI updates
@@ -12,7 +13,7 @@ This document provides a comprehensive template for creating new tools in Spider
 - `docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md` - DocumentCommunicationContext integration patterns
 - `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` - Keyboard shortcut integration and command definitions
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - AI-powered tool development with Nunjucks + Zod
-- `planning/250613c_unified_tool_architecture_url_state_llm_integration.md` - Future unified tool architecture vision
+- `planning/250614b_unified_tool_registry_architecture.md` - Current unified tool architecture planning
 - `components/unified-left-pane.tsx` - Main pane implementation for reference
 - `components/vertical-icon-nav.tsx` - Icon navigation system integration
 - `components/command-palette.tsx` - Command registration patterns
@@ -86,11 +87,18 @@ This document provides a comprehensive template for creating new tools in Spider
   - [ ] Add TypeScript interfaces for tool data and state
   - [ ] Follow shadcn/ui component patterns for consistency
 
-- [ ] **Add to vertical icon navigation**
+- [ ] **Register tool with unified registry** ⭐ NEW
+  - [ ] Create tool definition in `lib/tools/implementations/[tool-name].ts`
+  - [ ] Define Tool interface with all required properties (see `ARCHITECTURE_FOR_TOOLS.md`)
+  - [ ] Register tool using `registerTool()` function
+  - [ ] Add to registry loader for automatic discovery
+  - [ ] Test tool appears in registry with `getTool()` function
+
+- [ ] **Legacy integration (temporary)** 
+  - [ ] Add to vertical icon navigation (will be automated later)
   - [ ] Update `components/vertical-icon-nav.tsx` with new icon
   - [ ] Add to `TAB_CONFIG` array with icon, tooltip, and shortcut
   - [ ] Assign next available keyboard shortcut number
-  - [ ] Test icon appears correctly and tooltip shows
 
 - [ ] **Integrate with unified left pane**
   - [ ] Add tab case to `components/unified-left-pane.tsx`
@@ -368,6 +376,67 @@ export function ExampleToolPanel({ documentId, documentContent }: ExampleToolPan
 }
 ```
 
+### Tool Registry Integration Template
+
+```typescript
+// lib/tools/implementations/example-tool.ts
+import { registerTool } from '@/lib/tools/registry'
+import { MagnifyingGlass } from '@phosphor-icons/react/dist/ssr'
+
+const exampleTool: Tool = {
+  id: 'example-tool',
+  name: 'Example Tool',
+  description: 'Demonstrates tool architecture patterns for new tool development',
+  category: 'analysis',
+  icon: MagnifyingGlass,
+  
+  componentPath: '@/components/tools/ExampleToolPanel',
+  tabId: 'example-tool',
+  shortcuts: ['Cmd+9', 'Ctrl+9'],
+  keywords: ['demo', 'example', 'template', 'test'],
+  
+  requiresDocument: true,
+  autoLoad: false,
+  capabilities: {
+    search: true,
+    export: true,
+    realtime: false
+  },
+  
+  urlStateKeys: ['exampleParam', 'exampleFlag']
+}
+
+// Register the tool on module load
+registerTool(exampleTool)
+
+export default exampleTool
+```
+
+### URL State Hook Template
+
+```typescript
+// lib/tools/hooks/use-example-url-state.ts
+import { useQueryStates, parseAsString, parseAsBoolean } from 'nuqs'
+
+export function useExampleUrlState() {
+  const [urlState, setUrlState] = useQueryStates({
+    exampleParam: parseAsString,
+    exampleFlag: parseAsBoolean.withDefault(false)
+  })
+  
+  return {
+    param: urlState.exampleParam,
+    flag: urlState.exampleFlag,
+    setParam: (value: string) => setUrlState({ exampleParam: value }),
+    setFlag: (value: boolean) => setUrlState({ exampleFlag: value }),
+    clearState: () => setUrlState({ 
+      exampleParam: null, 
+      exampleFlag: null 
+    })
+  }
+}
+```
+
 ### API Route Template
 
 ```typescript
@@ -445,10 +514,12 @@ export async function POST(request: NextRequest) {
 - [ ] Tool responds to document position changes
 
 ### Technical Integration
+- [ ] Tool registered in unified registry with complete metadata
 - [ ] TypeScript interfaces properly defined
 - [ ] API endpoints follow established patterns
 - [ ] Error handling comprehensive and user-friendly
 - [ ] Logging integrated using Pino structured logging
+- [ ] URL state integration working (if applicable)
 - [ ] Tests written and passing
 
 ### Performance Integration

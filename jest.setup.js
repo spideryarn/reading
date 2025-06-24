@@ -156,4 +156,14 @@ beforeEach(() => {
     if (resetAuthMocks) {
         resetAuthMocks();
     }
+
+    // Reset tool registry for test isolation
+    try {
+        const { resetRegistryForTests } = require('@/lib/tools/registry');
+        if (resetRegistryForTests) {
+            resetRegistryForTests();
+        }
+    } catch (error) {
+        // Registry module may not be loaded in all tests - this is fine
+    }
 });
