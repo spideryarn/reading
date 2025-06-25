@@ -98,11 +98,16 @@ export class RobustAuthManager {
   }
   
   private async verifyAuthentication() {
-    // Verify user is actually logged in by checking profile API
+    // Verify user is actually logged in by checking if we can access protected pages
     try {
-      const response = await this.page.request.get('/api/user/profile');
-      if (response.status() !== 200) {
-        throw new Error(`Authentication verification failed: ${response.status()}`);
+      // Navigate to a protected page and see if we're redirected to login
+      await this.page.goto('/read');
+      await this.page.waitForLoadState('networkidle');
+      
+      // If we can see the page without being redirected to auth, we're authenticated
+      const currentUrl = this.page.url();
+      if (currentUrl.includes('/auth/login') || currentUrl.includes('/auth/signin')) {
+        throw new Error('User appears to be redirected to login page');
       }
     } catch (error) {
       throw new Error(`Authentication verification failed: ${error}`);
