@@ -50,6 +50,10 @@ interface ResizableDocumentLayoutProps {
   glossaryCached: boolean
   onLoadGlossary: () => void
   onResetGlossary?: () => void
+  // Progressive glossary loading
+  onLoadMoreGlossary?: () => void
+  hasMoreEntities?: boolean
+  isLoadingMoreGlossary?: boolean
   
   // Visibility tracking
   headingVisibility?: Map<string, 'visible' | 'not-visible'>
@@ -97,6 +101,9 @@ function ResizableDocumentLayoutInner({
   glossaryCached,
   onLoadGlossary,
   onResetGlossary,
+  onLoadMoreGlossary,
+  hasMoreEntities,
+  isLoadingMoreGlossary,
   headingVisibility,
   onElementVisibilityChange,
   onElementClick,
@@ -412,8 +419,11 @@ function ResizableDocumentLayoutInner({
               isPublic={isPublic}
               slug={slug}
               storagePath={storagePath}
-              originalFileType={originalFileType}
-              uploadMetadata={uploadMetadata}
+              {...(originalFileType !== undefined ? { originalFileType } : {})}
+              {...(uploadMetadata !== undefined ? { uploadMetadata } : {})}
+              {...(onLoadMoreGlossary ? { onLoadMoreGlossary } : {})}
+              {...(hasMoreEntities !== undefined ? { hasMoreEntities } : {})}
+              {...(isLoadingMoreGlossary !== undefined ? { isLoadingMoreGlossary } : {})}
             />
             </div>
           </div>
