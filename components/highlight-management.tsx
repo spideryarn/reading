@@ -68,6 +68,12 @@ export function HighlightManagement({
   // URL state for highlight criterion
   const { highlightCriterion, setHighlight } = useHighlightsUrlState()
   
+  // Local input state for immediate responsiveness (like search input pattern)
+  // We keep a local, immediate value so that the input feels responsive. The URL
+  // (single-source-of-truth) is still updated via the highlight creation,
+  // but the input itself is no longer bound directly to that URL state.
+  const [highlightInputValue, setHighlightInputValue] = useState(highlightCriterion || '')
+  
   // Core state - initialize criterion from URL if available
   const [criterion, setCriterion] = useState(highlightCriterion || '')
   const [highlights, setHighlights] = useState<Highlight[]>([])
@@ -224,6 +230,12 @@ export function HighlightManagement({
     }
   }, [documentId, actions, fetchQueryHistory, updateSemanticHighlights])
 
+  // Sync local input when the URL-driven criterion changes (e.g. back/forward
+  // navigation or programmatic updates).
+  useEffect(() => {
+    setHighlightInputValue(highlightCriterion || '')
+  }, [highlightCriterion])
+
   // Load highlights from URL criterion when component mounts or URL changes
   useEffect(() => {
     if (highlightCriterion && highlightCriterion !== criterion) {
@@ -284,8 +296,9 @@ export function HighlightManagement({
     return `${year}-${month}-${day} at ${hours}:${minutes}`
   }, [])
 
-  // Handle criterion input changes
+  // Handle criterion input changes (local state for responsiveness)
   const handleCriterionChange = useCallback((value: string) => {
+    setHighlightInputValue(value)
     setCriterion(value)
     
     // Clear previous errors
@@ -345,6 +358,7 @@ export function HighlightManagement({
     setHighlightsCached(false)
     setHighlightsCachedAt(null)
     setError(null)
+    setHighlightInputValue('')
     setCriterion('')
     // Clear URL state
     setHighlight(null)
@@ -370,7 +384,7 @@ export function HighlightManagement({
             <input
               ref={criterionInputRef}
               type="text"
-              value={criterion}
+              value={highlightInputValue}
               onChange={(e) => handleCriterionChange(e.target.value)}
               onFocus={() => {
                 if (queryHistory.length > 0) {
@@ -390,13 +404,16 @@ export function HighlightManagement({
               weight="bold" 
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
             />
-            {criterion && (
+            {highlightInputValue && (
               <button
                 onClick={() => {
+                  setHighlightInputValue('')
                   setCriterion('')
                   setHighlights([])
                   setHighlightsCached(false)
                   setHighlightsCachedAt(null)
+                  // Clear URL state as well
+                  setHighlight(null)
                 }}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
