@@ -224,13 +224,13 @@ export function transformShortcuts(
     return undefined
   }
   
-  // Find the appropriate shortcut for the platform
+  // Find the appropriate shortcut for the platform, or use the first one
   const platformShortcut = isMac 
-    ? toolShortcuts.find(s => s.includes('Cmd')) || toolShortcuts.find(s => s.includes('⌘'))
-    : toolShortcuts.find(s => s.includes('Ctrl'))
+    ? toolShortcuts.find(s => s.includes('Cmd')) || toolShortcuts.find(s => s.includes('⌘')) || toolShortcuts[0]
+    : toolShortcuts.find(s => s.includes('Ctrl')) || toolShortcuts[0]
   
   if (!platformShortcut) {
-    return toolShortcuts // Return as-is if no platform-specific shortcut found
+    return undefined
   }
   
   // Transform the shortcut for display

@@ -89,7 +89,7 @@ describe('Command Generation Integration', () => {
     const glossaryCommand = commands.find(cmd => cmd.id === 'nav-glossary')
     expect(glossaryCommand?.name).toBe('Glossary')
     expect(glossaryCommand?.keywords).toContain('terms')
-    expect(glossaryCommand?.shortcut).toEqual(['⌘+5', '⌘+5']) // Mac shortcuts
+    expect(glossaryCommand?.shortcut).toEqual(['⌘+5']) // Mac shortcuts
   })
   
   it('should handle tools with shortcuts correctly', () => {
@@ -171,8 +171,14 @@ describe('Command Generation Integration', () => {
     })
     
     // Verify each command has meaningful keywords
-    commands.forEach((command, index) => {
-      const tool = tools[index]
+    commands.forEach(command => {
+      // Find the corresponding tool by matching command ID to tool ID
+      const toolId = command.id.replace('nav-', '') // Remove nav- prefix
+      const tool = tools.find(t => t.id === toolId)
+      
+      if (!tool) {
+        throw new Error(`Could not find tool for command ${command.id}`)
+      }
       
       // Should contain tool name in some form
       const hasNameKeyword = command.keywords.some(keyword => 

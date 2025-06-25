@@ -198,9 +198,9 @@ describe('transformShortcuts', () => {
     expect(result2).toEqual(['Ctrl+1'])
   })
 
-  it('should handle multiple shortcuts', () => {
+  it('should handle multiple shortcuts by selecting the first platform-appropriate one', () => {
     const result = transformShortcuts(['Cmd+1', 'Cmd+Shift+1'], true)
-    expect(result).toEqual(['⌘+1', '⌘+Shift+1'])
+    expect(result).toEqual(['⌘+1']) // Only first Cmd shortcut is selected and transformed
   })
 })
 

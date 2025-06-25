@@ -105,8 +105,13 @@ export async function initializeToolRegistry(): Promise<void> {
  * @param toolPath - Path to the tool implementation module
  */
 export async function registerToolFromPath(toolPath: string): Promise<void> {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('registerToolFromPath() is not available in production')
+  }
+  
   try {
-    await import(toolPath)
+    // Only use dynamic import in development
+    const loadedModule = await import(/* webpackIgnore: true */ toolPath)
     console.log(`✅ Manually loaded tool from: ${toolPath}`)
   } catch (error) {
     console.error(`❌ Failed to load tool from ${toolPath}:`, error)
