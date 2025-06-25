@@ -29,7 +29,7 @@ Overview of CSS and visual styling configuration for the Spideryarn Reading appl
 
 ## Theme configuration
 
-Core theme system overview - see `docs/reference/STYLING_COLORS_FONTS.md` for complete details.
+Core theme system overview - see `docs/reference/STYLING_COLORS_FONTS.md` for complete details. View the live implementation at `/design`.
 
 - **Light mode only**: Currently enforced via `UI_CONFIG.FORCE_LIGHT_MODE` in `lib/config.ts`
 - **CSS custom properties**: Comprehensive theme system in `app/globals.css`
