@@ -103,6 +103,11 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
         isMac,
       })
 
+      // DEBUG: Log final command order in command palette
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 Command Palette - Final command order:', generatedCommands.map(c => c.id.replace('nav-', '')))
+      }
+
       // Convert GeneratedCommand to Command format
       return generatedCommands.map(genCmd => ({
         id: genCmd.id,

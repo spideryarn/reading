@@ -224,12 +224,21 @@ export function transformShortcuts(
     return undefined
   }
   
-  return toolShortcuts.map(shortcut => {
-    // Replace Cmd/Ctrl based on platform
-    return shortcut
-      .replace(/Cmd/g, isMac ? '⌘' : 'Ctrl')
-      .replace(/Ctrl/g, isMac ? '⌘' : 'Ctrl')
-  })
+  // Find the appropriate shortcut for the platform
+  const platformShortcut = isMac 
+    ? toolShortcuts.find(s => s.includes('Cmd')) || toolShortcuts.find(s => s.includes('⌘'))
+    : toolShortcuts.find(s => s.includes('Ctrl'))
+  
+  if (!platformShortcut) {
+    return toolShortcuts // Return as-is if no platform-specific shortcut found
+  }
+  
+  // Transform the shortcut for display
+  const transformed = platformShortcut
+    .replace(/Cmd/g, isMac ? '⌘' : 'Ctrl')
+    .replace(/Ctrl/g, isMac ? '⌘' : 'Ctrl')
+  
+  return [transformed]
 }
 
 /**
@@ -321,6 +330,41 @@ export function generateCommandsFromRegistry(
     }
     
     commands.push(command)
+  })
+  
+  // Sort commands to match vertical icon rail order
+  // This ensures consistent ordering in command palette with UI navigation
+  const TOOL_ORDER = [
+    'original',
+    'ai-generated', 
+    'summary',
+    'chat',
+    'glossary',
+    'search',
+    'highlights',
+    'tweet-thread',
+    'metadata'
+  ]
+  
+  commands.sort((a, b) => {
+    // Extract tool ID from command ID (nav-glossary -> glossary)
+    const toolIdA = a.id.replace('nav-', '')
+    const toolIdB = b.id.replace('nav-', '')
+    
+    const indexA = TOOL_ORDER.indexOf(toolIdA)
+    const indexB = TOOL_ORDER.indexOf(toolIdB)
+    
+    // If both tools are in the order list, sort by position
+    if (indexA !== -1 && indexB !== -1) {
+      return indexA - indexB
+    }
+    
+    // If only one is in the order list, prioritize it
+    if (indexA !== -1) return -1
+    if (indexB !== -1) return 1
+    
+    // If neither is in the order list, sort alphabetically
+    return toolIdA.localeCompare(toolIdB)
   })
   
   return commands

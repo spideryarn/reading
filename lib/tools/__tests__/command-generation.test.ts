@@ -426,4 +426,132 @@ describe('debugUtils', () => {
       expect(errors).toContain('Command 2: keywords must be array')
     })
   })
+  
+  describe('Command Ordering', () => {
+    it('should order commands according to vertical icon rail sequence', () => {
+      const tools: Tool[] = [
+        {
+          id: 'metadata',
+          name: 'Metadata',
+          description: 'Document metadata and statistics',
+          category: 'navigation',
+          icon: List,
+          componentPath: '@/components/tools/MetadataPanel',
+          tabId: 'metadata',
+          requiresDocument: false,
+          shortcuts: ['Cmd+I'],
+          keywords: ['metadata', 'info']
+        },
+        {
+          id: 'search',
+          name: 'Search',
+          description: 'Search within document',
+          category: 'interactive',
+          icon: List,
+          componentPath: '@/components/tools/SearchPanel',
+          tabId: 'search',
+          requiresDocument: false,
+          shortcuts: ['Cmd+F'],
+          keywords: ['search', 'find']
+        },
+        {
+          id: 'original',
+          name: 'Original',
+          description: 'Original document view',
+          category: 'navigation',
+          icon: List,
+          componentPath: '@/components/tools/OriginalPanel',
+          tabId: 'original',
+          requiresDocument: false,
+          shortcuts: ['Cmd+1'],
+          keywords: ['original', 'source']
+        },
+        {
+          id: 'glossary',
+          name: 'Glossary',
+          description: 'Key terms and definitions',
+          category: 'analysis',
+          icon: List,
+          componentPath: '@/components/tools/GlossaryPanel',
+          tabId: 'glossary',
+          requiresDocument: false,
+          shortcuts: ['Cmd+5'],
+          keywords: ['glossary', 'terms']
+        },
+        {
+          id: 'summary',
+          name: 'Summary',
+          description: 'Document summary',
+          category: 'navigation',
+          icon: List,
+          componentPath: '@/components/tools/SummaryPanel',
+          tabId: 'summary',
+          requiresDocument: false,
+          shortcuts: ['Cmd+3'],
+          keywords: ['summary', 'overview']
+        }
+      ]
+      
+      const commands = generateCommandsFromRegistry(tools, {
+        getNavigateToTab: () => mockNavigateToTab
+      })
+      
+      // Expected order based on TOOL_ORDER: original, summary, glossary, search, metadata
+      const expectedOrder = ['original', 'summary', 'glossary', 'search', 'metadata']
+      const actualOrder = commands.map(cmd => cmd.id.replace('nav-', ''))
+      
+      expect(actualOrder).toEqual(expectedOrder)
+    })
+    
+    it('should handle tools not in TOOL_ORDER list alphabetically', () => {
+      const tools: Tool[] = [
+        {
+          id: 'zebra-tool',
+          name: 'Zebra Tool',
+          description: 'Test tool starting with Z',
+          category: 'navigation',
+          icon: List,
+          componentPath: '@/components/tools/ZebraPanel',
+          tabId: 'zebra',
+          requiresDocument: false,
+          shortcuts: ['Cmd+Z'],
+          keywords: ['zebra']
+        },
+        {
+          id: 'alpha-tool',
+          name: 'Alpha Tool',
+          description: 'Test tool starting with A',
+          category: 'navigation',
+          icon: List,
+          componentPath: '@/components/tools/AlphaPanel',
+          tabId: 'alpha',
+          requiresDocument: false,
+          shortcuts: ['Cmd+A'],
+          keywords: ['alpha']
+        },
+        {
+          id: 'original',
+          name: 'Original',
+          description: 'Original document view',
+          category: 'navigation',
+          icon: List,
+          componentPath: '@/components/tools/OriginalPanel',
+          tabId: 'original',
+          requiresDocument: false,
+          shortcuts: ['Cmd+1'],
+          keywords: ['original']
+        }
+      ]
+      
+      const commands = generateCommandsFromRegistry(tools, {
+        getNavigateToTab: () => mockNavigateToTab
+      })
+      
+      // Expected order: original (from TOOL_ORDER first), then alpha-tool, zebra-tool (alphabetically)
+      const expectedOrder = ['original', 'alpha-tool', 'zebra-tool']
+      const actualOrder = commands.map(cmd => cmd.id.replace('nav-', ''))
+      
+      expect(actualOrder).toEqual(expectedOrder)
+    })
+  })
 })
