@@ -267,17 +267,17 @@ export function HighlightManagement({
     return sortHighlights(highlights, sortByIntensity)
   }, [highlights, sortByIntensity, sortHighlights])
 
-  // Filtered query history based on current criterion input
+  // Filtered query history based on current input value
   const filteredQueryHistory = useMemo(() => {
-    if (!criterion.trim()) {
+    if (!highlightInputValue.trim()) {
       return queryHistory
     }
     
-    const searchLower = criterion.toLowerCase()
+    const searchLower = highlightInputValue.toLowerCase()
     return queryHistory.filter(item => 
       item.query.toLowerCase().includes(searchLower)
     )
-  }, [queryHistory, criterion])
+  }, [queryHistory, highlightInputValue])
 
   // Format date in unambiguous format: "2025-June-08 at 22:15"
   const formatDate = useCallback((dateString: string) => {
@@ -318,12 +318,14 @@ export function HighlightManagement({
 
   // Trigger highlight creation
   const triggerHighlightCreation = useCallback(() => {
-    if (criterion.trim()) {
-      createHighlights(criterion)
+    if (highlightInputValue.trim()) {
+      createHighlights(highlightInputValue)
       // Update URL with the highlight criterion
-      setHighlight(criterion)
+      setHighlight(highlightInputValue)
+      // Update criterion to match the input
+      setCriterion(highlightInputValue)
     }
-  }, [criterion, createHighlights, setHighlight])
+  }, [highlightInputValue, createHighlights, setHighlight])
 
   // Handle Enter key in criterion input
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -426,7 +428,7 @@ export function HighlightManagement({
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
                 <div className="p-2">
                   <div className="text-xs text-gray-500 font-medium mb-2 px-2">
-                    {criterion.trim() ? `Filtered searches (${filteredQueryHistory.length} of ${queryHistory.length})` : 'Recent searches'}
+                    {highlightInputValue.trim() ? `Filtered searches (${filteredQueryHistory.length} of ${queryHistory.length})` : 'Recent searches'}
                   </div>
                   {filteredQueryHistory.map((historyItem, index) => (
                     <button
@@ -460,7 +462,7 @@ export function HighlightManagement({
 
           <Button
             onClick={triggerHighlightCreation}
-            disabled={!criterion.trim() || isCreating}
+            disabled={!highlightInputValue.trim() || isCreating}
             variant="default"
             size="sm"
             className="w-full"
@@ -479,7 +481,7 @@ export function HighlightManagement({
           </Button>
 
           {/* Example criteria */}
-          {!criterion.trim() && !isCreating && (
+          {!highlightInputValue.trim() && !isCreating && (
             <div className="text-xs text-gray-500 space-y-1">
               <div className="font-medium">Try highlighting:</div>
               <div>• &quot;arguments supporting the main thesis&quot;</div>
