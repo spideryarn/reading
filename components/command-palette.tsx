@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/command'
 import { useDocumentSlug } from '@/lib/context/document-communication-context'
 import { useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
-import { type TabValue } from '@/lib/tools/url-state-types'
 import { useAuth } from '@/lib/context/auth-context'
 import {
   House,
@@ -313,25 +312,14 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
     return () => document.removeEventListener('keydown', handleKeydown)
   }, [isMac, setOpen, open])
 
-  // Individual shortcut handlers for numbered navigation
+  // Global shortcut handlers for non-tool commands
   useEffect(() => {
-    const handleNumberedShortcuts = (event: KeyboardEvent) => {
+    const handleGlobalShortcuts = (event: KeyboardEvent) => {
       const correctModifier = isMac ? event.metaKey : event.ctrlKey
       
       if (!correctModifier) return
 
-      // Handle numbered shortcuts (1-8 for navigation)
-      const number = parseInt(event.key)
-      if (number >= 1 && number <= 8) {
-        event.preventDefault()
-        const tabIds = ['original', 'ai-generated', 'summary', 'chat', 'glossary', 'search', 'highlights', 'metadata']
-        const tabId = tabIds[number - 1]
-        if (tabId) {
-          navigateToTab(tabId as TabValue)
-        }
-      }
-
-      // Handle other shortcuts
+      // Handle non-tool shortcuts only (tool shortcuts are handled by command generation)
       switch (event.key.toLowerCase()) {
         case 'd':
           event.preventDefault()
@@ -348,9 +336,9 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
       }
     }
 
-    document.addEventListener('keydown', handleNumberedShortcuts)
-    return () => document.removeEventListener('keydown', handleNumberedShortcuts)
-  }, [isMac, navigateToTab, navigateWithErrorHandling])
+    document.addEventListener('keydown', handleGlobalShortcuts)
+    return () => document.removeEventListener('keydown', handleGlobalShortcuts)
+  }, [isMac, navigateWithErrorHandling])
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>

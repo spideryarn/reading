@@ -6,6 +6,8 @@ import { CommandPalette } from '../command-palette'
 import { useAuth } from '@/lib/context/auth-context'
 import { useDocumentCommunication, useDocumentSlug } from '@/lib/context/document-communication-context'
 import { getTestNamespace, createTestEmail } from '@/lib/testing/test-isolation-utils'
+import { getAllTools } from '@/lib/tools/registry'
+import { generateCommandsFromRegistry } from '@/lib/tools/command-generation'
 
 // Mock Next.js useRouter
 jest.mock('next/navigation', () => ({
@@ -107,6 +109,16 @@ jest.mock('@phosphor-icons/react', () => ({
   ),
 }))
 
+// Mock tool registry
+jest.mock('@/lib/tools/registry', () => ({
+  getAllTools: jest.fn(),
+}))
+
+// Mock command generation
+jest.mock('@/lib/tools/command-generation', () => ({
+  generateCommandsFromRegistry: jest.fn(),
+}))
+
 describe('CommandPalette', () => {
   const namespace = getTestNamespace('command-palette')
   const mockRouter = {
@@ -133,6 +145,10 @@ describe('CommandPalette', () => {
       actions: mockDocumentActions,
     })
     ;(useDocumentSlug as jest.Mock).mockReturnValue(null) // Default: no document context
+
+    // Mock tool registry to return empty tools by default
+    ;(getAllTools as jest.Mock).mockReturnValue([])
+    ;(generateCommandsFromRegistry as jest.Mock).mockReturnValue([])
 
     // Mock platform detection to default to non-Mac
     Object.defineProperty(window, 'navigator', {
@@ -238,7 +254,7 @@ describe('CommandPalette', () => {
       expect(screen.queryByTestId('command-dialog')).not.toBeInTheDocument()
     })
 
-    it('should execute navigation tab shortcuts', () => {
+    it('should not execute numbered shortcuts (handled by tool registry)', () => {
       ;(useAuth as jest.Mock).mockReturnValue({
         user: null,
         signOut: mockSignOut,
@@ -246,29 +262,16 @@ describe('CommandPalette', () => {
 
       render(<CommandPalette />)
 
-      // Test Ctrl+1 for original tab
+      // Test that numbered shortcuts are NOT handled by global shortcut handler
+      // (They are now handled by individual tool command shortcuts from registry)
       fireEvent.keyDown(document, { key: '1', ctrlKey: true })
-      expect(mockDocumentActions.setActiveTab).toHaveBeenCalledWith('original')
+      expect(mockDocumentActions.setActiveTab).not.toHaveBeenCalled()
 
-      // Test Ctrl+2 for ai-generated tab
       fireEvent.keyDown(document, { key: '2', ctrlKey: true })
-      expect(mockDocumentActions.setActiveTab).toHaveBeenCalledWith('ai-generated')
+      expect(mockDocumentActions.setActiveTab).not.toHaveBeenCalled()
 
-      // Test Ctrl+3 for summary tab
-      fireEvent.keyDown(document, { key: '3', ctrlKey: true })
-      expect(mockDocumentActions.setActiveTab).toHaveBeenCalledWith('summary')
-
-      // Test Ctrl+4 for chat tab
-      fireEvent.keyDown(document, { key: '4', ctrlKey: true })
-      expect(mockDocumentActions.setActiveTab).toHaveBeenCalledWith('chat')
-
-      // Test Ctrl+5 for glossary tab
       fireEvent.keyDown(document, { key: '5', ctrlKey: true })
-      expect(mockDocumentActions.setActiveTab).toHaveBeenCalledWith('glossary')
-
-      // Test Ctrl+6 for search tab
-      fireEvent.keyDown(document, { key: '6', ctrlKey: true })
-      expect(mockDocumentActions.setActiveTab).toHaveBeenCalledWith('search')
+      expect(mockDocumentActions.setActiveTab).not.toHaveBeenCalled()
     })
 
     it('should execute app navigation shortcuts', () => {
@@ -308,7 +311,7 @@ describe('CommandPalette', () => {
       // Check app navigation commands are present
       expect(screen.getByText('Documents List')).toBeInTheDocument()
       expect(screen.getByText('Upload Document')).toBeInTheDocument()
-      expect(screen.getByText('Settings')).toBeInTheDocument()
+      expect(screen.getByText('Models')).toBeInTheDocument()
 
       // Check shortcuts are displayed
       expect(screen.getByText('Ctrl+D')).toBeInTheDocument()
@@ -488,8 +491,30 @@ describe('CommandPalette', () => {
     })
   })
 
-  describe('Navigation Tab Commands', () => {
-    it('should render navigation tab commands', () => {
+  describe('Dynamic Tool Commands', () => {
+    it('should generate tool commands from registry', () => {
+      // Mock some tool commands
+      const mockToolCommands = [
+        {
+          id: 'nav-original',
+          name: 'Original',
+          keywords: ['original', 'source'],
+          shortcut: ['Ctrl+1'],
+          category: { id: 'navigation', name: 'Navigation', priority: 1 },
+          action: jest.fn(),
+          icon: () => React.createElement('span', { 'data-testid': 'tool-icon' })
+        },
+        {
+          id: 'nav-summary',
+          name: 'Summary',
+          keywords: ['summary', 'overview'],
+          shortcut: ['Ctrl+3'],
+          category: { id: 'navigation', name: 'Navigation', priority: 1 },
+          action: jest.fn(),
+          icon: () => React.createElement('span', { 'data-testid': 'tool-icon' })
+        }
+      ]
+      ;(generateCommandsFromRegistry as jest.Mock).mockReturnValue(mockToolCommands)
       ;(useAuth as jest.Mock).mockReturnValue({
         user: null,
         signOut: mockSignOut,
@@ -500,24 +525,19 @@ describe('CommandPalette', () => {
       // Open dialog
       fireEvent.keyDown(document, { key: 'k', ctrlKey: true })
 
-      // Check navigation tab commands are present
-      expect(screen.getByText('Original Document')).toBeInTheDocument()
-      expect(screen.getByText('AI-Generated Document')).toBeInTheDocument()
+      // Check that generated tool commands are present
+      expect(screen.getByText('Original')).toBeInTheDocument()
       expect(screen.getByText('Summary')).toBeInTheDocument()
-      expect(screen.getByText('Chat')).toBeInTheDocument()
-      expect(screen.getByText('Glossary')).toBeInTheDocument()
-      expect(screen.getByText('Search')).toBeInTheDocument()
-
-      // Check icons are rendered
-      expect(screen.getByTestId('icon-article')).toBeInTheDocument()
-      expect(screen.getByTestId('icon-robot')).toBeInTheDocument()
-      expect(screen.getByTestId('icon-list-bullets')).toBeInTheDocument()
-      expect(screen.getByTestId('icon-chat-circle')).toBeInTheDocument()
-      expect(screen.getByTestId('icon-book-open')).toBeInTheDocument()
-      expect(screen.getByTestId('icon-magnifying-glass')).toBeInTheDocument()
+      
+      // Check shortcuts are displayed
+      expect(screen.getByText('Ctrl+1')).toBeInTheDocument()
+      expect(screen.getByText('Ctrl+3')).toBeInTheDocument()
     })
 
-    it('should execute navigation tab commands when clicked', async () => {
+    it('should handle empty tool registry gracefully', () => {
+      // Empty registry should not break the component
+      ;(getAllTools as jest.Mock).mockReturnValue([])
+      ;(generateCommandsFromRegistry as jest.Mock).mockReturnValue([])
       ;(useAuth as jest.Mock).mockReturnValue({
         user: null,
         signOut: mockSignOut,
@@ -528,16 +548,31 @@ describe('CommandPalette', () => {
       // Open dialog
       fireEvent.keyDown(document, { key: 'k', ctrlKey: true })
 
-      // Click original document command
-      const originalCommand = screen.getByText('Original Document').closest('[data-testid="command-item"]')
-      fireEvent.click(originalCommand!)
+      // Should still show non-tool commands
+      expect(screen.getByText('Documents List')).toBeInTheDocument()
+      expect(screen.getByText('Upload Document')).toBeInTheDocument()
+    })
 
-      expect(mockDocumentActions.setActiveTab).toHaveBeenCalledWith('original')
-
-      // Dialog should close after command execution
-      await waitFor(() => {
-        expect(screen.queryByTestId('command-dialog')).not.toBeInTheDocument()
+    it('should handle tool generation errors gracefully', () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
+      ;(generateCommandsFromRegistry as jest.Mock).mockImplementation(() => {
+        throw new Error('Tool generation failed')
       })
+      ;(useAuth as jest.Mock).mockReturnValue({
+        user: null,
+        signOut: mockSignOut,
+      })
+
+      render(<CommandPalette />)
+      
+      // Open dialog
+      fireEvent.keyDown(document, { key: 'k', ctrlKey: true })
+
+      // Should log error and continue with non-tool commands
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to generate tool commands:', expect.any(Error))
+      expect(screen.getByText('Documents List')).toBeInTheDocument()
+      
+      consoleErrorSpy.mockRestore()
     })
   })
 
@@ -553,8 +588,7 @@ describe('CommandPalette', () => {
       // Open dialog
       fireEvent.keyDown(document, { key: 'k', ctrlKey: true })
 
-      // Check category headings are present
-      expect(screen.getByText('Navigation')).toBeInTheDocument()
+      // Check category headings are present (when no tool commands are generated)
       expect(screen.getByText('App Navigation')).toBeInTheDocument()
       expect(screen.getByText('Account')).toBeInTheDocument()
     })
@@ -572,7 +606,35 @@ describe('CommandPalette', () => {
 
       const headings = screen.getAllByTestId('group-heading')
       
-      // Check that categories are in priority order (Navigation, App Navigation, Account)
+      // Check that categories are in priority order (App Navigation priority 3, Account priority 4)
+      expect(headings[0]).toHaveTextContent('App Navigation')
+      expect(headings[1]).toHaveTextContent('Account')
+    })
+
+    it('should include Navigation category when tool commands are present', () => {
+      // Mock tool commands that create Navigation category
+      const mockToolCommands = [
+        {
+          id: 'nav-original',
+          name: 'Original',
+          keywords: ['original'],
+          category: { id: 'navigation', name: 'Navigation', priority: 1 },
+          action: jest.fn(),
+        }
+      ]
+      ;(generateCommandsFromRegistry as jest.Mock).mockReturnValue(mockToolCommands)
+      ;(useAuth as jest.Mock).mockReturnValue({
+        user: null,
+        signOut: mockSignOut,
+      })
+
+      render(<CommandPalette />)
+      
+      // Open dialog
+      fireEvent.keyDown(document, { key: 'k', ctrlKey: true })
+
+      // Should now have Navigation category with highest priority
+      const headings = screen.getAllByTestId('group-heading')
       expect(headings[0]).toHaveTextContent('Navigation')
       expect(headings[1]).toHaveTextContent('App Navigation')
       expect(headings[2]).toHaveTextContent('Account')
