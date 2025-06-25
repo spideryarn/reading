@@ -17,6 +17,7 @@ import { sanitizeDocumentTitle, validateDocumentTitle, MAX_TITLE_LENGTH } from '
 import { DeleteDocumentButton } from '@/components/delete-document-button'
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 import { EnhancementService } from '@/lib/services/database/enhancements'
+import { calculateEnhancedReadingTime, generateReadingTimeTooltip } from '@/lib/utils/enhanced-reading-time'
 
 interface MetadataPanelProps {
   documentTitle: string
@@ -61,11 +62,22 @@ export function MetadataPanel({
   originalFileType,
   uploadMetadata
 }: MetadataPanelProps) {
+  // Reading difficulty state (needs to be before documentStats calculation)
+  const [readingDifficulty, setReadingDifficulty] = useState<{
+    level: string
+    confidence: string
+    factors: string[]
+  } | null>(null)
+  const [isLoadingDifficulty, setIsLoadingDifficulty] = useState(false)
+  const [difficultyError, setDifficultyError] = useState<string | null>(null)
+  const [showAssessmentFactors, setShowAssessmentFactors] = useState(false)
+
   // Calculate document statistics (client-only to prevent hydration issues)
   const [documentStats, setDocumentStats] = useState({
     wordCount: 0,
     readingTime: 0,
-    fullText: ''
+    fullText: '',
+    enhancedReadingTime: null as ReturnType<typeof calculateEnhancedReadingTime> | null
   })
   
   useEffect(() => {
@@ -81,25 +93,16 @@ export function MetadataPanel({
       }
     })
     
-    // Calculate reading time (225 words per minute)
-    const readingTimeMinutes = Math.ceil(totalWords / 225)
+    // Calculate enhanced reading time using reading difficulty if available
+    const enhancedReadingTime = totalWords > 0 ? calculateEnhancedReadingTime(totalWords, readingDifficulty) : null
     
     setDocumentStats({
       wordCount: totalWords,
-      readingTime: readingTimeMinutes,
-      fullText: fullText.trim()
+      readingTime: enhancedReadingTime?.readingTimeMinutes ?? Math.ceil(totalWords / 238), // Fallback to updated baseline
+      fullText: fullText.trim(),
+      enhancedReadingTime
     })
-  }, [elements])
-  
-  // Reading difficulty state
-  const [readingDifficulty, setReadingDifficulty] = useState<{
-    level: string
-    confidence: string
-    factors: string[]
-  } | null>(null)
-  const [isLoadingDifficulty, setIsLoadingDifficulty] = useState(false)
-  const [difficultyError, setDifficultyError] = useState<string | null>(null)
-  const [showAssessmentFactors, setShowAssessmentFactors] = useState(false)
+  }, [elements, readingDifficulty])
   
   // Assess reading difficulty on component mount
   useEffect(() => {
@@ -589,17 +592,40 @@ export function MetadataPanel({
                 </div>
               </div>
               
-              <div className="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 hover:shadow-md transition-all duration-200 hover:border-slate-300">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center">
-                    <Clock size={14} weight="bold" className="text-white" />
+              <TooltipOrPopover
+                content={
+                  documentStats.enhancedReadingTime ? (
+                    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 max-w-sm">
+                      <pre className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap font-mono">
+                        {generateReadingTimeTooltip(documentStats.enhancedReadingTime)}
+                      </pre>
+                    </div>
+                  ) : (
+                    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                      <div className="text-xs text-gray-700 leading-relaxed">
+                        Reading time calculated using {238} WPM baseline (research-backed standard)
+                      </div>
+                    </div>
+                  )
+                }
+                side="left"
+                align="center"
+                sideOffset={8}
+                showIndicator={false}
+                contentClassName="p-0 bg-transparent border-0 shadow-none"
+              >
+                <div className="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 hover:shadow-md transition-all duration-200 hover:border-slate-300 cursor-help">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center">
+                      <Clock size={14} weight="bold" className="text-white" />
+                    </div>
+                    <span className="text-xs font-medium text-slate-600 uppercase tracking-wider border-b border-dotted border-slate-400">Read Time</span>
                   </div>
-                  <span className="text-xs font-medium text-slate-600 uppercase tracking-wider">Read Time</span>
+                  <div className="text-xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                    {documentStats.readingTime} <span className="text-sm font-medium text-slate-600">min</span>
+                  </div>
                 </div>
-                <div className="text-xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
-                  {documentStats.readingTime} <span className="text-sm font-medium text-slate-600">min</span>
-                </div>
-              </div>
+              </TooltipOrPopover>
             </div>
           </section>
           
