@@ -22,7 +22,7 @@ see also:
   - pull out core reusable functionality into utility functions
   - break long/complex functions down
 - Write code that's easy to test, i.e. prefer functional. Avoid object-oriented unless it's a particularly good fit.
-- Aim to keep changes minimal, and focused on the task at hand.
+- Aim to keep changes minimal, and focused on the task at hand. Don't fix unrelated issues you notice unless they're directly blocking your current task - flag concerning issues for discussion instead.
 - Try to keep things concise, don't over-engineer.
 - Remember YAGNI - but at the same time, it can be useful to understand the overall vision for the product, because that may inform the current design/architecture decisions.
 - If tests are failing, try and understand why. If they're failing for systemic reasons, we should discuss how to fix that. Be wary about removing/modifying the tests just to make them pass. If in doubt, stop & discuss with the user.

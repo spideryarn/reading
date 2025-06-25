@@ -26,6 +26,7 @@ Key principles that guide all development decisions, from `docs/CODING_PRINCIPLE
 
 - **This is early-stage development with AI-first methods.** We want to develop fast and experiment using AI agents, so we can figure out which features are most valuable. The comprehensive documentation, typing, and testing infrastructure exists to support AI productivity and prevent regressions.
 - **Fix the root cause rather than putting on a band-aid.** Avoid fallbacks & defaults - better to fail if input assumptions aren't being met.
+- **Stay focused on the specific task.** Make minimal, targeted changes only. Don't fix unrelated issues you notice unless they're directly blocking your current task. If you spot concerning issues, flag them for discussion rather than attempting fixes.
 - **If you hit any nasty surprises, stop & discuss with the user.** Don't push through unexpected issues.
 - **No destructive or irreversible changes without checking with the user.** Be especially careful about any operations that are irreversible, could involve data loss, affect databases, production systems, or user data. When in doubt, ask for explicit permission first.
 - **Raise errors early, clearly & fatally.** Prefer not to wrap in try/except so that tracebacks are obvious.
@@ -214,9 +215,10 @@ Template: `.env.example` (may not be current - check `.env.local` for active con
 - **Multi-worktree isolation**: Environment-aware authentication prevents conflicts
 
 **Playwright MCP (For interactive debugging)**:
-- **⚠️ CRITICAL**: Always check `.env.test` for PORT variable - different worktrees use different ports
-- **Multi-worktree auth**: Use environment-specific test users (test-user1@spideryarn.com, etc.)
-- **Configuration**: Use headless mode and 1200x800 viewport for reliable automation
+- **⚠️ CRITICAL**: Always run headless with `--isolated` flag to avoid conflicts with other agents
+- **Authentication**: Use seeded test user `hello@spideryarn.com` / `ASDFasdf1` 
+- **Dev server dependency**: Always run `npm run dev:status || npm run dev:daemon` before E2E tests
+- **Multi-worktree isolation**: Different ports per worktree, environment-specific test users
 
 **Documentation**: See `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md` for comprehensive patterns
 
@@ -232,6 +234,7 @@ Use subagents where appropriate:
 - Use subagents in parallel where possible (because this is faster), but only if there isn't a dependency between tasks (e.g. the output of this one is useful as input for the next)
 - **Give them lots of background** so that they can make good decisions, e.g. about goals, point them to relevant docs/code, what we've been changing, gotchas & things to avoid, relevant environment variables like $PORT for Puppeteer/Playwright, using Jest for testing, the current date/time from `date`, and anything else that will help them to be effective but correct/careful.
 - **Tell subagents what to be cautious of**, and to abort and provide feedback on what happened if there are problems or surprises (to avoid them going rogue and doing more harm than good)
+- **Instruct subagents to stay focused**: Tell them to make only the minimal changes needed for their specific task and to flag any unrelated issues they notice rather than attempting fixes
 
 **See**: `docs/instructions/TASKS_SUBAGENTS.md` for detailed guidelines on effective subagent usage
 
