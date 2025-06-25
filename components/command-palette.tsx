@@ -16,12 +16,6 @@ import { useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
 import { type TabValue } from '@/lib/tools/url-state-types'
 import { useAuth } from '@/lib/context/auth-context'
 import {
-  Article,
-  Robot,
-  ListBullets,
-  ChatCircle,
-  BookOpen,
-  MagnifyingGlass,
   House,
   Upload,
   User,
@@ -30,9 +24,10 @@ import {
   SignOut,
   TwitterLogo,
   FileText,
-  Tag,
-  HighlighterCircle,
+  Robot,
 } from '@phosphor-icons/react'
+import { generateCommandsFromRegistry } from '@/lib/tools/command-generation'
+import { getAllTools } from '@/lib/tools/registry'
 
 // Command definition interfaces
 interface Command {
@@ -98,6 +93,37 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
   const isMac = typeof window !== 'undefined' && 
                /Mac|iPod|iPhone|iPad/.test(window.navigator.platform)
 
+  // Generate dynamic tool commands from registry
+  const generateToolCommands = useCallback((): Command[] => {
+    try {
+      const tools = getAllTools()
+      const generatedCommands = generateCommandsFromRegistry(tools, {
+        getNavigateToTab: () => navigateToTab,
+        getCurrentDocument: () => documentSlug ? { id: documentSlug } : null,
+        isMac,
+      })
+
+      // Convert GeneratedCommand to Command format
+      return generatedCommands.map(genCmd => ({
+        id: genCmd.id,
+        name: genCmd.name,
+        keywords: genCmd.keywords,
+        shortcut: genCmd.shortcut,
+        category: {
+          id: genCmd.category.id,
+          name: genCmd.category.name,
+          priority: genCmd.category.priority,
+        },
+        action: genCmd.action,
+        condition: genCmd.condition,
+        icon: genCmd.icon,
+      }))
+    } catch (error) {
+      console.error('Failed to generate tool commands:', error)
+      return [] // Graceful fallback
+    }
+  }, [navigateToTab, documentSlug, isMac])
+
   // Enhanced navigation with error handling
   const navigateWithErrorHandling = useCallback(async (path: string) => {
     try {
@@ -143,79 +169,8 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
 
   // Define all commands
   const commands: Command[] = [
-    // Navigation commands matching existing tabs
-    {
-      id: 'nav-original',
-      name: 'Original Document',
-      keywords: ['document', 'original', 'source', 'raw'],
-      shortcut: [isMac ? '⌘' : 'Ctrl', '1'],
-      category: NAVIGATION_CATEGORY,
-      action: () => navigateToTab('original'),
-      icon: Article,
-    },
-    {
-      id: 'nav-ai-generated',
-      name: 'AI-Generated Document',
-      keywords: ['ai', 'generated', 'enhanced', 'headings'],
-      shortcut: [isMac ? '⌘' : 'Ctrl', '2'],
-      category: NAVIGATION_CATEGORY,
-      action: () => navigateToTab('ai-generated'),
-      icon: Robot,
-    },
-    {
-      id: 'nav-summary',
-      name: 'Summary',
-      keywords: ['summary', 'summarize', 'overview', 'brief'],
-      shortcut: [isMac ? '⌘' : 'Ctrl', '3'],
-      category: NAVIGATION_CATEGORY,
-      action: () => navigateToTab('summary'),
-      icon: ListBullets,
-    },
-    {
-      id: 'nav-chat',
-      name: 'Chat',
-      keywords: ['chat', 'ask', 'question', 'discuss'],
-      shortcut: [isMac ? '⌘' : 'Ctrl', '4'],
-      category: NAVIGATION_CATEGORY,
-      action: () => navigateToTab('chat'),
-      icon: ChatCircle,
-    },
-    {
-      id: 'nav-glossary',
-      name: 'Glossary',
-      keywords: ['glossary', 'terms', 'definitions', 'concepts'],
-      shortcut: [isMac ? '⌘' : 'Ctrl', '5'],
-      category: NAVIGATION_CATEGORY,
-      action: () => navigateToTab('glossary'),
-      icon: BookOpen,
-    },
-    {
-      id: 'nav-search',
-      name: 'Search',
-      keywords: ['search', 'find', 'locate', 'text'],
-      shortcut: [isMac ? '⌘' : 'Ctrl', '6'],
-      category: NAVIGATION_CATEGORY,
-      action: () => navigateToTab('search'),
-      icon: MagnifyingGlass,
-    },
-    {
-      id: 'nav-highlights',
-      name: 'Highlights',
-      keywords: ['highlights', 'mark', 'annotate', 'select'],
-      shortcut: [isMac ? '⌘' : 'Ctrl', '7'],
-      category: NAVIGATION_CATEGORY,
-      action: () => navigateToTab('highlights'),
-      icon: HighlighterCircle,
-    },
-    {
-      id: 'nav-metadata',
-      name: 'Document Metadata',
-      keywords: ['metadata', 'info', 'information', 'statistics', 'stats', 'details'],
-      shortcut: [isMac ? '⌘' : 'Ctrl', '8'],
-      category: NAVIGATION_CATEGORY,
-      action: () => navigateToTab('metadata'),
-      icon: Tag,
-    },
+    // Dynamic tool commands from registry
+    ...generateToolCommands(),
 
     // Document-specific commands (only show when viewing a document)
     ...(documentSlug ? [
