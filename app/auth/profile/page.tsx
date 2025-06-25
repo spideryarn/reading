@@ -6,7 +6,8 @@ import { ProfileService } from '@/lib/services/database/profiles'
 import { DocumentService } from '@/lib/services/database/documents'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, FileText, Clock, Globe } from '@phosphor-icons/react/dist/ssr'
+import { DocumentList } from '@/components/document-list'
+import { ArrowLeft, FileText } from '@phosphor-icons/react/dist/ssr'
 
 export const dynamic = 'force-dynamic'
 
@@ -99,69 +100,18 @@ export default async function ProfilePage() {
                 </div>
               </div>
 
-              {documents.length === 0 ? (
-                <div className="text-center py-8">
-                  <FileText size={48} className="mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-600 mb-4">No documents yet</p>
-                  <Link href="/">
-                    <Button>Upload Your First Document</Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {documents.map((document) => (
-                    <div 
-                      key={document.id} 
-                      className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <Link 
-                            href={`/documents/${document.slug}`}
-                            className="text-lg font-medium text-gray-900 hover:text-orange-600 transition-colors"
-                          >
-                            {document.title}
-                          </Link>
-                          
-                          {document.description && (
-                            <p className="text-gray-600 mt-1 text-sm">
-                              {document.description}
-                            </p>
-                          )}
-                          
-                          <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <Clock size={14} />
-                              {new Date(document.created_at).toLocaleDateString('en-GB')}
-                            </div>
-                            
-                            {document.word_count && (
-                              <div>{document.word_count.toLocaleString()} words</div>
-                            )}
-                            
-                            <div className="flex items-center gap-1">
-                              <Globe size={14} />
-                              {document.is_public ? 'Public' : 'Private'}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex gap-2">
-                          <Link href={`/documents/${document.slug}`}>
-                            <Button variant="outline" size="sm">View</Button>
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {documents.length === 10 && (
-                    <div className="text-center pt-4">
-                      <p className="text-sm text-gray-600">
-                        Showing your 10 most recent documents
-                      </p>
-                    </div>
-                  )}
+              <DocumentList
+                documents={documents}
+                emptyStateMessage="No documents yet. Upload your first document to get started."
+                showDeleteActions={true}
+                currentUserId={user.id}
+              />
+              
+              {documents.length === 10 && (
+                <div className="text-center pt-4">
+                  <p className="text-sm text-gray-600">
+                    Showing your 10 most recent documents
+                  </p>
                 </div>
               )}
             </Card>
