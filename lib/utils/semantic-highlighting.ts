@@ -1,32 +1,35 @@
 /**
  * Utility functions for semantic highlighting with confidence-based visual intensity
  * 
- * Maps confidence scores (0-100%) to CSS class names for visual highlighting
- * Uses Spideryarn orange color scheme with varying opacity and styling intensity
+ * Generates inline styles for semantic highlighting based on confidence scores
+ * Uses Spideryarn orange color scheme with continuous opacity scaling
  * 
  * See docs/reference/TOOL_HIGHLIGHT.md for complete semantic highlighting system documentation
  */
 
 /**
- * Maps a confidence percentage (0-100) to a semantic highlight CSS class name
+ * Generates inline styles for semantic highlighting based on confidence percentage
  * 
  * @param confidence - Confidence score as a percentage (0-100)
- * @returns CSS class name for the appropriate highlight intensity level
+ * @returns Object with CSS styles for background and border with scaled opacity
  */
-export function getSemanticHighlightClass(confidence: number): string {
+export function getSemanticHighlightStyles(confidence: number): React.CSSProperties {
   // Normalize confidence to 0-100 range
   const normalizedConfidence = Math.max(0, Math.min(100, confidence))
   
-  if (normalizedConfidence >= 80) {
-    return 'semantic-highlight-very-high'
-  } else if (normalizedConfidence >= 60) {
-    return 'semantic-highlight-high'
-  } else if (normalizedConfidence >= 40) {
-    return 'semantic-highlight-medium'
-  } else if (normalizedConfidence >= 20) {
-    return 'semantic-highlight-low'
-  } else {
-    return 'semantic-highlight-very-low'
+  // Convert to 0-1 opacity range
+  const opacity = normalizedConfidence / 100
+  
+  // Scale border opacity slightly higher for visibility
+  const borderOpacity = Math.min(1, opacity * 1.5)
+  
+  // Add font weight for high confidence matches
+  const fontWeight = normalizedConfidence >= 80 ? 700 : 'normal'
+  
+  return {
+    backgroundColor: `rgba(219, 138, 69, ${opacity})`,
+    borderLeft: `2px solid rgba(219, 138, 69, ${borderOpacity})`,
+    fontWeight
   }
 }
 
@@ -54,8 +57,9 @@ export function getSemanticHighlightIntensity(confidence: number): string {
 }
 
 /**
- * Gets all semantic highlight class names for testing and reference
+ * Legacy function: Gets all semantic highlight class names for testing and reference
  * 
+ * @deprecated Use getSemanticHighlightStyles() for new percentage-based highlighting
  * @returns Array of all semantic highlight CSS class names
  */
 export function getAllSemanticHighlightClasses(): string[] {
@@ -83,12 +87,12 @@ export const SEMANTIC_HIGHLIGHT_THRESHOLDS = {
  * Test function to validate confidence mapping across the full range
  * Useful for development and testing
  */
-export function testConfidenceMapping(): Array<{confidence: number, class: string, intensity: string}> {
+export function testConfidenceMapping(): Array<{confidence: number, styles: React.CSSProperties, intensity: string}> {
   const testValues = [0, 10, 25, 45, 65, 85, 100]
   
   return testValues.map(confidence => ({
     confidence,
-    class: getSemanticHighlightClass(confidence),
+    styles: getSemanticHighlightStyles(confidence),
     intensity: getSemanticHighlightIntensity(confidence)
   }))
 }

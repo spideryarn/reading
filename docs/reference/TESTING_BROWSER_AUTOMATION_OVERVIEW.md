@@ -22,6 +22,10 @@ Quick reference for AI agents and developers using browser automation testing in
 
 ## Quick Start for AI Agents
 
+**CRITICAL**: run in headless mode, unless explicitly asked by the user to be interactive/visible.
+
+**CRITICAL**: use `--isolated` to avoid clashing with other agents also using Playwright.
+
 ### ⚠️ Prerequisites: Dev Server Must Be Running
 
 **CRITICAL**: E2E tests require a running development server. Always verify before running tests:

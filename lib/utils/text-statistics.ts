@@ -40,7 +40,7 @@ export function calculateTextStats(text: string): {
 } {
   const wordCount = countWords(text)
   const characterCount = text.length
-  const readingTimeMinutes = Math.ceil(wordCount / 225) // 225 words per minute
+  const readingTimeMinutes = Math.ceil(wordCount / 238) // 238 words per minute (research-backed baseline)
   
   return {
     wordCount,

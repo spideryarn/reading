@@ -10,7 +10,7 @@ import type { DocumentElement } from '@/lib/types/document'
 import { MarkdownRenderer } from './markdown-renderer'
 import { useElementVisibility } from '@/lib/hooks/useElementVisibility'
 import { DocumentParser } from '@/lib/services/document-parser'
-import { getSemanticHighlightClass } from '@/lib/utils/semantic-highlighting'
+import { getSemanticHighlightStyles } from '@/lib/utils/semantic-highlighting'
 import Mark from 'mark.js'
 import { useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
 import type { Entity } from '@/lib/types/entity'
@@ -282,11 +282,11 @@ export function SimpleDocumentViewer({
       ? 'animate-highlight'
       : ''
     
-    // Semantic highlight class based on confidence score
+    // Semantic highlight styles based on confidence score
     const semanticHighlight = semanticHighlights.find(h => h.elementId === element.id)
-    const semanticHighlightClass = semanticHighlight 
-      ? getSemanticHighlightClass(semanticHighlight.confidence * 100)
-      : ''
+    const semanticHighlightStyles = semanticHighlight 
+      ? getSemanticHighlightStyles(semanticHighlight.confidence * 100)
+      : {}
     
     // Active highlight class for pulse animation (React-based, no DOM manipulation)
     const activeHighlightClass = activeElementId === element.id ? 'semantic-highlight-active' : ''
@@ -302,13 +302,13 @@ export function SimpleDocumentViewer({
           ${indentClass} 
           ${layoutStyles}
           ${highlightClass}
-          ${semanticHighlightClass}
           ${activeHighlightClass}
           ${isSelected ? 'bg-blue-50 border-l-4 border-blue-500 -ml-4 pl-4' : ''}
           ${element.attributes?.['data-ai-generated'] === 'true' ? 'bg-green-50 border-l-4 border-green-500 -ml-4 pl-4' : ''}
           transition-colors duration-200
           ${onElementSelect ? 'cursor-pointer hover:bg-gray-50' : ''}
         `}
+        style={semanticHighlightStyles}
         onClick={(e) => {
           e.stopPropagation()
           if (onElementSelect) {
