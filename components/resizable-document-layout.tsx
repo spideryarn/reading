@@ -71,8 +71,11 @@ interface ResizableDocumentLayoutProps {
   aiHeadingsGenerated?: boolean
   summaryGenerated?: boolean
   glossaryGenerated?: boolean
+  
   ownerEmail?: string
   isPublic?: boolean | null
+  
+  // Slug for URL construction
   slug: string
   storagePath: string | null
   originalFileType?: string | null
@@ -460,6 +463,7 @@ function ResizableDocumentLayoutInner({
           onTabClick={handleIconNavTabClick}
           onToggleCollapse={handleToggleCollapse}
           onCommandPaletteToggle={handleCommandPaletteToggle}
+          slug={slug}
           className="shadow-lg"
         />
       </div>
