@@ -371,66 +371,10 @@ body {
         animation: pulse-highlight 0.5s ease-out 3;
     }
 
-    /* Semantic highlighting styles - confidence-based intensity using Spideryarn orange */
-    .semantic-highlight-very-low {
-        background-color: rgba(219, 138, 69, 0.1);
-        border-left: 2px solid rgba(219, 138, 69, 0.2);
-        padding: 2px 4px;
-        margin: 1px 0;
-        border-radius: 2px;
-        transition: all 0.3s ease-in-out;
-    }
-
-    .semantic-highlight-low {
-        background-color: rgba(219, 138, 69, 0.2);
-        border-left: 2px solid rgba(219, 138, 69, 0.4);
-        padding: 2px 4px;
-        margin: 1px 0;
-        border-radius: 2px;
-        transition: all 0.3s ease-in-out;
-    }
-
-    .semantic-highlight-medium {
-        background-color: rgba(219, 138, 69, 0.3);
-        border-left: 3px solid rgba(219, 138, 69, 0.6);
-        padding: 2px 4px;
-        margin: 1px 0;
-        border-radius: 3px;
-        font-weight: 500;
-        transition: all 0.3s ease-in-out;
-    }
-
-    .semantic-highlight-high {
-        background-color: rgba(219, 138, 69, 0.4);
-        border-left: 3px solid rgba(219, 138, 69, 0.8);
-        padding: 3px 5px;
-        margin: 2px 0;
-        border-radius: 3px;
-        font-weight: 600;
-        transition: all 0.3s ease-in-out;
-    }
-
-    .semantic-highlight-very-high {
-        background-color: rgba(219, 138, 69, 0.5);
-        border-left: 4px solid #DB8A45;
-        padding: 3px 6px;
-        margin: 2px 0;
-        border-radius: 4px;
-        font-weight: 700;
-        box-shadow: 0 1px 3px rgba(219, 138, 69, 0.2);
-        transition: all 0.3s ease-in-out;
-    }
-
-    /* Hover effects for semantic highlights */
-    .semantic-highlight-very-low:hover,
-    .semantic-highlight-low:hover,
-    .semantic-highlight-medium:hover,
-    .semantic-highlight-high:hover,
-    .semantic-highlight-very-high:hover {
-        transform: scale(1.01);
-        box-shadow: 0 2px 6px rgba(219, 138, 69, 0.3);
-        cursor: pointer;
-    }
+    /* Legacy semantic highlighting styles - DEPRECATED in favor of inline styles
+     * These classes are no longer used but kept for backwards compatibility during migration
+     * New implementation uses getSemanticHighlightStyles() for percentage-based opacity
+     */
 
     /* Active semantic highlight when clicked from highlights list */
     .semantic-highlight-active {
@@ -454,59 +398,10 @@ body {
         }
     }
 
-    /* High-specificity rules to preserve semantic highlights when elements are selected */
-    /* These override the selection background styling to maintain highlight visibility */
-    .bg-blue-50.semantic-highlight-very-low {
-        background-color: rgba(219, 138, 69, 0.15) !important;
-        border-left: 3px solid rgba(219, 138, 69, 0.3) !important;
-    }
-
-    .bg-blue-50.semantic-highlight-low {
-        background-color: rgba(219, 138, 69, 0.25) !important;
-        border-left: 3px solid rgba(219, 138, 69, 0.5) !important;
-    }
-
-    .bg-blue-50.semantic-highlight-medium {
-        background-color: rgba(219, 138, 69, 0.35) !important;
-        border-left: 4px solid rgba(219, 138, 69, 0.7) !important;
-    }
-
-    .bg-blue-50.semantic-highlight-high {
-        background-color: rgba(219, 138, 69, 0.45) !important;
-        border-left: 4px solid rgba(219, 138, 69, 0.8) !important;
-    }
-
-    .bg-blue-50.semantic-highlight-very-high {
-        background-color: rgba(219, 138, 69, 0.55) !important;
-        border-left: 5px solid rgba(219, 138, 69, 0.9) !important;
-    }
-
-    /* High-specificity rules for AI-generated elements (green background) with semantic highlights */
-    /* These override the AI-generated element styling to maintain highlight visibility */
-    .bg-green-50.semantic-highlight-very-low {
-        background-color: rgba(219, 138, 69, 0.15) !important;
-        border-left: 3px solid rgba(219, 138, 69, 0.3) !important;
-    }
-
-    .bg-green-50.semantic-highlight-low {
-        background-color: rgba(219, 138, 69, 0.25) !important;
-        border-left: 3px solid rgba(219, 138, 69, 0.5) !important;
-    }
-
-    .bg-green-50.semantic-highlight-medium {
-        background-color: rgba(219, 138, 69, 0.35) !important;
-        border-left: 4px solid rgba(219, 138, 69, 0.7) !important;
-    }
-
-    .bg-green-50.semantic-highlight-high {
-        background-color: rgba(219, 138, 69, 0.45) !important;
-        border-left: 4px solid rgba(219, 138, 69, 0.8) !important;
-    }
-
-    .bg-green-50.semantic-highlight-very-high {
-        background-color: rgba(219, 138, 69, 0.55) !important;
-        border-left: 5px solid rgba(219, 138, 69, 0.9) !important;
-    }
+    /* Legacy high-specificity rules - DEPRECATED
+     * These were for discrete CSS classes with selection backgrounds
+     * New inline styles approach handles these interactions automatically
+     */
 
     @keyframes pulse-highlight {
         0% {
