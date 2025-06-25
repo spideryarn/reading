@@ -304,6 +304,13 @@ export function HighlightManagement({
     // Clear previous errors
     setError(null)
     
+    // Clear active highlights when input changes (user is preparing new search)
+    clearSemanticHighlights()
+    setHighlights([])
+    
+    // Clear URL highlight criterion to prevent auto-recreation effect
+    setHighlight(null)
+    
     // Show history dropdown when focusing and typing
     if (queryHistory.length > 0) {
       setShowQueryHistory(true)
@@ -311,10 +318,9 @@ export function HighlightManagement({
     
     // Don't auto-search - highlighting is manual trigger only
     if (!value.trim()) {
-      setHighlights([])
       setIsCreating(false)
     }
-  }, [queryHistory.length])
+  }, [queryHistory.length, clearSemanticHighlights, setHighlight])
 
   // Trigger highlight creation
   const triggerHighlightCreation = useCallback(() => {
