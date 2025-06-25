@@ -23,13 +23,9 @@ export function getSemanticHighlightStyles(confidence: number): React.CSSPropert
   // Scale border opacity slightly higher for visibility
   const borderOpacity = Math.min(1, opacity * 1.5)
   
-  // Add font weight for high confidence matches
-  const fontWeight = normalizedConfidence >= 80 ? 700 : 'normal'
-  
   return {
     backgroundColor: `rgba(219, 138, 69, ${opacity})`,
-    borderLeft: `2px solid rgba(219, 138, 69, ${borderOpacity})`,
-    fontWeight
+    borderLeft: `2px solid rgba(219, 138, 69, ${borderOpacity})`
   }
 }
 
