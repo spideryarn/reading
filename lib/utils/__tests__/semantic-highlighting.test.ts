@@ -3,7 +3,7 @@
  */
 
 import {
-  getSemanticHighlightClass,
+  getSemanticHighlightStyles,
   getSemanticHighlightIntensity,
   getAllSemanticHighlightClasses,
   SEMANTIC_HIGHLIGHT_THRESHOLDS,
@@ -11,45 +11,49 @@ import {
 } from '../semantic-highlighting'
 
 describe('semantic-highlighting utilities', () => {
-  describe('getSemanticHighlightClass', () => {
-    it('should map confidence scores to correct CSS classes', () => {
-      // Test boundary values and typical values
-      expect(getSemanticHighlightClass(0)).toBe('semantic-highlight-very-low')
-      expect(getSemanticHighlightClass(10)).toBe('semantic-highlight-very-low')
-      expect(getSemanticHighlightClass(19)).toBe('semantic-highlight-very-low')
+  describe('getSemanticHighlightStyles', () => {
+    it('should generate correct inline styles for confidence scores', () => {
+      // Test 0% confidence
+      const styles0 = getSemanticHighlightStyles(0)
+      expect(styles0.backgroundColor).toBe('rgba(219, 138, 69, 0)')
+      expect(styles0.borderLeft).toBe('2px solid rgba(219, 138, 69, 0)')
+      expect(styles0.fontWeight).toBe('normal')
       
-      expect(getSemanticHighlightClass(20)).toBe('semantic-highlight-low')
-      expect(getSemanticHighlightClass(30)).toBe('semantic-highlight-low')
-      expect(getSemanticHighlightClass(39)).toBe('semantic-highlight-low')
+      // Test 50% confidence
+      const styles50 = getSemanticHighlightStyles(50)
+      expect(styles50.backgroundColor).toBe('rgba(219, 138, 69, 0.5)')
+      expect(styles50.borderLeft).toBe('2px solid rgba(219, 138, 69, 0.75)')
+      expect(styles50.fontWeight).toBe('normal')
       
-      expect(getSemanticHighlightClass(40)).toBe('semantic-highlight-medium')
-      expect(getSemanticHighlightClass(50)).toBe('semantic-highlight-medium')
-      expect(getSemanticHighlightClass(59)).toBe('semantic-highlight-medium')
-      
-      expect(getSemanticHighlightClass(60)).toBe('semantic-highlight-high')
-      expect(getSemanticHighlightClass(70)).toBe('semantic-highlight-high')
-      expect(getSemanticHighlightClass(79)).toBe('semantic-highlight-high')
-      
-      expect(getSemanticHighlightClass(80)).toBe('semantic-highlight-very-high')
-      expect(getSemanticHighlightClass(90)).toBe('semantic-highlight-very-high')
-      expect(getSemanticHighlightClass(100)).toBe('semantic-highlight-very-high')
+      // Test 100% confidence
+      const styles100 = getSemanticHighlightStyles(100)
+      expect(styles100.backgroundColor).toBe('rgba(219, 138, 69, 1)')
+      expect(styles100.borderLeft).toBe('2px solid rgba(219, 138, 69, 1)')
+      expect(styles100.fontWeight).toBe(700)
     })
 
     it('should handle out-of-range values', () => {
-      // Values below 0 should be clamped to very-low
-      expect(getSemanticHighlightClass(-10)).toBe('semantic-highlight-very-low')
-      expect(getSemanticHighlightClass(-1)).toBe('semantic-highlight-very-low')
+      // Values below 0 should be clamped to 0
+      const stylesNegative = getSemanticHighlightStyles(-10)
+      expect(stylesNegative.backgroundColor).toBe('rgba(219, 138, 69, 0)')
       
-      // Values above 100 should be clamped to very-high
-      expect(getSemanticHighlightClass(110)).toBe('semantic-highlight-very-high')
-      expect(getSemanticHighlightClass(200)).toBe('semantic-highlight-very-high')
+      // Values above 100 should be clamped to 100
+      const stylesOver = getSemanticHighlightStyles(150)
+      expect(stylesOver.backgroundColor).toBe('rgba(219, 138, 69, 1)')
+      expect(stylesOver.fontWeight).toBe(700)
     })
 
-    it('should handle decimal values correctly', () => {
-      expect(getSemanticHighlightClass(19.9)).toBe('semantic-highlight-very-low')
-      expect(getSemanticHighlightClass(20.1)).toBe('semantic-highlight-low')
-      expect(getSemanticHighlightClass(79.9)).toBe('semantic-highlight-high')
-      expect(getSemanticHighlightClass(80.1)).toBe('semantic-highlight-very-high')
+    it('should apply bold font weight for high confidence (80%+)', () => {
+      expect(getSemanticHighlightStyles(79).fontWeight).toBe('normal')
+      expect(getSemanticHighlightStyles(80).fontWeight).toBe(700)
+      expect(getSemanticHighlightStyles(90).fontWeight).toBe(700)
+    })
+
+    it('should scale border opacity higher than background opacity', () => {
+      const styles30 = getSemanticHighlightStyles(30)
+      expect(styles30.backgroundColor).toBe('rgba(219, 138, 69, 0.3)')
+      // Border opacity should be 1.5x background opacity (approximately)
+      expect(styles30.borderLeft).toMatch(/rgba\(219, 138, 69, 0\.44/)
     })
   })
 
@@ -106,18 +110,14 @@ describe('semantic-highlighting utilities', () => {
       
       // Check specific mappings
       const zeroMapping = mapping.find(m => m.confidence === 0)
-      expect(zeroMapping).toEqual({
-        confidence: 0,
-        class: 'semantic-highlight-very-low',
-        intensity: 'Very Low'
-      })
+      expect(zeroMapping?.confidence).toBe(0)
+      expect(zeroMapping?.intensity).toBe('Very Low')
+      expect(zeroMapping?.styles.backgroundColor).toBe('rgba(219, 138, 69, 0)')
 
       const highMapping = mapping.find(m => m.confidence === 85)
-      expect(highMapping).toEqual({
-        confidence: 85,
-        class: 'semantic-highlight-very-high',
-        intensity: 'Very High'
-      })
+      expect(highMapping?.confidence).toBe(85)
+      expect(highMapping?.intensity).toBe('Very High')
+      expect(highMapping?.styles.fontWeight).toBe(700)
     })
 
     it('should cover all intensity levels', () => {
