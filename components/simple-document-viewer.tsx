@@ -157,6 +157,7 @@ export function SimpleDocumentViewer({
             if (entity) {
               // Store entity reference for click handling and tooltip data
               element.setAttribute('data-glossary-entity', entity.name)
+              element.setAttribute('data-glossary-matched-text', matchedText)
               element.setAttribute('data-glossary-explanation', entity.brief_explanation)
               element.setAttribute('data-glossary-long-explanation', entity.long_explanation || '')
               element.style.cursor = 'pointer'
@@ -184,14 +185,27 @@ export function SimpleDocumentViewer({
       if (target.classList.contains('highlight-glossary')) {
         const explanation = target.getAttribute('data-glossary-explanation')
         const longExplanation = target.getAttribute('data-glossary-long-explanation')
+        const entityName = target.getAttribute('data-glossary-entity')
+        const matchedText = target.getAttribute('data-glossary-matched-text')
         
         if (explanation || longExplanation) {
+          // Determine if we should prepend the primary name
+          const isAlias = entityName && matchedText && 
+                         entityName.toLowerCase() !== matchedText.toLowerCase()
+          
           // Create tooltip element
           const tooltip = document.createElement('div')
           tooltip.className = 'glossary-tooltip fixed z-50 max-w-md text-left bg-white border border-gray-200 rounded-lg shadow-lg p-4'
+          
+          // Build tooltip content
+          let tooltipContent = longExplanation || explanation
+          if (isAlias && entityName) {
+            tooltipContent = `<strong>${entityName}:</strong> ${tooltipContent}`
+          }
+          
           tooltip.innerHTML = `
             <div class="text-xs text-gray-700 leading-relaxed">
-              ${longExplanation || explanation}
+              ${tooltipContent}
             </div>
           `
           
