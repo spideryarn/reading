@@ -131,7 +131,8 @@ export async function POST(request: NextRequest) {
       content,
       already_entities,
       max_entities: safeEntityLimit,
-      existing_entities
+      existing_entities,
+      include_scoring: true // Enable difficulty and centrality scoring
     })
     
     // Log AI operation completion

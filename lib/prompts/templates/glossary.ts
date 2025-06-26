@@ -25,7 +25,10 @@ export const entitySchema = z.object({
   long_explanation: z.string().optional(), // Markdown formatted
   datetime: z.string().optional(),
   url: z.string().url().optional(),
-  extra: z.record(z.any()).optional()
+  extra: z.record(z.any()).optional(),
+  // Optional scoring fields for difficulty and centrality
+  difficulty: z.number().min(0).max(1).optional(), // 0-1 scale: 0=common knowledge, 1=expert knowledge
+  centrality: z.number().min(0).max(1).optional() // 0-1 scale: 0=minor relevance, 1=central to document
 })
 
 // Schema for the glossary response
@@ -43,7 +46,8 @@ const glossaryPromptSchema = z.object({
   })).optional(),
   documentId: z.string().uuid().optional(), // Optional for backward compatibility
   max_entities: z.number().int().positive().optional(), // Maximum entities to generate
-  existing_entities: z.array(entitySchema).optional() // Full entity objects for "generate more" mode
+  existing_entities: z.array(entitySchema).optional(), // Full entity objects for "generate more" mode
+  include_scoring: z.boolean().optional() // Whether to include difficulty and centrality scoring
 })
 
 // Load the glossary prompt template

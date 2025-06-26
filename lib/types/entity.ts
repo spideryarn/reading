@@ -12,6 +12,9 @@ export interface Entity {
   datetime?: string
   url?: string
   extra?: Record<string, unknown>
+  // Optional scoring fields for difficulty and centrality
+  difficulty?: number // 0-1 scale: how likely someone will know this (0=common, 1=expert knowledge)
+  centrality?: number // 0-1 scale: how important to understanding document (0=minor, 1=central)
 }
 
 // Entity with position information for document ordering
