@@ -6,7 +6,7 @@
 
 import { 
   Article, ListBullets, ChatCircle, 
-  BookOpen, MagnifyingGlass, SidebarSimple, Terminal, HighlighterCircle, Tag, TwitterLogo
+  BookOpen, MagnifyingGlass, SidebarSimple, Terminal, HighlighterCircle, Tag, TwitterLogo, Robot
 } from '@phosphor-icons/react'
 import type { IconProps } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
@@ -46,16 +46,15 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
       description: 'View the unmodified source document with original headings'
     }
   },
-  // Temporarily hidden due to bug - uncomment to restore
-  // {
-  //   id: 'ai-generated',
-  //   label: 'AI-generated',
-  //   icon: Robot,
-  //   tooltip: {
-  //     title: 'AI-Generated',
-  //     description: 'View document with AI-enhanced headings and structure'
-  //   }
-  // },
+  {
+    id: 'ai-generated',
+    label: 'AI-generated',
+    icon: Robot,
+    tooltip: {
+      title: 'AI-Generated',
+      description: 'View document with AI-enhanced headings and structure'
+    }
+  },
   {
     id: 'summary',
     label: 'Summary',
