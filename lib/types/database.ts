@@ -254,6 +254,41 @@ export type Database = {
           },
         ]
       }
+      document_users: {
+        Row: {
+          background: string | null
+          created_at: string | null
+          document_id: string
+          extra: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          background?: string | null
+          created_at?: string | null
+          document_id: string
+          extra?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          background?: string | null
+          created_at?: string | null
+          document_id?: string
+          extra?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_users_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           created_at: string | null
@@ -321,6 +356,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          background: string
           created_at: string | null
           id: string
           is_admin: string | null
@@ -333,6 +369,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          background?: string
           created_at?: string | null
           id?: string
           is_admin?: string | null
@@ -345,6 +382,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          background?: string
           created_at?: string | null
           id?: string
           is_admin?: string | null
