@@ -89,6 +89,8 @@ https://github.com/spideryarn/reading/
 
    Navigate to e.g. http://localhost:3001/ (or your configured port)
 
+   **Hot Reload**: The dev server uses standard Next.js Webpack compiler (not Turbopack) for improved Fast Refresh reliability. This provides more stable hot reloading of component changes during development.
+
    **For AI agents**: Use background daemon mode for automation - see `docs/reference/SETUP_DEV_SERVER_AUTOMATION.md` for comprehensive dev server management with daemon mode, health checking, and multi-worktree isolation.
 
 7. **Verify setup:**

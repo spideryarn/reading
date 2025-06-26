@@ -10,9 +10,9 @@ const nextConfig: NextConfig = {
   },
   // External packages for pino and pino-pretty to fix worker thread issues
   serverExternalPackages: ['pino', 'pino-pretty'],
-  turbopack: {
-    resolveExtensions: ['.js', '.jsx', '.ts', '.tsx', '.json']
-  },
+  // turbopack: {
+  //   resolveExtensions: ['.js', '.jsx', '.ts', '.tsx', '.json']
+  // },
   async headers() {
     return [
       {

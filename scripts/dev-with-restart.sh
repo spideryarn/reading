@@ -16,8 +16,13 @@
 #
 # WORKTREE SUPPORT:
 # - Automatically detects PORT from .env.local for multi-worktree development
-# - Uses existing port conflict resolution logic
+# - Uses robust port-based process killing with npx kill-port
 # - Each worktree runs independently with its own PID tracking
+#
+# PROCESS MANAGEMENT:
+# - Uses npx kill-port for reliable port-based process cleanup
+# - Handles orphaned processes that aren't tracked by PID files
+# - Falls back gracefully when npx is not available
 
 set -e  # Exit on any error
 
@@ -124,6 +129,23 @@ kill_process_gracefully() {
     return 1
 }
 
+kill_port_processes() {
+    local port="$1"
+    local description="$2"
+    
+    echo "🔄 Killing all processes on port $port ($description)"
+    
+    # Use npx kill-port for robust port-based process killing
+    if npx kill-port "$port" 2>/dev/null; then
+        echo "✅ Successfully cleared port $port"
+        return 0
+    else
+        echo "⚠️  Failed to clear port $port using npx kill-port"
+        echo "   This may indicate no processes were running on that port"
+        return 1
+    fi
+}
+
 rotate_log_if_needed() {
     # Rotate dev.log if it gets too large (for daemon mode)
     if [ -f "dev.log" ] && [ $(wc -c < dev.log 2>/dev/null || echo 0) -gt $MAX_LOG_SIZE ]; then
@@ -161,24 +183,64 @@ case "$MODE" in
     "stop")
         cleanup_stale_files
         daemon_pid=$(get_daemon_pid)
+        PORT=$(get_port)
         
-        if [ -z "$daemon_pid" ]; then
-            echo "❌ No daemon to stop"
-            exit 1
+        # Try PID-based killing first if we have a daemon PID
+        pid_killed=false
+        if [ -n "$daemon_pid" ]; then
+            if is_process_running "$daemon_pid"; then
+                if kill_process_gracefully "$daemon_pid" "dev server daemon"; then
+                    pid_killed=true
+                else
+                    echo "⚠️  PID-based killing failed, falling back to port-based cleanup"
+                fi
+            else
+                echo "❌ Daemon not running (stale PID: $daemon_pid)"
+                rm -f "$SYR_DEVSERVER_PIDFILE"
+            fi
         fi
         
-        if ! is_process_running "$daemon_pid"; then
-            echo "❌ Daemon not running (stale PID)"
-            rm -f "$SYR_DEVSERVER_PIDFILE"
-            exit 1
+        # Always try port-based cleanup as well (catches orphaned processes)
+        port_killed=false
+        if [ -n "$PORT" ]; then
+            if kill_port_processes "$PORT" "dev server on port $PORT"; then
+                port_killed=true
+            fi
         fi
         
-        if kill_process_gracefully "$daemon_pid" "dev server daemon"; then
-            rm -f "$SYR_DEVSERVER_PIDFILE" "$LOCKFILE"
-            echo "✅ Daemon stopped successfully"
-            exit 0
+        # Clean up files
+        rm -f "$SYR_DEVSERVER_PIDFILE" "$LOCKFILE"
+        
+        # Determine success based on what we tried to kill
+        if [ -n "$daemon_pid" ] && [ -n "$PORT" ]; then
+            # Had both PID and port
+            if [ "$pid_killed" = true ] || [ "$port_killed" = true ]; then
+                echo "✅ Daemon stopped successfully"
+                exit 0
+            else
+                echo "❌ Failed to stop daemon (both PID and port cleanup failed)"
+                exit 1
+            fi
+        elif [ -n "$daemon_pid" ]; then
+            # Only had PID
+            if [ "$pid_killed" = true ]; then
+                echo "✅ Daemon stopped successfully"
+                exit 0
+            else
+                echo "❌ Failed to stop daemon"
+                exit 1
+            fi
+        elif [ -n "$PORT" ]; then
+            # Only had port
+            if [ "$port_killed" = true ]; then
+                echo "✅ Port $PORT cleared successfully"
+                exit 0
+            else
+                echo "❌ No processes found on port $PORT"
+                exit 1
+            fi
         else
-            echo "❌ Failed to stop daemon"
+            echo "❌ No daemon PID or PORT found - nothing to stop"
             exit 1
         fi
         ;;
@@ -216,18 +278,15 @@ case "$MODE" in
             exit 1
         fi
         
-        # Clear port using existing logic
-        if existing_pid=$(lsof -ti:$PORT 2>/dev/null); then
-            echo "🔄 Found existing process on port $PORT (PID: $existing_pid)"
-            kill_process_gracefully "$existing_pid" "process on port $PORT"
-        fi
+        # Clear port using robust npx kill-port
+        kill_port_processes "$PORT" "any existing processes"
         
         # Rotate log if needed
         rotate_log_if_needed
         
         # Start dev server in background
         echo "🚀 Starting dev server daemon on port $PORT"
-        npm run db:types --silent && PATH="/opt/homebrew/bin:$PATH" dotenv -e .env.local -- next dev --turbopack > dev.log 2>&1 &
+        npm run db:types --silent && PATH="/opt/homebrew/bin:$PATH" dotenv -e .env.local -- next dev > dev.log 2>&1 &
         dev_server_pid=$!
         
         # Store PID and remove lock
@@ -255,28 +314,11 @@ case "$MODE" in
             echo "⚠️  No PORT found in .env.local - skipping process cleanup"
             echo "   To enable auto-restart, add PORT=xxxx to your .env.local file"
         else
-            # Try to find and kill any process using this port
-            if existing_pid=$(lsof -ti:$PORT 2>/dev/null); then
-                echo "🔄 Killing existing dev server on port $PORT (PID: $existing_pid)"
-                if kill "$existing_pid" 2>/dev/null; then
-                    # Give it a moment to shut down gracefully
-                    sleep 1
-                    # Double-check it's gone
-                    if lsof -ti:$PORT >/dev/null 2>&1; then
-                        echo "⚠️  Failed to kill process on port $PORT. Please kill manually: kill $existing_pid"
-                        exit 1
-                    else
-                        echo "✅ Successfully cleared port $PORT"
-                    fi
-                else
-                    echo "⚠️  Failed to kill process $existing_pid on port $PORT (permission denied?)"
-                    echo "   Please kill manually: kill $existing_pid"
-                    exit 1
-                fi
-            fi
+            # Use robust port-based process killing
+            kill_port_processes "$PORT" "existing dev server"
         fi
         
         # Run the original dev command in foreground
-        npm run db:types --silent && PATH="/opt/homebrew/bin:$PATH" dotenv -e .env.local -- next dev --turbopack > dev.log 2>&1
+        npm run db:types --silent && PATH="/opt/homebrew/bin:$PATH" dotenv -e .env.local -- next dev > dev.log 2>&1
         ;;
 esac

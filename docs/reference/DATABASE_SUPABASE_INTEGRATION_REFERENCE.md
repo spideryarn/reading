@@ -525,6 +525,23 @@ FROM pg_stat_statements
 ORDER BY mean_exec_time DESC;
 ```
 
+### Safe single-row selects with `.maybeSingle()`
+
+Supabase v2 adds `.maybeSingle()` (or `.throwOnError().maybeSingle()` if you prefer exceptions) which behaves like `.single()` **except** it treats a "zero-rows" result as a success, returning `{ data: null, error: null }` instead of triggering an HTTP 406 / `PGRST116`. Use it whenever the absence of a row is a valid outcome (for example, per-user metadata that may not exist yet).
+
+```ts
+const { data, error } = await supabase
+  .from('document_users')
+  .select('background')
+  .eq('user_id', user.id)
+  .eq('document_id', docId)
+  .maybeSingle()
+
+// data === null means "no record yet", error remains null
+```
+
+If duplicates are possible, `.maybeSingle()` will still surface a `PGRST117` error ("multiple rows returned"), so misuse is easy to spot in development.
+
 ## Migration and Scaling Considerations
 
 ### Database Migration Patterns

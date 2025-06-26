@@ -276,6 +276,10 @@ export class EnhancementService {
 
   /**
    * Store document glossary
+   * @deprecated Use individual entity storage instead via storeIndividualEntities()
+   * This method stores all entities in a single row with subtype 'default'.
+   * New implementations should use individual entity storage for better performance
+   * and granular tracking. This method is kept for backwards compatibility only.
    */
   async storeGlossary(
     documentId: string,

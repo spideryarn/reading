@@ -59,11 +59,13 @@ Next.js local dev server:
 - URL: http://localhost:$PORT/ (configurable via PORT in `.env.local`)
 
 **AI-First Development Best Practices:**
+- **Default to daemon mode**: `npm run dev:daemon` is recommended as the default for AI development workflows - it's more robust and doesn't block terminal sessions
 - **Use daemon mode for automation**: `npm run dev:daemon` allows LLM agents to manage dev server without blocking terminal
 - **Always check status first**: Run `npm run dev:status` before starting daemon to avoid conflicts
 - **Graceful cleanup**: Use `npm run dev:stop` rather than killing processes manually
 - **Worktree isolation**: Each worktree tracks its own daemon independently via `.dev-server.pid`
 - **Health verification**: Daemon mode checks both process existence AND HTTP response for true health status
+- **Improved robustness**: Both `npm run dev` and `npm run dev:daemon` now use `npx kill-port` for reliable process cleanup, making them more resilient to orphaned processes
 
 Production deployment:
 - **Live URL**: https://www.spideryarn.com
