@@ -90,6 +90,26 @@ export class ProfileService {
   }
 
   /**
+   * Update user background information
+   */
+  async updateBackground(userId: string, background: string): Promise<Profile> {
+    return this.updateByUserId(userId, { background })
+  }
+
+  /**
+   * Get user background information
+   */
+  async getBackground(userId: string): Promise<string> {
+    const profile = await this.getByUserId(userId)
+    
+    if (!profile) {
+      throw new Error('Profile not found')
+    }
+
+    return profile.background
+  }
+
+  /**
    * Get user preferences with defaults
    */
   async getPreferences(userId: string): Promise<JsonObject> {

@@ -7,6 +7,7 @@ import { DocumentService } from '@/lib/services/database/documents'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { DocumentList } from '@/components/document-list'
+import { BackgroundForm } from '@/components/profile/background-form'
 import { ArrowLeft, FileText } from '@phosphor-icons/react/dist/ssr'
 
 export const dynamic = 'force-dynamic'
@@ -43,8 +44,9 @@ export default async function ProfilePage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Profile Information */}
-          <div className="lg:col-span-1">
+          {/* Profile Information and Background */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Account Information */}
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-4">Account Information</h2>
               
@@ -87,6 +89,9 @@ export default async function ProfilePage() {
                 </div>
               </div>
             </Card>
+
+            {/* Background Form */}
+            <BackgroundForm initialBackground={profile?.background || ''} />
           </div>
 
           {/* Documents */}

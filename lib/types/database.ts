@@ -321,6 +321,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          background: string
           created_at: string | null
           id: string
           is_admin: string | null
@@ -333,6 +334,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          background?: string
           created_at?: string | null
           id?: string
           is_admin?: string | null
@@ -345,6 +347,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          background?: string
           created_at?: string | null
           id?: string
           is_admin?: string | null
