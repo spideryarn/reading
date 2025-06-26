@@ -13,7 +13,8 @@ import {
   X, 
   CircleNotch, 
   Clock,
-  Trash
+  Trash,
+  CaretDown
 } from '@phosphor-icons/react'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
 import { getSemanticHighlightIntensity } from '@/lib/utils/semantic-highlighting'
@@ -434,7 +435,12 @@ export function HighlightManagement({
                   setShowQueryHistory(true)
                 }
               }}
-              onBlur={() => {
+              onBlur={(e) => {
+                // Don't hide if the blur is caused by clicking on the dropdown arrow
+                const relatedTarget = e.relatedTarget as HTMLElement
+                if (relatedTarget?.closest('[data-dropdown-trigger]')) {
+                  return
+                }
                 // Delay hiding to allow clicking on dropdown items
                 setTimeout(() => setShowQueryHistory(false), 150)
               }}
@@ -447,7 +453,7 @@ export function HighlightManagement({
               weight="bold" 
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
             />
-            {highlightInputValue && (
+            {highlightInputValue ? (
               <button
                 onClick={() => {
                   setHighlightInputValue('')
@@ -463,6 +469,32 @@ export function HighlightManagement({
               >
                 <X size={16} weight="bold" />
               </button>
+            ) : (
+              <div
+                data-dropdown-trigger
+                className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
+                  queryHistory.length > 0 
+                    ? 'text-gray-400 hover:text-gray-600 cursor-pointer' 
+                    : 'text-gray-300'
+                }`}
+                title={
+                  queryHistory.length > 0 
+                    ? `${queryHistory.length} previous search${queryHistory.length === 1 ? '' : 'es'} available - click to browse`
+                    : 'No previous searches available'
+                }
+                onMouseDown={(e) => {
+                  // Prevent the input from losing focus when clicking the dropdown trigger
+                  e.preventDefault()
+                }}
+                onClick={() => {
+                  if (queryHistory.length > 0) {
+                    setShowQueryHistory(true)
+                    criterionInputRef.current?.focus()
+                  }
+                }}
+              >
+                <CaretDown size={16} weight="bold" />
+              </div>
             )}
             
             {/* Query history dropdown */}
