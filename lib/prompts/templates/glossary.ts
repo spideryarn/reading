@@ -30,7 +30,8 @@ export const entitySchema = z.object({
 
 // Schema for the glossary response
 export const glossaryResponseSchema = z.object({
-  entities: z.array(entitySchema)
+  entities: z.array(entitySchema),
+  more_entities_available: z.boolean()
 })
 
 // Schema for glossary prompt input

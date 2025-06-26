@@ -51,9 +51,16 @@ Return JSON in the following form, without any context or explanation, so that i
       "url": "string", // Optional
       "extra": {} // Optional
     }
-  ]
+  ],
+  "more_entities_available": true // Required boolean field
 }
 ```
+
+After generating the entities, you must indicate whether more entities could be generated from this document:
+- If you believe there are more important entities that could be extracted from the text: `"more_entities_available": true`
+- If you have covered all significant entities in the document: `"more_entities_available": false`
+
+Consider the document comprehensively - are there other people, places, concepts, events, or terms that would help readers understand this text?
 
 Ontology types:
 - person

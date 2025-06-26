@@ -54,6 +54,9 @@ interface ResizableDocumentLayoutProps {
   onLoadMoreGlossary?: () => void
   hasMoreEntities?: boolean
   isLoadingMoreGlossary?: boolean
+  // Auto-generation state
+  isAutoGenerating?: boolean
+  onCancelAutoGeneration?: () => void
   
   // Visibility tracking
   headingVisibility?: Map<string, 'visible' | 'not-visible'>
@@ -107,6 +110,8 @@ function ResizableDocumentLayoutInner({
   onLoadMoreGlossary,
   hasMoreEntities,
   isLoadingMoreGlossary,
+  isAutoGenerating,
+  onCancelAutoGeneration,
   headingVisibility,
   onElementVisibilityChange,
   onElementClick,
@@ -427,6 +432,8 @@ function ResizableDocumentLayoutInner({
               {...(onLoadMoreGlossary ? { onLoadMoreGlossary } : {})}
               {...(hasMoreEntities !== undefined ? { hasMoreEntities } : {})}
               {...(isLoadingMoreGlossary !== undefined ? { isLoadingMoreGlossary } : {})}
+              {...(isAutoGenerating !== undefined ? { isAutoGenerating } : {})}
+              {...(onCancelAutoGeneration ? { onCancelAutoGeneration } : {})}
             />
             </div>
           </div>

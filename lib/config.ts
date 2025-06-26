@@ -137,6 +137,14 @@ export const GLOSSARY_CONFIG = {
   // Maximum entities per "Load More" request
   // Batch size for incremental entity generation
   MAX_ENTITIES_PER_REQUEST: 30,
+  
+  // Auto-trigger configuration for automatic glossary generation
+  // Set to false to disable auto-trigger functionality entirely
+  GLOSSARY_AUTO_TRIGGER_ENABLED: true,
+  
+  // Consistent batch size for auto-trigger Load More operations
+  // Should be consistent with MAX_ENTITIES_PER_REQUEST for predictability
+  GLOSSARY_MAX_ENTITIES_PER_BATCH: 20,
 } as const
 
 // UI configuration

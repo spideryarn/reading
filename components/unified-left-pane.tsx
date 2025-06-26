@@ -81,6 +81,10 @@ interface UnifiedLeftPaneProps {
   hasMoreEntities?: boolean
   isLoadingMoreGlossary?: boolean
   
+  // Auto-generation state
+  isAutoGenerating?: boolean
+  onCancelAutoGeneration?: () => void
+  
   // For chat context
   documentContext: string
   
@@ -415,6 +419,8 @@ export function UnifiedLeftPane({
   onLoadMoreGlossary,
   hasMoreEntities = false,
   isLoadingMoreGlossary = false,
+  isAutoGenerating = false,
+  onCancelAutoGeneration,
   documentContext,
   semanticHighlights = [],
   onSemanticHighlightsChange,
@@ -995,6 +1001,11 @@ export function UnifiedLeftPane({
               </div>
               <p className="text-sm text-gray-600 mt-1">
                 {glossaryEntities?.length || 0} {(glossaryEntities?.length || 0) === 1 ? 'entry' : 'entries'} found
+                {isAutoGenerating && (
+                  <span className="ml-2 text-orange-600">
+                    (auto-generating...)
+                  </span>
+                )}
               </p>
             </div>
             <GlossaryDisplay 
@@ -1004,23 +1015,35 @@ export function UnifiedLeftPane({
               isLoadingMoreGlossary={isLoadingMoreGlossary}
               onLoadMoreGlossary={onLoadMoreGlossary}
             />
-            {hasMoreEntities && onLoadMoreGlossary && (
+            {hasMoreEntities && (
               <div className="p-4 border-t border-gray-200">
-                <Button
-                  onClick={onLoadMoreGlossary}
-                  disabled={isLoadingMoreGlossary}
-                  variant="outline"
-                  className="w-full"
-                >
-                  {isLoadingMoreGlossary ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-gray-600 mr-2" />
-                      Loading More...
-                    </>
-                  ) : (
-                    'Load More Entries'
-                  )}
-                </Button>
+                {isAutoGenerating && onCancelAutoGeneration ? (
+                  // Show Cancel button during auto-generation
+                  <Button
+                    onClick={onCancelAutoGeneration}
+                    variant="outline"
+                    className="w-full border-red-300 text-red-700 hover:bg-red-50"
+                  >
+                    Cancel Generation
+                  </Button>
+                ) : onLoadMoreGlossary ? (
+                  // Show Load More button when not auto-generating
+                  <Button
+                    onClick={onLoadMoreGlossary}
+                    disabled={isLoadingMoreGlossary}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {isLoadingMoreGlossary ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-gray-600 mr-2" />
+                        Loading More...
+                      </>
+                    ) : (
+                      'Load More Entries'
+                    )}
+                  </Button>
+                ) : null}
               </div>
             )}
           </div>
@@ -1037,7 +1060,7 @@ export function UnifiedLeftPane({
         )}
       </>
     )
-  }, [showGlossary, isLoadingGlossary, glossaryError, glossaryCached, glossaryEntities, elements, onLoadGlossary, onResetGlossary, hasMoreEntities, isLoadingMoreGlossary, onLoadMoreGlossary])
+  }, [showGlossary, isLoadingGlossary, glossaryError, glossaryCached, glossaryEntities, elements, onLoadGlossary, onResetGlossary, hasMoreEntities, isLoadingMoreGlossary, onLoadMoreGlossary, isAutoGenerating, onCancelAutoGeneration])
 
   const renderSearchTab = useCallback(() => (
       <div className="flex flex-col h-full">
