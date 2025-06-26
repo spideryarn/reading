@@ -41,6 +41,7 @@ npm run dev:status      # Verify healthy startup
 - **Lock protection**: Prevents race conditions during startup
 - **Stale cleanup**: Removes orphaned PID/lock files
 - **Log rotation**: 10MB limit on `dev.log`
+- **Improved hot reload reliability**: Uses standard Webpack instead of Turbopack for better Fast Refresh performance
 
 ## Configuration
 
@@ -80,3 +81,18 @@ Recent improvements to the dev server automation include:
 - **Better error messages**: Clear feedback about what cleanup methods were attempted and their success
 
 This makes both foreground and daemon modes more robust, particularly in scenarios where processes become orphaned or PID tracking fails.
+
+## Hot Reload Configuration
+
+**Turbopack Removal (June 2025)**: The dev server no longer uses Turbopack due to hot reload reliability issues:
+
+- **Previous configuration**: Used `--turbopack` flag and turbopack resolver configuration
+- **Current configuration**: Uses standard Next.js Webpack compiler for improved Fast Refresh reliability
+- **Impact**: More reliable hot reloading and component updates during development
+- **Performance**: Slightly slower initial compilation but significantly more stable hot reload experience
+
+**Files changed**:
+- `next.config.ts`: Commented out turbopack configuration
+- `scripts/dev-with-restart.sh`: Removed `--turbopack` flags from both daemon and foreground modes
+
+This change resolves issues where component changes weren't being properly reflected during development, improving the developer experience for hot reloading.
