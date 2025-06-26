@@ -322,23 +322,26 @@ const handleCancelAutoGeneration = () => {
 - Show progress indicator: "Auto-generating entities... (47/100 max)"
 - Clear visual distinction between manual and automatic loading states
 
-### Stage: Extended Features Foundation
+### Stage: Entity Difficulty and Centrality Scoring **← NEXT STAGE**
 - [ ] Prepare template for entity prioritisation scoring
   - Add conditional logic for scoring mode in Nunjucks template (see Appendix for user requirements)
   - Design scoring criteria: difficulty + centrality to document
   - Add scoring fields to entity schema (optional)
+  - Display `Difficulty` and `Centrality` for each entity in user interface
+- [ ] Implement entity sorting controls
+  - Add sorting dropdown similar to Semantic Search Highlights (see `docs/reference/TOOL_HIGHLIGHT.md`)
+  - Support sorting by Position (document order), Difficulty, and Centrality
+  - Follow UI pattern from highlights tool with position/intensity toggle
+  - Default to Position sorting, with easy toggle to Difficulty or Centrality
+- [ ] Test difficulty/centrality scoring with various scenarios
+- [ ] Git commit difficulty and centrality features
+
+### Stage: User-Specified Entity Requests
 - [ ] Implement user-specified entity requests
   - Add `requested_entities` parameter to template input schema
   - Modify Nunjucks template to prioritise requested entities
-  - Add frontend UI for entity search/request functionality, so that the user can type in a specific entity that they're confused about, and we generate a glossary entity (plus aliases) for that.
-    - Before starting on this stage, make a proposal for the user about how to deal with edge cases, e.g. what if the user asks for an entity that doesn't exist? Or one that we already have a very similar entity for? etc etc
-- [ ] Add configurable explanation levels
-  - Implement `generate_long_explanations` parameter
-  - Add conditional logic in template to skip long explanations when disabled
-  - Add fallback logic to copy brief explanation to long explanation field
-  - Store this somewhere with the entity, so that we know we didn't generate a long explanation for that entity (so that we might know to regenerate them in future)
-- [ ] Test extended features with various scenarios
-- [ ] Git commit extended features
+- [ ] Test user-specified entity functionality
+- [ ] Git commit user-specified entity features
 
 ### Stage: Documentation and Testing Refinement
 - [ ] Update `docs/reference/TOOL_GLOSSARY.md` with new functionality
