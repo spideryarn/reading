@@ -15,7 +15,7 @@ import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { AssistantChat } from './assistant-chat'
 import { HighlightManagement } from './highlight-management'
 import { MetadataPanel } from './tools/MetadataPanel'
-import { CircleNotch, Book, Question, Calendar, ArrowCounterClockwise, MagnifyingGlass, X, CaretDown } from '@phosphor-icons/react'
+import { CircleNotch, Book, Question, Calendar, Trash, MagnifyingGlass, X, CaretDown } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { AlertWithIcon } from '@/components/ui/alert'
 import type { DocumentElement } from '@/lib/types/document'
@@ -963,7 +963,7 @@ export function UnifiedLeftPane({
                   className="text-xs"
                   title="Reset and clear cached glossary data"
                 >
-                  <ArrowCounterClockwise size={14} weight="bold" className="mr-1" />
+                  <Trash size={14} weight="bold" className="mr-1" />
                   Reset Glossary
                 </Button>
               </div>
@@ -988,7 +988,7 @@ export function UnifiedLeftPane({
                       className="h-7 px-2 text-xs hover:bg-gray-100"
                       title="Reset and regenerate glossary"
                     >
-                      <ArrowCounterClockwise size={14} weight="bold" />
+                      <Trash size={14} weight="bold" />
                     </Button>
                   )}
                 </div>
