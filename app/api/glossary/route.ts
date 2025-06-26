@@ -8,6 +8,7 @@ import { glossaryPrompt, glossaryPromptInputSchema, glossaryResponseSchema, enti
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
+import { storeIndividualEntities, getIndividualEntities, deleteAllIndividualEntities } from '@/lib/services/database/individual-entity-storage'
 import { getModelForAICall, GLOSSARY_CONFIG } from '@/lib/config'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 import { validateAuth } from '@/lib/auth/server-auth'
@@ -61,39 +62,32 @@ export async function POST(request: NextRequest) {
     const enhancementService = new EnhancementService(supabase)
     const aiCallService = new AiCallService(supabase)
     
-    // Check if glossary already exists in database (only if documentId provided)
-    let existingGlossary = null
+    // Check if individual entities already exist in database (only if documentId provided)
+    let existingEntities: any[] = []
     if (documentId) {
-      existingGlossary = await enhancementService.get(
-        documentId,
-        'glossary',
-        'default'
-      )
+      existingEntities = await getIndividualEntities(supabase, documentId)
+      
+      // Also check for legacy bulk storage for backwards compatibility
+      const legacyGlossary = await enhancementService.get(documentId, 'glossary', 'default')
+      if (legacyGlossary && legacyGlossary.content && Array.isArray(legacyGlossary.content.entities)) {
+        existingEntities = [...existingEntities, ...legacyGlossary.content.entities]
+      }
     }
     
-    if (existingGlossary) {
-      // Validate cached data structure - fail fast if malformed
-      if (!existingGlossary.content || typeof existingGlossary.content !== 'object') {
-        throw new Error(`Malformed glossary data in database for enhancement ${existingGlossary.id}: content is not an object`)
-      }
-      
-      if (!Array.isArray(existingGlossary.content.entities)) {
-        throw new Error(`Malformed glossary data in database for enhancement ${existingGlossary.id}: content.entities is not an array. Found: ${typeof existingGlossary.content.entities}`)
-      }
-      
+    if (existingEntities.length > 0 && !existing_entities) {
+      // Return cached entities for initial glossary requests (not "Load More" requests)
       requestLogger.info({
         correlationId,
-        enhancementId: existingGlossary.id,
-        entityCount: existingGlossary.content.entities.length
-      }, 'Returning cached glossary')
+        entityCount: existingEntities.length
+      }, 'Returning cached individual entities')
       
       // Check if cached result hit the entity limit (indicating more entities might be available)
-      const hasMore = existingGlossary.content.entities.length >= GLOSSARY_CONFIG.DEFAULT_ENTITY_LIMIT_PER_REQUEST
+      const hasMore = existingEntities.length >= GLOSSARY_CONFIG.DEFAULT_ENTITY_LIMIT_PER_REQUEST
       
       return NextResponse.json({ 
-        entities: existingGlossary.content.entities,
+        entities: existingEntities,
         cached: true,
-        enhancementId: existingGlossary.id,
+        enhancementId: null, // Individual storage doesn't have single enhancement ID
         hasMore
       })
     }
@@ -186,7 +180,7 @@ export async function POST(request: NextRequest) {
       finishReason: llmResult.finishReason
     })
     
-    // Store the glossary result in database (only if documentId provided)
+    // Store entities individually in database (only if documentId provided)
     if (documentId) {
       // Clean entities to remove undefined properties for exactOptionalPropertyTypes compliance
       const cleanedEntities = validatedResponse.entities.map(entity => {
@@ -203,19 +197,16 @@ export async function POST(request: NextRequest) {
         return cleaned
       })
       
-      await enhancementService.storeGlossary(
+      // Store each entity individually with the same AI call ID
+      await storeIndividualEntities(supabase, documentId, aiCall.id, cleanedEntities)
+      
+      requestLogger.info({
+        correlationId,
         documentId,
-        aiCall.id,
-      {
-        entities: cleanedEntities,
-        metadata: {
-          content_length: content.length,
-          entities_count: validatedResponse.entities.length,
-          tier_used: modelString,
-          model_used: modelString
-        }
-      }
-    )
+        aiCallId: aiCall.id,
+        entityCount: cleanedEntities.length,
+        storageMethod: 'individual'
+      }, 'Entities stored individually in database')
     }
     
     requestLogger.info({
@@ -292,7 +283,8 @@ export async function DELETE(request: NextRequest) {
     const supabase = await createClient()
     const enhancementService = new EnhancementService(supabase)
     
-    // Delete the glossary enhancement
+    // Delete individual entities and legacy bulk storage
+    await deleteAllIndividualEntities(supabase, documentId)
     await enhancementService.delete(documentId, 'glossary')
     
     requestLogger.info({
