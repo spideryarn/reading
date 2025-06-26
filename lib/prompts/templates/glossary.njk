@@ -1,5 +1,13 @@
 {% if existing_entities %}
-You are helping the reader to understand this text. You must extract additional entities to add to an existing glossary. Generate {{ max_entities or 20 }} MORE entities that are not already covered by the existing entities listed below. They should be ordered according to which appears first in the text.
+You are helping the reader to understand this text. You must extract {{ max_entities or 20 }} MORE entities that are completely NEW and DISTINCT from the existing glossary shown below. These must be different entities that would add value to the reader's understanding.
+
+CRITICAL: You must generate {{ max_entities or 20 }} entities that are:
+- Completely different from existing entities (different names, different concepts)
+- Not variations, synonyms, or alternative forms of existing entities
+- Not entities that overlap significantly in meaning or scope
+- Ordered according to which appears first in the text
+
+Look specifically for entities that fall into different categories or cover different aspects of the text than what's already covered.
 {% else %}
 You are helping the reader to understand this text. You must extract the most important entities in this text into a kind of glossary, which they can refer to if they need help as they are reading. Generate up to {{ max_entities or 20 }} entities, focusing on the most important ones first. They should be ordered according to which appears first in the text.
 {% endif %}
@@ -9,7 +17,11 @@ You are helping the reader to understand this text. You must extract the most im
 - An entity could be a person, place, reference material, concept, etc (see full list of ontology types below).
 
 {% if existing_entities %}
-- Focus on entities not yet covered by the existing glossary. Prioritise entities that are equally important to those already extracted.
+- Focus ONLY on entities that are completely different from the existing glossary
+- Look for people, places, dates, events, references, and concepts not yet covered
+- Consider different philosophical schools, historical contexts, or technical terms mentioned
+- Find entities from different domains or aspects of the text
+- Prioritise entities that fill gaps in the current glossary coverage
 {% else %}
 - A longer/complex text will have many entities. A shorter/simpler text will have fewer entities.
 {% endif %}
@@ -74,11 +86,25 @@ For example, if the text is about the history of the United States, the response
 
 {% if existing_entities %}
 <existing_glossary_entities>
-This document already has the following entities in its glossary. DO NOT generate any entities that duplicate or significantly overlap with these:
+This document already has the following {{ existing_entities.length }} entities in its glossary:
+
 {% for entity in existing_entities %}
 - {{ entity.name }} ({{ entity.ontology }}){% if entity.aliases and entity.aliases.length > 0 %}, aliases: {{ entity.aliases | join(", ") }}{% endif %}
   Brief: {{ entity.brief_explanation }}
 {% endfor %}
+
+FORBIDDEN: Do not generate entities that:
+- Have the same name or similar name (case-insensitive)
+- Are synonyms, alternative terms, or translations of existing entities
+- Are closely related concepts that overlap in meaning
+- Are subcategories or aspects of existing entities
+- Share any aliases with existing entities
+
+REQUIRED: Generate {{ max_entities or 20 }} entities that are:
+- Completely distinct in name and concept
+- From different ontology categories if possible
+- Covering different aspects/domains of the text
+- Adding genuinely new information for readers
 </existing_glossary_entities>
 {% elif already_entities %}
 <already_extracted_entities>

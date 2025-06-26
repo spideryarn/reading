@@ -118,25 +118,56 @@ export function mergeAndSortEntities(
  * @returns Deduplicated array of entities
  */
 export function deduplicateEntities(entities: Entity[]): Entity[] {
-  const seen = new Set<string>()
-  const deduplicated: Entity[] = []
-  
+  // Previous implementation removed duplicates when *any* alias overlapped, which
+  // was too aggressive – legitimate new entities that merely share a synonym were
+  // being discarded. The new algorithm deduplicates when:
+  //   1) entity names are the same (case-insensitive)
+  //   2) an entity name matches an existing alias, or vice-versa
+  // It purposely *does not* treat alias-alias clashes as duplicates.
+  const seenNames = new Set<string>()
+  const seenAliases = new Set<string>()
+  const result: Entity[] = []
+
   for (const entity of entities) {
-    const entityKey = entity.name.toLowerCase()
-    const aliasKeys = entity.aliases.map(alias => alias.toLowerCase())
-    
-    // Check if we've seen this entity name or any of its aliases
-    const isDuplicate = seen.has(entityKey) || aliasKeys.some(alias => seen.has(alias))
-    
-    if (!isDuplicate) {
-      // Mark this entity's name and aliases as seen
-      seen.add(entityKey)
-      aliasKeys.forEach(alias => seen.add(alias))
-      deduplicated.push(entity)
+    const canonicalName = entity.name.toLowerCase()
+
+    // Duplicate if we've already kept an entity with this canonical name
+    if (seenNames.has(canonicalName)) {
+      continue
+    }
+
+    // Duplicate if this name matches an alias we have already seen
+    if (seenAliases.has(canonicalName)) {
+      continue
+    }
+
+    // Duplicate if *any* of this entity's aliases match an existing canonical name
+    const hasAliasMatchingExistingName = entity.aliases.some(
+      (alias) => seenNames.has(alias.toLowerCase())
+    )
+    if (hasAliasMatchingExistingName) {
+      continue
+    }
+
+    // Keep the entity – update tracking sets for future iterations
+    result.push(entity)
+
+    seenNames.add(canonicalName)
+    entity.aliases.forEach((alias) => {
+      seenAliases.add(alias.toLowerCase())
+    })
+  }
+
+  // Dev diagnostic: log how many items were filtered (no-op in production)
+  if (process.env.NODE_ENV !== 'production' && typeof console !== 'undefined') {
+    const filtered = entities.length - result.length
+    if (filtered > 0) {
+      // eslint-disable-next-line no-console
+      console.debug(`[Glossary] deduplicateEntities filtered ${filtered}/${entities.length} items`)
     }
   }
-  
-  return deduplicated
+
+  return result
 }
 
 /**
