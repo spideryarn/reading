@@ -75,6 +75,7 @@ interface ResizableDocumentLayoutProps {
   documentTitle: string
   documentCreatedAt: string
   documentSourceUrl?: string | null
+  wordCount: number | null
   aiHeadingsGenerated?: boolean
   summaryGenerated?: boolean
   glossaryGenerated?: boolean
@@ -122,6 +123,7 @@ function ResizableDocumentLayoutInner({
   documentTitle,
   documentCreatedAt,
   documentSourceUrl,
+  wordCount,
   aiHeadingsGenerated = false,
   summaryGenerated = false,
   glossaryGenerated = false,
@@ -420,6 +422,7 @@ function ResizableDocumentLayoutInner({
               documentTitle={documentTitle}
               documentCreatedAt={documentCreatedAt}
               {...(documentSourceUrl !== undefined ? { documentSourceUrl } : {})}
+              wordCount={wordCount}
               aiHeadingsGenerated={aiHeadingsGenerated}
               summaryGenerated={summaryGenerated}
               glossaryGenerated={glossaryGenerated}
