@@ -322,21 +322,41 @@ const handleCancelAutoGeneration = () => {
 - Show progress indicator: "Auto-generating entities... (47/100 max)"
 - Clear visual distinction between manual and automatic loading states
 
-### Stage: Entity Difficulty and Centrality Scoring **← NEXT STAGE**
-- [ ] Prepare template for entity prioritisation scoring
-  - Add conditional logic for scoring mode in Nunjucks template (see Appendix for user requirements)
-  - Design scoring criteria: difficulty + centrality to document
-  - Add scoring fields to entity schema (optional)
-  - Display `Difficulty` and `Centrality` for each entity in user interface
-- [ ] Implement entity sorting controls
-  - Add sorting dropdown similar to Semantic Search Highlights (see `docs/reference/TOOL_HIGHLIGHT.md`)
-  - Support sorting by Position (document order), Difficulty, and Centrality
-  - Follow UI pattern from highlights tool with position/intensity toggle
-  - Default to Position sorting, with easy toggle to Difficulty or Centrality
-- [ ] Test difficulty/centrality scoring with various scenarios
-- [ ] Git commit difficulty and centrality features
+### Stage: Entity Difficulty and Centrality Scoring ✅ **COMPLETED (2025-06-26)**
+- ✅ Prepare template for entity prioritisation scoring
+  - ✅ Add conditional logic for scoring mode in Nunjucks template (see Appendix for user requirements)
+  - ✅ Design 0-1 scoring criteria: difficulty (0=common knowledge, 1=expert knowledge) + centrality (0=minor relevance, 1=central to document)
+  - ✅ Add scoring fields to entity schema (as optional)
+  - ✅ Display `Difficulty` and `Centrality` for each entity in user interface
+- ✅ Implement entity sorting controls
+  - ✅ Add sorting toggle similar to Semantic Search Highlights (see `docs/reference/TOOL_HIGHLIGHT.md`)
+  - ✅ Support sorting by Position (document order), Difficulty, and Centrality
+  - ✅ Follow UI pattern from Semantic Search/Highlights tool with three-way toggle
+  - ✅ Default to Position sorting, with easy toggle to Difficulty or Centrality
+  - ✅ Position computed dynamically using existing findFirstOccurrence machinery
+- ✅ Test difficulty/centrality scoring with various scenarios
+- ✅ Git commit difficulty and centrality features
 
-### Stage: User-Specified Entity Requests
+**Stage 6 Completion Notes** (2025-06-26):
+- **Entity Schema Enhanced**: Added optional difficulty and centrality fields to Entity interface (0-1 scale)
+- **Template Scoring**: Enhanced Nunjucks template with conditional scoring instructions activated by `include_scoring` flag
+- **API Integration**: Added `include_scoring: true` parameter to glossary API route for consistent scoring
+- **UI Implementation**: Three-way sorting controls (Position, Difficulty, Centrality) with conditional display
+- **Score Visualization**: Color-coded percentage badges (red for difficulty, blue for centrality)
+- **Smart Fallback**: Sorting controls only appear when entities have scoring data, graceful degradation
+- **Performance**: Efficient sorting with proper memoization and callback patterns following existing code patterns
+
+**Stage 6 Technical Implementation**:
+- **Difficulty Scale**: 0 = common knowledge (e.g., "computer"), 1 = expert knowledge (e.g., "elliptic curve cryptography")
+- **Centrality Scale**: 0 = minor relevance to document, 1 = central to understanding document
+- **UI Pattern**: Follows established highlight sorting pattern with toggle button group
+- **Data Flow**: Template → API → Database → UI with proper type safety throughout
+- **Conditional Logic**: `entities.some(e => e.difficulty !== undefined || e.centrality !== undefined)` controls UI display
+- **Sort Logic**: Highest scores first for both difficulty and centrality (expert/central concepts prioritized)
+
+**Ready for Stage 7**: User-Specified Entity Requests can proceed - intelligent scoring foundation provides excellent basis for user-directed entity generation.
+
+### Stage: User-Specified Entity Requests **← NEXT STAGE**
 - [ ] Implement user-specified entity requests
   - Add `requested_entities` parameter to template input schema
   - Modify Nunjucks template to prioritise requested entities
