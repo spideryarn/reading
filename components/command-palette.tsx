@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
+  Command,
   CommandDialog,
   CommandEmpty,
   CommandGroup,
@@ -26,21 +27,93 @@ import {
   Robot,
   Trash,
 } from '@phosphor-icons/react'
+
+// Component to show what matched (enhanced with quality)
+function MatchIndicator({ matchInfo }: { matchInfo?: Command['matchInfo'] }) {
+  if (!matchInfo) return null
+  
+  let qualityIcon: string
+  let qualityColorClass: string
+  let qualityLabel: string
+  
+  if (matchInfo.score >= 0.8) {
+    qualityIcon = '🎯'
+    qualityColorClass = 'text-green-600'
+    qualityLabel = 'Excellent match'
+  } else if (matchInfo.score >= 0.6) {
+    qualityIcon = '✨'
+    qualityColorClass = 'text-blue-600'
+    qualityLabel = 'Good match'
+  } else if (matchInfo.score >= 0.4) {
+    qualityIcon = '🔍'
+    qualityColorClass = 'text-orange-600'
+    qualityLabel = 'Partial match'
+  } else if (matchInfo.score >= 0.2) {
+    qualityIcon = '💭'
+    qualityColorClass = 'text-gray-500'
+    qualityLabel = 'Fuzzy match'
+  } else {
+    qualityIcon = '❓'
+    qualityColorClass = 'text-gray-400'
+    qualityLabel = 'Weak match'
+  }
+  
+  return (
+    <div className="flex items-center gap-1">
+      <span className={`text-xs ${qualityColorClass}`} title={qualityLabel}>
+        {qualityIcon}
+      </span>
+      {(() => {
+        switch (matchInfo.type) {
+          case 'exact':
+            return <span className="text-green-600 text-xs font-medium">[exact match]</span>
+          case 'prefix':
+            return <span className="text-blue-600 text-xs font-medium">[starts with]</span>
+          case 'keyword':
+            return <span className="text-orange-600 text-xs">via &quot;{matchInfo.matchedKeyword}&quot;</span>
+          case 'fuzzy':
+            return <span className="text-gray-500 text-xs">via &quot;{matchInfo.matchedKeyword}&quot;</span>
+          default:
+            return null
+        }
+      })()}
+    </div>
+  )
+}
+
+// Component for visual separation between quality groups
+function QualitySeparator({ label }: { label: string }) {
+  return (
+    <div className="px-2 py-1 border-t border-gray-200">
+      <span className="text-xs text-gray-500 font-medium">{label}</span>
+    </div>
+  )
+}
+
 import { generateCommandsFromRegistry } from '@/lib/tools/command-generation'
 import { getAllTools } from '@/lib/tools/registry'
 import { createClient } from '@/lib/supabase/client'
 import { useDeleteDocument, type DocumentMetadata } from '@/lib/hooks/use-delete-document'
+import { useMemo } from 'react'
+
 
 // Command definition interfaces
 interface Command {
   id: string
   name: string
-  keywords?: string[]
-  shortcut?: string[]
+  keywords?: string[] | undefined
+  shortcut?: string[] | undefined
   category: CommandCategory
   action: () => void | Promise<void>
-  condition?: () => boolean
-  icon?: React.ComponentType<{ size?: number; className?: string }>
+  condition?: (() => boolean) | undefined
+  icon?: React.ComponentType<{ size?: number; className?: string }> | undefined
+  // Add this new property
+  matchInfo?: {
+    type: 'exact' | 'prefix' | 'keyword' | 'fuzzy'
+    matchedText: string
+    matchedKeyword?: string
+    score: number
+  } | undefined
 }
 
 interface CommandCategory {
@@ -50,11 +123,11 @@ interface CommandCategory {
 }
 
 // Command categories with priorities for ordering
-const NAVIGATION_CATEGORY: CommandCategory = {
-  id: 'navigation',
-  name: 'Navigation',
-  priority: 1,
-}
+// const NAVIGATION_CATEGORY: CommandCategory = {
+//   id: 'navigation',
+//   name: 'Navigation',
+//   priority: 1,
+// }
 
 const DOCUMENT_ACTIONS_CATEGORY: CommandCategory = {
   id: 'document-actions',
@@ -82,6 +155,7 @@ interface CommandPaletteProps {
 
 export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPaletteProps) {
   const [internalOpen, setInternalOpen] = useState(false)
+  const [searchValue, setSearchValue] = useState('')
   
   // Use external control if provided, otherwise use internal state
   const open = externalOpen !== undefined ? externalOpen : internalOpen
@@ -89,7 +163,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
   const documentSlug = useDocumentSlug()
   const router = useRouter()
   const { user, signOut } = useAuth()
-  const navigateToTab = useNavigateToTab()
+  const navigateToTab = useNavigateToTab() as (tabId: string) => void
 
   // Global delete dialog state
   const [deleteMetadata, setDeleteMetadata] = useState<DocumentMetadata | null>(null)
@@ -136,6 +210,129 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
   const isMac = typeof window !== 'undefined' && 
                /Mac|iPod|iPhone|iPad/.test(window.navigator.platform)
 
+  // Custom filter for more precise search matching
+  const customFilter = useCallback((value: string, search: string, keywords?: string[]) => {
+    const searchLower = search.toLowerCase().trim()
+    const valueLower = value.toLowerCase()
+    
+    // Empty search shows all
+    if (!searchLower) return 1
+    
+    // Exact match gets highest score
+    if (valueLower === searchLower) return 1
+    
+    // Starts with search gets high score
+    if (valueLower.startsWith(searchLower)) return 0.9
+    
+    // Check keywords for exact/prefix matches
+    if (keywords) {
+      for (const keyword of keywords) {
+        const keywordLower = keyword.toLowerCase()
+        if (keywordLower === searchLower) return 0.8
+        if (keywordLower.startsWith(searchLower)) return 0.7
+      }
+    }
+    
+    // Contains match but require minimum density to avoid distant fuzzy matches
+    if (valueLower.includes(searchLower)) {
+      const density = searchLower.length / valueLower.length
+      return density >= 0.3 ? 0.5 : 0
+    }
+    
+    // Check keywords for contains matches (lower priority)
+    if (keywords) {
+      for (const keyword of keywords) {
+        const keywordLower = keyword.toLowerCase()
+        if (keywordLower.includes(searchLower)) {
+          const density = searchLower.length / keywordLower.length
+          return density >= 0.4 ? 0.3 : 0
+        }
+      }
+    }
+    
+    // No match
+    return 0
+  }, [])
+
+  // Detect what matched for highlighting
+  const detectMatch = useCallback((
+    command: Command,
+    search: string
+  ): Command['matchInfo'] | null => {
+    const searchLower = search.toLowerCase().trim()
+    const nameLower = command.name.toLowerCase()
+    
+    if (!searchLower) return null
+    
+    // Exact match
+    if (nameLower === searchLower) {
+      return {
+        type: 'exact',
+        matchedText: command.name,
+        score: 1.0
+      }
+    }
+    
+    // Prefix match
+    if (nameLower.startsWith(searchLower)) {
+      return {
+        type: 'prefix', 
+        matchedText: searchLower,
+        score: 0.9
+      }
+    }
+    
+    // Keyword exact match
+    const exactKeyword = command.keywords?.find(k => 
+      k.toLowerCase() === searchLower
+    )
+    if (exactKeyword) {
+      return {
+        type: 'keyword',
+        matchedText: searchLower,
+        matchedKeyword: exactKeyword,
+        score: 0.8
+      }
+    }
+    
+    // Fuzzy keyword match
+    const fuzzyKeyword = command.keywords?.find(k =>
+      k.toLowerCase().includes(searchLower)
+    )
+    if (fuzzyKeyword) {
+      return {
+        type: 'fuzzy',
+        matchedText: searchLower,
+        matchedKeyword: fuzzyKeyword,
+        score: 0.6
+      }
+    }
+    
+    return null
+  }, [])
+
+  // Group commands by quality for better organization
+  const groupCommandsByQuality = useCallback((commands: Command[]) => {
+    const withSearch = commands.filter(cmd => cmd.matchInfo && searchValue.trim())
+    const withoutSearch = commands.filter(cmd => !cmd.matchInfo || !searchValue.trim())
+    
+    if (!searchValue.trim()) {
+      return { highQuality: withoutSearch, lowQuality: [] }
+    }
+    
+    // Sort by score descending
+    const sortedMatches = withSearch.sort((a, b) => {
+      const scoreA = a.matchInfo?.score ?? 0
+      const scoreB = b.matchInfo?.score ?? 0
+      return scoreB - scoreA
+    })
+    
+    const highQuality = sortedMatches.filter(cmd => (cmd.matchInfo?.score ?? 0) >= 0.6)
+    const lowQuality = sortedMatches.filter(cmd => (cmd.matchInfo?.score ?? 0) < 0.6)
+    
+    return { highQuality, lowQuality }
+  }, [searchValue])
+
   // Generate dynamic tool commands from registry
   const generateToolCommands = useCallback((): Command[] => {
     try {
@@ -155,16 +352,16 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
       return generatedCommands.map(genCmd => ({
         id: genCmd.id,
         name: genCmd.name,
-        keywords: genCmd.keywords,
-        shortcut: genCmd.shortcut,
+        keywords: genCmd.keywords || undefined,
+        shortcut: genCmd.shortcut || undefined,
         category: {
           id: genCmd.category.id,
           name: genCmd.category.name,
           priority: genCmd.category.priority,
         },
         action: genCmd.action,
-        condition: genCmd.condition,
-        icon: genCmd.icon,
+        condition: genCmd.condition || undefined,
+        icon: genCmd.icon || undefined,
       }))
     } catch (error) {
       console.error('Failed to generate tool commands:', error)
@@ -215,118 +412,128 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
   }, [handleGlobalEscape])
   // --- End new code ---
 
-  // Define all commands
-  const commands: Command[] = [
-    // Dynamic tool commands from registry
-    ...generateToolCommands(),
+  // Commands definition moved inside useMemo to prevent dependency issues
 
-    // Document-specific commands (only show when viewing a document)
-    ...(documentSlug ? [
-      {
-        id: 'doc-tweet-thread',
-        name: 'View as Tweet Thread',
-        keywords: ['tweet', 'thread', 'twitter', 'social', 'x'],
-        shortcut: [isMac ? '⌘' : 'Ctrl', 'T'],
-        category: DOCUMENT_ACTIONS_CATEGORY,
-        action: () => navigateWithErrorHandling(`/read/${documentSlug}/tweets`),
-        icon: TwitterLogo,
-      },
-      {
-        id: 'doc-view-original',
-        name: 'View Original',
-        keywords: ['original', 'view', 'source', 'html'],
-        shortcut: [isMac ? '⌘' : 'Ctrl', 'O'],
-        category: DOCUMENT_ACTIONS_CATEGORY,
-        action: () => {
-          // Open in new tab like the existing View Original button
-          window.open(`/api/read/${documentSlug}/original`, '_blank', 'noopener,noreferrer')
+  // Enhance commands with match information based on current search
+  const enhancedCommands: Command[] = useMemo(() => {
+    // Define all commands inside useMemo to prevent dependency issues
+    const baseCommands: Command[] = [
+      // Dynamic tool commands from registry
+      ...generateToolCommands(),
+
+      // Document-specific commands (only show when viewing a document)
+      ...(documentSlug ? [
+        {
+          id: 'doc-tweet-thread',
+          name: 'View as Tweet Thread',
+          keywords: ['tweet', 'thread', 'twitter', 'social', 'x'],
+          shortcut: [isMac ? '⌘' : 'Ctrl', 'T'],
+          category: DOCUMENT_ACTIONS_CATEGORY,
+          action: () => navigateWithErrorHandling(`/read/${documentSlug}/tweets`),
+          icon: TwitterLogo,
         },
-        icon: FileText,
+        {
+          id: 'doc-view-original',
+          name: 'View Original',
+          keywords: ['original', 'view', 'source', 'html'],
+          shortcut: [isMac ? '⌘' : 'Ctrl', 'O'],
+          category: DOCUMENT_ACTIONS_CATEGORY,
+          action: () => {
+            // Open in new tab like the existing View Original button
+            window.open(`/api/read/${documentSlug}/original`, '_blank', 'noopener,noreferrer')
+          },
+          icon: FileText,
+        },
+        {
+          id: 'doc-delete',
+          name: 'Delete Document',
+          keywords: ['delete', 'remove', 'trash', 'destroy'],
+          category: DOCUMENT_ACTIONS_CATEGORY,
+          action: handleDeleteCommand,
+          icon: Trash,
+        },
+      ] as Command[] : []),
+
+      // App navigation commands
+      {
+        id: 'app-documents',
+        name: 'Documents List',
+        keywords: ['documents', 'list', 'library', 'home'],
+        shortcut: [isMac ? '⌘' : 'Ctrl', 'D'],
+        category: APP_NAVIGATION_CATEGORY,
+        action: () => navigateWithErrorHandling('/read'),
+        icon: House,
       },
       {
-        id: 'doc-delete',
-        name: 'Delete Document',
-        keywords: ['delete', 'remove', 'trash', 'destroy'],
-        category: DOCUMENT_ACTIONS_CATEGORY,
-        action: handleDeleteCommand,
-        icon: Trash,
+        id: 'app-upload',
+        name: 'Upload Document',
+        keywords: ['upload', 'add', 'new', 'document'],
+        shortcut: [isMac ? '⌘' : 'Ctrl', 'U'],
+        category: APP_NAVIGATION_CATEGORY,
+        action: () => navigateWithErrorHandling('/upload'),
+        icon: Upload,
       },
-    ] as Command[] : []),
+      {
+        id: 'app-models',
+        name: 'Models',
+        keywords: ['models', 'ai', 'llm', 'settings', 'config'],
+        shortcut: [isMac ? '⌘' : 'Ctrl', ','],
+        category: APP_NAVIGATION_CATEGORY,
+        action: () => navigateWithErrorHandling('/settings'),
+        icon: Robot,
+      },
 
-    // App navigation commands
-    {
-      id: 'app-documents',
-      name: 'Documents List',
-      keywords: ['documents', 'list', 'library', 'home'],
-      shortcut: [isMac ? '⌘' : 'Ctrl', 'D'],
-      category: APP_NAVIGATION_CATEGORY,
-      action: () => navigateWithErrorHandling('/read'),
-      icon: House,
-    },
-    {
-      id: 'app-upload',
-      name: 'Upload Document',
-      keywords: ['upload', 'add', 'new', 'document'],
-      shortcut: [isMac ? '⌘' : 'Ctrl', 'U'],
-      category: APP_NAVIGATION_CATEGORY,
-      action: () => navigateWithErrorHandling('/upload'),
-      icon: Upload,
-    },
-    {
-      id: 'app-models',
-      name: 'Models',
-      keywords: ['models', 'ai', 'llm', 'settings', 'config'],
-      shortcut: [isMac ? '⌘' : 'Ctrl', ','],
-      category: APP_NAVIGATION_CATEGORY,
-      action: () => navigateWithErrorHandling('/settings'),
-      icon: Robot,
-    },
-
-    // Account commands (conditional based on auth state)
-    {
-      id: 'account-profile',
-      name: 'Profile',
-      keywords: ['profile', 'account', 'user'],
-      category: ACCOUNT_CATEGORY,
-      action: () => navigateWithErrorHandling('/auth/profile'),
-      icon: User,
-      condition: () => !!user, // Show only for authenticated users
-    },
-    {
-      id: 'account-logout',
-      name: 'Sign Out',
-      keywords: ['logout', 'sign', 'out', 'exit'],
-      category: ACCOUNT_CATEGORY,
-      action: handleLogout,
-      icon: SignOut,
-      condition: () => !!user, // Show only for authenticated users
-    },
-    {
-      id: 'account-login',
-      name: 'Sign In',
-      keywords: ['login', 'sign', 'in', 'auth'],
-      category: ACCOUNT_CATEGORY,
-      action: () => navigateWithErrorHandling('/auth/login'),
-      icon: SignIn,
-      condition: () => !user, // Show only for unauthenticated users
-    },
-    {
-      id: 'account-signup',
-      name: 'Sign Up',
-      keywords: ['signup', 'register', 'create', 'account'],
-      category: ACCOUNT_CATEGORY,
-      action: () => navigateWithErrorHandling('/auth/signup'),
-      icon: UserPlus,
-      condition: () => !user, // Show only for unauthenticated users
-    },
-  ]
+      // Account commands (conditional based on auth state)
+      {
+        id: 'account-profile',
+        name: 'Profile',
+        keywords: ['profile', 'account', 'user'],
+        category: ACCOUNT_CATEGORY,
+        action: () => navigateWithErrorHandling('/auth/profile'),
+        icon: User,
+        condition: () => !!user, // Show only for authenticated users
+      },
+      {
+        id: 'account-logout',
+        name: 'Sign Out',
+        keywords: ['logout', 'sign', 'out', 'exit'],
+        category: ACCOUNT_CATEGORY,
+        action: handleLogout,
+        icon: SignOut,
+        condition: () => !!user, // Show only for authenticated users
+      },
+      {
+        id: 'account-login',
+        name: 'Sign In',
+        keywords: ['login', 'sign', 'in', 'auth'],
+        category: ACCOUNT_CATEGORY,
+        action: () => navigateWithErrorHandling('/auth/login'),
+        icon: SignIn,
+        condition: () => !user, // Show only for unauthenticated users
+      },
+      {
+        id: 'account-signup',
+        name: 'Sign Up',
+        keywords: ['signup', 'register', 'create', 'account'],
+        category: ACCOUNT_CATEGORY,
+        action: () => navigateWithErrorHandling('/auth/signup'),
+        icon: UserPlus,
+        condition: () => !user, // Show only for unauthenticated users
+      },
+    ]
+    
+    return baseCommands.map(command => ({
+      ...command,
+      matchInfo: detectMatch(command, searchValue) || undefined
+    }))
+  }, [searchValue, detectMatch, generateToolCommands, documentSlug, isMac, navigateWithErrorHandling, handleDeleteCommand, user, handleLogout])
 
   // Filter commands based on conditions
-  const availableCommands = commands.filter(
+  const availableCommands = enhancedCommands.filter(
     command => !command.condition || command.condition()
   )
 
-  // Group commands by category
+  // Group commands by category AND quality
   const commandsByCategory = availableCommands.reduce((acc, command) => {
     if (!acc[command.category.id]) {
       acc[command.category.id] = {
@@ -334,9 +541,20 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
         commands: [],
       }
     }
-    acc[command.category.id].commands.push(command)
+    acc[command.category.id]!.commands.push(command)
     return acc
   }, {} as Record<string, { category: CommandCategory; commands: Command[] }>)
+
+  // Apply quality-based sorting within each category
+  Object.values(commandsByCategory).forEach(categoryGroup => {
+    const { highQuality, lowQuality } = groupCommandsByQuality(categoryGroup.commands)
+    
+    // Sort high quality by score (descending), then low quality by score
+    categoryGroup.commands = [
+      ...highQuality.sort((a, b) => (b.matchInfo?.score ?? 0) - (a.matchInfo?.score ?? 0)),
+      ...lowQuality.sort((a, b) => (b.matchInfo?.score ?? 0) - (a.matchInfo?.score ?? 0))
+    ]
+  })
 
   // Sort categories by priority
   const sortedCategories = Object.values(commandsByCategory).sort(
@@ -395,34 +613,82 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
   return (
     <>
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Type a command or search..." />
-        <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          
-          {sortedCategories.map(({ category, commands: categoryCommands }) => (
-            <CommandGroup key={category.id} heading={category.name}>
-              {categoryCommands.map(command => {
-                const Icon = command.icon
-                return (
-                  <CommandItem
-                    key={command.id}
-                    onSelect={() => executeCommand(command)}
-                    className="flex items-center gap-2"
-                    keywords={command.keywords}
-                  >
-                    {Icon && <Icon size={16} className="text-gray-500" />}
-                    <span className="flex-1">{command.name}</span>
-                    {command.shortcut && (
-                      <CommandShortcut>
-                        {command.shortcut.join('+')}
-                      </CommandShortcut>
-                    )}
-                  </CommandItem>
-                )
-              })}
-            </CommandGroup>
-          ))}
-        </CommandList>
+        <Command filter={customFilter}>
+          <CommandInput 
+            placeholder="Type a command or search..." 
+            onValueChange={setSearchValue}
+            value={searchValue}
+          />
+          <CommandList>
+            <CommandEmpty>No results found.</CommandEmpty>
+            
+            {sortedCategories.map(({ category, commands: categoryCommands }) => {
+              const { highQuality, lowQuality } = groupCommandsByQuality(categoryCommands || [])
+              const showQualitySeparation = searchValue.trim() && highQuality.length > 0 && lowQuality.length > 0
+              
+              return (
+                <CommandGroup key={category.id} heading={category.name}>
+                  {/* High quality results */}
+                  {(showQualitySeparation ? highQuality : categoryCommands).map(command => {
+                    const Icon = command.icon
+                    return (
+                      <CommandItem
+                        key={command.id}
+                        onSelect={() => executeCommand(command)}
+                        className="flex items-center gap-2"
+                        {...(command.keywords && { keywords: command.keywords })}
+                      >
+                        <div className="flex items-center gap-2 flex-1">
+                          {Icon && <Icon size={16} className="text-gray-500" />}
+                          <span>{command.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MatchIndicator matchInfo={command.matchInfo} />
+                          {command.shortcut && (
+                            <CommandShortcut>
+                              {command.shortcut.join('+')}
+                            </CommandShortcut>
+                          )}
+                        </div>
+                      </CommandItem>
+                    )
+                  })}
+                  
+                  {/* Quality separator and low quality results */}
+                  {showQualitySeparation && (
+                    <>
+                      <QualitySeparator label="Partial matches" />
+                      {lowQuality.map(command => {
+                        const Icon = command.icon
+                        return (
+                          <CommandItem
+                            key={command.id}
+                            onSelect={() => executeCommand(command)}
+                            className="flex items-center gap-2 opacity-75"
+                            {...(command.keywords && { keywords: command.keywords })}
+                          >
+                            <div className="flex items-center gap-2 flex-1">
+                              {Icon && <Icon size={16} className="text-gray-500" />}
+                              <span>{command.name}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <MatchIndicator matchInfo={command.matchInfo} />
+                              {command.shortcut && (
+                                <CommandShortcut>
+                                  {command.shortcut.join('+')}
+                                </CommandShortcut>
+                              )}
+                            </div>
+                          </CommandItem>
+                        )
+                      })}
+                    </>
+                  )}
+                </CommandGroup>
+              )
+            })}
+          </CommandList>
+        </Command>
       </CommandDialog>
       
       <DeleteDialog />

@@ -5,6 +5,7 @@ The command palette provides keyboard-driven navigation and actions for power us
 ## See Also
 
 - `components/command-palette.tsx` - Core implementation with TypeScript interfaces and command definitions
+- `docs/reference/COMMAND_PALETTE_FUZZY_SEARCH_CMDK.md` - Fuzzy search configuration and tuning with cmdk library
 - `planning/finished/250608e_command_palette_implementation.md` - Complete implementation planning and decision rationale
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - Platform detection patterns and shortcut conventions
 - `docs/reference/UI_COMPONENTS.md` - shadcn/ui Command component integration and usage patterns

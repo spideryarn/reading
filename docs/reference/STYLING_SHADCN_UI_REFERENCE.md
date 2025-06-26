@@ -537,7 +537,7 @@ test('button renders with correct variant', () => {
 - **Resizable** - For collapsible panes (see `planning/250530b_collapsible_resizable_panes.md`)
 - **Collapsible** - For expand/collapse animations
 - **Table** - For data display if needed
-- **Command** - For search/command palette
+- **Command** ✅ - For search/command palette (see `docs/reference/COMMAND_PALETTE_FUZZY_SEARCH_CMDK.md` for implementation details)
 
 ### Advanced Features
 - **Theme Switching** - Light/dark mode support

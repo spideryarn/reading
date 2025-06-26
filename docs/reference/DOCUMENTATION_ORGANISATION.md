@@ -87,6 +87,7 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/STYLING_OVERLAPPING_TEXT_HIGHLIGHTS.md` - Comprehensive guide for implementing overlapping text highlighting using CSS Custom Highlight API and Mark.js fallbacks ⭐ **Essential for highlighting features**
 - `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Architecture of unified left pane with tabbed interface, ToC, and tooltip summaries
 - `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` - Command palette implementation and usage
+- `docs/reference/COMMAND_PALETTE_FUZZY_SEARCH_CMDK.md` - Fuzzy search configuration and tuning with cmdk library for command palette search precision
 - `docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md` - Inter-pane communication patterns and architecture
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - Application keyboard shortcuts and navigation
 - `docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Reversible document transformation system for applying/reverting changes
