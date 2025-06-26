@@ -65,6 +65,7 @@ export default async function DocumentPage({ params }: PageProps) {
         uploadMetadata={doc.upload_metadata}
         documentCreatedAt={doc.created_at}
         documentSourceUrl={doc.source_url}
+        wordCount={doc.word_count}
         aiHeadingsGenerated={enhancementFlags.aiHeadingsGenerated}
         summaryGenerated={enhancementFlags.summaryGenerated}
         glossaryGenerated={enhancementFlags.glossaryGenerated}

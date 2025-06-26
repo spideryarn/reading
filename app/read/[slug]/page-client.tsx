@@ -31,6 +31,7 @@ interface DocumentPageClientProps {
   uploadMetadata?: Record<string, unknown>
   documentCreatedAt: string
   documentSourceUrl?: string | null
+  wordCount: number | null
   aiHeadingsGenerated?: boolean
   summaryGenerated?: boolean
   glossaryGenerated?: boolean
@@ -48,6 +49,7 @@ export default function DocumentPageClient({
   originalFileType,
   uploadMetadata,
   documentCreatedAt,
+  wordCount,
   documentSourceUrl,
   aiHeadingsGenerated = false,
   summaryGenerated = false,
@@ -367,6 +369,7 @@ export default function DocumentPageClient({
         documentTitle={currentTitle}
         documentCreatedAt={documentCreatedAt}
         documentSourceUrl={documentSourceUrl ?? null}
+        wordCount={wordCount}
         aiHeadingsGenerated={aiHeadingsGenerated}
         summaryGenerated={summaryGenerated}
         glossaryGenerated={glossaryGenerated}

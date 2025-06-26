@@ -96,6 +96,7 @@ interface UnifiedLeftPaneProps {
   documentTitle: string
   documentCreatedAt: string
   documentSourceUrl?: string | null
+  wordCount: number | null
   aiHeadingsGenerated?: boolean
   summaryGenerated?: boolean
   glossaryGenerated?: boolean
@@ -423,6 +424,7 @@ export function UnifiedLeftPane({
   documentTitle,
   documentCreatedAt,
   documentSourceUrl,
+  wordCount,
   aiHeadingsGenerated = false,
   summaryGenerated = false,
   glossaryGenerated = false,
@@ -888,6 +890,7 @@ export function UnifiedLeftPane({
       documentCreatedAt={documentCreatedAt}
       documentSourceUrl={documentSourceUrl}
       elements={elements}
+      wordCount={wordCount}
       glossaryGenerated={glossaryGenerated}
       glossaryLoading={isLoadingGlossary}
       aiHeadingsGenerated={aiHeadingsGenerated}
@@ -900,7 +903,7 @@ export function UnifiedLeftPane({
       originalFileType={originalFileType}
       uploadMetadata={uploadMetadata}
     />
-  ), [documentTitle, documentCreatedAt, documentSourceUrl, elements, glossaryGenerated, isLoadingGlossary, aiHeadingsGenerated, summaryGenerated, ownerEmail, isPublic, documentId, slug, storagePath, originalFileType, uploadMetadata])
+  ), [documentTitle, documentCreatedAt, documentSourceUrl, elements, wordCount, glossaryGenerated, isLoadingGlossary, aiHeadingsGenerated, summaryGenerated, ownerEmail, isPublic, documentId, slug, storagePath, originalFileType, uploadMetadata])
 
   const renderGlossaryTab = useCallback(() => {
     if (!showGlossary) {

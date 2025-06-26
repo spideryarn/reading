@@ -10,7 +10,6 @@ import {
 } from '@phosphor-icons/react'
 import { formatDistanceToNow } from 'date-fns'
 import type { DocumentElement } from '@/lib/types/document'
-import { extractCleanText } from '@/lib/utils/html-text-extraction'
 import { createClient } from '@/lib/supabase/client'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -20,13 +19,16 @@ import { sanitizeDocumentTitle, validateDocumentTitle, MAX_TITLE_LENGTH } from '
 import { DeleteDocumentButton } from '@/components/delete-document-button'
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 import { EnhancementService } from '@/lib/services/database/enhancements'
-import { calculateEnhancedReadingTime, generateReadingTimeTooltip } from '@/lib/utils/enhanced-reading-time'
+import { calculateReadingTimeFromWordCount, formatReadingTime } from '@/lib/utils/reading-time-calculation'
+import { generateReadingTimeTooltip } from '@/lib/utils/enhanced-reading-time'
 
 interface MetadataPanelProps {
   documentTitle: string
   documentCreatedAt: string
   documentSourceUrl?: string | null
   elements: DocumentElement[]
+  // Word count from database for reading time calculation
+  wordCount: number | null
   // Processing status flags
   glossaryGenerated?: boolean
   glossaryLoading?: boolean
@@ -53,6 +55,7 @@ export function MetadataPanel({
   documentCreatedAt,
   documentSourceUrl,
   elements,
+  wordCount,
   glossaryGenerated = false,
   glossaryLoading = false,
   aiHeadingsGenerated = false,
@@ -83,101 +86,89 @@ export function MetadataPanel({
   const [intentError, setIntentError] = useState<string | null>(null)
   const intentTextareaRef = useRef<HTMLTextAreaElement>(null)
 
-  // Calculate document statistics (client-only to prevent hydration issues)
+  // Calculate document statistics using database word_count (much simpler and more performant)
   const [documentStats, setDocumentStats] = useState({
     wordCount: 0,
     readingTime: 0,
-    fullText: '',
-    enhancedReadingTime: null as ReturnType<typeof calculateEnhancedReadingTime> | null
+    readingTimeResult: null as Awaited<ReturnType<typeof calculateReadingTimeFromWordCount>> | null
   })
   
   useEffect(() => {
-    let totalWords = 0
-    let fullText = ''
-    
-    elements.forEach(element => {
-      if (element.content) {
-        const cleanText = extractCleanText(element.content)
-        const words = cleanText.split(/\s+/).filter(word => word.length > 0)
-        totalWords += words.length
-        fullText += cleanText + ' '
-      }
-    })
-    
-    // Calculate enhanced reading time using reading difficulty if available
-    const enhancedReadingTime = totalWords > 0 ? calculateEnhancedReadingTime(totalWords, readingDifficulty) : null
-    
-    setDocumentStats({
-      wordCount: totalWords,
-      readingTime: enhancedReadingTime?.readingTimeMinutes ?? Math.ceil(totalWords / 238), // Fallback to updated baseline
-      fullText: fullText.trim(),
-      enhancedReadingTime
-    })
-  }, [elements, readingDifficulty])
-  
-  // Assess reading difficulty on component mount
-  useEffect(() => {
-    const assessReadingDifficulty = async () => {
-      if (!documentStats.fullText || documentStats.fullText.length < 50) {
+    const calculateStats = async () => {
+      // Use database word_count if available, otherwise skip calculation
+      if (!wordCount) {
+        console.warn(`No word_count available for document ${documentId}`)
+        setDocumentStats({
+          wordCount: 0,
+          readingTime: 0,
+          readingTimeResult: null
+        })
         return
       }
-      
-      setIsLoadingDifficulty(true)
-      setDifficultyError(null)
-      
+
       try {
-        // First check if reading difficulty already exists in database
         const supabase = createClient()
-        const enhancementService = new EnhancementService(supabase)
+        const readingTimeResult = await calculateReadingTimeFromWordCount(wordCount, documentId, supabase)
         
-        const existingDifficulty = await enhancementService.get(
-          documentId, 
-          'reading_difficulty', 
-          'ai_assessment'
-        )
-        
-        if (existingDifficulty) {
-          // Use cached result from database
-          const content = existingDifficulty.content as { level: string; confidence: number; factors: string[] }
-          setReadingDifficulty({
-            level: content.level,
-            confidence: content.confidence >= 0.8 ? 'High' : content.confidence >= 0.6 ? 'Medium' : 'Low',
-            factors: content.factors || []
-          })
-          setIsLoadingDifficulty(false)
-          return
-        }
-        
-        // No cached result - make API call to generate new assessment
-        const response = await fetch('/api/reading-difficulty', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            content: documentStats.fullText,
-            documentId: documentId
-          })
+        setDocumentStats({
+          wordCount: readingTimeResult.wordCount,
+          readingTime: readingTimeResult.readingTimeMinutes,
+          readingTimeResult
         })
-        
-        if (!response.ok) {
-          throw new Error('Failed to assess reading difficulty')
-        }
-        
-        const data = await response.json()
-        setReadingDifficulty(data)
       } catch (error) {
-        console.error('Reading difficulty assessment failed:', error)
-        setDifficultyError('Unable to assess reading difficulty')
-      } finally {
-        setIsLoadingDifficulty(false)
+        console.error('Failed to calculate reading time in MetadataPanel:', error)
+        // Fallback: show database word_count with simple reading time calculation
+        setDocumentStats({
+          wordCount: wordCount,
+          readingTime: Math.ceil(wordCount / 238), // Simple fallback calculation
+          readingTimeResult: null
+        })
       }
     }
     
-    if (documentStats.fullText) {
-      assessReadingDifficulty()
+    calculateStats()
+  }, [wordCount, documentId])
+  
+  // Reading difficulty is now handled by the shared calculation utility
+  useEffect(() => {
+    if (documentStats.readingTimeResult?.readingDifficulty) {
+      setReadingDifficulty(documentStats.readingTimeResult.readingDifficulty)
+      setIsLoadingDifficulty(false)
+    } else {
+      // Try to fetch reading difficulty separately if not included in reading time calculation
+      const fetchReadingDifficulty = async () => {
+        setIsLoadingDifficulty(true)
+        setDifficultyError(null)
+        
+        try {
+          const supabase = createClient()
+          const enhancementService = new EnhancementService(supabase)
+          
+          const existingDifficulty = await enhancementService.get(
+            documentId, 
+            'reading_difficulty', 
+            'ai_assessment'
+          )
+          
+          if (existingDifficulty) {
+            const content = existingDifficulty.content as { level: string; confidence: number; factors: string[] }
+            setReadingDifficulty({
+              level: content.level,
+              confidence: content.confidence >= 0.8 ? 'High' : content.confidence >= 0.6 ? 'Medium' : 'Low',
+              factors: content.factors || []
+            })
+          }
+        } catch (error) {
+          console.error('Failed to fetch reading difficulty:', error)
+          setDifficultyError('Failed to load reading difficulty')
+        } finally {
+          setIsLoadingDifficulty(false)
+        }
+      }
+      
+      fetchReadingDifficulty()
     }
-  }, [documentStats.fullText, documentId])
+  }, [documentStats.readingTimeResult, documentId])
   
   // Load reading intent on component mount
   useEffect(() => {
@@ -805,7 +796,7 @@ export function MetadataPanel({
                     <span className="text-xs font-medium text-slate-600 uppercase tracking-wider border-b border-dotted border-slate-400">Read Time</span>
                   </div>
                   <div className="text-xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
-                    {documentStats.readingTime} <span className="text-sm font-medium text-slate-600">min</span>
+                    {formatReadingTime(documentStats.readingTime)}
                   </div>
                 </div>
               </TooltipOrPopover>
