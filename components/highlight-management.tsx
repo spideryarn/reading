@@ -19,6 +19,8 @@ import { useDocumentCommunication } from '@/lib/context/document-communication-c
 import { getSemanticHighlightIntensity } from '@/lib/utils/semantic-highlighting'
 import { useHighlightsUrlState } from '@/lib/tools/hooks/use-tool-url-state'
 import type { DocumentElement } from '@/lib/types/document'
+import { createClient } from '@/lib/supabase/client'
+import { normalizeSemanticSearchQuery } from '@/lib/utils/semantic-search'
 
 // Highlight interface matching semantic search result structure
 interface Highlight {
@@ -359,7 +361,7 @@ export function HighlightManagement({
     actions.scrollToElement(highlight.elementId)
   }, [actions, onActiveElementChange])
 
-  // Clear all highlights
+  // Clear all highlights (for input box 'x' button)
   const clearHighlights = useCallback(() => {
     clearSemanticHighlights()
     setHighlights([])
@@ -371,6 +373,39 @@ export function HighlightManagement({
     // Clear URL state
     setHighlight(null)
   }, [clearSemanticHighlights, setHighlight])
+
+  // Delete semantic search query from database and refresh history
+  const deleteQueryFromDatabase = useCallback(async (queryToDelete: string) => {
+    try {
+      const supabase = createClient()
+      const normalizedQuery = normalizeSemanticSearchQuery(queryToDelete)
+      
+      const { error } = await supabase
+        .from('document_enhancements')
+        .delete()
+        .eq('document_id', documentId)
+        .eq('type', 'semantic-search')
+        .eq('subtype', normalizedQuery)
+      
+      if (error) {
+        throw new Error(error.message || 'Failed to delete query')
+      }
+      
+      console.log(`[HighlightDeletion] Successfully deleted query from database: "${queryToDelete}" (normalized: "${normalizedQuery}")`)
+      
+      // Clear current highlights if they match the deleted query
+      if (criterion === queryToDelete || highlightInputValue === queryToDelete) {
+        clearHighlights()
+      }
+      
+      // Refresh query history to remove the deleted item from dropdown
+      await fetchQueryHistory()
+      
+    } catch (error) {
+      console.error('[HighlightDeletion] Failed to delete query from database:', error)
+      setError(error instanceof Error ? error.message : 'Failed to delete query')
+    }
+  }, [documentId, criterion, highlightInputValue, clearHighlights, fetchQueryHistory])
 
   return (
     <div className="flex flex-col h-full">
@@ -424,6 +459,7 @@ export function HighlightManagement({
                   setHighlight(null)
                 }}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                title="Clear search input"
               >
                 <X size={16} weight="bold" />
               </button>
@@ -542,11 +578,11 @@ export function HighlightManagement({
                     {new Date(highlightsCachedAt).toLocaleTimeString()}
                   </span>
                 )}
-                {highlights.length > 0 && (
+                {highlights.length > 0 && criterion && (
                   <button
-                    onClick={clearHighlights}
+                    onClick={() => deleteQueryFromDatabase(criterion)}
                     className="text-xs text-gray-500 hover:text-red-600 transition-colors"
-                    title="Clear all highlights"
+                    title="Delete this search from history and clear highlights"
                   >
                     <Trash size={12} weight="bold" />
                   </button>
