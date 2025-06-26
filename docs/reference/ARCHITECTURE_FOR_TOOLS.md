@@ -198,24 +198,43 @@ const analysisTools = getAllTools().filter(tool => tool.category === 'analysis')
 
 ## Command Palette Integration
 
-Tools automatically generate command palette entries:
+Tools automatically generate command palette entries through the dynamic generation system implemented in `lib/tools/command-generation.ts`. This replaces all hardcoded command definitions.
+
+### Dynamic Command Generation
 
 ```typescript
-// Auto-generated from tool definition
+// Auto-generated from tool definition via generateCommandsFromRegistry()
 {
-  id: `tool-${tool.id}`,
+  id: `nav-${tool.id}`,
   name: tool.name,
   shortcut: tool.shortcuts,
-  keywords: [
-    ...tool.keywords || [],
-    tool.name.toLowerCase(),
-    ...tool.description.toLowerCase().split(' ').slice(0, 5)
-  ],
-  category: 'Tools',
+  keywords: tool.keywords || [],
+  category: {
+    id: 'navigation',
+    name: 'Navigation', 
+    priority: 1
+  },
   icon: tool.icon,
   action: () => navigateToTab(tool.tabId),
-  isAvailable: () => !tool.requiresDocument || !!getCurrentDocument()
+  condition: () => !tool.requiresDocument || !!getCurrentDocument()
 }
+```
+
+### Key Features
+
+- **Zero hardcoding**: All tool commands generated dynamically from registry
+- **Conflict detection**: Duplicate shortcuts throw errors, duplicate keywords log warnings
+- **Keyword search**: Tools searchable by name, description words, and explicit keywords
+- **Platform support**: Automatic ⌘/Ctrl transformation for Mac/PC
+- **Conditional availability**: Document-dependent tools only show when document loaded
+
+### Command Generation Process
+
+1. **Registry scan**: `generateCommandsFromRegistry()` iterates through all registered tools
+2. **Conflict detection**: Validates no duplicate shortcuts exist
+3. **Command creation**: Transforms each tool into command palette format
+4. **Integration**: Commands merged with non-tool commands (app navigation, account)
+5. **Search support**: Keywords enable semantic discovery (e.g., "digest" → Summary tool)
 ```
 
 ## Current Tool Implementations

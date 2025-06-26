@@ -93,6 +93,7 @@ This document provides a comprehensive template for creating new tools in Spider
   - [ ] Register tool using `registerTool()` function
   - [ ] Add to registry loader for automatic discovery
   - [ ] Test tool appears in registry with `getTool()` function
+  - [ ] **Command palette integration automatic**: Tool will appear in command palette via dynamic generation (no manual setup needed)
 
 - [ ] **Legacy integration (temporary)** 
   - [ ] Add to vertical icon navigation (will be automated later)
@@ -146,25 +147,26 @@ This document provides a comprehensive template for creating new tools in Spider
   - [ ] Implement temporary highlight effects for interactions
   - [ ] Test highlight conflicts and resolution
 
-### Stage: Command Palette Integration
+### Stage: Command Palette Integration ✅ AUTOMATED
 
-- [ ] **Add keyboard shortcuts**
-  - [ ] Update `components/command-palette.tsx` with new command
-  - [ ] Follow platform detection patterns (Cmd/Ctrl)
-  - [ ] Assign numbered shortcut (Cmd/Ctrl+[next number])
-  - [ ] Test shortcuts work from any application context
+Command palette integration is now **fully automated** through the unified tool registry. When you register a tool, it automatically:
 
-- [ ] **Create command definition**
-  - [ ] Add to navigation commands category
-  - [ ] Include descriptive name and search keywords
-  - [ ] Implement action using DocumentCommunicationContext
-  - [ ] Add conditional visibility if context-dependent
+- **Generates command palette entries**: Tool appears in command palette with name, shortcuts, and keywords
+- **Enables keyword search**: Users can find tools using semantic terms (e.g., "digest" → Summary tool)
+- **Handles platform shortcuts**: Automatic ⌘/Ctrl transformation for Mac/PC
+- **Manages conditional availability**: Document-dependent tools only show when document loaded
+- **Detects conflicts**: Duplicate shortcuts throw errors for safety
 
-- [ ] **Test command palette integration**
-  - [ ] Verify command appears in search results
-  - [ ] Test keyboard navigation to command
-  - [ ] Confirm command execution activates tool
-  - [ ] Test edge cases (no document loaded, etc.)
+**Manual steps no longer needed**:
+- ❌ No manual command definitions in `command-palette.tsx`
+- ❌ No hardcoded shortcut assignments
+- ❌ No manual keyword mapping
+
+**Optional customization**:
+- [ ] **Add rich keywords** in tool definition for better discoverability
+- [ ] **Choose meaningful shortcuts** following Cmd/Ctrl+[number] pattern
+- [ ] **Test keyword search** works as expected (e.g., semantic terms find your tool)
+- [ ] **Verify shortcuts** don't conflict with existing tools
 
 ### Stage: Data Persistence
 
