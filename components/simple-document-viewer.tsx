@@ -13,6 +13,7 @@ import { DocumentParser } from '@/lib/services/document-parser'
 import { getSemanticHighlightStyles } from '@/lib/utils/semantic-highlighting'
 import Mark from 'mark.js'
 import { useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
+import { useDocumentCommunication } from '@/lib/context/document-communication-context'
 import type { Entity } from '@/lib/types/entity'
 
 // Semantic highlight interface
@@ -64,6 +65,7 @@ export function SimpleDocumentViewer({
   // Glossary highlighting
   const glossaryMarkInstanceRef = useRef<Mark | null>(null)
   const navigateToTab = useNavigateToTab()
+  const { actions: commActions } = useDocumentCommunication()
   
   // Element visibility tracking
   const { observeElement, unobserveElement } = useElementVisibility(onElementVisibilityChange)
@@ -109,11 +111,11 @@ export function SimpleDocumentViewer({
   
   // Handle glossary click events
   const handleGlossaryClick = useCallback((entityName: string) => {
-    // Switch to glossary tab and scroll to entity
+    // Navigate to the Glossary tab via URL (single-source-of-truth)
     navigateToTab('glossary')
-    // Note: Scrolling to specific entity in glossary pane will be implemented later
-    console.log(`Glossary click: ${entityName}`) // Temporary log to use entityName
-  }, [navigateToTab])
+    // Notify the unified left pane which term should be brought into view
+    commActions.highlightTerm(entityName)
+  }, [navigateToTab, commActions])
   
   // Apply glossary highlights when entities change (but not on every re-render)
   useEffect(() => {
