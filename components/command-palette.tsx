@@ -24,9 +24,12 @@ import {
   TwitterLogo,
   FileText,
   Robot,
+  Trash,
 } from '@phosphor-icons/react'
 import { generateCommandsFromRegistry } from '@/lib/tools/command-generation'
 import { getAllTools } from '@/lib/tools/registry'
+import { createClient } from '@/lib/supabase/client'
+import { useDeleteDocument, type DocumentMetadata } from '@/lib/hooks/use-delete-document'
 
 // Command definition interfaces
 interface Command {
@@ -87,6 +90,47 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
   const router = useRouter()
   const { user, signOut } = useAuth()
   const navigateToTab = useNavigateToTab()
+
+  // Global delete dialog state
+  const [deleteMetadata, setDeleteMetadata] = useState<DocumentMetadata | null>(null)
+  const { triggerDelete, DeleteDialog } = useDeleteDocument(deleteMetadata || {
+    id: '',
+    title: '',
+  })
+
+  // Function to handle delete command from command palette
+  const handleDeleteCommand = useCallback(async () => {
+    if (!documentSlug) return
+
+    try {
+      const supabase = createClient()
+      const { data: document, error } = await supabase
+        .from('documents')
+        .select('id, title, created_at, upload_metadata, word_count')
+        .eq('slug', documentSlug)
+        .single()
+
+      if (error || !document) {
+        console.error('Failed to fetch document for deletion:', error)
+        throw new Error('Could not load document information')
+      }
+
+      // Prepare metadata for enhanced dialog
+      const metadata: DocumentMetadata = {
+        id: document.id,
+        title: document.title,
+        uploadDate: document.created_at,
+        fileSizeKB: document.upload_metadata?.content_size_kb,
+        wordCount: document.word_count,
+      }
+
+      setDeleteMetadata(metadata)
+      triggerDelete()
+    } catch (error) {
+      console.error('Delete command error:', error)
+      alert('Failed to load document information. Please try again.')
+    }
+  }, [documentSlug, triggerDelete])
 
   // Platform detection for keyboard shortcuts
   const isMac = typeof window !== 'undefined' && 
@@ -198,6 +242,14 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
           window.open(`/api/read/${documentSlug}/original`, '_blank', 'noopener,noreferrer')
         },
         icon: FileText,
+      },
+      {
+        id: 'doc-delete',
+        name: 'Delete Document',
+        keywords: ['delete', 'remove', 'trash', 'destroy'],
+        category: DOCUMENT_ACTIONS_CATEGORY,
+        action: handleDeleteCommand,
+        icon: Trash,
       },
     ] as Command[] : []),
 
@@ -341,35 +393,39 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
   }, [isMac, navigateWithErrorHandling])
 
   return (
-    <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="Type a command or search..." />
-      <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
-        
-        {sortedCategories.map(({ category, commands: categoryCommands }) => (
-          <CommandGroup key={category.id} heading={category.name}>
-            {categoryCommands.map(command => {
-              const Icon = command.icon
-              return (
-                <CommandItem
-                  key={command.id}
-                  onSelect={() => executeCommand(command)}
-                  className="flex items-center gap-2"
-                  keywords={command.keywords}
-                >
-                  {Icon && <Icon size={16} className="text-gray-500" />}
-                  <span className="flex-1">{command.name}</span>
-                  {command.shortcut && (
-                    <CommandShortcut>
-                      {command.shortcut.join('+')}
-                    </CommandShortcut>
-                  )}
-                </CommandItem>
-              )
-            })}
-          </CommandGroup>
-        ))}
-      </CommandList>
-    </CommandDialog>
+    <>
+      <CommandDialog open={open} onOpenChange={setOpen}>
+        <CommandInput placeholder="Type a command or search..." />
+        <CommandList>
+          <CommandEmpty>No results found.</CommandEmpty>
+          
+          {sortedCategories.map(({ category, commands: categoryCommands }) => (
+            <CommandGroup key={category.id} heading={category.name}>
+              {categoryCommands.map(command => {
+                const Icon = command.icon
+                return (
+                  <CommandItem
+                    key={command.id}
+                    onSelect={() => executeCommand(command)}
+                    className="flex items-center gap-2"
+                    keywords={command.keywords}
+                  >
+                    {Icon && <Icon size={16} className="text-gray-500" />}
+                    <span className="flex-1">{command.name}</span>
+                    {command.shortcut && (
+                      <CommandShortcut>
+                        {command.shortcut.join('+')}
+                      </CommandShortcut>
+                    )}
+                  </CommandItem>
+                )
+              })}
+            </CommandGroup>
+          ))}
+        </CommandList>
+      </CommandDialog>
+      
+      <DeleteDialog />
+    </>
   )
 }
