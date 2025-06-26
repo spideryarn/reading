@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Command Palette</title>
+</head>
+<body>
+    <h1>Debug Command Palette</h1>
+    <button onclick="testRegistry()">Test Tool Registry</button>
+    <button onclick="testCommandGeneration()">Test Command Generation</button>
+    <div id="output"></div>
+
+    <script type="module">
+        async function testRegistry() {
+            try {
+                // Import the registry module
+                const { getAllTools } = await import('/lib/tools/registry.js');
+                const tools = getAllTools();
+                
+                document.getElementById('output').innerHTML = `
+                    <h3>Tool Registry Test:</h3>
+                    <p>Number of tools: ${tools.length}</p>
+                    <p>Tool IDs: ${tools.map(t => t.id).join(', ')}</p>
+                    <pre>${JSON.stringify(tools, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('output').innerHTML = `
+                    <h3>Tool Registry Error:</h3>
+                    <pre>${error.message}\n${error.stack}</pre>
+                `;
+            }
+        }
+
+        async function testCommandGeneration() {
+            try {
+                // Import both modules
+                const { getAllTools } = await import('/lib/tools/registry.js');
+                const { generateCommandsFromRegistry } = await import('/lib/tools/command-generation.js');
+                
+                const tools = getAllTools();
+                const commands = generateCommandsFromRegistry(tools, {
+                    getNavigateToTab: () => () => console.log('navigate'),
+                    getCurrentDocument: () => ({ id: 'test-doc' }),
+                    isMac: false,
+                });
+                
+                document.getElementById('output').innerHTML = `
+                    <h3>Command Generation Test:</h3>
+                    <p>Number of tools: ${tools.length}</p>
+                    <p>Number of commands generated: ${commands.length}</p>
+                    <p>Command IDs: ${commands.map(c => c.id).join(', ')}</p>
+                    <pre>${JSON.stringify(commands, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('output').innerHTML = `
+                    <h3>Command Generation Error:</h3>
+                    <pre>${error.message}\n${error.stack}</pre>
+                `;
+            }
+        }
+
+        // Make functions global
+        window.testRegistry = testRegistry;
+        window.testCommandGeneration = testCommandGeneration;
+    </script>
+</body>
+</html>

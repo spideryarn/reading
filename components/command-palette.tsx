@@ -355,6 +355,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
                   key={command.id}
                   onSelect={() => executeCommand(command)}
                   className="flex items-center gap-2"
+                  keywords={command.keywords}
                 >
                   {Icon && <Icon size={16} className="text-gray-500" />}
                   <span className="flex-1">{command.name}</span>
