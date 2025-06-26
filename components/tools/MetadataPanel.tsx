@@ -193,7 +193,7 @@ export function MetadataPanel({
           .select('background')
           .eq('user_id', user.id)
           .eq('document_id', documentId)
-          .single()
+          .maybeSingle()
 
         if (error && error.code !== 'PGRST116') { // PGRST116 = not found
           throw error
