@@ -240,25 +240,87 @@ The core idea is:
 
 **Ready for Stage 5**: Advanced Configuration and Intelligence features can proceed with solid individual storage foundation.
 
-### Stage: Advanced Configuration and Intelligence
-- [ ] Expand `lib/config.ts` with advanced glossary configuration
-  - Add `MAX_ENTITIES_PER_REQUEST: 20` for batch size control
-    - Add configuration validation and error handling
-- [ ] Enhance Nunjucks template for completion detection
-  - Add instruction for LLM to indicate when document is "fully processed"
-  - Design response schema with `more_entities_available` boolean flag
-  - Add `completion_confidence` score for automated decision making
-- [ ] Update API response schema for completion signals
-  - Add `more_entities_available` field to response
-  - Include `suggested_next_batch_size` for intelligent pagination
-  - Add `completion_reason` field for debugging
-- [ ] Implement frontend auto-trigger logic
-  - Add configuration toggle for auto-generation vs manual trigger
-  - Implement auto-trigger when `more_entities_available` is true
-  - Add safety limits: max auto-generations, total entity caps
-  - Include user controls to stop auto-generation
-- [ ] Test advanced configuration and auto-trigger functionality
-- [ ] Git commit advanced features
+### Stage: Auto-Trigger with Cancel Control ⚠️ **SIMPLIFIED DESIGN**
+- [ ] Add configuration toggle in `lib/config.ts`
+  - Add `GLOSSARY_AUTO_TRIGGER_ENABLED: true` - simple boolean toggle
+  - Add `GLOSSARY_MAX_ENTITIES_PER_BATCH: 20` - consistent batch size for Load More
+- [ ] Enhance Nunjucks template for simple completion detection
+  - Add instruction for LLM to indicate `more_entities_available: boolean` 
+  - **Simplified**: Remove completion_confidence, suggested_next_batch_size, completion_reason
+  - **Focus**: Just a clear yes/no signal from the LLM
+- [ ] Update API response schema (minimal changes)
+  - Add `more_entities_available: boolean` field to glossary API response
+  - **Simplified**: No additional metadata fields, just the boolean signal
+- [ ] Implement frontend auto-trigger with cancel control
+  - **Cancel button**: Replaces "Load More" during auto-generation, aborts current request + stops future auto-triggers
+  - **Auto-trigger logic**: If `GLOSSARY_AUTO_TRIGGER_ENABLED && more_entities_available && under entity limit`, automatically call Load More
+  - **State management**: Track `isAutoGenerating` state separate from `isLoadingMoreGlossary`
+  - **AbortController**: Use to cancel in-flight requests when user clicks Cancel
+  - **Safety**: Use existing `MAX_TOTAL_ENTITY_LIMIT` to prevent runaway generation
+- [ ] Test auto-trigger functionality
+  - Test Cancel button aborts current request and stops auto-generation
+  - Test auto-trigger stops when `more_entities_available: false`
+  - Test auto-trigger stops when approaching `MAX_TOTAL_ENTITY_LIMIT`
+  - Test config toggle disables auto-trigger entirely
+- [ ] Git commit auto-trigger implementation
+
+**Stage 5 Implementation Details** (for developer reference):
+
+**Config Changes** (`lib/config.ts`):
+```typescript
+export const GLOSSARY_CONFIG = {
+  // ... existing config ...
+  GLOSSARY_AUTO_TRIGGER_ENABLED: true, // Set false to disable auto-trigger
+  GLOSSARY_MAX_ENTITIES_PER_BATCH: 20, // Consistent batch size
+} as const;
+```
+
+**Template Changes** (`lib/prompts/templates/glossary.njk`):
+```njk
+<!-- Add to end of template -->
+After generating the entities, indicate whether more entities could be generated:
+- If you believe there are more important entities to extract: "more_entities_available": true
+- If you have covered all significant entities: "more_entities_available": false
+```
+
+**API Response Schema** (update Zod schema):
+```typescript
+const glossaryResponseSchema = z.object({
+  entities: z.array(entitySchema),
+  more_entities_available: z.boolean(),
+  // ... existing fields ...
+});
+```
+
+**Frontend State** (`app/[documentId]/page-client.tsx`):
+```typescript
+const [isAutoGenerating, setIsAutoGenerating] = useState(false);
+const abortControllerRef = useRef<AbortController | null>(null);
+
+// Auto-trigger logic after Load More completes
+const currentEntityCount = glossaryData?.entities?.length || 0;
+if (GLOSSARY_AUTO_TRIGGER_ENABLED && 
+    !isAutoGenerating && 
+    hasMoreEntities && 
+    currentEntityCount < MAX_TOTAL_ENTITY_LIMIT) {
+  setIsAutoGenerating(true);
+  fetchMoreGlossary(); // Automatic call
+}
+```
+
+**Cancel Implementation**:
+```typescript
+const handleCancelAutoGeneration = () => {
+  abortControllerRef.current?.abort();
+  setIsAutoGenerating(false);
+  setIsLoadingMoreGlossary(false);
+};
+```
+
+**UI Changes** (`components/unified-left-pane.tsx`):
+- Replace "Load More" button with "Cancel Generation" during auto-generation
+- Show progress indicator: "Auto-generating entities... (47/100 max)"
+- Clear visual distinction between manual and automatic loading states
 
 ### Stage: Extended Features Foundation
 - [ ] Prepare template for entity prioritisation scoring
