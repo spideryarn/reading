@@ -13,12 +13,15 @@ import {
   X, 
   CircleNotch, 
   Clock,
-  Trash
+  Trash,
+  CaretDown
 } from '@phosphor-icons/react'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
 import { getSemanticHighlightIntensity } from '@/lib/utils/semantic-highlighting'
 import { useHighlightsUrlState } from '@/lib/tools/hooks/use-tool-url-state'
 import type { DocumentElement } from '@/lib/types/document'
+import { createClient } from '@/lib/supabase/client'
+import { normalizeSemanticSearchQuery } from '@/lib/utils/semantic-search'
 
 // Highlight interface matching semantic search result structure
 interface Highlight {
@@ -67,6 +70,12 @@ export function HighlightManagement({
   
   // URL state for highlight criterion
   const { highlightCriterion, setHighlight } = useHighlightsUrlState()
+  
+  // Local input state for immediate responsiveness (like search input pattern)
+  // We keep a local, immediate value so that the input feels responsive. The URL
+  // (single-source-of-truth) is still updated via the highlight creation,
+  // but the input itself is no longer bound directly to that URL state.
+  const [highlightInputValue, setHighlightInputValue] = useState(highlightCriterion || '')
   
   // Core state - initialize criterion from URL if available
   const [criterion, setCriterion] = useState(highlightCriterion || '')
@@ -224,6 +233,12 @@ export function HighlightManagement({
     }
   }, [documentId, actions, fetchQueryHistory, updateSemanticHighlights])
 
+  // Sync local input when the URL-driven criterion changes (e.g. back/forward
+  // navigation or programmatic updates).
+  useEffect(() => {
+    setHighlightInputValue(highlightCriterion || '')
+  }, [highlightCriterion])
+
   // Load highlights from URL criterion when component mounts or URL changes
   useEffect(() => {
     if (highlightCriterion && highlightCriterion !== criterion) {
@@ -255,17 +270,17 @@ export function HighlightManagement({
     return sortHighlights(highlights, sortByIntensity)
   }, [highlights, sortByIntensity, sortHighlights])
 
-  // Filtered query history based on current criterion input
+  // Filtered query history based on current input value
   const filteredQueryHistory = useMemo(() => {
-    if (!criterion.trim()) {
+    if (!highlightInputValue.trim()) {
       return queryHistory
     }
     
-    const searchLower = criterion.toLowerCase()
+    const searchLower = highlightInputValue.toLowerCase()
     return queryHistory.filter(item => 
       item.query.toLowerCase().includes(searchLower)
     )
-  }, [queryHistory, criterion])
+  }, [queryHistory, highlightInputValue])
 
   // Format date in unambiguous format: "2025-June-08 at 22:15"
   const formatDate = useCallback((dateString: string) => {
@@ -284,12 +299,20 @@ export function HighlightManagement({
     return `${year}-${month}-${day} at ${hours}:${minutes}`
   }, [])
 
-  // Handle criterion input changes
+  // Handle criterion input changes (local state for responsiveness)
   const handleCriterionChange = useCallback((value: string) => {
+    setHighlightInputValue(value)
     setCriterion(value)
     
     // Clear previous errors
     setError(null)
+    
+    // Clear active highlights when input changes (user is preparing new search)
+    clearSemanticHighlights()
+    setHighlights([])
+    
+    // Clear URL highlight criterion to prevent auto-recreation effect
+    setHighlight(null)
     
     // Show history dropdown when focusing and typing
     if (queryHistory.length > 0) {
@@ -298,19 +321,20 @@ export function HighlightManagement({
     
     // Don't auto-search - highlighting is manual trigger only
     if (!value.trim()) {
-      setHighlights([])
       setIsCreating(false)
     }
-  }, [queryHistory.length])
+  }, [queryHistory.length, clearSemanticHighlights, setHighlight])
 
   // Trigger highlight creation
   const triggerHighlightCreation = useCallback(() => {
-    if (criterion.trim()) {
-      createHighlights(criterion)
+    if (highlightInputValue.trim()) {
+      createHighlights(highlightInputValue)
       // Update URL with the highlight criterion
-      setHighlight(criterion)
+      setHighlight(highlightInputValue)
+      // Update criterion to match the input
+      setCriterion(highlightInputValue)
     }
-  }, [criterion, createHighlights, setHighlight])
+  }, [highlightInputValue, createHighlights, setHighlight])
 
   // Handle Enter key in criterion input
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -338,17 +362,51 @@ export function HighlightManagement({
     actions.scrollToElement(highlight.elementId)
   }, [actions, onActiveElementChange])
 
-  // Clear all highlights
+  // Clear all highlights (for input box 'x' button)
   const clearHighlights = useCallback(() => {
     clearSemanticHighlights()
     setHighlights([])
     setHighlightsCached(false)
     setHighlightsCachedAt(null)
     setError(null)
+    setHighlightInputValue('')
     setCriterion('')
     // Clear URL state
     setHighlight(null)
   }, [clearSemanticHighlights, setHighlight])
+
+  // Delete semantic search query from database and refresh history
+  const deleteQueryFromDatabase = useCallback(async (queryToDelete: string) => {
+    try {
+      const supabase = createClient()
+      const normalizedQuery = normalizeSemanticSearchQuery(queryToDelete)
+      
+      const { error } = await supabase
+        .from('document_enhancements')
+        .delete()
+        .eq('document_id', documentId)
+        .eq('type', 'semantic-search')
+        .eq('subtype', normalizedQuery)
+      
+      if (error) {
+        throw new Error(error.message || 'Failed to delete query')
+      }
+      
+      console.log(`[HighlightDeletion] Successfully deleted query from database: "${queryToDelete}" (normalized: "${normalizedQuery}")`)
+      
+      // Clear current highlights if they match the deleted query
+      if (criterion === queryToDelete || highlightInputValue === queryToDelete) {
+        clearHighlights()
+      }
+      
+      // Refresh query history to remove the deleted item from dropdown
+      await fetchQueryHistory()
+      
+    } catch (error) {
+      console.error('[HighlightDeletion] Failed to delete query from database:', error)
+      setError(error instanceof Error ? error.message : 'Failed to delete query')
+    }
+  }, [documentId, criterion, highlightInputValue, clearHighlights, fetchQueryHistory])
 
   return (
     <div className="flex flex-col h-full">
@@ -370,14 +428,19 @@ export function HighlightManagement({
             <input
               ref={criterionInputRef}
               type="text"
-              value={criterion}
+              value={highlightInputValue}
               onChange={(e) => handleCriterionChange(e.target.value)}
               onFocus={() => {
                 if (queryHistory.length > 0) {
                   setShowQueryHistory(true)
                 }
               }}
-              onBlur={() => {
+              onBlur={(e) => {
+                // Don't hide if the blur is caused by clicking on the dropdown arrow
+                const relatedTarget = e.relatedTarget as HTMLElement
+                if (relatedTarget?.closest('[data-dropdown-trigger]')) {
+                  return
+                }
                 // Delay hiding to allow clicking on dropdown items
                 setTimeout(() => setShowQueryHistory(false), 150)
               }}
@@ -390,18 +453,48 @@ export function HighlightManagement({
               weight="bold" 
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
             />
-            {criterion && (
+            {highlightInputValue ? (
               <button
                 onClick={() => {
+                  setHighlightInputValue('')
                   setCriterion('')
                   setHighlights([])
                   setHighlightsCached(false)
                   setHighlightsCachedAt(null)
+                  // Clear URL state as well
+                  setHighlight(null)
                 }}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                title="Clear search input"
               >
                 <X size={16} weight="bold" />
               </button>
+            ) : (
+              <div
+                data-dropdown-trigger
+                className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
+                  queryHistory.length > 0 
+                    ? 'text-gray-400 hover:text-gray-600 cursor-pointer' 
+                    : 'text-gray-300'
+                }`}
+                title={
+                  queryHistory.length > 0 
+                    ? `${queryHistory.length} previous search${queryHistory.length === 1 ? '' : 'es'} available - click to browse`
+                    : 'No previous searches available'
+                }
+                onMouseDown={(e) => {
+                  // Prevent the input from losing focus when clicking the dropdown trigger
+                  e.preventDefault()
+                }}
+                onClick={() => {
+                  if (queryHistory.length > 0) {
+                    setShowQueryHistory(true)
+                    criterionInputRef.current?.focus()
+                  }
+                }}
+              >
+                <CaretDown size={16} weight="bold" />
+              </div>
             )}
             
             {/* Query history dropdown */}
@@ -409,7 +502,7 @@ export function HighlightManagement({
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
                 <div className="p-2">
                   <div className="text-xs text-gray-500 font-medium mb-2 px-2">
-                    {criterion.trim() ? `Filtered searches (${filteredQueryHistory.length} of ${queryHistory.length})` : 'Recent searches'}
+                    {highlightInputValue.trim() ? `Filtered searches (${filteredQueryHistory.length} of ${queryHistory.length})` : 'Recent searches'}
                   </div>
                   {filteredQueryHistory.map((historyItem, index) => (
                     <button
@@ -443,7 +536,7 @@ export function HighlightManagement({
 
           <Button
             onClick={triggerHighlightCreation}
-            disabled={!criterion.trim() || isCreating}
+            disabled={!highlightInputValue.trim() || isCreating}
             variant="default"
             size="sm"
             className="w-full"
@@ -462,7 +555,7 @@ export function HighlightManagement({
           </Button>
 
           {/* Example criteria */}
-          {!criterion.trim() && !isCreating && (
+          {!highlightInputValue.trim() && !isCreating && (
             <div className="text-xs text-gray-500 space-y-1">
               <div className="font-medium">Try highlighting:</div>
               <div>• &quot;arguments supporting the main thesis&quot;</div>
@@ -517,11 +610,11 @@ export function HighlightManagement({
                     {new Date(highlightsCachedAt).toLocaleTimeString()}
                   </span>
                 )}
-                {highlights.length > 0 && (
+                {highlights.length > 0 && criterion && (
                   <button
-                    onClick={clearHighlights}
+                    onClick={() => deleteQueryFromDatabase(criterion)}
                     className="text-xs text-gray-500 hover:text-red-600 transition-colors"
-                    title="Clear all highlights"
+                    title="Delete this search from history and clear highlights"
                   >
                     <Trash size={12} weight="bold" />
                   </button>
