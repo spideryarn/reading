@@ -167,10 +167,16 @@ function getEntityColor(ontology: string) {
 // Component to display glossary entities
 function GlossaryDisplay({ 
   entities, 
-  elements 
+  elements,
+  hasMoreEntities,
+  isLoadingMoreGlossary,
+  onLoadMoreGlossary
 }: { 
   entities: Entity[]
   elements: DocumentElement[]
+  hasMoreEntities?: boolean
+  isLoadingMoreGlossary?: boolean
+  onLoadMoreGlossary?: () => void
 }) {
   const { actions } = useDocumentCommunication()
   const { term: searchTerm, setTerm: setSearchTerm } = useGlossaryUrlState()
@@ -254,6 +260,27 @@ function GlossaryDisplay({
           </div>
         )}
       </div>
+      
+      {/* Load More button - Top position */}
+      {hasMoreEntities && onLoadMoreGlossary && (
+        <div className="p-4 border-b border-gray-200">
+          <Button
+            onClick={onLoadMoreGlossary}
+            disabled={isLoadingMoreGlossary}
+            variant="outline"
+            className="w-full"
+          >
+            {isLoadingMoreGlossary ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-gray-600 mr-2" />
+                Loading More...
+              </>
+            ) : (
+              'Load More Entries'
+            )}
+          </Button>
+        </div>
+      )}
       
       {/* Entities list */}
       <div className="flex-1 overflow-y-auto">
@@ -973,6 +1000,9 @@ export function UnifiedLeftPane({
             <GlossaryDisplay 
               entities={glossaryEntities || []} 
               elements={elements}
+              hasMoreEntities={hasMoreEntities}
+              isLoadingMoreGlossary={isLoadingMoreGlossary}
+              onLoadMoreGlossary={onLoadMoreGlossary}
             />
             {hasMoreEntities && onLoadMoreGlossary && (
               <div className="p-4 border-t border-gray-200">

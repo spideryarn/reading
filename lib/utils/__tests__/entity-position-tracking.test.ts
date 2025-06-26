@@ -240,7 +240,7 @@ describe('Entity Position Tracking', () => {
       expect(result[1].name).toBe(mockEntities[1].name)
     })
 
-    it('should remove entities with duplicate aliases', () => {
+    it('should allow distinct entities that merely share an alias', () => {
       const entitiesWithDuplicateAliases: Entity[] = [
         {
           name: 'Artificial Intelligence',
@@ -257,7 +257,7 @@ describe('Entity Position Tracking', () => {
       ]
 
       const result = deduplicateEntities(entitiesWithDuplicateAliases)
-      expect(result).toHaveLength(1)
+      expect(result).toHaveLength(2)
     })
 
     it('should be case insensitive for deduplication', () => {
