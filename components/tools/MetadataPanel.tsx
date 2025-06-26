@@ -6,13 +6,16 @@ import {
   ChartBar, Robot, ListBullets, BookOpen,
   CircleNotch, CheckCircle, XCircle,
   GraduationCap, LockSimple, User, PencilSimple,
-  ArrowSquareOut, Download, CaretDown
+  ArrowSquareOut, Download, CaretDown, Target
 } from '@phosphor-icons/react'
 import { formatDistanceToNow } from 'date-fns'
 import type { DocumentElement } from '@/lib/types/document'
 import { extractCleanText } from '@/lib/utils/html-text-extraction'
 import { createClient } from '@/lib/supabase/client'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { useAuth } from '@/lib/context/auth-context'
+// import { DocumentUserService } from '@/lib/services/database/document-users' // Not needed with direct Supabase approach
 import { sanitizeDocumentTitle, validateDocumentTitle, MAX_TITLE_LENGTH } from '@/lib/utils/document-title'
 import { DeleteDocumentButton } from '@/components/delete-document-button'
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
@@ -71,6 +74,14 @@ export function MetadataPanel({
   const [isLoadingDifficulty, setIsLoadingDifficulty] = useState(false)
   const [difficultyError, setDifficultyError] = useState<string | null>(null)
   const [showAssessmentFactors, setShowAssessmentFactors] = useState(false)
+
+  // Reading intent state
+  const { user } = useAuth()
+  const [readingIntent, setReadingIntent] = useState('')
+  const [isEditingIntent, setIsEditingIntent] = useState(false)
+  const [isLoadingIntent, setIsLoadingIntent] = useState(false)
+  const [intentError, setIntentError] = useState<string | null>(null)
+  const intentTextareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Calculate document statistics (client-only to prevent hydration issues)
   const [documentStats, setDocumentStats] = useState({
@@ -168,6 +179,89 @@ export function MetadataPanel({
     }
   }, [documentStats.fullText, documentId])
   
+  // Load reading intent on component mount
+  useEffect(() => {
+    const loadReadingIntent = async () => {
+      if (!user) return
+
+      try {
+        setIsLoadingIntent(true)
+        const supabase = createClient()
+        
+        const { data, error } = await supabase
+          .from('document_users')
+          .select('background')
+          .eq('user_id', user.id)
+          .eq('document_id', documentId)
+          .single()
+
+        if (error && error.code !== 'PGRST116') { // PGRST116 = not found
+          throw error
+        }
+
+        setReadingIntent(data?.background || '')
+      } catch (error) {
+        console.error('Failed to load reading intent:', error)
+        setIntentError('Failed to load reading intent')
+      } finally {
+        setIsLoadingIntent(false)
+      }
+    }
+
+    loadReadingIntent()
+  }, [user, documentId])
+
+  // Save reading intent function
+  const saveReadingIntent = async (background: string) => {
+    if (!user) return
+
+    try {
+      setIsLoadingIntent(true)
+      setIntentError(null)
+      const supabase = createClient()
+      
+      const { error } = await supabase
+        .from('document_users')
+        .upsert({
+          user_id: user.id,
+          document_id: documentId,
+          background
+        }, {
+          onConflict: 'user_id,document_id'
+        })
+
+      if (error) throw error
+      
+      setReadingIntent(background)
+      setIsEditingIntent(false)
+    } catch (error) {
+      console.error('Failed to save reading intent:', error)
+      setIntentError('Failed to save reading intent')
+    } finally {
+      setIsLoadingIntent(false)
+    }
+  }
+
+  // Handle reading intent editing
+  const handleIntentKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setIsEditingIntent(false)
+      setIntentError(null)
+    } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault()
+      const textarea = e.target as HTMLTextAreaElement
+      saveReadingIntent(textarea.value)
+    }
+  }
+
+  // Focus textarea when editing starts
+  useEffect(() => {
+    if (isEditingIntent && intentTextareaRef.current) {
+      intentTextareaRef.current.focus()
+      intentTextareaRef.current.select()
+    }
+  }, [isEditingIntent])
+
   // Privacy toggle state
   const [currentIsPublic, setCurrentIsPublic] = useState(isPublic ?? false)
   const [isUpdating, setIsUpdating] = useState(false)
@@ -572,6 +666,95 @@ export function MetadataPanel({
               </div>
             </div>
           </section>
+          
+          {/* Reading Intent Section */}
+          {user && (
+            <section>
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <div className="w-1 h-4 bg-gradient-to-b from-orange-400 to-orange-500 rounded-full"></div>
+                Reading Intent
+              </h3>
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Target size={14} weight="bold" className="text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="mb-2">
+                        <span className="text-xs font-medium text-slate-600 uppercase tracking-wider">Your Reading Purpose</span>
+                      </div>
+                      
+                      {isLoadingIntent ? (
+                        <div className="flex items-center gap-2 text-amber-600">
+                          <CircleNotch size={16} className="animate-spin" />
+                          <span className="text-sm">Loading intent...</span>
+                        </div>
+                      ) : isEditingIntent ? (
+                        <div className="space-y-3">
+                          <Textarea
+                            ref={intentTextareaRef}
+                            defaultValue={readingIntent}
+                            placeholder="What's your purpose for reading this document? (e.g., research for a project, learning new concepts, understanding for work...)"
+                            className="min-h-[100px] text-sm resize-none"
+                            onKeyDown={handleIntentKeyDown}
+                          />
+                          <div className="flex items-center justify-between">
+                            <div className="text-xs text-slate-500">
+                              Press <kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-xs font-mono">Cmd/Ctrl+Enter</kbd> to save, <kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-xs font-mono">Esc</kbd> to cancel
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setIsEditingIntent(false)}
+                                className="px-3 py-1 text-xs font-medium text-slate-600 hover:text-slate-800 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => {
+                                  const value = intentTextareaRef.current?.value || ''
+                                  saveReadingIntent(value)
+                                }}
+                                disabled={isLoadingIntent}
+                                className="px-3 py-1 text-xs font-medium bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors disabled:opacity-50"
+                              >
+                                {isLoadingIntent ? 'Saving...' : 'Save'}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div 
+                            className="text-sm text-slate-700 cursor-pointer hover:text-slate-900 transition-colors group"
+                            onClick={() => setIsEditingIntent(true)}
+                          >
+                            {readingIntent ? (
+                              <div className="min-h-[2rem] flex items-start">
+                                <span className="flex-1">{readingIntent}</span>
+                                <PencilSimple size={14} className="text-slate-400 group-hover:text-slate-600 ml-2 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            ) : (
+                              <div className="text-slate-400 italic flex items-center gap-2 py-2">
+                                <span>Click to add your reading purpose...</span>
+                                <PencilSimple size={14} className="text-slate-400 group-hover:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            )}
+                          </div>
+                          
+                          {intentError && (
+                            <div className="text-xs text-red-600 bg-red-50 p-2 rounded border border-red-200">
+                              {intentError}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
           
           {/* Document Statistics Section */}
           <section>

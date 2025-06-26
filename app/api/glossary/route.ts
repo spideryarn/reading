@@ -87,10 +87,14 @@ export async function POST(request: NextRequest) {
         entityCount: existingGlossary.content.entities.length
       }, 'Returning cached glossary')
       
+      // Check if cached result hit the entity limit (indicating more entities might be available)
+      const hasMore = existingGlossary.content.entities.length >= GLOSSARY_CONFIG.DEFAULT_ENTITY_LIMIT_PER_REQUEST
+      
       return NextResponse.json({ 
         entities: existingGlossary.content.entities,
         cached: true,
-        enhancementId: existingGlossary.id
+        enhancementId: existingGlossary.id,
+        hasMore
       })
     }
     
@@ -231,10 +235,14 @@ export async function POST(request: NextRequest) {
       correlationId
     })
     
+    // Check if we hit the entity limit (indicating more entities might be available)
+    const hasMore = validatedResponse.entities.length >= safeEntityLimit
+    
     return NextResponse.json({
       ...validatedResponse,
       cached: false,
-      enhancementId: null // Will be available on next request from cache
+      enhancementId: null, // Will be available on next request from cache
+      hasMore
     })
   } catch (error) {
     console.error('Error generating glossary:', error)

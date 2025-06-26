@@ -6,13 +6,13 @@
 
 import { 
   Article, ListBullets, ChatCircle, 
-  BookOpen, MagnifyingGlass, SidebarSimple, Terminal, HighlighterCircle, Tag, TwitterLogo
+  BookOpen, MagnifyingGlass, SidebarSimple, Terminal, HighlighterCircle, Tag, TwitterLogo, Robot
 } from '@phosphor-icons/react'
 import type { IconProps } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 // Navigation item definition
 interface NavigationItem {
@@ -31,6 +31,7 @@ interface VerticalIconNavProps {
   onTabClick: (tabId: string) => void
   onToggleCollapse: () => void
   onCommandPaletteToggle?: () => void
+  slug: string
   className?: string
 }
 
@@ -45,16 +46,15 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
       description: 'View the unmodified source document with original headings'
     }
   },
-  // Temporarily hidden due to bug - uncomment to restore
-  // {
-  //   id: 'ai-generated',
-  //   label: 'AI-generated',
-  //   icon: Robot,
-  //   tooltip: {
-  //     title: 'AI-Generated',
-  //     description: 'View document with AI-enhanced headings and structure'
-  //   }
-  // },
+  {
+    id: 'ai-generated',
+    label: 'AI-generated',
+    icon: Robot,
+    tooltip: {
+      title: 'AI-Generated',
+      description: 'View document with AI-enhanced headings and structure'
+    }
+  },
   {
     id: 'summary',
     label: 'Summary',
@@ -125,11 +125,17 @@ export function VerticalIconNav({
   onTabClick, 
   onToggleCollapse,
   onCommandPaletteToggle,
+  slug,
   className 
 }: VerticalIconNavProps) {
   // Platform-specific shortcut text with SSR-safe implementation
   const [shortcutText, setShortcutText] = useState('Ctrl+B') // Default to non-Mac
   const [commandShortcutText, setCommandShortcutText] = useState('Ctrl+K') // Default to non-Mac
+  
+  // URL building utility for clean tab URLs (Option A: clean state)
+  const buildTabUrl = useCallback((tabId: string) => {
+    return `/read/${slug}?tab=${tabId}`
+  }, [slug])
   
   useEffect(() => {
     const isMac = /Mac|iPod|iPhone|iPad/.test(window.navigator.platform)
@@ -276,10 +282,19 @@ export function VerticalIconNav({
               showIndicator={false}
               contentClassName="p-0 bg-transparent border-0 shadow-none"
             >
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onTabClick(item.id)}
+              <a
+                href={buildTabUrl(item.id)}
+                onClick={(e) => {
+                  if (e.metaKey || e.ctrlKey || e.shiftKey) {
+                    // Let browser handle modifier+click naturally:
+                    // - Cmd+click (Mac) / Ctrl+click (Windows/Linux): new tab
+                    // - Shift+click: new window
+                    return
+                  }
+                  // Prevent default navigation for regular clicks
+                  e.preventDefault()
+                  onTabClick(item.id)
+                }}
                 className={cn(
                   'h-10 w-10 sm:h-12 sm:w-12 rounded-none border-0',
                   'flex items-center justify-center',
@@ -287,6 +302,7 @@ export function VerticalIconNav({
                   'hover:bg-gray-50',
                   'transition-colors duration-200',
                   'focus:ring-2 focus:ring-blue-500 focus:ring-inset',
+                  'no-underline', // Remove default link underline
                   isActive && [
                     'bg-orange-50 text-orange-700', // Spideryarn orange theme
                     'border-r-2 border-orange-500',
@@ -300,7 +316,7 @@ export function VerticalIconNav({
                   weight="duotone" 
                   className="transition-colors duration-200"
                 />
-              </Button>
+              </a>
             </TooltipOrPopover>
           </div>
         )

@@ -50,6 +50,10 @@ interface ResizableDocumentLayoutProps {
   glossaryCached: boolean
   onLoadGlossary: () => void
   onResetGlossary?: () => void
+  // Progressive glossary loading
+  onLoadMoreGlossary?: () => void
+  hasMoreEntities?: boolean
+  isLoadingMoreGlossary?: boolean
   
   // Visibility tracking
   headingVisibility?: Map<string, 'visible' | 'not-visible'>
@@ -71,8 +75,11 @@ interface ResizableDocumentLayoutProps {
   aiHeadingsGenerated?: boolean
   summaryGenerated?: boolean
   glossaryGenerated?: boolean
+  
   ownerEmail?: string
   isPublic?: boolean | null
+  
+  // Slug for URL construction
   slug: string
   storagePath: string | null
   originalFileType?: string | null
@@ -97,6 +104,9 @@ function ResizableDocumentLayoutInner({
   glossaryCached,
   onLoadGlossary,
   onResetGlossary,
+  onLoadMoreGlossary,
+  hasMoreEntities,
+  isLoadingMoreGlossary,
   headingVisibility,
   onElementVisibilityChange,
   onElementClick,
@@ -412,8 +422,11 @@ function ResizableDocumentLayoutInner({
               isPublic={isPublic}
               slug={slug}
               storagePath={storagePath}
-              originalFileType={originalFileType}
-              uploadMetadata={uploadMetadata}
+              {...(originalFileType !== undefined ? { originalFileType } : {})}
+              {...(uploadMetadata !== undefined ? { uploadMetadata } : {})}
+              {...(onLoadMoreGlossary ? { onLoadMoreGlossary } : {})}
+              {...(hasMoreEntities !== undefined ? { hasMoreEntities } : {})}
+              {...(isLoadingMoreGlossary !== undefined ? { isLoadingMoreGlossary } : {})}
             />
             </div>
           </div>
@@ -460,6 +473,7 @@ function ResizableDocumentLayoutInner({
           onTabClick={handleIconNavTabClick}
           onToggleCollapse={handleToggleCollapse}
           onCommandPaletteToggle={handleCommandPaletteToggle}
+          slug={slug}
           className="shadow-lg"
         />
       </div>

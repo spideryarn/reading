@@ -17,19 +17,16 @@ describe('semantic-highlighting utilities', () => {
       const styles0 = getSemanticHighlightStyles(0)
       expect(styles0.backgroundColor).toBe('rgba(219, 138, 69, 0)')
       expect(styles0.borderLeft).toBe('2px solid rgba(219, 138, 69, 0)')
-      expect(styles0.fontWeight).toBe('normal')
       
       // Test 50% confidence
       const styles50 = getSemanticHighlightStyles(50)
       expect(styles50.backgroundColor).toBe('rgba(219, 138, 69, 0.5)')
       expect(styles50.borderLeft).toBe('2px solid rgba(219, 138, 69, 0.75)')
-      expect(styles50.fontWeight).toBe('normal')
       
       // Test 100% confidence
       const styles100 = getSemanticHighlightStyles(100)
       expect(styles100.backgroundColor).toBe('rgba(219, 138, 69, 1)')
       expect(styles100.borderLeft).toBe('2px solid rgba(219, 138, 69, 1)')
-      expect(styles100.fontWeight).toBe(700)
     })
 
     it('should handle out-of-range values', () => {
@@ -40,13 +37,6 @@ describe('semantic-highlighting utilities', () => {
       // Values above 100 should be clamped to 100
       const stylesOver = getSemanticHighlightStyles(150)
       expect(stylesOver.backgroundColor).toBe('rgba(219, 138, 69, 1)')
-      expect(stylesOver.fontWeight).toBe(700)
-    })
-
-    it('should apply bold font weight for high confidence (80%+)', () => {
-      expect(getSemanticHighlightStyles(79).fontWeight).toBe('normal')
-      expect(getSemanticHighlightStyles(80).fontWeight).toBe(700)
-      expect(getSemanticHighlightStyles(90).fontWeight).toBe(700)
     })
 
     it('should scale border opacity higher than background opacity', () => {
@@ -117,7 +107,7 @@ describe('semantic-highlighting utilities', () => {
       const highMapping = mapping.find(m => m.confidence === 85)
       expect(highMapping?.confidence).toBe(85)
       expect(highMapping?.intensity).toBe('Very High')
-      expect(highMapping?.styles.fontWeight).toBe(700)
+      expect(highMapping?.styles.backgroundColor).toBe('rgba(219, 138, 69, 0.85)')
     })
 
     it('should cover all intensity levels', () => {

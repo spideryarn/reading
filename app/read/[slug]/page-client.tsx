@@ -231,9 +231,12 @@ export default function DocumentPageClient({
       setShowGlossary(true)
       
       // Determine if more entities might be available
-      // If we got exactly the limit, there might be more
+      // Use API's hasMore signal if available, otherwise use entity count logic
       const entitiesReceived = data.entities?.length || 0
-      setHasMoreEntities(!data.cached && entitiesReceived >= GLOSSARY_CONFIG.DEFAULT_ENTITY_LIMIT_PER_REQUEST)
+      const hasMore = data.hasMore !== undefined 
+        ? data.hasMore 
+        : entitiesReceived >= GLOSSARY_CONFIG.DEFAULT_ENTITY_LIMIT_PER_REQUEST
+      setHasMoreEntities(hasMore)
     } catch (error) {
       console.error('Error fetching glossary:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate glossary'
@@ -278,8 +281,11 @@ export default function DocumentPageClient({
       setGlossaryEntities(prev => processEntitiesForProgressive(prev, newEntities, mutatedDocument))
       
       // Update hasMoreEntities based on response
-      // If we got fewer entities than requested, no more available
-      setHasMoreEntities(newEntities.length >= GLOSSARY_CONFIG.MAX_ENTITIES_PER_REQUEST)
+      // Use API's hasMore signal if available, otherwise use entity count logic
+      const hasMore = data.hasMore !== undefined 
+        ? data.hasMore 
+        : newEntities.length >= GLOSSARY_CONFIG.MAX_ENTITIES_PER_REQUEST
+      setHasMoreEntities(hasMore)
       
     } catch (error) {
       console.error('Error fetching more glossary entries:', error)

@@ -106,9 +106,40 @@ The system uses intelligent push vs replace decisions:
 | Term selection | Push | Specific content navigation |
 | UI preferences | Replace | Transient state changes |
 
+### Input Responsiveness Pattern
+
+For input fields bound to URL state, we use a dual-state approach to ensure responsive typing while maintaining URL as the single source of truth:
+
+```typescript
+// Pattern: Local input value + URL state synchronization
+// Used in search and highlights inputs to prevent input lag
+
+// Local state for immediate UI responsiveness
+const [inputValue, setInputValue] = useState(urlValue || '')
+
+// Sync local input when URL changes (browser navigation, etc.)
+useEffect(() => {
+  setInputValue(urlValue || '')
+}, [urlValue])
+
+// Input handler updates both local and URL state
+const handleInputChange = useCallback((value: string) => {
+  setInputValue(value)        // Immediate UI update
+  setUrlValue(value)          // Update URL state
+}, [setUrlValue])
+
+// Input element uses local state for responsiveness
+<input 
+  value={inputValue}
+  onChange={e => handleInputChange(e.target.value)}
+/>
+```
+
+This pattern prevents the input lag and refresh issues that can occur when URL state synchronization interferes with typing.
+
 ### Search Pattern with Debouncing
 
-Search implements a special pattern to handle real-time typing vs deliberate submission:
+Search implements additional debouncing for performance:
 
 ```typescript
 // In use-tool-url-state.ts
@@ -203,25 +234,36 @@ useEffect(() => {
 
 ### Clearing URL State
 
-When clearing tool state, also clear URL parameters:
+When clearing tool state, clear both local input state and URL parameters:
 
 ```typescript
 const clearHighlights = useCallback(() => {
   // Clear component state
   setHighlights([])
+  setInputValue('')          // Clear local input state
   // Clear URL state
   setHighlight(null)
 }, [setHighlight])
+
+// Delete button should clear both states
+<button onClick={() => {
+  setInputValue('')
+  setUrlValue(null)
+}}>
+  Clear
+</button>
 ```
 
 ## Gotchas & Best Practices
 
 1. **Single Source of Truth** - Always navigate tabs via `useNavigateToTab()`, never `actions.setActiveTab()`
 2. **React Infinite Loops** - URL is the source of truth; context only mirrors it to prevent loops
-3. **Context Hierarchy** - Ensure URL state hooks are called within appropriate React context providers
-4. **Map Comparisons** - When syncing Maps to URL state, compare content not references
-5. **TypeScript Types** - Use nuqs parsers for type safety instead of manual parsing
-6. **Empty States** - Handle null/undefined URL parameters gracefully with defaults
+3. **Input Responsiveness** - Use local state pattern for inputs to prevent typing lag and refresh issues
+4. **Clear Both States** - When clearing inputs, clear both local input state and URL state
+5. **Context Hierarchy** - Ensure URL state hooks are called within appropriate React context providers
+6. **Map Comparisons** - When syncing Maps to URL state, compare content not references
+7. **TypeScript Types** - Use nuqs parsers for type safety instead of manual parsing
+8. **Empty States** - Handle null/undefined URL parameters gracefully with defaults
 
 ## Limitations
 
