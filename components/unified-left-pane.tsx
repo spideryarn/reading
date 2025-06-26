@@ -183,8 +183,10 @@ function GlossaryDisplay({
   isLoadingMoreGlossary?: boolean
   onLoadMoreGlossary?: () => void
 }) {
-  const { actions } = useDocumentCommunication()
+  const { state: docState, actions } = useDocumentCommunication()
   const { term: searchTerm, setTerm: setSearchTerm } = useGlossaryUrlState()
+  const listRef = useRef<HTMLDivElement>(null)
+  const lastScrolledTermRef = useRef<string | null>(null)
   
   // Sorting state for entities
   const [sortBy, setSortBy] = useState<'position' | 'difficulty' | 'centrality'>('position')
@@ -242,9 +244,39 @@ function GlossaryDisplay({
     return sortEntities(filtered, sortBy)
   }, [entities, searchTerm, sortBy, filterEntities, sortEntities])
   
-  // Note: We don't clear search when entities reload since URL state should persist
-  
-  
+  // Effect: When another pane highlights a glossary term, scroll it into view here
+  useEffect(() => {
+    const term = docState.highlightedTerm
+    if (!term || !listRef.current) return
+    // Avoid repeated scrolling for the same term
+    if (term === lastScrolledTermRef.current) return
+    const lower = term.toLowerCase()
+    // Find index of the entity (names or aliases match)
+    const targetIndex = processedEntities.findIndex(entity => {
+      if (entity.name.toLowerCase() === lower) return true
+      return entity.aliases.some(alias => alias.toLowerCase() === lower)
+    })
+
+    // If entity not visible due to active search filter, clear filter once
+    if (targetIndex === -1 && searchTerm) {
+      // Clear search to reveal full list, then effect will re-run
+      setSearchTerm(null)
+      return
+    }
+
+    if (targetIndex !== -1) {
+      const containerChildren = Array.from(listRef.current.children) as HTMLElement[]
+      const targetEl = containerChildren[targetIndex]
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        // Temporary highlight animation
+        targetEl.classList.add('animate-highlight')
+        setTimeout(() => targetEl.classList.remove('animate-highlight'), 2000)
+        lastScrolledTermRef.current = term
+      }
+    }
+  }, [docState.highlightedTerm, processedEntities, searchTerm, setSearchTerm])
+
   const handleEntityClick = (entity: Entity) => {
     const elementId = findFirstOccurrence(entity, elements)
     if (elementId) {
@@ -370,7 +402,7 @@ function GlossaryDisplay({
             </p>
           </div>
         ) : (
-          <div className="space-y-4 p-4">
+          <div className="space-y-4 p-4" ref={listRef}>
             {processedEntities.map((entity, index) => {
         const hasOccurrence = findFirstOccurrence(entity, elements) !== null
         

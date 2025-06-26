@@ -13,6 +13,7 @@ import { DocumentParser } from '@/lib/services/document-parser'
 import { getSemanticHighlightStyles } from '@/lib/utils/semantic-highlighting'
 import Mark from 'mark.js'
 import { useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
+import { useDocumentCommunication } from '@/lib/context/document-communication-context'
 import type { Entity } from '@/lib/types/entity'
 
 // Semantic highlight interface
@@ -64,6 +65,7 @@ export function SimpleDocumentViewer({
   // Glossary highlighting
   const glossaryMarkInstanceRef = useRef<Mark | null>(null)
   const navigateToTab = useNavigateToTab()
+  const { actions: commActions } = useDocumentCommunication()
   
   // Element visibility tracking
   const { observeElement, unobserveElement } = useElementVisibility(onElementVisibilityChange)
@@ -109,11 +111,11 @@ export function SimpleDocumentViewer({
   
   // Handle glossary click events
   const handleGlossaryClick = useCallback((entityName: string) => {
-    // Switch to glossary tab and scroll to entity
+    // Navigate to the Glossary tab via URL (single-source-of-truth)
     navigateToTab('glossary')
-    // Note: Scrolling to specific entity in glossary pane will be implemented later
-    console.log(`Glossary click: ${entityName}`) // Temporary log to use entityName
-  }, [navigateToTab])
+    // Notify the unified left pane which term should be brought into view
+    commActions.highlightTerm(entityName)
+  }, [navigateToTab, commActions])
   
   // Apply glossary highlights when entities change (but not on every re-render)
   useEffect(() => {
@@ -157,6 +159,7 @@ export function SimpleDocumentViewer({
             if (entity) {
               // Store entity reference for click handling and tooltip data
               element.setAttribute('data-glossary-entity', entity.name)
+              element.setAttribute('data-glossary-matched-text', matchedText)
               element.setAttribute('data-glossary-explanation', entity.brief_explanation)
               element.setAttribute('data-glossary-long-explanation', entity.long_explanation || '')
               element.style.cursor = 'pointer'
@@ -184,14 +187,27 @@ export function SimpleDocumentViewer({
       if (target.classList.contains('highlight-glossary')) {
         const explanation = target.getAttribute('data-glossary-explanation')
         const longExplanation = target.getAttribute('data-glossary-long-explanation')
+        const entityName = target.getAttribute('data-glossary-entity')
+        const matchedText = target.getAttribute('data-glossary-matched-text')
         
         if (explanation || longExplanation) {
+          // Determine if we should prepend the primary name
+          const isAlias = entityName && matchedText && 
+                         entityName.toLowerCase() !== matchedText.toLowerCase()
+          
           // Create tooltip element
           const tooltip = document.createElement('div')
           tooltip.className = 'glossary-tooltip fixed z-50 max-w-md text-left bg-white border border-gray-200 rounded-lg shadow-lg p-4'
+          
+          // Build tooltip content
+          let tooltipContent = longExplanation || explanation
+          if (isAlias && entityName) {
+            tooltipContent = `<strong>${entityName}:</strong> ${tooltipContent}`
+          }
+          
           tooltip.innerHTML = `
             <div class="text-xs text-gray-700 leading-relaxed">
-              ${longExplanation || explanation}
+              ${tooltipContent}
             </div>
           `
           

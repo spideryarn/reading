@@ -30,6 +30,7 @@ import { DocumentCommunicationProvider, useDocumentCommunication } from '@/lib/c
 import { useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
 import type { TabValue } from '@/lib/tools/url-state-types'
 import type { Entity } from '@/lib/types/entity'
+import { UI_CONFIG } from '@/lib/config'
 
 interface ResizableDocumentLayoutProps {
   // Document data
@@ -143,7 +144,7 @@ function ResizableDocumentLayoutInner({
   
   // State management
   const [isLeftPaneCollapsed, setIsLeftPaneCollapsed] = useState(false)
-  const [savedLeftPaneSize, setSavedLeftPaneSize] = useState(30) // Remember the last size
+  const [savedLeftPaneSize, setSavedLeftPaneSize] = useState(UI_CONFIG.DEFAULT_LEFT_PANE_WIDTH_PERCENT) // Remember the last size
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
   const leftPanelRef = useRef<ImperativePanelHandle>(null)
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -237,7 +238,7 @@ function ResizableDocumentLayoutInner({
           leftPanelRef.current.resize(savedLeftPaneSize)
         }
       } else {
-        leftPanelRef.current.resize(savedLeftPaneSize || 30)
+        leftPanelRef.current.resize(savedLeftPaneSize || UI_CONFIG.DEFAULT_LEFT_PANE_WIDTH_PERCENT)
       }
       setIsLeftPaneCollapsed(false)
     } else {
@@ -275,7 +276,7 @@ function ResizableDocumentLayoutInner({
             leftPanelRef.current.resize(savedLeftPaneSize)
           }
         } else {
-          leftPanelRef.current.resize(savedLeftPaneSize || 30)
+          leftPanelRef.current.resize(savedLeftPaneSize || UI_CONFIG.DEFAULT_LEFT_PANE_WIDTH_PERCENT)
         }
       }
       setIsLeftPaneCollapsed(false)
@@ -384,7 +385,7 @@ function ResizableDocumentLayoutInner({
            * We still remember user changes in `savedLeftPaneSize`, but only use that
            * value when we imperatively resize/expand the pane.
            */
-          defaultSize={30}
+          defaultSize={UI_CONFIG.DEFAULT_LEFT_PANE_WIDTH_PERCENT}
           minSize={20}
           maxSize={80}
           collapsedSize={0}
@@ -457,7 +458,7 @@ function ResizableDocumentLayoutInner({
         <ResizablePanel 
           id="right-pane"
           order={2}
-          defaultSize={70}
+          defaultSize={100 - UI_CONFIG.DEFAULT_LEFT_PANE_WIDTH_PERCENT}
           className="h-full relative"
         >
           <div className={`h-full ${isLeftPaneCollapsed ? 'pl-0' : 'pl-16'} ${isMobile ? 'mobile-compact mobile-heading-size mobile-body-text' : ''} ${isLandscape ? 'landscape-compact landscape-spacing' : ''}`}>
