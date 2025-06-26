@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Command,
@@ -94,8 +94,6 @@ import { generateCommandsFromRegistry } from '@/lib/tools/command-generation'
 import { getAllTools } from '@/lib/tools/registry'
 import { createClient } from '@/lib/supabase/client'
 import { useDeleteDocument, type DocumentMetadata } from '@/lib/hooks/use-delete-document'
-import { useMemo } from 'react'
-
 
 // Command definition interfaces
 interface Command {
@@ -155,7 +153,7 @@ interface CommandPaletteProps {
 
 export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPaletteProps) {
   const [internalOpen, setInternalOpen] = useState(false)
-  const [searchValue, setSearchValue] = useState('')
+  const [search, setSearch] = useState('')
   
   // Use external control if provided, otherwise use internal state
   const open = externalOpen !== undefined ? externalOpen : internalOpen
@@ -210,48 +208,22 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
   const isMac = typeof window !== 'undefined' && 
                /Mac|iPod|iPhone|iPad/.test(window.navigator.platform)
 
-  // Custom filter for more precise search matching
-  const customFilter = useCallback((value: string, search: string, keywords?: string[]) => {
-    const searchLower = search.toLowerCase().trim()
-    const valueLower = value.toLowerCase()
-    
-    // Empty search shows all
-    if (!searchLower) return 1
-    
-    // Exact match gets highest score
-    if (valueLower === searchLower) return 1
-    
-    // Starts with search gets high score
-    if (valueLower.startsWith(searchLower)) return 0.9
-    
-    // Check keywords for exact/prefix matches
-    if (keywords) {
-      for (const keyword of keywords) {
-        const keywordLower = keyword.toLowerCase()
-        if (keywordLower === searchLower) return 0.8
-        if (keywordLower.startsWith(searchLower)) return 0.7
-      }
-    }
-    
-    // Contains match but require minimum density to avoid distant fuzzy matches
-    if (valueLower.includes(searchLower)) {
-      const density = searchLower.length / valueLower.length
-      return density >= 0.3 ? 0.5 : 0
-    }
-    
-    // Check keywords for contains matches (lower priority)
-    if (keywords) {
-      for (const keyword of keywords) {
-        const keywordLower = keyword.toLowerCase()
-        if (keywordLower.includes(searchLower)) {
-          const density = searchLower.length / keywordLower.length
-          return density >= 0.4 ? 0.3 : 0
-        }
-      }
-    }
-    
-    // No match
-    return 0
+  // Start-of-word prefix filter: every search token must be the prefix of at
+  // least one word in the command value.  Keeps matching strict ("del" matches
+  // "Delete Document" but NOT "Models"), yet still allows multi-word initials
+  // like "v o" → "View Original".
+  const startWordFilter = useCallback((value: string, search: string) => {
+    const query = search.trim().toLowerCase()
+    if (!query) return 1 // show all when no query
+
+    const tokens = query.split(/\s+/)
+    const words = value.toLowerCase().split(/\s+/)
+
+    const allTokensMatch = tokens.every(token =>
+      words.some(word => word.startsWith(token))
+    )
+
+    return allTokensMatch ? 1 : 0
   }, [])
 
   // Detect what matched for highlighting
@@ -313,10 +285,10 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
 
   // Group commands by quality for better organization
   const groupCommandsByQuality = useCallback((commands: Command[]) => {
-    const withSearch = commands.filter(cmd => cmd.matchInfo && searchValue.trim())
-    const withoutSearch = commands.filter(cmd => !cmd.matchInfo || !searchValue.trim())
+    const withSearch = commands.filter(cmd => cmd.matchInfo && search.trim())
+    const withoutSearch = commands.filter(cmd => !cmd.matchInfo || !search.trim())
     
-    if (!searchValue.trim()) {
+    if (!search.trim()) {
       return { highQuality: withoutSearch, lowQuality: [] }
     }
     
@@ -331,7 +303,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
     const lowQuality = sortedMatches.filter(cmd => (cmd.matchInfo?.score ?? 0) < 0.6)
     
     return { highQuality, lowQuality }
-  }, [searchValue])
+  }, [search])
 
   // Generate dynamic tool commands from registry
   const generateToolCommands = useCallback((): Command[] => {
@@ -524,9 +496,9 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
     
     return baseCommands.map(command => ({
       ...command,
-      matchInfo: detectMatch(command, searchValue) || undefined
+      matchInfo: detectMatch(command, search) || undefined
     }))
-  }, [searchValue, detectMatch, generateToolCommands, documentSlug, isMac, navigateWithErrorHandling, handleDeleteCommand, user, handleLogout])
+  }, [search, detectMatch, generateToolCommands, documentSlug, isMac, navigateWithErrorHandling, handleDeleteCommand, user, handleLogout])
 
   // Filter commands based on conditions
   const availableCommands = enhancedCommands.filter(
@@ -613,18 +585,18 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
   return (
     <>
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <Command filter={customFilter}>
+        <Command filter={startWordFilter}>
           <CommandInput 
             placeholder="Type a command or search..." 
-            onValueChange={setSearchValue}
-            value={searchValue}
+            onValueChange={setSearch}
+            value={search}
           />
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
             
             {sortedCategories.map(({ category, commands: categoryCommands }) => {
               const { highQuality, lowQuality } = groupCommandsByQuality(categoryCommands || [])
-              const showQualitySeparation = searchValue.trim() && highQuality.length > 0 && lowQuality.length > 0
+              const showQualitySeparation = search.trim() && highQuality.length > 0 && lowQuality.length > 0
               
               return (
                 <CommandGroup key={category.id} heading={category.name}>
@@ -634,9 +606,9 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
                     return (
                       <CommandItem
                         key={command.id}
+                        value={[command.name, ...(command.keywords ?? [])].join(' ')}
                         onSelect={() => executeCommand(command)}
                         className="flex items-center gap-2"
-                        {...(command.keywords && { keywords: command.keywords })}
                       >
                         <div className="flex items-center gap-2 flex-1">
                           {Icon && <Icon size={16} className="text-gray-500" />}
@@ -663,9 +635,9 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
                         return (
                           <CommandItem
                             key={command.id}
+                            value={[command.name, ...(command.keywords ?? [])].join(' ')}
                             onSelect={() => executeCommand(command)}
                             className="flex items-center gap-2 opacity-75"
-                            {...(command.keywords && { keywords: command.keywords })}
                           >
                             <div className="flex items-center gap-2 flex-1">
                               {Icon && <Icon size={16} className="text-gray-500" />}
