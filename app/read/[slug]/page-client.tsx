@@ -31,6 +31,7 @@ interface DocumentPageClientProps {
   uploadMetadata?: Record<string, unknown>
   documentCreatedAt: string
   documentSourceUrl?: string | null
+  wordCount: number | null
   aiHeadingsGenerated?: boolean
   summaryGenerated?: boolean
   glossaryGenerated?: boolean
@@ -48,6 +49,7 @@ export default function DocumentPageClient({
   originalFileType,
   uploadMetadata,
   documentCreatedAt,
+  wordCount,
   documentSourceUrl,
   aiHeadingsGenerated = false,
   summaryGenerated = false,
@@ -66,6 +68,10 @@ export default function DocumentPageClient({
   // Load More functionality state
   const [hasMoreEntities, setHasMoreEntities] = useState(true)
   const [isLoadingMoreGlossary, setIsLoadingMoreGlossary] = useState(false)
+  
+  // Auto-trigger functionality state
+  const [isAutoGenerating, setIsAutoGenerating] = useState(false)
+  const abortControllerRef = useRef<AbortController | null>(null)
   
   // Real-time document title state
   const [currentTitle, setCurrentTitle] = useState(initialTitle)
@@ -189,6 +195,11 @@ export default function DocumentPageClient({
       setGlossaryError(null)
       setHasMoreEntities(true)
       setIsLoadingMoreGlossary(false)
+      setIsAutoGenerating(false)
+      
+      // Cancel any in-flight requests
+      abortControllerRef.current?.abort()
+      abortControllerRef.current = null
       
       console.log('Glossary reset successfully')
     } catch (error) {
@@ -196,6 +207,95 @@ export default function DocumentPageClient({
       setGlossaryError('Failed to reset glossary')
     }
   }
+
+  // Fetch additional glossary entities when "Load More" is clicked or auto-triggered
+  const fetchMoreGlossary = useCallback(async (isAutoTrigger = false) => {
+    // Create abort controller for this request
+    const abortController = new AbortController()
+    abortControllerRef.current = abortController
+    
+    setIsLoadingMoreGlossary(true)
+    setGlossaryError(null)
+    
+    if (isAutoTrigger) {
+      setIsAutoGenerating(true)
+    }
+    
+    try {
+      const response = await fetch('/api/glossary', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          content: html,
+          documentId: documentId,
+          max_entities: isAutoTrigger ? GLOSSARY_CONFIG.GLOSSARY_MAX_ENTITIES_PER_BATCH : GLOSSARY_CONFIG.MAX_ENTITIES_PER_REQUEST,
+          existing_entities: glossaryEntities // Pass current entities to avoid duplicates
+        }),
+        signal: abortController.signal
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      const newEntities = data.entities || []
+      console.log(`${isAutoTrigger ? 'Auto-trigger' : 'Load More'} API response: ${newEntities.length} additional entities`)
+      
+      // Merge and sort entities by document position
+      setGlossaryEntities(prev => processEntitiesForProgressive(prev, newEntities, mutatedDocument))
+      
+      // Update hasMoreEntities based on response - prioritize more_entities_available from LLM
+      const hasMore = data.more_entities_available !== undefined 
+        ? data.more_entities_available 
+        : (data.hasMore !== undefined 
+          ? data.hasMore 
+          : newEntities.length >= (isAutoTrigger ? GLOSSARY_CONFIG.GLOSSARY_MAX_ENTITIES_PER_BATCH : GLOSSARY_CONFIG.MAX_ENTITIES_PER_REQUEST))
+      setHasMoreEntities(hasMore)
+      
+      // Auto-trigger logic: continue if enabled, more entities available, and under limit
+      if (isAutoTrigger && GLOSSARY_CONFIG.GLOSSARY_AUTO_TRIGGER_ENABLED && hasMore) {
+        const currentEntityCount = (glossaryEntities.length + newEntities.length)
+        if (currentEntityCount < GLOSSARY_CONFIG.MAX_TOTAL_ENTITY_LIMIT) {
+          // Schedule next auto-trigger after a brief delay
+          setTimeout(() => {
+            if (abortControllerRef.current === abortController && !abortController.signal.aborted) {
+              fetchMoreGlossary(true) // Recursive auto-trigger
+            }
+          }, 100) // Small delay to avoid overwhelming the API
+        } else {
+          console.log('Auto-generation stopped: entity limit reached')
+          setIsAutoGenerating(false)
+        }
+      } else if (isAutoTrigger) {
+        console.log('Auto-generation completed: no more entities available')
+        setIsAutoGenerating(false)
+      }
+      
+    } catch (error) {
+      // Handle abort gracefully
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('Request aborted by user')
+        return
+      }
+      
+      console.error('Error fetching more glossary entries:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load more entries'
+      setGlossaryError(errorMessage)
+      
+      if (isAutoTrigger) {
+        setIsAutoGenerating(false)
+      }
+    } finally {
+      setIsLoadingMoreGlossary(false)
+      if (abortControllerRef.current === abortController) {
+        abortControllerRef.current = null
+      }
+    }
+  }, [html, documentId, glossaryEntities, mutatedDocument])
 
   // Fetch glossary entities when requested
   const fetchGlossary = async () => {
@@ -230,13 +330,25 @@ export default function DocumentPageClient({
       setGlossaryCached(data.cached || false)
       setShowGlossary(true)
       
-      // Determine if more entities might be available
-      // Use API's hasMore signal if available, otherwise use entity count logic
+      // Determine if more entities might be available - prioritize more_entities_available from LLM
       const entitiesReceived = data.entities?.length || 0
-      const hasMore = data.hasMore !== undefined 
-        ? data.hasMore 
-        : entitiesReceived >= GLOSSARY_CONFIG.DEFAULT_ENTITY_LIMIT_PER_REQUEST
+      const hasMore = data.more_entities_available !== undefined 
+        ? data.more_entities_available 
+        : (data.hasMore !== undefined 
+          ? data.hasMore 
+          : entitiesReceived >= GLOSSARY_CONFIG.DEFAULT_ENTITY_LIMIT_PER_REQUEST)
       setHasMoreEntities(hasMore)
+      
+      // Auto-trigger logic: start auto-generation if enabled and more entities available
+      if (GLOSSARY_CONFIG.GLOSSARY_AUTO_TRIGGER_ENABLED && hasMore && !data.cached) {
+        const currentEntityCount = entitiesReceived
+        if (currentEntityCount < GLOSSARY_CONFIG.MAX_TOTAL_ENTITY_LIMIT) {
+          // Start auto-generation after initial load
+          setTimeout(() => {
+            fetchMoreGlossary(true)
+          }, 500) // Brief delay after initial load
+        }
+      }
     } catch (error) {
       console.error('Error fetching glossary:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate glossary'
@@ -250,51 +362,13 @@ export default function DocumentPageClient({
     }
   }
 
-  // Fetch additional glossary entities when "Load More" is clicked
-  const fetchMoreGlossary = async () => {
-    setIsLoadingMoreGlossary(true)
-    setGlossaryError(null)
-    try {
-      const response = await fetch('/api/glossary', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          content: html,
-          documentId: documentId,
-          max_entities: GLOSSARY_CONFIG.MAX_ENTITIES_PER_REQUEST,
-          existing_entities: glossaryEntities // Pass current entities to avoid duplicates
-        }),
-      })
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
-      }
-      
-      const data = await response.json()
-      const newEntities = data.entities || []
-      console.log(`Load More API response: ${newEntities.length} additional entities`)
-      
-      // Merge and sort entities by document position
-      setGlossaryEntities(prev => processEntitiesForProgressive(prev, newEntities, mutatedDocument))
-      
-      // Update hasMoreEntities based on response
-      // Use API's hasMore signal if available, otherwise use entity count logic
-      const hasMore = data.hasMore !== undefined 
-        ? data.hasMore 
-        : newEntities.length >= GLOSSARY_CONFIG.MAX_ENTITIES_PER_REQUEST
-      setHasMoreEntities(hasMore)
-      
-    } catch (error) {
-      console.error('Error fetching more glossary entries:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Failed to load more entries'
-      setGlossaryError(errorMessage)
-    } finally {
-      setIsLoadingMoreGlossary(false)
-    }
-  }
+  // Cancel auto-generation and any in-flight requests
+  const handleCancelAutoGeneration = useCallback(() => {
+    abortControllerRef.current?.abort()
+    setIsAutoGenerating(false)
+    setIsLoadingMoreGlossary(false)
+    console.log('Auto-generation cancelled by user')
+  }, [])
 
   // Subscribe to TITLE updates once (on mount)
   useEffect(() => {
@@ -356,7 +430,9 @@ export default function DocumentPageClient({
         onResetGlossary={resetGlossary}
         hasMoreEntities={hasMoreEntities}
         isLoadingMoreGlossary={isLoadingMoreGlossary}
-        onLoadMoreGlossary={fetchMoreGlossary}
+        onLoadMoreGlossary={() => fetchMoreGlossary(false)}
+        isAutoGenerating={isAutoGenerating}
+        onCancelAutoGeneration={handleCancelAutoGeneration}
         headingVisibility={headingVisibility}
         onElementVisibilityChange={handleElementVisibilityChange}
         onElementClick={handleElementClick}
@@ -367,6 +443,7 @@ export default function DocumentPageClient({
         documentTitle={currentTitle}
         documentCreatedAt={documentCreatedAt}
         documentSourceUrl={documentSourceUrl ?? null}
+        wordCount={wordCount}
         aiHeadingsGenerated={aiHeadingsGenerated}
         summaryGenerated={summaryGenerated}
         glossaryGenerated={glossaryGenerated}

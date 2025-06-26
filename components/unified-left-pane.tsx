@@ -81,6 +81,10 @@ interface UnifiedLeftPaneProps {
   hasMoreEntities?: boolean
   isLoadingMoreGlossary?: boolean
   
+  // Auto-generation state
+  isAutoGenerating?: boolean
+  onCancelAutoGeneration?: () => void
+  
   // For chat context
   documentContext: string
   
@@ -96,6 +100,7 @@ interface UnifiedLeftPaneProps {
   documentTitle: string
   documentCreatedAt: string
   documentSourceUrl?: string | null
+  wordCount: number | null
   aiHeadingsGenerated?: boolean
   summaryGenerated?: boolean
   glossaryGenerated?: boolean
@@ -181,6 +186,9 @@ function GlossaryDisplay({
   const { actions } = useDocumentCommunication()
   const { term: searchTerm, setTerm: setSearchTerm } = useGlossaryUrlState()
   
+  // Sorting state for entities
+  const [sortBy, setSortBy] = useState<'position' | 'difficulty' | 'centrality'>('position')
+  
   // Filter entities based on search term
   const filterEntities = useCallback((entities: Entity[], searchTerm?: string): Entity[] => {
     if (!searchTerm?.trim()) return entities
@@ -200,10 +208,39 @@ function GlossaryDisplay({
     []
   )
   
-  // Apply search and get filtered entities
-  const filteredEntities = useMemo(() => {
-    return filterEntities(entities, searchTerm)
-  }, [entities, searchTerm, filterEntities])
+  // Sort entities function
+  const sortEntities = useCallback((entities: Entity[], sortBy: 'position' | 'difficulty' | 'centrality') => {
+    return [...entities].sort((a, b) => {
+      switch (sortBy) {
+        case 'difficulty':
+          // Sort by difficulty (highest first) - prioritize entities that are hardest to understand
+          const diffA = a.difficulty ?? 0
+          const diffB = b.difficulty ?? 0
+          return diffB - diffA
+        case 'centrality':
+          // Sort by centrality (highest first) - prioritize entities most important to document
+          const centA = a.centrality ?? 0
+          const centB = b.centrality ?? 0
+          return centB - centA
+        case 'position':
+        default:
+          // Sort by document position using first occurrence
+          const posA = findFirstOccurrence(a, elements) ? 
+            elements.find(el => el.id === findFirstOccurrence(a, elements))?.position ?? Infinity : 
+            Infinity
+          const posB = findFirstOccurrence(b, elements) ? 
+            elements.find(el => el.id === findFirstOccurrence(b, elements))?.position ?? Infinity : 
+            Infinity
+          return posA - posB
+      }
+    })
+  }, [elements])
+
+  // Apply search and sorting to get filtered entities
+  const processedEntities = useMemo(() => {
+    const filtered = filterEntities(entities, searchTerm)
+    return sortEntities(filtered, sortBy)
+  }, [entities, searchTerm, sortBy, filterEntities, sortEntities])
   
   // Note: We don't clear search when entities reload since URL state should persist
   
@@ -250,16 +287,54 @@ function GlossaryDisplay({
         {/* Results indicator */}
         {searchTerm?.trim() && (
           <div className="mt-2 text-sm text-gray-600">
-            {filteredEntities.length === 0 ? (
+            {processedEntities.length === 0 ? (
               <span className="text-red-600">No matches found</span>
             ) : (
               <span className="text-blue-600 bg-blue-50 px-2 py-1 rounded-full font-medium">
-                {filteredEntities.length} of {entities.length} {filteredEntities.length === 1 ? 'entry' : 'entries'}
+                {processedEntities.length} of {entities.length} {processedEntities.length === 1 ? 'entry' : 'entries'}
               </span>
             )}
           </div>
         )}
       </div>
+      
+      {/* Sort toggle - show when there are multiple entities and we have scoring data */}
+      {entities.length > 1 && entities.some(e => e.difficulty !== undefined || e.centrality !== undefined) && (
+        <div className="px-4 pb-4 border-b border-gray-200">
+          <div className="flex bg-gray-50 p-1 rounded-lg">
+            <button
+              onClick={() => setSortBy('position')}
+              className={`flex-1 px-2 py-1 text-xs font-medium rounded transition-all ${
+                sortBy === 'position'
+                  ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Position
+            </button>
+            <button
+              onClick={() => setSortBy('difficulty')}
+              className={`flex-1 px-2 py-1 text-xs font-medium rounded transition-all ${
+                sortBy === 'difficulty'
+                  ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Difficulty
+            </button>
+            <button
+              onClick={() => setSortBy('centrality')}
+              className={`flex-1 px-2 py-1 text-xs font-medium rounded transition-all ${
+                sortBy === 'centrality'
+                  ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Centrality
+            </button>
+          </div>
+        </div>
+      )}
       
       {/* Load More button - Top position */}
       {hasMoreEntities && onLoadMoreGlossary && (
@@ -284,7 +359,7 @@ function GlossaryDisplay({
       
       {/* Entities list */}
       <div className="flex-1 overflow-y-auto">
-        {filteredEntities.length === 0 && searchTerm.trim() ? (
+        {processedEntities.length === 0 && searchTerm?.trim() ? (
           <div className="flex flex-col items-center justify-center p-8 text-center">
             <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mb-4">
               <MagnifyingGlass size={24} weight="bold" className="text-gray-400" />
@@ -296,7 +371,7 @@ function GlossaryDisplay({
           </div>
         ) : (
           <div className="space-y-4 p-4">
-            {filteredEntities.map((entity, index) => {
+            {processedEntities.map((entity, index) => {
         const hasOccurrence = findFirstOccurrence(entity, elements) !== null
         
         return (
@@ -336,9 +411,31 @@ function GlossaryDisplay({
             </div>
             
             {entity.datetime && (
-              <div className="flex items-center gap-1.5 text-xs text-gray-600 font-medium bg-gray-50 px-2 py-1 rounded-md w-fit">
+              <div className="flex items-center gap-1.5 text-xs text-gray-600 font-medium bg-gray-50 px-2 py-1 rounded-md w-fit mb-3">
                 <Calendar size={12} weight="bold" />
                 {entity.datetime}
+              </div>
+            )}
+            
+            {/* Difficulty and Centrality scores */}
+            {(entity.difficulty !== undefined || entity.centrality !== undefined) && (
+              <div className="flex gap-2 mt-3">
+                {entity.difficulty !== undefined && (
+                  <div className="flex items-center gap-1 text-xs">
+                    <span className="text-gray-500 font-medium">Difficulty:</span>
+                    <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded-full font-medium">
+                      {Math.round(entity.difficulty * 100)}%
+                    </span>
+                  </div>
+                )}
+                {entity.centrality !== undefined && (
+                  <div className="flex items-center gap-1 text-xs">
+                    <span className="text-gray-500 font-medium">Centrality:</span>
+                    <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-medium">
+                      {Math.round(entity.centrality * 100)}%
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -415,6 +512,8 @@ export function UnifiedLeftPane({
   onLoadMoreGlossary,
   hasMoreEntities = false,
   isLoadingMoreGlossary = false,
+  isAutoGenerating = false,
+  onCancelAutoGeneration,
   documentContext,
   semanticHighlights = [],
   onSemanticHighlightsChange,
@@ -423,6 +522,7 @@ export function UnifiedLeftPane({
   documentTitle,
   documentCreatedAt,
   documentSourceUrl,
+  wordCount,
   aiHeadingsGenerated = false,
   summaryGenerated = false,
   glossaryGenerated = false,
@@ -888,6 +988,7 @@ export function UnifiedLeftPane({
       documentCreatedAt={documentCreatedAt}
       documentSourceUrl={documentSourceUrl}
       elements={elements}
+      wordCount={wordCount}
       glossaryGenerated={glossaryGenerated}
       glossaryLoading={isLoadingGlossary}
       aiHeadingsGenerated={aiHeadingsGenerated}
@@ -900,7 +1001,7 @@ export function UnifiedLeftPane({
       originalFileType={originalFileType}
       uploadMetadata={uploadMetadata}
     />
-  ), [documentTitle, documentCreatedAt, documentSourceUrl, elements, glossaryGenerated, isLoadingGlossary, aiHeadingsGenerated, summaryGenerated, ownerEmail, isPublic, documentId, slug, storagePath, originalFileType, uploadMetadata])
+  ), [documentTitle, documentCreatedAt, documentSourceUrl, elements, wordCount, glossaryGenerated, isLoadingGlossary, aiHeadingsGenerated, summaryGenerated, ownerEmail, isPublic, documentId, slug, storagePath, originalFileType, uploadMetadata])
 
   const renderGlossaryTab = useCallback(() => {
     if (!showGlossary) {
@@ -995,6 +1096,22 @@ export function UnifiedLeftPane({
               </div>
               <p className="text-sm text-gray-600 mt-1">
                 {glossaryEntities?.length || 0} {(glossaryEntities?.length || 0) === 1 ? 'entry' : 'entries'} found
+                {isAutoGenerating && (
+                  <TooltipOrPopover
+                    content="Auto-generating more glossary entities"
+                    side="top"
+                    align="center"
+                    showIndicator={false}
+                  >
+                    <span className="ml-2 inline-flex items-center">
+                      <CircleNotch 
+                        size={16} 
+                        weight="bold"
+                        className="animate-spin text-orange-600" 
+                      />
+                    </span>
+                  </TooltipOrPopover>
+                )}
               </p>
             </div>
             <GlossaryDisplay 
@@ -1004,23 +1121,35 @@ export function UnifiedLeftPane({
               isLoadingMoreGlossary={isLoadingMoreGlossary}
               onLoadMoreGlossary={onLoadMoreGlossary}
             />
-            {hasMoreEntities && onLoadMoreGlossary && (
+            {hasMoreEntities && (
               <div className="p-4 border-t border-gray-200">
-                <Button
-                  onClick={onLoadMoreGlossary}
-                  disabled={isLoadingMoreGlossary}
-                  variant="outline"
-                  className="w-full"
-                >
-                  {isLoadingMoreGlossary ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-gray-600 mr-2" />
-                      Loading More...
-                    </>
-                  ) : (
-                    'Load More Entries'
-                  )}
-                </Button>
+                {isAutoGenerating && onCancelAutoGeneration ? (
+                  // Show Cancel button during auto-generation
+                  <Button
+                    onClick={onCancelAutoGeneration}
+                    variant="outline"
+                    className="w-full border-red-300 text-red-700 hover:bg-red-50"
+                  >
+                    Cancel Generation
+                  </Button>
+                ) : onLoadMoreGlossary ? (
+                  // Show Load More button when not auto-generating
+                  <Button
+                    onClick={onLoadMoreGlossary}
+                    disabled={isLoadingMoreGlossary}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {isLoadingMoreGlossary ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-gray-600 mr-2" />
+                        Loading More...
+                      </>
+                    ) : (
+                      'Load More Entries'
+                    )}
+                  </Button>
+                ) : null}
               </div>
             )}
           </div>
@@ -1037,7 +1166,7 @@ export function UnifiedLeftPane({
         )}
       </>
     )
-  }, [showGlossary, isLoadingGlossary, glossaryError, glossaryCached, glossaryEntities, elements, onLoadGlossary, onResetGlossary, hasMoreEntities, isLoadingMoreGlossary, onLoadMoreGlossary])
+  }, [showGlossary, isLoadingGlossary, glossaryError, glossaryCached, glossaryEntities, elements, onLoadGlossary, onResetGlossary, hasMoreEntities, isLoadingMoreGlossary, onLoadMoreGlossary, isAutoGenerating, onCancelAutoGeneration])
 
   const renderSearchTab = useCallback(() => (
       <div className="flex flex-col h-full">

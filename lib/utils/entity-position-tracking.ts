@@ -162,7 +162,7 @@ export function deduplicateEntities(entities: Entity[]): Entity[] {
   if (process.env.NODE_ENV !== 'production' && typeof console !== 'undefined') {
     const filtered = entities.length - result.length
     if (filtered > 0) {
-      // eslint-disable-next-line no-console
+       
       console.debug(`[Glossary] deduplicateEntities filtered ${filtered}/${entities.length} items`)
     }
   }

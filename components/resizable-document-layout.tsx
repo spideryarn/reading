@@ -54,6 +54,9 @@ interface ResizableDocumentLayoutProps {
   onLoadMoreGlossary?: () => void
   hasMoreEntities?: boolean
   isLoadingMoreGlossary?: boolean
+  // Auto-generation state
+  isAutoGenerating?: boolean
+  onCancelAutoGeneration?: () => void
   
   // Visibility tracking
   headingVisibility?: Map<string, 'visible' | 'not-visible'>
@@ -72,6 +75,7 @@ interface ResizableDocumentLayoutProps {
   documentTitle: string
   documentCreatedAt: string
   documentSourceUrl?: string | null
+  wordCount: number | null
   aiHeadingsGenerated?: boolean
   summaryGenerated?: boolean
   glossaryGenerated?: boolean
@@ -107,6 +111,8 @@ function ResizableDocumentLayoutInner({
   onLoadMoreGlossary,
   hasMoreEntities,
   isLoadingMoreGlossary,
+  isAutoGenerating,
+  onCancelAutoGeneration,
   headingVisibility,
   onElementVisibilityChange,
   onElementClick,
@@ -117,6 +123,7 @@ function ResizableDocumentLayoutInner({
   documentTitle,
   documentCreatedAt,
   documentSourceUrl,
+  wordCount,
   aiHeadingsGenerated = false,
   summaryGenerated = false,
   glossaryGenerated = false,
@@ -415,6 +422,7 @@ function ResizableDocumentLayoutInner({
               documentTitle={documentTitle}
               documentCreatedAt={documentCreatedAt}
               {...(documentSourceUrl !== undefined ? { documentSourceUrl } : {})}
+              wordCount={wordCount}
               aiHeadingsGenerated={aiHeadingsGenerated}
               summaryGenerated={summaryGenerated}
               glossaryGenerated={glossaryGenerated}
@@ -427,6 +435,8 @@ function ResizableDocumentLayoutInner({
               {...(onLoadMoreGlossary ? { onLoadMoreGlossary } : {})}
               {...(hasMoreEntities !== undefined ? { hasMoreEntities } : {})}
               {...(isLoadingMoreGlossary !== undefined ? { isLoadingMoreGlossary } : {})}
+              {...(isAutoGenerating !== undefined ? { isAutoGenerating } : {})}
+              {...(onCancelAutoGeneration ? { onCancelAutoGeneration } : {})}
             />
             </div>
           </div>

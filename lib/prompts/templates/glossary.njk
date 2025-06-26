@@ -36,7 +36,11 @@ You are helping the reader to understand this text. You must extract the most im
 
 - `long_explanation`: If the entity is complex, unusual, or confusing, give it a much longer explanation with multiple, detailed paragraphs in **Markdown format**. As per the brief explanation, this should be clear, reworded but based on the text, and should be explicit if it makes use of any knowledge from outside the text. Explain or emphasise any important details, and help the reader to see the relevance of the entity to the text. Only include a `long_explanation` if the `brief_explanation` is insufficient for understanding the text.
 
-Return JSON in the following form, without any context or explanation, so that it can be directly parsed:
+{% if include_scoring %}- `difficulty`: A score from 0 to 1 indicating how likely someone is to already know this entity. **0 = common knowledge** (most people would recognise this), **1 = expert knowledge** (requires specialised domain expertise to understand). Consider the general education level and domain-specific knowledge required.
+
+- `centrality`: A score from 0 to 1 indicating how important this entity is to understanding the document. **0 = minor relevance** (interesting but not essential), **1 = central to document** (crucial for understanding the main arguments, themes, or subject matter). Consider how frequently it appears and how essential it is to the document's core message.
+
+{% endif %}Return JSON in the following form, without any context or explanation, so that it can be directly parsed:
 
 ```json
 {
@@ -49,11 +53,20 @@ Return JSON in the following form, without any context or explanation, so that i
       "long_explanation": "string", // Optional, Markdown formatted
       "datetime": "string", // Optional
       "url": "string", // Optional
-      "extra": {} // Optional
+      "extra": {},{% if include_scoring %} // Optional
+      "difficulty": 0.7, // Optional: 0-1 scale (0=common knowledge, 1=expert knowledge required)
+      "centrality": 0.8 // Optional: 0-1 scale (0=minor relevance, 1=central to understanding document){% endif %}
     }
-  ]
+  ],
+  "more_entities_available": true // Required boolean field
 }
 ```
+
+After generating the entities, you must indicate whether more entities could be generated from this document:
+- If you believe there are more important entities that could be extracted from the text: `"more_entities_available": true`
+- If you have covered all significant entities in the document: `"more_entities_available": false`
+
+Consider the document comprehensively - are there other people, places, concepts, events, or terms that would help readers understand this text?
 
 Ontology types:
 - person

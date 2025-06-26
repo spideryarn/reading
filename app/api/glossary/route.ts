@@ -88,7 +88,8 @@ export async function POST(request: NextRequest) {
         entities: existingEntities,
         cached: true,
         enhancementId: null, // Individual storage doesn't have single enhancement ID
-        hasMore
+        hasMore,
+        more_entities_available: hasMore // For backwards compatibility and consistency
       })
     }
     
@@ -130,7 +131,8 @@ export async function POST(request: NextRequest) {
       content,
       already_entities,
       max_entities: safeEntityLimit,
-      existing_entities
+      existing_entities,
+      include_scoring: true // Enable difficulty and centrality scoring
     })
     
     // Log AI operation completion
@@ -226,8 +228,8 @@ export async function POST(request: NextRequest) {
       correlationId
     })
     
-    // Check if we hit the entity limit (indicating more entities might be available)
-    const hasMore = validatedResponse.entities.length >= safeEntityLimit
+    // Use LLM's completion signal or fallback to entity count check
+    const hasMore = validatedResponse.more_entities_available ?? (validatedResponse.entities.length >= safeEntityLimit)
     
     return NextResponse.json({
       ...validatedResponse,
