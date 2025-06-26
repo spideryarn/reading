@@ -27,7 +27,7 @@ const searchTool: Tool = {
   componentPath: '@/components/tools/SearchPanel',
   tabId: 'search',
   shortcuts: ['Cmd+F', 'Ctrl+F'],
-  keywords: ['search', 'find', 'text', 'semantic', 'locate', 'highlight'],
+  keywords: ['search', 'find', 'text', 'semantic', 'locate', 'highlight', 'exact match'],
   
   // Behavior Configuration
   requiresDocument: true,
