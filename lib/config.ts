@@ -150,6 +150,7 @@ export const GLOSSARY_CONFIG = {
 // UI configuration
 export const UI_CONFIG = {
   FORCE_LIGHT_MODE: true,
+  DEFAULT_LEFT_PANE_WIDTH_PERCENT: 35, // Default width of left sidebar as percentage of window width
 } as const
 
 // Visibility tracking configuration for Table of Contents
