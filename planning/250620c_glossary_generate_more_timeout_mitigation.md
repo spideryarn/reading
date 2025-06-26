@@ -417,7 +417,7 @@ Generate up to {{ max_entities or 20 }} entities...
 
 **Configuration Values**:
 - `DEFAULT_ENTITY_LIMIT_PER_REQUEST: 20` - Safe initial limit for timeout prevention
-- `MAX_TOTAL_ENTITY_LIMIT: 50` - Safety bound for single request
+- `MAX_TOTAL_ENTITY_LIMIT: 100`
 - `MAX_ENTITIES_PER_REQUEST: 30` - Batch size for "Load More"
 
 ## Current Implementation Analysis

@@ -1002,9 +1002,20 @@ export function UnifiedLeftPane({
               <p className="text-sm text-gray-600 mt-1">
                 {glossaryEntities?.length || 0} {(glossaryEntities?.length || 0) === 1 ? 'entry' : 'entries'} found
                 {isAutoGenerating && (
-                  <span className="ml-2 text-orange-600">
-                    (auto-generating...)
-                  </span>
+                  <TooltipOrPopover
+                    content="Auto-generating more glossary entities"
+                    side="top"
+                    align="center"
+                    showIndicator={false}
+                  >
+                    <span className="ml-2 inline-flex items-center">
+                      <CircleNotch 
+                        size={16} 
+                        weight="bold"
+                        className="animate-spin text-orange-600" 
+                      />
+                    </span>
+                  </TooltipOrPopover>
                 )}
               </p>
             </div>
