@@ -188,37 +188,41 @@ The core idea is:
 
 **Ready for Stage 4**: Storage Architecture Evaluation can proceed - position tracking foundation is solid.
 
-### Stage: Storage Architecture Evaluation and Migration
-- [ ] Evaluate current storage approach vs individual entity rows
-  - Analyze current `storeGlossary` method in `lib/services/database/enhancements.ts`
-  - Current approach: Single JSON blob in `document_enhancements.content`
-  - Consider alternative: Individual entity rows for better incremental updates
-  - Document trade-offs and make architectural decision (see Appendix for current analysis)
-- [ ] Design individual entity storage schema if needed
-  - Create migration for `document_glossary_entities` table
-  - Include fields: `document_id`, `entity_name`, `aliases`, `brief_explanation`, `long_explanation`, `document_position`
-  - Add foreign key constraints and RLS policies
-  - Design indexes for performance (document_id, entity_name, document_position)
-- [ ] Implement storage migration if proceeding with individual rows
-  - Create database service methods for entity CRUD operations
-  - Update `storeGlossary` to work with individual entity rows
-  - Add batch operations for efficient entity loading
-  - Implement data migration from existing JSON blobs
-- [ ] Update API and frontend for new storage architecture
-  - Modify glossary API to work with individual entity operations
-  - Update frontend state management for incremental entity loading
-  - Ensure backward compatibility with existing cached glossaries
-- [ ] Test storage architecture changes
-  - Test entity creation, updates, and retrieval
-  - Verify performance with large glossaries
-  - Test data migration from existing documents
-- [ ] Git commit storage architecture changes
+### Stage: Individual Entity Storage Implementation ✅ **ARCHITECTURE DECIDED**
+- ✅ **Architecture Decision**: Use `document_enhancements` table with entity-specific subtypes 
+  - **Current**: Single JSON blob with `subtype: 'default'` containing all entities
+  - **New**: Individual rows with `subtype: '{ontology}:{normalized_name}'` for each entity
+  - **Format**: `person:Albert_Einstein`, `concept:Machine_Learning`, `organization:OpenAI`
+  - **Benefits**: Individual AI call tracking, incremental updates, efficient queries, no schema changes
+  - **Simplified**: No `entity:` prefix - YAGNI principle (You Aren't Gonna Need It)
+- ✅ **Implementation Approach**: Direct Supabase JS calls (skip CRUD service layer)
+  - **Rationale**: Current `EnhancementService` provides minimal value for individual entities
+  - **Security**: RLS policies handle authorization automatically
+  - **Simplicity**: Direct database calls, fewer abstraction layers, easier maintenance
+- [ ] Implement entity normalization utilities
+  - Create function to generate subtype from entity: `generateEntitySubtype(entity: Entity): string`
+  - Handle special characters, spaces, and Unicode in entity names for subtype generation
+  - Add validation to prevent subtype collisions and ensure unique identifiers
+- [ ] Update glossary API for direct Supabase entity storage
+  - Use direct `supabase.from('document_enhancements').upsert()` calls for individual entities
+  - Update entity retrieval with direct queries: `WHERE type='glossary' AND subtype LIKE 'person:%'`
+  - Implement entity merging logic for Load More functionality with individual storage
+  - Add support for entity updates and deletions through direct Supabase calls
+- [ ] Deprecate bulk storage approach
+  - Remove `subtype: 'default'` storage (no backwards compatibility needed per user requirement)
+  - Remove `storeGlossary()` method from EnhancementService
+  - Update all existing code references to use direct Supabase calls
+- [ ] Test individual entity storage implementation
+  - Test entity creation with various names, special characters, Unicode
+  - Verify Load More functionality works with individual entity retrieval
+  - Test entity ordering and position tracking with individual storage
+  - Verify RLS policies work correctly with entity-specific subtypes
+- [ ] Git commit individual entity storage implementation
 
 ### Stage: Advanced Configuration and Intelligence
 - [ ] Expand `lib/config.ts` with advanced glossary configuration
-  - Add `MAX_ENTITIES_PER_REQUEST: 30` for batch size control
-  - Add `ENABLE_LONG_EXPLANATIONS: true` flag for future use
-  - Add configuration validation and error handling
+  - Add `MAX_ENTITIES_PER_REQUEST: 20` for batch size control
+    - Add configuration validation and error handling
 - [ ] Enhance Nunjucks template for completion detection
   - Add instruction for LLM to indicate when document is "fully processed"
   - Design response schema with `more_entities_available` boolean flag
@@ -335,10 +339,12 @@ Generate up to {{ max_entities or 20 }} entities...
 
 ## Current Implementation Analysis
 
-**Storage Architecture**: Current implementation uses `storeGlossary()` method in `lib/services/database/enhancements.ts` to store entire glossary as single JSON blob in `document_enhancements.content` field. This approach:
-- **Pros**: Simple implementation, atomic updates, easy to cache
-- **Cons**: Must reload entire glossary to add entities, no fine-grained queries
-- **Decision needed**: Keep simple approach vs migrate to individual entity rows
+**Storage Architecture**: ✅ **ARCHITECTURE DECIDED - Individual Entity Storage**
+- **Previous**: Single JSON blob with `subtype: 'default'` containing all entities
+- **New**: Individual rows with `subtype: 'entity:{ontology}:{normalized_name}'` per entity
+- **Implementation**: Leverage existing `document_enhancements` table without schema changes
+- **Benefits**: Individual AI call tracking, incremental updates, efficient queries, no migrations required
+- **Format Examples**: `entity:person:Albert_Einstein`, `entity:concept:Machine_Learning`, `entity:organization:OpenAI`
 
 **Position Tracking**: Current implementation instructs LLM to order entities "according to which appears first in the text" (line 1 of `glossary.njk`). However, with progressive generation and priority-based selection, this LLM ordering breaks down. Frontend has existing `findFirstOccurrence()` function in `unified-left-pane.tsx` that:
 - Searches through document elements for entity names/aliases
@@ -362,7 +368,84 @@ Generate up to {{ max_entities or 20 }} entities...
 
 **Smart Caching**: Rejected due to user concern about context-specific relevance.
 
-**Individual Entity Storage**: Considered migrating to individual database rows per entity for better incremental updates, but adds complexity and may not provide significant benefits given current usage patterns.
+**Individual Entity Storage**: ✅ **SELECTED** - Use `document_enhancements` table with entity-specific subtypes (`entity:{ontology}:{normalized_name}`) to enable incremental updates and individual AI call tracking without requiring new tables or migrations.
+
+## Storage Architecture Analysis (2025-06-26)
+
+### Database Investigation Results
+
+**Current Schema Analysis**:
+- **Table**: `document_enhancements` with unique constraint on `(document_id, type, subtype)`
+- **Current glossary storage**: `type: 'glossary', subtype: 'default', content: { entities: [...] }`
+- **Available field**: `subtype` field can store entity-specific identifiers
+- **AI tracking**: Each row has `ai_call_id` for granular cost/performance tracking
+- **RLS policies**: Existing security model applies automatically to new storage approach
+
+**Selected Architecture - Entity-Specific Subtypes**:
+```sql
+-- Current (bulk storage)
+INSERT INTO document_enhancements (document_id, type, subtype, content) 
+VALUES (doc_id, 'glossary', 'default', '{"entities": [...]}');
+
+-- New (individual entity storage)
+INSERT INTO document_enhancements (document_id, type, subtype, content) 
+VALUES (doc_id, 'glossary', 'person:Albert_Einstein', '{"entity": {...}}');
+INSERT INTO document_enhancements (document_id, type, subtype, content) 
+VALUES (doc_id, 'glossary', 'concept:Machine_Learning', '{"entity": {...}}');
+```
+
+**Subtype Naming Convention**:
+- **Format**: `{ontology}:{normalized_name}` (simplified, no `entity:` prefix)
+- **Normalization**: Handle special characters, spaces, Unicode for subtype generation
+- **Examples**: 
+  - `person:John_Doe` (person: John Doe)
+  - `concept:Machine_Learning` (concept: Machine Learning)
+  - `organization:World_Health_Organization` (organization: World Health Organization)
+
+**Direct Supabase Query Patterns**:
+```typescript
+// Get all entities for document
+const { data } = await supabase
+  .from('document_enhancements')
+  .select('*')
+  .eq('document_id', documentId)
+  .eq('type', 'glossary')
+  .neq('subtype', 'default') // Exclude old bulk storage
+
+// Get entities by ontology
+const { data } = await supabase
+  .from('document_enhancements')
+  .select('*')
+  .eq('document_id', documentId)
+  .eq('type', 'glossary')
+  .like('subtype', 'person:%')
+
+// Store individual entity
+const { data } = await supabase
+  .from('document_enhancements')
+  .upsert({
+    document_id: documentId,
+    ai_call_id: aiCallId,
+    type: 'glossary',
+    subtype: 'concept:Machine_Learning',
+    content: { entity: entityData }
+  })
+```
+
+**Advantages**:
+1. **No schema changes**: Leverages existing table structure
+2. **Individual AI call tracking**: Each entity gets own `ai_call_id` 
+3. **Incremental updates**: Add/update/delete entities individually
+4. **Efficient querying**: Direct entity lookup and ontology filtering
+5. **RLS compatibility**: Existing policies apply automatically
+6. **No migrations**: Works with current database without changes
+
+**Implementation Considerations**:
+- **Direct Supabase**: Skip `EnhancementService` layer, use direct Supabase JS calls for simplicity
+- **Normalization**: Handle entity name → subtype conversion safely
+- **Backwards compatibility**: Remove `subtype: 'default'` approach (no compatibility needed per user)
+- **Performance**: Individual rows may increase query overhead for full glossary retrieval
+- **Security**: RLS policies provide authorization automatically
 
 ## External Critique
 
