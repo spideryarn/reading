@@ -3,6 +3,7 @@
 import { useRef } from 'react'
 import { Upload, FilePdf, FileHtml, X } from '@phosphor-icons/react'
 import { UPLOAD_LIMITS, formatUploadLimitMessage } from '@/lib/config/upload-limits'
+import { validatePdfPageCount } from '@/lib/utils/pdf-validation'
 
 interface FileUploadSectionProps {
   file: File | null
@@ -31,14 +32,15 @@ export function FileUploadSection({
 }: FileUploadSectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // File validation helper
-  const validateFileType = (file: File): boolean => {
+  // File validation helper - includes page count validation for PDFs
+  const validateFileType = async (file: File): Promise<boolean> => {
     const allowedTypes = ['application/pdf', 'text/html']
     const allowedExtensions = ['.pdf', '.html', '.htm']
     
     // Check file size based on file type
     let maxSize: number
-    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+    if (isPdf) {
       maxSize = UPLOAD_LIMITS.PDF_MAX_SIZE_BYTES
     } else if (file.type === 'text/html' || file.name.toLowerCase().endsWith('.html') || file.name.toLowerCase().endsWith('.htm')) {
       maxSize = UPLOAD_LIMITS.HTML_FILE_UPLOAD_MAX_SIZE_BYTES
@@ -60,6 +62,22 @@ export function FileUploadSection({
     if (!isValidType && !isValidExtension) {
       onValidationError(`Unsupported file type: ${file.name}. Please select a PDF or HTML file.`)
       return false
+    }
+    
+    // Additional validation for PDF files: page count check
+    if (isPdf) {
+      try {
+        const pageValidationResult = await validatePdfPageCount(file)
+        if (!pageValidationResult.isValid) {
+          onValidationError(pageValidationResult.error!)
+          return false
+        }
+      } catch (error) {
+        // If page counting fails, show a generic error but don't block upload
+        // The server will also validate and provide more specific error handling
+        onValidationError('Unable to validate PDF. Please ensure the file is not corrupted.')
+        return false
+      }
     }
     
     return true
@@ -89,7 +107,7 @@ export function FileUploadSection({
     }
   }
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     if (isDisabled) return
     e.preventDefault()
     e.stopPropagation()
@@ -98,18 +116,18 @@ export function FileUploadSection({
     const files = Array.from(e.dataTransfer.files)
     if (files.length > 0) {
       const file = files[0]
-      if (validateFileType(file)) {
+      if (file && await validateFileType(file)) {
         onDrop(file)
       }
     }
   }
 
   // Handle file input change
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files && files.length > 0) {
       const file = files[0]
-      if (validateFileType(file)) {
+      if (file && await validateFileType(file)) {
         onChange(file)
       }
     }
@@ -235,6 +253,9 @@ export function FileUploadSection({
                 <p className={`text-xs ${isDisabled ? 'text-gray-400' : 'text-gray-500'}`}>
                   Maximum file size: PDF {formatUploadLimitMessage(UPLOAD_LIMITS.PDF_MAX_SIZE_BYTES)}, HTML {formatUploadLimitMessage(UPLOAD_LIMITS.HTML_FILE_UPLOAD_MAX_SIZE_BYTES)}
                 </p>
+                <p className={`text-xs ${isDisabled ? 'text-gray-400' : 'text-gray-500'}`}>
+                  PDF page limit: {UPLOAD_LIMITS.PDF_MAX_PAGES} pages
+                </p>
               </div>
             </div>
           )}
@@ -254,7 +275,7 @@ export function FileUploadSection({
       {/* Helper Text */}
       {!isDisabled && !error && !file && (
         <p className="text-xs text-gray-500 mt-2">
-          Supported formats: PDF, HTML. Files are processed securely and stored safely.
+          Supported formats: PDF (max {UPLOAD_LIMITS.PDF_MAX_PAGES} pages), HTML. Files are processed securely and stored safely.
         </p>
       )}
 

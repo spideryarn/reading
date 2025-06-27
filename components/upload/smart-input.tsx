@@ -3,6 +3,7 @@
 import { useRef } from 'react'
 import { Upload, FilePdf, FileHtml, Link as LinkIcon, X } from '@phosphor-icons/react'
 import { UPLOAD_LIMITS, formatUploadLimitMessage } from '@/lib/config/upload-limits'
+import { validatePdfPageCount } from '@/lib/utils/pdf-validation'
 
 interface SmartInputProps {
   value: {
@@ -37,14 +38,15 @@ export function SmartInput({
 }: SmartInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // File validation helper
-  const validateFileType = (file: File): boolean => {
+  // File validation helper - includes page count validation for PDFs
+  const validateFileType = async (file: File): Promise<boolean> => {
     const allowedTypes = ['application/pdf', 'text/html']
     const allowedExtensions = ['.pdf', '.html', '.htm']
     
     // Check file size based on file type
     let maxSize: number
-    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+    if (isPdf) {
       maxSize = UPLOAD_LIMITS.PDF_MAX_SIZE_BYTES
     } else if (file.type === 'text/html' || file.name.toLowerCase().endsWith('.html') || file.name.toLowerCase().endsWith('.htm')) {
       maxSize = UPLOAD_LIMITS.HTML_FILE_UPLOAD_MAX_SIZE_BYTES
@@ -66,6 +68,22 @@ export function SmartInput({
     if (!isValidType && !isValidExtension) {
       onValidationError(`Unsupported file type: ${file.name}. Please select a PDF or HTML file.`)
       return false
+    }
+    
+    // Additional validation for PDF files: page count check
+    if (isPdf) {
+      try {
+        const pageValidationResult = await validatePdfPageCount(file)
+        if (!pageValidationResult.isValid) {
+          onValidationError(pageValidationResult.error!)
+          return false
+        }
+      } catch (error) {
+        // If page counting fails, show a generic error but don't block upload
+        // The server will also validate and provide more specific error handling
+        onValidationError('Unable to validate PDF. Please ensure the file is not corrupted.')
+        return false
+      }
     }
     
     return true
@@ -92,7 +110,7 @@ export function SmartInput({
     }
   }
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
     onDragEnd()
@@ -101,18 +119,18 @@ export function SmartInput({
     if (files.length > 0) {
       const file = files[0]
       // Validate file type before dropping
-      if (validateFileType(file)) {
+      if (file && await validateFileType(file)) {
         onFileDrop(file)
       }
     }
   }
 
   // Handle file input change
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files && files.length > 0) {
       const file = files[0]
-      if (validateFileType(file)) {
+      if (file && await validateFileType(file)) {
         onFileChange(file)
       }
     }
@@ -234,7 +252,7 @@ export function SmartInput({
           {/* Helper text */}
           {!value.url && !value.file && !isDragging && (
             <p className="text-center text-xs sm:text-sm text-gray-500 mt-4">
-              Enter a URL above or drag and drop PDF/HTML files here
+              Enter a URL above or drag and drop PDF (max {UPLOAD_LIMITS.PDF_MAX_PAGES} pages)/HTML files here
             </p>
           )}
 

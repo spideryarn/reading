@@ -117,6 +117,7 @@ The system should support four ingestion scenarios:
 1. Input Validation
    - Check file size limits
    - Validate file type/URL format
+   - Validate PDF page count (if applicable)
    - Authenticate user
 
 2. Original Storage
@@ -166,6 +167,36 @@ Current limits are centralized in `lib/config.ts` under `UPLOAD_LIMITS`:
 - **Gemini File API**: 2GB (temporary storage for 48 hours, requires additional API calls)
 - **Page limit**: 100 pages maximum (business rule to prevent excessive processing)
 
+#### Page Count Validation ✓ Implemented
+
+**Purpose**: Page limits serve as a proxy for word count and help ensure reasonable LLM processing times. This is distinct from file size limits which are primarily storage/transfer constraints.
+
+**Key Differences**:
+- **Page count** → Word count proxy → LLM processing time (text-based constraint)  
+- **File size** → Storage/transfer constraint → Driven by images/graphics (size-based constraint)
+
+**Implementation**:
+- **Library**: Uses `pdf-lib` for accurate page counting (371KB gzipped bundle impact)
+- **Client-side validation**: Dynamic import to avoid loading pdf-lib on non-upload pages
+- **Server-side validation**: Buffer-based validation for security and consistency
+- **Error handling**: Comprehensive error messages explaining page limit rationale
+
+**Validation Flow**:
+1. **Client-side**: File size → Page count → Upload
+2. **Server-side**: Authentication → File size → PDF header → Page count → AI processing
+
+**Error Messages**: Consistent format explaining both limit and rationale:
+```
+PDF has too many pages (150). Maximum allowed: 100 pages. 
+Page limits help ensure reasonable processing times for AI analysis.
+```
+
+**Technical Details**:
+- Client-side: Uses dynamic `import('pdf-lib')` for File objects
+- Server-side: Direct import for Buffer objects  
+- Graceful degradation: Page counting errors don't block upload (server validates as backup)
+- Metadata tracking: Page count included in AI call records and document metadata
+
 **References**:
 - [Supabase Storage Limits](https://supabase.com/docs/guides/storage/limits) - Free tier: 50MB per file
 - [Anthropic Claude API Limits](https://docs.anthropic.com/en/docs/build-with-claude/vision#file-size-and-types) - 32MB for PDF processing
@@ -207,6 +238,7 @@ interface UploadMetadata {
   upload_source: 'url' | 'pdf' | 'html'
   processing_time_ms?: number
   file_size_bytes?: number
+  page_count?: number  // PDF-specific: number of pages validated
   model_used?: string
   // HTML processing metadata
   html_size_bytes: number
