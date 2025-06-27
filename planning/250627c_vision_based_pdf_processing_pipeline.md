@@ -67,17 +67,21 @@ Replace the current direct PDF-to-HTML pipeline with a vision-based approach tha
 ## Stages & Actions
 
 ### Stage: Environment Setup and Prerequisites
-- [ ] **Research MuPDF.js integration options**: Use subagent to research browser-compatible MuPDF.js libraries, bundle sizes, and WebWorker compatibility
-  - Focus on packages like `mupdf-js`, `react-pdf`, or direct MuPDF WASM builds
-  - Evaluate bundle impact and dynamic loading strategies
+- [x] **Research MuPDF.js integration options**: Use subagent to research browser-compatible MuPDF.js libraries, bundle sizes, and WebWorker compatibility
+  - **COMPLETED**: Researched official `mupdf` npm package (v1.26.2) from Artifex
+  - **KEY FINDING**: MuPDF.js provides superior academic PDF rendering vs PDF.js
+  - **BONUS**: Can replace pdf-lib dependency with built-in `countPages()` method
+  - **LICENSING**: AGPL license may require commercial license for proprietary use
   - Document findings in Appendix A
 
 ### Stage: Core MuPDF.js Integration and Page Extraction
-- [ ] **Install and configure MuPDF.js**: Select optimal library based on research and add to package.json
+- [ ] **Install and configure MuPDF.js**: Install official `mupdf` npm package and configure for browser use
+- [ ] **Replace pdf-lib with MuPDF.js page counting**: Update `lib/utils/pdf-validation.ts` to use MuPDF.js `countPages()` method instead of pdf-lib
 - [ ] **Create PDF-to-images utility**: Implement `lib/utils/pdf-to-images.ts` with:
-  - Browser-compatible PDF to page images conversion
+  - Browser-compatible PDF to page images conversion using MuPDF.js
   - Configurable DPI/quality settings for token cost optimization
-  - WebWorker support for non-blocking processing
+  - **Phase 1**: Simple blocking implementation first
+  - **Phase 2**: WebWorker support for non-blocking processing (later stage)
   - Progress callback support for UI updates
 - [ ] **Add image format optimization**: Implement automatic PNG vs JPEG selection based on content type detection
 - [ ] **Write comprehensive tests**: Create test suite for image conversion with various PDF types
@@ -213,12 +217,34 @@ Replace the current direct PDF-to-HTML pipeline with a vision-based approach tha
 
 ## Appendix
 
-### A. MuPDF.js Research Requirements
-- **Bundle size impact**: Quantify size increase and mitigation strategies
-- **Browser compatibility**: Ensure support across target browsers
-- **WebWorker compatibility**: Verify worker thread processing capability
-- **Memory requirements**: Understand RAM usage for large documents
-- **Alternative libraries**: Compare mupdf-js vs react-pdf vs PDF.js for image extraction
+### A. MuPDF.js Research Results ✅ COMPLETED
+
+**Key Findings from Research (December 2024)**:
+
+**✅ Recommended Package**: Official `mupdf` npm package (v1.26.2) from Artifex
+- **Superior quality**: "absolutely better than Foxit and Poppler, even better than Adobe Reader"
+- **Academic advantages**: Handles graphics-heavy documents much better than PDF.js
+- **Official support**: Maintained by the MuPDF creators (Artifex)
+- **Modern architecture**: WebAssembly-based, TypeScript support included
+
+**✅ Technical Capabilities**:
+- **Page counting**: Built-in `countPages()` method can replace our pdf-lib dependency
+- **Browser compatibility**: Works in "all JavaScript environments: Node, Bun, Firefox, Safari, Chrome"
+- **WebWorker support**: WebAssembly + WebWorker compatible
+- **ESM module**: Requires modern bundler (already supported in our Next.js setup)
+
+**⚠️ Considerations**:
+- **Bundle size**: WebAssembly binary will be larger than pdf-lib, but justified by superior quality
+- **Licensing**: AGPL license may require commercial license for proprietary use
+- **Memory usage**: WebAssembly generally more efficient than JavaScript-based alternatives
+
+**📋 Implementation Strategy**:
+1. **Phase 1**: Replace pdf-lib with MuPDF.js for page counting (simple blocking)
+2. **Phase 2**: Add PDF-to-image conversion (blocking UI first)
+3. **Phase 3**: Add WebWorker support for non-blocking processing
+4. **Phase 4**: Optimize bundle size and memory usage
+
+**🔄 Planning Doc Updates**: Research scope corrected from generic PDF libraries to focus specifically on official MuPDF package vs PDF.js comparison for academic document processing.
 
 ### B. Technical Implementation Notes
 - **Error handling philosophy**: Fail fast with clear error messages rather than silent degradation
