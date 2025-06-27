@@ -87,9 +87,17 @@ After implementing the tool registry (250614b) and command palette generation (2
   - [ ] Response type validation (no envelope, direct response)
   - [ ] Error transformation from RFC 9457 Problem Details to user-friendly messages
   - [ ] **AbortController support** for cancellation of long-running requests
+- [ ] **Local operation observability** - Simple logging without server overhead
+  - [ ] Light correlation ID tracking for local operations
+  - [ ] `logLocalToolExecution()` utility for client-side debugging
+  - [ ] Preserve existing `createRequestLogger` patterns for server operations
+- [ ] **Security boundary enforcement** - Clear guidelines in registry
+  - [ ] Tool registry declares `allowedOperations: ['read', 'navigate']` for local tools
+  - [ ] Executor validates operation type against registry permissions
+  - [ ] **No data mutations in local execution path** - TypeScript guards
 - [ ] Add execution context
   - [ ] Current document info from URL state
-  - [ ] User context from `validateAuth()`
+  - [ ] User context from `validateAuth()` (server only)
   - [ ] Request metadata (source, timing, correlation IDs)
   - [ ] Correlation IDs for debugging and audit trail integration
 
@@ -121,19 +129,21 @@ After implementing the tool registry (250614b) and command palette generation (2
   - [ ] URL state updates properly
 
 ### Stage: Error handling enhancement
-- [ ] Comprehensive error strategy
-  - [ ] Network errors (with AbortController cancellation)
-  - [ ] Authentication failures (401/403 from `validateAuth()`)
-  - [ ] Validation errors (400/422 from tool schema validation)
-  - [ ] Rate limiting (429 with retry-after headers)
-  - [ ] API errors (500/502/503/504 from LLM services)
-  - [ ] Tool not found errors (404 for invalid tool IDs)
-- [ ] User-friendly error messages
+- [ ] **Consistent error types** - Create simple error hierarchy for uniform UX
+  - [ ] `ToolTimeoutError` - Operation exceeded configured timeout
+  - [ ] `ToolAuthenticationError` - Authentication failures (401/403)
+  - [ ] `ToolValidationError` - Parameter validation failures (400/422)
+  - [ ] `ToolServerError` - API errors (500/502/503/504)
+  - [ ] `ToolNotFoundError` - Invalid tool IDs (404)
+- [ ] **Clear timeout enforcement location** - Specify exactly where timeouts are applied
+  - [ ] Registry declares timeout policy per tool
+  - [ ] Executor applies timeout to fetch() calls with AbortController
+  - [ ] User-visible cancellation UI for operations >10 seconds
+- [ ] **Simple failure strategy** - Fail immediately and clearly (no retries)
   - [ ] **Shared UI component** - Reuse `GlobalUrlWarnings` pattern from URL state validation
   - [ ] Map RFC 9457 Problem Details to user-friendly messages
-  - [ ] Provide actionable next steps (e.g., "Try again in 5 minutes" for rate limits)
-  - [ ] Include retry mechanisms with exponential backoff
-  - [ ] **Toast notifications** for transient errors, **dialogs** for critical failures
+  - [ ] **Toast notifications** for errors, **dialogs** for critical failures
+  - [ ] Clear "what went wrong" and "what to try instead" messaging
 
 ### Stage: Update existing tools
 - [ ] Migrate tool implementations
@@ -425,6 +435,32 @@ The framework outlines a clean, coherent direction, but several practical gaps a
 Addressing them early will avoid re-work when you integrate with the registry, URL-state single-source-of-truth, and upcoming LLM function-calling layers.
 
 **✅ UPDATE**: All identified issues have been systematically addressed in the updated planning document above.
+
+---
+
+# Addendum - O3 Critique Integration (2025-06-27)
+
+Based on additional O3 critique of the conversation document `docs/conversations/250627b_tool_execution_framework_architecture_decisions.md`, the following refinements have been integrated:
+
+## ✅ Incorporated (Aligned with "Fail Immediately & Keep Simple")
+
+1. **Local operation observability gap** - Added light correlation ID tracking and `logLocalToolExecution()`
+2. **Clear timeout enforcement location** - Specified registry → executor → fetch() chain  
+3. **Error handling consistency** - Added simple error type hierarchy (`ToolTimeoutError`, etc.)
+4. **Security boundary enforcement** - Added registry permission declarations and TypeScript guards
+5. **User cancellation UX** - Added user-visible cancellation for operations >10 seconds
+
+## ❌ Rejected (Conflicts with Simplicity/Immediate Failure Principles)
+
+1. **Retry mechanisms** - User preference: "fail immediately & clearly when something unforeseen happens"
+2. **Contract tests** - Premature optimization for 8-tool scale
+3. **LocalExecutor wrapper** - Adds abstraction complexity without clear benefit
+4. **ToolProgressContext** - React context for progress feels heavyweight
+5. **Per-document mutex** - Premature complexity, may not be needed
+6. **CI type checking scripts** - Build-time optimization conflicts with runtime preference
+7. **Migration scripts** - Way premature for current development stage
+
+The result maintains the "AI-first, rapid iteration" philosophy while addressing real observability and security concerns through simple, targeted solutions rather than complex abstractions.
 
 ---
 
