@@ -1,0 +1,104 @@
+Convert this PDF page image to a clean HTML fragment for academic document processing.
+
+{% if fileName %}
+**Document**: {{ fileName }}{% endif %}
+**Page**: {{ pageNumber }} of {{ totalPages }}
+
+{% if documentContext %}
+**Document Context**: {{ documentContext }}{% endif %}
+
+{% if previousPageSummary %}
+**Previous Page Summary**: {{ previousPageSummary }}{% endif %}
+
+## Core Requirements
+
+**HTML Fragment Output**: Return ONLY the HTML content fragment - no `<html>`, `<head>`, or `<body>` wrapper elements. The fragment should contain semantic content elements that can be inserted directly into a larger document.
+
+**Academic Content Preservation**: This is an academic/technical document requiring high-fidelity conversion that preserves:
+- Mathematical equations and symbols
+- Tables with proper structure and alignment
+- Figures, diagrams, and their captions
+- Citations and references
+- Hierarchical section structure
+- Multi-column layouts
+
+## Structural Requirements
+
+### Semantic HTML Structure
+- Use proper heading hierarchy (h1, h2, h3, etc.) based on visual hierarchy
+- Convert paragraphs to `<p>` elements with logical breaks
+- Use `<ul>`, `<ol>`, and `<li>` for lists
+- Mark emphasized text with `<strong>` or `<em>` as appropriate
+- Use `<blockquote>` for quoted material
+
+### Tables
+- Convert ALL tables to proper HTML table markup using `<table>`, `<thead>`, `<tbody>`, `<th>`, and `<td>`
+- Preserve column alignment and spanning where visible
+- Include table captions using `<caption>` if present
+- For complex tables spanning multiple pages, add comment: `<!-- table-continues-from-previous-page -->` or `<!-- table-continues-on-next-page -->`
+
+### Mathematical Content
+- Convert mathematical equations using appropriate HTML markup:
+  - Use HTML entities for common symbols (×, ÷, ±, ≤, ≥, ∞, α, β, γ, δ, π, σ, μ, etc.)
+  - Use `<sup>` and `<sub>` for superscripts and subscripts
+  - For complex equations, use clear text representation with proper spacing
+  - Preserve equation numbering: `<span class="equation-number">(1.2)</span>`
+
+### Figures and Images
+- Use `<figure>` and `<figcaption>` for figures with captions
+- Add bounding box coordinates as data attributes using this format:
+  `<figure data-bbox="x1,y1,x2,y2" class="page-{{ pageNumber }}-figure">`
+- Include figure numbers and cross-references: `<span class="figure-ref">Figure 1.2</span>`
+- For diagrams, provide descriptive alt text: `alt="Flow diagram showing process steps"`
+
+### Cross-Page Elements
+- Add HTML comments for elements that may continue across pages:
+  - `<!-- continues-from-previous-page: section-title -->`
+  - `<!-- continues-on-next-page: table-data -->`
+  - `<!-- figure-reference: see-page-X -->`
+
+## CSS Classes and Annotations
+
+Add CSS classes for styling and navigation hooks:
+- Page identification: `class="page-{{ pageNumber }}"`
+- Column layout: `class="column-left"` or `class="column-right"` for multi-column layouts
+- Content types: `class="abstract"`, `class="introduction"`, `class="methodology"`, etc.
+- Academic elements: `class="citation"`, `class="footnote"`, `class="bibliography"`
+
+## Bounding Box Format
+
+For images, figures, and key elements, include bounding box coordinates as data attributes:
+- Format: `data-bbox="x1,y1,x2,y2"` where coordinates are relative to page dimensions
+- Use normalized coordinates (0-1 scale) if possible, or pixel coordinates if more appropriate
+- Example: `<figure data-bbox="0.1,0.2,0.9,0.6" class="page-{{ pageNumber }}-figure">`
+
+## Content to Ignore
+
+DO NOT include in the HTML fragment:
+- Page numbers, headers, and footers
+- Watermarks or background decorative elements
+- Publisher logos or branding
+- Navigation elements not part of main content
+- Margin notes that are clearly editorial
+
+## Quality Standards
+
+**Accuracy**: Preserve the exact semantic meaning and academic content
+**Completeness**: Include ALL substantive content visible on the page
+**Structure**: Maintain logical reading order and hierarchical relationships
+**Continuity**: Use comments to indicate cross-page relationships
+**Accessibility**: Include appropriate alt text and semantic markup
+
+## Output Format
+
+Return ONLY the HTML fragment - no explanations, no markdown code blocks, no additional text. The output should be ready for direct insertion into a larger HTML document.
+
+{% if pageNumber == 1 %}
+**Note**: This is the first page - establish the document structure and capture any title, author, or abstract information.
+{% elif pageNumber == totalPages %}
+**Note**: This is the final page - ensure references, conclusions, and any appendices are properly captured.
+{% else %}
+**Note**: This is page {{ pageNumber }} of {{ totalPages }} - maintain continuity with previous content and prepare for potential continuation.
+{% endif %}
+
+Focus on creating a high-quality HTML fragment that preserves the academic integrity and structure of this PDF page for serious document analysis and research purposes.

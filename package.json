@@ -69,6 +69,7 @@
         "jsonwebtoken": "^9.0.2",
         "lucide-react": "^0.511.0",
         "mark.js": "^8.11.1",
+        "mupdf": "^1.26.2",
         "next": "15.3.2",
         "nunjucks": "^3.2.4",
         "nuqs": "^2.4.3",

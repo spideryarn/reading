@@ -180,7 +180,7 @@ async function executeMultimodalPromptInternal<T extends z.ZodSchema>(
   // Get the appropriate model based on configuration
   const model = getModel()
   
-  // Check if variables contain messages (multimodal), PDF buffer, or just need prompt rendering
+  // Check if variables contain messages (multimodal), PDF buffer, base64 image, or just need prompt rendering
   let messages: Array<{ role: string; content: string | Array<{ type: string; text?: string; image?: string; data?: Buffer; mimeType?: string }> }> = []
   
   if ('messages' in validated && Array.isArray(validated.messages)) {
@@ -198,6 +198,24 @@ async function executeMultimodalPromptInternal<T extends z.ZodSchema>(
           type: 'file',
           data: validated.pdfBuffer as Buffer,
           mimeType: 'application/pdf'
+        },
+        {
+          type: 'text',
+          text: prompt
+        }
+      ]
+    }]
+  } else if ('pageImageBase64' in validated && typeof validated.pageImageBase64 === 'string') {
+    // Handle base64-encoded page image with rendered template
+    const templateContent = readFileSync(template.templatePath, 'utf-8')
+    const prompt = env.renderString(templateContent, validated)
+    
+    messages = [{
+      role: 'user',
+      content: [
+        {
+          type: 'image',
+          image: validated.pageImageBase64 as string
         },
         {
           type: 'text',
