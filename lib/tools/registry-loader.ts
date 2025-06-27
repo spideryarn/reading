@@ -9,6 +9,7 @@
  */
 
 import { lockRegistry, getRegistryStats } from './registry'
+import { TOOL_REGISTRY_CONFIG } from '../config'
 
 /**
  * Import all tool implementations
@@ -57,7 +58,9 @@ async function loadAllTools() {
       }
     }
     
-    console.log('✅ All tool implementations loaded successfully')
+    if (TOOL_REGISTRY_CONFIG.LOG_LEVEL !== 'silent') {
+      console.log('✅ All tool implementations loaded successfully')
+    }
   } catch (error) {
     console.error('❌ Failed to load tool implementations:', error)
     throw error
@@ -78,15 +81,22 @@ export async function initializeToolRegistry(): Promise<void> {
     // Lock the registry to prevent further registrations
     lockRegistry()
     
-    // Log registry statistics
-    const stats = getRegistryStats()
-    console.log(`🔧 Tool registry initialized with ${stats.totalTools} tools:`)
-    console.log(`   Categories: ${JSON.stringify(stats.categories)}`)
-    console.log(`   Tools: ${stats.toolIds.join(', ')}`)
-    
-    if (process.env.NODE_ENV === 'development') {
-      // Additional development logging
-      console.log('🛠️  Development mode: UNREGISTERED_TOOL_GUARD enabled')
+    // Log registry statistics (consolidated)
+    if (TOOL_REGISTRY_CONFIG.LOG_LEVEL !== 'silent') {
+      const stats = getRegistryStats()
+      
+      if (TOOL_REGISTRY_CONFIG.LOG_LEVEL === 'verbose') {
+        console.log(`🔧 Tool registry initialized with ${stats.totalTools} tools:`)
+        console.log(`   Categories: ${JSON.stringify(stats.categories)}`)
+        console.log(`   Tools: ${stats.toolIds.join(', ')}`)
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🛠️  Development mode: UNREGISTERED_TOOL_GUARD enabled')
+        }
+      } else {
+        // Normal mode: single consolidated line
+        console.log(`🔧 Tool registry: ${stats.totalTools} tools initialized`)
+      }
     }
   } catch (error) {
     console.error('💥 Failed to initialize tool registry:', error)

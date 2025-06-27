@@ -16,6 +16,7 @@ import type {
   ToolDiscoveryFilters,
   ConflictReport
 } from './types'
+import { TOOL_REGISTRY_CONFIG } from '../config'
 
 /**
  * Internal registry storage
@@ -31,6 +32,16 @@ let registryLocked = false
  * Development mode guard for unregistered tool access
  */
 const UNREGISTERED_TOOL_GUARD_ENABLED = process.env.NODE_ENV === 'development'
+
+/**
+ * Tool registry logging level configuration
+ */
+const TOOL_REGISTRY_LOG_LEVEL = TOOL_REGISTRY_CONFIG.LOG_LEVEL
+
+/**
+ * Track registered tools for batch logging
+ */
+const registeredTools: Array<{ id: string; name: string }> = []
 
 /**
  * Register a tool in the registry
@@ -82,7 +93,13 @@ export function registerTool(
   toolRegistry.set(tool.id, tool)
   
   if (UNREGISTERED_TOOL_GUARD_ENABLED) {
-    console.log(`✅ Registered tool: ${tool.id} (${tool.name})`)
+    // Track for batch logging
+    registeredTools.push({ id: tool.id, name: tool.name })
+    
+    // Only log individual registrations in verbose mode
+    if (TOOL_REGISTRY_LOG_LEVEL === 'verbose') {
+      console.log(`✅ Registered tool: ${tool.id} (${tool.name})`)
+    }
   }
 }
 
@@ -340,7 +357,15 @@ export function lockRegistry(): void {
   registryLocked = true
   
   if (UNREGISTERED_TOOL_GUARD_ENABLED) {
-    console.log(`🔒 Tool registry locked with ${toolRegistry.size} tools`)
+    // Batch summary of registered tools
+    if (TOOL_REGISTRY_LOG_LEVEL !== 'silent' && registeredTools.length > 0) {
+      const toolNames = registeredTools.map(t => t.id).join(', ')
+      console.log(`🔒 Tool registry locked: ${toolRegistry.size} tools (${toolNames})`)
+      
+      if (TOOL_REGISTRY_LOG_LEVEL === 'verbose') {
+        console.log(`   Details: ${registeredTools.map(t => `${t.id} (${t.name})`).join(', ')}`)
+      }
+    }
     
     // Check for conflicts and warn
     const conflicts = detectConflicts()

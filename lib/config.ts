@@ -153,6 +153,15 @@ export const UI_CONFIG = {
   DEFAULT_LEFT_PANE_WIDTH_PERCENT: 35, // Default width of left sidebar as percentage of window width
 } as const
 
+// Tool registry logging configuration
+export const TOOL_REGISTRY_CONFIG = {
+  // Control logging verbosity for tool registration
+  // 'silent': No logging (production)
+  // 'normal': Summary only (default for development)  
+  // 'verbose': Detailed per-tool logging (debugging)
+  LOG_LEVEL: (process.env.TOOL_REGISTRY_LOG_LEVEL || 'normal') as 'silent' | 'normal' | 'verbose',
+} as const
+
 // Visibility tracking configuration for Table of Contents
 export const VISIBILITY_CONFIG = {
   UPDATE_INTERVAL: 100,    // ms - How often to batch visibility updates
