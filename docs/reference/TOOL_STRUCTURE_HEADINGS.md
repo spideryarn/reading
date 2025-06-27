@@ -110,8 +110,33 @@ Original State: Back to original headings with generate button
 1. **Content analysis**: Extract document HTML with element IDs
 2. **LLM processing**: Send to configured AI model (Claude/Gemini)
 3. **Heading generation**: LLM analyzes content and suggests appropriate headings
-4. **Mutation application**: Generated headings inserted as reversible document transforms
-5. **UI update**: Interface updates to show AI-enhanced state
+4. **Semantic insertion**: Headings use insert-before semantics for correct positioning
+5. **Mutation application**: Generated headings inserted as reversible document transforms
+6. **UI update**: Interface updates to show AI-enhanced state
+
+### Insert-Before Semantics
+
+AI-generated headings use **insert-before** semantics, meaning they appear **before** the content they introduce. This matches user expectations from other document editors:
+
+- **Semantic correctness**: Headings introduce content sections rather than concluding them
+- **Proper hierarchy**: Multiple headings at the same insertion point appear in logical order (H2 → H3 → H4)
+- **Accessibility**: Screen readers navigate by headings in correct document flow
+- **Industry standard**: Matches patterns from Google Docs, Word, Notion
+
+### Multiple Heading Ordering
+
+When multiple AI headings target the same insertion point:
+
+1. **Non-chaining approach**: All headings target original document elements
+2. **Mutation engine sorting**: Handles correct precedence automatically
+3. **Serial insertion behavior**: Last transform appears closest to target
+4. **Deterministic ordering**: Consistent results across regeneration scenarios
+
+**Example**:
+```
+Input: Generate H2 "Introduction" and H3 "Overview" before paragraph-123
+Result: H2 Introduction → H3 Overview → paragraph-123 (correct logical order)
+```
 
 ### Caching and Persistence
 - **Database storage**: Generated headings stored in Supabase for reuse
@@ -142,6 +167,16 @@ The heading generation uses the standard prompt template system:
   context?: string,            // Additional context about document
   style?: string,             // Heading style preferences
   max_headings?: number       // Maximum number of headings to generate
+}
+```
+
+### Generated Heading Structure
+```typescript
+{
+  insertNewBeforeExistingId: string,  // Target element ID for semantic insertion
+  html: string,                       // Generated heading HTML content
+  level: number,                      // Heading level (1-6)
+  text: string                        // Plain text content
 }
 ```
 
@@ -209,6 +244,8 @@ The Structure tab is integrated with the unified tool registry system:
 - **Model dependency**: Quality depends on selected LLM model capabilities
 - **Content analysis**: Best results with structured, well-formatted documents
 - **Language support**: Optimized for English content
+- **Single mutation**: Only one heading mutation active at a time
+- **No intra-mutation dependencies**: Headings within same mutation cannot reference each other's generated IDs
 
 ### Future Enhancements
 - **Batch processing**: Generate headings for multiple documents
@@ -229,6 +266,12 @@ The Structure tab is integrated with the unified tool registry system:
 
 **Problem**: Loading state stuck
 - **Solution**: This was fixed in recent updates; ensure component state management is working
+
+**Problem**: Headings appearing in wrong order
+- **Solution**: This was fixed with insert-before semantics and proper mutation sorting
+
+**Problem**: Multiple headings at same insertion point reversed
+- **Solution**: Fixed with non-chaining approach and precedence sorting
 
 **Problem**: Responsive layout issues
 - **Solution**: Check CSS media queries and viewport meta tag
@@ -255,3 +298,6 @@ Users familiar with the previous "Original" and "AI-Generated" tabs will find:
 - **Component references**: `OriginalHeadingsTab` and `AIGeneratedHeadingsTab` removed
 - **URL routes**: Previous tab routes redirect to unified `structure` tab
 - **Tool registry**: Old `toc-original` and `toc-ai` tools replaced with `structure`
+- **Field names**: `afterId` replaced with explicit `insertNewBeforeExistingId` throughout
+- **Insertion semantics**: Switched from insert-after to insert-before for semantic correctness
+- **Chaining logic**: Eliminated complex chaining in favor of robust non-chaining approach

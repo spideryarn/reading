@@ -314,7 +314,7 @@ export function StructurePanel({
   }
 
   // Helper function to apply cached headings without API call
-  const applyCachedHeadings = useCallback(async (cachedHeadings: Array<{ id_of_after: string, html: string }>) => {
+  const applyCachedHeadings = useCallback(async (cachedHeadings: Array<{ insertNewBeforeExistingId: string, html: string }>) => {
     try {
       console.log('Applying cached headings:', cachedHeadings)
       

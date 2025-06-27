@@ -16,16 +16,67 @@ interface HeadingMutationOptions {
 /**
  * Generate a mutation that inserts AI-generated headings into a document.
  * Creates both forward transforms (insertions) and reverse transforms (removals).
+ * Implements precedence-based ordering to ensure correct positioning when multiple headings target the same insertion point.
+ * 
+ * Uses insert-before semantics where headings appear before the content they introduce,
+ * following industry standards from Google Docs, Word, and Notion. When multiple headings
+ * target the same insertion point, they appear in logical order (H2 → H3 → H4 → target).
+ * 
+ * @param options Configuration object containing headings array, document ID, and optional mutation ID
+ * @param options.headings Array of AI-generated heading objects with insertNewBeforeExistingId and html
+ * @param options.documentId Unique identifier for the document being modified
+ * @param options.mutationId Optional unique identifier for this mutation (auto-generated if not provided)
+ * @param options.isRegeneration Optional flag indicating this is a regeneration of existing headings
+ * @returns Mutation object with forward/reverse transforms for inserting/removing headings
+ * @throws Error if heading HTML format is invalid or ID collision is detected
  */
 export function generateHeadingMutation(options: HeadingMutationOptions): Mutation {
   const { headings, documentId, mutationId, isRegeneration = false } = options
+  
+  console.log(`[HeadingMutation] Starting generation for ${headings.length} headings`, {
+    documentId,
+    mutationId,
+    isRegeneration,
+    headingTitles: headings.map(h => h.html.match(/>([^<]+)</)?.[1] || 'Unknown')
+  })
   
   // Track generated IDs to ensure uniqueness
   const headingIds = new Map<number, string>()
   const existingIds = new Set<string>()
   
-  // Create forward transforms (insertions)
-  const forward: DocumentTransform[] = headings.map((heading, index) => {
+  // Group headings by insertion point for precedence sorting
+  const insertionGroups = new Map<string, number[]>()
+  headings.forEach((heading, index) => {
+    const targetId = heading.insertNewBeforeExistingId
+    if (!insertionGroups.has(targetId)) {
+      insertionGroups.set(targetId, [])
+    }
+    insertionGroups.get(targetId)!.push(index)
+  })
+  
+  // Log grouping results for debugging
+  console.log(`[HeadingMutation] Grouped headings by insertion point:`, {
+    totalGroups: insertionGroups.size,
+    groupDetails: Array.from(insertionGroups.entries()).map(([targetId, indexes]) => ({
+      targetId,
+      headingCount: indexes.length,
+      headingTitles: indexes.map(i => headings[i]!.html.match(/>([^<]+)</)?.[1] || 'Unknown'),
+      multipleHeadings: indexes.length > 1
+    }))
+  })
+  
+  // Reverse headings within each insertion group to counteract mutation engine's reversal
+  // This ensures semantic order is preserved (H2 → H3 → H4) in the final document
+  const reorderedHeadingIndexes: number[] = []
+  for (const [targetId, groupIndexes] of insertionGroups.entries()) {
+    // Reverse the order within each group so mutation engine's reversal produces correct semantic order
+    const reversedIndexes = [...groupIndexes].reverse()
+    reorderedHeadingIndexes.push(...reversedIndexes)
+  }
+
+  // Create forward transforms (insertions) using reordered indexes for correct precedence
+  const forward: DocumentTransform[] = reorderedHeadingIndexes.map((originalIndex) => {
+    const heading = headings[originalIndex]!
     // Extract heading content and level from HTML
     const match = heading.html.match(/^<h(\d)[^>]*>(.*?)<\/h\d>$/i)
     if (!match) {
@@ -58,11 +109,29 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
     }
     
     existingIds.add(headingId)
-    headingIds.set(index, headingId)
+    headingIds.set(originalIndex, headingId)
+    
+    // Use non-chaining approach: all headings target the original element
+    // The mutation engine's sortTransformsForPrecedence() will handle correct ordering
+    const actualInsertionTarget = heading.insertNewBeforeExistingId
+    const groupIndexes = insertionGroups.get(heading.insertNewBeforeExistingId)!
+    const positionInGroup = groupIndexes.indexOf(originalIndex)
+    const groupPosition = positionInGroup === 0 ? 'first-in-group' : 'targets-original-element'
+    
+    console.log(`[HeadingMutation] Group position for heading ${originalIndex}:`, {
+      headingContent: content,
+      headingLevel: level,
+      originalTarget: heading.insertNewBeforeExistingId,
+      actualTarget: actualInsertionTarget,
+      positionInGroup: positionInGroup + 1,
+      totalInGroup: groupIndexes.length,
+      groupPosition,
+      generatedId: headingId
+    })
     
     return {
       action: 'insert' as const,
-      insertNewBeforeExistingId: heading.insertNewBeforeExistingId,
+      insertNewBeforeExistingId: actualInsertionTarget,
       content: {
         id: headingId,
         tag_name: `h${level}`,
@@ -81,7 +150,7 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
     targetId: headingId
   }))
   
-  return {
+  const mutation = {
     id: mutationId || `ai-headings-${Date.now()}`,
     type: 'insert-headings',
     forward,
@@ -92,6 +161,16 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
       timestamp: Date.now()
     }
   }
+  
+  console.log(`[HeadingMutation] Generation completed:`, {
+    mutationId: mutation.id,
+    totalHeadings: headings.length,
+    totalTransforms: forward.length,
+    insertionGroupsCount: insertionGroups.size,
+    groupedHeadingsCount: Array.from(insertionGroups.values()).reduce((sum, group) => sum + Math.max(0, group.length - 1), 0)
+  })
+  
+  return mutation
 }
 
 /**
