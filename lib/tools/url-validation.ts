@@ -39,9 +39,9 @@ export function validateUrlState(state: ToolUrlState): ValidationResult {
         parameter: 'tab',
         value: state.tab,
         error: `Invalid tab "${state.tab}". Must be one of: ${TAB_VALUES.join(', ')}`,
-        fallback: 'original'
+        fallback: 'structure'
       })
-      sanitized.tab = 'original'
+      sanitized.tab = 'structure'
     } else {
       sanitized.tab = state.tab
     }

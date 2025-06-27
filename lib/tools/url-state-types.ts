@@ -4,8 +4,7 @@
 
 // Tab values - matches the activeTabId values in unified-left-pane.tsx
 export const TAB_VALUES = [
-  'original',
-  'ai-generated', 
+  'structure',
   'summary',
   'chat',
   'glossary',
@@ -63,7 +62,7 @@ export interface ToolUrlState {
 
 // Default values for optional parameters
 export const URL_STATE_DEFAULTS: Partial<ToolUrlState> = {
-  tab: 'original',
+  tab: 'structure',
   type: 'text',
   case: false,
   level: 'moderate'

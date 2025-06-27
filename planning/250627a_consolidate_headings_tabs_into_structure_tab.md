@@ -139,6 +139,15 @@ Consolidate the current separate "Original" and "AI-Generated" headings tabs int
 - Verify caching behavior
 - Test responsive design and mobile behavior
 
+### Stage 6: Documentation Updates
+**Deliverable:** Updated documentation reflecting consolidated structure tab  
+**Tasks:**
+- Update `docs/reference/TOOL_STRUCTURE_HEADINGS.md` to reflect new unified interface
+- Document the generate/remove button functionality
+- Update component architecture diagrams
+- Revise usage examples to show single structure tab workflow
+- Update any cross-references in other documentation
+
 ## Technical Design
 
 ### Component Structure
@@ -284,6 +293,9 @@ structure: {
 - URL state management (`lib/tools/hooks/use-tool-url-state.ts`)
 - Document communication context
 - Heading tree component
+
+### Documentation Dependencies
+- **Tool Documentation** (`docs/reference/TOOL_STRUCTURE_HEADINGS.md`) - comprehensive technical guide for the AI-generated heading system
 
 ### External Dependencies
 - Phosphor icons library (for new structure icon)

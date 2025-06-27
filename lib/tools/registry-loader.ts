@@ -29,8 +29,7 @@ async function loadAllTools() {
     const metadataModule = await import('./implementations/metadata')
     
     // Navigation tools
-    const originalTocModule = await import('./implementations/toc-original')
-    const aiTocModule = await import('./implementations/toc-ai')
+    const structureModule = await import('./implementations/structure')
     
     // Interactive tools
     const chatModule = await import('./implementations/chat')
@@ -43,13 +42,12 @@ async function loadAllTools() {
     // Re-register all tools in TOOL_ORDER sequence to ensure consistent ordering
     // This matches the expected order in command-generation.ts TOOL_ORDER array
     const toolModules = [
-      originalTocModule,   // 'original' - should be first
-      aiTocModule,         // 'ai-generated' - should be second  
-      summaryModule,       // 'summary' - should be third
-      chatModule,          // 'chat' - should be fourth
-      glossaryModule,      // 'glossary' - should be fifth
-      searchModule,        // 'search' - should be sixth
-      highlightsModule,    // 'highlights' - should be seventh
+      structureModule,     // 'structure' - should be first (consolidates original + ai-generated)
+      summaryModule,       // 'summary' - should be second
+      chatModule,          // 'chat' - should be third
+      glossaryModule,      // 'glossary' - should be fourth
+      searchModule,        // 'search' - should be fifth
+      highlightsModule,    // 'highlights' - should be sixth
       metadataModule       // 'metadata' - should be last
     ]
     

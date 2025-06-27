@@ -335,8 +335,7 @@ export function generateCommandsFromRegistry(
   // Sort commands to match vertical icon rail order
   // This ensures consistent ordering in command palette with UI navigation
   const TOOL_ORDER = [
-    'original',
-    'ai-generated', 
+    'structure',
     'summary',
     'chat',
     'glossary',

@@ -39,7 +39,7 @@ function buildUpdates<K extends keyof ToolUrlState>(
 
 // Parser definitions for nuqs
 // Cast readonly const arrays to mutable arrays expected by nuqs helper
-const tabParser = parseAsStringEnum<TabValue>([...TAB_VALUES] as TabValue[]).withDefault('original')
+const tabParser = parseAsStringEnum<TabValue>([...TAB_VALUES] as TabValue[]).withDefault('structure')
 const searchTypeParser = parseAsStringEnum<SearchType>([...SEARCH_TYPES] as SearchType[]).withDefault('text')
 const summaryLevelParser = parseAsStringEnum<SummaryLevel>([...SUMMARY_LEVELS] as SummaryLevel[])
 const expertiseLevelParser = parseAsStringEnum<ExpertiseLevel>([...EXPERTISE_LEVELS] as ExpertiseLevel[]).withDefault('intermediate')
@@ -185,7 +185,7 @@ export function useToolUrlState(): UseToolUrlStateReturn {
   // Clear all URL state
   const clearState = useCallback(() => {
     setUrlState({
-      tab: 'original',
+      tab: 'structure',
       term: null,
       q: null,
       type: 'text',

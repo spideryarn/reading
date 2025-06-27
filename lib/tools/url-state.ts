@@ -156,7 +156,7 @@ export function sanitizeUrlState(state: ToolUrlState): ToolUrlState {
   // Validate and copy each field
   if (state.tab) {
     // Validate against known tab values
-    const validTabs = ['original', 'ai-generated', 'summary', 'chat', 'glossary', 'search', 'highlights', 'metadata']
+    const validTabs = ['structure', 'summary', 'chat', 'glossary', 'search', 'highlights', 'metadata']
     if (validTabs.includes(state.tab)) {
       sanitized.tab = state.tab
     }

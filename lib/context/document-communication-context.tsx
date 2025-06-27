@@ -59,7 +59,7 @@ export function DocumentCommunicationProvider({ children }: DocumentCommunicatio
   const [state, setState] = useState<DocumentCommunicationState>({
     currentPosition: null,
     highlightedTerm: null,
-    activeTabId: 'original',
+    activeTabId: 'structure',
     documentSlug: getDocumentSlug(),
     urlStateEnabled: true // Enable URL state by default
   })
