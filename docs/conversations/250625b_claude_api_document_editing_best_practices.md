@@ -56,25 +56,3 @@ tools = [{
 }]
 ```
 
-## **Additional Best Practices**
-
-### **Context Management**
-- Make sure that your inputs are concise as it can help improve efficiency
-- Start new conversations for different topics, ask multiple related questions at once, and avoid re-uploading files unnecessarily
-
-### **Batching Related Changes**
-- Group similar edits together in a single API call
-- Plan changes in advance to minimize back-and-forth
-- Ask Claude to make a plan before coding. Explicitly tell it not to code until you've confirmed its plan looks good
-
-### **Use Response Prefilling**
-If you are using the technique of prefilling the response from Claude (filling in the beginning of Claude's response by using a final assistant role Message), Claude will respond by picking up from where you left off - this can help constrain responses and reduce unnecessary output tokens.
-
-## **Cost-Effectiveness Tips**
-
-1. **Leverage caching**: Cache writes cost 25% more than base input tokens, while cache reads cost 90% less
-2. **Use the right model**: Claude 3.7 Sonnet offers the best balance of capability and cost for most editing tasks
-3. **Set appropriate `max_tokens`**: Don't over-allocate output tokens
-4. **Monitor usage**: Conduct regular performance audits: Regularly check how your API calls are performing
-
-This approach can dramatically reduce your token consumption compared to full document rewrites while maintaining accuracy and enabling complex editing workflows.
