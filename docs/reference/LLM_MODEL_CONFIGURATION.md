@@ -15,6 +15,7 @@ The Spideryarn Reading application uses a **model string** approach for AI model
 📖 **Related Documentation:**
 - `docs/reference/DATABASE_SCHEMA.md` - Database schema with model_string fields
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - AI/LLM call patterns using model strings
+- `docs/reference/LLM_PROMPT_CACHING.md` - Prompt caching strategies for cost optimization across providers
 - `planning/finished/250614a_llm_model_management_simplification.md` - Migration planning and implementation
 
 ## Model String Format
@@ -399,6 +400,34 @@ GROUP BY model_string
 ORDER BY COUNT(*) DESC;
 ```
 
+## Cost Optimization
+
+### Prompt Caching
+
+For high-volume operations or repeated document analysis, consider implementing prompt caching to reduce costs:
+
+- **Anthropic Claude**: 90% cost savings with manual cache configuration
+- **Google Gemini**: 75% savings with automatic caching (2.5 models)
+- **OpenAI**: 50% savings with automatic caching
+
+**See**: `docs/reference/LLM_PROMPT_CACHING.md` for comprehensive implementation guidance, provider comparison, and cost analysis examples.
+
+### Development vs Production Cost Strategy
+
+**Development Environment**:
+```bash
+# Use cost-effective models for development
+LLM_MODEL=anthropic:claude-3-5-haiku:20241022
+LLM_MODEL=google:gemini-2.5-flash:latest
+```
+
+**Production Environment**:
+```bash
+# Balance quality and cost for production
+LLM_MODEL=anthropic:claude-sonnet-4:20250514
+# With caching enabled for repeated operations
+```
+
 ## Future Enhancements
 
 **Planned Features:**
@@ -406,6 +435,7 @@ ORDER BY COUNT(*) DESC;
 - Model capability detection
 - Usage analytics by model
 - Cost optimization recommendations
+- Prompt caching integration
 
 **Potential Extensions:**
 - Model versioning and deprecation handling

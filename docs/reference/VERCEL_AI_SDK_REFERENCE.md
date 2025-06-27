@@ -11,6 +11,7 @@ A comprehensive guide to the Vercel AI SDK library and its integration within th
 - `src/lib/hooks/useChatRuntime.ts` - Custom hook bridging AI SDK with @assistant-ui/react
 - `docs/reference/AI_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Integration guide for @assistant-ui/react library
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Prompt template system using Zod validation
+- `docs/reference/LLM_PROMPT_CACHING.md` - Prompt caching strategies for cost optimization across AI SDK providers
 - `lib/config.ts` - AI model configuration and provider settings
 
 ### Official Vercel AI SDK Documentation
@@ -630,7 +631,29 @@ const result = await generateText({
 if (result.finishReason === 'length') {
   console.warn('Response truncated due to token limit')
 }
+
+// Monitor cache usage (when implemented)
+if (result.usage?.cache_read_input_tokens) {
+  console.log('Cache hit rate:', result.usage.cache_read_input_tokens / result.usage.promptTokens)
+}
 ```
+
+#### Cost Optimization with Caching
+```typescript
+// Structure prompts for optimal caching
+const documentPrompt = [
+  { role: 'system', content: systemInstructions }, // Cacheable
+  { role: 'user', content: documentContent },      // Cacheable
+  { role: 'user', content: userQuestion }          // Dynamic
+]
+
+// For high-volume operations, consider caching strategies:
+// - Anthropic: Manual cache control (90% savings)
+// - Google: Automatic caching on 2.5 models (75% savings)  
+// - OpenAI: Automatic caching (50% savings)
+```
+
+**See**: `docs/reference/LLM_PROMPT_CACHING.md` for comprehensive caching implementation across providers.
 
 #### Prompt Engineering
 ```typescript

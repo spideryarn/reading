@@ -16,9 +16,10 @@ Spideryarn Reading processes documents through multiple AI operations (summaries
 
 ## References
 
-- `docs/LLM_MODEL_CONFIGURATION.md` - Multi-provider LLM configuration
-- `docs/VERCEL_AI_SDK_REFERENCE.md` - Vercel AI SDK usage patterns
-- `docs/LLM_PROMPT_TEMPLATES.md` - Nunjucks + Zod template system
+- `docs/reference/LLM_PROMPT_CACHING.md` - Comprehensive guide to prompt caching across all major LLM providers with cost analysis
+- `docs/reference/LLM_MODEL_CONFIGURATION.md` - Multi-provider LLM configuration
+- `docs/reference/VERCEL_AI_SDK_REFERENCE.md` - Vercel AI SDK usage patterns
+- `docs/reference/LLM_PROMPT_TEMPLATES.md` - Nunjucks + Zod template system
 - `lib/services/llm-provider.ts` - Current LLM provider implementation
 - `lib/prompts/templates/*.njk` - Existing prompt templates to update
 - Provider caching docs:

@@ -5,6 +5,7 @@ Comprehensive tracking system for monitoring AI/LLM token usage, costs, and perf
 ## See also
 
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Prompt template system with usage tracking functions
+- `docs/reference/LLM_PROMPT_CACHING.md` - Prompt caching strategies for cost optimization (90%, 75%, 50% savings across providers)
 - `docs/reference/DATABASE_SCHEMA.md` - Database tables: `ai_calls` and `ai_models` 
 - `docs/reference/LOGGING_BEST_PRACTICES.md` - Pino logging patterns for AI operations
 - `lib/services/database/ai-calls.ts` - AiCallService implementation with usage storage
@@ -310,10 +311,39 @@ FROM ai_models
 WHERE provider IN ('anthropic', 'google');
 ```
 
+## Cost Optimization with Caching
+
+### Prompt Caching Integration
+
+Token tracking works with prompt caching for significant cost reductions:
+
+- **Anthropic Claude**: Track `cache_creation_input_tokens` and `cache_read_input_tokens` for 90% savings on cached tokens
+- **Google Gemini**: Monitor implicit caching benefits (75% reduction) on 2.5 models 
+- **OpenAI**: Automatic caching provides 50% savings on repeated tokens
+
+**Enhanced Usage Tracking for Caching**:
+```typescript
+// Monitor cache performance
+const cacheMetrics = {
+  cache_creation_input_tokens: response.usage?.cache_creation_input_tokens,
+  cache_read_input_tokens: response.usage?.cache_read_input_tokens,
+  cache_hit_rate: calculateCacheHitRate(response.usage)
+}
+
+logAIOperation(logger, 'document-analysis', {
+  model: 'claude-3-5-sonnet',
+  tokens: response.usage,
+  cache: cacheMetrics,
+  cost: calculateCostWithCaching(response.usage, modelPricing)
+})
+```
+
+**See**: `docs/reference/LLM_PROMPT_CACHING.md` for comprehensive caching implementation and cost analysis.
+
 ## Future Enhancements
 
 - **Streaming token tracking**: Progressive usage updates for long responses
 - **Budget alerts**: Notify when usage exceeds thresholds
 - **Usage dashboards**: Visual analytics for token consumption
-- **Cache-aware pricing**: Reduced costs for cached responses
+- **Cache-aware pricing**: Reduced costs for cached responses (in progress)
 - **Batch operation tracking**: Aggregate costs for multi-step workflows

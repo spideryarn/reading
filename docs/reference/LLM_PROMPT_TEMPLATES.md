@@ -26,6 +26,7 @@ See also:
 - [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) - Overall system architecture decisions
 - [TOOL_SUMMARISE.md](TOOL_SUMMARISE.md) and [TOOL_GLOSSARY.md](TOOL_GLOSSARY.md) - Examples of template system usage
 - [LLM_TRACKING_TOKEN_USAGE_LOGGING.md](LLM_TRACKING_TOKEN_USAGE_LOGGING.md) - Comprehensive guide for token usage tracking and cost management
+- [LLM_PROMPT_CACHING.md](LLM_PROMPT_CACHING.md) - Prompt caching strategies for significant cost savings (up to 90% reduction)
 
 ## Overview
 
