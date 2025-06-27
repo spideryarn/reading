@@ -23,11 +23,8 @@ import {
   User, MapPin, Lightbulb, Star, Article, 
   Cube, Buildings, Info 
 } from '@phosphor-icons/react'
-import { 
-  OriginalHeadingsTab, 
-  AIGeneratedHeadingsTab, 
-  DocumentSummaryTab 
-} from './table-of-contents-tabs'
+import { DocumentSummaryTab } from './table-of-contents-tabs'
+import { StructurePanel } from './tools/StructurePanel'
 import { debounce } from '@/lib/utils/debounce'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
 import Mark from 'mark.js'
@@ -965,18 +962,8 @@ export function UnifiedLeftPane({
   // Note: DOM event listener removed - now using DocumentCommunicationContext for all cross-pane communication
 
   // Render functions for tabs - memoized to prevent unnecessary re-mounting
-  const renderOriginalTab = useCallback(() => (
-    <OriginalHeadingsTab
-      content={content}
-      elements={elements}
-      onHeadingClick={onHeadingClick}
-      documentId={documentId}
-      headingVisibility={headingVisibility}
-    />
-  ), [content, elements, onHeadingClick, documentId, headingVisibility])
-
-  const renderAIGeneratedTab = useCallback(() => (
-    <AIGeneratedHeadingsTab
+  const renderStructureTab = useCallback(() => (
+    <StructurePanel
       content={content}
       elements={elements}
       onHeadingClick={onHeadingClick}
@@ -1361,11 +1348,8 @@ export function UnifiedLeftPane({
     <div className="h-full flex flex-col">
       {/* All tabs rendered but only active one visible - using display:none for state persistence */}
       <div className="flex-1 overflow-y-auto">
-        <div style={{ display: state.activeTabId === 'original' ? 'block' : 'none' }} className="h-full">
-          {renderOriginalTab()}
-        </div>
-        <div style={{ display: state.activeTabId === 'ai-generated' ? 'block' : 'none' }} className="h-full">
-          {renderAIGeneratedTab()}
+        <div style={{ display: state.activeTabId === 'structure' ? 'block' : 'none' }} className="h-full">
+          {renderStructureTab()}
         </div>
         <div style={{ display: state.activeTabId === 'summary' ? 'block' : 'none' }} className="h-full">
           {renderSummaryTab()}
