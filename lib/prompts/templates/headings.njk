@@ -28,7 +28,7 @@ Respond with only JSON in the following form, in the order that elements appear 
 {
   "headings": [
     {
-      "id_of_after": "element_123",
+      "insertNewBeforeExistingId": "element_123",
       "html": "<h3>A new heading title at level 3</h3>"
     }
   ]
@@ -36,7 +36,7 @@ Respond with only JSON in the following form, in the order that elements appear 
 ```
 
 Where:
-- `id_of_after`: The ID of the existing HTML element that comes just after this heading, i.e. tells us we should insert this heading just before that element. This must be an existing ID in the HTML provided.
+- `insertNewBeforeExistingId`: The ID of the existing HTML element before which this heading should be inserted. The heading will appear immediately before the specified element, semantically introducing the content that follows. This must be an existing ID in the HTML provided.
 - `html`: The HTML for the new heading, e.g. "<h3>A new heading title at level 3</h3>". This should not include an ID attribute, which will be added automatically.
 
 Respond with ONLY valid JSON, i.e. don't include any superfluous conversation, commentary, or markdown/markup.

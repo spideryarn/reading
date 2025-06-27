@@ -9,6 +9,7 @@
 
 import { ComponentType } from 'react'
 import type { IconProps } from '@phosphor-icons/react'
+import type { TabValue } from './url-state-types'
 
 /**
  * Tool categories for organization and discovery
@@ -21,16 +22,8 @@ export type ToolCategory =
 
 /**
  * Tab identifier values for URL state and navigation
+ * (imported from url-state-types.ts)
  */
-export type TabValue = 
-  | 'original'
-  | 'ai-generated'
-  | 'summary'
-  | 'chat'
-  | 'glossary'
-  | 'search'
-  | 'highlights'
-  | 'metadata'
 
 /**
  * Tool capabilities flags for feature detection

@@ -2,7 +2,7 @@ import { Mutation, DocumentTransform } from '../types/mutation'
 import { generateContentBasedId } from './deterministicId'
 
 interface AIHeading {
-  id_of_after: string
+  insertNewBeforeExistingId: string
   html: string
 }
 
@@ -39,8 +39,8 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
     // This ensures unique IDs even when heading content is identical
     // For regenerations, add a timestamp to ensure different IDs from previous generations
     const idContent = isRegeneration 
-      ? `${content}:after:${heading.id_of_after}:${Date.now()}`
-      : `${content}:after:${heading.id_of_after}`
+      ? `${content}:before:${heading.insertNewBeforeExistingId}:${Date.now()}`
+      : `${content}:before:${heading.insertNewBeforeExistingId}`
     
     const headingId = generateContentBasedId(
       documentId, 
@@ -53,7 +53,7 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
       throw new Error(
         `FATAL: ID collision detected! Generated ID "${headingId}" already exists. ` +
         `This indicates a serious bug in the ID generation algorithm. ` +
-        `Context: AI heading "${content}" to be inserted after element "${heading.id_of_after}"`
+        `Context: AI heading "${content}" to be inserted before element "${heading.insertNewBeforeExistingId}"`
       )
     }
     
@@ -62,7 +62,7 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
     
     return {
       action: 'insert' as const,
-      insertNewAfterExistingId: heading.id_of_after,
+      insertNewBeforeExistingId: heading.insertNewBeforeExistingId,
       content: {
         id: headingId,
         tag_name: `h${level}`,

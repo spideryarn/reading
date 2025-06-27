@@ -269,7 +269,7 @@ export async function POST(request: NextRequest) {
     // Create AI call record for tracking
     const aiCall = await aiCallService.startCallWithModelString({
       userId: user.id,
-      documentId: documentId || undefined,
+      documentId,
       modelString: modelString,
       prompt_type: 'headings',
       input_data: { 
