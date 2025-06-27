@@ -37,7 +37,7 @@ describe('MutationContext', () => {
     type: 'insert-headings',
     forward: [{
       action: 'insert',
-      afterId: 'para-1',
+      insertNewAfterExistingId: 'para-1',
       content: {
         id: 'ai-heading-1',
         tag_name: 'h2',
@@ -109,7 +109,7 @@ describe('MutationContext', () => {
         type: 'insert-headings',
         forward: [{
           action: 'insert',
-          afterId: 'non-existent-id',
+          insertNewAfterExistingId: 'non-existent-id',
           content: { id: 'new-element' }
         }],
         reverse: []

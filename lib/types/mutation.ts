@@ -46,6 +46,14 @@ export interface DocumentTransform {
    */
   insertNewAfterExistingId?: string
   
+  /** 
+   * ID of the existing element before which the new content should be inserted.
+   * Only used for insert actions with 'before' insertion semantics.
+   * The new element will appear immediately before the element with this ID.
+   * Example: insertNewBeforeExistingId: 'para-123' → new content appears before para-123
+   */
+  insertNewBeforeExistingId?: string
+  
   /** New content to insert or replace with */
   content?: Partial<DocumentElement>
   
@@ -89,14 +97,40 @@ export interface MutationResult {
 }
 
 /**
- * Type guard to check if a transform is an insert action
+ * Type guard to check if a transform is an insert action (either before or after)
  */
 export function isInsertTransform(transform: DocumentTransform): transform is DocumentTransform & { 
+  action: 'insert'
+  content: Partial<DocumentElement>
+} & (
+  | { insertNewAfterExistingId: string }
+  | { insertNewBeforeExistingId: string }
+) {
+  return transform.action === 'insert' && 
+         !!transform.content && 
+         (!!transform.insertNewAfterExistingId || !!transform.insertNewBeforeExistingId)
+}
+
+/**
+ * Type guard to check if a transform is an insert-after action
+ */
+export function isInsertAfterTransform(transform: DocumentTransform): transform is DocumentTransform & { 
   action: 'insert'
   insertNewAfterExistingId: string
   content: Partial<DocumentElement>
 } {
   return transform.action === 'insert' && !!transform.insertNewAfterExistingId && !!transform.content
+}
+
+/**
+ * Type guard to check if a transform is an insert-before action
+ */
+export function isInsertBeforeTransform(transform: DocumentTransform): transform is DocumentTransform & { 
+  action: 'insert'
+  insertNewBeforeExistingId: string
+  content: Partial<DocumentElement>
+} {
+  return transform.action === 'insert' && !!transform.insertNewBeforeExistingId && !!transform.content
 }
 
 /**

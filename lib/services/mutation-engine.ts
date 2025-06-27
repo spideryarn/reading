@@ -4,6 +4,8 @@ import {
   DocumentTransform, 
   MutationResult,
   isInsertTransform,
+  isInsertAfterTransform,
+  isInsertBeforeTransform,
   isReplaceTransform,
   isRemoveTransform,
   isModifyTransform
@@ -247,7 +249,7 @@ export class MutationEngine {
   }
 
   /**
-   * Apply a list of transforms to a document
+   * Apply a list of transforms to a document with proper precedence for mixed insertion types
    */
   private static applyTransforms(
     document: DocumentElement[], 
@@ -262,9 +264,15 @@ export class MutationEngine {
       modified: 0
     }
 
-    for (const transform of transforms) {
-      if (isInsertTransform(transform)) {
-        workingDoc = this.applyInsert(workingDoc, transform)
+    // Sort transforms to ensure proper precedence for mixed insertion types
+    const sortedTransforms = this.sortTransformsForPrecedence(transforms)
+
+    for (const transform of sortedTransforms) {
+      if (isInsertAfterTransform(transform)) {
+        workingDoc = this.applyInsertAfter(workingDoc, transform)
+        changes.inserted++
+      } else if (isInsertBeforeTransform(transform)) {
+        workingDoc = this.applyInsertBefore(workingDoc, transform)
         changes.inserted++
       } else if (isReplaceTransform(transform)) {
         workingDoc = this.applyReplace(workingDoc, transform)
@@ -287,9 +295,68 @@ export class MutationEngine {
   }
 
   /**
+   * Sort transforms to implement mixed insertion precedence rule:
+   * before-insertions → original-element → after-insertions
+   * 
+   * This ensures that when multiple insertions target the same element,
+   * all before-insertions are processed first, then after-insertions.
+   */
+  private static sortTransformsForPrecedence(transforms: DocumentTransform[]): DocumentTransform[] {
+    // Group transforms by their target element ID
+    const insertionGroups = new Map<string, {
+      beforeInsertions: DocumentTransform[],
+      afterInsertions: DocumentTransform[],
+      otherTransforms: DocumentTransform[]
+    }>()
+    
+    const nonInsertionTransforms: DocumentTransform[] = []
+
+    // Group insertions by target element
+    for (const transform of transforms) {
+      if (isInsertBeforeTransform(transform)) {
+        const targetId = transform.insertNewBeforeExistingId
+        if (!insertionGroups.has(targetId)) {
+          insertionGroups.set(targetId, { beforeInsertions: [], afterInsertions: [], otherTransforms: [] })
+        }
+        insertionGroups.get(targetId)!.beforeInsertions.push(transform)
+      } else if (isInsertAfterTransform(transform)) {
+        const targetId = transform.insertNewAfterExistingId
+        if (!insertionGroups.has(targetId)) {
+          insertionGroups.set(targetId, { beforeInsertions: [], afterInsertions: [], otherTransforms: [] })
+        }
+        insertionGroups.get(targetId)!.afterInsertions.push(transform)
+      } else {
+        // Non-insertion transforms (replace, remove, modify) maintain original order
+        nonInsertionTransforms.push(transform)
+      }
+    }
+
+    // Build the sorted transform list with proper precedence
+    const sortedTransforms: DocumentTransform[] = []
+    
+    // First, add all before-insertions (in groups by target element)
+    // For before-insertions, reverse the order within each group to achieve
+    // correct serial insertion behavior (last transform should appear first)
+    for (const group of insertionGroups.values()) {
+      sortedTransforms.push(...group.beforeInsertions.reverse())
+    }
+    
+    // Then, add all non-insertion transforms in original order
+    sortedTransforms.push(...nonInsertionTransforms)
+    
+    // Finally, add all after-insertions (in groups by target element)
+    // For after-insertions, reverse order within each group (same serial insertion behavior as before-insertions)
+    for (const group of insertionGroups.values()) {
+      sortedTransforms.push(...group.afterInsertions.reverse())
+    }
+
+    return sortedTransforms
+  }
+
+  /**
    * Insert a new element after a specified element
    */
-  private static applyInsert(
+  private static applyInsertAfter(
     document: DocumentElement[], 
     transform: DocumentTransform & { action: 'insert'; insertNewAfterExistingId: string; content: Partial<DocumentElement> }
   ): DocumentElement[] {
@@ -321,6 +388,49 @@ export class MutationEngine {
     
     // Update positions of subsequent elements
     for (let i = existingElementIndex + 2; i < result.length; i++) {
+      if (result[i]!.parent_id === newElement.parent_id) {
+        result[i] = { ...result[i]!, position: result[i]!.position + 1 }
+      }
+    }
+
+    return result
+  }
+
+  /**
+   * Insert a new element before a specified element
+   */
+  private static applyInsertBefore(
+    document: DocumentElement[], 
+    transform: DocumentTransform & { action: 'insert'; insertNewBeforeExistingId: string; content: Partial<DocumentElement> }
+  ): DocumentElement[] {
+    const existingElementIndex = document.findIndex(el => el.id === transform.insertNewBeforeExistingId)
+    
+    if (existingElementIndex === -1) {
+      throw new Error(`Cannot insert before element ${transform.insertNewBeforeExistingId}: element not found`)
+    }
+
+    // Create a new element with defaults
+    const existingElement = document[existingElementIndex]!
+    const newElement: DocumentElement = {
+      id: transform.content.id || `generated-${Date.now()}-${Math.random()}`,
+      document_id: existingElement.document_id,
+      parent_id: existingElement.parent_id,
+      tag_name: 'div',
+      content: '',
+      attributes: {},
+      position: existingElement.position,
+      level: existingElement.level,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      ...transform.content
+    }
+
+    // Insert the new element before the existing element
+    const result = [...document]
+    result.splice(existingElementIndex, 0, newElement)
+    
+    // Update positions of the existing element and all subsequent siblings
+    for (let i = existingElementIndex + 1; i < result.length; i++) {
       if (result[i]!.parent_id === newElement.parent_id) {
         result[i] = { ...result[i]!, position: result[i]!.position + 1 }
       }
@@ -442,18 +552,36 @@ export class MutationEngine {
         if (!isInsertTransform(transform)) {
           return { valid: false, error: 'Invalid insert transform structure' }
         }
-        if (!transform.insertNewAfterExistingId) {
-          return { valid: false, error: 'Insert transform missing insertNewAfterExistingId' }
+        
+        // Validate insertion type - must have either before or after, but not both
+        const hasAfter = !!transform.insertNewAfterExistingId
+        const hasBefore = !!transform.insertNewBeforeExistingId
+        
+        if (!hasAfter && !hasBefore) {
+          return { valid: false, error: 'Insert transform missing both insertNewAfterExistingId and insertNewBeforeExistingId' }
         }
-        if (!document.find(el => el.id === transform.insertNewAfterExistingId)) {
-          return { valid: false, error: `Cannot insert after element ${transform.insertNewAfterExistingId}: element not found` }
+        
+        if (hasAfter && hasBefore) {
+          return { valid: false, error: 'Insert transform cannot have both insertNewAfterExistingId and insertNewBeforeExistingId' }
         }
+        
+        // Validate target element exists
+        const targetId = hasAfter ? transform.insertNewAfterExistingId : transform.insertNewBeforeExistingId
+        const insertionType = hasAfter ? 'after' : 'before'
+        
+        if (!document.find(el => el.id === targetId)) {
+          return { valid: false, error: `Cannot insert ${insertionType} element ${targetId}: element not found` }
+        }
+        
+        // Validate content
         if (!transform.content?.id) {
           return { valid: false, error: 'Insert transform missing content.id' }
         }
+        
         if (document.find(el => el.id === transform.content.id)) {
           return { valid: false, error: `Cannot insert element with duplicate ID: ${transform.content.id}` }
         }
+        
         return { valid: true, error: '' }
         
       case 'remove':
