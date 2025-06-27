@@ -54,8 +54,83 @@ function checkBrowserSupport(): boolean {
   return !!(
     navigator?.mediaDevices?.getUserMedia &&
     window.MediaRecorder &&
-    typeof MediaRecorder.isTypeSupported === 'function'
+    typeof MediaRecorder.isTypeSupported === 'function' &&
+    window.isSecureContext // HTTPS required for getUserMedia
   );
+}
+
+/**
+ * Check current microphone permission state
+ */
+async function checkMicrophonePermission(): Promise<string> {
+  try {
+    // Try Permissions API first (Chrome, Firefox)
+    const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+    return permissionStatus.state; // 'granted', 'denied', 'prompt'
+  } catch (error) {
+    // Fallback for Safari and older browsers
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const audioDevices = devices.filter(device => device.kind === 'audioinput');
+      
+      // If device labels are available, we likely have permission
+      if (audioDevices.length > 0 && audioDevices[0].label) {
+        return 'granted';
+      } else {
+        return 'prompt'; // Need to ask for permission
+      }
+    } catch (enumerateError) {
+      return 'unknown';
+    }
+  }
+}
+
+/**
+ * Get browser-specific guidance for enabling microphone permissions
+ */
+function getBrowserGuidance(): { message: string; instructions: string[] } {
+  const userAgent = navigator.userAgent;
+  
+  if (userAgent.includes('Chrome') || userAgent.includes('Edg')) {
+    return {
+      message: 'Chrome/Edge: Check microphone settings',
+      instructions: [
+        'Click the camera/microphone icon in the address bar',
+        'Select "Allow" for microphone access',
+        'Or go to chrome://settings/content/microphone',
+        'Remove this site from the blocked list and refresh'
+      ]
+    };
+  } else if (userAgent.includes('Firefox')) {
+    return {
+      message: 'Firefox: Check microphone settings',
+      instructions: [
+        'Click the shield or microphone icon in the address bar',
+        'Select "Allow" for microphone access',
+        'Or go to about:preferences#privacy',
+        'Check microphone permissions and refresh'
+      ]
+    };
+  } else if (userAgent.includes('Safari')) {
+    return {
+      message: 'Safari: Check microphone settings',
+      instructions: [
+        'Go to Safari > Preferences > Websites > Microphone',
+        'Find this site and set to "Ask" or "Allow"',
+        'Refresh the page to try again'
+      ]
+    };
+  }
+  
+  return {
+    message: 'Check browser microphone settings',
+    instructions: [
+      'Look for a microphone icon in your browser address bar',
+      'Enable microphone access for this site',
+      'Check browser privacy/security settings',
+      'Refresh the page after changing settings'
+    ]
+  };
 }
 
 /**
@@ -81,7 +156,8 @@ export function useSpeechToText(
     isProcessing: false,
     error: null,
     isSupported: checkBrowserSupport(),
-    hasPermission: null
+    hasPermission: null,
+    permissionState: 'unknown'
   });
 
   // Refs for MediaRecorder and audio stream
@@ -137,10 +213,29 @@ export function useSpeechToText(
    */
   const initializeRecording = useCallback(async (): Promise<MediaRecorder> => {
     if (!state.isSupported) {
-      throw new Error('Speech-to-text is not supported in this browser');
+      throw new Error('Speech-to-text is not supported in this browser. Please use Chrome, Firefox, or Safari with HTTPS.');
+    }
+
+    // Check current permission state first
+    const permissionState = await checkMicrophonePermission();
+    updateState({ permissionState });
+
+    console.log(`[SpeechToText] Permission state: ${permissionState}`);
+
+    if (permissionState === 'denied') {
+      const error = new Error('Microphone access is blocked. Please check your browser settings to allow microphone access for this site.');
+      (error as any).context = { 
+        errorType: 'permissionBlocked', 
+        permissionState,
+        browserGuidance: getBrowserGuidance()
+      };
+      throw error;
     }
 
     try {
+      console.log('[SpeechToText] Requesting microphone access...');
+      const startTime = Date.now();
+      
       // Request microphone access
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -150,6 +245,14 @@ export function useSpeechToText(
           sampleRate: 16000
         }
       });
+
+      const endTime = Date.now();
+      console.log(`[SpeechToText] Permission granted in ${endTime - startTime}ms`);
+
+      // If very fast, likely a cached permission
+      if (endTime - startTime < 500) {
+        console.log('[SpeechToText] Permission was cached (previously granted)');
+      }
 
       streamRef.current = stream;
       updateState({ hasPermission: true, error: null });
@@ -210,26 +313,46 @@ export function useSpeechToText(
       return mediaRecorder;
 
     } catch (error) {
-      updateState({ hasPermission: false });
+      const endTime = Date.now();
+      console.log(`[SpeechToText] Permission denied in ${endTime - startTime}ms`);
+      
+      // If very fast, likely a cached denial
+      if (endTime - startTime < 500) {
+        console.log('[SpeechToText] Permission was cached (previously denied)');
+      }
+
+      updateState({ hasPermission: false, permissionState: 'denied' });
       
       if (error instanceof Error) {
+        const browserGuidance = getBrowserGuidance();
+        
         if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-          const permissionError = new Error('Microphone permission denied. Please allow microphone access and try again.');
-          (permissionError as any).context = { errorName: error.name, errorType: 'permission' };
+          const permissionError = new Error(`Microphone permission denied. ${browserGuidance.message}\n\nSteps to fix:\n${browserGuidance.instructions.map(step => `• ${step}`).join('\n')}`);
+          (permissionError as any).context = { 
+            errorName: error.name, 
+            errorType: 'permission',
+            browserGuidance,
+            wasPromptShown: endTime - startTime > 500
+          };
           throw permissionError;
         } else if (error.name === 'NotFoundError') {
           const micError = new Error('No microphone found. Please connect a microphone and try again.');
           (micError as any).context = { errorName: error.name, errorType: 'hardware' };
           throw micError;
         } else if (error.name === 'NotSupportedError') {
-          const supportError = new Error('Audio recording not supported in this browser.');
+          const supportError = new Error('Audio recording not supported in this browser. Please use Chrome, Firefox, or Safari with HTTPS.');
           (supportError as any).context = { errorName: error.name, errorType: 'browserSupport' };
           throw supportError;
         }
       }
       
-      const genericError = new Error('Failed to access microphone. Please check permissions and try again.');
-      (genericError as any).context = { errorType: 'microphoneAccess', originalError: error };
+      const browserGuidance = getBrowserGuidance();
+      const genericError = new Error(`Failed to access microphone. ${browserGuidance.message}\n\nPlease check your browser settings and try again.`);
+      (genericError as any).context = { 
+        errorType: 'microphoneAccess', 
+        originalError: error,
+        browserGuidance
+      };
       throw genericError;
     }
   }, [state.isSupported, updateState, handleError, cleanup]);

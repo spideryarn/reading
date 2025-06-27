@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     let formData: FormData
     try {
       formData = await request.formData()
-    } catch (error) {
+    } catch {
       logger.warn('Failed to parse FormData')
       return NextResponse.json({
         success: false,

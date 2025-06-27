@@ -16,6 +16,8 @@ export interface SpeechToTextState {
   isSupported: boolean;
   /** Whether microphone permission has been granted (null = not requested) */
   hasPermission: boolean | null;
+  /** Current permission state from Permissions API */
+  permissionState: 'granted' | 'denied' | 'prompt' | 'unknown';
 }
 
 export interface SpeechToTextInputProps {
