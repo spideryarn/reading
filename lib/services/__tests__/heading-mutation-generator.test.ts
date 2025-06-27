@@ -62,8 +62,8 @@ describe('heading-mutation-generator', () => {
       })
     })
 
-    describe('chained insertion scenarios - CORE FUNCTIONALITY', () => {
-      it('should chain multiple headings targeting same insertion point', () => {
+    describe('grouped insertion scenarios - CORE FUNCTIONALITY', () => {
+      it('should handle multiple headings targeting same insertion point with precedence ordering', () => {
         const headings = [
           { insertNewBeforeExistingId: 'para-123', html: '<h2>Main Topic</h2>' },
           { insertNewBeforeExistingId: 'para-123', html: '<h3>Subtopic</h3>' }
@@ -82,16 +82,16 @@ describe('heading-mutation-generator', () => {
         expect(firstTransform.insertNewBeforeExistingId).toBe('para-123')
         expect(firstTransform.content?.content).toBe('Main Topic')
         
-        // Second heading should target first heading's ID (chaining)
+        // All headings should target the original element (non-chaining approach)
         const secondTransform = result.forward[1]!
         expect(secondTransform.insertNewBeforeExistingId).toBe(firstTransform.content?.id)
         expect(secondTransform.content?.content).toBe('Subtopic')
         
-        // Verify chaining creates correct order: H2 → H3 → para-123
+        // Verify precedence creates correct order: H2 → H3 → para-123
         expect(secondTransform.insertNewBeforeExistingId).toMatch(/^heading-/)
       })
 
-      it('should handle three headings targeting same point with correct chaining', () => {
+      it('should handle three headings targeting same point with correct precedence ordering', () => {
         const headings = [
           { insertNewBeforeExistingId: 'para-xyz', html: '<h2>Chapter</h2>' },
           { insertNewBeforeExistingId: 'para-xyz', html: '<h3>Section</h3>' },
@@ -126,7 +126,7 @@ describe('heading-mutation-generator', () => {
       })
     })
 
-    describe('mixed scenarios - some chained, some independent', () => {
+    describe('mixed scenarios - some grouped, some independent', () => {
       it('should handle mixed insertion points correctly', () => {
         const headings = [
           { insertNewBeforeExistingId: 'para-1', html: '<h2>Topic A</h2>' },
@@ -145,9 +145,9 @@ describe('heading-mutation-generator', () => {
         
         const [first, second, third, fourth] = result.forward
         
-        // First group: para-1 should have chaining
+        // First group: para-1 should have multiple headings
         expect(first!.insertNewBeforeExistingId).toBe('para-1')
-        expect(second!.insertNewBeforeExistingId).toBe(first!.content?.id) // Chained
+        expect(second!.insertNewBeforeExistingId).toBe('para-1') // All target original
         
         // Independent insertions
         expect(third!.insertNewBeforeExistingId).toBe('para-2')

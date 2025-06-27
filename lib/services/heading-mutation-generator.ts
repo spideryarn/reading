@@ -16,7 +16,19 @@ interface HeadingMutationOptions {
 /**
  * Generate a mutation that inserts AI-generated headings into a document.
  * Creates both forward transforms (insertions) and reverse transforms (removals).
- * Implements chaining logic to ensure correct ordering when multiple headings target the same insertion point.
+ * Implements precedence-based ordering to ensure correct positioning when multiple headings target the same insertion point.
+ * 
+ * Uses insert-before semantics where headings appear before the content they introduce,
+ * following industry standards from Google Docs, Word, and Notion. When multiple headings
+ * target the same insertion point, they appear in logical order (H2 → H3 → H4 → target).
+ * 
+ * @param options Configuration object containing headings array, document ID, and optional mutation ID
+ * @param options.headings Array of AI-generated heading objects with insertNewBeforeExistingId and html
+ * @param options.documentId Unique identifier for the document being modified
+ * @param options.mutationId Optional unique identifier for this mutation (auto-generated if not provided)
+ * @param options.isRegeneration Optional flag indicating this is a regeneration of existing headings
+ * @returns Mutation object with forward/reverse transforms for inserting/removing headings
+ * @throws Error if heading HTML format is invalid or ID collision is detected
  */
 export function generateHeadingMutation(options: HeadingMutationOptions): Mutation {
   const { headings, documentId, mutationId, isRegeneration = false } = options
@@ -32,7 +44,7 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
   const headingIds = new Map<number, string>()
   const existingIds = new Set<string>()
   
-  // Group headings by insertion point for chaining logic
+  // Group headings by insertion point for precedence sorting
   const insertionGroups = new Map<string, number[]>()
   headings.forEach((heading, index) => {
     const targetId = heading.insertNewBeforeExistingId
@@ -49,7 +61,7 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
       targetId,
       headingCount: indexes.length,
       headingTitles: indexes.map(i => headings[i]!.html.match(/>([^<]+)</)?.[1] || 'Unknown'),
-      chainingRequired: indexes.length > 1
+      multipleHeadings: indexes.length > 1
     }))
   })
   
@@ -62,7 +74,7 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
     reorderedHeadingIndexes.push(...reversedIndexes)
   }
 
-  // Create forward transforms (insertions) with chaining logic using reordered indexes
+  // Create forward transforms (insertions) using reordered indexes for correct precedence
   const forward: DocumentTransform[] = reorderedHeadingIndexes.map((originalIndex) => {
     const heading = headings[originalIndex]!
     // Extract heading content and level from HTML
@@ -104,16 +116,16 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
     const actualInsertionTarget = heading.insertNewBeforeExistingId
     const groupIndexes = insertionGroups.get(heading.insertNewBeforeExistingId)!
     const positionInGroup = groupIndexes.indexOf(originalIndex)
-    const chainingAction = positionInGroup === 0 ? 'first-in-group' : 'targets-original-element'
+    const groupPosition = positionInGroup === 0 ? 'first-in-group' : 'targets-original-element'
     
-    console.log(`[HeadingMutation] Chaining decision for heading ${originalIndex}:`, {
+    console.log(`[HeadingMutation] Group position for heading ${originalIndex}:`, {
       headingContent: content,
       headingLevel: level,
       originalTarget: heading.insertNewBeforeExistingId,
       actualTarget: actualInsertionTarget,
       positionInGroup: positionInGroup + 1,
       totalInGroup: groupIndexes.length,
-      chainingAction,
+      groupPosition,
       generatedId: headingId
     })
     
@@ -154,8 +166,8 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
     mutationId: mutation.id,
     totalHeadings: headings.length,
     totalTransforms: forward.length,
-    chainingGroupsCount: insertionGroups.size,
-    chainedHeadingsCount: Array.from(insertionGroups.values()).reduce((sum, group) => sum + Math.max(0, group.length - 1), 0)
+    insertionGroupsCount: insertionGroups.size,
+    groupedHeadingsCount: Array.from(insertionGroups.values()).reduce((sum, group) => sum + Math.max(0, group.length - 1), 0)
   })
   
   return mutation

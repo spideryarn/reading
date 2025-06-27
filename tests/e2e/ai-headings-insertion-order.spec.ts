@@ -7,10 +7,10 @@ import { RobustAuthManager } from '../helpers/robust-auth';
  * Comprehensive testing of the AI headings insertion order fixes to verify:
  * 1. Headings appear before content they introduce (insert-before semantics)
  * 2. Multiple headings maintain correct hierarchical order (H2 → H3 → H4)
- * 3. Chained insertion logic prevents reverse ordering
+ * 3. Precedence-based insertion logic prevents reverse ordering
  * 
  * This test verifies the fixes implemented in planning/250627b_fix_ai_headings_insertion_order.md
- * covering the transition from insert-after to insert-before semantics and the chained
+ * covering the transition from insert-after to insert-before semantics and the precedence-based
  * insertion algorithm that solves the reverse ordering problem.
  */
 
@@ -274,12 +274,12 @@ test.describe('AI Headings Insertion Order', () => {
       }
     }
     
-    // Look for AI-generated heading clusters to test chaining logic
+    // Look for AI-generated heading clusters to test insertion ordering
     const aiHeadings = headingData.filter(h => h.isAI);
     if (aiHeadings.length > 1) {
-      console.log(`✅ Found ${aiHeadings.length} AI headings - testing chaining logic`);
+      console.log(`✅ Found ${aiHeadings.length} AI headings - testing insertion ordering`);
       
-      // Check for consecutive AI headings (indicates chaining worked correctly)
+      // Check for consecutive AI headings (indicates ordering worked correctly)
       for (let i = 1; i < aiHeadings.length; i++) {
         const currentAI = aiHeadings[i];
         const prevAI = aiHeadings[i - 1];
@@ -287,7 +287,7 @@ test.describe('AI Headings Insertion Order', () => {
         // If these are consecutive in the document, verify correct order
         if (currentAI.index === prevAI.index + 1) {
           if (currentAI.level >= prevAI.level) {
-            console.log(`✅ Correct chaining: ${prevAI.tagName} → ${currentAI.tagName}`);
+            console.log(`✅ Correct ordering: ${prevAI.tagName} → ${currentAI.tagName}`);
           } else {
             console.log(`⚠️ Potential hierarchy issue: ${prevAI.tagName} → ${currentAI.tagName}`);
           }
@@ -298,8 +298,8 @@ test.describe('AI Headings Insertion Order', () => {
     console.log('✅ Hierarchical order test completed');
   });
 
-  test('chained insertions prevent reverse ordering', async ({ page }) => {
-    console.log('🔄 Testing chained insertion logic');
+  test('precedence-based insertions prevent reverse ordering', async ({ page }) => {
+    console.log('🔄 Testing precedence-based insertion logic');
     
     const documentId = await getTestDocument(page);
     
@@ -318,7 +318,7 @@ test.describe('AI Headings Insertion Order', () => {
     if (headingCount > 0) {
       console.log(`📊 Document has ${headingCount} headings after AI generation`);
       
-      // Look for sequences of consecutive headings that might have been chained
+      // Look for sequences of consecutive headings with correct precedence
       const consecutiveSequences = [];
       let currentSequence = [];
       
@@ -354,7 +354,7 @@ test.describe('AI Headings Insertion Order', () => {
           }
         }
         
-        console.log('✅ Chained insertion sequences appear in logical order');
+        console.log('✅ Precedence-based sequences appear in logical order');
       } else {
         console.log('📝 No consecutive heading sequences found (may indicate distributed insertion)');
       }
@@ -365,7 +365,7 @@ test.describe('AI Headings Insertion Order', () => {
     expect(documentText).toBeTruthy();
     expect(documentText!.length).toBeGreaterThan(100);
     
-    console.log('✅ Chained insertion test completed');
+    console.log('✅ Precedence-based insertion test completed');
   });
 
   test('AI headings generation and removal workflow', async ({ page }) => {

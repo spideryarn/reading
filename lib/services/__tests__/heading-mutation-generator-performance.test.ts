@@ -18,7 +18,7 @@ describe('heading-mutation-generator performance', () => {
 
   describe('performance characteristics', () => {
     it('should handle typical AI generation scenarios (2-10 headings) efficiently', () => {
-      // Typical scenario: 5 headings with some chaining
+      // Typical scenario: 5 headings with some grouping
       const headings = [
         { insertNewBeforeExistingId: 'para-1', html: '<h2>Chapter 1</h2>' },
         { insertNewBeforeExistingId: 'para-1', html: '<h3>Section 1.1</h3>' },
@@ -46,7 +46,7 @@ describe('heading-mutation-generator performance', () => {
     })
 
     it('should handle large documents with many headings efficiently', () => {
-      // Stress test: 50 headings with various chaining patterns
+      // Stress test: 50 headings with various grouping patterns
       const headings = []
       
       // Create 5 groups of 10 headings each (simulating complex document)
@@ -74,7 +74,7 @@ describe('heading-mutation-generator performance', () => {
       expect(duration).toBeLessThan(20)
       expect(result.forward).toHaveLength(50)
       
-      // Verify chaining logic works correctly at scale
+      // Verify grouping logic works correctly at scale
       const groupCounts = new Map<string, number>()
       result.forward.forEach(transform => {
         const targetId = transform.insertNewBeforeExistingId!
@@ -83,7 +83,7 @@ describe('heading-mutation-generator performance', () => {
         }
       })
       
-      // All headings should target their original elements (no chaining to avoid intra-mutation dependencies)
+      // All headings should target their original elements to avoid intra-mutation dependencies
       expect(groupCounts.size).toBe(5)
       Array.from(groupCounts.values()).forEach(count => {
         expect(count).toBe(10) // All 10 headings in each group target the original section element
@@ -114,12 +114,12 @@ describe('heading-mutation-generator performance', () => {
       expect(duration).toBeLessThan(10)
       expect(result.forward).toHaveLength(20)
       
-      // Verify all headings target the original element (no chaining to avoid validation issues)
+      // Verify all headings target the original element to avoid validation issues
       result.forward.forEach(transform => {
         expect(transform.insertNewBeforeExistingId).toBe('single-target')
       })
       
-      console.log(`[Performance] Worst-case scenario (20 chained headings): ${duration.toFixed(2)}ms`)
+      console.log(`[Performance] Worst-case scenario (20 grouped headings): ${duration.toFixed(2)}ms`)
     })
 
     it('should demonstrate algorithm complexity is O(n) where n = number of headings', () => {
@@ -128,7 +128,7 @@ describe('heading-mutation-generator performance', () => {
 
       sizes.forEach(size => {
         const headings = Array.from({ length: size }, (_, i) => ({
-          insertNewBeforeExistingId: `target-${i % 3}`, // 3 groups for mixed chaining
+          insertNewBeforeExistingId: `target-${i % 3}`, // 3 groups for mixed insertion
           html: `<h2>Heading ${i + 1}</h2>`
         }))
 
@@ -180,7 +180,7 @@ describe('heading-mutation-generator performance', () => {
         
         // Verify each iteration produces correct result
         expect(result.forward).toHaveLength(2)
-        // Both headings should target the original element (no chaining)
+        // Both headings should target the original element
         expect(result.forward[0]!.insertNewBeforeExistingId).toBe('para-1')
         expect(result.forward[1]!.insertNewBeforeExistingId).toBe('para-1')
       }
