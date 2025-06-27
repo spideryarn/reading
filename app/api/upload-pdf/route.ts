@@ -12,6 +12,7 @@ import { getModelForAICall, UPLOAD_LIMITS } from '@/lib/config'
 import { validateAuth } from '@/lib/auth/server-auth'
 import { processHtmlToDocument, handleSanitizationError } from '@/lib/services/html-document-processor'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
+import { validatePdfPageCountFromBuffer } from '@/lib/utils/pdf-validation'
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
@@ -72,7 +73,28 @@ export async function POST(request: NextRequest) {
       return new NextResponse('File is not a valid PDF', { status: 400 })
     }
 
-    console.log(`Processing PDF with storage integration: ${pdfFile.name} (${(pdfBuffer.length / 1024).toFixed(1)} KB) using ${provider}`)
+    // Validate PDF page count
+    const pageValidationResult = await validatePdfPageCountFromBuffer(pdfBuffer)
+    if (!pageValidationResult.isValid) {
+      requestLogger.warn({
+        correlationId,
+        fileName: pdfFile.name,
+        pageCount: pageValidationResult.pageCount,
+        maxAllowed: UPLOAD_LIMITS.PDF_MAX_PAGES,
+        userId: user.id
+      }, 'PDF page count validation failed')
+      
+      return new NextResponse(pageValidationResult.error, { status: 400 })
+    }
+
+    requestLogger.info({
+      correlationId,
+      fileName: pdfFile.name,
+      pageCount: pageValidationResult.pageCount,
+      userId: user.id
+    }, `PDF page count validation passed: ${pageValidationResult.pageCount} pages`)
+
+    console.log(`Processing PDF with storage integration: ${pdfFile.name} (${(pdfBuffer.length / 1024).toFixed(1)} KB, ${pageValidationResult.pageCount} pages) using ${provider}`)
     
     requestLogger.info({
       correlationId,
@@ -102,6 +124,7 @@ export async function POST(request: NextRequest) {
       input_data: {
         file_name: pdfFile.name,
         file_size_bytes: pdfBuffer.length,
+        page_count: pageValidationResult.pageCount,
         provider_requested: provider,
         model_used: modelString
       }
@@ -179,6 +202,7 @@ export async function POST(request: NextRequest) {
         // PDF-specific metadata fields
         processing_time_ms: processingTime,
         file_size_bytes: pdfBuffer.length,
+        page_count: pageValidationResult.pageCount,
         model_used: modelString
       }
     )
@@ -221,7 +245,8 @@ export async function POST(request: NextRequest) {
       } : null,
       processing: {
         provider: providerDisplayName,
-        file_size_kb: Math.round(pdfBuffer.length / 1024)
+        file_size_kb: Math.round(pdfBuffer.length / 1024),
+        page_count: pageValidationResult.pageCount
       }
     }, {
       status: 201,

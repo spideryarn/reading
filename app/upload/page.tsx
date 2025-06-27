@@ -459,7 +459,7 @@ export default function AddDocumentPage() {
                 isDragging={uploadState.ui.isDragging}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
-                error={uploadState.input.file ? uploadState.ui.error : undefined}
+                error={uploadState.ui.error || undefined}
               />
               
               {/* Processing Options */}
