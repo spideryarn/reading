@@ -81,52 +81,55 @@ Consolidate the current separate "Original" and "AI-Generated" headings tabs int
 
 ## Implementation Plan
 
-### Stage 1: Icon Research & Selection
+### Stage 1: Icon Research & Selection ✅ COMPLETED
 **Deliverable:** Selected icon for Structure tab  
 **Tasks:**
-- Research appropriate icons for "structure" concept in Phosphor icon library
-- Consider options: Tree, TreeStructure, List, Rows, FlowArrow, etc.
-- Select icon that best represents document structure/table of contents
+- ✅ Research appropriate icons for "structure" concept in Phosphor icon library
+- ✅ Consider options: Tree, TreeStructure, List, Rows, FlowArrow, etc.
+- ✅ Select icon that best represents document structure/table of contents
+- **Selected:** TreeStructure icon for Structure tab
 
-### Stage 2: Tool Registry & Navigation Updates
+### Stage 2: Tool Registry & Navigation Updates ✅ COMPLETED
 **Deliverable:** Updated tool registry and navigation system  
 **Tasks:**
 - **Tool Registry Migration** (Primary):
-  - Update `lib/tools/registry-loader.ts` to remove `toc-original` and `toc-ai` registrations
-  - Add new `structure` tool registration with consolidated metadata
-  - Update tool keywords and shortcuts for better discoverability
+  - ✅ Remove old `toc-original.ts` and `toc-ai.ts` tool implementations 
+  - ✅ New `structure` tool registration with consolidated metadata already exists
+  - ✅ Tool keywords and shortcuts configured for better discoverability
 - **Navigation Updates** (Automatic from registry):
-  - Command palette will automatically update from registry changes
-  - Vertical icon nav will automatically reflect new tool metadata
-  - No manual updates to `NAVIGATION_ITEMS` needed (driven by registry)
+  - ✅ Command palette will automatically update from registry changes
+  - ✅ Vertical icon nav will automatically reflect new tool metadata
+  - ✅ No manual updates to `NAVIGATION_ITEMS` needed (driven by registry)
 - **URL State Management**:
-  - Update URL state types to replace 'original'/'ai-generated' with 'structure'
-  - Handle URL migration/redirects if needed
-  - Update `DocumentCommunicationContext` default tab ID
+  - ✅ URL state types updated to use 'structure' (handled by existing tool implementation)
+  - ✅ `DocumentCommunicationContext` will use new tool tabId
+  - Note: URL migration/redirects may be needed for bookmarked URLs but is not blocking
 
-### Stage 3: Component Consolidation
-**Deliverable:** New unified `StructureTab` component  
+**ISSUE RESOLVED:** Removed old `toc-original.ts` and `toc-ai.ts` tool files that were causing duplicate icons in the vertical rail. Only the new Structure tool should now appear.
+
+### Stage 3: Component Consolidation ✅ COMPLETED
+**Deliverable:** New unified `StructurePanel` component  
 **Tasks:**
-- Create new `StructureTab` component merging both existing tabs
-- Implement generate/remove button logic
-- Add status badge with original/AI state indication
-- Preserve all existing functionality:
-  - Heading extraction and rendering
-  - Tooltip summarization
-  - Mutation state detection
-  - Auto-generation behavior
-  - Caching integration
-- Remove theme distinction (blue/green)
-- Implement unified consistent styling
+- ✅ Create new `StructurePanel` component merging both existing tabs
+- ✅ Implement generate/remove button logic
+- ✅ Add status badge with original/AI state indication
+- ✅ Preserve all existing functionality:
+  - ✅ Heading extraction and rendering
+  - ✅ Tooltip summarization
+  - ✅ Mutation state detection
+  - ✅ Auto-generation behavior
+  - ✅ Caching integration
+- ✅ Remove theme distinction (blue/green)
+- ✅ Implement unified consistent styling
 
-### Stage 4: Integration & Cleanup
+### Stage 4: Integration & Cleanup ✅ COMPLETED
 **Deliverable:** Fully integrated single structure tab  
 **Tasks:**
-- Update `UnifiedLeftPane` to use new `StructureTab`
-- Remove `OriginalHeadingsTab` and `AIGeneratedHeadingsTab` components
-- Update parent component integration points
-- Clean up unused imports and references
-- Update type definitions if needed
+- ✅ Update `UnifiedLeftPane` to use new `StructurePanel`
+- ✅ Remove `OriginalHeadingsTab` and `AIGeneratedHeadingsTab` components
+- ✅ Update parent component integration points
+- ✅ Clean up unused imports and references
+- ✅ Update type definitions if needed
 
 ### Stage 5: Testing & Validation
 **Deliverable:** Verified working implementation  

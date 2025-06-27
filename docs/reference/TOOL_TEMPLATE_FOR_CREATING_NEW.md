@@ -95,6 +95,12 @@ This document provides a comprehensive template for creating new tools in Spider
   - [ ] Test tool appears in registry with `getTool()` function
   - [ ] **Command palette integration automatic**: Tool will appear in command palette via dynamic generation (no manual setup needed)
 
+- [ ] **Consider tool consolidation scenarios** ⭐ NEW
+  - [ ] Evaluate if tool replaces or consolidates existing tools
+  - [ ] If consolidating: Follow `docs/reference/TOOL_CONSOLIDATION_GUIDE.md` (when available)
+  - [ ] Plan removal of deprecated tools from registry and navigation
+  - [ ] Document impact on existing bookmarks/URLs if tool changes tabIds
+
 - [ ] **Legacy integration (temporary)** 
   - [ ] Add to vertical icon navigation (will be automated later)
   - [ ] Update `components/vertical-icon-nav.tsx` with new icon
@@ -571,8 +577,10 @@ When the unified architecture is implemented:
 ## Troubleshooting Common Issues
 
 ### Tool Not Appearing in Navigation
-- Verify icon added to `components/vertical-icon-nav.tsx`
-- Check tab case added to `components/unified-left-pane.tsx`
+- Verify tool registered in `lib/tools/implementations/[tool-name].ts`
+- Check tool appears in registry with `getTool()` function  
+- Ensure registry loader includes tool import
+- Verify tab case added to `components/unified-left-pane.tsx`
 - Ensure imports are correct and components export properly
 
 ### Cross-Pane Communication Not Working
@@ -581,9 +589,17 @@ When the unified architecture is implemented:
 - Check DocumentCommunicationContext provider wraps components
 
 ### Keyboard Shortcuts Not Working
-- Verify command added to `components/command-palette.tsx`
+- Check tool registry definition has correct shortcuts
+- Verify no shortcut conflicts with `detectConflicts()` function
 - Check platform detection logic (Mac vs PC)
 - Ensure shortcut not conflicting with browser shortcuts
+
+### Tool Consolidation Issues ⭐ NEW
+- **Duplicate icons in navigation**: Check for old tool files still in `lib/tools/implementations/`
+- **Registry conflicts**: Use `detectConflicts()` to find duplicate tool IDs or shortcuts  
+- **Component not rendering**: Verify UnifiedLeftPane uses new consolidated component
+- **URLs still use old tabIds**: May need URL migration strategy for bookmarked links
+- **Old tools still accessible**: Ensure old tool files are completely removed from registry loader
 
 ### Performance Issues
 - Add debouncing for frequent operations (search, scroll)
