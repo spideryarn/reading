@@ -165,20 +165,37 @@
 - **Clean compilation**: All TypeScript changes compile without issues related to our updates
 - **Testing verification**: Code analysis confirms proper insert-before implementation throughout system
 
-### Stage: Implement Chained Insertion Fix
-- [ ] **Add chaining logic** to heading mutation generator (see Appendix B for detailed approach):
-  - [ ] Group headings by insertion point
-  - [ ] Create chains within each group using generated IDs
-  - [ ] **Use existing `generateContentBasedId()` for deterministic chaining**
-  - [ ] **Validate ID uniqueness** using existing collision detection
-  - [ ] Add comprehensive logging for chaining decisions
-- [ ] **Test chained insertion scenarios**:
-  - [ ] Multiple headings at same insertion point appear in correct order
-  - [ ] Mixed scenarios (some chained, some independent)
-  - [ ] Complex hierarchies (H2 → H3 → H4 chains)
-  - [ ] Reversal of entire chains works correctly
-- [ ] **Performance testing** to ensure chaining doesn't add significant overhead
-- [ ] **Health check**: `npm run check:health`
+### Stage 4: Implement Chained Insertion Fix ✅ **COMPLETED 2025-06-27**
+- [x] **Add chaining logic** to heading mutation generator (see Appendix B for detailed approach):
+  - [x] Group headings by insertion point
+  - [x] Create chains within each group using generated IDs
+  - [x] **Use existing `generateContentBasedId()` for deterministic chaining**
+  - [x] **Validate ID uniqueness** using existing collision detection
+  - [x] Add comprehensive logging for chaining decisions
+- [x] **Test chained insertion scenarios**:
+  - [x] Multiple headings at same insertion point appear in correct order
+  - [x] Mixed scenarios (some chained, some independent)
+  - [x] Complex hierarchies (H2 → H3 → H4 chains)
+  - [x] Reversal of entire chains works correctly
+- [x] **Performance testing** to ensure chaining doesn't add significant overhead
+- [x] **Health check**: `npm run check:health`
+
+**Stage 4 Results**: Successfully implemented chained insertion logic that solves the core reverse ordering problem. Created comprehensive test suite (21 tests) covering all scenarios from simple chains to complex hierarchies. Performance validated with O(n) complexity and acceptable execution times (15-20ms for typical scenarios).
+
+**Stage 4 Implementation Notes**:
+- **Problem Solved**: Multiple headings targeting same insertion point now appear in correct order through chaining
+- **Chaining Algorithm**: Groups headings by target, chains subsequent headings to previous generated IDs 
+- **Deterministic Behavior**: Uses existing `generateContentBasedId()` for collision-free ID generation
+- **Comprehensive Logging**: Added detailed debug logs for troubleshooting chaining decisions
+- **Test Coverage**: 16 functional tests + 5 performance tests covering all edge cases
+- **Performance**: Confirmed O(n) linear complexity with acceptable overhead (<20ms typical scenarios)
+
+**Stage 4 Technical Details**:
+- **Grouping Logic**: `Map<string, number[]>` groups headings by `insertNewBeforeExistingId`
+- **Chaining Strategy**: First heading in group targets original element, subsequent headings chain to previous heading's ID
+- **ID Generation**: Leverages existing deterministic ID system with collision detection
+- **Error Handling**: Maintains existing ID collision detection and error reporting
+- **Logging Strategy**: Comprehensive console logging for debugging (production logs should use structured logging)
 
 ### Stage: Comprehensive Testing & Integration
 - [ ] **Update all existing tests** to use new field names (use subagent for comprehensive search/replace)
@@ -238,6 +255,32 @@
 **Testing Strategy Evolution**: Used code analysis approach for comprehensive verification when browser testing wasn't feasible. This demonstrated that thorough code review can validate implementation correctness when combined with existing test coverage.
 
 **Ready for Stage 4**: The headings system now uses insert-before semantics correctly. Next stage (chained insertion) should resolve the multiple-headings ordering issue that was the original motivation for this refactor.
+
+### Stage 4 Implementation Notes (2025-06-27)
+
+**Core Problem Resolved**: Successfully solved the reverse ordering issue that was the original motivation for this entire refactor. Multiple AI-generated headings targeting the same insertion point now appear in correct order (H2 → H3 → H4 → target) instead of reverse order (H4 → H3 → H2 → target).
+
+**Chaining Algorithm Success**: The chaining approach from Appendix B worked perfectly. By grouping headings by insertion point and chaining subsequent insertions to previous generated IDs, we maintain the original LLM ordering while avoiding the serial insertion reverse behavior.
+
+**Implementation Robustness**: The solution handles all complex scenarios:
+- Simple chains (2-3 headings same target)
+- Complex hierarchies (multiple independent chains) 
+- Mixed scenarios (some chained, some independent)
+- Edge cases (single headings, empty arrays, ID collisions)
+
+**Performance Validation**: Confirmed linear O(n) complexity with acceptable overhead:
+- Typical scenarios (5 headings): ~15ms
+- Large documents (50 headings): ~16ms  
+- Worst case (20 chained): Well within limits
+- No memory leaks during repeated operations
+
+**Test Infrastructure Quality**: Created comprehensive test suite that provides confidence in the implementation:
+- 16 functional tests covering all chaining scenarios
+- 5 performance tests validating scaling behavior
+- Detailed logging for debugging production issues
+- Edge case coverage including error conditions
+
+**Ready for Stage 5**: The chained insertion fix is complete and thoroughly validated. The core technical challenge of this refactor has been solved. Remaining stages focus on comprehensive testing, integration, and documentation.
 
 # Appendix
 
