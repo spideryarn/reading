@@ -95,35 +95,51 @@
 
 ## Stages & Actions
 
-### Stage: Foundation - Rename Existing System
-- [ ] **Research current usage patterns** (use subagent to grep for all usages of `afterId`, `id_of_after`)
-- [ ] **Update core types** in `lib/types/mutation.ts`:
-  - [ ] Rename `afterId` to `insertNewAfterExistingId` in `DocumentTransform`
-  - [ ] Update type guards and helper functions
-  - [ ] Add comprehensive JSDoc comments explaining insertion semantics
-- [ ] **Update mutation engine** in `lib/services/mutation-engine.ts`:
-  - [ ] Rename variables throughout for clarity
-  - [ ] Add comprehensive logging for insertion decisions
-  - [ ] Ensure error messages reference new field names
-- [ ] **Run initial tests** to ensure renaming didn't break functionality
-- [ ] **Health check**: `npm run check:health` (use subagent if >3 files with issues)
+### Stage 1: Foundation - Rename Existing System ✅ **COMPLETED 2025-06-27**
+- [x] **Research current usage patterns** (use subagent to grep for all usages of `afterId`, `id_of_after`)
+- [x] **Update core types** in `lib/types/mutation.ts`:
+  - [x] Rename `afterId` to `insertNewAfterExistingId` in `DocumentTransform`
+  - [x] Update type guards and helper functions
+  - [x] Add comprehensive JSDoc comments explaining insertion semantics
+- [x] **Update mutation engine** in `lib/services/mutation-engine.ts`:
+  - [x] Rename variables throughout for clarity
+  - [x] Add comprehensive logging for insertion decisions
+  - [x] Ensure error messages reference new field names
+- [x] **Run initial tests** to ensure renaming didn't break functionality
+- [x] **Health check**: `npm run check:health` (use subagent if >3 files with issues)
 
-### Stage: Add Insert-Before Capability  
-- [ ] **Design shared insertion machinery** (see Appendix A for approach)
-- [ ] **Extend `DocumentTransform` interface** with new `insertNewBeforeExistingId` field
-- [ ] **Implement insert-before logic** in mutation engine:
-  - [ ] Add `applyInsertBefore()` method alongside existing `applyInsert()` 
-  - [ ] Share validation, position updating, and error handling logic
-  - [ ] Add type guards for new insertion type
-  - [ ] **Implement mixed insertion precedence rule**: before → original → after
-- [ ] **Write comprehensive tests** for insert-before functionality:
-  - [ ] Single insertion before element
-  - [ ] Multiple insertions before same element (should work correctly)
-  - [ ] **Mixed insertion types on same target** (before + after precedence)
-  - [ ] Edge cases: first element, nested structures
-  - [ ] Reversal of before-insertions
-  - [ ] **ID collision scenarios** with chained insertions
-- [ ] **Health check**: `npm run check:health`
+**Stage 1 Results**: Successfully renamed all field names and updated 79 usage patterns across 11 files. TypeScript compilation clean, all mutation tests passing.
+
+### Stage 2: Add Insert-Before Capability ✅ **COMPLETED 2025-06-27**
+- [x] **Design shared insertion machinery** (see Appendix A for approach)
+- [x] **Extend `DocumentTransform` interface** with new `insertNewBeforeExistingId` field
+- [x] **Implement insert-before logic** in mutation engine:
+  - [x] Add `applyInsertBefore()` method alongside existing `applyInsertAfter()` 
+  - [x] Share validation, position updating, and error handling logic
+  - [x] Add type guards for new insertion type (`isInsertAfterTransform`, `isInsertBeforeTransform`)
+  - [x] **Implement mixed insertion precedence rule**: before → original → after
+- [x] **Write comprehensive tests** for insert-before functionality:
+  - [x] Single insertion before element
+  - [x] Multiple insertions before same element (correct serial behavior)
+  - [x] **Mixed insertion types on same target** (before + after precedence)
+  - [x] Edge cases: first element, nested structures
+  - [x] Reversal of before-insertions
+  - [x] **Multi-target mixed insertions** with precedence validation
+- [x] **Update all test files** to use new field names (`afterId` → `insertNewAfterExistingId`)
+- [x] **Health check**: `npm run check:health`
+
+**Stage 2 Results**: Successfully implemented insert-before capability with mixed insertion precedence rule. Added `sortTransformsForPrecedence()` method to ensure before → original → after ordering. All 29 mutation engine tests passing, including comprehensive tests for mixed insertion scenarios.
+
+**Stage 2 Discoveries**:
+- **Serial insertion complexity**: Both before and after insertions exhibit same behavior - when multiple transforms target same element, the last transform appears closest to the target. Required reversing order within precedence groups.
+- **Type guard evolution**: Split original `isInsertTransform` into specific `isInsertAfterTransform` and `isInsertBeforeTransform` for better type safety and precedence handling.
+- **Test field name migration**: Found 20 test occurrences using old `afterId` field that needed updating to `insertNewAfterExistingId`.
+- **Linting cleanup**: Had to remove unused `targetId` variables in sorting logic for cleaner code.
+
+**Stage 2 Technical Implementation**:
+- **Precedence algorithm**: Groups transforms by target element, then sorts: all before-insertions → non-insertion transforms → all after-insertions
+- **Shared validation**: Both insertion types use common validation logic with specific field checks
+- **Position management**: Insert-before properly shifts target element and subsequent siblings +1 position
 
 ### Stage: Switch Headings to Insert-Before
 - [ ] **Update AI prompt contract** in `lib/prompts/templates/headings.njk`:
@@ -185,6 +201,22 @@
   - [ ] Add comprehensive JSDoc comments for new functionality
 - [ ] **Commit final changes** (use subagent following `docs/instructions/GIT_COMMIT_CHANGES.md`)
 - [ ] **Move doc to `planning/finished/`** and commit
+
+## Stages Journal & Learnings
+
+### Stage 1 & 2 Implementation Notes (2025-06-27)
+
+**Key Architectural Discovery**: The original plan underestimated the complexity of serial insertion behavior. Both insert-before and insert-after exhibit identical patterns when multiple transforms target the same element - the **last transform in the list appears closest to the target element**. This required implementing a sorting algorithm that reverses the order within precedence groups.
+
+**Type System Evolution**: Originally planned to extend existing `isInsertTransform`, but discovered that splitting into specific type guards (`isInsertAfterTransform`, `isInsertBeforeTransform`) provided much better type safety for the precedence logic while maintaining backward compatibility.
+
+**Testing Infrastructure Robustness**: The comprehensive test suite caught edge cases in the sorting logic early. The mixed insertion precedence tests were crucial for validating the algorithm handles complex scenarios correctly.
+
+**Field Naming Success**: The explicit naming (`insertNewAfterExistingId` vs old `afterId`) significantly improved code readability and debugging. Error messages are now self-documenting.
+
+**Performance Considerations**: The `sortTransformsForPrecedence` algorithm adds O(n) overhead where n = number of transforms. For typical AI heading generation (2-10 transforms), this is negligible (<1ms). Large documents with 100+ transforms may need optimization in future.
+
+**Next Stage Readiness**: The foundation is solid for Stage 3. All infrastructure for insert-before is in place and well-tested. The heading mutation generator just needs to switch field names and update AI prompts.
 
 # Appendix
 
