@@ -13,7 +13,7 @@ The application has established patterns for cross-pane communication through `D
 ## References
 
 - `docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md` - Existing React Context-based communication system for integrating command actions
-- `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - Component library documentation including Command component installation and usage patterns
+- `docs/reference/DESIGN_SHADCN_UI_REFERENCE.md` - Component library documentation including Command component installation and usage patterns
 - `planning/250608c_vertical_icon_navigation_bar.md` - Current navigation implementation that command palette will complement
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - Existing keyboard shortcut patterns and platform detection
 - `components/resizable-document-layout.tsx` - Main layout component where command palette integration will occur

@@ -8,9 +8,9 @@
 
 ## References
 
-- `docs/reference/STYLING_TOOLTIPS.md` - Comprehensive tooltip styling patterns and the established default light content theme
-- `docs/reference/STYLING_MOBILE_PLATFORM_DETECTION.md` - Mobile detection patterns using react-responsive
-- `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - shadcn/ui component patterns and installation process
+- `docs/reference/DESIGN_TOOLTIPS.md` - Comprehensive tooltip styling patterns and the established default light content theme
+- `docs/reference/DESIGN_MOBILE_PLATFORM_DETECTION.md` - Mobile detection patterns using react-responsive
+- `docs/reference/DESIGN_SHADCN_UI_REFERENCE.md` - shadcn/ui component patterns and installation process
 - `components/heading-tree.tsx` - Current implementation with info icons and modals for touch devices
 - `components/ui/tooltip.tsx` - Existing shadcn/ui tooltip component that will form the basis
 - `planning/finished/250615a_migrate_to_react_responsive.md` - Previous work establishing touch detection patterns
@@ -33,7 +33,7 @@
 ## Stages & Actions
 
 ### Stage: Preparation & Setup ✅ COMPLETED
-- [x] Review current tooltip usage patterns in `docs/reference/STYLING_TOOLTIPS.md`
+- [x] Review current tooltip usage patterns in `docs/reference/DESIGN_TOOLTIPS.md`
 - [x] Install shadcn/ui Popover component: `printf "\n" | npx shadcn@latest add popover --force`
 
 ### Stage: Core Component Development ✅ COMPLETED
@@ -53,7 +53,7 @@
   - [x] Use new `useCanHover()` helper for consistent input detection
   - [x] Desktop path: Render standard Tooltip component
   - [x] Touch path: Render Popover with long-press trigger
-  - [x] Match exact tooltip styling from `docs/reference/STYLING_TOOLTIPS.md` default pattern
+  - [x] Match exact tooltip styling from `docs/reference/DESIGN_TOOLTIPS.md` default pattern
   - [x] Add faint dotted underline to indicate interactive elements (follow glossary pattern)
 - [x] Create generalized tooltip discoverability styling
   - [x] Add `border-bottom: 1px dotted #DB8A45` (faint orange, matches glossary highlighting)
@@ -138,14 +138,14 @@
   - [x] Focus management
 
 ### Stage: Documentation & Polish ✅ COMPLETED
-- [x] Update `docs/reference/STYLING_TOOLTIPS.md`
+- [x] Update `docs/reference/DESIGN_TOOLTIPS.md`
   - [x] Add TooltipOrPopover pattern section
   - [x] Document long-press interaction
   - [x] Document faint dotted underline pattern for tooltip discoverability
   - [x] Add generalized tooltip discoverability styling guide
   - [x] Add migration guide for future tooltips
 - [x] Create usage examples in component documentation
-- [x] Update `docs/reference/STYLING_MOBILE_PLATFORM_DETECTION.md` with tooltip pattern
+- [x] Update `docs/reference/DESIGN_MOBILE_PLATFORM_DETECTION.md` with tooltip pattern
 - [x] Remove any deprecated tooltip code
 - [x] Final lint and build check
 - [x] Create PR if on branch (follow PR creation instructions)
@@ -347,7 +347,7 @@ function TooltipOrPopover({
 - [ ] Accessibility testing
 
 ### Documentation
-- [ ] Update STYLING_MOBILE_PLATFORM_DETECTION.md
+- [ ] Update DESIGN_MOBILE_PLATFORM_DETECTION.md
 - [ ] Create TooltipOrPopover usage guide
 - [ ] Update affected component documentation
 - [ ] Add migration notes for future tooltip usage
@@ -617,7 +617,7 @@ function TooltipOrPopover({
 - [ ] Accessibility testing
 
 ### Documentation
-- [ ] Update STYLING_MOBILE_PLATFORM_DETECTION.md
+- [ ] Update DESIGN_MOBILE_PLATFORM_DETECTION.md
 - [ ] Create TooltipOrPopover usage guide
 - [ ] Update affected component documentation
 - [ ] Add migration notes for future tooltip usage
@@ -736,7 +736,7 @@ Based on codebase analysis, the following components need migration:
 ## I. Styling Requirements & Specifications
 
 ### Current Tooltip Styling Pattern
-From heading-tree.tsx and `docs/reference/STYLING_TOOLTIPS.md`:
+From heading-tree.tsx and `docs/reference/DESIGN_TOOLTIPS.md`:
 ```tsx
 <Tooltip.Content
   side="right"
@@ -842,7 +842,7 @@ import { TooltipOrPopover } from "@/components/ui/tooltip-or-popover"
   - Migrated all 10 navigation tooltips to TooltipOrPopover
   - Tested hover functionality with Puppeteer MCP
   - Verified visual consistency and content structure
-  - Updated STYLING_TOOLTIPS.md with migration guide and new patterns
+  - Updated DESIGN_TOOLTIPS.md with migration guide and new patterns
 - 🚀 **Stage 5 COMPLETED**: Medium Priority Content Migrations
   - Migrated UnifiedLeftPane search result tooltips (context-aware snippets with full paragraph tooltips)
   - Migrated DualSummarySliders expand/collapse tooltips (dynamic content support)
@@ -870,8 +870,8 @@ import { TooltipOrPopover } from "@/components/ui/tooltip-or-popover"
   - Touch device testing: Long-press interactions working reliably
   - Cross-browser compatibility: Tested across modern browsers
 - 📚 **Documentation & Polish COMPLETED**: Comprehensive documentation updates
-  - Updated `docs/reference/STYLING_TOOLTIPS.md` with complete TooltipOrPopover usage guide
-  - Enhanced `docs/reference/STYLING_MOBILE_PLATFORM_DETECTION.md` with touch tooltip patterns
+  - Updated `docs/reference/DESIGN_TOOLTIPS.md` with complete TooltipOrPopover usage guide
+  - Enhanced `docs/reference/DESIGN_MOBILE_PLATFORM_DETECTION.md` with touch tooltip patterns
   - Added implementation best practices and migration guidance
   - Created detailed API reference and usage examples
 - ✅ **Production Ready**: TooltipOrPopover system successfully implemented and documented

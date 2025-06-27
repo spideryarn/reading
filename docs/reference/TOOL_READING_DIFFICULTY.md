@@ -9,8 +9,8 @@ AI-powered analysis of document complexity using academic-level categorisation, 
 - `components/tools/MetadataPanel.tsx` - Implementation of reading difficulty UI components
 - `app/api/reading-difficulty/route.ts` - API endpoint for AI-powered difficulty assessment
 - `lib/prompts/templates/reading-difficulty.ts` - LLM prompt template and response parsing
-- `docs/reference/STYLING_TOOLTIPS.md` - TooltipOrPopover implementation patterns used for academic level descriptions
-- `docs/reference/STYLING_COLLAPSIBLE.md` - Collapsible component patterns for assessment factors
+- `docs/reference/DESIGN_TOOLTIPS.md` - TooltipOrPopover implementation patterns used for academic level descriptions
+- `docs/reference/DESIGN_COLLAPSIBLE.md` - Collapsible component patterns for assessment factors
 
 ## Key Features
 

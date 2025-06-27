@@ -12,7 +12,7 @@ Currently, the unified left pane displays navigation options as a vertical list 
 
 - `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Current left pane architecture and features
 - `docs/reference/UI_COMPONENTS.md` - Available UI components and patterns
-- `docs/reference/STYLING_OVERVIEW.md` - Phosphor icons usage and styling guidelines
+- `docs/reference/DESIGN_OVERVIEW.md` - Phosphor icons usage and styling guidelines
 - `docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md` - State management for pane interactions
 - `components/unified-left-pane.tsx` - Current implementation to be modified
 - `components/tab-container.tsx` - Existing tab container that may be reused/modified
@@ -151,7 +151,7 @@ Currently, the unified left pane displays navigation options as a vertical list 
 ### Future Stages (Not Part of Initial Implementation)
 
 ### Stage: visual polish and Animated Collapse/Expand ✅ COMPLETED
-- [x] Read docs/reference/STYLING_SHADCN_UI_REFERENCE.md and research animation approaches (e.g. for Shadcn Collapsible) in a subagent
+- [x] Read docs/reference/DESIGN_SHADCN_UI_REFERENCE.md and research animation approaches (e.g. for Shadcn Collapsible) in a subagent
 - [x] Discuss with user, and decide on next steps. If the user agrees, then:
   - [x] Add smooth animation transitions for left pane collapse/expand
   - [x] Implement CSS-based width transition with duration control

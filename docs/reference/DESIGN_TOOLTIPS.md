@@ -5,11 +5,11 @@ Comprehensive guide to tooltip styling patterns and implementations in the Spide
 ## See also
 
 - `components/ui/tooltip.tsx` - shadcn/ui tooltip component implementation
-- `docs/reference/STYLING_OVERVIEW.md` - General styling system overview
-- `docs/reference/STYLING_COLORS_FONTS.md` - Colour palette and typography system
-- `docs/reference/STYLING_ICONS.md` - Icon usage patterns and conventions
-- `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - shadcn/ui component reference
-- `docs/reference/STYLING_MOBILE_PLATFORM_DETECTION.md` - Touch device detection and responsive patterns
+- `docs/reference/DESIGN_OVERVIEW.md` - General styling system overview
+- `docs/reference/DESIGN_COLORS_FONTS.md` - Colour palette and typography system
+- `docs/reference/DESIGN_ICONS.md` - Icon usage patterns and conventions
+- `docs/reference/DESIGN_SHADCN_UI_REFERENCE.md` - shadcn/ui component reference
+- `docs/reference/DESIGN_MOBILE_PLATFORM_DETECTION.md` - Touch device detection and responsive patterns
 - `components/ui/tooltip-or-popover.tsx` - Universal touch-friendly tooltip component
 - `lib/hooks/use-can-hover.ts` - Device hover capability detection
 - `lib/hooks/use-long-press.ts` - Touch long-press interaction hook

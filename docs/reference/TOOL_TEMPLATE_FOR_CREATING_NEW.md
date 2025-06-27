@@ -130,7 +130,7 @@ This document provides a comprehensive template for creating new tools in Spider
 - [ ] **Implement loading and error states**
   - [ ] Add spinner animations using Phosphor icons
   - [ ] Create user-friendly error messages with retry options
-  - [ ] Follow patterns from `docs/reference/STYLING_OVERVIEW.md`
+  - [ ] Follow patterns from `docs/reference/DESIGN_OVERVIEW.md`
   - [ ] Test all failure scenarios
 
 ### Stage: Cross-Pane Communication

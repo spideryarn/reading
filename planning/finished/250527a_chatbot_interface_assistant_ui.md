@@ -59,7 +59,7 @@ Implement a chatbot interface for document analysis using the assistant-ui React
 - **Fake API First**: Start with mock responses to test interface before LLM integration
 - **Progressive Enhancement**: Begin with basic chat, layer in complexity gradually
 - **Existing Patterns**: Reuse existing API patterns from lib/config.ts (Sonnet 4, temp 0)
-- **Error Handling**: Use Phosphor icons for loading/error states per docs/STYLING_OVERVIEW.md
+- **Error Handling**: Use Phosphor icons for loading/error states per docs/DESIGN_OVERVIEW.md
 
 ### Conversation Management
 - **Single Thread**: One conversation thread per session initially
@@ -127,7 +127,7 @@ Implement a chatbot interface for document analysis using the assistant-ui React
   - [x] Add error simulation for testing error handling
 
 - [x] **Add loading and error UI components**
-  - [x] Import Phosphor icons: `CircleNotch` for loading, `Warning` for errors per `docs/STYLING_OVERVIEW.md:64-88`
+  - [x] Import Phosphor icons: `CircleNotch` for loading, `Warning` for errors per `docs/DESIGN_OVERVIEW.md:64-88`
   - [x] Create loading state with spinning icon during API calls
   - [x] Implement error display with warning icon and retry functionality
   - [x] Use existing error patterns from glossary implementation as reference

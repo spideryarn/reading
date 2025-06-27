@@ -5,7 +5,7 @@ This document provides research-backed guidelines for optimal text formatting in
 ## See also
 
 - `docs/reference/RESEARCH_READING_DIFFICULTY_METRICS.md` - Comprehensive research on readability assessment for professional documents
-- `docs/reference/STYLING_OVERVIEW.md` - CSS and visual styling configuration for the application
+- `docs/reference/DESIGN_OVERVIEW.md` - CSS and visual styling configuration for the application
 - `docs/reference/UI_INTERFACE.md` - Multi-pane layout and interface design documentation  
 - `docs/reference/ARCHITECTURE_DECISIONS.md` - Overall system architecture and design decisions
 - `app/globals.css` - Current CSS implementation of typography and styling

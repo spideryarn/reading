@@ -4,8 +4,8 @@ Comprehensive guide for implementing consistent iconography across the Spideryar
 
 ## See also
 
-- `docs/reference/STYLING_OVERVIEW.md` - Main styling guide including theme configuration and UI patterns
-- `docs/reference/STYLING_COLLAPSIBLE.md` - Icon patterns for expand/collapse functionality
+- `docs/reference/DESIGN_OVERVIEW.md` - Main styling guide including theme configuration and UI patterns
+- `docs/reference/DESIGN_COLLAPSIBLE.md` - Icon patterns for expand/collapse functionality
 - `docs/reference/UI_COMPONENTS.md` - shadcn/ui components that use icons
 - `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` - Command palette icon implementation
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - Keyboard shortcut visual indicators
@@ -236,7 +236,7 @@ import { CaretDown, CaretRight } from '@phosphor-icons/react'
 )}
 ```
 
-**See:** `docs/reference/STYLING_COLLAPSIBLE.md` for comprehensive collapsible icon patterns
+**See:** `docs/reference/DESIGN_COLLAPSIBLE.md` for comprehensive collapsible icon patterns
 
 ### Loading States
 

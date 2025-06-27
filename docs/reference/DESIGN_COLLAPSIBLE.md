@@ -4,7 +4,7 @@ Comprehensive guide for implementing consistent expand/collapse functionality ac
 
 ## See also
 
-- `docs/reference/STYLING_OVERVIEW.md` - Main styling guide including typography, colours, and theme configuration
+- `docs/reference/DESIGN_OVERVIEW.md` - Main styling guide including typography, colours, and theme configuration
 - `docs/reference/UI_COMPONENTS.md` - shadcn/ui component reference and usage patterns
 - `components/dual-summary-sliders.tsx` - Example of responsive collapsible component
 - `components/heading-tree.tsx` - Hierarchical collapsible tree navigation implementation

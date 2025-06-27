@@ -297,9 +297,9 @@ Available evergreen documentation in `docs/` - comprehensive signposting by doma
 **UI, Styling & Components**:
 - `docs/reference/UI_INTERFACE.md` - Multi-pane layout with tabbed navigation
 - `docs/reference/UI_COMPONENTS.md` - Available components and usage patterns
-- `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - shadcn/ui integration guide
-- `docs/reference/STYLING_OVERVIEW.md` - CSS configuration and theme settings
-- `docs/reference/STYLING_*.md` - Colors, fonts, icons, highlighting, tooltips, mobile detection
+- `docs/reference/DESIGN_SHADCN_UI_REFERENCE.md` - shadcn/ui integration guide
+- `docs/reference/DESIGN_OVERVIEW.md` - CSS configuration and theme settings
+- `docs/reference/DESIGN_*.md` - Colors, fonts, icons, highlighting, tooltips, mobile detection
 - `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Architecture and features of the unified left pane with tabbed interface, ToC, AI-generated headings, and tooltip summaries
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - Application keyboard shortcuts
 
@@ -352,7 +352,7 @@ Available evergreen documentation in `docs/` - comprehensive signposting by doma
 - **Install new**: `printf "\n" | npx shadcn@latest add [component-name]`
 
 **Icons**: Phosphor icons with SSR support - use `/dist/ssr/` imports for server components
-**Documentation**: `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` and `docs/reference/UI_COMPONENTS.md`
+**Documentation**: `docs/reference/DESIGN_SHADCN_UI_REFERENCE.md` and `docs/reference/UI_COMPONENTS.md`
 
 ## Style
 

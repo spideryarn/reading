@@ -12,8 +12,8 @@ The project uses a hybrid approach combining:
 ## References
 
 - `docs/reference/UI_INTERFACE.md`
-- `docs/reference/STYLING_SHADCN_UI_REFERENCE.md`
-- `docs/reference/STYLING_MOBILE_PLATFORM_DETECTION.md` - mobile responsive design patterns affecting component behavior
+- `docs/reference/DESIGN_SHADCN_UI_REFERENCE.md`
+- `docs/reference/DESIGN_MOBILE_PLATFORM_DETECTION.md` - mobile responsive design patterns affecting component behavior
 
 
 ## Component Library: shadcn/ui
@@ -485,8 +485,8 @@ Visit `/design` for a live, interactive design reference page showcasing all com
 - `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` - Complete command palette implementation guide
 - `docs/reference/COMMAND_PALETTE_FUZZY_SEARCH_CMDK.md` - cmdk library fuzzy search configuration for improving command discoverability
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - Keyboard shortcut patterns and platform detection
-- `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - Installation and technical reference
-- `docs/reference/STYLING_OVERVIEW.md` - Overall styling configuration and theme
+- `docs/reference/DESIGN_SHADCN_UI_REFERENCE.md` - Installation and technical reference
+- `docs/reference/DESIGN_OVERVIEW.md` - Overall styling configuration and theme
 - `planning/250530a_shadcn_ui_adoption.md` - Implementation planning and decisions
 - `CLAUDE.md` - Quick reference for AI agents
 - `/design` - Live design reference and style guide

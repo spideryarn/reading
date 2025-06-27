@@ -41,7 +41,7 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/TESTING_AUTHENTICATION.md` - Redirect to AUTHENTICATION_TESTING.md for authentication testing patterns
 - `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md` - Comprehensive analysis of browser automation testing options (Playwright, Cypress, Puppeteer) for AI-assisted development ⭐ **Essential for E2E testing**
 - `docs/reference/COMMAND_LINE_SCRIPTS.md` - Guidelines for writing command-line scripts using shell scripts or TypeScript/Clipanion
-- `docs/reference/STYLING_OVERVIEW.md` - Overview of CSS and visual styling configuration with links to specialized styling documentation ⭐ **Start here for styling**
+- `docs/reference/DESIGN_OVERVIEW.md` - Overview of CSS and visual styling configuration with links to specialized styling documentation ⭐ **Start here for styling**
 - `docs/reference/GIT_WORKTREES.md` - Multi-worktree development setup using hub-and-spoke model
 - `docs/reference/SITE_ORGANISATION_WEBSITE_STRUCTURE.md` - Application routes, component hierarchy, and navigation patterns (may be outdated)
 
@@ -78,14 +78,14 @@ Available evergreen documentation in `docs/` organised by category:
 ### UI Components & Interface
 - `docs/reference/UI_COMPONENTS.md` - Available UI components and usage patterns
 - `docs/reference/UI_INTERFACE.md` - Multi-pane layout with tabbed navigation architecture
-- `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - shadcn/ui component library integration and customisation
-- `docs/reference/STYLING_COLORS_FONTS.md` - Complete color system, typography hierarchy, and theme configuration
-- `docs/reference/STYLING_ICONS.md` - Phosphor Icons usage patterns, SSR compatibility, and sizing standards
-- `docs/reference/STYLING_TOOLTIPS.md` - Tooltip styling patterns with default light theme and implementation examples
-- `docs/reference/STYLING_COLLAPSIBLE.md` - Comprehensive guide for expand/collapse component patterns
-- `docs/reference/STYLING_MOBILE_PLATFORM_DETECTION.md` - Mobile device detection and responsive design system
-- `docs/reference/STYLING_LOGO.md` - Logo animation system with shared definitions and random selection for header interactivity
-- `docs/reference/STYLING_OVERLAPPING_TEXT_HIGHLIGHTS.md` - Comprehensive guide for implementing overlapping text highlighting using CSS Custom Highlight API and Mark.js fallbacks ⭐ **Essential for highlighting features**
+- `docs/reference/DESIGN_SHADCN_UI_REFERENCE.md` - shadcn/ui component library integration and customisation
+- `docs/reference/DESIGN_COLORS_FONTS.md` - Complete color system, typography hierarchy, and theme configuration
+- `docs/reference/DESIGN_ICONS.md` - Phosphor Icons usage patterns, SSR compatibility, and sizing standards
+- `docs/reference/DESIGN_TOOLTIPS.md` - Tooltip styling patterns with default light theme and implementation examples
+- `docs/reference/DESIGN_COLLAPSIBLE.md` - Comprehensive guide for expand/collapse component patterns
+- `docs/reference/DESIGN_MOBILE_PLATFORM_DETECTION.md` - Mobile device detection and responsive design system
+- `docs/reference/DESIGN_LOGO.md` - Logo animation system with shared definitions and random selection for header interactivity
+- `docs/reference/DESIGN_OVERLAPPING_TEXT_HIGHLIGHTS.md` - Comprehensive guide for implementing overlapping text highlighting using CSS Custom Highlight API and Mark.js fallbacks ⭐ **Essential for highlighting features**
 - `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Architecture of unified left pane with tabbed interface, ToC, and tooltip summaries
 - `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` - Command palette implementation and usage
 - `docs/reference/COMMAND_PALETTE_FUZZY_SEARCH_CMDK.md` - Fuzzy search configuration and tuning with cmdk library for command palette search precision
@@ -161,7 +161,7 @@ See `planning/later/` for deferred features and future enhancements.
 **For developers**: Focus on CODING_PRINCIPLES.md → CODING_GUIDELINES.md → TESTING_OVERVIEW.md → TESTING_SETUP.md
 **For AI agents**: Essential reads: SETUP_DEV_SERVER_AUTOMATION.md → GIT_WORKTREES.md → SETUP_DEVELOPMENT_ENVIRONMENT.md
 **For AI features**: Begin with LLM_PROMPT_TEMPLATES.md → TOOL_SUMMARISE.md → TOOL_GLOSSARY.md
-**For highlighting work**: Use STYLING_OVERLAPPING_TEXT_HIGHLIGHTS.md → TOOL_SEARCH_TEXT.md → TOOL_HIGHLIGHT.md
+**For highlighting work**: Use DESIGN_OVERLAPPING_TEXT_HIGHLIGHTS.md → TOOL_SEARCH_TEXT.md → TOOL_HIGHLIGHT.md
 **For documentation work**: Use WRITE_EVERGREEN_DOC.md → UPDATE_HOUSEKEEPING_DOCUMENTATION.md
 **For E2E testing**: Start with TESTING_BROWSER_AUTOMATION_OVERVIEW.md → TESTING_OVERVIEW.md
 

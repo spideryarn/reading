@@ -9,7 +9,7 @@
 - `app/design/logoplay/page.tsx` - Visual playground showcasing all logo animations
 - `styles/logo-animations.css` - CSS implementations of all logo animations
 - `components/app-header.tsx` - Header implementation using RandomLogoAnimation
-- `docs/reference/STYLING_OVERVIEW.md` - General styling and CSS configuration
+- `docs/reference/DESIGN_OVERVIEW.md` - General styling and CSS configuration
 
 ## Overview
 

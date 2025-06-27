@@ -13,12 +13,12 @@ The Spideryarn Reading application features a **2-pane resizable layout** with t
 - `components/document-header.tsx` - document header with title and action buttons
 - `app/documents/[slug]/page-client.tsx` - main layout coordination and state management
 - `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - detailed documentation of left pane functionality
-- `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - shadcn/ui component usage patterns
+- `docs/reference/DESIGN_SHADCN_UI_REFERENCE.md` - shadcn/ui component usage patterns
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - overall application architecture
 - `docs/reference/UI_COMPONENTS.md`
-- `docs/reference/STYLING_SHADCN_UI_REFERENCE.md`
+- `docs/reference/DESIGN_SHADCN_UI_REFERENCE.md`
 - `docs/reference/TOOL_HIGHLIGHT.md` - semantic highlighting system accessible via the Highlights tab
-- `docs/reference/STYLING_MOBILE_PLATFORM_DETECTION.md` - mobile device detection and responsive design system for UI adaptation
+- `docs/reference/DESIGN_MOBILE_PLATFORM_DETECTION.md` - mobile device detection and responsive design system for UI adaptation
 
 ## Layout Structure
 
@@ -166,7 +166,7 @@ The **Search** tab provides advanced full-text document search with cross-elemen
 - **Consistent padding** and spacing throughout (`p-4`)
 - **ResizablePanelGroup layout** ensures proper height distribution and overflow handling
 - **Keyboard accessibility** with Ctrl+B shortcut for quick pane toggling
-- **Mobile adaptations** use device detection to auto-collapse left pane and optimize touch interactions (see `docs/reference/STYLING_MOBILE_PLATFORM_DETECTION.md`)
+- **Mobile adaptations** use device detection to auto-collapse left pane and optimize touch interactions (see `docs/reference/DESIGN_MOBILE_PLATFORM_DETECTION.md`)
 
 ## State Management Flow
 

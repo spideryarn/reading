@@ -17,7 +17,7 @@ The unified left pane provides comprehensive document navigation and AI-powered 
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - prompt template system for AI features
 - `docs/reference/TOOL_HIGHLIGHT.md` - semantic highlighting feature accessible via the Highlights tab
 - `docs/reference/ARCHITECTURE_URL_STATE.md` - URL state management for persistent tool state across sessions
-- `docs/reference/STYLING_MOBILE_PLATFORM_DETECTION.md` - mobile device detection affecting left pane auto-collapse behaviour
+- `docs/reference/DESIGN_MOBILE_PLATFORM_DETECTION.md` - mobile device detection affecting left pane auto-collapse behaviour
 - `planning/250608c_vertical_icon_navigation_bar.md` - vertical icon navigation implementation
 - `planning/250526g_ai_generated_headings.md` - AI headings implementation details
 - `planning/250526a_ToC_hierarchical_summary_tooltips.md` - tooltip feature planning
@@ -193,7 +193,7 @@ const getTooltipContent = (headingText: string): JSX.Element
 
 ## Loading and Error States
 
-Follows standardised pattern documented in `docs/reference/STYLING_OVERVIEW.md`:
+Follows standardised pattern documented in `docs/reference/DESIGN_OVERVIEW.md`:
 
 - **Generate Button**: Phosphor icons for consistent UI
 - **Loading**: Spinner animation with disabled state

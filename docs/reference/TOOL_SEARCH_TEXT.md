@@ -10,7 +10,7 @@ The text search feature provides intelligent full-text search with context-aware
 - `planning/finished/250604b_document_search_functionality.md` - Initial element-based search implementation
 - `docs/reference/CODING_GUIDELINES.md#html-text-extraction` - HTML text extraction utility documentation
 - `docs/reference/TOOL_HIGHLIGHT.md` - semantic highlighting system for AI-powered highlighting (complementary to text search)
-- `docs/reference/STYLING_OVERLAPPING_TEXT_HIGHLIGHTS.md` - Comprehensive guide for implementing overlapping text highlighting with Mark.js limitations and CSS Custom Highlight API solutions
+- `docs/reference/DESIGN_OVERLAPPING_TEXT_HIGHLIGHTS.md` - Comprehensive guide for implementing overlapping text highlighting with Mark.js limitations and CSS Custom Highlight API solutions
 - `docs/reference/ARCHITECTURE_URL_STATE.md` - URL state management for shareable search states (e.g., `?tab=search&q=consciousness&type=text`)
 - `lib/utils/html-text-extraction.ts` - HTML text extraction implementation
 - `components/unified-left-pane.tsx` - Search UI, Mark.js integration, and HighlightedSearchText component

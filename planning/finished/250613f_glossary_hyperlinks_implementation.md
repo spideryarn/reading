@@ -10,7 +10,7 @@ This builds on top of the existing glossary feature which extracts entities usin
 
 - `docs/reference/TOOL_GLOSSARY.md` - Current glossary feature documentation
 - `docs/reference/TOOL_SEARCH_TEXT.md` - Text search implementation using Mark.js, provides patterns for highlighting text
-- `docs/reference/STYLING_TOOLTIPS.md` - Tooltip styling patterns using shadcn/ui
+- `docs/reference/DESIGN_TOOLTIPS.md` - Tooltip styling patterns using shadcn/ui
 - `components/unified-left-pane.tsx` - Contains glossary display logic and entity click handlers
 - `components/simple-document-viewer.tsx` - Document rendering component where highlights will be applied
 - `lib/utils/search-context-extraction.ts` - Context extraction utilities that could be reused

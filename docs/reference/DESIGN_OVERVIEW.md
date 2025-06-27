@@ -5,13 +5,13 @@ Overview of CSS and visual styling configuration for the Spideryarn Reading appl
 ## See also
 
 ### Specialized Styling Documentation
-- `docs/reference/STYLING_COLORS_FONTS.md` - Complete color system, typography, and theme configuration
-- `docs/reference/STYLING_ICONS.md` - Phosphor Icons usage patterns, SSR compatibility, and sizing standards
-- `docs/reference/STYLING_TOOLTIPS.md` - Tooltip styling patterns and implementation with default light theme
-- `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - shadcn/ui component library integration guide
-- `docs/reference/STYLING_OVERLAPPING_TEXT_HIGHLIGHTS.md` - Advanced highlighting implementation with CSS Custom Highlight API
-- `docs/reference/STYLING_COLLAPSIBLE.md` - Comprehensive guide for expand/collapse component patterns
-- `docs/reference/STYLING_MOBILE_PLATFORM_DETECTION.md` - Mobile device detection and responsive design system
+- `docs/reference/DESIGN_COLORS_FONTS.md` - Complete color system, typography, and theme configuration
+- `docs/reference/DESIGN_ICONS.md` - Phosphor Icons usage patterns, SSR compatibility, and sizing standards
+- `docs/reference/DESIGN_TOOLTIPS.md` - Tooltip styling patterns and implementation with default light theme
+- `docs/reference/DESIGN_SHADCN_UI_REFERENCE.md` - shadcn/ui component library integration guide
+- `docs/reference/DESIGN_OVERLAPPING_TEXT_HIGHLIGHTS.md` - Advanced highlighting implementation with CSS Custom Highlight API
+- `docs/reference/DESIGN_COLLAPSIBLE.md` - Comprehensive guide for expand/collapse component patterns
+- `docs/reference/DESIGN_MOBILE_PLATFORM_DETECTION.md` - Mobile device detection and responsive design system
 
 ### Implementation Files
 - `lib/config.ts` - UI configuration including theme settings
@@ -29,7 +29,7 @@ Overview of CSS and visual styling configuration for the Spideryarn Reading appl
 
 ## Theme configuration
 
-Core theme system overview - see `docs/reference/STYLING_COLORS_FONTS.md` for complete details. View the live implementation at `/design`.
+Core theme system overview - see `docs/reference/DESIGN_COLORS_FONTS.md` for complete details. View the live implementation at `/design`.
 
 - **Light mode only**: Currently enforced via `UI_CONFIG.FORCE_LIGHT_MODE` in `lib/config.ts`
 - **CSS custom properties**: Comprehensive theme system in `app/globals.css`
@@ -54,11 +54,11 @@ We use Tailwind CSS v4 beta, which has significant differences from v3:
 
 ### Radix UI Integration
 
-Tooltips, dialogs, and other interactive components use Radix UI primitives with custom Tailwind styling. See `docs/reference/STYLING_TOOLTIPS.md` for comprehensive tooltip styling patterns.
+Tooltips, dialogs, and other interactive components use Radix UI primitives with custom Tailwind styling. See `docs/reference/DESIGN_TOOLTIPS.md` for comprehensive tooltip styling patterns.
 
 ## Icons
 
-The project uses Phosphor Icons (`@phosphor-icons/react`) for consistent iconography across all components. See `docs/reference/STYLING_ICONS.md` for complete usage patterns, SSR compatibility, and sizing standards.
+The project uses Phosphor Icons (`@phosphor-icons/react`) for consistent iconography across all components. See `docs/reference/DESIGN_ICONS.md` for complete usage patterns, SSR compatibility, and sizing standards.
 
 ## UI Patterns
 
@@ -122,7 +122,7 @@ const [showContent, setShowContent] = useState(false)
 
 ### Expand/Collapse Buttons
 
-Use Phosphor `CaretDown`/`CaretUp` icons for expand/collapse functionality. See `docs/reference/STYLING_COLLAPSIBLE.md` for comprehensive patterns and `docs/reference/STYLING_ICONS.md` for icon-specific guidance.
+Use Phosphor `CaretDown`/`CaretUp` icons for expand/collapse functionality. See `docs/reference/DESIGN_COLLAPSIBLE.md` for comprehensive patterns and `docs/reference/DESIGN_ICONS.md` for icon-specific guidance.
 
 ## Static assets
 

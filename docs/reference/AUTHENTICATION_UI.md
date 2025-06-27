@@ -10,7 +10,7 @@ Authentication UI components, forms, and pages built with shadcn/ui components a
 - `docs/reference/AUTHENTICATION_SECURITY.md` - Security patterns and route protection implementation
 - `components/auth/` - Authentication UI component implementations
 - `app/auth/` - Authentication page layouts and routing
-- `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - Component library installation and usage patterns
+- `docs/reference/DESIGN_SHADCN_UI_REFERENCE.md` - Component library installation and usage patterns
 
 ## Component Architecture
 

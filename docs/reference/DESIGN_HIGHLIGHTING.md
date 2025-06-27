@@ -10,7 +10,7 @@ It captures the patterns we have converged on so future features can reuse the s
 
 - `docs/reference/TOOL_SEARCH_TEXT.md` – explains the search feature and how it applies Mark.js highlights.
 - `docs/reference/TOOL_GLOSSARY.md` – glossary extraction & navigation, now extended with inline entity highlights.
-- `docs/reference/STYLING_OVERLAPPING_TEXT_HIGHLIGHTS.md` – strategies for handling multiple highlight layers.
+- `docs/reference/DESIGN_OVERLAPPING_TEXT_HIGHLIGHTS.md` – strategies for handling multiple highlight layers.
 - `components/simple-document-viewer.tsx` – the main implementation of Mark.js calls and CSS overrides.
 - `planning/250613f_glossary_hyperlinks_implementation.md` – decision log for glossary link styling (historical context).
 

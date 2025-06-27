@@ -4,7 +4,7 @@
 **Status**: In Progress
 **Priority**: Medium
 **Related Docs**: 
-- `docs/reference/STYLING_MOBILE_PLATFORM_DETECTION.md` - Current mobile detection implementation
+- `docs/reference/DESIGN_MOBILE_PLATFORM_DETECTION.md` - Current mobile detection implementation
 - `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - ToC tooltip system that needs touch adaptation
 - `components/resizable-document-layout.tsx` - Main detection implementation
 - `components/heading-tree.tsx` - Tooltip implementation needing touch support
@@ -158,7 +158,7 @@ const isDesktop = useMediaQuery({ minWidth: 1025 })
 4. Skip extensive touch detection tests - library is well-tested ✅
 
 ### Stage 6: Documentation ✅
-1. Update `STYLING_MOBILE_PLATFORM_DETECTION.md` ✅
+1. Update `DESIGN_MOBILE_PLATFORM_DETECTION.md` ✅
 2. Document new patterns and usage ✅
 3. Add examples for common scenarios ✅
 
@@ -212,7 +212,7 @@ const isDesktop = useMediaQuery({ minWidth: 1025 })
 - Stage 5: Verified tests pass without any react-responsive mocking needed
   - heading-tree.test.tsx passes all 15 tests
   - Test failures unrelated to react-responsive (nuqs ESM issue)
-- Stage 6: Updated STYLING_MOBILE_PLATFORM_DETECTION.md documentation
+- Stage 6: Updated DESIGN_MOBILE_PLATFORM_DETECTION.md documentation
   - Documented current implementation with react-responsive
   - Updated examples and patterns
   - Marked completed features in status summary

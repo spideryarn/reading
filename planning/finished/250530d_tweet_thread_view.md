@@ -164,7 +164,7 @@ Key requirements from user:
   - Explain design decisions
   - Note future enhancement ideas
 
-- [ ] Update `docs/UI_INTERFACE.md`, `docs/UI_COMPONENTS.md`, `docs/STYLING_OVERVIEW.md` etc
+- [ ] Update `docs/UI_INTERFACE.md`, `docs/UI_COMPONENTS.md`, `docs/DESIGN_OVERVIEW.md` etc
   - Document new tab structure
   - Update component hierarchy
 

@@ -18,8 +18,8 @@ User priorities:
 ## References
 
 - `docs/CODING_PRINCIPLES.md` - Development principles prioritising simplicity and rapid prototyping
-- `docs/STYLING_SHADCN_UI_REFERENCE.md`
-- `docs/STYLING_OVERVIEW.md` - Current CSS and visual styling configuration
+- `docs/DESIGN_SHADCN_UI_REFERENCE.md`
+- `docs/DESIGN_OVERVIEW.md` - Current CSS and visual styling configuration
 - `components/` - Existing components showing current Tailwind usage patterns
 - Already using `@radix-ui/react-tooltip` - shadcn/ui is built on Radix UI
 
@@ -40,7 +40,7 @@ User priorities:
   - ✅ Used web search to find latest installation guide
   - ✅ Confirmed compatibility with Next.js 15 and React 19 (requires canary version)
   - ✅ Understood CLI tool and configuration options
-  - ✅ Created comprehensive reference guide: `docs/STYLING_SHADCN_UI_REFERENCE.md`
+  - ✅ Created comprehensive reference guide: `docs/DESIGN_SHADCN_UI_REFERENCE.md`
 
 - [x] Create a plan for which components to adopt first
   - ✅ Analysed current component usage patterns across codebase
@@ -165,8 +165,8 @@ User priorities:
   - ✅ Added footer to client layout (conditional on `/design` page)
   - ✅ Includes both Home and Design Reference navigation
 
-- [x] Reference it in relevant docs, e.g. `docs/STYLING_OVERVIEW.md`, `docs/UI_COMPONENTS.md`,e tc
-  - ✅ Added `/design` reference to `docs/STYLING_OVERVIEW.md` 
+- [x] Reference it in relevant docs, e.g. `docs/DESIGN_OVERVIEW.md`, `docs/UI_COMPONENTS.md`,e tc
+  - ✅ Added `/design` reference to `docs/DESIGN_OVERVIEW.md` 
   - ✅ Added design reference section to `docs/UI_COMPONENTS.md`
   - ✅ Cross-linked with existing documentation
 
@@ -175,7 +175,7 @@ User priorities:
 - [x] Update all relevant documentation
   - ✅ Enhanced CLAUDE.md with UI Components & Styling section
   - ✅ Created comprehensive docs/UI_COMPONENTS.md reference
-  - ✅ Updated docs/STYLING_OVERVIEW.md with design reference links
+  - ✅ Updated docs/DESIGN_OVERVIEW.md with design reference links
   - ✅ Cross-linked all relevant documentation
 
 - [x] Ensure all tests pass

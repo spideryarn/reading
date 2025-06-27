@@ -9,7 +9,7 @@ The `DocumentList` component provides a reusable, consistent interface for displ
 - `app/read/page.tsx` - Read page usage showing all accessible documents
 - `docs/reference/DATABASE_SCHEMA.md` - Document table schema and available metadata fields
 - `docs/reference/AUTHENTICATION_OVERVIEW.md` - User authentication and permission system
-- `docs/reference/STYLING_TOOLTIPS.md` - Tooltip implementation patterns used for privacy status indicators
+- `docs/reference/DESIGN_TOOLTIPS.md` - Tooltip implementation patterns used for privacy status indicators
 - `docs/reference/UI_COMPONENTS.md` - Available UI components and usage patterns
 - `lib/services/database/document-service.ts` - Document data access layer
 - `lib/types/database.ts` - TypeScript interfaces for document data structures

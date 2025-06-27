@@ -20,11 +20,11 @@ Current state: Spideryarn uses basic web typography without research-based optim
 ## References
 
 - `docs/RESEARCH_ON_OPTIMAL_TEXT_FORMATTING.md` - Complete research synthesis with implementation details
-- `docs/STYLING_OVERVIEW.md` - Current CSS and visual styling configuration  
+- `docs/DESIGN_OVERVIEW.md` - Current CSS and visual styling configuration  
 - `app/globals.css` - Current CSS implementation that will be enhanced
 - `components/document-viewer.tsx` - Main document rendering component requiring typography updates
 - `docs/CODING_PRINCIPLES.md` - Development approach emphasising simplicity and rapid prototyping
-- `docs/STYLING_SHADCN_UI_REFERENCE.md` - Component system for consistent design implementation
+- `docs/DESIGN_SHADCN_UI_REFERENCE.md` - Component system for consistent design implementation
 
 ## Principles and Key Decisions
 
@@ -198,7 +198,7 @@ Current state: Spideryarn uses basic web typography without research-based optim
 
 ### Stage: Documentation and Testing
 - [ ] Update implementation documentation
-  - [ ] Document new CSS architecture in `docs/STYLING_OVERVIEW.md`
+  - [ ] Document new CSS architecture in `docs/DESIGN_OVERVIEW.md`
   - [ ] Update component documentation with typography usage
   - [ ] Add developer guide for typography customization
 
@@ -233,7 +233,7 @@ Current state: Spideryarn uses basic web typography without research-based optim
 - [ ] Update evergreen documentation
   - [ ] Update `docs/RESEARCH_ON_OPTIMAL_TEXT_FORMATTING.md` with implementation status
   - [ ] Add implementation learnings and edge cases discovered
-  - [ ] Update `docs/STYLING_OVERVIEW.md` with complete typography system documentation
+  - [ ] Update `docs/DESIGN_OVERVIEW.md` with complete typography system documentation
 
 - [ ] Git commit: "feat: complete optimal typography implementation for academic reading"
 

@@ -11,9 +11,9 @@ Comprehensive guide to color schemes, typography hierarchy, and theme system for
 - `tailwind.config.js` - Tailwind CSS configuration (if exists)
 
 **Related documentation:**
-- `docs/reference/STYLING_OVERVIEW.md` - General styling configuration and patterns
-- `docs/reference/STYLING_SHADCN_UI_REFERENCE.md` - shadcn/ui component theming
-- `docs/reference/STYLING_TOOLTIPS.md` - Tooltip-specific color patterns
+- `docs/reference/DESIGN_OVERVIEW.md` - General styling configuration and patterns
+- `docs/reference/DESIGN_SHADCN_UI_REFERENCE.md` - shadcn/ui component theming
+- `docs/reference/DESIGN_TOOLTIPS.md` - Tooltip-specific color patterns
 - `docs/reference/UI_COMPONENTS.md` - Component usage and styling patterns
 
 ## Principles, key decisions

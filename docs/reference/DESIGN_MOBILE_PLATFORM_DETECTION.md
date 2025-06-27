@@ -16,8 +16,8 @@ This document covers the comprehensive device detection and responsive design sy
 - `app/test-responsive/page.tsx` - Test page for react-responsive functionality
 - `planning/250615a_migrate_to_react_responsive.md` - Migration planning and implementation details
 - `planning/250616a_tooltip_or_popover_hybrid.md` - TooltipOrPopover implementation and testing
-- `docs/reference/STYLING_TOOLTIPS.md` - Comprehensive tooltip styling with TooltipOrPopover patterns
-- `docs/reference/STYLING_OVERVIEW.md` - General styling configuration and theme settings
+- `docs/reference/DESIGN_TOOLTIPS.md` - Comprehensive tooltip styling with TooltipOrPopover patterns
+- `docs/reference/DESIGN_OVERVIEW.md` - General styling configuration and theme settings
 - `docs/reference/UI_INTERFACE.md` - Multi-pane layout architecture and responsive design patterns
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - Overall system architecture including responsive design approach
 - [CSS Media Queries Level 4](https://www.w3.org/TR/mediaqueries-4/) - Web standards for interaction media features
@@ -527,5 +527,5 @@ Based on research and successful implementation:
 - [Radix UI Tooltip Docs](https://www.radix-ui.com/primitives/docs/components/tooltip)
 - [Radix UI GitHub Issues #2589](https://github.com/radix-ui/primitives/issues/2589) - Touch support discussion
 - [CSS Media Queries Level 4](https://www.w3.org/TR/mediaqueries-4/) - Latest spec
-- `docs/reference/STYLING_TOOLTIPS.md` - Complete TooltipOrPopover usage guide and patterns
+- `docs/reference/DESIGN_TOOLTIPS.md` - Complete TooltipOrPopover usage guide and patterns
 - `planning/250616a_tooltip_or_popover_hybrid.md` - Implementation planning and testing documentation

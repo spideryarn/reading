@@ -4,10 +4,10 @@ Comprehensive guide to implementing shadcn/ui component library in the Spideryar
 
 ## See also
 
-- `docs/reference/STYLING_OVERVIEW.md` - Current CSS and visual styling configuration
+- `docs/reference/DESIGN_OVERVIEW.md` - Current CSS and visual styling configuration
 - `docs/reference/UI_INTERFACE.md`
 - `docs/reference/UI_COMPONENTS.md`
-- `docs/reference/STYLING_MOBILE_PLATFORM_DETECTION.md` - mobile device detection affecting responsive component behavior
+- `docs/reference/DESIGN_MOBILE_PLATFORM_DETECTION.md` - mobile device detection affecting responsive component behavior
 - `docs/reference/CODING_PRINCIPLES.md` - Development principles prioritising simplicity and rapid prototyping
 - `planning/250530a_shadcn_ui_adoption.md` - Planning document and implementation roadmap
 - `components/` - Current component implementations using raw Tailwind

@@ -33,7 +33,7 @@
 - `lib/utils/html-text-extraction.ts` - DOM-based text extraction utility (just implemented)
 - `components/highlight-management.tsx` - Semantic highlighting patterns for visual consistency
 - `docs/reference/CODING_PRINCIPLES.md` - Rapid prototyping principles, start simple and layer complexity
-- `docs/reference/STYLING_OVERVIEW.md` - Phosphor icons, tooltip patterns, Spideryarn orange theme
+- `docs/reference/DESIGN_OVERVIEW.md` - Phosphor icons, tooltip patterns, Spideryarn orange theme
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - Future Cmd+F integration patterns
 - `planning/250613c_html_document_storage_and_security_implementation.md` - HTML sanitization approaches
 - Radix Tooltip components in codebase - Established tooltip patterns with Radix UI styling in `app/globals.css`
