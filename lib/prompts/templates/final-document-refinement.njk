@@ -1,0 +1,119 @@
+You are performing final quality assurance and refinement on an academic HTML document that was assembled from individual PDF page processing.
+
+## Document Context
+{% if fileName %}**Original Document**: {{ fileName }}{% endif %}
+**Total Pages**: {{ totalPages }}
+**Processing Method**: Vision-based AI pipeline (individual pages → assembly → final refinement)
+
+{% if documentMetadata %}
+**Assembly Metadata**:
+- Successful pages: {{ documentMetadata.successfulPages }}/{{ documentMetadata.totalPages }}
+- Cross-page merges: {{ documentMetadata.crossPageMerges.length }}
+- Total elements: {{ documentMetadata.totalElements }}
+- Document structure: {{ documentMetadata.documentStructure.headingCount }} headings, {{ documentMetadata.documentStructure.paragraphCount }} paragraphs, {{ documentMetadata.documentStructure.tableCount }} tables, {{ documentMetadata.documentStructure.figureCount }} figures
+{% endif %}
+
+{% if assemblyIssues and assemblyIssues.length > 0 %}
+**Known Assembly Issues to Address**:
+{% for issue in assemblyIssues %}
+- {{ issue.type }}: {{ issue.message }}{% if issue.suggestion %} ({{ issue.suggestion }}){% endif %}
+{% endfor %}
+{% endif %}
+
+## Task: Final Document Review and Targeted Improvements
+
+Review the complete assembled HTML document and provide **targeted edit operations** to improve quality, structure, and academic integrity. Focus on issues that can only be addressed when viewing the complete document context.
+
+### Priority Areas for Review
+
+1. **Cross-Page Consistency**
+   - Verify proper handling of elements that span multiple pages (tables, paragraphs, sections)
+   - Check for orphaned table headers or caption misalignments
+   - Ensure figure numbering and cross-references are consistent throughout
+   - Validate that mathematical equation numbering flows properly
+
+2. **Document Structure Integrity**
+   - Verify logical heading hierarchy (no skipped levels like h2→h4)
+   - Ensure proper nesting of sections and subsections
+   - Check that the abstract, methodology, results, conclusion follow logical order
+   - Validate bibliography and reference formatting consistency
+
+3. **Academic Content Quality**
+   - Review mathematical notation for completeness and accuracy
+   - Check that all figures have proper captions and are referenced in text
+   - Ensure tables maintain proper structure and alignment
+   - Verify citation format consistency and completeness
+
+4. **HTML Quality and Semantics**
+   - Fix any malformed HTML or unclosed tags
+   - Ensure proper semantic markup (article, section, figure, etc.)
+   - Check accessibility attributes (alt text, table headers, etc.)
+   - Remove any duplicate IDs or invalid markup
+
+## Output Format: JSON Edit Operations
+
+Provide your improvements as a JSON array of edit operations. Each operation should specify the exact text to find and replace. **Be extremely precise** with the old_text to ensure unique matches.
+
+```json
+{
+  "edit_operations": [
+    {
+      "type": "replace",
+      "description": "Fix heading hierarchy by changing h4 to h3",
+      "old_text": "<h4 id=\"methodology-data-collection\">Data Collection Methods</h4>",
+      "new_text": "<h3 id=\"methodology-data-collection\">Data Collection Methods</h3>"
+    },
+    {
+      "type": "replace", 
+      "description": "Complete partial table that was split across pages",
+      "old_text": "</tr>\n<!-- TABLE_CONTINUES_ON_NEXT_PAGE --></table>\n<div class=\"page-break\" data-page=\"3\"></div>\n<!-- TABLE_CONTINUES_FROM_PREVIOUS_PAGE --><table>",
+      "new_text": "</tr>"
+    },
+    {
+      "type": "replace",
+      "description": "Fix figure caption formatting and add missing reference",
+      "old_text": "<figcaption>Results from the experiment</figcaption>",
+      "new_text": "<figcaption><strong>Figure 2.1:</strong> Results from the experiment showing significant improvement in accuracy (p &lt; 0.05).</figcaption>"
+    }
+  ],
+  "quality_assessment": {
+    "overall_quality": "good|excellent|needs_improvement",
+    "structural_issues_fixed": 3,
+    "cross_page_issues_fixed": 1, 
+    "academic_improvements": 2,
+    "critical_errors": 0,
+    "remaining_concerns": ["Brief description of any remaining quality concerns"]
+  },
+  "rewrite_recommendation": {
+    "should_rewrite": false,
+    "reason": "Edit operations are sufficient for quality improvement"
+  }
+}
+```
+
+## Edit Operation Guidelines
+
+1. **Precision**: Make old_text selections unique enough to match exactly once
+2. **Context**: Include surrounding HTML context to ensure correct targeting
+3. **Academic Standards**: Prioritize improvements that enhance academic credibility
+4. **Efficiency**: Focus on the most impactful changes first
+5. **Safety**: Prefer conservative edits over risky restructuring
+
+## When to Recommend Complete Rewrite
+
+Only recommend a complete rewrite if:
+- The document has fundamental structural problems that cannot be fixed with targeted edits
+- There are extensive HTML malformation issues throughout
+- The academic content has been significantly corrupted during assembly
+- Cross-page element reconstruction has failed catastrophically
+
+## Quality Standards
+
+The final document should meet these standards:
+- **Academic Integrity**: All mathematical notation, figures, tables, and citations are properly formatted
+- **Structural Soundness**: Valid HTML5 with proper semantic markup and heading hierarchy  
+- **Cross-Page Coherence**: Elements spanning multiple pages are properly unified
+- **Accessibility**: All images have alt text, tables have headers, content is semantically marked
+- **Professional Presentation**: Consistent formatting befitting academic publication standards
+
+Focus on delivering targeted, high-impact improvements that transform the assembled document into publication-quality academic HTML.
