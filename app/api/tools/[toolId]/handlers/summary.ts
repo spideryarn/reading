@@ -45,18 +45,21 @@ const SummaryGetRequestSchema = z.object({
 })
 
 const SingleSummaryPostRequestSchema = z.object({
-  action: z.enum(['execute', 'generate', 'refresh']).default('execute'),
   content: z.string().min(1, 'Content is required'),
   documentId: z.string().min(1, 'Document ID is required'),
   granularity: z.string().optional(),
   sectionId: z.string().optional()
-})
+}).passthrough()
 
+// The multi-summary POST parameters are provided via the `parameters` object of the
+// unified tool request. The *type* of action ("multi-summarise") is already
+// conveyed by the top-level `action` field, so we **must not** require an
+// additional `action` property here – doing so causes perfectly valid requests
+// to fail validation.  We therefore validate only what is actually needed.
 const MultiSummaryPostRequestSchema = z.object({
-  action: z.enum(['multi', 'hierarchical']),
   content: z.string().min(1, 'Content is required'),
   documentId: z.string().min(1, 'Document ID is required')
-})
+}).passthrough()
 
 /**
  * Summary tool handler with unified single/multi-level functionality
@@ -196,8 +199,11 @@ export class SummaryHandler extends BaseToolHandler {
       throw createHandlerError('Authentication required for summary operations', 'auth')
     }
     
-    // Route based on action type
-    if (action === 'multi' || action === 'hierarchical') {
+    // Check for mode parameter to support new pattern
+    const mode = parameters.mode as string | undefined
+    
+    // Route based on action type or mode
+    if (action === 'multi' || action === 'hierarchical' || action === 'multi-summarise' || mode === 'multi-summarise') {
       return this.handleMultiLevelSummary(parameters, context, logger)
     } else {
       // Default to single summary for 'execute', 'generate', 'refresh'
@@ -285,8 +291,8 @@ export class SummaryHandler extends BaseToolHandler {
         prompt_type: 'summarise',
         input_data: { 
           content_length: content.length,
-          granularity,
-          section_id: sectionId,
+          granularity: granularity || null,
+          section_id: sectionId || null,
           model_used: modelString
         }
       })
