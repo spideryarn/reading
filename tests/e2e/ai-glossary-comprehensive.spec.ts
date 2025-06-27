@@ -68,7 +68,7 @@ test.describe('Glossary Comprehensive Testing', () => {
       // Click and wait for glossary generation with extended timeout for AI
       const [glossaryResponse] = await Promise.all([
         page.waitForResponse(resp => 
-          resp.url().includes('/api/glossary') && resp.status() === 200,
+          resp.url().includes('/api/tools/glossary') && resp.status() === 200,
           { timeout: 45000 } // Extended timeout for AI processing
         ),
         glossaryButton.click()
@@ -99,7 +99,7 @@ test.describe('Glossary Comprehensive Testing', () => {
         // Click Load More and wait for additional entities
         const [loadMoreResponse] = await Promise.all([
           page.waitForResponse(resp => 
-            resp.url().includes('/api/glossary') && resp.status() === 200,
+            resp.url().includes('/api/tools/glossary') && resp.status() === 200,
             { timeout: 45000 }
           ),
           loadMoreButton.click()
@@ -293,7 +293,7 @@ test.describe('Glossary Comprehensive Testing', () => {
       let apiStatus = 0;
       
       page.on('response', response => {
-        if (response.url().includes('/api/glossary')) {
+        if (response.url().includes('/api/tools/glossary')) {
           apiCallMade = true;
           apiStatus = response.status();
           console.log(`Glossary API call: ${response.status()}`);

@@ -165,7 +165,7 @@ test.describe('Glossary Reset and Document Highlight Removal', () => {
         // Click and wait for glossary generation with extended timeout for AI processing
         const [glossaryResponse] = await Promise.all([
           page.waitForResponse(resp => 
-            resp.url().includes('/api/glossary') && resp.status() === 200,
+            resp.url().includes('/api/tools/glossary') && resp.status() === 200,
             { timeout: 60000 } // Extended timeout for LLM processing
           ),
           generateButton.click()
@@ -285,7 +285,7 @@ test.describe('Glossary Reset and Document Highlight Removal', () => {
       // Click reset and wait for the DELETE API call
       const [resetResponse] = await Promise.all([
         page.waitForResponse(resp => 
-          resp.url().includes('/api/glossary') && resp.request().method() === 'DELETE',
+          resp.url().includes('/api/tools/glossary') && resp.request().method() === 'DELETE',
           { timeout: 30000 }
         ),
         resetButton.click()
@@ -385,7 +385,7 @@ test.describe('Glossary Reset and Document Highlight Removal', () => {
       
       const [glossaryResponse] = await Promise.all([
         page.waitForResponse(resp => 
-          resp.url().includes('/api/glossary') && resp.status() === 200,
+          resp.url().includes('/api/tools/glossary') && resp.status() === 200,
           { timeout: 60000 }
         ),
         glossaryButton.click()
@@ -406,7 +406,7 @@ test.describe('Glossary Reset and Document Highlight Removal', () => {
         
         const [loadMoreResponse] = await Promise.all([
           page.waitForResponse(resp => 
-            resp.url().includes('/api/glossary') && resp.status() === 200,
+            resp.url().includes('/api/tools/glossary') && resp.status() === 200,
             { timeout: 60000 }
           ),
           loadMoreButton.click()
@@ -451,7 +451,7 @@ test.describe('Glossary Reset and Document Highlight Removal', () => {
       
       const [resetResponse] = await Promise.all([
         page.waitForResponse(resp => 
-          resp.url().includes('/api/glossary') && resp.request().method() === 'DELETE',
+          resp.url().includes('/api/tools/glossary') && resp.request().method() === 'DELETE',
           { timeout: 30000 }
         ),
         resetButton.click()
@@ -511,7 +511,7 @@ test.describe('Glossary Reset and Document Highlight Removal', () => {
       await page.waitForSelector('[data-testid="glossary-section"]', { timeout: 10000 });
       
       const [glossaryResponse] = await Promise.all([
-        page.waitForResponse(resp => resp.url().includes('/api/glossary') && resp.status() === 200, { timeout: 60000 }),
+        page.waitForResponse(resp => resp.url().includes('/api/tools/glossary') && resp.status() === 200, { timeout: 60000 }),
         page.click('button:has-text("Generate Glossary")')
       ]);
       
@@ -537,7 +537,7 @@ test.describe('Glossary Reset and Document Highlight Removal', () => {
       await page.click('button:has-text("Generate Glossary")');
       
       await Promise.all([
-        page.waitForResponse(resp => resp.url().includes('/api/glossary') && resp.status() === 200, { timeout: 60000 }),
+        page.waitForResponse(resp => resp.url().includes('/api/tools/glossary') && resp.status() === 200, { timeout: 60000 }),
         page.waitForSelector('[data-testid="glossary-entities"]', { timeout: 15000 })
       ]);
       

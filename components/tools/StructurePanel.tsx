@@ -143,16 +143,24 @@ async function generateHeadingSummary(
     .join('')
 
   try {
-    const response = await fetch('/api/summarise', {
+    const response = await fetch('/api/tools/summary', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        content: htmlContent,
-        granularity: TOOLTIP_GRANULARITY,
-        documentId: documentId,
-        sectionId: elementId
+        action: 'execute',
+        parameters: {
+          content: htmlContent,
+          granularity: TOOLTIP_GRANULARITY,
+          documentId: documentId,
+          sectionId: elementId
+        },
+        metadata: {
+          correlationId: crypto.randomUUID(),
+          source: 'structure-panel',
+          timestamp: new Date().toISOString()
+        }
       }),
     })
 
@@ -336,7 +344,7 @@ export function StructurePanel({
     fetchInProgressRef.current = true
     
     try {
-      const response = await fetch(`/api/headings?documentId=${documentId}`)
+      const response = await fetch(`/api/tools/structure?documentId=${documentId}`)
       if (!response.ok) {
         console.error('Failed to fetch cached headings:', response.status)
         return null
@@ -441,7 +449,6 @@ export function StructurePanel({
         return
       }
       
-      let htmlWithIds = ''
       // Timeout machinery for fetch – 60 s hard limit
       const HEADINGS_GENERATION_TIMEOUT_MS = 60_000 // 1 minute
       const abortController = new AbortController()
@@ -450,6 +457,7 @@ export function StructurePanel({
       }, HEADINGS_GENERATION_TIMEOUT_MS)
 
       try {
+        let htmlWithIds = ''
         if (elements && elements.length > 0) {
           htmlWithIds = elements.map(el => {
             const attrs = Object.entries(el.attributes)
@@ -471,16 +479,24 @@ export function StructurePanel({
           throw error
         }
         
-        console.log('Sending POST /api/headings with content length:', htmlWithIds.length)
+        console.log('Sending POST /api/tools/structure with content length:', htmlWithIds.length)
         
-        const response = await fetch('/api/headings', {
+        const response = await fetch('/api/tools/structure', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            html_content: htmlWithIds,
-            documentId: documentId
+            action: 'execute',
+            parameters: {
+              html_content: htmlWithIds,
+              documentId: documentId
+            },
+            metadata: {
+              correlationId: crypto.randomUUID(),
+              source: 'structure-panel',
+              timestamp: new Date().toISOString()
+            }
           }),
           signal: abortController.signal,
         })
@@ -578,7 +594,7 @@ export function StructurePanel({
       
       if (enhancementId) {
         console.log('Deleting cached headings enhancement...')
-        const deleteResponse = await fetch(`/api/headings?documentId=${documentId}`, {
+        const deleteResponse = await fetch(`/api/tools/structure?documentId=${documentId}`, {
           method: 'DELETE'
         })
         

@@ -4,16 +4,20 @@
  * This tool generates hierarchical summaries at multiple levels of detail
  * using AI analysis with configurable expertise and length parameters.
  * 
+ * Supports both single and multi-dimensional summary generation through
+ * the unified tool execution framework.
+ * 
  * @see docs/reference/TOOL_SUMMARISE.md for user documentation
  * @see docs/reference/ARCHITECTURE_FOR_TOOLS.md for technical documentation
  */
 
 import { registerTool } from '../registry'
 import { ListBullets } from '@phosphor-icons/react/dist/ssr'
+import { z } from 'zod'
 import type { Tool } from '../types'
 
 /**
- * Summary tool definition
+ * Summary tool definition with executor framework integration
  */
 const summaryTool: Tool = {
   // Identity & Metadata
@@ -39,7 +43,38 @@ const summaryTool: Tool = {
   },
   
   // URL State Integration
-  urlStateKeys: ['expertise', 'length']
+  urlStateKeys: ['expertise', 'length'],
+  
+  // Executor Framework Configuration
+  executorConfig: {
+    apiEndpoint: '/api/tools/summary',
+    timeout: 180000, // 3 minutes - summaries can be very slow, especially multi-dimensional
+    supportedActions: ['execute', 'generate', 'refresh', 'multi', 'hierarchical'],
+    parameterSchema: z.object({
+      // Single summary parameters
+      content: z.string().min(1).optional(),
+      documentId: z.string().min(1).optional(),
+      granularity: z.string().optional(),
+      sectionId: z.string().optional(),
+      
+      // Multi-summary parameters (content and documentId overlap)
+      // action determines which type of summary to generate
+      
+      // GET/DELETE parameters
+      type: z.enum(['single', 'multi', 'all']).optional()
+    }).refine(
+      () => {
+        // For POST operations, either content or documentId should be provided
+        // Content is required for generation, documentId for cached retrieval
+        return true // Validation handled by individual handlers
+      },
+      {
+        message: 'Either content or documentId must be provided'
+      }
+    ),
+    cacheable: true,
+    requiresAuth: true
+  }
 }
 
 // Register the tool on module load

@@ -176,12 +176,11 @@ export default function DocumentPageClient({
   // Reset glossary (delete from database and clear UI)
   const resetGlossary = async () => {
     try {
-      const response = await fetch('/api/glossary', {
+      const response = await fetch(`/api/tools/glossary?documentId=${documentId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ documentId }),
       })
       
       if (!response.ok) {
@@ -222,16 +221,24 @@ export default function DocumentPageClient({
     }
     
     try {
-      const response = await fetch('/api/glossary', {
+      const response = await fetch('/api/tools/glossary', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          content: html,
-          documentId: documentId,
-          max_entities: isAutoTrigger ? GLOSSARY_CONFIG.GLOSSARY_MAX_ENTITIES_PER_BATCH : GLOSSARY_CONFIG.MAX_ENTITIES_PER_REQUEST,
-          existing_entities: glossaryEntities // Pass current entities to avoid duplicates
+        body: JSON.stringify({
+          action: 'execute',
+          parameters: {
+            content: html,
+            documentId: documentId,
+            max_entities: isAutoTrigger ? GLOSSARY_CONFIG.GLOSSARY_MAX_ENTITIES_PER_BATCH : GLOSSARY_CONFIG.MAX_ENTITIES_PER_REQUEST,
+            existing_entities: glossaryEntities // Pass current entities to avoid duplicates
+          },
+          metadata: {
+            correlationId: crypto.randomUUID(),
+            source: 'component',
+            timestamp: new Date().toISOString()
+          }
         }),
         signal: abortController.signal
       })
@@ -302,15 +309,23 @@ export default function DocumentPageClient({
     setIsLoadingGlossary(true)
     setGlossaryError(null)
     try {
-      const response = await fetch('/api/glossary', {
+      const response = await fetch('/api/tools/glossary', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          content: html,
-          documentId: documentId,
-          max_entities: GLOSSARY_CONFIG.DEFAULT_ENTITY_LIMIT_PER_REQUEST
+        body: JSON.stringify({
+          action: 'execute',
+          parameters: {
+            content: html,
+            documentId: documentId,
+            max_entities: GLOSSARY_CONFIG.DEFAULT_ENTITY_LIMIT_PER_REQUEST
+          },
+          metadata: {
+            correlationId: crypto.randomUUID(),
+            source: 'component',
+            timestamp: new Date().toISOString()
+          }
         }),
       })
       

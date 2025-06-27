@@ -136,18 +136,31 @@ describe('DocumentPageClient Load More Integration', () => {
     fireEvent.click(generateButton)
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/glossary', {
+      expect(mockFetch).toHaveBeenCalledWith('/api/tools/glossary', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          content: '<p>Test content</p>',
-          documentId: 'test-doc-id',
-          max_entities: 20 // Default entity limit
-        })
+        body: expect.stringContaining('"action":"execute"')
       })
     })
+    
+    // Verify the structured request body
+    const firstCall = mockFetch.mock.calls[0]
+    const requestBody = JSON.parse(firstCall[1].body)
+    expect(requestBody).toMatchObject({
+      action: 'execute',
+      parameters: {
+        content: '<p>Test content</p>',
+        documentId: 'test-doc-id',
+        max_entities: 20
+      },
+      metadata: {
+        source: 'component'
+      }
+    })
+    expect(requestBody.metadata.correlationId).toBeDefined()
+    expect(requestBody.metadata.timestamp).toBeDefined()
   })
 
   it('shows Load More button when entities equal limit', async () => {
@@ -250,7 +263,7 @@ describe('DocumentPageClient Load More Integration', () => {
     fireEvent.click(loadMoreButton)
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/glossary', {
+      expect(mockFetch).toHaveBeenCalledWith('/api/tools/glossary', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -262,7 +275,7 @@ describe('DocumentPageClient Load More Integration', () => {
     // Check that existing_entities was passed
     const secondCall = mockFetch.mock.calls[1]
     const secondCallBody = JSON.parse(secondCall[1].body)
-    expect(secondCallBody.existing_entities).toHaveLength(20)
+    expect(secondCallBody.parameters.existing_entities).toHaveLength(20)
   })
 
   it('appends new entities to existing list', async () => {

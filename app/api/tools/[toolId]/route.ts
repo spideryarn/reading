@@ -14,7 +14,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validateAuth } from '@/lib/auth/server-auth'
 import { createRequestLogger, generateCorrelationId, createTimer } from '@/lib/services/logger'
-import { getTool } from '@/lib/tools/registry'
+import { getTool, isRegistryLocked } from '@/lib/tools/registry'
+import { initializeToolRegistry } from '@/lib/tools/registry-loader'
 import { z } from 'zod'
 import type { 
   ToolApiRequest, 
@@ -22,6 +23,19 @@ import type {
   ToolApiErrorResponse,
   ExecutionContext 
 } from '@/lib/tools/executor/types'
+
+// Cache the registry initialization to avoid repeated initialization
+let registryInitialized = false
+
+/**
+ * Ensure the tool registry is initialized
+ */
+async function ensureRegistryInitialized(): Promise<void> {
+  if (!registryInitialized || !isRegistryLocked()) {
+    await initializeToolRegistry()
+    registryInitialized = true
+  }
+}
 
 // Request validation schemas
 const UnifiedRequestSchema = z.object({
@@ -37,7 +51,7 @@ const UnifiedRequestSchema = z.object({
 const GetParamsSchema = z.object({
   action: z.enum(['get', 'list']).default('get'),
   // Tool-specific query parameters will be passed through
-})
+}).passthrough() // Allow additional properties to be passed through
 
 /**
  * Create execution context for the request
@@ -131,14 +145,13 @@ function getErrorTitle(status: number): string {
  * Only include handlers that have been implemented
  */
 const toolHandlers = {
-  metadata: () => import('./handlers/metadata')
-  // Additional handlers will be added as they are migrated:
-  // chat: () => import('./handlers/chat'),
-  // summary: () => import('./handlers/summary'),
-  // glossary: () => import('./handlers/glossary'),
-  // structure: () => import('./handlers/structure'),
-  // search: () => import('./handlers/search'),
-  // highlights: () => import('./handlers/highlights')
+  metadata: () => import('./handlers/metadata'),
+  glossary: () => import('./handlers/glossary'),
+  search: () => import('./handlers/search'),
+  summary: () => import('./handlers/summary'),
+  chat: () => import('./handlers/chat'),
+  structure: () => import('./handlers/structure'),
+  highlights: () => import('./handlers/highlights')
 }
 
 /**
@@ -146,16 +159,21 @@ const toolHandlers = {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { toolId: string } }
+  { params }: { params: Promise<{ toolId: string }> }
 ) {
   const correlationId = generateCorrelationId()
   const { pathname } = new URL(request.url)
   const logger = createRequestLogger('GET /api/tools/[toolId]', correlationId)
   const timer = createTimer()
   
+  let toolId = 'unknown'
   try {
-    const { toolId } = params
+    const resolvedParams = await params
+    toolId = resolvedParams.toolId
     logger.info('Processing GET request', { toolId })
+    
+    // Ensure tool registry is initialized
+    await ensureRegistryInitialized()
     
     // Validate tool exists
     const tool = getTool(toolId)
@@ -173,23 +191,9 @@ export async function GET(
       )
     }
     
-    // Check if tool requires authentication for GET operations
-    if (tool.requiresDocument) {
-      const authResult = await validateAuth(request, { requireAuth: true })
-      if (!authResult.success) {
-        return createErrorResponse(
-          {
-            status: 401,
-            code: 'TOOL_AUTH_FAILED',
-            message: 'Authentication required for this tool',
-            retryable: false
-          },
-          toolId,
-          correlationId,
-          pathname
-        )
-      }
-    }
+    // For GET requests, authentication is optional by default
+    // Individual handlers can check context.user and require auth if needed
+    // This matches the original tool endpoint behavior
     
     // Parse query parameters
     const { searchParams } = new URL(request.url)
@@ -226,7 +230,8 @@ export async function GET(
       )
     }
     
-    const handler = await handlerModule()
+    const handlerExport = await handlerModule()
+    const handler = handlerExport.default || handlerExport
     const context = await createExecutionContext(request, correlationId, toolId)
     
     // Execute tool-specific GET logic
@@ -250,7 +255,7 @@ export async function GET(
         message: error instanceof Error ? error.message : 'Internal server error',
         retryable: true
       },
-      params.toolId,
+      toolId,
       correlationId,
       pathname
     )
@@ -262,16 +267,21 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { toolId: string } }
+  { params }: { params: Promise<{ toolId: string }> }
 ) {
   const correlationId = generateCorrelationId()
   const { pathname } = new URL(request.url)
   const logger = createRequestLogger('POST /api/tools/[toolId]', correlationId)
   const timer = createTimer()
   
+  let toolId = 'unknown'
   try {
-    const { toolId } = params
+    const resolvedParams = await params
+    toolId = resolvedParams.toolId
     logger.info('Processing POST request', { toolId })
+    
+    // Ensure tool registry is initialized
+    await ensureRegistryInitialized()
     
     // Validate tool exists
     const tool = getTool(toolId)
@@ -357,7 +367,8 @@ export async function POST(
       )
     }
     
-    const handler = await handlerModule()
+    const handlerExport = await handlerModule()
+    const handler = handlerExport.default || handlerExport
     const context = await createExecutionContext(request, correlationId, toolId)
     
     // Execute tool-specific POST logic
@@ -381,7 +392,7 @@ export async function POST(
         message: error instanceof Error ? error.message : 'Internal server error',
         retryable: true
       },
-      params.toolId,
+      toolId,
       correlationId,
       pathname
     )
@@ -393,16 +404,21 @@ export async function POST(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { toolId: string } }
+  { params }: { params: Promise<{ toolId: string }> }
 ) {
   const correlationId = generateCorrelationId()
   const { pathname } = new URL(request.url)
   const logger = createRequestLogger('DELETE /api/tools/[toolId]', correlationId)
   const timer = createTimer()
   
+  let toolId = 'unknown'
   try {
-    const { toolId } = params
+    const resolvedParams = await params
+    toolId = resolvedParams.toolId
     logger.info('Processing DELETE request', { toolId })
+    
+    // Ensure tool registry is initialized
+    await ensureRegistryInitialized()
     
     // Validate tool exists
     const tool = getTool(toolId)
@@ -456,7 +472,8 @@ export async function DELETE(
       )
     }
     
-    const handler = await handlerModule()
+    const handlerExport = await handlerModule()
+    const handler = handlerExport.default || handlerExport
     const context = await createExecutionContext(request, correlationId, toolId)
     
     // Execute tool-specific DELETE logic
@@ -479,7 +496,7 @@ export async function DELETE(
         message: error instanceof Error ? error.message : 'Internal server error',
         retryable: true
       },
-      params.toolId,
+      toolId,
       correlationId,
       pathname
     )

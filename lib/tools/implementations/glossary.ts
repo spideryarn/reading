@@ -11,12 +11,12 @@
 
 import { registerTool } from '../registry'
 import { BookOpen } from '@phosphor-icons/react/dist/ssr'
-import type { Tool } from '../types'
+import type { ExecutableTool } from '../executor/types'
 
 /**
- * Glossary tool definition
+ * Glossary tool definition with execution framework configuration
  */
-const glossaryTool: Tool = {
+const glossaryTool: ExecutableTool = {
   // Identity & Metadata
   id: 'glossary',
   name: 'Glossary',
@@ -40,7 +40,29 @@ const glossaryTool: Tool = {
   },
   
   // URL State Integration
-  urlStateKeys: ['term']
+  urlStateKeys: ['term'],
+  
+  // Execution Framework Configuration
+  apiEndpoint: {
+    route: 'glossary',
+    methods: ['GET', 'POST', 'DELETE'],
+    cacheable: true,
+    requiresAuth: true,
+    timeout: {
+      default: 30000,    // 30 seconds for retrieving cached entities
+      ai: 90000,         // 90 seconds for AI entity extraction
+      analysis: 60000    // 60 seconds for entity analysis
+    }
+  },
+  preferredExecution: 'server',
+  localOperations: ['open'],
+  serverOperations: ['execute', 'refresh', 'generate'],
+  timeouts: {
+    default: 30000,
+    ai: 90000,         // Glossary generation can take longer due to LLM processing
+    analysis: 60000,
+    upload: 30000      // Not typically used for glossary
+  }
 }
 
 // Register the tool on module load

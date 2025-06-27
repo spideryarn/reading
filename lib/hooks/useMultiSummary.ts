@@ -70,7 +70,7 @@ export function useMultiSummary(
   // Fetch cached summaries
   const fetchCachedSummaries = useCallback(async () => {
     try {
-      const response = await fetch(`/api/multi-summarise?documentId=${encodeURIComponent(documentId)}`)
+      const response = await fetch(`/api/tools/summary?documentId=${encodeURIComponent(documentId)}`)
       if (!response.ok) {
         if (response.status !== 404) {
           console.error('Failed to fetch cached summaries:', response.status)
@@ -97,14 +97,22 @@ export function useMultiSummary(
       setIsLoading(true)
       setError(null)
       
-      const response = await fetch('/api/multi-summarise', {
+      const response = await fetch('/api/tools/summary', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          content, 
-          documentId
+        body: JSON.stringify({
+          action: 'multi-summarise',
+          parameters: {
+            content,
+            documentId
+          },
+          metadata: {
+            correlationId: crypto.randomUUID(),
+            source: 'multi-summary-hook',
+            timestamp: new Date().toISOString()
+          }
         }),
       })
       
@@ -148,7 +156,7 @@ export function useMultiSummary(
   // Clear summaries
   const clearSummaries = useCallback(async () => {
     try {
-      await fetch(`/api/multi-summarise?documentId=${encodeURIComponent(documentId)}`, {
+      await fetch(`/api/tools/summary?documentId=${encodeURIComponent(documentId)}`, {
         method: 'DELETE'
       })
       
