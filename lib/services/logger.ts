@@ -39,8 +39,15 @@ export const searchLogger = logger.child({ component: 'search' })
 
 // Utility functions for common logging patterns
 export function generateCorrelationId(): string {
-  // Use Web Crypto API available in both Node.js (16+) and modern browsers
-  return crypto.randomUUID()
+  // Use Node.js crypto module for UUID generation
+  // This works in both Node.js and browser environments when properly polyfilled
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+  
+  // Fallback for test environments or older Node.js versions
+  const { randomUUID } = require('crypto')
+  return randomUUID()
 }
 
 export function createRequestLogger(path: string, correlationId?: string) {
@@ -50,20 +57,34 @@ export function createRequestLogger(path: string, correlationId?: string) {
   })
 }
 
-// Helper for timing operations
-export function createTimer(logger: pino.Logger, operation: string) {
+// Helper for timing operations (overloaded)
+export function createTimer(logger: pino.Logger, operation: string): {
+  end: (additionalContext?: Record<string, any>) => number
+}
+export function createTimer(): {
+  elapsed: () => number
+}
+export function createTimer(logger?: pino.Logger, operation?: string) {
   const start = Date.now()
   
-  return {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    end: (additionalContext?: Record<string, any>) => {
-      const duration = Date.now() - start
-      logger.info({
-        operation,
-        duration,
-        ...additionalContext
-      }, `${operation} completed in ${duration}ms`)
-      return duration
+  if (logger && operation) {
+    // With logger version
+    return {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      end: (additionalContext?: Record<string, any>) => {
+        const duration = Date.now() - start
+        logger.info({
+          operation,
+          duration,
+          ...additionalContext
+        }, `${operation} completed in ${duration}ms`)
+        return duration
+      }
+    }
+  } else {
+    // Without logger version
+    return {
+      elapsed: () => Date.now() - start
     }
   }
 }
