@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { LOGO_ANIMATIONS } from '@/lib/animations/logo-animations'
+import { DynamicLogoAnimation } from '@/components/ui/dynamic-logo-animation'
 
 // Logo component with different animations
 interface LogoPlaygroundItemProps {
@@ -14,31 +15,43 @@ function LogoPlaygroundItem({ title, description, animationClass }: LogoPlaygrou
   // Split "Spideryarn" into individual letters for animation
   const letters = "Spideryarn".split("")
   
-  // Add autoplay version of the animation class for playground
-  const autoplayClass = `${animationClass}-autoplay`
+  // For glossary-builder, use dynamic component with phrases
+  const isGlossaryBuilder = animationClass === 'glossary-builder'
   
   return (
     <div className="border border-gray-200 rounded-lg p-6 bg-white shadow-sm">
       <div className="flex items-center justify-center h-32 mb-4">
-        <div className={`flex items-center space-x-3 ${animationClass}`}>
-          <Image
-            src="/spideryarn-logo.png"
-            alt="Spideryarn logo"
-            width={32}
-            height={32}
-            className="h-8 w-8 logo-image"
+        {isGlossaryBuilder ? (
+          <DynamicLogoAnimation 
+            animationClass={animationClass}
+            className=""
           />
-          <span className="text-xl font-semibold text-spideryarn-orange font-trebuchet logo-text">
-            {letters.map((letter, index) => (
-              <span key={index} className="logo-letter" style={{ animationDelay: `${index * 0.1}s` }}>
-                {letter}
-              </span>
-            ))}
-          </span>
-        </div>
+        ) : (
+          <div className={`flex items-center space-x-3 ${animationClass}`}>
+            <Image
+              src="/spideryarn-logo.png"
+              alt="Spideryarn logo"
+              width={32}
+              height={32}
+              className="h-8 w-8 logo-image"
+            />
+            <span className="text-xl font-semibold text-spideryarn-orange font-trebuchet logo-text">
+              {letters.map((letter, index) => (
+                <span key={index} className="logo-letter" style={{ animationDelay: `${index * 0.1}s` }}>
+                  {letter}
+                </span>
+              ))}
+            </span>
+          </div>
+        )}
       </div>
       <h3 className="font-semibold text-lg mb-2">{title}</h3>
-      <p className="text-gray-600 text-sm">{description}</p>
+      <p className="text-gray-600 text-sm">
+        {isGlossaryBuilder 
+          ? `${description} (Now using dynamic phrases from the 100-phrase collection!)` 
+          : description
+        }
+      </p>
     </div>
   )
 }
