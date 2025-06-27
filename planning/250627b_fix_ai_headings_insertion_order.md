@@ -56,6 +56,7 @@
 - `docs/reference/TOOL_HEADINGS.md` - AI headings feature documentation
 - `docs/conversations/250627b_ai_headings_insertion_order_fix.md` - Problem analysis and research findings
 - `planning/250527a_reversible_document_mutations.md` - Original mutation system design decisions
+- `lib/services/deterministicId.ts` - Existing deterministic ID generation utility with collision detection
 
 **Research Context**:
 - Document editing best practices research showing headings should introduce content
@@ -81,6 +82,17 @@
 - Zero users means we can make optimal decisions without backwards compatibility concerns
 - Prioritize long-term clarity over short-term preservation of existing patterns
 
+**Mixed Insertion Type Handling**:
+- When both before and after insertions target same element, enforce deterministic precedence
+- **Precedence rule**: `before-insertions → original-element → after-insertions`
+- Example: H2 (before) + para-123 + bullet (after) = correct semantic order
+- Must be consistently implemented and thoroughly tested
+
+**ID Generation Strategy**:
+- Leverage existing `generateContentBasedId()` from `lib/services/deterministicId.ts`
+- Ensures collision detection and deterministic chaining behavior
+- Critical for chained insertion reliability and regeneration scenarios
+
 ## Stages & Actions
 
 ### Stage: Foundation - Rename Existing System
@@ -103,11 +115,14 @@
   - [ ] Add `applyInsertBefore()` method alongside existing `applyInsert()` 
   - [ ] Share validation, position updating, and error handling logic
   - [ ] Add type guards for new insertion type
+  - [ ] **Implement mixed insertion precedence rule**: before → original → after
 - [ ] **Write comprehensive tests** for insert-before functionality:
   - [ ] Single insertion before element
   - [ ] Multiple insertions before same element (should work correctly)
+  - [ ] **Mixed insertion types on same target** (before + after precedence)
   - [ ] Edge cases: first element, nested structures
   - [ ] Reversal of before-insertions
+  - [ ] **ID collision scenarios** with chained insertions
 - [ ] **Health check**: `npm run check:health`
 
 ### Stage: Switch Headings to Insert-Before
@@ -129,7 +144,8 @@
 - [ ] **Add chaining logic** to heading mutation generator (see Appendix B for detailed approach):
   - [ ] Group headings by insertion point
   - [ ] Create chains within each group using generated IDs
-  - [ ] Preserve deterministic ID generation
+  - [ ] **Use existing `generateContentBasedId()` for deterministic chaining**
+  - [ ] **Validate ID uniqueness** using existing collision detection
   - [ ] Add comprehensive logging for chaining decisions
 - [ ] **Test chained insertion scenarios**:
   - [ ] Multiple headings at same insertion point appear in correct order
@@ -144,7 +160,9 @@
 - [ ] **Add integration tests** covering both insertion types:
   - [ ] Headings using insert-before with correct semantic positioning
   - [ ] Other content types using insert-after (future-proofing)
-  - [ ] Mixed mutations using both insertion types
+  - [ ] **Mixed mutations using both insertion types with precedence validation**
+  - [ ] **Complex chaining scenarios** with ID collision edge cases
+  - [ ] **Precedence rule compliance** in all mutation combinations
 - [ ] **E2E testing** with browser automation (use subagent with Playwright MCP):
   - [ ] Generate AI headings and verify they appear in correct positions
   - [ ] Test insertion order visually in rendered document
@@ -219,7 +237,8 @@ function updatePositions(document: DocumentElement[], insertIndex: number): Docu
 1. Group headings by target insertion point
 2. Within each group, chain subsequent insertions to previous generated IDs
 3. Preserve original LLM ordering through chaining
-4. Generate deterministic IDs for reliable chaining
+4. **Use `generateContentBasedId()` for deterministic chaining IDs**
+5. **Leverage existing collision detection** from `lib/services/deterministicId.ts`
 
 ## Appendix C: Research Summary
 
@@ -244,10 +263,11 @@ function updatePositions(document: DocumentElement[], insertIndex: number): Docu
 - Future content types can choose appropriate insertion semantics
 
 **Chaining Edge Cases**:
-- Mixed insertion types in same mutation (some before, some after)
+- **Mixed insertion types targeting same element** (enforce precedence: before → original → after)
 - Nested document structures with complex hierarchies
-- ID collision handling when generating chain references
+- **ID collision handling using existing `validateIdUniqueness()`** from deterministicId.ts
 - Partial chain failures (some elements succeed, others fail)
+- **Deterministic behavior across regeneration scenarios**
 
 **Migration Risks**:
 - All existing AI calls will fail until prompts updated (acceptable with zero users)
@@ -260,7 +280,9 @@ function updatePositions(document: DocumentElement[], insertIndex: number): Docu
 - Large documents with many insertions may need optimization later
 
 **Quality Assurance**:
-- Comprehensive test coverage for both insertion types
+- Comprehensive test coverage for both insertion types **and mixed scenarios**
+- **Precedence rule validation** in all test cases involving same-target insertions
 - Integration testing with real AI generation
 - Visual verification of document structure correctness
+- **ID collision testing** with existing deterministicId utilities
 - Logging throughout to aid debugging during transition period
