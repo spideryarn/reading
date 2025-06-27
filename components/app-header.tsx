@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/context/auth-context'
 import { Button } from '@/components/ui/button'
 import { ProfileDropdown } from '@/components/auth/profile-dropdown'
+import { RandomLogoAnimation } from '@/components/ui/random-logo-animation'
 
 interface AppHeaderProps {
   title?: string
@@ -39,19 +40,25 @@ export function AppHeader({
           <div className="flex items-center gap-8 min-w-0 flex-1">
             <Link 
               href={logoLink || "/"} 
-              className="flex items-center space-x-3 transition-transform duration-200 hover:scale-105 flex-shrink-0"
+              className="flex items-center space-x-3 flex-shrink-0"
               aria-label="Return to homepage"
             >
-              <Image
-                src="/spideryarn-logo.png"
-                alt="Spideryarn logo"
-                width={32}
-                height={32}
-                className="drop-shadow-md h-6 w-6 sm:h-8 sm:w-8"
-              />
-              <span className="hidden sm:inline text-xl font-semibold text-spideryarn-orange font-trebuchet">
-                Spideryarn
-              </span>
+              <RandomLogoAnimation className="flex items-center space-x-3">
+                <Image
+                  src="/spideryarn-logo.png"
+                  alt="Spideryarn logo"
+                  width={32}
+                  height={32}
+                  className="drop-shadow-md h-6 w-6 sm:h-8 sm:w-8 logo-image"
+                />
+                <span className="hidden sm:inline text-xl font-semibold text-spideryarn-orange font-trebuchet logo-text">
+                  {"Spideryarn".split("").map((letter, index) => (
+                    <span key={index} className="logo-letter">
+                      {letter}
+                    </span>
+                  ))}
+                </span>
+              </RandomLogoAnimation>
             </Link>
             
             {(title || backLink) && (

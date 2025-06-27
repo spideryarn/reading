@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 @import "tw-animate-css";
+@import "../styles/logo-animations.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -278,65 +279,66 @@ body {
             font-size: 0.875rem;
             line-height: 1.25rem;
         }
-        
+
         /* Reduce padding and margins on mobile */
         .mobile-compact {
             padding: 0.5rem;
         }
-        
+
         /* Hide left pane by default on mobile */
         .mobile-hide-left-pane {
             display: none;
         }
-        
+
         /* Reduce font sizes for better mobile fit */
         .mobile-heading-size h1 {
             font-size: 1.5rem;
             line-height: 2rem;
             margin-bottom: 0.5rem;
         }
-        
+
         .mobile-heading-size h2 {
             font-size: 1.25rem;
             line-height: 1.75rem;
             margin-bottom: 0.5rem;
         }
-        
+
         .mobile-heading-size h3 {
             font-size: 1.125rem;
             line-height: 1.5rem;
             margin-bottom: 0.5rem;
         }
-        
+
         .mobile-body-text {
             font-size: 0.875rem;
             line-height: 1.5rem;
         }
-        
+
         /* Reduce header height on mobile */
         :root {
             --header-height: 3rem;
         }
     }
-    
+
     /* Landscape mobile (short screens) */
     @media (max-height: 500px) {
+
         /* Even more compact spacing for landscape */
         .landscape-compact {
             padding: 0.25rem;
         }
-        
+
         /* Smaller header in landscape */
         :root {
             --header-height: 2.5rem;
         }
-        
+
         /* Reduce all vertical spacing */
         .landscape-spacing * {
             margin-top: 0.25rem;
             margin-bottom: 0.25rem;
         }
-        
+
         .landscape-spacing h1,
         .landscape-spacing h2,
         .landscape-spacing h3 {
@@ -344,7 +346,7 @@ body {
             margin-bottom: 0.25rem;
         }
     }
-    
+
     /* Tablet breakpoint */
     @media (min-width: 641px) and (max-width: 1024px) {
         .tablet-optimized {
@@ -388,10 +390,12 @@ body {
             outline-color: #DB8A45;
             outline-width: 2px;
         }
+
         50% {
             outline-color: rgba(219, 138, 69, 0.6);
             outline-width: 4px;
         }
+
         100% {
             outline-color: #DB8A45;
             outline-width: 2px;
@@ -407,9 +411,11 @@ body {
         0% {
             box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.4);
         }
+
         50% {
             box-shadow: 0 0 0 6px rgba(255, 193, 7, 0.2);
         }
+
         100% {
             box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.4);
         }
@@ -431,16 +437,19 @@ body {
             outline: 2px solid transparent;
             outline-offset: 0;
         }
+
         20% {
             outline: 2px solid rgb(59, 130, 246);
             outline-offset: 4px;
             background-color: rgba(59, 130, 246, 0.05);
         }
+
         80% {
             outline: 2px solid rgb(59, 130, 246);
             outline-offset: 4px;
             background-color: rgba(59, 130, 246, 0.05);
         }
+
         100% {
             outline: 2px solid transparent;
             outline-offset: 0;
@@ -456,25 +465,25 @@ body {
     /* Left pane collapse/expand animations */
     .panel-transition {
         transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1),
-                    opacity 200ms ease-out;
+            opacity 200ms ease-out;
     }
-    
+
     .panel-collapsed {
         transform: translateX(-100%);
         opacity: 0;
     }
-    
+
     .panel-expanded {
         transform: translateX(0);
         opacity: 1;
     }
-    
+
     /* Respect user motion preferences */
     @media (prefers-reduced-motion: reduce) {
         .panel-transition {
             transition: none;
         }
-        
+
         .transition-all {
             transition: none;
         }
@@ -484,20 +493,33 @@ body {
     .vertical-icon-nav::-webkit-scrollbar {
         width: 6px;
     }
-    
+
     .vertical-icon-nav::-webkit-scrollbar-track {
         background: transparent;
     }
-    
+
     .vertical-icon-nav::-webkit-scrollbar-thumb {
         background-color: #d1d5db;
         border-radius: 3px;
         border: 1px solid transparent;
         background-clip: content-box;
     }
-    
+
     .vertical-icon-nav::-webkit-scrollbar-thumb:hover {
         background-color: #9ca3af;
+    }
+
+    /* Logo animations: pause autoplay until hover */
+    .random-logo-animation:not(:hover) *,
+    .random-logo-animation:not(:hover)::before,
+    .random-logo-animation:not(:hover)::after {
+        animation-play-state: paused !important;
+    }
+
+    .random-logo-animation:hover *,
+    .random-logo-animation:hover::before,
+    .random-logo-animation:hover::after {
+        animation-play-state: running !important;
     }
 
 }
