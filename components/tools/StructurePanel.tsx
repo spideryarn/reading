@@ -62,7 +62,7 @@ function hasSufficientContentForSummary(
   const sectionElements: DocumentElement[] = []
   
   for (let i = 0; i < elementsToSearch.length; i++) {
-    const element = elementsToSearch[i]
+    const element = elementsToSearch[i]!
     
     if (element.position <= headingPosition) continue
     
@@ -118,7 +118,7 @@ async function generateHeadingSummary(
   const sectionElements: DocumentElement[] = []
   
   for (let i = 0; i < elementsToSearch.length; i++) {
-    const element = elementsToSearch[i]
+    const element = elementsToSearch[i]!
     
     if (element.position <= headingPosition) continue
     
@@ -212,6 +212,44 @@ export function StructurePanel({
   const [enhancementId, setEnhancementId] = useState<string | null>(null)
   const [hasInitialized, setHasInitialized] = useState(false)
   const fetchInProgressRef = useRef(false)
+
+  /**
+   * Failsafe timer to ensure the UI never remains indefinitely in a
+   * "Generating…" state without surfacing an error. If the loading flag stays
+   * stuck for more than FAILSAFE_TIMEOUT_MS the timer will automatically clear
+   * the loading state and expose an error to the user.
+   */
+  const FAILSAFE_TIMEOUT_MS = 120_000 // 2 minutes
+  const failsafeTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    // Whenever loading starts, start/refresh the failsafe timer.
+    if (isLoadingHeadings) {
+      if (failsafeTimerRef.current) {
+        clearTimeout(failsafeTimerRef.current)
+      }
+      failsafeTimerRef.current = setTimeout(() => {
+        console.error('[StructurePanel] Failsafe-timeout fired – headings generation exceeded', FAILSAFE_TIMEOUT_MS, 'ms')
+        setIsLoadingHeadings(false)
+        setHeadingsError('Timed out — something prevented headings generation from completing. Please try again or check the console for details.')
+      }, FAILSAFE_TIMEOUT_MS)
+    } else {
+      // Loading cleared → cancel timer
+      if (failsafeTimerRef.current) {
+        clearTimeout(failsafeTimerRef.current)
+        failsafeTimerRef.current = null
+      }
+    }
+
+    return () => {
+      if (failsafeTimerRef.current) {
+        clearTimeout(failsafeTimerRef.current)
+      }
+    }
+  }, [isLoadingHeadings])
+
+  // Debug/trace helper – incrementing attempt id for each generate call
+  const attemptIdRef = useRef(0)
 
   // Extract headings based on current mode
   useEffect(() => {
@@ -314,7 +352,7 @@ export function StructurePanel({
   }
 
   // Helper function to apply cached headings without API call
-  const applyCachedHeadings = useCallback(async (cachedHeadings: Array<{ insertNewBeforeExistingId: string, html: string }>) => {
+  const applyCachedHeadings = useCallback(async (cachedHeadings: Array<{ id_of_after?: string; insertNewBeforeExistingId?: string; html: string }>) => {
     try {
       console.log('Applying cached headings:', cachedHeadings)
       
@@ -329,8 +367,14 @@ export function StructurePanel({
         return
       }
       
+      // Map cached format { id_of_after, html } -> { insertNewBeforeExistingId, html }
+      const convertedHeadings = cachedHeadings.map(h => ({
+        insertNewBeforeExistingId: h.insertNewBeforeExistingId ?? h.id_of_after ?? '',
+        html: h.html
+      }))
+
       const mutation = generateHeadingMutation({
-        headings: cachedHeadings,
+        headings: convertedHeadings,
         documentId: documentId
       })
       
@@ -358,9 +402,33 @@ export function StructurePanel({
 
   // Core headings generation logic
   const generateHeadingsFromAPI = useCallback(async (isRegeneration = false) => {
+    const attemptId = ++attemptIdRef.current
+    console.group(`[StructurePanel] generateHeadingsFromAPI attempt #${attemptId}`)
+    console.log('isRegeneration:', isRegeneration, 'currentMode:', currentMode)
+
+    // ---- QUICK FAIL-FAST MITIGATION FOR LARGE DOCUMENTS -------------------
+    const MAX_ELEMENTS_FOR_HEADINGS_GEN = 8000
+    const MAX_HTML_LENGTH_FOR_HEADINGS_GEN = 800_000 // ~800 KB
+
+    if (elements && elements.length > MAX_ELEMENTS_FOR_HEADINGS_GEN) {
+      console.warn(`[StructurePanel] Element count (${elements.length}) exceeds limit (${MAX_ELEMENTS_FOR_HEADINGS_GEN}). Aborting generation.`)
+      const msg = `Document has ${elements.length.toLocaleString()} elements – AI heading generation is currently limited to ${MAX_ELEMENTS_FOR_HEADINGS_GEN.toLocaleString()} elements. Please try a shorter document or split it up.`
+      console.error('[StructurePanel] ', msg)
+      setHeadingsError(msg)
+      setIsLoadingHeadings(false)
+      console.groupEnd()
+      return
+    }
+    if (content && content.length > MAX_HTML_LENGTH_FOR_HEADINGS_GEN) {
+      const msg = `Document HTML is ${Math.round(content.length / 1024)} KB – exceeds current 800 KB limit for AI heading generation.`
+      console.error('[StructurePanel] ', msg)
+      setHeadingsError(msg)
+      setIsLoadingHeadings(false)
+      console.groupEnd()
+      return
+    }
+
     try {
-      console.log('generateHeadingsFromAPI called, isRegeneration:', isRegeneration)
-      
       if (mutationState.activeMutation?.type === 'insert-headings' && !isRegeneration) {
         console.warn('AI headings mutation already active, skipping generation')
         const existingHeadings = extractHeadingsFromMutation(mutationState.activeMutation).map(h => ({
@@ -369,79 +437,102 @@ export function StructurePanel({
         }))
         setHeadings(existingHeadings)
         setIsLoadingHeadings(false)
+        setHeadingsError('AI headings are already applied. Remove them first or click "Regenerate" to create a new set.')
         return
       }
       
       let htmlWithIds = ''
-      if (elements && elements.length > 0) {
-        htmlWithIds = elements.map(el => {
-          const attrs = Object.entries(el.attributes)
-            .map(([key, value]) => `${key}="${value}"`)
-            .join(' ')
-          const attrString = attrs ? ` ${attrs}` : ''
-          
-          if (el.content) {
-            return `<${el.tag_name} id="${el.id}"${attrString}>${el.content}</${el.tag_name}>`
-          } else {
-            return `<${el.tag_name} id="${el.id}"${attrString} />`
-          }
-        }).join('\n')
-      } else if (content) {
-        htmlWithIds = content
-      } else {
-        const error = new Error('Cannot generate headings: No content or elements available')
-        console.error('generateHeadingsFromAPI error:', error)
-        throw error
-      }
-      
-      console.log('Sending POST /api/headings with content length:', htmlWithIds.length)
-      
-      const response = await fetch('/api/headings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          html_content: htmlWithIds,
-          documentId: documentId
-        }),
-      })
+      // Timeout machinery for fetch – 60 s hard limit
+      const HEADINGS_GENERATION_TIMEOUT_MS = 60_000 // 1 minute
+      const abortController = new AbortController()
+      const timeoutId = setTimeout(() => {
+        abortController.abort()
+      }, HEADINGS_GENERATION_TIMEOUT_MS)
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        const error = new Error(`API failed with status ${response.status}: ${errorText}`)
-        console.error('Headings API error:', error)
-        throw error
-      }
+      try {
+        if (elements && elements.length > 0) {
+          htmlWithIds = elements.map(el => {
+            const attrs = Object.entries(el.attributes)
+              .map(([key, value]) => `${key}="${value}"`)
+              .join(' ')
+            const attrString = attrs ? ` ${attrs}` : ''
+            
+            if (el.content) {
+              return `<${el.tag_name} id="${el.id}"${attrString}>${el.content}</${el.tag_name}>`
+            } else {
+              return `<${el.tag_name} id="${el.id}"${attrString} />`
+            }
+          }).join('\n')
+        } else if (content) {
+          htmlWithIds = content
+        } else {
+          const error = new Error('Cannot generate headings: No content or elements available')
+          console.error('generateHeadingsFromAPI error:', error)
+          throw error
+        }
+        
+        console.log('Sending POST /api/headings with content length:', htmlWithIds.length)
+        
+        const response = await fetch('/api/headings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            html_content: htmlWithIds,
+            documentId: documentId
+          }),
+          signal: abortController.signal,
+        })
 
-      const data = await response.json()
-      console.log('Generate headings response:', data)
-      
-      if (!data.headings || data.headings.length === 0) {
-        const error = new Error('API returned no headings')
-        console.error('Empty headings response:', data)
-        throw error
-      }
-      
-      const mutation = generateHeadingMutation({
-        headings: data.headings,
-        documentId: documentId,
-        isRegeneration: isRegeneration
-      })
-      
-      const result = await applyMutation(mutation)
-      
-      if (result.success) {
-        const generatedHeadings = extractHeadingsFromMutation(mutation).map(h => ({
-          ...h,
-          elementId: h.id
-        }))
-        setHeadings(generatedHeadings)
-        setCollapsedIds(new Set())
+        if (!response.ok) {
+          const errorText = await response.text()
+          const error = new Error(`API failed with status ${response.status}: ${errorText}`)
+          console.error('Headings API error:', error)
+          throw error
+        }
+
+        const data = await response.json()
+        console.log('Generate headings response:', data)
+        
+        if (!data.headings || data.headings.length === 0) {
+          const error = new Error('API returned no headings')
+          console.error('Empty headings response:', data)
+          throw error
+        }
+        
+        const mutation = generateHeadingMutation({
+          headings: data.headings,
+          documentId: documentId,
+          isRegeneration: isRegeneration
+        })
+        
+        const result = await applyMutation(mutation)
+        
+        if (result.success) {
+          const generatedHeadings = extractHeadingsFromMutation(mutation).map(h => ({
+            ...h,
+            elementId: h.id
+          }))
+          setHeadings(generatedHeadings)
+          setCollapsedIds(new Set())
+          setIsLoadingHeadings(false)
+        } else {
+          setIsLoadingHeadings(false) // FIX: Ensure loading state is cleared on mutation failure
+          throw new Error(result.error || 'Failed to apply mutation')
+        }
+      } catch (error) {
+        // CRITICAL FIX: Ensure loading state is always cleared, even on unexpected errors
         setIsLoadingHeadings(false)
-      } else {
-        setIsLoadingHeadings(false) // FIX: Ensure loading state is cleared on mutation failure
-        throw new Error(result.error || 'Failed to apply mutation')
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          console.error('Headings generation timed out after', HEADINGS_GENERATION_TIMEOUT_MS / 1000, 'seconds')
+          throw new Error('Timed out: AI headings generation took too long. Please try again later.')
+        }
+        console.error('Error in generateHeadingsFromAPI:', error)
+        throw error // Re-throw to maintain error handling in calling functions
+      } finally {
+        clearTimeout(timeoutId)
+        console.groupEnd()
       }
     } catch (error) {
       // CRITICAL FIX: Ensure loading state is always cleared, even on unexpected errors
@@ -519,7 +610,6 @@ export function StructurePanel({
       // cached headings from loading on page refresh
       
       setHasInitialized(true)
-      setIsLoadingHeadings(true)
       setHeadingsError(null)
       
       try {
@@ -534,6 +624,11 @@ export function StructurePanel({
           console.log('Found cached headings, applying them...')
           setEnhancementId(cached.enhancementId || null)
           await applyCachedHeadings(cached.headings)
+        } else if (cached && (!Array.isArray(cached.headings) || cached.headings.length === 0)) {
+          console.error('[StructurePanel] Cached headings payload invalid or empty:', cached)
+          setHeadingsError('Cached AI headings were invalid. Please regenerate.')
+          setIsLoadingHeadings(false)
+          return
         } else {
           // Don't auto-generate - user must explicitly request
           setIsLoadingHeadings(false)
@@ -824,7 +919,7 @@ export function StructurePanel({
         onToggleExpanded={toggleExpanded}
         granularityLevel={granularityLevel}
         onGranularityChange={setGranularityLevel}
-        headingVisibility={headingVisibility}
+        headingVisibility={headingVisibility || new Map()}
       />
     </div>
   )
