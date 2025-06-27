@@ -157,9 +157,36 @@ All upload APIs (upload-pdf, extract-url, upload-html) use the shared HTML proce
 
 ### File Size Limits
 
-- **PDF files**: 32MB (API limit), 50MB (storage limit)
-- **HTML content**: 500KB (fetched URLs)
-- **Proposed HTML files**: 10MB (generous for academic papers)
+Current limits are centralized in `lib/config.ts` under `UPLOAD_LIMITS`:
+
+#### PDF Upload Limits
+- **Storage limit**: 50MB (Supabase free tier maximum)
+- **Claude API processing**: 32MB (Anthropic's file upload limit)
+- **Gemini API processing**: 20MB (Google's direct API limit, 37% smaller than Claude)
+- **Gemini File API**: 2GB (temporary storage for 48 hours, requires additional API calls)
+- **Page limit**: 100 pages maximum (business rule to prevent excessive processing)
+
+**References**:
+- [Supabase Storage Limits](https://supabase.com/docs/guides/storage/limits) - Free tier: 50MB per file
+- [Anthropic Claude API Limits](https://docs.anthropic.com/en/docs/build-with-claude/vision#file-size-and-types) - 32MB for PDF processing
+- [Google Gemini API Limits](https://ai.google.dev/gemini-api/docs/file-prompting) - 20MB direct, 2GB via File API
+
+#### HTML Content Limits
+- **URL extraction**: 500KB (optimized for LLM token limits and web performance)
+- **HTML file uploads**: 10MB (generous for academic papers with embedded content)
+- **Sanitizer memory protection**: 50MB academic content, 10MB user content (internal limits)
+
+**Platform Constraints**:
+- **Vercel API routes**: 4.5MB hard limit (affects current implementation)
+- **Solution**: Direct browser-to-Supabase uploads bypass Vercel's API route limits
+- **Supabase resumable uploads**: Automatic for files >6MB using TUS protocol
+
+#### Typical File Sizes
+Based on research for 100-page PDF limit:
+- **Text-only academic papers**: 3-10MB
+- **Papers with figures/images**: 10-25MB  
+- **Scanned documents**: 50MB+ (may hit limits)
+- **Web pages (HTML)**: 100KB-2MB typical, 500KB+ for complex sites
 
 ### Error Handling
 
