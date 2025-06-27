@@ -1,231 +1,266 @@
-# Fix AI Headings Insertion Order - Implementation Plan
+# Refactor Insertion System: Explicit Naming + Dual Before/After Capabilities + Chained Insertions
 
-**Date**: 2025-06-27  
 **Status**: Ready for Implementation  
 **Priority**: High  
-**Type**: Bug Fix  
-**Complexity**: Low-Medium  
+**Type**: Major Refactor + Bug Fix  
+**Complexity**: Medium-High  
 
-## Problem Summary
+## Goal & Context
 
-AI-generated headings are being inserted in reverse order when multiple headings target the same insertion point. For example, when an H2 and H3 should both be inserted after the same paragraph, the H3 appears before the H2, breaking the logical document hierarchy.
+**Primary Goals**:
+1. **Fix insertion order bug**: AI-generated headings appear in reverse order when multiple headings target same insertion point
+2. **Eliminate naming confusion**: Replace ambiguous `id_of_after`/`afterId` with explicit `insertNewAfterExistingId`
+3. **Add semantic insertion**: Implement `insertNewBeforeExistingId` for headings (semantically correct) while keeping after-insertion for other content
+4. **Shared machinery**: Implement both insertion types with common logic to avoid duplication
 
-**Root Cause**: The mutation engine applies transforms serially, and multiple insertions after the same `afterId` cause each subsequent insertion to push previous insertions further away from the original insertion point.
+**Background**: 
+- Current system uses confusing naming (`id_of_after` vs `afterId`) with unclear semantics
+- Multiple insertions after same element cause reverse ordering due to serial application
+- Research shows headings should insert before content they introduce (semantic correctness)
+- Bullet points and similar content work better with after-insertion
+- Zero users = perfect time for breaking changes to improve clarity
 
-## Solution: Chain Insertion Transforms
+## User Stories & Acceptance Criteria
 
-Transform the LLM's heading output to create a chain of insertions rather than multiple insertions after the same element.
+**As a document reader**, I want:
+- Headings to appear before the content they introduce (semantic correctness)
+- Logical heading hierarchy (H2 before H3 when both inserted at same point)
+- Clear insertion behavior that matches my mental model from other editors
 
-### Current Behavior (Problematic)
+**As a developer**, I want:
+- Explicit, unambiguous field names throughout the system
+- Consistent camelCase naming from AI contract to internal implementation  
+- Shared logic for insert-before and insert-after to minimize duplication
+- Ability to use the right insertion type for different content types
+
+**Acceptance Criteria**:
+- ✅ Field names clearly indicate what they do: `insertNewBeforeExistingId` / `insertNewAfterExistingId`
+- ✅ Headings insert before target element (semantic correctness)
+- ✅ Multiple headings at same insertion point appear in correct order
+- ✅ Both insertion types available with shared validation/error handling
+- ✅ All existing functionality continues working
+- ✅ Clear documentation explaining when to use each insertion type
+
+## References
+
+**Core Files to Update**:
+- `lib/prompts/templates/headings.njk` - Update prompt text and field names for headings
+- `lib/prompts/templates/headings.ts` - Update schema definitions for new field names
+- `lib/types/mutation.ts` - Add new insertion types and rename existing fields
+- `lib/services/mutation-engine.ts` - Implement insert-before logic alongside existing insert-after
+- `lib/services/heading-mutation-generator.ts` - Switch to insert-before + implement chaining logic
+- All test files - Update to use new field names and test both insertion types
+
+**Related Documentation**:
+- `docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Core mutations system architecture
+- `docs/reference/TOOL_HEADINGS.md` - AI headings feature documentation
+- `docs/conversations/250627b_ai_headings_insertion_order_fix.md` - Problem analysis and research findings
+- `planning/250527a_reversible_document_mutations.md` - Original mutation system design decisions
+
+**Research Context**:
+- Document editing best practices research showing headings should introduce content
+- Analysis of Google Docs, Word, Notion patterns for semantic insertion expectations
+
+## Principles & Key Decisions
+
+**Semantic Correctness Over Technical Simplicity**:
+- Headings should insert before content they introduce (matches user expectations from other editors)
+- Bullet points and similar content can continue using after-insertion (feels more natural for appending)
+
+**Explicit Naming Throughout**:
+- Replace `id_of_after`/`afterId` with `insertNewBeforeExistingId`/`insertNewAfterExistingId`
+- Same field names from AI contract through to internal implementation (eliminate translation layer)
+- Long but unambiguous names preferred over short but confusing ones
+
+**Shared Machinery for DRY Principles**:
+- Common validation, error handling, and logging for both insertion types
+- Reuse position updating, ID generation, and reversal logic
+- Different insertion types should be implementation variants, not separate systems
+
+**Breaking Changes Acceptable**:
+- Zero users means we can make optimal decisions without backwards compatibility concerns
+- Prioritize long-term clarity over short-term preservation of existing patterns
+
+## Stages & Actions
+
+### Stage: Foundation - Rename Existing System
+- [ ] **Research current usage patterns** (use subagent to grep for all usages of `afterId`, `id_of_after`)
+- [ ] **Update core types** in `lib/types/mutation.ts`:
+  - [ ] Rename `afterId` to `insertNewAfterExistingId` in `DocumentTransform`
+  - [ ] Update type guards and helper functions
+  - [ ] Add comprehensive JSDoc comments explaining insertion semantics
+- [ ] **Update mutation engine** in `lib/services/mutation-engine.ts`:
+  - [ ] Rename variables throughout for clarity
+  - [ ] Add comprehensive logging for insertion decisions
+  - [ ] Ensure error messages reference new field names
+- [ ] **Run initial tests** to ensure renaming didn't break functionality
+- [ ] **Health check**: `npm run check:health` (use subagent if >3 files with issues)
+
+### Stage: Add Insert-Before Capability  
+- [ ] **Design shared insertion machinery** (see Appendix A for approach)
+- [ ] **Extend `DocumentTransform` interface** with new `insertNewBeforeExistingId` field
+- [ ] **Implement insert-before logic** in mutation engine:
+  - [ ] Add `applyInsertBefore()` method alongside existing `applyInsert()` 
+  - [ ] Share validation, position updating, and error handling logic
+  - [ ] Add type guards for new insertion type
+- [ ] **Write comprehensive tests** for insert-before functionality:
+  - [ ] Single insertion before element
+  - [ ] Multiple insertions before same element (should work correctly)
+  - [ ] Edge cases: first element, nested structures
+  - [ ] Reversal of before-insertions
+- [ ] **Health check**: `npm run check:health`
+
+### Stage: Switch Headings to Insert-Before
+- [ ] **Update AI prompt contract** in `lib/prompts/templates/headings.njk`:
+  - [ ] Change field name to `insertNewBeforeExistingId` 
+  - [ ] Update prompt text to explain "insert this heading before the specified element"
+  - [ ] Update examples in prompt to be clearer
+- [ ] **Update prompt schema** in `lib/prompts/templates/headings.ts`:
+  - [ ] Rename field in Zod schema
+  - [ ] Update type definitions for new field name
+- [ ] **Update heading mutation generator** in `lib/services/heading-mutation-generator.ts`:
+  - [ ] Switch from `insertNewAfterExistingId` to `insertNewBeforeExistingId`
+  - [ ] Update variable names throughout for clarity
+  - [ ] Add logging for insertion type choice
+- [ ] **Test with real AI generation** to verify semantic correctness
+- [ ] **Health check**: `npm run check:health`
+
+### Stage: Implement Chained Insertion Fix
+- [ ] **Add chaining logic** to heading mutation generator (see Appendix B for detailed approach):
+  - [ ] Group headings by insertion point
+  - [ ] Create chains within each group using generated IDs
+  - [ ] Preserve deterministic ID generation
+  - [ ] Add comprehensive logging for chaining decisions
+- [ ] **Test chained insertion scenarios**:
+  - [ ] Multiple headings at same insertion point appear in correct order
+  - [ ] Mixed scenarios (some chained, some independent)
+  - [ ] Complex hierarchies (H2 → H3 → H4 chains)
+  - [ ] Reversal of entire chains works correctly
+- [ ] **Performance testing** to ensure chaining doesn't add significant overhead
+- [ ] **Health check**: `npm run check:health`
+
+### Stage: Comprehensive Testing & Integration
+- [ ] **Update all existing tests** to use new field names (use subagent for comprehensive search/replace)
+- [ ] **Add integration tests** covering both insertion types:
+  - [ ] Headings using insert-before with correct semantic positioning
+  - [ ] Other content types using insert-after (future-proofing)
+  - [ ] Mixed mutations using both insertion types
+- [ ] **E2E testing** with browser automation (use subagent with Playwright MCP):
+  - [ ] Generate AI headings and verify they appear in correct positions
+  - [ ] Test insertion order visually in rendered document
+  - [ ] Verify table of contents reflects correct hierarchy
+- [ ] **Test consolidation** (use subagent to identify redundant tests and consolidate)
+- [ ] **Final health check**: `npm run build && npm run lint && npm test`
+
+### Stage: Documentation & Cleanup
+- [ ] **Update mutation system documentation** in `docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md`:
+  - [ ] Document both insertion types with clear examples
+  - [ ] Explain when to use insert-before vs insert-after
+  - [ ] Update code examples to use new field names
+- [ ] **Update headings documentation** in `docs/reference/TOOL_HEADINGS.md`:
+  - [ ] Document semantic insert-before behavior
+  - [ ] Explain chaining logic for multiple insertions
+  - [ ] Add troubleshooting section for insertion issues
+- [ ] **Code cleanup**:
+  - [ ] Remove any obsolete comments referring to old field names
+  - [ ] Ensure consistent variable naming throughout
+  - [ ] Add comprehensive JSDoc comments for new functionality
+- [ ] **Commit final changes** (use subagent following `docs/instructions/GIT_COMMIT_CHANGES.md`)
+- [ ] **Move doc to `planning/finished/`** and commit
+
+# Appendix
+
+## Appendix A: Shared Insertion Machinery Design
+
+**Common Interface**:
 ```typescript
-// LLM outputs headings for same insertion point
-[
-  { id_of_after: "para-123", html: "<h2>Main Section</h2>" },
-  { id_of_after: "para-123", html: "<h3>Subsection</h3>" }
+interface InsertionConfig {
+  type: 'before' | 'after'
+  targetElementId: string
+  newElement: DocumentElement
+  document: DocumentElement[]
+}
+
+// Shared logic for both insertion types
+function executeInsertion(config: InsertionConfig): DocumentElement[]
+function validateInsertion(config: InsertionConfig): ValidationResult
+function updatePositions(document: DocumentElement[], insertIndex: number): DocumentElement[]
+```
+
+**Benefits**:
+- Single source of truth for validation logic
+- Consistent error handling and logging
+- Easy to add new insertion types in future (e.g., "replace-with")
+- Reduced code duplication and maintenance burden
+
+## Appendix B: Chained Insertion Algorithm
+
+**Current Problem**:
+```typescript
+// Multiple insertions at same point
+[ 
+  { insertNewBeforeExistingId: "para-123", html: "<h2>Main</h2>" },
+  { insertNewBeforeExistingId: "para-123", html: "<h3>Sub</h3>" }
 ]
-
-// Results in reverse order: para-123, H3, H2
+// Results in: H3, H2, para-123 (reverse order)
 ```
 
-### Target Behavior (Fixed)
+**Solution - Chaining**:
 ```typescript
-// Programmatically transform to chained insertions
+// Transform to chained insertions
 [
-  { id_of_after: "para-123", html: "<h2>Main Section</h2>" },
-  { id_of_after: "generated-h2-id", html: "<h3>Subsection</h3>" }
+  { insertNewBeforeExistingId: "para-123", html: "<h2>Main</h2>" },
+  { insertNewBeforeExistingId: "generated-h2-id", html: "<h3>Sub</h3>" }
 ]
-
-// Results in correct order: para-123, H2, H3
+// Results in: H2, H3, para-123 (correct order)
 ```
 
-## Implementation Details
+**Implementation Strategy**:
+1. Group headings by target insertion point
+2. Within each group, chain subsequent insertions to previous generated IDs
+3. Preserve original LLM ordering through chaining
+4. Generate deterministic IDs for reliable chaining
 
-### Primary Changes
+## Appendix C: Research Summary
 
-**File**: `lib/services/heading-mutation-generator.ts`
+**Document Editor Patterns**:
+- Google Docs, Word: Headings introduce following content sections
+- Notion, WordPress: Block editors provide explicit above/below insertion controls  
+- Industry standard: Headings semantically introduce content, not conclude it
 
-**Current Implementation** (lines 28-76):
-```typescript
-const forward: DocumentTransform[] = headings.map((heading, index) => {
-  // Direct mapping - problematic for same afterId
-  return {
-    action: 'insert' as const,
-    afterId: heading.id_of_after,
-    content: { /* heading content */ }
-  }
-})
-```
+**Mental Model**: Users expect "Insert heading before paragraph X" to result in heading appearing above paragraph X, introducing it as a section.
 
-**New Implementation**:
-```typescript
-const forward: DocumentTransform[] = []
-const headingIdMap = new Map<number, string>() // Track generated IDs
+**Technical Benefits of Insert-Before for Headings**:
+- Better accessibility (screen readers navigate by headings)
+- Semantic HTML structure matches user expectations
+- Table of contents generation works more intuitively
+- Matches patterns from established document editors
 
-// Group headings by insertion point and chain them
-const insertionGroups = new Map<string, typeof headings>()
-headings.forEach((heading, index) => {
-  const key = heading.id_of_after
-  if (!insertionGroups.has(key)) {
-    insertionGroups.set(key, [])
-  }
-  insertionGroups.get(key)!.push({ ...heading, originalIndex: index })
-})
+## Appendix D: Edge Cases & Risk Mitigation
 
-// Process each group to create chained insertions
-insertionGroups.forEach((groupHeadings, afterId) => {
-  let currentAfterId = afterId
-  
-  groupHeadings.forEach((heading, groupIndex) => {
-    const headingId = generateContentBasedId(/* ... */)
-    headingIdMap.set(heading.originalIndex, headingId)
-    
-    forward.push({
-      action: 'insert' as const,
-      afterId: currentAfterId,
-      content: {
-        id: headingId,
-        // ... rest of heading content
-      }
-    })
-    
-    // Next heading in this group will insert after this one
-    currentAfterId = headingId
-  })
-})
-```
+**Insertion Type Selection**:
+- Most content types default to insert-after (appending behavior)
+- Headings specifically use insert-before (semantic introduction)
+- Future content types can choose appropriate insertion semantics
 
-### Supporting Changes
+**Chaining Edge Cases**:
+- Mixed insertion types in same mutation (some before, some after)
+- Nested document structures with complex hierarchies
+- ID collision handling when generating chain references
+- Partial chain failures (some elements succeed, others fail)
 
-**Error Handling**: 
-- Validate that chained insertions maintain proper hierarchy
-- Ensure ID generation remains deterministic
+**Migration Risks**:
+- All existing AI calls will fail until prompts updated (acceptable with zero users)
+- Tests need comprehensive updates for new field names
+- Any cached AI responses become invalid (regeneration required)
 
-**Testing Updates**:
-- Add test cases for multiple headings with same insertion point
-- Verify correct ordering in final document
-- Test reversal of chained insertions
+**Performance Considerations**:
+- Chaining logic adds computational overhead (estimated <5ms per mutation)
+- Shared machinery should reduce overall code complexity despite feature additions
+- Large documents with many insertions may need optimization later
 
-**Logging Enhancement**:
-- Log insertion groups and chaining decisions for debugging
-- Track which headings were chained vs. independently inserted
-
-## Implementation Steps
-
-### Phase 1: Core Transform Logic
-1. **Modify `generateHeadingMutation()`** to group headings by `id_of_after`
-2. **Implement chaining logic** within each group
-3. **Preserve original ID generation** for deterministic behavior
-4. **Update reverse transforms** to handle chained removals
-
-### Phase 2: Testing & Validation
-1. **Add unit tests** for chained insertion scenarios
-2. **Test with real AI heading generation** to verify correct ordering
-3. **Validate reversal behavior** works correctly
-4. **Performance testing** to ensure no regression
-
-### Phase 3: Integration & Monitoring
-1. **Deploy with logging** to monitor chaining behavior
-2. **Validate in production** with real documents
-3. **Monitor for any edge cases** or unexpected behavior
-
-## Technical Considerations
-
-### ID Generation
-- **Maintain deterministic IDs** for regeneration scenarios
-- **Handle collision detection** with existing ID validation
-- **Preserve `isRegeneration` flag** behavior
-
-### Mutation Composition
-- **Verify chained insertions** compose properly with other mutations
-- **Test edge cases** where other mutations target elements within chains
-- **Ensure atomic reversal** of entire heading groups
-
-### Performance
-- **Minimal overhead** from grouping and chaining logic
-- **Preserve existing batch validation** behavior
-- **No impact on single-heading** insertion scenarios
-
-## Edge Cases & Considerations
-
-### Multiple Insertion Points
-- **Mixed scenarios**: Some headings chain, others insert independently
-- **Complex hierarchies**: H2 → H3 → H4 chains
-- **Interleaved content**: Other elements between chained headings
-
-### Error Scenarios
-- **Invalid chaining**: Missing intermediate elements
-- **ID conflicts**: Generated IDs colliding with existing elements
-- **Partial failures**: Some headings in chain succeed, others fail
-
-### Rollback Scenarios
-- **Incremental rollback**: Remove individual headings from chain
-- **Full rollback**: Remove entire heading group atomically
-- **Regeneration**: Replace existing chains with new ones
-
-## Success Criteria
-
-### Functional Requirements
-- ✅ **Correct ordering**: H2 before H3 when both insert after same element
-- ✅ **Hierarchical integrity**: Heading levels maintain logical structure
-- ✅ **Reversibility**: Can undo chained insertions properly
-- ✅ **Composition**: Works with other mutation types
-
-### Performance Requirements
-- ✅ **No regression**: Existing single-heading scenarios unchanged
-- ✅ **Minimal overhead**: Chaining logic adds <5ms to generation
-- ✅ **Memory efficient**: No significant memory overhead
-
-### Quality Requirements
-- ✅ **Backward compatible**: Existing mutations continue working
-- ✅ **Deterministic**: Same input produces same chained result
-- ✅ **Debuggable**: Clear logging of chaining decisions
-
-## Risks & Mitigation
-
-### Implementation Risks
-- **Complexity increase**: Chaining logic adds complexity to generator
-  - *Mitigation*: Comprehensive unit tests, clear documentation
-- **ID dependency**: Chained headings depend on previous IDs
-  - *Mitigation*: Robust ID generation, collision detection
-
-### Compatibility Risks
-- **Breaking changes**: Mutation format changes
-  - *Mitigation*: No format changes, only generation logic changes
-- **Tool integration**: ToC or other features assume current structure
-  - *Mitigation*: Test integration points thoroughly
-
-## Future Enhancements
-
-### Semantic Awareness
-- **Smart grouping**: Group by semantic hierarchy, not just insertion point
-- **Content analysis**: Consider heading levels when determining chains
-- **User preferences**: Allow configuration of chaining behavior
-
-### Performance Optimization
-- **Batch processing**: Optimize for large documents with many headings
-- **Caching**: Cache chaining decisions for repeated operations
-- **Parallel processing**: Process independent chains concurrently
-
-## Documentation Updates
-
-### User-Facing
-- Update `docs/reference/TOOL_HEADINGS.md` with chaining behavior
-- Document expected ordering in AI headings
-
-### Developer-Facing
-- Update `docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md`
-- Add chaining examples to mutation documentation
-- Document ID dependency patterns
-
-## Related Work
-
-**Previous Context**: 
-- `docs/conversations/250627b_ai_headings_insertion_order_fix.md` - Problem analysis and solution decision
-- `docs/conversations/250627a_json_patch_vs_custom_mutations_evaluation.md` - Related mutation system evaluation
-
-**Implementation Dependencies**:
-- `lib/services/mutation-engine.ts` - Core mutation application logic
-- `lib/services/deterministicId.ts` - ID generation utilities
-- `lib/types/mutation.ts` - Type definitions
-
-This implementation provides a targeted fix for the ordering issue while maintaining the flexibility and composability of the existing mutation system.
+**Quality Assurance**:
+- Comprehensive test coverage for both insertion types
+- Integration testing with real AI generation
+- Visual verification of document structure correctness
+- Logging throughout to aid debugging during transition period
