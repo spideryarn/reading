@@ -47,7 +47,7 @@ describe('URL State Validation', () => {
       expect(result.errors).toHaveLength(1)
       expect(result.errors[0]!.parameter).toBe('tab')
       expect(result.errors[0]!.error).toContain('Invalid tab')
-      expect(result.sanitized.tab).toBe('original')
+      expect(result.sanitized.tab).toBe('structure')
     })
 
     it('should validate and trim string parameters', () => {

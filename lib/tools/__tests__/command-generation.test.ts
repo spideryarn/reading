@@ -496,8 +496,8 @@ describe('debugUtils', () => {
         getNavigateToTab: () => mockNavigateToTab
       })
       
-      // Expected order based on TOOL_ORDER: original, summary, glossary, search, metadata
-      const expectedOrder = ['original', 'summary', 'glossary', 'search', 'metadata']
+      // Expected order based on TOOL_ORDER: summary, glossary, search, metadata, then original (not in list, so alphabetically after)
+      const expectedOrder = ['summary', 'glossary', 'search', 'metadata', 'original']
       const actualOrder = commands.map(cmd => cmd.id.replace('nav-', ''))
       
       expect(actualOrder).toEqual(expectedOrder)
@@ -547,8 +547,8 @@ describe('debugUtils', () => {
         getNavigateToTab: () => mockNavigateToTab
       })
       
-      // Expected order: original (from TOOL_ORDER first), then alpha-tool, zebra-tool (alphabetically)
-      const expectedOrder = ['original', 'alpha-tool', 'zebra-tool']
+      // Expected order: alphabetically since none are in TOOL_ORDER: alpha-tool, original, zebra-tool
+      const expectedOrder = ['alpha-tool', 'original', 'zebra-tool']
       const actualOrder = commands.map(cmd => cmd.id.replace('nav-', ''))
       
       expect(actualOrder).toEqual(expectedOrder)
