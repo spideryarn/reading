@@ -103,8 +103,8 @@ After completing the main documentation updates:
 **Architectural Changes**
 ```markdown
 # Add transitional documentation
-**Current State**: Code uses decomposed element storage
-**Target State**: Single-row document storage (see ARCHITECTURE_DECISIONS.md)
+**Current State**: Code uses decomposed storage
+**Target State**: Single-row storage (see ARCHITECTURE_DECISIONS.md)
 **Migration Status**: Schema exists, code needs updating
 ```
 
