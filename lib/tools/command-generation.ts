@@ -341,7 +341,6 @@ export function generateCommandsFromRegistry(
     'glossary',
     'search',
     'highlights',
-    'tweet-thread',
     'metadata'
   ]
   

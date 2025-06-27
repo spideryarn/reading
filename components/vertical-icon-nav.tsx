@@ -2,21 +2,23 @@
 
 // Vertical icon navigation component for collapsed left pane
 // Implements VSCode-style activity bar with Phosphor icons and tooltips
+// Now dynamically generates navigation items from the tool registry
 // See planning/250608c_vertical_icon_navigation_bar.md for design decisions
 
 import { 
-  Article, ListBullets, ChatCircle, 
-  BookOpen, MagnifyingGlass, SidebarSimple, Terminal, HighlighterCircle, Tag, TwitterLogo, Robot
+  SidebarSimple, Terminal
 } from '@phosphor-icons/react'
 import type { IconProps } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { getAllTools } from '@/lib/tools/registry'
+import type { Tool } from '@/lib/tools/types'
 
-// Navigation item definition
+// Navigation item definition (generated from tool registry)
 interface NavigationItem {
-  id: 'original' | 'ai-generated' | 'summary' | 'chat' | 'glossary' | 'search' | 'highlights' | 'tweet-thread' | 'metadata'
+  id: string
   label: string
   icon: React.ComponentType<IconProps>
   tooltip: {
@@ -35,90 +37,67 @@ interface VerticalIconNavProps {
   className?: string
 }
 
-// Navigation items configuration with final icon selections
-const NAVIGATION_ITEMS: NavigationItem[] = [
-  {
-    id: 'original',
-    label: 'Original',
-    icon: Article,
-    tooltip: {
-      title: 'Original Document',
-      description: 'View the unmodified source document with original headings'
-    }
-  },
-  {
-    id: 'ai-generated',
-    label: 'AI-generated',
-    icon: Robot,
-    tooltip: {
-      title: 'AI-Generated',
-      description: 'View document with AI-enhanced headings and structure'
-    }
-  },
-  {
-    id: 'summary',
-    label: 'Summary',
-    icon: ListBullets,
-    tooltip: {
-      title: 'Summary',
-      description: 'Read hierarchical summaries at different detail levels'
-    }
-  },
-  {
-    id: 'chat',
-    label: 'Chat',
-    icon: ChatCircle,
-    tooltip: {
-      title: 'Chat',
-      description: 'Ask questions and discuss the document with AI'
-    }
-  },
-  {
-    id: 'glossary',
-    label: 'Glossary',
-    icon: BookOpen,
-    tooltip: {
-      title: 'Glossary',
-      description: 'Explore key terms and concepts from the document'
-    }
-  },
-  {
-    id: 'search',
-    label: 'Search',
-    icon: MagnifyingGlass,
-    tooltip: {
-      title: 'Search',
-      description: 'Find specific text or concepts within the document'
-    }
-  },
-  {
-    id: 'highlights',
-    label: 'Highlights',
-    icon: HighlighterCircle,
-    tooltip: {
-      title: 'Highlights',
-      description: 'Create and manage persistent highlights based on criteria'
-    }
-  },
-  {
-    id: 'tweet-thread',
-    label: 'Tweet Thread',
-    icon: TwitterLogo,
-    tooltip: {
-      title: 'Tweet Thread',
-      description: 'Convert document to Twitter thread format for social sharing'
-    }
-  },
-  {
-    id: 'metadata',
-    label: 'Metadata',
-    icon: Tag,
-    tooltip: {
-      title: 'Document Metadata',
-      description: 'View document information and statistics'
-    }
-  }
+// Tool ordering for consistent navigation (matches command palette order)
+const TOOL_ORDER = [
+  'structure',
+  'summary',
+  'chat',
+  'glossary',
+  'search',
+  'highlights',
+  'metadata'
 ]
+
+/**
+ * Generate navigation items from tool registry
+ * 
+ * Transforms registered tools into navigation items for the vertical icon rail.
+ * This replaces the previous hardcoded approach with dynamic registry-based generation.
+ */
+function generateNavigationFromRegistry(): NavigationItem[] {
+  try {
+    const tools = getAllTools()
+    
+    // Convert tools to navigation items
+    const navigationItems: NavigationItem[] = tools.map(tool => ({
+      id: tool.tabId, // Use tabId for navigation (matches URL routing)
+      label: tool.name,
+      icon: tool.icon as React.ComponentType<IconProps>,
+      tooltip: {
+        title: tool.name,
+        description: tool.description
+      }
+    }))
+    
+    // Sort by tool order for consistent navigation
+    navigationItems.sort((a, b) => {
+      const indexA = TOOL_ORDER.indexOf(a.id)
+      const indexB = TOOL_ORDER.indexOf(b.id)
+      
+      // If both tools are in the order list, sort by position
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB
+      }
+      
+      // If only one is in the order list, prioritize it
+      if (indexA !== -1) return -1
+      if (indexB !== -1) return 1
+      
+      // If neither is in the order list, sort alphabetically
+      return a.id.localeCompare(b.id)
+    })
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🧭 Vertical Navigation - Generated from registry:', navigationItems.map(item => item.id))
+    }
+    
+    return navigationItems
+  } catch (error) {
+    console.error('Failed to generate navigation from registry:', error)
+    // Return empty array as fallback - better to show no navigation than crash
+    return []
+  }
+}
 
 export function VerticalIconNav({ 
   activeTab, 
@@ -131,6 +110,9 @@ export function VerticalIconNav({
   // Platform-specific shortcut text with SSR-safe implementation
   const [shortcutText, setShortcutText] = useState('Ctrl+B') // Default to non-Mac
   const [commandShortcutText, setCommandShortcutText] = useState('Ctrl+K') // Default to non-Mac
+  
+  // Generate navigation items from tool registry
+  const navigationItems = useMemo(() => generateNavigationFromRegistry(), [])
   
   // URL building utility for clean tab URLs (Option A: clean state)
   const buildTabUrl = useCallback((tabId: string) => {
@@ -253,7 +235,7 @@ export function VerticalIconNav({
       {/* Gap before navigation items */}
       <div className="h-3" />
       
-      {NAVIGATION_ITEMS.map((item) => {
+      {navigationItems.map((item) => {
         const Icon = item.icon
         const isActive = activeTab === item.id
         

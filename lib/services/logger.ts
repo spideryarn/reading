@@ -1,5 +1,4 @@
 import pino from 'pino'
-import { randomUUID } from 'crypto'
 
 // Configure logger for development vs production vs test
 export const logger = pino({
@@ -40,7 +39,8 @@ export const searchLogger = logger.child({ component: 'search' })
 
 // Utility functions for common logging patterns
 export function generateCorrelationId(): string {
-  return randomUUID()
+  // Use Web Crypto API available in both Node.js (16+) and modern browsers
+  return crypto.randomUUID()
 }
 
 export function createRequestLogger(path: string, correlationId?: string) {
