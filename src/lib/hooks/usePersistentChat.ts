@@ -15,6 +15,7 @@ interface UsePersistentChatProps {
   documentId: string;
   documentContext: string;
   conversationId?: string;
+  onThreadDeleted?: () => void;
 }
 
 interface UsePersistentChatReturn {
@@ -25,13 +26,15 @@ interface UsePersistentChatReturn {
   error: string | null;
   isRefreshing: boolean;
   refreshMessages: () => Promise<void>;
+  deleteThread: () => Promise<void>;
   runtimeKey: number;
 }
 
 export function usePersistentChat({ 
   documentId, 
   documentContext,
-  conversationId 
+  conversationId,
+  onThreadDeleted
 }: UsePersistentChatProps): UsePersistentChatReturn {
   // Start with isLoaded = true to avoid hanging loading state
   const [isLoaded] = useState(true);
@@ -124,6 +127,29 @@ export function usePersistentChat({
       setIsRefreshing(false);
     }
   }, [loadMessages]);
+
+  // Delete current thread and reset to fresh chat
+  const deleteThread = useCallback(async (): Promise<void> => {
+    if (!threadId || !chatService) return;
+    
+    try {
+      await chatService.deleteThread(threadId);
+      console.log('[Persistent Chat] Thread deleted:', threadId);
+      
+      // Reset state to fresh chat
+      setThreadId(null);
+      setMessages([]);
+      setError(null);
+      setRuntimeKey((k) => k + 1);
+      
+      // Notify parent component to clear URL state
+      onThreadDeleted?.();
+      
+    } catch (err) {
+      console.error('[Persistent Chat] Error deleting thread:', err);
+      setError(`Failed to delete conversation: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
+  }, [chatService, threadId, onThreadDeleted]);
 
   // Save message to database (fire and forget)
   const saveMessage = useCallback(async (
@@ -269,6 +295,7 @@ export function usePersistentChat({
     error,
     isRefreshing,
     refreshMessages,
+    deleteThread,
     runtimeKey,
   };
 }
