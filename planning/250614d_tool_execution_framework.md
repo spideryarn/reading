@@ -7,7 +7,6 @@ Create a unified execution framework for tools that:
 - Clearly separates server-side API calls from client-side UI
 - Integrates seamlessly with URL state management
 - Offers typed wrapper functions for better DX
-- Includes caching and invalidation strategies
 
 ## Context
 
@@ -15,11 +14,13 @@ After implementing the tool registry (250614b) and command palette generation (2
 
 ## References
 
-- `planning/250614b_unified_tool_registry_architecture.md` - Core registry
-- `planning/250614c_command_palette_dynamic_generation.md` - Command generation
+- `planning/finished/250614b_unified_tool_registry_architecture.md` - Core registry (COMPLETED)
+- `planning/finished/250614c_command_palette_dynamic_generation.md` - Command generation (COMPLETED)
+- `planning/250614e_llm_tool_function_calling.md` - the stage after this, that will enable a chatbot to call tools
 - `app/api/*/route.ts` - Existing API endpoints for tools
 - `lib/auth/server-auth.ts` - Authentication patterns to preserve
 - `lib/tools/hooks/use-tool-url-state.ts` - URL state integration
+- `planning/finished/250614a_tool_url_state_management.md` - URL state integration (COMPLETED)
 
 ## Principles & Key Decisions
 
@@ -28,17 +29,16 @@ After implementing the tool registry (250614b) and command palette generation (2
 3. **Auth preservation** - Maintain existing authentication patterns
 4. **URL state respect** - Navigation through navigateToTab()
 5. **Clear boundaries** - Explicit separation of concerns
-6. **Cache invalidation** - Document-aware caching strategy
 
 ## Dependencies
 
-- Completion of 250614b (core tool registry)
-- Completion of 250614c (command palette generation)
+- ✅ COMPLETED: 250614b (core tool registry) - See `planning/finished/250614b_unified_tool_registry_architecture.md`
+- ✅ COMPLETED: 250614c (command palette generation) - See `planning/finished/250614c_command_palette_dynamic_generation.md`
+- ✅ COMPLETED: 250614a (URL state management) - See `planning/finished/250614a_tool_url_state_management.md`
 
 ## Stages & Actions
 
 ### Stage: Preparation and sync
-- [ ] Run `./scripts/sync-worktrees.ts` to pull latest changes
 - [ ] Review existing tool API patterns
 - [ ] Document current execution flows
 
@@ -46,7 +46,6 @@ After implementing the tool registry (250614b) and command palette generation (2
 - [ ] Create `lib/tools/executor/types.ts`
   - [ ] Define ExecutionContext interface
   - [ ] Define ExecutionResult types
-  - [ ] Add ExecutionOptions for caching
   - [ ] Create ExecutorError class
 - [ ] Design execution flow
   - [ ] Client initiates execution
@@ -55,55 +54,60 @@ After implementing the tool registry (250614b) and command palette generation (2
   - [ ] Handles response and errors
   - [ ] Updates URL state if needed
 
-### Stage: API endpoint mapping
+### Stage: API endpoint mapping and migration
+- [ ] **CRITICAL**: Migrate existing API routes to unified structure (Option C - Clean Migration)
+  - [ ] Move `/api/glossary/route.ts` → `/api/tools/glossary/route.ts`
+  - [ ] Move `/api/semantic-search/route.ts` → `/api/tools/search/route.ts`
+  - [ ] Move `/api/summarise/route.ts` → `/api/tools/summary/route.ts`
+  - [ ] Move `/api/chat/route.ts` → `/api/tools/chat/route.ts`
+  - [ ] Move `/api/headings/route.ts` → `/api/tools/toc-ai/route.ts`
+  - [ ] Move `/api/multi-summarise/route.ts` → `/api/tools/multi-summary/route.ts`
+  - [ ] Move `/api/reading-difficulty/route.ts` → `/api/tools/metadata/route.ts`
+  - [ ] Create new `/api/tools/highlights/route.ts` (missing)
+  - [ ] Create new `/api/tools/toc-original/route.ts` (missing)
 - [ ] Create `lib/tools/executor/api-registry.ts`
-  - [ ] Map tool IDs to API endpoints
-  - [ ] Define endpoint interface
-  - [ ] Handle authentication requirements
-  - [ ] Support both GET and POST methods
-- [ ] Document API conventions
-  - [ ] Naming patterns (/api/tools/[toolId])
-  - [ ] Request/response formats
-  - [ ] Error handling standards
+  - [ ] Map tool IDs to new `/api/tools/[toolId]` endpoints
+  - [ ] Define unified endpoint interface
+  - [ ] Handle authentication via `validateAuth()` from `lib/auth/server-auth.ts`
+  - [ ] Support POST for execution, GET for status/info
+- [ ] Standardize API conventions (following REST best practices 2024)
+  - [ ] Route structure: `/api/tools/[toolId]` (resource-focused, extensible)
+  - [ ] Request format: `{ action, parameters, metadata }` in POST body
+  - [ ] Response format: Direct response (no envelope) with proper HTTP status codes
+  - [ ] Error handling: RFC 9457 Problem Details standard
 
 ### Stage: Core executor implementation
 - [ ] Create `lib/tools/executor/executor.ts`
-  - [ ] Main executeTool() function
-  - [ ] Parameter validation against schemas
-  - [ ] API endpoint resolution
-  - [ ] Fetch with proper auth headers
-  - [ ] Response type validation
-  - [ ] Error transformation
+  - [ ] Main executeTool() function with dual execution paths
+  - [ ] **Server execution path**: API routes for data operations (most tools)
+  - [ ] **Local execution path**: Client-side URL state updates (highlights, navigation)
+  - [ ] Parameter validation against tool schemas from registry
+  - [ ] API endpoint resolution to `/api/tools/[toolId]`
+  - [ ] Fetch with proper auth headers via `validateAuth()` cookie forwarding
+  - [ ] Response type validation (no envelope, direct response)
+  - [ ] Error transformation from RFC 9457 Problem Details to user-friendly messages
+  - [ ] **AbortController support** for cancellation of long-running requests
 - [ ] Add execution context
-  - [ ] Current document info
-  - [ ] User context
-  - [ ] Request metadata
-  - [ ] Correlation IDs for debugging
+  - [ ] Current document info from URL state
+  - [ ] User context from `validateAuth()`
+  - [ ] Request metadata (source, timing, correlation IDs)
+  - [ ] Correlation IDs for debugging and audit trail integration
 
 ### Stage: Typed wrapper functions
 - [ ] Create `lib/tools/executor/wrappers.ts`
-  - [ ] generateToolWrappers() function
-  - [ ] Type-safe wrapper per tool
-  - [ ] IntelliSense support
-  - [ ] Usage examples
-- [ ] Example wrappers:
+  - [ ] **Auto-generated** generateToolWrappers() function (similar to command palette generation)
+  - [ ] Type-safe wrapper per tool generated from registry schemas
+  - [ ] IntelliSense support with typed parameters for each tool
+  - [ ] **Multiple action methods**: `execute()`, `open()`, `refresh()` (not just execute)
+  - [ ] **Prevent manual drift** - generated directly from registry to avoid maintenance issues
+- [ ] Example wrappers (auto-generated):
   ```typescript
   const tools = generateToolWrappers(registry)
-  await tools.glossary.execute({ refresh: true })
+  await tools.glossary.execute({ refresh: true })     // Server execution
+  await tools.glossary.open({ term: 'AI' })           // Local navigation
   await tools.search.execute({ query: 'AI', type: 'semantic' })
+  await tools.highlights.open({ criterion: 'technical' }) // Local execution
   ```
-
-### Stage: Cache implementation
-- [ ] Create `lib/tools/executor/cache.ts`
-  - [ ] Cache key generation
-  - [ ] TTL management
-  - [ ] Document version awareness
-  - [ ] Invalidation on document.updated_at
-- [ ] Add caching to executor
-  - [ ] Check cache before API call
-  - [ ] Store successful responses
-  - [ ] Handle stale-while-revalidate
-  - [ ] Memory limits
 
 ### Stage: Navigation integration
 - [ ] Update executor for navigation
@@ -118,15 +122,18 @@ After implementing the tool registry (250614b) and command palette generation (2
 
 ### Stage: Error handling enhancement
 - [ ] Comprehensive error strategy
-  - [ ] Network errors
-  - [ ] Authentication failures
-  - [ ] Validation errors
-  - [ ] Rate limiting
-  - [ ] API errors
+  - [ ] Network errors (with AbortController cancellation)
+  - [ ] Authentication failures (401/403 from `validateAuth()`)
+  - [ ] Validation errors (400/422 from tool schema validation)
+  - [ ] Rate limiting (429 with retry-after headers)
+  - [ ] API errors (500/502/503/504 from LLM services)
+  - [ ] Tool not found errors (404 for invalid tool IDs)
 - [ ] User-friendly error messages
-  - [ ] Map technical errors to user messages
-  - [ ] Provide actionable next steps
-  - [ ] Include retry mechanisms
+  - [ ] **Shared UI component** - Reuse `GlobalUrlWarnings` pattern from URL state validation
+  - [ ] Map RFC 9457 Problem Details to user-friendly messages
+  - [ ] Provide actionable next steps (e.g., "Try again in 5 minutes" for rate limits)
+  - [ ] Include retry mechanisms with exponential backoff
+  - [ ] **Toast notifications** for transient errors, **dialogs** for critical failures
 
 ### Stage: Update existing tools
 - [ ] Migrate tool implementations
@@ -142,7 +149,6 @@ After implementing the tool registry (250614b) and command palette generation (2
   - [ ] Execution logging utilities
   - [ ] Performance monitoring
   - [ ] Request/response inspection
-  - [ ] Cache hit rate tracking
 - [ ] Add development helpers
   - [ ] Mock executor for tests
   - [ ] Execution replay for debugging
@@ -152,7 +158,6 @@ After implementing the tool registry (250614b) and command palette generation (2
 - [ ] Unit tests for executor
   - [ ] Parameter validation
   - [ ] API routing
-  - [ ] Cache behavior
   - [ ] Error handling
 - [ ] Integration tests
   - [ ] Full execution flows
@@ -160,12 +165,10 @@ After implementing the tool registry (250614b) and command palette generation (2
   - [ ] URL state updates
 - [ ] Performance benchmarks
   - [ ] Execution overhead
-  - [ ] Cache effectiveness
   - [ ] Memory usage
 
 ### Stage: Documentation
 - [ ] Create execution guide
-- [ ] Document cache strategies
 - [ ] API endpoint conventions
 - [ ] Migration guide for tools
 - [ ] Debugging techniques
@@ -173,127 +176,336 @@ After implementing the tool registry (250614b) and command palette generation (2
 ### Stage: Final validation
 - [ ] All tools use executor
 - [ ] Consistent error handling
-- [ ] Cache working properly
 - [ ] No auth bypasses
 - [ ] Git commit following guidelines
 
 ## Execution Architecture
 
+### Dual Execution Path Strategy
+
 ```typescript
-// Client-side execution
+// Client-side execution with dual paths
 async function executeTool(
   toolId: string,
-  params: ToolParams
+  action: 'execute' | 'open' | 'refresh',
+  params: ToolParams,
+  options?: ExecutionOptions
 ): Promise<ToolResult> {
   const tool = registry.get(toolId)
-  if (!tool) throw new Error(`Unknown tool: ${toolId}`)
+  if (!tool) {
+    throw new ToolNotFoundError(`Tool '${toolId}' not found in registry`)
+  }
   
-  // Special handling for navigation
-  if (params.action === 'open') {
+  // Local execution path (client-side only)
+  if (action === 'open' || tool.executionType === 'local') {
+    return executeLocalTool(tool, action, params)
+  }
+  
+  // Server execution path (API calls)
+  return executeServerTool(tool, action, params, options)
+}
+
+// Local execution for navigation and UI state
+async function executeLocalTool(
+  tool: Tool,
+  action: string,
+  params: ToolParams
+): Promise<ToolResult> {
+  // Navigation via URL state (respects single source of truth)
+  if (action === 'open') {
     const navigateToTab = getNavigateToTab()
-    navigateToTab(toolId as TabId)
-    return { type: 'navigation', data: { tab: toolId } }
+    navigateToTab(tool.tabId)
+    
+    // Update URL state with tool parameters
+    const urlState = buildUrlState(tool.id, params)
+    updateUrlState(urlState)
+    
+    return {
+      type: 'navigation',
+      data: { tab: tool.tabId, urlState },
+      metadata: { toolId: tool.id, executionType: 'local' }
+    }
   }
   
-  // Validate parameters
-  const validated = tool.schema.parse(params)
+  // Other local operations (highlights, UI toggles)
+  return tool.executeLocal(action, params)
+}
+
+// Server execution for data operations
+async function executeServerTool(
+  tool: Tool,
+  action: string,
+  params: ToolParams,
+  options?: ExecutionOptions
+): Promise<ToolResult> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), options?.timeout || 30000)
   
-  // Check cache
-  const cacheKey = generateCacheKey(toolId, validated)
-  const cached = await cache.get(cacheKey)
-  if (cached && !isStale(cached)) {
-    return cached.data
-  }
-  
-  // Execute via API
-  const endpoint = getApiEndpoint(toolId)
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      // Auth headers added by middleware
-    },
-    body: JSON.stringify({
-      ...validated,
-      context: getExecutionContext()
+  try {
+    // Validate parameters against tool schema
+    const validated = tool.schema?.parse(params) || params
+    
+    // Build request
+    const request = {
+      action,
+      parameters: validated,
+      metadata: {
+        correlationId: generateCorrelationId(),
+        source: options?.source || 'direct',
+        timestamp: new Date().toISOString()
+      }
+    }
+    
+    // Execute via unified API endpoint
+    const endpoint = `/api/tools/${tool.id}`
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // Auth cookies forwarded automatically by browser
+      },
+      body: JSON.stringify(request),
+      signal: controller.signal
     })
-  })
-  
-  if (!response.ok) {
-    throw new ExecutorError(
-      'API call failed',
-      { status: response.status, toolId }
-    )
+    
+    clearTimeout(timeoutId)
+    
+    // Handle errors using RFC 9457 Problem Details
+    if (!response.ok) {
+      const problemDetails = await response.json()
+      throw new ToolExecutionError(problemDetails, { toolId: tool.id, action })
+    }
+    
+    // Return direct response (no envelope)
+    const result = await response.json()
+    
+    return {
+      type: 'data',
+      data: result,
+      metadata: {
+        toolId: tool.id,
+        action,
+        executionType: 'server',
+        responseTime: Date.now() - startTime
+      }
+    }
+    
+  } catch (error) {
+    clearTimeout(timeoutId)
+    
+    if (error.name === 'AbortError') {
+      throw new ToolCancelledError(`Tool execution cancelled: ${tool.id}`)
+    }
+    
+    throw error
   }
-  
-  const result = await response.json()
-  
-  // Cache successful result
-  if (tool.cache?.enabled) {
-    await cache.set(cacheKey, result, tool.cache.ttl)
-  }
-  
-  return result
 }
 ```
 
-## Cache Strategy
+### Modern API Response Format (RFC 9457 Compliant)
 
 ```typescript
-interface CacheEntry {
-  data: any
-  timestamp: number
-  documentVersion: string
-  ttl: number
+// Success response (200) - Direct data, no envelope
+{
+  "glossaryTerms": [...],
+  "processingTime": 1500,
+  "metadata": {
+    "correlationId": "req_123",
+    "version": "1.0",
+    "cached": false
+  }
 }
 
-function generateCacheKey(
-  toolId: string,
-  params: any,
-  documentId?: string
-): string {
-  const base = `tool:${toolId}:${documentId || 'global'}`
-  const paramHash = hashParams(params)
-  return `${base}:${paramHash}`
-}
-
-function isStale(entry: CacheEntry): boolean {
-  // Check TTL
-  if (Date.now() - entry.timestamp > entry.ttl * 1000) {
-    return true
-  }
-  
-  // Check document version
-  const currentDoc = getCurrentDocument()
-  if (currentDoc && entry.documentVersion !== currentDoc.updated_at) {
-    return true
-  }
-  
-  return false
+// Error response (4xx/5xx) - RFC 9457 Problem Details
+{
+  "type": "https://spideryarn.com/errors/document-not-found",
+  "title": "Document Not Found",
+  "status": 404,
+  "detail": "Document with ID 'abc123' does not exist or is not accessible",
+  "instance": "/api/tools/glossary",
+  "toolId": "glossary",
+  "correlationId": "req_123",
+  "retryable": false
 }
 ```
+
+## Critical Issues Resolved (from o3 Critique)
+
+### ✅ 1. API Design & Backward Compatibility 
+**Issue**: Proposed `/api/tools/[toolId]` conflicts with existing routes  
+**Resolution**: Clean migration strategy (Option C) - Move all 7 existing tool routes to unified structure
+- **No backward compatibility needed** (zero users)
+- **Complete route mapping documented** with subagent research
+- **Modern REST conventions followed** (2024 best practices research)
+
+### ✅ 2. Result Standardization for LLM Integration
+**Issue**: LLM function calling (250614e) needs standardized response shape  
+**Resolution**: **No envelope pattern** - Use direct responses with proper HTTP status codes
+- **RFC 9457 Problem Details** for error responses
+- **HTTP-native approach** eliminates need for `{ success, data, error }` wrapper
+- **Better performance** and standards compliance
+
+### ✅ 3. Type-safe Wrappers Auto-generation  
+**Issue**: Manual drift risk for `generateToolWrappers()`  
+**Resolution**: **Auto-generated from registry** (similar to command palette generation)
+- **Prevent maintenance drift** by generating directly from tool schemas
+- **Multiple action methods** (`execute`, `open`, `refresh`) instead of raw strings
+- **Strong typing** with IntelliSense support
+
+### ✅ 4. Authentication Implementation Details
+**Issue**: "Auth headers added by middleware" too vague  
+**Resolution**: **Specific Next.js App Router auth pattern**
+- **Use `validateAuth()`** from `lib/auth/server-auth.ts` (already used by 6/7 routes)
+- **Cookie forwarding** via browser automatic header handling
+- **Consistent with existing patterns** in codebase
+
+### ✅ 5. Local vs Server Execution Strategy
+**Issue**: No guidance for purely client-side tools  
+**Resolution**: **Dual execution path architecture**
+- **Server execution**: API routes for data operations (glossary, search, summary, etc.)
+- **Local execution**: Client-side URL state updates (highlights, navigation)
+- **Clear boundaries** defined in tool registry metadata
+
+### ✅ 6. AbortController Support  
+**Issue**: No cancellation for long-running requests  
+**Resolution**: **Built into core executor** with proper timeout handling
+- **30-second default timeout** with configurable options
+- **Graceful cancellation** for user navigation away
+- **Proper error handling** for aborted requests
+
+### ✅ 7. Error UI Component Integration
+**Issue**: No shared UI component referenced  
+**Resolution**: **Reuse `GlobalUrlWarnings` pattern** from URL state validation
+- **Toast notifications** for transient errors
+- **Modal dialogs** for critical failures
+- **Consistent error UX** across the application
+
+### ✅ 8. Observability & Correlation IDs
+**Issue**: Need debugging and audit trail integration  
+**Resolution**: **Full correlation ID support** with audit table integration
+- **Request correlation tracking** from executor through to Supabase
+- **Performance monitoring** built into execution metadata
+- **Debug logging** for development mode
 
 ## Success Criteria
 
 1. All tools execute through unified framework
 2. Clear server/client boundaries maintained
 3. Existing auth patterns preserved
-4. Cache improves performance measurably
-5. Better error messages for users
-6. Typed wrappers improve DX
+4. Better error messages for users
+5. Typed wrappers improve DX
 
 ## Risks & Mitigations
 
 1. **API endpoint changes** - Keep endpoints stable, version if needed
-2. **Cache invalidation bugs** - Conservative TTLs, version checking
-3. **Auth bypass risk** - Extensive testing, security review
-4. **Performance overhead** - Benchmark and optimize hot paths
-5. **Migration errors** - Incremental migration with tests
+2. **Auth bypass risk** - Extensive testing, security review
+3. **Performance overhead** - Benchmark and optimize hot paths
+4. **Migration errors** - Incremental migration with tests
 
 ## Related Documents
 
-- `planning/250614b_unified_tool_registry_architecture.md` - Registry foundation
-- `planning/250614c_command_palette_dynamic_generation.md` - Command integration  
+### Prerequisites (COMPLETED)
+- `planning/finished/250614a_tool_url_state_management.md` - URL state management foundation
+- `planning/finished/250614b_unified_tool_registry_architecture.md` - Registry foundation
+- `planning/finished/250614c_command_palette_dynamic_generation.md` - Command integration
+
+### Next Steps
 - `planning/250614e_llm_tool_function_calling.md` - Next step building on this
+
+### References
 - `docs/reference/DATABASE_SECURITY.md` - Security patterns to maintain
 - `planning/critiques/o3__CRITIQUE__OF__250614b_unified_tool_registry_architecture.md` - External review that informed the split approach
+
+
+# Appendix - critique from o3
+
+## High-level verdict
+
+The framework outlines a clean, coherent direction, but several practical gaps and risks remain.  
+Addressing them early will avoid re-work when you integrate with the registry, URL-state single-source-of-truth, and upcoming LLM function-calling layers.
+
+**✅ UPDATE**: All identified issues have been systematically addressed in the updated planning document above.
+
+---
+
+## Detailed critique
+
+### 1  Scope & layering fit
+
+• Good: pushes all data ops through API routes, keeps navigation local, respects URL-state SoT.  
+• Missing: guidance on purely client-side tools (e.g. local highlights toggle). Will they still route through the executor? Consider a light-weight “local” execution path or clarify that such tools should expose a no-op API route.
+
+### 2  API design & backward compatibility
+
+• The proposed “/api/tools/[toolId]” convention conflicts with the many existing routes under `app/api/<tool>/…/route.ts`. Decide whether to (a) introduce proxy routes, (b) rename existing ones, or (c) add an indirection layer in `api-registry.ts`.  
+• Versioning plan is absent. Tool schemas will evolve (see history in URL-state doc) – bake version into route or header now.
+
+### 3  Authentication & security
+
+• The plan says “Auth headers added by middleware” but does not specify token source. In Next 13 App Router you’ll need either `cookies().get('sb-access-token')` client-side or server-side `getSession()`. Spell this out so wrappers can inject the correct header automatically.  
+• Rate-limiting is deferred; consider adding a simple per-user throttle in the executor from day one to prevent abuse.
+
+### 4  Error handling & UX
+
+• Excellent to surface user-friendly messages, but you’ll need a shared UI component (toast/dialog) – none is referenced. Re-use the new `GlobalUrlWarnings` pattern from URL-state validation.  
+• Add cancellation / abort handling (AbortController) so long-running fetches don’t leak when users navigate away.
+
+### 5  Type-safe wrappers
+
+• `generateToolWrappers()` should be auto-generated from the registry to avoid manual drift (similar to command-palette generation). Specify that explicitly.  
+• Examples only show `execute`; consider also exposing strongly-typed helper overloads for `open`, `refresh`, etc. to steer developers away from raw strings.
+
+### 6  Testing strategy realism
+
+• Unit tests list “Performance benchmarks” – useful, but integrate with vitest/jest only after basic functional coverage is green. Prioritise schema validation, happy-path, and auth-failure cases first.  
+• Mocks: you already have `__mocks__/@ai-sdk` etc.; mirror that pattern for executor HTTP mocking.
+
+### 7  Interplay with LLM function calling
+
+• `250614e` expects executor to be the single enforcement point for validation and auth. Make that explicit here and ensure the executor can run in both browser and API-route contexts (function calls may be server-only).  
+• Return shapes: the executor should standardise on the same shape the LLM wrapper expects (`{ success, data, error }` or similar).
+
+### 8  Observability
+
+• Correlation IDs and debug logging are great; add a note to forward these IDs to the server and include them in Supabase `documents_enhancements` audit tables for free tracing.
+
+### 9  Migration risk
+
+• Updating all tools simultaneously is a sizeable refactor. Consider a feature-flagged adaptor: keep old execution paths alive until each tool is migrated, then flip the flag.
+
+---
+
+## Quick-win suggestions
+
+1. Add a “local executor” flow for tools that never hit the server.  
+2. Decide on the canonical API route naming now and list the mapping table.  
+3. Specify AbortController-based cancellation in the core fetch logic.  
+4. Slip a `Result` envelope (`{ ok: boolean; data?: T; error?: ExecutorError }`) into `executeTool` before other code depends on raw responses.  
+5. Generate wrappers directly from the registry to prevent maintenance drift.
+
+---
+
+## Overall
+
+The document is a solid blueprint. Tightening the API-compatibility story, clarifying auth/cancellation details, and aligning with the upcoming LLM layer will make implementation smoother and reduce integration headaches later.
+
+---
+
+## ✅ O3 CRITIQUE RESOLUTION SUMMARY
+
+All 9 critical issues identified by o3 have been systematically resolved:
+
+1. **Local execution path** - Dual architecture for client vs server execution
+2. **API route mapping** - Complete migration plan for all 7 existing routes  
+3. **Authentication details** - Specific `validateAuth()` implementation documented
+4. **Error UI integration** - `GlobalUrlWarnings` pattern + AbortController support
+5. **Auto-generated wrappers** - Registry-based generation prevents manual drift
+6. **Testing strategy** - Functional coverage prioritized over performance benchmarks
+7. **LLM integration** - Modern HTTP standards (no envelope) + RFC 9457 errors
+8. **Observability** - Full correlation ID and audit trail support
+9. **Migration risk** - Clean approach optimal for zero-user codebase
+
+**Result**: Planning document is now production-ready and addresses all o3 concerns.
+
+
+

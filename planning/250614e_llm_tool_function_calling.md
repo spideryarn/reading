@@ -24,8 +24,8 @@ We need a system that generates function schemas from tool definitions and safel
 - `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Current chat implementation
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Nunjucks + Zod template system
 - `lib/prompts/templates/chat.njk` - Chat prompt template to enhance
-- `planning/250614b_unified_tool_registry_architecture.md` - Core tool registry (dependency)
-- `planning/250614c_command_palette_dynamic_generation.md` - Command generation (dependency)
+- `planning/finished/250614b_unified_tool_registry_architecture.md` - Core tool registry (COMPLETED)
+- `planning/finished/250614c_command_palette_dynamic_generation.md` - Command generation (COMPLETED)
 - `planning/250614d_tool_execution_framework.md` - Execution framework (dependency)
 - `planning/finished/250614a_tool_url_state_management.md` - URL state for function results
 
@@ -42,8 +42,8 @@ We need a system that generates function schemas from tool definitions and safel
 ## Stages & Actions
 
 ### Stage: Preparation and dependencies
-- [ ] Ensure core tool registry (250614b) is implemented
-- [ ] Ensure command palette generation (250614c) is complete
+- [x] ✅ COMPLETED: Core tool registry (250614b) - All 8 tools registered  
+- [x] ✅ COMPLETED: Command palette generation (250614c) - Dynamic generation working
 - [ ] Ensure execution framework (250614d) is operational
 - [ ] Review current chat implementation and prompt templates
 - [ ] Research Claude and Gemini function calling formats
@@ -271,14 +271,15 @@ const llmResponse = {
 // 2. Wrapper validates and executes
 const result = await executeFunction(llmResponse.function_call)
 
-// 3. Result returned to LLM
+// 3. Result returned to LLM (using direct response format from 250614d)
 const functionResult = {
   name: "use_glossary",
   result: {
-    success: true,
-    data: {
-      terms: [...],
-      message: "Generated glossary with 15 terms"
+    glossaryTerms: [...],
+    processingTime: 1500,
+    metadata: {
+      correlationId: "req_123",
+      cached: false
     }
   }
 }
@@ -395,9 +396,9 @@ AI: [Calls search_document with type: "semantic", query: "technical terminology"
 ## Related Documents
 
 ### Prerequisites (must be completed first)
-- `planning/250614b_unified_tool_registry_architecture.md` - Core registry
-- `planning/250614c_command_palette_dynamic_generation.md` - Dynamic commands
-- `planning/250614d_tool_execution_framework.md` - Execution framework
+- `planning/finished/250614b_unified_tool_registry_architecture.md` - Core registry (COMPLETED)
+- `planning/finished/250614c_command_palette_dynamic_generation.md` - Dynamic commands (COMPLETED)
+- `planning/250614d_tool_execution_framework.md` - Execution framework (dependency)
 
 ### Related
 - `planning/finished/250614a_tool_url_state_management.md` - URL state integration
