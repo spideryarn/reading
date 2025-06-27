@@ -214,9 +214,8 @@ Before finalizing documentation:
 
 ### File Naming Convention
 - **Decision docs**: `DECISION_[topic]_[YYYY-MM-DD].md`
-- **Reference guides**: `REFERENCE_[topic].md`
+- **Reference guides**: `RESEARCH_ON_[topic].md`
 - **Landscape analysis**: `LANDSCAPE_[domain]_[YYYY-MM-DD].md`
-- **Investigation reports**: `INVESTIGATION_[problem]_[YYYY-MM-DD].md`
 
 ### Location Guidelines
 - **Evergreen references**: `docs/reference/`
