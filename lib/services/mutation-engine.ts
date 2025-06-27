@@ -291,25 +291,25 @@ export class MutationEngine {
    */
   private static applyInsert(
     document: DocumentElement[], 
-    transform: DocumentTransform & { action: 'insert'; afterId: string; content: Partial<DocumentElement> }
+    transform: DocumentTransform & { action: 'insert'; insertNewAfterExistingId: string; content: Partial<DocumentElement> }
   ): DocumentElement[] {
-    const afterIndex = document.findIndex(el => el.id === transform.afterId)
+    const existingElementIndex = document.findIndex(el => el.id === transform.insertNewAfterExistingId)
     
-    if (afterIndex === -1) {
-      throw new Error(`Cannot insert after element ${transform.afterId}: element not found`)
+    if (existingElementIndex === -1) {
+      throw new Error(`Cannot insert after element ${transform.insertNewAfterExistingId}: element not found`)
     }
 
     // Create a new element with defaults
-    const afterElement = document[afterIndex]
+    const existingElement = document[existingElementIndex]!
     const newElement: DocumentElement = {
       id: transform.content.id || `generated-${Date.now()}-${Math.random()}`,
-      document_id: afterElement.document_id,
-      parent_id: afterElement.parent_id,
+      document_id: existingElement.document_id,
+      parent_id: existingElement.parent_id,
       tag_name: 'div',
       content: '',
       attributes: {},
-      position: afterElement.position + 1,
-      level: afterElement.level,
+      position: existingElement.position + 1,
+      level: existingElement.level,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       ...transform.content
@@ -317,12 +317,12 @@ export class MutationEngine {
 
     // Insert the new element
     const result = [...document]
-    result.splice(afterIndex + 1, 0, newElement)
+    result.splice(existingElementIndex + 1, 0, newElement)
     
     // Update positions of subsequent elements
-    for (let i = afterIndex + 2; i < result.length; i++) {
-      if (result[i].parent_id === newElement.parent_id) {
-        result[i] = { ...result[i], position: result[i].position + 1 }
+    for (let i = existingElementIndex + 2; i < result.length; i++) {
+      if (result[i]!.parent_id === newElement.parent_id) {
+        result[i] = { ...result[i]!, position: result[i]!.position + 1 }
       }
     }
 
@@ -344,7 +344,7 @@ export class MutationEngine {
 
     const result = [...document]
     result[targetIndex] = {
-      ...result[targetIndex],
+      ...result[targetIndex]!,
       ...transform.content,
       updated_at: new Date().toISOString()
     }
@@ -366,14 +366,14 @@ export class MutationEngine {
     }
 
     const result = [...document]
-    const removedElement = result[targetIndex]
+    const removedElement = result[targetIndex]!
     result.splice(targetIndex, 1)
     
     // Update positions of subsequent siblings
     for (let i = targetIndex; i < result.length; i++) {
-      if (result[i].parent_id === removedElement.parent_id && 
-          result[i].position > removedElement.position) {
-        result[i] = { ...result[i], position: result[i].position - 1 }
+      if (result[i]!.parent_id === removedElement.parent_id && 
+          result[i]!.position > removedElement.position) {
+        result[i] = { ...result[i]!, position: result[i]!.position - 1 }
       }
     }
 
@@ -395,9 +395,9 @@ export class MutationEngine {
 
     const result = [...document]
     result[targetIndex] = {
-      ...result[targetIndex],
+      ...result[targetIndex]!,
       attributes: {
-        ...result[targetIndex].attributes,
+        ...result[targetIndex]!.attributes,
         ...transform.attributes
       },
       updated_at: new Date().toISOString()
@@ -442,11 +442,11 @@ export class MutationEngine {
         if (!isInsertTransform(transform)) {
           return { valid: false, error: 'Invalid insert transform structure' }
         }
-        if (!transform.afterId) {
-          return { valid: false, error: 'Insert transform missing afterId' }
+        if (!transform.insertNewAfterExistingId) {
+          return { valid: false, error: 'Insert transform missing insertNewAfterExistingId' }
         }
-        if (!document.find(el => el.id === transform.afterId)) {
-          return { valid: false, error: `Cannot insert after element ${transform.afterId}: element not found` }
+        if (!document.find(el => el.id === transform.insertNewAfterExistingId)) {
+          return { valid: false, error: `Cannot insert after element ${transform.insertNewAfterExistingId}: element not found` }
         }
         if (!transform.content?.id) {
           return { valid: false, error: 'Insert transform missing content.id' }

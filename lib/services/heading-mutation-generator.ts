@@ -32,8 +32,8 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
       throw new Error(`Invalid heading HTML format: ${heading.html}`)
     }
     
-    const level = parseInt(match[1])
-    const content = match[2]
+    const level = parseInt(match[1]!)
+    const content = match[2]!
     
     // Generate deterministic ID for this heading including the insertion point
     // This ensures unique IDs even when heading content is identical
@@ -62,7 +62,7 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
     
     return {
       action: 'insert' as const,
-      afterId: heading.id_of_after,
+      insertNewAfterExistingId: heading.id_of_after,
       content: {
         id: headingId,
         tag_name: `h${level}`,
