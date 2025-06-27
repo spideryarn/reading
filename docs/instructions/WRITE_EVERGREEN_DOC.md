@@ -100,8 +100,8 @@ Example:
 ```markdown
 ## Database Architecture
 
-**Current State**: Uses decomposed element storage (each HTML element as a row)
-**Target State**: Single-row document storage with JSONB enhancements
+**Current State**: Uses decomposed storage (each X as a row)
+**Target State**: Single-row storage with JSONB enhancements
 **Migration Status**: Schema designed, code updates pending
 
 see `docs/reference/ARCHITECTURE_DECISIONS.md` for migration rationale

@@ -38,8 +38,13 @@ export interface DocumentTransform {
   /** ID of the element to modify or remove (not used for insertions) */
   targetId?: string
   
-  /** ID of the element after which to insert (only for insert actions) */
-  afterId?: string
+  /** 
+   * ID of the existing element after which the new content should be inserted.
+   * Only used for insert actions with 'after' insertion semantics.
+   * The new element will appear immediately after the element with this ID.
+   * Example: insertNewAfterExistingId: 'para-123' → new content appears after para-123
+   */
+  insertNewAfterExistingId?: string
   
   /** New content to insert or replace with */
   content?: Partial<DocumentElement>
@@ -88,10 +93,10 @@ export interface MutationResult {
  */
 export function isInsertTransform(transform: DocumentTransform): transform is DocumentTransform & { 
   action: 'insert'
-  afterId: string
+  insertNewAfterExistingId: string
   content: Partial<DocumentElement>
 } {
-  return transform.action === 'insert' && !!transform.afterId && !!transform.content
+  return transform.action === 'insert' && !!transform.insertNewAfterExistingId && !!transform.content
 }
 
 /**
