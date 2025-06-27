@@ -18,8 +18,9 @@ import { usePersistentChat } from '@/src/lib/hooks/usePersistentChat';
 import { Button } from '@/components/ui/button'
 import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 import { useChatUrlState } from '@/lib/tools/hooks/use-tool-url-state';
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover';
+import { SpeechToTextInput } from '@/components/speech/speech-to-text-input';
 
 interface AssistantChatProps {
   documentId: string;
@@ -71,16 +72,54 @@ const AssistantMessage = () => (
   </MessagePrimitive.Root>
 );
 
-// Composer component with loading states
+// Composer component with loading states and voice input
 const Composer = () => {
+  // Handle voice transcription by creating a hidden suggestion that gets triggered
+  const [voicePrompt, setVoicePrompt] = useState<string | null>(null);
+
+  const handleVoiceTranscription = useCallback((text: string) => {
+    // Use the suggestion pattern to set and send the transcribed text
+    setVoicePrompt(text);
+    // Clear the prompt after a brief delay to reset the state
+    setTimeout(() => setVoicePrompt(null), 100);
+  }, []);
+
+  // Handle voice input errors
+  const handleVoiceError = useCallback((error: string) => {
+    console.error('Voice input error:', error);
+    // Use the global error notification system for user-friendly error feedback
+    import('@/lib/tools/executor/error-ui').then(({ showGenericError }) => {
+      const voiceError = new Error(error);
+      (voiceError as any).source = 'voice-input';
+      showGenericError(voiceError);
+    });
+  }, []);
+
   return (
     <ComposerPrimitive.Root className="flex items-end gap-3 p-4 border-t border-gray-200 bg-white/80 backdrop-blur-sm">
+      {/* Hidden suggestion component that triggers when voice input is received */}
+      {voicePrompt && (
+        <ThreadPrimitive.Suggestion
+          prompt={voicePrompt}
+          method="replace"
+          autoSend
+          asChild
+        >
+          <button style={{ display: 'none' }} />
+        </ThreadPrimitive.Suggestion>
+      )}
+      
       <ComposerPrimitive.Input 
         className="flex-1 min-h-[44px] max-h-[120px] resize-none rounded-xl border border-gray-300 px-4 py-3 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm transition-all"
         placeholder="Ask about this document..."
         rows={1}
       />
       <ThreadPrimitive.If running={false}>
+        <SpeechToTextInput 
+          onTranscription={handleVoiceTranscription}
+          onError={handleVoiceError}
+          className="flex-shrink-0"
+        />
         <ComposerPrimitive.Send asChild>
           <Button variant="default" size="icon" className="h-[44px] w-[44px] rounded-xl bg-blue-600 hover:bg-blue-700 shadow-sm">
             <PaperPlaneTilt size={18} weight="bold" />
