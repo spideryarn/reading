@@ -13,7 +13,7 @@
  * 
  * @see docs/reference/TOOL_HIGHLIGHT.md for complete highlighting system documentation
  * @see components/highlight-management.tsx for UI integration
- * @see app/api/semantic-search/route.ts for underlying semantic search functionality
+ * @see app/api/tools/[toolId]/handlers/search.ts for underlying semantic search functionality
  */
 
 import { z } from 'zod'
@@ -321,34 +321,21 @@ export class HighlightsHandler extends BaseToolHandler {
         }
       }
       
-      // No cached results - delegate to semantic search API
-      // Create a new request to the semantic search endpoint
-      const semanticSearchRequest = new Request('http://localhost/api/semantic-search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Forward authentication headers if available
-          ...(context.request && 'cookie' in context.request ? {
-            'Cookie': context.request.cookie
-          } : {})
-        },
-        body: JSON.stringify({
+      // No cached results - delegate to semantic search tool
+      // Use the unified tools API to call the search tool
+      const searchHandler = await import('./search')
+      const searchResponse = await searchHandler.default.handlePost(
+        'execute',
+        {
           query: criterion,
-          documentId
-        })
-      })
+          documentId,
+          type: 'semantic'
+        },
+        context
+      )
       
-      // Import and call the semantic search API directly
-      // This avoids HTTP overhead while maintaining the same logic
-      const semanticSearchModule = await import('../../../semantic-search/route')
-      const semanticSearchResponse = await semanticSearchModule.POST(semanticSearchRequest as NextRequest)
-      
-      if (!semanticSearchResponse.ok) {
-        const errorData = await semanticSearchResponse.json()
-        throw new Error(errorData.error || 'Semantic search failed')
-      }
-      
-      const semanticSearchData = await semanticSearchResponse.json()
+      // Handle search response (no need to check .ok since it's not an HTTP response)
+      const semanticSearchData = searchResponse
       
       // Define the shape of semantic search match data
       interface SemanticSearchMatch {
