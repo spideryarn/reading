@@ -161,7 +161,25 @@ export const VISIBILITY_CONFIG = {
   THRESHOLD: 0.15,         // Minimum visible ratio to count as visible (15%)
 } as const
 
+// Upload limits configuration - centralized size limits for all file types
+// Note: URL extraction has separate limits in URL_EXTRACTION_CONFIG below (different use case)
+export const UPLOAD_LIMITS = {
+  // PDF file upload limits
+  PDF_MAX_SIZE_BYTES: 50 * 1024 * 1024,                    // 50MB - Supabase storage limit (free tier)
+  PDF_CLAUDE_API_PROCESSING_LIMIT: 32 * 1024 * 1024,       // 32MB - Claude API can process this size
+  PDF_GEMINI_API_PROCESSING_LIMIT: 20 * 1024 * 1024,       // 20MB - Gemini direct API limit (smaller than Claude)
+  PDF_GEMINI_FILE_API_LIMIT: 2 * 1024 * 1024 * 1024,       // 2GB - Gemini File API limit (temporary storage)
+  PDF_MAX_PAGES: 100,                                       // Maximum pages allowed in PDF (business rule)
+  
+  // HTML file upload limits
+  HTML_FILE_UPLOAD_MAX_SIZE_BYTES: 10 * 1024 * 1024,       // 10MB - for direct HTML file uploads
+  
+  // General file upload limit (fallback)
+  GENERAL_MAX_SIZE_BYTES: 50 * 1024 * 1024,                // 50MB - matches Supabase free tier limit
+} as const
+
 // URL extraction configuration for webpage content processing
+// Note: These limits are separate from UPLOAD_LIMITS above (different use case - web scraping vs file upload)
 export const URL_EXTRACTION_CONFIG = {
   MAX_HTML_SIZE_BYTES: 500 * 1024, // 500KB limit (safe for both Claude/Gemini token limits)
   FETCH_TIMEOUT_MS: 10000, // 10 second timeout
