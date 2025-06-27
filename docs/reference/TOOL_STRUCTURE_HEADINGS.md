@@ -1,69 +1,131 @@
-# AI Headings Feature
+# Structure Tab: Document Headings and AI Enhancement
 
-The AI headings feature generates relevant headings for document sections using LLM analysis, displayed in the Table of Contents with visual indicators and tooltip summaries.
+The Structure tab provides a unified interface for viewing and enhancing document structure with AI-generated headings. It consolidates the original document outline with optional AI-powered enhancements in a single, intuitive interface.
+
+## Overview
+
+The Structure tab replaces the previous separate "Original" and "AI-Generated" headings tabs with a unified experience that:
+
+- **Displays document structure** in its current state (original or AI-enhanced)
+- **Provides explicit AI enhancement** through user-initiated generation
+- **Supports seamless switching** between original and AI-enhanced views
+- **Maintains all existing functionality** including tooltips, navigation, and mutation handling
 
 ## See also
 
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide to creating and using LLM prompt templates
 - `docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Documents the reversible document transformation system
-- `planning/250526g_ai_generated_headings.md` - Implementation planning for AI-generated headings
+- `planning/250627a_consolidate_headings_tabs_into_structure_tab.md` - Implementation planning for Structure tab consolidation
 - `lib/prompts/templates/headings.ts` - Schema and prompt configuration for heading generation
 - `lib/prompts/templates/headings.njk` - LLM prompt template for heading generation
 - `/api/headings/route.ts` - API endpoint for generating document headings
-- `components/table-of-contents-tabs.tsx` - ToC tab components with AI headings integration
-- `components/unified-left-pane.tsx` - Main left pane that includes AI headings tab
+- `components/tools/StructurePanel.tsx` - Unified Structure tab component
+- `components/unified-left-pane.tsx` - Main left pane that includes Structure tab
 
-## Key decisions
+## Key Features
 
-- **Reversible mutations**: AI headings implemented as reversible document transformations
-- **Visual indicators**: AI-generated headings marked with distinct styling in ToC
-- **Loading behaviour**: On-demand via "Generate headings" button (not automatic)
-- **Content structure**: Generates headings for sections that lack them, maintains document hierarchy
-- **Template architecture**: Nunjucks templates with Zod validation for type-safe prompt generation
+### Unified Interface Design
+- **Single Structure tab** with TreeStructure icon replaces dual-tab system
+- **Status badge** clearly indicates current state (Original vs AI-enhanced)
+- **Context-aware buttons** show appropriate actions (Generate vs Remove)
+- **Seamless state transitions** between original and enhanced views
 
-## Heading generation architecture
+### AI Enhancement Workflow
+- **Explicit user control**: AI generation only occurs when user clicks "Generate AI headings"
+- **Visual feedback**: Loading states and progress indicators during generation
+- **Persistent state**: Generated headings are cached and survive page refreshes
+- **Reversible changes**: Trashcan button removes AI enhancements and reverts to original
 
-The system supports multiple LLM providers (Claude and Gemini) for analysing document content and generating relevant headings. The LLM prompt instructs the model to:
+### Enhanced User Experience
+- **Simplified navigation**: Single tab reduces cognitive load
+- **Clear state indication**: Badge tooltips explain current enhancement status
+- **Responsive design**: Works seamlessly across desktop, tablet, and mobile devices
+- **Keyboard accessibility**: Cmd+1/Ctrl+1 shortcut provides quick access
 
-- Analyse content sections that lack appropriate headings
-- Generate meaningful, descriptive headings that reflect content
-- Maintain consistent heading hierarchy and style
-- Ensure headings are concise but informative
-- Return headings in structured format for document insertion
+## User Interface
 
-**Multi-Provider Support**: Uses the centralised provider-tier system from `lib/config.ts`. Switch models using the `LLM_MODEL` environment variable (e.g., `google-cheap` for development, `anthropic-balanced` for production). See [docs/reference/LLM_MODEL_CONFIGURATION.md](LLM_MODEL_CONFIGURATION.md) for model comparison.
+### State Matrix
 
-## Content pipeline
+| Current State | Status Badge | Available Actions | Description |
+|---------------|--------------|-------------------|-------------|
+| Original headings | "Original" (blue) | "Generate AI headings" button | Showing document's original structure |
+| AI headings active | "AI-enhanced" (green) | Trashcan (remove) button | Showing AI-generated enhanced structure |
+| Generating | "Original" (blue) | Loading spinner | AI enhancement in progress |
+| Removing | "AI-enhanced" (green) | Loading spinner | Reverting to original structure |
 
+### Button Behaviors
+
+#### Generate AI Headings Button
+- **Appearance**: Green text, appears when in original state
+- **Function**: Initiates AI analysis and heading generation
+- **Loading state**: Shows "Generating..." with spinner during processing
+- **Success**: Transitions to AI-enhanced state with trashcan button
+- **Error handling**: Shows error message with retry option
+
+#### Remove AI Headings Button (Trashcan)
+- **Appearance**: Red trashcan icon, appears when in AI-enhanced state
+- **Function**: Removes AI headings and reverts to original structure
+- **Loading state**: Shows spinner during reversion process
+- **Success**: Transitions back to original state with generate button
+
+## Technical Architecture
+
+### Component Structure
 ```
-HTML Document → Content Analysis → Missing Headings Detection → LLM Prompt → Generated Headings → Document Mutation
+StructurePanel
+├── Header
+│   ├── TreeStructure icon
+│   ├── "Structure" title
+│   ├── Status badge (Original/AI-enhanced)
+│   └── Action button (Generate/Remove)
+├── HeadingTree (unified display)
+│   ├── Heading items with tooltips
+│   ├── Level filtering controls
+│   └── Collapse/expand functionality
+└── Loading/Error states
 ```
 
-### Document mutation system
+### State Management Flow
+```
+Initial State: Original headings displayed
+     ↓ User clicks "Generate AI headings"
+Loading State: Shows "Generating..." with spinner
+     ↓ API call completes successfully
+AI State: AI headings displayed with trashcan button
+     ↓ User clicks trashcan button
+Loading State: Shows spinner during removal
+     ↓ Mutation reverted successfully
+Original State: Back to original headings with generate button
+```
 
-AI headings are implemented as reversible mutations:
+### Data Flow
+1. **Document loaded** → Extract original headings → Display in Structure tab
+2. **Generate button clicked** → API call to `/api/headings` → Apply mutation → Update UI
+3. **Remove button clicked** → Revert mutation → Clear cache → Update UI
+4. **Page refresh** → Check for cached headings → Apply if available → Update UI
 
-1. **Analysis**: Identify content sections lacking appropriate headings
-2. **Generation**: Use LLM to create relevant headings based on content analysis
-3. **Insertion**: Apply heading mutations to document structure
-4. **Reversibility**: Allow users to undo/redo heading changes
-5. **Visual markers**: Mark AI-generated headings in Table of Contents
+## AI Heading Generation
 
-## UI behaviour
+### Generation Process
+1. **Content analysis**: Extract document HTML with element IDs
+2. **LLM processing**: Send to configured AI model (Claude/Gemini)
+3. **Heading generation**: LLM analyzes content and suggests appropriate headings
+4. **Mutation application**: Generated headings inserted as reversible document transforms
+5. **UI update**: Interface updates to show AI-enhanced state
 
-### Heading generation
-1. **Trigger**: Click "Generate headings" button in Tools pane
-2. **Loading**: Progress indicator during LLM processing and document mutation
-3. **Display**: New headings appear in Table of Contents with AI indicators
-4. **Error states**: Clear error messages when generation fails
+### Caching and Persistence
+- **Database storage**: Generated headings stored in Supabase for reuse
+- **Automatic loading**: Cached headings applied on page load if available
+- **Performance optimization**: Avoids re-generation for previously processed documents
+- **Cache invalidation**: Remove button clears both UI and database cache
 
-### ToC integration
-1. **Visual indicators**: AI-generated headings shown with distinct styling
-2. **Tooltip summaries**: AI headings support same tooltip summary system as regular headings
-3. **Navigation**: Click to scroll to heading location in document
-4. **Mutation controls**: Undo/redo buttons to reverse heading changes
+### Multi-Provider Support
+Uses the centralized provider-tier system from `lib/config.ts`:
+- **Development**: Use `google:gemini-2.0-flash:latest` or `anthropic:claude-3-5-haiku:20241022` for cost efficiency
+- **Production**: Use `anthropic:claude-sonnet-4:20250514` for quality
+- **Configuration**: Switch models using `LLM_MODEL` environment variable
 
-## Template system
+## Template System
 
 The heading generation uses the standard prompt template system:
 
@@ -72,38 +134,124 @@ The heading generation uses the standard prompt template system:
 - **Content analysis**: Sophisticated prompts for understanding document structure
 - **Error handling**: Robust validation throughout the prompt pipeline
 
-## Heading schema
-
+### Heading Schema
 ```typescript
 {
-  content: string,           // Document content to analyse
-  context?: string,          // Additional context about document
-  style?: string,           // Heading style preferences
-  max_headings?: number     // Maximum number of headings to generate
+  html_content: string,        // Document HTML content to analyze
+  documentId: string,          // Document identifier for caching
+  context?: string,            // Additional context about document
+  style?: string,             // Heading style preferences
+  max_headings?: number       // Maximum number of headings to generate
 }
 ```
 
-## Limitations
+## Tool Registry Integration
 
-- Requires fresh LLM processing for each document (no caching implemented)
-- Generated headings may need manual refinement for optimal quality
-- Processing time depends on document length and complexity
-- No persistent storage of heading preferences or history
+The Structure tab is integrated with the unified tool registry system:
 
-## Planned enhancements
+- **Tool ID**: `structure`
+- **Icon**: TreeStructure (Phosphor Icons)
+- **Category**: Navigation
+- **Shortcuts**: `Cmd+1`, `Ctrl+1`
+- **Keywords**: `['headings', 'toc', 'table of contents', 'structure', 'outline', 'ai', 'generate']`
+- **Requirements**: Requires document to be loaded
 
-- Cache generated headings in Supabase for faster subsequent loads
-- User preferences for heading style and frequency
-- Batch heading generation for multiple documents
-- Smart heading suggestion based on document type
-- Integration with document editing capabilities
-- Heading quality scoring and improvement suggestions
+### Command Palette Integration
+- **Auto-generation**: Commands automatically generated from tool registry
+- **Search**: Discoverable via keywords in command palette
+- **Navigation**: `nav-structure` command opens Structure tab
+
+## Responsive Design
+
+### Cross-Device Compatibility
+- **Desktop (1200px+)**: Full interface with all features visible
+- **Tablet (768px-1024px)**: Optimized layout with maintained functionality
+- **Mobile (320px-768px)**: Touch-friendly interface with accessible controls
+- **Adaptive layout**: UI elements reflow appropriately at all screen sizes
+
+### Touch Interface Support
+- **Button sizing**: Appropriate touch targets for mobile devices
+- **Tooltip behavior**: Optimized for touch interactions
+- **Scroll handling**: Smooth scrolling and navigation on touch devices
+
+## Error Handling and Recovery
+
+### Common Error Scenarios
+- **API failures**: Clear error messages with retry options
+- **Network issues**: Graceful degradation with offline indicators
+- **State corruption**: Automatic recovery and fallback to original state
+- **Cache mismatches**: Intelligent cache validation and repair
+
+### User Feedback
+- **Loading indicators**: Clear visual feedback during all operations
+- **Success confirmation**: Immediate UI updates on successful operations
+- **Error messages**: Descriptive error messages with actionable solutions
+- **State clarity**: Always clear what state the interface is in
+
+## Performance Considerations
+
+### Optimization Strategies
+- **Lazy loading**: Content loaded on demand
+- **Caching**: Aggressive caching of generated content
+- **State efficiency**: Minimal re-renders and optimized React patterns
+- **API optimization**: Efficient backend processing with correlation tracking
+
+### Monitoring and Observability
+- **Correlation IDs**: All operations tracked with unique identifiers
+- **Performance timing**: Generation and loading times monitored
+- **Error tracking**: Comprehensive error logging for debugging
+- **User analytics**: Understanding of feature usage patterns
+
+## Limitations and Considerations
+
+### Current Limitations
+- **LLM processing time**: Generation can take 30-60 seconds for large documents
+- **Model dependency**: Quality depends on selected LLM model capabilities
+- **Content analysis**: Best results with structured, well-formatted documents
+- **Language support**: Optimized for English content
+
+### Future Enhancements
+- **Batch processing**: Generate headings for multiple documents
+- **Quality scoring**: Automatic assessment of heading quality
+- **User preferences**: Customizable generation parameters
+- **Real-time collaboration**: Multi-user editing of generated headings
+- **Smart suggestions**: Context-aware heading recommendations
 
 ## Troubleshooting
 
-### Common issues
+### Common Issues
 
-- **Poor heading quality**: Try different provider-tier models for better results
-- **Template errors**: Check Nunjucks template syntax and Zod schema validation
-- **Mutation failures**: Verify document structure integrity and mutation system
-- **ToC display issues**: Check component state and AI heading indicators
+**Problem**: Generate button not responding
+- **Solution**: Check dev tools for API errors, verify authentication
+
+**Problem**: Generated headings not displaying
+- **Solution**: Refresh page to trigger cache reload, check for state sync issues
+
+**Problem**: Loading state stuck
+- **Solution**: This was fixed in recent updates; ensure component state management is working
+
+**Problem**: Responsive layout issues
+- **Solution**: Check CSS media queries and viewport meta tag
+
+**Problem**: Poor heading quality
+- **Solution**: Try different LLM model configurations, check document structure
+
+### Development Debugging
+- **Browser dev tools**: Check console for state management issues
+- **Network tab**: Monitor API calls and response timing
+- **React dev tools**: Inspect component state and props
+- **Server logs**: Check backend processing with correlation IDs
+
+## Migration Notes
+
+### From Dual-Tab System
+Users familiar with the previous "Original" and "AI-Generated" tabs will find:
+- **Functionality preserved**: All previous features available in unified interface
+- **Clearer workflow**: Single tab reduces confusion about state
+- **Improved UX**: More discoverable AI enhancement features
+- **Better performance**: Optimized state management and rendering
+
+### Breaking Changes
+- **Component references**: `OriginalHeadingsTab` and `AIGeneratedHeadingsTab` removed
+- **URL routes**: Previous tab routes redirect to unified `structure` tab
+- **Tool registry**: Old `toc-original` and `toc-ai` tools replaced with `structure`

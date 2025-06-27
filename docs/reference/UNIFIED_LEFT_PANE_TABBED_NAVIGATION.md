@@ -1,11 +1,11 @@
 # Unified Left Pane
 
-The unified left pane provides comprehensive document navigation and AI-powered tools through a vertical icon navigation system. Navigation includes table of contents (original and AI-generated), summaries, chat, glossary, and search functionality. This document covers the architecture and features of the complete left pane system in the 2-pane resizable layout.
+The unified left pane provides comprehensive document navigation and AI-powered tools through a vertical icon navigation system. Navigation includes a unified Structure tab (consolidating original and AI-enhanced headings), summaries, chat, glossary, and search functionality. This document covers the architecture and features of the complete left pane system in the 2-pane resizable layout.
 
 ## See also
 
 - `components/unified-left-pane.tsx` - consolidated navigation and tools pane containing ToC
-- `components/table-of-contents-tabs.tsx` - extracted ToC tab components (Original, AI-generated, Summary)
+- `components/tools/StructurePanel.tsx` - unified Structure tab component (replaces separate Original/AI-generated tabs)
 - `components/vertical-icon-nav.tsx` - vertical icon navigation bar component
 - `components/heading-tree.tsx` - shared tree component for rendering hierarchical headings
 - `components/resizable-document-layout.tsx` - main 2-pane layout coordinator
@@ -27,7 +27,7 @@ The unified left pane provides comprehensive document navigation and AI-powered 
 
 The ToC system is now integrated into the 2-pane architecture with simplified coordination:
 
-1. **UnifiedLeftPane** - contains ToC as tabs (Original, AI-generated) alongside Summary, Chat, Glossary, Search, Highlights, and Metadata
+1. **UnifiedLeftPane** - contains unified Structure tab alongside Summary, Chat, Glossary, Search, Highlights, and Metadata
 2. **ResizableDocumentLayout** - manages cross-pane communication and scroll coordination
 3. **SimpleDocumentViewer** - displays elements and accepts external selection state
 
@@ -43,18 +43,19 @@ The ToC uses a shared `HeadingTree` component that eliminates code duplication b
 - Tree structure enables efficient expand/collapse and granularity filtering
 - Uses `useMemo` for efficient tree building when headings change
 
-### Shared Rendering Logic
-- Single component handles both Original and AI-generated heading display
-- Theme customization via `themeColors` prop (blue for Original, green for AI-generated)
+### Unified Rendering Logic
+- Single StructurePanel component handles both original and AI-enhanced heading display
+- Unified theme (no separate blue/green theming) with status badges indicating current state
 - Manages tooltip display, click handlers, and hierarchical indentation
 - Supports expand/collapse controls and granularity filtering
+- Context-aware action buttons (Generate AI headings vs Remove AI headings)
 
 ### Expand/Collapse Functionality
 - Individual sections can be collapsed to hide their child headings
 - Chevron buttons (CaretDown/CaretRight icons) indicate expandable sections
 - State is lifted to parent tab components and persists across tab switches
-- Separate expand/collapse state for Original and AI-generated tabs
-- Collapsed state automatically clears when new AI headings are generated
+- Unified expand/collapse state within the Structure tab
+- Collapsed state automatically clears when switching between original and AI-enhanced views
 - Only affects ToC display - document pane content remains unchanged
 
 ### Granularity Control

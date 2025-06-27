@@ -352,11 +352,13 @@ export function StructurePanel({
     } catch (error) {
       console.error('Error applying cached headings:', error)
       setHeadingsError(`Failed to load cached headings: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setIsLoadingHeadings(false) // FIX: Ensure loading state is cleared on error
     }
   }, [documentId, applyMutation, mutationState.activeMutation])
 
   // Core headings generation logic
   const generateHeadingsFromAPI = useCallback(async (isRegeneration = false) => {
+    try {
       console.log('generateHeadingsFromAPI called, isRegeneration:', isRegeneration)
       
       if (mutationState.activeMutation?.type === 'insert-headings' && !isRegeneration) {
@@ -438,8 +440,15 @@ export function StructurePanel({
         setCollapsedIds(new Set())
         setIsLoadingHeadings(false)
       } else {
+        setIsLoadingHeadings(false) // FIX: Ensure loading state is cleared on mutation failure
         throw new Error(result.error || 'Failed to apply mutation')
       }
+    } catch (error) {
+      // CRITICAL FIX: Ensure loading state is always cleared, even on unexpected errors
+      setIsLoadingHeadings(false)
+      console.error('Error in generateHeadingsFromAPI:', error)
+      throw error // Re-throw to maintain error handling in calling functions
+    }
   }, [content, elements, documentId, mutationState.activeMutation, applyMutation])
 
   // Public API for manual headings generation
@@ -449,6 +458,7 @@ export function StructurePanel({
     
     try {
       await generateHeadingsFromAPI()
+      // NOTE: setIsLoadingHeadings(false) is handled inside generateHeadingsFromAPI on success
     } catch (error) {
       console.error('Error generating headings:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate headings'
@@ -502,9 +512,11 @@ export function StructurePanel({
     let isCancelled = false
     
     const loadHeadings = async () => {
-      if (hasInitialized || currentMode === 'original') {
+      if (hasInitialized) {
         return
       }
+      // CRITICAL FIX: Remove currentMode === 'original' check that was preventing 
+      // cached headings from loading on page refresh
       
       setHasInitialized(true)
       setIsLoadingHeadings(true)
@@ -545,7 +557,7 @@ export function StructurePanel({
       console.log('StructurePanel unmounting')
       isCancelled = true
     }
-  }, [documentId, hasInitialized, currentMode, applyCachedHeadings, content, elements])
+  }, [documentId, hasInitialized, applyCachedHeadings, content, elements])
 
   const handleHeadingClick = (heading: Heading) => {
     if (onHeadingClick) {
