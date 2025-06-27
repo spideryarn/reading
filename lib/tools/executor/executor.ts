@@ -428,6 +428,11 @@ function mapApiErrorToExecutorError(problemDetails: ToolApiErrorResponse): ToolE
  * Get user-friendly error message from ToolExecutorError
  * 
  * This transforms technical error details into messages suitable for end users.
+ * 
+ * @deprecated Use the comprehensive error UI system instead:
+ * - Import { showToolError } from '@/lib/tools/executor/error-ui'
+ * - Import { transformErrorToMessage } from '@/lib/tools/executor/error-messages'
+ * These provide much richer error handling with proper UI integration.
  */
 export function getErrorMessage(error: ToolExecutorError): string {
   switch (error.code) {
