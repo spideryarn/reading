@@ -1078,7 +1078,7 @@ describe('MutationEngine', () => {
       expect(() => {
         generateHeadingMutation({
           headings: [{
-            id_of_after: 'para-1',
+            insertNewBeforeExistingId: 'para-1',
             html: 'Not valid HTML tags'  // Missing <h> tags
           }],
           documentId: 'test-doc'
@@ -1090,7 +1090,7 @@ describe('MutationEngine', () => {
       expect(() => {
         generateHeadingMutation({
           headings: [{
-            id_of_after: 'para-1',
+            insertNewBeforeExistingId: 'para-1',
             html: '<h2>Unclosed heading'  // Missing closing tag
           }],
           documentId: 'test-doc'
@@ -1103,7 +1103,7 @@ describe('MutationEngine', () => {
       
       const mutation = generateHeadingMutation({
         headings: [{
-          id_of_after: 'para-1',
+          insertNewBeforeExistingId: 'para-1',
           html: '<h1></h1>'  // Empty heading content
         }],
         documentId: 'test-doc'
@@ -1122,7 +1122,7 @@ describe('MutationEngine', () => {
       
       const mutation = generateHeadingMutation({
         headings: [{
-          id_of_after: 'para-1',
+          insertNewBeforeExistingId: 'para-1',
           html: '<h2>Section with "quotes" & special chars</h2>'
         }],
         documentId: 'test-doc'

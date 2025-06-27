@@ -53,8 +53,18 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
     }))
   })
   
-  // Create forward transforms (insertions) with chaining logic
-  const forward: DocumentTransform[] = headings.map((heading, index) => {
+  // Reverse headings within each insertion group to counteract mutation engine's reversal
+  // This ensures semantic order is preserved (H2 → H3 → H4) in the final document
+  const reorderedHeadingIndexes: number[] = []
+  for (const [targetId, groupIndexes] of insertionGroups.entries()) {
+    // Reverse the order within each group so mutation engine's reversal produces correct semantic order
+    const reversedIndexes = [...groupIndexes].reverse()
+    reorderedHeadingIndexes.push(...reversedIndexes)
+  }
+
+  // Create forward transforms (insertions) with chaining logic using reordered indexes
+  const forward: DocumentTransform[] = reorderedHeadingIndexes.map((originalIndex) => {
+    const heading = headings[originalIndex]!
     // Extract heading content and level from HTML
     const match = heading.html.match(/^<h(\d)[^>]*>(.*?)<\/h\d>$/i)
     if (!match) {
@@ -87,26 +97,16 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
     }
     
     existingIds.add(headingId)
-    headingIds.set(index, headingId)
+    headingIds.set(originalIndex, headingId)
     
-    // Determine the actual insertion target for chaining
+    // Use non-chaining approach: all headings target the original element
+    // The mutation engine's sortTransformsForPrecedence() will handle correct ordering
+    const actualInsertionTarget = heading.insertNewBeforeExistingId
     const groupIndexes = insertionGroups.get(heading.insertNewBeforeExistingId)!
-    const positionInGroup = groupIndexes.indexOf(index)
+    const positionInGroup = groupIndexes.indexOf(originalIndex)
+    const chainingAction = positionInGroup === 0 ? 'first-in-group' : 'targets-original-element'
     
-    let actualInsertionTarget: string
-    let chainingAction: string
-    if (positionInGroup === 0) {
-      // First heading in group - insert before original target
-      actualInsertionTarget = heading.insertNewBeforeExistingId
-      chainingAction = 'first-in-group'
-    } else {
-      // Subsequent headings - chain to previous heading in same group
-      const previousHeadingIndex = groupIndexes[positionInGroup - 1]!
-      actualInsertionTarget = headingIds.get(previousHeadingIndex)!
-      chainingAction = 'chained-to-previous'
-    }
-    
-    console.log(`[HeadingMutation] Chaining decision for heading ${index}:`, {
+    console.log(`[HeadingMutation] Chaining decision for heading ${originalIndex}:`, {
       headingContent: content,
       headingLevel: level,
       originalTarget: heading.insertNewBeforeExistingId,

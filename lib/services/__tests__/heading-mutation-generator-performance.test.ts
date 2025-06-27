@@ -83,10 +83,10 @@ describe('heading-mutation-generator performance', () => {
         }
       })
       
-      // Each original section should only have one direct insertion (the rest are chained)
+      // All headings should target their original elements (no chaining to avoid intra-mutation dependencies)
       expect(groupCounts.size).toBe(5)
       Array.from(groupCounts.values()).forEach(count => {
-        expect(count).toBe(1) // Only first heading in each group targets original section
+        expect(count).toBe(10) // All 10 headings in each group target the original section element
       })
       
       console.log(`[Performance] Large scenario (50 headings): ${duration.toFixed(2)}ms`)
@@ -114,14 +114,10 @@ describe('heading-mutation-generator performance', () => {
       expect(duration).toBeLessThan(10)
       expect(result.forward).toHaveLength(20)
       
-      // Verify perfect chaining: first targets original, rest form chain
-      expect(result.forward[0]!.insertNewBeforeExistingId).toBe('single-target')
-      
-      for (let i = 1; i < result.forward.length; i++) {
-        const currentTransform = result.forward[i]!
-        const previousTransform = result.forward[i - 1]!
-        expect(currentTransform.insertNewBeforeExistingId).toBe(previousTransform.content?.id)
-      }
+      // Verify all headings target the original element (no chaining to avoid validation issues)
+      result.forward.forEach(transform => {
+        expect(transform.insertNewBeforeExistingId).toBe('single-target')
+      })
       
       console.log(`[Performance] Worst-case scenario (20 chained headings): ${duration.toFixed(2)}ms`)
     })
@@ -184,7 +180,9 @@ describe('heading-mutation-generator performance', () => {
         
         // Verify each iteration produces correct result
         expect(result.forward).toHaveLength(2)
-        expect(result.forward[1]!.insertNewBeforeExistingId).toBe(result.forward[0]!.content?.id)
+        // Both headings should target the original element (no chaining)
+        expect(result.forward[0]!.insertNewBeforeExistingId).toBe('para-1')
+        expect(result.forward[1]!.insertNewBeforeExistingId).toBe('para-1')
       }
       
       // If we reach here without issues, memory usage is reasonable

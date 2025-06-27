@@ -345,9 +345,9 @@ export class MutationEngine {
     sortedTransforms.push(...nonInsertionTransforms)
     
     // Finally, add all after-insertions (in groups by target element)
-    // For after-insertions, reverse order within each group (same serial insertion behavior as before-insertions)
+    // For after-insertions, maintain original order (first transform ends up closest to target)
     for (const group of insertionGroups.values()) {
-      sortedTransforms.push(...group.afterInsertions.reverse())
+      sortedTransforms.push(...group.afterInsertions)
     }
 
     return sortedTransforms
