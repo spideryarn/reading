@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validateAuth } from '@/lib/auth/server-auth'
 import { createRequestLogger, generateCorrelationId, createTimer } from '@/lib/services/logger'
+import type { User } from '@supabase/auth-helpers-nextjs'
 import { getTool, isRegistryLocked } from '@/lib/tools/registry'
 import { initializeToolRegistry } from '@/lib/tools/registry-loader'
 import { z } from 'zod'
@@ -66,13 +67,11 @@ async function createExecutionContext(
   // Get user context if authenticated
   let user
   try {
-    const authResult = await validateAuth(request, { requireAuth: false })
-    if (authResult.success) {
-      user = {
-        id: authResult.user.id,
-        email: authResult.user.email || '',
-        preferences: {} // Could be expanded later
-      }
+    const authUser = await validateAuth()
+    user = {
+      id: authUser.id,
+      email: authUser.email || '',
+      preferences: {} // Could be expanded later
     }
   } catch (error) {
     // User not authenticated - proceed without user context
@@ -300,8 +299,10 @@ export async function POST(
     }
     
     // Most tools require authentication for POST operations
-    const authResult = await validateAuth(request, { requireAuth: true })
-    if (!authResult.success) {
+    let authUser: User
+    try {
+      authUser = await validateAuth()
+    } catch (error) {
       return createErrorResponse(
         {
           status: 401,
@@ -437,8 +438,10 @@ export async function DELETE(
     }
     
     // DELETE operations always require authentication
-    const authResult = await validateAuth(request, { requireAuth: true })
-    if (!authResult.success) {
+    let authUser: User
+    try {
+      authUser = await validateAuth()
+    } catch (error) {
       return createErrorResponse(
         {
           status: 401,
