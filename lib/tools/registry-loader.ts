@@ -8,100 +8,44 @@
  * @see docs/reference/ARCHITECTURE_FOR_TOOLS.md for documentation
  */
 
-import { lockRegistry, getRegistryStats } from './registry'
-import { TOOL_REGISTRY_CONFIG } from '../config'
+import { lockRegistry, isRegistryLocked } from './registry'
 
 /**
- * Import all tool implementations
- * 
- * Each import will automatically register the tool via side effects.
- * Tools are imported dynamically to support lazy loading in the future.
+ * Synchronous tool registration
+ *
+ * We now import all tool implementations statically so that they register
+ * themselves during module evaluation.  This guarantees that the tool
+ * registry is fully populated before any React components render and avoids
+ * race conditions where navigation components read from an empty registry.
+ *
+ * @see planning/finished/250614d_tool_execution_framework.md
  */
-async function loadAllTools() {
-  // Import all tool implementations
-  // Each file will register its tool during import
-  
-  try {
-    // Get registry functions - force re-registration with allowOverwrite
-    const { registerTool } = await import('./registry')
-    
-    // Analysis tools
-    const glossaryModule = await import('./implementations/glossary')
-    const metadataModule = await import('./implementations/metadata')
-    
-    // Navigation tools
-    const structureModule = await import('./implementations/structure')
-    
-    // Interactive tools
-    const chatModule = await import('./implementations/chat')
-    const searchModule = await import('./implementations/search')
-    
-    // Generation tools
-    const summaryModule = await import('./implementations/summary')
-    const highlightsModule = await import('./implementations/highlights')
-    
-    // Re-register all tools in TOOL_ORDER sequence to ensure consistent ordering
-    // This matches the expected order in command-generation.ts TOOL_ORDER array
-    const toolModules = [
-      structureModule,     // 'structure' - should be first (consolidates original + ai-generated)
-      summaryModule,       // 'summary' - should be second
-      chatModule,          // 'chat' - should be third
-      glossaryModule,      // 'glossary' - should be fourth
-      searchModule,        // 'search' - should be fifth
-      highlightsModule,    // 'highlights' - should be sixth
-      metadataModule       // 'metadata' - should be last
-    ]
-    
-    for (const toolModule of toolModules) {
-      if (toolModule.default) {
-        registerTool(toolModule.default, { allowOverwrite: true })
-      }
-    }
-    
-    if (TOOL_REGISTRY_CONFIG.LOG_LEVEL !== 'silent') {
-      console.log('✅ All tool implementations loaded successfully')
-    }
-  } catch (error) {
-    console.error('❌ Failed to load tool implementations:', error)
-    throw error
-  }
+
+// Import each implementation – the side-effect of each import is a
+// registerTool() call, so no additional work is required.
+import './implementations/structure'
+import './implementations/summary'
+import './implementations/chat'
+import './implementations/glossary'
+import './implementations/search'
+import './implementations/highlights'
+import './implementations/metadata'
+
+// Once all tools are imported, lock the registry (only if not locked yet – this
+// file can be imported in both client and server bundles).
+if (!isRegistryLocked()) {
+  lockRegistry()
 }
 
 /**
- * Initialize the tool registry
- * 
- * Loads all tools and locks the registry to prevent late registrations.
- * Should be called during application startup.
+ * Backward-compatibility shim – other parts of the codebase still call
+ * initializeToolRegistry().  Now that registration happens synchronously at
+ * import time, this function simply resolves immediately.  Retaining it avoids
+ * refactors in API routes and tests.
  */
 export async function initializeToolRegistry(): Promise<void> {
-  try {
-    // Load all tool implementations
-    await loadAllTools()
-    
-    // Lock the registry to prevent further registrations
-    lockRegistry()
-    
-    // Log registry statistics (consolidated)
-    if (TOOL_REGISTRY_CONFIG.LOG_LEVEL !== 'silent') {
-      const stats = getRegistryStats()
-      
-      if (TOOL_REGISTRY_CONFIG.LOG_LEVEL === 'verbose') {
-        console.log(`🔧 Tool registry initialized with ${stats.totalTools} tools:`)
-        console.log(`   Categories: ${JSON.stringify(stats.categories)}`)
-        console.log(`   Tools: ${stats.toolIds.join(', ')}`)
-        
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🛠️  Development mode: UNREGISTERED_TOOL_GUARD enabled')
-        }
-      } else {
-        // Normal mode: single consolidated line
-        console.log(`🔧 Tool registry: ${stats.totalTools} tools initialized`)
-      }
-    }
-  } catch (error) {
-    console.error('💥 Failed to initialize tool registry:', error)
-    throw error
-  }
+  // No-op – registry is already initialized.
+  return
 }
 
 /**
@@ -141,18 +85,18 @@ export function validateAllRegisteredTools(): void {
   let hasErrors = false
   let hasWarnings = false
   
-  tools.forEach(tool => {
+  tools.forEach((tool: any) => {
     const validation = validateTool(tool)
     
     if (!validation.isValid) {
       console.error(`❌ Tool validation failed for "${tool.id}":`)
-      validation.errors.forEach(error => console.error(`   - ${error}`))
+      validation.errors.forEach((error: string) => console.error(`   - ${error}`))
       hasErrors = true
     }
     
     if (validation.warnings.length > 0) {
       console.warn(`⚠️  Tool validation warnings for "${tool.id}":`)
-      validation.warnings.forEach(warning => console.warn(`   - ${warning}`))
+      validation.warnings.forEach((warning: string) => console.warn(`   - ${warning}`))
       hasWarnings = true
     }
   })
