@@ -2,6 +2,7 @@
 
 import { useRef } from 'react'
 import { Upload, FilePdf, FileHtml, X } from '@phosphor-icons/react'
+import { UPLOAD_LIMITS, formatUploadLimitMessage } from '@/lib/config/upload-limits'
 
 interface FileUploadSectionProps {
   file: File | null
@@ -34,11 +35,20 @@ export function FileUploadSection({
   const validateFileType = (file: File): boolean => {
     const allowedTypes = ['application/pdf', 'text/html']
     const allowedExtensions = ['.pdf', '.html', '.htm']
-    const maxSize = 50 * 1024 * 1024 // 50MB limit
+    
+    // Check file size based on file type
+    let maxSize: number
+    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+      maxSize = UPLOAD_LIMITS.PDF_MAX_SIZE_BYTES
+    } else if (file.type === 'text/html' || file.name.toLowerCase().endsWith('.html') || file.name.toLowerCase().endsWith('.htm')) {
+      maxSize = UPLOAD_LIMITS.HTML_FILE_UPLOAD_MAX_SIZE_BYTES
+    } else {
+      maxSize = UPLOAD_LIMITS.GENERAL_MAX_SIZE_BYTES
+    }
     
     // Check file size
     if (file.size > maxSize) {
-      onValidationError(`File size (${(file.size / 1024 / 1024).toFixed(1)}MB) exceeds the 50MB limit`)
+      onValidationError(`File size (${(file.size / 1024 / 1024).toFixed(1)}MB) exceeds the ${formatUploadLimitMessage(maxSize)} limit`)
       return false
     }
     
@@ -223,7 +233,7 @@ export function FileUploadSection({
                   or click to browse files
                 </p>
                 <p className={`text-xs ${isDisabled ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Maximum file size: 50MB
+                  Maximum file size: PDF {formatUploadLimitMessage(UPLOAD_LIMITS.PDF_MAX_SIZE_BYTES)}, HTML {formatUploadLimitMessage(UPLOAD_LIMITS.HTML_FILE_UPLOAD_MAX_SIZE_BYTES)}
                 </p>
               </div>
             </div>

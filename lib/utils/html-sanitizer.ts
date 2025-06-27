@@ -12,6 +12,7 @@
  */
 
 import DOMPurify from 'isomorphic-dompurify';
+import { UPLOAD_LIMITS } from '@/lib/config/upload-limits';
 
 /**
  * Academic content sanitization configuration for DOMPurify
@@ -141,9 +142,8 @@ export function sanitizeAcademicContent(
   }
 
   // Check for extremely large content that might cause memory issues
-  const MAX_HTML_SIZE = 50 * 1024 * 1024 // 50MB
-  if (html.length > MAX_HTML_SIZE) {
-    throw new Error(`HTML content too large (${Math.round(html.length / 1024 / 1024)}MB). Maximum size is ${MAX_HTML_SIZE / 1024 / 1024}MB`)
+  if (html.length > UPLOAD_LIMITS.GENERAL_MAX_SIZE_BYTES) {
+    throw new Error(`HTML content too large (${Math.round(html.length / 1024 / 1024)}MB). Maximum size is ${Math.round(UPLOAD_LIMITS.GENERAL_MAX_SIZE_BYTES / 1024 / 1024)}MB`)
   }
 
   const {
@@ -244,9 +244,8 @@ export function sanitizeUserContent(html: string): string {
   }
 
   // Check for large content that might cause memory issues
-  const MAX_HTML_SIZE = 10 * 1024 * 1024 // 10MB for user content (more restrictive)
-  if (html.length > MAX_HTML_SIZE) {
-    throw new Error(`HTML content too large (${Math.round(html.length / 1024 / 1024)}MB). Maximum size for user content is ${MAX_HTML_SIZE / 1024 / 1024}MB`)
+  if (html.length > UPLOAD_LIMITS.HTML_FILE_UPLOAD_MAX_SIZE_BYTES) {
+    throw new Error(`HTML content too large (${Math.round(html.length / 1024 / 1024)}MB). Maximum size for user content is ${Math.round(UPLOAD_LIMITS.HTML_FILE_UPLOAD_MAX_SIZE_BYTES / 1024 / 1024)}MB`)
   }
 
   try {

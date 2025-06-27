@@ -9,7 +9,7 @@ import { createUrlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
 import { createPdfToHtmlPrompt } from '@/lib/prompts/templates/pdf-to-html-direct'
 import { createClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { getModelForAICall } from '@/lib/config'
+import { getModelForAICall, UPLOAD_LIMITS } from '@/lib/config'
 import { generateHtmlFilename } from '@/lib/utils/slug'
 import { URL_EXTRACTION_CONFIG } from '@/lib/config'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
@@ -120,17 +120,16 @@ async function fetchPdfContent(url: string): Promise<Buffer> {
     
     // Check content length for PDF size limits
     const contentLength = response.headers.get('content-length')
-    const maxPdfSize = 32 * 1024 * 1024 // 32MB limit for Claude API
-    if (contentLength && parseInt(contentLength) > maxPdfSize) {
-      throw new Error('PDF file too large for processing (max 32MB for Claude direct processing)')
+    if (contentLength && parseInt(contentLength) > UPLOAD_LIMITS.PDF_CLAUDE_API_PROCESSING_LIMIT) {
+      throw new Error(`PDF file too large for processing (max ${Math.round(UPLOAD_LIMITS.PDF_CLAUDE_API_PROCESSING_LIMIT / 1024 / 1024)}MB for Claude direct processing)`)
     }
     
     const arrayBuffer = await response.arrayBuffer()
     const pdfBuffer = Buffer.from(arrayBuffer)
     
     // Check actual PDF size
-    if (pdfBuffer.length > maxPdfSize) {
-      throw new Error('PDF file too large for processing (max 32MB for Claude direct processing)')
+    if (pdfBuffer.length > UPLOAD_LIMITS.PDF_CLAUDE_API_PROCESSING_LIMIT) {
+      throw new Error(`PDF file too large for processing (max ${Math.round(UPLOAD_LIMITS.PDF_CLAUDE_API_PROCESSING_LIMIT / 1024 / 1024)}MB for Claude direct processing)`)
     }
     
     // Basic PDF validation - check header

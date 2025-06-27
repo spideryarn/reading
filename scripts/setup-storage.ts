@@ -9,6 +9,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import * as dotenv from 'dotenv'
+import { UPLOAD_LIMITS } from '../lib/config/upload-limits'
 
 // Load environment variables
 dotenv.config({ path: '.env.local' })
@@ -59,7 +60,7 @@ async function setupStorage() {
           'text/html',
           'text/plain'
         ],
-        fileSizeLimit: 50 * 1024 * 1024  // 50MB limit
+        fileSizeLimit: UPLOAD_LIMITS.GENERAL_MAX_SIZE_BYTES
       })
 
       if (createError) {
@@ -174,7 +175,7 @@ async function setupStorage() {
     console.log('\n📊 Storage Configuration Summary:')
     console.log('   Bucket Name: documents')
     console.log('   Privacy: Private (requires authentication)')
-    console.log('   File Size Limit: 50MB')
+    console.log(`   File Size Limit: ${Math.round(UPLOAD_LIMITS.GENERAL_MAX_SIZE_BYTES / 1024 / 1024)}MB`)
     console.log('   Allowed Types: PDF, DOC, DOCX, HTML, TXT')
     console.log('   Path Format: {document-uuid}/original/{filename}')
     console.log('   CDN: Enabled (automatic caching)')

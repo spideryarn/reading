@@ -8,7 +8,7 @@ import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { createUrlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
 import { createClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { getModelForAICall } from '@/lib/config'
+import { getModelForAICall, UPLOAD_LIMITS } from '@/lib/config'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
 import { validateAuth } from '@/lib/auth/server-auth'
 import { processHtmlToDocument, handleSanitizationError } from '@/lib/services/html-document-processor'
@@ -65,10 +65,9 @@ export async function POST(request: NextRequest) {
       return new NextResponse('HTML file is empty', { status: 400 })
     }
 
-    // Check file size (10MB limit for HTML files)
-    const maxHtmlSize = 10 * 1024 * 1024 // 10MB
-    if (htmlContent.length > maxHtmlSize) {
-      return new NextResponse('HTML file too large (max 10MB)', { status: 400 })
+    // Check file size using centralized limits
+    if (htmlContent.length > UPLOAD_LIMITS.HTML_FILE_UPLOAD_MAX_SIZE_BYTES) {
+      return new NextResponse(`HTML file too large (max ${Math.round(UPLOAD_LIMITS.HTML_FILE_UPLOAD_MAX_SIZE_BYTES / 1024 / 1024)}MB)`, { status: 400 })
     }
 
     // Basic HTML validation - check if it contains HTML tags

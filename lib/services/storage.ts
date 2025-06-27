@@ -7,10 +7,10 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { shouldThrowStorageError, getStorageErrorMessage, detectEnvironment } from '@/lib/utils/environment'
+import { UPLOAD_LIMITS } from '@/lib/config'
 
 // Storage configuration constants
 const DOCUMENTS_BUCKET = 'documents'
-const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
 const ALLOWED_MIME_TYPES = [
   'application/pdf',
   'application/msword', 
@@ -53,9 +53,9 @@ export async function uploadDocumentFile(
 ): Promise<StorageUploadResult | null> {
   const supabase = await createClient()
   
-  // Validate file size
-  if (file.size > MAX_FILE_SIZE) {
-    throw new StorageError(`File size ${file.size} exceeds maximum allowed size of ${MAX_FILE_SIZE} bytes`)
+  // Validate file size using centralized limits
+  if (file.size > UPLOAD_LIMITS.GENERAL_MAX_SIZE_BYTES) {
+    throw new StorageError(`File size ${file.size} exceeds maximum allowed size of ${UPLOAD_LIMITS.GENERAL_MAX_SIZE_BYTES} bytes`)
   }
   
   // Validate MIME type (parse base type, ignoring parameters like charset)

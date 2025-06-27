@@ -8,7 +8,7 @@ import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { createPdfToHtmlPrompt } from '@/lib/prompts/templates/pdf-to-html-direct'
 import { createClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { getModelForAICall } from '@/lib/config'
+import { getModelForAICall, UPLOAD_LIMITS } from '@/lib/config'
 import { validateAuth } from '@/lib/auth/server-auth'
 import { processHtmlToDocument, handleSanitizationError } from '@/lib/services/html-document-processor'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
@@ -57,16 +57,13 @@ export async function POST(request: NextRequest) {
       return new NextResponse('PDF file is empty', { status: 400 })
     }
 
-    // Check file size (32MB limit for Claude API, 50MB for storage)
-    const maxApiSize = 32 * 1024 * 1024 // 32MB for API
-    const maxStorageSize = 50 * 1024 * 1024 // 50MB for storage
-    
-    if (pdfBuffer.length > maxStorageSize) {
-      return new NextResponse('PDF file too large (max 50MB)', { status: 400 })
+    // Check file size using centralized limits
+    if (pdfBuffer.length > UPLOAD_LIMITS.PDF_MAX_SIZE_BYTES) {
+      return new NextResponse(`PDF file too large (max ${Math.round(UPLOAD_LIMITS.PDF_MAX_SIZE_BYTES / 1024 / 1024)}MB)`, { status: 400 })
     }
     
-    if (pdfBuffer.length > maxApiSize) {
-      return new NextResponse('PDF file too large for AI processing (max 32MB for Claude direct processing)', { status: 400 })
+    if (pdfBuffer.length > UPLOAD_LIMITS.PDF_CLAUDE_API_PROCESSING_LIMIT) {
+      return new NextResponse(`PDF file too large for AI processing (max ${Math.round(UPLOAD_LIMITS.PDF_CLAUDE_API_PROCESSING_LIMIT / 1024 / 1024)}MB for Claude direct processing)`, { status: 400 })
     }
 
     // Check if it's actually a PDF by looking at the header
