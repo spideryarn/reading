@@ -226,7 +226,7 @@ export function AssistantChat({ documentId, documentContext }: AssistantChatProp
   }
 
   return (
-    <div className="h-full flex flex-col bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div className="flex flex-col bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       {/* Chat header with persistence status and refresh */}
       <div className="px-4 py-2 bg-blue-50 border-b border-blue-100 flex items-center justify-between">
         <div className="text-xs text-blue-700">
