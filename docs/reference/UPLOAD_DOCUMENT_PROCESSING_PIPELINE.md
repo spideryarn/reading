@@ -65,49 +65,49 @@ The system implements **Option A: Smart auto-detection with "use as-is" override
 **Output**: AI-converted HTML content  
 **Methods**:
 - Claude 4 Sonnet (recommended for most PDFs)
-- Gemini 1.5 Pro (better for longer documents)
+- Gemini 2.5 Pro (better for longer documents)
 
 **Storage**:
 - Original PDF stored in Supabase Storage
 - Converted HTML stored in database
 - File metadata tracked for re-processing
 
-## Proposed Upload Matrix (2x2)
+### 3. HTML File Upload ✓ Implemented
 
-The system should support four ingestion scenarios:
+**Input**: Local HTML file upload  
+**Output**: Processed and sanitized HTML content  
+**Methods**:
+- As-is (direct use with sanitization only)
+- Mozilla Readability (content extraction)
+- AI Transcription (high-quality processing)
+
+**Storage**:
+- Original HTML stored in Supabase Storage
+- Processed content stored in database
+- Same processing pipeline as URL extraction
+
+## Upload Matrix (2x2) ✓ Fully Implemented
+
+The system supports four ingestion scenarios:
 
 |                | **URL Input**           | **File Upload**              |
 |----------------|-------------------------|------------------------------|
-| **Need HTML**  | URL → HTML (current)    | HTML file → HTML (proposed)  |
-| **Need PDF**   | URL → PDF (proposed)    | PDF file → HTML (current)    |
+| **Need HTML**  | URL → HTML ✓           | HTML file → HTML ✓         |
+| **Need PDF**   | URL → PDF ✓            | PDF file → HTML ✓           |
 
-### 3. URL → PDF Download (Proposed)
+### 4. URL → PDF Download ✓ Implemented
 
 **Use Case**: User provides URL to a PDF file  
 **Process**:
-1. Detect that URL points to PDF (Content-Type or .pdf extension)
-2. Download PDF file directly
-3. Process as if user uploaded the PDF
+1. Automatic detection that URL points to PDF (Content-Type or .pdf extension)
+2. Download PDF file directly via URL extraction API
+3. Process through existing PDF pipeline
 4. Store original PDF and convert to HTML
 
 **Implementation Notes**:
-- Reuse existing PDF processing pipeline
-- Add PDF detection to URL extraction endpoint
-- Handle large file downloads with progress tracking
-
-### 4. HTML File Upload (Proposed)
-
-**Use Case**: User has local HTML file to import  
-**Process**:
-1. Accept HTML file upload (similar to PDF interface)
-2. Store original HTML file
-3. Apply sanitization for display
-4. No conversion needed - use as-is
-
-**Implementation Notes**:
-- Extend upload interface to accept .html/.htm files
-- Store in same pattern as PDF uploads
-- Apply same sanitization as URL-extracted HTML
+- Integrated into `/api/extract-url` endpoint
+- Automatic content type detection and routing
+- Seamless user experience (no manual format selection needed)
 
 ## Upload Processing Pipeline
 
@@ -206,6 +206,12 @@ Page limits help ensure reasonable processing times for AI analysis.
 - **URL extraction**: 500KB (optimized for LLM token limits and web performance)
 - **HTML file uploads**: 10MB (generous for academic papers with embedded content)
 - **Sanitizer memory protection**: 50MB academic content, 10MB user content (internal limits)
+
+**URL Extraction Configuration** (from `URL_EXTRACTION_CONFIG`):
+- **Content size limit**: 500KB extracted HTML
+- **Timeout**: 10 seconds for content fetching
+- **User agent**: Mozilla/5.0 (academic content compatibility)
+- **Auto-retry**: Built-in error handling with suggested alternatives
 
 **Platform Constraints**:
 - **Vercel API routes**: 4.5MB hard limit for request/response payloads (affects current implementation)
@@ -306,34 +312,33 @@ Content-Security-Policy:
 - `POST /api/upload-pdf` - PDF file upload
 - `POST /api/extract-url` - URL content extraction
 - `GET /api/documents/[slug]/original` - Download original file
-- **Proposed**: `POST /api/upload-html` - HTML file upload
+- `POST /api/upload-html` - HTML file upload ✓ Implemented
 
 ### Frontend Interface
 
-Current unified "Add Document" page (`/upload`) supports:
-- Radio selection between URL and PDF upload
-- Extraction method selection (for URLs)
-- Provider selection (Claude vs Gemini)
-- Drag-and-drop for file uploads
+Current unified "Add Document" page (`/upload`) implements smart input detection:
+- **Smart input detection**: Automatically detects input type (URL, PDF, HTML)
+- **Mutual exclusivity**: URL input clears file selection and vice versa
+- **Dynamic processing options**: Available methods adjust based on input type
+- **Unified submission**: Single interface handles all upload types
+- **Drag-and-drop support**: For both PDF and HTML file uploads
+- **Real-time validation**: Input validation with contextual error messages
 
-Proposed additions:
-- Accept .html/.htm in file picker
-- Auto-detect PDF URLs and handle appropriately
-- "Use as-is" option for HTML files
+**Processing Method Availability**:
+- **URLs**: Readability, AI Transcription (auto-detects and routes PDF URLs)
+- **PDF files**: AI Transcription only
+- **HTML files**: As-is, Readability, AI Transcription
+
+**Provider Selection**: Claude vs Gemini for AI processing methods
 
 ## Future Enhancements
 
 ### Near-term Improvements
 
-1. **HTML File Upload**
-   - Extend file picker to accept HTML
-   - Apply same sanitization pipeline
-   - Store original and processed versions
-
-2. **URL → PDF Download**  
-   - Detect PDF URLs automatically
-   - Download and process as uploaded PDF
-   - Handle large files with progress
+1. **Batch Upload Processing**
+   - Multiple file upload support
+   - Queue management for large batches
+   - Progress tracking across multiple documents
 
 3. **Re-processing Capability**
    - UI to re-process stored originals
