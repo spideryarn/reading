@@ -13,12 +13,13 @@ import {
   type ThreadMessageLike,
 } from "@assistant-ui/react";
 import { type TextContentPartComponent } from "@assistant-ui/react/dist/types/ContentPartComponentTypes";
-import { User, Robot, PaperPlaneTilt, CircleNotch, ArrowClockwise } from '@phosphor-icons/react';
+import { User, Robot, PaperPlaneTilt, CircleNotch, ArrowClockwise, Trash } from '@phosphor-icons/react';
 import { usePersistentChat } from '@/src/lib/hooks/usePersistentChat';
 import { Button } from '@/components/ui/button'
 import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 import { useChatUrlState } from '@/lib/tools/hooks/use-tool-url-state';
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
+import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover';
 
 interface AssistantChatProps {
   documentId: string;
@@ -171,12 +172,17 @@ function ChatRuntime({ adapter, initialMessages }: { adapter: ChatModelAdapter; 
 export function AssistantChat({ documentId, documentContext }: AssistantChatProps) {
   const { conversationId, setConversation } = useChatUrlState();
   
+  // Handle thread deletion by clearing URL state
+  const handleThreadDeleted = useCallback(() => {
+    setConversation(null);
+  }, [setConversation]);
+  
   // Build props for usePersistentChat, omitting conversationId when undefined to satisfy exactOptionalPropertyTypes
   const persistentChatProps = conversationId
-    ? { documentId, documentContext, conversationId }
-    : { documentId, documentContext };
+    ? { documentId, documentContext, conversationId, onThreadDeleted: handleThreadDeleted }
+    : { documentId, documentContext, onThreadDeleted: handleThreadDeleted };
 
-  const { chatModelAdapter, initialMessages, isLoaded, threadId, error, isRefreshing, refreshMessages, runtimeKey } =
+  const { chatModelAdapter, initialMessages, isLoaded, threadId, error, isRefreshing, refreshMessages, deleteThread, runtimeKey } =
     usePersistentChat(persistentChatProps);
   
   // Sync threadId to URL when it changes
@@ -227,7 +233,7 @@ export function AssistantChat({ documentId, documentContext }: AssistantChatProp
 
   return (
     <div className="flex flex-col bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      {/* Chat header with persistence status and refresh */}
+      {/* Chat header with persistence status and actions */}
       <div className="px-4 py-2 bg-blue-50 border-b border-blue-100 flex items-center justify-between">
         <div className="text-xs text-blue-700">
           {threadId ? (
@@ -239,22 +245,45 @@ export function AssistantChat({ documentId, documentContext }: AssistantChatProp
             <span className="text-blue-600">Ready to chat</span>
           )}
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={refreshMessages}
-          disabled={isRefreshing}
-          className="h-6 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
-        >
-          <ArrowClockwise 
-            size={12} 
-            weight="bold" 
-            className={isRefreshing ? "animate-spin" : ""} 
-          />
-          <span className="ml-1 text-xs">
-            {isRefreshing ? "Refreshing..." : "Refresh"}
-          </span>
-        </Button>
+        <div className="flex items-center gap-1">
+          <TooltipOrPopover
+            content="Check for chat update from the database"
+            side="bottom"
+            sideOffset={4}
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={refreshMessages}
+              disabled={isRefreshing}
+              className="h-6 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
+            >
+              <ArrowClockwise 
+                size={12} 
+                weight="bold" 
+                className={isRefreshing ? "animate-spin" : ""} 
+              />
+            </Button>
+          </TooltipOrPopover>
+          {threadId && (
+            <TooltipOrPopover
+              content="Delete this conversation and start fresh"
+              side="bottom"
+              sideOffset={4}
+              showIndicator={false}
+            >
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={deleteThread}
+                disabled={isRefreshing}
+                className="h-6 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash size={12} weight="bold" />
+              </Button>
+            </TooltipOrPopover>
+          )}
+        </div>
       </div>
       
       <ChatRuntime key={runtimeKey} adapter={chatModelAdapter} initialMessages={initialMessages} />
