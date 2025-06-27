@@ -185,6 +185,13 @@ async function executeLocalTool(
 
 /**
  * Handle navigation action (tool opening)
+ * 
+ * This function returns a navigation result that can be handled by the caller.
+ * The actual navigation is handled by the useToolExecutorWithNavigation hook
+ * which processes navigation results and updates the URL state appropriately.
+ * 
+ * This approach keeps the executor agnostic about navigation specifics while
+ * providing the necessary information for navigation to occur.
  */
 function handleNavigationAction(
   tool: Tool,
@@ -192,15 +199,14 @@ function handleNavigationAction(
   context: ExecutionContext,
   startTime: number
 ): ToolExecutionResult {
-  // Note: In a real implementation, this would integrate with the navigation system
-  // For now, we return a mock navigation result
-  // This would call getNavigateToTab() and update URL state
-  
+  // Return navigation result with all necessary information
+  // The actual navigation will be handled by the useToolExecutorWithNavigation hook
   return {
     type: 'navigation',
     data: {
       tab: tool.tabId,
-      parameters
+      parameters,
+      success: true
     },
     metadata: {
       toolId: tool.id,

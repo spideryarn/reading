@@ -62,7 +62,8 @@ describe('Tool Execution Framework', () => {
       expect(result.metadata.toolId).toBe('test-tool')
       expect(result.data).toEqual({
         tab: 'test',
-        parameters: { param1: 'value1' }
+        parameters: { param1: 'value1' },
+        success: true
       })
     })
 
