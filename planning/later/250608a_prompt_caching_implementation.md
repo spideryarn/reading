@@ -35,10 +35,13 @@ Spideryarn Reading processes documents through multiple AI operations (summaries
 - **Minimum 1024 tokens**: Ensure cached prefix meets Anthropic's minimum requirement
 
 ### Architecture Decisions
+- **Document-level caching**: Single cache per document (not tool-specific) for simplicity and effectiveness
+- **Page load cache timing**: Cache document prefix synchronously on page load before tools are available
+- **Developer-driven cache annotation**: Tools must be explicitly annotated with cache behavior rather than automatic detection
 - **Explicit caching control**: Add `enableCaching` parameter to force conscious decision by callers
 - **Shared template component**: Create `document-prefix.njk` for consistency across templates
-- **No default value**: Require explicit caching decision to prevent accidental misuse
-- **Preserve template flexibility**: Maintain ability to use templates without caching where appropriate
+- **Standardized document format**: All tools use `<document_html>{{ html_content }}</document_html>` wrapper
+- **Automatic cache invalidation**: Tools marked with `requiresCacheRefresh: true` automatically trigger cache updates
 
 ### Cost-Benefit Analysis
 - **Document operations**: Glossary + headings + summaries benefit from shared cache
@@ -47,36 +50,96 @@ Spideryarn Reading processes documents through multiple AI operations (summaries
 
 ## Actions
 
+### Stage: Format Standardization Prerequisites
+
+#### Substage: Standardize Variable Wrapper Tags
+- [ ] Update all document-processing templates to use consistent wrapper tag `<document_html>{{ html_content }}</document_html>`:
+  - [ ] `glossary.njk` - Change from `<document>{{ content }}</document>` to `<document_html>{{ html_content }}</document_html>`
+  - [ ] `summarise.njk` - Change from `<text>{{ content }}</text>` to `<document_html>{{ html_content }}</document_html>`
+  - [ ] `multi-summarise.njk` - Change from `<document>{{ content }}</document>` to `<document_html>{{ html_content }}</document_html>`
+  - [ ] `reading-difficulty.njk` - Change from `<document>{{ content }}</document>` to `<document_html>{{ html_content }}</document_html>`
+  - [ ] `chat.njk` - Change from `<document_context>{{ documentContext }}</document_context>` to `<document_html>{{ html_content }}</document_html>`
+  - [ ] `headings.njk` - Already uses `<html_content>{{ html_content }}</html_content>`, change to `<document_html>{{ html_content }}</document_html>`
+- [ ] Update corresponding API route handlers to pass `html_content` parameter consistently instead of mixed `content`/`documentContext` names
+- [ ] Test each template to ensure functionality is preserved with new wrapper tags
+- [ ] Run existing tests to verify no regressions
+
+#### Substage: Investigate Semantic Search HTML Format Compatibility
+- [ ] Examine current semantic search implementation:
+  - [ ] Review `formatDocumentForSemanticSearch()` function in detail
+  - [ ] Understand why annotated format `[elem_id] text` was chosen over standard HTML
+  - [ ] Test semantic search accuracy with element IDs embedded in HTML vs annotated format
+- [ ] Research alternative approaches:
+  - [ ] Can semantic search work with HTML element IDs preserved in standard format?
+  - [ ] Would using CSS selectors or XPath be more effective than current annotation?
+  - [ ] Test search relevance and accuracy with standard HTML format
+- [ ] Document findings and recommendation:
+  - [ ] If standard HTML works well, plan migration to `<document_html>{{ html_content }}</document_html>`
+  - [ ] If annotated format is significantly better, keep semantic search separate from caching
+  - [ ] Consider hybrid approach where search can use either format
+
+#### Substage: Adapt Structure/Headings Tool to Standard HTML
+- [ ] Remove `removeExistingHeadings()` preprocessing from structure handler
+- [ ] Update `headings.njk` template to work with HTML that includes existing headings:
+  - [ ] Modify prompt to instruct Claude to "review existing headings and improve/replace them as needed"
+  - [ ] Add instruction to "remove headings that aren't useful and add missing ones"
+  - [ ] Test that Claude can effectively handle documents with existing heading structure
+- [ ] Update structure tool workflow:
+  - [ ] Ensure it uses standard `html_content` parameter like other tools
+  - [ ] Verify it uses `<document_html>{{ html_content }}</document_html>` wrapper
+- [ ] Test structure generation with various document types to ensure quality is maintained
+- [ ] Update tests for new prompt approach
+
 ### Stage: Investigate document format consistency across templates
-- [ ] Examine all document-processing templates to identify document format variations:
-  - [ ] Check if some use HTML format
-  - [ ] Check if some use plaintext format
-  - [ ] Check if some use markdown with element IDs (e.g., semantic search)
-  - [ ] Document findings about format inconsistencies
-- [ ] If significant variations found, STOP and discuss with user about:
-  - Whether to standardize on single format
-  - Which format would be most appropriate
-  - Migration strategy for templates using different formats
-- [ ] Only proceed with implementation after format question is resolved
+- [x] ✅ **COMPLETED** - Examination revealed significant format inconsistencies:
+  - [x] **Found**: Mixed wrapper tags (`<document>`, `<text>`, `<html_content>`, `<content>`, `<document_context>`)
+  - [x] **Found**: Variable parameter names (`content`, `html_content`, `documentContext`)
+  - [x] **Found**: Semantic search uses unique annotated format `[elem_id] text`
+  - [x] **Found**: Structure tool strips existing headings via `removeExistingHeadings()`
+  - [x] **Decision**: Standardize on `<document_html>{{ html_content }}</document_html>` format
+  - [x] **Decision**: Address inconsistencies through Format Standardization Prerequisites stages above
 
 ### Stage: Create common document prefix template
 - [ ] Create `lib/prompts/templates/partials/document-prefix.njk` with standardized structure:
   - Role definition for Claude as research assistant
-  - Document wrapper with clear delineation
+  - Document wrapper: `<document_html>{{ html_content }}</document_html>`
   - Ensure minimum 1024 tokens for Anthropic caching
 - [ ] Test token count to verify meets minimum requirements
 - [ ] Research and implement best practices for cache-friendly prompt structure
 
-### Stage: Update LLM provider to support caching
+### Stage: Document-Level Cache Management System
+
+#### Substage: Implement Page Load Caching
+- [ ] Add document-level cache creation on page load:
+  - [ ] Implement `cacheDocumentPrefix()` function in document viewer
+  - [ ] Cache creation happens synchronously as part of page load before tools are available
+  - [ ] Use document-level caching approach (not tool-specific)
+  - [ ] Cache key: `document-{id}-prefix` for simple management
+- [ ] Create cache management utilities:
+  - [ ] `lib/services/document-cache.ts` - Document prefix cache operations
+  - [ ] `createDocumentCache(documentId, htmlContent)` - Initial cache creation
+  - [ ] `refreshDocumentCache(documentId, htmlContent)` - Cache invalidation/refresh
+  - [ ] `getDocumentCache(documentId)` - Cache retrieval for tool operations
+
+#### Substage: Tool Cache Configuration System
+- [ ] Extend tool registry to support cache metadata:
+  - [ ] Update `lib/tools/types.ts` to include `cacheConfig` interface
+  - [ ] Add `mutatesDocument: boolean` flag for tools that modify document content
+  - [ ] Add `requiresCacheRefresh: boolean` flag for tools that should trigger cache reload
+- [ ] Annotate existing tools in tool registry:
+  - [ ] Structure tool: `mutatesDocument: true, requiresCacheRefresh: true`
+  - [ ] All other tools: `mutatesDocument: false, requiresCacheRefresh: false`
+- [ ] Document cache configuration guidance:
+  - [ ] Update tool documentation with cache configuration patterns
+  - [ ] Add action to update `docs/reference/TOOL_TEMPLATE_FOR_CREATING_NEW.md` with cache annotation guidance
+
+#### Substage: Update LLM provider to support caching
 - [ ] Modify `lib/services/llm-provider.ts` to accept `enableCaching` parameter
-- [ ] Add `experimental_cacheHeaders: true` when caching is enabled
+- [ ] Add Anthropic cache control headers when caching is enabled
 - [ ] Update TypeScript types to include caching parameter
 - [ ] Add error handling for caching-related failures
 - [ ] Write unit tests for caching functionality
 - [ ] Run tests to verify provider changes work correctly
-- [ ] Update planning doc with progress
-- [ ] Follow `docs/DEBRIEF_PROGRESS.md` for progress summary
-- [ ] Commit changes following `docs/GIT_COMMITS.md`
 
 ### Stage: Update existing prompt templates
 - [ ] Update templates to use common prefix (excluding chat):
@@ -109,22 +172,38 @@ Spideryarn Reading processes documents through multiple AI operations (summaries
 - [ ] Follow `docs/DEBRIEF_PROGRESS.md` for progress summary
 - [ ] Commit changes following `docs/GIT_COMMITS.md`
 
+### Stage: Automatic Cache Management Integration
+- [ ] Integrate cache management with tool execution:
+  - [ ] Update tool executor to check for cache configuration
+  - [ ] After successful tool execution, check if `requiresCacheRefresh: true`
+  - [ ] If tool mutates document, call `refreshDocumentCache()` automatically
+  - [ ] Add cache refresh to structure tool apply operation
+- [ ] Update tool execution flow:
+  - [ ] Ensure all document-processing tools use cached prefix when `enableCaching: true`
+  - [ ] Add cache hit/miss logging for monitoring effectiveness
+  - [ ] Handle cache failures gracefully (fall back to full prompt)
+
 ### Stage: Integration testing
 - [ ] Test with subagent using Playwright MCP:
   - Upload a document
+  - Verify initial cache creation on page load
   - Generate glossary, headings, summary
-  - Verify caching headers in network requests
-  - Check for performance improvements
-- [ ] Monitor Anthropic/Google API dashboards for cache hit rates
-- [ ] Verify cost reduction in API usage
-- [ ] Test regeneration scenarios to confirm cache benefits
+  - Verify cache refresh after headings tool modifies document
+  - Check for performance improvements and cost reduction
+- [ ] Monitor Anthropic API dashboards for cache hit rates
+- [ ] Test cache invalidation workflow:
+  - Apply AI headings to document
+  - Verify cache is refreshed with new document content
+  - Confirm subsequent operations use updated cache
 - [ ] Document any issues or unexpected behavior
-- [ ] Update planning doc with test results
-- [ ] Follow `docs/DEBRIEF_PROGRESS.md` for progress summary
-- [ ] Commit changes following `docs/GIT_COMMITS.md`
 
 ### Stage: Documentation and cleanup
-- [ ] Update `docs/LLM_PROMPT_TEMPLATES.md` with caching guidance
+- [ ] Update tool documentation with cache configuration guidance:
+  - [ ] Update `docs/reference/TOOL_TEMPLATE_FOR_CREATING_NEW.md` with cache annotation guidance
+  - [ ] Add section on `cacheConfig` interface with `mutatesDocument` and `requiresCacheRefresh` flags
+  - [ ] Provide examples of when to use each cache configuration
+  - [ ] Document developer responsibility for cache annotation decisions
+- [ ] Update `docs/reference/LLM_PROMPT_TEMPLATES.md` with caching guidance
 - [ ] Create brief guide in `docs/` for prompt caching patterns
 - [ ] Document the common prefix structure and rationale
 - [ ] Review all changes for consistency
