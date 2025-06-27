@@ -177,9 +177,16 @@ Current limits are centralized in `lib/config.ts` under `UPLOAD_LIMITS`:
 - **Sanitizer memory protection**: 50MB academic content, 10MB user content (internal limits)
 
 **Platform Constraints**:
-- **Vercel API routes**: 4.5MB hard limit (affects current implementation)
-- **Solution**: Direct browser-to-Supabase uploads bypass Vercel's API route limits
-- **Supabase resumable uploads**: Automatic for files >6MB using TUS protocol
+- **Vercel API routes**: 4.5MB hard limit for request/response payloads (affects current implementation)
+  - **Error**: Returns `413: FUNCTION_PAYLOAD_TOO_LARGE` when exceeded
+  - **Source**: [Vercel Functions Limitations](https://vercel.com/docs/functions/limitations)
+  - **Impact**: Academic PDFs (3-10MB typical) routinely exceed this limit
+  - **Memory limits**: 2GB (Hobby), 4GB max (Pro/Enterprise) - sufficient for processing
+  - **Execution time**: 5min (Hobby), 13min (Pro/Enterprise) - sufficient for processing
+  - **Download limits**: No bandwidth limits for outbound requests from functions
+- **Critical constraint**: The 4.5MB response limit also prevents downloading large files within Vercel functions for processing
+- **Solution**: Direct browser-to-Supabase uploads bypass Vercel's API route limits entirely
+- **Supabase Storage**: 50MB file limit (free tier), resumable uploads >6MB using TUS protocol
 
 #### Typical File Sizes
 Based on research for 100-page PDF limit:
