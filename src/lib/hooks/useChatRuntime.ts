@@ -28,12 +28,20 @@ export function useChatRuntime({ documentContext }: UseChatRuntimeProps) {
 
       let res;
       try {
-        res = await fetch('/api/chat', {
+        res = await fetch('/api/tools/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            messages: conversationHistory,
-            documentContext,
+            action: 'execute',
+            parameters: {
+              messages: conversationHistory,
+              documentContext,
+            },
+            metadata: {
+              correlationId: crypto.randomUUID(),
+              source: 'chat-component',
+              timestamp: new Date().toISOString()
+            }
           }),
           signal: abortSignal,
         });

@@ -135,7 +135,7 @@ export function HighlightManagement({
   // Fetch query history from API
   const fetchQueryHistory = useCallback(async () => {
     try {
-      const response = await fetch(`/api/semantic-search?documentId=${encodeURIComponent(documentId)}`)
+      const response = await fetch(`/api/tools/search?documentId=${encodeURIComponent(documentId)}`)
       const data = await response.json()
       
       if (!response.ok) {
@@ -163,7 +163,7 @@ export function HighlightManagement({
     }
   }, [clearSemanticHighlights])
 
-  // Create highlights using semantic search API
+  // Create highlights using unified search API
   const createHighlights = useCallback(async (query: string) => {
     // Clear any previous state
     setError(null)
@@ -172,14 +172,22 @@ export function HighlightManagement({
     setHighlightsCachedAt(null)
 
     try {
-      const response = await fetch('/api/semantic-search', {
+      const response = await fetch('/api/tools/search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          query,
-          documentId
+          action: 'execute',
+          parameters: {
+            query,
+            documentId
+          },
+          metadata: {
+            correlationId: crypto.randomUUID(),
+            source: 'component',
+            timestamp: new Date().toISOString()
+          }
         })
       })
 

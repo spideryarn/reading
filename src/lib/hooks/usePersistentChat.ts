@@ -180,10 +180,18 @@ export function usePersistentChat({
       };
       
       try {
-        const res = await fetch('/api/chat', {
+        const res = await fetch('/api/tools/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestPayload),
+          body: JSON.stringify({
+            action: 'execute',
+            parameters: requestPayload,
+            metadata: {
+              correlationId: crypto.randomUUID(),
+              source: 'chat-component',
+              timestamp: new Date().toISOString()
+            }
+          }),
           signal: abortSignal,
         });
 

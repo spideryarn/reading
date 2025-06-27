@@ -39,7 +39,16 @@ const chatTool: Tool = {
   },
   
   // URL State Integration
-  urlStateKeys: ['conversation']
+  urlStateKeys: ['conversation'],
+  
+  // Execution Framework Configuration
+  executorConfig: {
+    apiEndpoint: '/api/tools/chat',
+    timeout: 60000, // 60 seconds for AI chat operations
+    supportedActions: ['send', 'execute', 'create', 'get', 'list', 'delete'],
+    requiresAuth: true,
+    cacheable: false // Chat responses should not be cached
+  }
 }
 
 // Register the tool on module load

@@ -39,7 +39,14 @@ const searchTool: Tool = {
   },
   
   // URL State Integration
-  urlStateKeys: ['q', 'type', 'case']
+  urlStateKeys: ['q', 'type', 'case'],
+  
+  // Executor Framework Configuration
+  executorConfig: {
+    timeout: 60000, // 60 seconds for semantic search with LLM processing
+    apiEndpoint: '/api/tools/search',
+    supportedOperations: ['search', 'history', 'delete']
+  }
 }
 
 // Register the tool on module load

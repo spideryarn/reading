@@ -39,7 +39,15 @@ const highlightsTool: Tool = {
   },
   
   // URL State Integration
-  urlStateKeys: ['highlight']
+  urlStateKeys: ['highlight'],
+  
+  // Execution Framework Configuration
+  executorConfig: {
+    timeout: 60000, // 60 seconds for AI operations
+    supportedActions: ['execute', 'get', 'delete'],
+    requiresAuth: true,
+    requiresDocument: true
+  }
 }
 
 // Register the tool on module load

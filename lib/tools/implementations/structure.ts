@@ -40,7 +40,16 @@ const structureTool: Tool = {
   },
   
   // URL State Integration
-  urlStateKeys: []
+  urlStateKeys: [],
+  
+  // Executor Configuration
+  executorConfig: {
+    apiEndpoint: '/api/tools/structure',
+    timeout: 90000, // 90 seconds for AI generation (can be slow)
+    supportedActions: ['execute', 'generate', 'apply', 'get', 'delete', 'refresh'],
+    requiresAuth: true,
+    cacheable: true
+  }
 }
 
 // Register the tool on module load

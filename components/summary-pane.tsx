@@ -41,7 +41,7 @@ export function SummaryPane({
         params.append('granularity', granularity)
       }
       
-      const response = await fetch(`/api/summarise?${params}`)
+      const response = await fetch(`/api/tools/summary?${params}`)
       if (!response.ok) {
         console.error('Failed to fetch cached summary:', response.status)
         return null
@@ -60,15 +60,23 @@ export function SummaryPane({
       setSummaryError('')
       setShowSummaryButton(false)
       
-      const response = await fetch('/api/summarise', {
+      const response = await fetch('/api/tools/summary', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          content, 
-          documentId,
-          granularity 
+        body: JSON.stringify({
+          action: 'execute',
+          parameters: {
+            content,
+            documentId,
+            granularity
+          },
+          metadata: {
+            correlationId: crypto.randomUUID(),
+            source: 'summary-pane',
+            timestamp: new Date().toISOString()
+          }
         }),
       })
 
@@ -110,7 +118,7 @@ export function SummaryPane({
           params.append('granularity', granularity)
         }
         
-        const deleteResponse = await fetch(`/api/summarise?${params}`, {
+        const deleteResponse = await fetch(`/api/tools/summary?${params}`, {
           method: 'DELETE'
         })
         
