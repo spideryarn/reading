@@ -29,6 +29,12 @@ Use this to capture conversations that are:
 - Technical details that can be summarized
 - Back-and-forth that reaches the same conclusion
 
+**Don't hallucinate:**
+- If the user specifically asks you to add more detail, then include more information from the conversation, but *only* draw on the conversation - don't spuriously invent extra stuff that hadn't already been said.
+- Even in this case, avoid waffle or stating the obvious.
+- If it's not possible to add any more detail, just say so.
+
+
 ### Source Preservation
 Always capture:
 - Links to external sources mentioned
