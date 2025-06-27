@@ -296,11 +296,11 @@ case "$MODE" in
         # Wait a moment and verify it started
         sleep 2
         if is_process_running "$dev_server_pid"; then
-            echo "✅ Daemon started successfully (PID: $dev_server_pid)"
+            echo "✅ Daemon started successfully (PID: $dev_server_pid) at $(date)"
             echo "   Use --status to check health, --stop to stop"
             exit 0
         else
-            echo "❌ Daemon failed to start"
+            echo "❌ Daemon failed to start at $(date)"
             rm -f "$SYR_DEVSERVER_PIDFILE"
             exit 1
         fi
@@ -317,6 +317,9 @@ case "$MODE" in
             # Use robust port-based process killing
             kill_port_processes "$PORT" "existing dev server"
         fi
+        
+        # Set up trap to output timestamp when dev server exits
+        trap 'echo "📅 Dev server finished at $(date)"' EXIT
         
         # Run the original dev command in foreground
         npm run db:types --silent && PATH="/opt/homebrew/bin:$PATH" dotenv -e .env.local -- next dev > dev.log 2>&1
