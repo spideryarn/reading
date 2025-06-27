@@ -21,7 +21,7 @@ import { loadPromptTemplateFromCaller } from '../types'
 
 // Schema for individual heading generation
 export const headingSchema = z.object({
-  id_of_after: z.string().min(1, 'Element ID cannot be empty'),
+  insertNewBeforeExistingId: z.string().min(1, 'Element ID cannot be empty'),
   html: z.string().min(1, 'HTML content cannot be empty').regex(
     /^<h[1-6][^>]*>.*<\/h[1-6]>$/,
     'HTML must be a valid heading element (h1-h6)'
