@@ -10,12 +10,12 @@
 
 import { registerTool } from '../registry'
 import { Tag } from '@phosphor-icons/react/dist/ssr'
-import type { Tool } from '../types'
+import type { ExecutableTool } from '../executor/types'
 
 /**
- * Metadata tool definition
+ * Metadata tool definition with execution framework configuration
  */
-const metadataTool: Tool = {
+const metadataTool: ExecutableTool = {
   // Identity & Metadata
   id: 'metadata',
   name: 'Metadata',
@@ -39,7 +39,29 @@ const metadataTool: Tool = {
   },
   
   // URL State Integration
-  urlStateKeys: []
+  urlStateKeys: [],
+  
+  // Execution Framework Configuration
+  apiEndpoint: {
+    route: 'metadata',
+    methods: ['GET', 'POST', 'DELETE'],
+    cacheable: true,
+    requiresAuth: true,
+    timeout: {
+      default: 30000,    // 30 seconds for standard operations
+      ai: 45000,         // 45 seconds for reading difficulty analysis
+      analysis: 60000    // 60 seconds for complex document analysis
+    }
+  },
+  preferredExecution: 'server',
+  localOperations: ['open'],
+  serverOperations: ['execute', 'refresh', 'analyze-reading-difficulty'],
+  timeouts: {
+    default: 30000,
+    ai: 45000,
+    analysis: 60000,
+    upload: 30000      // Not typically used for metadata
+  }
 }
 
 // Register the tool on module load
