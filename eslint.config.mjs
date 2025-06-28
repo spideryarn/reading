@@ -41,7 +41,7 @@ const eslintConfig = [
     files: ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"],
     rules: {
       // Tests need flexibility for mocking complex external libraries
-      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-explicit-any": "off", // Allow any types in tests for mocking flexibility
       "@typescript-eslint/no-unused-vars": "warn",
       "@typescript-eslint/no-require-imports": "warn",
       "@typescript-eslint/no-unused-expressions": "warn",
