@@ -1,10 +1,10 @@
-# Tool Creation Template
+# Tool Architecture and Development Guide
 
-This document provides a comprehensive template for creating new tools in Spideryarn Reading, covering UI integration, cross-pane communication, persistence, and all necessary implementation steps.
+This document provides comprehensive guidance for understanding tool architecture and creating new tools in Spideryarn Reading, covering the unified registry system, UI integration, cross-pane communication, persistence, and all implementation steps.
 
 ## See also
-
-- `docs/reference/ARCHITECTURE_FOR_TOOLS.md` - **NEW**: Unified tool registry architecture and implementation patterns
+- `docs/reference/TOOL_GLOSSARY.md` - Example of analysis tool implementation with LLM integration
+- `docs/reference/TOOL_EXECUTION_FRAMEWORK.md` - Framework for executing tools with unified API endpoints
 - `docs/reference/TOOL_GLOSSARY.md` - Example of analysis tool implementation with LLM integration
 - `docs/reference/TOOL_READING_DIFFICULTY.md` - Example of AI-powered assessment tool with JSON output and UI enhancements
 - `docs/reference/TOOL_SEARCH_TEXT.md` - Example of search functionality with real-time UI updates
@@ -17,6 +17,180 @@ This document provides a comprehensive template for creating new tools in Spider
 - `components/unified-left-pane.tsx` - Main pane implementation for reference
 - `components/vertical-icon-nav.tsx` - Icon navigation system integration
 - `components/command-palette.tsx` - Command registration patterns
+
+# Part 1: Tool Architecture Overview
+
+## Tool System Architecture
+
+This section defines the unified tool architecture for Spideryarn Reading, providing a centralized registry system for all document tools. This architecture replaces the previous hardcoded approach with a type-safe, discoverable system.
+
+## Tool Interface Definition
+
+### Core Tool Interface
+
+```typescript
+interface Tool {
+  // Identity & Metadata
+  id: string                    // Unique identifier (e.g., 'glossary')
+  name: string                  // Display name (e.g., 'Glossary')
+  description: string           // For command palette and tooltips
+  category: ToolCategory        // Categorization for organization
+  icon: ComponentType<IconProps> // Phosphor icon component
+  
+  // UI Integration
+  componentPath: string         // Path to lazy-load component
+  tabId: TabValue              // ID for tab navigation system
+  shortcuts?: string[]         // Keyboard shortcuts (['Cmd+5', 'Ctrl+5'])
+  keywords?: string[]          // Additional search terms for command palette
+  
+  // Behavior Configuration
+  requiresDocument: boolean    // Can only run with document context
+  autoLoad?: boolean          // Load immediately on tab activation
+  capabilities?: ToolCapabilities
+  
+  // URL State Integration
+  urlStateKeys?: (keyof ToolUrlState)[]  // Which URL parameters this tool uses
+}
+```
+
+### Tool Categories
+
+```typescript
+type ToolCategory = 
+  | 'navigation'    // Document viewing and navigation (Original, AI-Generated, Summary)
+  | 'analysis'      // Content analysis tools (Glossary, Metadata)
+  | 'generation'    // AI-powered content generation (Summary, Highlights)
+  | 'interactive'   // Interactive interfaces (Chat, Search)
+```
+
+### Tool Capabilities
+
+```typescript
+interface ToolCapabilities {
+  search?: boolean             // Supports internal search
+  export?: boolean            // Can export data
+  realtime?: boolean          // Updates in real-time
+  collaborative?: boolean     // Supports multi-user features
+}
+```
+
+## Registry Integration
+
+### Tool Registration
+
+```typescript
+// lib/tools/implementations/example.ts
+import { registerTool } from '@/lib/tools/registry'
+import { MagnifyingGlass } from '@phosphor-icons/react/dist/ssr'
+
+const exampleTool: Tool = {
+  id: 'example',
+  name: 'Example Tool',
+  description: 'Demonstrates tool architecture patterns',
+  category: 'analysis',
+  icon: MagnifyingGlass,
+  
+  componentPath: '@/components/tools/ExampleTool',
+  tabId: 'example',
+  shortcuts: ['Cmd+9', 'Ctrl+9'],
+  keywords: ['demo', 'test', 'example'],
+  
+  requiresDocument: true,
+  autoLoad: false,
+  capabilities: {
+    search: true,
+    export: false
+  },
+  
+  urlStateKeys: ['exampleParam', 'exampleFlag']
+}
+
+registerTool(exampleTool)
+```
+
+### Registry Usage
+
+```typescript
+// In components that need tool information
+import { getTool, getAllTools } from '@/lib/tools/registry'
+
+// Get specific tool
+const glossaryTool = getTool('glossary')
+if (!glossaryTool) {
+  console.error('Glossary tool not registered!')
+  return null
+}
+
+// Get all tools in a category
+const analysisTools = getAllTools().filter(tool => tool.category === 'analysis')
+```
+
+## Command Palette Integration
+
+Tools automatically generate command palette entries through the dynamic generation system implemented in `lib/tools/command-generation.ts`. This replaces all hardcoded command definitions.
+
+### Dynamic Command Generation
+
+```typescript
+// Auto-generated from tool definition via generateCommandsFromRegistry()
+{
+  id: `nav-${tool.id}`,
+  name: tool.name,
+  shortcut: tool.shortcuts,
+  keywords: tool.keywords || [],
+  category: {
+    id: 'navigation',
+    name: 'Navigation', 
+    priority: 1
+  },
+  icon: tool.icon,
+  action: () => navigateToTab(tool.tabId),
+  condition: () => !tool.requiresDocument || !!getCurrentDocument()
+}
+```
+
+### Key Features
+
+- **Zero hardcoding**: All tool commands generated dynamically from registry
+- **Conflict detection**: Duplicate shortcuts throw errors, duplicate keywords log warnings
+- **Keyword search**: Tools searchable by name, description words, and explicit keywords
+- **Platform support**: Automatic ⌘/Ctrl transformation for Mac/PC
+- **Conditional availability**: Document-dependent tools only show when document loaded
+
+### Command Generation Process
+
+1. **Registry scan**: `generateCommandsFromRegistry()` iterates through all registered tools
+2. **Conflict detection**: Validates no duplicate shortcuts exist
+3. **Command creation**: Transforms each tool into command palette format
+4. **Integration**: Commands merged with non-tool commands (app navigation, account)
+5. **Search support**: Keywords enable semantic discovery (e.g., "digest" → Summary tool)
+
+## Current Tool Implementations
+
+### Navigation Tools
+
+| Tool | ID | Description | Shortcuts |
+|------|----|----|-----------||
+| Original Document | `original` | Document with original headings | `Cmd+1`, `Ctrl+1` |
+| AI-Generated Headings | `ai-generated` | Enhanced document with AI headings | `Cmd+2`, `Ctrl+2` |
+| Summary | `summary` | Hierarchical document summaries | `Cmd+3`, `Ctrl+3` |
+
+### Interactive Tools
+
+| Tool | ID | Description | Shortcuts |
+|------|----|----|-----------||
+| Chat | `chat` | AI conversation interface | `Cmd+4`, `Ctrl+4` |
+| Search | `search` | Text and semantic search | `Cmd+6`, `Ctrl+6` |
+
+### Analysis Tools
+
+| Tool | ID | Description | Shortcuts |
+|------|----|----|-----------||
+| Glossary | `glossary` | Key terms and entities | `Cmd+5`, `Ctrl+5` |
+| Highlights | `highlights` | Semantic highlighting system | `Cmd+7`, `Ctrl+7` |
+| Metadata | `metadata` | Document information panel | `Cmd+8`, `Ctrl+8` |
+
+# Part 2: Tool Development Guide
 
 ## Key Principles for Tool Development
 
@@ -89,7 +263,7 @@ This document provides a comprehensive template for creating new tools in Spider
 
 - [ ] **Register tool with unified registry** ⭐ NEW
   - [ ] Create tool definition in `lib/tools/implementations/[tool-name].ts`
-  - [ ] Define Tool interface with all required properties (see `ARCHITECTURE_FOR_TOOLS.md`)
+  - [ ] Define Tool interface with all required properties (see Part 1 above)
   - [ ] Register tool using `registerTool()` function
   - [ ] Add to registry loader for automatic discovery
   - [ ] Test tool appears in registry with `getTool()` function
@@ -535,6 +709,87 @@ export async function POST(request: NextRequest) {
 - [ ] Memoized components to prevent unnecessary re-renders
 - [ ] Proper cleanup of event listeners and timers
 - [ ] Tested with maximum document sizes
+
+## Testing Considerations
+
+### Registry Testing
+- Test tool registration and retrieval
+- Verify conflict detection for duplicate IDs/shortcuts
+- Test registry reset for test isolation
+
+### Component Testing
+- Mock tool registry in component tests
+- Test tool loading and error states
+- Verify URL state integration
+
+### Integration Testing
+- Test full tool workflow (registration → discovery → rendering)
+- Verify command palette generation
+- Test cross-pane communication
+
+## Error Handling
+
+### Registration Errors
+- Duplicate tool IDs
+- Invalid component paths
+- Missing required fields
+- Shortcut conflicts
+
+### Runtime Errors
+- Component loading failures
+- URL state validation errors
+- Cross-pane communication failures
+
+### Development Guards
+- `UNREGISTERED_TOOL_GUARD` warnings for missing tools
+- Registry lock prevents late registrations
+- Type checking for tool definitions
+
+## Performance Considerations
+
+### Lazy Loading
+- Components loaded on-demand via `componentPath`
+- Registry populated at startup, not runtime
+- URL state hooks only active when tool is visible
+
+### Memory Management
+- Test registry reset prevents pollution
+- Component unmounting clears tool state
+- URL state cleanup on navigation
+
+### Bundle Size
+- Tool components code-split by default
+- Registry metadata minimal (no component code)
+- Icon components imported efficiently
+
+## Security Considerations
+
+### Input Validation
+- All URL parameters validated against schemas
+- Component props type-checked
+- Cross-pane actions restricted to safe operations
+
+### Access Control
+- `requiresDocument` prevents unauthorized tool access
+- Tool capabilities restrict available operations
+- Registry validation prevents malicious tool registration
+
+## Future Enhancements
+
+### Dynamic Tool Loading
+- Plugin architecture for third-party tools
+- Remote tool loading from CDN
+- User-installable tool packages
+
+### Tool Composition
+- Multi-tool workflows
+- Tool-to-tool communication
+- Composite tool interfaces
+
+### Analytics Integration
+- Tool usage tracking
+- Performance monitoring
+- Error reporting and aggregation
 
 ## Future Architecture Considerations
 

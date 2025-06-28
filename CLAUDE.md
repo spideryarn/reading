@@ -304,7 +304,7 @@ Available evergreen documentation in `docs/` - comprehensive signposting by doma
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - Application keyboard shortcuts
 
 **AI Features & Tools**:
-- `docs/reference/TOOL_TEMPLATE_FOR_CREATING_NEW.md` - **CRITICAL**: Comprehensive template for creating new tools, including tool consolidation patterns
+- `docs/reference/TOOL_ARCHITECTURE_AND_DEVELOPMENT_GUIDE.md` - **CRITICAL**: Comprehensive guide for tool architecture and development, including creation patterns and consolidation
 - `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Comprehensive technical guide for integrating the @assistant-ui/react library into the chatbot interface within the Tools pane
 - `docs/reference/TOOL_SUMMARISE.md` - Documents the AI summarise feature that generates hierarchical summaries of document content using LLM analysis at multiple granularity levels
 - `docs/reference/TOOL_GLOSSARY.md` - Documents the glossary feature that extracts key entities from documents using LLM analysis and displays them in a dedicated pane
@@ -337,7 +337,7 @@ Available evergreen documentation in `docs/` - comprehensive signposting by doma
 **Recent Decisions & Planning**: `planning/*.md` for major feature progress tracking and architectural decisions
 
 **Tool Management & Consolidation**:
-- **Tool creation**: Use `docs/reference/TOOL_TEMPLATE_FOR_CREATING_NEW.md` for comprehensive guidance
+- **Tool creation**: Use `docs/reference/TOOL_ARCHITECTURE_AND_DEVELOPMENT_GUIDE.md` for comprehensive guidance
 - **Tool registry**: All tools must be registered in `lib/tools/implementations/[tool-name].ts`
 - **Tool consolidation**: When consolidating tools (like Original + AI-generated → Structure), remove old tool files from registry implementations to prevent duplicate icons in navigation
 - **Common consolidation issue**: If you see duplicate icons in vertical navigation rail, check for old tool files still in `lib/tools/implementations/` directory
