@@ -88,6 +88,22 @@ export interface Tool {
   // URL State Integration (optional)
   /** Which URL parameters this tool uses */
   urlStateKeys?: string[]
+  
+  /** Configuration used by the unified tool executor */
+  executorConfig?: {
+    /** API endpoint that backs this tool (e.g. '/api/tools/chat'). Optional to allow tools resolved purely on the client. */
+    apiEndpoint?: string
+    /** Per-request timeout override (ms) */
+    timeout?: number
+    /** Supported actions accepted by the endpoint */
+    supportedActions?: string[]
+    /** Whether the endpoint requires authenticated user */
+    requiresAuth?: boolean
+    /** Whether successful responses may be cached */
+    cacheable?: boolean
+    /** Additional custom configuration flags (kept loose for forward compatibility) */
+    [key: string]: unknown
+  }
 }
 
 /**
@@ -274,5 +290,6 @@ export type {
   Tool as ToolInterface,
   ToolRegistry as Registry,
   ToolCategory as Category,
-  TabValue as Tab
+  TabValue as Tab,
+  TabValue,
 }
