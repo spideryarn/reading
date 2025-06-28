@@ -249,11 +249,29 @@ case "$MODE" in
         # Check for existing daemon
         cleanup_stale_files
         daemon_pid=$(get_daemon_pid)
+        PORT=$(get_port)
         
+        # Try quick restart first if daemon exists and is healthy
         if [ -n "$daemon_pid" ] && is_process_running "$daemon_pid"; then
-            echo "🔄 Restarting existing daemon (PID: $daemon_pid)"
-            kill_process_gracefully "$daemon_pid" "existing daemon"
-            rm -f "$SYR_DEVSERVER_PIDFILE" "$LOCKFILE"
+            if [ -n "$PORT" ] && is_port_responding "$PORT"; then
+                echo "🔄 Quick restarting healthy daemon (PID: $daemon_pid)"
+                if kill_process_gracefully "$daemon_pid" "existing daemon"; then
+                    rm -f "$SYR_DEVSERVER_PIDFILE" "$LOCKFILE"
+                    # Skip port cleanup since daemon was healthy
+                    echo "✅ Quick restart - skipping port cleanup"
+                    skip_port_cleanup=true
+                else
+                    echo "⚠️  Quick restart failed, falling back to full cleanup"
+                    skip_port_cleanup=false
+                fi
+            else
+                echo "🔄 Restarting unhealthy daemon (PID: $daemon_pid)"
+                kill_process_gracefully "$daemon_pid" "existing daemon"
+                rm -f "$SYR_DEVSERVER_PIDFILE" "$LOCKFILE"
+                skip_port_cleanup=false
+            fi
+        else
+            skip_port_cleanup=false
         fi
         
         # Prevent multiple daemon instances
@@ -269,8 +287,7 @@ case "$MODE" in
         # Create lock file
         echo $$ > "$LOCKFILE"
         
-        # Get port and clear any existing processes
-        PORT=$(get_port)
+        # Get port and clear any existing processes (if needed)
         if [ -z "$PORT" ]; then
             rm -f "$LOCKFILE"
             echo "❌ No PORT found in .env.local"
@@ -278,8 +295,10 @@ case "$MODE" in
             exit 1
         fi
         
-        # Clear port using robust npx kill-port
-        kill_port_processes "$PORT" "any existing processes"
+        # Clear port using robust npx kill-port (unless quick restart succeeded)
+        if [ "$skip_port_cleanup" != true ]; then
+            kill_port_processes "$PORT" "any existing processes"
+        fi
         
         # Rotate log if needed
         rotate_log_if_needed
