@@ -38,7 +38,7 @@ function getSupportedMimeType(): string {
   ];
   
   for (const type of types) {
-    if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(type)) {
+    if (MediaRecorder.isTypeSupported(type)) {
       return type;
     }
   }
@@ -51,10 +51,15 @@ function getSupportedMimeType(): string {
  * Check if speech-to-text is supported in the current browser
  */
 function checkBrowserSupport(): boolean {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+    // Server-side: assume unsupported to keep HTML consistent
+    return false;
+  }
+
+  const MR = (window as any).MediaRecorder;
   return !!(
     navigator?.mediaDevices?.getUserMedia &&
-    window.MediaRecorder &&
-    typeof MediaRecorder.isTypeSupported === 'function' &&
+    MR &&
     window.isSecureContext // HTTPS required for getUserMedia
   );
 }
@@ -62,7 +67,7 @@ function checkBrowserSupport(): boolean {
 /**
  * Check current microphone permission state
  */
-async function checkMicrophonePermission(): Promise<string> {
+async function checkMicrophonePermission(): Promise<'granted' | 'denied' | 'prompt' | 'unknown'> {
   try {
     // Try Permissions API first (Chrome, Firefox)
     const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
@@ -155,7 +160,7 @@ export function useSpeechToText(
     isRecording: false,
     isProcessing: false,
     error: null,
-    isSupported: checkBrowserSupport(),
+    isSupported: false,
     hasPermission: null,
     permissionState: 'unknown'
   });
@@ -268,8 +273,8 @@ export function useSpeechToText(
 
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: config.mimeType,
-        audioBitsPerSecond: config.audioBitsPerSecond
-      });
+        ...(config.audioBitsPerSecond ? { audioBitsPerSecond: config.audioBitsPerSecond } : {})
+      } as MediaRecorderOptions);
 
       // Reset audio chunks
       audioChunksRef.current = [];
@@ -497,6 +502,12 @@ export function useSpeechToText(
       cleanup();
     };
   }, [cleanup]);
+
+  // After mount, detect browser support to update UI without causing hydration mismatch
+  useEffect(() => {
+    const supported = checkBrowserSupport();
+    setState(prev => ({ ...prev, isSupported: supported }));
+  }, []);
 
   return {
     state,
