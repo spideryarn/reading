@@ -422,6 +422,79 @@ import { OAuthButton } from '@/components/auth/oauth-button'
 - Responsive form layouts
 - Proper spacing and typography
 
+## Voice Input Components ✅
+
+### SpeechToTextInput (`components/speech/`)
+
+**Status:** Complete voice input system with OpenAI Whisper integration
+
+The voice input system provides speech-to-text functionality for the chatbot interface with comprehensive error handling and browser compatibility.
+
+#### SpeechToTextInput (`components/speech/SpeechToTextInput.tsx`)
+
+**Features:**
+- Click to start/stop or hold to record interaction modes
+- Visual feedback during recording (red state with pulsing animation)
+- Processing indicator during transcription
+- Browser compatibility checking and graceful degradation
+- Authentication requirement enforcement
+- Comprehensive error handling with recovery guidance
+
+**Dependencies:**
+- OpenAI Whisper API for transcription
+- MediaRecorder API for browser audio recording
+- Permissions API for microphone access checking
+- Phosphor Icons for microphone button states
+
+#### useSpeechToText Hook (`components/speech/use-speech-to-text.ts`)
+
+**Features:**
+- MediaRecorder API integration with MIME type detection
+- Permission state management and browser-specific guidance
+- Audio processing and format optimization
+- Network retry logic and error recovery
+- Resource cleanup and memory management
+- HTTPS requirement checking for secure contexts
+
+**Browser Support:**
+- Chrome/Chromium 47+ (recommended)
+- Firefox 29+
+- Safari 14.1+
+- Edge 79+
+- Requires HTTPS for microphone access
+
+#### Voice Input Integration
+
+**Usage Pattern in Chat Interface:**
+```tsx
+import { SpeechToTextInput } from '@/components/speech/SpeechToTextInput';
+
+// In chat composer next to send button
+<SpeechToTextInput
+  onTranscription={(text) => {
+    // Use ThreadPrimitive.Suggestion for auto-send
+    handleSendMessage(text);
+  }}
+  disabled={!isAuthenticated || isProcessing}
+  className="flex-shrink-0"
+/>
+```
+
+**Error Handling:**
+- Microphone permission denied with browser-specific recovery instructions
+- Network failures with retry suggestions
+- Authentication required prompts
+- HTTPS requirement warnings for localhost development
+- Rate limiting with wait time guidance
+
+**Visual States:**
+- Idle: Gray microphone icon (Phosphor Microphone)
+- Recording: Red microphone with pulsing animation
+- Processing: Spinner indicating transcription in progress
+- Error: Clear error messaging with recovery instructions
+
+See `docs/reference/TOOL_VOICE_INPUT_SPEECH_TO_TEXT.md` for complete implementation details and troubleshooting guide.
+
 ## Best Practices
 
 ### When to Use shadcn/ui
