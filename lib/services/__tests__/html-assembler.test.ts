@@ -8,8 +8,7 @@
 import {
   assembleDocument,
   quickAssembleFragments,
-  type AssemblyConfig,
-  type AssembledDocument
+  type AssemblyConfig
 } from '../html-assembler'
 import { type ProcessedFragment } from '../html-fragment-processor'
 

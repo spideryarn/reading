@@ -8,8 +8,7 @@
 import {
   processHtmlFragment,
   processFragmentsBatch,
-  type FragmentProcessingInput,
-  type ProcessedFragment
+  type FragmentProcessingInput
 } from '../html-fragment-processor'
 
 // Mock the logger
