@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Loading } from '@/components/ui/loading'
 import { AlertWithIcon } from '@/components/ui/alert'
 import { MarkdownRenderer } from '@/components/markdown-renderer'
+import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 
 // Component props interface
 interface StructurePanelProps {
@@ -866,16 +867,22 @@ export function StructurePanel({
         )}
         
         {currentMode === 'ai-generated' && (
-          <Button
-            onClick={handleRemoveHeadings}
-            variant="ghost"
-            size="icon-xs"
-            className="text-red-600 hover:text-red-800 hover:bg-red-100 ml-auto"
-            title="Remove AI headings"
-            disabled={isLoadingHeadings}
+          <TooltipOrPopover
+            content="Remove AI headings"
+            side="top"
+            align="center"
+            showIndicator={true}
           >
-            <Trash size={14} />
-          </Button>
+            <Button
+              onClick={handleRemoveHeadings}
+              variant="ghost"
+              size="icon-xs"
+              className="text-red-600 hover:text-red-800 hover:bg-red-100 ml-auto"
+              disabled={isLoadingHeadings}
+            >
+              <Trash size={14} />
+            </Button>
+          </TooltipOrPopover>
         )}
       </div>
     )

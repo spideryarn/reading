@@ -1084,16 +1084,22 @@ export function UnifiedLeftPane({
             />
             {onResetGlossary && glossaryCached && (
               <div className="mt-4 flex justify-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onResetGlossary}
-                  className="text-xs"
-                  title="Reset and clear cached glossary data"
+                <TooltipOrPopover
+                  content="Reset and clear cached glossary data"
+                  side="top"
+                  align="center"
+                  showIndicator={true}
                 >
-                  <Trash size={14} weight="bold" className="mr-1" />
-                  Reset Glossary
-                </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onResetGlossary}
+                    className="text-xs"
+                  >
+                    <Trash size={14} weight="bold" className="mr-1" />
+                    Reset Glossary
+                  </Button>
+                </TooltipOrPopover>
               </div>
             )}
           </div>
@@ -1109,15 +1115,21 @@ export function UnifiedLeftPane({
                     </span>
                   )}
                   {onResetGlossary && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={onResetGlossary}
-                      className="h-7 px-2 text-xs hover:bg-gray-100"
-                      title="Reset and regenerate glossary"
+                    <TooltipOrPopover
+                      content="Reset and regenerate glossary"
+                      side="top"
+                      align="center"
+                      showIndicator={true}
                     >
-                      <Trash size={14} weight="bold" />
-                    </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onResetGlossary}
+                        className="h-7 px-2 text-xs hover:bg-gray-100"
+                      >
+                        <Trash size={14} weight="bold" />
+                      </Button>
+                    </TooltipOrPopover>
                   )}
                 </div>
               </div>

@@ -22,6 +22,7 @@ import { useHighlightsUrlState } from '@/lib/tools/hooks/use-tool-url-state'
 import type { DocumentElement } from '@/lib/types/document'
 import { createClient } from '@/lib/supabase/client'
 import { normalizeSemanticSearchQuery } from '@/lib/utils/semantic-search'
+import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 
 // Highlight interface matching semantic search result structure
 interface Highlight {
@@ -462,21 +463,27 @@ export function HighlightManagement({
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
             />
             {highlightInputValue ? (
-              <button
-                onClick={() => {
-                  setHighlightInputValue('')
-                  setCriterion('')
-                  setHighlights([])
-                  setHighlightsCached(false)
-                  setHighlightsCachedAt(null)
-                  // Clear URL state as well
-                  setHighlight(null)
-                }}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                title="Clear search input"
+              <TooltipOrPopover
+                content="Clear search input"
+                side="top"
+                align="center"
+                showIndicator={true}
               >
-                <X size={16} weight="bold" />
-              </button>
+                <button
+                  onClick={() => {
+                    setHighlightInputValue('')
+                    setCriterion('')
+                    setHighlights([])
+                    setHighlightsCached(false)
+                    setHighlightsCachedAt(null)
+                    // Clear URL state as well
+                    setHighlight(null)
+                  }}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={16} weight="bold" />
+                </button>
+              </TooltipOrPopover>
             ) : (
               <div
                 data-dropdown-trigger
@@ -534,25 +541,31 @@ export function HighlightManagement({
                             {historyItem.resultCount} {historyItem.resultCount === 1 ? 'result' : 'results'} • {formatDate(historyItem.searchedAt)}
                           </div>
                         </div>
-                        <span
-                          role="button"
-                          tabIndex={0}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            deleteQueryFromDatabase(historyItem.query)
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault()
+                        <TooltipOrPopover
+                          content="Delete this search from history"
+                          side="top"
+                          align="center"
+                          showIndicator={true}
+                        >
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => {
                               e.stopPropagation()
                               deleteQueryFromDatabase(historyItem.query)
-                            }
-                          }}
-                          className="ml-2 text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
-                          title="Delete this search from history"
-                        >
-                          <Trash size={12} weight="bold" />
-                        </span>
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                deleteQueryFromDatabase(historyItem.query)
+                              }
+                            }}
+                            className="ml-2 text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+                          >
+                            <Trash size={12} weight="bold" />
+                          </span>
+                        </TooltipOrPopover>
                       </div>
                     </button>
                   ))}
@@ -633,13 +646,19 @@ export function HighlightManagement({
                     {new Date(highlightsCachedAt).toLocaleTimeString()}
                   </span>
                 )}
-                <button
-                  onClick={() => deleteQueryFromDatabase(criterion)}
-                  className="text-xs text-gray-500 hover:text-red-600 transition-colors"
-                  title="Delete this search from history and clear highlights"
+                <TooltipOrPopover
+                  content="Delete this search from history and clear highlights"
+                  side="top"
+                  align="center"
+                  showIndicator={true}
                 >
-                  <Trash size={12} weight="bold" />
-                </button>
+                  <button
+                    onClick={() => deleteQueryFromDatabase(criterion)}
+                    className="text-xs text-gray-500 hover:text-red-600 transition-colors"
+                  >
+                    <Trash size={12} weight="bold" />
+                  </button>
+                </TooltipOrPopover>
               </div>
             </div>
             <div className="text-sm text-gray-500 text-center py-4">
@@ -668,13 +687,19 @@ export function HighlightManagement({
                   </span>
                 )}
                 {criterion && (
-                  <button
-                    onClick={() => deleteQueryFromDatabase(criterion)}
-                    className="text-xs text-gray-500 hover:text-red-600 transition-colors"
-                    title="Delete this search from history and clear highlights"
+                  <TooltipOrPopover
+                    content="Delete this search from history and clear highlights"
+                    side="top"
+                    align="center"
+                    showIndicator={true}
                   >
-                    <Trash size={12} weight="bold" />
-                  </button>
+                    <button
+                      onClick={() => deleteQueryFromDatabase(criterion)}
+                      className="text-xs text-gray-500 hover:text-red-600 transition-colors"
+                    >
+                      <Trash size={12} weight="bold" />
+                    </button>
+                  </TooltipOrPopover>
                 )}
               </div>
             </div>

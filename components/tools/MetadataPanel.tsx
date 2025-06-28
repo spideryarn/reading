@@ -904,12 +904,24 @@ export function MetadataPanel({
                       <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center">
                         <GraduationCap size={18} weight="bold" className="text-white" />
                       </div>
-                      <span 
-                        className="text-sm font-semibold text-slate-700 border-b border-dotted border-slate-400 cursor-help" 
-                        title="Academic difficulty level assessed using AI analysis of vocabulary, concepts, and technical complexity. More comprehensive than traditional readability formulas."
+                      <TooltipOrPopover
+                        content={
+                          <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 max-w-sm">
+                            <div className="text-xs text-gray-700 leading-relaxed">
+                              Academic difficulty level assessed using AI analysis of vocabulary, concepts, and technical complexity. More comprehensive than traditional readability formulas.
+                            </div>
+                          </div>
+                        }
+                        side="left"
+                        align="center"
+                        sideOffset={8}
+                        showIndicator={true}
+                        contentClassName="p-0 bg-transparent border-0 shadow-none"
                       >
-                        Academic Level
-                      </span>
+                        <span className="text-sm font-semibold text-slate-700 border-b border-dotted border-slate-400 cursor-help">
+                          Academic Level
+                        </span>
+                      </TooltipOrPopover>
                     </div>
                     <TooltipOrPopover
                       content={
@@ -965,18 +977,42 @@ export function MetadataPanel({
                     
                     {/* Confidence */}
                     <div className="flex items-center justify-between text-xs text-slate-500">
-                      <span 
-                        className="border-b border-dotted border-slate-400 cursor-help"
-                        title="Assessment performed using AI analysis for comprehensive evaluation of text complexity, vocabulary sophistication, and conceptual requirements."
+                      <TooltipOrPopover
+                        content={
+                          <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 max-w-sm">
+                            <div className="text-xs text-gray-700 leading-relaxed">
+                              Assessment performed using AI analysis for comprehensive evaluation of text complexity, vocabulary sophistication, and conceptual requirements.
+                            </div>
+                          </div>
+                        }
+                        side="left"
+                        align="center"
+                        sideOffset={8}
+                        showIndicator={true}
+                        contentClassName="p-0 bg-transparent border-0 shadow-none"
                       >
-                        Method: AI Analysis
-                      </span>
-                      <span 
-                        className="border-b border-dotted border-slate-400 cursor-help"
-                        title={`Confidence level: ${readingDifficulty.confidence}. High confidence indicates clear classification, medium suggests borderline complexity.`}
+                        <span className="border-b border-dotted border-slate-400 cursor-help">
+                          Method: AI Analysis
+                        </span>
+                      </TooltipOrPopover>
+                      <TooltipOrPopover
+                        content={
+                          <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 max-w-sm">
+                            <div className="text-xs text-gray-700 leading-relaxed">
+                              Confidence level: {readingDifficulty.confidence}. High confidence indicates clear classification, medium suggests borderline complexity.
+                            </div>
+                          </div>
+                        }
+                        side="left"
+                        align="center"
+                        sideOffset={8}
+                        showIndicator={true}
+                        contentClassName="p-0 bg-transparent border-0 shadow-none"
                       >
-                        Confidence: {readingDifficulty.confidence}
-                      </span>
+                        <span className="border-b border-dotted border-slate-400 cursor-help">
+                          Confidence: {readingDifficulty.confidence}
+                        </span>
+                      </TooltipOrPopover>
                     </div>
                     
                   </div>
