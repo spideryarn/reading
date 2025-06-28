@@ -298,7 +298,10 @@ export async function POST(request: NextRequest) {
       documentId,
       aiCall.id,
       {
-        tweets: validatedResponse.tweets,
+        tweets: validatedResponse.tweets.map(tweet => ({
+          id: `tweet-${tweet.number}`,
+          text: tweet.text
+        })),
         metadata: {
           thread_summary: validatedResponse.thread_summary,
           ...metadata

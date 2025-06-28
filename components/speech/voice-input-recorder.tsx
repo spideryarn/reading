@@ -93,7 +93,7 @@ export function VoiceInputRecorder({
 
   const isRecording = status === 'recording';
   const isSupported = typeof navigator !== 'undefined' && 
-    navigator?.mediaDevices?.getUserMedia && 
+    navigator?.mediaDevices?.getUserMedia !== undefined && 
     typeof window !== 'undefined' &&
     window.isSecureContext;
 

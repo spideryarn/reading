@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
+import { NextRequest } from 'next/server'
 
 export async function POST() {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   try {
     // Sign out the user
@@ -30,7 +31,7 @@ export async function POST() {
 
 // Handle GET requests to /auth/logout for direct navigation
 export async function GET(request: NextRequest) {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   try {
     // Sign out the user

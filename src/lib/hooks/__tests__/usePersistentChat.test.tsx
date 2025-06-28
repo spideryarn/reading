@@ -6,6 +6,7 @@ import { renderHook, act } from '@testing-library/react'
 import { usePersistentChat } from '../usePersistentChat'
 import { ChatService } from '@/lib/services/database/chat'
 import type { ChatThread, ChatMessage } from '@/lib/types/database'
+import { createClient } from '@/lib/supabase/client'
 
 // Mock dependencies
 jest.mock('@/lib/supabase/client', () => ({

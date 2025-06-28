@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { subscribeToDocumentEnhancements } from '@/lib/supabase/realtime'
-import type { DocumentEnhancement } from '@/lib/types/database'
+import type { Database } from '@/lib/types/database'
+
+type DocumentEnhancement = Database['public']['Tables']['document_enhancements']['Row']
 
 interface RealtimeDemoProps {
   documentId: string

@@ -12,7 +12,7 @@ export function NotAuthorizedPage({}: NotAuthorizedPageProps) {
   notFound()
 }
 
-export function NotAuthorizedPageComponent({ userEmail }: NotAuthorizedPageProps) {
+export function NotAuthorizedPageComponent({ userEmail, slug }: NotAuthorizedPageProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       <AppHeader />
