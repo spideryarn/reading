@@ -9,7 +9,6 @@ import {
   ArrowSquareOut, Download, CaretDown, Target
 } from '@phosphor-icons/react'
 import { formatDistanceToNow } from 'date-fns'
-import type { DocumentElement } from '@/lib/types/document'
 import { createClient } from '@/lib/supabase/client'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'

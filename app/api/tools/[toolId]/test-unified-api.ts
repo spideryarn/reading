@@ -64,7 +64,7 @@ export { testRequests }
 // Console test functions for manual testing
 if (typeof window !== 'undefined') {
   // Browser environment - add test functions to window
-  ;(window as any).testUnifiedAPI = {
+  const testUnifiedAPI = {
     async testMetadataGet() {
       try {
         const response = await fetch(testRequests.getMetadata.url, {
@@ -136,6 +136,9 @@ if (typeof window !== 'undefined') {
       console.log('✅ All tests completed')
     }
   }
+  
+  // Assign to window with proper typing
+  ;(window as unknown as Window & { testUnifiedAPI: typeof testUnifiedAPI }).testUnifiedAPI = testUnifiedAPI
   
   console.log('🧪 Unified API test functions available:')
   console.log('- window.testUnifiedAPI.testMetadataGet()')

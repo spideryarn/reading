@@ -16,7 +16,7 @@ import { processPagesBatch } from '@/lib/services/page-processor'
 import { processFragmentsBatch } from '@/lib/services/html-fragment-processor'
 import { assembleDocument } from '@/lib/services/html-assembler'
 import { validateFragmentsBatch } from '@/lib/services/html-fragment-validator'
-import { processFinalDocument } from '@/lib/services/final-document-processor'
+// import { processFinalDocument } from '@/lib/services/final-document-processor' // Unused - only used in commented final refinement stage
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()

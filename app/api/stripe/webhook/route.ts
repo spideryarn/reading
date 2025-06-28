@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
           eventType: event.type,
           customerId: invoice.customer,
           invoiceId: invoice.id,
-          subscriptionId: (invoice as any).subscription as string | undefined,
+          subscriptionId: 'subscription' in invoice ? invoice.subscription as string | undefined : undefined,
           amountPaid: invoice.amount_paid,
           currency: invoice.currency
         }, 'Payment succeeded for customer')
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
           eventType: event.type,
           customerId: invoice.customer,
           invoiceId: invoice.id,
-          subscriptionId: (invoice as any).subscription as string | undefined,
+          subscriptionId: 'subscription' in invoice ? invoice.subscription as string | undefined : undefined,
           attemptCount: invoice.attempt_count,
           currency: invoice.currency,
           amountDue: invoice.amount_due
