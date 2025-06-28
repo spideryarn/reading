@@ -335,6 +335,44 @@ const schema = z.object({
 })
 ```
 
+### Advanced Schema Patterns: Conditional Validation
+
+For complex operations that require different fields based on action type, use Zod's `.refine()` method:
+
+```typescript
+// Example from headings.ts - operations with conditional requirements
+const operationSchema = baseOperationSchema.extend({
+  insertNewBeforeExistingId: z.string().optional(),
+  targetId: z.string().optional(),
+  content: headingContentSchema.optional()
+}).refine((data) => {
+  // Insert operations require insertNewBeforeExistingId and content
+  if (data.action === 'insert') {
+    return data.insertNewBeforeExistingId && data.content
+  }
+  // Replace operations require targetId and content
+  if (data.action === 'replace') {
+    return data.targetId && data.content
+  }
+  // Remove operations require only targetId
+  if (data.action === 'remove') {
+    return data.targetId && !data.content
+  }
+  return false
+}, (data) => {
+  // Custom error messages for each validation failure
+  if (data.action === 'insert' && !data.insertNewBeforeExistingId) {
+    return { message: 'Insert operations require insertNewBeforeExistingId', path: ['insertNewBeforeExistingId'] }
+  }
+  // ... additional error cases
+})
+```
+
+This pattern is useful when:
+- Different operations require different fields
+- Field requirements depend on other field values
+- You need clear, specific error messages for validation failures
+
 ## Testing Your Prompts
 
 ```typescript
@@ -385,7 +423,7 @@ When creating new prompts or updating existing ones, consistently use XML-style 
 
 Several existing templates in `/lib/prompts/templates/` could benefit from adding XML delimiters:
 - `glossary.njk` - wrap document content
-- `headings.njk` - wrap input document
+- `headings.njk` - already uses `<html_content>` wrapper for input document
 - `summarise.njk` - wrap document content
 - `semantic-search.njk` - wrap query and documents
 
@@ -407,7 +445,7 @@ See [CHATBOT_ASSISTANT_UI_INTEGRATION.md](CHATBOT_ASSISTANT_UI_INTEGRATION.md) f
 **Single-Use Prompts** (Nunjucks Template System):
 - **Summarisation**: `/api/summarise` (see [TOOL_SUMMARISE.md](TOOL_SUMMARISE.md))
 - **Glossary Generation**: `/api/glossary` (see [TOOL_GLOSSARY.md](TOOL_GLOSSARY.md))
-- **Heading Generation**: `/api/headings`
+- **Heading Generation**: `/api/headings` (see [TOOL_HEADINGS.md](TOOL_HEADINGS.md))
 - **Reading Difficulty Assessment**: `/api/reading-difficulty` (see [TOOL_READING_DIFFICULTY.md](TOOL_READING_DIFFICULTY.md))
 - **Chat System Prompt**: `chat-system.njk` (initial message only)
 
@@ -419,6 +457,47 @@ See [CHATBOT_ASSISTANT_UI_INTEGRATION.md](CHATBOT_ASSISTANT_UI_INTEGRATION.md) f
 All new **single-use AI features** should use the Nunjucks + Zod template system. **Interactive chat features** should follow the pattern established in `/api/chat` and `usePersistentChat`.
 
 ## Advanced Patterns and Best Practices
+
+### Operations-Based Patterns
+
+For tools that modify document structure (like headings), use operations-based patterns:
+
+```nunjucks
+{# Example from headings.njk #}
+Respond with only JSON in the following form, in the order that operations should be applied:
+
+```json
+{
+  "operations": [
+    {
+      "action": "insert",
+      "insertNewBeforeExistingId": "element_123",
+      "content": {
+        "tag_name": "h3",
+        "content": "A new heading title at level 3"
+      }
+    },
+    {
+      "action": "replace",
+      "targetId": "existing_heading_456",
+      "content": {
+        "tag_name": "h2", 
+        "content": "Improved heading text"
+      }
+    },
+    {
+      "action": "remove",
+      "targetId": "redundant_heading_789"
+    }
+  ]
+}
+```
+
+**Benefits of Operations-Based Patterns:**
+- **Granular control**: Specify exactly what changes to make
+- **Reversibility**: Operations can be undone or reapplied
+- **Validation**: Each operation type has specific requirements
+- **Flexibility**: Mix insert, replace, and remove operations as needed
 
 ### JSON Output with Type Safety
 

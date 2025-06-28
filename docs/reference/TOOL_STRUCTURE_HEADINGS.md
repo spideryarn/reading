@@ -16,6 +16,7 @@ The Structure tab replaces the previous separate "Original" and "AI-Generated" h
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide to creating and using LLM prompt templates
 - `docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Documents the reversible document transformation system
 - `planning/250627a_consolidate_headings_tabs_into_structure_tab.md` - Implementation planning for Structure tab consolidation
+- `docs/conversations/250628b_headings_generation_full_mutation_support.md` - Implementation of full mutation support for heading operations
 - `lib/prompts/templates/headings.ts` - Schema and prompt configuration for heading generation
 - `lib/prompts/templates/headings.njk` - LLM prompt template for heading generation
 - `/api/headings/route.ts` - API endpoint for generating document headings
@@ -107,36 +108,79 @@ Original State: Back to original headings with generate button
 ## AI Heading Generation
 
 ### Generation Process
-1. **Content analysis**: Extract document HTML with element IDs
-2. **LLM processing**: Send to configured AI model (Claude/Gemini)
-3. **Heading generation**: LLM analyzes content and suggests appropriate headings
-4. **Semantic insertion**: Headings use insert-before semantics for correct positioning
-5. **Mutation application**: Generated headings inserted as reversible document transforms
-6. **UI update**: Interface updates to show AI-enhanced state
+1. **Content analysis**: Extract document HTML with element IDs and existing headings
+2. **LLM processing**: Send to configured AI model (Claude/Gemini) with full context
+3. **Operations generation**: LLM analyzes content and generates heading operations
+4. **Mutation application**: Operations applied as reversible document transforms
+5. **UI update**: Interface updates to show AI-enhanced state
 
-### Insert-Before Semantics
+### Key Features
+- **Preserves original headings**: AI sees and respects author's original structure
+- **Full mutation capabilities**: Can insert new headings, replace existing ones, or remove headings
+- **Context-aware**: AI receives complete document structure including original headings
+- **Operations-based**: Uses flexible operations format for comprehensive heading modifications
 
-AI-generated headings use **insert-before** semantics, meaning they appear **before** the content they introduce. This matches user expectations from other document editors:
+### Operations Format
 
-- **Semantic correctness**: Headings introduce content sections rather than concluding them
-- **Proper hierarchy**: Multiple headings at the same insertion point appear in logical order (H2 → H3 → H4)
-- **Accessibility**: Screen readers navigate by headings in correct document flow
-- **Industry standard**: Matches patterns from Google Docs, Word, Notion
+The AI generates heading modifications using a flexible operations system:
 
-### Multiple Heading Ordering
+#### Operation Types
 
-When multiple AI headings target the same insertion point:
+1. **Insert Operation**
+   - Adds new headings at specific positions
+   - Uses insert-before semantics for intuitive placement
+   - Preserves document flow and hierarchy
 
-1. **Non-chaining approach**: All headings target original document elements
-2. **Mutation engine sorting**: Handles correct precedence automatically
-3. **Serial insertion behavior**: Last transform appears closest to target
-4. **Deterministic ordering**: Consistent results across regeneration scenarios
+2. **Replace Operation**
+   - Updates existing headings while maintaining position
+   - Preserves original heading IDs for stability
+   - Allows refinement of author's structure
 
-**Example**:
+3. **Remove Operation**
+   - Removes unnecessary or redundant headings
+   - Helps clean up over-structured documents
+   - Maintains document coherence
+
+#### Operation Schema
+```typescript
+type HeadingOperation = 
+  | { type: 'insert'; insertNewBeforeExistingId: string; html: string; level: number; text: string }
+  | { type: 'replace'; existingId: string; html: string; level: number; text: string }
+  | { type: 'remove'; existingId: string }
 ```
-Input: Generate H2 "Introduction" and H3 "Overview" before paragraph-123
-Result: H2 Introduction → H3 Overview → paragraph-123 (correct logical order)
-```
+
+#### Schema Validation
+- **Conditional validation**: Each operation type has specific required fields
+- **Type safety**: Zod schemas ensure operations are well-formed
+- **Error prevention**: Invalid operations rejected before application
+
+### Preserving Author Intent
+
+The system is designed to enhance, not replace, the author's original structure:
+
+- **Original headings as context**: AI sees all existing headings during analysis
+- **Intelligent enhancement**: AI can choose to keep, modify, or remove headings
+- **Respectful modifications**: Changes aim to clarify and improve, not rewrite
+- **User control**: All changes can be reverted with one click
+
+### Technical Implementation Details
+
+#### Content Processing
+- **Full HTML context**: Document HTML sent with all original headings intact
+- **Element preservation**: Original heading IDs maintained for stability
+- **Structured extraction**: Headings extracted with hierarchy information
+- **AI visibility**: LLM receives complete document structure for informed decisions
+
+#### Mutation Engine Integration
+- **Operations to transforms**: Each operation converted to a mutation transform
+- **Transform types**: Maps to `add-element`, `replace-element`, or `remove-element`
+- **Atomic application**: All operations applied as single reversible mutation
+- **Rollback support**: Complete mutation can be reverted with one action
+
+#### Backward Compatibility
+- **Legacy format support**: Removed to simplify codebase
+- **Clean migration**: Old insert-only format no longer supported
+- **Simplified validation**: Single operations-based schema with conditional rules
 
 ### Caching and Persistence
 - **Database storage**: Generated headings stored in Supabase for reuse
@@ -162,7 +206,7 @@ The heading generation uses the standard prompt template system:
 ### Heading Schema
 ```typescript
 {
-  html_content: string,        // Document HTML content to analyze
+  html_content: string,        // Document HTML content to analyze (includes original headings)
   documentId: string,          // Document identifier for caching
   context?: string,            // Additional context about document
   style?: string,             // Heading style preferences
@@ -170,13 +214,29 @@ The heading generation uses the standard prompt template system:
 }
 ```
 
-### Generated Heading Structure
+### Generated Operations Structure
 ```typescript
 {
-  insertNewBeforeExistingId: string,  // Target element ID for semantic insertion
-  html: string,                       // Generated heading HTML content
-  level: number,                      // Heading level (1-6)
-  text: string                        // Plain text content
+  operations: Array<
+    | {
+        type: 'insert';
+        insertNewBeforeExistingId: string;  // Target element ID for insertion
+        html: string;                       // New heading HTML content
+        level: number;                      // Heading level (1-6)
+        text: string;                       // Plain text content
+      }
+    | {
+        type: 'replace';
+        existingId: string;                 // ID of heading to replace
+        html: string;                       // Replacement HTML content
+        level: number;                      // New heading level (1-6)
+        text: string;                       // New plain text content
+      }
+    | {
+        type: 'remove';
+        existingId: string;                 // ID of heading to remove
+      }
+  >
 }
 ```
 
@@ -245,7 +305,7 @@ The Structure tab is integrated with the unified tool registry system:
 - **Content analysis**: Best results with structured, well-formatted documents
 - **Language support**: Optimized for English content
 - **Single mutation**: Only one heading mutation active at a time
-- **No intra-mutation dependencies**: Headings within same mutation cannot reference each other's generated IDs
+- **No intra-mutation dependencies**: Operations within same mutation cannot reference each other's generated IDs
 
 ### Future Enhancements
 - **Batch processing**: Generate headings for multiple documents
@@ -301,3 +361,6 @@ Users familiar with the previous "Original" and "AI-Generated" tabs will find:
 - **Field names**: `afterId` replaced with explicit `insertNewBeforeExistingId` throughout
 - **Insertion semantics**: Switched from insert-after to insert-before for semantic correctness
 - **Chaining logic**: Eliminated complex chaining in favor of robust non-chaining approach
+- **Response format**: Changed from array of headings to operations-based format
+- **AI context**: Original headings now provided to AI (previously stripped)
+- **Mutation types**: Expanded from insert-only to full insert/replace/remove operations

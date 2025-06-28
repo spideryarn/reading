@@ -16,7 +16,7 @@ Spideryarn Reading is in active development with core AI features now implemente
 - **File storage system** - Original PDFs stored in Supabase Storage with database references
 - **Upload metadata tracking** - Comprehensive metadata capture (extraction method, provider, processing time, file sizes) with AI call traceability via `documents.upload_ai_call_id`
 - Two-pane resizable document viewer layout:
-  - Left: Unified pane with 7 tabs (Original ToC, AI headings, Summary, Chat, Glossary, Search, Highlights)
+  - Left: Unified pane with 6 tabs (Structure, Summary, Chat, Glossary, Search, Highlights)
   - Right: Document viewer with element details and highlighting
   - Collapsible left pane with keyboard shortcuts (Ctrl+B)
 - **Document header** - PDF icon for documents with stored files, File icon for HTML-only documents
@@ -49,9 +49,9 @@ Spideryarn Reading is in active development with core AI features now implemente
 
 **Data Model & UI Components**
 - **Document parsing pipeline**: HTML → Cheerio → structured elements with hierarchical relationships
-- **Table of Contents** component with:
-  - Original headings extraction
-  - AI-generated headings in separate tab
+- **Structure navigation** component with:
+  - Unified tab combining original and AI-enhanced headings
+  - Toggle between original document structure and AI-generated headings
   - Hover tooltips showing AI summaries (using Radix UI tooltips)
   - Loading states and error handling
 - **Glossary component** with ordered entity display and simple text search

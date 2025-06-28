@@ -5,11 +5,11 @@ This document provides comprehensive guidance for understanding tool architectur
 ## See also
 - `docs/reference/TOOL_GLOSSARY.md` - Example of analysis tool implementation with LLM integration
 - `docs/reference/TOOL_EXECUTION_FRAMEWORK.md` - Framework for executing tools with unified API endpoints
-- `docs/reference/TOOL_GLOSSARY.md` - Example of analysis tool implementation with LLM integration
+- `docs/reference/TOOL_STRUCTURE.md` - Unified document structure with operations-based headings system
 - `docs/reference/TOOL_READING_DIFFICULTY.md` - Example of AI-powered assessment tool with JSON output and UI enhancements
 - `docs/reference/TOOL_SEARCH_TEXT.md` - Example of search functionality with real-time UI updates
 - `docs/reference/TOOL_HIGHLIGHT.md` - Example of semantic highlighting with confidence-based visuals
-- `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Tab system architecture and vertical icon navigation
+- `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Tab system architecture with unified Structure tool
 - `docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md` - DocumentCommunicationContext integration patterns
 - `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` - Keyboard shortcut integration and command definitions
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - AI-powered tool development with Nunjucks + Zod
@@ -171,8 +171,7 @@ Tools automatically generate command palette entries through the dynamic generat
 
 | Tool | ID | Description | Shortcuts |
 |------|----|----|-----------||
-| Original Document | `original` | Document with original headings | `Cmd+1`, `Ctrl+1` |
-| AI-Generated Headings | `ai-generated` | Enhanced document with AI headings | `Cmd+2`, `Ctrl+2` |
+| Structure | `structure` | Document with unified headings system | `Cmd+1`, `Ctrl+1` |
 | Summary | `summary` | Hierarchical document summaries | `Cmd+3`, `Ctrl+3` |
 
 ### Interactive Tools
@@ -211,14 +210,14 @@ Tools automatically generate command palette entries through the dynamic generat
 - **UI Pattern**: Tab-based with loading states and result lists
 
 ### Navigation Tools  
-**Examples**: Original ToC, AI-generated ToC, Summary
+**Examples**: Structure (unified ToC), Summary
 - **Purpose**: Help users navigate and understand document structure
-- **LLM Integration**: Optional (Original ToC) or required (AI headings)
-- **Persistence**: Memory-only for UI state, database for generated content
+- **LLM Integration**: Optional for basic structure, required for AI-enhanced headings
+- **Persistence**: Memory-only for UI state, operations-based system for headings
 - **UI Pattern**: Hierarchical lists with click-to-scroll functionality
 
 ### Generation Tools
-**Examples**: Chat, Summary, AI headings
+**Examples**: Chat, Summary, AI-enhanced structure
 - **Purpose**: Create new content based on document analysis
 - **LLM Integration**: Always required
 - **Persistence**: Results often saved to database for reuse
@@ -290,7 +289,7 @@ Tools automatically generate command palette entries through the dynamic generat
 ### Stage: Core Functionality
 
 - [ ] **Implement tool logic**
-  - [ ] Create API endpoint in `app/api/[tool-name]/route.ts` if needed
+  - [ ] Create API endpoint in `app/api/tools/[tool-name]/route.ts` if needed (or use unified tool execution framework)
   - [ ] Implement core functionality with proper error handling
   - [ ] Add TypeScript types for API request/response
   - [ ] Follow existing API patterns for consistency
@@ -877,7 +876,7 @@ When the unified architecture is implemented:
 ### API Patterns
 - `app/api/glossary/route.ts` - LLM integration with structured output
 - `app/api/search/route.ts` - Text processing and result formatting
-- `app/api/headings/route.ts` - Document analysis and generation
+- `app/api/tools/structure/route.ts` - Document structure analysis with operations-based headings
 
 ### Integration Examples
 - `components/unified-left-pane.tsx` - Tab system integration
