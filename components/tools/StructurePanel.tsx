@@ -158,7 +158,7 @@ async function generateHeadingSummary(
         },
         metadata: {
           correlationId: crypto.randomUUID(),
-          source: 'structure-panel',
+          source: 'direct',
           timestamp: new Date().toISOString()
         }
       }),
@@ -494,7 +494,7 @@ export function StructurePanel({
             },
             metadata: {
               correlationId: crypto.randomUUID(),
-              source: 'structure-panel',
+              source: 'direct',
               timestamp: new Date().toISOString()
             }
           }),
