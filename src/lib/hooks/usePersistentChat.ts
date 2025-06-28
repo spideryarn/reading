@@ -206,7 +206,7 @@ export function usePersistentChat({
               part.type === 'text'
             ) as TextContentPart)?.text ?? ''
           : (msg.content as unknown as string) || ''
-      }));
+      })).filter(item => item.content.trim().length > 0);
 
       // Make API call
       const requestPayload = {
@@ -240,7 +240,7 @@ export function usePersistentChat({
             parameters: requestPayload,
             metadata: {
               correlationId: crypto.randomUUID(),
-              source: 'chat-component',
+              source: 'direct',
               timestamp: new Date().toISOString()
             }
           }),
@@ -250,11 +250,12 @@ export function usePersistentChat({
 
         if (!res.ok) {
           const errorData = await res.json();
+          const detail = errorData.detail || errorData.message || errorData.error || 'Unknown error';
           return {
             content: [
               {
                 type: "text" as const,
-                text: `❌ Error: ${errorData.error || 'Unknown error'}\n\nPlease try again.`
+                text: `❌ Error: ${detail}\n\nPlease try again.`
               }
             ]
           };

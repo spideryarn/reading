@@ -12,15 +12,20 @@ import {
   type ChatModelAdapter,
   type ThreadMessageLike,
 } from "@assistant-ui/react";
-import { type TextContentPartComponent } from "@assistant-ui/react/dist/types/ContentPartComponentTypes";
 import { User, Robot, PaperPlaneTilt, CircleNotch, ArrowClockwise, Trash } from '@phosphor-icons/react';
 import { usePersistentChat } from '@/src/lib/hooks/usePersistentChat';
 import { Button } from '@/components/ui/button'
 import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 import { useChatUrlState } from '@/lib/tools/hooks/use-tool-url-state';
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover';
 import dynamic from 'next/dynamic';
+
+// The upstream library currently doesn't publish its internal type helpers, so
+// we declare a lightweight alias locally to satisfy TypeScript while keeping
+// the public API surface unchanged.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TextContentPartComponent = any;
 
 // Dynamically import the voice recorder with SSR disabled to avoid
 // `Worker is not defined` errors during the Node.js render phase.
@@ -84,13 +89,39 @@ const AssistantMessage = () => (
 const Composer = () => {
   // Handle voice transcription by creating a hidden suggestion that gets triggered
   const [voicePrompt, setVoicePrompt] = useState<string | null>(null);
+  const hiddenSuggestionButtonRef = useRef<HTMLButtonElement | null>(null);
+  // A ref to remember the last transcribed string we sent. This helps avoid
+  // duplicate sends that can occur in React Strict Mode where effects may run
+  // twice in development.
+  const lastTranscribedRef = useRef<string | null>(null);
 
+  // Fire when transcription arrives from voice recorder
   const handleVoiceTranscription = useCallback((text: string) => {
-    // Use the suggestion pattern to set and send the transcribed text
+    // De-duplicate: if we just sent the exact same transcription, ignore it.
+    if (text.trim() === lastTranscribedRef.current) {
+      return;
+    }
+
+    lastTranscribedRef.current = text.trim();
+    // 1. Store the prompt so the hidden suggestion renders with the text
     setVoicePrompt(text);
-    // Clear the prompt after a brief delay to reset the state
-    setTimeout(() => setVoicePrompt(null), 100);
   }, []);
+
+  // When the hidden suggestion is on the page, programmatically click it so that
+  // the suggestion is selected (which moves the prompt into the input) AND – because
+  // we passed `autoSend` – the message is immediately dispatched.
+  useEffect(() => {
+    if (!voicePrompt) return;
+
+    // Using a timeout in the next tick guarantees the element has mounted.
+    const id = setTimeout(() => {
+      hiddenSuggestionButtonRef.current?.click();
+      // Give the click handler enough time to propagate before un-mounting the element.
+      setTimeout(() => setVoicePrompt(null), 250);
+    }, 0);
+
+    return () => clearTimeout(id);
+  }, [voicePrompt]);
 
   // Handle voice input errors
   const handleVoiceError = useCallback((error: string) => {
@@ -113,7 +144,13 @@ const Composer = () => {
           autoSend
           asChild
         >
-          <button style={{ display: 'none' }} />
+          {/*
+            The button is hidden from view but we keep a ref so that we can trigger
+            a programmatic click when the suggestion mounts. This reliably executes
+            the same internal logic that would run if the user had clicked a visible
+            suggestion, ensuring we reuse the library's behaviour.
+          */}
+          <button ref={hiddenSuggestionButtonRef} style={{ display: 'none' }} />
         </ThreadPrimitive.Suggestion>
       )}
       
