@@ -16,12 +16,11 @@ test.use({
  * REPLACES 15-20 UNIT TESTS:
  * 
  * Search Functionality Tests (7 tests):
- * - lib/utils/__tests__/semantic-search.test.ts
+ * - lib/utils/__tests__/semantic-search.test.ts (consolidated)
  * - lib/utils/__tests__/search-context-extraction.test.ts
  * - lib/utils/__tests__/semantic-highlighting.test.ts
  * - app/api/__tests__/semantic-search-consolidated.test.ts
  * - lib/services/__tests__/semantic-search-formatter.test.ts
- * - lib/prompts/templates/__tests__/semantic-search.test.ts
  * - Navigation-related parts of other service tests
  * 
  * URL State & Navigation Tests (5 tests):

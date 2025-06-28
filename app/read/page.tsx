@@ -7,7 +7,9 @@ import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { getUserId } from '@/lib/auth/server-auth'
 import { getCurrentUserAdminStatus } from '@/lib/auth/admin-utils'
-import type { Document } from '@/lib/types/database'
+import type { Database } from '@/lib/types/database'
+
+type Document = Database['public']['Tables']['documents']['Row']
 import { Plus } from '@phosphor-icons/react/dist/ssr/Plus'
 import { Shield } from '@phosphor-icons/react/dist/ssr/Shield'
 

@@ -4,7 +4,7 @@
 // Quick-and-dirty implementation for user feedback
 
 import { useState, useEffect } from 'react'
-import { AlertTriangle, X } from '@phosphor-icons/react/dist/ssr'
+import { Warning as AlertTriangle, X } from '@phosphor-icons/react/dist/ssr'
 import type { ValidationError } from '@/lib/tools/url-validation'
 
 interface UrlValidationWarningProps {

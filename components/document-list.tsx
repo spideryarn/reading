@@ -8,7 +8,9 @@ import { DeleteDocumentButton } from '@/components/delete-document-button'
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 import { MarkdownRenderer } from '@/components/markdown-renderer'
 import { FileText, Clock, Globe, Lock, CircleNotch } from '@phosphor-icons/react/dist/ssr'
-import type { Document } from '@/lib/types/database'
+import type { Database } from '@/lib/types/database'
+
+type Document = Database['public']['Tables']['documents']['Row']
 import { formatUserDate } from '@/lib/utils/date-formatting'
 
 interface TooltipInfo {

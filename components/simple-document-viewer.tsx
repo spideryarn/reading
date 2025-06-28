@@ -162,7 +162,9 @@ export function SimpleDocumentViewer({
               element.setAttribute('data-glossary-matched-text', matchedText)
               element.setAttribute('data-glossary-explanation', entity.brief_explanation)
               element.setAttribute('data-glossary-long-explanation', entity.long_explanation || '')
-              element.style.cursor = 'pointer'
+              if (element instanceof HTMLElement) {
+                element.style.cursor = 'pointer'
+              }
               
               // Add click handler
               element.addEventListener('click', (e) => {

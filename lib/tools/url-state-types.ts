@@ -10,6 +10,7 @@ export const TAB_VALUES = [
   'glossary',
   'search',
   'highlights',
+  'tweet-thread',
   'metadata'
 ] as const
 
