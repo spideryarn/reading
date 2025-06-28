@@ -30,6 +30,38 @@ interface UsePersistentChatReturn {
   runtimeKey: number;
 }
 
+// Helper: Convert ThreadMessageLike content to non-empty string for API schema compliance
+function serializeMessageContent(msg: ThreadMessageLike): string {
+  // If content is already a primitive, just coerce to string
+  if (!Array.isArray(msg.content)) {
+    const primitive = msg.content as unknown as string;
+    return primitive?.trim() ? primitive : '[unknown]';
+  }
+
+  // Prefer any plain-text parts first
+  const textParts = msg.content
+    .filter((p): p is TextContentPart => (p as TextContentPart).type === 'text')
+    .map(p => p.text)
+    .join('\n');
+
+  if (textParts.trim().length > 0) {
+    return textParts;
+  }
+
+  // No text parts – fall back to shorthand tags plus truncated JSON for context
+  const tags = msg.content.map(part => {
+    const type = (part as { type?: string }).type ?? 'unknown';
+    if (type === 'tool-call') {
+      const name = (part as { name?: string }).name ?? 'unknown';
+      return `[tool-call ${name}]`;
+    }
+    return `[${type}]`;
+  }).join(' ');
+
+  const jsonSnippet = JSON.stringify(msg.content).slice(0, 300); // keep payload small
+  return `${tags} ${jsonSnippet}`;
+}
+
 export function usePersistentChat({ 
   documentId, 
   documentContext,
@@ -187,14 +219,10 @@ export function usePersistentChat({
         documentId
       });
 
-      // Convert assistant-ui messages to API format
+      // Convert assistant-ui messages to API format ensuring non-empty content
       const conversationHistory = messages.map(msg => ({
         role: msg.role as 'user' | 'assistant',
-        content: Array.isArray(msg.content)
-          ? (msg.content.find((part: ThreadUserContentPart | ThreadAssistantContentPart): part is TextContentPart => 
-              part.type === 'text'
-            ) as TextContentPart)?.text ?? ''
-          : (msg.content as unknown as string) || ''
+        content: serializeMessageContent(msg)
       }));
 
       // Make API call

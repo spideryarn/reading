@@ -227,3 +227,17 @@ const handleVoiceTranscription = (text: string) => {
 - `components/speech/use-speech-to-text.ts` - Recording logic hook
 - `components/speech/types.ts` - TypeScript type definitions
 - `components/speech/__tests__/` - Comprehensive test suite
+
+### Server-Side Rendering & Hydration Considerations
+
+React **Strict Mode** with Next.js performs server rendering first, then hydrates on the client.  
+Because the voice-input component needs browser-only APIs (`MediaRecorder`, `navigator.mediaDevices`, etc.),
+feature-detection **must not run during SSR** or the generated HTML will differ and trigger a
+hydration mismatch warning.
+
+Implementation pattern we follow:
+1. Initialise `isSupported` to `false` during the first render (which runs on the server).
+2. After the component mounts on the client (`useEffect`), run `checkBrowserSupport()` and update the state.
+3. The UI seamlessly re-renders with the real capability information—no mismatch, no warning.
+
+This pattern should be reused for any future voice-input components (or other browser-only features) to guarantee predictable SSR behaviour.

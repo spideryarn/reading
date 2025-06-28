@@ -236,7 +236,7 @@ export default function DocumentPageClient({
           },
           metadata: {
             correlationId: crypto.randomUUID(),
-            source: 'component',
+            source: 'direct',
             timestamp: new Date().toISOString()
           }
         }),
@@ -323,7 +323,7 @@ export default function DocumentPageClient({
           },
           metadata: {
             correlationId: crypto.randomUUID(),
-            source: 'component',
+            source: 'direct',
             timestamp: new Date().toISOString()
           }
         }),
@@ -467,7 +467,7 @@ export default function DocumentPageClient({
         slug={slug}
         storagePath={storagePath}
         originalFileType={originalFileType}
-        uploadMetadata={uploadMetadata}
+        uploadMetadata={uploadMetadata ?? null}
       />
       </div>
     </div>

@@ -185,7 +185,7 @@ export function HighlightManagement({
           },
           metadata: {
             correlationId: crypto.randomUUID(),
-            source: 'component',
+            source: 'direct',
             timestamp: new Date().toISOString()
           }
         })
@@ -202,7 +202,7 @@ export function HighlightManagement({
       setHighlightsCachedAt(data.cachedAt || null)
 
       // Convert semantic search results to highlight format
-      const newHighlights: Highlight[] = data.matches.map((match: {
+      const newHighlights: Highlight[] = (data.matches || []).map((match: {
         elementId: string
         confidence: number
         reasoning: string
@@ -222,7 +222,7 @@ export function HighlightManagement({
       if (newHighlights.length > 0) {
         updateSemanticHighlights(newHighlights)
         // Scroll to first highlight to show the results
-        actions.scrollToElement(newHighlights[0].elementId)
+        actions?.scrollToElement(newHighlights[0]!.elementId)
       }
 
       // Replace existing highlights with new ones (highlights are session-based)
@@ -367,7 +367,7 @@ export function HighlightManagement({
     }
     
     // Scroll to element using robust existing system
-    actions.scrollToElement(highlight.elementId)
+    actions?.scrollToElement(highlight.elementId)
   }, [actions, onActiveElementChange])
 
   // Clear all highlights (for input box 'x' button)

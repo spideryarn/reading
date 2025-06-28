@@ -156,7 +156,7 @@ describe('DocumentPageClient Load More Integration', () => {
         max_entities: 20
       },
       metadata: {
-        source: 'component'
+        source: 'direct'
       }
     })
     expect(requestBody.metadata.correlationId).toBeDefined()
