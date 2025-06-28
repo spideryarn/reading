@@ -379,6 +379,177 @@ export async function getStorageStats() {
 }
 
 /**
+ * Upload an image asset to Supabase Storage
+ * 
+ * @param imageData - Image data as Blob or base64 string  
+ * @param documentId - UUID of the document this asset belongs to
+ * @param filename - Filename for the asset (should be descriptive and filename-safe)
+ * @param mimeType - MIME type of the image (e.g., 'image/png', 'image/jpeg')
+ * @returns Storage path for database reference, or null if upload failed but should be handled gracefully
+ */
+export async function uploadImageAsset(
+  imageData: Blob | string,
+  documentId: string,
+  filename: string,
+  mimeType: string = 'image/png'
+): Promise<StorageUploadResult | null> {
+  const supabase = await createClient()
+  
+  // Convert base64 string to Blob if needed
+  let fileBlob: Blob
+  if (typeof imageData === 'string') {
+    // Handle base64 data URLs
+    const base64Data = imageData.includes(',') ? imageData.split(',')[1] : imageData
+    const binaryString = atob(base64Data)
+    const bytes = new Uint8Array(binaryString.length)
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i)
+    }
+    fileBlob = new Blob([bytes], { type: mimeType })
+  } else {
+    fileBlob = imageData
+  }
+  
+  // Validate file size using centralized limits  
+  if (fileBlob.size > UPLOAD_LIMITS.GENERAL_MAX_SIZE_BYTES) {
+    throw new StorageError(`Image size ${fileBlob.size} exceeds maximum allowed size of ${UPLOAD_LIMITS.GENERAL_MAX_SIZE_BYTES} bytes`)
+  }
+  
+  // Construct storage path: {document-uuid}/assets/{filename}
+  const storagePath = `${documentId}/assets/${filename}`
+  
+  try {
+    // Upload to storage
+    const { data, error } = await supabase.storage
+      .from(DOCUMENTS_BUCKET)
+      .upload(storagePath, fileBlob, {
+        cacheControl: '3600', // 1 hour cache
+        upsert: false, // Prevent overwriting existing files
+        contentType: mimeType
+      })
+    
+    if (error) {
+      const env = detectEnvironment()
+      
+      // Environment-aware error handling
+      if (shouldThrowStorageError(error.message)) {
+        throw new StorageError(getStorageErrorMessage(error.message))
+      } else {
+        // Expected failure in this environment - log but don't throw
+        console.warn(`Image asset upload failed (expected in ${env.isLocalSupabase ? 'local development' : 'this environment'}):`, error.message)
+        return null // Indicate storage failed but processing can continue
+      }
+    }
+    
+    return {
+      path: data.path,
+      fullPath: data.fullPath,
+      size: fileBlob.size,
+      mimeType: mimeType
+    }
+    
+  } catch (error) {
+    if (error instanceof StorageError) {
+      throw error
+    }
+    
+    // Handle specific Supabase storage errors with environment awareness
+    const err = error as { message?: string }
+    const errorMessage = err.message || 'Unknown error'
+    
+    if (errorMessage.includes('Asset Already Exists')) {
+      throw new StorageError(`Image asset already exists at path: ${storagePath}`)
+    }
+    if (errorMessage.includes('Bucket not found')) {
+      throw new StorageError(`Storage bucket '${DOCUMENTS_BUCKET}' not found. Run storage setup first.`)
+    }
+    
+    // Environment-aware error handling for unexpected errors
+    if (shouldThrowStorageError(errorMessage)) {
+      throw new StorageError(getStorageErrorMessage(errorMessage))
+    } else {
+      // Expected failure in this environment - log but return null
+      const env = detectEnvironment()
+      console.warn(`Image asset upload failed (expected in ${env.isLocalSupabase ? 'local development' : 'this environment'}):`, errorMessage)
+      return null
+    }
+  }
+}
+
+/**
+ * Get a signed URL for an image asset
+ * 
+ * @param documentId - UUID of the document
+ * @param filename - Asset filename
+ * @param expiresIn - Expiration time in seconds (default: 1 hour)
+ * @returns Signed URL for temporary access
+ */
+export async function getImageAssetUrl(
+  documentId: string,
+  filename: string,
+  expiresIn: number = 3600
+): Promise<string> {
+  const storagePath = `${documentId}/assets/${filename}`
+  return getSignedDocumentUrl(storagePath, expiresIn)
+}
+
+/**
+ * Get a public URL for an image asset (only works if file has public access)
+ * 
+ * @param documentId - UUID of the document
+ * @param filename - Asset filename  
+ * @returns Public URL (no expiration)
+ */
+export function getPublicImageAssetUrl(documentId: string, filename: string): string {
+  const storagePath = `${documentId}/assets/${filename}`
+  return getPublicDocumentUrl(storagePath)
+}
+
+/**
+ * Delete an image asset from storage
+ * 
+ * @param documentId - UUID of the document
+ * @param filename - Asset filename to delete
+ */
+export async function deleteImageAsset(documentId: string, filename: string): Promise<void> {
+  const storagePath = `${documentId}/assets/${filename}`
+  return deleteDocumentFile(storagePath)
+}
+
+/**
+ * List all image assets for a specific document
+ * 
+ * @param documentId - UUID of the document
+ * @returns Array of asset file objects in the document assets folder
+ */
+export async function listDocumentImageAssets(documentId: string) {
+  const supabase = await createClient()
+  
+  try {
+    const { data, error } = await supabase.storage
+      .from(DOCUMENTS_BUCKET)
+      .list(`${documentId}/assets`, {
+        limit: 100,
+        sortBy: { column: 'created_at', order: 'desc' }
+      })
+    
+    if (error) {
+      throw new StorageError(`Asset list failed: ${error.message}`)
+    }
+    
+    return data || []
+    
+  } catch (error) {
+    if (error instanceof StorageError) {
+      throw error
+    }
+    
+    const err = error as { message?: string }
+    throw new StorageError(`Unexpected asset list error: ${err.message}`)
+  }
+}
+
+/**
  * Helper function to format bytes in human readable format
  */
 function formatBytes(bytes: number): string {

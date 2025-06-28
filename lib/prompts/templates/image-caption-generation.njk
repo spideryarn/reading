@@ -1,0 +1,79 @@
+Generate a descriptive caption and technical analysis for this image region extracted from an academic/technical document.
+
+{% if documentContext %}**Document Context**: {{ documentContext }}{% endif %}
+**Page**: {{ pageNumber }}
+**Bounding Box**: {{ boundingBox.x1 }},{{ boundingBox.y1 }} to {{ boundingBox.x2 }},{{ boundingBox.y2 }} (normalized coordinates)
+**Purpose**: {{ extractionPurpose }}
+
+## Analysis Requirements
+
+**Primary Task**: Generate a concise, descriptive caption suitable for filename generation that accurately describes the image content while being filename-safe and meaningful.
+
+**Academic Focus**: This image is from an academic/technical document. Prioritize accuracy and precision in identifying:
+- Figures, charts, graphs, and diagrams
+- Tables and data presentations  
+- Mathematical equations and formulas
+- Technical illustrations and schematics
+- Scientific photographs and microscopy
+- Engineering drawings and blueprints
+
+## Output Requirements
+
+Return a JSON object with the following structure:
+
+```json
+{
+  "caption": "concise-descriptive-caption-for-filename",
+  "description": "Detailed technical description of the image content, methodology, and academic significance",
+  "confidence": 0.95,
+  "imageType": "figure|table|equation|diagram|chart|graph|photo|illustration|other",
+  "academicRelevance": "high|medium|low"
+}
+```
+
+## Caption Generation Guidelines
+
+**Filename-Safe Caption** (max 100 characters):
+- Use lowercase letters, numbers, and hyphens only
+- Be descriptive but concise: "figure-3-neural-network-architecture"
+- Include figure/table numbers if visible: "table-2-performance-metrics"
+- Identify chart types: "bar-chart-accuracy-comparison"
+- Describe equations: "equation-5-loss-function-derivation"
+- Avoid generic terms: prefer "workflow-diagram" over "diagram"
+
+**Technical Description** (max 500 characters):
+- Describe visual elements, data patterns, and technical content
+- Include axis labels, data trends, and key findings if applicable
+- Note methodology or experimental setup if visible
+- Identify specific academic field or domain relevance
+- Mention color coding, symbols, or notation systems used
+
+**Confidence Assessment**:
+- High (0.8-1.0): Clear, unambiguous academic content with visible labels/captions
+- Medium (0.5-0.79): Recognizable academic content but some ambiguity in details
+- Low (0.0-0.49): Unclear image quality or ambiguous content type
+
+**Image Type Classification**:
+- `figure`: Illustrations, diagrams, photographs, scientific images
+- `table`: Data tables, comparison charts, structured data presentations
+- `equation`: Mathematical formulas, chemical equations, symbolic expressions
+- `diagram`: Flowcharts, process diagrams, conceptual illustrations
+- `chart`: Bar charts, line graphs, pie charts, statistical visualizations
+- `graph`: Network graphs, scatter plots, function plots
+- `photo`: Photographs, microscopy, real-world images
+- `illustration`: Technical drawings, schematics, artistic representations
+- `other`: Content that doesn't fit standard academic categories
+
+**Academic Relevance**:
+- `high`: Core technical content, data, equations, primary research figures
+- `medium`: Supporting illustrations, supplementary diagrams, contextual images
+- `low`: Decorative elements, logos, headers, non-technical content
+
+## Quality Standards
+
+**Accuracy**: Caption must accurately reflect the visible content
+**Specificity**: Use specific technical terminology when identifiable
+**Consistency**: Maintain consistent naming conventions across similar content types
+**Usefulness**: Caption should help researchers quickly identify and locate content
+
+Focus on creating actionable, descriptive captions that will help academic users organize and reference document images effectively.
