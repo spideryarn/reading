@@ -565,7 +565,7 @@ export function StructurePanel({
       console.error('Error in generateHeadingsFromAPI:', error)
       throw error // Re-throw to maintain error handling in calling functions
     }
-  }, [content, elements, documentId, mutationState.activeMutation, applyMutation])
+  }, [content, elements, documentId, mutationState.activeMutation, applyMutation, currentMode])
 
   // Public API for manual headings generation
   const handleGenerateHeadings = async () => {

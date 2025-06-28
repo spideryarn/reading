@@ -14,7 +14,6 @@ import { cn } from '@/lib/utils'
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { getAllTools } from '@/lib/tools/registry'
-import type { Tool } from '@/lib/tools/types'
 
 // Navigation item definition (generated from tool registry)
 interface NavigationItem {

@@ -29,6 +29,7 @@ import './implementations/chat'
 import './implementations/glossary'
 import './implementations/search'
 import './implementations/highlights'
+import './implementations/tweet-thread'
 import './implementations/metadata'
 
 // Once all tools are imported, lock the registry (only if not locked yet – this

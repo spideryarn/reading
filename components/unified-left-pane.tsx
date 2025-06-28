@@ -963,15 +963,20 @@ export function UnifiedLeftPane({
   // Note: DOM event listener removed - now using DocumentCommunicationContext for all cross-pane communication
 
   // Render functions for tabs - memoized to prevent unnecessary re-mounting
-  const renderStructureTab = useCallback(() => (
-    <StructurePanel
-      content={content}
-      elements={elements}
-      onHeadingClick={onHeadingClick}
-      documentId={documentId}
-      headingVisibility={headingVisibility}
-    />
-  ), [content, elements, onHeadingClick, documentId, headingVisibility])
+  const renderStructureTab = useCallback(() => {
+    const props: React.ComponentProps<typeof StructurePanel> = {
+      content,
+      elements,
+      onHeadingClick,
+      documentId
+    }
+    
+    if (headingVisibility !== undefined) {
+      props.headingVisibility = headingVisibility
+    }
+    
+    return <StructurePanel {...props} />
+  }, [content, elements, onHeadingClick, documentId, headingVisibility])
 
   const renderSummaryTab = useCallback(() => (
     <DocumentSummaryTab
@@ -990,45 +995,65 @@ export function UnifiedLeftPane({
     </div>
   ), [documentId, documentContext])
 
-  const renderHighlightsTab = useCallback(() => (
-    <HighlightManagement
-      documentId={documentId}
-      elements={elements}
-      semanticHighlights={semanticHighlights}
-      onSemanticHighlightsChange={onSemanticHighlightsChange}
-      activeElementId={activeElementId}
-      onActiveElementChange={onActiveElementChange}
-      isActive={state.activeTabId === 'highlights'}
-    />
-  ), [documentId, elements, semanticHighlights, onSemanticHighlightsChange, activeElementId, onActiveElementChange, state.activeTabId])
+  const renderHighlightsTab = useCallback(() => {
+    const props: React.ComponentProps<typeof HighlightManagement> = {
+      documentId,
+      elements,
+      isActive: state.activeTabId === 'highlights'
+    }
+    
+    if (semanticHighlights !== undefined) {
+      props.semanticHighlights = semanticHighlights
+    }
+    if (onSemanticHighlightsChange !== undefined) {
+      props.onSemanticHighlightsChange = onSemanticHighlightsChange
+    }
+    if (activeElementId !== null && activeElementId !== undefined) {
+      props.activeElementId = activeElementId
+    }
+    if (onActiveElementChange !== undefined) {
+      props.onActiveElementChange = onActiveElementChange
+    }
+    
+    return <HighlightManagement {...props} />
+  }, [documentId, elements, semanticHighlights, onSemanticHighlightsChange, activeElementId, onActiveElementChange, state.activeTabId])
   
-  const renderMetadataTab = useCallback(() => (
-    <MetadataPanel
-      documentTitle={documentTitle}
-      documentCreatedAt={documentCreatedAt}
-      documentSourceUrl={documentSourceUrl}
-      elements={elements}
-      wordCount={wordCount}
-      glossaryGenerated={glossaryGenerated}
-      glossaryLoading={isLoadingGlossary}
-      aiHeadingsGenerated={aiHeadingsGenerated}
-      summaryGenerated={summaryGenerated}
-      ownerEmail={ownerEmail}
-      isPublic={isPublic}
-      documentId={documentId}
-      slug={slug}
-      storagePath={storagePath}
-      originalFileType={originalFileType}
-      uploadMetadata={uploadMetadata}
-    />
-  ), [documentTitle, documentCreatedAt, documentSourceUrl, elements, wordCount, glossaryGenerated, isLoadingGlossary, aiHeadingsGenerated, summaryGenerated, ownerEmail, isPublic, documentId, slug, storagePath, originalFileType, uploadMetadata])
+  const renderMetadataTab = useCallback(() => {
+    const props: React.ComponentProps<typeof MetadataPanel> = {
+      documentTitle,
+      documentCreatedAt,
+      elements,
+      wordCount,
+      glossaryGenerated,
+      glossaryLoading: isLoadingGlossary,
+      aiHeadingsGenerated,
+      summaryGenerated,
+      ownerEmail,
+      isPublic,
+      documentId,
+      slug,
+      storagePath,
+      originalFileType
+    }
+    
+    // Only add optional properties if they're not undefined
+    if (documentSourceUrl !== undefined) {
+      props.documentSourceUrl = documentSourceUrl
+    }
+    if (uploadMetadata !== undefined) {
+      props.uploadMetadata = uploadMetadata
+    }
+    
+    return <MetadataPanel {...props} />
+  }, [documentTitle, documentCreatedAt, documentSourceUrl, elements, wordCount, glossaryGenerated, isLoadingGlossary, aiHeadingsGenerated, summaryGenerated, ownerEmail, isPublic, documentId, slug, storagePath, originalFileType, uploadMetadata])
 
   const renderTweetThreadTab = useCallback(() => (
     <TweetThreadPanel
       documentId={documentId}
       slug={slug}
+      documentContent={content}
     />
-  ), [documentId, slug])
+  ), [documentId, slug, content])
 
   const renderGlossaryTab = useCallback(() => {
     if (!showGlossary) {
@@ -1156,9 +1181,9 @@ export function UnifiedLeftPane({
             <GlossaryDisplay 
               entities={glossaryEntities || []} 
               elements={elements}
-              hasMoreEntities={hasMoreEntities}
-              isLoadingMoreGlossary={isLoadingMoreGlossary}
-              onLoadMoreGlossary={onLoadMoreGlossary}
+              {...(hasMoreEntities !== undefined && { hasMoreEntities })}
+              {...(isLoadingMoreGlossary !== undefined && { isLoadingMoreGlossary })}
+              {...(onLoadMoreGlossary !== undefined && { onLoadMoreGlossary })}
             />
             {hasMoreEntities && (
               <div className="p-4 border-t border-gray-200">
