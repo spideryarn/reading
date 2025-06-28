@@ -242,7 +242,7 @@ export function usePersistentChat({
             parameters: requestPayload,
             metadata: {
               correlationId: crypto.randomUUID(),
-              source: 'chat-component',
+              source: 'direct',
               timestamp: new Date().toISOString()
             }
           }),
