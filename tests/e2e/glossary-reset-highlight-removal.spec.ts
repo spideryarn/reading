@@ -3,7 +3,7 @@ import { withDatabaseResetRecovery } from '../helpers/robust-auth';
 
 // Use pre-authenticated state for faster test execution (worktree-specific)
 test.use({ 
-  storageState: 'playwright/.auth/worktree1-user.json' 
+  storageState: 'playwright/.auth/worktree2-user.json' 
 });
 
 /**

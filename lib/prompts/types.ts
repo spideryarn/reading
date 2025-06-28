@@ -54,13 +54,18 @@ export function loadPromptTemplate<T extends z.ZodSchema>(
   // Load template content at module load time for better performance
   readFileSync(templatePath, 'utf-8')
   
-  return {
+  const result: PromptTemplate<T> = {
     name: templatePath.split('/').pop()?.replace('.njk', '') || 'unnamed',
     description: `Prompt template from ${templatePath}`,
     schema,
-    templatePath,
-    modelConfig
+    templatePath
   }
+  
+  if (modelConfig !== undefined) {
+    result.modelConfig = modelConfig
+  }
+  
+  return result
 }
 
 // Helper function to auto-resolve template path from template name
@@ -326,11 +331,16 @@ export function loadMultimodalPromptTemplate<T extends z.ZodSchema>(
   // Load template content at module load time for better performance
   readFileSync(templatePath, 'utf-8')
   
-  return {
+  const result: MultimodalPromptTemplate<T> = {
     name: templatePath.split('/').pop()?.replace('.njk', '') || 'unnamed',
     description: `Multimodal prompt template from ${templatePath}`,
     schema,
-    templatePath,
-    modelConfig
+    templatePath
   }
+  
+  if (modelConfig !== undefined) {
+    result.modelConfig = modelConfig
+  }
+  
+  return result
 }

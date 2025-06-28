@@ -278,7 +278,15 @@ export class DocumentService {
     
     const createdDoc = await this.create(documentToCreate)
     
-    return { document: createdDoc, storageResult }
+    const result: { document: Document; storageResult?: StorageUploadResult | null } = {
+      document: createdDoc
+    }
+    
+    if (storageResult !== undefined) {
+      result.storageResult = storageResult
+    }
+    
+    return result
   }
 
   /**

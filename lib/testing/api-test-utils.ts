@@ -79,15 +79,20 @@ export async function testApiRoute(config: ApiTestConfig): Promise<ApiTestRespon
     appHandler: handler,
     url,
     test: async ({ fetch }) => {
-      const response = await fetch({
+      const fetchOptions: RequestInit = {
         method,
         headers: {
           'Content-Type': 'application/json',
           ...authHeaders,
           ...headers
-        },
-        body: body ? JSON.stringify(body) : undefined
-      })
+        }
+      }
+      
+      if (body !== undefined) {
+        fetchOptions.body = JSON.stringify(body)
+      }
+      
+      const response = await fetch(fetchOptions)
 
       responseStatus = response.status
       responseHeaders = response.headers
@@ -144,13 +149,18 @@ export const apiTestPatterns = {
    * Test API route with authentication failure
    */
   authFailure: async (routeModule: any, url: string, body?: unknown, error?: string) => {
-    return await testApiRoute({
+    const config: ApiTestConfig = {
       handler: routeModule,
       url,
       body,
-      authScenario: 'authFailure',
-      authError: error
-    })
+      authScenario: 'authFailure'
+    }
+    
+    if (error !== undefined) {
+      config.authError = error
+    }
+    
+    return await testApiRoute(config)
   },
 
   /**
@@ -241,15 +251,20 @@ export const apiTestHelpers = {
             authHeaders = authSetup.headers
           }
 
-          const response = await fetch({
+          const fetchOptions: RequestInit = {
             method: config.method || 'POST',
             headers: {
               'Content-Type': 'application/json',
               ...authHeaders,
               ...config.headers
-            },
-            body: config.body ? JSON.stringify(config.body) : undefined
-          })
+            }
+          }
+          
+          if (config.body !== undefined) {
+            fetchOptions.body = JSON.stringify(config.body)
+          }
+          
+          const response = await fetch(fetchOptions)
 
           const chunks: string[] = []
           

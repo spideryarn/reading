@@ -70,15 +70,20 @@ export async function testSecureApiRoute(
     appHandler: handler,
     url,
     test: async ({ fetch }) => {
-      const response = await fetch({
+      const fetchOptions: RequestInit = {
         method,
         headers: {
           'content-type': 'application/json',
           ...authHeaders,
           ...headers,
-        },
-        body: body ? JSON.stringify(body) : undefined,
-      })
+        }
+      }
+      
+      if (body !== undefined) {
+        fetchOptions.body = JSON.stringify(body)
+      }
+      
+      const response = await fetch(fetchOptions)
 
       responseStatus = response.status
       responseHeaders = response.headers
@@ -443,15 +448,20 @@ export function createSecureMockRequest(
     authHeaders = mockApiAuth(auth.user)
   }
 
-  return new Request(url, {
+  const requestInit: RequestInit = {
     method,
     headers: {
       'content-type': 'application/json',
       ...authHeaders,
       ...headers,
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  })
+    }
+  }
+  
+  if (body !== undefined) {
+    requestInit.body = JSON.stringify(body)
+  }
+  
+  return new Request(url, requestInit)
 }
 
 /**

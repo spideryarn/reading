@@ -260,13 +260,18 @@ export class AiCallService {
                       response.finishTimestamp - response.startTimestamp : 0) || 
                     0
 
-    return {
+    const metrics: AiCallMetrics = {
       promptTokens: usage.promptTokens || 0,
       completionTokens: usage.completionTokens || 0,
       totalTokens: usage.totalTokens || 0,
-      reasoningTokens: usage.reasoningTokens,
       latencyMs: latency,
     }
+    
+    if (usage.reasoningTokens !== undefined) {
+      metrics.reasoningTokens = usage.reasoningTokens
+    }
+    
+    return metrics
   }
 
   // Test helper methods

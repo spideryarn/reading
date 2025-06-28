@@ -257,14 +257,18 @@ export function DocumentList({
 
   return (
     <div className={`space-y-4 ${className}`}>
-      {documents.map((document) => (
-        <DocumentItem
-          key={document.id}
-          document={document}
-          showDeleteActions={showDeleteActions}
-          currentUserId={currentUserId}
-        />
-      ))}
+      {documents.map((document) => {
+        const itemProps: DocumentItemProps = {
+          document,
+          showDeleteActions
+        }
+        
+        if (currentUserId !== undefined) {
+          itemProps.currentUserId = currentUserId
+        }
+        
+        return <DocumentItem key={document.id} {...itemProps} />
+      })}
     </div>
   )
 }

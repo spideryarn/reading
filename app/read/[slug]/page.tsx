@@ -35,7 +35,7 @@ export default async function DocumentPage({ params }: PageProps) {
   // If document not found or not accessible, show not authorized page
   // This conflates "not found" and "no permission" for security
   if (!doc) {
-    return <NotAuthorizedPage userEmail={user?.email} slug={slug} />
+    return <NotAuthorizedPage userEmail={user?.email ?? null} slug={slug} />
   }
 
   // Get enhancement flags from the document_enhancements table
@@ -69,7 +69,7 @@ export default async function DocumentPage({ params }: PageProps) {
         aiHeadingsGenerated={enhancementFlags.aiHeadingsGenerated}
         summaryGenerated={enhancementFlags.summaryGenerated}
         glossaryGenerated={enhancementFlags.glossaryGenerated}
-        ownerEmail={user?.email}
+        {...(user?.email !== undefined && { ownerEmail: user.email })}
         isPublic={doc.is_public}
       />
     </MutationProvider>

@@ -187,11 +187,18 @@ export class DocumentService {
       return { documents: [], hasMore: false }
     }
 
-    return this.list({
-      createdBy: userId,
-      limit: options?.limit,
-      offset: options?.offset
-    })
+    const listOptions: Parameters<typeof this.list>[0] = {
+      createdBy: userId
+    }
+    
+    if (options?.limit !== undefined) {
+      listOptions.limit = options.limit
+    }
+    if (options?.offset !== undefined) {
+      listOptions.offset = options.offset
+    }
+    
+    return this.list(listOptions)
   }
 
   /**

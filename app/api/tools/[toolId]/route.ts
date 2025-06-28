@@ -76,8 +76,7 @@ async function createExecutionContext(
   // In a full implementation, we might extract documentId from parameters
   // and fetch document context here
   
-  return {
-    user,
+  const context: ExecutionContext = {
     request: {
       correlationId,
       timestamp: new Date(),
@@ -85,6 +84,12 @@ async function createExecutionContext(
       executionType: 'server'
     }
   }
+  
+  if (user) {
+    context.user = user
+  }
+  
+  return context
 }
 
 /**
