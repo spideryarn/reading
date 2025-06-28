@@ -1,7 +1,7 @@
 /**
- * PDF to Images Conversion using MuPDF.js
+ * PDF to Images Conversion using PDF.js
  * 
- * This module provides utilities for converting PDF pages to images using MuPDF.js.
+ * This module provides utilities for converting PDF pages to images using PDF.js.
  * It handles browser-only operations and provides base64-encoded images suitable
  * for vision-based AI processing.
  * 
@@ -18,6 +18,9 @@ if (typeof window === 'undefined') {
   throw new Error('pdf-to-images.ts can only be used in browser environments')
 }
 
+import { pdfjsLib } from '@/lib/pdf-config';
+import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
+
 /**
  * Error thrown when PDF to image conversion fails
  */
@@ -32,14 +35,16 @@ export class PDFToImagesError extends Error {
  * Configuration options for PDF to image conversion
  */
 export interface PDFToImagesOptions {
-  /** DPI/scale factor for image quality (1.0 = 72 DPI, 2.0 = 144 DPI) */
+  /** Scale factor for image quality (1.0 = 72 DPI, 2.0 = 144 DPI) */
   scale?: number
   /** Output format: 'png' for lossless, 'jpeg' for smaller size */
   format?: 'png' | 'jpeg'
-  /** JPEG quality (1-100, only used when format is 'jpeg') */
-  jpegQuality?: number
-  /** Whether to include alpha channel */
-  alpha?: boolean
+  /** JPEG quality (0-1, only used when format is 'jpeg') */
+  quality?: number
+  /** Rotation in degrees (0, 90, 180, 270) */
+  rotation?: number
+  /** Pages to convert ('all' or array of page numbers) */
+  pages?: 'all' | number[]
   /** Progress callback function (pageIndex, totalPages) => void */
   onProgress?: (pageIndex: number, totalPages: number) => void
 }
@@ -67,6 +72,8 @@ export interface PDFToImagesResult {
   pages: PageImageResult[]
   /** Total number of pages converted */
   totalPages: number
+  /** Processing time in milliseconds */
+  processingTime: number
   /** Conversion summary */
   summary: {
     format: 'png' | 'jpeg'
@@ -77,71 +84,122 @@ export interface PDFToImagesResult {
 }
 
 /**
- * Convert a single PDF page to base64 image using MuPDF.js
- * 
- * @param document - MuPDF Document instance
- * @param pageIndex - Zero-based page index
- * @param options - Conversion options
- * @returns Promise resolving to page image result
+ * Interface for render options
  */
-async function convertPageToImage(
-  document: import('mupdf').Document,
-  pageIndex: number,
-  options: Required<PDFToImagesOptions>
-): Promise<PageImageResult> {
-  const page = document.loadPage(pageIndex)
-  
+interface RenderOptions {
+  scale: number;
+  rotation?: number;
+  outputScale?: number;
+}
+
+/**
+ * Interface for page render result
+ */
+interface PageRenderResult {
+  canvas: HTMLCanvasElement;
+  context: CanvasRenderingContext2D;
+  viewport: any;
+}
+
+/**
+ * Load PDF from various sources
+ */
+async function loadPDF(
+  source: string | ArrayBuffer | Uint8Array
+): Promise<{ pdf: PDFDocumentProxy; pageCount: number; metadata?: any }> {
   try {
-    // Create scaling matrix for DPI
-    const mupdf = await import('mupdf')
-    const matrix = mupdf.Matrix.scale(options.scale, options.scale)
+    const loadingTask = pdfjsLib.getDocument(source);
     
-    // Get default colorspace (RGB)
-    const colorspace = mupdf.ColorSpace.DeviceRGB
+    const pdf = await loadingTask.promise;
+    const metadata = await pdf.getMetadata().catch(() => null);
     
-    // Convert page to pixmap
-    const pixmap = page.toPixmap(matrix, colorspace, options.alpha)
-    
-    try {
-      // Get image data based on format
-      let imageData: Uint8Array
-      let mimeType: string
-      
-      if (options.format === 'jpeg') {
-        imageData = pixmap.asJPEG(options.jpegQuality)
-        mimeType = 'image/jpeg'
-      } else {
-        imageData = pixmap.asPNG()
-        mimeType = 'image/png'
-      }
-      
-      // Convert to base64
-      const base64 = btoa(String.fromCharCode(...imageData))
-      const base64Image = `data:${mimeType};base64,${base64}`
-      
-      // Get pixmap dimensions
-      const width = pixmap.getWidth()
-      const height = pixmap.getHeight()
-      
-      return {
-        pageIndex,
-        base64Image,
-        format: options.format,
-        width,
-        height
-      }
-    } finally {
-      // Clean up pixmap
-      pixmap.destroy()
+    return {
+      pdf,
+      pageCount: pdf.numPages,
+      metadata: metadata?.info
+    };
+  } catch (error: any) {
+    if (error.name === 'InvalidPDFException') {
+      throw new PDFToImagesError('Invalid PDF file format');
+    } else if (error.name === 'MissingPDFException') {
+      throw new PDFToImagesError('PDF file not found');
+    } else if (error.name === 'UnexpectedResponseException') {
+      throw new PDFToImagesError('Network error loading PDF');
     }
-  } finally {
-    // Clean up page
-    page.destroy()
+    throw new PDFToImagesError(`PDF loading failed: ${error.message}`);
   }
 }
 
 /**
- * Convert PDF file to page images using MuPDF.js (browser-only)
+ * Render a PDF page to canvas
+ */
+async function renderPageToCanvas(
+  page: PDFPageProxy,
+  options: RenderOptions = { scale: 1.5 }
+): Promise<PageRenderResult> {
+  // Calculate viewport with scale
+  const viewport = page.getViewport({ 
+    scale: options.scale,
+    rotation: options.rotation || 0
+  });
+  
+  // Create canvas with proper sizing
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d')!;
+  
+  // Handle high-DPI displays
+  const outputScale = options.outputScale || window.devicePixelRatio || 1;
+  
+  canvas.width = Math.floor(viewport.width * outputScale);
+  canvas.height = Math.floor(viewport.height * outputScale);
+  canvas.style.width = Math.floor(viewport.width) + 'px';
+  canvas.style.height = Math.floor(viewport.height) + 'px';
+  
+  // Render page to canvas
+  const renderContext = {
+    canvasContext: context,
+    viewport: viewport,
+    ...(outputScale !== 1 && { transform: [outputScale, 0, 0, outputScale, 0, 0] })
+  };
+  
+  await page.render(renderContext).promise;
+  
+  return { canvas, context, viewport };
+}
+
+/**
+ * Extract image from canvas
+ */
+async function extractImageFromCanvas(
+  canvas: HTMLCanvasElement,
+  format: 'png' | 'jpeg',
+  quality: number
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    try {
+      const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
+      const dataUrl = canvas.toDataURL(mimeType, quality);
+      resolve(dataUrl);
+    } catch (error: any) {
+      reject(new PDFToImagesError(`Image extraction failed: ${error.message}`));
+    }
+  });
+}
+
+/**
+ * Clean up canvas to free memory
+ */
+function cleanupCanvas(canvas: HTMLCanvasElement): void {
+  const context = canvas.getContext('2d');
+  if (context) {
+    context.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  canvas.width = 0;
+  canvas.height = 0;
+}
+
+/**
+ * Convert PDF file to page images using PDF.js (browser-only)
  * 
  * @param file - PDF file object from browser file input
  * @param options - Conversion options
@@ -157,7 +215,7 @@ async function convertPageToImage(
  *     const result = await convertPDFToImages(file, {
  *       scale: 2.0,
  *       format: 'jpeg',
- *       jpegQuality: 85,
+ *       quality: 0.85,
  *       onProgress: (page, total) => {
  *         console.log(`Processing page ${page + 1} of ${total}`)
  *       }
@@ -177,73 +235,101 @@ export async function convertPDFToImages(
   file: File,
   options: PDFToImagesOptions = {}
 ): Promise<PDFToImagesResult> {
-  // Set default options
-  const opts: Required<PDFToImagesOptions> = {
-    scale: options.scale ?? 2.0,
-    format: options.format ?? 'png',
-    jpegQuality: options.jpegQuality ?? 85,
-    alpha: options.alpha ?? false,
-    onProgress: options.onProgress ?? (() => {})
+  const startTime = Date.now();
+  
+  // Validate browser environment
+  if (typeof window === 'undefined') {
+    throw new PDFToImagesError('PDF conversion must happen in browser environment');
   }
   
+  const {
+    scale = 1.5,
+    format = 'png',
+    quality = 0.95,
+    rotation = 0,
+    pages = 'all',
+    onProgress
+  } = options;
+  
   try {
-    // Dynamic import of MuPDF.js
-    const mupdf = await import('mupdf')
+    // Load PDF
+    const arrayBuffer = await file.arrayBuffer();
+    const { pdf, pageCount } = await loadPDF(arrayBuffer);
     
-    // Convert File to ArrayBuffer
-    const arrayBuffer = await file.arrayBuffer()
+    // Determine pages to process
+    const pageIndices = pages === 'all' 
+      ? Array.from({ length: pageCount }, (_, i) => i + 1)
+      : pages;
     
-    // Create MuPDF Document
-    const document = mupdf.Document.openDocument(arrayBuffer)
+    const results: PageImageResult[] = [];
+    let totalSizeBytes = 0;
     
-    try {
-      const totalPages = document.countPages()
-      const pages: PageImageResult[] = []
-      let totalSizeBytes = 0
+    // Process pages sequentially to manage memory
+    for (let i = 0; i < pageIndices.length; i++) {
+      const pageNumber = pageIndices[i];
+      if (typeof pageNumber !== 'number') {
+        throw new PDFToImagesError(`Invalid page number: ${pageNumber}`);
+      }
       
-      // Convert each page sequentially
-      for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
-        // Call progress callback
-        opts.onProgress(pageIndex, totalPages)
+      try {
+        // Load page
+        const page = await pdf.getPage(pageNumber);
         
-        // Convert page to image
-        const pageResult = await convertPageToImage(document, pageIndex, opts)
-        pages.push(pageResult)
+        // Render to canvas
+        const { canvas, viewport } = await renderPageToCanvas(page, { scale, rotation });
+        
+        // Extract image with proper cleanup
+        const imageData = await extractImageFromCanvas(canvas, format, quality);
+        
+        results.push({
+          pageIndex: pageNumber - 1, // Zero-indexed for consistency
+          base64Image: imageData,
+          format,
+          width: Math.floor(viewport.width),
+          height: Math.floor(viewport.height)
+        });
         
         // Track total size (rough estimate from base64 length)
-        totalSizeBytes += Math.round(pageResult.base64Image.length * 0.75) // base64 is ~33% larger
+        totalSizeBytes += Math.round(imageData.length * 0.75); // base64 is ~33% larger
+        
+        // Cleanup canvas immediately
+        cleanupCanvas(canvas);
+        
+        // Report progress
+        onProgress?.(i, pageIndices.length);
+        
+      } catch (error: any) {
+        console.error(`Failed to process page ${pageNumber}:`, error);
+        throw new PDFToImagesError(`Page ${pageNumber} processing failed: ${error.message}`);
       }
-      
-      // Call final progress
-      opts.onProgress(totalPages, totalPages)
-      
-      return {
-        pages,
-        totalPages,
-        summary: {
-          format: opts.format,
-          scale: opts.scale,
-          totalSizeBytes,
-          averageSizeBytes: Math.round(totalSizeBytes / totalPages)
-        }
+    }
+    
+    // Cleanup PDF document
+    pdf.cleanup();
+    pdf.destroy();
+    
+    return {
+      pages: results,
+      totalPages: pageCount,
+      processingTime: Date.now() - startTime,
+      summary: {
+        format,
+        scale,
+        totalSizeBytes,
+        averageSizeBytes: Math.round(totalSizeBytes / results.length)
       }
-    } finally {
-      // Clean up document
-      document.destroy()
+    };
+    
+  } catch (error: any) {
+    if (error instanceof PDFToImagesError) {
+      throw error;
     }
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new PDFToImagesError(
-        `Failed to convert PDF to images: ${error.message}`,
-        error
-      )
-    }
-    throw new PDFToImagesError('Failed to convert PDF to images: Unknown error')
+    throw new PDFToImagesError(`PDF conversion failed: ${error.message}`);
   }
 }
 
 /**
- * Convert PDF ArrayBuffer to page images using MuPDF.js (browser-only)
+ * Convert PDF ArrayBuffer to page images using PDF.js (browser-only)
  * 
  * @param arrayBuffer - PDF data as ArrayBuffer
  * @param options - Conversion options
@@ -254,65 +340,95 @@ export async function convertPDFBufferToImages(
   arrayBuffer: ArrayBuffer,
   options: PDFToImagesOptions = {}
 ): Promise<PDFToImagesResult> {
-  // Set default options
-  const opts: Required<PDFToImagesOptions> = {
-    scale: options.scale ?? 2.0,
-    format: options.format ?? 'png',
-    jpegQuality: options.jpegQuality ?? 85,
-    alpha: options.alpha ?? false,
-    onProgress: options.onProgress ?? (() => {})
+  const startTime = Date.now();
+  
+  // Validate browser environment
+  if (typeof window === 'undefined') {
+    throw new PDFToImagesError('PDF conversion must happen in browser environment');
   }
   
+  const {
+    scale = 1.5,
+    format = 'png',
+    quality = 0.95,
+    rotation = 0,
+    pages = 'all',
+    onProgress
+  } = options;
+  
   try {
-    // Dynamic import of MuPDF.js
-    const mupdf = await import('mupdf')
+    // Load PDF
+    const { pdf, pageCount } = await loadPDF(arrayBuffer);
     
-    // Create MuPDF Document
-    const document = mupdf.Document.openDocument(arrayBuffer)
+    // Determine pages to process
+    const pageIndices = pages === 'all' 
+      ? Array.from({ length: pageCount }, (_, i) => i + 1)
+      : pages;
     
-    try {
-      const totalPages = document.countPages()
-      const pages: PageImageResult[] = []
-      let totalSizeBytes = 0
+    const results: PageImageResult[] = [];
+    let totalSizeBytes = 0;
+    
+    // Process pages sequentially to manage memory
+    for (let i = 0; i < pageIndices.length; i++) {
+      const pageNumber = pageIndices[i];
+      if (typeof pageNumber !== 'number') {
+        throw new PDFToImagesError(`Invalid page number: ${pageNumber}`);
+      }
       
-      // Convert each page sequentially
-      for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
-        // Call progress callback
-        opts.onProgress(pageIndex, totalPages)
+      try {
+        // Load page
+        const page = await pdf.getPage(pageNumber);
         
-        // Convert page to image
-        const pageResult = await convertPageToImage(document, pageIndex, opts)
-        pages.push(pageResult)
+        // Render to canvas
+        const { canvas, viewport } = await renderPageToCanvas(page, { scale, rotation });
+        
+        // Extract image with proper cleanup
+        const imageData = await extractImageFromCanvas(canvas, format, quality);
+        
+        results.push({
+          pageIndex: pageNumber - 1, // Zero-indexed for consistency
+          base64Image: imageData,
+          format,
+          width: Math.floor(viewport.width),
+          height: Math.floor(viewport.height)
+        });
         
         // Track total size (rough estimate from base64 length)
-        totalSizeBytes += Math.round(pageResult.base64Image.length * 0.75) // base64 is ~33% larger
+        totalSizeBytes += Math.round(imageData.length * 0.75); // base64 is ~33% larger
+        
+        // Cleanup canvas immediately
+        cleanupCanvas(canvas);
+        
+        // Report progress
+        onProgress?.(i, pageIndices.length);
+        
+      } catch (error: any) {
+        console.error(`Failed to process page ${pageNumber}:`, error);
+        throw new PDFToImagesError(`Page ${pageNumber} processing failed: ${error.message}`);
       }
-      
-      // Call final progress
-      opts.onProgress(totalPages, totalPages)
-      
-      return {
-        pages,
-        totalPages,
-        summary: {
-          format: opts.format,
-          scale: opts.scale,
-          totalSizeBytes,
-          averageSizeBytes: Math.round(totalSizeBytes / totalPages)
-        }
+    }
+    
+    // Cleanup PDF document
+    pdf.cleanup();
+    pdf.destroy();
+    
+    return {
+      pages: results,
+      totalPages: pageCount,
+      processingTime: Date.now() - startTime,
+      summary: {
+        format,
+        scale,
+        totalSizeBytes,
+        averageSizeBytes: Math.round(totalSizeBytes / results.length)
       }
-    } finally {
-      // Clean up document
-      document.destroy()
+    };
+    
+  } catch (error: any) {
+    if (error instanceof PDFToImagesError) {
+      throw error;
     }
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new PDFToImagesError(
-        `Failed to convert PDF buffer to images: ${error.message}`,
-        error
-      )
-    }
-    throw new PDFToImagesError('Failed to convert PDF buffer to images: Unknown error')
+    throw new PDFToImagesError(`PDF buffer conversion failed: ${error.message}`);
   }
 }
 
@@ -325,22 +441,19 @@ export function getRecommendedSettings(useCase: 'speed' | 'quality' | 'balanced'
       return {
         scale: 1.5,
         format: 'jpeg',
-        jpegQuality: 70,
-        alpha: false
+        quality: 0.7
       }
     case 'quality':
       return {
-        scale: 3.0,
-        format: 'png',
-        alpha: false
+        scale: 2.5,
+        format: 'png'
       }
     case 'balanced':
     default:
       return {
         scale: 2.0,
         format: 'jpeg',
-        jpegQuality: 85,
-        alpha: false
+        quality: 0.85
       }
   }
 }

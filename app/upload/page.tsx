@@ -362,15 +362,6 @@ export default function AddDocumentPage() {
         
         if (input.type === 'pdf') {
           if (processing.method === 'vision-ai') {
-            // TEMPORARILY DISABLED: MuPDF.js has build compatibility issues with Next.js webpack
-            // TODO: Replace with PDF.js or canvas-based solution for frontend PDF-to-image conversion
-            // See planning/250627c_vision_based_pdf_processing_pipeline.md for details
-            throw new Error(
-              'LLM vision-based transcription (v2) temporarily unavailable due to PDF conversion library compatibility issues. ' +
-              'Please use LLM transcription (v1) for PDFs in the meantime.'
-            )
-            
-            /*
             // Vision-AI processing requires frontend PDF-to-image conversion
             try {
               // Update processing message for conversion phase
@@ -424,7 +415,6 @@ export default function AddDocumentPage() {
                   : 'PDF conversion failed with unknown error'
               )
             }
-            */
           }
           
           const apiEndpoint = processing.method === 'vision-ai' ? '/api/upload-pdf-vision' : '/api/upload-pdf'
