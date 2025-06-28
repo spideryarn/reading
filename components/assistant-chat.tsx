@@ -20,7 +20,7 @@ import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 import { useChatUrlState } from '@/lib/tools/hooks/use-tool-url-state';
 import { useEffect, useCallback, useState } from 'react';
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover';
-import { SpeechToTextInput } from '@/components/speech/speech-to-text-input';
+import { VoiceInputRecorder } from '@/components/speech/voice-input-recorder';
 
 interface AssistantChatProps {
   documentId: string;
@@ -115,7 +115,7 @@ const Composer = () => {
         rows={1}
       />
       <ThreadPrimitive.If running={false}>
-        <SpeechToTextInput 
+        <VoiceInputRecorder 
           onTranscription={handleVoiceTranscription}
           onError={handleVoiceError}
           className="flex-shrink-0"

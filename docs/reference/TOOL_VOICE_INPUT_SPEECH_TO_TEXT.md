@@ -5,11 +5,13 @@ Voice input functionality for the chatbot interface using OpenAI Whisper API, al
 ## See also
 
 - `components/speech/` - Reusable voice input components implementation
+- `components/speech/voice-input-recorder.tsx` - New react-media-recorder based implementation
 - `app/api/speech-to-text/route.ts` - OpenAI Whisper API integration endpoint
 - `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Chat interface integration details
 - `docs/reference/RESEARCH_ON_SPEECH_TO_TEXT.md` - Speech-to-text API research and decision rationale
 - `planning/250627b_voice_input_microphone_chatbot.md` - Complete implementation planning and debrief
 - [OpenAI Whisper API documentation](https://platform.openai.com/docs/guides/speech-to-text) - API reference and capabilities
+- [react-media-recorder](https://www.npmjs.com/package/react-media-recorder) - Library used for improved browser permission handling
 
 ## Key Features ✓
 
@@ -74,6 +76,15 @@ Voice input functionality for the chatbot interface using OpenAI Whisper API, al
 - **Rate limits**: Wait time guidance when API limits exceeded
 
 ## Technical Implementation
+
+### Current Implementation (react-media-recorder)
+
+As of January 2025, we've migrated to using `react-media-recorder` for more robust browser permission handling. The new implementation:
+
+- **Better permission flow**: Actually triggers browser permission prompts correctly
+- **Improved error recovery**: Clear guidance when permissions are denied
+- **Same API surface**: Drop-in replacement for the previous component
+- **Enhanced reliability**: Library handles edge cases better than custom implementation
 
 ### Component Architecture
 ```typescript
