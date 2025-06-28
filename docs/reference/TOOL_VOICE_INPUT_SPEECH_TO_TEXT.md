@@ -211,6 +211,23 @@ interface SpeechToTextInputProps {
 
 ## Development Notes
 
+### Test Audio Files
+For debugging and testing the speech-to-text API, a sample audio file is available:
+
+- **Location**: `static/examples/test-audio-2s-440hz.webm`
+- **Format**: WebM with Opus codec (32kbps)
+- **Content**: 2-second 440Hz sine wave tone
+- **Size**: ~10KB
+- **Usage**: Can be used to test the `/api/speech-to-text` endpoint directly
+
+Example test command:
+```bash
+# Test the API with authentication (requires valid session)
+curl -X POST http://localhost:3003/api/speech-to-text \
+  -F "audio=@static/examples/test-audio-2s-440hz.webm" \
+  -H "Cookie: [your-auth-cookies]"
+```
+
 ### Reusable Architecture
 The voice input system is designed for extensibility:
 
