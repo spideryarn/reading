@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { AiCallService } from '../database/ai-calls'
 import { getModelConfig, parseModelString } from '@/lib/config/models'
 import { generateText } from 'ai'
-import { getTestNamespace, createTestUser, getCleanupFunctions } from '@/lib/testing/test-isolation-utils'
+import { getTestNamespace, createTestUser } from '@/lib/testing/test-isolation-utils'
 
 // Mock Supabase client
 jest.mock('@/lib/supabase/server', () => ({
@@ -266,9 +266,9 @@ describe('Token Usage Tracking', () => {
       
       const cost = 0
       try {
-        const config = getModelConfig(call.model_string)
+        const _config = getModelConfig(call.model_string)
         // This won't execute due to error
-      } catch (e) {
+      } catch (_e) {
         // Cost remains 0 when model not found
       }
       
@@ -300,7 +300,7 @@ describe('Token Usage Tracking', () => {
     })
 
     it('should differentiate usage by model tier', async () => {
-      const userId = testUser.id
+      const _userId = testUser.id
 
       // Mock calls with different model tiers
       const mockCalls = [
