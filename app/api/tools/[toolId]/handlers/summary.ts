@@ -20,7 +20,8 @@ import { executePromptWithUsage } from '@/lib/prompts/types'
 import { 
   summarisePrompt, 
   getMaxTokensForGranularity, 
-  getGranularityInstruction 
+  getGranularityInstruction,
+  type GranularityKey 
 } from '@/lib/prompts/templates/summarise'
 import { 
   multiSummarisePrompt, 
@@ -276,7 +277,7 @@ export class SummaryHandler extends BaseToolHandler {
         ...summarisePrompt,
         modelConfig: {
           ...summarisePrompt.modelConfig,
-          maxTokens: granularity ? getMaxTokensForGranularity(granularity) : 200
+          maxTokens: granularity ? getMaxTokensForGranularity(granularity as GranularityKey) : 200
         }
       }
       
@@ -312,7 +313,7 @@ export class SummaryHandler extends BaseToolHandler {
         
         const summaryResult = await executePromptWithUsage(templateWithTokens, { 
           content, 
-          granularity: getGranularityInstruction(granularity)
+          granularity: getGranularityInstruction(granularity as GranularityKey | undefined)
         })
         
         operationTimer.end({
@@ -347,8 +348,8 @@ export class SummaryHandler extends BaseToolHandler {
             {
               text: summaryResult.text,
               metadata: {
-                granularity,
-                sectionId,
+                ...(granularity && { granularity }),
+                ...(sectionId && { sectionId }),
                 generatedAt: new Date().toISOString(),
                 modelUsed: modelString
               }
@@ -694,7 +695,6 @@ export class SummaryHandler extends BaseToolHandler {
           error: dbError instanceof Error ? dbError.message : 'Unknown database error',
           aiCallId: aiCall.id,
           ...this.createResponseMetadata({
-            executionTime: overallTimer.elapsed(),
             tokensUsed: summaryResult.usage?.totalTokens
           })
         }
@@ -722,7 +722,7 @@ export class SummaryHandler extends BaseToolHandler {
     const requestTimer = createTimer()
     
     const documentId = params.documentId
-    const granularity = params.granularity
+    const granularity = typeof params.granularity === 'string' ? params.granularity : undefined
     const type = params.type || 'all'
     
     if (!documentId || typeof documentId !== 'string') {

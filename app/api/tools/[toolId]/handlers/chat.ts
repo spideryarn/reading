@@ -527,7 +527,7 @@ export class ChatHandler extends BaseToolHandler {
         }
       } else {
         // Delete entire thread
-        await chatService.deleteThread(threadId, context.user.id)
+        await chatService.deleteThread(threadId)
         
         logger.info({
           threadId

@@ -288,8 +288,23 @@ export class GlossaryHandler extends BaseToolHandler {
       // Store entities individually in database (only if documentId provided)
       if (documentId) {
         // Store each entity individually with the same AI call ID
-        // validatedResponse.entities are already validated Entity objects from Zod
-        await storeIndividualEntities(supabase, documentId, aiCall.id, validatedResponse.entities)
+        // Clean up entities to remove undefined optional properties for strict typing
+        const cleanedEntities = validatedResponse.entities.map(entity => {
+          const cleaned: Entity = {
+            name: entity.name,
+            ontology: entity.ontology,
+            aliases: entity.aliases,
+            brief_explanation: entity.brief_explanation
+          }
+          if (entity.long_explanation !== undefined) cleaned.long_explanation = entity.long_explanation
+          if (entity.datetime !== undefined) cleaned.datetime = entity.datetime
+          if (entity.url !== undefined) cleaned.url = entity.url
+          if (entity.extra !== undefined) cleaned.extra = entity.extra
+          if (entity.difficulty !== undefined) cleaned.difficulty = entity.difficulty
+          if (entity.centrality !== undefined) cleaned.centrality = entity.centrality
+          return cleaned
+        })
+        await storeIndividualEntities(supabase, documentId, aiCall.id, cleanedEntities)
         
         logger.info({
           documentId,

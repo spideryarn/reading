@@ -235,7 +235,7 @@ describe('generateCommandsFromRegistry', () => {
   })
 
   it('should warn about keyword conflicts in development', () => {
-    const consoleSpy = jest.spyOn(console, 'warn').mockImplementation()
+    const consoleSpy = jest.spyOn(console, 'debug').mockImplementation()
     const originalEnv = process.env.NODE_ENV
     process.env.NODE_ENV = 'development'
 

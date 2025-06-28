@@ -118,18 +118,18 @@ export async function POST(request: NextRequest) {
               }
             ],
             metadata: { extractedTerms: 2 }
-          },
-          'default'
+          }
         )
 
         await aiCallService.completeCall(
           glossaryCall!.id,
-          'Glossary extracted successfully',
           {
-            promptTokens: 100,
-            completionTokens: 50,
-            totalTokens: 150,
-            latencyMs: 1500
+            output_data: { message: 'Glossary extracted successfully' },
+            usage: {
+              promptTokens: 100,
+              completionTokens: 50,
+              totalTokens: 150
+            }
           }
         )
       }, 4000)
@@ -168,18 +168,18 @@ export async function POST(request: NextRequest) {
               }
             ],
             metadata: { algorithm: 'semantic-analysis' }
-          },
-          'default'
+          }
         )
 
         await aiCallService.completeCall(
           headingsCall!.id,
-          'Headings generated',
           {
-            promptTokens: 80,
-            completionTokens: 40,
-            totalTokens: 120,
-            latencyMs: 1200
+            output_data: { message: 'Headings generated' },
+            usage: {
+              promptTokens: 80,
+              completionTokens: 40,
+              totalTokens: 120
+            }
           }
         )
       }, 6000)

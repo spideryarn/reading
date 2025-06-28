@@ -56,18 +56,23 @@ export class ChatService {
   /**
    * Get a chat thread by ID
    */
-  async getThread(id: string): Promise<ChatThread | null> {
+  async getThread(id: string, userId?: string): Promise<ChatThread | null> {
     // Validate UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     if (!uuidRegex.test(id)) {
       return null
     }
 
-    const { data, error } = await this.supabase
+    let query = this.supabase
       .from('chat_threads')
       .select('*, documents(title)')
       .eq('id', id)
-      .single()
+
+    if (userId) {
+      query = query.eq('created_by', userId)
+    }
+
+    const { data, error } = await query.single()
 
     if (error) {
       if (error.code === 'PGRST116') { // Not found
@@ -268,5 +273,93 @@ export class ChatService {
   async autoUpdateThreadTitle(threadId: string): Promise<ChatThread> {
     const title = await this.generateThreadTitle(threadId)
     return await this.updateThread(threadId, { title })
+  }
+
+  /**
+   * Get messages with pagination (alias for getThreadMessages)
+   */
+  async getMessages(threadId: string, options?: { limit?: number }): Promise<ChatMessage[]> {
+    // For now, ignore limit and return all messages
+    return await this.getThreadMessages(threadId)
+  }
+
+  /**
+   * Get threads for a specific document and user
+   */
+  async getThreadsForDocument(documentId: string, userId?: string): Promise<ChatThread[]> {
+    let query = this.supabase
+      .from('chat_threads')
+      .select('*, documents(title)')
+      .eq('document_id', documentId)
+
+    if (userId) {
+      query = query.eq('created_by', userId)
+    }
+
+    const { data, error } = await query
+      .order('updated_at', { ascending: false })
+
+    if (error) {
+      throw new Error(`Failed to fetch threads for document: ${error.message}`)
+    }
+
+    return data || []
+  }
+
+  /**
+   * Get threads for a specific user
+   */
+  async getThreadsForUser(userId: string, options?: { limit?: number }): Promise<ChatThread[]> {
+    const { data, error } = await this.supabase
+      .from('chat_threads')
+      .select('*, documents(title)')
+      .eq('created_by', userId)
+      .order('updated_at', { ascending: false })
+      .limit(options?.limit || 20)
+
+    if (error) {
+      throw new Error(`Failed to fetch threads for user: ${error.message}`)
+    }
+
+    return data || []
+  }
+
+  /**
+   * Delete a specific message
+   */
+  async deleteMessage(messageId: string, userId?: string): Promise<void> {
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(messageId)) {
+      return
+    }
+
+    // First verify the message belongs to a thread owned by the user
+    if (userId) {
+      const { data: message, error: fetchError } = await this.supabase
+        .from('chat_messages')
+        .select('thread_id, chat_threads!inner(created_by)')
+        .eq('id', messageId)
+        .single()
+
+      if (fetchError || !message) {
+        throw new Error('Message not found')
+      }
+
+      // Check if user owns the thread
+      const thread = message.chat_threads as any
+      if (thread?.created_by !== userId) {
+        throw new Error('Access denied')
+      }
+    }
+
+    const { error } = await this.supabase
+      .from('chat_messages')
+      .delete()
+      .eq('id', messageId)
+
+    if (error) {
+      throw new Error(`Failed to delete message: ${error.message}`)
+    }
   }
 }

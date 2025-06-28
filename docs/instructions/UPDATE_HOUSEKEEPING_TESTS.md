@@ -47,10 +47,11 @@ Perform testing housekeeping:
    - Note any console warnings or deprecation messages
 
 **Test File Audit:**
-1. Identify test files last modified >1 week ago (candidates for consolidation)
-2. Check for duplicate test coverage across files
-3. Find obsolete test files in `/tests/` or other non-standard locations
-4. Look for standalone Node.js test scripts that should be Jest tests
+1. **PRIORITY**: Sort test files by creation/modification date - focus on oldest files first
+2. Identify test files last modified >1 week ago (prime candidates for aggressive consolidation)
+3. Check for duplicate test coverage across files
+4. Find obsolete test files in `/tests/` or other non-standard locations
+5. Look for standalone Node.js test scripts that should be converted or removed
 
 **Infrastructure Validation:**
 1. Verify `.env.test` exists (tests should abort if missing)
@@ -77,7 +78,7 @@ Use subagents for diagnosis and repair of complex infrastructure issues.
 ### Stage: Test Consolidation
 
 **Identify Consolidation Candidates:**
-1. **Component Unit Tests** → Feature-level integration tests
+1. **Component Unit Tests** → Feature-level integration tests (preferably Playwright E2E)
    - Example: Individual button, form, input tests → Complete form workflow test
 2. **Service Unit Tests** → Behaviour verification tests  
    - Example: Multiple database method tests → End-to-end data flow test
@@ -85,11 +86,12 @@ Use subagents for diagnosis and repair of complex infrastructure issues.
    - Example: Heavily mocked API tests → Real request/response integration
 
 **Consolidation Strategy:**
-1. Start with oldest tests (>2 weeks since last modification)
-2. Group related tests by feature area
-3. Create new integration test covering the behaviour
-4. Remove redundant detailed tests
-5. Keep unit tests only for complex algorithms or edge cases
+1. **PRIORITY: Focus on oldest tests first** (check file creation/modification dates to avoid conflicts with other agents)
+2. **Be ruthless**: Aim to replace many unit tests with fewer, high-coverage Playwright tests
+3. Group related tests by feature area
+4. Create new integration test covering the behaviour (prefer Playwright E2E where possible)
+5. Remove redundant detailed tests aggressively
+6. Keep unit tests only for complex algorithms or critical business logic
 
 **Use Subagents for Consolidation:**
 - Provide rich context about feature goals and expected behaviour  

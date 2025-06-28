@@ -431,10 +431,10 @@ export class SearchHandler extends BaseToolHandler {
               error: recoveryError instanceof Error ? recoveryError.message : 'JSON recovery failed',
               documentId
             }, 'Failed to recover JSON from embedded LLM response')
-            throw new Error(`Failed to parse LLM JSON response: ${parseError.message}`)
+            throw new Error(`Failed to parse LLM JSON response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`)
           }
         } else {
-          throw new Error(`Failed to parse LLM JSON response: ${parseError.message}`)
+          throw new Error(`Failed to parse LLM JSON response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`)
         }
       }
       

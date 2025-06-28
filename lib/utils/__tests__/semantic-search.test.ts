@@ -1,57 +1,93 @@
+/**
+ * Consolidated semantic search tests
+ * 
+ * This file combines tests for:
+ * 1. Query normalization utility (simple string trimming)
+ * 2. Prompt template schema validation
+ */
+
 import { normalizeSemanticSearchQuery } from '../semantic-search'
+import { 
+  semanticSearchPrompt, 
+  semanticSearchPromptInputSchema, 
+  semanticSearchResponseSchema,
+  semanticMatchSchema 
+} from '../../prompts/templates/semantic-search'
 
-describe('normalizeSemanticSearchQuery', () => {
-  it('should trim leading and trailing spaces', () => {
-    expect(normalizeSemanticSearchQuery('  hello world  ')).toBe('hello world')
-    expect(normalizeSemanticSearchQuery(' consciousness ')).toBe('consciousness')
+describe('semantic search utilities and schemas', () => {
+  describe('normalizeSemanticSearchQuery', () => {
+    // This function just calls .trim() - keeping only essential tests
+    it('should trim whitespace', () => {
+      expect(normalizeSemanticSearchQuery('  hello world  ')).toBe('hello world')
+      expect(normalizeSemanticSearchQuery('\t\nhello\n\t')).toBe('hello')
+      expect(normalizeSemanticSearchQuery('')).toBe('')
+      expect(normalizeSemanticSearchQuery('   ')).toBe('')
+    })
+
+    it('should preserve content and be idempotent', () => {
+      const query = 'What is consciousness?'
+      expect(normalizeSemanticSearchQuery(query)).toBe(query)
+      expect(normalizeSemanticSearchQuery(normalizeSemanticSearchQuery('  ' + query + '  '))).toBe(query)
+    })
   })
 
-  it('should trim tabs and newlines', () => {
-    expect(normalizeSemanticSearchQuery('\thello\t')).toBe('hello')
-    expect(normalizeSemanticSearchQuery('\nhello\n')).toBe('hello')
-    expect(normalizeSemanticSearchQuery('\r\nhello\r\n')).toBe('hello')
-    expect(normalizeSemanticSearchQuery(' \t\n hello world \n\t ')).toBe('hello world')
-  })
+  describe('semantic search prompt schemas', () => {
+    describe('input validation', () => {
+      it('should accept valid input', () => {
+        const validInput = {
+          content: '[elem_h1_1] Introduction\n[elem_p_2] Content.',
+          query: 'introduction'
+        }
+        
+        const result = semanticSearchPromptInputSchema.safeParse(validInput)
+        expect(result.success).toBe(true)
+      })
 
-  it('should preserve case sensitivity', () => {
-    expect(normalizeSemanticSearchQuery('  Consciousness  ')).toBe('Consciousness')
-    expect(normalizeSemanticSearchQuery('  HELLO WORLD  ')).toBe('HELLO WORLD')
-    expect(normalizeSemanticSearchQuery('  CamelCase Query  ')).toBe('CamelCase Query')
-  })
+      it('should reject invalid input', () => {
+        const emptyContent = { content: '', query: 'test' }
+        const emptyQuery = { content: 'content', query: '' }
+        const missingField = { content: 'content' }
+        
+        expect(semanticSearchPromptInputSchema.safeParse(emptyContent).success).toBe(false)
+        expect(semanticSearchPromptInputSchema.safeParse(emptyQuery).success).toBe(false)
+        expect(semanticSearchPromptInputSchema.safeParse(missingField).success).toBe(false)
+      })
+    })
 
-  it('should preserve punctuation', () => {
-    expect(normalizeSemanticSearchQuery('  what is consciousness?  ')).toBe('what is consciousness?')
-    expect(normalizeSemanticSearchQuery('  "quoted phrase"  ')).toBe('"quoted phrase"')
-    expect(normalizeSemanticSearchQuery("  it's important!  ")).toBe("it's important!")
-    expect(normalizeSemanticSearchQuery('  semi-colon; and comma, preserved  ')).toBe('semi-colon; and comma, preserved')
-  })
+    describe('response validation', () => {
+      it('should accept valid matches', () => {
+        const validResponse = {
+          matches: [
+            {
+              elementId: 'elem_p_1',
+              confidence: 0.9,
+              reasoning: 'Directly relevant',
+              relevantText: 'Relevant content'
+            }
+          ]
+        }
+        
+        expect(semanticSearchResponseSchema.safeParse(validResponse).success).toBe(true)
+        expect(semanticSearchResponseSchema.safeParse({ matches: [] }).success).toBe(true)
+      })
 
-  it('should preserve internal whitespace', () => {
-    expect(normalizeSemanticSearchQuery('  multiple   spaces   inside  ')).toBe('multiple   spaces   inside')
-    expect(normalizeSemanticSearchQuery('  tab\there  ')).toBe('tab\there')
-  })
+      it('should reject invalid confidence values', () => {
+        const invalidResponse = {
+          matches: [{
+            elementId: 'elem_p_1',
+            confidence: 1.5, // > 1
+            reasoning: 'Test',
+            relevantText: 'Test'
+          }]
+        }
+        
+        expect(semanticSearchResponseSchema.safeParse(invalidResponse).success).toBe(false)
+      })
+    })
 
-  it('should handle edge cases', () => {
-    expect(normalizeSemanticSearchQuery('')).toBe('')
-    expect(normalizeSemanticSearchQuery('   ')).toBe('')
-    expect(normalizeSemanticSearchQuery('\t\n')).toBe('')
-    expect(normalizeSemanticSearchQuery('a')).toBe('a')
-  })
-
-  it('should handle unicode and special characters', () => {
-    expect(normalizeSemanticSearchQuery('  café  ')).toBe('café')
-    expect(normalizeSemanticSearchQuery('  🧠 consciousness  ')).toBe('🧠 consciousness')
-    expect(normalizeSemanticSearchQuery('  日本語  ')).toBe('日本語')
-  })
-
-  it('should handle very long queries', () => {
-    const longQuery = '  ' + 'a'.repeat(1000) + '  '
-    expect(normalizeSemanticSearchQuery(longQuery)).toBe('a'.repeat(1000))
-  })
-
-  it('should be idempotent', () => {
-    const query = '  hello world  '
-    const normalized = normalizeSemanticSearchQuery(query)
-    expect(normalizeSemanticSearchQuery(normalized)).toBe(normalized)
+    it('should have correct template configuration', () => {
+      expect(semanticSearchPrompt.name).toBe('semantic-search')
+      expect(semanticSearchPrompt.modelConfig?.temperature).toBe(0.3)
+    })
   })
 })
