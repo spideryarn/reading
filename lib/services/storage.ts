@@ -33,8 +33,12 @@ export class StorageError extends Error {
   constructor(message: string, code?: string, statusCode?: number) {
     super(message)
     this.name = 'StorageError'
-    this.code = code
-    this.statusCode = statusCode
+    if (code !== undefined) {
+      this.code = code
+    }
+    if (statusCode !== undefined) {
+      this.statusCode = statusCode
+    }
   }
 }
 

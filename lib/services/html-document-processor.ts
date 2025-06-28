@@ -209,10 +209,15 @@ export async function processHtmlToDocument(
     hasStorageResult: !!storageResult
   }, 'Document processing pipeline completed successfully')
 
-  return {
-    document,
-    storageResult
+  const result: ProcessedDocument = {
+    document
   }
+  
+  if (storageResult !== null && storageResult !== undefined) {
+    result.storageResult = storageResult as Record<string, unknown>
+  }
+  
+  return result
 }
 
 /**

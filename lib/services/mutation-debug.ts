@@ -83,8 +83,11 @@ class MutationDebugger {
       documentAfter: result.document ? result.document.map(el => ({ ...el })) : documentBefore,
       transformCount: operation === 'apply' ? mutation.forward.length : mutation.reverse.length,
       changes: result.changes,
-      error: result.error,
       duration
+    }
+    
+    if (result.error !== undefined) {
+      info.error = result.error
     }
 
     this.history.unshift(info)

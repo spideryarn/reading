@@ -27,9 +27,9 @@ export function DeleteDocumentButton({
   const metadata: DocumentMetadata = {
     id: documentId,
     title: documentTitle,
-    uploadDate,
-    wordCount,
-    fileSizeKB
+    ...(uploadDate !== undefined && { uploadDate }),
+    ...(wordCount !== undefined && { wordCount }),
+    ...(fileSizeKB !== undefined && { fileSizeKB })
   }
 
   const { triggerDelete, DeleteDialog } = useDeleteDocument(metadata)

@@ -235,20 +235,24 @@ function HeadingNodeComponent({
       {/* Render children only if expanded */}
       {hasChildren && isExpanded && (
         <div className="mt-1 space-y-1">
-          {node.children.map((child) => (
-            <HeadingNodeComponent
-              key={child.id}
-              node={child}
-              themeColors={themeColors}
-              onHeadingClick={onHeadingClick}
-              getTooltipContent={getTooltipContent}
-              handleTooltipShow={handleTooltipShow}
-              collapsedIds={collapsedIds}
-              onToggleExpanded={onToggleExpanded}
-              granularityLevel={granularityLevel}
-              headingVisibility={headingVisibility}
-            />
-          ))}
+          {node.children.map((child) => {
+            const childProps = {
+              node: child,
+              themeColors,
+              onHeadingClick,
+              getTooltipContent,
+              handleTooltipShow,
+              collapsedIds,
+              onToggleExpanded,
+              granularityLevel
+            }
+            
+            if (headingVisibility !== undefined) {
+              return <HeadingNodeComponent key={child.id} {...childProps} headingVisibility={headingVisibility} />
+            }
+            
+            return <HeadingNodeComponent key={child.id} {...childProps} />
+          })}
         </div>
       )}
     </>
@@ -373,20 +377,25 @@ export function HeadingTree({
       {/* Headings Navigation - takes remaining space */}
       <div className="flex-1 min-h-0 overflow-y-auto">
         <nav className="space-y-1 px-4 pt-3 pb-4">
-        {headingTree.map((node) => (
-          <HeadingNodeComponent
-            key={node.id}
-            node={node}
-            themeColors={themeColors}
-            onHeadingClick={onHeadingClick}
-            getTooltipContent={getTooltipContent}
-            handleTooltipShow={handleTooltipShow}
-            collapsedIds={collapsedIds}
-            onToggleExpanded={onToggleExpanded}
-            granularityLevel={granularityLevel}
-            headingVisibility={headingVisibility}
-          />
-        ))}
+        {headingTree.map((node) => {
+          const nodeProps = {
+            key: node.id,
+            node,
+            themeColors,
+            onHeadingClick,
+            getTooltipContent,
+            handleTooltipShow,
+            collapsedIds,
+            onToggleExpanded,
+            granularityLevel
+          }
+          
+          if (headingVisibility !== undefined) {
+            return <HeadingNodeComponent {...nodeProps} headingVisibility={headingVisibility} />
+          }
+          
+          return <HeadingNodeComponent {...nodeProps} />
+        })}
         {/* 
          * Spacer to ensure the last heading can be scrolled to the top of the viewport.
          * Without this spacer, the last few headings in the list can't be scrolled high enough

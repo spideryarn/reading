@@ -300,9 +300,9 @@ export default function AddDocumentPage() {
   // Auto-adjust processing method when input type changes
   useEffect(() => {
     const availableMethods = getAvailableProcessingMethods()
-    if (!availableMethods.includes(uploadState.processing.method)) {
+    if (!availableMethods.includes(uploadState.processing.method) && availableMethods.length > 0) {
       // Switch to first available method if current method is not valid
-      handleProcessingChange(availableMethods[0])
+      handleProcessingChange(availableMethods[0]!)
     }
   }, [uploadState.input.type, uploadState.processing.method, getAvailableProcessingMethods, handleProcessingChange])
 
@@ -498,11 +498,10 @@ export default function AddDocumentPage() {
               <UrlInputSection
                 value={uploadState.input.url}
                 onChange={handleUrlChange}
-                onValidationError={handleValidationError}
                 isActive={!uploadState.input.file}
                 isDisabled={!!uploadState.input.file}
                 isProcessing={uploadState.ui.isProcessing}
-                error={uploadState.input.url ? uploadState.ui.error : undefined}
+                {...(uploadState.input.url && uploadState.ui.error && { error: uploadState.ui.error })}
               />
               
               {/* Divider */}
@@ -521,13 +520,12 @@ export default function AddDocumentPage() {
                 onChange={handleFileChange}
                 onDrop={handleFileDrop}
                 onValidationError={handleValidationError}
-                isActive={!uploadState.input.url}
                 isDisabled={!!uploadState.input.url}
                 isProcessing={uploadState.ui.isProcessing}
                 isDragging={uploadState.ui.isDragging}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
-                error={uploadState.ui.error || undefined}
+                {...(uploadState.ui.error && { error: uploadState.ui.error })}
               />
               
               {/* Processing Options */}

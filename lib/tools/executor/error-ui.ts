@@ -291,7 +291,8 @@ export function showAuthError(message?: string): void {
  */
 export function showValidationError(errors: string[], toolId?: string): void {
   import('./types').then(({ ToolValidationError }) => {
-    const error = new ToolValidationError(errors, { toolId })
+    const options = toolId ? { toolId } : undefined
+    const error = new ToolValidationError(errors, options)
     showToolError(error)
   })
 }
@@ -301,7 +302,8 @@ export function showValidationError(errors: string[], toolId?: string): void {
  */
 export function showServerError(message: string, httpStatus?: number, toolId?: string): void {
   import('./types').then(({ ToolServerError }) => {
-    const error = new ToolServerError(message, httpStatus, { toolId })
+    const options = toolId ? { toolId } : undefined
+    const error = new ToolServerError(message, httpStatus, options)
     showToolError(error)
   })
 }

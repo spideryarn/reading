@@ -9,9 +9,12 @@
  * New route: /api/tools/glossary
  */
 
-import { z } from 'zod'
 import { executePromptWithUsage } from '@/lib/prompts/types'
 import { glossaryPrompt, glossaryPromptInputSchema, glossaryResponseSchema, entitySchema } from '@/lib/prompts/templates/glossary'
+import { z } from 'zod'
+
+// Type for entities
+type Entity = z.infer<typeof entitySchema>
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
@@ -70,7 +73,7 @@ export class GlossaryHandler extends BaseToolHandler {
       const existingEntities = await getIndividualEntities(supabase, documentId)
       
       // Also check for legacy bulk storage for backwards compatibility
-      let legacyEntities: any[] = []
+      let legacyEntities: Entity[] = []
       if (existingEntities.length === 0) {
         const enhancementService = new EnhancementService(supabase)
         const legacyGlossary = await enhancementService.get(documentId, 'glossary', 'default')
@@ -161,7 +164,7 @@ export class GlossaryHandler extends BaseToolHandler {
       const enhancementService = new EnhancementService(supabase)
       
       // Check if individual entities already exist in database (only if documentId provided)
-      let existingEntitiesInDb: any[] = []
+      let existingEntitiesInDb: Entity[] = []
       if (documentId) {
         existingEntitiesInDb = await getIndividualEntities(supabase, documentId)
         
@@ -284,28 +287,14 @@ export class GlossaryHandler extends BaseToolHandler {
       
       // Store entities individually in database (only if documentId provided)
       if (documentId) {
-        // Clean entities to remove undefined properties for exactOptionalPropertyTypes compliance
-        const cleanedEntities = validatedResponse.entities.map(entity => {
-          const cleaned: Partial<z.infer<typeof entitySchema>> = {
-            name: entity.name,
-            ontology: entity.ontology,
-            aliases: entity.aliases,
-            brief_explanation: entity.brief_explanation
-          }
-          if (entity.long_explanation !== undefined) cleaned.long_explanation = entity.long_explanation
-          if (entity.datetime !== undefined) cleaned.datetime = entity.datetime
-          if (entity.url !== undefined) cleaned.url = entity.url
-          if (entity.extra !== undefined) cleaned.extra = entity.extra
-          return cleaned
-        })
-        
         // Store each entity individually with the same AI call ID
-        await storeIndividualEntities(supabase, documentId, aiCall.id, cleanedEntities)
+        // validatedResponse.entities are already validated Entity objects from Zod
+        await storeIndividualEntities(supabase, documentId, aiCall.id, validatedResponse.entities)
         
         logger.info({
           documentId,
           aiCallId: aiCall.id,
-          entityCount: cleanedEntities.length,
+          entityCount: validatedResponse.entities.length,
           storageMethod: 'individual'
         }, 'Entities stored individually in database')
       }

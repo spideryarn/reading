@@ -18,14 +18,19 @@ function createMockRequest(url: string, options: MockRequestOptions = {}) {
   // Convert relative URLs to full URLs
   const fullUrl = url.startsWith('http') ? url : `http://localhost:3000${url}`;
   
-  return new Request(fullUrl, {
+  const requestInit: RequestInit = {
     method: options.method || 'GET',
     headers: {
       'content-type': 'application/json',
       ...options.headers
-    },
-    body: options.body ? JSON.stringify(options.body) : undefined
-  });
+    }
+  };
+  
+  if (options.body) {
+    requestInit.body = JSON.stringify(options.body);
+  }
+  
+  return new Request(fullUrl, requestInit);
 }
 
 // Helper to test API routes using next-test-api-route-handler
@@ -42,14 +47,19 @@ async function testApiRoute(
     appHandler: routeModule, // Pass the entire route module
     url: options.url || '/api/test',
     test: async ({ fetch }) => {
-      const response = await fetch({
+      const fetchOptions: RequestInit = {
         method: options.method || 'GET',
         headers: {
           'content-type': 'application/json',
           ...options.headers
-        },
-        body: options.body ? JSON.stringify(options.body) : undefined
-      });
+        }
+      };
+      
+      if (options.body) {
+        fetchOptions.body = JSON.stringify(options.body);
+      }
+      
+      const response = await fetch(fetchOptions);
 
       responseStatus = response.status;
       responseHeaders = response.headers;
