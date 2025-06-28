@@ -103,14 +103,15 @@ export function useMultiSummary(
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          action: 'multi-summarise',
+          action: 'execute',
           parameters: {
+            mode: 'multi-summarise',
             content,
             documentId
           },
           metadata: {
             correlationId: crypto.randomUUID(),
-            source: 'multi-summary-hook',
+            source: 'direct',
             timestamp: new Date().toISOString()
           }
         }),
