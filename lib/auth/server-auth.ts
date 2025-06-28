@@ -131,65 +131,6 @@ export async function getSession() {
 }
 
 /**
- * Validate that a user is authenticated and return the user object.
- * 
- * This function throws an error if the user is not authenticated,
- * making it useful for API routes where you want to fail fast
- * on unauthenticated requests.
- * 
- * @returns Promise<User> - The authenticated user object
- * @throws Error if user is not authenticated
- * 
- * @example
- * ```typescript
- * // In an API route
- * export async function POST(request: Request) {
- *   try {
- *     const user = await validateAuth()
- *     // User is guaranteed to be authenticated here
- *     // Handle the authenticated request
- *   } catch (error) {
- *     return NextResponse.json(
- *       { error: 'Authentication required' },
- *       { status: 401 }
- *     )
- *   }
- * }
- * ```
- */
-export async function validateAuth(): Promise<User> {
-  const correlationId = generateCorrelationId()
-  const { user, error } = await getUser()
-  
-  if (error) {
-    authLogger.warn({
-      error,
-      correlationId,
-      operation: 'validateAuth'
-    }, 'Authentication validation failed due to auth error')
-    
-    throw new Error(`Authentication failed: ${error}`)
-  }
-  
-  if (!user) {
-    authLogger.warn({
-      correlationId,
-      operation: 'validateAuth'
-    }, 'Authentication validation failed - no user found')
-    
-    throw new Error('User not authenticated')
-  }
-  
-  authLogger.debug({
-    userId: user.id,
-    correlationId,
-    operation: 'validateAuth'
-  }, 'Authentication validation successful')
-  
-  return user
-}
-
-/**
  * Check if the current user has admin privileges.
  * 
  * This function checks for admin status using user metadata.
@@ -405,4 +346,46 @@ export async function getUserProfile(): Promise<UserProfile | null> {
     avatar: userMetadata.avatar_url,
     createdAt: user.created_at
   }
+}
+
+/**
+ * Unified validation helper supporting both legacy (throwing) and modern (result-object) styles.
+ *
+ * • Legacy usage: `const user = await validateAuth()` – throws on failure and returns `User` on success.
+ * • New usage:    `const { success, user } = await validateAuth(request, { requireAuth: true })`
+ *                 – returns an object describing the auth result without throwing.
+ */
+export async function validateAuth(
+  request?: Request,
+  opts?: { requireAuth?: boolean }
+): Promise<User | { success: boolean; user?: User; error?: string }> {
+  const { user, error } = await getUser()
+
+  // Modern result-object style when a Request is passed
+  if (request !== undefined) {
+    if (error) {
+      return { success: false, error }
+    }
+    if (!user) {
+      if (opts?.requireAuth) {
+        return { success: false, error: 'Authentication required' }
+      }
+      return { success: false }
+    }
+    return { success: true, user }
+  }
+
+  // Legacy throwing style (no arguments)
+  if (error) {
+    throw new Error(`Authentication failed: ${error}`)
+  }
+  if (!user) {
+    throw new Error('User not authenticated')
+  }
+  return user
+}
+
+// Convenience helper for code that prefers explicit throwing behaviour
+export async function requireAuth(): Promise<User> {
+  return validateAuth() as Promise<User>
 }

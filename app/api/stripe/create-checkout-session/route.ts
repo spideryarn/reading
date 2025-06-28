@@ -9,7 +9,6 @@ import { getOrCreateStripeCustomer } from '@/lib/services/stripe/customers'
 import { createCheckoutSession } from '@/lib/services/stripe/subscriptions'
 import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
   const requestLogger = createRequestLogger('/api/stripe/create-checkout-session', correlationId)

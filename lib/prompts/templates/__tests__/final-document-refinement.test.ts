@@ -13,8 +13,7 @@ import {
   validateEditOperations,
   applyEditOperations,
   type FinalDocumentRefinementInput,
-  type EditOperation,
-  type DocumentMetadata
+  type EditOperation
 } from '../final-document-refinement'
 
 describe('Final Document Refinement Prompt Template', () => {

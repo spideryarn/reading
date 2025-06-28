@@ -11,7 +11,7 @@ describe('heading-mutation-generator performance', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     // Fast mock implementation for performance testing
-    mockedGenerateContentBasedId.mockImplementation((docId, type, content) => {
+    mockedGenerateContentBasedId.mockImplementation((docId, type, _content) => {
       return `${type}-${Math.random().toString(36).substr(2, 9)}`
     })
   })

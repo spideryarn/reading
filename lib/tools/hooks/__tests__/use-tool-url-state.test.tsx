@@ -1,8 +1,7 @@
 // Tests for useToolUrlState hook with development guard verification
 
 import React from 'react'
-import { render, act, renderHook } from '@testing-library/react'
-import { useToolUrlState } from '../use-tool-url-state'
+import { render } from '@testing-library/react'
 import { DocumentCommunicationProvider, useDocumentCommunication } from '@/lib/context/document-communication-context'
 
 // Mock nuqs

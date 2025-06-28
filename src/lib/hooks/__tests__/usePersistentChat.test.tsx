@@ -2,7 +2,6 @@
  * @jest-environment jsdom
  */
 
-import React from 'react'
 import { renderHook, act } from '@testing-library/react'
 import { usePersistentChat } from '../usePersistentChat'
 import { ChatService } from '@/lib/services/database/chat'

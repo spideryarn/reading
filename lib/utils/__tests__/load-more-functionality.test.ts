@@ -3,8 +3,6 @@ import {
   deduplicateEntities, 
   calculateEntityPositions, 
   sortEntitiesByPosition,
-  stripPositionMetadata,
-  mergeAndSortEntities,
   processEntitiesForProgressive
 } from '../entity-position-tracking'
 import type { Entity, EntityWithPosition } from '@/lib/types/entity'

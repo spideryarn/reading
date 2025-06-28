@@ -16,6 +16,8 @@ ABOVE ALL, don't do anything that could result in lost work or mess up yet-to-be
 - The codebase should (ideally) be in a working state after each commit.
 - Try not to mix unrelated changes.
 - Before making the commit, list all files that will be committed.
+- If it looks like progress is still ongoing and unfinished, consider committing the oldest changes (by file 
+  modification date) first.
 
 ### Commit Message Format
 ```

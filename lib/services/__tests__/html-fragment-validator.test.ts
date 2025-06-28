@@ -9,8 +9,7 @@ import {
   validateHtmlFragment,
   validateAssembledDocument,
   validateFragmentsBatch,
-  type ValidationConfig,
-  type ValidationResult
+  type ValidationConfig
 } from '../html-fragment-validator'
 import { type ProcessedFragment } from '../html-fragment-processor'
 import { type AssembledDocument } from '../html-assembler'

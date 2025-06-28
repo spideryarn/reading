@@ -48,7 +48,7 @@ export async function processPDFVisionPipeline(file: File) {
   
   // Dynamic imports to avoid SSR issues
   const [
-    { getMuPDFPageCount, validateMuPDFPageCount },
+    { validateMuPDFPageCount },
     { convertPDFToImages, getRecommendedSettings }
   ] = await Promise.all([
     import('./mupdf-browser'),
@@ -168,7 +168,7 @@ function PDFUploadComponent() {
  * This demonstrates the next stage of the pipeline where base64 images
  * are sent to AI models for HTML fragment generation.
  */
-export async function processPageWithAI(base64Image: string): Promise<string> {
+export async function processPageWithAI(_base64Image: string): Promise<string> {
   // This would be replaced with actual AI API call
   console.log('🤖 Processing page with AI vision model...')
   

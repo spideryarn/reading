@@ -3,8 +3,6 @@
 
 import { generateText } from 'ai'
 import { getModel } from '../llm-provider'
-import { getModelForAICall } from '@/lib/config'
-import { createClient } from '@/lib/supabase/server'
 import { getTestNamespace, createTestUser } from '@/lib/testing/test-isolation-utils'
 
 // Mock AI SDK
@@ -41,7 +39,7 @@ function createRateLimitError(provider: string, retryAfter?: number) {
 }
 
 // Utility function to create service unavailable error
-function createServiceError(provider: string) {
+function _createServiceError(provider: string) {
   const error: any = new Error(`Service temporarily unavailable for ${provider}`)
   error.name = 'APICallError'
   error.statusCode = 503
@@ -388,7 +386,7 @@ describe('Rate Limiting', () => {
       }
 
       // Simulate multiple concurrent requests
-      const tasks = Array(10).fill(null).map((_, i) => 
+      const tasks = Array(10).fill(null).map(() => 
         queueTask(async () => {
           await new Promise(resolve => setTimeout(resolve, 50))
         })

@@ -304,7 +304,7 @@ export function generateCrossPageId(
  */
 export function assignBatchPageIds(
   fragments: Array<{ htmlFragment: string; pageNumber: number }>,
-  docId?: string
+  _docId?: string
 ): Array<{ htmlFragment: string; pageNumber: number; processedHtml: string }> {
   const globalIds = new Set<string>();
   

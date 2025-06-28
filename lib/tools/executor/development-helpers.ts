@@ -92,7 +92,7 @@ export class MockToolExecutor {
     toolId: string,
     action: string,
     parameters: Record<string, unknown>,
-    context?: Partial<ExecutionContext>
+    _context?: Partial<ExecutionContext>
   ): Promise<ExecutionResult> {
     const startTime = Date.now()
     const correlationId = generateCorrelationId()

@@ -440,7 +440,7 @@ function mergeTableElements(
   fragmentContent: string,
   fragment: ProcessedFragment,
   crossPageMerges: CrossPageElement[],
-  warnings: string[]
+  _warnings: string[]
 ): string {
   const tableMerges = crossPageMerges.filter(
     merge => merge.elementType === 'table' && 
@@ -481,7 +481,7 @@ function mergeParagraphElements(
   fragmentContent: string,
   fragment: ProcessedFragment,
   crossPageMerges: CrossPageElement[],
-  warnings: string[]
+  _warnings: string[]
 ): string {
   const paragraphMerges = crossPageMerges.filter(
     merge => merge.elementType === 'paragraph' && 
@@ -542,7 +542,7 @@ function extractDocumentTitle(firstPageContent: string): string | null {
     }
     
     return null
-  } catch (error) {
+  } catch (_error) {
     return null
   }
 }

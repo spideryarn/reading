@@ -1,10 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { 
   type ChatModelAdapter,
   type ThreadMessageLike,
   type TextContentPart,
+  type ThreadUserContentPart,
+  type ThreadAssistantContentPart
 } from "@assistant-ui/react";
 import { createClient } from '@/lib/supabase/client';
 import { ChatService } from '@/lib/services/database/chat';
@@ -28,38 +30,6 @@ interface UsePersistentChatReturn {
   runtimeKey: number;
 }
 
-// Helper: Convert ThreadMessageLike content to non-empty string for API schema compliance
-function serializeMessageContent(msg: ThreadMessageLike): string {
-  // If content is already a primitive, just coerce to string
-  if (!Array.isArray(msg.content)) {
-    const primitive = msg.content as unknown as string;
-    return primitive?.trim() ? primitive : '[unknown]';
-  }
-
-  // Prefer any plain-text parts first
-  const textParts = msg.content
-    .filter((p): p is TextContentPart => (p as TextContentPart).type === 'text')
-    .map(p => p.text)
-    .join('\n');
-
-  if (textParts.trim().length > 0) {
-    return textParts;
-  }
-
-  // No text parts – fall back to shorthand tags plus truncated JSON for context
-  const tags = msg.content.map(part => {
-    const type = (part as { type?: string }).type ?? 'unknown';
-    if (type === 'tool-call') {
-      const name = (part as { name?: string }).name ?? 'unknown';
-      return `[tool-call ${name}]`;
-    }
-    return `[${type}]`;
-  }).join(' ');
-
-  const jsonSnippet = JSON.stringify(msg.content).slice(0, 300); // keep payload small
-  return `${tags} ${jsonSnippet}`;
-}
-
 export function usePersistentChat({ 
   documentId, 
   documentContext,
@@ -74,6 +44,13 @@ export function usePersistentChat({
   const [messages, setMessages] = useState<ThreadMessageLike[]>([]);
   const [runtimeKey, setRuntimeKey] = useState(0);
   const chatService = useMemo(() => new ChatService(createClient()), []);
+  // Keep a mutable ref in sync with threadId so the adapter can access the latest value
+  const threadIdRef = useRef<string | null>(null);
+
+  // Sync the ref whenever threadId changes
+  useEffect(() => {
+    threadIdRef.current = threadId;
+  }, [threadId]);
 
   // Load messages from database and update state
   const loadMessages = useCallback(async (): Promise<void> => {
@@ -208,43 +185,67 @@ export function usePersistentChat({
     }
   }, [chatService]);
 
-  // Create chat model adapter with simplified persistence
-  const chatModelAdapter: ChatModelAdapter = {
-    run: useCallback(async ({ messages, abortSignal }) => {
+  // Create chat model adapter. We memoise the object so its identity remains
+  // stable across renders, preventing the runtime from being recreated and
+  // clearing in-memory messages after each state update.
+  const chatModelAdapter: ChatModelAdapter = useMemo(() => ({
+    run: async ({ messages, abortSignal }) => {
+      const currentThreadId = threadIdRef.current;
+
       console.log('[Persistent Chat] Processing message:', {
         messageCount: messages.length,
-        threadId,
+        threadId: currentThreadId,
         documentId
       });
 
-      // Convert assistant-ui messages to API format ensuring non-empty content
+      // Convert assistant-ui messages to API format
       const conversationHistory = messages.map(msg => ({
         role: msg.role as 'user' | 'assistant',
-        content: serializeMessageContent(msg)
+        content: Array.isArray(msg.content)
+          ? (msg.content.find((part: ThreadUserContentPart | ThreadAssistantContentPart): part is TextContentPart => 
+              part.type === 'text'
+            ) as TextContentPart)?.text ?? ''
+          : (msg.content as unknown as string) || ''
       }));
 
       // Make API call
       const requestPayload = {
         messages: conversationHistory,
         documentContext,
-        ...(threadId ? { threadId } : {}),
+        ...(currentThreadId ? { threadId: currentThreadId } : {}),
         documentId
       };
       
       try {
+        // Retrieve Supabase access token and include it in Authorization header
+        let authHeaders: Record<string, string> = {}
+        try {
+          const supabaseBrowser = createClient()
+          const { data: { session } } = await supabaseBrowser.auth.getSession()
+          if (session?.access_token) {
+            authHeaders['Authorization'] = `Bearer ${session.access_token}`
+          }
+        } catch (_err) {
+          // Ignore if session retrieval fails; server will return 401
+        }
+
         const res = await fetch('/api/tools/chat', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            ...authHeaders
+          },
           body: JSON.stringify({
             action: 'execute',
             parameters: requestPayload,
             metadata: {
               correlationId: crypto.randomUUID(),
-              source: 'direct',
+              source: 'chat-component',
               timestamp: new Date().toISOString()
             }
           }),
           signal: abortSignal,
+          credentials: 'include'
         });
 
         if (!res.ok) {
@@ -261,31 +262,25 @@ export function usePersistentChat({
 
         const data = await res.json();
         const response = data.response;
-        const returnedThreadId = data.threadId;
+        const returnedThreadId = data.threadId as string | undefined;
         
         // Update thread ID if server created a new one
-        if (returnedThreadId && !threadId) {
+        if (returnedThreadId && !threadIdRef.current) {
           setThreadId(returnedThreadId);
+          threadIdRef.current = returnedThreadId;
           console.log('[Persistent Chat] Thread created:', returnedThreadId);
         }
         
         // Save user and assistant messages (sequential to avoid race condition)
-        if (returnedThreadId || threadId) {
-          const currentThreadId2 = returnedThreadId || threadId;
+        if (returnedThreadId || currentThreadId) {
+          const effectiveThreadId = returnedThreadId || currentThreadId!;
           const userMessage = conversationHistory[conversationHistory.length - 1];
           
           if (userMessage) {
             // Save user message first, then assistant response sequentially
-            await saveMessage(currentThreadId2, 'user', userMessage.content);
+            await saveMessage(effectiveThreadId, 'user', userMessage.content);
           }
-          await saveMessage(currentThreadId2, 'assistant', response, data.aiCallId);
-        }
-        
-        // Refresh local cache from database to keep runtime / initialMessages in sync without duplicates
-        try {
-          await loadMessages();
-        } catch (err) {
-          console.warn('[Persistent Chat] Failed to refresh messages after send:', err);
+          await saveMessage(effectiveThreadId, 'assistant', response, data.aiCallId);
         }
         
         return {
@@ -307,8 +302,8 @@ export function usePersistentChat({
           ]
         };
       }
-    }, [documentContext, threadId, documentId, saveMessage, loadMessages]),
-  };
+    }
+  }), [documentContext, documentId, saveMessage]);
 
   // Load messages on mount and when documentId or conversationId changes
   useEffect(() => {
