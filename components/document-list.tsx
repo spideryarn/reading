@@ -8,6 +8,7 @@ import { DeleteDocumentButton } from '@/components/delete-document-button'
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 import { FileText, Clock, Globe, Lock, CircleNotch } from '@phosphor-icons/react/dist/ssr'
 import type { Document } from '@/lib/types/database'
+import { formatUserDate } from '@/lib/utils/date-formatting'
 
 interface TooltipInfo {
   sourceInfo: string
@@ -153,7 +154,12 @@ function DocumentItem({ document, showDeleteActions, currentUserId }: DocumentIt
                 {document.created_at && (
                   <div className="flex items-center gap-1">
                     <Clock size={14} />
-                    {new Date(document.created_at).toLocaleDateString('en-GB')}
+                    <time 
+                      dateTime={formatUserDate(document.created_at).iso}
+                      title={formatUserDate(document.created_at).absolute}
+                    >
+                      {formatUserDate(document.created_at).relative}
+                    </time>
                   </div>
                 )}
                 

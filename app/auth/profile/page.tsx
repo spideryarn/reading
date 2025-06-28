@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { DocumentList } from '@/components/document-list'
 import { BackgroundForm } from '@/components/profile/background-form'
 import { ArrowLeft, FileText } from '@phosphor-icons/react/dist/ssr'
+import { formatProfileDate } from '@/lib/utils/date-formatting'
 
 export const dynamic = 'force-dynamic'
 
@@ -66,25 +67,28 @@ export default async function ProfilePage() {
                 <div>
                   <label className="text-sm font-medium text-gray-600">Member Since</label>
                   <p className="text-gray-900">
-                    {new Date(user.created_at).toLocaleDateString('en-GB', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
+                    <time 
+                      dateTime={formatProfileDate(user.created_at).iso}
+                      title={formatProfileDate(user.created_at).absolute}
+                    >
+                      {formatProfileDate(user.created_at).relative}
+                    </time>
                   </p>
                 </div>
                 
                 <div>
                   <label className="text-sm font-medium text-gray-600">Profile Created</label>
                   <p className="text-gray-900">
-                    {profile?.created_at 
-                      ? new Date(profile.created_at).toLocaleDateString('en-GB', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })
-                      : 'Unknown'
-                    }
+                    {profile?.created_at ? (
+                      <time 
+                        dateTime={formatProfileDate(profile.created_at).iso}
+                        title={formatProfileDate(profile.created_at).absolute}
+                      >
+                        {formatProfileDate(profile.created_at).relative}
+                      </time>
+                    ) : (
+                      'Unknown'
+                    )}
                   </p>
                 </div>
               </div>
