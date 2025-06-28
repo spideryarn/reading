@@ -632,12 +632,16 @@ export function StructurePanel({
         const cached = await fetchCachedHeadings(documentId)
         
         if (isCancelled) {
-          console.log('AI headings load cancelled (component unmounted)')
+          if (process.env.NODE_ENV === 'development') {
+            console.log('AI headings load cancelled (component unmounted)')
+          }
           return
         }
         
         if (cached && cached.headings) {
-          console.log('Found cached headings, applying them...')
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Found cached headings, applying them...')
+          }
           setEnhancementId(cached.enhancementId || null)
           await applyCachedHeadings(cached.headings)
         } else if (cached && (!Array.isArray(cached.headings) || cached.headings.length === 0)) {
@@ -660,12 +664,16 @@ export function StructurePanel({
     }
     
     if ((elements && elements.length > 0) || content) {
-      console.log('Content/elements available, checking for cached headings')
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Content/elements available, checking for cached headings')
+      }
       loadHeadings()
     }
     
     return () => {
-      console.log('StructurePanel unmounting')
+      if (process.env.NODE_ENV === 'development') {
+        console.log('StructurePanel unmounting')
+      }
       isCancelled = true
     }
   }, [documentId, hasInitialized, applyCachedHeadings, content, elements])

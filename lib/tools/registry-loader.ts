@@ -132,10 +132,12 @@ export function checkForToolConflicts(): void {
   }
   
   if (conflicts.keywords.size > 0) {
-    console.warn('⚠️  Keyword conflicts detected:')
-    conflicts.keywords.forEach((tools: string[], keyword: string) => {
-      console.warn(`   "${keyword}" used by: ${tools.join(', ')}`)
-    })
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️  Keyword conflicts detected:')
+      conflicts.keywords.forEach((tools: string[], keyword: string) => {
+        console.warn(`   "${keyword}" used by: ${tools.join(', ')}`)
+      })
+    }
     // Keywords conflicts are warnings, not errors
   }
   
@@ -148,7 +150,9 @@ export function checkForToolConflicts(): void {
   }
   
   if (!hasConflicts) {
-    console.log('✅ No tool conflicts detected')
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✅ No tool conflicts detected')
+    }
   } else {
     throw new Error('❌ Tool conflicts detected - see errors above')
   }
