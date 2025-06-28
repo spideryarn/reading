@@ -15,7 +15,6 @@ import {
 } from '../worktree-auth-helpers'
 
 import { 
-  getTestNamespace,
   getWorktreeTestNamespace as getWorktreeTestNamespaceFromIsolation,
   createTestUser,
   createTestDocument,
