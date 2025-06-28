@@ -236,6 +236,9 @@ export async function assembleDocument(
     // Validate final document structure
     const documentStructure = analyzeDocumentStructure(completeDocument, warnings)
     
+    // Validate storage-based image references
+    validateStorageImageReferences(completeDocument, warnings)
+    
     // Apply final sanitization if configured
     const finalDocument = completeDocument
     if (validatedConfig.sanitizeOutput) {
@@ -668,4 +671,63 @@ export async function quickAssembleFragments(
   return DOCUMENT_TEMPLATE
     .replace('{{DOCUMENT_TITLE}}', documentTitle)
     .replace('{{DOCUMENT_CONTENT}}', content)
+}
+
+/**
+ * Validate storage-based image references in assembled document
+ */
+function validateStorageImageReferences(
+  htmlDocument: string,
+  warnings: string[]
+): void {
+  try {
+    const dom = new JSDOM(htmlDocument)
+    const document = dom.window.document
+    
+    const images = document.querySelectorAll('img')
+    let storageImageCount = 0
+    let brokenImageCount = 0
+    
+    images.forEach((img, index) => {
+      const src = img.getAttribute('src')
+      if (!src) {
+        warnings.push(`Image ${index + 1} missing src attribute`)
+        return
+      }
+      
+      // Check if image uses Supabase Storage URL pattern
+      if (src.includes('supabase') && (src.includes('/storage/') || src.includes('/object/'))) {
+        storageImageCount++
+        
+        // Basic validation of storage URL format
+        if (!src.startsWith('http')) {
+          warnings.push(`Image ${index + 1} has invalid storage URL format: ${src}`)
+          brokenImageCount++
+        }
+        
+        // Check for signed URL parameters
+        if (!src.includes('token=') && !src.includes('?sign')) {
+          warnings.push(`Image ${index + 1} storage URL may be missing signed parameters: ${src}`)
+        }
+      } else if (src.startsWith('data:')) {
+        // Base64 images should have been replaced in Stage 3 integration
+        warnings.push(`Image ${index + 1} still uses base64 data URL - image extraction may have failed`)
+      } else if (src.startsWith('blob:')) {
+        warnings.push(`Image ${index + 1} uses blob URL - may not persist across sessions`)
+      }
+      
+      // Validate alt text presence for accessibility
+      const alt = img.getAttribute('alt')
+      if (!alt || alt.trim().length === 0) {
+        warnings.push(`Image ${index + 1} missing alt text for accessibility`)
+      }
+    })
+    
+    if (storageImageCount > 0) {
+      warnings.push(`Document contains ${storageImageCount} storage-based images${brokenImageCount > 0 ? ` (${brokenImageCount} may be broken)` : ''}`)
+    }
+    
+  } catch (error) {
+    warnings.push(`Failed to validate storage image references: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
 }

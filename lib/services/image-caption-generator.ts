@@ -11,7 +11,7 @@ import { createRequestLogger } from '@/lib/services/logger'
 import { 
   imageCaptionPrompt, 
   imageCaptionOutputSchema,
-  type imageCaptionGenerationPromptInputSchema 
+  imageCaptionGenerationPromptInputSchema 
 } from '@/lib/prompts/templates/image-caption-generation'
 import { z } from 'zod'
 import type { BoundingBox } from '@/lib/services/html-fragment-processor'
@@ -49,7 +49,13 @@ export const batchCaptionResultSchema = z.object({
       x2: z.number().min(0).max(1),
       y2: z.number().min(0).max(1)
     }),
-    caption: imageCaptionOutputSchema,
+    caption: z.object({
+      caption: z.string().min(1).max(100),
+      description: z.string().min(1).max(500),
+      confidence: z.number().min(0).max(1),
+      imageType: z.enum(['figure', 'table', 'equation', 'diagram', 'chart', 'graph', 'photo', 'illustration', 'other']),
+      academicRelevance: z.enum(['high', 'medium', 'low'])
+    }),
     processingTimeMs: z.number(),
     success: z.boolean(),
     error: z.string().optional()
