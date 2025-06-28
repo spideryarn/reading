@@ -21,9 +21,7 @@ import {
   Warning, 
   X, 
   Info, 
-  XCircle,
-  CheckCircle,
-  Clock
+  XCircle
 } from "@phosphor-icons/react/dist/ssr"
 import { 
   registerErrorNotificationHandler, 
