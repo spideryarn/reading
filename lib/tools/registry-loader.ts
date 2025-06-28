@@ -63,7 +63,7 @@ export async function registerToolFromPath(toolPath: string): Promise<void> {
   
   try {
     // Only use dynamic import in development
-    const loadedModule = await import(/* webpackIgnore: true */ toolPath)
+    await import(/* webpackIgnore: true */ toolPath)
     console.log(`✅ Manually loaded tool from: ${toolPath}`)
   } catch (error) {
     console.error(`❌ Failed to load tool from ${toolPath}:`, error)

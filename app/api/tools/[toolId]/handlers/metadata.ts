@@ -85,8 +85,7 @@ export class MetadataHandler extends BaseToolHandler {
   }
   
   async handleGet(
-    params: GetRequestParams,
-    context: ExecutionContext
+    params: GetRequestParams
   ): Promise<ToolApiResponse> {
     const validation = GetMetadataRequestSchema.safeParse(params)
     if (!validation.success) {
@@ -141,8 +140,7 @@ export class MetadataHandler extends BaseToolHandler {
   }
   
   async handleDelete(
-    params: DeleteRequestParams,
-    context: ExecutionContext
+    params: DeleteRequestParams
   ): Promise<ToolApiResponse> {
     const documentId = params.documentId
     if (!documentId || typeof documentId !== 'string') {
@@ -251,4 +249,5 @@ export class MetadataHandler extends BaseToolHandler {
 }
 
 // Export the handler instance
-export default new MetadataHandler()
+const metadataHandler = new MetadataHandler()
+export default metadataHandler

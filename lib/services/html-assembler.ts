@@ -236,7 +236,7 @@ export async function assembleDocument(
     const documentStructure = analyzeDocumentStructure(completeDocument, warnings)
     
     // Apply final sanitization if configured
-    let finalDocument = completeDocument
+    const finalDocument = completeDocument
     if (validatedConfig.sanitizeOutput) {
       // Note: This would normally use the HTML sanitizer, but we'll keep it simple for now
       assemblyNotes.push('HTML sanitization applied to final document')

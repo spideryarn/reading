@@ -6,7 +6,6 @@
  */
 
 import type { ToolApiResponse, ExecutionResult, ExecutionContext } from './types'
-import type { Tool } from '../registry/types'
 import { generateCorrelationId } from '../utils'
 
 // Mock response configuration
@@ -47,7 +46,7 @@ interface ProfilingData {
 }
 
 // Global state for development helpers
-let mockConfigs: Map<string, MockResponseConfig> = new Map()
+const mockConfigs: Map<string, MockResponseConfig> = new Map()
 let replayRecords: ReplayRecord[] = []
 let profilingData: ProfilingData[] = []
 let isProfilingEnabled = false

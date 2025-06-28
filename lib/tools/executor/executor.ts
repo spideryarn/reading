@@ -28,12 +28,10 @@ import {
   ToolValidationError,
   ToolServerError,
   ToolNotFoundError,
-  ToolCancelledError,
   DEFAULT_TIMEOUTS
 } from './types'
 import type {
   ToolExecutor,
-  ToolExecutionParams,
   ToolExecutionResult,
   ExecutionOptions,
   ExecutionContext,
@@ -65,7 +63,6 @@ export const executeTool: ToolExecutor = async (
   parameters: Record<string, unknown> = {},
   options: ExecutionOptions = {}
 ): Promise<ToolExecutionResult> => {
-  const startTime = Date.now()
   const correlationId = generateCorrelationId()
   
   // Step 1: Validate tool exists in registry

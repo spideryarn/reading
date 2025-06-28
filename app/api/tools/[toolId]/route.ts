@@ -19,8 +19,6 @@ import { getTool, isRegistryLocked } from '@/lib/tools/registry'
 import { initializeToolRegistry } from '@/lib/tools/registry-loader'
 import { z } from 'zod'
 import type { 
-  ToolApiRequest, 
-  ToolApiResponse, 
   ToolApiErrorResponse,
   ExecutionContext 
 } from '@/lib/tools/executor/types'
@@ -59,10 +57,8 @@ const GetParamsSchema = z.object({
  */
 async function createExecutionContext(
   request: NextRequest,
-  correlationId: string,
-  toolId: string
+  correlationId: string
 ): Promise<ExecutionContext> {
-  const timer = createTimer()
   
   // Get user context if authenticated
   let user
@@ -73,7 +69,7 @@ async function createExecutionContext(
       email: authUser.email || '',
       preferences: {} // Could be expanded later
     }
-  } catch (error) {
+  } catch {
     // User not authenticated - proceed without user context
   }
   
@@ -231,7 +227,7 @@ export async function GET(
     
     const handlerExport = await handlerModule()
     const handler = handlerExport.default || handlerExport
-    const context = await createExecutionContext(request, correlationId, toolId)
+    const context = await createExecutionContext(request, correlationId)
     
     // Execute tool-specific GET logic
     const result = await handler.handleGet(validation.data, context)
@@ -299,10 +295,9 @@ export async function POST(
     }
     
     // Most tools require authentication for POST operations
-    let authUser: User
     try {
-      authUser = await validateAuth()
-    } catch (error) {
+      await validateAuth()
+    } catch {
       return createErrorResponse(
         {
           status: 401,
@@ -320,7 +315,7 @@ export async function POST(
     let requestBody
     try {
       requestBody = await request.json()
-    } catch (error) {
+    } catch {
       return createErrorResponse(
         {
           status: 400,
@@ -370,7 +365,7 @@ export async function POST(
     
     const handlerExport = await handlerModule()
     const handler = handlerExport.default || handlerExport
-    const context = await createExecutionContext(request, correlationId, toolId)
+    const context = await createExecutionContext(request, correlationId)
     
     // Execute tool-specific POST logic
     const result = await handler.handlePost(action, parameters, context)
@@ -438,10 +433,9 @@ export async function DELETE(
     }
     
     // DELETE operations always require authentication
-    let authUser: User
     try {
-      authUser = await validateAuth()
-    } catch (error) {
+      await validateAuth()
+    } catch {
       return createErrorResponse(
         {
           status: 401,
@@ -477,7 +471,7 @@ export async function DELETE(
     
     const handlerExport = await handlerModule()
     const handler = handlerExport.default || handlerExport
-    const context = await createExecutionContext(request, correlationId, toolId)
+    const context = await createExecutionContext(request, correlationId)
     
     // Execute tool-specific DELETE logic
     const result = await handler.handleDelete(queryParams, context)
