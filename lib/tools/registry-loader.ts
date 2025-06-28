@@ -86,17 +86,17 @@ export function validateAllRegisteredTools(): void {
   let hasErrors = false
   let hasWarnings = false
   
-  tools.forEach((tool: any) => {
+  tools.forEach((tool: unknown) => {
     const validation = validateTool(tool)
     
     if (!validation.isValid) {
-      console.error(`❌ Tool validation failed for "${tool.id}":`)
+      console.error(`❌ Tool validation failed for "${(tool as any)?.id || 'unknown'}":`)
       validation.errors.forEach((error: string) => console.error(`   - ${error}`))
       hasErrors = true
     }
     
     if (validation.warnings.length > 0) {
-      console.warn(`⚠️  Tool validation warnings for "${tool.id}":`)
+      console.warn(`⚠️  Tool validation warnings for "${(tool as any)?.id || 'unknown'}":`)
       validation.warnings.forEach((warning: string) => console.warn(`   - ${warning}`))
       hasWarnings = true
     }
@@ -194,14 +194,15 @@ export function getProductionReadyTools() {
   
   // For now, all registered tools are considered production ready
   // In the future, this could check for additional flags or validation
-  return tools.filter((tool: any) => {
+  return tools.filter((tool: unknown) => {
     // Basic readiness checks
+    const t = tool as any
     return (
-      tool.componentPath && 
-      tool.shortcuts && 
-      tool.shortcuts.length > 0 &&
-      tool.description && 
-      tool.description.length > 10
+      t.componentPath && 
+      t.shortcuts && 
+      t.shortcuts.length > 0 &&
+      t.description && 
+      t.description.length > 10
     )
   })
 }

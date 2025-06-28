@@ -3,7 +3,7 @@
 
 import { generateText } from 'ai'
 import { getModel } from '../llm-provider'
-import { getTestNamespace, createTestUser } from '@/lib/testing/test-isolation-utils'
+import { getTestNamespace } from '@/lib/testing/test-isolation-utils'
 
 // Mock AI SDK
 jest.mock('ai', () => ({
@@ -38,18 +38,8 @@ function createRateLimitError(provider: string, retryAfter?: number) {
   return error
 }
 
-// Utility function to create service unavailable error
-function _createServiceError(provider: string) {
-  const error: any = new Error(`Service temporarily unavailable for ${provider}`)
-  error.name = 'APICallError'
-  error.statusCode = 503
-  error.provider = provider
-  return error
-}
-
 describe('Rate Limiting', () => {
-  const namespace = getTestNamespace('rate-limiting')
-  const testUser = createTestUser(namespace)
+  const _namespace = getTestNamespace('rate-limiting')
   const originalEnv = process.env
 
   beforeEach(() => {
@@ -116,8 +106,6 @@ describe('Rate Limiting', () => {
     })
 
     it('should differentiate between rate limits and other errors', async () => {
-      const generateTextMock = generateText as jest.MockedFunction<typeof generateText>
-      
       // Test different error types
       const errors = [
         { statusCode: 429, name: 'APICallError', isRateLimit: true },

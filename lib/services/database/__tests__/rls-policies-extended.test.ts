@@ -117,7 +117,7 @@ describe('Extended RLS Policy Tests', () => {
       const userBClient = await setup.createUserClient(TEST_USER_IDS.USER_B)
 
       // User B should NOT be able to update public document they don't own
-      const { data, error } = await userBClient
+      const { data } = await userBClient
         .from('documents')
         .update({ title: 'Hacked Title' })
         .eq('id', publicDocument.id)

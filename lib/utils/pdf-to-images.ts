@@ -98,7 +98,12 @@ interface RenderOptions {
 interface PageRenderResult {
   canvas: HTMLCanvasElement;
   context: CanvasRenderingContext2D;
-  viewport: any;
+  viewport: {
+    width: number;
+    height: number;
+    scale: number;
+    rotation: number;
+  };
 }
 
 /**
@@ -106,7 +111,7 @@ interface PageRenderResult {
  */
 async function loadPDF(
   source: string | ArrayBuffer | Uint8Array
-): Promise<{ pdf: PDFDocumentProxy; pageCount: number; metadata?: any }> {
+): Promise<{ pdf: PDFDocumentProxy; pageCount: number; metadata?: Record<string, unknown> }> {
   try {
     const loadingTask = pdfjsLib.getDocument(source);
     
@@ -118,7 +123,7 @@ async function loadPDF(
       pageCount: pdf.numPages,
       metadata: metadata?.info
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error.name === 'InvalidPDFException') {
       throw new PDFToImagesError('Invalid PDF file format');
     } else if (error.name === 'MissingPDFException') {
@@ -180,7 +185,7 @@ async function extractImageFromCanvas(
       const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
       const dataUrl = canvas.toDataURL(mimeType, quality);
       resolve(dataUrl);
-    } catch (error: any) {
+    } catch (error: unknown) {
       reject(new PDFToImagesError(`Image extraction failed: ${error.message}`));
     }
   });
@@ -298,7 +303,7 @@ export async function convertPDFToImages(
         // Report progress
         onProgress?.(i, pageIndices.length);
         
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(`Failed to process page ${pageNumber}:`, error);
         throw new PDFToImagesError(`Page ${pageNumber} processing failed: ${error.message}`);
       }
@@ -320,7 +325,7 @@ export async function convertPDFToImages(
       }
     };
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof PDFToImagesError) {
       throw error;
     }
@@ -402,7 +407,7 @@ export async function convertPDFBufferToImages(
         // Report progress
         onProgress?.(i, pageIndices.length);
         
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(`Failed to process page ${pageNumber}:`, error);
         throw new PDFToImagesError(`Page ${pageNumber} processing failed: ${error.message}`);
       }
@@ -424,7 +429,7 @@ export async function convertPDFBufferToImages(
       }
     };
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof PDFToImagesError) {
       throw error;
     }

@@ -155,7 +155,7 @@ export class MockToolExecutor {
     toolId: string, 
     action: string, 
     parameters: Record<string, unknown>
-  ): any {
+  ): Record<string, unknown> {
     switch (toolId) {
       case 'glossary':
         return {
@@ -387,7 +387,7 @@ export function startProfiling(toolId: string, action: string): string {
   
   // Capture memory usage if available
   if ('memory' in performance) {
-    data.memoryBefore = (performance as any).memory.usedJSHeapSize
+    data.memoryBefore = (performance as unknown as { memory: { usedJSHeapSize: number } }).memory.usedJSHeapSize
   }
   
   profilingData.push(data)
@@ -412,7 +412,7 @@ export function endProfiling(toolId: string, action: string): void {
     
     // Capture memory usage if available
     if ('memory' in performance) {
-      data.memoryAfter = (performance as any).memory.usedJSHeapSize
+      data.memoryAfter = (performance as unknown as { memory: { usedJSHeapSize: number } }).memory.usedJSHeapSize
     }
   }
 }
@@ -477,7 +477,7 @@ export function installDevelopmentHelpers(): void {
   if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
     const mockExecutor = MockToolExecutor.getInstance()
     
-    ;(window as any).toolExecutorDev = {
+    ;(window as unknown as { toolExecutorDev: unknown }).toolExecutorDev = {
       mock: {
         configure: mockExecutor.configureMock.bind(mockExecutor),
         execute: mockExecutor.executeTool.bind(mockExecutor),

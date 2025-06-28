@@ -188,7 +188,7 @@ function generateNotificationId(
 ): string {
   // Create a hash-like ID based on error content to enable deduplication
   const errorType = error instanceof Error ? error.constructor.name : 'UnknownError'
-  const errorMessage = error instanceof Error ? error.message : String(error)
+  const _errorMessage = error instanceof Error ? error.message : String(error)
   const toolId = (error as any)?.toolId || 'unknown'
   
   // Use timestamp for uniqueness while allowing deduplication of rapid identical errors

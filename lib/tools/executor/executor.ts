@@ -286,7 +286,7 @@ async function executeServerTool(
         action,
         executionType: 'server',
         executionTime: Date.now() - startTime,
-        cached: (result as any).cached || false,
+        cached: (result as Record<string, unknown>).cached as boolean || false,
         correlationId: context.request.correlationId
       }
     }

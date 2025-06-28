@@ -230,13 +230,13 @@ describe('heading-mutation-generator', () => {
           { insertNewBeforeExistingId: 'para-123', html: '<h2>Same Content</h2>' }
         ]
 
-        const firstResult = generateHeadingMutation({
+        generateHeadingMutation({
           headings,
           documentId: mockDocumentId,
           isRegeneration: false
         })
 
-        const secondResult = generateHeadingMutation({
+        generateHeadingMutation({
           headings,
           documentId: mockDocumentId,
           isRegeneration: true

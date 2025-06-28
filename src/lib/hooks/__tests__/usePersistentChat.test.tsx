@@ -313,7 +313,7 @@ describe('usePersistentChat', () => {
 
   describe('Document Changes', () => {
     it('should reset state when document ID changes', async () => {
-      const { result, rerender } = renderHook(
+      const { rerender } = renderHook(
         ({ documentId, documentContext }) => 
           usePersistentChat({ documentId, documentContext }),
         {

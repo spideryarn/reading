@@ -10,8 +10,7 @@ import { normalizeSemanticSearchQuery } from '../semantic-search'
 import { 
   semanticSearchPrompt, 
   semanticSearchPromptInputSchema, 
-  semanticSearchResponseSchema,
-  semanticMatchSchema 
+  semanticSearchResponseSchema
 } from '../../prompts/templates/semantic-search'
 
 describe('semantic search utilities and schemas', () => {

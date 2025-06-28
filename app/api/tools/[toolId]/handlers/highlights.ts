@@ -341,7 +341,11 @@ export class HighlightsHandler extends BaseToolHandler {
           relevantText: string
         }>
         aiCallId?: string
-        stats?: any
+        stats?: {
+          tokensUsed?: number;
+          processingTime?: number;
+          [key: string]: unknown;
+        }
       }
       
       // Filter matches by confidence threshold

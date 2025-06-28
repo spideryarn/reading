@@ -67,6 +67,27 @@ export const validationResultSchema = z.object({
 export type ValidationConfig = z.infer<typeof validationConfigSchema>
 export type ValidationResult = z.infer<typeof validationResultSchema>
 
+type StructuralIssue = {
+  type: 'error' | 'warning' | 'info';
+  message: string;
+  element?: string;
+  pageNumber?: number;
+  suggestion?: string;
+}
+
+type AccessibilityIssue = {
+  type: 'error' | 'warning' | 'info';
+  message: string;
+  element?: string;
+  wcagLevel?: 'A' | 'AA' | 'AAA';
+}
+
+type AcademicIssue = {
+  type: 'error' | 'warning' | 'info';
+  message: string;
+  element?: string;
+}
+
 // Standard academic HTML tags allowed in fragments
 const ACADEMIC_ALLOWED_TAGS = [
   'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
@@ -105,9 +126,9 @@ export async function validateHtmlFragment(
     const dom = new JSDOM(fragment.htmlFragment)
     const document = dom.window.document
     
-    const structuralIssues: any[] = []
-    const accessibilityIssues: any[] = []
-    const academicIssues: any[] = []
+    const structuralIssues: StructuralIssue[] = []
+    const accessibilityIssues: AccessibilityIssue[] = []
+    const academicIssues: AcademicIssue[] = []
     
     // Basic structural validation
     validateBasicStructure(document, fragment.pageNumber, structuralIssues, validatedConfig)
@@ -212,7 +233,7 @@ export async function validateHtmlFragment(
 function validateBasicStructure(
   document: Document,
   pageNumber: number,
-  issues: any[],
+  issues: StructuralIssue[],
   config: ValidationConfig
 ): void {
   // Check for valid HTML elements
@@ -297,7 +318,7 @@ function validateBasicStructure(
 function validateAccessibility(
   document: Document,
   pageNumber: number,
-  issues: any[],
+  issues: AccessibilityIssue[],
   _config: ValidationConfig
 ): void {
   // Check images for alt text
@@ -385,7 +406,7 @@ function validateAccessibility(
 function validateAcademicStructure(
   document: Document,
   pageNumber: number,
-  issues: any[],
+  issues: AcademicIssue[],
   _config: ValidationConfig
 ): void {
   // Check for proper citation formatting
@@ -566,9 +587,9 @@ export async function validateAssembledDocument(
     const dom = new JSDOM(assembledDoc.htmlDocument)
     const document = dom.window.document
     
-    const structuralIssues: any[] = []
-    const accessibilityIssues: any[] = []
-    const academicIssues: any[] = []
+    const structuralIssues: StructuralIssue[] = []
+    const accessibilityIssues: AccessibilityIssue[] = []
+    const academicIssues: AcademicIssue[] = []
     
     // Validate complete document structure
     validateCompleteDocumentStructure(document, structuralIssues, validatedConfig)
@@ -670,7 +691,7 @@ export async function validateAssembledDocument(
  */
 function validateCompleteDocumentStructure(
   document: Document,
-  issues: any[],
+  issues: StructuralIssue[],
   _config: ValidationConfig
 ): void {
   // Check for proper HTML5 document structure
@@ -711,7 +732,7 @@ function validateCompleteDocumentStructure(
 function validateCrossPageConsistency(
   document: Document,
   assembledDoc: AssembledDocument,
-  issues: any[]
+  issues: StructuralIssue[]
 ): void {
   // Check for cross-page table continuations
   const tableContinuations = document.querySelectorAll('*:contains("TABLE_CONTINUES")')
