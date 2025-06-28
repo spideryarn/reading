@@ -10,6 +10,25 @@ const nextConfig: NextConfig = {
   },
   // External packages for pino and pino-pretty to fix worker thread issues
   serverExternalPackages: ['pino', 'pino-pretty'],
+  webpack: (config, { isServer }) => {
+    // Exclude MuPDF.js from server-side bundling (browser-only)
+    if (isServer) {
+      config.externals = config.externals || []
+      config.externals.push('mupdf')
+    } else {
+      // For client-side, resolve Node.js modules to false
+      config.resolve = config.resolve || {}
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        'node:fs': false,
+        'fs': false,
+        'module': false,
+        'path': false,
+        'os': false
+      }
+    }
+    return config
+  },
   // turbopack: {
   //   resolveExtensions: ['.js', '.jsx', '.ts', '.tsx', '.json']
   // },

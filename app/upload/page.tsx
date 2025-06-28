@@ -361,6 +361,72 @@ export default function AddDocumentPage() {
         formData.append('isPublic', processing.isPublic.toString())
         
         if (input.type === 'pdf') {
+          if (processing.method === 'vision-ai') {
+            // TEMPORARILY DISABLED: MuPDF.js has build compatibility issues with Next.js webpack
+            // TODO: Replace with PDF.js or canvas-based solution for frontend PDF-to-image conversion
+            // See planning/250627c_vision_based_pdf_processing_pipeline.md for details
+            throw new Error(
+              'Vision-AI processing temporarily unavailable due to PDF conversion library compatibility issues. ' +
+              'Please use AI Transcription for PDFs in the meantime.'
+            )
+            
+            /*
+            // Vision-AI processing requires frontend PDF-to-image conversion
+            try {
+              // Update processing message for conversion phase
+              setUploadState(prev => ({
+                ...prev,
+                ui: { 
+                  ...prev.ui, 
+                  processingMessage: 'Converting PDF to images...'
+                }
+              }))
+
+              // Dynamic import to avoid SSR issues - only import if in browser
+              if (typeof window === 'undefined') {
+                throw new Error('PDF conversion must happen in browser environment')
+              }
+              const { convertPDFToImages, getRecommendedSettings } = await import('@/lib/utils/pdf-to-images')
+              
+              // Use balanced settings for good quality/performance trade-off
+              const conversionOptions = getRecommendedSettings('balanced')
+              
+              // Convert PDF to images with progress feedback
+              const imageResult = await convertPDFToImages(input.file, {
+                ...conversionOptions,
+                onProgress: (pageIndex, totalPages) => {
+                  setUploadState(prev => ({
+                    ...prev,
+                    ui: { 
+                      ...prev.ui, 
+                      processingMessage: `Converting page ${pageIndex + 1} of ${totalPages}...`
+                    }
+                  }))
+                }
+              })
+
+              // Update processing message for AI processing phase
+              setUploadState(prev => ({
+                ...prev,
+                ui: { 
+                  ...prev.ui, 
+                  processingMessage: 'Processing images with vision-based AI pipeline...'
+                }
+              }))
+
+              // Add converted images to form data as JSON
+              formData.append('pageImages', JSON.stringify(imageResult.pages))
+              
+            } catch (conversionError) {
+              throw new Error(
+                conversionError instanceof Error 
+                  ? `PDF conversion failed: ${conversionError.message}` 
+                  : 'PDF conversion failed with unknown error'
+              )
+            }
+            */
+          }
+          
           const apiEndpoint = processing.method === 'vision-ai' ? '/api/upload-pdf-vision' : '/api/upload-pdf'
           response = await fetch(apiEndpoint, {
             method: 'POST',

@@ -214,30 +214,32 @@ Replace the current direct PDF-to-HTML pipeline with a vision-based approach tha
 - [x] **Health check**: Run `npm run check:health` to validate API integration
   - **COMPLETED**: Build successful, TypeScript compilation clean for all new files
 
-### Stage: Frontend PDF-to-Image Conversion (Critical for V1) 🚨 CURRENT PRIORITY
-- [ ] **Implement frontend MuPDF.js integration**: Add PDF-to-image conversion in upload page for vision-ai processing
-  - Use existing `lib/utils/pdf-to-images.ts` utility in browser context
-  - Convert PDF to base64 page images before API call
-  - Handle progress feedback during conversion
-  - Manage memory efficiently for large PDFs
-- [ ] **Update upload flow for vision-ai**: Modify submission logic to include page images
-  - Pre-convert PDF to images when vision-ai method selected
-  - Send both PDF file and page images to API endpoint
-  - Handle conversion errors gracefully with fallback suggestions
-- [ ] **Add conversion progress UI**: Implement progress indicator for PDF-to-image conversion
-  - Show conversion progress during image generation
-  - Provide clear feedback on conversion status
-  - Handle long conversion times for large documents
+### Stage: Frontend PDF-to-Image Conversion (Critical for V1) ⚠️ BLOCKED - LIBRARY COMPATIBILITY
+- [x] **Identify MuPDF.js compatibility issue**: CRITICAL BUILD ERROR discovered
+  - **ISSUE**: MuPDF.js uses `import("node:fs")` which causes webpack build failures in Next.js
+  - **ERROR**: `Module build failed: UnhandledSchemeError: Reading from "node:fs" is not handled by plugins`
+  - **ROOT CAUSE**: MuPDF.js library includes Node.js specific imports that conflict with browser bundling
+  - **STATUS**: Frontend PDF-to-image conversion temporarily disabled with clear error message
+- [x] **Implement temporary fallback**: Frontend conversion disabled with user-friendly error
+  - Vision-AI processing shows clear error: "Vision-AI processing temporarily unavailable due to PDF conversion library compatibility issues"
+  - Users directed to use "AI Transcription" for PDFs in the meantime
+  - All vision-AI conversion code commented out but preserved for future implementation
+- [ ] **Research alternative PDF-to-image solutions**: 
+  - **NEXT STEPS**: Evaluate PDF.js, canvas-based solutions, or html2canvas alternatives
+  - **REQUIREMENT**: Must be webpack/Next.js compatible for browser-only usage
+  - **CONSTRAINT**: Must maintain base64 image output format for existing API compatibility
+- [ ] **Implement alternative solution**: Replace MuPDF.js with compatible library
 - [ ] **Test frontend conversion**: Validate image conversion with various PDF types
 - [ ] **Health check**: Run `npm run check:health` to validate frontend integration
 
-### Stage: Vercel Constraints Mitigation (Temporary V1 Solution) ⚠️ ARCHITECTURAL WORKAROUND
-- [ ] **Comment out final refinement stage**: Temporarily disable final document processing due to payload limits
-  - Comment out Stage 6 (Final Document Refinement) in API route
-  - Add clear documentation referencing this planning document
-  - Preserve all final refinement code for future Supabase Edge Function implementation
-  - Note: **Option 1** - Skip final stage completely for V1, **Option 3** - Supabase Edge Functions for V2
-- [ ] **Document payload limit impact**: Update API documentation with current limitations
+### Stage: Vercel Constraints Mitigation (Temporary V1 Solution) ✅ COMPLETED
+- [x] **Comment out final refinement stage**: Temporarily disable final document processing due to payload limits
+  - **COMPLETED**: Stage 6 (Final Document Refinement) commented out in API route with clear documentation
+  - **COMPLETED**: Added reference to planning document for context
+  - **COMPLETED**: Preserved all final refinement code for future Supabase Edge Function implementation
+  - **STRATEGY**: Option 1 (skip final stage for V1) → Option 3 (Supabase Edge Functions for V2)
+  - **FALLBACK**: API returns assembled document with estimated quality score (0.85) without final refinement
+- [x] **Document payload limit impact**: Clear constraints documented in code comments
 - [ ] **Plan Supabase Edge Function migration**: Prepare architecture for final stage migration to Supabase
   - Research Deno runtime compatibility for existing services
   - Plan code sharing strategies between Node.js and Deno runtimes
@@ -470,9 +472,11 @@ Replace the current direct PDF-to-HTML pipeline with a vision-based approach tha
    - Frontend must convert PDF to images before API call due to Vercel payload constraints
    - Final refinement stage commented out due to 4.5MB payload limit
 
-### 🔄 Next Priority Implementation
-7. **Frontend PDF-to-Image Conversion** - Critical integration for testable V1 pipeline
-8. **Vercel Constraints Mitigation** - Comment out final stage with documentation
+### ⚠️ Current Blocker (Library Compatibility Issue)
+7. **Frontend PDF-to-Image Conversion** - BLOCKED by MuPDF.js webpack compatibility issue
+   - Vision-AI temporarily disabled with clear user error message
+   - Need alternative PDF-to-image library (PDF.js, canvas-based solutions)
+8. **Vercel Constraints Mitigation** - ✅ COMPLETED
 
 ### 📋 Planned Future Stages (V2)
 9. **Adjacent Page-Pair Processing** - Cross-page element refinement (deferred)
@@ -492,15 +496,16 @@ Replace the current direct PDF-to-HTML pipeline with a vision-based approach tha
 - **Production-ready architecture** integrated with existing infrastructure
 - **Academic document specialization** for citations, figures, equations, and cross-references
 
-### 🎯 Current Status - V1 Pipeline Blocked
-The vision-based PDF processing pipeline has core services completed but **requires frontend integration for testing**:
-- ✅ **Core services implemented**: Page processing, fragment assembly, validation, final refinement
+### 🎯 Current Status - V1 Pipeline Blocked by Library Compatibility
+The vision-based PDF processing pipeline has core services completed but **blocked by MuPDF.js compatibility issues**:
+- ✅ **Core services implemented**: Page processing, fragment assembly, validation, final refinement (commented out)
 - ✅ **API endpoint created**: `/api/upload-pdf-vision` expects pre-converted page images
-- ✅ **UI integration partial**: "Vision-based AI Processing" option available for PDFs
-- ❌ **BLOCKER**: Frontend PDF-to-image conversion not implemented
-- ❌ **BLOCKER**: API call fails with "No page images provided" error
-- ⚠️ **CONSTRAINT**: Final refinement stage disabled due to Vercel 4.5MB payload limit
+- ✅ **UI integration completed**: "Vision-based AI Processing" option available for PDFs (shows compatibility error)
+- ✅ **Vercel constraints mitigated**: Final refinement stage properly commented out with documentation
+- ❌ **CRITICAL BLOCKER**: MuPDF.js library incompatible with Next.js webpack bundling
+- ❌ **BUILD ERROR**: `import("node:fs")` causes webpack compilation failures
+- ⚠️ **USER IMPACT**: Vision-AI processing temporarily unavailable with clear error message directing to AI Transcription
 
-**🔧 Current Priority**: Implement frontend PDF-to-image conversion using existing `lib/utils/pdf-to-images.ts` utilities in the upload page to enable end-to-end testing.
+**🔧 Current Priority**: Research and implement alternative PDF-to-image solution (PDF.js, canvas-based) that's compatible with Next.js webpack bundling.
 
-**📋 V1 Architecture Decision**: Skip final refinement stage completely to avoid payload limits, preserve code for future Supabase Edge Function implementation (Option 1 → Option 3 migration path).
+**📋 V1 Status**: All infrastructure complete, blocked only by frontend PDF conversion library compatibility. Once resolved, V1 will be fully testable.

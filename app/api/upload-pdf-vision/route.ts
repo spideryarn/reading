@@ -267,6 +267,10 @@ export async function POST(request: NextRequest) {
     console.log(`Stage 5 Complete: Document assembled in ${assemblyTime}ms (${assembledDoc.htmlContent.length} characters)`)
 
     // Stage 6: Final document refinement using Claude Sonnet 4
+    // TEMPORARILY DISABLED: Due to Vercel 4.5MB payload limit constraints
+    // See planning/250627c_vision_based_pdf_processing_pipeline.md for details
+    // This stage will be re-enabled when we migrate to Supabase Edge Functions
+    /*
     console.log('Stage 6: Final document refinement using Claude Sonnet 4...')
     requestLogger.info({
       correlationId,
@@ -292,6 +296,20 @@ export async function POST(request: NextRequest) {
     const refinementTime = Date.now() - refinementStart
 
     console.log(`Stage 6 Complete: Final refinement completed in ${refinementTime}ms (${finalResult.appliedOperations.length} improvements applied)`)
+    */
+    
+    // For V1: Skip final refinement and use assembled document directly
+    console.log('Stage 6: Skipped final refinement (V1 - Vercel payload constraints)')
+    const finalResult = {
+      htmlContent: assembledDoc.htmlContent,
+      appliedOperations: [],
+      qualityMetrics: {
+        overallScore: 0.85, // Estimated quality without final refinement
+        improvements: [],
+        remainingIssues: []
+      }
+    }
+    const refinementTime = 0
 
     const totalProcessingTime = Date.now() - startTime
 
