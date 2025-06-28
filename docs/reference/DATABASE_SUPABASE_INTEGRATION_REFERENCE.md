@@ -593,3 +593,30 @@ CREATE POLICY "Public document access" ON documents
 - [ ] Storage RLS policies match file structure
 - [ ] Signed URLs used for private bucket access
 - [ ] File paths follow expected patterns
+
+## Generating TypeScript Types – new CLI output (2025-05)
+
+Supabase CLI ≥ v1.58 now generates **only** a single `Database` tree and helper generics (`Tables`, `TablesInsert`, …) – it no longer emits one-line "row aliases" such as `export type Document = …`. 
+
+To avoid breaking thousands of imports while we migrate, we keep a **compatibility shim** appended to the bottom of `lib/types/database.ts`:
+
+```ts
+// lib/types/database.ts  (tail of file – persists across re-generation)
+export type Document = Database["public"]["Tables"]["documents"]["Row"]
+export type ChatThread = Database["public"]["Tables"]["chat_threads"]["Row"]
+// …and a handful of other commonly-used aliases
+```
+
+Guidelines
+
+1. Running `npm run db:types` (or the nightly GitHub Action) still overwrites the generated portion **but leaves the shim intact** because it's placed after the closing brace.
+2. New code should prefer the generic helpers:
+
+```ts
+import type { Tables } from '@/lib/types/database'
+const doc: Tables<'documents'> = …
+```
+
+3. During refactors we can gradually replace old alias imports; once the codebase is clean the shim can be deleted in one commit.
+
+4. The update script & Action live in `package.json` and `.github/workflows/update-types.yml` respectively – see the Setup guide for details.

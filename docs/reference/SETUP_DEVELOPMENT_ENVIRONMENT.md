@@ -73,10 +73,13 @@ https://github.com/spideryarn/reading/
    ```bash
    npm run db:types
    ```
-   
-   This generates TypeScript types from your database schema into `lib/types/database.ts`. The types provide compile-time safety and autocomplete for database operations.
-   
-   **Alternative**: Use `npm run db:reset:DANGEROUS` to reset the database and generate types in one command.
+   This runs `supabase gen types typescript --local` and writes to `lib/types/database.ts`.
+
+   **IMPORTANT (May-2025):** The CLI now outputs *only* the `Database` tree. We append a small
+   compatibility shim at the *end* of that file which re-exports a few common aliases
+   (`Document`, `AiCall`, etc.).  Regenerating types does **not** touch the shim, so simply rerun the
+   command whenever you change the schema; GitHub also runs a nightly job that opens a PR
+   if the generated section drifts.
 
 6. **Start development server:**
    ```bash

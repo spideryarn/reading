@@ -327,6 +327,7 @@ interface ExecutionOptions {
 
 **See Also:**
 - `planning/250614d_tool_execution_framework.md` - Complete planning document
+- `docs/reference/TOOL_ARCHITECTURE_AND_DEVELOPMENT_GUIDE.md` - Tool architecture and development guide
 - `lib/tools/executor/` - Implementation files
 - `app/api/tools/[toolId]/` - Unified API handlers
 - `docs/reference/TOOL_*.md` - Individual tool documentation
