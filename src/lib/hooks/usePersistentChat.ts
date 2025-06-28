@@ -5,8 +5,6 @@ import {
   type ChatModelAdapter,
   type ThreadMessageLike,
   type TextContentPart,
-  type ThreadUserContentPart,
-  type ThreadAssistantContentPart
 } from "@assistant-ui/react";
 import { createClient } from '@/lib/supabase/client';
 import { ChatService } from '@/lib/services/database/chat';
