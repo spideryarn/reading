@@ -768,16 +768,16 @@ export function MetadataPanel({
               
               <TooltipOrPopover
                 content={
-                  documentStats.enhancedReadingTime ? (
+                  documentStats.readingTimeResult?.enhancedReadingTime ? (
                     <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 max-w-sm">
                       <pre className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap font-mono">
-                        {generateReadingTimeTooltip(documentStats.enhancedReadingTime)}
+                        {generateReadingTimeTooltip(documentStats.readingTimeResult.enhancedReadingTime)}
                       </pre>
                     </div>
                   ) : (
                     <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-                      <div className="text-xs text-gray-700 leading-relaxed">
-                        Reading time calculated using {238} WPM baseline (research-backed standard)
+                      <div className="text-xs text-red-600 leading-relaxed font-medium">
+                        ❌ Reading time calculation failed: Enhanced reading time data missing from documentStats.readingTimeResult
                       </div>
                     </div>
                   )
