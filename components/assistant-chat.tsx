@@ -20,7 +20,7 @@ import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 import { useChatUrlState } from '@/lib/tools/hooks/use-tool-url-state';
 import { useEffect, useCallback, useState } from 'react';
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover';
-import { VoiceInputRecorder } from '@/components/speech/voice-input-recorder';
+import dynamic from 'next/dynamic';
 
 interface AssistantChatProps {
   documentId: string;
@@ -115,7 +115,7 @@ const Composer = () => {
         rows={1}
       />
       <ThreadPrimitive.If running={false}>
-        <VoiceInputRecorder 
+        <VoiceInputRecorderLazy 
           onTranscription={handleVoiceTranscription}
           onError={handleVoiceError}
           className="flex-shrink-0"
@@ -197,6 +197,15 @@ function Thread() {
     </ThreadPrimitive.Root>
   );
 }
+
+// Dynamically import the voice recorder with SSR disabled to avoid
+// `Worker is not defined` errors during the Node.js render phase.
+// See docs/reference/WEB_WORKERS_BEST_PRACTICES.md for background.
+
+const VoiceInputRecorderLazy = dynamic(async () => {
+  const mod = await import('@/components/speech/voice-input-recorder');
+  return mod.VoiceInputRecorder;
+}, { ssr: false });
 
 // Runtime wrapper that remounts when key changes
 function ChatRuntime({ adapter, initialMessages }: { adapter: ChatModelAdapter; initialMessages: ThreadMessageLike[] }) {

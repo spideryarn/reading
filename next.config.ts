@@ -36,11 +36,12 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://static.hotjar.com https://script.hotjar.com", // Next.js requires unsafe-eval and unsafe-inline in dev + Hotjar analytics
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://static.hotjar.com https://script.hotjar.com", // Next.js requires unsafe-eval and unsafe-inline in dev + Hotjar analytics
               "style-src 'self' 'unsafe-inline' https://*.hotjar.com", // Tailwind and academic content require inline styles + Hotjar UI
               "img-src 'self' data: https: blob:", // Allow academic images from various sources (https: covers Hotjar CDN)
               "font-src 'self' data: https://script.hotjar.com", // Hotjar fonts
               "connect-src 'self' http://localhost:54341 http://127.0.0.1:54341 https://blsgjlrezruxcfdyrqpk.supabase.co https://api.anthropic.com https://generativelanguage.googleapis.com https://*.hotjar.com https://*.hotjar.io wss://*.hotjar.com wss: ws:", // Allow Supabase local + production + AI APIs + Hotjar analytics
+              "worker-src 'self' blob:", // Allow Web Workers and blob URLs required by media-encoder-host-broker
               "frame-src 'none'", // No iframes for security
               "object-src 'none'", // No objects/embeds for security
               "base-uri 'self'", // Restrict base tag
