@@ -55,6 +55,28 @@ const { TextEncoder, TextDecoder } = require('util');
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
+// Add Web Streams API polyfills for undici compatibility
+if (typeof global.ReadableStream === 'undefined') {
+    const { ReadableStream, WritableStream, TransformStream } = require('node:stream/web');
+    global.ReadableStream = ReadableStream;
+    global.WritableStream = WritableStream;
+    global.TransformStream = TransformStream;
+}
+
+// Add MessagePort and MessageChannel for undici compatibility
+if (typeof global.MessagePort === 'undefined') {
+    const { MessagePort, MessageChannel } = require('node:worker_threads');
+    global.MessagePort = MessagePort;
+    global.MessageChannel = MessageChannel;
+}
+
+// Add structuredClone polyfill for AI SDK compatibility  
+if (typeof global.structuredClone === 'undefined') {
+    global.structuredClone = (obj) => {
+        return JSON.parse(JSON.stringify(obj));
+    };
+}
+
 // Polyfill setImmediate for pino-pretty/thread-stream in test environment
 if (typeof setImmediate === 'undefined') {
     global.setImmediate = (fn, ...args) => setTimeout(fn, 0, ...args);
@@ -156,24 +178,37 @@ if (typeof global.Headers === 'undefined') {
     };
 }
 
-// Add fetch polyfill for next-test-api-route-handler - use undici if available
+// Add fetch polyfill for tests - use Node.js built-in fetch in Node 18+
 if (typeof fetch === 'undefined') {
-    try {
-        const { fetch } = require('undici');
-        global.fetch = fetch;
-    } catch (error) {
-        // Basic fallback fetch mock only for cases where undici is unavailable
-        // Most tests should have access to undici, so this should rarely be used
-        global.fetch = async (url, options = {}) => {
-            console.warn(`[jest.setup.js] Fallback fetch mock called for: ${url}`);
-            
-            // Default mock response for requests
-            return new Response(JSON.stringify({ success: true }), {
-                status: 200,
-                statusText: 'OK',
-                headers: { 'content-type': 'application/json' }
-            });
-        };
+    // Check if Node.js built-in fetch is available (Node 18+)
+    if (typeof globalThis.fetch === 'function') {
+        global.fetch = globalThis.fetch;
+        global.Request = globalThis.Request;
+        global.Response = globalThis.Response; 
+        global.Headers = globalThis.Headers;
+        console.log('[jest.setup.js] Using Node.js built-in fetch for tests');
+    } else {
+        try {
+            const { fetch, Request, Response, Headers } = require('undici');
+            global.fetch = fetch;
+            global.Request = Request; 
+            global.Response = Response;
+            global.Headers = Headers;
+            console.log('[jest.setup.js] Using undici fetch for tests');
+        } catch (error) {
+            // Basic fallback fetch mock only for cases where undici is unavailable
+            // This should rarely be used in modern Node.js environments
+            global.fetch = async (url, options = {}) => {
+                console.warn(`[jest.setup.js] Fallback fetch mock called for: ${url}`);
+                
+                // Default mock response for requests
+                return new Response(JSON.stringify({ success: true }), {
+                    status: 200,
+                    statusText: 'OK',
+                    headers: { 'content-type': 'application/json' }
+                });
+            };
+        }
     }
 }
 

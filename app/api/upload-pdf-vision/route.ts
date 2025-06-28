@@ -179,20 +179,22 @@ export async function POST(request: NextRequest) {
     }))
 
     const pageFragments = await processPagesBatch(pageInputs, {
-      concurrency: 3, // Process up to 3 pages in parallel
+      concurrencyLimit: 3, // Process up to 3 pages in parallel
       provider: 'gemini',
       retryAttempts: 2,
-      retryDelay: 1000
+      retryDelayMs: 1000
     }, 
-    (progress) => {
+    (completed, total, currentPage, elapsedMs) => {
       // Progress callback
       requestLogger.info({
         correlationId,
         stage: 'page-processing-progress',
-        processed: progress.completed,
-        total: progress.total,
-        percentage: Math.round((progress.completed / progress.total) * 100)
-      }, `Page processing progress: ${progress.completed}/${progress.total}`)
+        processed: completed,
+        total: total,
+        currentPage: currentPage,
+        elapsedMs: elapsedMs,
+        percentage: Math.round((completed / total) * 100)
+      }, `Page processing progress: ${completed}/${total} (page ${currentPage})`)
     })
     const pageProcessingTime = Date.now() - pageProcessingStart
 

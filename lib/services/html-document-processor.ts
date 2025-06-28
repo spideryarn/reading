@@ -232,16 +232,38 @@ export async function sanitizeAndExtractText(
   logger: Logger,
   correlationId: string
 ): Promise<SanitizedContent> {
-  // Step 1: Sanitize HTML content for security (always applied)
+  // Step 1: Extract body content if this is a complete HTML document (for vision pipeline)
+  let contentToSanitize = htmlContent
+  if (htmlContent.includes('<!DOCTYPE') && htmlContent.includes('<html') && htmlContent.includes('<body')) {
+    logger.info({
+      correlationId,
+      step: 'extract-body-content',
+      originalLength: htmlContent.length
+    }, 'Detected complete HTML document, extracting body content for sanitization')
+    
+    // Extract content between <body> tags
+    const bodyMatch = htmlContent.match(/<body[^>]*>([\s\S]*)<\/body>/i)
+    if (bodyMatch) {
+      contentToSanitize = bodyMatch[1]
+      logger.info({
+        correlationId,
+        step: 'body-extraction-complete',
+        extractedLength: contentToSanitize.length,
+        reductionPercent: Math.round((1 - contentToSanitize.length / htmlContent.length) * 100)
+      }, 'Successfully extracted body content from complete HTML document')
+    }
+  }
+
+  // Step 2: Sanitize HTML content for security (always applied)
   let sanitizedHtml: string
   try {
-    sanitizedHtml = sanitizeAcademicContent(htmlContent)
+    sanitizedHtml = sanitizeAcademicContent(contentToSanitize)
     logger.info({
       correlationId,
       step: 'sanitization-complete',
       sanitizedLength: sanitizedHtml.length,
-      originalLength: htmlContent.length,
-      contentReduction: Math.round((1 - sanitizedHtml.length / htmlContent.length) * 100)
+      originalLength: contentToSanitize.length,
+      contentReduction: Math.round((1 - sanitizedHtml.length / contentToSanitize.length) * 100)
     }, 'HTML sanitization completed successfully')
   } catch (sanitizationError) {
     logger.error({

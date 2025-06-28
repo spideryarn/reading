@@ -177,8 +177,33 @@ async function executeMultimodalPromptInternal<T extends z.ZodSchema>(
   // Validate variables against schema
   const validated = template.schema.parse(variables)
   
-  // Get the appropriate model based on configuration
-  const model = getModel()
+  // Get the appropriate model - use template model config if specified, otherwise use environment
+  let model
+  if (template.modelConfig?.model) {
+    // Use model specified in template
+    const { parseModelString } = await import('@/lib/config/models')
+    const { getProvider } = await import('@/lib/services/llm-provider')
+    
+    const parsedModel = parseModelString(template.modelConfig.model)
+    const providerInstance = getProvider(parsedModel.provider)
+    
+    // Handle Anthropic version concatenation like in llm-provider.ts
+    let providerModelName = parsedModel.modelName
+    if (parsedModel.provider === 'anthropic' && parsedModel.version !== 'latest' && !providerModelName.endsWith(parsedModel.version)) {
+      providerModelName = `${providerModelName}-${parsedModel.version}`
+    }
+    
+    // Configure thinking mode for Anthropic models if enabled
+    const modelOptions: Record<string, unknown> = {}
+    if (parsedModel.provider === 'anthropic' && parsedModel.thinking) {
+      modelOptions.thinking = true
+    }
+    
+    model = providerInstance(providerModelName, modelOptions)
+  } else {
+    // Fall back to environment configuration
+    model = getModel()
+  }
   
   // Check if variables contain messages (multimodal), PDF buffer, base64 image, or just need prompt rendering
   let messages: Array<{ role: string; content: string | Array<{ type: string; text?: string; image?: string; data?: Buffer; mimeType?: string }> }> = []
