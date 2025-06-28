@@ -78,14 +78,14 @@ describe('HTML Prettifier', () => {
     })
 
     it('should log errors when logger is provided', () => {
-      const mockLogger = { child: jest.fn().mockReturnThis(), error: jest.fn() }
+      const mockLogger = { warn: jest.fn() }
       const originalBeautify = require('js-beautify').html
       require('js-beautify').html = jest.fn(() => { throw new Error('Test error') })
       
       const html = '<div>Test</div>'
-      prettifyAcademicHtmlSafe(html, mockLogger as any)
+      prettifyAcademicHtmlSafe(html, mockLogger as any, 'test-correlation')
       
-      expect(mockLogger.error).toHaveBeenCalledWith(
+      expect(mockLogger.warn).toHaveBeenCalledWith(
         expect.objectContaining({
           step: 'prettification-failed',
           correlationId: 'test-correlation',

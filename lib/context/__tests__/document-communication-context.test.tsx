@@ -68,7 +68,7 @@ describe('DocumentCommunicationContext', () => {
       </DocumentCommunicationProvider>
     )
     
-    expect(screen.getByTestId('active-tab')).toHaveTextContent('original')
+    expect(screen.getByTestId('active-tab')).toHaveTextContent('structure')
     expect(screen.getByTestId('highlighted-term')).toHaveTextContent('none')
     expect(screen.getByTestId('document-slug')).toHaveTextContent('none')
     expect(screen.getByTestId('url-state-enabled')).toHaveTextContent('true')
@@ -144,7 +144,7 @@ describe('DocumentCommunicationContext', () => {
       </DocumentCommunicationProvider>
     )
     
-    expect(screen.getByTestId('hook-active-tab')).toHaveTextContent('original')
+    expect(screen.getByTestId('hook-active-tab')).toHaveTextContent('structure')
     expect(screen.getByTestId('hook-document-slug')).toHaveTextContent('none')
   })
   
