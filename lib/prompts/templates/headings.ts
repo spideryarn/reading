@@ -19,24 +19,79 @@
 import { z } from 'zod'
 import { loadPromptTemplateFromCaller } from '../types'
 
-// Schema for individual heading generation
-export const headingSchema = z.object({
-  insertNewBeforeExistingId: z.string().min(1, 'Element ID cannot be empty'),
-  html: z.string().min(1, 'HTML content cannot be empty').regex(
-    /^<h[1-6][^>]*>.*<\/h[1-6]>$/,
-    'HTML must be a valid heading element (h1-h6)'
-  )
+// Schema for heading content in insert/replace operations
+const headingContentSchema = z.object({
+  tag_name: z.enum(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'], {
+    errorMap: () => ({ message: 'tag_name must be h1, h2, h3, h4, h5, or h6' })
+  }),
+  content: z.string().min(1, 'Heading content cannot be empty')
 })
 
-// Schema for the headings response
-export const headingsResponseSchema = z.object({
-  headings: z.array(headingSchema)
+// Base operation schema with action field
+const baseOperationSchema = z.object({
+  action: z.enum(['insert', 'replace', 'remove'], {
+    errorMap: () => ({ message: 'action must be insert, replace, or remove' })
+  })
 })
+
+// Schema for heading operations with conditional validation
+export const headingOperationSchema = baseOperationSchema.extend({
+  insertNewBeforeExistingId: z.string().optional(),
+  targetId: z.string().optional(),
+  content: headingContentSchema.optional()
+}).refine((data) => {
+  // Insert operations require insertNewBeforeExistingId and content
+  if (data.action === 'insert') {
+    return data.insertNewBeforeExistingId && data.content
+  }
+  // Replace operations require targetId and content
+  if (data.action === 'replace') {
+    return data.targetId && data.content
+  }
+  // Remove operations require only targetId
+  if (data.action === 'remove') {
+    return data.targetId && !data.content
+  }
+  return false
+}, (data) => {
+  if (data.action === 'insert') {
+    if (!data.insertNewBeforeExistingId) {
+      return { message: 'Insert operations require insertNewBeforeExistingId', path: ['insertNewBeforeExistingId'] }
+    }
+    if (!data.content) {
+      return { message: 'Insert operations require content', path: ['content'] }
+    }
+  }
+  if (data.action === 'replace') {
+    if (!data.targetId) {
+      return { message: 'Replace operations require targetId', path: ['targetId'] }
+    }
+    if (!data.content) {
+      return { message: 'Replace operations require content', path: ['content'] }
+    }
+  }
+  if (data.action === 'remove') {
+    if (!data.targetId) {
+      return { message: 'Remove operations require targetId', path: ['targetId'] }
+    }
+    if (data.content) {
+      return { message: 'Remove operations should not include content', path: ['content'] }
+    }
+  }
+  return { message: 'Invalid operation configuration' }
+})
+
+// Schema for the new operations-based headings response
+export const headingsResponseSchema = z.object({
+  operations: z.array(headingOperationSchema).min(1, 'At least one operation is required')
+})
+
+// Legacy schema removed - using operations-based format only
 
 // Schema for headings prompt input
 const headingsPromptSchema = z.object({
   html_content: z.string().min(1, 'HTML content cannot be empty'),
-  documentId: z.string().uuid().optional() // Optional for backward compatibility
+  documentId: z.string().uuid().optional()
 })
 
 // Load the headings prompt template

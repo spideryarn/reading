@@ -145,9 +145,9 @@ describe('heading-mutation-generator', () => {
         
         const [first, second, third, fourth] = result.forward
         
-        // First group: para-1 should have multiple headings
+        // First group: para-1 should have chained headings
         expect(first!.insertNewBeforeExistingId).toBe('para-1')
-        expect(second!.insertNewBeforeExistingId).toBe('para-1') // All target original
+        expect(second!.insertNewBeforeExistingId).toBe(first!.content?.id) // Chains to first heading
         
         // Independent insertions
         expect(third!.insertNewBeforeExistingId).toBe('para-2')

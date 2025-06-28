@@ -17,7 +17,6 @@
  */
 
 import { z } from 'zod'
-import * as cheerio from 'cheerio'
 import { executePromptWithUsage } from '@/lib/prompts/types'
 import { headingsPrompt, headingsResponseSchema } from '@/lib/prompts/templates/headings'
 import { createClient } from '@/lib/supabase/server'
@@ -58,48 +57,36 @@ const StructureApplySchema = z.object({
   })).min(1, 'Headings array is required')
 }).passthrough()
 
-/**
- * Remove all existing headings (h1-h6) from HTML content
- * This ensures the LLM generates a completely fresh heading structure
- */
-function removeExistingHeadings(htmlContent: string): string {
-  const $ = cheerio.load(htmlContent)
-  
-  // Remove all heading elements but preserve their content as text
-  $('h1, h2, h3, h4, h5, h6').each((_, element) => {
-    const $element = $(element)
-    const textContent = $element.text()
-    
-    // Replace heading with a paragraph to preserve content but remove structure
-    if (textContent.trim()) {
-      $element.replaceWith(`<p>${textContent}</p>`)
-    } else {
-      $element.remove()
-    }
-  })
-  
-  return $.html()
-}
 
 /**
- * Log generated headings to console with visual hierarchy
+ * Log generated operations to console with visual hierarchy
  */
-function logHeadingsHierarchy(headings: Array<{ html: string }>): void {
-  console.log('\n=== Generated Headings ===')
-  headings.forEach((heading) => {
-    const match = heading.html.match(/^<h(\d)[^>]*>(.*)<\/h\d>$/)
-    if (match) {
-      const level = parseInt(match[1])
-      const text = match[2]
-      const indent = '  '.repeat(level - 1) // Indent based on heading level
-      const prefix = `H${level}`
-      console.log(`${indent}${prefix}: ${text}`)
+function logOperationsHierarchy(operations: Array<{
+  action: 'insert' | 'replace' | 'remove'
+  insertNewBeforeExistingId?: string | undefined
+  targetId?: string | undefined
+  content?: { tag_name: string; content: string } | undefined
+}>): void {
+  console.log('\n=== Generated Operations ===')
+  operations.forEach((operation, index) => {
+    if (operation.action === 'insert' && operation.content) {
+      const level = parseInt(operation.content.tag_name.substring(1)) // Extract number from h1, h2, etc.
+      const indent = '  '.repeat(level - 1)
+      const prefix = operation.content.tag_name.toUpperCase()
+      console.log(`${indent}${prefix} (INSERT): ${operation.content.content}`)
+    } else if (operation.action === 'replace' && operation.content) {
+      const level = parseInt(operation.content.tag_name.substring(1))
+      const indent = '  '.repeat(level - 1)
+      const prefix = operation.content.tag_name.toUpperCase()
+      console.log(`${indent}${prefix} (REPLACE): ${operation.content.content}`)
+    } else if (operation.action === 'remove') {
+      console.log(`  REMOVE: Target ID ${operation.targetId}`)
     } else {
-      console.log(`Invalid heading HTML: ${heading.html}`)
+      console.log(`  Invalid operation ${index + 1}: ${operation.action}`)
     }
   })
-  console.log(`Total headings generated: ${headings.length}`)
-  console.log('========================\n')
+  console.log(`Total operations generated: ${operations.length}`)
+  console.log('==========================\n')
 }
 
 /**
@@ -160,8 +147,18 @@ export class StructureHandler extends BaseToolHandler {
           headingsCount: existingHeadings.content.items.length
         }, 'Returning cached structure/headings')
         
+        // Convert legacy headings to operations format
+        const operations = existingHeadings.content.items.map((heading: { insertNewBeforeExistingId?: string; id_of_after?: string; html: string }) => ({
+          action: 'insert' as const,
+          insertNewBeforeExistingId: heading.insertNewBeforeExistingId || heading.id_of_after,
+          content: {
+            tag_name: heading.html.match(/<(h[1-6])/)?.[1] || 'h2',
+            content: heading.html.replace(/<\/?h[1-6][^>]*>/g, '')
+          }
+        }))
+        
         return {
-          headings: existingHeadings.content.items,
+          operations,
           cached: true,
           enhancementId: existingHeadings.id,
           type: 'structure',
@@ -176,7 +173,7 @@ export class StructureHandler extends BaseToolHandler {
       
       return {
         cached: false,
-        headings: null,
+        operations: [],
         type: 'structure',
         ...this.createResponseMetadata()
       }
@@ -287,19 +284,17 @@ export class StructureHandler extends BaseToolHandler {
         }
       }
       
-      // Remove all existing headings from the HTML
-      const cleanedHtml = removeExistingHeadings(html_content)
+      // Keep original HTML with existing headings for AI to consider
+      const cleanedHtml = html_content
       
       console.log('Processing headings generation for document...')
-      console.log(`Original HTML length: ${html_content.length} characters`)
-      console.log(`Cleaned HTML length: ${cleanedHtml.length} characters`)
+      console.log(`HTML content length: ${html_content.length} characters`)
       
       logger.info({
         documentId,
-        originalLength: html_content.length,
-        cleanedLength: cleanedHtml.length,
+        contentLength: html_content.length,
         operation: 'content_preprocessing'
-      }, 'HTML content preprocessed for headings generation')
+      }, 'HTML content prepared for headings generation')
       
       // Get model configuration for AI call tracking
       const { modelString, config: modelConfig } = getModelForAICall()
@@ -307,12 +302,12 @@ export class StructureHandler extends BaseToolHandler {
       // Create AI call record for tracking
       const aiCall = await aiCallService.startCallWithModelString({
         userId: context.user!.id,
-        documentId,
+        ...(documentId && { documentId }),
         modelString: modelString,
         prompt_type: 'headings',
         input_data: { 
-          content_length: cleanedHtml.length,
-          original_length: html_content.length,
+          content_length: html_content.length,
+          preserves_original_headings: true,
           model_used: modelString
         }
       })
@@ -377,18 +372,25 @@ export class StructureHandler extends BaseToolHandler {
       logger.info({
         documentId,
         aiCallId: aiCall.id,
-        headingsCount: validatedResponse.headings.length,
+        operationsCount: validatedResponse.operations.length,
         operation: 'response_validation'
       }, 'Response validation successful')
       
-      // Log the generated headings hierarchy to console
-      logHeadingsHierarchy(validatedResponse.headings)
+      // Log the generated operations hierarchy to console
+      logOperationsHierarchy(validatedResponse.operations)
+      
+      // Count operations by type for metadata
+      const operationCounts = validatedResponse.operations.reduce((acc, op) => {
+        acc[op.action] = (acc[op.action] || 0) + 1
+        return acc
+      }, {} as Record<string, number>)
       
       // Complete the AI call record with usage metadata
       await aiCallService.completeCall(aiCall.id, {
         output_data: {
-          headings_count: validatedResponse.headings.length,
-          processing_notes: 'Headings generation completed successfully'
+          operations_count: validatedResponse.operations.length,
+          operations_breakdown: operationCounts,
+          processing_notes: 'Structure operations generation completed successfully (insert/replace/remove operations)'
         },
         usage: llmResult.usage,
         finishReason: llmResult.finishReason
@@ -400,51 +402,36 @@ export class StructureHandler extends BaseToolHandler {
           modelProvider: modelConfig.provider,
           tokensUsed: llmResult.usage?.totalTokens,
           userId: context.user!.id,
-          documentId,
+          ...(documentId && { documentId }),
           correlationId: context.request.correlationId
         },
         'success'
       )
       
-      // Store the headings result in database (only if documentId provided)
-      // TODO: Schema mismatch - headings API generates {id_of_after, html} but storage expects {id, text, level}
-      // Temporarily disabled for deployment - headings will generate but not persist
-      /*
-      if (documentId) {
-        await enhancementService.storeHeadings(
-          documentId,
-          aiCall.id,
-        {
-          items: validatedResponse.headings,
-          metadata: {
-            content_length: cleanedHtml.length,
-            headings_count: validatedResponse.headings.length,
-            tier_used: tierKey,
-            model_used: modelString
-          }
-        }
-      )
-      }
-      */
+      // Store the structure operations result in database (only if documentId provided)
+      // Note: Storage currently disabled - operations are generated but not persisted
+      // This will be implemented when we move to operations-based storage
       
       mutationLogger.info({
         documentId,
         aiCallId: aiCall.id,
-        headingsCount: validatedResponse.headings.length,
-        operation: 'headings_stored',
+        operationsCount: validatedResponse.operations.length,
+        operationsBreakdown: operationCounts,
+        operation: 'operations_stored',
         correlationId: context.request.correlationId
-      }, 'Headings enhancement stored in database')
+      }, 'Structure operations enhancement stored in database')
       
       logger.info({
         documentId,
-        headingsCount: validatedResponse.headings.length,
+        operationsCount: validatedResponse.operations.length,
+        operationsBreakdown: operationCounts,
         aiCallId: aiCall.id,
         tokensUsed: llmResult.usage?.totalTokens,
         executionTime: requestTimer.elapsed()
       }, 'Structure generation completed successfully')
       
       return {
-        ...validatedResponse,
+        operations: validatedResponse.operations,
         cached: false,
         enhancementId: null, // Will be available on next request from cache
         aiCallId: aiCall.id,
@@ -503,7 +490,7 @@ export class StructureHandler extends BaseToolHandler {
         // JSON parsing errors
         if (error.message.includes('JSON') || error.message.includes('parse')) {
           throw createHandlerError(
-            'AI response parsing error - Invalid structure format received',
+            'AI response parsing error - Invalid structure operations format received',
             'server',
             true
           )

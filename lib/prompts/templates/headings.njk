@@ -1,10 +1,15 @@
-You are helping the reader to understand this HTML text, by producing a new set of headings that provide extra information about the semantic structure of the text. The goal is to be able to create a Table of Contents from those headings that shows the clear, fine-grained semantic structure of the text.
+You are helping the reader to understand this HTML text, by improving the semantic structure through better headings. The goal is to create a Table of Contents that shows clear, fine-grained semantic structure.
 
-- The HTML contains no headings - all existing headings have been removed. You will create a completely new set of headings from scratch.
+- The HTML may contain existing headings from the original author. You should improve upon them - preserve good ones, modify unclear ones, and add new ones where the structure needs enhancement.
 
 - The highest-level heading is H1. The lowest-level heading is H6.
 
 - You must always return exactly one H1. It should be at the very top of the text. Create a clear and descriptive H1 title that captures the main topic or theme of the document.
+
+- You can improve the document structure using three types of operations:
+  * **Insert**: Add new headings where structure is missing or needs enhancement
+  * **Replace**: Improve existing headings that are unclear, poorly written, or could be better
+  * **Remove**: Delete existing headings that are redundant, unnecessary, or disrupt the flow
 
 - Add appropriate headings throughout the document based on the semantic structure you identify.
 
@@ -22,22 +27,57 @@ You are helping the reader to understand this HTML text, by producing a new set 
 
 - Don't split up a bibliography, or any other section that really should be a single heading.
 
-Respond with only JSON in the following form, in the order that elements appear in the text:
+Focus on improving the document structure comprehensively. Use insert operations to add new headings where structure is missing, replace operations to improve existing headings that could be clearer or better written, and remove operations to eliminate redundant or unnecessary headings. The existing headings provide context for understanding the author's intended organization, so you can build upon and improve that structure.
+
+**Operation Usage Guidelines:**
+- **Insert**: Use `insertNewBeforeExistingId` because headings should introduce the content that follows. This is the primary way to add structure where it's missing.
+- **Replace**: Use when existing headings are unclear, poorly written, or could be significantly improved while maintaining the same structural position.
+- **Remove**: Use sparingly, only for headings that are truly redundant, disruptive, or unnecessary for the document's structure.
+
+Respond with only JSON in the following form, in the order that operations should be applied:
 
 ```json
 {
-  "headings": [
+  "operations": [
     {
+      "action": "insert",
       "insertNewBeforeExistingId": "element_123",
-      "html": "<h3>A new heading title at level 3</h3>"
+      "content": {
+        "tag_name": "h3",
+        "content": "A new heading title at level 3"
+      }
+    },
+    {
+      "action": "replace",
+      "targetId": "existing_heading_456",
+      "content": {
+        "tag_name": "h2", 
+        "content": "Improved heading text"
+      }
+    },
+    {
+      "action": "remove",
+      "targetId": "redundant_heading_789"
     }
   ]
 }
 ```
 
 Where:
-- `insertNewBeforeExistingId`: The ID of the existing HTML element before which this heading should be inserted. The heading will appear immediately before the specified element, semantically introducing the content that follows. This must be an existing ID in the HTML provided.
-- `html`: The HTML for the new heading, e.g. "<h3>A new heading title at level 3</h3>". This should not include an ID attribute, which will be added automatically.
+- **Insert operations**:
+  - `insertNewBeforeExistingId`: The ID of the existing HTML element before which this heading should be inserted
+  - `content.tag_name`: The heading level (h1, h2, h3, h4, h5, h6)
+  - `content.content`: The text content of the heading (no HTML tags, just the text)
+
+- **Replace operations**:
+  - `targetId`: The ID of the existing heading element to replace
+  - `content.tag_name`: The new heading level (can be same or different from original)
+  - `content.content`: The new text content for the heading
+
+- **Remove operations**:
+  - `targetId`: The ID of the existing heading element to remove
+
+All element IDs (`insertNewBeforeExistingId`, `targetId`) must reference existing element IDs in the HTML provided.
 
 Respond with ONLY valid JSON, i.e. don't include any superfluous conversation, commentary, or markdown/markup.
 

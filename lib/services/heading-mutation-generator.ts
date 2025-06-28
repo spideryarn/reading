@@ -65,84 +65,87 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
     }))
   })
   
-  // Reverse headings within each insertion group to counteract mutation engine's reversal
-  // This ensures semantic order is preserved (H2 → H3 → H4) in the final document
-  const reorderedHeadingIndexes: number[] = []
+  // Create forward transforms (insertions) with chaining for grouped headings
+  const forward: DocumentTransform[] = []
+  
+  // Process each insertion group to implement chaining behavior
   for (const [targetId, groupIndexes] of insertionGroups.entries()) {
-    // Reverse the order within each group so mutation engine's reversal produces correct semantic order
-    const reversedIndexes = [...groupIndexes].reverse()
-    reorderedHeadingIndexes.push(...reversedIndexes)
-  }
-
-  // Create forward transforms (insertions) using reordered indexes for correct precedence
-  const forward: DocumentTransform[] = reorderedHeadingIndexes.map((originalIndex) => {
-    const heading = headings[originalIndex]!
-    // Extract heading content and level from HTML
-    const match = heading.html.match(/^<h(\d)[^>]*>(.*?)<\/h\d>$/i)
-    if (!match) {
-      throw new Error(`Invalid heading HTML format: ${heading.html}`)
-    }
+    let currentInsertionTarget = targetId
     
-    const level = parseInt(match[1]!)
-    const content = match[2]!
-    
-    // Generate deterministic ID for this heading including the insertion point
-    // This ensures unique IDs even when heading content is identical
-    // For regenerations, add a timestamp to ensure different IDs from previous generations
-    const idContent = isRegeneration 
-      ? `${content}:before:${heading.insertNewBeforeExistingId}:${Date.now()}`
-      : `${content}:before:${heading.insertNewBeforeExistingId}`
-    
-    const headingId = generateContentBasedId(
-      documentId, 
-      'heading', 
-      idContent
-    )
-    
-    // Check for ID collision
-    if (existingIds.has(headingId)) {
-      throw new Error(
-        `FATAL: ID collision detected! Generated ID "${headingId}" already exists. ` +
-        `This indicates a serious bug in the ID generation algorithm. ` +
-        `Context: AI heading "${content}" to be inserted before element "${heading.insertNewBeforeExistingId}"`
+    // Process headings in original order for this group (no reversal needed)
+    // The mutation engine will handle precedence correctly
+    for (const originalIndex of groupIndexes) {
+      const heading = headings[originalIndex]!
+      
+      // Extract heading content and level from HTML
+      const match = heading.html.match(/^<h(\d)[^>]*>(.*?)<\/h\d>$/i)
+      if (!match) {
+        throw new Error(`Invalid heading HTML format: ${heading.html}`)
+      }
+      
+      const level = parseInt(match[1]!)
+      const content = match[2]!
+      
+      // Generate deterministic ID for this heading including the insertion point
+      // This ensures unique IDs even when heading content is identical
+      // For regenerations, add a timestamp to ensure different IDs from previous generations
+      const idContent = isRegeneration 
+        ? `${content}:before:${heading.insertNewBeforeExistingId}:${Date.now()}`
+        : `${content}:before:${heading.insertNewBeforeExistingId}`
+      
+      const headingId = generateContentBasedId(
+        documentId, 
+        'heading', 
+        idContent
       )
-    }
-    
-    existingIds.add(headingId)
-    headingIds.set(originalIndex, headingId)
-    
-    // Use non-chaining approach: all headings target the original element
-    // The mutation engine's sortTransformsForPrecedence() will handle correct ordering
-    const actualInsertionTarget = heading.insertNewBeforeExistingId
-    const groupIndexes = insertionGroups.get(heading.insertNewBeforeExistingId)!
-    const positionInGroup = groupIndexes.indexOf(originalIndex)
-    const groupPosition = positionInGroup === 0 ? 'first-in-group' : 'targets-original-element'
-    
-    console.log(`[HeadingMutation] Group position for heading ${originalIndex}:`, {
-      headingContent: content,
-      headingLevel: level,
-      originalTarget: heading.insertNewBeforeExistingId,
-      actualTarget: actualInsertionTarget,
-      positionInGroup: positionInGroup + 1,
-      totalInGroup: groupIndexes.length,
-      groupPosition,
-      generatedId: headingId
-    })
-    
-    return {
-      action: 'insert' as const,
-      insertNewBeforeExistingId: actualInsertionTarget,
-      content: {
-        id: headingId,
-        tag_name: `h${level}`,
-        content: content,
-        attributes: {
-          'data-ai-generated': 'true',
-          'data-mutation-id': mutationId || `heading-mutation-${Date.now()}`
+      
+      // Check for ID collision
+      if (existingIds.has(headingId)) {
+        throw new Error(
+          `FATAL: ID collision detected! Generated ID "${headingId}" already exists. ` +
+          `This indicates a serious bug in the ID generation algorithm. ` +
+          `Context: AI heading "${content}" to be inserted before element "${heading.insertNewBeforeExistingId}"`
+        )
+      }
+      
+      existingIds.add(headingId)
+      headingIds.set(originalIndex, headingId)
+      
+      // Use chaining approach: subsequent headings target the previous heading's ID
+      const positionInGroup = groupIndexes.indexOf(originalIndex)
+      const groupPosition = positionInGroup === 0 ? 'first-in-group' : 'chained-to-previous'
+      
+      console.log(`[HeadingMutation] Group position for heading ${originalIndex}:`, {
+        headingContent: content,
+        headingLevel: level,
+        originalTarget: heading.insertNewBeforeExistingId,
+        actualTarget: currentInsertionTarget,
+        positionInGroup: positionInGroup + 1,
+        totalInGroup: groupIndexes.length,
+        groupPosition,
+        generatedId: headingId
+      })
+      
+      const transform = {
+        action: 'insert' as const,
+        insertNewBeforeExistingId: currentInsertionTarget,
+        content: {
+          id: headingId,
+          tag_name: `h${level}`,
+          content: content,
+          attributes: {
+            'data-ai-generated': 'true',
+            'data-mutation-id': mutationId || `heading-mutation-${Date.now()}`
+          }
         }
       }
+      
+      forward.push(transform)
+      
+      // Update target for next heading in this group to create chaining
+      currentInsertionTarget = headingId
     }
-  })
+  }
   
   // Create reverse transforms (removals)
   const reverse: DocumentTransform[] = Array.from(headingIds.values()).map(headingId => ({
