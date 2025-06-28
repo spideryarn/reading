@@ -218,7 +218,7 @@ export function usePersistentChat({
       
       try {
         // Retrieve Supabase access token and include it in Authorization header
-        let authHeaders: Record<string, string> = {}
+        const authHeaders: Record<string, string> = {}
         try {
           const supabaseBrowser = createClient()
           const { data: { session } } = await supabaseBrowser.auth.getSession()
