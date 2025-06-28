@@ -9,7 +9,7 @@ Spideryarn Reading is a Next.js web application that provides AI-assisted docume
 - `docs/reference/CODING_PRINCIPLES.md` - Development philosophy emphasising rapid prototyping
 - `docs/reference/DATABASE_SCHEMA.md` - Database structure and migration details
 - `docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Document transformation system implementation
-- `docs/reference/CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Chat interface architecture
+- `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Chat interface architecture
 - `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Navigation pane design and features
 - `docs/reference/TOOL_HIGHLIGHT.md` - Semantic highlighting system architecture and implementation
 - `docs/reference/DESIGN_MOBILE_PLATFORM_DETECTION.md` - Mobile device detection and responsive design patterns

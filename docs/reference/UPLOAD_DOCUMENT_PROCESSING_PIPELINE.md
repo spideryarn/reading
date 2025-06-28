@@ -14,6 +14,7 @@ This document provides a comprehensive reference for the document upload and imp
 - `docs/reference/ENVIRONMENT_DETECTION_RUNTIME_PATTERNS.md` - Environment-aware error handling for storage RLS limitations
 - `planning/finished/250606a_url_based_document_addition.md` - URL extraction feature implementation decisions
 - `planning/finished/250613c_html_document_storage_and_security_implementation.md` - HTML storage and security improvements
+- `planning/250627c_vision_based_pdf_processing_pipeline.md` - Vision-based PDF processing pipeline with comprehensive evaluation framework
 - `app/api/upload-pdf/route.ts` - PDF upload API implementation
 - `app/api/extract-url/route.ts` - URL extraction API implementation
 - `lib/utils/html-sanitizer.ts` - HTML sanitization implementation for security
@@ -71,6 +72,8 @@ The system implements **Option A: Smart auto-detection with "use as-is" override
 - Original PDF stored in Supabase Storage
 - Converted HTML stored in database
 - File metadata tracked for re-processing
+
+**Quality Assessment**: See `planning/250627c_vision_based_pdf_processing_pipeline.md` for the evaluation framework that helps assess PDF conversion quality and guide improvements.
 
 ### 3. HTML File Upload ✓ Implemented
 

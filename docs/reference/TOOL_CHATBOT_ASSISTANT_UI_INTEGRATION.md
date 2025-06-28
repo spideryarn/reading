@@ -22,6 +22,8 @@ This document provides comprehensive technical guidance for integrating the @ass
 - [planning/250527a_chatbot_interface_assistant_ui.md](../planning/250527a_chatbot_interface_assistant_ui.md) - Original implementation plan and decision context
 - [planning/250605a_chat_database_integration.md](../planning/250605a_chat_database_integration.md) - Database persistence implementation planning
 - [planning/250602a_database_integration_completion.md](../planning/250602a_database_integration_completion.md) - Overall database integration progress
+- [planning/250616a_implement_multi_chat_threads.md](../planning/250616a_implement_multi_chat_threads.md) - Multi-chat thread feature proposal for enhanced conversation management
+- [planning/250627b_voice_input_for_chatbot.md](../planning/250627b_voice_input_for_chatbot.md) - Voice input feature integration planning
 
 ## Library Overview
 
