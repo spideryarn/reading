@@ -114,7 +114,7 @@ function transformTimeoutError(error: ToolTimeoutError): ErrorMessage {
 /**
  * Transform authentication errors into user-friendly messages
  */
-function transformAuthError(error: ToolAuthenticationError): ErrorMessage {
+function transformAuthError(_error: ToolAuthenticationError): ErrorMessage {
   return {
     title: 'Sign-in Required',
     description: 'You need to be signed in to use this feature',
