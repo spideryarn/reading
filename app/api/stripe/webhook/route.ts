@@ -5,9 +5,9 @@
 
 import { headers } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
-// TODO: Stripe services temporarily disabled for deployment - missing STRIPE_SECRET_KEY env var
-// import { stripe } from '@/lib/services/stripe/client'
-// import { processSubscriptionWebhook } from '@/lib/services/stripe/subscriptions'
+import Stripe from 'stripe'
+import { stripe } from '@/lib/services/stripe/client'
+import { processSubscriptionWebhook } from '@/lib/services/stripe/subscriptions'
 import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
 
 export async function POST(request: NextRequest) {
@@ -15,7 +15,8 @@ export async function POST(request: NextRequest) {
   const requestLogger = createRequestLogger('/api/stripe/webhook', correlationId)
   
   const body = await request.text()
-  const signature = headers().get('stripe-signature')
+  const headersList = await headers()
+  const signature = headersList.get('stripe-signature')
 
   requestLogger.info({
     method: 'POST',
@@ -23,11 +24,18 @@ export async function POST(request: NextRequest) {
     bodyLength: body.length
   }, 'Processing Stripe webhook request')
 
-  // TODO: Webhook processing temporarily disabled for deployment - missing Stripe config
-  return NextResponse.json(
-    { error: 'Stripe webhooks temporarily unavailable - service not configured' },
-    { status: 503 }
-  )
+  // Check if Stripe webhook secret is configured
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || ''
+  if (!webhookSecret) {
+    requestLogger.error({
+      error: 'STRIPE_WEBHOOK_SECRET not configured'
+    }, 'Webhook secret not configured')
+    
+    return NextResponse.json(
+      { error: 'Webhook secret not configured' },
+      { status: 503 }
+    )
+  }
 
   if (!signature) {
     // Legacy console.error for transition period
@@ -50,7 +58,7 @@ export async function POST(request: NextRequest) {
     event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      webhookSecret
     )
     
     requestLogger.info({
@@ -128,7 +136,7 @@ export async function POST(request: NextRequest) {
       }
 
       case 'invoice.payment_succeeded': {
-        const invoice = event.data.object
+        const invoice = event.data.object as Stripe.Invoice
         
         // Legacy console.log for transition period
         console.log(`Payment succeeded for customer ${invoice.customer}`)
@@ -137,7 +145,7 @@ export async function POST(request: NextRequest) {
           eventType: event.type,
           customerId: invoice.customer,
           invoiceId: invoice.id,
-          subscriptionId: invoice.subscription,
+          subscriptionId: (invoice as any).subscription as string | undefined,
           amountPaid: invoice.amount_paid,
           currency: invoice.currency
         }, 'Payment succeeded for customer')
@@ -148,7 +156,7 @@ export async function POST(request: NextRequest) {
       }
 
       case 'invoice.payment_failed': {
-        const invoice = event.data.object
+        const invoice = event.data.object as Stripe.Invoice
         
         // Legacy console.log for transition period
         console.log(`Payment failed for customer ${invoice.customer}`)
@@ -157,7 +165,7 @@ export async function POST(request: NextRequest) {
           eventType: event.type,
           customerId: invoice.customer,
           invoiceId: invoice.id,
-          subscriptionId: invoice.subscription,
+          subscriptionId: (invoice as any).subscription as string | undefined,
           attemptCount: invoice.attempt_count,
           currency: invoice.currency,
           amountDue: invoice.amount_due

@@ -38,7 +38,7 @@ export async function createStripeCustomer(
     // Create customer in Stripe
     const customer = await stripe.customers.create({
       email,
-      name,
+      ...(name && { name }),
       metadata: {
         supabase_user_id: userId,
       },
@@ -52,7 +52,7 @@ export async function createStripeCustomer(
     }, 'Stripe customer created successfully')
 
     // Update user profile with Stripe customer ID
-    const supabase = createClient()
+    const supabase = await createClient()
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ stripe_customer_id: customer.id })
@@ -123,7 +123,7 @@ export async function getOrCreateStripeCustomer(
   }, 'Starting get or create Stripe customer')
   
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
     // Check if user already has a Stripe customer
     const { data: profile, error: profileError } = await supabase
@@ -268,7 +268,7 @@ export async function updateUserSubscriptionStatus(
   }, 'Starting subscription status update')
   
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
     const updateData: ProfileUpdate = {
       subscription_status: subscriptionData.status,
@@ -355,7 +355,7 @@ export async function getUserSubscriptionStatus(
   }, 'Fetching user subscription status')
   
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
     const { data: profile, error } = await supabase
       .from('profiles')

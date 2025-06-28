@@ -420,3 +420,15 @@ export function __getInternalRegistry(): ToolRegistry {
   return toolRegistry
 }
 
+// Re-export key types for external use
+export type { 
+  Tool,
+  ToolRegistry,
+  ToolRegistrationOptions,
+  ToolValidationResult,
+  ToolDiscoveryFilters,
+  ConflictReport,
+  ToolCategory,
+  ToolCapabilities
+} from './types'
+
