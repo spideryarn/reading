@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { DeleteDocumentButton } from '@/components/delete-document-button'
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
+import { MarkdownRenderer } from '@/components/markdown-renderer'
 import { FileText, Clock, Globe, Lock, CircleNotch } from '@phosphor-icons/react/dist/ssr'
 import type { Document } from '@/lib/types/database'
 import { formatUserDate } from '@/lib/utils/date-formatting'
@@ -102,7 +103,7 @@ function DocumentItem({ document, showDeleteActions, currentUserId }: DocumentIt
           <div className="border-t border-gray-100 pt-3">
             {tooltipData.hasSummary && tooltipData.summary ? (
               <div className="text-sm text-gray-700 leading-relaxed">
-                {tooltipData.summary}
+                <MarkdownRenderer content={tooltipData.summary} />
               </div>
             ) : (
               <div className="text-sm text-gray-500 italic">
@@ -154,12 +155,27 @@ function DocumentItem({ document, showDeleteActions, currentUserId }: DocumentIt
                 {document.created_at && (
                   <div className="flex items-center gap-1">
                     <Clock size={14} />
-                    <time 
-                      dateTime={formatUserDate(document.created_at).iso}
-                      title={formatUserDate(document.created_at).absolute}
+                    <TooltipOrPopover
+                      content={
+                        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                          <div className="text-sm text-gray-700">
+                            {formatUserDate(document.created_at).absolute}
+                          </div>
+                        </div>
+                      }
+                      side="top"
+                      align="center"
+                      sideOffset={8}
+                      showIndicator={false}
+                      contentClassName="p-0 bg-transparent border-0 shadow-none"
                     >
-                      {formatUserDate(document.created_at).relative}
-                    </time>
+                      <time 
+                        dateTime={formatUserDate(document.created_at).iso}
+                        className="hover:text-orange-600 transition-colors cursor-help"
+                      >
+                        {formatUserDate(document.created_at).relative}
+                      </time>
+                    </TooltipOrPopover>
                   </div>
                 )}
                 
