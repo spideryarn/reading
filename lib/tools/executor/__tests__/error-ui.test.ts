@@ -11,16 +11,11 @@ import {
   dismissAllErrors,
   getCurrentNotifications,
   clearAllErrors,
-  showTimeoutError,
-  showAuthError,
-  showValidationError,
-  showServerError,
   withErrorNotification
 } from '../error-ui'
 import {
   ToolTimeoutError,
   ToolAuthenticationError,
-  ToolValidationError,
   ToolServerError
 } from '../types'
 

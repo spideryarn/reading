@@ -24,7 +24,7 @@ import {
 export const executeToolWithErrorUI = withErrorNotification(executeTool)
 
 // Usage:
-async function exampleUsage() {
+async function _exampleUsage() {
   try {
     const result = await executeToolWithErrorUI('glossary', 'generate', {
       documentId: 'doc-123'
@@ -43,7 +43,7 @@ async function exampleUsage() {
  * For more control, you can manually catch errors and show them
  * using the showToolError function.
  */
-async function manualErrorHandling() {
+async function _manualErrorHandling() {
   try {
     const result = await executeTool('summarise', 'generate', {
       documentId: 'doc-123',

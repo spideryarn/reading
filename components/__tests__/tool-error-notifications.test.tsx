@@ -8,7 +8,6 @@ import { ToolErrorNotifications } from '../tool-error-notifications'
 import {
   showToolError,
   showGenericError,
-  dismissError,
   dismissAllErrors,
   clearAllErrors
 } from '@/lib/tools/executor/error-ui'
