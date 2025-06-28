@@ -22,6 +22,14 @@ import { useEffect, useCallback, useState } from 'react';
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover';
 import dynamic from 'next/dynamic';
 
+// Dynamically import the voice recorder with SSR disabled to avoid
+// `Worker is not defined` errors during the Node.js render phase.
+// See docs/reference/WEB_WORKERS_BEST_PRACTICES.md for background.
+const VoiceInputRecorderLazy = dynamic(async () => {
+  const mod = await import('@/components/speech/voice-input-recorder');
+  return mod.VoiceInputRecorder;
+}, { ssr: false });
+
 interface AssistantChatProps {
   documentId: string;
   documentContext: string;
@@ -198,14 +206,6 @@ function Thread() {
   );
 }
 
-// Dynamically import the voice recorder with SSR disabled to avoid
-// `Worker is not defined` errors during the Node.js render phase.
-// See docs/reference/WEB_WORKERS_BEST_PRACTICES.md for background.
-
-const VoiceInputRecorderLazy = dynamic(async () => {
-  const mod = await import('@/components/speech/voice-input-recorder');
-  return mod.VoiceInputRecorder;
-}, { ssr: false });
 
 // Runtime wrapper that remounts when key changes
 function ChatRuntime({ adapter, initialMessages }: { adapter: ChatModelAdapter; initialMessages: ThreadMessageLike[] }) {
