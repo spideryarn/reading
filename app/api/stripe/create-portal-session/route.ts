@@ -5,8 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-// TODO: Stripe services temporarily disabled for deployment - missing STRIPE_SECRET_KEY env var
-// import { createPortalSession } from '@/lib/services/stripe/subscriptions'
+import { createPortalSession } from '@/lib/services/stripe/subscriptions'
 import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
 
 export async function POST(request: NextRequest) {
@@ -20,7 +19,8 @@ export async function POST(request: NextRequest) {
     }, 'Stripe portal session creation request initiated')
     
     // Check if Stripe is properly configured (development check)
-    if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.includes('placeholder')) {
+    const stripeKey = process.env.STRIPE_SECRET_KEY || ''
+    if (!stripeKey || stripeKey.includes('placeholder')) {
       requestLogger.warn({
         correlationId
       }, 'Stripe not configured for portal session')
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the authenticated user
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
@@ -41,12 +41,6 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       )
     }
-
-    // TODO: Portal session temporarily disabled for deployment - missing Stripe config
-    return NextResponse.json(
-      { error: 'Stripe portal temporarily unavailable - service not configured' },
-      { status: 503 }
-    )
 
     // Get user's Stripe customer ID
     const { data: profile, error: profileError } = await supabase

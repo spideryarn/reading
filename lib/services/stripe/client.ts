@@ -7,8 +7,11 @@ import Stripe from 'stripe'
 import { loadStripe } from '@stripe/stripe-js'
 
 // Server-side Stripe client (for API calls)
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-06-20',
+// Use a dummy key if not configured to avoid build errors
+const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder_key_for_build'
+
+export const stripe = new Stripe(stripeKey, {
+  apiVersion: '2025-05-28.basil',
   typescript: true,
 })
 

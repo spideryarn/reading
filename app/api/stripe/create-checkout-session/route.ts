@@ -5,9 +5,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-// TODO: Stripe services temporarily disabled for deployment - missing STRIPE_SECRET_KEY env var
-// import { getOrCreateStripeCustomer } from '@/lib/services/stripe/customers'
-// import { createCheckoutSession } from '@/lib/services/stripe/subscriptions'
+import { getOrCreateStripeCustomer } from '@/lib/services/stripe/customers'
+import { createCheckoutSession } from '@/lib/services/stripe/subscriptions'
 import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -22,7 +21,8 @@ export async function POST(request: NextRequest) {
     }, 'Stripe checkout session creation request initiated')
     
     // Check if Stripe is properly configured (development check)
-    if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.includes('placeholder')) {
+    const stripeKey = process.env.STRIPE_SECRET_KEY || ''
+    if (!stripeKey || stripeKey.includes('placeholder')) {
       requestLogger.warn({
         correlationId
       }, 'Stripe not configured - using placeholder keys')
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the authenticated user
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
@@ -55,23 +55,15 @@ export async function POST(request: NextRequest) {
       userEmail: user.email
     }, 'User authenticated for checkout session')
 
-    // TODO: Stripe customer creation temporarily disabled for deployment
-    /*
+    // Parse request body for URLs
+    const { successUrl, cancelUrl } = await request.json().catch(() => ({}))
+    
     // Get or create Stripe customer
     const { customer, error: customerError } = await getOrCreateStripeCustomer(
       user.id,
       user.email!,
       user.user_metadata?.full_name
     )
-    */
-    
-    // Return early with service unavailable for now
-    return NextResponse.json(
-      { error: 'Stripe checkout temporarily unavailable - service not configured' },
-      { status: 503 }
-    )
-
-    /* TODO: Restore when Stripe is configured
     if (customerError || !customer) {
       console.error('Failed to create/retrieve customer:', customerError)
       
@@ -127,7 +119,6 @@ export async function POST(request: NextRequest) {
       url,
       customerId: customer.id 
     })
-    */
   } catch (error) {
     console.error('Error in create-checkout-session:', error)
     

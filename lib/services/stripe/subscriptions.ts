@@ -294,8 +294,9 @@ export async function processSubscriptionWebhook(
     }
 
     // Extract end date
-    if (subscription.current_period_end) {
-      endsAt = new Date(subscription.current_period_end * 1000).toISOString()
+    if ('current_period_end' in subscription && subscription.current_period_end) {
+      const periodEnd = subscription.current_period_end as number
+      endsAt = new Date(periodEnd * 1000).toISOString()
     }
 
     stripeLogger.info({
@@ -312,8 +313,8 @@ export async function processSubscriptionWebhook(
     // Update user's subscription status in database
     const result = await updateUserSubscriptionStatus(customerId, {
       status,
-      plan: planId,
-      endsAt,
+      ...(planId && { plan: planId }),
+      ...(endsAt && { endsAt }),
     })
 
     if (!result.success) {
@@ -326,7 +327,7 @@ export async function processSubscriptionWebhook(
         correlationId
       }, 'Failed to update subscription status in database')
       
-      return { success: false, error: result.error }
+      return { success: false, error: result.error || 'Unknown error' }
     }
 
     const duration = timer.end({
