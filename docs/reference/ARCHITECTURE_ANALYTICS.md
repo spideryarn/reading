@@ -93,10 +93,22 @@ NEXT_PUBLIC_HOTJAR_VERSION=6
 - **Client hydration**: Tracking initialises properly after React hydration
 - **Route transitions**: Continues tracking across Next.js client-side navigation
 
+### Content Security Policy (CSP) Configuration
+**Hotjar-specific CSP directives** (configured in `next.config.ts`):
+```typescript
+"script-src": "https://static.hotjar.com https://script.hotjar.com"
+"style-src": "https://*.hotjar.com"
+"font-src": "https://script.hotjar.com"
+"connect-src": "https://*.hotjar.com https://*.hotjar.io wss://*.hotjar.com"
+```
+
+**Security compliance**: CSP configuration follows Hotjar's official requirements while maintaining strict security policies for other resources.
+
 ### Production Deployment
 - **Domain configuration**: Configured for www.spideryarn.com production domain
 - **Environment variables**: Managed through Vercel deployment settings
 - **HTTPS requirement**: Automatically satisfied by production deployment
+- **CSP implementation**: Comprehensive Content Security Policy includes all required Hotjar domains
 
 ## Future Enhancements 📋
 
