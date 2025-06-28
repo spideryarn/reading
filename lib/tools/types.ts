@@ -4,7 +4,7 @@
  * This file defines the interfaces and types that all tools must conform to,
  * enabling type-safe tool registration, discovery, and execution.
  * 
- * @see docs/reference/ARCHITECTURE_FOR_TOOLS.md for complete documentation
+ * @see docs/reference/TOOL_ARCHITECTURE_AND_DEVELOPMENT_GUIDE.md for complete documentation
  */
 
 import { ComponentType } from 'react'
@@ -88,6 +88,22 @@ export interface Tool {
   // URL State Integration (optional)
   /** Which URL parameters this tool uses */
   urlStateKeys?: string[]
+  
+  /** Configuration used by the unified tool executor */
+  executorConfig?: {
+    /** API endpoint that backs this tool (e.g. '/api/tools/chat'). Optional to allow tools resolved purely on the client. */
+    apiEndpoint?: string
+    /** Per-request timeout override (ms) */
+    timeout?: number
+    /** Supported actions accepted by the endpoint */
+    supportedActions?: string[]
+    /** Whether the endpoint requires authenticated user */
+    requiresAuth?: boolean
+    /** Whether successful responses may be cached */
+    cacheable?: boolean
+    /** Additional custom configuration flags (kept loose for forward compatibility) */
+    [key: string]: unknown
+  }
 }
 
 /**
@@ -274,5 +290,6 @@ export type {
   Tool as ToolInterface,
   ToolRegistry as Registry,
   ToolCategory as Category,
-  TabValue as Tab
+  TabValue as Tab,
+  TabValue,
 }

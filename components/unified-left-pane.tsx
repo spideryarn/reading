@@ -15,6 +15,7 @@ import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { AssistantChat } from './assistant-chat'
 import { HighlightManagement } from './highlight-management'
 import { MetadataPanel } from './tools/MetadataPanel'
+import { TweetThreadPanel } from './tools/TweetThreadPanel'
 import { CircleNotch, Book, Question, Calendar, Trash, MagnifyingGlass, X, CaretDown } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { AlertWithIcon } from '@/components/ui/alert'
@@ -1022,6 +1023,13 @@ export function UnifiedLeftPane({
     />
   ), [documentTitle, documentCreatedAt, documentSourceUrl, elements, wordCount, glossaryGenerated, isLoadingGlossary, aiHeadingsGenerated, summaryGenerated, ownerEmail, isPublic, documentId, slug, storagePath, originalFileType, uploadMetadata])
 
+  const renderTweetThreadTab = useCallback(() => (
+    <TweetThreadPanel
+      documentId={documentId}
+      slug={slug}
+    />
+  ), [documentId, slug])
+
   const renderGlossaryTab = useCallback(() => {
     if (!showGlossary) {
       return (
@@ -1365,6 +1373,9 @@ export function UnifiedLeftPane({
         </div>
         <div style={{ display: state.activeTabId === 'highlights' ? 'block' : 'none' }} className="h-full">
           {renderHighlightsTab()}
+        </div>
+        <div style={{ display: state.activeTabId === 'tweet-thread' ? 'block' : 'none' }} className="h-full">
+          {renderTweetThreadTab()}
         </div>
         <div style={{ display: state.activeTabId === 'metadata' ? 'block' : 'none' }} className="h-full">
           {renderMetadataTab()}

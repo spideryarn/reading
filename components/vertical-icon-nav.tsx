@@ -45,6 +45,7 @@ const TOOL_ORDER = [
   'glossary',
   'search',
   'highlights',
+  'tweet-thread',
   'metadata'
 ]
 

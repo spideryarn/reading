@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { File, TwitterLogo } from '@phosphor-icons/react'
+import { File } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 
 interface DocumentHeaderProps {
@@ -20,19 +20,6 @@ export function DocumentHeader({ title, slug }: DocumentHeaderProps) {
           {title}
         </h1>
         <div className="flex items-center gap-2">
-          <Button
-            asChild
-            variant="ghost"
-            className="text-gray-600 hover:text-gray-900"
-          >
-            <Link 
-              href={`/read/${slug}/tweets`}
-              title="View as tweet thread"
-            >
-              <TwitterLogo size={16} />
-              Tweet thread
-            </Link>
-          </Button>
           <Button
             asChild
             variant="ghost"
