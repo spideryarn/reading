@@ -187,7 +187,9 @@ describe('Glossary Template Conditional Logic', () => {
       const validInput = {
         content: 'Test content',
         max_entities: 20,
-        existing_entities: existingEntities
+        existing_entities: [
+          { name: 'Test Entity', aliases: ['TE'] }
+        ]
       }
       
       const result = glossaryPrompt.schema.safeParse(validInput)
