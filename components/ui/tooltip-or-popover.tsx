@@ -53,7 +53,7 @@ export function TooltipOrPopover({
   const [popoverOpen, setPopoverOpen] = useState(false)
   
   const longPressPropsWithActive = useLongPress(() => setPopoverOpen(true), { delay: 500 })
-  const { isActive: longPressActive, ...longPressProps } = longPressPropsWithActive
+  const { isActive: _longPressActive, ...longPressProps } = longPressPropsWithActive
   
   // Discoverability styling (faint dotted underline matching glossary pattern)
   const indicatorStyle = showIndicator

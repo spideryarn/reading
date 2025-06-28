@@ -265,7 +265,7 @@ export function isTool(obj: unknown): obj is Tool {
     return false
   }
   
-  const tool = obj as any
+  const tool = obj as Record<string, unknown>
   return (
     typeof tool.id === 'string' &&
     typeof tool.name === 'string' &&

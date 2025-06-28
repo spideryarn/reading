@@ -326,8 +326,8 @@ function validateFragmentStructure(
   try {
     // Check for proper semantic structure
     const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6')
-    const paragraphs = document.querySelectorAll('p')
-    const lists = document.querySelectorAll('ul, ol')
+    const _paragraphs = document.querySelectorAll('p')
+    const _lists = document.querySelectorAll('ul, ol')
     const tables = document.querySelectorAll('table')
     const figures = document.querySelectorAll('figure')
     

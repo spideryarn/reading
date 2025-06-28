@@ -170,7 +170,6 @@ describe('AiCallService - Usage Tracking', () => {
 
   describe('startCall integration with completeCall', () => {
     it('should work with the full start->complete flow', async () => {
-      const mockModelUuid = 'model-uuid-123'
       const documentId = 'doc-456'
       const integrationCallId = '987e6543-e89b-12d3-a456-426614174000'
       

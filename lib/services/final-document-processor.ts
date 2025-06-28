@@ -127,7 +127,11 @@ export async function processFinalDocument(
     
     let refinedDocument = assembledDoc.htmlDocument
     let usedFallbackRewrite = false
-    const appliedOperations: any[] = []
+    const appliedOperations: Array<{
+      operation: EditOperation;
+      success: boolean;
+      error?: string;
+    }> = []
     
     // Attempt targeted refinement with edit operations
     try {
@@ -319,16 +323,24 @@ async function applyEditOperationsWithValidation(
   document: string,
   editOperations: EditOperation[],
   config: FinalProcessingConfig,
-  logger: any
+  logger: ReturnType<typeof createRequestLogger>
 ): Promise<{
   document: string,
-  operations: any[],
+  operations: Array<{
+    operation: EditOperation;
+    success: boolean;
+    error?: string;
+  }>,
   errors: string[],
   warnings: string[]
 }> {
   const errors: string[] = []
   const warnings: string[] = []
-  const operations: any[] = []
+  const operations: Array<{
+    operation: EditOperation;
+    success: boolean;
+    error?: string;
+  }> = []
   let workingDocument = document
   
   // Limit operations if needed

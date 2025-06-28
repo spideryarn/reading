@@ -278,7 +278,7 @@ export class ChatService {
   /**
    * Get messages with pagination (alias for getThreadMessages)
    */
-  async getMessages(threadId: string, options?: { limit?: number }): Promise<ChatMessage[]> {
+  async getMessages(threadId: string, _options?: { limit?: number }): Promise<ChatMessage[]> {
     // For now, ignore limit and return all messages
     return await this.getThreadMessages(threadId)
   }
@@ -347,7 +347,7 @@ export class ChatService {
       }
 
       // Check if user owns the thread
-      const thread = message.chat_threads as any
+      const thread = message.chat_threads as { created_by?: string } | null
       if (thread?.created_by !== userId) {
         throw new Error('Access denied')
       }

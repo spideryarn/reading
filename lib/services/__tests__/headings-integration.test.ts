@@ -330,8 +330,6 @@ describe('Headings Integration Tests - Insert-Before Semantics', () => {
     })
     
     it('should validate heading HTML format', () => {
-      const document = createTestDocumentForHeadings()
-      
       expect(() => {
         generateHeadingMutation({
           headings: [{

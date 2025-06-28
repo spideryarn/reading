@@ -184,7 +184,7 @@ export const apiTestHelpers = {
    * Helper for testing file upload APIs (FormData)
    */
   fileUpload: async (config: Omit<ApiTestConfig, 'body'> & { file: File, formData?: Record<string, string> }) => {
-    const { file, formData = {}, ...testConfig } = config
+    const { file, formData = {} } = config
 
     return new Promise<ApiTestResponse>((resolve) => {
       testApiHandler({

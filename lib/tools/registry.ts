@@ -214,7 +214,7 @@ export function getRegistryStats() {
  * @param tool - Tool to validate
  * @returns Validation result with errors and warnings
  */
-export function validateTool(tool: any): ToolValidationResult {
+export function validateTool(tool: unknown): ToolValidationResult {
   const errors: string[] = []
   const warnings: string[] = []
   
