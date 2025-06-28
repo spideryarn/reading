@@ -39,7 +39,7 @@ export function useChatRuntime({ documentContext }: UseChatRuntimeProps) {
             },
             metadata: {
               correlationId: crypto.randomUUID(),
-              source: 'chat-component',
+              source: 'direct',
               timestamp: new Date().toISOString()
             }
           }),

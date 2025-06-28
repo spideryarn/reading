@@ -241,6 +241,8 @@ export function transformShortcuts(
   return [transformed]
 }
 
+let _hasLoggedKeywordConflictWarning = false
+
 /**
  * Generate commands from tool registry
  * 
@@ -274,12 +276,17 @@ export function generateCommandsFromRegistry(
       )
     }
     
-    // Log keyword conflicts as warnings (less critical)
-    if (conflicts.keywords.size > 0 && process.env.NODE_ENV === 'development') {
-      console.warn(
+    if (
+      conflicts.keywords.size > 0 &&
+      process.env.NODE_ENV === 'development' &&
+      !_hasLoggedKeywordConflictWarning
+    ) {
+      // Use debug level and log only once per session to avoid console noise
+      console.debug(
         '⚠️ Keyword conflicts detected (may affect search ranking):',
         Object.fromEntries(conflicts.keywords)
       )
+      _hasLoggedKeywordConflictWarning = true
     }
   }
   

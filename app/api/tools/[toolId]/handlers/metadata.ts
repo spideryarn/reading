@@ -129,7 +129,7 @@ export class MetadataHandler extends BaseToolHandler {
         return this.analyzeReadingDifficulty(parameters, context)
       
       case 'refresh':
-        return this.refreshMetadata(parameters, context)
+        return this.refreshMetadata(parameters)
       
       default:
         throw createHandlerError(
@@ -229,8 +229,7 @@ export class MetadataHandler extends BaseToolHandler {
    * Refresh metadata for a document
    */
   private async refreshMetadata(
-    parameters: Record<string, unknown>,
-    context: ExecutionContext
+    parameters: Record<string, unknown>
   ): Promise<ToolApiResponse> {
     const documentId = this.getDocumentId(parameters)
     

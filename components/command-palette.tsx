@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Command,
@@ -150,6 +150,8 @@ interface CommandPaletteProps {
   open?: boolean
   onOpenChange?: (open: boolean) => void
 }
+
+let _hasLoggedCommandOrder = false
 
 export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPaletteProps) {
   const [internalOpen, setInternalOpen] = useState(false)
@@ -315,9 +317,15 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
         isMac,
       })
 
-      // DEBUG: Log final command order in command palette
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 Command Palette - Final command order:', generatedCommands.map(c => c.id.replace('nav-', '')))
+      if (
+        process.env.NODE_ENV === 'development' &&
+        !_hasLoggedCommandOrder
+      ) {
+        console.debug(
+          '🔍 Command Palette – Final command order:',
+          generatedCommands.map(c => c.id.replace('nav-', ''))
+        )
+        _hasLoggedCommandOrder = true
       }
 
       // Convert GeneratedCommand to Command format

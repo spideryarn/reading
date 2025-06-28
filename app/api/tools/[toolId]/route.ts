@@ -14,7 +14,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validateAuth } from '@/lib/auth/server-auth'
 import { createRequestLogger, generateCorrelationId, createTimer } from '@/lib/services/logger'
-import type { User } from '@supabase/auth-helpers-nextjs'
 import { getTool, isRegistryLocked } from '@/lib/tools/registry'
 import { initializeToolRegistry } from '@/lib/tools/registry-loader'
 import { z } from 'zod'

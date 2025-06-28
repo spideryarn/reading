@@ -534,6 +534,25 @@ export function HighlightManagement({
                             {historyItem.resultCount} {historyItem.resultCount === 1 ? 'result' : 'results'} • {formatDate(historyItem.searchedAt)}
                           </div>
                         </div>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            deleteQueryFromDatabase(historyItem.query)
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              deleteQueryFromDatabase(historyItem.query)
+                            }
+                          }}
+                          className="ml-2 text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+                          title="Delete this search from history"
+                        >
+                          <Trash size={12} weight="bold" />
+                        </span>
                       </div>
                     </button>
                   ))}
@@ -594,8 +613,38 @@ export function HighlightManagement({
             </div>
           </div>
         ) : criterion.trim() && highlights.length === 0 && !error ? (
-          <div className="text-sm text-gray-500 text-center py-8">
-            No matching content found for highlighting
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-sm text-gray-600">
+                0 results for &quot;{criterion}&quot;
+              </div>
+              <div className="flex items-center gap-2">
+                {highlightsCached && (
+                  <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full font-medium">
+                    Loaded
+                  </span>
+                )}
+                {highlightsCachedAt && (
+                  <span 
+                    className="text-xs text-gray-500" 
+                    title={`Search was performed at ${formatDate(highlightsCachedAt)}`}
+                  >
+                    <Clock size={12} weight="bold" className="inline mr-1" />
+                    {new Date(highlightsCachedAt).toLocaleTimeString()}
+                  </span>
+                )}
+                <button
+                  onClick={() => deleteQueryFromDatabase(criterion)}
+                  className="text-xs text-gray-500 hover:text-red-600 transition-colors"
+                  title="Delete this search from history and clear highlights"
+                >
+                  <Trash size={12} weight="bold" />
+                </button>
+              </div>
+            </div>
+            <div className="text-sm text-gray-500 text-center py-4">
+              No matching content found for highlighting
+            </div>
           </div>
         ) : highlights.length > 0 ? (
           <div className="p-4">
@@ -618,7 +667,7 @@ export function HighlightManagement({
                     {new Date(highlightsCachedAt).toLocaleTimeString()}
                   </span>
                 )}
-                {highlights.length > 0 && criterion && (
+                {criterion && (
                   <button
                     onClick={() => deleteQueryFromDatabase(criterion)}
                     className="text-xs text-gray-500 hover:text-red-600 transition-colors"

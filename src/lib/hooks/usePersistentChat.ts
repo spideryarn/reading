@@ -5,8 +5,6 @@ import {
   type ChatModelAdapter,
   type ThreadMessageLike,
   type TextContentPart,
-  type ThreadUserContentPart,
-  type ThreadAssistantContentPart
 } from "@assistant-ui/react";
 import { createClient } from '@/lib/supabase/client';
 import { ChatService } from '@/lib/services/database/chat';
@@ -242,7 +240,7 @@ export function usePersistentChat({
             parameters: requestPayload,
             metadata: {
               correlationId: crypto.randomUUID(),
-              source: 'chat-component',
+              source: 'direct',
               timestamp: new Date().toISOString()
             }
           }),
@@ -273,14 +271,21 @@ export function usePersistentChat({
         
         // Save user and assistant messages (sequential to avoid race condition)
         if (returnedThreadId || threadId) {
-          const currentThreadId = returnedThreadId || threadId;
+          const currentThreadId2 = returnedThreadId || threadId;
           const userMessage = conversationHistory[conversationHistory.length - 1];
           
           if (userMessage) {
             // Save user message first, then assistant response sequentially
-            await saveMessage(currentThreadId, 'user', userMessage.content);
+            await saveMessage(currentThreadId2, 'user', userMessage.content);
           }
-          await saveMessage(currentThreadId, 'assistant', response, data.aiCallId);
+          await saveMessage(currentThreadId2, 'assistant', response, data.aiCallId);
+        }
+        
+        // Refresh local cache from database to keep runtime / initialMessages in sync without duplicates
+        try {
+          await loadMessages();
+        } catch (err) {
+          console.warn('[Persistent Chat] Failed to refresh messages after send:', err);
         }
         
         return {
@@ -302,7 +307,7 @@ export function usePersistentChat({
           ]
         };
       }
-    }, [documentContext, threadId, documentId, saveMessage]),
+    }, [documentContext, threadId, documentId, saveMessage, loadMessages]),
   };
 
   // Load messages on mount and when documentId or conversationId changes
