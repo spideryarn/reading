@@ -534,16 +534,25 @@ export function HighlightManagement({
                             {historyItem.resultCount} {historyItem.resultCount === 1 ? 'result' : 'results'} • {formatDate(historyItem.searchedAt)}
                           </div>
                         </div>
-                        <button
+                        <span
+                          role="button"
+                          tabIndex={0}
                           onClick={(e) => {
                             e.stopPropagation()
                             deleteQueryFromDatabase(historyItem.query)
                           }}
-                          className="ml-2 text-gray-400 hover:text-red-600 transition-colors"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              deleteQueryFromDatabase(historyItem.query)
+                            }
+                          }}
+                          className="ml-2 text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
                           title="Delete this search from history"
                         >
                           <Trash size={12} weight="bold" />
-                        </button>
+                        </span>
                       </div>
                     </button>
                   ))}
