@@ -19,7 +19,7 @@
 import { z } from 'zod'
 import * as cheerio from 'cheerio'
 import { executePromptWithUsage } from '@/lib/prompts/types'
-import { headingsPrompt, headingsPromptInputSchema, headingsResponseSchema } from '@/lib/prompts/templates/headings'
+import { headingsPrompt, headingsResponseSchema } from '@/lib/prompts/templates/headings'
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
@@ -35,20 +35,28 @@ const StructureGetRequestSchema = z.object({
   documentId: z.string().min(1, 'Document ID is required')
 })
 
+// The structure generation POST parameters are provided via the `parameters` object of the
+// unified tool request. The *type* of action ("generate", "execute") is already
+// conveyed by the top-level `action` field, so we **must not** require an
+// additional `action` property here – doing so causes perfectly valid requests
+// to fail validation. We therefore validate only what is actually needed.
 const StructureGenerateSchema = z.object({
-  action: z.enum(['generate', 'execute']).default('generate'),
   html_content: z.string().min(1, 'HTML content is required'),
   documentId: z.string().optional()
-})
+}).passthrough()
 
+// The structure apply POST parameters are provided via the `parameters` object of the
+// unified tool request. The *type* of action ("apply") is already
+// conveyed by the top-level `action` field, so we **must not** require an
+// additional `action` property here – doing so causes perfectly valid requests
+// to fail validation. We therefore validate only what is actually needed.
 const StructureApplySchema = z.object({
-  action: z.enum(['apply']),
   documentId: z.string().min(1, 'Document ID is required'),
   headings: z.array(z.object({
     html: z.string(),
     id_of_after: z.string().optional()
   })).min(1, 'Headings array is required')
-})
+}).passthrough()
 
 /**
  * Remove all existing headings (h1-h6) from HTML content

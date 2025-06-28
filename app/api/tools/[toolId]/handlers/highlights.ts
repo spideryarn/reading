@@ -17,7 +17,6 @@
  */
 
 import { z } from 'zod'
-import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { normalizeSemanticSearchQuery } from '@/lib/utils/semantic-search'
@@ -33,18 +32,17 @@ const HighlightsGetRequestSchema = z.object({
 })
 
 const HighlightsGenerateSchema = z.object({
-  action: z.enum(['generate', 'execute']).default('generate'),
   documentId: z.string().min(1, 'Document ID is required'),
   criterion: z.string().min(1, 'Highlight criterion is required').max(500, 'Criterion too long'),
   // Optional parameters for advanced highlighting
   confidenceThreshold: z.number().min(0).max(1).optional().default(0.25),
   maxResults: z.number().int().min(1).max(100).optional().default(50)
-})
+}).passthrough()
 
 const HighlightsDeleteSchema = z.object({
   documentId: z.string().min(1, 'Document ID is required'),
   criterion: z.string().optional() // Optional - if provided, delete specific highlight set
-})
+}).passthrough()
 
 /**
  * Interface for semantic highlight data (matching component usage)

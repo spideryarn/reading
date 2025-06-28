@@ -36,15 +36,13 @@ import type { GetRequestParams, DeleteRequestParams } from '../handler-interface
 
 // Validation schemas
 const SearchGetRequestSchema = z.object({
-  action: z.enum(['get', 'list']).default('get'),
   documentId: z.string().min(1, 'Document ID is required'),
   type: z.enum(['history', 'all']).default('history')
-})
+}).passthrough()
 
 const SearchPostRequestSchema = z.object({
-  action: z.enum(['execute', 'search', 'refresh']).default('execute'),
   ...semanticSearchApiInputSchema.shape
-})
+}).passthrough()
 
 /**
  * Search tool handler
@@ -164,10 +162,7 @@ export class SearchHandler extends BaseToolHandler {
     }
     
     // Validate request parameters
-    const validation = SearchPostRequestSchema.safeParse({
-      action,
-      ...parameters
-    })
+    const validation = SearchPostRequestSchema.safeParse(parameters)
     if (!validation.success) {
       throw createHandlerError(
         `Invalid parameters: ${validation.error.errors.map(e => e.message).join(', ')}`,

@@ -30,14 +30,12 @@ import type { GetRequestParams, DeleteRequestParams } from '../handler-interface
 
 // Validation schemas
 const ChatGetRequestSchema = z.object({
-  action: z.enum(['get', 'list']).default('list'),
   threadId: z.string().optional(),
   documentId: z.string().optional(),
   limit: z.coerce.number().min(1).max(100).default(50)
-})
+}).passthrough()
 
 const ChatSendMessageSchema = z.object({
-  action: z.enum(['send', 'execute']).default('send'),
   messages: z.array(z.object({
     role: z.enum(['user', 'assistant']),
     content: z.string().min(1)
@@ -45,13 +43,12 @@ const ChatSendMessageSchema = z.object({
   documentContext: z.string().optional(),
   threadId: z.string().optional(),
   documentId: z.string().optional()
-})
+}).passthrough()
 
 const ChatCreateThreadSchema = z.object({
-  action: z.enum(['create']),
   documentId: z.string().min(1, 'Document ID is required'),
   title: z.string().min(1, 'Thread title is required')
-})
+}).passthrough()
 
 /**
  * Chat tool handler with conversation management
@@ -79,10 +76,9 @@ export class ChatHandler extends BaseToolHandler {
       )
     }
     
-    const { action, threadId, documentId, limit } = validation.data
+    const { threadId, documentId, limit } = validation.data
     
     logger.info({
-      action,
       threadId,
       documentId,
       limit,
@@ -93,7 +89,7 @@ export class ChatHandler extends BaseToolHandler {
       const supabase = await createClient()
       const chatService = new ChatService(supabase)
       
-      if (action === 'get' && threadId) {
+      if (threadId) {
         // Get specific thread with messages
         const thread = await chatService.getThread(threadId, context.user.id)
         if (!thread) {

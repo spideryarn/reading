@@ -29,9 +29,8 @@ const GlossaryGetRequestSchema = z.object({
 })
 
 const GlossaryPostRequestSchema = z.object({
-  action: z.enum(['execute', 'generate', 'refresh']).default('execute'),
   ...glossaryPromptInputSchema.shape
-})
+}).passthrough()
 
 /**
  * Glossary tool handler
@@ -130,10 +129,7 @@ export class GlossaryHandler extends BaseToolHandler {
     }
     
     // Validate request parameters
-    const validation = GlossaryPostRequestSchema.safeParse({
-      action,
-      ...parameters
-    })
+    const validation = GlossaryPostRequestSchema.safeParse(parameters)
     if (!validation.success) {
       throw createHandlerError(
         `Invalid parameters: ${validation.error.errors.map(e => e.message).join(', ')}`,
