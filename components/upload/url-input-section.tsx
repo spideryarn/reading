@@ -5,6 +5,7 @@ import { Link as LinkIcon, X } from '@phosphor-icons/react'
 interface UrlInputSectionProps {
   value: string
   onChange: (url: string) => void
+  onSubmit?: () => void
   isActive: boolean
   isDisabled: boolean
   isProcessing: boolean
@@ -14,6 +15,7 @@ interface UrlInputSectionProps {
 export function UrlInputSection({
   value,
   onChange,
+  onSubmit,
   isActive,
   isDisabled,
   isProcessing,
@@ -22,9 +24,9 @@ export function UrlInputSection({
   
   // Handle Enter key for URL submission
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && value.trim()) {
+    if (e.key === 'Enter' && value.trim() && onSubmit) {
       e.preventDefault()
-      // Parent component should handle submission
+      onSubmit()
     }
   }
 

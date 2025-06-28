@@ -57,7 +57,6 @@ export default function AddDocumentPage() {
     }
   })
   
-
   // Helper functions - defined before use
   const isValidUrl = (urlString: string): boolean => {
     if (!urlString || urlString.trim().length === 0) return false
@@ -307,7 +306,7 @@ export default function AddDocumentPage() {
   }, [uploadState.input.type, uploadState.processing.method, getAvailableProcessingMethods, handleProcessingChange])
 
   // Unified submit handler
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     const { input, processing } = uploadState
     
     // Clear any previous errors and set processing state
@@ -471,7 +470,29 @@ export default function AddDocumentPage() {
         }
       }))
     }
-  }
+  }, [uploadState, router])
+
+  // Global ENTER key handling for file uploads
+  useEffect(() => {
+    const handleGlobalKeyDown = (event: KeyboardEvent) => {
+      // Only handle ENTER when a file is selected and no URL is entered
+      if (
+        event.key === 'Enter' && 
+        uploadState.input.file && 
+        !uploadState.input.url &&
+        !uploadState.ui.isProcessing &&
+        // Ensure we're not inside an input field (let URL input handle its own ENTER)
+        !(event.target instanceof HTMLInputElement) &&
+        !(event.target instanceof HTMLTextAreaElement)
+      ) {
+        event.preventDefault()
+        handleSubmit()
+      }
+    }
+
+    document.addEventListener('keydown', handleGlobalKeyDown)
+    return () => document.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [uploadState.input.file, uploadState.input.url, uploadState.ui.isProcessing, handleSubmit])
 
   // Check if we can submit (have valid input)
   const canSubmit = (): boolean => {
@@ -498,6 +519,7 @@ export default function AddDocumentPage() {
               <UrlInputSection
                 value={uploadState.input.url}
                 onChange={handleUrlChange}
+                onSubmit={handleSubmit}
                 isActive={!uploadState.input.file}
                 isDisabled={!!uploadState.input.file}
                 isProcessing={uploadState.ui.isProcessing}

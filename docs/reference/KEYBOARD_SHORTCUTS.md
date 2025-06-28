@@ -42,6 +42,12 @@ Available globally when command palette is closed:
 - **Upload Document**: `Cmd/Ctrl+U` - Navigate to document upload
 - **Settings**: `Cmd/Ctrl+,` - Navigate to application settings
 
+### Upload Page Shortcuts
+
+- **Submit Document**: `Enter` - Trigger "Add Document" when URL entered or PDF file selected
+  - URL input: Submit when URL is entered and input is focused
+  - File upload: Submit when PDF is dropped/selected (global shortcut)
+
 ### Document Action Shortcuts
 
 Available when viewing a document:
@@ -195,5 +201,5 @@ The implemented command palette follows these established patterns:
 
 ---
 
-*Last updated: 9 June 2025*  
-*Shortcut count: 13 (Command Palette + 11 global shortcuts + Sidebar Toggle)*
+*Last updated: 28 June 2025*  
+*Shortcut count: 14 (Command Palette + 11 global shortcuts + Sidebar Toggle + Upload Submit)*
