@@ -312,7 +312,7 @@ export class EvaluationRunner {
           
           console.log(`✅ ${testDoc.name} + ${method.name}: ${(result.overallScore * 100).toFixed(1)}% (${result.passed ? 'PASS' : 'FAIL'})`)
           
-        } catch (error) {
+        } catch (_error) {
           console.error(`❌ ${testDoc.name} + ${method.name}: Evaluation failed`)
         }
       }
