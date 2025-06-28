@@ -298,7 +298,7 @@ function validateAccessibility(
   document: Document,
   pageNumber: number,
   issues: any[],
-  config: ValidationConfig
+  _config: ValidationConfig
 ): void {
   // Check images for alt text
   const images = document.querySelectorAll('img')
@@ -386,7 +386,7 @@ function validateAcademicStructure(
   document: Document,
   pageNumber: number,
   issues: any[],
-  config: ValidationConfig
+  _config: ValidationConfig
 ): void {
   // Check for proper citation formatting
   const citations = document.querySelectorAll('.citation, cite')
@@ -484,7 +484,7 @@ function validateAcademicStructure(
  */
 function calculatePerformanceMetrics(
   document: Document,
-  pageNumber: number
+  _pageNumber: number
 ): {
   domComplexity: number
   nestingDepth: number
@@ -671,7 +671,7 @@ export async function validateAssembledDocument(
 function validateCompleteDocumentStructure(
   document: Document,
   issues: any[],
-  config: ValidationConfig
+  _config: ValidationConfig
 ): void {
   // Check for proper HTML5 document structure
   if (!document.doctype) {

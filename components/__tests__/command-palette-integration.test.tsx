@@ -6,7 +6,7 @@
  */
 
 import React from 'react'
-import { render, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import { CommandPalette } from '../command-palette'
 import { initializeToolRegistry } from '@/lib/tools/registry-loader'
 
@@ -48,7 +48,7 @@ describe('CommandPalette Integration', () => {
     // Initialize the tool registry
     try {
       await initializeToolRegistry()
-    } catch (error) {
+    } catch (_error) {
       // May fail in test environment, that's ok
       console.log('Registry initialization skipped in test environment')
     }
