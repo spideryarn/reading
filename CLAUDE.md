@@ -89,7 +89,7 @@ Type checking and linting:
   - Tests **require** `.env.test` (copy from `.env.local`: `cp .env.local .env.test`) - tests abort if missing
   - When writing tests, use our Jest testing framework with React Testing Library
   - Prefer using a subagent for running tests to avoid filling the context window
-  - Current test health: ~71% pass rate due to NextRequest mocking issues (see `docs/reference/TESTING_TROUBLESHOOTING.md`)
+  - Current test health: ~81% of tests pass, ~57% of test suites pass (UI component test issues, NextRequest mocking resolved - see `docs/reference/TESTING_TROUBLESHOOTING.md`)
 - `npm run test:e2e` - Playwright E2E tests (requires auth setup first: `npm run test:e2e:setup`)
 - `npm run test:e2e:setup` - Set up Playwright authentication for current worktree
 

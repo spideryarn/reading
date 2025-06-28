@@ -1,16 +1,17 @@
 # LLM Model Configuration Reference
 
-> ✅ **CURRENT** - This documentation reflects the model string system implemented in June 2025.
+> ✅ **CURRENT** - This documentation reflects the model string system implemented in June 2025 (last updated: January 2025).
 
 ## Overview
 
-The Spideryarn Reading application uses a **model string** approach for AI model configuration, replacing the previous tier-based UUID system. This provides better performance, easier debugging, and simplified maintenance.
+The Spideryarn Reading application uses a **model string** approach for AI model configuration, supporting multiple AI providers through a unified format. This system replaced the previous tier-based UUID system, providing better performance, easier debugging, and simplified maintenance.
 
 **Key Benefits:**
+- **Multi-Provider Support**: Unified format for Anthropic, Google, OpenAI, and other providers
 - **Performance**: Eliminates database lookups on every AI call
 - **Debugging**: Human-readable model identifiers in SQL queries and logs
 - **Maintenance**: All model configuration in version-controlled files
-- **Flexibility**: Easy to add new models without database migrations
+- **Flexibility**: Easy to add new models and providers without database migrations
 
 📖 **Related Documentation:**
 - `docs/reference/DATABASE_SCHEMA.md` - Database schema with model_string fields
@@ -23,18 +24,31 @@ The Spideryarn Reading application uses a **model string** approach for AI model
 **Format**: `provider:model:version[:thinking]`
 
 **Components:**
-- `provider`: AI provider (anthropic, google, openai, etc.)
+- `provider`: AI provider (anthropic, google, openai, groq, mistral, etc.)
 - `model`: Model identifier WITHOUT version suffix
 - `version`: Version identifier (date-based, latest, preview, etc.)
 - `thinking`: Optional suffix for reasoning/thinking mode
 
 **Examples:**
 ```
+# Anthropic Claude models
 anthropic:claude-3-5-haiku:20241022
 anthropic:claude-sonnet-4:20250514
 anthropic:claude-sonnet-4:20250514:thinking
+anthropic:claude-opus-4:latest
+
+# Google Gemini models
+google:gemini-2.0-flash:latest
 google:gemini-2.5-flash:latest
 google:gemini-2.5-pro:latest
+
+# OpenAI models (future support)
+openai:gpt-4:latest
+openai:gpt-4-turbo:preview
+
+# Other providers (future support)
+groq:llama-3.3-70b:latest
+mistral:mistral-large:latest
 ```
 
 **Validation:**
@@ -140,6 +154,23 @@ LLM_MODEL=anthropic:claude-sonnet-4:20250514
 LLM_MODEL=google:gemini-2.5-pro:latest
 ```
 
+### Provider API Keys
+
+Each provider requires its own API key environment variable:
+
+```bash
+# Anthropic Claude
+ANTHROPIC_API_KEY=sk-ant-api03-...
+
+# Google Gemini
+GOOGLE_GENERATIVE_AI_API_KEY=AIza...
+
+# OpenAI (when using OpenAI models)
+OPENAI_API_KEY=sk-...
+```
+
+The system validates that the required API key is present for the selected provider at startup.
+
 ## API Usage Patterns
 
 ### Standard AI Call Pattern
@@ -182,26 +213,29 @@ await AiCallService.completeCall(aiCall.id, {
 
 ### Model-Specific Handling
 
+The system uses a unified provider interface through `lib/services/llm-provider.ts`:
+
 ```typescript
-import { parseModelString, getModelConfig } from '@/lib/config/models'
+import { getModel, getLLMConfig } from '@/lib/services/llm-provider'
 
-const { modelString } = getModelForAICall()
-const parsed = parseModelString(modelString)
+// Simple usage - get model instance for the configured model
+const model = getModel()
 
-// Provider-specific logic
-if (parsed.provider === 'anthropic') {
-  // Use Anthropic SDK
-  const model = anthropic(config.modelId)
-} else if (parsed.provider === 'google') {
-  // Use Google SDK
-  const model = google(config.modelId)
-}
+// Advanced usage - get full configuration
+const llmConfig = getLLMConfig()
+console.log({
+  provider: llmConfig.provider,        // 'anthropic', 'google', or 'openai'
+  modelName: llmConfig.modelName,      // e.g., 'claude-sonnet-4'
+  version: llmConfig.version,          // e.g., '20250514'
+  thinking: llmConfig.thinking,        // true if thinking mode enabled
+  contextWindow: llmConfig.contextWindow,
+  outputTokens: llmConfig.outputTokens
+})
 
-// Thinking mode handling
-if (parsed.thinking) {
-  // Enable reasoning tokens for supported models
-  options.reasoning = true
-}
+// The provider handles model-specific configuration automatically
+// - Anthropic: Adds version suffix and thinking mode if needed
+// - Google: Uses model name directly
+// - OpenAI: Uses model name directly
 ```
 
 ## Database Integration
@@ -236,17 +270,37 @@ WHERE model_string LIKE '%:thinking';
 
 | Model String | Name | Input Price* | Output Price* | Context | Use Case |
 |--------------|------|--------------|---------------|---------|----------|
-| `google:gemini-2.5-flash:latest` | Gemini 2.0 Flash | TBA** | TBA** | 1M tokens | **Development** - Fast, large context |
-| `google:gemini-2.5-pro:latest` | Gemini 2.5 Pro | $1.25/M† | $10/M† | 1M tokens | Production alternative |
+| **Anthropic Claude** | | | | | |
 | `anthropic:claude-3-5-haiku:20241022` | Claude 3.5 Haiku | $0.80/M | $4/M | 200K tokens | Development, simple tasks |
 | `anthropic:claude-sonnet-4:20250514` | Claude Sonnet 4 | $3/M | $15/M | 200K tokens | **Production** - Reliable |
 | `anthropic:claude-sonnet-4:20250514:thinking` | Claude Sonnet 4 (Thinking) | $3/M | $15/M | 200K tokens | **Complex Analysis** - Advanced reasoning |
 | `anthropic:claude-opus-4:latest` | Claude Opus 4 | $15/M | $75/M | 200K tokens | Maximum quality |
+| **Google Gemini** | | | | | |
+| `google:gemini-2.0-flash:latest` | Gemini 2.0 Flash | TBA** | TBA** | 1M tokens | **Development** - Fast, large context |
+| `google:gemini-2.5-flash:latest` | Gemini 2.5 Flash | $1.25/M† | $10/M† | 1M tokens | High-volume operations |
+| `google:gemini-2.5-pro:latest` | Gemini 2.5 Pro | $1.25/M† | $10/M† | 1M tokens | Production alternative |
+| **OpenAI** (Provider implemented, models need configuration) | | | | | |
+| `openai:gpt-4:latest` | GPT-4 | $30/M | $60/M | 8K tokens | High-quality reasoning |
+| `openai:gpt-4-turbo:preview` | GPT-4 Turbo | $10/M | $30/M | 128K tokens | Larger context window |
 
 *Per million tokens  
-**Gemini Flash pricing TBA  
+**Gemini 2.0 Flash pricing TBA  
 †Higher pricing ($2.50/M input, $15/M output) for prompts >200K tokens
 
+**Note**: While the OpenAI provider is fully implemented in the codebase, specific OpenAI models need to be added to `lib/config/models.ts` before they can be used. See "Adding New Models" section below.
+
+
+### Supported Providers
+
+The system currently supports the following AI providers through the Vercel AI SDK:
+
+| Provider | Status | Model String Prefix | SDK Import | Required Environment Variable |
+|----------|--------|-------------------|------------|------------------------------|
+| Anthropic | ✅ Active | `anthropic:` | `@ai-sdk/anthropic` | `ANTHROPIC_API_KEY` |
+| Google | ✅ Active | `google:` | `@ai-sdk/google` | `GOOGLE_GENERATIVE_AI_API_KEY` |
+| OpenAI | ✅ Active | `openai:` | `@ai-sdk/openai` | `OPENAI_API_KEY` |
+| Groq | 🚧 Future | `groq:` | `@ai-sdk/groq` | N/A |
+| Mistral | 🚧 Future | `mistral:` | `@ai-sdk/mistral` | N/A |
 
 ## Adding New Models
 
@@ -278,18 +332,16 @@ export const MODELS = {
 ```
 
 
-### 3. Update Provider Support
+### 2. Verify Provider Support
 
-Ensure the provider is supported in API call logic:
+The system already supports Anthropic, Google, and OpenAI providers through `lib/services/llm-provider.ts`. 
 
-```typescript
-// In API routes, add provider handling
-if (parsed.provider === 'openai') {
-  const model = openai(config.modelId)
-}
-```
+For new providers (e.g., Groq, Mistral), you would need to:
+1. Install the provider SDK (e.g., `@ai-sdk/groq`)
+2. Add the provider to `lib/services/llm-provider.ts`
+3. Map the required environment variable
 
-### 4. Test Configuration
+### 3. Test Configuration
 
 ```bash
 # Test with direct model string

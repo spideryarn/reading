@@ -1,5 +1,7 @@
 # Tweet Thread View
 
+> **⚠️ DEPRECATED**: This tool has been removed from the application. The Tweet Thread button has been removed from the Document Header, and this feature is no longer available in the unified tool system. This documentation is preserved for historical reference only.
+
 The tweet thread feature converts academic documents into Twitter-style thread format, making research papers and long-form content accessible for social media sharing.
 
 ## See also

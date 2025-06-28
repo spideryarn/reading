@@ -12,6 +12,7 @@ Spideryarn Reading is in active development with core AI features now implemente
 - HTML document parsing using Cheerio (`lib/services/document-parser.ts`)
 - Document elements with deterministic ID generation using UUID v5
 - **PDF upload and conversion** - Direct PDF to HTML conversion using Claude/Gemini APIs with Supabase Storage
+- **Vision-based PDF processing** - Advanced PDF conversion using PDF.js integration with page-by-page image processing, evaluation framework, and superior handling of complex academic documents
 - **URL content extraction** - Web page content extraction and conversion to HTML via `/api/extract-url`
 - **File storage system** - Original PDFs stored in Supabase Storage with database references
 - **Upload metadata tracking** - Comprehensive metadata capture (extraction method, provider, processing time, file sizes) with AI call traceability via `documents.upload_ai_call_id`
@@ -98,6 +99,15 @@ Spideryarn Reading is in active development with core AI features now implemente
 - **Storage**: Supabase Storage bucket with security policies for authenticated file access
 - **Authentication**: Complete Supabase Auth integration with Google OAuth and email/password flows
 - **Testing**: Jest testing framework with ~71% pass rate (NextRequest mocking issues being resolved)
+
+### Production Infrastructure ✓
+
+- **Live deployment**: https://www.spideryarn.com
+- **Hosting**: Vercel with automatic GitHub integration
+- **Custom domain**: SSL-enabled with www subdomain as primary
+- **CI/CD**: Automatic deployments on push to main branch
+- **Database migrations**: Automated via GitHub Actions
+- **Authentication**: Production-ready Google OAuth and email/password flows
 
 ## Architecture
 

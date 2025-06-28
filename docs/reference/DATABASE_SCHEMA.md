@@ -1,6 +1,6 @@
 # Database Schema Reference
 
-> ✅ **UPDATED** - This documentation reflects the current database schema as of June 2025.
+> ✅ **UPDATED** - This documentation reflects the current database schema as of June 2025 (last updated: January 2025).
 
 ## Overview
 
@@ -20,11 +20,15 @@ The database schema is defined and represented in several places:
 1. **SQL Migration** (Source of Truth):
    - `supabase/migrations/20250531235026_comprehensive_storage_schema.sql` - Initial comprehensive schema
    - `supabase/migrations/20250608120000_add_upload_metadata_fields.sql` - Upload metadata tracking fields
+   - `supabase/migrations/20250612223724_add_admin_support.sql` - Admin functionality with is_admin timestamp field
+   - `supabase/migrations/20250612235719_add_stripe_subscription_fields.sql` - Stripe subscription management fields
    - `supabase/migrations/20250615023410_add_model_string_column.sql` - Add model_string column to ai_calls
    - `supabase/migrations/20250615023551_populate_model_string_data.sql` - Populate model_string from legacy data
    - `supabase/migrations/20250615120000_finalize_model_string_migration.sql` - Complete migration to model_string system
    - `supabase/migrations/20250616161300_migrate_chat_threads_to_model_string.sql` - Migrate chat_threads to model_string
    - `supabase/migrations/20250616161430_drop_ai_models_table.sql` - Remove legacy ai_models table
+   - `supabase/migrations/20250625232520_add_profile_background_column.sql` - Profile background for AI personalisation
+   - `supabase/migrations/20250625235000_add_document_users_table.sql` - User-document relationships table
    - Contains CREATE TABLE statements, indexes, triggers, and initial data
 
 2. **TypeScript Types** (Auto-generated):
@@ -32,6 +36,7 @@ The database schema is defined and represented in several places:
    - Generated from Supabase schema using `npm run db:types`
    - Provides type-safe interfaces for all tables
    - Updated to reflect model_string system (no ai_models table)
+   - Includes admin support, document_users, and profile customization types
 
 3. **Service Layer** (Database API):
    - `lib/services/database/` - Clean API for database operations
@@ -210,16 +215,59 @@ The database schema is defined and represented in several places:
 
 ### **`profiles`** - User Profiles
 
-**Purpose**: Future expansion for user preferences and settings
+**Purpose**: User profiles with preferences, admin support, and subscription management
 
 **Key Fields**:
 - `user_id`: 1:1 relationship with auth.users
 - `preferences`: JSONB for flexible user settings
+- `is_admin`: TIMESTAMPTZ for admin access (NULL for regular users, timestamp for admins)
+- `background`: TEXT field for user background/interests for AI personalisation (default '')
+- `stripe_customer_id`: TEXT for Stripe payment integration
+- `subscription_status`: TEXT with check constraint (active, inactive, trialing, past_due, canceled, unpaid)
+- `subscription_plan`: TEXT for current subscription plan identifier
+- `subscription_ends_at`: TIMESTAMPTZ for subscription period end date
+
+**Indexes**:
+- `idx_profiles_admin_lookup`: Composite index on (user_id, is_admin) for RLS policy performance
+- `idx_profiles_stripe_customer_id`: For efficient Stripe customer lookups
+- `idx_profiles_subscription_status`: For subscription status queries
 
 **Design Notes**: 
-- Minimal implementation for future user features
-- JSONB preferences enable schema-free expansion
+- Admin access granted via timestamp in `is_admin` field (non-null = admin)
+- Background field supports AI personalisation features
+- Stripe integration fields support subscription management
+- Helper function `has_active_subscription(user_uuid)` checks subscription status
 - Unique constraint on user_id ensures 1:1 relationship
+- See `planning/250612b_integrate_stripe_subscriptions.md` for subscription feature implementation planning
+
+### **`document_users`** - User-Document Relationships
+
+**Purpose**: Junction table storing user-specific context and reading intent for documents
+
+**Key Fields**:
+- `user_id`: References auth.users (part of composite primary key)
+- `document_id`: References documents (part of composite primary key)
+- `background`: TEXT for user intent/context for this specific document (default '')
+- `extra`: JSONB for additional metadata and future extensibility (default '{}')
+- `created_at`: TIMESTAMPTZ with automatic default
+- `updated_at`: TIMESTAMPTZ with automatic update trigger
+
+**Primary Key**: Composite (user_id, document_id)
+
+**Indexes**:
+- `idx_document_users_user_id`: For efficient user-based queries
+- `idx_document_users_document_id`: For efficient document-based queries
+
+**RLS Policies**:
+- Users can manage their own document relationships
+- Admin override available (users with non-null `is_admin` can access all relationships)
+
+**Design Notes**: 
+- Enables user-specific document context (e.g., "I want to understand X", "Research for project Y")
+- Junction table pattern allows many-to-many relationships
+- Background field supports personalised AI interactions per document
+- Extra JSONB field provides extensibility without schema changes
+- Automatic timestamp updates via moddatetime trigger
 
 ## TypeScript Integration
 

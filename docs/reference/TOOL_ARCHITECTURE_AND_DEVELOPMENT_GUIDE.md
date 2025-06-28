@@ -14,6 +14,7 @@ This document provides comprehensive guidance for understanding tool architectur
 - `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` - Keyboard shortcut integration and command definitions
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - AI-powered tool development with Nunjucks + Zod
 - `planning/250614b_unified_tool_registry_architecture.md` - Current unified tool architecture planning
+- `planning/250614e_llm_tool_function_calling.md` - LLM tool function calling architecture and OpenAPI schema generation
 - `components/unified-left-pane.tsx` - Main pane implementation for reference
 - `components/vertical-icon-nav.tsx` - Icon navigation system integration
 - `components/command-palette.tsx` - Command registration patterns
