@@ -195,7 +195,59 @@ const MessageActions = () => (
 );
 ```
 
-### 4. Runtime Providers
+### 4. Voice Input Integration ✅
+
+The chatbot interface includes integrated voice input functionality using OpenAI Whisper for speech-to-text transcription.
+
+```jsx
+import { SpeechToTextInput } from '@/components/speech/SpeechToTextInput';
+
+const ComposerWithVoiceInput = () => {
+  const handleVoiceTranscription = (text: string) => {
+    // Use ThreadPrimitive.Suggestion to auto-send transcribed text
+    // This leverages the existing chat machinery for consistency
+  };
+
+  return (
+    <ComposerPrimitive.Root className="flex items-center gap-2 p-4 border-t">
+      <ComposerPrimitive.Input 
+        rows={1} 
+        autoFocus 
+        placeholder="Ask about this document..." 
+        className="flex-1 resize-none rounded-lg border p-2" 
+      />
+      
+      {/* Voice input button next to send button */}
+      <SpeechToTextInput
+        onTranscription={handleVoiceTranscription}
+        disabled={isProcessing}
+        className="flex-shrink-0"
+      />
+      
+      <ComposerAction />
+    </ComposerPrimitive.Root>
+  );
+};
+```
+
+**Voice Input Features**:
+- **Microphone button** positioned next to send button
+- **Two recording modes**: Click to start/stop or hold to record
+- **Visual feedback** during recording (red state) and processing
+- **Authentication required** (disabled for anonymous users)
+- **Auto-send transcription** using existing chat flow
+- **Error handling** for permissions, network, and API failures
+- **Browser compatibility** with graceful degradation
+
+**Implementation Notes**:
+- Uses `ThreadPrimitive.Suggestion` with `autoSend` for seamless integration
+- Voice transcription follows the same path as typed input
+- No changes to core chat logic required
+- Reusable components support future voice features
+
+See `docs/reference/TOOL_VOICE_INPUT_SPEECH_TO_TEXT.md` for complete voice input documentation.
+
+### 5. Runtime Providers
 Two main approaches for managing chat state and backend integration.
 
 ## Runtime Configuration and API Integration

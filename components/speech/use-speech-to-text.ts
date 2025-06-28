@@ -222,19 +222,20 @@ export function useSpeechToText(
 
     console.log(`[SpeechToText] Permission state: ${permissionState}`);
 
+    // If Permissions API reports "denied" we *still* attempt to call getUserMedia.
+    // Users may have just changed the setting to "Allow" but the Permissions API cache
+    // has not updated yet (Chrome issue 999363). Some browsers also return "denied"
+    // while still showing the permission prompt on getUserMedia.
+    // We therefore treat this as a soft signal and do not abort early.
     if (permissionState === 'denied') {
-      const error = new Error('Microphone access is blocked. Please check your browser settings to allow microphone access for this site.');
-      (error as any).context = { 
-        errorType: 'permissionBlocked', 
-        permissionState,
-        browserGuidance: getBrowserGuidance()
-      };
-      throw error;
+      console.warn('[SpeechToText] Permissions API returned "denied" — attempting getUserMedia anyway to allow the browser to re-prompt the user.');
     }
+
+    let startTime: number = Date.now();
 
     try {
       console.log('[SpeechToText] Requesting microphone access...');
-      const startTime = Date.now();
+      startTime = Date.now();
       
       // Request microphone access
       const stream = await navigator.mediaDevices.getUserMedia({
