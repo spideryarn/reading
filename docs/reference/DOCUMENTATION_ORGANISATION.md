@@ -117,6 +117,7 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/COMMAND_PALETTE_MIGRATION_GUIDE.md` - Migration guide for command palette implementation changes
 - `docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md` - Inter-pane communication patterns and architecture
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - Application keyboard shortcuts and navigation
+- `docs/reference/CLIPBOARD_LIBRARY_INTEGRATION.md` - Clipboard operations integration using usehooks-ts for copying text to clipboard
 - `docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Reversible document transformation system for applying/reverting changes
 - `docs/reference/ARCHITECTURE_URL_STATE.md` - URL-based state management for shareable tool states and browser history navigation ⭐ **Essential for tool state persistence**
 
