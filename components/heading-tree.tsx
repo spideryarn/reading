@@ -379,7 +379,6 @@ export function HeadingTree({
         <nav className="space-y-1 px-4 pt-3 pb-4">
         {headingTree.map((node) => {
           const nodeProps = {
-            key: node.id,
             node,
             themeColors,
             onHeadingClick,
@@ -391,10 +390,10 @@ export function HeadingTree({
           }
           
           if (headingVisibility !== undefined) {
-            return <HeadingNodeComponent {...nodeProps} headingVisibility={headingVisibility} />
+            return <HeadingNodeComponent key={node.id} {...nodeProps} headingVisibility={headingVisibility} />
           }
           
-          return <HeadingNodeComponent {...nodeProps} />
+          return <HeadingNodeComponent key={node.id} {...nodeProps} />
         })}
         {/* 
          * Spacer to ensure the last heading can be scrolled to the top of the viewport.
