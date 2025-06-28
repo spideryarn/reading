@@ -366,7 +366,7 @@ export function useSpeechToText(
   /**
    * Upload audio to transcription API
    */
-  const transcribeAudio = useCallback(async (audioBlob: Blob) => {
+  async function transcribeAudio(audioBlob: Blob): Promise<void> {
     try {
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
@@ -437,7 +437,7 @@ export function useSpeechToText(
         handleError('Failed to transcribe audio. Please try again.');
       }
     }
-  }, [updateState, handleError, onTranscription]);
+  }
 
   /**
    * Start audio recording
