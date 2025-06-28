@@ -404,3 +404,114 @@ AI: [Calls search_document with type: "semantic", query: "technical terminology"
 - `planning/finished/250614a_tool_url_state_management.md` - URL state integration
 - `planning/finished/250615a_url_state_single_source_of_truth.md` - URL as SoT
 - `planning/critiques/o3__CRITIQUE__OF__250614b_unified_tool_registry_architecture.md` - External review that informed the split approach
+
+
+## Appendix - critique from o3 AI
+
+Critique of planning/250614e_llm_tool_function_calling.md  
+(against the backdrop of the recently-finished Tool Execution Framework and overall tool architecture)
+
+────────────────────────────────────────
+Overall
+────────────────────────────────────────
+The document is ambitious and mostly on-point, but it occasionally drifts out of sync with the freshly-implemented execution framework and registry-driven architecture.  The biggest risks are (a) duplicating logic that already lives in the executor layer, (b) leaving a few critical integration details vague, and (c) under-estimating provider quirks and security hardening.
+
+────────────────────────────────────────
+1  Alignment with Tool Execution Framework (250614d, TOOL_EXECUTION_FRAMEWORK.md)
+────────────────────────────────────────
+•  Validation & execution boundaries  
+  – The executor already owns Zod validation, routing, timeouts, correlation IDs, and RFC 9457 error shaping.  
+  – 250614e proposes its own “wrapper validates and executes” step.  That would duplicate work and create two sources of truth.  
+  → Recommendation: have the LLM function wrapper delegate straight to `executeTool()` (or the generated typed wrappers) and never perform a second validation pass.  The only extra logic the LLM layer needs is provider-specific argument/response marshalling.
+
+•  Result shape  
+  – 250614e’s example result embeds `{ name, result: { … } }`.  
+  – The executor purposely returns “no envelope” JSON plus metadata, and surfaces errors via RFC 9457.  
+  → Spell out a deterministic mapping from executor responses to the provider format (e.g. Claude’s `tool_response`) without re-wrapping successful data.  Consistency matters for caching, audit, and tests.
+
+•  Security / rate limits  
+  – The executor exposes per-tool timeout configuration and will soon expose rate limiting helpers (see Stage “Security implementation” in 250614e).  
+  – Keep *all* throttling at the executor or API-middleware layer; the LLM façade should simply respect 429 responses and surface them to the model.
+
+────────────────────────────────────────
+2  Schema generation design
+────────────────────────────────────────
+•  Source-of-truth for schemas  
+  – All tools already declare their Zod schemas in the registry; re-defining them in `lib/tools/llm/types.ts` risks drift.  
+  → Generate OpenAPI/Claude/Gemini schemas by introspecting the registry entries directly.  That makes new tools instantly available to the chat agent without extra code.
+
+•  Enum vs union types  
+  – Some tool parameter types use Zod unions (e.g. search `type: 'text' | 'semantic'`).  Confirm your Zod-to-OpenAPI converter handles these (many OSS converters stumble here).
+
+•  Nested object refs  
+  – Several tools embed deep objects (e.g. summary granularity options).  Decide whether to flatten or use `$ref` components; Claude currently dislikes `$ref`, Gemini is fine.  Document that decision.
+
+────────────────────────────────────────
+3  Provider-specific quirks
+────────────────────────────────────────
+•  Claude function_call streaming  
+  – Claude can emit a partial `function_call` message *before* all arguments are present.  Specify how your parsing layer will buffer or resume the stream.
+
+•  Gemini hallucination mitigation  
+  – The doc notes that Gemini “may hallucinate function names more often”.  Add concrete safeguards: reject unknown names, log the attempted call, and feed back an error tool response so the model can retry.
+
+•  Token cost explosion  
+  – Schema lists for seven tools are ~2 k tokens uncompressed.  Plan compression or selective exposure; e.g. only include the two most-likely tools for the current conversation context.
+
+────────────────────────────────────────
+4  User-consent UX
+────────────────────────────────────────
+The plan says “Show what AI will do before execution (initially)”.  Good for safety, but:
+
+•  This is orthogonal to function calling; it belongs in the chat UI layer, not the LLM wrapper.  
+•  Decide the approval mechanism now (modal vs toast vs inline diff) because it drives what metadata the wrapper must return (e.g. a prettified summary of arguments).
+
+────────────────────────────────────────
+5  Audit & observability
+────────────────────────────────────────
+•  The executor already forwards correlation IDs into Supabase audit tables.  250614e should explicitly reuse those IDs instead of generating new ones, or we’ll lose end-to-end traces.
+
+•  Function-call telemetry: consider tagging each audit row with `invoked_by_llm: true/false` so we can compare AI vs user-triggered tool usage.
+
+────────────────────────────────────────
+6  Testing strategy
+────────────────────────────────────────
+•  You list “Use subagent for comprehensive testing” but omit contract tests between wrapper → executor → handlers.  
+  – Add golden-file tests: given a `function_call` JSON, assert the executor sees precisely the same validated params.  This will catch marshalling bugs early.
+
+•  Provider regression tests: snapshot Claude & Gemini responses for edge-case schemas (enums, nested objects, optionals).
+
+────────────────────────────────────────
+7  Security hardening gaps
+────────────────────────────────────────
+•  Prompt-injection surface  
+  – LLM can supply strings that become SQL pattern inputs or regexes (search tool).  Sanitisation layer is mentioned but needs explicit mapping: which Zod refinements or helper functions will be auto-applied?
+
+•  Long-running chains  
+  – Multi-step orchestration could yield runaway loops (LLM A calls tool, gets data, immediately asks to refresh, ad infinitum).  Define a per-conversation execution budget (N calls or T seconds) enforced by the wrapper.
+
+────────────────────────────────────────
+8  Stage planning realism
+────────────────────────────────────────
+Several stages could be merged to reduce overhead:
+
+•  “Schema generation implementation” and “Provider integration – Claude” are tightly coupled—Claude formatting is just a projection of the OpenAPI schema.  Combining them will keep conversions in one file and avoid drift.
+
+•  “Security implementation” can be incremental: start with parameter sanitisation and permission checks; rate limiting and audit trail already exist in the executor.
+
+────────────────────────────────────────
+Quick-win recommendations
+────────────────────────────────────────
+1.  Generate provider schemas directly from the tool registry; drop any parallel schema definitions.  
+2.  Make the LLM wrapper a very thin layer:  
+   – translate provider ↔ executor JSON  
+   – call `tools.<id>.<action>()`  
+   – map executor responses/errors back.  
+3.  Adopt the executor’s RFC 9457 error objects 1-for-1; do *not* invent a `{ name, error }` envelope.  
+4.  Add a “max function_calls_per_turn” and “max function_chain_depth” constant now—cheap insurance.  
+5.  Clarify the consent UX flow and the data contract it needs before coding Stage “Chat interface enhancement”.
+
+────────────────────────────────────────
+Conclusion
+────────────────────────────────────────
+The plan is directionally correct and leverages modern function-calling capabilities well.  Tightening its coupling with the existing executor, clarifying provider quirks, and sharpening security/observability details will prevent duplication and integration friction.  With those adjustments, Stage-by-Stage implementation should proceed smoothly.
