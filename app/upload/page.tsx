@@ -199,7 +199,7 @@ export default function AddDocumentPage() {
       case 'html':
         return ['as-is', 'readability', 'ai-transcription']
       case 'pdf':
-        return ['ai-transcription', 'vision-ai']
+        return ['vision-ai', 'ai-transcription']
       default:
         return ['readability', 'ai-transcription'] // Default options
     }
@@ -239,16 +239,16 @@ export default function AddDocumentPage() {
         case 'readability':
           return 'Extracting content with Mozilla Readability...'
         case 'ai-transcription':
-          return `Transcribing content with ${provider === 'claude' ? 'Claude' : 'Gemini'}...`
+          return `Processing with LLM transcription (v1) using ${provider === 'claude' ? 'Claude' : 'Gemini'}...`
         default:
           return 'Processing URL...'
       }
     } else if (file) {
       if (type === 'pdf') {
         if (method === 'vision-ai') {
-          return 'Processing PDF with vision-based AI pipeline...'
+          return 'Processing PDF with LLM vision-based transcription (v2)...'
         } else {
-          return `Transcribing PDF with ${provider === 'claude' ? 'Claude' : 'Gemini'}...`
+          return `Processing PDF with LLM transcription (v1) using ${provider === 'claude' ? 'Claude' : 'Gemini'}...`
         }
       } else if (type === 'html') {
         switch (method) {
@@ -257,7 +257,7 @@ export default function AddDocumentPage() {
           case 'readability':
             return 'Extracting content with Mozilla Readability...'
           case 'ai-transcription':
-            return `Transcribing HTML with ${provider === 'claude' ? 'Claude' : 'Gemini'}...`
+            return `Processing HTML with LLM transcription (v1) using ${provider === 'claude' ? 'Claude' : 'Gemini'}...`
           default:
             return 'Processing HTML file...'
         }
@@ -366,8 +366,8 @@ export default function AddDocumentPage() {
             // TODO: Replace with PDF.js or canvas-based solution for frontend PDF-to-image conversion
             // See planning/250627c_vision_based_pdf_processing_pipeline.md for details
             throw new Error(
-              'Vision-AI processing temporarily unavailable due to PDF conversion library compatibility issues. ' +
-              'Please use AI Transcription for PDFs in the meantime.'
+              'LLM vision-based transcription (v2) temporarily unavailable due to PDF conversion library compatibility issues. ' +
+              'Please use LLM transcription (v1) for PDFs in the meantime.'
             )
             
             /*

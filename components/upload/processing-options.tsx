@@ -33,9 +33,9 @@ export function ProcessingOptions({
       case 'readability':
         return 'Mozilla Readability'
       case 'ai-transcription':
-        return 'AI Transcription'
+        return 'LLM transcription (v1)'
       case 'vision-ai':
-        return 'Vision-based AI Processing'
+        return 'LLM vision-based transcription (v2)'
       default:
         return method
     }
@@ -48,9 +48,9 @@ export function ProcessingOptions({
       case 'readability':
         return 'Extract main content using Mozilla Readability (fast, reliable for articles)'
       case 'ai-transcription':
-        return 'Use AI to transcribe and structure the content (high quality, handles complex layouts)'
+        return 'Use AI to transcribe and structure the content (stable, handles complex layouts)'
       case 'vision-ai':
-        return 'Use computer vision and AI to process PDF pages as images (best for complex academic documents with figures and tables)'
+        return 'Use computer vision and AI to process PDF pages as images (experimental, best for complex academic documents with figures and tables)'
       default:
         return ''
     }
