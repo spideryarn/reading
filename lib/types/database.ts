@@ -545,30 +545,3 @@ export const Constants = {
   },
 } as const
 
-// ---------------------------------------------------------------------------
-// Compatibility alias types for Spideryarn codebase (temporary)
-// ---------------------------------------------------------------------------
-
-export type Document = Database["public"]["Tables"]["documents"]["Row"]
-export type DocumentInsert = Database["public"]["Tables"]["documents"]["Insert"]
-export type DocumentUpdate = Database["public"]["Tables"]["documents"]["Update"]
-
-export type DocumentEnhancement = Database["public"]["Tables"]["document_enhancements"]["Row"]
-export type DocumentEnhancementInsert = Database["public"]["Tables"]["document_enhancements"]["Insert"]
-
-export type AiCall = Database["public"]["Tables"]["ai_calls"]["Row"]
-export type AiCallInsert = Database["public"]["Tables"]["ai_calls"]["Insert"]
-export type AiCallUpdate = Database["public"]["Tables"]["ai_calls"]["Update"]
-
-export type ChatThread = Database["public"]["Tables"]["chat_threads"]["Row"]
-export type ChatThreadInsert = Database["public"]["Tables"]["chat_threads"]["Insert"]
-export type ChatMessage = Database["public"]["Tables"]["chat_messages"]["Row"]
-export type ChatMessageInsert = Database["public"]["Tables"]["chat_messages"]["Insert"]
-
-export type Profile = Database["public"]["Tables"]["profiles"]["Row"]
-
-export type CallStatus = AiCall["status"]
-export type PromptType = AiCall["prompt_type"]
-export type EnhancementType = DocumentEnhancement["type"]
-export type MessageRole = ChatMessage["role"]
-
