@@ -379,7 +379,6 @@ export function HeadingTree({
         <nav className="space-y-1 px-4 pt-3 pb-4">
         {headingTree.map((node) => {
           const nodeProps = {
-            key: node.id,
             node,
             themeColors,
             onHeadingClick,
