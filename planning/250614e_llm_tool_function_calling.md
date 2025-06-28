@@ -515,3 +515,79 @@ Quick-win recommendations
 Conclusion
 ────────────────────────────────────────
 The plan is directionally correct and leverages modern function-calling capabilities well.  Tightening its coupling with the existing executor, clarifying provider quirks, and sharpening security/observability details will prevent duplication and integration friction.  With those adjustments, Stage-by-Stage implementation should proceed smoothly.
+
+
+## Appendix: Critique of Planning Doc (by Gemini)
+
+### High-level Verdict
+
+This is a well-structured plan that correctly builds upon the existing tool registry and execution framework. The approach of auto-generating provider-specific function schemas from Zod definitions is excellent and will significantly reduce maintenance overhead.
+
+The plan's primary risk lies in potential redundancy with the recently completed Tool Execution Framework (`planning/finished/250614d_tool_execution_framework.md`). By ensuring the LLM function calling layer is a thin wrapper around the existing executor, we can improve consistency, security, and velocity. The following points suggest refinements to further align with existing architecture.
+
+### 1. Execution Flow & Redundancy with Existing Framework
+
+**Issue**: The plan proposes creating a new `lib/tools/llm/function-wrapper.ts` and `lib/tools/llm/security.ts`. This seems to duplicate the responsibilities of the existing `lib/tools/executor/executor.ts` from `250614d`, which already handles parameter validation, execution context, error handling, and provides a security model via `validateAuth()`.
+
+**Suggestion**: Reuse the existing `Tool Execution Framework` directly. The chat API route (`/api/tools/chat/route.ts` or a new endpoint) should be the primary integration point.
+
+The flow should be:
+1.  LLM responds with a `function_call`.
+2.  The chat API route parses the response to get `toolId`, `action`, and `parameters`.
+3.  The route directly calls the existing, unified `executeTool(toolId, action, parameters)` function.
+4.  The existing framework handles validation, authentication, execution (local or server), and error handling.
+5.  The result from `executeTool` is formatted by a provider-specific adapter (`claude.ts` or `gemini.ts`) and sent back to the LLM.
+
+This approach avoids creating a parallel execution path, ensuring that tools behave identically whether invoked by the LLM or a user. It also centralizes security policies like rate limiting and auditing within the core execution framework, as intended by `250614d`.
+
+### 2. Mapping LLM Functions to Tool Actions
+
+**Issue**: The example `use_glossary` function includes `action` as a parameter. The core `executeTool` function, however, takes `action` as a distinct, top-level argument: `executeTool(toolId, action, params)`. The plan needs to clarify how an LLM function call maps to this signature.
+
+**Suggestion**: The plan should explicitly adopt the proposed mapping. The chat API route will be responsible for this translation. For example:
+
+```typescript
+// In the Chat API route
+const { name, arguments } = llmResponse.function_call;
+const { action, ...parameters } = arguments;
+
+// Assumes 'use_glossary' maps to toolId 'glossary'
+const toolId = name.replace('use_', ''); 
+
+const result = await executeTool(toolId, action, parameters);
+```
+
+The schema generation process must ensure that the `action` parameter is always required and has an `enum` of valid actions for that tool (e.g., `['open', 'execute', 'refresh']`), derived from the tool's definition. This provides a clear and consistent mapping.
+
+### 3. Security, Consent, and Safety
+
+**Issue**: The plan mentions "User consent - Show what AI will do before execution (initially)", which is critical but lacks implementation detail. A blanket policy for all tools may be too restrictive or too permissive.
+
+**Suggestion**: Enhance the `Tool` definition in the registry (`docs/reference/TOOL_ARCHITECTURE_AND_DEVELOPMENT_GUIDE.md`) with a safety-level property.
+
+```typescript
+// In the Tool interface
+interface Tool {
+  // ... existing properties
+  executionSafety: 'read-only' | 'generative' | 'mutative' | 'local-nav';
+}
+```
+
+-   `read-only`: Safe for the LLM to call without user confirmation (e.g., `search`, `glossary`).
+-   `generative`/`mutative`: Always require user confirmation (e.g., `summary`, `structure`).
+-   `local-nav`: Safe to call without confirmation, as it only affects local UI state.
+
+The chat UI can use this property to dynamically decide when to show a confirmation step. This allows for a more fluid user experience for safe, read-only operations while maintaining security for others.
+
+### 4. API Response Handling and Provider Adapters
+
+**Issue**: The "Function Execution Flow" example shows a `functionResult` being constructed. The `docs/reference/TOOL_EXECUTION_FRAMEWORK.md` documentation specifies that successful API calls return direct data (no envelope), while errors follow RFC 9457.
+
+**Suggestion**: Clarify the role of the provider adapters (`claude.ts`, `gemini.ts`). The `executeTool` function will return the raw, direct data response from the tool's API handler. The provider adapter is then responsible for taking this raw data and wrapping it in the specific format that the LLM provider (Claude or Gemini) expects for a tool result. This maintains separation of concerns: the execution framework is provider-agnostic, and the adapters handle the provider-specific formatting.
+
+### 5. Hallucination Mitigation
+
+**Issue**: The plan correctly identifies the risk of hallucinated function names. The mitigation is mentioned in the "Risks" section but should be a core part of the architecture.
+
+**Suggestion**: Explicitly state in the "Chat interface enhancement" stage that the very first step after receiving a `function_call` is to validate the function `name` against the list of available tools from the `tool registry`. If the function name is not found, the system should return an error to the LLM immediately, instructing it to only use functions from the provided list. This fail-fast approach is critical for stability.
+
