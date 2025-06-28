@@ -164,7 +164,8 @@ const DOCUMENT_TEMPLATE = `<!DOCTYPE html>
  */
 export async function assembleDocument(
   fragments: ProcessedFragment[],
-  config: Partial<AssemblyConfig> = {}
+  config: Partial<AssemblyConfig> = {},
+  expectedTotalPages?: number
 ): Promise<AssembledDocument> {
   const logger = createRequestLogger('/services/html-assembler', `assembly-${Date.now()}`)
   const startTime = Date.now()
@@ -261,7 +262,7 @@ export async function assembleDocument(
     return assembledDocumentSchema.parse({
       htmlDocument: finalDocument,
       documentMetadata: {
-        totalPages: fragments.length,
+        totalPages: expectedTotalPages || Math.max(1, fragments.length),
         successfulPages: processedFragments.length,
         failedPages,
         assemblyTimeMs,
@@ -294,7 +295,7 @@ export async function assembleDocument(
     return assembledDocumentSchema.parse({
       htmlDocument: '<html><body><p>Document assembly failed</p></body></html>',
       documentMetadata: {
-        totalPages: fragments.length,
+        totalPages: expectedTotalPages || Math.max(1, fragments.length),
         successfulPages: 0,
         failedPages: fragments.map(f => f.pageNumber),
         assemblyTimeMs,
