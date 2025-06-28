@@ -214,21 +214,31 @@ Replace the current direct PDF-to-HTML pipeline with a vision-based approach tha
 - [x] **Health check**: Run `npm run check:health` to validate API integration
   - **COMPLETED**: Build successful, TypeScript compilation clean for all new files
 
-### Stage: Frontend PDF-to-Image Conversion (Critical for V1) ⚠️ BLOCKED - LIBRARY COMPATIBILITY
+### Stage: Frontend PDF-to-Image Conversion (Critical for V1) 🔄 IN PROGRESS - PDF.js Migration
 - [x] **Identify MuPDF.js compatibility issue**: CRITICAL BUILD ERROR discovered
   - **ISSUE**: MuPDF.js uses `import("node:fs")` which causes webpack build failures in Next.js
   - **ERROR**: `Module build failed: UnhandledSchemeError: Reading from "node:fs" is not handled by plugins`
   - **ROOT CAUSE**: MuPDF.js library includes Node.js specific imports that conflict with browser bundling
-  - **STATUS**: Frontend PDF-to-image conversion temporarily disabled with clear error message
-- [x] **Implement temporary fallback**: Frontend conversion disabled with user-friendly error
-  - Vision-AI processing shows clear error: "Vision-AI processing temporarily unavailable due to PDF conversion library compatibility issues"
-  - Users directed to use "AI Transcription" for PDFs in the meantime
-  - All vision-AI conversion code commented out but preserved for future implementation
-- [ ] **Research alternative PDF-to-image solutions**: 
-  - **NEXT STEPS**: Evaluate PDF.js, canvas-based solutions, or html2canvas alternatives
-  - **REQUIREMENT**: Must be webpack/Next.js compatible for browser-only usage
-  - **CONSTRAINT**: Must maintain base64 image output format for existing API compatibility
-- [ ] **Implement alternative solution**: Replace MuPDF.js with compatible library
+  - **DECISION**: Remove MuPDF.js entirely and migrate to PDF.js for production reliability
+- [x] **Research alternative PDF-to-image solutions**: ✅ COMPLETED
+  - **EVALUATED**: pdftoimg-js, pdf-img-convert, TheProfs/pdf-to-image, MuPDF WebViewer
+  - **DECISION**: Use PDF.js directly (not wrapper libraries) for maximum control and reliability
+  - **RATIONALE**: PDF.js is Mozilla's proven solution, widely used in production, better documentation
+  - **DOCUMENTATION**: Created comprehensive integration guide at `docs/reference/PDF_JS_INTEGRATION_GUIDE.md`
+- [ ] **Remove MuPDF.js dependencies**: Clean up all MuPDF.js imports and utilities
+  - Remove `mupdf` package from package.json
+  - Remove MuPDF.js webpack configuration from next.config.ts
+  - Remove `lib/utils/mupdf-integration.ts` and related files
+  - Update `lib/utils/pdf-validation.ts` to use PDF.js instead of MuPDF.js
+- [ ] **Implement PDF.js conversion**: Replace `lib/utils/pdf-to-images.ts` with PDF.js implementation
+  - **REFERENCE**: See `docs/reference/PDF_JS_INTEGRATION_GUIDE.md` for comprehensive implementation patterns
+  - Maintain existing API signature for compatibility with upload page
+  - Use PDF.js canvas rendering with proper memory management
+  - Implement progress callbacks and error handling
+  - Support configurable DPI/quality settings
+- [ ] **Update frontend integration**: Enable vision-AI processing in upload page
+  - Remove temporary error message and commented code
+  - Test PDF.js conversion with real academic PDFs
 - [ ] **Test frontend conversion**: Validate image conversion with various PDF types
 - [ ] **Health check**: Run `npm run check:health` to validate frontend integration
 
@@ -467,16 +477,11 @@ Replace the current direct PDF-to-HTML pipeline with a vision-based approach tha
 5. **Final Document Refinement and Quality Assurance** - Claude Sonnet 4 quality review (temporarily disabled for V1)
 6. **API Integration and Pipeline Replacement** - Complete vision-based API endpoint with UI integration
 
-### 🚨 Current Blocker (Library Compatibility Issue)
-7. **Frontend PDF-to-Image Conversion** - ⚠️ BLOCKED BY MUPDF.JS COMPATIBILITY
-   - V1 infrastructure complete but MuPDF.js incompatible with Next.js webpack
-   - Vision-AI temporarily disabled with clear user error message
-   - Need alternative PDF-to-image library (PDF.js, canvas-based solution)
-
-### ⚠️ Current Blocker (Library Compatibility Issue)
-7. **Frontend PDF-to-Image Conversion** - BLOCKED by MuPDF.js webpack compatibility issue
-   - Vision-AI temporarily disabled with clear user error message
-   - Need alternative PDF-to-image library (PDF.js, canvas-based solutions)
+### 🔄 Current Focus (PDF.js Migration)
+7. **Frontend PDF-to-Image Conversion** - IN PROGRESS - PDF.js Migration
+   - MuPDF.js compatibility issues identified and decision made to migrate to PDF.js
+   - Research completed: PDF.js selected as replacement for production reliability
+   - Next steps: Remove MuPDF.js dependencies and implement PDF.js conversion
 8. **Vercel Constraints Mitigation** - ✅ COMPLETED
 
 ### 📋 Planned Future Stages (V2)
@@ -497,16 +502,16 @@ Replace the current direct PDF-to-HTML pipeline with a vision-based approach tha
 - **Production-ready architecture** integrated with existing infrastructure
 - **Academic document specialization** for citations, figures, equations, and cross-references
 
-### 🎯 Current Status - V1 Pipeline Blocked by Library Compatibility
-The vision-based PDF processing pipeline has core services completed but **blocked by MuPDF.js compatibility issues**:
+### 🎯 Current Status - V1 Pipeline Ready for PDF.js Migration
+The vision-based PDF processing pipeline has core services completed and **ready for PDF.js migration**:
 - ✅ **Core services implemented**: Page processing, fragment assembly, validation, final refinement (commented out)
 - ✅ **API endpoint created**: `/api/upload-pdf-vision` expects pre-converted page images
-- ✅ **UI integration completed**: "Vision-based AI Processing" option available for PDFs (shows compatibility error)
+- ✅ **UI integration completed**: "Vision-based AI Processing" option available for PDFs (temporarily disabled)
 - ✅ **Vercel constraints mitigated**: Final refinement stage properly commented out with documentation
-- ❌ **CRITICAL BLOCKER**: MuPDF.js library incompatible with Next.js webpack bundling
-- ❌ **BUILD ERROR**: `import("node:fs")` causes webpack compilation failures
+- ✅ **Research completed**: PDF.js selected as replacement for MuPDF.js after comprehensive evaluation
+- 🔄 **IN PROGRESS**: PDF.js migration to replace MuPDF.js frontend conversion
 - ⚠️ **USER IMPACT**: Vision-AI processing temporarily unavailable with clear error message directing to AI Transcription
 
-**🔧 Current Priority**: Research and implement alternative PDF-to-image solution (PDF.js, canvas-based) that's compatible with Next.js webpack bundling.
+**🔧 Current Priority**: Complete PDF.js migration by removing MuPDF.js dependencies and implementing PDF.js conversion.
 
-**📋 V1 Status**: All infrastructure complete, blocked only by frontend PDF conversion library compatibility. Once resolved, V1 will be fully testable.
+**📋 V1 Status**: All infrastructure complete, actively migrating to PDF.js for frontend PDF conversion. Once migration complete, V1 will be fully testable.
