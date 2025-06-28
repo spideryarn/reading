@@ -118,14 +118,15 @@ export async function POST(request: NextRequest) {
     const startTime = Date.now()
     const mainAiCall = await aiCallService.startCallWithModelString({
       userId: user.id,
-      modelString: 'vision-pipeline-multi-model', // Special identifier for vision pipeline
+      modelString: 'anthropic:claude-sonnet-4:20250514', // Primary model for multi-model pipeline tracking
       prompt_type: 'pdf-vision-pipeline',
       input_data: {
         file_name: pdfFile.name,
         file_size_bytes: pdfBuffer.length,
         page_count: pageValidationResult.pageCount,
         provider_requested: provider,
-        pipeline_type: 'vision-based'
+        pipeline_type: 'vision-based-multi-model', // Gemini Flash 2.5 + Claude Sonnet 4
+        models_used: ['google:gemini-2.5-flash:latest', 'anthropic:claude-sonnet-4:20250514']
       }
     })
 
@@ -256,15 +257,16 @@ export async function POST(request: NextRequest) {
 
     const assemblyStart = Date.now()
     const assembledDoc = await assembleDocument(validFragments, {
-      documentMetadata: {
-        title: title,
-        fileName: pdfFile.name,
-        pageCount: pageValidationResult.pageCount
-      }
-    })
+      preservePageBreaks: true,
+      mergeTableRows: true,
+      unifyParagraphs: true,
+      generateToc: false,
+      sanitizeOutput: true,
+      validateStructure: true
+    }, pageValidationResult.pageCount)
     const assemblyTime = Date.now() - assemblyStart
 
-    console.log(`Stage 5 Complete: Document assembled in ${assemblyTime}ms (${assembledDoc.htmlContent.length} characters)`)
+    console.log(`Stage 5 Complete: Document assembled in ${assemblyTime}ms (${assembledDoc.htmlDocument.length} characters)`)
 
     // Stage 6: Final document refinement using Claude Sonnet 4
     // TEMPORARILY DISABLED: Due to Vercel 4.5MB payload limit constraints
@@ -301,7 +303,7 @@ export async function POST(request: NextRequest) {
     // For V1: Skip final refinement and use assembled document directly
     console.log('Stage 6: Skipped final refinement (V1 - Vercel payload constraints)')
     const finalResult = {
-      htmlContent: assembledDoc.htmlContent,
+      htmlContent: assembledDoc.htmlDocument,
       appliedOperations: [],
       qualityMetrics: {
         overallScore: 0.85, // Estimated quality without final refinement
@@ -316,7 +318,7 @@ export async function POST(request: NextRequest) {
     // Complete the main AI call record with comprehensive metadata
     await aiCallService.completeCall(mainAiCall.id, {
       output_data: {
-        html_length: finalResult.refinedDocument.length,
+        html_length: finalResult.htmlContent.length,
         total_processing_time_ms: totalProcessingTime,
         stage_timings: {
           image_parsing_ms: imageParsingTime,
@@ -327,11 +329,11 @@ export async function POST(request: NextRequest) {
           refinement_ms: refinementTime
         },
         pipeline_results: {
-          pages_processed: images.pages.length,
+          pages_processed: pageImages.length,
           fragments_generated: pageFragments.length,
           fragments_valid: validFragments.length,
           final_improvements: finalResult.appliedOperations.length,
-          quality_assessment: finalResult.qualityAssessment
+          quality_assessment: finalResult.qualityMetrics
         }
       },
       usage: {
@@ -340,7 +342,7 @@ export async function POST(request: NextRequest) {
         promptTokens: 0,
         completionTokens: 0
       },
-      finishReason: finalResult.success ? 'stop' : 'error'
+      finishReason: 'stop' // Assembly completed successfully if we reach this point
     })
 
     console.log('Stage 7: Processing through shared pipeline...')
@@ -352,7 +354,7 @@ export async function POST(request: NextRequest) {
 
     // Process HTML through shared pipeline (sanitization, text extraction, document creation)
     const { document, storageResult } = await processHtmlToDocument(
-      finalResult.refinedDocument,
+      finalResult.htmlContent,
       {
         title,
         sourceUrl: null, // PDF uploads don't have source URLs
@@ -386,9 +388,9 @@ export async function POST(request: NextRequest) {
         },
         quality_metrics: {
           fragments_generated: pageFragments.length,
-          fragments_valid: validationResult.validFragments.length,
+          fragments_valid: validFragments.length,
           final_improvements: finalResult.appliedOperations.length,
-          overall_quality: finalResult.qualityAssessment?.overall_quality
+          overall_quality: finalResult.qualityMetrics?.overallScore
         }
       }
     )
@@ -457,7 +459,7 @@ export async function POST(request: NextRequest) {
           fragments_valid: validFragments.length,
           validation_success_rate: (validFragments.length / pageFragments.length * 100).toFixed(1) + '%',
           final_improvements_applied: finalResult.appliedOperations.length,
-          overall_quality: finalResult.qualityAssessment?.overall_quality || 'unknown'
+          overall_quality: finalResult.qualityMetrics?.overallScore || 'unknown'
         }
       }
     }, {
