@@ -5,7 +5,7 @@
  * This replaces the previous hardcoded approach with a type-safe,
  * discoverable system.
  * 
- * @see docs/reference/ARCHITECTURE_FOR_TOOLS.md for complete documentation
+ * @see docs/reference/TOOL_ARCHITECTURE_AND_DEVELOPMENT_GUIDE.md for complete documentation
  */
 
 import type { 
