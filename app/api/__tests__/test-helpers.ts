@@ -39,9 +39,9 @@ async function testApiRoute(
   routeModule: Record<string, unknown>, // The entire route module (e.g., import * as route from './route')
   options: TestApiOptions = {}
 ) {
-  let responseBody: unknown;
-  let responseStatus: number;
-  let responseHeaders: Headers;
+  let responseBody: unknown = null;
+  let responseStatus: number = 0;
+  let responseHeaders: Headers = new Headers();
 
   await testApiHandler({
     appHandler: routeModule, // Pass the entire route module

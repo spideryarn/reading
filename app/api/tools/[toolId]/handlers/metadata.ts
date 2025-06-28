@@ -177,39 +177,22 @@ export class MetadataHandler extends BaseToolHandler {
     const timer = createTimer()
     
     try {
-      // Log the AI operation (reading difficulty analysis)
-      const aiCallId = await logAIOperation({
-        type: 'reading_difficulty_analysis',
-        documentId,
-        correlationId: context.request.correlationId,
-        metadata: {
-          contentLength: content.length,
-          source: context.request.source
-        }
-      })
-      
       // Perform the analysis
       const result = await analyzeReadingDifficulty(content)
       
-      // Update AI operation with result
-      await logAIOperation({
-        type: 'reading_difficulty_analysis',
-        documentId,
-        correlationId: context.request.correlationId,
-        result: {
-          level: result.level,
-          confidence: result.confidence
+      // Log the operation result
+      logAIOperation(
+        'reading_difficulty_analysis',
+        {
+          documentId,
+          correlationId: context.request.correlationId
         },
-        metadata: {
-          contentLength: content.length,
-          executionTime: timer.elapsed()
-        }
-      })
+        'success'
+      )
       
       return {
         ...result,
         documentId,
-        aiCallId,
         cached: false,
         ...this.createResponseMetadata({
           executionTime: timer.elapsed()

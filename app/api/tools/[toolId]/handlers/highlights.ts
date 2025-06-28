@@ -333,18 +333,19 @@ export class HighlightsHandler extends BaseToolHandler {
       )
       
       // Handle search response (no need to check .ok since it's not an HTTP response)
-      const semanticSearchData = searchResponse
-      
-      // Define the shape of semantic search match data
-      interface SemanticSearchMatch {
-        elementId: string
-        confidence: number
-        reasoning: string
-        relevantText: string
+      const semanticSearchData = searchResponse as {
+        matches: Array<{
+          elementId: string
+          confidence: number
+          reasoning: string
+          relevantText: string
+        }>
+        aiCallId?: string
+        stats?: any
       }
       
       // Filter matches by confidence threshold
-      const filteredMatches = (semanticSearchData.matches as SemanticSearchMatch[]).filter(
+      const filteredMatches = semanticSearchData.matches.filter(
         (match) => match.confidence >= confidenceThreshold
       ).slice(0, maxResults)
       
