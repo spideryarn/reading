@@ -90,8 +90,8 @@ const Composer = () => {
     // Use the global error notification system for user-friendly error feedback
     import('@/lib/tools/executor/error-ui').then(({ showGenericError }) => {
       const voiceError = new Error(error);
-      (voiceError as any).source = 'voice-input';
-      showGenericError(voiceError);
+      const voiceErrorWithSource = Object.assign(voiceError, { source: 'voice-input' });
+      showGenericError(voiceErrorWithSource);
     });
   }, []);
 

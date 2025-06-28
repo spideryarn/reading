@@ -78,7 +78,7 @@ export function SmartInput({
           onValidationError(pageValidationResult.error!)
           return false
         }
-      } catch (error) {
+      } catch {
         // If page counting fails, show a generic error but don't block upload
         // The server will also validate and provide more specific error handling
         onValidationError('Unable to validate PDF. Please ensure the file is not corrupted.')

@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
       if (!Array.isArray(pageImages) || pageImages.length === 0) {
         return new NextResponse('Invalid page images format', { status: 400 })
       }
-    } catch (error) {
+    } catch {
       return new NextResponse('Failed to parse page images JSON', { status: 400 })
     }
     const imageParsingTime = Date.now() - imageParsingStart

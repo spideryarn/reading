@@ -25,7 +25,7 @@ export function DynamicLogoAnimation({ animationClass, className = '' }: Dynamic
   useEffect(() => {
     setIsClient(true)
     generatePhrases()
-  }, [])
+  }, [generatePhrases])
 
   // For the glossary-builder animation, we need to show dynamic phrases
   const isGlossaryBuilder = animationClass === 'glossary-builder'

@@ -398,7 +398,7 @@ function identifyCrossPageElements(
           })
           
           crossPageElements.push(crossPageElement)
-        } catch (error) {
+        } catch {
           warnings.push(`Invalid cross-page element instruction: ${instruction}`)
         }
       }
@@ -423,7 +423,7 @@ function identifyCrossPageElements(
           })
           
           crossPageElements.push(crossPageElement)
-        } catch (error) {
+        } catch {
           warnings.push(`Invalid cross-page element instruction: ${instruction}`)
         }
       }

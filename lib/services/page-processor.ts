@@ -10,7 +10,6 @@
 import { createRequestLogger } from '@/lib/services/logger'
 import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { 
-  pageToHtmlFragmentPrompt, 
   createPageToHtmlFragmentPrompt,
   pageToHtmlFragmentPromptInputSchema 
 } from '@/lib/prompts/templates/page-to-html-fragment'

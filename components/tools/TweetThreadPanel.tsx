@@ -13,7 +13,7 @@ interface TweetThreadPanelProps {
   slug: string
 }
 
-export function TweetThreadPanel({ documentId, slug }: TweetThreadPanelProps) {
+export function TweetThreadPanel({ }: TweetThreadPanelProps) {
   return (
     <div className="flex flex-col items-center justify-center h-full p-8 text-center">
       <div className="w-16 h-16 mb-4 rounded-full bg-blue-50 flex items-center justify-center">

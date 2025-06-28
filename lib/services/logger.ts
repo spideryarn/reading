@@ -46,6 +46,7 @@ export function generateCorrelationId(): string {
   }
   
   // Fallback for test environments or older Node.js versions
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { randomUUID } = require('crypto')
   return randomUUID()
 }
@@ -59,7 +60,7 @@ export function createRequestLogger(path: string, correlationId?: string) {
 
 // Helper for timing operations (overloaded)
 export function createTimer(logger: pino.Logger, operation: string): {
-  end: (additionalContext?: Record<string, any>) => number
+  end: (additionalContext?: Record<string, unknown>) => number
 }
 export function createTimer(): {
   elapsed: () => number
