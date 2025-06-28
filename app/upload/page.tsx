@@ -12,7 +12,7 @@ import { ProcessingOptions } from '@/components/upload/processing-options'
 
 // Unified state types for smart upload interface
 type InputType = 'url' | 'pdf' | 'html' | null
-type ProcessingMethod = 'as-is' | 'readability' | 'ai-transcription'
+type ProcessingMethod = 'as-is' | 'readability' | 'ai-transcription' | 'vision-ai'
 type Provider = 'claude' | 'gemini'
 
 interface UnifiedUploadState {
@@ -199,7 +199,7 @@ export default function AddDocumentPage() {
       case 'html':
         return ['as-is', 'readability', 'ai-transcription']
       case 'pdf':
-        return ['ai-transcription']
+        return ['ai-transcription', 'vision-ai']
       default:
         return ['readability', 'ai-transcription'] // Default options
     }
@@ -214,7 +214,14 @@ export default function AddDocumentPage() {
     if (inputType === 'pdf' && ['as-is', 'readability'].includes(method)) {
       return {
         isValid: false,
-        error: "PDF documents require AI transcription. 'As-is' and 'Readability' are only available for HTML content.",
+        error: "PDF documents require AI processing. 'As-is' and 'Readability' are only available for HTML content.",
+        suggestedMethod: 'vision-ai'
+      }
+    }
+    if (inputType !== 'pdf' && method === 'vision-ai') {
+      return {
+        isValid: false,
+        error: "Vision-based processing is only available for PDF documents.",
         suggestedMethod: 'ai-transcription'
       }
     }
@@ -238,7 +245,11 @@ export default function AddDocumentPage() {
       }
     } else if (file) {
       if (type === 'pdf') {
-        return `Transcribing PDF with ${provider === 'claude' ? 'Claude' : 'Gemini'}...`
+        if (method === 'vision-ai') {
+          return 'Processing PDF with vision-based AI pipeline...'
+        } else {
+          return `Transcribing PDF with ${provider === 'claude' ? 'Claude' : 'Gemini'}...`
+        }
       } else if (type === 'html') {
         switch (method) {
           case 'as-is':
@@ -350,7 +361,8 @@ export default function AddDocumentPage() {
         formData.append('isPublic', processing.isPublic.toString())
         
         if (input.type === 'pdf') {
-          response = await fetch('/api/upload-pdf', {
+          const apiEndpoint = processing.method === 'vision-ai' ? '/api/upload-pdf-vision' : '/api/upload-pdf'
+          response = await fetch(apiEndpoint, {
             method: 'POST',
             body: formData
           })

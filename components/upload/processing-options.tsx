@@ -2,13 +2,13 @@
 
 interface ProcessingOptionsProps {
   inputType: 'url' | 'pdf' | 'html' | null
-  selectedMethod: 'as-is' | 'readability' | 'ai-transcription'
+  selectedMethod: 'as-is' | 'readability' | 'ai-transcription' | 'vision-ai'
   selectedProvider: 'claude' | 'gemini'
   isPublic: boolean
-  onMethodChange: (method: 'as-is' | 'readability' | 'ai-transcription') => void
+  onMethodChange: (method: 'as-is' | 'readability' | 'ai-transcription' | 'vision-ai') => void
   onProviderChange: (provider: 'claude' | 'gemini') => void
   onPublicChange: (isPublic: boolean) => void
-  availableMethods: ('as-is' | 'readability' | 'ai-transcription')[]
+  availableMethods: ('as-is' | 'readability' | 'ai-transcription' | 'vision-ai')[]
 }
 
 export function ProcessingOptions({
@@ -34,6 +34,8 @@ export function ProcessingOptions({
         return 'Mozilla Readability'
       case 'ai-transcription':
         return 'AI Transcription'
+      case 'vision-ai':
+        return 'Vision-based AI Processing'
       default:
         return method
     }
@@ -47,12 +49,14 @@ export function ProcessingOptions({
         return 'Extract main content using Mozilla Readability (fast, reliable for articles)'
       case 'ai-transcription':
         return 'Use AI to transcribe and structure the content (high quality, handles complex layouts)'
+      case 'vision-ai':
+        return 'Use computer vision and AI to process PDF pages as images (best for complex academic documents with figures and tables)'
       default:
         return ''
     }
   }
 
-  const needsProvider = selectedMethod === 'ai-transcription'
+  const needsProvider = selectedMethod === 'ai-transcription' || selectedMethod === 'vision-ai'
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -85,31 +89,33 @@ export function ProcessingOptions({
         </div>
       </div>
 
-      {/* AI Provider Selection (only show for AI transcription) */}
+      {/* AI Provider Selection (only show for AI transcription and vision-ai) */}
       {needsProvider && (
         <div className="animate-in slide-in-from-top-2 duration-300">
           <label className="block text-sm font-medium text-gray-700 mb-3">
             AI Provider
           </label>
           <div className="space-y-3">
-            <label className="flex items-start space-x-3 cursor-pointer group hover:bg-gray-50 p-2 rounded-lg transition-colors duration-200">
-              <input
-                type="radio"
-                name="ai-provider"
-                value="claude"
-                checked={selectedProvider === 'claude'}
-                onChange={() => onProviderChange('claude')}
-                className="mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 transition-all duration-200"
-              />
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-gray-900 text-sm sm:text-base">
-                  Claude Sonnet
+            {selectedMethod === 'ai-transcription' && (
+              <label className="flex items-start space-x-3 cursor-pointer group hover:bg-gray-50 p-2 rounded-lg transition-colors duration-200">
+                <input
+                  type="radio"
+                  name="ai-provider"
+                  value="claude"
+                  checked={selectedProvider === 'claude'}
+                  onChange={() => onProviderChange('claude')}
+                  className="mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 transition-all duration-200"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-gray-900 text-sm sm:text-base">
+                    Claude Sonnet
+                  </div>
+                  <div className="text-xs sm:text-sm text-gray-500 mt-1">
+                    Most accurate but slower, better for shorter documents
+                  </div>
                 </div>
-                <div className="text-xs sm:text-sm text-gray-500 mt-1">
-                  Most accurate but slower, better for shorter documents
-                </div>
-              </div>
-            </label>
+              </label>
+            )}
             <label className="flex items-start space-x-3 cursor-pointer group hover:bg-gray-50 p-2 rounded-lg transition-colors duration-200">
               <input
                 type="radio"
@@ -121,13 +127,21 @@ export function ProcessingOptions({
               />
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-gray-900 text-sm sm:text-base">
-                  Gemini 2.5 Pro (recommended)
+                  {selectedMethod === 'vision-ai' ? 'Gemini Flash 2.5 + Claude Sonnet 4' : 'Gemini 2.5 Pro (recommended)'}
                 </div>
                 <div className="text-xs sm:text-sm text-gray-500 mt-1">
-                  Fast processing with excellent quality and large context window
+                  {selectedMethod === 'vision-ai' 
+                    ? 'Multi-model pipeline: Gemini for page processing, Claude for final refinement'
+                    : 'Fast processing with excellent quality and large context window'
+                  }
                 </div>
               </div>
             </label>
+            {selectedMethod === 'vision-ai' && (
+              <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded-lg">
+                Vision-based processing uses a specialized multi-model pipeline for optimal quality
+              </div>
+            )}
           </div>
         </div>
       )}
