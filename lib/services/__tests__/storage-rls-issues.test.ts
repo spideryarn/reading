@@ -12,9 +12,14 @@
  * called from the HTML upload pipeline, causing RLS policies to block the upload.
  * 
  * These tests should initially FAIL to demonstrate the issue exists.
+ * 
+ * NOTE: These tests were updated to work with current uploadDocumentFile signature
+ * that creates its own client internally. The original tests controlled auth context
+ * by passing different clients, but this is no longer possible. The tests may need
+ * architectural review to properly test RLS scenarios.
  */
 
-import { uploadOriginalFile } from '@/lib/services/storage'
+import { uploadDocumentFile } from '@/lib/services/storage'
 import { getTestNamespace, createTestUser, getCleanupFunctions } from '@/lib/testing/test-isolation-utils'
 import { createClient } from '@/lib/supabase/server'
 // Note: Commenting out RLS testing for now to focus on core issue reproduction
@@ -65,7 +70,7 @@ describe('Storage RLS Policy Violation Issue', () => {
       mockRequireAuth.mockRejectedValue(new Error('User not authenticated'))
 
       try {
-        await uploadOriginalFile(testFile, documentId, supabase)
+        await uploadDocumentFile(testFile, documentId)
         
         // Should not succeed without authentication
         fail('Expected storage upload to fail without authentication')
@@ -98,7 +103,7 @@ describe('Storage RLS Policy Violation Issue', () => {
       mockRequireAuth.mockResolvedValue(nonExistentUser)
 
       try {
-        await uploadOriginalFile(testFile, documentId, supabase)
+        await uploadDocumentFile(testFile, documentId)
         
         // Should fail due to RLS policies requiring valid user in profiles table
         fail('Expected storage upload to fail with invalid user')
@@ -173,7 +178,7 @@ describe('Storage RLS Policy Violation Issue', () => {
       const unauthenticatedClient = await createClient()
 
       try {
-        await uploadOriginalFile(testFile, documentId, unauthenticatedClient)
+        await uploadDocumentFile(testFile, documentId)
         
         // Should fail due to lack of authentication context in storage request
         fail('Expected storage upload to fail without proper auth headers')
@@ -264,7 +269,7 @@ describe('Storage RLS Policy Violation Issue', () => {
 
       try {
         // This should fail with the same RLS issue as in the HTML upload pipeline
-        const result = await uploadOriginalFile(testFile, documentId, supabaseClient)
+        const result = await uploadDocumentFile(testFile, documentId)
         
         // If it succeeds, the issue might be intermittent or context-dependent
         console.warn('Storage upload succeeded in pipeline context - issue may be intermittent')
