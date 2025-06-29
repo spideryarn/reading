@@ -69,7 +69,6 @@ Current system removes all existing headings and generates completely new ones. 
 ## Stages & actions
 
 ### Stage: Foundation and prompt engineering
-- [ ] Run `./scripts/sync-worktrees.ts` in subagent to sync latest changes from main
 - [ ] Use subagent to research existing iteration patterns in the codebase (glossary polling, tool execution)
 - [ ] Validate current mutation system supports operation limiting without modifications
 - [ ] Modify `lib/prompts/templates/headings.njk` to support iterative approach:
@@ -77,14 +76,18 @@ Current system removes all existing headings and generates completely new ones. 
   - Include operation count limit (max 10 per iteration)
   - Add density guidance (~200 words between headings)
   - Include iteration context (what was done in previous iterations)
-- [ ] Extend `lib/prompts/templates/headings.ts` schema:
+- [ ] Extend `lib/prompts/templates/headings.ts` schema (CRITICAL: affects many files):
   - Add `more_changes_required: boolean` in response schema
   - Add `iteration_summary: string` describing changes made
-  - Add `confidence_score: number` (0-100) in completion
-  - Add `safety_check: { total_operations: number, iterations: number }` for limits
+  - Add `feeling_of_confidence: number` (0-100) to avoid statistical misinterpretation
+  - Add `safety_check: { current_iteration: number, total_operations_so_far: number, max_iterations_reached: boolean }` for limits
+  - **Schema Ripple Effects**: This change affects 15+ files across the codebase (see detailed analysis below)
+  - Must maintain backwards compatibility during transition
 
 ### Stage: API route enhancement for iteration support
-- [ ] Extend `/app/api/tools/structure/route.ts` to support iterative requests:
+- [ ] **CORRECTED**: Extend existing unified tool handler at `/app/api/tools/[toolId]/handlers/structure.ts` (NOT a separate route):
+  - Use existing action-based routing pattern within `StructureHandler.handlePost()`
+  - Add new action handlers: `'iterate'`, `'iterate-continue'`, `'iterate-finalize'`
   - Add iteration tracking and safety limits (max 5 iterations, 50 operations)
   - Implement operation counting and validation
   - Add comprehensive logging for iteration metrics
@@ -95,7 +98,7 @@ Current system removes all existing headings and generates completely new ones. 
     operations: HeadingOperation[],
     more_changes_required: boolean,
     iteration_summary: string,
-    confidence_score: number,
+    feeling_of_confidence: number,
     safety_check: {
       current_iteration: number,
       total_operations_so_far: number,
@@ -103,16 +106,29 @@ Current system removes all existing headings and generates completely new ones. 
     }
   }
   ```
+- [ ] **CRITICAL**: Add post-LLM validation using existing utilities:
+  - Use `heading-section-detector.ts` to validate heading hierarchy
+  - Use `html-fragment-validator.ts` to check for multiple H1s
+  - Fail fast with clear error messages when validation fails
 - [ ] Add frontend state management to prevent concurrent iterations
 - [ ] Test API changes with various document types and operation scenarios
 
 ### Stage: Frontend UI for iterative progression
+- [ ] **MAJOR REFACTOR**: Migrate `StructurePanel.tsx` from direct fetch to unified tool executor:
+  - Current implementation bypasses shared execution hooks (creates technical debt)
+  - Move from manual `fetch('/api/tools/structure')` to `useToolExecutorWithNavigation`
+  - Integrate with existing cancellation and timeout mechanisms
+  - Fix broken cancel behavior (currently has competing AbortControllers)
 - [ ] Modify `components/tools/StructurePanel.tsx` to support iteration workflow:
   - Replace single "Generate" button with "Improve Headings" button
   - Show iteration progress (e.g., "Iteration 2 of 5")
   - Display operation summary after each iteration
   - Add "Continue Improving" and "Finish" buttons after each iteration
-  - Implement loading states with cancel control
+  - Implement loading states with coordinated cancel control
+- [ ] **REQUIRED**: Extend `lib/tools/hooks/use-tool-executor-with-navigation.ts` for iterative execution:
+  - Add step-by-step execution support
+  - Coordinate cancellation across multiple steps
+  - Handle execution state for iterative operations
 - [ ] Add iteration state management:
   - Track current iteration count and total operations
   - Store iteration summaries for user review
@@ -122,6 +138,9 @@ Current system removes all existing headings and generates completely new ones. 
   - Toast notifications for iteration completion
   - Simple operation count display
   - Clear continue/stop choice after each iteration
+- [ ] **CRITICAL**: Handle empty operations array edge case:
+  - Fast-track when LLM returns no operations (perfect headings case)
+  - Skip mutation application to avoid no-op mutations cluttering history
 - [ ] Write tests for iterative generation UI flows
 
 ### Stage: Safety mechanisms and testing
@@ -139,6 +158,20 @@ Current system removes all existing headings and generates completely new ones. 
   - Blog posts (expect 1-2 iterations for simple structure)
   - Technical documentation (expect 2-3 iterations)
   - Books/chapters (expect 4-5 iterations up to limit)
+- [ ] **EXTENSIVE TEST UPDATES REQUIRED** (14-22 hour effort):
+  - **Phase 1 - Critical (8-12 hours)**: Update 3 core test files:
+    - `lib/services/__tests__/heading-mutation-generator.test.ts` (8 locations)
+    - `lib/services/__tests__/headings-integration.test.ts` (9 locations)
+    - `lib/services/__tests__/heading-mutation-generator-performance.test.ts` (4 locations)
+  - **Phase 2 - Medium (4-6 hours)**: Update 5 integration test files:
+    - `mixed-insertion-precedence.test.ts`, `heading-section-detector.test.ts`
+    - Various HTML processing tests
+  - **Phase 3 - Low (2-4 hours)**: Update 6+ UI/E2E test files:
+    - `tests/e2e/ai-headings-insertion-order.spec.ts`
+    - Command generation and tool integration tests
+- [ ] **REUSE EXISTING**: Leverage `heading-mutation-generator-performance.test.ts` infrastructure:
+  - Performance timing patterns and stress test data generation
+  - Memory leak detection and scaling analysis logic
 - [ ] Use subagent with browser automation to test complete iterative workflows
 - [ ] Run `npm run check:health` to ensure no regressions
 
@@ -170,7 +203,11 @@ Current system removes all existing headings and generates completely new ones. 
 - [ ] Load testing with various document sizes and iteration scenarios
 - [ ] Test integration with other tools using iteratively-generated headings
 - [ ] Final health check: `npm run build`, `npm run lint`, `npm test` (use subagent if verbose output)
-- [ ] Update `docs/reference/TOOL_STRUCTURE_HEADINGS.md` with iterative approach documentation
+- [ ] **MISSING DOCUMENTATION CREATION**:
+  - Create `docs/reference/TOOL_HEADINGS.md` (currently doesn't exist)
+  - Major rewrite of `docs/reference/TOOL_STRUCTURE_HEADINGS.md` with iterative approach
+  - Update `CLAUDE.md` with new iterative heading generation context
+  - Update `docs/reference/DOCUMENTATION_ORGANISATION.md` to reference new docs
 - [ ] Move doc to `planning/finished/` and commit
 
 ## Appendix
@@ -258,3 +295,114 @@ Previous changes: {{ previous_iteration_summary || "None - this is the first ite
 - LLM fails to provide stopping signal: Default to requiring user choice after each iteration
 - Network timeout during iteration: Clear error state with option to retry
 - Invalid operations returned: Validation layer catches and requests re-iteration
+
+
+## Appendix - critique from o3 AI
+
+Critique of `planning/250629b_iterative_heading_generation_operation_limited.md`
+(using the guidelines in `docs/instructions/CRITIQUE_OF_PLANNING_DOC.md`)
+
+2. High-level architecture & consistency with existing patterns  
+• Prompt-side changes look straightforward, but the doc under-states the knock-on effects. Today the contract is:
+
+```lib/prompts/templates/headings.ts
+export const headingsResponseSchema = z.object({
+  operations: z.array(headingOperationSchema)
+})
+```
+
+Adding `more_changes_required`, `iteration_summary`, etc. will ripple through:  
+  - `lib/tools/implementations/structure.ts` (executor)  
+  - `lib/services/heading-mutation-generator*` tests  
+  - Playwright E2E suite that asserts JSON shape  
+These call-sites are not listed in the action checklist; they should be.
+
+• Route location: the doc says “Extend `/app/api/tools/structure/route.ts`”, but headings currently flow through `app/api/tools/[toolId]/route.ts` (see `tools/[toolId]/handler-interface.ts`). Using `structure` directly would break the generic tool dispatcher unless we refactor the registry. Clarify whether this is a new bespoke endpoint or an update to the existing tool handler.
+
+• Frontend: `components/tools/StructurePanel.tsx` now assumes a single-shot call that returns final operations (see loading logic around `executeTool`). The proposal to show “Continue / Finish” fits, but we need to audit shared hooks (`lib/tools/hooks/use-tool-executor-with-navigation.ts`) for cancel / debounce behaviour; otherwise cancel may leak aborted fetches.
+
+3. Operation-count limit & hierarchical guidance  
+
+• The doc relies solely on prompt wording for hierarchical correctness; there’s no post-validation. Past bugs show the model occasionally returns multiple H1s or nests incorrectly. We may need a thin validator (existing `heading-section-detector.ts` can help) that fails the iteration (aim to fail fast, immediately, and with a debuggable user-visible message).
+
+6. Testing plan  
+• The checklist calls for Playwright flows, unit tests, etc., but does not mention updating existing Jest snapshots that expect the old schema. There are >20 tests under `lib/services/__tests__/` and `components/__tests__/` that parse the response. Flagging them now avoids future red tests.
+
+• Performance tests: we already have `heading-mutation-generator-performance.test.ts`; reuse it instead of new bespoke perf harness.
+
+7. Documentation debt  
+• `docs/reference/TOOL_HEADINGS.md` will need a major rewrite.
+
+8. Edge-case coverage  
+• Short documents with existing perfect headings: plan says “LLM returns `more_changes_required: false`”, but the executor should fast-track and skip mutation application when operations array is empty—otherwise we’ll commit a no-op mutation that still clutters history.
+
+10. Minor suggestions  
+• Rename `confidence_score` to `feeling_of_confidence` to avoid statistical misinterpretation.  
+
+### Appendix D: Comprehensive Schema Ripple Effect Analysis
+
+**Files Requiring Updates When Extending `headingsResponseSchema`:**
+
+**Core Schema & Validation (CRITICAL)**:
+- `lib/prompts/templates/headings.ts` - Schema definition
+- `app/api/tools/[toolId]/handlers/structure.ts` - Response parsing & validation
+- `lib/tools/implementations/structure.ts` - Tool configuration
+
+**Test Files (HIGH IMPACT - 14-22 hours)**:
+- `lib/services/__tests__/heading-mutation-generator.test.ts` - 8 test locations
+- `lib/services/__tests__/headings-integration.test.ts` - 9 test locations  
+- `lib/services/__tests__/heading-mutation-generator-performance.test.ts` - 4 locations
+- `lib/services/__tests__/mixed-insertion-precedence.test.ts` - 8 locations
+- `lib/services/__tests__/heading-section-detector.test.ts` - Validation logic
+- `tests/e2e/ai-headings-insertion-order.spec.ts` - UI integration
+
+**Frontend Components (MEDIUM IMPACT)**:
+- `components/tools/StructurePanel.tsx` - Response handling
+- `lib/tools/hooks/use-tool-executor-with-navigation.ts` - Execution patterns
+
+**Documentation (CREATION REQUIRED)**:
+- `docs/reference/TOOL_HEADINGS.md` - Does not exist, must create
+- `docs/reference/TOOL_STRUCTURE_HEADINGS.md` - Major rewrite needed
+
+### Appendix E: Route Architecture Clarification
+
+**CORRECTION**: The planning document initially mentioned extending `/app/api/tools/structure/route.ts` which **does not exist**. 
+
+**Correct Implementation Approach**:
+- Use existing unified tool dispatcher: `/app/api/tools/[toolId]/route.ts`
+- Route pattern: `/api/tools/structure` (where `toolId = 'structure'`)
+- Extend `StructureHandler` class with new action handlers
+- Maintain consistency with existing tool architecture
+- Use action-based routing: `'iterate'`, `'iterate-continue'`, `'iterate-finalize'`
+
+### Appendix F: Validation Infrastructure Integration
+
+**Post-LLM Validation Strategy**:
+```typescript
+// After LLM generates operations, before applying mutations:
+function validateHeadingOperations(operations: HeadingOperation[], currentDocument: DocumentElement[]): ValidationResult {
+  // 1. Simulate operations application
+  const simulatedDocument = applyOperationsSimulation(operations, currentDocument)
+  
+  // 2. Use existing utilities for validation
+  const headings = extractHeadingElements(simulatedDocument) // from heading-section-detector.ts
+  const h1Count = headings.filter(h => h.tag_name === 'h1').length
+  
+  // 3. Check hierarchy using existing validator logic
+  const hierarchyValidation = validateHeadingHierarchy(headings) // from html-fragment-validator.ts
+  
+  // 4. Return comprehensive validation result
+  return {
+    isValid: h1Count === 1 && hierarchyValidation.isValid,
+    errors: [...h1Errors, ...hierarchyValidation.errors],
+    warnings: hierarchyValidation.warnings
+  }
+}
+```
+
+**Validation Rules**:
+- Exactly one H1 in the document
+- No skip-level hierarchies (H1 → H3 without H2)
+- Valid element IDs for all operation targets
+- Reasonable hierarchy depth (max 3 levels span)
+
