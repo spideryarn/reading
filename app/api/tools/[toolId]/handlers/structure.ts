@@ -19,7 +19,6 @@
 import { z } from 'zod'
 import { executePromptWithUsage } from '@/lib/prompts/types'
 import { headingsPrompt, headingsResponseSchema } from '@/lib/prompts/templates/headings'
-import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelForAICall } from '@/lib/config'
@@ -121,7 +120,7 @@ export class StructureHandler extends BaseToolHandler {
     
     try {
       // Initialize database services
-      const supabase = await createClient()
+      const supabase = context.supabaseClient!
       const enhancementService = new EnhancementService(supabase)
       
       // Check if headings already exist in database
@@ -242,7 +241,7 @@ export class StructureHandler extends BaseToolHandler {
     
     try {
       // Initialize database services
-      const supabase = await createClient()
+      const supabase = context.supabaseClient!
       const enhancementService = new EnhancementService(supabase)
       const aiCallService = new AiCallService(supabase)
       
@@ -596,7 +595,7 @@ export class StructureHandler extends BaseToolHandler {
     
     try {
       // Initialize database services
-      const supabase = await createClient()
+      const supabase = context.supabaseClient!
       const enhancementService = new EnhancementService(supabase)
       
       // Delete headings enhancement for this document

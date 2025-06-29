@@ -15,7 +15,6 @@ import { z } from 'zod'
 
 // Type for entities
 type Entity = z.infer<typeof entitySchema>
-import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { storeIndividualEntities, getIndividualEntities, deleteAllIndividualEntities } from '@/lib/services/database/individual-entity-storage'
@@ -67,7 +66,7 @@ export class GlossaryHandler extends BaseToolHandler {
     
     try {
       // Initialize database client
-      const supabase = await createClient()
+      const supabase = context.supabaseClient!
       
       // Get individual entities from database
       const existingEntities = await getIndividualEntities(supabase, documentId)
@@ -160,7 +159,7 @@ export class GlossaryHandler extends BaseToolHandler {
     
     try {
       // Initialize database services
-      const supabase = await createClient()
+      const supabase = context.supabaseClient!
       const enhancementService = new EnhancementService(supabase)
       
       // Check if individual entities already exist in database (only if documentId provided)
@@ -382,7 +381,7 @@ export class GlossaryHandler extends BaseToolHandler {
     
     try {
       // Initialize database services
-      const supabase = await createClient()
+      const supabase = context.supabaseClient!
       const enhancementService = new EnhancementService(supabase)
       
       // Delete individual entities and legacy bulk storage

@@ -28,7 +28,6 @@ import {
   multiSummaryOutputSchema,
   type MultiSummaryOutput
 } from '@/lib/prompts/templates/multi-summarise'
-import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelForAICall } from '@/lib/config'
@@ -95,7 +94,7 @@ export class SummaryHandler extends BaseToolHandler {
     
     try {
       // Initialize database services
-      const supabase = await createClient()
+      const supabase = context.supabaseClient!
       const enhancementService = new EnhancementService(supabase)
       
       if (type === 'single' || (type === 'all' && granularity)) {
@@ -245,7 +244,7 @@ export class SummaryHandler extends BaseToolHandler {
     
     try {
       // Initialize database services
-      const supabase = await createClient()
+      const supabase = context.supabaseClient!
       const enhancementService = new EnhancementService(supabase)
       const aiCallService = new AiCallService(supabase)
       
@@ -456,7 +455,7 @@ export class SummaryHandler extends BaseToolHandler {
     
     try {
       // Initialize database services
-      const supabase = await createClient()
+      const supabase = context.supabaseClient!
       const enhancementService = new EnhancementService(supabase)
       const aiCallService = new AiCallService(supabase)
       
@@ -743,7 +742,7 @@ export class SummaryHandler extends BaseToolHandler {
     
     try {
       // Initialize database services
-      const supabase = await createClient()
+      const supabase = context.supabaseClient!
       const enhancementService = new EnhancementService(supabase)
       
       if (type === 'single' || (type === 'all' && granularity)) {

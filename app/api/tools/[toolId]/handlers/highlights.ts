@@ -17,7 +17,6 @@
  */
 
 import { z } from 'zod'
-import { createClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { normalizeSemanticSearchQuery } from '@/lib/utils/semantic-search'
 import { createRequestLogger, createTimer } from '@/lib/services/logger'
@@ -98,7 +97,7 @@ export class HighlightsHandler extends BaseToolHandler {
     
     try {
       // Initialize database services
-      const supabase = await createClient()
+      const supabase = context.supabaseClient!
       
       // Get all semantic search enhancements for this document (these are our highlights)
       const { data: enhancements, error } = await supabase
@@ -237,7 +236,7 @@ export class HighlightsHandler extends BaseToolHandler {
       const normalizedCriterion = normalizeSemanticSearchQuery(criterion)
       
       // Initialize database services
-      const supabase = await createClient()
+      const supabase = context.supabaseClient!
       const enhancementService = new EnhancementService(supabase)
       
       // Check for cached results first
@@ -481,7 +480,7 @@ export class HighlightsHandler extends BaseToolHandler {
     
     try {
       // Initialize database services
-      const supabase = await createClient()
+      const supabase = context.supabaseClient!
       
       if (criterion) {
         // Delete specific highlight set based on criterion

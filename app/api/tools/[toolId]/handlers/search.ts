@@ -16,7 +16,6 @@ import {
   semanticSearchApiInputSchema, 
   semanticSearchResponseSchema 
 } from '@/lib/prompts/templates/semantic-search'
-import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { EnhancementService } from '@/lib/services/database/enhancements'
@@ -76,7 +75,7 @@ export class SearchHandler extends BaseToolHandler {
     
     try {
       // Initialize database client
-      const supabase = await createClient()
+      const supabase = context.supabaseClient!
       
       // Get all semantic search enhancements for this document
       const { data: enhancements, error } = await supabase
@@ -191,7 +190,7 @@ export class SearchHandler extends BaseToolHandler {
       const normalizedQuery = normalizeSemanticSearchQuery(query)
       
       // Initialize database services
-      const supabase = await createClient()
+      const supabase = context.supabaseClient!
       const documentService = new DocumentService(supabase)
       const aiCallService = new AiCallService(supabase)
       const enhancementService = new EnhancementService(supabase)
@@ -585,7 +584,7 @@ export class SearchHandler extends BaseToolHandler {
     
     try {
       // Initialize database services
-      const supabase = await createClient()
+      const supabase = context.supabaseClient!
       
       // Delete all semantic search enhancements for this document
       const { error } = await supabase
