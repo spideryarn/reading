@@ -32,13 +32,6 @@ Comprehensive test suite covering all access control scenarios:
 - ✅ HTTP status codes are consistent for security
 - ✅ Navigation respects access control
 
-### `document-access-control-basic.spec.ts`
-Simplified smoke tests for basic functionality:
-- Application accessibility for anonymous users
-- 404 handling for non-existent documents
-- Authentication system accessibility
-- Bot user agent handling
-
 ### `helpers/document-access-test-utils.ts`
 Reusable utilities for access control testing:
 
@@ -100,11 +93,8 @@ Reusable utilities for access control testing:
 # Run all document access control tests
 npm run test:e2e -- --grep "Document Access Control"
 
-# Run basic smoke tests only
-npm run test:e2e -- --grep "Document Access Control - Basic Tests"
-
-# Run comprehensive tests only  
-npm run test:e2e -- --grep "Document Access Control" --grep-invert "Basic Tests"
+# Run comprehensive tests  
+npm run test:e2e -- --grep "Document Access Control"
 
 # Run with verbose output
 npm run test:e2e -- --grep "Document Access Control" --reporter=list
