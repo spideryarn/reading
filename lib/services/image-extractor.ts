@@ -66,11 +66,12 @@ function validateBoundingBox(bbox: BoundingBox): void {
     throw new ImageExtractionError(`Invalid bounding box: y1 (${bbox.y1}) must be less than y2 (${bbox.y2})`)
   }
   
-  // Check for minimum size (at least 1% of page in each dimension)
+  // Check for minimum size (at least ~1% of page in each dimension, with floating point tolerance)
   const width = bbox.x2 - bbox.x1
   const height = bbox.y2 - bbox.y1
-  if (width < 0.01 || height < 0.01) {
-    throw new ImageExtractionError(`Bounding box too small: ${width.toFixed(3)} x ${height.toFixed(3)} (minimum 0.01 x 0.01)`)
+  const MIN_SIZE = 0.009 // Slightly less than 1% to handle floating point precision
+  if (width < MIN_SIZE || height < MIN_SIZE) {
+    throw new ImageExtractionError(`Bounding box too small: ${width.toFixed(3)} x ${height.toFixed(3)} (minimum ~0.01 x 0.01)`)
   }
 }
 
