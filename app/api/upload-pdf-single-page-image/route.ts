@@ -295,7 +295,14 @@ export async function POST(request: NextRequest) {
         images_extracted: extractedImages.length,
         processing_time_ms: totalProcessingTime
       },
-      usage: pageResult.tokenUsage || {
+      usage: pageResult.tokenUsage ? {
+        totalTokens: pageResult.tokenUsage.totalTokens,
+        promptTokens: pageResult.tokenUsage.promptTokens,
+        completionTokens: pageResult.tokenUsage.completionTokens,
+        ...(pageResult.tokenUsage.reasoningTokens !== undefined && {
+          reasoningTokens: pageResult.tokenUsage.reasoningTokens
+        })
+      } : {
         totalTokens: 0,
         promptTokens: 0,
         completionTokens: 0

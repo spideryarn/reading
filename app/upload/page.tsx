@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button'
 import { UrlInputSection } from '@/components/upload/url-input-section'
 import { FileUploadSection } from '@/components/upload/file-upload-section'
 import { ProcessingOptions } from '@/components/upload/processing-options'
+import { useVisionSinglePageUploader } from '@/lib/hooks/use-vision-single-page-uploader'
+import { generateDocumentId } from '@/lib/utils/document-id'
 
 // Unified state types for smart upload interface
 type InputType = 'url' | 'pdf' | 'html' | null
@@ -36,6 +38,32 @@ interface UnifiedUploadState {
 
 export default function AddDocumentPage() {
   const router = useRouter()
+  
+  // Vision single-page uploader hook
+  const {
+    uploadPages,
+    pageStates,
+    isUploading: isVisionUploading,
+    overallProgress: visionProgress,
+    cancel: cancelVisionUpload,
+    getCompletedHtml
+  } = useVisionSinglePageUploader({
+    maxConcurrency: 3,
+    onProgress: (pageNumber, progress, status) => {
+      // Update UI with page-level progress
+      console.log(`Page ${pageNumber}: ${status} (${progress}%)`)
+    },
+    onPageComplete: (pageNumber, htmlFragment) => {
+      console.log(`Page ${pageNumber} completed`)
+    },
+    onError: (pageNumber, error) => {
+      console.error(`Page ${pageNumber} failed:`, error)
+    },
+    onAllComplete: async (htmlFragments) => {
+      // All pages processed, now finalize the document
+      console.log('All pages processed, finalizing document...')
+    }
+  })
   
   // Unified state for smart upload interface
   const [uploadState, setUploadState] = useState<UnifiedUploadState>({

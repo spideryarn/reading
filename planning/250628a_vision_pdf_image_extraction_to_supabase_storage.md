@@ -540,11 +540,18 @@ Serverless (Vercel Node runtime)
 - [x] Define Zod schema `SinglePageVisionResponse` with `{ pageNumber, pageHtml, extractedImages: [ { elementId, filename, storagePath } ] }`.
 - [x] Update page processor to return bounding-box info + generated filenames without cropping.
 
-#### Stage: Browser uploader/worker
-- [ ] Create React hook `useVisionSinglePageUploader` handling queue, concurrency, resize-if-needed, progress events.
-- [ ] Implement image resize utility (Canvas down-scale with JPEG quality 0.8) targeting ~3.5 MB max.
-- [ ] Generate `documentId` (UUID v4) before first call.
-- [ ] After each response, perform Canvas cropping, upload asset via signed URL, and patch fragment.
+#### Stage: Browser uploader/worker ✅ **COMPLETED**
+- [x] Create React hook `useVisionSinglePageUploader` handling queue, concurrency, resize-if-needed, progress events.
+- [x] Implement image resize utility (Canvas down-scale with JPEG quality 0.8) targeting ~3.5 MB max.
+- [x] Generate `documentId` (UUID v4) before first call.
+- [x] After each response, perform Canvas cropping, upload asset via signed URL, and patch fragment.
+
+**Stage Implementation Notes**:
+- **React Hook**: Created `useVisionSinglePageUploader` with concurrent upload management, progress tracking, and error handling
+- **Image Resize**: Implemented `resizeImage` utility with iterative quality/dimension reduction to meet 4MB constraints
+- **Document ID**: Created `generateDocumentId` utility using browser crypto API for UUID v4 generation
+- **Canvas Cropping**: Integrated bounding box-based image extraction in the hook (uses original image dimensions)
+- **TypeScript**: Fixed type safety issues with proper object destructuring and optional property handling
 
 #### Stage: Supabase signed uploads
 - [ ] Add helper route `/api/storage/signed-upload-url` (or embed in page response) returning URL & headers for `PUT`.
