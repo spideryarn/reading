@@ -7,7 +7,7 @@
  * based on user-defined criteria.
  * 
  * Actions:
- * - 'generate' or 'execute' - Generate semantic highlights based on criteria
+ * - 'generate' - Generate semantic highlights based on criteria
  * - 'get' or 'list' - Get cached highlights for a document (via GET)
  * - 'delete' - Remove highlights/semantic search cache (via DELETE)
  * 
@@ -192,11 +192,11 @@ export class HighlightsHandler extends BaseToolHandler {
     }
     
     // Route based on action type
-    if (action === 'generate' || action === 'execute') {
+    if (action === 'generate') {
       return this.handleGenerateHighlights(parameters, context, logger)
     } else {
       throw createHandlerError(
-        `Unsupported action: ${action}. Supported actions: generate, execute`,
+        `Unsupported action: ${action}. Supported actions: generate`,
         'validation'
       )
     }

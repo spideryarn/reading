@@ -44,7 +44,7 @@ const highlightsTool: Tool = {
   // Execution Framework Configuration
   executorConfig: {
     timeout: 60000, // 60 seconds for AI operations
-    supportedActions: ['execute', 'get', 'delete'],
+    supportedActions: ['generate', 'get', 'delete'],
     requiresAuth: true,
     requiresDocument: true
   }

@@ -102,7 +102,7 @@ export async function exampleMultiToolWorkflow() {
     // Step 4: Generate highlights
     if (tools.highlights) {
       console.log('Generating highlights...')
-      await tools.highlights.execute({
+      await tools.highlights.generate({
         criteria: 'important-facts'
       })
     }
