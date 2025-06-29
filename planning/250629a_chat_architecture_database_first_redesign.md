@@ -65,7 +65,7 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
 - Keep existing database schema and RLS policies (they work well)
 - Replace dual-state management with single database-driven state
 - Use `useExternalStoreRuntime` from assistant-ui for external message store
-- Add Supabase realtime subscriptions for multi-session sync *(filter by `thread_id` and respect existing RLS to avoid leakage)*
+- Supabase realtime subscriptions for multi-session sync *(optional, post-MVP; filter by `thread_id` and respect existing RLS to avoid leakage)*
 - Maintain existing API patterns but ensure atomic operations
 - **Streaming strategy:** the server streams tokens to the client; the UI shows a temporary "assistant-typing" bubble that is replaced with the authoritative DB row once the generation finishes.  This preserves real-time feel while still keeping the DB as the source of truth
 - **Optimistic user placeholder:** render the user bubble instantly, flagged as `pending`, then overwrite with the DB row to avoid UX delay while preventing duplicates
@@ -73,13 +73,12 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
 - **Future multi-thread support:** design the API and store so a document can own multiple threads, but limit UI to a single active thread for now (out of scope to surface thread list)
 
 **Migration Strategy:**
-- Implement new endpoint alongside existing one for safe rollback
 - Progressive enhancement - start with core send/receive, add realtime later
 - Preserve existing chat data and authentication patterns
 
 ## Progress Summary
 
-**Status**: ✅ **Stages 1-4 Complete** | 🚧 **Stage 5 Ready to Begin**
+**Status**: ✅ **Stages 1-4 Complete** | Next focus: Content validation & edge cases
 
 **Implementation Date**: June 29, 2025  
 **Git Commits**: `0b0113c` (useChatStore), `a29d443` (assistant-ui integration)  
@@ -131,14 +130,6 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
 - [x] Test that all assistant-ui features work with external store pattern
 - [x] **Fix enum validation error** - Resolved `source: 'chat-store'` → `source: 'direct'` metadata issue
 
-### 🚧 Stage 5: Add Supabase realtime synchronisation - **NEXT**
-- [ ] Add Supabase realtime subscription to `chat_messages` table
-- [ ] Filter realtime events by current `thread_id` and user permissions (RLS safe)
-- [ ] Merge realtime message updates (INSERT/UPDATE/DELETE) into local message store
-- [ ] Handle connection drops and reconnection gracefully
-- [ ] Add subtle "live" indicator when realtime is connected
-- [ ] Test multi-tab scenario: messages appear across browser tabs
-
 ### Stage: Content validation and edge cases
 - [ ] Standardise empty content handling across all layers
   - [ ] API validation: decide whether to allow empty/whitespace-only messages
@@ -148,12 +139,6 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
 - [ ] Test edge cases: network failures, malformed content, concurrent requests
 - [ ] Ensure proper error messages replace current "refresh to fix" scenarios
 
-### Stage: Migration and rollback safety
-- [ ] Implement feature flag to switch between old and new chat architecture
-- [ ] Add database migration if needed for new content structure
-- [ ] Test with existing chat threads and messages (no data loss)
-- [ ] Create rollback plan if database-first approach causes issues
-- [ ] Update relevant evergreen documentation in `docs/reference/`
 
 ### Stage: Testing and validation
 - [ ] Write integration tests for atomic thread + message creation
@@ -164,6 +149,7 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
 - [ ] Use subagent for comprehensive test execution
 
 ### Stage: Final validation and cleanup
+- [ ] Update relevant evergreen documentation in `docs/reference/`
 - [ ] Run `npm run check:health` to validate all TypeScript and linting
 - [ ] Run `npm test` in subagent to ensure all tests pass
 - [ ] Remove old dual-state management code from `usePersistentChat`
@@ -171,6 +157,17 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
 - [ ] Git commit following `docs/instructions/GIT_COMMIT_CHANGES.md`
 - [ ] Ask user permission to merge branch back to main (if created)
 - [ ] Move planning doc to `planning/finished/` and commit
+
+
+
+### Optional Stage: Supabase realtime synchronisation (post-MVP)
+- [ ] Add Supabase realtime subscription to `chat_messages` table
+- [ ] Filter realtime events by current `thread_id` and user permissions (RLS safe)
+- [ ] Merge realtime message updates (INSERT/UPDATE/DELETE) into local message store
+- [ ] Handle connection drops and reconnection gracefully
+- [ ] Add subtle "live" indicator when realtime is connected
+- [ ] Test multi-tab scenario: messages appear across browser tabs
+
 
 ## ✅ Implementation Summary (Stages 1-4)
 
@@ -198,7 +195,7 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
 - ✅ All UI features preserved (voice input, suggestions, thread management)
 - ✅ External store runtime integrates seamlessly with @assistant-ui/react
 
-**Next Stage Ready**: Stage 5 (Supabase realtime synchronisation) for multi-tab support.
+**Next Stage Ready**: Optional Stage: Supabase realtime synchronisation (post-MVP) for multi-tab support.
 
 # Appendix
 
@@ -302,6 +299,42 @@ const runtime = useExternalStoreRuntime({
 2. **No refresh button needed** - eliminated due to consistent state
 3. **Atomic thread creation** - race conditions eliminated
 4. **Consistent empty content handling** - standardised across all layers  
-5. **Multi-session sync** - realtime updates across browser tabs
+5. **Multi-session sync** - realtime updates across browser tabs (post-MVP)
 6. **Maintained UX quality** - loading states replace optimistic updates
-7. **Rollback safety** - feature flagged implementation with existing data preservation
+7. **Rollback safety** - ability to revert deployment via Git prior to launch (no runtime feature flag)
+
+
+## Appendix - suggestions from o3 AI
+
+EMPTY-CONTENT DISCUSSION
+
+Why it matters  
+• Users may hit “Enter” accidentally (creating an empty user message).  
+• Assistant messages can legitimately have no natural-language content when they are pure tool calls or streaming has just begun.  
+• Inconsistencies here historically caused the “refresh to fix” bug.
+
+Three main approaches:
+
+A. Strict-reject empty user messages (most common)  
+   API validation trims whitespace; if `content === ""` return 400.  
+   Pros: simplest UI logic; DB never stores blanks.  
+   Cons: blocks some edge-case tool workflows where the user message is intentionally blank and only metadata matters.
+
+B. Allow empties but require an alternate payload  
+   Schema: `content` can be empty *iff* at least one of (`tool_call`, `media`, `metadata`) is present.  
+   Pros: supports tool-only messages cleanly.  
+   Cons: slightly more complex validation; must keep the rule in both client and server.
+
+C. Allow empties unconditionally  
+   Treat “empty” the same as “typing…” placeholder.  
+   Pros: zero validation effort.  
+   Cons: UI must special-case them; duplicates/phantom messages become possible again.
+
+Recommended path for the database-first MVP  
+1. User messages → adopt option A (reject). The UX isn’t harmed; we can show a toast saying “Please enter a message”.  
+2. Assistant messages → adopt option B. Insert the row immediately with `content = ""` and `status = "streaming"`, then update the row when content arrives. If it’s a pure tool call we leave `content = ""` but store the tool payload (already supported by our `tool_call` column).  
+3. Add a tiny helper in the component layer:  
+   • If `role === "assistant" && status === "streaming"` render the typing bubble.  
+   • Otherwise render as normal (even if content is still empty—e.g. tool-only).
+
+Net effect: consistent DB, no duplicate/phantom messages, trivial client logic.

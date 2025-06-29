@@ -63,7 +63,7 @@ const AssistantMessage = () => (
       </div>
       <div className="bg-gray-100 text-gray-900 px-4 py-3 rounded-2xl rounded-bl-md shadow-sm">
         <MessagePrimitive.If hasContent={false}>
-          <div className="flex items-center gap-2 text-gray-500">
+          <div className="flex items-center gap-2 text-blue-600">
             <CircleNotch 
               size={16} 
               className="animate-spin" 
@@ -153,9 +153,10 @@ const Composer = () => {
       )}
       
       <ComposerPrimitive.Input 
-        className="flex-1 min-h-[44px] max-h-[120px] resize-none rounded-xl border border-gray-300 px-4 py-3 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm transition-all"
+        className="flex-1 min-h-[44px] max-h-[120px] resize-none rounded-xl border border-gray-300 px-4 py-3 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         placeholder="Ask about this document..."
         rows={1}
+        disabled={false} // Will be controlled by ThreadPrimitive.If running state
       />
       <ThreadPrimitive.If running={false}>
         <VoiceInputRecorderLazy 
@@ -296,18 +297,6 @@ export function AssistantChat({ documentId, documentContext }: AssistantChatProp
   }, [threadId, conversationId, setConversation]);
 
   // Show loading state while initializing (only for initial load)
-  if (isLoading && !threadId && !error) {
-    return (
-      <div className="h-full flex flex-col bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="flex-1 flex items-center justify-center p-8">
-          <div className="flex flex-col items-center gap-3">
-            <CircleNotch size={24} className="animate-spin text-blue-600" weight="bold" />
-            <p className="text-sm text-gray-600">Loading conversation...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // Show error state if persistence failed
   if (error) {
@@ -338,8 +327,13 @@ export function AssistantChat({ documentId, documentContext }: AssistantChatProp
     <div className="flex flex-col bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       {/* Chat header with persistence status and actions */}
       <div className="px-4 py-2 bg-blue-50 border-b border-blue-100 flex items-center justify-between">
-        <div className="text-xs text-blue-700">
-          {threadId ? (
+        <div className="text-xs text-blue-700 flex items-center gap-2">
+          {isLoading ? (
+            <>
+              <CircleNotch size={12} className="animate-spin" weight="bold" />
+              <span className="font-medium">Processing...</span>
+            </>
+          ) : threadId ? (
             <>
               <span className="font-medium">✓ Conversation saved</span>
               <span className="text-blue-600 ml-2">Thread: {threadId.slice(-8)}</span>
