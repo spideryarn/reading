@@ -44,6 +44,8 @@ Current system removes all existing headings and generates completely new ones. 
 - `planning/250628b_hierarchical_heading_generation_implementation.md` - Previous level-by-level approach with valuable research and technical analysis  
 - `docs/reference/TOOL_STRUCTURE_HEADINGS.md` - Current heading system architecture and mutation integration
 - `docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Mutation system supporting insert, replace, remove operations
+- `docs/reference/TOOL_EXECUTION_FRAMEWORK.md` - Unified tool execution framework with type-safe wrappers and standardized API endpoints
+- `docs/reference/TOOL_ARCHITECTURE_AND_DEVELOPMENT_GUIDE.md` - Comprehensive tool development guide including registry integration and implementation patterns
 - `lib/prompts/templates/headings.njk` - Current prompt template requiring modification for iterative approach
 - `lib/prompts/templates/headings.ts` - Schema validation requiring extension for iteration signals
 - `docs/reference/LLM_PROMPT_CACHING.md` - Anthropic caching capabilities for cost optimization
@@ -64,6 +66,8 @@ Current system removes all existing headings and generates completely new ones. 
 
 **Quality over speed**: Continue using Claude Sonnet 4 for accuracy, achieve speed through progressive iteration rather than model switching.
 
+**Fail fatally & immediately**: Fail fast with clear, debuggable, user-visible error messages whenever errors or unforeseen situations occur. Don't mask problems - expose them clearly for debugging and user understanding.
+
 **Anthropic prompt caching integration**: Once headings are finalized, cache complete document structure for 90% cost savings on subsequent operations (glossary, summary, chat).
 
 ## Stages & actions
@@ -71,15 +75,16 @@ Current system removes all existing headings and generates completely new ones. 
 ### Stage: Foundation and prompt engineering
 - [ ] Use subagent to research existing iteration patterns in the codebase (glossary polling, tool execution)
 - [ ] Validate current mutation system supports operation limiting without modifications
+- [ ] **CLARIFY ITERATION INDEXING**: Use 0-based indexing internally (`iteration_count: 0, 1, 2, 3, 4`) and add 1 in presentation layer for user display ("Iteration 1 of 5", "Iteration 2 of 5")
 - [ ] Modify `lib/prompts/templates/headings.njk` to support iterative approach:
   - Add hierarchical priorities guidance (see Appendix A for full prompt)
-  - Include operation count limit (max 10 per iteration)
+  - Include special first iteration guidance for preserving author's original intent
+  - Include `MAX_HEADING_OPERATIONS_PER_ITERATION` limit as a variable (default=10), defined in `lib/config.ts`
   - Add density guidance (~200 words between headings)
   - Include iteration context (what was done in previous iterations)
 - [ ] Extend `lib/prompts/templates/headings.ts` schema (CRITICAL: affects many files):
   - Add `more_changes_required: boolean` in response schema
   - Add `iteration_summary: string` describing changes made
-  - Add `feeling_of_confidence: number` (0-100) to avoid statistical misinterpretation
   - Add `safety_check: { current_iteration: number, total_operations_so_far: number, max_iterations_reached: boolean }` for limits
   - **Schema Ripple Effects**: This change affects 15+ files across the codebase (see detailed analysis below)
   - Must maintain backwards compatibility during transition
@@ -87,18 +92,18 @@ Current system removes all existing headings and generates completely new ones. 
 ### Stage: API route enhancement for iteration support
 - [ ] **CORRECTED**: Extend existing unified tool handler at `/app/api/tools/[toolId]/handlers/structure.ts` (NOT a separate route):
   - Use existing action-based routing pattern within `StructureHandler.handlePost()`
-  - Add new action handlers: `'iterate'`, `'iterate-continue'`, `'iterate-finalize'`
-  - Add iteration tracking and safety limits (max 5 iterations, 50 operations)
+  - Add new adaptive action handler: `'iterate'` (single action that adapts based on parameters, following glossary pattern)
+  - Adaptive behavior: detect initial vs continue mode via `existing_operations` parameter presence
+  - Add iteration tracking and safety limits (max 5 iterations, 50 operations) - define these as variables with those defaults in `lib/config.ts`
   - Implement operation counting and validation
   - Add comprehensive logging for iteration metrics
-  - Preserve all existing caching and error handling
+  - Preserve all existing storage and error handling
 - [ ] Implement enhanced response format with iteration signals:
   ```typescript
   {
     operations: HeadingOperation[],
     more_changes_required: boolean,
     iteration_summary: string,
-    feeling_of_confidence: number,
     safety_check: {
       current_iteration: number,
       total_operations_so_far: number,
@@ -109,7 +114,7 @@ Current system removes all existing headings and generates completely new ones. 
 - [ ] **CRITICAL**: Add post-LLM validation using existing utilities:
   - Use `heading-section-detector.ts` to validate heading hierarchy
   - Use `html-fragment-validator.ts` to check for multiple H1s
-  - Fail fast with clear error messages when validation fails
+  - Fail fast with clear, debuggable, user-visible error messages when validation fails
 - [ ] Add frontend state management to prevent concurrent iterations
 - [ ] Test API changes with various document types and operation scenarios
 
@@ -144,20 +149,11 @@ Current system removes all existing headings and generates completely new ones. 
 - [ ] Write tests for iterative generation UI flows
 
 ### Stage: Safety mechanisms and testing
-- [ ] Implement hard safety limits:
+- [ ] Implement hard safety limits (defined as variables with these defaults in `lib/config.ts`):
   - Maximum 5 iterations per document session
   - Maximum 50 total operations per document
   - Frontend disabled state when limits reached
   - Clear messaging about why iteration stopped
-- [ ] Add operation loop detection:
-  - Track operation fingerprints to detect oscillation
-  - Stop if same operations are being undone/redone
-  - Log loop detection events for analysis
-- [ ] Test iteration approach with variety of document types:
-  - Academic papers (expect 3-4 iterations for complex structure)
-  - Blog posts (expect 1-2 iterations for simple structure)
-  - Technical documentation (expect 2-3 iterations)
-  - Books/chapters (expect 4-5 iterations up to limit)
 - [ ] **EXTENSIVE TEST UPDATES REQUIRED** (14-22 hour effort):
   - **Phase 1 - Critical (8-12 hours)**: Update 3 core test files:
     - `lib/services/__tests__/heading-mutation-generator.test.ts` (8 locations)
@@ -175,19 +171,8 @@ Current system removes all existing headings and generates completely new ones. 
 - [ ] Use subagent with browser automation to test complete iterative workflows
 - [ ] Run `npm run check:health` to ensure no regressions
 
-### Stage: Performance monitoring and optimization
-- [ ] Implement detailed iteration metrics:
-  - Time per iteration and total session time
-  - Token usage per iteration vs old all-at-once approach
-  - User stopping patterns (when do they choose to finish?)
-  - Operation type distribution (insert vs replace vs remove)
-- [ ] Add iteration-specific logging using existing `logAIOperation()` patterns:
-  - Track iteration progression for performance analysis
-  - Monitor safety limit triggers and reasons
-  - Log user satisfaction signals (early stopping vs hitting limits)
-- [ ] Use subagent to analyze performance logs and identify optimization opportunities
-
 ### Stage: Anthropic prompt caching integration - simplified approach
+- [ ] This needs discussion with the user
 - [ ] Design cache strategy for finalized heading documents:
   - Cache complete document + headings after user chooses "Finish"
   - Simple key based on document ID + heading version
@@ -196,10 +181,9 @@ Current system removes all existing headings and generates completely new ones. 
   - Add Anthropic cache headers for finalized documents
   - Cache invalidation when headings modified
   - Track cache hit rates and cost savings
-- [ ] Test cache effectiveness with realistic document analysis workflows
 
 ### Stage: Final testing and rollout
-- [ ] Comprehensive testing with subagent using Playwright for full iterative workflows
+- [ ] Comprehensive testing with subagent using Playwright (headless) for full iterative workflows
 - [ ] Load testing with various document sizes and iteration scenarios
 - [ ] Test integration with other tools using iteratively-generated headings
 - [ ] Final health check: `npm run build`, `npm run lint`, `npm test` (use subagent if verbose output)
@@ -217,11 +201,18 @@ Current system removes all existing headings and generates completely new ones. 
 **Key prompt priorities to include in `headings.njk`:**
 
 ```njk
+{% if iteration_count == 0 or not iteration_count %}
+**FIRST ITERATION - ORIGINAL HEADINGS**: The current headings were created by the original author. These represent their intended structure and organisation. While you can edit, insert, or remove headings to improve clarity and navigation, please try to broadly preserve the author's original high-level intent and structural approach where reasonable.
+{% endif %}
+
 Make up to 10 improvements to the heading structure. Prioritize in this order:
 
 1. **Establish clear document structure first**: 
    - Ensure there's exactly one H1 for the document title
    - Create H2 major sections to organize the main topics
+   {% if iteration_count == 0 or not iteration_count %}
+   - Respect the author's original sectioning approach where it works well
+   {% endif %}
    
 2. **Add subdivisions where sections are too long**:
    - Add H3+ sub-headings where sections exceed ~400 words
@@ -230,13 +221,16 @@ Make up to 10 improvements to the heading structure. Prioritize in this order:
 3. **Improve existing headings following best practices**:
    - Make headings more descriptive and scannable
    - Ensure consistent voice and style
+   {% if iteration_count == 0 or not iteration_count %}
+   - Enhance rather than replace author's headings when possible
+   {% endif %}
    - Remove redundant or unclear headings
    
 4. **Optimize for readability**:
    - Target approximately 200 words between headings
    - Ensure headings serve as useful navigation waypoints
 
-Current iteration: {{ iteration_count || 1 }}
+Current iteration: {{ (iteration_count || 0) + 1 }} {# 0-indexed internally, 1-indexed for display #}
 Previous changes: {{ previous_iteration_summary || "None - this is the first iteration" }}
 ```
 
@@ -329,9 +323,9 @@ Previous changes: {{ previous_iteration_summary || "None - this is the first ite
 **Correct Implementation Approach**:
 - Use existing unified tool dispatcher: `/app/api/tools/[toolId]/route.ts`
 - Route pattern: `/api/tools/structure` (where `toolId = 'structure'`)
-- Extend `StructureHandler` class with new action handlers
+- Extend `StructureHandler` class with new adaptive action handler
 - Maintain consistency with existing tool architecture
-- Use action-based routing: `'iterate'`, `'iterate-continue'`, `'iterate-finalize'`
+- Use single adaptive action: `'iterate'` (adapts based on parameters like glossary pattern)
 
 ### Appendix F: Validation Infrastructure Integration
 
