@@ -139,25 +139,60 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
 - [ ] Test edge cases: network failures, malformed content, concurrent requests
 - [ ] Ensure proper error messages replace current "refresh to fix" scenarios
 
+### Stage: Authentication & Supabase client consolidation
+- [ ] **Centralise test-aware authentication logic**
+  - [ ] Extend `lib/auth/server-auth.ts → getAuthUser()` with a Bearer-token fallback that activates when either `allowBearer: true` is passed **or** `process.env.NODE_ENV === "test"`.
+    - Parse the `Authorization: Bearer <jwt>` header from the incoming `Request` and, if present, create a short-lived Supabase client (anon key + `Authorization` header) to fetch the user via `auth.getUser()`.
+    - Return the same `User` object shape used for cookie-based auth; otherwise fall back to current cookie logic.
+    - Update JSDoc (`@param opts.allowBearer`) and unit tests in `lib/auth/__tests__/server-auth.test.ts` to cover new paths (cookie, bearer, unauthenticated).
+- [ ] **Enhance Supabase server client factory**
+  - [ ] In `lib/supabase/server.ts` add `getSupabaseServerClient(request: Request, opts?: { jwt?: string }): SupabaseClient`.
+    - Default behaviour stays cookie-based.
+    - If `opts.jwt` is provided **or** a valid Bearer token is detected in `request.headers`, construct a header-authenticated client:  
+      `createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: `Bearer ${jwt}` } } })`.
+    - Export the helper and update existing exports to re-export for backwards compatibility (`createServerClient` etc.).
+    - Add focused unit tests (`lib/supabase/__tests__/server-client.test.ts`) verifying cookie vs bearer modes.
+- [ ] **Refactor chat API route to use consolidated helpers**
+  - [ ] Delete the ad-hoc `getAuthUserForTesting()` from `app/api/tools/[toolId]/route.ts`.
+  - [ ] Replace with `const user = await requireAuth(request)` (from consolidated helpers).  
+    `requireAuth()` will in turn call the new `getAuthUser()` which now supports both cookie and bearer flows.
+  - [ ] Obtain the authenticated Supabase client via `const supabase = getSupabaseServerClient(request)` and pass it through the `ExecutionContext` (`context.supabaseClient`).
+  - [ ] Update downstream handlers (`handlers/chat.ts`) to use `context.supabaseClient` instead of locally initialising a new client.
+- [ ] **Sweep codebase for duplicate client creation**  
+  Use `ripgrep "createClient(.*supabase"` to identify API routes or services that still instantiate a Supabase client directly.  For each, switch to `getSupabaseServerClient()` so all server queries share the same auth path.
+- [ ] **Integration & RLS regression tests**
+  - [ ] Add `lib/services/database/__tests__/chat-rls-auth.test.ts` exercising:  
+    1. Unauthenticated request → expect 401 from `requireAuth()`.  
+    2. Authenticated via cookie (helper utility) → expect 200 and successful thread+message creation.  
+    3. Authenticated via Bearer token (Supertest `.set('Authorization', 'Bearer <jwt>')`) → expect 200 with no RLS errors.
+  - [ ] Ensure tests assert absence of `row violates row-level security` errors in logs.
+- [ ] **Documentation & cross-project updates**
+  - [ ] Cross-link this stage from `planning/250629a_auth_helpers_consolidation.md` — add a note that auth helper alterations here must be reflected there.
+  - [ ] Update `docs/reference/AUTHENTICATION_OVERVIEW.md` and `docs/reference/ARCHITECTURE_DECISIONS.md` with the new unified authentication flow diagram (cookie + bearer).
+  - [ ] Append migration notes to `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` explaining that API routes now expect `requireAuth()` and a pre-configured Supabase client from context.
+
+### Stage: Validation and cleanup
+- [ ] Update relevant evergreen documentation in `docs/reference/`
+- [ ] **Consolidate chat validation limits**: Extract hardcoded values (50,000 char message limit, 100,000 char context limit, 1,000 char word limit, 20 message conversation limit) from `app/api/tools/[toolId]/handlers/chat.ts` and `src/lib/hooks/useChatStore.ts` into `CHAT_VALIDATION_CONFIG` in `lib/config.ts`.
+
+- [ ] Run `npm run check:health` to validate all TypeScript and linting
+- [ ] Run `npm test` in subagent to ensure all tests pass
+- [ ] Update `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` with new patterns
+- [ ] Git commit following `docs/instructions/GIT_COMMIT_CHANGES.md`
+- [ ] Ask user permission to merge branch back to main (if created)
+
 
 ### Stage: Testing and validation
+- [ ] Remove old dual-state management code from `usePersistentChat`
 - [ ] Write integration tests for atomic thread + message creation
 - [ ] Add tests for message deduplication and ordering guarantees
 - [ ] Test multi-session realtime synchronisation scenarios
 - [ ] Validate no more duplicate messages under any conditions
-- [ ] Performance testing: compare database round-trip vs optimistic updates
 - [ ] Use subagent for comprehensive test execution
 
-### Stage: Final validation and cleanup
-- [ ] Update relevant evergreen documentation in `docs/reference/`
-- [ ] Run `npm run check:health` to validate all TypeScript and linting
-- [ ] Run `npm test` in subagent to ensure all tests pass
-- [ ] Remove old dual-state management code from `usePersistentChat`
-- [ ] Update `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` with new patterns
-- [ ] Git commit following `docs/instructions/GIT_COMMIT_CHANGES.md`
-- [ ] Ask user permission to merge branch back to main (if created)
-- [ ] Move planning doc to `planning/finished/` and commit
 
+### Final stage
+- [ ] Move planning doc to `planning/finished/` and commit
 
 
 ### Optional Stage: Supabase realtime synchronisation (post-MVP)
@@ -309,9 +344,9 @@ const runtime = useExternalStoreRuntime({
 EMPTY-CONTENT DISCUSSION
 
 Why it matters  
-• Users may hit “Enter” accidentally (creating an empty user message).  
+• Users may hit "Enter" accidentally (creating an empty user message).  
 • Assistant messages can legitimately have no natural-language content when they are pure tool calls or streaming has just begun.  
-• Inconsistencies here historically caused the “refresh to fix” bug.
+• Inconsistencies here historically caused the "refresh to fix" bug.
 
 Three main approaches:
 
@@ -326,13 +361,13 @@ B. Allow empties but require an alternate payload
    Cons: slightly more complex validation; must keep the rule in both client and server.
 
 C. Allow empties unconditionally  
-   Treat “empty” the same as “typing…” placeholder.  
+   Treat "empty" the same as "typing..." placeholder.  
    Pros: zero validation effort.  
    Cons: UI must special-case them; duplicates/phantom messages become possible again.
 
 Recommended path for the database-first MVP  
-1. User messages → adopt option A (reject). The UX isn’t harmed; we can show a toast saying “Please enter a message”.  
-2. Assistant messages → adopt option B. Insert the row immediately with `content = ""` and `status = "streaming"`, then update the row when content arrives. If it’s a pure tool call we leave `content = ""` but store the tool payload (already supported by our `tool_call` column).  
+1. User messages → adopt option A (reject). The UX isn't harmed; we can show a toast saying "Please enter a message".  
+2. Assistant messages → adopt option B. Insert the row immediately with `content = ""` and `status = "streaming"`, then update the row when content arrives. If it's a pure tool call we leave `content = ""` but store the tool payload (already supported by our `tool_call` column).  
 3. Add a tiny helper in the component layer:  
    • If `role === "assistant" && status === "streaming"` render the typing bubble.  
    • Otherwise render as normal (even if content is still empty—e.g. tool-only).

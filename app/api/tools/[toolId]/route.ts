@@ -52,21 +52,96 @@ const GetParamsSchema = z.object({
 }).passthrough() // Allow additional properties to be passed through
 
 /**
- * Create execution context for the request
+ * Test-aware authentication that supports both cookie-based auth (production)
+ * and Bearer token auth (testing)
+ */
+async function getAuthUserForTesting(request: NextRequest) {
+  // First try standard cookie-based auth
+  const standardUser = await getAuthUser()
+  if (standardUser) {
+    return standardUser
+  }
+
+  // If no cookie auth and we're in test environment, try Bearer token
+  if (process.env.NODE_ENV === 'test') {
+    const authHeader = request.headers.get('Authorization')
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.slice(7)
+      
+      try {
+        // Create a client with the Bearer token for testing
+        const { createClient } = await import('@supabase/supabase-js')
+        const testClient = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          {
+            global: {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            }
+          }
+        )
+        
+        const { data: { user }, error } = await testClient.auth.getUser()
+        if (error) {
+          console.warn('Bearer token auth failed:', error.message)
+          return null
+        }
+        
+        return user
+      } catch (error) {
+        console.warn('Bearer token processing failed:', error)
+        return null
+      }
+    }
+  }
+
+  return null
+}
+
+/**
+ * Create execution context for the request with authenticated Supabase client
  */
 async function createExecutionContext(
   request: NextRequest,
   correlationId: string
 ): Promise<ExecutionContext> {
   
-  // Get user context if authenticated
+  // Get user context if authenticated (supports both cookie and Bearer token auth)
   let user
-  const authUser = await getAuthUser()
+  let authenticatedSupabaseClient
+  const authUser = await getAuthUserForTesting(request)
   if (authUser) {
     user = {
       id: authUser.id,
       email: authUser.email || '',
       preferences: {} // Could be expanded later
+    }
+    
+    // In test environment with Bearer token, create client with token
+    if (process.env.NODE_ENV === 'test') {
+      const authHeader = request.headers.get('Authorization')
+      if (authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.slice(7)
+        const { createClient } = await import('@supabase/supabase-js')
+        authenticatedSupabaseClient = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          {
+            global: {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            }
+          }
+        )
+      }
+    }
+    
+    // Fall back to standard server client for production
+    if (!authenticatedSupabaseClient) {
+      authenticatedSupabaseClient = await import('@/lib/supabase/server').then(m => m.createClient())
     }
   }
   
@@ -85,6 +160,10 @@ async function createExecutionContext(
   
   if (user) {
     context.user = user
+  }
+  
+  if (authenticatedSupabaseClient) {
+    context.supabaseClient = authenticatedSupabaseClient
   }
   
   return context
@@ -297,9 +376,8 @@ export async function POST(
     }
     
     // Most tools require authentication for POST operations
-    try {
-      await requireAuth()
-    } catch {
+    const authUser = await getAuthUserForTesting(request)
+    if (!authUser) {
       return createErrorResponse(
         {
           status: 401,
@@ -435,9 +513,8 @@ export async function DELETE(
     }
     
     // DELETE operations always require authentication
-    try {
-      await requireAuth()
-    } catch {
+    const authUser = await getAuthUserForTesting(request)
+    if (!authUser) {
       return createErrorResponse(
         {
           status: 401,
