@@ -22,7 +22,8 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
 
 **As a user sending chat messages:**
 - When I send a message, I see a loading spinner immediately
-- My message appears in the chat only after server confirms it was saved to database
+- My **own** message appears instantly in the thread in a *pending* state (greyed-out or with an hour-glass icon) and flips to normal once the server confirms it was persisted
+- While the assistant is generating a reply I see a typing/streaming indicator so I know the request is in-progress
 - I never see duplicate messages in the conversation
 - I never need to refresh the page to see the correct conversation state
 - Empty messages or tool-only responses display consistently
@@ -64,8 +65,12 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
 - Keep existing database schema and RLS policies (they work well)
 - Replace dual-state management with single database-driven state
 - Use `useExternalStoreRuntime` from assistant-ui for external message store
-- Add Supabase realtime subscriptions for multi-session sync
+- Add Supabase realtime subscriptions for multi-session sync *(filter by `thread_id` and respect existing RLS to avoid leakage)*
 - Maintain existing API patterns but ensure atomic operations
+- **Streaming strategy:** the server streams tokens to the client; the UI shows a temporary "assistant-typing" bubble that is replaced with the authoritative DB row once the generation finishes.  This preserves real-time feel while still keeping the DB as the source of truth
+- **Optimistic user placeholder:** render the user bubble instantly, flagged as `pending`, then overwrite with the DB row to avoid UX delay while preventing duplicates
+- **Schema scope:** we *may* add a `content_parts JSONB` column for richer message parts in future, but this iteration will stay with the current `content` text column to keep risk low.  Migration task is deferred and tracked separately
+- **Future multi-thread support:** design the API and store so a document can own multiple threads, but limit UI to a single active thread for now (out of scope to surface thread list)
 
 **Migration Strategy:**
 - Implement new endpoint alongside existing one for safe rollback
@@ -97,8 +102,10 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
   - [ ] State: `messages[]`, `isLoading`, `error`, `threadId`
   - [ ] Actions: `sendMessage(content)`, `loadThread(threadId)`, `clearMessages()`
   - [ ] Integrate with new API endpoint to receive authoritative database rows
+  - [ ] **Render user message placeholder marked as pending and replace on confirmation**
+  - [ ] **Show assistant-typing placeholder during streaming; replace on completion**
 - [ ] Add message deduplication based on database IDs (not content)
-- [ ] Implement loading states for message sending operations
+- [ ] Implement loading states for message sending operations and error-retry UI (e.g. "Resend" button on failure)
 - [ ] Add error handling with proper user feedback (no more silent failures)
 
 ### Stage: Replace assistant-ui integration
@@ -111,8 +118,8 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
 
 ### Stage: Add Supabase realtime synchronisation
 - [ ] Add Supabase realtime subscription to `chat_messages` table
-- [ ] Filter realtime events by current `thread_id` and user permissions
-- [ ] Merge realtime message updates into local message store
+- [ ] Filter realtime events by current `thread_id` and user permissions (RLS safe)
+- [ ] Merge realtime message updates (INSERT/UPDATE/DELETE) into local message store
 - [ ] Handle connection drops and reconnection gracefully
 - [ ] Add subtle "live" indicator when realtime is connected
 - [ ] Test multi-tab scenario: messages appear across browser tabs
