@@ -15,6 +15,7 @@ import Mark from 'mark.js'
 import { useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
 import type { Entity } from '@/lib/types/entity'
+import { markdownToHtml } from '@/lib/utils/markdown-to-html'
 
 // Semantic highlight interface
 interface SemanticHighlight {
@@ -146,7 +147,7 @@ export function SimpleDocumentViewer({
     setTimeout(() => {
       if (glossaryMarkInstanceRef.current) {
         glossaryMarkInstanceRef.current.mark(allTerms, {
-          separateWordSearch: false,  // Match exact phrases
+          separateWordSearch: true,   // Respect word boundaries to avoid false matches
           acrossElements: true,       // Handle terms split across HTML elements
           caseSensitive: false,       // Case-insensitive matching
           exclude: ['mark'],          // Don't highlight within existing marks
@@ -201,8 +202,8 @@ export function SimpleDocumentViewer({
           const tooltip = document.createElement('div')
           tooltip.className = 'glossary-tooltip fixed z-50 max-w-md text-left bg-white border border-gray-200 rounded-lg shadow-lg p-4'
           
-          // Build tooltip content
-          let tooltipContent = longExplanation || explanation
+          // Build tooltip content with Markdown rendering
+          let tooltipContent = markdownToHtml(longExplanation || explanation)
           if (isAlias && entityName) {
             tooltipContent = `<strong>${entityName}:</strong> ${tooltipContent}`
           }

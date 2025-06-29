@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { OAuthButton } from './oauth-button'
+import { CircleNotch } from '@phosphor-icons/react/dist/ssr'
 
 const signupSchema = z.object({
   email: z
@@ -211,7 +212,14 @@ export function SignupForm() {
             variant="orange"
             disabled={isLoading}
           >
-            {isLoading ? 'Creating account...' : 'Create account'}
+            {isLoading ? (
+              <>
+                <CircleNotch className="animate-spin mr-2" size={16} />
+                Creating account...
+              </>
+            ) : (
+              'Create account'
+            )}
           </Button>
 
           <div className="relative">
