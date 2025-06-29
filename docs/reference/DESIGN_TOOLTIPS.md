@@ -21,16 +21,20 @@ Comprehensive guide to tooltip styling patterns and implementations in the Spide
 - `components/vertical-icon-nav.tsx` - Navigation tooltip patterns
 - `docs/reference/TOOL_READING_DIFFICULTY.md` - Academic level tooltips implementation example
 
-## Principles, key decisions
+## Principles & key decisions  (2025-06 tooltip overhaul)
 
-- **Universal Device Support**: All tooltips work on both desktop (hover) and touch devices (long-press) via TooltipOrPopover component
-- **Default Style**: ToC-heading summary tooltips define our standard tooltip appearance (light background, nice margins/padding, subtle grey arrow)
-- **Radix UI Foundation**: All tooltips use `@radix-ui/react-tooltip` and `@radix-ui/react-popover` primitives via shadcn/ui
-- **Content-First Design**: Our default white theme with clean borders is optimised for readable content
-- **Visual Consistency**: Touch popovers match desktop tooltips exactly for seamless cross-device experience
-- **Progressive Enhancement**: Desktop experience unchanged, touch devices get long-press popover functionality
-- **Accessibility First**: Radix UI ensures proper ARIA attributes, keyboard navigation, and screen reader compatibility
-- **Performance**: Tooltips are positioned with `z-50` to avoid z-index conflicts, with efficient device detection
+The **TooltipOrPopover** component is now the *only* supported way to render tooltips across the application.  Key guarantees:
+
+1. **Universal Device Support** – Desktop hover + focus, touch long-press, pen input – all handled automatically.
+2. **Single-tooltip rule** – At most one tooltip can be open at a time (managed by `TooltipManager`).
+3. **Predictable timing** – Hover delay ≈ 200 ms, long-press delay ≈ 500 ms.
+4. **No pop-back-up after click** – Mouse clicks close the tooltip and suppress hover reopening for 300 ms.
+5. **Visual Consistency** – Popover (touch) and Tooltip (hover) share identical styling.
+6. **Radix UI Foundation** – Built on Radix `Popover`; hover mode re-uses the same primitive for reduced bundle size.
+7. **Accessibility** – ARIA roles, ESC to close, keyboard focus, screen-reader descriptions – all handled by Radix.
+8. **Performance-minded** – Lightweight listeners, timers cleaned up on unmount.
+
+Anything outside `TooltipOrPopover` is considered *deprecated* and will be removed in future clean-ups.
 
 ## When to Use Which Pattern
 
@@ -148,9 +152,9 @@ import remarkGfm from "remark-gfm"
 </div>
 ```
 
-### 2. Simple Primary Theme ✓ (Legacy Optional)
+### 2. Simple Primary Theme ✓ (Optional)
 
-**Usage**: Simple tooltips, icons, brief labels (use sparingly)
+**Usage**: Extremely brief tooltips (e.g. single-word icon labels) where the primary orange theme is desired.
 
 ```tsx
 <TooltipContent>
@@ -598,27 +602,6 @@ import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 </TooltipOrPopover>
 ```
 
-### Legacy Desktop-Only Tooltip (Migration Target)
-
-```tsx
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-
-<Tooltip>
-  <TooltipTrigger>
-    <button>Table of Contents Heading</button>
-  </TooltipTrigger>
-  <TooltipContent 
-    side="right" 
-    className="max-w-md text-left bg-white border border-gray-200 rounded-lg shadow-lg p-4"
-    sideOffset={8}
-  >
-    <div className="text-xs text-gray-700 leading-relaxed">
-      Content summary or detailed information...
-    </div>
-  </TooltipContent>
-</Tooltip>
-```
-
 ### Simple Icon Tooltip (Cross-Device)
 
 ```tsx
@@ -628,43 +611,6 @@ import { Info } from '@phosphor-icons/react'
 <TooltipOrPopover content="Brief information">
   <Info size={16} />
 </TooltipOrPopover>
-```
-
-### Legacy Simple Icon Tooltip (Desktop-Only)
-
-```tsx
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { Info } from '@phosphor-icons/react'
-
-<Tooltip>
-  <TooltipTrigger>
-    <Info size={16} />
-  </TooltipTrigger>
-  <TooltipContent>
-    Brief information
-  </TooltipContent>
-</Tooltip>
-```
-
-### Loading State Tooltip
-
-```tsx
-const [isLoading, setIsLoading] = useState(false)
-
-const getTooltipContent = () => {
-  if (isLoading) {
-    return (
-      <div className="max-w-md p-4 text-sm bg-white border border-gray-200 rounded-lg shadow-lg">
-        <div className="flex items-center space-x-3">
-          <CircleNotch size={16} className="animate-spin text-blue-500" />
-          <span className="text-gray-700 font-medium">Loading content...</span>
-        </div>
-      </div>
-    )
-  }
-  
-  return <div>Static content</div>
-}
 ```
 
 ## Accessibility Features
