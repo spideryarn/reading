@@ -127,50 +127,70 @@ export function SimpleDocumentViewer({
       return
     }
     
-    // Clear previous glossary highlights
-    glossaryMarkInstanceRef.current.unmark({ className: 'highlight-glossary' })
-    
-    // Extract all entity terms (names + aliases)
+    // Extract all entity terms (names + aliases) and build a map for metadata lookup
     const allTerms: string[] = []
     const termToEntityMap = new Map<string, Entity>()
-    
+
     glossaryEntities.forEach(entity => {
-      const terms = [entity.name, ...entity.aliases]
-      terms.forEach(term => {
-        if (term.trim()) {
-          allTerms.push(term)
-          termToEntityMap.set(term.toLowerCase(), entity)
+      ;[entity.name, ...entity.aliases].forEach(term => {
+        const cleaned = term.trim()
+        if (cleaned) {
+          allTerms.push(cleaned)
+          // Store metadata for quick lookup when a match is found
+          termToEntityMap.set(cleaned.toLowerCase(), entity)
         }
       })
     })
-    
+
     if (allTerms.length === 0) return
-    
-    // Apply highlights using Mark.js with a small delay to ensure DOM is ready
+
+    // Clear previous glossary highlights before marking new ones
+    glossaryMarkInstanceRef.current.unmark({ className: 'highlight-glossary' })
+
+    // Sort longest-first so that multi-word phrases get marked before their substrings
+    allTerms.sort((a, b) => b.length - a.length)
+
+    // Helper to escape special RegExp characters
+    const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+    // Expose for quick console inspection in dev
+    if (typeof window !== 'undefined') {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      window.__SYR_DEBUG = window.__SYR_DEBUG || {}
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      window.__SYR_DEBUG.longestTerms = [...allTerms]
+    }
+
+    // Slight delay ensures the document has finished rendering before we start marking
     setTimeout(() => {
-      if (glossaryMarkInstanceRef.current) {
-        glossaryMarkInstanceRef.current.mark(allTerms, {
-          separateWordSearch: true,   // Respect word boundaries to avoid false matches
-          acrossElements: true,       // Handle terms split across HTML elements
-          caseSensitive: false,       // Case-insensitive matching
-          exclude: ['mark'],          // Don't highlight within existing marks
+      const mark = glossaryMarkInstanceRef.current
+      if (!mark) return
+
+      // Highlight each term in sequence. Doing them one-by-one (longest first) plus
+      // `exclude: ['mark']` ensures that once a longer phrase is marked, the shorter
+      // substring inside it will be skipped automatically.
+      for (const term of allTerms) {
+        mark.mark(term, {
+          accuracy: 'exactly',           // Whole phrase only
+          separateWordSearch: false,     // Keep multi-word phrases together
+          acrossElements: true,          // Support tags inside the phrase
+          caseSensitive: false,
+          exclude: ['mark'],             // Don't re-mark inside existing marks
           className: 'highlight-glossary',
-          each: function(element) {
-            // Get the matched text to find corresponding entity
+          each: element => {
             const matchedText = element.textContent || ''
             const entity = termToEntityMap.get(matchedText.toLowerCase())
-            
-            if (entity) {
-              // Store entity reference for click handling and tooltip data
-              element.setAttribute('data-glossary-entity', entity.name)
-              element.setAttribute('data-glossary-matched-text', matchedText)
-              element.setAttribute('data-glossary-explanation', entity.brief_explanation)
-              element.setAttribute('data-glossary-long-explanation', entity.long_explanation || '')
-              if (element instanceof HTMLElement) {
-                element.style.cursor = 'pointer'
-              }
-              
-              // Add click handler
+            if (!entity) return
+
+            element.setAttribute('data-glossary-entity', entity.name)
+            element.setAttribute('data-glossary-matched-text', matchedText)
+            element.setAttribute('data-glossary-explanation', entity.brief_explanation)
+            element.setAttribute('data-glossary-long-explanation', entity.long_explanation || '')
+
+            if (element instanceof HTMLElement) {
+              element.style.cursor = 'pointer'
               element.addEventListener('click', (e) => {
                 e.preventDefault()
                 e.stopPropagation()
@@ -206,7 +226,7 @@ export function SimpleDocumentViewer({
           tooltip.className = 'glossary-tooltip fixed z-50 max-w-md text-left bg-white border border-gray-200 rounded-lg shadow-lg p-4'
           
           // Build tooltip content with Markdown rendering
-          let tooltipContent = markdownToHtml(longExplanation || explanation)
+          let tooltipContent = markdownToHtml(longExplanation || explanation || '')
           if (isAlias && entityName) {
             tooltipContent = `<strong>${entityName}:</strong> ${tooltipContent}`
           }
