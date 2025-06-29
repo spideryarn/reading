@@ -110,6 +110,7 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/DESIGN_LOGO.md` - Logo animation system with shared definitions and random selection for header interactivity
 - `docs/reference/DESIGN_HIGHLIGHTING.md` - Text highlighting patterns and visual design system
 - `docs/reference/DESIGN_OVERLAPPING_TEXT_HIGHLIGHTS.md` - Comprehensive guide for implementing overlapping text highlighting using CSS Custom Highlight API and Mark.js fallbacks ⭐ **Essential for highlighting features**
+- `docs/reference/DESIGN_LOADING.md` - Comprehensive guide to loading states, spinners, and async operation handling including full-page loading screens and UX best practices
 - `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Architecture of unified left pane with tabbed interface, ToC, and tooltip summaries
 - `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` - Command palette implementation and usage
 - `docs/reference/COMMAND_PALETTE_FUZZY_SEARCH_CMDK.md` - Fuzzy search configuration and tuning with cmdk library for command palette search precision

@@ -38,6 +38,7 @@ function DocumentItem({ document, showDeleteActions, currentUserId }: DocumentIt
   const [tooltipData, setTooltipData] = useState<TooltipInfo | null>(null)
   const [isLoadingTooltip, setIsLoadingTooltip] = useState(false)
   const [tooltipError, setTooltipError] = useState(false)
+  const [isNavigating, setIsNavigating] = useState(false)
 
   const loadTooltipData = useCallback(async () => {
     if (tooltipData || isLoadingTooltip) return // Already loaded or loading
@@ -129,7 +130,10 @@ function DocumentItem({ document, showDeleteActions, currentUserId }: DocumentIt
         {/* Main clickable area */}
         <Link
           href={`/read/${document.slug}`}
-          className="flex-1 min-w-0 p-4 hover:bg-gray-50 transition-colors"
+          className={`flex-1 min-w-0 p-4 transition-colors ${
+            isNavigating ? 'bg-gray-100 cursor-wait' : 'hover:bg-gray-50'
+          }`}
+          onClick={() => setIsNavigating(true)}
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
@@ -144,10 +148,19 @@ function DocumentItem({ document, showDeleteActions, currentUserId }: DocumentIt
                 triggerClassName="block"
               >
                 <h3 
-                  className="font-medium text-gray-900 hover:text-orange-600 transition-colors leading-tight"
+                  className={`font-medium leading-tight transition-colors ${
+                    isNavigating 
+                      ? 'text-gray-600' 
+                      : 'text-gray-900 hover:text-orange-600'
+                  }`}
                   onMouseEnter={loadTooltipData}
                 >
-                  {document.title}
+                  <div className="flex items-center gap-2">
+                    {isNavigating && (
+                      <CircleNotch size={16} className="animate-spin text-orange-500" />
+                    )}
+                    {document.title}
+                  </div>
                 </h3>
               </TooltipOrPopover>
               

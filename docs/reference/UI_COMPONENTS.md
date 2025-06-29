@@ -13,6 +13,7 @@ The project uses a hybrid approach combining:
 
 - `docs/reference/UI_INTERFACE.md`
 - `docs/reference/DESIGN_SHADCN_UI_REFERENCE.md`
+- `docs/reference/DESIGN_LOADING.md` - loading states and spinner components (Spinner, Loading, LoadingPage)
 - `docs/reference/DESIGN_MOBILE_PLATFORM_DETECTION.md` - mobile responsive design patterns affecting component behavior
 
 
