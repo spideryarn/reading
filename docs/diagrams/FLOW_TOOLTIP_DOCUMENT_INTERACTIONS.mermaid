@@ -1,0 +1,94 @@
+graph TB
+    %% User Interactions and Entry Points
+    UserGlossary[👤 User Clicks<br/>Glossary Entry]
+    UserStructure[👤 User Clicks<br/>Structure Heading]
+    UserSearch[👤 User Clicks<br/>Search Result]
+    UserDocGlossary[👤 User Clicks<br/>Glossary Term in Document]
+    UserDocScroll[👤 User Scrolls<br/>Document]
+
+    %% Central Communication Hub
+    CommContext[🧠 DocumentCommunicationContext<br/>Central State Management]
+
+    %% Communication Actions
+    ScrollAction[📍 scrollToElement elementId]
+    PositionAction[📌 setCurrentPosition elementId]
+    HighlightAction[✨ highlightTerm term]
+    TabAction[🔄 setActiveTab tabId]
+
+    %% Document Components
+    Document[📄 Document Viewer<br/>simple-document-viewer.tsx]
+    MarkJS[🎯 Mark.js Highlighting<br/>Text + Element Outline]
+
+    %% Tooltip Tab Components
+    GlossaryTab[📚 Glossary Tab<br/>unified-left-pane.tsx]
+    StructureTab[🏗️ Structure Panel<br/>StructurePanel.tsx]
+    SearchTab[🔍 Search Panel<br/>unified-left-pane.tsx]
+
+    %% Visual Effects and Responses
+    DocScroll[📜 Document Scrolls<br/>Smooth Animation]
+    DocHighlight[🌟 Document Highlights<br/>Temporary Effect]
+    TabScroll[📋 Tab Auto-scrolls<br/>to Relevant Item]
+    TabHighlight[💡 Tab Item Highlighted<br/>Visual Emphasis]
+    PositionSync[🔄 Position Synchronization<br/>Cross-tab State]
+    URLState[🔗 URL State Update<br/>Persistent Navigation]
+
+    %% User Interaction Flows
+    UserGlossary --> CommContext
+    UserStructure --> CommContext
+    UserSearch --> CommContext
+    UserDocGlossary --> CommContext
+    UserDocScroll --> CommContext
+
+    %% Communication Context Actions
+    CommContext --> ScrollAction
+    CommContext --> PositionAction
+    CommContext --> HighlightAction
+    CommContext --> TabAction
+
+    %% Action to Component Flows
+    ScrollAction --> Document
+    PositionAction --> Document
+    HighlightAction --> Document
+    TabAction --> GlossaryTab
+    TabAction --> StructureTab
+    TabAction --> SearchTab
+
+    %% Document Responses
+    Document --> DocScroll
+    Document --> DocHighlight
+    Document --> MarkJS
+    Document --> PositionSync
+
+    %% Tab Responses
+    GlossaryTab --> TabScroll
+    GlossaryTab --> TabHighlight
+    StructureTab --> TabScroll
+    StructureTab --> TabHighlight
+    SearchTab --> TabScroll
+    SearchTab --> TabHighlight
+
+    %% Cross-component Synchronization
+    PositionSync --> StructureTab
+    PositionSync --> GlossaryTab
+    PositionSync --> SearchTab
+    TabAction --> URLState
+
+    %% Specific Flow Examples with Labels
+    UserGlossary -.->|navigateToTab + highlightTerm| GlossaryTab
+    UserStructure -.->|scrollToElement| DocScroll
+    UserSearch -.->|scrollToElement| DocScroll
+    UserDocGlossary -.->|navigateToTab + scrollToElement| GlossaryTab
+    UserDocScroll -.->|setCurrentPosition| PositionSync
+
+    %% Styling
+    classDef userAction fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef commHub fill:#fff3e0,stroke:#e65100,stroke-width:3px
+    classDef action fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef component fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef effect fill:#fff8e1,stroke:#ff8f00,stroke-width:2px
+
+    class UserGlossary,UserStructure,UserSearch,UserDocGlossary,UserDocScroll userAction
+    class CommContext commHub
+    class ScrollAction,PositionAction,HighlightAction,TabAction action
+    class Document,GlossaryTab,StructureTab,SearchTab,MarkJS component
+    class DocScroll,DocHighlight,TabScroll,TabHighlight,PositionSync,URLState effect
