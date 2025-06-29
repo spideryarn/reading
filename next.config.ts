@@ -40,7 +40,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://*.hotjar.com", // Tailwind and academic content require inline styles + Hotjar UI
               "img-src 'self' data: https: blob:", // Allow academic images from various sources (https: covers Hotjar CDN)
               "font-src 'self' data: https://script.hotjar.com", // Hotjar fonts
-              "connect-src 'self' blob: http://localhost:54341 http://127.0.0.1:54341 https://blsgjlrezruxcfdyrqpk.supabase.co https://api.anthropic.com https://generativelanguage.googleapis.com https://*.hotjar.com https://*.hotjar.io wss://*.hotjar.com https://www.google-analytics.com https://analytics.google.com wss: ws:", // Allow blob URLs for audio processing + Supabase local + production + AI APIs + Hotjar analytics + Google Analytics
+              "connect-src 'self' blob: http://localhost:54341 http://127.0.0.1:54341 https://blsgjlrezruxcfdyrqpk.supabase.co https://api.anthropic.com https://generativelanguage.googleapis.com https://*.hotjar.com https://*.hotjar.io wss://*.hotjar.com https://*.google-analytics.com https://analytics.google.com wss: ws:", // Allow blob URLs for audio processing + Supabase local + production + AI APIs + Hotjar analytics + Google Analytics (wildcard for regional domains)
               "worker-src 'self' blob:", // Allow Web Workers and blob URLs required by media-encoder-host-broker
               "frame-src 'none'", // No iframes for security
               "object-src 'none'", // No objects/embeds for security
