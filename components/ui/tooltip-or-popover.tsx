@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useId } from 'react'
+import { useCallback, useEffect, useId, useRef } from 'react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useCanHover } from '@/lib/hooks/use-can-hover'
 import { useLongPress } from '@/lib/hooks/use-long-press'
@@ -115,16 +115,35 @@ export function TooltipOrPopover({
     }
   }, [open, setOpenId])
 
-  // --- Trigger event handling ---------------------------------------------
+  // --- Hover delay & click suppression logic -------------------------------
+  const hoverDelayMs = 200
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const recentClickUntilRef = useRef<number>(0)
 
-  // Hover/focus handlers. Hover only applies if the device canHover.
+  const clearHoverTimeout = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current)
+      hoverTimeoutRef.current = null
+    }
+  }
+
   const handlePointerEnter = useCallback(() => {
-    if (canHover) setOpenId(tooltipId)
-  }, [canHover, setOpenId, tooltipId])
+    if (!canHover) return
+    // Ignore if we've just clicked – prevents immediate reopen after click
+    if (Date.now() < recentClickUntilRef.current) return
+
+    hoverTimeoutRef.current = setTimeout(() => {
+      setOpenId(tooltipId)
+    }, hoverDelayMs)
+  }, [canHover, hoverDelayMs, setOpenId, tooltipId])
 
   const handlePointerLeave = useCallback(() => {
-    if (canHover) setOpenId(null)
+    if (!canHover) return
+    clearHoverTimeout()
+    setOpenId(null)
   }, [canHover, setOpenId])
+
+  // --- Trigger event handling ---------------------------------------------
 
   const handleFocus = useCallback(() => setOpenId(tooltipId), [setOpenId, tooltipId])
   const handleBlur = useCallback(() => setOpenId(null), [setOpenId])
@@ -138,7 +157,18 @@ export function TooltipOrPopover({
       } as React.CSSProperties
     : ({} as React.CSSProperties)
 
-  // Merge long-press handlers with hover/focus handlers
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    // Close existing tooltip on click so it doesn't reopen immediately.
+    if (e.pointerType === 'mouse') {
+      recentClickUntilRef.current = Date.now() + 300 // suppress hover for next 300 ms
+      setOpenId(null)
+      clearHoverTimeout()
+    }
+  }, [setOpenId])
+
+  // Avoid property duplication: remove onPointerDown from longPressHandlers, then add merged version.
+  const { onPointerDown: lpOnPointerDown, ...restLongPress } = longPressHandlers
+
   const triggerProps = {
     suppressHydrationWarning: true,
     style: indicatorStyle,
@@ -147,8 +177,15 @@ export function TooltipOrPopover({
     onPointerLeave: handlePointerLeave,
     onFocus: handleFocus,
     onBlur: handleBlur,
-    ...longPressHandlers
+    onPointerDown: (e: React.PointerEvent) => {
+      handlePointerDown(e)
+      lpOnPointerDown?.(e)
+    },
+    ...restLongPress
   }
+
+  // Cleanup timer on unmount
+  useEffect(() => clearHoverTimeout, [])
 
   return (
     <Popover open={open} onOpenChange={(v) => setOpenId(v ? tooltipId : null)}>
