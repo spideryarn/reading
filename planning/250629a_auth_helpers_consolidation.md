@@ -33,7 +33,7 @@ This planning document proposes a **root-cause refactor** to converge on a singl
 
 - `lib/auth/server-auth.ts` – current helper implementations (to be refactored)
 - `lib/auth/route-protection.ts` – duplicate helpers, slated for deletion
-- `docs/reference/AUTHENTICATION_OVERVIEW.md` – will need update
+- `docs/reference/AUTHENTICATION_OVERVIEW.md` (and other relevant docs?) – will need update
 - `docs/instructions/WRITE_PLANNING_DOC.md` – planning doc guidelines (this document follows)
 
 
@@ -100,4 +100,38 @@ This planning document proposes a **root-cause refactor** to converge on a singl
 
 ## Appendix
 
-*None at this stage – to be populated with research findings, ripgrep output, and AI critique summaries during implementation.* 
+Here’s the split of responsibilities that the refactor is aiming for:
+
+1. getAuthUser()  → “Just give me the user (or null)”  
+   • Returns `User | null`.  
+   • Never throws, never redirects, no extra metadata.  
+   • Ideal when the caller will decide the next step itself (e.g. a page that shows different UI for guests vs members, or you’re about to run several optional checks).
+
+2. requireAuth(...)  → “Guarantee I’m authenticated”  
+   • Returns `User` on success.  
+   • If unauthenticated:  
+      – **In API/server logic** (default): throws `AuthError(401)` so the caller can convert it to a uniform Problem-Details JSON.  
+      – **In pages/components** (when you pass `{ redirectTo: '/auth/login' }`): performs `redirect()` for you.  
+   • Use this when you simply can’t continue without a user and you’re happy to delegate failure handling (throw or redirect) to the helper.
+
+3. assertAuth(request)  → “Give me a typed result object so I can branch without exceptions”  
+   • Returns an object `{ success: boolean; user?: User; error?: string }`.  
+   • Never throws or redirects.  
+   • Primary use-cases:  
+      – **Edge/runtime environments** where throwing isn’t ideal and you want a quick JSON response:  
+        ```ts
+        const { success, user, error } = assertAuth(req)
+        if (!success) return NextResponse.json({ error }, { status: 401 })
+        ```  
+      – **Middleware-style utilities** that need to log/measure auth outcome and then continue down a chain without exception control-flow.  
+      – When you’d like to preserve the semantics of the old “`validateAuth(request, { requireAuth: true })` pattern” but with a clearer, non-overloaded name.
+
+In short:
+
+• If you want **simple data (or null)** – use getAuthUser.  
+• If you want a **hard guard** – use requireAuth.  
+• If you need a **structured result** for branching or logging without try/catch – use assertAuth.
+
+Most routes will end up using either requireAuth (one-liner) or getAuthUser (for optional auth). assertAuth is there for the minority of places where explicit success/error objects make the code cleaner than exceptions or null-checks.
+
+We need to update relevant docs to describe this.
