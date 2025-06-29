@@ -71,8 +71,6 @@ export function mockAuthModules() {
     getUserId: jest.fn(),
     checkAdminAccess: jest.fn(),
     getSession: jest.fn(),
-    // Keep validateAuth for backward compatibility during transition
-    validateAuth: jest.fn()
   }))
 }
 

@@ -268,11 +268,13 @@ export function mockApiAuth(userKey: TestUserKey | null): Record<string, string>
   
   // Mock the server-side auth validation
   jest.doMock('@/lib/auth/server-auth', () => ({
-    validateAuth: jest.fn().mockResolvedValue(user),
+    requireAuth: jest.fn().mockResolvedValue(user),
+    getAuthUser: jest.fn().mockResolvedValue(user),
+    assertAuth: jest.fn().mockResolvedValue({ success: !!user, user }),
     getUser: jest.fn().mockResolvedValue({ user, error: null }),
-    getUserId: jest.fn().mockResolvedValue(user.id),
+    getUserId: jest.fn().mockResolvedValue(user?.id ?? null),
     checkResourceOwnership: jest.fn().mockImplementation((ownerId: string) => {
-      return Promise.resolve(ownerId === user.id)
+      return Promise.resolve(ownerId === (user?.id ?? ''))
     }),
   }))
   
