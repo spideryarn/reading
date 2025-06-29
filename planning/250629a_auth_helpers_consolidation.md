@@ -81,6 +81,8 @@ This planning document proposes a **root-cause refactor** to converge on a singl
 
 **Stage 6 Summary**: Successfully updated all documentation to reflect the new authentication helper API. Added comprehensive helper function documentation to `AUTHENTICATION_OVERVIEW.md` with clear usage examples for `getAuthUser()`, `requireAuth()`, and `assertAuth()`. Added architectural decision record to `ARCHITECTURE_DECISIONS.md` explaining the consolidation rationale and migration benefits. Updated all `validateAuth` references across documentation files (`AUTHENTICATION_SECURITY.md`, `TOOL_EXECUTION_FRAMEWORK.md`, `TESTING_SERVICE_MOCKS.md`, `TESTING_AUTH_MIDDLEWARE_SOLUTION.md`, `LOGGING_BEST_PRACTICES.md`) and diagram files. Documentation now accurately reflects the current three-function authentication API.
 
+**⚠️ Cross-Project Note**: The chat architecture database-first redesign (`planning/250629a_chat_architecture_database_first_redesign.md`) extends the `getAuthUser()` function with Bearer token support via `allowBearer: true` parameter. Any future modifications to authentication helpers in this document must account for that Bearer token enhancement to maintain compatibility.
+
 ### Stage: Update Tests & Mocks ✅ COMPLETED
 - [x] Delete `setupValidateAuthMock`, `mockValidateAuth`, and consolidate into `mockGetAuthUser()`.
 - [x] Refactor affected tests to use `getAuthUser` mock.
