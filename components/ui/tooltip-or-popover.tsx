@@ -171,7 +171,11 @@ export function TooltipOrPopover({
 
   const triggerProps = {
     suppressHydrationWarning: true,
-    style: indicatorStyle,
+    style: {
+      ...indicatorStyle,
+      WebkitTouchCallout: 'none', // Suppress iOS long-press system menus
+      userSelect: 'none',         // Prevent text selection flash during long-press
+    } as React.CSSProperties,
     className: triggerClassName ?? className,
     onPointerEnter: handlePointerEnter,
     onPointerLeave: handlePointerLeave,
