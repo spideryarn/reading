@@ -1,0 +1,125 @@
+graph TB
+    subgraph "User Interaction"
+        User[👤 User clicks Generate Glossary]
+        GlossaryTab[📖 Glossary Tab Panel]
+        LoadMore[➕ Load More Button]
+        SearchBox[🔍 Search Box]
+    end
+    
+    subgraph "API Request Flow"
+        APICall[🌐 POST /api/glossary]
+        ValidateAuth[🔐 validateAuth]
+        ValidateParams[✅ Zod validation]
+        EnhancementService[⚙️ Enhancement Service]
+    end
+    
+    subgraph "LLM Processing"
+        LLMProvider[🤖 LLM Provider Factory]
+        PromptTemplate[📝 Nunjucks Template]
+        ZodSchema[📋 Entity Schema]
+        AICall[🧠 generateObject API]
+        TokenTracking[📊 AI Call Logging]
+    end
+    
+    subgraph "Entity Processing"
+        EntityValidation[✅ Entity Validation]
+        PositionTracking[📍 Position Tracking]
+        ScoringSystem[🎯 Scoring System]
+        DatabaseSave[💾 Individual Entity Save]
+    end
+    
+    subgraph "Document Highlighting"
+        MarkJS[🎨 Mark.js Integration]
+        TooltipSystem[💬 Tooltip System]
+        CrossPaneComm[🔄 Cross-Pane Communication]
+        URLState[🔗 URL State Update]
+    end
+    
+    subgraph "Error Handling"
+        TimeoutCheck[⏱️ Timeout Detection]
+        EntityCapping[🛡️ Entity Capping]
+        ErrorResponse[❌ RFC 9457 Error]
+        RetryMechanism[🔄 Retry Logic]
+    end
+    
+    subgraph "UI Updates"
+        LoadingState[⏳ Loading Spinner]
+        EntityDisplay[📝 Entity List]
+        SearchResults[🔍 Filtered Results]
+        ClickNavigation[🎯 Click to Navigate]
+    end
+    
+    %% Main Flow
+    User --> GlossaryTab
+    GlossaryTab --> APICall
+    APICall --> ValidateAuth
+    ValidateAuth --> ValidateParams
+    ValidateParams --> EnhancementService
+    
+    %% LLM Processing Flow
+    EnhancementService --> LLMProvider
+    LLMProvider --> PromptTemplate
+    PromptTemplate --> ZodSchema
+    ZodSchema --> AICall
+    AICall --> TokenTracking
+    
+    %% Entity Processing Flow
+    AICall --> EntityValidation
+    EntityValidation --> PositionTracking
+    PositionTracking --> ScoringSystem
+    ScoringSystem --> DatabaseSave
+    
+    %% Document Integration Flow
+    DatabaseSave --> MarkJS
+    MarkJS --> TooltipSystem
+    TooltipSystem --> CrossPaneComm
+    CrossPaneComm --> URLState
+    
+    %% UI Response Flow
+    DatabaseSave --> EntityDisplay
+    EntityDisplay --> GlossaryTab
+    
+    %% Search Flow
+    SearchBox --> SearchResults
+    SearchResults --> EntityDisplay
+    
+    %% Navigation Flow
+    EntityDisplay --> ClickNavigation
+    ClickNavigation --> CrossPaneComm
+    
+    %% Progressive Loading Flow
+    LoadMore --> APICall
+    EntityCapping --> LoadMore
+    
+    %% Error Handling Flow
+    AICall --> TimeoutCheck
+    TimeoutCheck --> EntityCapping
+    EntityCapping --> RetryMechanism
+    RetryMechanism --> ErrorResponse
+    ErrorResponse --> GlossaryTab
+    
+    %% Loading States
+    APICall --> LoadingState
+    LoadingState --> GlossaryTab
+    
+    %% Styling
+    style User fill:#e3f2fd
+    style AICall fill:#fff3e0
+    style DatabaseSave fill:#e8f5e8
+    style MarkJS fill:#fce4ec
+    style ErrorResponse fill:#ffebee
+    style LoadingState fill:#f3e5f5
+    style URLState fill:#e0f2f1
+    
+    %% Component Classifications
+    classDef userInterface fill:#bbdefb,stroke:#1976d2,stroke-width:2px
+    classDef apiLayer fill:#c8e6c9,stroke:#388e3c,stroke-width:2px
+    classDef llmProcessing fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+    classDef dataProcessing fill:#d1c4e9,stroke:#512da8,stroke-width:2px
+    classDef errorHandling fill:#ffcdd2,stroke:#c62828,stroke-width:2px
+    
+    class User,GlossaryTab,LoadMore,SearchBox userInterface
+    class APICall,ValidateAuth,ValidateParams,EnhancementService apiLayer
+    class LLMProvider,PromptTemplate,ZodSchema,AICall,TokenTracking llmProcessing
+    class EntityValidation,PositionTracking,ScoringSystem,DatabaseSave dataProcessing
+    class TimeoutCheck,EntityCapping,ErrorResponse,RetryMechanism errorHandling
