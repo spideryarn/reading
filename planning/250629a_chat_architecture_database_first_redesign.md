@@ -47,6 +47,7 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
 - `lib/services/database/chat.ts` - Database service layer
 - `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Current assistant-ui integration patterns
 - `planning/250616a_multi_chat_threads.md` - Future multi-thread UI requirements
+- `planning/250629a_auth_helpers_consolidation.md` - new auth refactor
 
 ## Principles & Key Decisions
 
@@ -130,35 +131,35 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
 - [x] Test that all assistant-ui features work with external store pattern
 - [x] **Fix enum validation error** - Resolved `source: 'chat-store'` → `source: 'direct'` metadata issue
 
-### Stage: Content validation and edge cases
-- [ ] Standardise empty content handling across all layers
-  - [ ] API validation: decide whether to allow empty/whitespace-only messages
-  - [ ] Database storage: consistent handling of tool calls vs text content
-  - [ ] UI rendering: proper display of empty or tool-only messages
-- [ ] Add comprehensive input validation at API layer
-- [ ] Test edge cases: network failures, malformed content, concurrent requests
-- [ ] Ensure proper error messages replace current "refresh to fix" scenarios
-
 ### Stage: Authentication & Supabase client consolidation
-- [ ] **Centralise test-aware authentication logic**
-  - [ ] Extend `lib/auth/server-auth.ts → getAuthUser()` with a Bearer-token fallback that activates when either `allowBearer: true` is passed **or** `process.env.NODE_ENV === "test"`.
+**Migration Strategy**: Implement incrementally with individual commits and test passes to stay green and enable rollback.
+
+**Key Design Decisions** (per o3 AI guidance):
+- **Bearer token activation**: Explicit opt-in via `allowBearer: true` flag only (no `NODE_ENV` check to avoid staging environment surprises)
+- **Supabase client caching**: No caching - keep stateless for safety and avoid cross-request JWT leakage
+- **Implementation approach**: Incremental sub-steps with individual commits for easier debugging
+
+- [ ] **Sub-step A: Centralise test-aware authentication logic**
+  - [ ] Extend `lib/auth/server-auth.ts → getAuthUser()` with a Bearer-token fallback that activates **only** when `allowBearer: true` is explicitly passed.
     - Parse the `Authorization: Bearer <jwt>` header from the incoming `Request` and, if present, create a short-lived Supabase client (anon key + `Authorization` header) to fetch the user via `auth.getUser()`.
     - Return the same `User` object shape used for cookie-based auth; otherwise fall back to current cookie logic.
     - Update JSDoc (`@param opts.allowBearer`) and unit tests in `lib/auth/__tests__/server-auth.test.ts` to cover new paths (cookie, bearer, unauthenticated).
-- [ ] **Enhance Supabase server client factory**
-  - [ ] In `lib/supabase/server.ts` add `getSupabaseServerClient(request: Request, opts?: { jwt?: string }): SupabaseClient`.
+    - **Commit and test pass** before proceeding to sub-step B.
+- [ ] **Sub-step B: Enhance Supabase server client factory**
+  - [ ] In `lib/supabase/server.ts` add `getSupabaseServerClient(request: Request, opts?: { allowBearer?: boolean }): SupabaseClient`.
     - Default behaviour stays cookie-based.
-    - If `opts.jwt` is provided **or** a valid Bearer token is detected in `request.headers`, construct a header-authenticated client:  
+    - If `opts.allowBearer` is true and a valid Bearer token is detected in `request.headers`, construct a header-authenticated client:  
       `createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: `Bearer ${jwt}` } } })`.
     - Export the helper and update existing exports to re-export for backwards compatibility (`createServerClient` etc.).
     - Add focused unit tests (`lib/supabase/__tests__/server-client.test.ts`) verifying cookie vs bearer modes.
-- [ ] **Refactor chat API route to use consolidated helpers**
+    - **Commit and test pass** before proceeding to sub-step C.
+- [ ] **Sub-step C: Refactor chat API route to use consolidated helpers**
   - [ ] Delete the ad-hoc `getAuthUserForTesting()` from `app/api/tools/[toolId]/route.ts`.
-  - [ ] Replace with `const user = await requireAuth(request)` (from consolidated helpers).  
-    `requireAuth()` will in turn call the new `getAuthUser()` which now supports both cookie and bearer flows.
-  - [ ] Obtain the authenticated Supabase client via `const supabase = getSupabaseServerClient(request)` and pass it through the `ExecutionContext` (`context.supabaseClient`).
+  - [ ] Replace with `const user = await requireAuth(request, { allowBearer: true })` for test compatibility.  
+  - [ ] Obtain the authenticated Supabase client via `const supabase = getSupabaseServerClient(request, { allowBearer: true })` and pass it through the `ExecutionContext` (`context.supabaseClient`).
   - [ ] Update downstream handlers (`handlers/chat.ts`) to use `context.supabaseClient` instead of locally initialising a new client.
-- [ ] **Sweep codebase for duplicate client creation**  
+  - [ ] **Commit and test pass** before proceeding to sub-step D.
+- [ ] **Sub-step D: Sweep codebase for duplicate client creation**  
   Use `ripgrep "createClient(.*supabase"` to identify API routes or services that still instantiate a Supabase client directly.  For each, switch to `getSupabaseServerClient()` so all server queries share the same auth path.
 - [ ] **Integration & RLS regression tests**
   - [ ] Add `lib/services/database/__tests__/chat-rls-auth.test.ts` exercising:  
@@ -170,6 +171,15 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
   - [ ] Cross-link this stage from `planning/250629a_auth_helpers_consolidation.md` — add a note that auth helper alterations here must be reflected there.
   - [ ] Update `docs/reference/AUTHENTICATION_OVERVIEW.md` and `docs/reference/ARCHITECTURE_DECISIONS.md` with the new unified authentication flow diagram (cookie + bearer).
   - [ ] Append migration notes to `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` explaining that API routes now expect `requireAuth()` and a pre-configured Supabase client from context.
+
+### Stage: Content validation and edge cases
+- [ ] Standardise empty content handling across all layers
+  - [ ] API validation: decide whether to allow empty/whitespace-only messages
+  - [ ] Database storage: consistent handling of tool calls vs text content
+  - [ ] UI rendering: proper display of empty or tool-only messages
+- [ ] Add comprehensive input validation at API layer
+- [ ] Test edge cases: network failures, malformed content, concurrent requests
+- [ ] Ensure proper error messages replace current "refresh to fix" scenarios
 
 ### Stage: Validation and cleanup
 - [ ] Update relevant evergreen documentation in `docs/reference/`

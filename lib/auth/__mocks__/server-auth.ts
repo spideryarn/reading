@@ -88,12 +88,14 @@ export const getUserProfile = jest.fn<Promise<UserProfile | null>, []>().mockRes
   createdAt: defaultTestUser.created_at
 })
 
-// New authentication helper functions
-export const getAuthUser = jest.fn<Promise<User | null>, []>().mockResolvedValue(defaultTestUser)
+// New authentication helper functions with Bearer token support
+export const getAuthUser = jest.fn<Promise<User | null>, [{ allowBearer?: boolean; request?: Request }?]>()
+  .mockResolvedValue(defaultTestUser)
 
-export const requireAuth = jest.fn().mockResolvedValue(defaultTestUser)
+export const requireAuth = jest.fn<Promise<User>, [{ redirectTo?: string; allowBearer?: boolean; request?: Request }?]>()
+  .mockResolvedValue(defaultTestUser)
 
-export const assertAuth = jest.fn<Promise<{ success: boolean; user?: User; error?: string }>, [Request]>()
+export const assertAuth = jest.fn<Promise<{ success: boolean; user?: User; error?: string }>, [Request, { allowBearer?: boolean }?]>()
   .mockResolvedValue({
     success: true,
     user: defaultTestUser
@@ -127,7 +129,7 @@ export const setMockUser = (user: User | null) => {
     
     // New authentication helpers - primary interface
     getAuthUser.mockResolvedValue(null)
-    requireAuth.mockImplementation((opts?: { redirectTo?: string }) => {
+    requireAuth.mockImplementation((opts?: { redirectTo?: string; allowBearer?: boolean; request?: Request }) => {
       if (opts?.redirectTo) {
         redirectFunction(opts.redirectTo)
         // This line won't be reached due to redirect throwing

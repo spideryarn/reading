@@ -372,44 +372,109 @@ export async function getUserProfile(): Promise<UserProfile | null> {
  * or performing redirects. Use this when you need to check authentication
  * status and handle the result yourself.
  * 
+ * @param opts - Configuration options
+ * @param opts.allowBearer - Allow Bearer token authentication (explicit opt-in only)
+ * @param opts.request - Request object for Bearer token extraction (required if allowBearer is true)
  * @returns Promise<User | null> - The authenticated user or null
  * 
  * @example
  * ```typescript
- * // In a server component or API route
+ * // In a server component or API route (cookie-based)
  * const user = await getAuthUser()
  * if (!user) {
  *   return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
  * }
+ * 
+ * // In test environment with Bearer token
+ * const user = await getAuthUser({ allowBearer: true, request })
  * ```
  */
-export async function getAuthUser(): Promise<User | null> {
+export async function getAuthUser(opts?: { 
+  allowBearer?: boolean
+  request?: Request 
+}): Promise<User | null> {
   const correlationId = generateCorrelationId()
   
   try {
+    // First try standard cookie-based authentication
     const supabase = await createClient()
     const { data: { user }, error } = await supabase.auth.getUser()
     
-    if (error) {
-      authLogger.warn({
-        error: error.message,
-        correlationId,
-        operation: 'getAuthUser'
-      }, 'Authentication error during user retrieval')
-      
-      return null
-    }
-    
-    if (user) {
+    if (!error && user) {
       authLogger.debug({
         userId: user.id,
         email: user.email,
         correlationId,
-        operation: 'getAuthUser'
-      }, 'User retrieved successfully')
+        operation: 'getAuthUser',
+        authMethod: 'cookie'
+      }, 'User retrieved successfully via cookie auth')
+      
+      return user
     }
     
-    return user
+    // If cookie auth failed and Bearer token is explicitly allowed, try Bearer token fallback
+    if (opts?.allowBearer && opts.request) {
+      const authHeader = opts.request.headers.get('Authorization')
+      if (authHeader?.startsWith('Bearer ')) {
+        const jwt = authHeader.slice(7)
+        
+        try {
+          // Create a short-lived Supabase client with Bearer token
+          const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')
+          const bearerClient = createSupabaseClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+              global: {
+                headers: {
+                  'Authorization': `Bearer ${jwt}`
+                }
+              }
+            }
+          )
+          
+          const { data: { user: bearerUser }, error: bearerError } = await bearerClient.auth.getUser()
+          
+          if (!bearerError && bearerUser) {
+            authLogger.debug({
+              userId: bearerUser.id,
+              email: bearerUser.email,
+              correlationId,
+              operation: 'getAuthUser',
+              authMethod: 'bearer'
+            }, 'User retrieved successfully via Bearer token')
+            
+            return bearerUser
+          } else if (bearerError) {
+            authLogger.warn({
+              error: bearerError.message,
+              correlationId,
+              operation: 'getAuthUser',
+              authMethod: 'bearer'
+            }, 'Bearer token authentication failed')
+          }
+        } catch (bearerAuthError) {
+          authLogger.warn({
+            error: bearerAuthError instanceof Error ? bearerAuthError.message : 'Unknown error',
+            correlationId,
+            operation: 'getAuthUser',
+            authMethod: 'bearer'
+          }, 'Bearer token processing failed')
+        }
+      }
+    }
+    
+    // Log the original cookie auth error if no fallback succeeded
+    if (error) {
+      authLogger.warn({
+        error: error.message,
+        correlationId,
+        operation: 'getAuthUser',
+        authMethod: 'cookie'
+      }, 'Cookie authentication failed')
+    }
+    
+    return null
   } catch (error) {
     authLogger.error({
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -429,6 +494,8 @@ export async function getAuthUser(): Promise<User | null> {
  * 
  * @param opts - Configuration options
  * @param opts.redirectTo - URL to redirect to if unauthenticated (performs redirect instead of throwing)
+ * @param opts.allowBearer - Allow Bearer token authentication (explicit opt-in only)
+ * @param opts.request - Request object for Bearer token extraction (required if allowBearer is true)
  * @returns Promise<User> - The authenticated user (guaranteed)
  * @throws AuthError - When unauthenticated and no redirectTo provided
  * 
@@ -445,17 +512,31 @@ export async function getAuthUser(): Promise<User | null> {
  *   const user = await requireAuth({ redirectTo: '/auth/login' })
  *   // user is guaranteed to be valid here
  * }
+ * 
+ * // In an API route with Bearer token support
+ * export async function POST(request: Request) {
+ *   const user = await requireAuth({ allowBearer: true, request })
+ *   // user is guaranteed to be valid here
+ * }
  * ```
  */
-export async function requireAuth(opts?: { redirectTo?: string }): Promise<User> {
+export async function requireAuth(opts?: { 
+  redirectTo?: string
+  allowBearer?: boolean
+  request?: Request 
+}): Promise<User> {
   const correlationId = generateCorrelationId()
-  const user = await getAuthUser()
+  const user = await getAuthUser({
+    allowBearer: opts?.allowBearer,
+    request: opts?.request
+  })
   
   if (!user) {
     authLogger.info({
       correlationId,
       operation: 'requireAuth',
-      redirectTo: opts?.redirectTo
+      redirectTo: opts?.redirectTo,
+      allowBearer: opts?.allowBearer
     }, 'Authentication required - user not found')
     
     if (opts?.redirectTo) {
@@ -481,14 +562,25 @@ export async function requireAuth(opts?: { redirectTo?: string }): Promise<User>
  * result object. Use this when you need explicit control over authentication
  * failure handling, such as in middleware or edge functions.
  * 
- * @param request - The incoming request (used for logging context)
+ * @param request - The incoming request (used for logging context and Bearer token extraction)
+ * @param opts - Configuration options
+ * @param opts.allowBearer - Allow Bearer token authentication (explicit opt-in only)
  * @returns Object with success flag, user (if authenticated), and error message
  * 
  * @example
  * ```typescript
  * // In an API route with explicit error handling
  * export async function POST(request: Request) {
- *   const { success, user, error } = assertAuth(request)
+ *   const { success, user, error } = await assertAuth(request)
+ *   if (!success) {
+ *     return NextResponse.json({ error }, { status: 401 })
+ *   }
+ *   // Use user here
+ * }
+ * 
+ * // In an API route with Bearer token support
+ * export async function POST(request: Request) {
+ *   const { success, user, error } = await assertAuth(request, { allowBearer: true })
  *   if (!success) {
  *     return NextResponse.json({ error }, { status: 401 })
  *   }
@@ -496,16 +588,23 @@ export async function requireAuth(opts?: { redirectTo?: string }): Promise<User>
  * }
  * ```
  */
-export async function assertAuth(request: Request): Promise<{ success: boolean; user?: User; error?: string }> {
+export async function assertAuth(
+  request: Request, 
+  opts?: { allowBearer?: boolean }
+): Promise<{ success: boolean; user?: User; error?: string }> {
   const correlationId = generateCorrelationId()
-  const user = await getAuthUser()
+  const user = await getAuthUser({
+    allowBearer: opts?.allowBearer,
+    request
+  })
   
   if (!user) {
     authLogger.info({
       correlationId,
       operation: 'assertAuth',
       url: request.url,
-      method: request.method
+      method: request.method,
+      allowBearer: opts?.allowBearer
     }, 'Authentication assertion failed')
     
     return {

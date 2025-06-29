@@ -85,6 +85,39 @@ describe('getAuthUser', () => {
 
     expect(result).toBeNull()
   })
+
+  it('should support Bearer token authentication when allowBearer is true', async () => {
+    // Configure mock to return the test user for Bearer token auth
+    setMockUser(mockUser)
+
+    const mockRequest = new Request('https://example.com/api/test', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer mock-jwt-token'
+      }
+    })
+
+    const result = await getAuthUser({ allowBearer: true, request: mockRequest })
+
+    expect(result).toEqual(mockUser)
+  })
+
+  it('should ignore Bearer token when allowBearer is false', async () => {
+    // Configure mock to return the test user for cookie auth only
+    setMockUser(mockUser)
+
+    const mockRequest = new Request('https://example.com/api/test', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer mock-jwt-token'
+      }
+    })
+
+    // Should work with cookie auth regardless of Bearer token presence
+    const result = await getAuthUser({ allowBearer: false, request: mockRequest })
+
+    expect(result).toEqual(mockUser)
+  })
 })
 
 describe('requireAuth', () => {
@@ -143,6 +176,39 @@ describe('requireAuth', () => {
     expect(errorThrown).toBe(true)
     expect(mockRedirect).toHaveBeenCalledWith('/login')
   })
+
+  it('should support Bearer token authentication when allowBearer is true', async () => {
+    // Configure mock to return the test user
+    setMockUser(mockUser)
+
+    const mockRequest = new Request('https://example.com/api/test', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer mock-jwt-token'
+      }
+    })
+
+    const result = await requireAuth({ allowBearer: true, request: mockRequest })
+
+    expect(result).toEqual(mockUser)
+  })
+
+  it('should throw AuthError with Bearer token when not authenticated', async () => {
+    // Configure mock to simulate unauthenticated state
+    setMockUser(null)
+
+    const mockRequest = new Request('https://example.com/api/test', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer invalid-token'
+      }
+    })
+
+    await expect(requireAuth({ allowBearer: true, request: mockRequest }))
+      .rejects.toThrow(AuthError)
+    await expect(requireAuth({ allowBearer: true, request: mockRequest }))
+      .rejects.toThrow('Authentication required')
+  })
 })
 
 describe('assertAuth', () => {
@@ -181,6 +247,44 @@ describe('assertAuth', () => {
     setMockUser(null)
 
     const result = await assertAuth(mockRequest)
+
+    expect(result).toEqual({
+      success: false,
+      error: 'Authentication required'
+    })
+  })
+
+  it('should support Bearer token authentication when allowBearer is true', async () => {
+    // Configure mock to return the test user
+    setMockUser(mockUser)
+
+    const bearerRequest = new Request('https://example.com/api/test', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer mock-jwt-token'
+      }
+    })
+
+    const result = await assertAuth(bearerRequest, { allowBearer: true })
+
+    expect(result).toEqual({
+      success: true,
+      user: mockUser
+    })
+  })
+
+  it('should return failure result with Bearer token when not authenticated', async () => {
+    // Configure mock to simulate unauthenticated state
+    setMockUser(null)
+
+    const bearerRequest = new Request('https://example.com/api/test', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer invalid-token'
+      }
+    })
+
+    const result = await assertAuth(bearerRequest, { allowBearer: true })
 
     expect(result).toEqual({
       success: false,
