@@ -36,14 +36,39 @@ const ChatGetRequestSchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(50)
 }).passthrough()
 
+/**
+ * Enhanced content validation per o3 AI recommendations:
+ * - User messages: Reject empty content (strict validation)
+ * - Assistant messages: Allow empty content for streaming/tool-only scenarios
+ * - Additional comprehensive input validation for security and robustness
+ */
 const ChatSendMessageSchema = z.object({
   messages: z.array(z.object({
     role: z.enum(['user', 'assistant']),
-    content: z.string().min(1)
-  })).min(1),
-  documentContext: z.string().optional(),
-  threadId: z.string().optional(),
-  documentId: z.string().optional()
+    content: z.string().max(50000, 'Message content too long (max 50,000 characters)'),
+    status: z.enum(['streaming', 'complete']).optional()
+  }).refine((msg) => {
+    // User messages must have non-empty content after trimming whitespace
+    if (msg.role === 'user') {
+      const trimmed = msg.content.trim()
+      if (trimmed.length === 0) {
+        return false
+      }
+      // Additional validation: check for suspiciously long single words (potential attack)
+      const words = trimmed.split(/\s+/)
+      const hasExcessivelyLongWord = words.some(word => word.length > 1000)
+      if (hasExcessivelyLongWord) {
+        return false
+      }
+    }
+    // Assistant messages can be empty (for streaming states or tool-only responses)
+    return true
+  }, {
+    message: "User messages cannot be empty, contain only whitespace, or have excessively long words"
+  })).min(1).max(20, 'Too many messages in conversation (max 20)'),
+  documentContext: z.string().max(100000, 'Document context too long').optional(),
+  threadId: z.string().uuid('Invalid thread ID format').optional(),
+  documentId: z.string().uuid('Invalid document ID format').optional()
 }).passthrough()
 
 const ChatCreateThreadSchema = z.object({
@@ -206,6 +231,15 @@ export class ChatHandler extends BaseToolHandler {
       throw createHandlerError('Invalid message format: expected user message', 'validation')
     }
     
+    // Enhanced empty content validation per o3 AI recommendations
+    const trimmedContent = latestMessage.content.trim()
+    if (trimmedContent.length === 0) {
+      throw createHandlerError(
+        'Message content cannot be empty or contain only whitespace. Please enter a message.',
+        'validation'
+      )
+    }
+    
     logger.info({
       userId: context.user!.id,
       messageCount: messages.length,
@@ -259,11 +293,11 @@ export class ChatHandler extends BaseToolHandler {
         throw new Error('No thread ID available for message operations')
       }
       
-      // Save user message to database first
-      const userMessage = await chatService.addMessage({
+      // Save user message to database first (using trimmed content)
+      await chatService.addMessage({
         threadId: effectiveThreadId,
         role: 'user',
-        content: latestMessage.content
+        content: trimmedContent
       })
       
       // Generate AI response
@@ -382,29 +416,59 @@ export class ChatHandler extends BaseToolHandler {
         documentId
       }, 'Error in atomic chat operation')
       
-      // Enhanced error handling
+      // Enhanced error handling to eliminate "refresh to fix" scenarios
       if (error instanceof Error) {
+        // API configuration errors (non-recoverable)
         if (error.message.includes('API key') || error.message.includes('401')) {
           throw createHandlerError(
-            'API configuration error - The Anthropic API key is missing or invalid',
+            'AI service configuration error. Please contact support if this persists.',
             'server',
             false
           )
         }
         
+        // Rate limiting (recoverable with retry)
         if (error.message.includes('rate limit') || error.message.includes('429')) {
           throw createHandlerError(
-            'Rate limit exceeded - Too many requests to the AI service',
+            'Too many requests. Please wait a moment and try again.',
             'server',
             true
           )
         }
         
-        if (error.message.includes('Database transaction failed')) {
+        // Database transaction failures (system issue)
+        if (error.message.includes('Database transaction failed') || error.message.includes('thread creation')) {
           throw createHandlerError(
-            'Database error - Failed to save conversation',
+            'Failed to save conversation. Your message was not lost - please try sending again.',
             'server',
             true
+          )
+        }
+        
+        // Network connectivity issues (recoverable)
+        if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('ECONNRESET')) {
+          throw createHandlerError(
+            'Network connection issue. Please check your connection and try again.',
+            'server',
+            true
+          )
+        }
+        
+        // Thread access/permission issues (user-fixable)
+        if (error.message.includes('Thread not found') || error.message.includes('access denied')) {
+          throw createHandlerError(
+            'Conversation not found or access denied. Please start a new conversation.',
+            'validation',
+            false
+          )
+        }
+        
+        // Content validation issues (user-fixable)
+        if (error.message.includes('content') && error.message.includes('validation')) {
+          throw createHandlerError(
+            error.message, // Use the specific validation message
+            'validation',
+            false
           )
         }
       }

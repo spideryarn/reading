@@ -110,8 +110,22 @@ export function useChatStore({
    * Send message using database-first atomic API
    */
   const sendMessage = useCallback(async (content: string): Promise<void> => {
-    if (!content.trim()) {
-      throw new Error('Message content cannot be empty');
+    // Enhanced content validation per o3 AI recommendations
+    const trimmedContent = content.trim()
+    if (trimmedContent.length === 0) {
+      throw new Error('Message content cannot be empty or contain only whitespace. Please enter a message.')
+    }
+    
+    // Additional client-side validation for immediate feedback
+    if (trimmedContent.length > 50000) {
+      throw new Error('Message is too long (maximum 50,000 characters)')
+    }
+    
+    // Check for suspiciously long words
+    const words = trimmedContent.split(/\s+/)
+    const hasExcessivelyLongWord = words.some(word => word.length > 1000)
+    if (hasExcessivelyLongWord) {
+      throw new Error('Message contains excessively long words. Please break up long text.')
     }
     
     setIsLoading(true);
@@ -126,9 +140,9 @@ export function useChatStore({
         throw new Error('Authentication required');
       }
       
-      // Prepare request for atomic database-first API
+      // Prepare request for atomic database-first API (use trimmed content)
       const requestPayload: SendMessageRequest = {
-        content,
+        content: trimmedContent,
         documentContext,
         documentId,
         ...(threadId ? { threadId } : {})
@@ -145,7 +159,7 @@ export function useChatStore({
           action: 'execute',
           parameters: {
             ...requestPayload,
-            messages: [{ role: 'user' as const, content }],
+            messages: [{ role: 'user' as const, content: trimmedContent }],
             // Feature flag for database-first implementation
             databaseFirst: true,
             atomic: true
