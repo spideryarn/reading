@@ -57,7 +57,7 @@ CREATE POLICY "Users and admins can view document assets" ON document_assets
             AND (
                 documents.is_public = true OR
                 documents.created_by = auth.uid() OR
-                public.is_admin()
+                EXISTS (SELECT 1 FROM profiles WHERE user_id = auth.uid() AND is_admin IS NOT NULL)
             )
         )
     );
@@ -72,7 +72,7 @@ CREATE POLICY "Authenticated users and admins can manage document assets" ON doc
             WHERE documents.id = document_assets.document_id 
             AND (
                 documents.created_by = auth.uid() OR
-                public.is_admin()
+                EXISTS (SELECT 1 FROM profiles WHERE user_id = auth.uid() AND is_admin IS NOT NULL)
             )
         )
     );
