@@ -7,7 +7,7 @@ interface NotAuthorizedPageProps {
   slug: string
 }
 
-export function NotAuthorizedPage({}: NotAuthorizedPageProps) {
+export function NotAuthorizedPage({}: NotAuthorizedPageProps): never {
   // Return 404-like response for security (conflates not found with no permission)
   notFound()
 }
