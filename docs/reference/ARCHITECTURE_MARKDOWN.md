@@ -219,3 +219,52 @@ const tooltipContent = markdownToHtml(longExplanation || explanation);
 // Already implemented - full-featured markdown
 <MarkdownText content={message.content} />
 ```
+
+## Common Pitfalls & How to Avoid Them
+
+> The following lessons were learned the hard way after a series of `This component must be used within a component passed to <MessagePrimitive.Content…>` runtime crashes.  Follow them to save future you (and the CI) some grief.
+
+### 1. **Do not use `MarkdownTextPrimitive` outside the chat‐message context**
+
+`MarkdownTextPrimitive` is exported from **@assistant-ui/react-markdown** and **must** live inside the `MessagePrimitive.Content` tree (the chat message renderer from **@assistant-ui/react**).
+
+* ✅ **Use when** you are inside the chat bubble – i.e. you are already passing your own components via `<MessagePrimitive.Content components={…}>`.
+* ❌ **Do *not* use** in normal React pages, tooltips, panes, etc. – it will throw at runtime.
+
+### 2. **Use plain `react-markdown` (or the HTML pipeline) everywhere else**
+
+Outside the chat context, render markdown with either:
+
+```tsx
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
+<ReactMarkdown remarkPlugins={[remarkGfm]}>{markdownString}</ReactMarkdown>
+```
+
+or – if you need an HTML string – the helper:
+
+```ts
+import { markdownToHtml } from '@/lib/utils/markdown-processor';
+const htmlString = markdownToHtml(markdownString);
+```
+
+### 3. **Verify new components with the "is it inside MessagePrimitive?" checklist**
+
+When reviewing PRs:
+
+1. Search for `MarkdownTextPrimitive` imports.
+2. Confirm the component is rendered under `MessagePrimitive.Content`.
+3. If not, switch to `react-markdown`.
+
+### 4. **Type-safe guardrails**
+
+Consider adding an ESLint rule (TODO) or TS wrapper that forbids importing `MarkdownTextPrimitive` outside `*/chat/*` or `components/assistant-chat.tsx`.
+
+### 5. **End-to-end test**
+
+The Playwright test `ai-glossary-comprehensive.spec.ts` now loads `/read/*` documents and asserts that no uncaught errors appear in the console.  If you accidentally introduce the context error again, CI will fail.
+
+---
+
+Keeping these rules in mind will prevent another round of runtime context errors and keep document pages stable.
