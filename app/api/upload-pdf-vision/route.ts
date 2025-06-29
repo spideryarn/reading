@@ -205,6 +205,22 @@ export async function POST(request: NextRequest) {
         percentage: Math.round((completed / total) * 100)
       }, `Page processing progress: ${completed}/${total} (page ${currentPage})`)
     })
+
+    // NEW: Fail-fast validation – abort immediately if any page failed or produced an empty fragment
+    const failedPages = pageFragments.filter(p => !p.success || !p.htmlFragment || p.htmlFragment.trim().length === 0)
+    if (failedPages.length > 0) {
+      const failedPageNumbers = failedPages.map(p => p.pageNumber)
+      const firstFailure = failedPages[0]
+      requestLogger.error({
+        correlationId,
+        stage: 'page-processing',
+        failedPageNumbers,
+        firstError: firstFailure.error || firstFailure.userError?.userMessage || 'Unknown error'
+      }, 'Page processing failures detected – aborting vision pipeline')
+
+      throw new Error(`Vision processing failed: error on page(s) ${failedPageNumbers.join(', ')} – ${firstFailure.userError?.userMessage || firstFailure.error || 'Unknown error'}`)
+    }
+
     const pageProcessingTime = Date.now() - pageProcessingStart
 
     console.log(`Stage 2 Complete: Processed ${pageFragments.length} page fragments in ${pageProcessingTime}ms`)
