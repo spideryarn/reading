@@ -297,48 +297,6 @@ Previous changes: {{ previous_iteration_summary || "None - this is the first ite
 - Invalid operations returned: Validation layer catches and requests re-iteration
 
 
-## Appendix - critique from o3 AI
-
-Critique of `planning/250629b_iterative_heading_generation_operation_limited.md`
-(using the guidelines in `docs/instructions/CRITIQUE_OF_PLANNING_DOC.md`)
-
-2. High-level architecture & consistency with existing patterns  
-• Prompt-side changes look straightforward, but the doc under-states the knock-on effects. Today the contract is:
-
-```lib/prompts/templates/headings.ts
-export const headingsResponseSchema = z.object({
-  operations: z.array(headingOperationSchema)
-})
-```
-
-Adding `more_changes_required`, `iteration_summary`, etc. will ripple through:  
-  - `lib/tools/implementations/structure.ts` (executor)  
-  - `lib/services/heading-mutation-generator*` tests  
-  - Playwright E2E suite that asserts JSON shape  
-These call-sites are not listed in the action checklist; they should be.
-
-• Route location: the doc says “Extend `/app/api/tools/structure/route.ts`”, but headings currently flow through `app/api/tools/[toolId]/route.ts` (see `tools/[toolId]/handler-interface.ts`). Using `structure` directly would break the generic tool dispatcher unless we refactor the registry. Clarify whether this is a new bespoke endpoint or an update to the existing tool handler.
-
-• Frontend: `components/tools/StructurePanel.tsx` now assumes a single-shot call that returns final operations (see loading logic around `executeTool`). The proposal to show “Continue / Finish” fits, but we need to audit shared hooks (`lib/tools/hooks/use-tool-executor-with-navigation.ts`) for cancel / debounce behaviour; otherwise cancel may leak aborted fetches.
-
-3. Operation-count limit & hierarchical guidance  
-
-• The doc relies solely on prompt wording for hierarchical correctness; there’s no post-validation. Past bugs show the model occasionally returns multiple H1s or nests incorrectly. We may need a thin validator (existing `heading-section-detector.ts` can help) that fails the iteration (aim to fail fast, immediately, and with a debuggable user-visible message).
-
-6. Testing plan  
-• The checklist calls for Playwright flows, unit tests, etc., but does not mention updating existing Jest snapshots that expect the old schema. There are >20 tests under `lib/services/__tests__/` and `components/__tests__/` that parse the response. Flagging them now avoids future red tests.
-
-• Performance tests: we already have `heading-mutation-generator-performance.test.ts`; reuse it instead of new bespoke perf harness.
-
-7. Documentation debt  
-• `docs/reference/TOOL_HEADINGS.md` will need a major rewrite.
-
-8. Edge-case coverage  
-• Short documents with existing perfect headings: plan says “LLM returns `more_changes_required: false`”, but the executor should fast-track and skip mutation application when operations array is empty—otherwise we’ll commit a no-op mutation that still clutters history.
-
-10. Minor suggestions  
-• Rename `confidence_score` to `feeling_of_confidence` to avoid statistical misinterpretation.  
-
 ### Appendix D: Comprehensive Schema Ripple Effect Analysis
 
 **Files Requiring Updates When Extending `headingsResponseSchema`:**
