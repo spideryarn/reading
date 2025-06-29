@@ -46,6 +46,9 @@ export interface ExecutionContext {
   
   /** URL state at time of execution */
   urlState?: Record<string, unknown>
+  
+  /** Authenticated Supabase client (server execution only, test environment) */
+  supabaseClient?: any
 }
 
 /**
