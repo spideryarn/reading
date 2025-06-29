@@ -592,10 +592,3 @@ export const Constants = {
   },
 } as const
 
-// Chat-specific type aliases for convenience
-export type ChatThread = Tables<'chat_threads'>
-export type ChatThreadInsert = TablesInsert<'chat_threads'>
-export type ChatMessage = Tables<'chat_messages'>
-export type ChatMessageInsert = TablesInsert<'chat_messages'>
-export type MessageRole = 'user' | 'assistant'
-

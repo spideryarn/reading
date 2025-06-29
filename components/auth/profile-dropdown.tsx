@@ -51,7 +51,8 @@ export function ProfileDropdown({ user }: ProfileDropdownProps) {
   }
 
   // Get user initials for avatar
-  const getInitials = (email: string) => {
+  const getInitials = (email: string | undefined) => {
+    if (!email) return 'U'
     return email
       .split('@')[0]
       .split('.')
@@ -69,7 +70,7 @@ export function ProfileDropdown({ user }: ProfileDropdownProps) {
       >
         {/* User Avatar */}
         <div className="w-8 h-8 bg-orange-100 text-orange-700 rounded-full flex items-center justify-center text-sm font-medium">
-          {getInitials(user.email || '')}
+          {getInitials(user.email)}
         </div>
         
         {/* Dropdown Arrow */}
@@ -86,7 +87,7 @@ export function ProfileDropdown({ user }: ProfileDropdownProps) {
             {/* User Info */}
             <div className="pb-3 border-b border-gray-200">
               <p className="text-sm text-gray-600">Logged in as</p>
-              <p className="font-medium text-gray-900 truncate">{user.email}</p>
+              <p className="font-medium text-gray-900 truncate">{user.email || 'User'}</p>
             </div>
             
             {/* Menu Items */}
