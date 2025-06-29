@@ -553,6 +553,25 @@ Serverless (Vercel Node runtime)
 - **Canvas Cropping**: Integrated bounding box-based image extraction in the hook (uses original image dimensions)
 - **TypeScript**: Fixed type safety issues with proper object destructuring and optional property handling
 
+#### Stage: Library Integration & Quality Improvements
+- [ ] **Integrate p-queue for robust concurrency management**: Replace manual queue implementation with p-queue library
+  - Install p-queue (~4KB bundle size addition)
+  - Replace manual queue/concurrency logic in `useVisionSinglePageUploader` 
+  - Add priority support (lower page numbers = higher priority)
+  - Implement pause/resume functionality for better control
+  - Enhance retry logic with p-queue's built-in support
+- [ ] **Integrate Pica for high-quality image resizing**: Replace Canvas API resizing with Pica
+  - Install Pica library (~14.5KB bundle size addition)
+  - Update `resizeImage` utility to use Pica's Lanczos filtering
+  - Enable Web Worker support to prevent UI blocking during resize
+  - Configure tile-based processing for memory efficiency
+  - Test quality improvements with academic PDFs containing fine text/diagrams
+- [ ] **Update tests for new library integrations**: Ensure all existing tests pass with library changes
+  - Mock p-queue for unit tests
+  - Mock Pica for image resize tests
+  - Add integration tests for concurrent upload scenarios
+- [ ] **Health check**: Run `npm run check:health` to validate library integrations
+
 #### Stage: Supabase signed uploads
 - [ ] Add helper route `/api/storage/signed-upload-url` (or embed in page response) returning URL & headers for `PUT`.
 - [ ] Client uploads cropped images, retries on 5xx.
@@ -580,6 +599,25 @@ Serverless (Vercel Node runtime)
 * High invocation count might increase latency or cost; monitor usage in Vercel & Gemini.
 * Need to ensure cropping with down-scaled images still meets quality requirements (might expose "view original" link later).
 * Mobile memory limits – may need progressive upload of cropped assets to avoid holding large blobs in RAM.
+
+### Library Decisions
+
+Based on research and codebase investigation:
+
+1. **p-queue** (4KB) - Recommended for robust concurrency management
+   - Replaces manual queue implementation with battle-tested solution
+   - Provides priority support, pause/resume, and better error handling
+   - Small bundle size impact for significant reliability improvements
+
+2. **Pica** (14.5KB) - Recommended for high-quality image resizing
+   - Lanczos filtering provides better quality than Canvas API
+   - Web Worker support prevents UI blocking
+   - Important for academic documents with fine text and diagrams
+
+3. **Document ID Generation** - Keep existing approach
+   - Current UUID v4 implementation in `lib/utils/document-id.ts` is appropriate
+   - Deterministic IDs (UUID v5) in codebase are for different purposes (element IDs)
+   - No changes needed to ID generation strategy
 
 ---
 
