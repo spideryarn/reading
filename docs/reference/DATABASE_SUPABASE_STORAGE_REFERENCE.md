@@ -5,6 +5,10 @@ Comprehensive guide to implementing file storage in Spideryarn Reading using Sup
 ## See also
 
 - `planning/finished/250606a_pdf_Supabase_Storage_integration.md` - Complete PDF storage integration planning
+- `planning/250628a_vision_pdf_image_extraction_to_supabase_storage.md` - **NEW**: Image extraction and asset storage architecture
+- `supabase/migrations/20250628170150_add_document_assets_table.sql` - **NEW**: Database schema for asset tracking
+- `lib/services/database/document-assets.ts` - **NEW**: Asset database service layer
+- `lib/services/document-processing-transaction.ts` - **NEW**: Transaction-based cleanup for failed operations
 - `planning/later/250530h_pdf_to_html_conversion_implementation.md` - PDF conversion implementation context
 - `supabase/migrations/20250531235026_comprehensive_storage_schema.sql` - Database schema with `storage_path` field
 - `lib/types/database.ts` - TypeScript definitions for documents table including storage references
@@ -28,9 +32,10 @@ Comprehensive guide to implementing file storage in Spideryarn Reading using Sup
 - `documents` - Single bucket containing all document-related files
 
 **Objects**: Individual files stored within buckets with hierarchical paths
-- Path format: `{document-uuid}/{file-type}/{original-filename.ext}`
-- Example: `550e8400-e29b-41d4-a716-446655440000/original/research-paper.pdf`
-- Future examples: `{doc-uuid}/extracted/figure-1.png`, `{doc-uuid}/thumbnails/page-1.jpg`
+- Path format: `{document-uuid}/{file-type}/{filename.ext}`
+- Original documents: `{doc-uuid}/original/research-paper.pdf`
+- **Extracted images**: `{doc-uuid}/assets/{descriptive-filename}.png` (NEW - implemented)
+- Future examples: `{doc-uuid}/thumbnails/page-1.jpg`, `{doc-uuid}/processed/summary.json`
 
 **Policies**: RLS-based access control for fine-grained security
 - Read/write permissions based on user authentication
@@ -52,6 +57,303 @@ interface Document {
   source_url: string | null        // Original URL if web-sourced
 }
 ```
+
+## Image Asset Storage Architecture (NEW)
+
+### Document Assets Integration
+
+The vision-based PDF processing pipeline extracts images from documents and stores them in Supabase Storage with comprehensive database tracking. This architecture supports the `/assets/` directory pattern for document-related files.
+
+#### Database Schema for Asset Tracking
+
+The `document_assets` table tracks all extracted assets with comprehensive metadata:
+
+```typescript
+interface DocumentAsset {
+  id: string                         // UUID primary key
+  document_id: string                // Foreign key to documents table
+  type: 'image'                      // Asset type (extensible for future types)
+  filename: string                   // Generated filename in storage
+  storage_path: string               // Full storage path without bucket
+  caption: string | null             // AI-generated caption
+  extraction_confidence: number | null // AI confidence score (0-1)
+  metadata: AssetMetadata            // JSONB field with asset-specific data
+  created_at: string                 // ISO timestamp
+  updated_at: string                 // ISO timestamp
+}
+
+interface AssetMetadata {
+  bounding_box?: {                   // Original location in PDF page
+    x1: number, y1: number,         // Top-left coordinates (normalized 0-1)
+    x2: number, y2: number          // Bottom-right coordinates (normalized 0-1)
+  }
+  page_number?: number              // Source page number (1-indexed)
+  original_dimensions?: {           // Extracted image dimensions
+    width: number, height: number
+  }
+  file_size?: number               // File size in bytes
+  extraction_method?: string       // Processing method used
+  element_id?: string             // HTML element ID for reference
+}
+```
+
+#### Storage Path Architecture
+
+**Assets Directory Structure**:
+```
+documents/
+├── {document-uuid}/original/research-paper.pdf
+├── {document-uuid}/assets/figure-1-neural-network-architecture.png
+├── {document-uuid}/assets/table-2-performance-metrics.png
+├── {document-uuid}/assets/equation-3-loss-function.png
+├── {document-uuid}/assets/{fallback-uuid}.png
+```
+
+**Filename Generation Strategy**:
+1. **AI-generated captions**: Descriptive names from image analysis (`figure-1-neural-network-architecture.png`)
+2. **Existing alt-text**: Use HTML alt attributes if available (`existing-alt-text.png`)
+3. **Deterministic UUIDs**: Consistent fallback based on page + coordinates (`img-{uuid}.png`)
+
+**Benefits**:
+- **Descriptive organization**: Human-readable filenames improve asset management
+- **Document-centric grouping**: All document files organized under single UUID
+- **RLS compatibility**: Existing document ownership policies extend to assets
+- **Future extensibility**: `/assets/` supports multiple asset types
+
+### Image Asset Upload Implementation
+
+#### Service Integration
+
+```typescript
+import { uploadImageAsset, getImageAssetUrl } from '@/lib/services/storage'
+import { documentAssetsService } from '@/lib/services/database/document-assets'
+
+async function extractAndStoreImage(
+  pageImageBase64: string,
+  documentId: string,
+  imageData: ExtractedImageData
+): Promise<ExtractedImageAsset> {
+  // 1. Extract image region from PDF page
+  const extractedImage = await extractImageFromPage({
+    pageImageBase64,
+    pageNumber: imageData.pageNumber,
+    boundingBox: imageData.bbox,
+    outputFormat: 'png',
+    quality: 0.95
+  })
+  
+  // 2. Generate AI caption for filename
+  const captionResult = await generateImageCaption({
+    imageBase64: extractedImage.base64Image,
+    pageNumber: imageData.pageNumber,
+    boundingBox: imageData.bbox,
+    extractionPurpose: 'filename'
+  })
+  
+  // 3. Generate descriptive filename with fallback hierarchy
+  const filenameResult = generateImageFilename({
+    aiCaption: captionResult.caption,
+    altText: imageData.altText,
+    pageNumber: imageData.pageNumber,
+    boundingBox: imageData.bbox,
+    elementId: imageData.elementId
+  }, existingFilenames)
+  
+  // 4. Upload to Supabase Storage
+  const uploadResult = await uploadImageAsset(
+    extractedImage.base64Image,
+    documentId,
+    filenameResult.filename,
+    'image/png'
+  )
+  
+  // 5. Create database record for asset tracking
+  const assetMetadata: AssetMetadata = {
+    bounding_box: {
+      x1: imageData.bbox.x1, y1: imageData.bbox.y1,
+      x2: imageData.bbox.x2, y2: imageData.bbox.y2
+    },
+    page_number: imageData.pageNumber,
+    original_dimensions: { 
+      width: extractedImage.width || 0, 
+      height: extractedImage.height || 0 
+    },
+    file_size: uploadResult.size,
+    extraction_method: 'vision_pipeline_stage3',
+    element_id: imageData.elementId
+  }
+  
+  const dbRecord = await documentAssetsService.create({
+    document_id: documentId,
+    type: 'image',
+    filename: filenameResult.filename,
+    storage_path: uploadResult.path,
+    caption: captionResult.caption,
+    extraction_confidence: captionResult.confidence,
+    metadata: assetMetadata
+  })
+  
+  // 6. Generate signed URL for HTML replacement
+  const storageUrl = await getImageAssetUrl(
+    documentId,
+    filenameResult.filename,
+    24 * 3600 // 24 hour expiration
+  )
+  
+  return {
+    elementId: imageData.elementId,
+    filename: filenameResult.filename,
+    storagePath: uploadResult.path,
+    storageUrl,
+    caption: captionResult.caption,
+    source: filenameResult.source,
+    extractionTimeMs: Date.now() - startTime
+  }
+}
+```
+
+#### Storage Service Extensions
+
+```typescript
+// Extended storage service for image assets
+async function uploadImageAsset(
+  base64Image: string,
+  documentId: string,
+  filename: string,
+  mimeType: string
+): Promise<StorageUploadResult | null> {
+  const filePath = `${documentId}/assets/${filename}`
+  
+  // Convert base64 to File object
+  const base64Data = base64Image.split(',')[1]
+  const byteCharacters = atob(base64Data)
+  const byteNumbers = new Array(byteCharacters.length)
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i)
+  }
+  const byteArray = new Uint8Array(byteNumbers)
+  const file = new File([byteArray], filename, { type: mimeType })
+  
+  const { data, error } = await supabase.storage
+    .from('documents')
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: false
+    })
+  
+  if (error) {
+    console.error('Image upload failed:', error)
+    return null // Graceful degradation in development
+  }
+  
+  return {
+    path: data.path,
+    fullPath: `documents/${data.path}`,
+    size: file.size,
+    mimeType
+  }
+}
+
+async function getImageAssetUrl(
+  documentId: string,
+  filename: string,
+  expiresIn: number
+): Promise<string> {
+  const filePath = `${documentId}/assets/${filename}`
+  
+  const { data, error } = await supabase.storage
+    .from('documents')
+    .createSignedUrl(filePath, expiresIn)
+  
+  if (error) {
+    throw new Error(`Failed to generate image URL: ${error.message}`)
+  }
+  
+  return data.signedUrl
+}
+```
+
+### Transaction-Based Error Handling
+
+The image extraction pipeline uses transaction-based cleanup to ensure data consistency:
+
+```typescript
+import { DocumentProcessingTransaction } from '@/lib/services/document-processing-transaction'
+
+async function processPageWithImageExtraction(pageData: PageProcessingInput) {
+  const transaction = new DocumentProcessingTransaction(pageData.documentId)
+  
+  try {
+    for (const imageData of extractedImages) {
+      // Upload to storage
+      const uploadResult = await uploadImageAsset(/* ... */)
+      transaction.recordStorageUpload(filename, uploadResult.path, metadata)
+      
+      // Create database record
+      const dbRecord = await documentAssetsService.create(/* ... */)
+      transaction.recordDatabaseRecord(dbRecord.id, metadata)
+    }
+    
+    // Commit transaction on success
+    transaction.commit()
+    
+  } catch (error) {
+    // Automatic rollback on any failure
+    await transaction.rollback()
+    throw error
+  }
+}
+```
+
+**Rollback Operations**:
+- **Storage cleanup**: Removes uploaded images from Supabase Storage
+- **Database cleanup**: Deletes created `document_assets` records
+- **LIFO order**: Last uploaded items are cleaned first
+- **Error aggregation**: Reports all rollback operations and any cleanup failures
+
+### RLS Policies for Asset Access
+
+Asset access inherits document-based security through path validation:
+
+```sql
+-- Users can upload assets for documents they own
+CREATE POLICY "Users can upload assets for owned documents" 
+ON storage.objects 
+FOR INSERT 
+TO authenticated 
+WITH CHECK (
+  bucket_id = 'documents' AND 
+  name ~ '^[0-9a-f-]+/assets/' AND
+  EXISTS (
+    SELECT 1 FROM documents 
+    WHERE documents.id::text = split_part(name, '/', 1)
+    AND documents.created_by = auth.uid()
+  )
+);
+
+-- Users can read assets for documents they can access
+CREATE POLICY "Users can view assets for accessible documents"
+ON storage.objects
+FOR SELECT
+TO authenticated
+USING (
+  bucket_id = 'documents' AND 
+  name ~ '^[0-9a-f-]+/assets/' AND
+  EXISTS (
+    SELECT 1 FROM documents 
+    WHERE documents.id::text = split_part(name, '/', 1)
+    AND (
+      documents.created_by = auth.uid() OR
+      documents.is_public = true
+    )
+  )
+);
+```
+
+**Path Pattern Matching**:
+- **Asset detection**: `name ~ '^[0-9a-f-]+/assets/'` matches asset paths
+- **Document extraction**: `split_part(name, '/', 1)` extracts document UUID
+- **Ownership validation**: Checks document access through existing policies
 
 ## File Upload Implementation
 
@@ -543,10 +845,10 @@ Bucket: "thumbnails"
 ```
 Bucket: "documents"
 ├── {doc-uuid}/original/filename.pdf
-├── {doc-uuid}/extracted/figure-1.png
-├── {doc-uuid}/extracted/chart-2.jpg
-├── {doc-uuid}/thumbnails/page-1-thumb.jpg
-├── {doc-uuid}/processed/summary.json
+├── {doc-uuid}/assets/figure-1-neural-network-architecture.png    ✅ IMPLEMENTED
+├── {doc-uuid}/assets/table-2-performance-metrics.png             ✅ IMPLEMENTED
+├── {doc-uuid}/thumbnails/page-1-thumb.jpg                        (future)
+├── {doc-uuid}/processed/summary.json                             (future)
 ```
 
 **Advantages**:

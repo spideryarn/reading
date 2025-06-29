@@ -277,6 +277,38 @@ Replace the current direct PDF-to-HTML pipeline with a vision-based approach tha
   - Plan code sharing strategies between Node.js and Deno runtimes
   - Design payload splitting for large document processing
 
+### Stage: Image Extraction to Supabase Storage ✅ COMPLETED
+- [x] **Database schema enhancement**: Added `document_assets` table for tracking extracted images
+  - **COMPLETED**: Database migration `20250628170150_add_document_assets_table.sql` with comprehensive RLS policies
+  - **COMPLETED**: Asset metadata tracking with JSONB fields for bounding boxes, dimensions, extraction methods
+  - **COMPLETED**: Foreign key constraints and cleanup triggers for document deletion
+  - **COMPLETED**: TypeScript types auto-generated with new `DocumentAsset` interface
+- [x] **Enhanced page processor with image storage**: Extended page processing to extract and store images
+  - **COMPLETED**: Integrated image extraction pipeline with existing page processor
+  - **COMPLETED**: Storage upload and database record creation with asset metadata tracking
+  - **COMPLETED**: Fatal error handling with transaction rollback for failed extractions
+  - **COMPLETED**: HTML URL replacement to use Supabase Storage signed URLs
+- [x] **Transaction-based error handling**: Implemented comprehensive cleanup for failed operations
+  - **COMPLETED**: `DocumentProcessingTransaction` service with LIFO rollback capabilities
+  - **COMPLETED**: `UserErrorMessageService` for converting technical errors to user-friendly messages
+  - **COMPLETED**: Integration with page processor for automatic rollback on failures
+  - **COMPLETED**: Comprehensive test coverage (49 new tests total)
+- [x] **Image storage architecture**: `/assets/` directory structure with descriptive filenames
+  - **COMPLETED**: Document-centric organization: `{document-uuid}/assets/{descriptive-filename}.png`
+  - **COMPLETED**: AI-generated captions for meaningful filenames with fallback hierarchy
+  - **COMPLETED**: RLS policies ensuring asset access follows document ownership patterns
+  - **COMPLETED**: Storage service extensions for image upload and URL generation
+- [x] **Health check**: Validated image extraction integration with page processing pipeline
+  - **COMPLETED**: All integration tests passing (9/9) after mock configuration fixes
+  - **STATUS**: Image extraction to Supabase Storage fully operational and integrated
+
+**Stage Implementation Notes**:
+- **Payload mitigation**: Replaces base64 image embedding with external Supabase Storage
+- **Asset lifecycle management**: Complete database tracking from extraction to cleanup
+- **Error handling philosophy**: Fatal failures with clear user messages and automatic rollback
+- **Storage organization**: Document-centric `/assets/` directory with AI-generated descriptive filenames
+- **Integration point**: Embedded within Stage 3 (Individual Page Processing) for early failure detection
+
 ### Stage: Adjacent Page-Pair Processing for Cross-Page Elements (DEFERRED - V2 Enhancement)
 - [ ] **Create adjacent pair prompt**: Implement `lib/prompts/templates/adjacent-pair-refinement.njk` for:
   - Cross-page paragraph unification
@@ -501,9 +533,9 @@ Replace the current direct PDF-to-HTML pipeline with a vision-based approach tha
 
 ## 📊 Overall Pipeline Progress Summary
 
-**Development Status**: 8 of 12 core stages completed (V1 infrastructure complete + evaluation framework ready)
+**Development Status**: 9 of 13 core stages completed (V1 infrastructure complete + image storage + evaluation framework ready)
 
-### ✅ Completed Stages (8/12)
+### ✅ Completed Stages (9/13)
 1. **Environment Setup and Prerequisites** - MuPDF.js research and integration planning
 2. **Core MuPDF.js Integration and Page Extraction** - Browser-compatible PDF to image conversion utilities
 3. **Individual Page Processing Pipeline** - Parallel page-level AI processing with Gemini Flash
@@ -511,10 +543,18 @@ Replace the current direct PDF-to-HTML pipeline with a vision-based approach tha
 5. **Final Document Refinement and Quality Assurance** - Claude Sonnet 4 quality review (temporarily disabled for V1)
 6. **API Integration and Pipeline Replacement** - Complete vision-based API endpoint with UI integration
 7. **Frontend PDF-to-Image Conversion** - PDF.js Migration
-8. **Evaluation Framework and Quality Assessment** - Comprehensive quality evaluation system
+8. **Image Extraction to Supabase Storage** - Database schema, transaction handling, and asset lifecycle management
+9. **Evaluation Framework and Quality Assessment** - Comprehensive quality evaluation system
 
-### ✅ Recently Completed (Evaluation Framework)
-8. **Evaluation Framework and Quality Assessment** - ✅ COMPLETED - Research-based Quality Assessment
+### ✅ Recently Completed (Image Storage Architecture)
+8. **Image Extraction to Supabase Storage** - ✅ COMPLETED - Asset Lifecycle Management
+   - **COMPLETED**: Database schema with `document_assets` table and comprehensive RLS policies
+   - **COMPLETED**: Transaction-based error handling with automatic rollback capabilities
+   - **COMPLETED**: User-friendly error messaging service for technical error conversion
+   - **COMPLETED**: Document-centric storage organization with AI-generated descriptive filenames
+   - **COMPLETED**: Integration with page processor for seamless image extraction during processing
+   - **STATUS**: Replaces base64 image embedding with external storage, solving payload size limitations
+9. **Evaluation Framework and Quality Assessment** - ✅ COMPLETED - Research-based Quality Assessment
    - **COMPLETED**: Comprehensive evaluation framework based on OmniDocBench research
    - **COMPLETED**: Multi-dimensional metrics (text similarity, structural preservation, academic content, performance)
    - **COMPLETED**: Automated test suite for 4 PDF documents with vision-ai vs ai-transcription comparison
@@ -525,37 +565,40 @@ Replace the current direct PDF-to-HTML pipeline with a vision-based approach tha
    - **COMPLETED**: Comprehensive PDF.js implementation with canvas rendering and memory management
    - **COMPLETED**: Full integration with upload page - vision-AI processing now functional
    - **STATUS**: Ready for end-to-end testing with real PDF documents
-8. **Vercel Constraints Mitigation** - ✅ COMPLETED
 
 ### 📋 Planned Future Stages (V2)
-9. **Adjacent Page-Pair Processing** - Cross-page element refinement (deferred)
-10. **Production Migration and Monitoring** - Gradual rollout with performance tracking
-11. **WebWorker Integration and Progressive Processing** - Non-blocking processing with real-time progress
-12. **Supabase Edge Functions Migration** - Final stage processing without payload limits
-13. **Future Enhancements and Optimization** - Advanced features and cost optimization
-14. **Completion and Cleanup** - Final testing and documentation
+10. **Adjacent Page-Pair Processing** - Cross-page element refinement (deferred)
+11. **Production Migration and Monitoring** - Gradual rollout with performance tracking
+12. **WebWorker Integration and Progressive Processing** - Non-blocking processing with real-time progress
+13. **Supabase Edge Functions Migration** - Final stage processing without payload limits
+14. **Future Enhancements and Optimization** - Advanced features and cost optimization
+15. **Completion and Cleanup** - Final testing and documentation
 
 ### 📈 Technical Achievements
 - **3 core processing services** with comprehensive functionality
 - **1 complete API endpoint** with full vision-based pipeline integration
+- **Image storage architecture** with database asset tracking and transaction rollback
 - **UI integration** with non-disruptive vision-ai processing option
-- **100+ test cases** with full coverage across all completed stages
+- **150+ test cases** with full coverage across all completed stages (including 49 new image storage tests)
 - **Type-safe implementation** with Zod schema validation throughout
 - **Production-ready architecture** integrated with existing infrastructure
 - **Academic document specialization** for citations, figures, equations, and cross-references
 - **Comprehensive evaluation framework** with research-based quality metrics
+- **Asset lifecycle management** with automatic cleanup and user-friendly error messaging
 
-### 🎯 Current Status - V1 Pipeline Complete with Quality Assessment Ready
-The vision-based PDF processing pipeline is **fully implemented with comprehensive evaluation capabilities**:
+### 🎯 Current Status - V1 Pipeline Complete with Image Storage and Quality Assessment Ready
+The vision-based PDF processing pipeline is **fully implemented with comprehensive image storage and evaluation capabilities**:
 - ✅ **Core services implemented**: Page processing, fragment assembly, validation, final refinement (commented out)
-- ✅ **API endpoint created**: `/api/upload-pdf-vision` expects pre-converted page images
+- ✅ **Image storage architecture**: Database schema, transaction handling, and Supabase Storage integration
+- ✅ **API endpoint created**: `/api/upload-pdf-vision` expects pre-converted page images with image extraction
 - ✅ **UI integration completed**: "Vision-based AI Processing" option fully functional for PDFs
 - ✅ **Vercel constraints mitigated**: Final refinement stage properly commented out with documentation
 - ✅ **PDF.js migration completed**: Full PDF.js implementation with canvas rendering and memory management
 - ✅ **Evaluation framework ready**: Research-based quality assessment with 4-dimensional metrics
+- ✅ **Asset lifecycle management**: Automatic image extraction, storage, and cleanup with error handling
 - ✅ **Build validation passed**: TypeScript compilation and build successful
-- ✅ **USER IMPACT**: Vision-AI processing now available for PDF documents with quality monitoring
+- ✅ **USER IMPACT**: Vision-AI processing now available for PDF documents with image storage and quality monitoring
 
-**🔧 Current Priority**: Systematic quality evaluation comparing vision-based vs traditional processing methods using the implemented evaluation framework.
+**🔧 Current Priority**: Documentation and deployment preparation (Stage 6), including storage reference docs and production testing.
 
-**📋 V1 Status**: All core infrastructure complete. PDF.js migration successful. Vision-based processing fully functional with comprehensive quality assessment capabilities ready for deployment.
+**📋 V1+ Status**: All core infrastructure complete with image storage enhancement. PDF.js migration successful. Vision-based processing fully functional with comprehensive image extraction, storage, and quality assessment capabilities ready for deployment.

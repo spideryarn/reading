@@ -28,6 +28,17 @@ const mockLogger = {
 }
 ;(createRequestLogger as jest.Mock).mockReturnValue(mockLogger)
 
+// Mock database assets service
+const mockDocumentAssetsService = {
+  create: jest.fn(),
+  getByDocumentId: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn()
+}
+jest.doMock('../database/document-assets', () => ({
+  documentAssetsService: mockDocumentAssetsService
+}))
+
 describe('Page Processor Integration with Image Extraction', () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -164,6 +175,31 @@ describe('Page Processor Integration with Image Extraction', () => {
     const mockGetImageAssetUrl = require('../storage').getImageAssetUrl
     mockGetImageAssetUrl.mockResolvedValue('https://supabase.example.com/storage/v1/object/sign/documents/doc-123/assets/neural-network-diagram.png?token=abc123')
 
+    // Mock database assets service
+    const mockDocumentAssetsService = require('../database/document-assets').documentAssetsService
+    mockDocumentAssetsService.create.mockResolvedValue({
+      id: 'asset-123',
+      document_id: 'doc-123',
+      type: 'image',
+      filename: 'neural-network-diagram.png',
+      storage_path: 'doc-123/assets/neural-network-diagram.png',
+      caption: 'Neural network diagram',
+      extraction_confidence: 0.85,
+      metadata: {},
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+
+    // Mock transaction
+    const mockTransaction = {
+      recordStorageUpload: jest.fn(),
+      recordDatabaseRecord: jest.fn(),
+      commit: jest.fn(),
+      rollback: jest.fn().mockResolvedValue({ success: true, operationsRolledBack: 0, errors: [] })
+    }
+    const MockDocumentProcessingTransaction = require('../document-processing-transaction').DocumentProcessingTransaction
+    MockDocumentProcessingTransaction.mockImplementation(() => mockTransaction)
+
     const input: PageProcessingInput = {
       pageImageBase64: 'data:image/png;base64,test',
       pageNumber: 1,
@@ -191,6 +227,8 @@ describe('Page Processor Integration with Image Extraction', () => {
     expect(mockGenerateImageCaption).toHaveBeenCalled()
     expect(mockUploadImageAsset).toHaveBeenCalled()
     expect(mockGetImageAssetUrl).toHaveBeenCalled()
+    expect(mockDocumentAssetsService.create).toHaveBeenCalled()
+    expect(mockTransaction.commit).toHaveBeenCalled()
   })
 
   it('should handle storage upload failure gracefully', async () => {
@@ -296,7 +334,7 @@ describe('Page Processor Integration with Image Extraction', () => {
     expect(result.error).toContain('Image extraction failed for page 1')
     expect(result.extractedImages).toEqual([])
     expect(mockLogger.error).toHaveBeenCalledWith(
-      'Image extraction failed fatally',
+      'Image extraction failed fatally, performing rollback',
       expect.objectContaining({
         pageNumber: 1,
         elementId: 'fig-1',
@@ -392,7 +430,7 @@ describe('Page Processor Integration with Image Extraction', () => {
         expect.objectContaining({
           pageNumber: 2,
           documentId: 'doc-456',
-          operation: 'page processing',
+          operation: 'image extraction',
           processingStage: 'vision pipeline'
         })
       )

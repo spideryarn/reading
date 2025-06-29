@@ -36,6 +36,7 @@ Replace base64 image embedding in vision-based PDF processing with Supabase Stor
 
 - **Vision Pipeline Planning**: `planning/250627c_vision_based_pdf_processing_pipeline.md` - Current vision-based processing implementation
 - **Supabase Storage Reference**: `docs/reference/DATABASE_SUPABASE_STORAGE_REFERENCE.md` - Storage architecture and implementation patterns
+- **Database Migrations Guide**: `docs/reference/DATABASE_MIGRATIONS.md` - Schema change management with Supabase
 - **Current Vision Implementation**: `app/api/upload-pdf-vision/route.ts` - Vision-based PDF processing API endpoint
 - **Fragment Processor**: `lib/services/html-fragment-processor.ts` - Bounding box extraction and image metadata processing
 - **Page Processing**: `lib/services/page-processor.ts` - Individual page AI processing with Gemini Flash 2.5
