@@ -67,10 +67,12 @@ This planning document proposes a **root-cause refactor** to converge on a singl
 - [x] Replace imports of `lib/auth/route-protection` helpers with new ones.
 - [x] Run `npm run check:health --quick` to catch immediate type errors.
 
-### Stage: Remove Deprecated Code
-- [ ] Remove deprecated `validateAuth` function from `lib/auth/server-auth.ts`.
-- [ ] Remove any remaining deprecated function overloads and legacy compatibility code.
-- [ ] Update JSDoc and TypeScript definitions to reflect final API.
+### Stage: Remove Deprecated Code ✅ COMPLETED
+- [x] Remove deprecated `validateAuth` function from `lib/auth/server-auth.ts`.
+- [x] Remove any remaining deprecated function overloads and legacy compatibility code.
+- [x] Update JSDoc and TypeScript definitions to reflect final API.
+
+**Stage 5 Summary**: Successfully removed all deprecated code including the `validateAuth` function from `lib/auth/server-auth.ts`, cleaned up related test cases and mock implementations, and updated module JSDoc to reflect the final three-function API (`getAuthUser`, `requireAuth`, `assertAuth`). All authentication tests (11/11) passing. The authentication helper API is now clean and consistent with single-responsibility functions.
 
 ### Stage: Documentation & Evergreen Updates
 - [ ] Update `docs/reference/AUTHENTICATION_OVERVIEW.md` helper descriptions.

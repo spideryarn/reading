@@ -62,9 +62,6 @@ export const getSession = jest.fn().mockResolvedValue({
   user: defaultTestUser
 })
 
-// Legacy function - kept for backward compatibility during transition
-// TODO: Remove after all tests are migrated to new authentication helpers
-export const validateAuth = jest.fn().mockResolvedValue(defaultTestUser)
 
 export const checkAdminAccess = jest.fn<Promise<boolean>, []>().mockResolvedValue(false)
 
@@ -123,16 +120,6 @@ export const setMockUser = (user: User | null) => {
       user
     })
     
-    // Legacy validateAuth - kept for backward compatibility during transition
-    validateAuth.mockImplementation((request?: Request) => {
-      if (request) {
-        // Modern style - return result object (delegates to assertAuth)
-        return Promise.resolve({ success: true, user })
-      } else {
-        // Legacy style - return user directly (delegates to requireAuth)
-        return Promise.resolve(user)
-      }
-    })
   } else {
     getUser.mockResolvedValue({ user: null, error: 'Not authenticated' })
     getUserId.mockResolvedValue(null)
@@ -154,16 +141,6 @@ export const setMockUser = (user: User | null) => {
       error: 'Authentication required'
     })
     
-    // Legacy validateAuth - kept for backward compatibility during transition
-    validateAuth.mockImplementation((request?: Request) => {
-      if (request) {
-        // Modern style - return result object (delegates to assertAuth)
-        return Promise.resolve({ success: false, error: 'Authentication required' })
-      } else {
-        // Legacy style - throw AuthError (delegates to requireAuth)
-        return Promise.reject(new AuthError('Authentication required'))
-      }
-    })
   }
 }
 
@@ -182,8 +159,6 @@ export const resetAuthMocks = () => {
   requireAuth.mockClear()
   assertAuth.mockClear()
   
-  // Legacy validateAuth - kept for backward compatibility during transition
-  validateAuth.mockClear()
   
   // Reset to default authenticated state
   setMockUser(defaultTestUser)
