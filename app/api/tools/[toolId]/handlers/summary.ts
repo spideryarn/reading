@@ -12,7 +12,7 @@
  * New route: /api/tools/summary
  * Actions:
  * - 'generate' or 'execute' - single summary generation
- * - 'multi' or 'hierarchical' - multi-dimensional summary generation
+ * - 'multi-summarise' - multi-dimensional summary generation
  */
 
 import { z } from 'zod'
@@ -42,7 +42,7 @@ const SummaryGetRequestSchema = z.object({
   action: z.enum(['get', 'list']).default('get'),
   documentId: z.string().min(1, 'Document ID is required'),
   granularity: z.string().optional(),
-  type: z.enum(['single', 'multi', 'all']).default('all')
+  type: z.enum(['single', 'multi-summarise', 'all']).default('all')
 })
 
 const SingleSummaryPostRequestSchema = z.object({
@@ -141,7 +141,7 @@ export class SummaryHandler extends BaseToolHandler {
           type: 'single',
           ...this.createResponseMetadata()
         }
-      } else if (type === 'multi' || type === 'all') {
+      } else if (type === 'multi-summarise' || type === 'all') {
         // Get multi-dimensional summary
         const existingMultiSummary = await enhancementService.getMultiSummary(documentId)
         
@@ -149,7 +149,7 @@ export class SummaryHandler extends BaseToolHandler {
           logger.info({ documentId, cached: true }, 'Returning cached multi-dimensional summary')
           return {
             summaries: existingMultiSummary,
-            type: 'multi',
+            type: 'multi-summarise',
             cached: true,
             ...this.createResponseMetadata()
           }
@@ -160,7 +160,7 @@ export class SummaryHandler extends BaseToolHandler {
         return {
           cached: false,
           summaries: null,
-          type: 'multi',
+          type: 'multi-summarise',
           ...this.createResponseMetadata()
         }
       }
@@ -204,7 +204,9 @@ export class SummaryHandler extends BaseToolHandler {
     const mode = parameters.mode as string | undefined
     
     // Route based on action type or mode
-    if (action === 'multi' || action === 'hierarchical' || action === 'multi-summarise' || mode === 'multi-summarise') {
+    // Note: We use 'multi-summarise' as the canonical action name. 
+    // Previously supported aliases ('multi', 'hierarchical') have been removed for cleaner codebase.
+    if (action === 'multi-summarise' || mode === 'multi-summarise') {
       return this.handleMultiLevelSummary(parameters, context, logger)
     } else {
       // Default to single summary for 'execute', 'generate', 'refresh'
@@ -466,7 +468,7 @@ export class SummaryHandler extends BaseToolHandler {
         logger.info({ documentId, cached: true }, 'Returning cached multi-dimensional summary')
         return {
           summaries: existingSummary,
-          type: 'multi',
+          type: 'multi-summarise',
           cached: true,
           ...this.createResponseMetadata()
         }
@@ -668,7 +670,7 @@ export class SummaryHandler extends BaseToolHandler {
         
         return {
           summaries: parsedSummaries,
-          type: 'multi',
+          type: 'multi-summarise',
           cached: false,
           enhancementId: enhancement.id,
           totalCombinations: 9,
@@ -689,7 +691,7 @@ export class SummaryHandler extends BaseToolHandler {
         
         return {
           summaries: parsedSummaries,
-          type: 'multi',
+          type: 'multi-summarise',
           cached: false,
           warning: 'Summaries generated but not saved to database',
           error: dbError instanceof Error ? dbError.message : 'Unknown database error',
@@ -763,7 +765,7 @@ export class SummaryHandler extends BaseToolHandler {
             executionTime: requestTimer.elapsed()
           })
         }
-      } else if (type === 'multi') {
+      } else if (type === 'multi-summarise') {
         // Delete multi-dimensional summary enhancement
         await enhancementService.delete(documentId, 'summary', 'multi-dimensional')
         
@@ -774,7 +776,7 @@ export class SummaryHandler extends BaseToolHandler {
         return {
           success: true,
           deleted: true,
-          type: 'multi',
+          type: 'multi-summarise',
           documentId,
           ...this.createResponseMetadata({
             executionTime: requestTimer.elapsed()

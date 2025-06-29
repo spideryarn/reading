@@ -236,7 +236,6 @@ export class ChatHandler extends BaseToolHandler {
       
       // ATOMIC TRANSACTION: Thread creation/verification + user message
       let effectiveThreadId = threadId
-      let userMessage
       
       if (!threadId && documentId) {
         // Create new thread atomically with user message
@@ -261,7 +260,7 @@ export class ChatHandler extends BaseToolHandler {
       }
       
       // Save user message to database first
-      userMessage = await chatService.addMessage({
+      const userMessage = await chatService.addMessage({
         threadId: effectiveThreadId,
         role: 'user',
         content: latestMessage.content

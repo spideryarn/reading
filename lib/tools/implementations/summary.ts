@@ -49,7 +49,7 @@ const summaryTool: Tool = {
   executorConfig: {
     apiEndpoint: '/api/tools/summary',
     timeout: 180000, // 3 minutes - summaries can be very slow, especially multi-dimensional
-    supportedActions: ['execute', 'generate', 'refresh', 'multi', 'hierarchical'],
+    supportedActions: ['execute', 'generate', 'refresh', 'multi-summarise'],
     parameterSchema: z.object({
       // Single summary parameters
       content: z.string().min(1).optional(),
@@ -61,7 +61,7 @@ const summaryTool: Tool = {
       // action determines which type of summary to generate
       
       // GET/DELETE parameters
-      type: z.enum(['single', 'multi', 'all']).optional()
+      type: z.enum(['single', 'multi-summarise', 'all']).optional()
     }).refine(
       () => {
         // For POST operations, either content or documentId should be provided

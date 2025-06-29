@@ -200,6 +200,7 @@ Tools automatically generate command palette entries through the dynamic generat
 - **Accessible by default**: Keyboard shortcuts, screen reader support, platform-specific conventions
 - **Progressive enhancement**: Basic functionality first, advanced features iteratively
 - **LLM-friendly architecture**: Design for future function calling and URL state integration
+- **Canonical naming**: Each tool should have exactly one canonical name/action - avoid aliases to prevent confusion
 
 ## Tool Categories and Characteristics
 
