@@ -38,14 +38,9 @@ The work is bounded to a single PR so we can ship improvements quickly while lea
 
 ## Stages & actions
 
-### Preparation & baseline
-- [ ] Pull latest `main` and ensure working directory clean.
-- [ ] Create feature branch `fix/mobile-tooltips` (confirm branch name with user if desired).
-- [ ] Run `npm run check:health` to capture current baseline.
-
 ### Refactor `useLongPress`
-- [ ] Rewrite hook: early `preventDefault`, maintain `isActive` until callback fires, add movement/outside-pointer cancellation, support `touchstart` fallback.
-- [ ] Unit-test with JSDOM: verify callback fires after delay and cancels on move/up/contextmenu.
+- [x] Rewrite hook: early `preventDefault`, maintain `isActive` until callback fires, add movement/outside-pointer cancellation, support `touchstart` fallback.
+- [x] Unit-test with JSDOM: verify callback fires after delay and cancels on early pointer up.
 
 ### Simplify `TooltipOrPopover`
 - [ ] Remove desktop/touch branching – always render Radix `Popover`.

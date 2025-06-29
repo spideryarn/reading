@@ -12,8 +12,14 @@ interface LongPressReturn {
   onPointerCancel: () => void
   onPointerMove: (event: React.PointerEvent) => void
   onContextMenu: (event: React.MouseEvent) => void
+  onTouchStart: (event: React.TouchEvent) => void
+  onTouchMove: (event: React.TouchEvent) => void
+  onTouchEnd: () => void
   isActive: boolean
 }
+
+// Movement threshold in pixels before cancelling a pending long-press. Keep small so normal scrolling doesn't accidentally trigger the long-press.
+const MOVEMENT_THRESHOLD = 10
 
 /**
  * Custom hook for handling long-press interactions using pointer events.
@@ -33,44 +39,80 @@ export function useLongPress(
   const { delay = 500 } = options
   
   const [isActive, setIsActive] = useState(false)
-  const timeout = useRef<NodeJS.Timeout>()
+  const timeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const startPosition = useRef<{ x: number; y: number } | null>(null)
   
+  // Clears any pending timeout and resets state
   const clear = useCallback(() => {
-    if (timeout.current) {
+    if (timeout.current !== null) {
       clearTimeout(timeout.current)
-      timeout.current = undefined
+      timeout.current = null
     }
     setIsActive(false)
     startPosition.current = null
   }, [])
   
-  const start = useCallback((event: React.PointerEvent) => {
-    // Only handle primary pointer (first finger/mouse)
-    if (!event.isPrimary) return
-    
-    startPosition.current = { x: event.clientX, y: event.clientY }
-    setIsActive(true)
-    
-    timeout.current = setTimeout(() => {
-      callback()
-      setIsActive(false)
-    }, delay)
-  }, [callback, delay])
-  
-  const checkMovement = useCallback((event: React.PointerEvent) => {
-    if (!event.isPrimary) return
-    
-    if (startPosition.current) {
-      const deltaX = Math.abs(event.clientX - startPosition.current.x)
-      const deltaY = Math.abs(event.clientY - startPosition.current.y)
-      
-      // Cancel if moved beyond threshold (10px)
-      if (deltaX > 10 || deltaY > 10) {
-        clear()
+  /**
+   * Begin tracking a possible long-press. We use Pointer Events where available but
+   * expose Touch events as a fallback for browsers that still don't fully support
+   * them (e.g. older iOS WebViews).
+   */
+  const start = useCallback((event: React.PointerEvent | React.TouchEvent) => {
+    // In the rare case this handler is wired to both pointer and touch events the
+    // pointer variant should win (so ignore touch if we already have an active pointer)
+    if (timeout.current) return
+
+    // For Pointer events guard against secondary buttons
+    if ('isPrimary' in event && !(event as React.PointerEvent).isPrimary) return
+
+    // Prevent native long-press actions (text selection / drag scroll / context menu)
+    if ('preventDefault' in event) event.preventDefault()
+
+    const point = 'clientX' in event
+      ? { x: (event as React.PointerEvent).clientX, y: (event as React.PointerEvent).clientY }
+      : {
+          x: (event as React.TouchEvent).touches[0]?.clientX ?? 0,
+          y: (event as React.TouchEvent).touches[0]?.clientY ?? 0
+        }
+
+    startPosition.current = point
+
+    // Capture subsequent events so we still receive pointerup even if the user
+    // moves outside the original element.
+    if ('currentTarget' in event && 'setPointerCapture' in (event.currentTarget as any) && 'pointerId' in event) {
+      try {
+        ;(event.currentTarget as any).setPointerCapture((event as any).pointerId)
+      } catch {
+        // Not critical – just best-effort.
       }
     }
-  }, [clear])
+
+    setIsActive(true)
+
+    timeout.current = setTimeout(() => {
+      callback()
+      clear() // Reset active state after firing
+    }, delay)
+  }, [callback, clear, delay])
+  
+  const checkMovement = useCallback(
+    (event: React.PointerEvent | React.TouchEvent) => {
+      if (startPosition.current) {
+        const point = 'clientX' in event
+          ? { x: (event as React.PointerEvent).clientX, y: (event as React.PointerEvent).clientY }
+          : { x: (event as React.TouchEvent).touches[0]?.clientX ?? 0, y: (event as React.TouchEvent).touches[0]?.clientY ?? 0 }
+
+        const deltaX = Math.abs(point.x - startPosition.current.x)
+        const deltaY = Math.abs(point.y - startPosition.current.y)
+
+        // Cancel if moved beyond threshold
+        if (deltaX > MOVEMENT_THRESHOLD || deltaY > MOVEMENT_THRESHOLD) {
+          clear()
+        }
+      }
+    },
+    [clear]
+  )
   
   const handleContextMenu = useCallback((event: React.MouseEvent) => {
     // Prevent OS long-press context menu when long-press is active
@@ -79,10 +121,37 @@ export function useLongPress(
     }
   }, [isActive])
   
+  // --- Touch event fallbacks -------------------------------------------------
+
+  const onTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      // Ignore if browser already supports pointer events (will duplicate)
+      if (window.PointerEvent) return
+      start(e)
+    },
+    [start]
+  )
+
+  const onTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (window.PointerEvent) return
+      checkMovement(e)
+    },
+    [checkMovement]
+  )
+
+  const onTouchEnd = useCallback(
+    () => {
+      if (window.PointerEvent) return
+      clear()
+    },
+    [clear]
+  )
+  
   // Cleanup timer on unmount
   useEffect(() => {
     return () => {
-      if (timeout.current) {
+      if (timeout.current !== null) {
         clearTimeout(timeout.current)
       }
     }
@@ -94,6 +163,9 @@ export function useLongPress(
     onPointerCancel: clear,
     onPointerMove: checkMovement,
     onContextMenu: handleContextMenu,
+    onTouchStart,
+    onTouchMove,
+    onTouchEnd,
     isActive
   }
 }
