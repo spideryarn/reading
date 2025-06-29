@@ -154,7 +154,7 @@ export function useChatStore({
           },
           metadata: {
             correlationId: crypto.randomUUID(),
-            source: 'chat-store',
+            source: 'direct',
             timestamp: new Date().toISOString()
           }
         }),
@@ -195,7 +195,7 @@ export function useChatStore({
     } finally {
       setIsLoading(false);
     }
-  }, [documentContext, documentId, threadId]);
+  }, [documentContext, documentId, threadId, deduplicateMessages]);
 
   /**
    * Create new thread (will be called automatically by sendMessage if needed)

@@ -8,12 +8,10 @@ import {
   ComposerPrimitive, 
   MessagePrimitive,
   AssistantRuntimeProvider, 
-  useLocalRuntime,
-  type ChatModelAdapter,
-  type ThreadMessageLike,
+  useExternalStoreRuntime,
 } from "@assistant-ui/react";
-import { User, Robot, PaperPlaneTilt, CircleNotch, ArrowClockwise, Trash } from '@phosphor-icons/react';
-import { usePersistentChat } from '@/src/lib/hooks/usePersistentChat';
+import { User, Robot, PaperPlaneTilt, CircleNotch, Trash } from '@phosphor-icons/react';
+import { useChatStore } from '@/src/lib/hooks/useChatStore';
 import { Button } from '@/components/ui/button'
 import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 import { useChatUrlState } from '@/lib/tools/hooks/use-tool-url-state';
@@ -244,9 +242,29 @@ function Thread() {
 }
 
 
-// Runtime wrapper that remounts when key changes
-function ChatRuntime({ adapter, initialMessages }: { adapter: ChatModelAdapter; initialMessages: ThreadMessageLike[] }) {
-  const runtime = useLocalRuntime(adapter, { initialMessages });
+// Runtime wrapper using external store pattern
+function ChatRuntime({ chatStore }: { chatStore: ReturnType<typeof useChatStore> }) {
+  const runtime = useExternalStoreRuntime({
+    messages: chatStore.messages,
+    isRunning: chatStore.isLoading,
+    onNew: async (message) => {
+      // Extract text content from assistant-ui message format
+      const content = Array.isArray(message.content)
+        ? message.content.find(part => part.type === 'text')?.text || ''
+        : String(message.content || '');
+      
+      if (content.trim()) {
+        await chatStore.sendMessage(content);
+      }
+    },
+    convertMessage: (msg) => ({
+      id: msg.id,
+      role: msg.role as 'user' | 'assistant',
+      content: [{ type: 'text' as const, text: msg.content }],
+      createdAt: new Date(msg.created_at)
+    })
+  });
+  
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <Thread />
@@ -262,13 +280,13 @@ export function AssistantChat({ documentId, documentContext }: AssistantChatProp
     setConversation(null);
   }, [setConversation]);
   
-  // Build props for usePersistentChat, omitting conversationId when undefined to satisfy exactOptionalPropertyTypes
-  const persistentChatProps = conversationId
+  // Build props for useChatStore, omitting conversationId when undefined to satisfy exactOptionalPropertyTypes
+  const chatStoreProps = conversationId
     ? { documentId, documentContext, conversationId, onThreadDeleted: handleThreadDeleted }
     : { documentId, documentContext, onThreadDeleted: handleThreadDeleted };
 
-  const { chatModelAdapter, initialMessages, isLoaded, threadId, error, isRefreshing, refreshMessages, deleteThread, runtimeKey } =
-    usePersistentChat(persistentChatProps);
+  const chatStore = useChatStore(chatStoreProps);
+  const { threadId, error, isLoading } = chatStore;
   
   // Sync threadId to URL when it changes
   useEffect(() => {
@@ -277,8 +295,8 @@ export function AssistantChat({ documentId, documentContext }: AssistantChatProp
     }
   }, [threadId, conversationId, setConversation]);
 
-  // Show loading state while initializing
-  if (!isLoaded) {
+  // Show loading state while initializing (only for initial load)
+  if (isLoading && !threadId && !error) {
     return (
       <div className="h-full flex flex-col bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="flex-1 flex items-center justify-center p-8">
@@ -331,25 +349,6 @@ export function AssistantChat({ documentId, documentContext }: AssistantChatProp
           )}
         </div>
         <div className="flex items-center gap-1">
-          <TooltipOrPopover
-            content="Check for chat update from the database"
-            side="bottom"
-            sideOffset={4}
-          >
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={refreshMessages}
-              disabled={isRefreshing}
-              className="h-6 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
-            >
-              <ArrowClockwise 
-                size={12} 
-                weight="bold" 
-                className={isRefreshing ? "animate-spin" : ""} 
-              />
-            </Button>
-          </TooltipOrPopover>
           {threadId && (
             <TooltipOrPopover
               content="Delete this conversation and start fresh"
@@ -360,8 +359,8 @@ export function AssistantChat({ documentId, documentContext }: AssistantChatProp
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={deleteThread}
-                disabled={isRefreshing}
+                onClick={chatStore.deleteThread}
+                disabled={isLoading}
                 className="h-6 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
               >
                 <Trash size={12} weight="bold" />
@@ -371,7 +370,7 @@ export function AssistantChat({ documentId, documentContext }: AssistantChatProp
         </div>
       </div>
       
-      <ChatRuntime key={runtimeKey} adapter={chatModelAdapter} initialMessages={initialMessages} />
+      <ChatRuntime chatStore={chatStore} />
     </div>
   );
 }
