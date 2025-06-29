@@ -51,7 +51,7 @@ export function buildHeadingTree(headings: Heading[]): HeadingNode[] {
     }
 
     // Pop items from stack that are at the same level or higher
-    while (stack.length > 0 && stack[stack.length - 1].level >= heading.level) {
+    while (stack.length > 0 && stack[stack.length - 1]!.level >= heading.level) {
       stack.pop()
     }
 
@@ -60,7 +60,8 @@ export function buildHeadingTree(headings: Heading[]): HeadingNode[] {
       roots.push(node)
     } else {
       // This is a child of the last item in the stack
-      stack[stack.length - 1].node.children.push(node)
+      const parentEntry = stack[stack.length - 1]!
+      parentEntry.node.children.push(node)
     }
 
     // Push this node onto the stack
@@ -82,7 +83,7 @@ function getIndentClass(level: number): string {
     5: 'pl-12',
     6: 'pl-15'
   }
-  return indents[level as keyof typeof indents] || 'pl-0'
+  return indents[level as keyof typeof indents] ?? 'pl-0'
 }
 
 function getTextSizeClass(level: number): string {
@@ -94,7 +95,7 @@ function getTextSizeClass(level: number): string {
     5: 'text-xs font-normal',
     6: 'text-xs font-normal'
   }
-  return sizes[level as keyof typeof sizes] || 'text-sm font-normal'
+  return sizes[level as keyof typeof sizes] ?? 'text-sm font-normal'
 }
 
 
@@ -179,6 +180,11 @@ function HeadingNodeComponent({
           sideOffset={4}
           showIndicator={false}
           contentClassName="relative z-10 p-0 bg-transparent border-0 shadow-none"
+          onOpenChange={(open) => {
+            if (open && handleTooltipShow) {
+              handleTooltipShow(node.elementId)
+            }
+          }}
         >
           <div
             className={`cursor-pointer rounded-lg px-3 py-3 transition-all duration-150 group flex-1 ${
@@ -189,8 +195,6 @@ function HeadingNodeComponent({
                 : 'hover:shadow-sm'
             }`}
             onClick={() => onHeadingClick(node)}
-            onMouseEnter={() => handleTooltipShow(node.elementId)}
-            onFocus={() => handleTooltipShow(node.elementId)}
             data-heading-id={node.id}
           >
             <div className="flex items-center justify-between">

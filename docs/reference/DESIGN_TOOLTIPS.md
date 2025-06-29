@@ -807,3 +807,36 @@ const getCachedContent = (key: string) => {
 - Test long-press timing (default 500ms) and movement cancellation (10px threshold)
 - Check console for device detection and hook cleanup warnings
 - Verify visual consistency between desktop tooltip and touch popover modes
+
+## 2025-06 Mobile-Tooltip Reliability Patch  ✅ NEW
+
+> Introduced in planning doc `planning/250629a_mobile_tooltips_fix.md` (shipped June 2025).
+
+Key upgrades:
+
+1. **`useLongPress` hardened** – early `preventDefault`, movement-cancellation & pointer-up cleanup ensure 500 ms long-press is reliable on iOS & Android.
+2. **`TooltipManager` context** – global provider tracks `openId`; `TooltipOrPopover` now calls `setOpenId()` internally so **only one tooltip can be open at a time**. Dismisses on pointer-down outside, scroll, resize and ⎋.
+3. **Unified implementation** – `TooltipOrPopover` always renders a Radix Popover. Hover/focus instantly opens on devices that can hover; touch devices rely on long-press.
+4. **`onOpenChange` hook** – `TooltipOrPopover` exposes `onOpenChange` prop. Callers (e.g. `HeadingTree`) load AI summaries _only when_ the tooltip becomes visible, avoiding unnecessary network calls from stray hover/blur events.
+5. **Trigger API unchanged** – previous props remain stable; dotted-underline indicator still optional via `showIndicator`.
+
+### Usage Example (loading summaries on open)
+
+```tsx
+<TooltipOrPopover
+  content={getTooltipContent(elementId)}
+  onOpenChange={(open) => {
+    if (open) {
+      handleTooltipShow(elementId)
+    }
+  }}
+  side="right"
+  align="start"
+  sideOffset={4}
+  contentClassName="p-0 bg-transparent border-0 shadow-none"
+>
+  <span>{headingText}</span>
+</TooltipOrPopover>
+```
+
+No additional changes are required for most existing call-sites – they automatically gain single-tooltip behaviour and touch reliability.
