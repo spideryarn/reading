@@ -17,6 +17,9 @@ import { extractImageFromPage } from '@/lib/services/image-extractor'
 import { generateImageCaption } from '@/lib/services/image-caption-generator'
 import { generateImageFilename } from '@/lib/utils/image-filename-generator'
 import { uploadImageAsset, getImageAssetUrl } from '@/lib/services/storage'
+import { documentAssetsService, type AssetMetadata } from '@/lib/services/database/document-assets'
+import { DocumentProcessingTransaction } from '@/lib/services/document-processing-transaction'
+import { getUserErrorMessage, type ErrorContext } from '@/lib/services/user-error-messages'
 import { z } from 'zod'
 
 // Schema for page processing input
@@ -55,7 +58,15 @@ export const pageProcessingResultSchema = z.object({
   }),
   extractedImages: z.array(extractedImageAssetSchema).default([]).describe('Images extracted and stored'),
   success: z.boolean(),
-  error: z.string().optional()
+  error: z.string().optional(),
+  userError: z.object({
+    userMessage: z.string(),
+    category: z.enum(['storage', 'processing', 'input', 'system', 'quota']),
+    isRetryable: z.boolean(),
+    userAction: z.string().optional(),
+    technicalDetails: z.string().optional(),
+    errorCode: z.string().optional()
+  }).optional().describe('User-friendly error information when processing fails')
 })
 
 export type PageProcessingInput = z.infer<typeof pageProcessingInputSchema>
@@ -143,10 +154,12 @@ export async function processPageToHtml(
             imageCount: processedFragment.extractedImages.length
           })
           
-          // Step 3: Extract and store each image
+          // Step 3: Extract and store each image with transaction support
+          const transaction = new DocumentProcessingTransaction(validatedInput.documentId)
           const existingFilenames = new Set<string>()
           
-          for (const imageData of processedFragment.extractedImages) {
+          try {
+            for (const imageData of processedFragment.extractedImages) {
             const imageStartTime = Date.now()
             
             try {
@@ -197,6 +210,17 @@ export async function processPageToHtml(
                 continue
               }
               
+              // Record storage upload for potential rollback
+              transaction.recordStorageUpload(
+                filenameResult.filename,
+                uploadResult.path,
+                { 
+                  pageNumber: validatedInput.pageNumber,
+                  elementId: imageData.elementId,
+                  extractionTimeMs: Date.now() - imageStartTime
+                }
+              )
+              
               // Get signed URL for access
               const storageUrl = await getImageAssetUrl(
                 validatedInput.documentId,
@@ -205,6 +229,45 @@ export async function processPageToHtml(
               )
               
               const extractionTimeMs = Date.now() - imageStartTime
+              
+              // Create asset metadata for database record
+              const assetMetadata: AssetMetadata = {
+                bounding_box: {
+                  x1: imageData.bbox.x1,
+                  y1: imageData.bbox.y1,
+                  x2: imageData.bbox.x2,
+                  y2: imageData.bbox.y2
+                },
+                page_number: validatedInput.pageNumber,
+                original_dimensions: {
+                  width: extractedImage.width || 0,
+                  height: extractedImage.height || 0
+                },
+                file_size: uploadResult.size,
+                extraction_method: 'vision_pipeline_stage3',
+                element_id: imageData.elementId
+              }
+              
+              // Create database record for asset tracking
+              const dbRecord = await documentAssetsService.create({
+                document_id: validatedInput.documentId,
+                type: 'image',
+                filename: filenameResult.filename,
+                storage_path: uploadResult.path,
+                caption: captionResult.caption,
+                extraction_confidence: captionResult.confidence,
+                metadata: assetMetadata
+              })
+              
+              // Record database record for potential rollback
+              transaction.recordDatabaseRecord(
+                dbRecord.id,
+                {
+                  pageNumber: validatedInput.pageNumber,
+                  elementId: imageData.elementId,
+                  filename: filenameResult.filename
+                }
+              )
               
               const extractedAsset: ExtractedImageAsset = {
                 elementId: imageData.elementId,
@@ -227,29 +290,76 @@ export async function processPageToHtml(
               })
               
             } catch (imageError) {
-              // Fatal error for image extraction per coding principles
+              // Fatal error for image extraction per coding principles - rollback and re-throw
               const errorMessage = imageError instanceof Error ? imageError.message : 'Unknown image extraction error'
-              logger.error('Image extraction failed fatally', {
+              
+              // Generate user-friendly error message
+              const errorContext: ErrorContext = {
+                pageNumber: validatedInput.pageNumber,
+                documentId: validatedInput.documentId,
+                operation: 'image extraction',
+                processingStage: 'vision pipeline'
+              }
+              const userErrorInfo = getUserErrorMessage(imageError, errorContext)
+              
+              logger.error('Image extraction failed fatally, performing rollback', {
                 pageNumber: validatedInput.pageNumber,
                 elementId: imageData.elementId,
-                error: errorMessage
+                error: errorMessage,
+                userError: userErrorInfo
               })
-              throw new Error(`Image extraction failed for page ${validatedInput.pageNumber}, element ${imageData.elementId}: ${errorMessage}`)
+              
+              // Rollback all operations performed so far
+              await transaction.rollback()
+              
+              // Create enhanced error with user message
+              const enhancedError = new Error(`Image extraction failed for page ${validatedInput.pageNumber}, element ${imageData.elementId}: ${errorMessage}`)
+              ;(enhancedError as any).userErrorInfo = userErrorInfo
+              throw enhancedError
             }
           }
           
+          // Commit transaction after successful processing
+          transaction.commit()
+          
+          logger.info('All image extractions completed successfully, transaction committed', {
+            pageNumber: validatedInput.pageNumber,
+            extractedImagesCount: extractedImages.length
+          })
+          
           // Step 4: Update HTML fragment with storage URLs
           finalHtmlFragment = updateHtmlWithStorageUrls(processedFragment.htmlFragment, extractedImages, logger)
+          
+          } catch (transactionError) {
+            // Ensure rollback even if not triggered by image extraction error
+            await transaction.rollback()
+            throw transactionError
+          }
         }
         
       } catch (extractionError) {
         // Fatal error per coding principles - don't proceed with partial results
         const errorMessage = extractionError instanceof Error ? extractionError.message : 'Unknown extraction error'
+        
+        // Generate user-friendly error message if not already present
+        if (!(extractionError as any).userErrorInfo) {
+          const errorContext: ErrorContext = {
+            pageNumber: validatedInput.pageNumber,
+            documentId: validatedInput.documentId,
+            operation: 'image extraction pipeline',
+            processingStage: 'vision pipeline'
+          }
+          const userErrorInfo = getUserErrorMessage(extractionError, errorContext)
+          ;(extractionError as any).userErrorInfo = userErrorInfo
+        }
+        
         logger.error('Image extraction pipeline failed fatally', {
           pageNumber: validatedInput.pageNumber,
-          error: errorMessage
+          error: errorMessage,
+          userError: (extractionError as any).userErrorInfo
         })
-        throw new Error(`Page ${validatedInput.pageNumber} image extraction failed: ${errorMessage}`)
+        
+        throw extractionError // Re-throw with preserved user error info
       }
     }
     
@@ -276,11 +386,26 @@ export async function processPageToHtml(
     const processingTimeMs = Date.now() - startTime
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     
+    // Generate user-friendly error message
+    const errorContext: ErrorContext = {
+      pageNumber: input.pageNumber,
+      documentId: input.documentId,
+      operation: 'page processing',
+      processingStage: 'vision pipeline'
+    }
+    
+    // Check if error already has user error info from inner catch
+    let userErrorInfo = (error as any)?.userErrorInfo
+    if (!userErrorInfo) {
+      userErrorInfo = getUserErrorMessage(error, errorContext)
+    }
+    
     logger.error('Page processing failed', {
       pageNumber: input.pageNumber,
       processingTimeMs,
       error: errorMessage,
-      provider
+      provider,
+      userError: userErrorInfo
     })
     
     return pageProcessingResultSchema.parse({
@@ -294,7 +419,8 @@ export async function processPageToHtml(
       },
       extractedImages: [],
       success: false,
-      error: errorMessage
+      error: errorMessage,
+      userError: userErrorInfo
     })
   }
 }

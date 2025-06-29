@@ -203,6 +203,53 @@ export type Database = {
           },
         ]
       }
+      document_assets: {
+        Row: {
+          caption: string | null
+          created_at: string | null
+          document_id: string
+          extraction_confidence: number | null
+          filename: string
+          id: string
+          metadata: Json | null
+          storage_path: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string | null
+          document_id: string
+          extraction_confidence?: number | null
+          filename: string
+          id?: string
+          metadata?: Json | null
+          storage_path: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string | null
+          document_id?: string
+          extraction_confidence?: number | null
+          filename?: string
+          id?: string
+          metadata?: Json | null
+          storage_path?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_assets_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_enhancements: {
         Row: {
           ai_call_id: string | null

@@ -16,6 +16,9 @@ jest.mock('../html-fragment-processor')
 jest.mock('@/lib/utils/image-filename-generator')
 jest.mock('@/lib/prompts/types')
 jest.mock('@/lib/services/logger')
+jest.mock('../user-error-messages')
+jest.mock('../database/document-assets')
+jest.mock('../document-processing-transaction')
 
 // Mock logger
 const mockLogger = {
@@ -313,5 +316,150 @@ describe('Page Processor Integration with Image Extraction', () => {
 
     expect(result.success).toBe(false)
     expect(result.error).toContain('pageImageBase64')
+  })
+
+  describe('User Error Message Integration', () => {
+    beforeEach(() => {
+      // Mock the user error message service
+      const mockGetUserErrorMessage = require('../user-error-messages').getUserErrorMessage
+      mockGetUserErrorMessage.mockReturnValue({
+        userMessage: 'Unable to process the image due to a technical issue.',
+        category: 'processing',
+        isRetryable: true,
+        userAction: 'Please try uploading your document again.',
+        technicalDetails: 'Canvas API not available',
+        errorCode: 'IMAGE_PROCESSING_FAILED'
+      })
+    })
+
+    it('should include user-friendly error messages in failed results', async () => {
+      // Mock AI processing
+      const mockExecuteMultimodalPromptWithUsage = require('@/lib/prompts/types').executeMultimodalPromptWithUsage
+      mockExecuteMultimodalPromptWithUsage.mockResolvedValue({
+        text: '<figure id="fig-1" data-bbox="0.1,0.2,0.6,0.8"><img src="placeholder"/></figure>',
+        usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 }
+      })
+
+      // Mock fragment processing
+      const mockProcessHtmlFragment = require('../html-fragment-processor').processHtmlFragment
+      mockProcessHtmlFragment.mockResolvedValue({
+        success: true,
+        htmlFragment: '<figure id="fig-1" data-bbox="0.1,0.2,0.6,0.8"><img src="placeholder"/></figure>',
+        extractedImages: [{
+          elementId: 'fig-1',
+          bbox: { x1: 0.1, y1: 0.2, x2: 0.6, y2: 0.8 },
+          elementType: 'figure'
+        }]
+      })
+
+      // Mock transaction
+      const mockTransaction = {
+        recordStorageUpload: jest.fn(),
+        recordDatabaseRecord: jest.fn(),
+        commit: jest.fn(),
+        rollback: jest.fn().mockResolvedValue({ success: true, operationsRolledBack: 0, errors: [] })
+      }
+      const MockDocumentProcessingTransaction = require('../document-processing-transaction').DocumentProcessingTransaction
+      MockDocumentProcessingTransaction.mockImplementation(() => mockTransaction)
+
+      // Mock image extraction failure
+      const mockExtractImageFromPage = require('../image-extractor').extractImageFromPage
+      mockExtractImageFromPage.mockRejectedValue(new Error('Canvas API not available'))
+
+      const input: PageProcessingInput = {
+        pageImageBase64: 'data:image/png;base64,test',
+        pageNumber: 2,
+        totalPages: 5,
+        documentId: 'doc-456',
+        enableImageExtraction: true
+      }
+
+      const result = await processPageToHtml(input)
+
+      expect(result.success).toBe(false)
+      expect(result.error).toContain('Image extraction failed for page 2')
+      expect(result.userError).toBeDefined()
+      expect(result.userError?.userMessage).toBe('Unable to process the image due to a technical issue.')
+      expect(result.userError?.category).toBe('processing')
+      expect(result.userError?.isRetryable).toBe(true)
+      expect(result.userError?.userAction).toBe('Please try uploading your document again.')
+      expect(result.userError?.errorCode).toBe('IMAGE_PROCESSING_FAILED')
+
+      // Verify getUserErrorMessage was called with correct context
+      const mockGetUserErrorMessage = require('../user-error-messages').getUserErrorMessage
+      expect(mockGetUserErrorMessage).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          pageNumber: 2,
+          documentId: 'doc-456',
+          operation: 'page processing',
+          processingStage: 'vision pipeline'
+        })
+      )
+
+      // Verify transaction rollback was called
+      expect(mockTransaction.rollback).toHaveBeenCalled()
+    })
+
+    it('should include user error in logs when processing fails', async () => {
+      // Mock AI processing failure
+      const mockExecuteMultimodalPromptWithUsage = require('@/lib/prompts/types').executeMultimodalPromptWithUsage
+      mockExecuteMultimodalPromptWithUsage.mockRejectedValue(new Error('AI service timeout'))
+
+      const input: PageProcessingInput = {
+        pageImageBase64: 'data:image/png;base64,test',
+        pageNumber: 3,
+        totalPages: 5,
+        documentId: 'doc-789'
+      }
+
+      const result = await processPageToHtml(input)
+
+      expect(result.success).toBe(false)
+      expect(result.userError).toBeDefined()
+      
+      // Verify error was logged with user error info
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Page processing failed',
+        expect.objectContaining({
+          pageNumber: 3,
+          error: 'AI service timeout',
+          userError: expect.objectContaining({
+            userMessage: 'Unable to process the image due to a technical issue.',
+            category: 'processing'
+          })
+        })
+      )
+    })
+
+    it('should generate user error info for generic processing failures', async () => {
+      // Mock a generic processing failure
+      const mockExecuteMultimodalPromptWithUsage = require('@/lib/prompts/types').executeMultimodalPromptWithUsage
+      mockExecuteMultimodalPromptWithUsage.mockRejectedValue(new Error('Network connection failed'))
+
+      // Update mock to return network error type
+      const mockGetUserErrorMessage = require('../user-error-messages').getUserErrorMessage
+      mockGetUserErrorMessage.mockReturnValue({
+        userMessage: 'Network connection issue. Please check your internet connection and try again.',
+        category: 'system',
+        isRetryable: true,
+        userAction: 'Check your internet connection and try again.',
+        technicalDetails: 'Network connection failed',
+        errorCode: 'NETWORK_ERROR'
+      })
+
+      const input: PageProcessingInput = {
+        pageImageBase64: 'data:image/png;base64,test',
+        pageNumber: 4,
+        totalPages: 5
+      }
+
+      const result = await processPageToHtml(input)
+
+      expect(result.success).toBe(false)
+      expect(result.userError?.category).toBe('system')
+      expect(result.userError?.userMessage).toContain('Network connection issue')
+      expect(result.userError?.isRetryable).toBe(true)
+    })
   })
 })
