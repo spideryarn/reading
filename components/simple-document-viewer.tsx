@@ -407,8 +407,8 @@ export function SimpleDocumentViewer({
       <div
         id="document-viewer"
         className={`max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl ${
-          leftAligned ? 'ml-12 mr-4 lg:ml-auto lg:mr-auto' : 'mx-auto'
-        } p-3 sm:p-6 md:p-8 lg:px-8`}
+          leftAligned ? 'ml-10 mr-2 sm:ml-12 sm:mr-4 lg:ml-auto lg:mr-auto' : 'mx-auto'
+        } p-2 sm:p-4 md:p-8 lg:px-8`}
       >
         {/* Render root elements */}
         {elements
