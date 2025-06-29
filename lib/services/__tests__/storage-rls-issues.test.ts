@@ -22,8 +22,9 @@ import { createClient } from '@/lib/supabase/server'
 
 // Mock authentication to control auth context
 jest.mock('@/lib/auth/server-auth')
-import { validateAuth } from '@/lib/auth/server-auth'
-const mockValidateAuth = validateAuth as jest.MockedFunction<typeof validateAuth>
+import { getAuthUser, requireAuth } from '@/lib/auth/server-auth'
+const mockGetAuthUser = getAuthUser as jest.MockedFunction<typeof getAuthUser>
+const mockRequireAuth = requireAuth as jest.MockedFunction<typeof requireAuth>
 
 describe('Storage RLS Policy Violation Issue', () => {
   const namespace = getTestNamespace('storage-rls-issues')
@@ -60,7 +61,8 @@ describe('Storage RLS Policy Violation Issue', () => {
       const documentId = 'test-document-id'
 
       // Don't mock authentication - let it fail naturally
-      mockValidateAuth.mockRejectedValue(new Error('User not authenticated'))
+      mockGetAuthUser.mockResolvedValue(null)
+      mockRequireAuth.mockRejectedValue(new Error('User not authenticated'))
 
       try {
         await uploadOriginalFile(testFile, documentId, supabase)
@@ -87,11 +89,13 @@ describe('Storage RLS Policy Violation Issue', () => {
       const documentId = 'test-document-id'
 
       // Mock authentication with non-existent user
-      mockValidateAuth.mockResolvedValue({
+      const nonExistentUser = {
         id: 'non-existent-user-id',
         email: 'nonexistent@test.com',
         user_metadata: {}
-      } as any)
+      } as any
+      mockGetAuthUser.mockResolvedValue(nonExistentUser)
+      mockRequireAuth.mockResolvedValue(nonExistentUser)
 
       try {
         await uploadOriginalFile(testFile, documentId, supabase)
@@ -157,11 +161,13 @@ describe('Storage RLS Policy Violation Issue', () => {
       const documentId = 'test-headers-document'
 
       // Mock authentication but with invalid session context
-      mockValidateAuth.mockResolvedValue({
+      const invalidUser = {
         id: testUser.id,
         email: testUser.email,
         user_metadata: {}
-      } as any)
+      } as any
+      mockGetAuthUser.mockResolvedValue(invalidUser)
+      mockRequireAuth.mockResolvedValue(invalidUser)
 
       // Create a client without proper authentication headers
       const unauthenticatedClient = await createClient()
@@ -194,11 +200,13 @@ describe('Storage RLS Policy Violation Issue', () => {
       const documentId = 'test-bucket-document'
 
       // Mock valid authentication
-      mockValidateAuth.mockResolvedValue({
+      const validUser = {
         id: testUser.id,
         email: testUser.email,
         user_metadata: {}
-      } as any)
+      } as any
+      mockGetAuthUser.mockResolvedValue(validUser)
+      mockRequireAuth.mockResolvedValue(validUser)
 
       try {
         // Try to upload to a non-existent or restricted bucket path
@@ -243,11 +251,13 @@ describe('Storage RLS Policy Violation Issue', () => {
       const documentId = 'pipeline-test-document'
 
       // Mock authentication as it would be in the HTML upload API
-      mockValidateAuth.mockResolvedValue({
+      const pipelineUser = {
         id: testUser.id,
         email: testUser.email,
         user_metadata: {}
-      } as any)
+      } as any
+      mockGetAuthUser.mockResolvedValue(pipelineUser)
+      mockRequireAuth.mockResolvedValue(pipelineUser)
 
       // Create supabase client as it would be in the API route
       const supabaseClient = await createClient()

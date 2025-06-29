@@ -62,6 +62,8 @@ export const getSession = jest.fn().mockResolvedValue({
   user: defaultTestUser
 })
 
+// Legacy function - kept for backward compatibility during transition
+// TODO: Remove after all tests are migrated to new authentication helpers
 export const validateAuth = jest.fn().mockResolvedValue(defaultTestUser)
 
 export const checkAdminAccess = jest.fn<Promise<boolean>, []>().mockResolvedValue(false)
@@ -101,18 +103,10 @@ export const assertAuth = jest.fn<Promise<{ success: boolean; user?: User; error
   })
 
 // Helper to configure the mock user for specific tests
+// Primary focus on new authentication helpers (getAuthUser, requireAuth, assertAuth)
 export const setMockUser = (user: User | null) => {
   if (user) {
     getUser.mockResolvedValue({ user, error: null })
-    validateAuth.mockImplementation((request?: Request) => {
-      if (request) {
-        // Modern style - return result object
-        return Promise.resolve({ success: true, user })
-      } else {
-        // Legacy style - return user directly
-        return Promise.resolve(user)
-      }
-    })
     getUserId.mockResolvedValue(user.id)
     getUserProfile.mockResolvedValue({
       id: user.id,
@@ -120,27 +114,31 @@ export const setMockUser = (user: User | null) => {
       displayName: user.user_metadata?.display_name || user.email || 'User',
       createdAt: user.created_at
     })
-    // New functions
+    
+    // New authentication helpers - primary interface
     getAuthUser.mockResolvedValue(user)
     requireAuth.mockResolvedValue(user)
     assertAuth.mockResolvedValue({
       success: true,
       user
     })
-  } else {
-    getUser.mockResolvedValue({ user: null, error: 'Not authenticated' })
+    
+    // Legacy validateAuth - kept for backward compatibility during transition
     validateAuth.mockImplementation((request?: Request) => {
       if (request) {
-        // Modern style - return result object
-        return Promise.resolve({ success: false, error: 'Authentication required' })
+        // Modern style - return result object (delegates to assertAuth)
+        return Promise.resolve({ success: true, user })
       } else {
-        // Legacy style - throw AuthError
-        return Promise.reject(new AuthError('Authentication required'))
+        // Legacy style - return user directly (delegates to requireAuth)
+        return Promise.resolve(user)
       }
     })
+  } else {
+    getUser.mockResolvedValue({ user: null, error: 'Not authenticated' })
     getUserId.mockResolvedValue(null)
     getUserProfile.mockResolvedValue(null)
-    // New functions
+    
+    // New authentication helpers - primary interface
     getAuthUser.mockResolvedValue(null)
     requireAuth.mockImplementation((opts?: { redirectTo?: string }) => {
       if (opts?.redirectTo) {
@@ -155,6 +153,17 @@ export const setMockUser = (user: User | null) => {
       success: false,
       error: 'Authentication required'
     })
+    
+    // Legacy validateAuth - kept for backward compatibility during transition
+    validateAuth.mockImplementation((request?: Request) => {
+      if (request) {
+        // Modern style - return result object (delegates to assertAuth)
+        return Promise.resolve({ success: false, error: 'Authentication required' })
+      } else {
+        // Legacy style - throw AuthError (delegates to requireAuth)
+        return Promise.reject(new AuthError('Authentication required'))
+      }
+    })
   }
 }
 
@@ -162,16 +171,19 @@ export const setMockUser = (user: User | null) => {
 export const resetAuthMocks = () => {
   getUser.mockClear()
   getSession.mockClear()
-  validateAuth.mockClear()
   checkAdminAccess.mockClear()
   getUserId.mockClear()
   getAuthenticatedClient.mockClear()
   checkResourceOwnership.mockClear()
   getUserProfile.mockClear()
-  // New functions
+  
+  // New authentication helpers - primary interface
   getAuthUser.mockClear()
   requireAuth.mockClear()
   assertAuth.mockClear()
+  
+  // Legacy validateAuth - kept for backward compatibility during transition
+  validateAuth.mockClear()
   
   // Reset to default authenticated state
   setMockUser(defaultTestUser)

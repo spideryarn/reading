@@ -6,7 +6,7 @@
  */
 
 import { type User } from '@supabase/supabase-js'
-import { validateAuth } from '@/lib/auth/server-auth'
+import { getAuthUser, requireAuth, assertAuth } from '@/lib/auth/server-auth'
 
 /**
  * Test user fixture with all required properties for authentication testing
@@ -66,27 +66,32 @@ export function createAnonymousUser(): null {
 }
 
 /**
- * Mocks the validateAuth function to return a successful authentication result
+ * Mocks the getAuthUser function to return a user or null
  * Should be called before running API route tests that require authentication
  */
-export function mockValidateAuth(user: TestUser | null = null): void {
+export function mockGetAuthUser(user: TestUser | null = null): void {
+  const mockUser = user as User | null
   
-  if (user) {
-    validateAuth.mockResolvedValue({
-      user: user as User,
-      session: {
-        access_token: 'test-access-token',
-        refresh_token: 'test-refresh-token',
-        expires_in: 3600,
-        token_type: 'bearer',
-        user: user as User
-      }
+  // Mock getAuthUser
+  ;(getAuthUser as jest.MockedFunction<typeof getAuthUser>).mockResolvedValue(mockUser)
+  
+  // Mock requireAuth
+  if (mockUser) {
+    ;(requireAuth as jest.MockedFunction<typeof requireAuth>).mockResolvedValue(mockUser)
+  } else {
+    ;(requireAuth as jest.MockedFunction<typeof requireAuth>).mockRejectedValue(new Error('Authentication required'))
+  }
+  
+  // Mock assertAuth
+  if (mockUser) {
+    ;(assertAuth as jest.MockedFunction<typeof assertAuth>).mockResolvedValue({
+      success: true,
+      user: mockUser
     })
   } else {
-    // Mock unauthenticated state
-    validateAuth.mockResolvedValue({
-      user: null,
-      session: null
+    ;(assertAuth as jest.MockedFunction<typeof assertAuth>).mockResolvedValue({
+      success: false,
+      error: 'Authentication required'
     })
   }
 }
@@ -95,8 +100,12 @@ export function mockValidateAuth(user: TestUser | null = null): void {
  * Mocks authentication failure scenarios for testing error handling
  */
 export function mockAuthFailure(error: string = 'Authentication failed'): void {
-  
-  validateAuth.mockRejectedValue(new Error(error))
+  ;(getAuthUser as jest.MockedFunction<typeof getAuthUser>).mockResolvedValue(null)
+  ;(requireAuth as jest.MockedFunction<typeof requireAuth>).mockRejectedValue(new Error(error))
+  ;(assertAuth as jest.MockedFunction<typeof assertAuth>).mockResolvedValue({
+    success: false,
+    error
+  })
 }
 
 /**
@@ -104,9 +113,14 @@ export function mockAuthFailure(error: string = 'Authentication failed'): void {
  * Should be called in test cleanup (afterEach) to ensure test isolation
  */
 export function resetAuthMocks(): void {
-  
-  if (validateAuth && validateAuth.mockClear) {
-    validateAuth.mockClear()
+  if (getAuthUser && (getAuthUser as jest.MockedFunction<typeof getAuthUser>).mockClear) {
+    ;(getAuthUser as jest.MockedFunction<typeof getAuthUser>).mockClear()
+  }
+  if (requireAuth && (requireAuth as jest.MockedFunction<typeof requireAuth>).mockClear) {
+    ;(requireAuth as jest.MockedFunction<typeof requireAuth>).mockClear()
+  }
+  if (assertAuth && (assertAuth as jest.MockedFunction<typeof assertAuth>).mockClear) {
+    ;(assertAuth as jest.MockedFunction<typeof assertAuth>).mockClear()
   }
 }
 
@@ -130,7 +144,7 @@ export const authTestScenarios = {
    */
   authenticated: (namespace?: string) => {
     const testUser = createTestUser(namespace)
-    mockValidateAuth(testUser)
+    mockGetAuthUser(testUser)
     return {
       user: testUser,
       headers: createAuthHeaders(testUser)
@@ -141,7 +155,7 @@ export const authTestScenarios = {
    * Setup for testing unauthenticated API routes  
    */
   unauthenticated: () => {
-    mockValidateAuth(null)
+    mockGetAuthUser(null)
     return {
       user: null,
       headers: {}

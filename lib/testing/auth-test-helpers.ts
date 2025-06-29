@@ -32,32 +32,29 @@ export const defaultTestUser: User = {
 } as User
 
 /**
- * Mock configuration for validateAuth
+ * Mock configuration for getAuthUser
  */
-export interface ValidateAuthMockConfig {
+export interface GetAuthUserMockConfig {
   shouldSucceed: boolean
   user?: User
-  errorMessage?: string
 }
 
 /**
- * Set up validateAuth mock with the specified behavior
+ * Set up getAuthUser mock with the specified behavior
  * 
  * @param config - Configuration for the mock behavior
- * @returns The mocked validateAuth function
+ * @returns The mocked getAuthUser function
  */
-export function setupValidateAuthMock(config: ValidateAuthMockConfig): jest.Mock {
-  const validateAuthMock = jest.fn()
+export function setupGetAuthUserMock(config: GetAuthUserMockConfig): jest.Mock {
+  const getAuthUserMock = jest.fn()
   
   if (config.shouldSucceed) {
-    validateAuthMock.mockResolvedValue(config.user || defaultTestUser)
+    getAuthUserMock.mockResolvedValue(config.user || defaultTestUser)
   } else {
-    validateAuthMock.mockRejectedValue(
-      new Error(config.errorMessage || 'User not authenticated')
-    )
+    getAuthUserMock.mockResolvedValue(null)
   }
   
-  return validateAuthMock
+  return getAuthUserMock
 }
 
 /**
@@ -65,63 +62,77 @@ export function setupValidateAuthMock(config: ValidateAuthMockConfig): jest.Mock
  * This should be called at the top of test files before imports
  */
 export function mockAuthModules() {
-  // Mock server-auth module
+  // Mock server-auth module with new authentication helpers
   jest.mock('@/lib/auth/server-auth', () => ({
     getUser: jest.fn(),
-    validateAuth: jest.fn(),
+    getAuthUser: jest.fn(),
+    requireAuth: jest.fn(),
+    assertAuth: jest.fn(),
     getUserId: jest.fn(),
     checkAdminAccess: jest.fn(),
-    getSession: jest.fn()
-  }))
-  
-  // Mock validate-auth module (if it exists separately)
-  jest.mock('@/lib/auth/validate-auth', () => ({
+    getSession: jest.fn(),
+    // Keep validateAuth for backward compatibility during transition
     validateAuth: jest.fn()
   }))
 }
 
 /**
- * Setup auth mocks for different test scenarios
+ * Setup auth mocks for different test scenarios using new authentication helpers
  */
 export const authTestScenarios = {
   /**
    * Setup for testing business logic - auth always succeeds
    */
   businessLogic: () => {
-    const validateAuth = setupValidateAuthMock({ shouldSucceed: true })
+    const getAuthUser = setupGetAuthUserMock({ shouldSucceed: true })
+    const requireAuth = jest.fn().mockResolvedValue(defaultTestUser)
+    const assertAuth = jest.fn().mockResolvedValue({ success: true, user: defaultTestUser })
+    
     // Dynamic import assignment - necessary for test mocking
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    require('@/lib/auth/server-auth').validateAuth = validateAuth
-    return validateAuth
+    const authModule = require('@/lib/auth/server-auth')
+    authModule.getAuthUser = getAuthUser
+    authModule.requireAuth = requireAuth
+    authModule.assertAuth = assertAuth
+    
+    return { getAuthUser, requireAuth, assertAuth }
   },
   
   /**
    * Setup for testing auth failures
    */
-  authFailure: (errorMessage?: string) => {
-    const validateAuth = setupValidateAuthMock({ 
-      shouldSucceed: false, 
-      errorMessage 
-    })
+  authFailure: () => {
+    const getAuthUser = setupGetAuthUserMock({ shouldSucceed: false })
+    const requireAuth = jest.fn().mockRejectedValue(new Error('Authentication required'))
+    const assertAuth = jest.fn().mockResolvedValue({ success: false, error: 'Authentication required' })
+    
     // Dynamic import assignment - necessary for test mocking
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    require('@/lib/auth/server-auth').validateAuth = validateAuth
-    return validateAuth
+    const authModule = require('@/lib/auth/server-auth')
+    authModule.getAuthUser = getAuthUser
+    authModule.requireAuth = requireAuth
+    authModule.assertAuth = assertAuth
+    
+    return { getAuthUser, requireAuth, assertAuth }
   },
   
   /**
    * Setup for testing with a specific user
    */
   withUser: (user: Partial<User>) => {
-    const fullUser = { ...defaultTestUser, ...user }
-    const validateAuth = setupValidateAuthMock({ 
-      shouldSucceed: true, 
-      user: fullUser as User 
-    })
+    const fullUser = { ...defaultTestUser, ...user } as User
+    const getAuthUser = setupGetAuthUserMock({ shouldSucceed: true, user: fullUser })
+    const requireAuth = jest.fn().mockResolvedValue(fullUser)
+    const assertAuth = jest.fn().mockResolvedValue({ success: true, user: fullUser })
+    
     // Dynamic import assignment - necessary for test mocking
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    require('@/lib/auth/server-auth').validateAuth = validateAuth
-    return { validateAuth, user: fullUser }
+    const authModule = require('@/lib/auth/server-auth')
+    authModule.getAuthUser = getAuthUser
+    authModule.requireAuth = requireAuth
+    authModule.assertAuth = assertAuth
+    
+    return { getAuthUser, requireAuth, assertAuth, user: fullUser }
   },
   
   /**
