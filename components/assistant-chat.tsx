@@ -262,7 +262,7 @@ function ChatRuntime({ chatStore }: { chatStore: ReturnType<typeof useChatStore>
       id: msg.id,
       role: msg.role as 'user' | 'assistant',
       content: [{ type: 'text' as const, text: msg.content }],
-      createdAt: new Date(msg.created_at)
+      createdAt: new Date(msg.created_at || new Date().toISOString())
     })
   });
   

@@ -21,9 +21,7 @@ interface UseChatStoreReturn extends ChatStore {
 }
 
 /**
- * Database-first chat store that eliminates dual-state management
- * 
- * This hook replaces usePersistentChat with a single source of truth approach:
+ * Database-first chat store with single source of truth approach:
  * - All messages come from database
  * - API calls return complete thread + message state
  * - No optimistic updates, loading states provide feedback
@@ -247,8 +245,9 @@ export function useChatStore({
       // No active thread, try to load most recent for document
       try {
         const threads = await chatService.current.getThreadsForDocument(documentId);
-        if (threads.length > 0) {
-          await loadThread(threads[0].id);
+        const mostRecentThread = threads[0];
+        if (mostRecentThread) {
+          await loadThread(mostRecentThread.id);
         } else {
           clearMessages();
         }
@@ -308,8 +307,9 @@ export function useChatStore({
     const loadMostRecent = async () => {
       try {
         const threads = await chatService.current.getThreadsForDocument(documentId);
-        if (threads.length > 0) {
-          await loadThread(threads[0].id);
+        const mostRecentThread = threads[0];
+        if (mostRecentThread) {
+          await loadThread(mostRecentThread.id);
         } else {
           clearMessages();
         }

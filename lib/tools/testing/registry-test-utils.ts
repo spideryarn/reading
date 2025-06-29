@@ -188,13 +188,13 @@ export function createMockToolComponent() {
 export function createRealisticTestRegistry(): Tool[] {
   const tools: Tool[] = [
     createTestTool({
-      id: 'original',
-      name: 'Original Document',
-      description: 'View document with original headings',
+      id: 'structure',
+      name: 'Document Structure',
+      description: 'View document structure with original and AI-generated headings',
       category: 'navigation',
-      tabId: 'original',
+      tabId: 'structure',
       shortcuts: ['Cmd+1', 'Ctrl+1'],
-      keywords: ['original', 'document', 'view']
+      keywords: ['structure', 'headings', 'navigation']
     }),
     createTestTool({
       id: 'summary',

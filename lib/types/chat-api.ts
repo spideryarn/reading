@@ -88,10 +88,7 @@ export interface CreateThreadResponse {
 }
 
 /**
- * Interface for the database-first message store
- * 
- * This replaces the dual-state management in usePersistentChat
- * with a single database-driven state store.
+ * Interface for the database-first message store with single database-driven state.
  */
 export interface ChatStore {
   // State
