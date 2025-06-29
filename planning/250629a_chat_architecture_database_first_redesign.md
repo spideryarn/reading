@@ -156,12 +156,13 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
     - Add focused unit tests (`lib/supabase/__tests__/server-client.test.ts`) verifying cookie vs bearer modes.
     - **Commit and test pass** before proceeding to sub-step C.
   - [x] **Git commit**: `d680764` - All Supabase client tests passing (9/9)
-- [ ] **Sub-step C: Refactor chat API route to use consolidated helpers**
-  - [ ] Delete the ad-hoc `getAuthUserForTesting()` from `app/api/tools/[toolId]/route.ts`.
-  - [ ] Replace with `const user = await requireAuth(request, { allowBearer: true })` for test compatibility.  
-  - [ ] Obtain the authenticated Supabase client via `const supabase = getSupabaseServerClient(request, { allowBearer: true })` and pass it through the `ExecutionContext` (`context.supabaseClient`).
-  - [ ] Update downstream handlers (`handlers/chat.ts`) to use `context.supabaseClient` instead of locally initialising a new client.
-  - [ ] **Commit and test pass** before proceeding to sub-step D.
+- [x] **Sub-step C: Refactor chat API route to use consolidated helpers** ✅ COMPLETED
+  - [x] Delete the ad-hoc `getAuthUserForTesting()` from `app/api/tools/[toolId]/route.ts`.
+  - [x] Replace with `const user = await requireAuth(request, { allowBearer: true })` for test compatibility.  
+  - [x] Obtain the authenticated Supabase client via `const supabase = getSupabaseServerClient(request, { allowBearer: true })` and pass it through the `ExecutionContext` (`context.supabaseClient`).
+  - [x] Update downstream handlers (`handlers/chat.ts`) to use `context.supabaseClient` instead of locally initialising a new client.
+  - [x] **Commit and test pass** before proceeding to sub-step D.
+  - [x] **Git commit**: `efcc455` - Chat handler now uses consolidated auth flow
 - [ ] **Sub-step D: Sweep codebase for duplicate client creation**  
   Use `ripgrep "createClient(.*supabase"` to identify API routes or services that still instantiate a Supabase client directly.  For each, switch to `getSupabaseServerClient()` so all server queries share the same auth path.
 - [ ] **Integration & RLS regression tests**

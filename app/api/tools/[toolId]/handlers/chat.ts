@@ -250,7 +250,7 @@ export class ChatHandler extends BaseToolHandler {
     
     // Use authenticated Supabase client from context if available (test environment)
     // Otherwise create standard server client (production environment)
-    const supabase = context.supabaseClient || await createClient()
+    const supabase = context.supabaseClient!
     const chatService = new ChatService(supabase)
     const aiCallService = new AiCallService(supabase)
     const { modelString, config: modelConfig } = getModelForAICall()
