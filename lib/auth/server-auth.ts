@@ -6,9 +6,12 @@ import { redirect } from 'next/navigation'
 /**
  * Server-side authentication utilities for Next.js App Router
  * 
- * This module provides utilities for handling authentication in
- * server components and API routes with proper error handling
- * and type safety.
+ * This module provides three core authentication functions:
+ * • getAuthUser() - Returns User | null, never throws or redirects
+ * • requireAuth() - Returns User or throws/redirects on failure
+ * • assertAuth() - Returns structured result object, never throws
+ * 
+ * Each function has a single, well-defined behavior for clear usage patterns.
  */
 
 /**
@@ -525,26 +528,3 @@ export async function assertAuth(request: Request): Promise<{ success: boolean; 
   }
 }
 
-/**
- * Unified validation helper supporting both legacy (throwing) and modern (result-object) styles.
- *
- * @deprecated Use getAuthUser(), requireAuth(), or assertAuth() instead for clearer semantics.
- * 
- * • Legacy usage: `const user = await validateAuth()` – throws on failure and returns `User` on success.
- * • New usage:    `const { success, user } = await validateAuth(request, { requireAuth: true })`
- *                 – returns an object describing the auth result without throwing.
- */
-export async function validateAuth(): Promise<User>
-export async function validateAuth(request: Request, opts?: { requireAuth?: boolean }): Promise<{ success: boolean; user?: User; error?: string }>
-export async function validateAuth(
-  request?: Request,
-  opts?: { requireAuth?: boolean }
-): Promise<User | { success: boolean; user?: User; error?: string }> {
-  // Modern result-object style when a Request is passed
-  if (request !== undefined) {
-    return assertAuth(request)
-  }
-
-  // Legacy throwing style (no arguments) - delegate to requireAuth
-  return requireAuth()
-}

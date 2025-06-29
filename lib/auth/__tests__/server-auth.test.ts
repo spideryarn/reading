@@ -13,7 +13,6 @@ import {
   getAuthUser, 
   requireAuth, 
   assertAuth, 
-  validateAuth, 
   AuthError,
   setMockUser,
   setRedirectFunction
@@ -190,60 +189,3 @@ describe('assertAuth', () => {
   })
 })
 
-describe('validateAuth (legacy/deprecated)', () => {
-  const mockUser: User = {
-    id: 'user-123',
-    email: 'test@example.com',
-    created_at: '2023-01-01T00:00:00.000Z',
-    app_metadata: {},
-    user_metadata: {},
-    aud: 'authenticated',
-    role: 'authenticated'
-  }
-
-  const mockRequest = new Request('https://example.com/api/test')
-
-  beforeEach(() => {
-    jest.clearAllMocks()
-  })
-
-  it('should delegate to requireAuth when called without arguments (legacy style)', async () => {
-    // Configure mock to return the test user
-    setMockUser(mockUser)
-
-    const result = await validateAuth()
-
-    expect(result).toEqual(mockUser)
-  })
-
-  it('should delegate to assertAuth when called with request (modern style)', async () => {
-    // Configure mock to return the test user
-    setMockUser(mockUser)
-
-    const result = await validateAuth(mockRequest, { requireAuth: true })
-
-    expect(result).toEqual({
-      success: true,
-      user: mockUser
-    })
-  })
-
-  it('should throw when called without arguments and user not authenticated', async () => {
-    // Configure mock to simulate unauthenticated state
-    setMockUser(null)
-
-    await expect(validateAuth()).rejects.toThrow(AuthError)
-  })
-
-  it('should return failure result when called with request and user not authenticated', async () => {
-    // Configure mock to simulate unauthenticated state
-    setMockUser(null)
-
-    const result = await validateAuth(mockRequest, { requireAuth: true })
-
-    expect(result).toEqual({
-      success: false,
-      error: 'Authentication required'
-    })
-  })
-})
