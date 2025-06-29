@@ -8,6 +8,7 @@ Database schema changes are managed through Supabase migrations - timestamped SQ
 - `docs/reference/DATABASE_OVERVIEW.md`
 - `docs/reference/DATABASE_SCHEMA.md`
 - `docs/reference/SETUP_DEVELOPMENT_ENVIRONMENT.md` - How to start Supabase locally
+- `docs/reference/SETUP_DEPLOYMENT_PRODUCTION.md` - Production deployment with GitHub Actions migration automation
 
 
 ## File Structure
@@ -194,6 +195,26 @@ FOR SELECT USING (true);  -- Adjust condition as needed
 - **RLS policies affect tests**: When testing with anon keys, ensure appropriate policies exist
 - **Environment variables in tests**: Use `@next/env` loadEnvConfig for proper Next.js integration
 - **⚠️ Storage RLS policy restrictions**: Migrations cannot directly modify RLS policies on `storage.objects` table due to permission restrictions. Use application-layer security during development, or create policies through Supabase Studio/API after migration.
+
+## Troubleshooting Migration Issues
+
+### Migration History Mismatch
+**Symptom**: `Remote migration versions not found in local migrations directory`
+
+**Common Cause**: Orphaned migrations on production not in local git repository
+
+**Solution**: Use migration repair commands:
+```bash
+# Mark problematic migration as reverted (replace VERSION with actual migration)
+npx supabase migration repair --status reverted VERSION
+
+# Then push pending local migrations
+npx supabase db push
+```
+
+**Prevention**: All migrations should be committed to git before applying to production
+
+For GitHub Actions deployment troubleshooting, see `docs/reference/SETUP_DEPLOYMENT_PRODUCTION.md`.
 
 ## Migration History
 

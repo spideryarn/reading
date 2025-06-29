@@ -169,6 +169,11 @@ GitHub Actions automatically handles database schema changes:
 
 **Workflow File:** `.github/workflows/deploy-production.yml`
 
+**Migration Failure Monitoring:**
+- **GitHub notifications**: Configure email notifications in GitHub Settings → Notifications
+- **Check failed runs**: Visit [repository Actions tab](https://github.com/spideryarn/reading/actions) when deployments fail
+- **Common failure**: Migration history mismatch (see `docs/reference/DATABASE_MIGRATIONS.md` for troubleshooting)
+
 ### Build Requirements 🚧
 **Current temporary fixes for deployment:**
 - ESLint rules downgraded to warnings (non-blocking)
