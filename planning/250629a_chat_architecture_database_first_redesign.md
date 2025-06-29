@@ -139,20 +139,23 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
 - **Supabase client caching**: No caching - keep stateless for safety and avoid cross-request JWT leakage
 - **Implementation approach**: Incremental sub-steps with individual commits for easier debugging
 
-- [ ] **Sub-step A: Centralise test-aware authentication logic**
-  - [ ] Extend `lib/auth/server-auth.ts → getAuthUser()` with a Bearer-token fallback that activates **only** when `allowBearer: true` is explicitly passed.
+- [x] **Sub-step A: Centralise test-aware authentication logic** ✅ COMPLETED
+  - [x] Extend `lib/auth/server-auth.ts → getAuthUser()` with a Bearer-token fallback that activates **only** when `allowBearer: true` is explicitly passed.
     - Parse the `Authorization: Bearer <jwt>` header from the incoming `Request` and, if present, create a short-lived Supabase client (anon key + `Authorization` header) to fetch the user via `auth.getUser()`.
     - Return the same `User` object shape used for cookie-based auth; otherwise fall back to current cookie logic.
     - Update JSDoc (`@param opts.allowBearer`) and unit tests in `lib/auth/__tests__/server-auth.test.ts` to cover new paths (cookie, bearer, unauthenticated).
     - **Commit and test pass** before proceeding to sub-step B.
-- [ ] **Sub-step B: Enhance Supabase server client factory**
-  - [ ] In `lib/supabase/server.ts` add `getSupabaseServerClient(request: Request, opts?: { allowBearer?: boolean }): SupabaseClient`.
+  - [x] Also updated `requireAuth()` and `assertAuth()` functions with Bearer token support
+  - [x] **Git commit**: `ea23d54` - All authentication tests passing (17/17)
+- [x] **Sub-step B: Enhance Supabase server client factory** ✅ COMPLETED
+  - [x] In `lib/supabase/server.ts` add `getSupabaseServerClient(request: Request, opts?: { allowBearer?: boolean }): SupabaseClient`.
     - Default behaviour stays cookie-based.
     - If `opts.allowBearer` is true and a valid Bearer token is detected in `request.headers`, construct a header-authenticated client:  
       `createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: `Bearer ${jwt}` } } })`.
     - Export the helper and update existing exports to re-export for backwards compatibility (`createServerClient` etc.).
     - Add focused unit tests (`lib/supabase/__tests__/server-client.test.ts`) verifying cookie vs bearer modes.
     - **Commit and test pass** before proceeding to sub-step C.
+  - [x] **Git commit**: `d680764` - All Supabase client tests passing (9/9)
 - [ ] **Sub-step C: Refactor chat API route to use consolidated helpers**
   - [ ] Delete the ad-hoc `getAuthUserForTesting()` from `app/api/tools/[toolId]/route.ts`.
   - [ ] Replace with `const user = await requireAuth(request, { allowBearer: true })` for test compatibility.  

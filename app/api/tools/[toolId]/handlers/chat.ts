@@ -20,7 +20,6 @@ import { generateText } from 'ai'
 import { getModel } from '@/lib/services/llm-provider'
 import { AI_CONFIG, getModelForAICall } from '@/lib/config'
 import { renderChatSystemPrompt } from '@/lib/prompts/templates/chat-system'
-import { createClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { ChatService } from '@/lib/services/database/chat'
 import { createRequestLogger, createTimer, logAIOperation } from '@/lib/services/logger'
@@ -112,7 +111,7 @@ export class ChatHandler extends BaseToolHandler {
     }, 'Getting chat data')
     
     try {
-      const supabase = context.supabaseClient || await createClient()
+      const supabase = context.supabaseClient!
       const chatService = new ChatService(supabase)
       
       if (threadId) {
@@ -563,7 +562,7 @@ export class ChatHandler extends BaseToolHandler {
       let finalThreadId = threadId
       if (!threadId && messages.length === 1 && messages[0]?.role === 'user' && documentId) {
         try {
-          const supabase = context.supabaseClient || await createClient()
+          const supabase = context.supabaseClient!
           const chatService = new ChatService(supabase)
           
           // Create title from first user message
@@ -597,7 +596,7 @@ export class ChatHandler extends BaseToolHandler {
       let aiCallId: string | null = null
       if (finalThreadId) {
         try {
-          const supabase = context.supabaseClient || await createClient()
+          const supabase = context.supabaseClient!
           const aiCallService = new AiCallService(supabase)
           
           const aiCall = await aiCallService.createWithModelString({
@@ -754,7 +753,7 @@ export class ChatHandler extends BaseToolHandler {
     }, 'Creating new chat thread')
     
     try {
-      const supabase = context.supabaseClient || await createClient()
+      const supabase = context.supabaseClient!
       const chatService = new ChatService(supabase)
       const { modelString } = getModelForAICall()
       
@@ -823,7 +822,7 @@ export class ChatHandler extends BaseToolHandler {
     }, 'Chat DELETE request initiated')
     
     try {
-      const supabase = context.supabaseClient || await createClient()
+      const supabase = context.supabaseClient!
       const chatService = new ChatService(supabase)
       
       if (messageId && typeof messageId === 'string') {

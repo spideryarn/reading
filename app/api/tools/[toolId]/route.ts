@@ -51,54 +51,6 @@ const GetParamsSchema = z.object({
   // Tool-specific query parameters will be passed through
 }).passthrough() // Allow additional properties to be passed through
 
-/**
- * Test-aware authentication that supports both cookie-based auth (production)
- * and Bearer token auth (testing)
- */
-async function getAuthUserForTesting(request: NextRequest) {
-  // First try standard cookie-based auth
-  const standardUser = await getAuthUser()
-  if (standardUser) {
-    return standardUser
-  }
-
-  // If no cookie auth and we're in test environment, try Bearer token
-  if (process.env.NODE_ENV === 'test') {
-    const authHeader = request.headers.get('Authorization')
-    if (authHeader?.startsWith('Bearer ')) {
-      const token = authHeader.slice(7)
-      
-      try {
-        // Create a client with the Bearer token for testing
-        const { createClient } = await import('@supabase/supabase-js')
-        const testClient = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-          {
-            global: {
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            }
-          }
-        )
-        
-        const { data: { user }, error } = await testClient.auth.getUser()
-        if (error) {
-          console.warn('Bearer token auth failed:', error.message)
-          return null
-        }
-        
-        return user
-      } catch (error) {
-        console.warn('Bearer token processing failed:', error)
-        return null
-      }
-    }
-  }
-
-  return null
-}
 
 /**
  * Create execution context for the request with authenticated Supabase client
@@ -111,7 +63,7 @@ async function createExecutionContext(
   // Get user context if authenticated (supports both cookie and Bearer token auth)
   let user
   let authenticatedSupabaseClient
-  const authUser = await getAuthUserForTesting(request)
+  const authUser = await getAuthUser({ allowBearer: true, request })
   if (authUser) {
     user = {
       id: authUser.id,
@@ -119,30 +71,9 @@ async function createExecutionContext(
       preferences: {} // Could be expanded later
     }
     
-    // In test environment with Bearer token, create client with token
-    if (process.env.NODE_ENV === 'test') {
-      const authHeader = request.headers.get('Authorization')
-      if (authHeader?.startsWith('Bearer ')) {
-        const token = authHeader.slice(7)
-        const { createClient } = await import('@supabase/supabase-js')
-        authenticatedSupabaseClient = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-          {
-            global: {
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            }
-          }
-        )
-      }
-    }
-    
-    // Fall back to standard server client for production
-    if (!authenticatedSupabaseClient) {
-      authenticatedSupabaseClient = await import('@/lib/supabase/server').then(m => m.createClient())
-    }
+    // Get authenticated Supabase client using consolidated factory
+    const { getSupabaseServerClient } = await import('@/lib/supabase/server')
+    authenticatedSupabaseClient = await getSupabaseServerClient(request, { allowBearer: true })
   }
   
   // For now, document context would need to be passed in parameters
@@ -376,8 +307,9 @@ export async function POST(
     }
     
     // Most tools require authentication for POST operations
-    const authUser = await getAuthUserForTesting(request)
-    if (!authUser) {
+    try {
+      await requireAuth({ allowBearer: true, request })
+    } catch (error) {
       return createErrorResponse(
         {
           status: 401,
@@ -513,8 +445,9 @@ export async function DELETE(
     }
     
     // DELETE operations always require authentication
-    const authUser = await getAuthUserForTesting(request)
-    if (!authUser) {
+    try {
+      await requireAuth({ allowBearer: true, request })
+    } catch (error) {
       return createErrorResponse(
         {
           status: 401,
