@@ -80,8 +80,6 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
 ## Stages & Actions
 
 ### Stage: Prepare for implementation
-- [ ] Run `./scripts/sync-worktrees.ts` in subagent to pull latest changes from main
-- [ ] Ask user if we should create `250629a_chat_database_first` Git branch for this work
 - [ ] Research `useExternalStoreRuntime` documentation and patterns
   - [ ] Web search for assistant-ui external store examples and best practices
   - [ ] Examine current assistant-ui integration points that need updating
@@ -210,6 +208,48 @@ const sendMessage = async (content: string) => {
 **Optimistic Updates with Conflict Resolution:** Keep optimistic updates but add sophisticated merge logic. Decided against due to complexity and potential for new edge cases.
 
 **Event Sourcing Pattern:** Store chat events rather than final state. Too complex for current needs and would require major database schema changes.
+
+## useExternalStoreRuntime Research Findings
+
+**Key Capabilities from assistant-ui External Store Runtime:**
+- Direct integration with external state management systems (Redux, Zustand, custom stores)
+- Automatic optimistic updates and loading states controlled by `isRunning` boolean
+- Message conversion utilities between external format and assistant-ui format
+- Built-in tool call handling and streaming support
+- Capability-based feature enabling (UI features enabled based on provided handlers)
+
+**Implementation Pattern:**
+```typescript
+import { useExternalStoreRuntime } from "@assistant-ui/react";
+
+const runtime = useExternalStoreRuntime({
+  messages: messageArray,           // Your external message store array
+  isRunning: boolean,              // Controls loading states and optimistic updates
+  onNew: async (message) => {      // Handle new message sends
+    // Call your API and update external store
+    const { thread, messages } = await api.sendMessage(message.content)
+    setMessages(messages)          // Update external store with database truth
+  },
+  convertMessage: (msg) => ({      // Convert your format to assistant-ui format
+    role: msg.role,
+    content: [{ type: "text", text: msg.content }],
+    id: msg.id,
+    createdAt: new Date(msg.created_at)
+  })
+})
+```
+
+**Current Integration Points Analysis:**
+- `components/assistant-chat.tsx:249` - Uses `useLocalRuntime`, needs switch to `useExternalStoreRuntime`
+- `usePersistentChat.ts` - Complex dual-state management, needs replacement with database-first store
+- Database service layer in `lib/services/database/chat.ts` is solid and can be preserved
+- API endpoint needs enhancement to return atomic `{ thread, messages }` responses
+
+**Streaming Strategy:**
+- Server streams tokens to client during generation
+- UI shows temporary "assistant-typing" bubble during streaming
+- Replace with authoritative DB row once generation completes
+- Preserves real-time feel while maintaining database as source of truth
 
 ## Success Criteria Summary
 

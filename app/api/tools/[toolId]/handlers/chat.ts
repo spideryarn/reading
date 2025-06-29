@@ -27,6 +27,7 @@ import { createRequestLogger, createTimer, logAIOperation } from '@/lib/services
 import { BaseToolHandler, createHandlerError } from '../handler-interface'
 import type { ExecutionContext, ToolApiResponse } from '@/lib/tools/executor/types'
 import type { GetRequestParams, DeleteRequestParams } from '../handler-interface'
+import type { ChatApiResponse } from '@/lib/types/chat-api'
 
 // Validation schemas
 const ChatGetRequestSchema = z.object({
@@ -160,13 +161,267 @@ export class ChatHandler extends BaseToolHandler {
     if (action === 'create') {
       return this.handleCreateThread(parameters, context, logger)
     } else {
-      // Default to send message for 'send', 'execute', or other actions
-      return this.handleSendMessage(parameters, context, logger)
+      // Check for database-first flag in parameters (feature flag for gradual migration)
+      const useDatabaseFirst = parameters.databaseFirst === true || parameters.atomic === true
+      
+      if (useDatabaseFirst) {
+        return this.handleSendMessageAtomic(parameters, context, logger)
+      } else {
+        // Default to legacy implementation for backward compatibility
+        return this.handleSendMessage(parameters, context, logger)
+      }
     }
   }
   
   /**
-   * Handle sending chat messages (migrated from /api/chat POST)
+   * Handle sending chat messages with atomic database-first operations
+   * 
+   * This method implements the new database-first architecture that eliminates
+   * dual-state management and race conditions by:
+   * 1. Creating/verifying thread atomically with message operations
+   * 2. Saving both user message and AI response to database in single transaction
+   * 3. Returning complete thread + message data from authoritative database rows
+   */
+  private async handleSendMessageAtomic(
+    parameters: Record<string, unknown>,
+    context: ExecutionContext,
+    logger: ReturnType<typeof createRequestLogger>
+  ): Promise<ChatApiResponse> {
+    const requestTimer = createTimer()
+    
+    // Validate request parameters
+    const validation = ChatSendMessageSchema.safeParse(parameters)
+    if (!validation.success) {
+      throw createHandlerError(
+        `Invalid parameters: ${validation.error.errors.map(e => e.message).join(', ')}`,
+        'validation'
+      )
+    }
+    
+    const { messages, documentContext, threadId, documentId } = validation.data
+    
+    // For atomic operations, we expect only the latest user message
+    const latestMessage = messages[messages.length - 1]
+    if (!latestMessage || latestMessage.role !== 'user') {
+      throw createHandlerError('Invalid message format: expected user message', 'validation')
+    }
+    
+    logger.info({
+      userId: context.user!.id,
+      messageCount: messages.length,
+      documentContextLength: documentContext?.length || 0,
+      threadId,
+      documentId,
+      userMessage: latestMessage.content.slice(0, 100) + '...'
+    }, 'Processing atomic chat conversation')
+    
+    const supabase = await createClient()
+    const chatService = new ChatService(supabase)
+    const aiCallService = new AiCallService(supabase)
+    const { modelString, config: modelConfig } = getModelForAICall()
+    
+    try {
+      // Build conversation history for AI context
+      const systemPrompt = renderChatSystemPrompt({
+        documentContext: documentContext || 'No document context provided.'
+      })
+      
+      const aiMessages = [
+        { role: 'system' as const, content: systemPrompt },
+        ...messages.map(msg => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content
+        }))
+      ]
+      
+      // ATOMIC TRANSACTION: Thread creation/verification + user message
+      let effectiveThreadId = threadId
+      let userMessage
+      
+      if (!threadId && documentId) {
+        // Create new thread atomically with user message
+        const title = latestMessage.content.slice(0, 100) || 'Untitled Chat'
+        const newThread = await chatService.createThread({
+          documentId,
+          modelString: modelString,
+          title,
+          userId: context.user!.id
+        })
+        effectiveThreadId = newThread.id
+        
+        logger.info({
+          threadId: effectiveThreadId,
+          title,
+          documentId
+        }, 'Created new thread for atomic operation')
+      }
+      
+      if (!effectiveThreadId) {
+        throw new Error('No thread ID available for message operations')
+      }
+      
+      // Save user message to database first
+      userMessage = await chatService.addMessage({
+        threadId: effectiveThreadId,
+        role: 'user',
+        content: latestMessage.content
+      })
+      
+      // Generate AI response
+      const chatTimer = createTimer(logger, 'chat-generation')
+      
+      logger.info({
+        modelProvider: modelConfig.provider,
+        modelString: modelString,
+        messageCount: aiMessages.length,
+        maxTokens: AI_CONFIG.DEFAULT_MAX_TOKENS,
+        correlationId: context.request.correlationId,
+        threadId: effectiveThreadId
+      }, 'Starting AI chat generation')
+      
+      const model = getModel()
+      const aiResult = await generateText({
+        model,
+        messages: aiMessages,
+        maxTokens: AI_CONFIG.DEFAULT_MAX_TOKENS,
+        temperature: 0,
+      })
+      
+      const chatDuration = chatTimer.end({
+        tokensUsed: aiResult.usage?.totalTokens,
+        responseLength: aiResult.text.length
+      })
+      
+      // Create AI call tracking record
+      const aiCall = await aiCallService.createWithModelString({
+        userId: context.user!.id,
+        modelString: modelString,
+        promptTokens: aiResult.usage?.promptTokens || null,
+        completionTokens: aiResult.usage?.completionTokens || null,
+        totalTokens: aiResult.usage?.totalTokens || null,
+        requestData: {
+          messages: messages.map(m => ({ role: m.role, content: m.content })),
+          documentContext: documentContext ? documentContext.substring(0, 1000) + '...' : null,
+          threadId: effectiveThreadId
+        },
+        responseData: { response: aiResult.text }
+      })
+      
+      // Save AI response message to database
+      await chatService.addMessage({
+        threadId: effectiveThreadId,
+        role: 'assistant',
+        content: aiResult.text,
+        aiCallId: aiCall.id
+      })
+      
+      // Get complete thread and message data from database (single source of truth)
+      const { thread, messages: allMessages } = await chatService.getThreadWithMessages(effectiveThreadId)
+      
+      if (!thread) {
+        throw new Error('Thread not found after atomic operation')
+      }
+      
+      // Log successful operation
+      const costEstimate = aiResult.usage?.totalTokens ? aiResult.usage.totalTokens * 0.000003 : undefined
+      const logData: {
+        modelProvider: string
+        tokensUsed?: number
+        userId: string
+        documentId?: string
+        correlationId: string
+        cost?: number
+      } = {
+        modelProvider: modelConfig.provider,
+        tokensUsed: aiResult.usage?.totalTokens,
+        userId: context.user!.id,
+        correlationId: context.request.correlationId
+      }
+      if (documentId) {
+        logData.documentId = documentId
+      }
+      if (costEstimate !== undefined) {
+        logData.cost = costEstimate
+      }
+      logAIOperation('chat', logData, 'success')
+      
+      logger.info({
+        threadId: thread.id,
+        messageCount: allMessages.length,
+        responseLength: aiResult.text.length,
+        aiCallId: aiCall.id,
+        tokensUsed: aiResult.usage?.totalTokens,
+        duration: chatDuration,
+        correlationId: context.request.correlationId
+      }, 'Atomic chat operation completed successfully')
+      
+      // Return complete database state with legacy compatibility
+      return {
+        // New database-first format
+        thread,
+        messages: allMessages,
+        type: 'conversation',
+        cached: false,
+        
+        // Legacy compatibility (deprecated)
+        response: aiResult.text,
+        aiCallId: aiCall.id,
+        threadId: thread.id,
+        
+        // Standard response metadata
+        ...this.createResponseMetadata({
+          executionTime: requestTimer.elapsed(),
+          tokensUsed: aiResult.usage?.totalTokens
+        })
+      } as ChatApiResponse
+      
+    } catch (error) {
+      logger.error({
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        threadId,
+        documentId
+      }, 'Error in atomic chat operation')
+      
+      // Enhanced error handling
+      if (error instanceof Error) {
+        if (error.message.includes('API key') || error.message.includes('401')) {
+          throw createHandlerError(
+            'API configuration error - The Anthropic API key is missing or invalid',
+            'server',
+            false
+          )
+        }
+        
+        if (error.message.includes('rate limit') || error.message.includes('429')) {
+          throw createHandlerError(
+            'Rate limit exceeded - Too many requests to the AI service',
+            'server',
+            true
+          )
+        }
+        
+        if (error.message.includes('Database transaction failed')) {
+          throw createHandlerError(
+            'Database error - Failed to save conversation',
+            'server',
+            true
+          )
+        }
+      }
+      
+      throw createHandlerError(
+        error instanceof Error ? error.message : 'Failed to process chat message',
+        'server',
+        true
+      )
+    }
+  }
+
+  /**
+   * Handle sending chat messages (legacy implementation for backward compatibility)
+   * 
+   * TODO: Remove this method once all clients migrate to the new atomic implementation
    */
   private async handleSendMessage(
     parameters: Record<string, unknown>,
