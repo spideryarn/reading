@@ -181,11 +181,11 @@ When capturing research findings:
 ## File Naming and Organization
 
 ### Naming Convention
-`yyMMdd[letter]_description_in_normal_case.md`
+`yyMMdd[letter]_conversation_description_in_normal_case.md`
 
-Use `./scripts/generate-sequential-datetime-prefix.ts docs/conversations/` to get the date prefix, then add description in lowercase words separated by underscores (except proper names/acronyms).
+Use `./scripts/generate-sequential-datetime-prefix.ts docs/conversations/` to get the date prefix, then add "conversation" followed by description in lowercase words separated by underscores (except proper names/acronyms).
 
-Example: `250616a_research_instructions_improvement.md`
+Example: `250616a_conversation_research_instructions_improvement.md`
 
 **Generate filename prefix using**: `./scripts/generate-sequential-datetime-prefix.ts docs/conversations/`
 
