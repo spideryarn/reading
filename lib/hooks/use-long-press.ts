@@ -66,7 +66,19 @@ export function useLongPress(
     if ('isPrimary' in event && !(event as React.PointerEvent).isPrimary) return
 
     // Prevent native long-press actions (text selection / drag scroll / context menu)
-    if ('preventDefault' in event) event.preventDefault()
+    // but only for touch/pen inputs. For mouse clicks we must NOT preventDefault – doing so
+    // suppresses the subsequent click event which the icon-buttons rely on.
+    if ('preventDefault' in event) {
+      if ('pointerType' in event) {
+        const pointerType = (event as React.PointerEvent).pointerType
+        if (pointerType === 'touch' || pointerType === 'pen') {
+          event.preventDefault()
+        }
+      } else {
+        // TouchEvent branch – always prevent default because it's inherently touch.
+        event.preventDefault()
+      }
+    }
 
     const point = 'clientX' in event
       ? { x: (event as React.PointerEvent).clientX, y: (event as React.PointerEvent).clientY }
@@ -80,10 +92,15 @@ export function useLongPress(
     // Capture subsequent events so we still receive pointerup even if the user
     // moves outside the original element.
     if ('currentTarget' in event && 'setPointerCapture' in (event.currentTarget as any) && 'pointerId' in event) {
-      try {
-        ;(event.currentTarget as any).setPointerCapture((event as any).pointerId)
-      } catch {
-        // Not critical – just best-effort.
+      // Only capture touch/pen pointers; capturing the mouse pointer steals the subsequent
+      // pointerup/click from child elements (e.g. links), breaking normal navigation.
+      const ptrType = 'pointerType' in event ? (event as React.PointerEvent).pointerType : 'touch'
+      if (ptrType === 'touch' || ptrType === 'pen') {
+        try {
+          ;(event.currentTarget as any).setPointerCapture((event as any).pointerId)
+        } catch {
+          // Not critical – best effort only.
+        }
       }
     }
 

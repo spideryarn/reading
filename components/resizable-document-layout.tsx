@@ -144,7 +144,7 @@ function ResizableDocumentLayoutInner({
   
   // State management
   const [isLeftPaneCollapsed, setIsLeftPaneCollapsed] = useState(false)
-  const [savedLeftPaneSize, setSavedLeftPaneSize] = useState(UI_CONFIG.DEFAULT_LEFT_PANE_WIDTH_PERCENT) // Remember the last size
+  const [savedLeftPaneSize, setSavedLeftPaneSize] = useState<number>(UI_CONFIG.DEFAULT_LEFT_PANE_WIDTH_PERCENT) // Remember the last size
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
   const leftPanelRef = useRef<ImperativePanelHandle>(null)
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -461,7 +461,7 @@ function ResizableDocumentLayoutInner({
           defaultSize={100 - UI_CONFIG.DEFAULT_LEFT_PANE_WIDTH_PERCENT}
           className="h-full relative"
         >
-          <div className={`h-full ${isLeftPaneCollapsed ? 'pl-0' : 'pl-16'} ${isMobile ? 'mobile-compact mobile-heading-size mobile-body-text' : ''} ${isLandscape ? 'landscape-compact landscape-spacing' : ''}`}>
+          <div suppressHydrationWarning className={`h-full ${isLeftPaneCollapsed ? 'pl-0' : 'pl-16'} ${isMobile ? 'mobile-compact mobile-heading-size mobile-body-text' : ''} ${isLandscape ? 'landscape-compact landscape-spacing' : ''}`}>
             <SimpleDocumentViewer
               elements={elements}
               {...(selectedElement !== undefined ? { selectedElement } : {})}
