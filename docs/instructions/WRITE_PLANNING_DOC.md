@@ -4,7 +4,8 @@ This is a guide for writing planning/project management `.md` files, e.g. `plann
 
 These are for thinking through & documenting decisions, breaking down complex projects into multiple stages, and tracking progress.
 
-Aim to keep these concise, but emphasise & clearly capture all the decisions, responses, and requirements from the user.
+Aim to keep these concise, but emphasise & clearly capture all the decisions, responses, and requirements from the user. Make sure it's detailed & full enough for another developer to implement correctly & reliably.
+
 
 Update this doc regularly to keep the actions up-to-date. When you change it, make minimal, focused changes, based on new user input.
 
