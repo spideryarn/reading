@@ -63,12 +63,6 @@ see: `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
 - ✅ HTTP status code consistency
 - ✅ Cross-document navigation access control
 
-### 9. `document-access-control-basic.spec.ts` - Access Control Smoke Tests
-- ✅ Anonymous application access
-- ✅ 404 handling for non-existent documents
-- ✅ Authentication system accessibility
-- ✅ Bot user agent handling
-
 ### 9. `ai-tweet-thread-generation.spec.ts` - AI Tweet Thread Generation
 - ✅ Complete tweet thread generation workflow
 - ✅ Document upload and AI processing pipeline
