@@ -405,3 +405,174 @@ documents/
 - Current vision pipeline stages preserved
 - HTML fragment processing API backward compatible
 - Document metadata schema extensible without breaking changes
+
+
+## Appendix - message from user with overall architecture plan re single-page images
+
+The issue with a lot of your plans is that the Vercel Serverless request body limit is not just on uploads - it's also on downloads, as I understand it. So even if we were to upload a big file to Supabase Storage, we *still* wouldn't be able to process it with a Vercel Serverless Function.
+
+Here's what I'm thinking - update @250628a_vision_pdf_image_extraction_to_supabase_storage.md :
+- Rename `/api/upload-pdf-vision` to `/api/upload-pdf-single-page-image`
+- Don't send up the whole raw PDF to `/api/upload-pdf-single-page-image`, just a single page-image. Call that API many times in parallel, each receiving a single page-image. Before sending, the browser should validate that images are <4MB - if they're too large, it should resize them somehow in a sensible way.
+- Once that `/api/upload-pdf-single-page-image` has got all the stuff back from Gemini as now, it should generate an image filename, rewrite the <img src>`, return the bounding box info plus image filename etc to the browser caller, and then it's up to the browser to do the cropping and upload the cropped files to Supabase. This way, the final HTML should include a bunch of filename references that will pull from Supabase Storage.
+
+
+## Appendix - response from o3 AI
+
+(‣ Sounding-board mode – no changes yet ‣)
+
+I like the direction: break the monolith upload into many small (< 4 MB) calls so we stay safely below Vercel's per-request limit, and push the heaviest binary work (cropping and storage) back to the browser. A few things to sanity-check before we commit:
+
+1. Number of invocations / concurrency  
+   • A 40-page article → 40 separate `/api/upload-pdf-single-page-image` calls.  
+   • Each call spins up a serverless function + a Gemini Flash request.  
+   • Vercel allows high concurrency, but there's a warm-up latency & cost per invocation. We should throttle from the browser (e.g. 3–5 concurrent) so we don't DDOS our own quota or exceed Gemini concurrency limits.
+
+2. Coordinating a "document" across independent page calls  
+   • We still need a shared `documentId` so filenames land in the same `{uuid}/assets/` folder and page numbers are known.  
+   • The first page call could generate & return that UUID; subsequent calls include it. Or the browser generates one upfront (easier, avoids a race).
+
+3. Resizing before upload  
+   • Bounding boxes returned by Gemini are normalised (0-1), so if we down-scale the page image the coordinates remain valid.  
+   • For final cropping we must use the **same raster dimensions** we passed to Gemini, otherwise floating-point rounding can drift a pixel or two. Cropping the *down-scaled* image is usually fine for web display; we can preserve DPI for print later if needed.
+
+4. Filename generation & storage upload flow  
+   • Server decides the descriptive filename (`figure-1-accuracy-curve.png`) but the browser does the actual upload.  
+   • The API response needs to include: `elementId`, `filename` (relative), and maybe a pre-signed **upload URL** (Supabase `createSignedUploadUrl`) so the browser can PUT without an extra round trip.  
+   • We also need the storage path convention (`{documentId}/assets/filename.png`) in that payload.
+
+5. Assembling the final HTML  
+   • After all pages return, the browser now has:  
+     – page HTML fragments with `<img id="…">` and `src="filename.png"` placeholders  
+     – cropped images uploaded (or about to be uploaded) to storage  
+   • We can assemble and patch the complete document client-side, then POST one last tiny JSON body (`{documentId, html}`) to a `/api/finalise-vision-document` endpoint that saves it and triggers text extraction, etc. That keeps every serverless request below the 4.5 MB mark.
+
+6. Error handling / retries  
+   • If one page fails we should surface it so the UI can retry that page alone.  
+   • The finaliser endpoint can validate "got N of N pages" before committing.
+
+7. Browser capability check  
+   • Cropping dozens of images in-browser is fine on desktop, but we should guard against very low-memory mobiles. Maybe cap to 20 MPixels total at once or batch uploads.
+
+8. Naming the route  
+   – `/api/upload-pdf-single-page-image` is explicit but long. `/api/upload-page-image` or `/api/page-image` might read better, but that's bikeshedding.
+
+9. Alternative worth noting  
+   • Supabase Edge Functions (Node 20) don't have the 4.5 MB limit; one call with the whole PDF would work there. That's extra infra but avoids many invocations. Trade-off is complexity vs cost.
+
+Overall I think the multi-call approach is viable, aligns with Vercel limits, and keeps us pure-JS (no `sharp`/`canvas` binaries). The main implementation pieces:
+
+a) Client: rasterise → compress/resize → POST `/api/page-image` (with docId, pageNo, image) – concurrency-limited.  
+b) Server route: validate payload size, call Gemini, get fragment & bounding boxes, generate filenames, rewrite `<img src>`, respond with `{ pageHtml, extractedImages[] }`.  
+c) Client: crop each bbox, upload via signed URLs, patch `src=` attributes, track progress.  
+d) Client: after all pages done → POST final HTML & metadata to `/api/finalise-document`.
+
+If this sounds good I can draft an implementation plan (routing, payload schema, client worker flow, finaliser endpoint).
+
+
+## Phase 2 – Single-page image upload re-architecture (Work-in-progress)
+
+### Goal and Context (supersedes Phase 1 for Vercel limits)
+
+We discovered that Vercel's Serverless Functions impose a **4.5 MB hard limit on the *entire* HTTP request body (uploads *and* downloads)**.  The Phase 1 implementation still depends on posting all page PNGs (often 10-30 MB) to a single `/api/upload-pdf-vision` endpoint, so any realistic academic paper will trigger `413 FUNCTION_PAYLOAD_TOO_LARGE` in production.
+
+To remain on Vercel without switching to Edge Functions or external workers we will:
+
+1. **Split the upload into one request per page image** (< 4 MB each) so every invocation is comfortably under the limit.
+2. **Run Gemini + HTML fragment generation in the Serverless Function** as today, but **return the bounding-box metadata and descriptive filenames** instead of doing the Canvas crop server-side.
+3. **Crop the regions in the browser**, upload the resulting assets directly to Supabase Storage using signed URLs, and patch the HTML fragments locally.
+4. Finally POST a *tiny* `{documentId, html}` payload to a new `/api/finalise-vision-document` route which stores the assembled document and kicks off the existing shared processing pipeline.
+
+### High-level user flow
+
+Browser (client)
+```
+PDF.js → page-to-PNG (<4 MB)   ─┐
+                              │  ① POST /api/upload-pdf-single-page-image  (3-5 concurrent)
+                              └──> returns { pageHtml, extractedImages[] }
+crop each bbox with Canvas
+upload cropped PNG to Supabase via signed URL
+patch <img src> in pageHtml
+repeat for all pages (N calls)
+assemble full HTML
+POST /api/finalise-vision-document { documentId, html }
+```
+
+Serverless (Vercel Node runtime)
+```
++/api/upload-pdf-single-page-image
+  ↳ validate payload (<4 MB)
+  ↳ Gemini Flash → HTML + bbox JSON
+  ↳ generate filenames & rewrite <img src>
+  ↳ respond with metadata (no cropping)
+
++/api/finalise-vision-document
+  ↳ basic validation (received all pages?)
+  ↳ store HTML, trigger shared pipeline (text extraction, etc.)
+```
+
+### Key decisions
+
+* **Route rename**: `/api/upload-pdf-vision` → `/api/upload-pdf-single-page-image` (may alias old route during transition).
+* **Request size guard**: browser resizes any page image > 4 MB before upload (max-dimension heuristic, e.g. shrink to 1500 px wide).
+* **Client-generated `documentId`** (UUID v4) passed with every page call to keep assets co-located.
+* **Concurrency throttle** on the client: default 3 (configurable).
+* **Supabase signed upload URLs** returned by new helper route `/api/signed-upload-url` *or* embedded in each page response to avoid an extra RTT.
+* **Fail-fast errors**: any page failure surfaces immediately; UI can retry individual pages.
+* **No server-side Canvas/Sharp**: keeps bundle size < 50 MB and avoids native deps.
+
+### Revised Acceptance Criteria
+
+- Page image upload payloads must be < 4 MB each (validated client-side and server-side).
+- All Gemini calls succeed and return HTML + normalised bounding-box metadata.
+- Cropped images are uploaded from the browser to `{documentId}/assets/` with server-provided filenames.
+- Final assembled HTML references Supabase Storage URLs and renders correctly.
+- Entire workflow completes without any single request exceeding 4.5 MB.
+
+### Stages & Actions (Phase 2)
+
+#### Stage: Preparatory refactor ✅ **COMPLETED**
+- [x] **Duplicate & rename API route**: scaffold `app/api/upload-pdf-single-page-image/route.ts` copying logic from existing route but accepting *one* `pageImage` field instead of arrays.
+- [x] **Add `documentId` header/field** validation and generation helper.
+- [x] **Implement payload-size guard**: return `400` if `Content-Length` > 4 MB or if decoded base-64 length exceeds threshold.
+
+#### Stage: API response schema ✅ **COMPLETED**
+- [x] Define Zod schema `SinglePageVisionResponse` with `{ pageNumber, pageHtml, extractedImages: [ { elementId, filename, storagePath } ] }`.
+- [x] Update page processor to return bounding-box info + generated filenames without cropping.
+
+#### Stage: Browser uploader/worker
+- [ ] Create React hook `useVisionSinglePageUploader` handling queue, concurrency, resize-if-needed, progress events.
+- [ ] Implement image resize utility (Canvas down-scale with JPEG quality 0.8) targeting ~3.5 MB max.
+- [ ] Generate `documentId` (UUID v4) before first call.
+- [ ] After each response, perform Canvas cropping, upload asset via signed URL, and patch fragment.
+
+#### Stage: Supabase signed uploads
+- [ ] Add helper route `/api/storage/signed-upload-url` (or embed in page response) returning URL & headers for `PUT`.
+- [ ] Client uploads cropped images, retries on 5xx.
+
+#### Stage: Document finaliser
+- [ ] Create `/api/finalise-vision-document` expecting `{ documentId, html, pageCount }`.
+- [ ] Validate pageCount vs stored assets, store HTML in DB, enqueue shared processing.
+
+#### Stage: UI integration & progress UX
+- [ ] Show page-by-page progress, failures, retry option.
+- [ ] Warn user when browser memory or total upload size exceeds soft limits.
+
+#### Stage: Testing & validation
+- [ ] Add Jest unit tests for new payload guard util.
+- [ ] Add Playwright e2e test uploading a 10-page PDF (>20 MB) ensuring all page calls finish and final document renders with CDN images.
+- [ ] `npm run check:health` after each stage.
+
+#### Stage: Cleanup & documentation
+- [ ] Deprecate old `/api/upload-pdf-vision` route (alias for 4 weeks, log warnings).
+- [ ] Update `docs/reference/UPLOAD_DOCUMENT_PROCESSING_PIPELINE.md` and this planning doc.
+- [ ] Move planning doc to finished when complete.
+
+### Risks / open questions
+
+* High invocation count might increase latency or cost; monitor usage in Vercel & Gemini.
+* Need to ensure cropping with down-scaled images still meets quality requirements (might expose "view original" link later).
+* Mobile memory limits – may need progressive upload of cropped assets to avoid holding large blobs in RAM.
+
+---
+

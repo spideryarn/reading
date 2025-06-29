@@ -168,6 +168,17 @@ export async function extractImageFromPage(
   const logger = createRequestLogger('/services/image-extractor', `extract-${Date.now()}`)
   const startTime = Date.now()
   
+  // Validate runtime environment before doing any heavy work. This prevents the
+  // server-side Vision pipeline (where browser APIs are unavailable) from
+  // progressing to the unhelpful "Image is not defined" error and instead
+  // surfaces a clear, actionable failure message.
+  const envCheck = validateExtractionEnvironment()
+  if (!envCheck.supported) {
+    const msg = `Image extraction requires browser environment: ${envCheck.errors.join('; ')}`
+    logger.error('Unsupported environment for image extraction', { errors: envCheck.errors })
+    throw new ImageExtractionError(msg)
+  }
+  
   try {
     // Validate input
     const validatedInput = imageExtractionInputSchema.parse(input)
@@ -274,7 +285,7 @@ export async function extractMultipleRegions(
   const results: ImageExtractionResult[] = []
   
   for (let i = 0; i < regions.length; i++) {
-    const region = regions[i]
+    const region = regions[i]!
     
     try {
       const input: ImageExtractionInput = {
