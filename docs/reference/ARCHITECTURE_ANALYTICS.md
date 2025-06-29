@@ -1,23 +1,49 @@
 # Analytics Architecture
 
-Analytics tracking for user behaviour analysis and application performance monitoring through Hotjar integration with Next.js App Router.
+Analytics tracking for user behaviour analysis and application performance monitoring through hybrid integration: Google Analytics 4 (via @next/third-parties) and Hotjar (via Next.js Script component) with Next.js App Router.
 
 ## See also
 
-- `app/layout.tsx` - Root layout with Hotjar tracking implementation
+- `app/layout.tsx` - Root layout with Google Analytics and Hotjar tracking implementation
+- `next.config.ts` - Content Security Policy configuration for analytics providers
 - `.env.local` - Analytics configuration and environment variables
 - `docs/reference/SITE_ORGANISATION_WEBSITE_STRUCTURE.md` - Complete application architecture
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - System architecture implementation
+- [Next.js @next/third-parties Documentation](https://nextjs.org/docs/app/building-your-application/optimizing/third-party-libraries) - Official Google Analytics integration guide
 - [Hotjar Documentation](https://help.hotjar.com/hc/en-us/articles/115009336727-How-to-Install-Your-Hotjar-Tracking-Code) - Official installation guide
 
 ## Principles and Key Decisions
 
 - **Privacy-conscious**: Only track user behaviour, not sensitive document content
 - **Environment-based**: Analytics only loads when configured (production environments)
-- **Best practices compliance**: Uses Next.js Script component with proper loading strategy
-- **Single tracking solution**: Hotjar chosen for comprehensive user behaviour insights (heatmaps, session recordings, user feedback)
+- **Best practices compliance**: Uses official Next.js approaches (@next/third-parties for GA4, Script component for Hotjar)
+- **Hybrid tracking approach**: Google Analytics for traffic/conversion analysis, Hotjar for user behaviour insights
+- **Performance optimised**: Both tracking solutions use optimal loading strategies to prevent render blocking
 
 ## Current Implementation ✓
+
+### Google Analytics 4 (GA4) Integration
+
+**Configuration**: Environment variable in `.env.local`:
+```bash
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-8JFKZ95T84
+```
+
+**Implementation**: Uses official @next/third-parties package (`app/layout.tsx`):
+```typescript
+import { GoogleAnalytics } from '@next/third-parties/google';
+
+// In JSX:
+{process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+  <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+)}
+```
+
+**Key Benefits**:
+- Official Next.js integration with automatic optimisations
+- Performance-optimised script loading
+- Automatic pageview tracking for client-side navigation
+- Built-in support for Core Web Vitals measurement
 
 ### Hotjar Integration
 
@@ -94,7 +120,15 @@ NEXT_PUBLIC_HOTJAR_VERSION=6
 - **Route transitions**: Continues tracking across Next.js client-side navigation
 
 ### Content Security Policy (CSP) Configuration
-**Hotjar-specific CSP directives** (configured in `next.config.ts`):
+**Analytics-specific CSP directives** (configured in `next.config.ts`):
+
+**Google Analytics 4**:
+```typescript
+"script-src": "https://www.googletagmanager.com"
+"connect-src": "https://www.google-analytics.com https://analytics.google.com"
+```
+
+**Hotjar**:
 ```typescript
 "script-src": "https://static.hotjar.com https://script.hotjar.com"
 "style-src": "https://*.hotjar.com"
@@ -102,25 +136,29 @@ NEXT_PUBLIC_HOTJAR_VERSION=6
 "connect-src": "https://*.hotjar.com https://*.hotjar.io wss://*.hotjar.com"
 ```
 
-**Security compliance**: CSP configuration follows Hotjar's official requirements while maintaining strict security policies for other resources.
+**Security compliance**: CSP configuration follows both Google Analytics and Hotjar official requirements while maintaining strict security policies for other resources.
 
 ### Production Deployment
 - **Domain configuration**: Configured for www.spideryarn.com production domain
 - **Environment variables**: Managed through Vercel deployment settings
+  - `NEXT_PUBLIC_GA_MEASUREMENT_ID` for Google Analytics
+  - `NEXT_PUBLIC_HOTJAR_ID` and `NEXT_PUBLIC_HOTJAR_VERSION` for Hotjar
 - **HTTPS requirement**: Automatically satisfied by production deployment
-- **CSP implementation**: Comprehensive Content Security Policy includes all required Hotjar domains
+- **CSP implementation**: Comprehensive Content Security Policy includes all required Google Analytics and Hotjar domains
 
 ## Future Enhancements 📋
 
 ### Additional Analytics Providers
-- **Google Analytics**: For detailed traffic and conversion analysis
 - **PostHog**: For advanced product analytics and feature flagging
 - **Mixpanel**: For detailed event tracking and user lifecycle analysis
+- **Amplitude**: For advanced user behaviour analysis and cohort tracking
 
 ### Advanced Tracking Features
-- **Custom event tracking**: AI feature usage, document processing completion
+- **Custom GA4 events**: AI feature usage, document processing completion using `sendGAEvent`
+- **Enhanced ecommerce tracking**: Subscription conversions, upgrade funnels
 - **User segmentation**: New vs returning users, document upload patterns
 - **Conversion funnels**: Registration to first document upload tracking
+- **Cross-platform attribution**: Mobile web and desktop usage patterns
 
 ### Privacy and Compliance
 - **Cookie consent management**: GDPR and CCPA compliance implementation
@@ -130,27 +168,42 @@ NEXT_PUBLIC_HOTJAR_VERSION=6
 ## Troubleshooting
 
 ### Common Issues
-1. **Tracking not working**: Verify `NEXT_PUBLIC_HOTJAR_ID` is set correctly
-2. **Development environment**: Hotjar requires HTTPS, so local testing may not work
-3. **Script loading errors**: Check browser console for Content Security Policy issues
+1. **GA4 tracking not working**: Verify `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set correctly
+2. **Hotjar tracking not working**: Verify `NEXT_PUBLIC_HOTJAR_ID` is set correctly
+3. **Development environment**: Both analytics providers require HTTPS, so local testing may not work
+4. **Script loading errors**: Check browser console for Content Security Policy issues
+5. **Missing events**: Verify CSP allows connections to Google Analytics and Hotjar domains
 
 ### Verification
 - Visit production site at www.spideryarn.com
-- Check browser developer tools Network tab for hotjar script loading
-- Verify in Hotjar dashboard that data is being received
+- Check browser developer tools Network tab for both Google Analytics and Hotjar script loading
+- Verify in Google Analytics dashboard (GA4) that real-time data is being received
+- Verify in Hotjar dashboard that session data is being received
 
 ### Development Testing
 ```bash
 # Check environment configuration
+echo $NEXT_PUBLIC_GA_MEASUREMENT_ID
 echo $NEXT_PUBLIC_HOTJAR_ID
 
-# Enable Hotjar in development (if needed for testing)
-NEXT_PUBLIC_HOTJAR_ID=6448124 npm run dev
+# Enable analytics in development (if needed for testing)
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-8JFKZ95T84 NEXT_PUBLIC_HOTJAR_ID=6448124 npm run dev
 ```
 
 ## Implementation Notes
 
+### Google Analytics 4
+- **Measurement ID**: G-8JFKZ95T84 (configured in Google Analytics dashboard)
+- **Integration**: @next/third-parties package for optimised performance
+- **Package version**: ^15.3.4 (matches Next.js version)
+- **Automatic features**: Pageview tracking, Core Web Vitals, enhanced measurement
+
+### Hotjar
 - **Site ID**: 6448124 (configured in Hotjar dashboard)
 - **Version**: Currently using Hotjar tracking version 6
-- **Deployment**: Automatically deployed with Next.js application via Vercel
-- **Monitoring**: Track analytics in Hotjar dashboard for user insights and optimisation opportunities
+- **Integration**: Next.js Script component with manual implementation
+
+### Deployment
+- **Platform**: Automatically deployed with Next.js application via Vercel
+- **Monitoring**: Track analytics in both Google Analytics 4 and Hotjar dashboards for comprehensive user insights and optimisation opportunities
+- **Performance**: Both tracking solutions load asynchronously to prevent blocking page rendering
