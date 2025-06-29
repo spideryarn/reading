@@ -44,7 +44,7 @@ describe('Page Processor Integration with Image Extraction', () => {
     jest.clearAllMocks()
   })
 
-  it('should process page without image extraction when disabled', async () => {
+  it('should process page without image extraction when documentId is missing', async () => {
     // Mock AI processing
     const mockExecuteMultimodalPromptWithUsage = require('@/lib/prompts/types').executeMultimodalPromptWithUsage
     mockExecuteMultimodalPromptWithUsage.mockResolvedValue({
@@ -60,8 +60,8 @@ describe('Page Processor Integration with Image Extraction', () => {
       pageImageBase64: 'data:image/png;base64,test',
       pageNumber: 1,
       totalPages: 5,
-      documentContext: 'Test Document',
-      enableImageExtraction: false // Disabled
+      documentContext: 'Test Document'
+      // No documentId - image extraction will be skipped
     }
 
     const result = await processPageToHtml(input)
@@ -73,46 +73,13 @@ describe('Page Processor Integration with Image Extraction', () => {
       'Processing page to HTML with image extraction',
       expect.objectContaining({
         pageNumber: 1,
-        enableImageExtraction: false,
-        hasDocumentId: false
+        hasDocumentId: false,
+        imageExtractionEnabled: false
       })
     )
   })
 
-  it('should skip image extraction when documentId is missing', async () => {
-    // Mock AI processing
-    const mockExecuteMultimodalPromptWithUsage = require('@/lib/prompts/types').executeMultimodalPromptWithUsage
-    mockExecuteMultimodalPromptWithUsage.mockResolvedValue({
-      text: '<p>Test page content</p>',
-      usage: {
-        promptTokens: 100,
-        completionTokens: 50,
-        totalTokens: 150
-      }
-    })
-
-    const input: PageProcessingInput = {
-      pageImageBase64: 'data:image/png;base64,test',
-      pageNumber: 1,
-      totalPages: 5,
-      enableImageExtraction: true, // Enabled
-      // documentId: undefined - Missing document ID
-    }
-
-    const result = await processPageToHtml(input)
-
-    expect(result.success).toBe(true)
-    expect(result.extractedImages).toEqual([])
-    expect(mockLogger.info).toHaveBeenCalledWith(
-      'Processing page to HTML with image extraction',
-      expect.objectContaining({
-        enableImageExtraction: true,
-        hasDocumentId: false
-      })
-    )
-  })
-
-  it('should process image extraction when enabled with document ID', async () => {
+  it('should process image extraction when document ID is present', async () => {
     // Mock AI processing
     const mockExecuteMultimodalPromptWithUsage = require('@/lib/prompts/types').executeMultimodalPromptWithUsage
     mockExecuteMultimodalPromptWithUsage.mockResolvedValue({
@@ -204,8 +171,7 @@ describe('Page Processor Integration with Image Extraction', () => {
       pageImageBase64: 'data:image/png;base64,test',
       pageNumber: 1,
       totalPages: 5,
-      documentId: 'doc-123',
-      enableImageExtraction: true
+      documentId: 'doc-123'
     }
 
     const result = await processPageToHtml(input)
@@ -279,8 +245,7 @@ describe('Page Processor Integration with Image Extraction', () => {
       pageImageBase64: 'data:image/png;base64,test',
       pageNumber: 1,
       totalPages: 5,
-      documentId: 'doc-123',
-      enableImageExtraction: true
+      documentId: 'doc-123'
     }
 
     const result = await processPageToHtml(input)
@@ -324,8 +289,7 @@ describe('Page Processor Integration with Image Extraction', () => {
       pageImageBase64: 'data:image/png;base64,test',
       pageNumber: 1,
       totalPages: 5,
-      documentId: 'doc-123',
-      enableImageExtraction: true
+      documentId: 'doc-123'
     }
 
     const result = await processPageToHtml(input)
@@ -409,8 +373,7 @@ describe('Page Processor Integration with Image Extraction', () => {
         pageNumber: 2,
         totalPages: 5,
         documentId: 'doc-456',
-        enableImageExtraction: true
-      }
+              }
 
       const result = await processPageToHtml(input)
 
