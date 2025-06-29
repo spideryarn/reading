@@ -1,0 +1,106 @@
+graph TB
+    subgraph "User Interface"
+        User["👤 User"]
+        ChatUI["💬 Chat Interface<br/>@assistant-ui/react"]
+        ConsentUI["🔒 Function Consent UI<br/>Safety-based approval"]
+        ResultUI["📊 Tool Results Display<br/>Inline in chat"]
+    end
+
+    subgraph "Chat API Layer"
+        ChatAPI["🌐 /api/chat<br/>Enhanced with function calling"]
+        SchemaGen["📋 Schema Generator<br/>generateFunctionSchema()"]
+        FunctionExec["⚡ Function Executor<br/>executeLLMFunction()"]
+    end
+
+    subgraph "LLM Processing"
+        LLMCall["🤖 LLM Request<br/>With function definitions"]
+        Claude["🔵 Claude Functions<br/>Anthropic format"]
+        Gemini["🔴 Gemini Functions<br/>Google format"]
+        ResponseParser["🔍 Response Parser<br/>Extract function calls"]
+    end
+
+    subgraph "Tool System"
+        Registry["📚 Tool Registry<br/>Enhanced with Zod schemas"]
+        ToolExec["⚙️ Tool Executor<br/>executeTool()"]
+        Validator["✅ Parameter Validator<br/>Zod validation"]
+        ToolHandlers["🔧 Tool Handlers<br/>Existing API endpoints"]
+    end
+
+    subgraph "Enhanced Tool Definitions"
+        ToolDefs["🛠️ Tool Definitions<br/>+ parameterSchemas<br/>+ executionSafety"]
+        ZodSchemas["📝 Zod Schemas<br/>Per action validation"]
+        SafetyLevels["🚦 Safety Levels<br/>read-only/generative/mutative"]
+    end
+
+    subgraph "Security & Validation"
+        FunctionVal["🛡️ Function Validator<br/>validateFunctionName()"]
+        AuthCheck["🔐 Authentication<br/>validateAuth()"]
+        CircuitBreaker["⚡ Circuit Breaker<br/>Rate limiting"]
+    end
+
+    subgraph "Execution Results"
+        ToolResults["📈 Tool Results<br/>Direct JSON output"]
+        ErrorHandler["❌ Error Handler<br/>RFC 9457 format"]
+        AuditLog["📋 Audit Trail<br/>ai_calls table"]
+    end
+
+    %% User Flow
+    User --> ChatUI
+    ChatUI --> ChatAPI
+
+    %% Schema Generation
+    ChatAPI --> SchemaGen
+    SchemaGen --> Registry
+    Registry --> ToolDefs
+    ToolDefs --> ZodSchemas
+    ZodSchemas --> SafetyLevels
+
+    %% LLM Processing
+    ChatAPI --> LLMCall
+    LLMCall --> Claude
+    LLMCall --> Gemini
+    Claude --> ResponseParser
+    Gemini --> ResponseParser
+
+    %% Function Execution
+    ResponseParser --> FunctionVal
+    FunctionVal --> ConsentUI
+    ConsentUI --> FunctionExec
+    FunctionExec --> ToolExec
+
+    %% Tool Execution
+    ToolExec --> Validator
+    Validator --> AuthCheck
+    AuthCheck --> CircuitBreaker
+    CircuitBreaker --> ToolHandlers
+
+    %% Results Processing
+    ToolHandlers --> ToolResults
+    ToolHandlers --> ErrorHandler
+    ToolResults --> AuditLog
+    ErrorHandler --> AuditLog
+
+    %% Response Flow
+    ToolResults --> ChatAPI
+    ErrorHandler --> ChatAPI
+    ChatAPI --> ResultUI
+    ResultUI --> ChatUI
+
+    %% Styling
+    style User fill:#e3f2fd
+    style ChatUI fill:#e8f5e8
+    style LLMCall fill:#fff3e0
+    style Claude fill:#e1f5fe
+    style Gemini fill:#fce4ec
+    style ToolExec fill:#f3e5f5
+    style ConsentUI fill:#fff8e1
+    style AuditLog fill:#f1f8e9
+
+    %% Annotations
+    classDef newComponent fill:#ffeb3b,stroke:#ff9800,stroke-width:2px
+    classDef enhanced fill:#4caf50,stroke:#2e7d32,stroke-width:2px
+    classDef existing fill:#e0e0e0,stroke:#757575,stroke-width:1px
+
+    class SchemaGen,FunctionExec,ConsentUI,FunctionVal,CircuitBreaker newComponent
+    class ChatAPI,Registry,ToolExec,ToolDefs enhanced
+    class ToolHandlers,AuthCheck,AuditLog existing
