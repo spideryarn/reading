@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useRef } from 'react'
 import { z } from 'zod'
-import { resizeImage, calculateBase64SizeBytes } from '@/lib/utils/image-resize'
+import PQueue from 'p-queue'
+import { resizeImage, calculateBase64SizeBytes } from '@/lib/utils/image-resize-pica'
 
 // Schema matching the API response
 const SinglePageVisionResponseSchema = z.object({
@@ -68,6 +69,9 @@ interface UseVisionSinglePageUploaderReturn {
   isUploading: boolean
   overallProgress: number
   cancel: () => void
+  pause: () => void
+  resume: () => void
+  isPaused: boolean
   retry: (pageNumber: number) => Promise<void>
   getCompletedHtml: () => string[]
 }
@@ -86,9 +90,16 @@ export function useVisionSinglePageUploader(
 
   const [pageStates, setPageStates] = useState<PageUploadState[]>([])
   const [isUploading, setIsUploading] = useState(false)
+  const [isPaused, setIsPaused] = useState(false)
   const abortControllerRef = useRef<AbortController | null>(null)
-  const queueRef = useRef<Array<() => Promise<void>>>([])
-  const activeUploadsRef = useRef(0)
+  const queueRef = useRef<PQueue | null>(null)
+  const pageImagesRef = useRef<Map<number, string>>(new Map()) // Store page images for retry
+  const documentMetadataRef = useRef<{
+    documentId: string
+    documentTitle: string
+    fileName: string
+    totalPages: number
+  } | null>(null)
 
   // Update page state
   const updatePageState = useCallback((pageNumber: number, updates: Partial<PageUploadState>) => {
@@ -219,15 +230,20 @@ export function useVisionSinglePageUploader(
             )
           })
 
-          croppedImages.push({
+          const croppedImage: ExtractedImageWithData = {
             elementId: imageData.elementId,
             filename: imageData.filename,
             storagePath: imageData.storagePath,
             boundingBox: imageData.boundingBox,
-            caption: imageData.caption,
-            altText: imageData.altText,
             blob
-          })
+          }
+          if (imageData.caption !== undefined) {
+            croppedImage.caption = imageData.caption
+          }
+          if (imageData.altText !== undefined) {
+            croppedImage.altText = imageData.altText
+          }
+          croppedImages.push(croppedImage)
         } catch (cropError) {
           console.error(`Failed to crop image ${imageData.elementId}:`, cropError)
           // Continue with other images even if one fails
@@ -280,19 +296,6 @@ export function useVisionSinglePageUploader(
     }
   }, [updatePageState, onPageComplete, onError, maxRetries])
 
-  // Process queue with concurrency control
-  const processQueue = useCallback(async () => {
-    while (queueRef.current.length > 0 && activeUploadsRef.current < maxConcurrency) {
-      const task = queueRef.current.shift()
-      if (task) {
-        activeUploadsRef.current++
-        task().finally(() => {
-          activeUploadsRef.current--
-          processQueue() // Process next in queue
-        })
-      }
-    }
-  }, [maxConcurrency])
 
   // Main upload function
   const uploadPages = useCallback(async (
@@ -305,6 +308,20 @@ export function useVisionSinglePageUploader(
     // Reset state
     abortControllerRef.current = new AbortController()
     setIsUploading(true)
+    setIsPaused(false)
+    
+    // Store page images and document metadata for retry functionality
+    pageImagesRef.current.clear()
+    pageImages.forEach(({ base64Image, pageNumber }) => {
+      pageImagesRef.current.set(pageNumber, base64Image)
+    })
+    
+    documentMetadataRef.current = {
+      documentId,
+      documentTitle,
+      fileName,
+      totalPages
+    }
     
     // Initialize page states
     const initialStates: PageUploadState[] = pageImages.map(({ pageNumber }) => ({
@@ -314,59 +331,121 @@ export function useVisionSinglePageUploader(
     }))
     setPageStates(initialStates)
 
-    // Create queue of upload tasks
-    queueRef.current = pageImages.map(({ base64Image, pageNumber }) => 
-      () => processPage(
-        base64Image,
-        pageNumber,
-        totalPages,
-        documentId,
-        documentTitle,
-        fileName
+    // Create p-queue instance with configuration
+    const queue = new PQueue({ 
+      concurrency: maxConcurrency,
+      throwOnTimeout: true,
+      timeout: 300000 // 5 minutes per page
+    })
+    queueRef.current = queue
+
+    // Add tasks to queue with priority (lower page numbers = higher priority)
+    const promises = pageImages.map(({ base64Image, pageNumber }) => 
+      queue.add(
+        () => processPage(
+          base64Image,
+          pageNumber,
+          totalPages,
+          documentId,
+          documentTitle,
+          fileName
+        ),
+        { priority: -pageNumber } // Negative so lower page numbers have higher priority
       )
     )
 
-    // Start processing
-    await processQueue()
-
     // Wait for all uploads to complete
-    const checkInterval = setInterval(() => {
-      const allComplete = pageStates.every(
-        state => state.status === 'completed' || state.status === 'error'
-      )
+    try {
+      await Promise.all(promises)
+    } catch (error) {
+      console.error('Error processing pages:', error)
+    } finally {
+      setIsUploading(false)
       
-      if (allComplete && activeUploadsRef.current === 0) {
-        clearInterval(checkInterval)
-        setIsUploading(false)
+      // Get all completed HTML fragments in order
+      const completedFragments = pageStates
+        .filter(state => state.status === 'completed')
+        .sort((a, b) => a.pageNumber - b.pageNumber)
+        .map(state => state.htmlFragment!)
         
-        // Get all completed HTML fragments in order
-        const completedFragments = pageStates
-          .filter(state => state.status === 'completed')
-          .sort((a, b) => a.pageNumber - b.pageNumber)
-          .map(state => state.htmlFragment!)
-          
-        onAllComplete?.(completedFragments)
-      }
-    }, 100)
-  }, [processPage, processQueue, onAllComplete])
+      onAllComplete?.(completedFragments)
+    }
+  }, [processPage, onAllComplete, maxConcurrency, pageStates])
 
   // Cancel all uploads
   const cancel = useCallback(() => {
     abortControllerRef.current?.abort()
-    queueRef.current = []
+    queueRef.current?.clear() // Clear p-queue
+    queueRef.current?.pause() // Pause queue
     setIsUploading(false)
-    setPageStates(prev => prev.map(state => ({
-      ...state,
-      status: state.status === 'completed' ? 'completed' : 'error',
-      error: state.status === 'completed' ? undefined : 'Cancelled'
-    })))
+    setPageStates(prev => prev.map(state => {
+      if (state.status === 'completed') {
+        return state
+      }
+      return {
+        ...state,
+        status: 'error' as const,
+        error: 'Cancelled'
+      }
+    }))
   }, [])
 
   // Retry a specific page
   const retry = useCallback(async (pageNumber: number) => {
-    // This would need access to the original page image data
-    // For now, this is a placeholder
-    console.log(`Retry functionality for page ${pageNumber} to be implemented`)
+    const pageImage = pageImagesRef.current.get(pageNumber)
+    const metadata = documentMetadataRef.current
+    
+    if (!pageImage || !metadata) {
+      console.error(`Cannot retry page ${pageNumber}: missing data`)
+      return
+    }
+
+    // Reset the page state
+    updatePageState(pageNumber, { 
+      status: 'pending', 
+      progress: 0
+    })
+
+    // If there's an active queue, add the retry to it
+    if (queueRef.current && !queueRef.current.isPaused) {
+      await queueRef.current.add(
+        () => processPage(
+          pageImage,
+          pageNumber,
+          metadata.totalPages,
+          metadata.documentId,
+          metadata.documentTitle,
+          metadata.fileName
+        ),
+        { priority: -pageNumber }
+      )
+    } else {
+      // Process immediately if no active queue
+      await processPage(
+        pageImage,
+        pageNumber,
+        metadata.totalPages,
+        metadata.documentId,
+        metadata.documentTitle,
+        metadata.fileName
+      )
+    }
+  }, [processPage, updatePageState])
+
+  // Pause uploads
+  const pause = useCallback(() => {
+    if (queueRef.current) {
+      queueRef.current.pause()
+      setIsPaused(true)
+    }
+  }, [])
+
+  // Resume uploads
+  const resume = useCallback(() => {
+    if (queueRef.current) {
+      queueRef.current.start()
+      setIsPaused(false)
+    }
   }, [])
 
   // Get completed HTML fragments
@@ -390,6 +469,9 @@ export function useVisionSinglePageUploader(
     isUploading,
     overallProgress,
     cancel,
+    pause,
+    resume,
+    isPaused,
     retry,
     getCompletedHtml
   }
