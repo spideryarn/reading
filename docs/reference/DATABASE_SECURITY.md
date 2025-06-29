@@ -27,6 +27,7 @@ The project uses Supabase Row Level Security (RLS) to enforce data access polici
 |-------|-------------|---------------------|---------------|---------------|
 | documents | ✅ Yes | ✅ Full CRUD | ✅ Yes | ❌ No |
 | document_enhancements | ✅ Yes | ✅ Full CRUD | ✅ Yes | ❌ No |
+| document_assets | ✅ Yes | ✅ Full CRUD | ✅ Yes | ❌ No |
 | ai_calls | ✅ Yes | ✅ Full CRUD (Fixed) | ✅ Yes | ❌ No |
 | profiles | ✅ Yes | ✅ User-only access | ❌ No* | N/A |
 | chat_threads | ✅ Yes | ✅ Full CRUD | ✅ Yes | ❌ No |
@@ -165,6 +166,26 @@ EXISTS (SELECT 1 FROM profiles WHERE user_id = auth.uid() AND is_admin IS NOT NU
 - ✅ **Admin Override**: Admins can access all threads/messages
 - ❌ **Public Documents**: Chat remains private even when document is public
 
+### document_assets
+
+**Purpose**: Track extracted assets (images, future asset types) linked to documents for cleanup and reference.
+
+**RLS Status**: ✅ Enabled with document-based access control
+
+**Current Policies**: 
+- "Users and admins can view document assets" (SELECT)
+- "Authenticated users and admins can manage document assets" (ALL operations)
+
+**Access Patterns**:
+- ✅ **View**: Users can view assets for documents they can access (including public documents)
+- ✅ **Manage**: Users can create/update/delete assets for documents they own
+- ✅ **Admin Override**: Admins can access all document assets using `public.is_admin()`
+
+**Security Implementation**:
+- Uses `public.is_admin()` function to avoid RLS recursion
+- Access derived from parent document ownership
+- Supports future public document access patterns
+
 ### ai_models
 
 **Purpose**: Reference table for AI model configurations (deprecated - replaced by model strings).
@@ -205,8 +226,8 @@ EXISTS (SELECT 1 FROM profiles WHERE user_id = auth.uid() AND is_admin IS NOT NU
 The admin system uses a SECURITY DEFINER function to avoid RLS recursion:
 
 ```sql
--- auth.is_admin() function checks admin status without triggering RLS
-CREATE FUNCTION auth.is_admin()
+-- public.is_admin() function checks admin status without triggering RLS
+CREATE FUNCTION public.is_admin()
 RETURNS BOOLEAN
 SECURITY DEFINER
 AS $$
@@ -221,6 +242,8 @@ $$ LANGUAGE plpgsql;
 ```
 
 This function is used in all RLS policies that need admin override, preventing the infinite recursion that would occur if policies directly queried the profiles table.
+
+**⚠️ CRITICAL**: Always use `public.is_admin()` in RLS policies instead of direct profile table queries. Direct queries like `EXISTS (SELECT 1 FROM profiles WHERE user_id = auth.uid() AND is_admin IS NOT NULL)` can cause RLS recursion issues and should be avoided.
 
 ### Access Control Matrix
 
