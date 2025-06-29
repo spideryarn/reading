@@ -87,10 +87,12 @@ describe('Real RLS Policy Tests', () => {
       const userAClient = await setup.createUserClient(TEST_USER_IDS.USER_A)
       const userBClient = await setup.createUserClient(TEST_USER_IDS.USER_B)
 
-      // User A should only see their own documents
+      // User A should only see their own *private* documents
+      // We exclude public documents because they are intentionally visible to all users.
       const { data: userADocuments } = await userAClient
         .from('documents')
-        .select('id, title, created_by')
+        .select('id, title, created_by, is_public')
+        .eq('is_public', false)
 
       expect(userADocuments).toBeTruthy()
       const userADocIds = userADocuments?.map(doc => doc.id) || []
@@ -99,15 +101,17 @@ describe('Real RLS Policy Tests', () => {
       expect(userADocIds).toContain(userADoc.id)
       expect(userADocIds).not.toContain(userBDoc.id)
 
-      // All documents should belong to User A
+      // All returned (private) documents should belong to User A
       userADocuments?.forEach(doc => {
         expect(doc.created_by).toBe(TEST_USER_IDS.USER_A)
       })
 
-      // User B should only see their own documents
+      // User B should only see their own *private* documents
+      // We exclude public documents because they are intentionally visible to all users.
       const { data: userBDocuments } = await userBClient
         .from('documents')
-        .select('id, title, created_by')
+        .select('id, title, created_by, is_public')
+        .eq('is_public', false)
 
       expect(userBDocuments).toBeTruthy()
       const userBDocIds = userBDocuments?.map(doc => doc.id) || []
@@ -116,7 +120,7 @@ describe('Real RLS Policy Tests', () => {
       expect(userBDocIds).toContain(userBDoc.id)
       expect(userBDocIds).not.toContain(userADoc.id)
 
-      // All documents should belong to User B
+      // All returned (private) documents should belong to User B
       userBDocuments?.forEach(doc => {
         expect(doc.created_by).toBe(TEST_USER_IDS.USER_B)
       })
