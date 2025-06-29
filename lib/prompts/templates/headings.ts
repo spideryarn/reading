@@ -81,17 +81,30 @@ export const headingOperationSchema = baseOperationSchema.extend({
   return { message: 'Invalid operation configuration' }
 })
 
-// Schema for the new operations-based headings response
+// Schema for iteration safety check
+const safetyCheckSchema = z.object({
+  current_iteration: z.number().int().min(0),
+  total_operations_so_far: z.number().int().min(0),
+  max_iterations_reached: z.boolean()
+})
+
+// Schema for the new operations-based headings response with iteration support
 export const headingsResponseSchema = z.object({
-  operations: z.array(headingOperationSchema).min(1, 'At least one operation is required')
+  operations: z.array(headingOperationSchema),
+  more_changes_required: z.boolean(),
+  iteration_summary: z.string(),
+  safety_check: safetyCheckSchema
 })
 
 // Legacy schema removed - using operations-based format only
 
-// Schema for headings prompt input
+// Schema for headings prompt input with iteration support
 const headingsPromptSchema = z.object({
   html_content: z.string().min(1, 'HTML content cannot be empty'),
-  documentId: z.string().uuid().optional()
+  documentId: z.string().uuid().optional(),
+  iteration_count: z.number().int().min(0).optional(),
+  previous_iteration_summary: z.string().optional(),
+  MAX_HEADING_OPERATIONS_PER_ITERATION: z.number().int().min(1).optional()
 })
 
 // Load the headings prompt template
