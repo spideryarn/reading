@@ -580,9 +580,16 @@ Serverless (Vercel Node runtime)
 - **Test coverage**: Created comprehensive test suites for both utilities with proper mocking
 - **Bundle size impact**: Total addition of ~18.5KB (p-queue 4KB + Pica 14.5KB) - acceptable for quality improvements
 
-#### Stage: Supabase signed uploads
-- [ ] Add helper route `/api/storage/signed-upload-url` (or embed in page response) returning URL & headers for `PUT`.
-- [ ] Client uploads cropped images, retries on 5xx.
+#### Stage: Direct browser uploads with RLS
+- [ ] Create client-side storage utilities for uploading images directly from browser
+  - Use existing Supabase client with anon key (RLS enforced)
+  - Upload to `{documentId}/assets/{filename}` path format
+  - Handle blob uploads with proper content types
+- [ ] Update `useVisionSinglePageUploader` to upload cropped images directly
+  - After cropping, upload each image blob to Supabase Storage
+  - Get public/signed URLs after successful upload
+  - Update HTML fragments with final storage URLs
+- [ ] Add retry logic for failed uploads (network issues, etc)
 
 #### Stage: Document finaliser
 - [ ] Create `/api/finalise-vision-document` expecting `{ documentId, html, pageCount }`.
