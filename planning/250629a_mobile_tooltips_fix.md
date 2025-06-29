@@ -43,16 +43,16 @@ The work is bounded to a single PR so we can ship improvements quickly while lea
 - [x] Unit-test with JSDOM: verify callback fires after delay and cancels on early pointer up.
 
 ### Simplify `TooltipOrPopover`
-- [ ] Remove desktop/touch branching – always render Radix `Popover`.
-- [ ] Add hover (`pointerenter`/`focus`) trigger to open instantly on hover-capable devices.
-- [ ] Integrate new `useLongPress` trigger.
-- [ ] Add global listeners (pointerdown outside, scroll, resize, keydown Esc) to dismiss.
-- [ ] Manual smoke test on desktop & mobile simulator.
+- [x] Remove desktop/touch branching – always render Radix `Popover`.
+- [x] Add hover (`pointerenter`/`focus`) trigger to open instantly on hover-capable devices.
+- [x] Integrate new `useLongPress` trigger.
+- [x] Add global listeners (pointerdown outside, scroll, resize, keydown Esc) to dismiss.
+- [x] Manual smoke test on desktop & mobile simulator.
 
 ### TooltipManager context
-- [ ] Create `lib/context/tooltip-manager.tsx` that tracks `openId` + `setOpenId`.
-- [ ] Wrap `_app.tsx` (or nearest common root) in provider.
-- [ ] Inside `TooltipOrPopover`, on open set `openId`, on close clear it; auto-close previous tooltip when a new one opens.
+- [x] Create `lib/context/tooltip-manager.tsx` that tracks `openId` + `setOpenId`.
+- [x] Wrap `_app.tsx` (or nearest common root) in provider.
+- [x] Inside `TooltipOrPopover`, on open set `openId`, on close clear it; auto-close previous tooltip when a new one opens.
 
 ### Trigger summary load on open
 - [ ] Expose `onOpenChange` prop from `TooltipOrPopover` (non-breaking).

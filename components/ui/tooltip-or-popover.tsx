@@ -1,13 +1,16 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useId } from 'react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useCanHover } from '@/lib/hooks/use-can-hover'
 import { useLongPress } from '@/lib/hooks/use-long-press'
+import { useTooltipManager } from '@/lib/context/tooltip-manager'
 
 interface TooltipOrPopoverProps {
   children: React.ReactNode
   content: React.ReactNode
+  /** Optional stable id to identify this tooltip instance. If omitted, a React-generated id is used. */
+  tooltipId?: string
   side?: 'top' | 'right' | 'bottom' | 'left'
   align?: 'start' | 'center' | 'end'
   sideOffset?: number
@@ -46,6 +49,7 @@ interface TooltipOrPopoverProps {
 export function TooltipOrPopover({
   children,
   content,
+  tooltipId: propTooltipId,
   side = 'right',
   align = 'start',
   sideOffset = 4,
@@ -57,26 +61,21 @@ export function TooltipOrPopover({
 }: TooltipOrPopoverProps) {
   const canHover = useCanHover()
 
-  /**
-   * Internal open state. We control it explicitly so we can trigger open via
-   * multiple interaction patterns (hover, focus, long-press) and dismiss via
-   * global listeners.
-   */
-  const [open, setOpen] = useState(false)
+  const { openId, setOpenId } = useTooltipManager()
+  const generatedId = useId()
+  const tooltipId = propTooltipId ?? generatedId
 
-  // Notify caller on state change (e.g. heading summary load)
-  const setOpenAndNotify = useCallback(
-    (value: boolean) => {
-      setOpen(value)
-      onOpenChange?.(value)
-    },
-    [onOpenChange]
-  )
+  const open = openId === tooltipId
 
-  /**
-   * Long-press handling (touch/pen). Triggers open after delay.
-   */
-  const longPressHandlers = useLongPress(() => setOpenAndNotify(true), { delay: 500 })
+  // Notify external caller when open state changes
+  useEffect(() => {
+    onOpenChange?.(open)
+  }, [open, onOpenChange])
+
+  // Remove `isActive` from the handlers so React doesn't pass it to the DOM as an
+  // unknown attribute (it is only used for internal state tracking).
+  const { isActive: _ignoredIsActive, ...longPressHandlers } =
+    useLongPress(() => setOpenId(tooltipId), { delay: 500 })
 
   /**
    * Global listeners to dismiss the popover when open.
@@ -87,7 +86,7 @@ export function TooltipOrPopover({
   useEffect(() => {
     if (!open) return
 
-    const close = () => setOpenAndNotify(false)
+    const close = () => setOpenId(null)
 
     // ESC key
     const handleKey = (e: KeyboardEvent) => {
@@ -114,21 +113,21 @@ export function TooltipOrPopover({
       window.removeEventListener('scroll', handleScroll, true)
       window.removeEventListener('pointerdown', handlePointerDown)
     }
-  }, [open, setOpenAndNotify])
+  }, [open, setOpenId])
 
   // --- Trigger event handling ---------------------------------------------
 
   // Hover/focus handlers. Hover only applies if the device canHover.
   const handlePointerEnter = useCallback(() => {
-    if (canHover) setOpenAndNotify(true)
-  }, [canHover, setOpenAndNotify])
+    if (canHover) setOpenId(tooltipId)
+  }, [canHover, setOpenId, tooltipId])
 
   const handlePointerLeave = useCallback(() => {
-    if (canHover) setOpenAndNotify(false)
-  }, [canHover, setOpenAndNotify])
+    if (canHover) setOpenId(null)
+  }, [canHover, setOpenId])
 
-  const handleFocus = useCallback(() => setOpenAndNotify(true), [setOpenAndNotify])
-  const handleBlur = useCallback(() => setOpenAndNotify(false), [setOpenAndNotify])
+  const handleFocus = useCallback(() => setOpenId(tooltipId), [setOpenId, tooltipId])
+  const handleBlur = useCallback(() => setOpenId(null), [setOpenId])
 
   // Discoverability styling (faint dotted underline matching glossary pattern)
   const indicatorStyle = showIndicator
@@ -152,7 +151,7 @@ export function TooltipOrPopover({
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpenAndNotify}>
+    <Popover open={open} onOpenChange={(v) => setOpenId(v ? tooltipId : null)}>
       <PopoverTrigger asChild>
         <span {...triggerProps}>{children}</span>
       </PopoverTrigger>
