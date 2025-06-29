@@ -137,7 +137,7 @@ export function getContextualFilesForTopic(
   if (docLower.includes('auth') || docLower.includes('user') || docLower.includes('login')) {
     contextualFiles.push(
       'lib/auth/server-auth.ts',
-      'lib/auth/route-protection.ts',
+      'lib/utils/http-auth.ts',
       'docs/reference/AUTHENTICATION_OVERVIEW.md',
     );
   }

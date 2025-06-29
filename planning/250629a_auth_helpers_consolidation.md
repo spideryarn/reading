@@ -56,10 +56,10 @@ This planning document proposes a **root-cause refactor** to converge on a singl
 - [x] Export new helpers and ensure existing named exports remain.
 - [x] Update unit tests for `server-auth` to cover new behaviours (success, null, redirect, throw).
 
-### Stage: Delete Legacy Module & Relocate Utilities
-- [ ] Confirm `lib/auth/route-protection.ts` is unused via `ripgrep`.
-- [ ] If `isBot` / `createUnauthorizedResponse` **unused**, delete; if used elsewhere, move to `lib/utils/http-auth.ts` and update imports.
-- [ ] Remove the file and update `tsconfig` paths if necessary.
+### Stage: Delete Legacy Module & Relocate Utilities ✅ COMPLETED
+- [x] Confirm `lib/auth/route-protection.ts` is unused via `ripgrep`.
+- [x] If `isBot` / `createUnauthorizedResponse` **unused**, delete; if used elsewhere, move to `lib/utils/http-auth.ts` and update imports.
+- [x] Remove the file and update `tsconfig` paths if necessary.
 
 ### Stage: Codebase-wide Migration
 - [ ] **Codemod**: Replace `validateAuth()` (throwing style) with `requireAuth()` across `app/api/*`.
@@ -138,5 +138,3 @@ In short:
 • If you need a **structured result** for branching or logging without try/catch – use assertAuth.
 
 Most routes will end up using either requireAuth (one-liner) or getAuthUser (for optional auth). assertAuth is there for the minority of places where explicit success/error objects make the code cleaner than exceptions or null-checks.
-
-We need to update relevant docs to describe this.

@@ -1,7 +1,7 @@
 import { DocumentParser } from '@/lib/services/document-parser'
 import DocumentPageClient from './page-client'
 import { MutationProvider } from '@/lib/context/mutation-context'
-import { getAuthUser } from '@/lib/auth/route-protection'
+import { getAuthUser } from '@/lib/auth/server-auth'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import type { Database } from '@/lib/types/database'

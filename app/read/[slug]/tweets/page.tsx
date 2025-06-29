@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { TweetThreadPageClient } from './page-client'
 import { AppHeader } from '@/components/app-header'
-import { requireAuth } from '@/lib/auth/route-protection'
+import { requireAuth } from '@/lib/auth/server-auth'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
@@ -28,7 +28,7 @@ export default async function TweetThreadPage({ params }: PageProps) {
   
   // Require authentication for tweet thread access
   await requireAuth({
-    returnTo: `/read/${slug}/tweets`
+    redirectTo: `/auth/login?next=/read/${slug}/tweets`
   })
   
   const doc = await getDocumentBySlug(slug)
