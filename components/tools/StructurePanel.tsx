@@ -16,7 +16,7 @@ import { HeadingTree, type Heading } from '../heading-tree'
 import { Button } from '@/components/ui/button'
 import { Loading } from '@/components/ui/loading'
 import { AlertWithIcon } from '@/components/ui/alert'
-import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown"
+import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 
@@ -742,7 +742,9 @@ export function StructurePanel({
       return (
         <div className="max-w-md p-4 text-sm bg-white border border-gray-200 rounded-lg shadow-lg">
           <div className="prose prose-sm prose-gray max-w-none">
-            <MarkdownTextPrimitive content={cachedContent} remarkPlugins={[remarkGfm]} />
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {cachedContent}
+            </ReactMarkdown>
           </div>
         </div>
       )

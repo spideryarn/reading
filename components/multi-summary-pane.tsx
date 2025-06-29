@@ -8,7 +8,7 @@
 import { Button } from '@/components/ui/button'
 import { Loading } from '@/components/ui/loading'
 import { AlertWithIcon } from '@/components/ui/alert'
-import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown"
+import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { DualSummarySliders } from '@/components/dual-summary-sliders'
 import { useMultiSummary } from '@/lib/hooks/useMultiSummary'
@@ -159,7 +159,9 @@ export function MultiSummaryPane({
             {/* Summary Content */}
             {currentSummary ? (
               <div className="prose prose-sm prose-gray max-w-none">
-                <MarkdownTextPrimitive content={currentSummary} remarkPlugins={[remarkGfm]} />
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {currentSummary}
+                </ReactMarkdown>
               </div>
             ) : (
               <div className="text-sm text-gray-500 italic">

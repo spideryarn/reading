@@ -7,7 +7,7 @@
 
 import React, { useRef, useEffect, useCallback, useMemo } from 'react'
 import type { DocumentElement } from '@/lib/types/document'
-import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown"
+import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { useElementVisibility } from '@/lib/hooks/useElementVisibility'
 import { DocumentParser } from '@/lib/services/document-parser'
@@ -38,8 +38,8 @@ interface SimpleDocumentViewerProps {
 }
 
 // Memoised helpers to keep innerHTML stable across re-renders
-const MemoisedMarkdownRenderer = React.memo(function MemoisedMarkdownRenderer({ content }: { content: string }) {
-  return <MarkdownTextPrimitive content={content} remarkPlugins={[remarkGfm]} />
+const MemoisedMarkdownRenderer = React.memo(function MemoisedMarkdownRenderer({ content }: { content: string | null }) {
+  return <ReactMarkdown remarkPlugins={[remarkGfm]}>{content ?? ''}</ReactMarkdown>
 })
 
 const MemoisedHtml = React.memo(function MemoisedHtml({ html }: { html: string }) {

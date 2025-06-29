@@ -7,7 +7,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Loading } from '@/components/ui/loading'
-import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown"
+import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 
 interface SummaryPaneProps {
@@ -277,7 +277,9 @@ export function SummaryPane({
         </div>
         {!isSummaryCollapsed && (
           <div className="prose prose-sm prose-blue max-w-none">
-            <MarkdownTextPrimitive content={summary} remarkPlugins={[remarkGfm]} />
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {summary}
+            </ReactMarkdown>
           </div>
         )}
       </div>

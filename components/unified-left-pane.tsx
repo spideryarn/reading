@@ -35,7 +35,7 @@ import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 import { useGlossaryUrlState, useSearchUrlState } from '@/lib/tools/hooks/use-tool-url-state'
 import type { Entity } from '@/lib/types/entity'
 import { findFirstOccurrence } from '@/lib/utils/entity-position-tracking'
-import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown"
+import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 
 // Semantic highlight interface
@@ -439,7 +439,9 @@ function GlossaryDisplay({
             )}
             
             <div className="text-sm text-gray-700 leading-relaxed mb-3 font-medium">
-              <MarkdownTextPrimitive content={entity.long_explanation || entity.brief_explanation} remarkPlugins={[remarkGfm]} />
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {entity.long_explanation || entity.brief_explanation}
+              </ReactMarkdown>
             </div>
             
             {entity.datetime && (
