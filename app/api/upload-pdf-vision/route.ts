@@ -168,6 +168,14 @@ export async function POST(request: NextRequest) {
 
     const pageProcessingStart = Date.now()
     
+    // Generate document ID for image extraction (always enabled for vision processing)
+    const documentId = crypto.randomUUID()
+    requestLogger.info({
+      correlationId,
+      documentId,
+      stage: 'document-id-generation'
+    }, 'Generated document ID for image extraction')
+    
     // Convert image results to page processing inputs
     const pageInputs = pageImages.map((image, index) => ({
       pageImageBase64: image.base64Image,
@@ -175,7 +183,8 @@ export async function POST(request: NextRequest) {
       totalPages: pageImages.length,
       fileName: pdfFile.name,
       documentContext: `Title: ${title}`,
-      previousPageSummary: undefined // Will be filled by batch processor
+      previousPageSummary: undefined, // Will be filled by batch processor
+      documentId: documentId // Enable image extraction for all pages
     }))
 
     const pageFragments = await processPagesBatch(pageInputs, {

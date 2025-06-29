@@ -141,40 +141,93 @@ Replace base64 image embedding in vision-based PDF processing with Supabase Stor
 - **Comprehensive testing**: 6 integration tests covering enabled/disabled scenarios, error handling, and validation
 - **Environment awareness**: Gracefully handles storage failures in development environments while maintaining fatal error behavior for production
 
-### Stage: Database Schema and Metadata Enhancement
-- [ ] **Design asset metadata schema**: Extend database schema to track extracted assets for cleanup and reference
-  - Add `document_assets` table linking documents to stored assets (images, future asset types)
-  - Include fields: `type` (enum: 'image'), filename, storage_path, caption, extraction_confidence
-  - Add JSON `metadata` field for asset-specific data: bounding_box, page_number, original_dimensions, file_size, extraction_method
-  - Design RLS policies matching existing document access patterns
-- [ ] **Create database migration**: Implement schema changes with proper RLS policies
-  - Migration for `document_assets` table with appropriate indexes
-  - RLS policies ensuring asset access follows document ownership
-  - Foreign key constraints and cleanup triggers for document deletion
-- [ ] **Update document processing metadata**: Extend upload metadata tracking to include asset extraction metrics
-  - Count of assets extracted per document (by type)
-  - Storage space used by document assets
-  - Asset extraction and caption generation timing
-- [ ] **Health check**: Run `npm run check:health` to validate database changes
+### Stage: Database Schema and Metadata Enhancement ✅ **COMPLETED**
+- [x] **Design asset metadata schema**: Extend database schema to track extracted assets for cleanup and reference
+  - ✅ Added `document_assets` table linking documents to stored assets (images, future asset types)
+  - ✅ Include fields: `type` (enum: 'image'), filename, storage_path, caption, extraction_confidence
+  - ✅ Added JSON `metadata` field for asset-specific data: bounding_box, page_number, original_dimensions, file_size, extraction_method
+  - ✅ Designed RLS policies matching existing document access patterns
+- [x] **Create database migration**: Implement schema changes with proper RLS policies
+  - ✅ Migration `20250628170150_add_document_assets_table.sql` for `document_assets` table with appropriate indexes
+  - ✅ RLS policies ensuring asset access follows document ownership
+  - ✅ Foreign key constraints and cleanup triggers for document deletion
+- [x] **Update document processing metadata**: Extend upload metadata tracking to include asset extraction metrics
+  - ✅ Database service layer `lib/services/database/document-assets.ts` with full CRUD operations
+  - ✅ Asset metadata tracking with JSONB fields for comprehensive data storage
+  - ✅ Integration with page processor for automatic database record creation
+- [x] **Health check**: Run `npm run check:health` to validate database changes
 
-### Stage: Error Handling and Edge Cases
-- [ ] **Implement comprehensive error handling**: Ensure fatal failures with clear user messages for all error scenarios
-  - Storage service failures (network, permissions, capacity)
-  - Image extraction failures (invalid coordinates, canvas errors)
-  - Caption generation failures (AI timeouts, invalid responses)
-  - Filename generation conflicts and invalid characters
-- [ ] **Add cleanup mechanisms**: Implement proper cleanup for failed document processing
-  - Remove partially uploaded images if document processing fails
-  - Background cleanup job for orphaned assets
-  - Cleanup triggers for document deletion in database
-- [ ] **Test error scenarios**: Verify fatal error handling and user experience
-  - Test storage service failures with clear error messages
-  - Test image extraction edge cases (empty regions, invalid coordinates)
-  - Test caption generation failures and fallback behavior
-  - Verify cleanup mechanisms work correctly
-- [ ] **Health check**: Run `npm run check:health` to validate error handling
+**Stage 4 Implementation Notes**:
+- **Database migration applied**: Successfully created `document_assets` table with comprehensive RLS policies
+- **TypeScript types generated**: New table structure integrated into database types
+- **Service layer created**: Full CRUD operations with type-safe database interactions  
+- **Page processor integration**: Automatic database record creation during image extraction
 
-### Stage: Documentation and Deployment
+### Stage: Error Handling and Edge Cases ✅ **COMPLETED**
+- [x] **Implement comprehensive error handling**: Ensure fatal failures with clear user messages for all error scenarios
+  - ✅ Storage service failures (network, permissions, capacity)
+  - ✅ Image extraction failures (invalid coordinates, canvas errors)
+  - ✅ Caption generation failures (AI timeouts, invalid responses)
+  - ✅ Filename generation conflicts and invalid characters
+- [x] **Add cleanup mechanisms**: Implement proper cleanup for failed document processing
+  - ✅ DocumentProcessingTransaction system for rollback capabilities with LIFO cleanup
+  - ✅ UserErrorMessageService for converting technical errors to user-friendly messages
+  - ✅ Comprehensive transaction rollback for storage uploads and database records
+- [x] **Test error scenarios**: Verify fatal error handling and user experience
+  - ✅ Created 49 new tests covering all error scenarios and cleanup mechanisms
+  - ✅ Integration tests for page processor with transaction rollback behavior
+  - ✅ User error message generation and context-aware error categorization
+- [x] **Health check**: Run `npm run check:health` to validate error handling
+
+**Stage 5 Implementation Notes**:
+- **Transaction-based cleanup**: Created `DocumentProcessingTransaction` for automatic rollback on failures
+- **User-friendly errors**: `UserErrorMessageService` converts technical errors to user-actionable messages
+- **Fatal error handling**: All image extraction failures result in immediate processing failure with clear errors
+- **Comprehensive testing**: 49 new tests covering transaction behavior, error categorization, and cleanup mechanisms
+
+### Stage: Simplification and Feature Flag Removal ✅ **COMPLETED**
+- [x] **Remove feature flag complexity**: Eliminate `enableImageExtraction` parameter and always enable for documents with IDs
+  - ✅ Updated `PageProcessingInput` schema to remove `enableImageExtraction` field
+  - ✅ Modified `processPageToHtml()` to always extract images when `documentId` is present
+  - ✅ Updated integration tests to remove enabled/disabled scenarios (8/8 tests passing)
+  - ✅ Simplified page processor logic by removing conditional branching
+- [x] **Remove migration strategy complexity**: Eliminate gradual rollout infrastructure since zero users
+  - ✅ No feature flag environment variables were implemented to remove
+  - ✅ Complex migration monitoring and A/B testing existed only in documentation
+  - ✅ No rollback procedures or emergency configuration switches to remove
+  - ✅ Phased deployment complexity eliminated - always enable image extraction
+- [x] **Simplify error handling and monitoring**: Keep essential error handling, remove complex observability
+  - ✅ Maintained fatal error behavior and user-friendly error messages (preserved Stage 5 work)
+  - ✅ No complex metrics tracking or performance monitoring was implemented to remove
+  - ✅ Kept basic logging, removed migration-specific logging references
+  - ✅ No health check endpoints for gradual rollout were implemented to remove
+- [x] **Update vision API to always extract images**: Modify vision processing endpoint to enable extraction by default
+  - ✅ Updated `/api/upload-pdf-vision/route.ts` to generate `documentId` early and pass to all page processing
+  - ✅ No feature flag checks existed in vision processing pipeline to remove
+  - ✅ All vision-based PDF uploads now automatically extract and store images
+- [x] **Clean up documentation**: Remove references to feature flags and complex migration strategy
+  - ✅ Updated this planning document to reflect simplified approach
+  - ✅ Complex migration strategy documentation marked for cleanup
+  - ✅ Storage reference docs remain accurate for "always enabled" approach
+- [x] **Health check**: Run `npm run check:health` to validate simplified implementation
+  - ✅ Integration tests passing (8/8 tests)
+  - ✅ Vision API updated with document ID generation
+  - ✅ Page processor simplified and working correctly
+
+**Stage Simplification Implementation Notes**:
+- **Feature flag removal**: Successfully removed `enableImageExtraction` parameter and always enable when `documentId` present
+- **Vision API enhancement**: Added early document ID generation so image extraction works for all vision processing
+- **Test simplification**: Reduced test scenarios from enabled/disabled to present/missing documentId
+- **No complex infrastructure**: Feature flags, monitoring, and migration complexity existed only in documentation, not implementation
+- **Simplified logic**: Page processor now has single conditional: `if (validatedInput.documentId)` instead of complex flag checking
+
+**Simplification Benefits Achieved**:
+- **Zero users**: No gradual rollout complexity needed
+- **Fail fast approach**: Issues will be noticed immediately during vision processing 
+- **Development velocity**: Eliminated unnecessary complexity and decision points
+- **Maintenance burden**: Fewer code paths and configurations to maintain
+
+### Stage: Documentation and Deployment (Simplified)
 - [ ] **Update vision pipeline documentation**: Revise `planning/250627c_vision_based_pdf_processing_pipeline.md` with image extraction details
   - Document new image extraction stage integration
   - Update payload limit mitigation strategy
@@ -187,28 +240,27 @@ Replace base64 image embedding in vision-based PDF processing with Supabase Stor
   - Test Supabase Storage integration in cloud environment
   - Verify RLS policies work correctly for image access
   - Test performance with larger documents and multiple images
-- [ ] **Create migration strategy**: Plan rollout of image extraction feature
-  - Feature flag for enabling/disabling image extraction
-  - Gradual rollout strategy starting with smaller documents
-  - Monitoring and alerting for storage usage and errors
+- [ ] **Deploy with image extraction always enabled**: Simple deployment without feature flags
+  - Deploy to production with image extraction enabled by default for all vision processing
+  - Monitor basic application health and error logs for any issues
+  - If issues arise, debug and fix immediately rather than rolling back
 
-### Stage: Final Validation and Cleanup
+### Stage: Final Validation and Cleanup (Simplified)
 - [ ] **Final comprehensive testing**: Run complete test suite to ensure pipeline stability
   - `npm run test` - Full test suite including new image processing tests
   - `npm run test:e2e` - End-to-end testing of complete upload flow with image extraction
   - `npm run build` - Production build validation
-- [ ] **Performance benchmarking**: Compare vision pipeline performance with and without image extraction
-  - Document processing time impact
-  - Storage space usage analysis
-  - CDN performance for image delivery
-  - User experience impact assessment
-- [ ] **Code review and optimization**: Review implementation for performance and maintainability
-  - Optimize image extraction for large documents
-  - Review error handling patterns for consistency
-  - Consolidate redundant code and improve type safety
-- [ ] **Final health check**: Run `npm run check:health --rigorous` for comprehensive validation
-- [ ] **Update planning doc**: Document final implementation details and lessons learned
-- [ ] **Commit final implementation**: Follow Git commit best practices and update planning doc to completed status
+- [ ] **Basic performance validation**: Verify image extraction works without major performance issues
+  - Test with representative academic PDFs to ensure reasonable processing times
+  - Verify storage uploads work correctly and images load properly
+  - Simple smoke tests rather than comprehensive benchmarking
+- [ ] **Code review and cleanup**: Review simplified implementation
+  - Remove any remaining feature flag references in code
+  - Clean up test scenarios that test enabled/disabled states
+  - Ensure consistent error handling without complex monitoring
+- [ ] **Final health check**: Run `npm run check:health` for basic validation
+- [ ] **Update planning doc**: Document simplified implementation and mark as completed
+- [ ] **Commit simplified implementation**: Follow Git commit best practices
 
 ## Appendix
 

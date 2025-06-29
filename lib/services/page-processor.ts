@@ -30,8 +30,7 @@ export const pageProcessingInputSchema = z.object({
   fileName: z.string().optional().describe('Original filename for context'),
   documentContext: z.string().optional().describe('Overall document context (title, authors, subject)'),
   previousPageSummary: z.string().optional().describe('Summary of previous page content for continuity'),
-  documentId: z.string().optional().describe('Document UUID for image asset storage'),
-  enableImageExtraction: z.boolean().default(false).describe('Enable image extraction to Supabase Storage')
+  documentId: z.string().optional().describe('Document UUID for image asset storage (image extraction enabled when present)')
 })
 
 // Schema for extracted image asset result
@@ -116,8 +115,8 @@ export async function processPageToHtml(
       hasFileName: !!validatedInput.fileName,
       hasContext: !!validatedInput.documentContext,
       hasPreviousSummary: !!validatedInput.previousPageSummary,
-      enableImageExtraction: validatedInput.enableImageExtraction,
-      hasDocumentId: !!validatedInput.documentId
+      hasDocumentId: !!validatedInput.documentId,
+      imageExtractionEnabled: !!validatedInput.documentId
     })
     
     // Step 1: Get HTML fragment from AI processing
@@ -134,8 +133,8 @@ export async function processPageToHtml(
     let finalHtmlFragment = aiResult.text
     const extractedImages: ExtractedImageAsset[] = []
     
-    // Step 2: Process HTML fragment to extract image metadata
-    if (validatedInput.enableImageExtraction && validatedInput.documentId) {
+    // Step 2: Process HTML fragment to extract image metadata (enabled when documentId present)
+    if (validatedInput.documentId) {
       try {
         const fragmentInput: FragmentProcessingInput = {
           htmlFragment: aiResult.text,
