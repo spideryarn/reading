@@ -59,7 +59,7 @@ The system supports multiple LLM providers (Claude and Gemini) for analysing doc
 ## UI behaviour
 
 1. **Loading**: Click "Load glossary" button to generate entities
-2. **Display**: Entities shown with name, ontology type (grey smallcaps), and long explanation
+2. **Display**: Entities shown with name, ontology type (grey smallcaps), and long explanation rendered as Markdown
 3. **Search**: Real-time text search filters entities by name and aliases
 4. **Navigation**: Click entity to scroll to first occurrence in document text
 5. **Error states**: Clear error messages with warning icons when generation fails
@@ -111,7 +111,7 @@ Entities are highlighted within the document text using Mark.js with the followi
 - No obtrusive background colour by default
 
 **Smart tooltip display**:
-- Hover shows entity explanation with proper formatting
+- Hover shows entity explanation with Markdown formatting rendered as HTML
 - For aliases: prepends primary entity name in bold (e.g., "**United States of America:** The U.S. is...")
 - Uses `long_explanation` when available, falls back to `brief_explanation`
 - Cross-device compatibility: hover on desktop, long-press on mobile

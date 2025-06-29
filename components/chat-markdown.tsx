@@ -14,10 +14,10 @@ import remarkGfm from "remark-gfm";
  *    - Optimized for complex AI-generated content
  *    - Built on react-markdown with security by default
  * 
- * 2. Document elements: Custom MarkdownRenderer (components/markdown-renderer.tsx)
- *    - Lightweight basic formatting (bold, italic, inline code only)
- *    - Optimized for simple document structure content
- *    - Minimal bundle size impact
+ * 2. Document elements: MarkdownTextPrimitive from @assistant-ui/react-markdown
+ *    - Basic markdown formatting with unified architecture
+ *    - Used throughout document components for consistency
+ *    - Unified ecosystem approach for all markdown rendering
  * 
  * This separation allows us to:
  * - Use appropriate complexity for each context

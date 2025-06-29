@@ -138,9 +138,12 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 **For Rich Content (ToC summaries):**
 Content returned by `getTooltipContent()` can override styling with custom containers:
 ```tsx
+import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown"
+import remarkGfm from "remark-gfm"
+
 <div className="max-w-md p-4 text-sm bg-white border border-gray-200 rounded-lg shadow-lg">
   <div className="prose prose-sm prose-gray max-w-none">
-    <MarkdownRenderer content={content} />
+    <MarkdownTextPrimitive content={content} remarkPlugins={[remarkGfm]} />
   </div>
 </div>
 ```
@@ -261,9 +264,12 @@ import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 Rich content with markdown support:
 
 ```tsx
+import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown"
+import remarkGfm from "remark-gfm"
+
 <div className="max-w-md p-4 text-sm bg-white border border-gray-200 rounded-lg shadow-lg">
   <div className="prose prose-sm prose-gray max-w-none">
-    <MarkdownRenderer content={content} />
+    <MarkdownTextPrimitive content={content} remarkPlugins={[remarkGfm]} />
   </div>
 </div>
 ```

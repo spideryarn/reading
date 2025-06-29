@@ -7,7 +7,8 @@
 
 import React, { useRef, useEffect, useCallback, useMemo } from 'react'
 import type { DocumentElement } from '@/lib/types/document'
-import { MarkdownRenderer } from './markdown-renderer'
+import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown"
+import remarkGfm from "remark-gfm"
 import { useElementVisibility } from '@/lib/hooks/useElementVisibility'
 import { DocumentParser } from '@/lib/services/document-parser'
 import { getSemanticHighlightStyles } from '@/lib/utils/semantic-highlighting'
@@ -15,7 +16,7 @@ import Mark from 'mark.js'
 import { useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
 import type { Entity } from '@/lib/types/entity'
-import { markdownToHtml } from '@/lib/utils/markdown-to-html'
+import { markdownToHtml } from '@/lib/utils/markdown-processor'
 
 // Semantic highlight interface
 interface SemanticHighlight {
@@ -37,7 +38,9 @@ interface SimpleDocumentViewerProps {
 }
 
 // Memoised helpers to keep innerHTML stable across re-renders
-const MemoisedMarkdownRenderer = React.memo(MarkdownRenderer)
+const MemoisedMarkdownRenderer = React.memo(function MemoisedMarkdownRenderer({ content }: { content: string }) {
+  return <MarkdownTextPrimitive content={content} remarkPlugins={[remarkGfm]} />
+})
 
 const MemoisedHtml = React.memo(function MemoisedHtml({ html }: { html: string }) {
   const htmlObject = useMemo(() => ({ __html: html }), [html])

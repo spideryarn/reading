@@ -6,7 +6,8 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { DeleteDocumentButton } from '@/components/delete-document-button'
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
-import { MarkdownRenderer } from '@/components/markdown-renderer'
+import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown"
+import remarkGfm from "remark-gfm"
 import { FileText, Clock, Globe, Lock, CircleNotch } from '@phosphor-icons/react/dist/ssr'
 import type { Database } from '@/lib/types/database'
 
@@ -106,7 +107,7 @@ function DocumentItem({ document, showDeleteActions, currentUserId }: DocumentIt
           <div className="border-t border-gray-100 pt-3">
             {tooltipData.hasSummary && tooltipData.summary ? (
               <div className="text-sm text-gray-700 leading-relaxed">
-                <MarkdownRenderer content={tooltipData.summary} />
+                <MarkdownTextPrimitive content={tooltipData.summary} remarkPlugins={[remarkGfm]} />
               </div>
             ) : (
               <div className="text-sm text-gray-500 italic">
