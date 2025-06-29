@@ -592,7 +592,19 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
 
   return (
     <>
-      <CommandDialog open={open} onOpenChange={setOpen}>
+      {/*
+        Adjust positioning so the dialog sits higher up on small screens (e.g. mobile
+        where the on-screen keyboard can otherwise cover the lower half when the
+        palette is vertically centred). We keep the original centred positioning
+        for ≥sm breakpoints so desktop behaviour is unchanged.
+        The arbitrary values (30%) were chosen empirically to provide enough
+        clearance while still looking visually centred on typical phone viewports.
+      */}
+      <CommandDialog
+        open={open}
+        onOpenChange={setOpen}
+        className="top-[20%] translate-y-[-20%] sm:top-[50%] sm:translate-y-[-50%]"
+      >
         <Command filter={startWordFilter}>
           <CommandInput 
             placeholder="Type a command or search..." 
