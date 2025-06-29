@@ -17,7 +17,6 @@ const createMockAiCall = (overrides?: Partial<AiCall>): AiCall => ({
   id: 'mock-ai-call-id',
   document_id: null,
   created_by: 'mock-user-id',
-  model_id: null,
   model_string: 'anthropic:claude-3-5-haiku:20241022',
   prompt_type: 'chat' as PromptType,
   prompt_input: '{}',
@@ -49,11 +48,6 @@ export class AiCallService {
     return `mock-ai-call-id-${this.nextId++}`
   }
 
-  // DEPRECATED: Old method for backward compatibility
-  async getModelUuidByProviderAndId(): Promise<string> {
-    // Mock implementation - ignores parameters
-    return 'mock-model-uuid'
-  }
 
   // NEW: Model string-based startCall
   async startCallWithModelString(options: CreateAiCallWithModelStringOptions): Promise<AiCall> {
@@ -62,7 +56,6 @@ export class AiCallService {
       document_id: options.documentId || null,
       created_by: options.userId,
       model_string: options.modelString,
-      model_id: null,
       prompt_type: options.prompt_type,
       prompt_input: JSON.stringify(options.input_data || {}),
       extra: options.extra || {},
@@ -73,10 +66,6 @@ export class AiCallService {
     return aiCall
   }
 
-  // Alias for startCallWithModelString - for backward compatibility with tests
-  async startCall(options: CreateAiCallWithModelStringOptions): Promise<AiCall> {
-    return this.startCallWithModelString(options)
-  }
 
   // Complete an AI call
   async completeCall(
@@ -219,7 +208,6 @@ export class AiCallService {
       id: AiCallService.generateId(),
       created_by: options.userId,
       model_string: options.modelString,
-      model_id: null,
       prompt_type: 'chat',
       prompt_input: JSON.stringify(options.requestData || {}),
       status: 'success',
@@ -234,10 +222,6 @@ export class AiCallService {
     return aiCall
   }
 
-  // Alias for createWithModelString - for backward compatibility with tests  
-  async create(options: SimpleCreateAiCallWithModelStringOptions): Promise<AiCall> {
-    return this.createWithModelString(options)
-  }
 
   // Extract metrics helper
   extractMetricsFromAiResponse(response: {
