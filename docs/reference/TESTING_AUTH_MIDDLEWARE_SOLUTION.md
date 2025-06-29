@@ -2,7 +2,7 @@
 
 ## Problem
 
-In Stage 5 of the test restructuring, we identified an execution order issue where auth middleware (`validateAuth()`) is called before input validation in API routes. This causes:
+In Stage 5 of the test restructuring, we identified an execution order issue where auth middleware (`requireAuth()`) is called before input validation in API routes. This causes:
 
 1. 500 errors instead of expected 400 errors for invalid input
 2. Tests unable to properly test input validation errors
@@ -16,7 +16,7 @@ The issue occurs because API routes typically follow this pattern:
 export async function POST(request: NextRequest) {
   try {
     // Auth check happens first
-    const user = await validateAuth()  // Throws on failure
+    const user = await requireAuth()  // Throws on failure
     
     // Input validation happens second
     const body = await request.json()
@@ -88,7 +88,7 @@ import { POST } from '../route'
 
 Different routes have different auth patterns:
 
-- **Routes using `validateAuth()`**: Throws on failure, enforces auth
+- **Routes using `requireAuth()`**: Throws on failure, enforces auth
 - **Routes using `getUser()`**: Returns `{user, error}`, doesn't enforce auth
 - **Chat API**: Uses `getUser()` for optional user context, works without auth
 
@@ -133,7 +133,7 @@ describe('Chat API Tests', () => {
 
 1. **Mock early**: Set up all mocks before importing routes
 2. **Separate concerns**: Use different test blocks for auth vs validation
-3. **Know your route**: Understand if it uses `validateAuth()` or `getUser()`
+3. **Know your route**: Understand if it uses `requireAuth()` or `getUser()`
 4. **Error messages matter**: Auth error detection often relies on specific message patterns
 5. **Service mocking**: Mock service constructors at module level, not in beforeEach
 

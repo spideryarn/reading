@@ -74,10 +74,12 @@ This planning document proposes a **root-cause refactor** to converge on a singl
 
 **Stage 5 Summary**: Successfully removed all deprecated code including the `validateAuth` function from `lib/auth/server-auth.ts`, cleaned up related test cases and mock implementations, and updated module JSDoc to reflect the final three-function API (`getAuthUser`, `requireAuth`, `assertAuth`). All authentication tests (11/11) passing. The authentication helper API is now clean and consistent with single-responsibility functions.
 
-### Stage: Documentation & Evergreen Updates
-- [ ] Update `docs/reference/AUTHENTICATION_OVERVIEW.md` helper descriptions.
-- [ ] Add upgrade note in `docs/reference/ARCHITECTURE_DECISIONS.md` (or new ADR) explaining rationale.
-- [ ] Search docs for `validateAuth` examples and update.
+### Stage: Documentation & Evergreen Updates ✅ COMPLETED
+- [x] Update `docs/reference/AUTHENTICATION_OVERVIEW.md` helper descriptions.
+- [x] Add upgrade note in `docs/reference/ARCHITECTURE_DECISIONS.md` (or new ADR) explaining rationale.
+- [x] Search docs for `validateAuth` examples and update.
+
+**Stage 6 Summary**: Successfully updated all documentation to reflect the new authentication helper API. Added comprehensive helper function documentation to `AUTHENTICATION_OVERVIEW.md` with clear usage examples for `getAuthUser()`, `requireAuth()`, and `assertAuth()`. Added architectural decision record to `ARCHITECTURE_DECISIONS.md` explaining the consolidation rationale and migration benefits. Updated all `validateAuth` references across documentation files (`AUTHENTICATION_SECURITY.md`, `TOOL_EXECUTION_FRAMEWORK.md`, `TESTING_SERVICE_MOCKS.md`, `TESTING_AUTH_MIDDLEWARE_SOLUTION.md`, `LOGGING_BEST_PRACTICES.md`) and diagram files. Documentation now accurately reflects the current three-function authentication API.
 
 ### Stage: Update Tests & Mocks ✅ COMPLETED
 - [x] Delete `setupValidateAuthMock`, `mockValidateAuth`, and consolidate into `mockGetAuthUser()`.
@@ -87,6 +89,7 @@ This planning document proposes a **root-cause refactor** to converge on a singl
 **Stage 4 Summary**: Successfully migrated all test utilities and mocks from legacy `validateAuth` patterns to new authentication helpers (`getAuthUser`, `requireAuth`, `assertAuth`). Updated `auth-test-helpers.ts`, `auth-test-utils.ts`, `storage-rls-issues.test.ts`, and `__mocks__/server-auth.ts`. All authentication tests (15/15) passing, E2E authentication setup verified working. Test isolation and mocking patterns functioning correctly.
 
 ### Stage: Final Validation & Cleanup
+- [ ] Remove/update any tests still using the old patterns
 - [ ] Run `npm run test` (unit + integration) in subagent.
 - [ ] Run `npm run check:health` (rigorous) to ensure TS, ESLint, build all pass.
 - [ ] Manual Playwright smoke test: login, hit a protected API route (expect success), unauthenticated request (expect 401 JSON), unauthenticated page (expect redirect).

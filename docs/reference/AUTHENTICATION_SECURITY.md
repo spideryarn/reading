@@ -57,11 +57,11 @@ export async function getUser(): Promise<{
 }
 
 // Strict authentication requirement
-export async function validateAuth(): Promise<User> {
-  const { user, error } = await getUser()
+export async function requireAuth(): Promise<User> {
+  const user = await getAuthUser()
   
-  if (error || !user) {
-    throw new Error('Authentication required')
+  if (!user) {
+    throw new AuthError('Authentication required')
   }
   
   return user
@@ -174,7 +174,7 @@ export default async function PublicPage({ params }: { params: { slug: string } 
 export async function GET(request: NextRequest) {
   try {
     // Validate authentication
-    const user = await validateAuth()
+    const user = await requireAuth()
     
     // Perform authorized operation
     const data = await getUserData(user.id)

@@ -179,6 +179,27 @@ Historical rationale and key architectural choices that shaped the Spideryarn Re
 - Row-level security patterns established early
 - Avoids major architectural changes later
 
+### Authentication Helper Consolidation (2025-06-29)
+**Decision**: Consolidate overlapping authentication helpers into three single-purpose functions
+**Previous state**: Mixed `validateAuth()` with overloaded behaviour, duplicate `requireAuth` exports from multiple modules
+**New API**: Three distinct functions in `lib/auth/server-auth.ts`:
+- `getAuthUser()` - Returns User | null, never throws or redirects
+- `requireAuth()` - Returns User or throws/redirects on failure  
+- `assertAuth()` - Returns structured result object, never throws
+
+**Rationale**:
+- **Single responsibility principle**: Each function has exactly one behaviour pattern
+- **Reduced cognitive load**: Clear naming eliminates confusion about throw vs redirect vs return patterns
+- **Simplified testing**: Consolidated mocking reduces test boilerplate
+- **Type safety**: No overloaded signatures with conditional return types
+- **Maintenance**: Single module eliminates duplicate implementations
+
+**Migration benefits**:
+- Eliminated `lib/auth/route-protection.ts` duplicate module
+- Removed overloaded `validateAuth()` function with mixed paradigms  
+- Consolidated all authentication test utilities and mocks
+- Clearer error handling patterns across API routes and page components
+
 ## Technology Evolution
 
 ### React 19 & Next.js 15 Adoption

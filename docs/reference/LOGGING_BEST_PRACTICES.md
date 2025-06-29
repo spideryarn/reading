@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
   
   try {
     // Validate authentication first
-    const user = await validateAuth()
+    const user = await requireAuth()
     
     // Log request initiation with structured context
     requestLogger.info({

@@ -138,7 +138,7 @@ try {
 
 All tool executions are automatically authenticated using the existing Supabase auth system:
 
-- **Server execution**: Uses `validateAuth()` from `lib/auth/server-auth.ts`
+- **Server execution**: Uses `requireAuth()` from `lib/auth/server-auth.ts`
 - **Cookie forwarding**: Browser handles auth cookies automatically
 - **Auth errors**: Automatically trigger sign-in dialogs
 

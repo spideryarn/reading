@@ -8,7 +8,7 @@ graph TB
     
     subgraph "API Request Flow"
         APICall[🌐 POST /api/glossary]
-        ValidateAuth[🔐 validateAuth]
+        ValidateAuth[🔐 requireAuth]
         ValidateParams[✅ Zod validation]
         EnhancementService[⚙️ Enhancement Service]
     end

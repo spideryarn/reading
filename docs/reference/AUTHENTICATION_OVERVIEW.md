@@ -35,6 +35,62 @@ Spideryarn Reading uses Supabase Auth with Next.js App Router for secure user re
 - User experience with `/auth/login?next=/protected/route` redirects
 - Proper 401 status codes for bots accessing protected routes
 
+## Authentication Helper Functions
+
+The authentication system provides three core helper functions in `lib/auth/server-auth.ts`, each with a single, well-defined behavior:
+
+### `getAuthUser(): Promise<User | null>`
+Returns the current authenticated user or `null`. Never throws errors or performs redirects.
+
+**Use when**: You need to check authentication status and handle the result yourself (e.g., showing different UI for authenticated vs unauthenticated users).
+
+```typescript
+// In a server component
+const user = await getAuthUser()
+if (!user) {
+  return <div>Please log in to view your documents</div>
+}
+return <DocumentList userId={user.id} />
+```
+
+### `requireAuth(opts?: { redirectTo?: string }): Promise<User>`
+Guarantees authentication by either returning a User or handling failure.
+
+- **API routes** (no options): Throws `AuthError` with status 401
+- **Page components** (with `redirectTo`): Performs redirect to login page
+
+**Use when**: You need guaranteed authentication and want the helper to handle failures.
+
+```typescript
+// In an API route (throws AuthError)
+export async function GET() {
+  const user = await requireAuth()
+  // user is guaranteed to be valid here
+}
+
+// In a page component (redirects)
+export default async function ProtectedPage() {
+  const user = await requireAuth({ redirectTo: '/auth/login' })
+  // user is guaranteed to be valid here
+}
+```
+
+### `assertAuth(request: Request): Promise<{ success: boolean; user?: User; error?: string }>`
+Returns a structured result object. Never throws errors or performs redirects.
+
+**Use when**: You need explicit control over authentication failure handling, such as in middleware or edge functions.
+
+```typescript
+// In an API route with explicit error handling
+export async function POST(request: Request) {
+  const { success, user, error } = await assertAuth(request)
+  if (!success) {
+    return NextResponse.json({ error }, { status: 401 })
+  }
+  // Use user here
+}
+```
+
 ## Implementation Status
 
 ### ✅ Completed Features

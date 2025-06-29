@@ -68,11 +68,11 @@ const mockDocument = createMockDocument({ title: 'My Test Doc' })
 ```typescript
 import { POST } from '../headings/route'
 import { createMockRequest } from './test-helpers'
-import { validateAuth } from '@/lib/auth/server-auth'
+import { requireAuth } from '@/lib/auth/server-auth'
 import { executePromptWithUsage } from '@/lib/prompts/types'
 import { setupCommonServiceMocks } from '@/lib/testing/service-mocks'
 
-const mockValidateAuth = validateAuth as jest.MockedFunction<typeof validateAuth>
+const mockRequireAuth = requireAuth as jest.MockedFunction<typeof requireAuth>
 const mockExecutePromptWithUsage = executePromptWithUsage as jest.MockedFunction<typeof executePromptWithUsage>
 
 describe('/api/headings', () => {
