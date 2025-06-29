@@ -2,6 +2,27 @@
 import type { User } from '@supabase/supabase-js'
 import type { AuthResult, UserProfile } from '../server-auth'
 
+// We'll use a dynamic redirect function that can be overridden in tests
+let redirectFunction: (url: string) => never = (url: string) => {
+  throw new Error(`REDIRECT: ${url}`)
+}
+
+// Export a function to set the redirect function for tests
+export const setRedirectFunction = (fn: (url: string) => never) => {
+  redirectFunction = fn
+}
+
+// Mock AuthError class
+export class AuthError extends Error {
+  public readonly status: number
+
+  constructor(message: string = 'Authentication required', status: number = 401) {
+    super(message)
+    this.name = 'AuthError'
+    this.status = status
+  }
+}
+
 // Default test user
 const defaultTestUser: User = {
   id: '00000000-0000-0000-0000-000000000001',
@@ -41,7 +62,7 @@ export const getSession = jest.fn().mockResolvedValue({
   user: defaultTestUser
 })
 
-export const validateAuth = jest.fn<Promise<User>, []>().mockResolvedValue(defaultTestUser)
+export const validateAuth = jest.fn().mockResolvedValue(defaultTestUser)
 
 export const checkAdminAccess = jest.fn<Promise<boolean>, []>().mockResolvedValue(false)
 
@@ -68,11 +89,30 @@ export const getUserProfile = jest.fn<Promise<UserProfile | null>, []>().mockRes
   createdAt: defaultTestUser.created_at
 })
 
+// New authentication helper functions
+export const getAuthUser = jest.fn<Promise<User | null>, []>().mockResolvedValue(defaultTestUser)
+
+export const requireAuth = jest.fn().mockResolvedValue(defaultTestUser)
+
+export const assertAuth = jest.fn<Promise<{ success: boolean; user?: User; error?: string }>, [Request]>()
+  .mockResolvedValue({
+    success: true,
+    user: defaultTestUser
+  })
+
 // Helper to configure the mock user for specific tests
 export const setMockUser = (user: User | null) => {
   if (user) {
     getUser.mockResolvedValue({ user, error: null })
-    validateAuth.mockResolvedValue(user)
+    validateAuth.mockImplementation((request?: Request) => {
+      if (request) {
+        // Modern style - return result object
+        return Promise.resolve({ success: true, user })
+      } else {
+        // Legacy style - return user directly
+        return Promise.resolve(user)
+      }
+    })
     getUserId.mockResolvedValue(user.id)
     getUserProfile.mockResolvedValue({
       id: user.id,
@@ -80,11 +120,41 @@ export const setMockUser = (user: User | null) => {
       displayName: user.user_metadata?.display_name || user.email || 'User',
       createdAt: user.created_at
     })
+    // New functions
+    getAuthUser.mockResolvedValue(user)
+    requireAuth.mockResolvedValue(user)
+    assertAuth.mockResolvedValue({
+      success: true,
+      user
+    })
   } else {
     getUser.mockResolvedValue({ user: null, error: 'Not authenticated' })
-    validateAuth.mockRejectedValue(new Error('User not authenticated'))
+    validateAuth.mockImplementation((request?: Request) => {
+      if (request) {
+        // Modern style - return result object
+        return Promise.resolve({ success: false, error: 'Authentication required' })
+      } else {
+        // Legacy style - throw AuthError
+        return Promise.reject(new AuthError('Authentication required'))
+      }
+    })
     getUserId.mockResolvedValue(null)
     getUserProfile.mockResolvedValue(null)
+    // New functions
+    getAuthUser.mockResolvedValue(null)
+    requireAuth.mockImplementation((opts?: { redirectTo?: string }) => {
+      if (opts?.redirectTo) {
+        redirectFunction(opts.redirectTo)
+        // This line won't be reached due to redirect throwing
+        return Promise.reject(new AuthError('Authentication required'))
+      } else {
+        return Promise.reject(new AuthError('Authentication required'))
+      }
+    })
+    assertAuth.mockResolvedValue({
+      success: false,
+      error: 'Authentication required'
+    })
   }
 }
 
@@ -98,6 +168,10 @@ export const resetAuthMocks = () => {
   getAuthenticatedClient.mockClear()
   checkResourceOwnership.mockClear()
   getUserProfile.mockClear()
+  // New functions
+  getAuthUser.mockClear()
+  requireAuth.mockClear()
+  assertAuth.mockClear()
   
   // Reset to default authenticated state
   setMockUser(defaultTestUser)

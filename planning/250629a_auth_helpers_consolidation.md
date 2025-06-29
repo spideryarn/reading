@@ -48,13 +48,13 @@ This planning document proposes a **root-cause refactor** to converge on a singl
 
 ## Stages & Actions
 
-### Stage: Preparation & Research
-- [ ] Search (`ripgrep`) for imports of `validateAuth`, `requireAuth`, and `route-protection` to quantify migration scope.
-- [ ] Add `AuthError` class with HTTP status 401.
-- [ ] Implement `getAuthUser`, `requireAuth`, `assertAuth` per acceptance criteria.
-- [ ] Deprecate `validateAuth` (JSDoc `@deprecated`) and have it internally call new helpers.
-- [ ] Export new helpers and ensure existing named exports remain.
-- [ ] Update unit tests for `server-auth` to cover new behaviours (success, null, redirect, throw).
+### Stage: Preparation & Research ✅ COMPLETED
+- [x] Search (`ripgrep`) for imports of `validateAuth`, `requireAuth`, and `route-protection` to quantify migration scope.
+- [x] Add `AuthError` class with HTTP status 401.
+- [x] Implement `getAuthUser`, `requireAuth`, `assertAuth` per acceptance criteria.
+- [x] Deprecate `validateAuth` (JSDoc `@deprecated`) and have it internally call new helpers.
+- [x] Export new helpers and ensure existing named exports remain.
+- [x] Update unit tests for `server-auth` to cover new behaviours (success, null, redirect, throw).
 
 ### Stage: Delete Legacy Module & Relocate Utilities
 - [ ] Confirm `lib/auth/route-protection.ts` is unused via `ripgrep`.
@@ -86,8 +86,13 @@ This planning document proposes a **root-cause refactor** to converge on a singl
 - [ ] Run `npm run check:health` (rigorous) to ensure TS, ESLint, build all pass.
 - [ ] Manual Playwright smoke test: login, hit a protected API route (expect success), unauthenticated request (expect 401 JSON), unauthenticated page (expect redirect).
 - [ ] Search for remaining `validateAuth(` or `route-protection` strings – expect zero.
-- [ ] Squash commits per `docs/instructions/GIT_COMMIT_CHANGES.md` and open PR.
 
+### Stage: Remove Deprecated Code (Post-Migration)
+- [ ] Remove deprecated `validateAuth` function from `lib/auth/server-auth.ts`.
+- [ ] Remove any remaining deprecated function overloads and legacy compatibility code.
+- [ ] Update JSDoc and TypeScript definitions to reflect final API.
+- [ ] Run final `npm run check:health` to ensure no regressions.
+- [ ] Move this doc to `planning/finished/`
 
 ## Risks & Mitigations
 

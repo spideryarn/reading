@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import type { User } from '@supabase/supabase-js'
 import { authLogger, generateCorrelationId } from '@/lib/services/logger'
+import { redirect } from 'next/navigation'
 
 /**
  * Server-side authentication utilities for Next.js App Router
@@ -9,6 +10,19 @@ import { authLogger, generateCorrelationId } from '@/lib/services/logger'
  * server components and API routes with proper error handling
  * and type safety.
  */
+
+/**
+ * Custom error class for authentication failures in API routes.
+ */
+export class AuthError extends Error {
+  public readonly status: number
+
+  constructor(message: string = 'Authentication required', status: number = 401) {
+    super(message)
+    this.name = 'AuthError'
+    this.status = status
+  }
+}
 
 export interface AuthResult {
   user: User | null
@@ -349,43 +363,188 @@ export async function getUserProfile(): Promise<UserProfile | null> {
 }
 
 /**
+ * Get the current authenticated user.
+ * 
+ * This function returns the current user or null without throwing errors
+ * or performing redirects. Use this when you need to check authentication
+ * status and handle the result yourself.
+ * 
+ * @returns Promise<User | null> - The authenticated user or null
+ * 
+ * @example
+ * ```typescript
+ * // In a server component or API route
+ * const user = await getAuthUser()
+ * if (!user) {
+ *   return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+ * }
+ * ```
+ */
+export async function getAuthUser(): Promise<User | null> {
+  const correlationId = generateCorrelationId()
+  
+  try {
+    const supabase = await createClient()
+    const { data: { user }, error } = await supabase.auth.getUser()
+    
+    if (error) {
+      authLogger.warn({
+        error: error.message,
+        correlationId,
+        operation: 'getAuthUser'
+      }, 'Authentication error during user retrieval')
+      
+      return null
+    }
+    
+    if (user) {
+      authLogger.debug({
+        userId: user.id,
+        email: user.email,
+        correlationId,
+        operation: 'getAuthUser'
+      }, 'User retrieved successfully')
+    }
+    
+    return user
+  } catch (error) {
+    authLogger.error({
+      error: error instanceof Error ? error.message : 'Unknown error',
+      correlationId,
+      operation: 'getAuthUser'
+    }, 'Unexpected authentication error')
+    
+    return null
+  }
+}
+
+/**
+ * Require authentication with configurable failure handling.
+ * 
+ * By default, throws an AuthError for API routes. When redirectTo is provided,
+ * performs a redirect instead (useful for page components).
+ * 
+ * @param opts - Configuration options
+ * @param opts.redirectTo - URL to redirect to if unauthenticated (performs redirect instead of throwing)
+ * @returns Promise<User> - The authenticated user (guaranteed)
+ * @throws AuthError - When unauthenticated and no redirectTo provided
+ * 
+ * @example
+ * ```typescript
+ * // In an API route (throws AuthError)
+ * export async function GET() {
+ *   const user = await requireAuth()
+ *   // user is guaranteed to be valid here
+ * }
+ * 
+ * // In a page component (redirects)
+ * export default async function ProtectedPage() {
+ *   const user = await requireAuth({ redirectTo: '/auth/login' })
+ *   // user is guaranteed to be valid here
+ * }
+ * ```
+ */
+export async function requireAuth(opts?: { redirectTo?: string }): Promise<User> {
+  const correlationId = generateCorrelationId()
+  const user = await getAuthUser()
+  
+  if (!user) {
+    authLogger.info({
+      correlationId,
+      operation: 'requireAuth',
+      redirectTo: opts?.redirectTo
+    }, 'Authentication required - user not found')
+    
+    if (opts?.redirectTo) {
+      redirect(opts.redirectTo)
+    } else {
+      throw new AuthError('Authentication required')
+    }
+  }
+  
+  authLogger.debug({
+    userId: user.id,
+    correlationId,
+    operation: 'requireAuth'
+  }, 'Authentication successful')
+  
+  return user
+}
+
+/**
+ * Assert authentication status with structured result object.
+ * 
+ * This function never throws or redirects, instead returning a structured
+ * result object. Use this when you need explicit control over authentication
+ * failure handling, such as in middleware or edge functions.
+ * 
+ * @param request - The incoming request (used for logging context)
+ * @returns Object with success flag, user (if authenticated), and error message
+ * 
+ * @example
+ * ```typescript
+ * // In an API route with explicit error handling
+ * export async function POST(request: Request) {
+ *   const { success, user, error } = assertAuth(request)
+ *   if (!success) {
+ *     return NextResponse.json({ error }, { status: 401 })
+ *   }
+ *   // Use user here
+ * }
+ * ```
+ */
+export async function assertAuth(request: Request): Promise<{ success: boolean; user?: User; error?: string }> {
+  const correlationId = generateCorrelationId()
+  const user = await getAuthUser()
+  
+  if (!user) {
+    authLogger.info({
+      correlationId,
+      operation: 'assertAuth',
+      url: request.url,
+      method: request.method
+    }, 'Authentication assertion failed')
+    
+    return {
+      success: false,
+      error: 'Authentication required'
+    }
+  }
+  
+  authLogger.debug({
+    userId: user.id,
+    correlationId,
+    operation: 'assertAuth',
+    url: request.url,
+    method: request.method
+  }, 'Authentication assertion successful')
+  
+  return {
+    success: true,
+    user
+  }
+}
+
+/**
  * Unified validation helper supporting both legacy (throwing) and modern (result-object) styles.
  *
+ * @deprecated Use getAuthUser(), requireAuth(), or assertAuth() instead for clearer semantics.
+ * 
  * • Legacy usage: `const user = await validateAuth()` – throws on failure and returns `User` on success.
  * • New usage:    `const { success, user } = await validateAuth(request, { requireAuth: true })`
  *                 – returns an object describing the auth result without throwing.
  */
+export async function validateAuth(): Promise<User>
+export async function validateAuth(request: Request, opts?: { requireAuth?: boolean }): Promise<{ success: boolean; user?: User; error?: string }>
 export async function validateAuth(
   request?: Request,
   opts?: { requireAuth?: boolean }
 ): Promise<User | { success: boolean; user?: User; error?: string }> {
-  const { user, error } = await getUser()
-
   // Modern result-object style when a Request is passed
   if (request !== undefined) {
-    if (error) {
-      return { success: false, error }
-    }
-    if (!user) {
-      if (opts?.requireAuth) {
-        return { success: false, error: 'Authentication required' }
-      }
-      return { success: false }
-    }
-    return { success: true, user }
+    return assertAuth(request)
   }
 
-  // Legacy throwing style (no arguments)
-  if (error) {
-    throw new Error(`Authentication failed: ${error}`)
-  }
-  if (!user) {
-    throw new Error('User not authenticated')
-  }
-  return user
-}
-
-// Convenience helper for code that prefers explicit throwing behaviour
-export async function requireAuth(): Promise<User> {
-  return validateAuth() as Promise<User>
+  // Legacy throwing style (no arguments) - delegate to requireAuth
+  return requireAuth()
 }
