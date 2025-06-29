@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
-import { validateAuth } from '@/lib/auth/server-auth'
+import { requireAuth } from '@/lib/auth/server-auth'
 import { getCurrentUserAdminStatus } from '@/lib/auth/admin-utils'
 import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
 
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   
   try {
     // Validate authentication first
-    const user = await validateAuth()
+    const user = await requireAuth()
     
     const { documentId } = await request.json()
     

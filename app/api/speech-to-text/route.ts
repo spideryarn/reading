@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
-import { validateAuth } from '@/lib/auth/server-auth'
+import { requireAuth } from '@/lib/auth/server-auth'
 import { createRequestLogger, generateCorrelationId, createTimer } from '@/lib/services/logger'
 
 // Supported audio formats as per OpenAI Whisper API documentation
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   
   try {
     // Validate authentication
-    const authUser = await validateAuth()
+    const authUser = await requireAuth()
     
     logger.info({
       userId: authUser.id,

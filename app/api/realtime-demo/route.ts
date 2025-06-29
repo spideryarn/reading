@@ -12,12 +12,12 @@ import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { getModelForAICall } from '@/lib/config'
-import { validateAuth } from '@/lib/auth/server-auth'
+import { requireAuth } from '@/lib/auth/server-auth'
 
 export async function POST(request: NextRequest) {
   try {
     // Validate authentication first
-    const user = await validateAuth()
+    const user = await requireAuth()
     
     const { documentId } = await request.json()
     

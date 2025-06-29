@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { EnhancementService } from '@/lib/services/database/enhancements'
-import { validateAuth } from '@/lib/auth/server-auth'
+import { requireAuth } from '@/lib/auth/server-auth'
 import { getCurrentUserAdminStatus } from '@/lib/auth/admin-utils'
 import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
 import { calculateReadingTimeFromWordCount, formatReadingTime } from '@/lib/utils/reading-time-calculation'
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   
   try {
     // Validate authentication first
-    const user = await validateAuth()
+    const user = await requireAuth()
     
     const { slug } = await context.params
 

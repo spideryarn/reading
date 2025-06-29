@@ -13,7 +13,7 @@ import { getModelForAICall, UPLOAD_LIMITS } from '@/lib/config'
 import { generateHtmlFilename } from '@/lib/utils/slug'
 import { URL_EXTRACTION_CONFIG } from '@/lib/config'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
-import { validateAuth } from '@/lib/auth/server-auth'
+import { requireAuth } from '@/lib/auth/server-auth'
 import { processHtmlToDocument, handleSanitizationError, type ProcessingMetadata } from '@/lib/services/html-document-processor'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 import { detectAndAnalyzeContent, isPdfContentType } from '@/lib/utils/content-type-detection'
@@ -331,7 +331,7 @@ export async function POST(request: NextRequest) {
   
   try {
     // Validate authentication first
-    const user = await validateAuth()
+    const user = await requireAuth()
     
     // Parse JSON request body
     const body = await request.json()

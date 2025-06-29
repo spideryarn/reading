@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelForAICall, UPLOAD_LIMITS } from '@/lib/config'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
-import { validateAuth } from '@/lib/auth/server-auth'
+import { requireAuth } from '@/lib/auth/server-auth'
 import { processHtmlToDocument, handleSanitizationError } from '@/lib/services/html-document-processor'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
   
   try {
     // Validate authentication first
-    const user = await validateAuth()
+    const user = await requireAuth()
     
     // Parse multipart form data
     const formData = await request.formData()

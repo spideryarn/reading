@@ -61,11 +61,11 @@ This planning document proposes a **root-cause refactor** to converge on a singl
 - [x] If `isBot` / `createUnauthorizedResponse` **unused**, delete; if used elsewhere, move to `lib/utils/http-auth.ts` and update imports.
 - [x] Remove the file and update `tsconfig` paths if necessary.
 
-### Stage: Codebase-wide Migration
-- [ ] **Codemod**: Replace `validateAuth()` (throwing style) with `requireAuth()` across `app/api/*`.
-- [ ] Replace pattern `await validateAuth(request, { requireAuth: true })` with `assertAuth(request)` OR `requireAuth()` depending on use-case.
-- [ ] Replace imports of `lib/auth/route-protection` helpers with new ones.
-- [ ] Run `npm run check:health --quick` to catch immediate type errors.
+### Stage: Codebase-wide Migration ✅ COMPLETED
+- [x] **Codemod**: Replace `validateAuth()` (throwing style) with `requireAuth()` across `app/api/*`.
+- [x] Replace pattern `await validateAuth(request, { requireAuth: true })` with `assertAuth(request)` OR `requireAuth()` depending on use-case.
+- [x] Replace imports of `lib/auth/route-protection` helpers with new ones.
+- [x] Run `npm run check:health --quick` to catch immediate type errors.
 
 ### Stage: Update Tests & Mocks
 - [ ] Delete `setupValidateAuthMock`, `mockValidateAuth`, and consolidate into `mockGetAuthUser()`.

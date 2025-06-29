@@ -12,7 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { validateAuth } from '@/lib/auth/server-auth'
+import { requireAuth, getAuthUser } from '@/lib/auth/server-auth'
 import { createRequestLogger, generateCorrelationId, createTimer } from '@/lib/services/logger'
 import { getTool, isRegistryLocked } from '@/lib/tools/registry'
 import { initializeToolRegistry } from '@/lib/tools/registry-loader'
@@ -61,15 +61,13 @@ async function createExecutionContext(
   
   // Get user context if authenticated
   let user
-  try {
-    const authUser = await validateAuth()
+  const authUser = await getAuthUser()
+  if (authUser) {
     user = {
       id: authUser.id,
       email: authUser.email || '',
       preferences: {} // Could be expanded later
     }
-  } catch {
-    // User not authenticated - proceed without user context
   }
   
   // For now, document context would need to be passed in parameters
@@ -300,7 +298,7 @@ export async function POST(
     
     // Most tools require authentication for POST operations
     try {
-      await validateAuth()
+      await requireAuth()
     } catch {
       return createErrorResponse(
         {
@@ -438,7 +436,7 @@ export async function DELETE(
     
     // DELETE operations always require authentication
     try {
-      await validateAuth()
+      await requireAuth()
     } catch {
       return createErrorResponse(
         {

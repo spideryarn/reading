@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
-import { validateAuth } from '@/lib/auth/server-auth'
+import { requireAuth } from '@/lib/auth/server-auth'
 import { getCurrentUserAdminStatus } from '@/lib/auth/admin-utils'
 import type { Database } from '@/lib/types/database'
 
@@ -37,7 +37,7 @@ export async function GET(
 ) {
   try {
     // Validate authentication first
-    const user = await validateAuth()
+    const user = await requireAuth()
     
     const { slug } = await params
     const doc = await getDocumentBySlug(slug)

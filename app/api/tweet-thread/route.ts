@@ -6,7 +6,7 @@ import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelForAICall } from '@/lib/config'
 import { createRequestLogger, generateCorrelationId, logAIOperation } from '@/lib/services/logger'
-import { validateAuth } from '@/lib/auth/server-auth'
+import { requireAuth } from '@/lib/auth/server-auth'
 
 export async function GET(request: NextRequest) {
   const correlationId = generateCorrelationId()
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
   
   try {
     // Validate authentication first
-    const user = await validateAuth()
+    const user = await requireAuth()
     
     const body = await request.json()
     
