@@ -16,6 +16,7 @@ see also:
   - Database services propagate errors instead of silently returning null
   - API routes can catch and map to appropriate HTTP responses
   - "Not found" is a valid state, not an error (return null, don't throw)
+- **Fail fatally & immediately with clear, debuggable, user-visible error messages.** When errors or unforeseen situations occur, don't mask problems - expose them clearly for debugging and user understanding. Better to fail fast than fail silently. Make error messages actionable and informative.
 - Don't try and write a full, final version immediately. Get a simple version working end-to-end first, and then gradually layer in complexity in stages.
 - Follow software engineering best practices, e.g.
   - reuse code/machinery where it makes sense to do so

@@ -30,6 +30,7 @@ Key principles that guide all development decisions, from `docs/CODING_PRINCIPLE
 - **If you hit any nasty surprises, stop & discuss with the user.** Don't push through unexpected issues.
 - **No destructive or irreversible changes without checking with the user.** Be especially careful about any operations that are irreversible, could involve data loss, affect databases, production systems, or user data. When in doubt, ask for explicit permission first.
 - **Raise errors early, clearly & fatally.** Prefer not to wrap in try/except so that tracebacks are obvious.
+- **Fail fatally & immediately with clear, debuggable, user-visible error messages.** When errors or unforeseen situations occur, don't mask problems - expose them clearly for debugging and user understanding. Better to fail fast than fail silently.
 - **If things don't make sense or seem like a bad idea, ask questions or discuss rather than just going along with it.** Be a good collaborator, and help make good decisions.
 
 ## Key Architectural Decisions
