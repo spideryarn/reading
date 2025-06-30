@@ -46,14 +46,15 @@ export async function GET(request: NextRequest) {
         throw new Error(`Malformed tweet thread data in database for enhancement ${existingTweetThread.id}: content is not an object`)
       }
       
-      if (!Array.isArray(existingTweetThread.content.tweets)) {
+      const content = existingTweetThread.content as { tweets?: unknown; thread_summary?: unknown; metadata?: unknown }
+      if (!Array.isArray(content.tweets)) {
         throw new Error(`Malformed tweet thread data in database for enhancement ${existingTweetThread.id}: content.tweets is not an array`)
       }
       
       return NextResponse.json({ 
-        tweets: existingTweetThread.content.tweets,
-        thread_summary: existingTweetThread.content.thread_summary,
-        metadata: existingTweetThread.content.metadata || {},
+        tweets: content.tweets,
+        thread_summary: content.thread_summary,
+        metadata: content.metadata || {},
         cached: true
       })
     }
@@ -189,20 +190,21 @@ export async function POST(request: NextRequest) {
         throw new Error(`Malformed tweet thread data in database for enhancement ${existingTweetThread.id}: content is not an object`)
       }
       
-      if (!Array.isArray(existingTweetThread.content.tweets)) {
+      const content = existingTweetThread.content as { tweets?: unknown; thread_summary?: unknown; metadata?: unknown }
+      if (!Array.isArray(content.tweets)) {
         throw new Error(`Malformed tweet thread data in database for enhancement ${existingTweetThread.id}: content.tweets is not an array`)
       }
       
       requestLogger.info({
         correlationId,
         enhancementId: existingTweetThread.id,
-        tweetCount: existingTweetThread.content.tweets.length
+        tweetCount: content.tweets.length
       }, 'Returning cached tweet thread from POST request')
       
       return NextResponse.json({ 
-        tweets: existingTweetThread.content.tweets,
-        thread_summary: existingTweetThread.content.thread_summary,
-        metadata: existingTweetThread.content.metadata || {},
+        tweets: content.tweets,
+        thread_summary: content.thread_summary,
+        metadata: content.metadata || {},
         cached: true
       })
     }

@@ -1,6 +1,7 @@
 import { RealtimeDemo } from '@/components/realtime-demo'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
+import { generateSlug } from '@/lib/utils/slug'
 
 export default async function RealtimeDemoPage() {
   const supabase = await createClient()
@@ -11,8 +12,10 @@ export default async function RealtimeDemoPage() {
   
   if (demoDoc.documents.length === 0) {
     // Create a demo document if none exist
+    const title = 'Real-time Demo Document'
     const newDoc = await documentService.create({
-      title: 'Real-time Demo Document',
+      title,
+      slug: generateSlug(title),
       html_content: '<h1>Demo Document</h1><p>This document is used for testing real-time enhancement updates.</p>',
       plaintext_content: 'Demo Document\nThis document is used for testing real-time enhancement updates.',
       source_url: 'https://example.com/demo',

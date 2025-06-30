@@ -9,7 +9,8 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["@phosphor-icons/react"],
   },
   // External packages for pino and pino-pretty to fix worker thread issues
-  serverExternalPackages: ['pino', 'pino-pretty'],
+  // nunjucks added to fix fsevents binary module webpack error
+  serverExternalPackages: ['pino', 'pino-pretty', 'nunjucks'],
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Client-side fallbacks for Node.js modules (PDF.js compatibility)

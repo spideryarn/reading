@@ -58,13 +58,6 @@ export default async function ProfilePage() {
                 </div>
                 
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Display Name</label>
-                  <p className="text-gray-900">
-                    {profile?.display_name || 'Not set'}
-                  </p>
-                </div>
-                
-                <div>
                   <label className="text-sm font-medium text-gray-600">Member Since</label>
                   <p className="text-gray-900">
                     <time 

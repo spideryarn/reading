@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
     const aiCall = await aiCallService.startCallWithModelString({
       userId: user.id,
       modelString: 'google:gemini-2.5-flash:latest',
-      prompt_type: 'page-to-html-fragment',
+      prompt_type: 'page_to_html',
       input_data: {
         document_id: documentId,
         page_number: pageNumber,

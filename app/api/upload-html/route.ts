@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
       })
       
       // Create provider-specific prompt template with appropriate model configuration
-      const promptTemplate = createUrlToHtmlPrompt(provider)
+      const promptTemplate = createUrlToHtmlPrompt(provider as 'claude' | 'gemini' | undefined)
       const providerDisplayName = provider === 'gemini' ? 'Gemini 1.5 Pro' : 'Claude 4 Sonnet'
       
       try {
@@ -280,7 +280,7 @@ export async function POST(request: NextRequest) {
       processedHtml,
       {
         title,
-        sourceUrl: null, // HTML uploads don't have source URLs
+        // sourceUrl is omitted for HTML uploads
         isPublic,
         originalFile: htmlFile,
         filename: htmlFile.name,

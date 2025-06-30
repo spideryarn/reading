@@ -298,7 +298,7 @@ export function useVisionSinglePageUploader(
       updatePageState(pageNumber, { status: 'storing', progress: 85 })
       
       // Step 4: Patch HTML with final storage URLs
-      let patchedHtml = result.pageHtml
+      const patchedHtml = result.pageHtml
       
       // Replace placeholder image paths with actual uploaded URLs
       for (const uploadedImage of uploadedImages) {

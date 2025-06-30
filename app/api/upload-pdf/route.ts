@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     const aiCallService = new AiCallService(supabase)
 
     // Create provider-specific prompt template with appropriate model configuration
-    const promptTemplate = createPdfToHtmlPrompt(provider)
+    const promptTemplate = createPdfToHtmlPrompt(provider as 'claude' | 'gemini' | undefined)
     const providerDisplayName = provider === 'gemini' ? 'Gemini 1.5 Pro' : 'Claude 4 Sonnet'
     
     // Get model configuration for AI call tracking
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
       htmlResult.text,
       {
         title,
-        sourceUrl: null, // PDF uploads don't have source URLs
+        // sourceUrl is omitted for PDF uploads
         isPublic,
         originalFile: pdfFile,
         filename: pdfFile.name,

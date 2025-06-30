@@ -111,23 +111,24 @@ export class SummaryHandler extends BaseToolHandler {
             throw new Error(`Malformed summary data in database for enhancement ${existingSummary.id}: content is not an object`)
           }
           
-          if (typeof existingSummary.content.text !== 'string') {
+          const content = existingSummary.content as { text?: unknown; metadata?: unknown }
+          if (typeof content.text !== 'string') {
             throw new Error(`Malformed summary data in database for enhancement ${existingSummary.id}: content.text is not a string`)
           }
           
           logger.info({
             enhancementId: existingSummary.id,
-            textLength: existingSummary.content.text.length,
+            textLength: content.text.length,
             documentId,
             granularity
           }, 'Returning cached single summary')
           
           return {
-            summary: existingSummary.content.text,
+            summary: content.text,
             type: 'single',
             cached: true,
             enhancementId: existingSummary.id,
-            metadata: existingSummary.content.metadata || {},
+            metadata: content.metadata || {},
             ...this.createResponseMetadata()
           }
         }
@@ -258,14 +259,23 @@ export class SummaryHandler extends BaseToolHandler {
       )
       
       if (existingSummary) {
+        if (!existingSummary.content || typeof existingSummary.content !== 'object' || existingSummary.content === null) {
+          throw new Error(`Malformed summary data: content is not an object`)
+        }
+        
+        const content = existingSummary.content as { text?: unknown }
+        if (typeof content.text !== 'string') {
+          throw new Error(`Malformed summary data: content.text is not a string`)
+        }
+        
         logger.info({
           enhancementId: existingSummary.id,
-          textLength: existingSummary.content.text.length,
+          textLength: content.text.length,
           cacheKey
         }, 'Returning cached summary from POST request')
         
         return {
-          summary: existingSummary.content.text,
+          summary: content.text,
           type: 'single',
           cached: true,
           enhancementId: existingSummary.id,
@@ -489,7 +499,7 @@ export class SummaryHandler extends BaseToolHandler {
         userId: context.user!.id,
         documentId,
         modelString: modelString,
-        prompt_type: 'multi-summarise',
+        prompt_type: 'summarise',
         input_data: { 
           content_length: content.length,
           approach: 'single-prompt-structured-output',
