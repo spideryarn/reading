@@ -7,7 +7,7 @@ import { getModel } from '@/lib/services/llm-provider'
 import { AI_CONFIG, getModelForAICall } from '@/lib/config'
 import { chatPromptInputSchema } from '@/lib/prompts/templates/chat'
 import { renderChatSystemPrompt } from '@/lib/prompts/templates/chat-system'
-import { createClient } from '@/lib/supabase/server'
+import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { ChatService } from '@/lib/services/database/chat'
 import { createRequestLogger, createTimer, logAIOperation, generateCorrelationId } from '@/lib/services/logger'
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   
   try {
     // Validate authentication (required for chat)
-    const user = await requireAuth()
+    const user = await requireAuth({ allowBearer: true, request })
     
     const body = await request.json()
     // Note: 'body' is only accessible within this try block scope
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
     let finalThreadId = threadId;
     if (!threadId && messages.length === 1 && messages[0]?.role === 'user' && documentId) {
       try {
-        const supabase = await createClient()
+        const supabase = await getSupabaseServerClient(request, { allowBearer: true })
         const chatService = new ChatService(supabase)
         
         // Create title from first user message
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
     let aiCallId: string | null = null;
     if (finalThreadId) {
       try {
-        const supabase = await createClient()
+        const supabase = await getSupabaseServerClient(request, { allowBearer: true })
         const aiCallService = new AiCallService(supabase)
         
         const aiCall = await aiCallService.createWithModelString({

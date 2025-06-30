@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { requireAuth } from '@/lib/auth/server-auth'
 import { getCurrentUserAdminStatus } from '@/lib/auth/admin-utils'
@@ -18,8 +18,8 @@ type Document = Database['public']['Tables']['documents']['Row']
  * as it would appear when opened directly in a browser.
  */
 
-async function getDocumentBySlug(slug: string): Promise<Document | null> {
-  const supabase = await createClient()
+async function getDocumentBySlug(slug: string, request: NextRequest): Promise<Document | null> {
+  const supabase = await getSupabaseServerClient(request)
   const documentService = new DocumentService(supabase)
   
   try {
@@ -37,17 +37,17 @@ export async function GET(
 ) {
   try {
     // Validate authentication first
-    const user = await requireAuth()
+    const user = await requireAuth({ allowBearer: true, request })
     
     const { slug } = await params
-    const doc = await getDocumentBySlug(slug)
+    const doc = await getDocumentBySlug(slug, request)
     
     if (!doc) {
       return new Response('Document not found', { status: 404 })
     }
 
     // Check if user owns the document or has admin access
-    const supabase = await createClient()
+    const supabase = await getSupabaseServerClient(request, { allowBearer: true })
     const documentService = new DocumentService(supabase)
     const isOwned = await documentService.isOwnedByUser(doc.id, user.id)
     const adminStatus = await getCurrentUserAdminStatus()

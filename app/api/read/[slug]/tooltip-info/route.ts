@@ -2,7 +2,7 @@
 // Provides source info, reading time, and summary for document list tooltips
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { requireAuth } from '@/lib/auth/server-auth'
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   
   try {
     // Validate authentication first
-    const user = await requireAuth()
+    const user = await requireAuth({ allowBearer: true, request })
     
     const { slug } = await context.params
 
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }, 'Document tooltip info request initiated')
 
     // Initialize Supabase client and services
-    const supabase = await createClient()
+    const supabase = await getSupabaseServerClient(request, { allowBearer: true })
     const documentService = new DocumentService(supabase)
     const enhancementService = new EnhancementService(supabase)
 

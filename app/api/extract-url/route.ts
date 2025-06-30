@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { createUrlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
 import { createPdfToHtmlPrompt } from '@/lib/prompts/templates/pdf-to-html-direct'
-import { createClient } from '@/lib/supabase/server'
+import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelForAICall, UPLOAD_LIMITS } from '@/lib/config'
 import { generateHtmlFilename } from '@/lib/utils/slug'
@@ -331,7 +331,7 @@ export async function POST(request: NextRequest) {
   
   try {
     // Validate authentication first
-    const user = await requireAuth()
+    const user = await requireAuth({ allowBearer: true, request })
     
     // Parse JSON request body
     const body = await request.json()
@@ -413,7 +413,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Initialize Supabase client and services (needed for both PDF and HTML paths)
-    const supabase = await createClient()
+    const supabase = await getSupabaseServerClient(request, { allowBearer: true })
     const aiCallService = new AiCallService(supabase)
     
     // Route based on detected content type
