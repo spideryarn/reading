@@ -119,3 +119,6 @@ export const headingsPrompt = loadPromptTemplateFromCaller(
 
 // Export schemas for use in the API
 export const headingsPromptInputSchema = headingsPromptSchema
+
+// Export types
+export type HeadingOperation = z.infer<typeof headingOperationSchema>

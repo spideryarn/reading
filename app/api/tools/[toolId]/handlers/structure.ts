@@ -10,7 +10,8 @@
  * Tool renamed: "headings" → "structure" in registry
  * 
  * Actions:
- * - 'generate' or 'execute' - Generate AI-powered document structure/headings
+ * - 'generate' or 'execute' - Generate AI-powered document structure/headings (all-at-once)
+ * - 'iterate' - Iterative heading generation with operation limits (max 10 ops per iteration)
  * - 'apply' - Apply structure mutations to document
  * - 'get' or 'list' - Get cached structure/headings (via GET)
  * - 'delete' - Remove structure enhancement (via DELETE)
@@ -18,10 +19,10 @@
 
 import { z } from 'zod'
 import { executePromptWithUsage } from '@/lib/prompts/types'
-import { headingsPrompt, headingsResponseSchema } from '@/lib/prompts/templates/headings'
+import { headingsPrompt, headingsResponseSchema, type HeadingOperation } from '@/lib/prompts/templates/headings'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
-import { getModelForAICall } from '@/lib/config'
+import { getModelForAICall, HEADING_ITERATION_CONFIG } from '@/lib/config'
 import { createRequestLogger, createTimer, logAIOperation, mutationLogger } from '@/lib/services/logger'
 import { BaseToolHandler, createHandlerError } from '../handler-interface'
 import type { ExecutionContext, ToolApiResponse } from '@/lib/tools/executor/types'
@@ -56,6 +57,82 @@ const StructureApplySchema = z.object({
   })).min(1, 'Headings array is required')
 }).passthrough()
 
+// Schema for iterative heading generation
+const StructureIterateSchema = z.object({
+  html_content: z.string().min(1, 'HTML content is required'),
+  documentId: z.string().optional(),
+  // Iteration tracking fields
+  iteration_count: z.number().int().min(0).default(0),
+  previous_iteration_summary: z.string().optional(),
+  existing_operations: z.array(z.any()).optional(), // Operations from previous iterations
+  total_operations_count: z.number().int().min(0).default(0)
+}).passthrough()
+
+
+/**
+ * Validate heading operations for structural integrity
+ * Ensures no multiple H1s and reasonable hierarchy depth
+ */
+function validateHeadingOperations(
+  operations: HeadingOperation[]
+): { isValid: boolean; errors: string[] } {
+  const errors: string[] = []
+  
+  // Count H1 operations
+  const h1Operations = operations.filter(op => 
+    (op.action === 'insert' || op.action === 'replace') && 
+    op.content?.tag_name === 'h1'
+  )
+  
+  if (h1Operations.length > 1) {
+    errors.push(`Multiple H1 operations detected (${h1Operations.length}). Document should have exactly one H1.`)
+  }
+  
+  // Check for reasonable hierarchy depth
+  const headingLevels = operations
+    .filter(op => (op.action === 'insert' || op.action === 'replace') && op.content)
+    .map(op => parseInt(op.content!.tag_name.substring(1)))
+    .filter(level => !isNaN(level))
+  
+  if (headingLevels.length > 0) {
+    const maxLevel = Math.max(...headingLevels)
+    const minLevel = Math.min(...headingLevels)
+    
+    if (maxLevel - minLevel > 3) {
+      errors.push(`Heading hierarchy spans ${maxLevel - minLevel + 1} levels (h${minLevel} to h${maxLevel}). Consider flattening for better readability.`)
+    }
+    
+    // Check for skip-level hierarchies (e.g., H1 → H3 without H2)
+    const uniqueLevels = [...new Set(headingLevels)].sort((a, b) => a - b)
+    for (let i = 1; i < uniqueLevels.length; i++) {
+      const currentLevel = uniqueLevels[i]
+      const previousLevel = uniqueLevels[i-1]
+      if (currentLevel && previousLevel && currentLevel - previousLevel > 1) {
+        errors.push(`Skip-level hierarchy detected: h${previousLevel} → h${currentLevel}. Consider adding intermediate heading levels.`)
+      }
+    }
+  }
+  
+  // Validate operation targets exist (would need document context for full validation)
+  const missingTargets = operations.filter(op => {
+    if (op.action === 'replace' || op.action === 'remove') {
+      return !op.targetId
+    }
+    if (op.action === 'insert') {
+      return !op.insertNewBeforeExistingId
+    }
+    return false
+  })
+  
+  if (missingTargets.length > 0) {
+    errors.push(`${missingTargets.length} operations missing required target IDs`)
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  }
+}
 
 /**
  * Log generated operations to console with visual hierarchy
@@ -205,6 +282,8 @@ export class StructureHandler extends BaseToolHandler {
     // Route based on action type
     if (action === 'apply') {
       return this.handleApplyStructure(parameters, context, logger)
+    } else if (action === 'iterate') {
+      return this.handleIterateStructure(parameters, context, logger)
     } else {
       // Default to generate structure for 'generate', 'execute', or other actions
       return this.handleGenerateStructure(parameters, context, logger)
@@ -562,6 +641,316 @@ export class StructureHandler extends BaseToolHandler {
       
       throw createHandlerError(
         error instanceof Error ? error.message : 'Failed to apply structure mutations',
+        'server',
+        true
+      )
+    }
+  }
+  
+  /**
+   * Handle iterative structure/headings generation with operation limits
+   * 
+   * This implements the adaptive action pattern following glossary's "Load More" approach.
+   * Detects initial vs continuation mode via `existing_operations` parameter presence.
+   * Constrains LLM to max 10 operations per iteration with safety limits.
+   */
+  private async handleIterateStructure(
+    parameters: Record<string, unknown>,
+    context: ExecutionContext,
+    logger: ReturnType<typeof createRequestLogger>
+  ): Promise<ToolApiResponse> {
+    const requestTimer = createTimer()
+    
+    // Validate input parameters
+    const validation = StructureIterateSchema.safeParse(parameters)
+    if (!validation.success) {
+      throw createHandlerError(
+        `Invalid parameters: ${validation.error.errors.map(e => e.message).join(', ')}`,
+        'validation'
+      )
+    }
+    
+    const { 
+      html_content, 
+      documentId, 
+      iteration_count, 
+      previous_iteration_summary,
+      existing_operations,
+      total_operations_count
+    } = validation.data
+    
+    // Check safety limits
+    if (iteration_count >= HEADING_ITERATION_CONFIG.MAX_ITERATIONS) {
+      logger.warn({
+        iteration_count,
+        max_iterations: HEADING_ITERATION_CONFIG.MAX_ITERATIONS,
+        operation: 'iteration_limit_reached'
+      }, 'Maximum iteration limit reached')
+      
+      return {
+        operations: [],
+        more_changes_required: false,
+        iteration_summary: 'Maximum iteration limit reached',
+        safety_check: {
+          current_iteration: iteration_count,
+          total_operations_so_far: total_operations_count,
+          max_iterations_reached: true
+        },
+        type: 'structure',
+        ...this.createResponseMetadata({
+          executionTime: requestTimer.elapsed()
+        })
+      }
+    }
+    
+    if (total_operations_count >= HEADING_ITERATION_CONFIG.MAX_TOTAL_OPERATIONS) {
+      logger.warn({
+        total_operations_count,
+        max_total_operations: HEADING_ITERATION_CONFIG.MAX_TOTAL_OPERATIONS,
+        operation: 'total_operations_limit_reached'
+      }, 'Maximum total operations limit reached')
+      
+      return {
+        operations: [],
+        more_changes_required: false,
+        iteration_summary: 'Maximum total operations limit reached',
+        safety_check: {
+          current_iteration: iteration_count,
+          total_operations_so_far: total_operations_count,
+          max_iterations_reached: false
+        },
+        type: 'structure',
+        ...this.createResponseMetadata({
+          executionTime: requestTimer.elapsed()
+        })
+      }
+    }
+    
+    // Determine if this is initial or continuation mode
+    const isInitialIteration = !existing_operations || existing_operations.length === 0
+    
+    logger.info({
+      userId: context.user!.id,
+      documentId,
+      contentLength: html_content.length,
+      iteration_count,
+      total_operations_count,
+      is_initial: isInitialIteration,
+      operation: 'iterative_structure_generation'
+    }, 'Starting iterative structure generation')
+    
+    try {
+      // Initialize database services
+      const supabase = context.supabaseClient!
+      const aiCallService = new AiCallService(supabase)
+      
+      // Get model configuration
+      const { modelString, config: modelConfig } = getModelForAICall()
+      
+      // Create AI call record for tracking
+      const aiCall = await aiCallService.startCallWithModelString({
+        userId: context.user!.id,
+        ...(documentId && { documentId }),
+        modelString: modelString,
+        prompt_type: 'headings',
+        input_data: { 
+          content_length: html_content.length,
+          iteration_count,
+          is_initial: isInitialIteration,
+          total_operations_so_far: total_operations_count,
+          max_operations_per_iteration: HEADING_ITERATION_CONFIG.MAX_HEADING_OPERATIONS_PER_ITERATION,
+          model_used: modelString
+        }
+      })
+      
+      logger.info({
+        documentId,
+        aiCallId: aiCall.id,
+        provider: modelConfig.provider,
+        modelString: modelString,
+        operation: 'ai_call_start'
+      }, 'AI call started for iterative structure generation')
+      
+      // Generate headings using LLM with iteration context
+      const llmTimer = createTimer(logger, 'iterative_headings_generation')
+      const llmResult = await executePromptWithUsage(headingsPrompt, { 
+        html_content,
+        documentId,
+        iteration_count,
+        previous_iteration_summary,
+        MAX_HEADING_OPERATIONS_PER_ITERATION: HEADING_ITERATION_CONFIG.MAX_HEADING_OPERATIONS_PER_ITERATION
+      })
+      llmTimer.end({
+        documentId,
+        aiCallId: aiCall.id,
+        responseLength: llmResult.text.length
+      })
+      
+      // Parse and validate response
+      let jsonString = llmResult.text.trim()
+      if (jsonString.startsWith('```json')) {
+        jsonString = jsonString.slice(7)
+      }
+      if (jsonString.startsWith('```')) {
+        jsonString = jsonString.slice(3)
+      }
+      if (jsonString.endsWith('```')) {
+        jsonString = jsonString.slice(0, -3)
+      }
+      
+      const parsedResponse = JSON.parse(jsonString.trim())
+      const validatedResponse = headingsResponseSchema.parse(parsedResponse)
+      
+      // Log the generated operations hierarchy
+      logOperationsHierarchy(validatedResponse.operations)
+      
+      // Validate heading operations for structural integrity
+      const validation = validateHeadingOperations(validatedResponse.operations)
+      if (!validation.isValid) {
+        logger.warn({
+          documentId,
+          aiCallId: aiCall.id,
+          validationErrors: validation.errors,
+          operation: 'heading_validation_failed'
+        }, 'Heading operations failed validation')
+        
+        // Complete AI call with validation failure
+        await aiCallService.completeCall(aiCall.id, {
+          output_data: {
+            operations_count: validatedResponse.operations.length,
+            validation_failed: true,
+            validation_errors: validation.errors,
+            processing_notes: 'Heading operations failed structural validation'
+          },
+          usage: llmResult.usage,
+          finishReason: llmResult.finishReason
+        })
+        
+        // Return error response with validation details
+        throw createHandlerError(
+          `Heading validation failed: ${validation.errors.join('; ')}`,
+          'validation',
+          true
+        )
+      }
+      
+      // Count operations by type for metadata
+      const operationCounts = validatedResponse.operations.reduce((acc, op) => {
+        acc[op.action] = (acc[op.action] || 0) + 1
+        return acc
+      }, {} as Record<string, number>)
+      
+      // Calculate new total operations count
+      const newTotalOperations = total_operations_count + validatedResponse.operations.length
+      
+      // Complete the AI call record
+      await aiCallService.completeCall(aiCall.id, {
+        output_data: {
+          operations_count: validatedResponse.operations.length,
+          operations_breakdown: operationCounts,
+          iteration_count,
+          more_changes_required: validatedResponse.more_changes_required,
+          iteration_summary: validatedResponse.iteration_summary,
+          processing_notes: `Iterative structure generation - iteration ${iteration_count + 1}`
+        },
+        usage: llmResult.usage,
+        finishReason: llmResult.finishReason
+      })
+      
+      logAIOperation(
+        'iterative_headings_generation',
+        {
+          modelProvider: modelConfig.provider,
+          tokensUsed: llmResult.usage?.totalTokens,
+          userId: context.user!.id,
+          ...(documentId && { documentId }),
+          correlationId: context.request.correlationId
+        },
+        'success'
+      )
+      
+      logger.info({
+        documentId,
+        iteration_count,
+        operationsCount: validatedResponse.operations.length,
+        operationsBreakdown: operationCounts,
+        more_changes_required: validatedResponse.more_changes_required,
+        newTotalOperations,
+        aiCallId: aiCall.id,
+        tokensUsed: llmResult.usage?.totalTokens,
+        executionTime: requestTimer.elapsed()
+      }, 'Iterative structure generation completed successfully')
+      
+      // Return response with iteration tracking
+      return {
+        operations: validatedResponse.operations,
+        more_changes_required: validatedResponse.more_changes_required ?? false,
+        iteration_summary: validatedResponse.iteration_summary ?? '',
+        safety_check: validatedResponse.safety_check ?? {
+          current_iteration: iteration_count,
+          total_operations_so_far: newTotalOperations,
+          max_iterations_reached: false
+        },
+        cached: false,
+        aiCallId: aiCall.id,
+        type: 'structure',
+        ...this.createResponseMetadata({
+          executionTime: requestTimer.elapsed(),
+          tokensUsed: llmResult.usage?.totalTokens,
+          iteration: iteration_count + 1,
+          totalOperations: newTotalOperations
+        })
+      }
+      
+    } catch (error) {
+      logger.error({
+        documentId,
+        iteration_count,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      }, 'Error in iterative structure generation')
+      
+      // Enhanced error handling
+      if (error instanceof Error) {
+        // API key errors
+        if (error.message.includes('API key') || error.message.includes('401')) {
+          throw createHandlerError(
+            'API configuration error - The AI service API key is missing or invalid',
+            'server',
+            false
+          )
+        }
+        
+        // Rate limit errors  
+        if (error.message.includes('rate limit') || error.message.includes('429')) {
+          throw createHandlerError(
+            'Rate limit exceeded - Too many requests to the AI service',
+            'server',
+            true
+          )
+        }
+        
+        // JSON parsing errors
+        if (error.message.includes('JSON') || error.message.includes('parse')) {
+          throw createHandlerError(
+            'AI response parsing error - Invalid structure operations format received',
+            'server',
+            true
+          )
+        }
+        
+        // Schema validation errors
+        if (error.message.includes('Expected') || error.message.includes('Received')) {
+          throw createHandlerError(
+            `Response validation error: ${error.message}`,
+            'server',
+            true
+          )
+        }
+      }
+      
+      throw createHandlerError(
+        error instanceof Error ? error.message : 'Failed to generate iterative document structure',
         'server',
         true
       )

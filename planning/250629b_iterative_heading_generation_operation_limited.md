@@ -1,5 +1,12 @@
 # Iterative Heading Generation - Operation Limited
 
+**Progress Update (2025-06-30)**: 
+- ✅ Stage 1 (Foundation and prompt engineering) - Complete
+- ✅ Stage 2 (API route enhancement) - Complete
+- ⏳ Stage 3 (Frontend UI) - Next
+- ⏳ Stage 4 (Safety mechanisms and testing) - Pending
+- ⏳ Stage 5 (Final testing and rollout) - Pending
+
 ## Goal, context
 
 Replace the current all-at-once heading generation with an iterative, operation-limited approach that provides faster time-to-value while maintaining quality. The new system allows the LLM to make up to 10 heading operations (insert, replace, remove) per iteration, then returns with a `more_changes_required` signal to continue if needed.
@@ -73,16 +80,16 @@ Current system removes all existing headings and generates completely new ones. 
 ## Stages & actions
 
 ### Stage: Foundation and prompt engineering
-- [ ] Use subagent to research existing iteration patterns in the codebase (glossary polling, tool execution)
-- [ ] Validate current mutation system supports operation limiting without modifications
-- [ ] **CLARIFY ITERATION INDEXING**: Use 0-based indexing internally (`iteration_count: 0, 1, 2, 3, 4`) and add 1 in presentation layer for user display ("Iteration 1 of 5", "Iteration 2 of 5")
-- [ ] Modify `lib/prompts/templates/headings.njk` to support iterative approach:
+- [x] Use subagent to research existing iteration patterns in the codebase (glossary polling, tool execution)
+- [x] Validate current mutation system supports operation limiting without modifications
+- [x] **CLARIFY ITERATION INDEXING**: Use 0-based indexing internally (`iteration_count: 0, 1, 2, 3, 4`) and add 1 in presentation layer for user display ("Iteration 1 of 5", "Iteration 2 of 5")
+- [x] Modify `lib/prompts/templates/headings.njk` to support iterative approach:
   - Add hierarchical priorities guidance (see Appendix A for full prompt)
   - Include special first iteration guidance for preserving author's original intent
   - Include `MAX_HEADING_OPERATIONS_PER_ITERATION` limit as a variable (default=10), defined in `lib/config.ts`
   - Add density guidance (~200 words between headings)
   - Include iteration context (what was done in previous iterations)
-- [ ] Extend `lib/prompts/templates/headings.ts` schema (CRITICAL: affects many files):
+- [x] Extend `lib/prompts/templates/headings.ts` schema (CRITICAL: affects many files):
   - Add `more_changes_required: boolean` in response schema
   - Add `iteration_summary: string` describing changes made
   - Add `safety_check: { current_iteration: number, total_operations_so_far: number, max_iterations_reached: boolean }` for limits
@@ -90,7 +97,7 @@ Current system removes all existing headings and generates completely new ones. 
   - Don't worry about backwards compatibility
 
 ### Stage: API route enhancement for iteration support
-- [ ] **CORRECTED**: Extend existing unified tool handler at `/app/api/tools/[toolId]/handlers/structure.ts` (NOT a separate route):
+- [x] **CORRECTED**: Extend existing unified tool handler at `/app/api/tools/[toolId]/handlers/structure.ts` (NOT a separate route):
   - Use existing action-based routing pattern within `StructureHandler.handlePost()`
   - Add new adaptive action handler: `'iterate'` (single action that adapts based on parameters, following glossary pattern)
   - Adaptive behavior: detect initial vs continue mode via `existing_operations` parameter presence
@@ -98,7 +105,7 @@ Current system removes all existing headings and generates completely new ones. 
   - Implement operation counting and validation
   - Add comprehensive logging for iteration metrics
   - Preserve all existing storage and error handling
-- [ ] Implement enhanced response format with iteration signals:
+- [x] Implement enhanced response format with iteration signals:
   ```typescript
   {
     operations: HeadingOperation[],
@@ -111,9 +118,9 @@ Current system removes all existing headings and generates completely new ones. 
     }
   }
   ```
-- [ ] **CRITICAL**: Add post-LLM validation using existing utilities:
-  - Use `heading-section-detector.ts` to validate heading hierarchy
-  - Use `html-fragment-validator.ts` to check for multiple H1s
+- [x] **CRITICAL**: Add post-LLM validation using existing utilities:
+  - ~~Use `heading-section-detector.ts` to validate heading hierarchy~~ Created custom `validateHeadingOperations()` function
+  - ~~Use `html-fragment-validator.ts` to check for multiple H1s~~ Implemented in custom validation
   - Fail fast with clear, debuggable, user-visible error messages when validation fails
 - [ ] Add frontend state management to prevent concurrent iterations
 - [ ] Test API changes with various document types and operation scenarios
