@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { z } from 'zod'
 import PQueue from 'p-queue'
 // Dynamic import for browser-only image resize utilities
@@ -116,6 +116,12 @@ export function useVisionSinglePageUploader(
     fileName: string
     totalPages: number
   } | null>(null)
+  const pageStatesRef = useRef<PageUploadState[]>([])
+
+  // Initialize pageStatesRef whenever pageStates changes
+  useEffect(() => {
+    pageStatesRef.current = pageStates
+  }, [pageStates])
 
   // Update page state
   const updatePageState = useCallback((pageNumber: number, updates: Partial<PageUploadState>) => {
@@ -134,6 +140,8 @@ export function useVisionSinglePageUploader(
         }
       }
       
+      // Update ref with latest states
+      pageStatesRef.current = newStates
       return newStates
     })
   }, [onProgress])
@@ -188,7 +196,7 @@ export function useVisionSinglePageUploader(
           documentTitle,
           fileName
         }),
-        signal: abortControllerRef.current?.signal
+        signal: abortControllerRef.current?.signal || null
       })
 
       if (!response.ok) {
@@ -457,7 +465,7 @@ export function useVisionSinglePageUploader(
       setIsUploading(false)
       
       // Get all completed HTML fragments in order
-      const completedFragments = pageStates
+      const completedFragments = pageStatesRef.current
         .filter(state => state.status === 'completed')
         .sort((a, b) => a.pageNumber - b.pageNumber)
         .map(state => state.htmlFragment!)

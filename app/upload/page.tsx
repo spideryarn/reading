@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppHeader } from '@/components/app-header'
 import { Footer } from '@/components/footer'
@@ -77,6 +77,64 @@ export default function AddDocumentPage() {
     pageCount: 0
   })
 
+  // FIRST_EDIT
+  const visionUploadStateRef = useRef(visionUploadState)
+  const uploadStateRef = useRef(uploadState)
+
+  useEffect(() => {
+    visionUploadStateRef.current = visionUploadState
+  }, [visionUploadState])
+
+  useEffect(() => {
+    uploadStateRef.current = uploadState
+  }, [uploadState])
+
+  // Insert moved definition after useEffect update for uploadStateRef
+  // INSERT_HANDLE_VISION_ALL_COMPLETE
+  const handleVisionAllComplete = useCallback(async (htmlFragments: string[]) => {
+    const { documentId, pageCount, documentTitle } = visionUploadStateRef.current
+    const { input, processing } = uploadStateRef.current
+
+    try {
+      const fullHtml = htmlFragments.join('\n')
+
+      const response = await fetch('/api/finalise-vision-document', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          documentId,
+          html: fullHtml,
+          pageCount,
+          title: documentTitle,
+          filename: input.file?.name,
+          isPublic: processing.isPublic
+        })
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(errorText || 'Failed to finalize document')
+      }
+
+      const result = await response.json()
+      if (result.success) {
+        router.push(`/read/${result.document.slug}`)
+      } else {
+        throw new Error(result.message || 'Failed to create document')
+      }
+    } catch (error) {
+      setUploadState(prev => ({
+        ...prev,
+        ui: {
+          ...prev.ui,
+          error: error instanceof Error ? error.message : 'Failed to finalize document',
+          isProcessing: false,
+          processingMessage: ''
+        }
+      }))
+    }
+  }, [router])
+
   const {
     uploadPages,
     pageStates,
@@ -100,52 +158,7 @@ export default function AddDocumentPage() {
     onError: (pageNumber, error) => {
       console.error(`Page ${pageNumber} failed:`, error)
     },
-    onAllComplete: async (htmlFragments) => {
-      // All pages processed, now finalize the document
-      console.log('All pages processed, finalizing document...')
-      
-      try {
-        // Join all HTML fragments
-        const fullHtml = htmlFragments.join('\n')
-        
-        // Call the finalise-vision-document API
-        const response = await fetch('/api/finalise-vision-document', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            documentId: visionUploadState.documentId,
-            html: fullHtml,
-            pageCount: visionUploadState.pageCount,
-            title: visionUploadState.documentTitle,
-            filename: uploadState.input.file?.name,
-            isPublic: uploadState.processing.isPublic
-          })
-        })
-        
-        if (!response.ok) {
-          const errorText = await response.text()
-          throw new Error(errorText || 'Failed to finalize document')
-        }
-        
-        const result = await response.json()
-        if (result.success) {
-          // Navigate to the document
-          router.push(`/read/${result.document.slug}`)
-        } else {
-          throw new Error(result.message || 'Failed to create document')
-        }
-      } catch (error) {
-        setUploadState(prev => ({
-          ...prev,
-          ui: {
-            ...prev.ui,
-            error: error instanceof Error ? error.message : 'Failed to finalize document',
-            isProcessing: false,
-            processingMessage: ''
-          }
-        }))
-      }
-    }
+    onAllComplete: handleVisionAllComplete
   })
   
   // Helper functions - defined before use
