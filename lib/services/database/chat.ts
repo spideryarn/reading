@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
+import { validateMessage } from '@/lib/utils/chat-validation'
 import type { 
   Database, 
   ChatThread, 
@@ -130,6 +131,13 @@ export class ChatService {
    * Add a message to a thread
    */
   async addMessage(options: CreateMessageOptions): Promise<ChatMessage> {
+    // Validate message content as a safety net
+    // (Primary validation should happen at API/client layers)
+    const validation = validateMessage(options.role, options.content)
+    if (!validation.valid) {
+      throw new Error(`Invalid message content: ${validation.error}`)
+    }
+    
     // Get current max sequence number
     const { data: existingMessages, error: seqError } = await this.supabase
       .from('chat_messages')
@@ -150,7 +158,7 @@ export class ChatService {
       thread_id: options.threadId,
       sequence_number: nextSequence,
       role: options.role,
-      content: options.content,
+      content: validation.trimmedContent || options.content,
       ai_call_id: options.aiCallId || null,
       extra: options.extra || {},
     }

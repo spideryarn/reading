@@ -200,6 +200,32 @@ export const URL_EXTRACTION_CONFIG = {
   }
 } as const
 
+// Chat validation configuration - centralised limits for message validation
+export const CHAT_VALIDATION_CONFIG = {
+  // Maximum length for a single message
+  MAX_MESSAGE_LENGTH: 50000,
+  
+  // Maximum length for a single word (security check against attacks)
+  MAX_WORD_LENGTH: 1000,
+  
+  // Maximum number of messages in a conversation
+  MAX_CONVERSATION_LENGTH: 20,
+  
+  // Maximum document context length
+  MAX_DOCUMENT_CONTEXT_LENGTH: 100000,
+  
+  // Error messages for validation failures
+  ERROR_MESSAGES: {
+    EMPTY_CONTENT: 'Message content cannot be empty or contain only whitespace. Please enter a message.',
+    MESSAGE_TOO_LONG: 'Message is too long (maximum 50,000 characters)',
+    WORD_TOO_LONG: 'Message contains excessively long words. Please break up long text.',
+    TOO_MANY_MESSAGES: 'Too many messages in conversation (max 20)',
+    CONTEXT_TOO_LONG: 'Document context too long',
+    INVALID_THREAD_ID: 'Invalid thread ID format',
+    INVALID_DOCUMENT_ID: 'Invalid document ID format'
+  }
+} as const
+
 // Site configuration
 export const SITE_CONFIG = {
   // Base URL for the application

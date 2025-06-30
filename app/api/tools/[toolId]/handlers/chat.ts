@@ -18,7 +18,8 @@
 import { z } from 'zod'
 import { generateText } from 'ai'
 import { getModel } from '@/lib/services/llm-provider'
-import { AI_CONFIG, getModelForAICall } from '@/lib/config'
+import { AI_CONFIG, getModelForAICall, CHAT_VALIDATION_CONFIG } from '@/lib/config'
+import { validateMessage } from '@/lib/utils/chat-validation'
 import { renderChatSystemPrompt } from '@/lib/prompts/templates/chat-system'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { ChatService } from '@/lib/services/database/chat'
@@ -44,30 +45,19 @@ const ChatGetRequestSchema = z.object({
 const ChatSendMessageSchema = z.object({
   messages: z.array(z.object({
     role: z.enum(['user', 'assistant']),
-    content: z.string().max(50000, 'Message content too long (max 50,000 characters)'),
+    content: z.string(),
     status: z.enum(['streaming', 'complete']).optional()
   }).refine((msg) => {
-    // User messages must have non-empty content after trimming whitespace
-    if (msg.role === 'user') {
-      const trimmed = msg.content.trim()
-      if (trimmed.length === 0) {
-        return false
-      }
-      // Additional validation: check for suspiciously long single words (potential attack)
-      const words = trimmed.split(/\s+/)
-      const hasExcessivelyLongWord = words.some(word => word.length > 1000)
-      if (hasExcessivelyLongWord) {
-        return false
-      }
-    }
-    // Assistant messages can be empty (for streaming states or tool-only responses)
-    return true
+    // Use shared validation logic for consistency
+    const validation = validateMessage(msg.role, msg.content)
+    return validation.valid
   }, {
-    message: "User messages cannot be empty, contain only whitespace, or have excessively long words"
-  })).min(1).max(20, 'Too many messages in conversation (max 20)'),
-  documentContext: z.string().max(100000, 'Document context too long').optional(),
-  threadId: z.string().uuid('Invalid thread ID format').optional(),
-  documentId: z.string().uuid('Invalid document ID format').optional()
+    message: "Invalid message content",
+    path: ['content']
+  })).min(1).max(CHAT_VALIDATION_CONFIG.MAX_CONVERSATION_LENGTH, CHAT_VALIDATION_CONFIG.ERROR_MESSAGES.TOO_MANY_MESSAGES),
+  documentContext: z.string().max(CHAT_VALIDATION_CONFIG.MAX_DOCUMENT_CONTEXT_LENGTH, CHAT_VALIDATION_CONFIG.ERROR_MESSAGES.CONTEXT_TOO_LONG).optional(),
+  threadId: z.string().uuid(CHAT_VALIDATION_CONFIG.ERROR_MESSAGES.INVALID_THREAD_ID).optional(),
+  documentId: z.string().uuid(CHAT_VALIDATION_CONFIG.ERROR_MESSAGES.INVALID_DOCUMENT_ID).optional()
 }).passthrough()
 
 const ChatCreateThreadSchema = z.object({
@@ -231,13 +221,14 @@ export class ChatHandler extends BaseToolHandler {
     }
     
     // Enhanced empty content validation per o3 AI recommendations
-    const trimmedContent = latestMessage.content.trim()
-    if (trimmedContent.length === 0) {
+    const messageValidation = validateMessage('user', latestMessage.content)
+    if (!messageValidation.valid) {
       throw createHandlerError(
-        'Message content cannot be empty or contain only whitespace. Please enter a message.',
+        messageValidation.error!,
         'validation'
       )
     }
+    const trimmedContent = messageValidation.trimmedContent!
     
     logger.info({
       userId: context.user!.id,

@@ -179,17 +179,33 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
   - [x] Appended migration notes to `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md`
 
 ### Stage: Content validation and edge cases
-- [ ] Standardise empty content handling across all layers
-  - [ ] API validation: decide whether to allow empty/whitespace-only messages
-  - [ ] Database storage: consistent handling of tool calls vs text content
-  - [ ] UI rendering: proper display of empty or tool-only messages
-- [ ] Add comprehensive input validation at API layer
-- [ ] Test edge cases: network failures, malformed content, concurrent requests
-- [ ] Ensure proper error messages replace current "refresh to fix" scenarios
+- [x] Standardise empty content handling across all layers
+  - [x] API validation: decide whether to allow empty/whitespace-only messages ✅ IMPLEMENTED
+    - User messages: Strict rejection of empty/whitespace-only content
+    - Assistant messages: Allow empty content for streaming/tool-only scenarios
+  - [x] Database storage: consistent handling of tool calls vs text content ✅ IMPLEMENTED
+    - Added validation to ChatService as safety net
+    - Consistent trimming of whitespace before storage
+  - [x] UI rendering: proper display of empty or tool-only messages ✅ EXISTING
+    - Already handled by assistant-ui component
+- [x] Add comprehensive input validation at API layer ✅ COMPLETED
+  - Created shared validation utility: `lib/utils/chat-validation.ts`
+  - Consolidated validation config in `CHAT_VALIDATION_CONFIG`
+  - Consistent validation across client, API, and database layers
+- [x] Test edge cases: network failures, malformed content, concurrent requests ✅ TESTED
+  - Comprehensive unit tests for validation logic
+  - Edge case tests for database service layer
+  - Existing integration tests verify error handling
+- [x] Ensure proper error messages replace current "refresh to fix" scenarios ✅ DONE
+  - Clear, user-friendly error messages in centralized config
+  - Consistent error handling across all layers
 
 ### Stage: Validation and cleanup
 - [ ] Update relevant evergreen documentation in `docs/reference/`
-- [ ] **Consolidate chat validation limits**: Extract hardcoded values (50,000 char message limit, 100,000 char context limit, 1,000 char word limit, 20 message conversation limit) from `app/api/tools/[toolId]/handlers/chat.ts` and `src/lib/hooks/useChatStore.ts` into `CHAT_VALIDATION_CONFIG` in `lib/config.ts`.
+- [x] **Consolidate chat validation limits**: Extract hardcoded values (50,000 char message limit, 100,000 char context limit, 1,000 char word limit, 20 message conversation limit) from `app/api/tools/[toolId]/handlers/chat.ts` and `src/lib/hooks/useChatStore.ts` into `CHAT_VALIDATION_CONFIG` in `lib/config.ts`. ✅ COMPLETED
+  - Created `CHAT_VALIDATION_CONFIG` with all limits and error messages
+  - Updated both API and client to use centralized config
+  - Created shared validation utility to avoid code duplication
 
 - [ ] Run `npm run check:health` to validate all TypeScript and linting
 - [ ] Run `npm test` in subagent to ensure all tests pass

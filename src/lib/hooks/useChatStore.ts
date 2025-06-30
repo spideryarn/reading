@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { ChatService } from '@/lib/services/database/chat';
+import { validateUserMessage } from '@/lib/utils/chat-validation';
 import type { ChatThread, ChatMessage } from '@/lib/types/database';
 import type { ChatStore, SendMessageRequest, ChatApiResponse } from '@/lib/types/chat-api';
 
@@ -111,22 +112,11 @@ export function useChatStore({
    */
   const sendMessage = useCallback(async (content: string): Promise<void> => {
     // Enhanced content validation per o3 AI recommendations
-    const trimmedContent = content.trim()
-    if (trimmedContent.length === 0) {
-      throw new Error('Message content cannot be empty or contain only whitespace. Please enter a message.')
+    const validation = validateUserMessage(content)
+    if (!validation.valid) {
+      throw new Error(validation.error!)
     }
-    
-    // Additional client-side validation for immediate feedback
-    if (trimmedContent.length > 50000) {
-      throw new Error('Message is too long (maximum 50,000 characters)')
-    }
-    
-    // Check for suspiciously long words
-    const words = trimmedContent.split(/\s+/)
-    const hasExcessivelyLongWord = words.some(word => word.length > 1000)
-    if (hasExcessivelyLongWord) {
-      throw new Error('Message contains excessively long words. Please break up long text.')
-    }
+    const trimmedContent = validation.trimmedContent!
     
     setIsLoading(true);
     setError(null);
