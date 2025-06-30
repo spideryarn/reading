@@ -333,13 +333,21 @@ export function HeadingTree({
               <div className="relative">
                 <input
                   type="range"
-                  min="1"
+                  min="2"
                   max={maxDepth}
                   value={Math.min(granularityLevel, maxDepth)}
                   onChange={(e) => onGranularityChange(parseInt(e.target.value))}
                   className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-modern"
                   style={{
-                    background: `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${((Math.min(granularityLevel, maxDepth) - 1) / (maxDepth - 1)) * 100}%, #E5E7EB ${((Math.min(granularityLevel, maxDepth) - 1) / (maxDepth - 1)) * 100}%, #E5E7EB 100%)`
+                    background: (() => {
+                      const min = 2
+                      const max = maxDepth
+                      if (max === min) {
+                        return '#3B82F6'
+                      }
+                      const percentage = ((Math.min(granularityLevel, max) - min) / (max - min)) * 100
+                      return `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${percentage}%, #E5E7EB ${percentage}%, #E5E7EB 100%)`
+                    })()
                   }}
                 />
                 {/* Custom slider thumb styling */}
@@ -370,7 +378,7 @@ export function HeadingTree({
                 `}</style>
               </div>
               <div className="flex justify-between mt-1.5">
-                <span className="text-xs text-gray-500 font-medium">1</span>
+                <span className="text-xs text-gray-500 font-medium">2</span>
                 <span className="text-xs text-gray-500 font-medium">{maxDepth}</span>
               </div>
             </div>

@@ -194,16 +194,31 @@ export function StructurePanel({
     }
   }, [content, elements, mutatedDocument, activeMutationType])
 
-  // Update default granularity based on max depth
+  // Ensure granularityLevel stays within valid bounds whenever the heading set changes.
+  // We *only* update the value if the current setting is outside the new bounds so
+  // that user-driven changes via the slider are preserved.
   useEffect(() => {
-    if (headings.length > 0) {
-      const maxDepth = Math.max(...headings.map(h => h.level))
-      const newGranularityLevel = Math.min(3, maxDepth)
-      if (newGranularityLevel !== granularityLevel) {
-        setGranularityLevel(newGranularityLevel)
-      }
-    }
-  }, [headings, granularityLevel])
+    if (headings.length === 0) return
+
+    // slider can show at most the deepest heading level available but not less
+    // than MIN_LEVEL (2 – we always show H1 and at least H2).
+    const MIN_LEVEL = 2
+    const maxDepth = Math.max(...headings.map(h => h.level))
+
+    setGranularityLevel((prev) => {
+      // Clamp prev into the valid range [MIN_LEVEL, maxDepth]
+      if (prev < MIN_LEVEL) return Math.min(3, Math.max(MIN_LEVEL, maxDepth))
+      if (prev > maxDepth) return maxDepth
+      return prev // keep user selection
+    })
+  }, [headings])
+
+  // Reset any user-collapsed nodes when the user changes the granularity slider so that
+  // they immediately see the effect of their selection.  (Otherwise a previously
+  // collapsed parent could hide deeper levels and make the slider appear broken.)
+  useEffect(() => {
+    setCollapsedIds(new Set())
+  }, [granularityLevel])
 
   // Helper function to fetch cached headings from database using tool executor
   const fetchCachedHeadings = useCallback(async (documentId: string) => {
@@ -421,7 +436,7 @@ export function StructurePanel({
         console.log(`[StructurePanel] Auto-continuing to iteration ${iterationState.currentIteration + 1}`)
         // Keep loading state and trigger next iteration automatically
         setTimeout(() => {
-          generateHeadingsIteratively()
+          generateIterRef.current()
         }, 500) // Brief pause for UI feedback
       } else {
         // Show manual controls for user to decide
@@ -441,6 +456,18 @@ export function StructurePanel({
     }
   }, [content, elements, documentId, iterationState, applyMutation, executeToolWithNavigation, isIterationInProgress, autoIterationStopped])
 
+  // ---------------------------------------------------------------------------
+  // Ensure the auto-iteration timer always invokes the **latest** version of
+  // generateHeadingsIteratively (which closes over the most up-to-date
+  // iterationState).  Without this, the scheduled callback can carry a stale
+  // reference, causing `iteration_count` sent to the server to freeze on an
+  // older value and letting iterations exceed the configured limit.
+  // ---------------------------------------------------------------------------
+  const generateIterRef = useRef<() => Promise<void>>(generateHeadingsIteratively)
+  useEffect(() => {
+    generateIterRef.current = generateHeadingsIteratively
+  }, [generateHeadingsIteratively])
+
   // Public API for manual headings generation (now uses iterative approach)
   const handleGenerateHeadings = async () => {
     setIsLoadingHeadings(true)
@@ -458,7 +485,7 @@ export function StructurePanel({
     })
     
     try {
-      await generateHeadingsIteratively()
+      await generateIterRef.current()
       // NOTE: setIsLoadingHeadings(false) is handled inside generateHeadingsIteratively
     } catch (error) {
       console.error('Error generating headings:', error)
@@ -475,7 +502,7 @@ export function StructurePanel({
     setShowIterationControls(false)
     
     try {
-      await generateHeadingsIteratively()
+      await generateIterRef.current()
     } catch (error) {
       console.error('Error continuing iteration:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to continue iteration'
