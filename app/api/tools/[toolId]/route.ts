@@ -313,24 +313,11 @@ export async function POST(
       )
     }
     
-    // Most tools require authentication for POST operations
-    try {
-      await requireAuth({ allowBearer: true, request })
-    } catch (error) {
-      return createErrorResponse(
-        {
-          status: 401,
-          code: 'TOOL_AUTH_FAILED',
-          message: 'Authentication required for tool execution',
-          retryable: false
-        },
-        toolId,
-        correlationId,
-        pathname
-      )
-    }
-    
-    // Parse request body
+    // Parse request body early so we can determine the action type before enforcing
+    // authentication. "get" and "list" are read-only helper actions that should be
+    // available without a signed-in session so cached data (e.g. AI-generated
+    // headings) can be loaded for public documents or signed-out users.
+
     let requestBody
     try {
       requestBody = await request.json()
@@ -347,6 +334,37 @@ export async function POST(
         pathname
       )
     }
+
+    // Determine requested action upfront (default to 'execute' if omitted)
+    const requestedAction: string = typeof requestBody?.action === 'string'
+      ? requestBody.action
+      : 'execute'
+
+    // Only enforce authentication for modifying or potentially expensive actions
+    // (everything except the read-only "get"/"list" operations).
+    if (requestedAction !== 'get' && requestedAction !== 'list') {
+      try {
+        await requireAuth({ allowBearer: true, request })
+      } catch (error) {
+        return createErrorResponse(
+          {
+            status: 401,
+            code: 'TOOL_AUTH_FAILED',
+            message: 'Authentication required for tool execution',
+            retryable: false
+          },
+          toolId,
+          correlationId,
+          pathname
+        )
+      }
+    }
+
+    // requestBody already parsed above – reuse it further down instead of re-parsing.
+    
+    // ---------------------------------------------------------------------------
+    // Existing validation & handler invocation logic (unchanged below this line)
+    // ---------------------------------------------------------------------------
     
     // Validate request structure
     const validation = UnifiedRequestSchema.safeParse(requestBody)
