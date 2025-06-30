@@ -95,13 +95,6 @@ function validateHeadingOperations(
     .filter(level => !isNaN(level))
   
   if (headingLevels.length > 0) {
-    const maxLevel = Math.max(...headingLevels)
-    const minLevel = Math.min(...headingLevels)
-    
-    if (maxLevel - minLevel > 3) {
-      errors.push(`Heading hierarchy spans ${maxLevel - minLevel + 1} levels (h${minLevel} to h${maxLevel}). Consider flattening for better readability.`)
-    }
-    
     // Check for skip-level hierarchies (e.g., H1 → H3 without H2)
     const uniqueLevels = [...new Set(headingLevels)].sort((a, b) => a - b)
     for (let i = 1; i < uniqueLevels.length; i++) {
@@ -163,6 +156,19 @@ function logOperationsHierarchy(operations: Array<{
   })
   console.log(`Total operations generated: ${operations.length}`)
   console.log('==========================\n')
+}
+
+/**
+ * Detect IDs referenced in operations that do NOT actually exist in the supplied HTML string.
+ * This helps us catch fabricated/example IDs without black-listing legitimate prefixes.
+ */
+function findFabricatedIds(operations: HeadingOperation[], html: string): string[] {
+  return operations
+    .map(op => op.insertNewBeforeExistingId || op.targetId)
+    .filter(id => {
+      if (!id) return false
+      return !html.includes(`id="${id}"`) && !html.includes(`id='${id}'`)
+    }) as string[]
 }
 
 /**
@@ -476,10 +482,7 @@ export class StructureHandler extends BaseToolHandler {
           operation: 'heading_validation_failed'
         }, 'Heading operations failed validation')
         
-        // Check for common AI errors with element IDs
-        const suspiciousIds = validatedResponse.operations
-          .map(op => op.insertNewBeforeExistingId || op.targetId)
-          .filter(id => id && (id.includes('syr-p-') || id.includes('syr-') || id.includes('element_')))
+        const suspiciousIds = findFabricatedIds(validatedResponse.operations, cleanedHtml)
         
         if (suspiciousIds.length > 0) {
           logger.error({
@@ -872,10 +875,7 @@ export class StructureHandler extends BaseToolHandler {
           operation: 'heading_validation_failed'
         }, 'Heading operations failed validation')
         
-        // Check for common AI errors with element IDs
-        const suspiciousIds = validatedResponse.operations
-          .map(op => op.insertNewBeforeExistingId || op.targetId)
-          .filter(id => id && (id.includes('syr-p-') || id.includes('syr-') || id.includes('element_')))
+        const suspiciousIds = findFabricatedIds(validatedResponse.operations, html_content)
         
         if (suspiciousIds.length > 0) {
           logger.error({
