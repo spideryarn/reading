@@ -72,9 +72,16 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
   for (const [targetId, groupIndexes] of insertionGroups.entries()) {
     let currentInsertionTarget = targetId
     
-    // Process headings in original order for this group (no reversal needed)
-    // The mutation engine will handle precedence correctly
-    for (const originalIndex of groupIndexes) {
+    // Sort headings in this group by heading level ascending so that higher-level headings
+    // (e.g. H2) are inserted before their subsections (e.g. H3, H4). This defends against
+    // occasional LLM ordering mistakes and complements the chaining logic below.
+    const sortedIndexes = [...groupIndexes].sort((a, b) => {
+      const levelA = parseInt(headings[a]!.html.match(/^<h(\d)/i)?.[1] || '6', 10)
+      const levelB = parseInt(headings[b]!.html.match(/^<h(\d)/i)?.[1] || '6', 10)
+      return levelA - levelB
+    })
+
+    for (const originalIndex of sortedIndexes) {
       const heading = headings[originalIndex]!
       
       // Extract heading content and level from HTML
@@ -142,10 +149,10 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
       
       forward.push(transform)
       
-      // Update target for next heading in this group to create chaining
-      // o3-pro says: The line below was causing client-side validation failures.
-      //   The mutation engine on the client should handle sequential insertions at the same point.
-      //   currentInsertionTarget = headingId
+      // Update target for the next heading in this group to create chaining behaviour.
+      // Once this heading is inserted, subsequent headings will reference its ID so that
+      // the resulting order in the document is always serial (H2, then its H3 children, etc.)
+      currentInsertionTarget = headingId
     }
   }
   

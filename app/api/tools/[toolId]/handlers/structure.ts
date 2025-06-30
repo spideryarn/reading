@@ -912,9 +912,10 @@ export class StructureHandler extends BaseToolHandler {
         await enhancementService.upsert({
           documentId,
           type: 'headings',
-          variant: 'default',
+          subtype: 'default',
           content: {
-            operations: allOperations,
+            // Cast to JsonValue to satisfy JsonObject typing
+            operations: allOperations as unknown as import('@/lib/types/json').JsonValue,
             iteration_metadata: {
               iteration_count: iteration_count + 1,
               total_operations: newTotalOperations,
@@ -923,7 +924,6 @@ export class StructureHandler extends BaseToolHandler {
               last_updated: new Date().toISOString()
             }
           },
-          userId: context.user!.id,
           aiCallId: aiCall.id
         })
         

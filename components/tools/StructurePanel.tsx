@@ -10,7 +10,8 @@ import type { DocumentElement } from '@/lib/types/document'
 import { useMutation, useActiveMutationType } from '@/lib/context/mutation-context'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
 import { HEADING_ITERATION_CONFIG } from '@/lib/config'
-import { generateHeadingMutation, extractHeadingsFromMutation } from '@/lib/services/heading-mutation-generator'
+import { headingOperationsToMutation } from '@/lib/services/heading-operations-mutation'
+import { extractHeadingsFromMutation } from '@/lib/services/heading-mutation-generator'
 import { HeadingTree, type Heading } from '../heading-tree'
 import { Button } from '@/components/ui/button'
 import { AlertWithIcon } from '@/components/ui/alert'
@@ -232,7 +233,7 @@ export function StructurePanel({
     }
   }, [executeToolWithNavigation])
 
-  // Helper function to apply cached operations directly without legacy conversion
+  // Helper function to apply cached operations (currently converts them to HTML fragments until heading operations are applied natively)
   const applyCachedOperations = useCallback(async (operations: HeadingOperation[]) => {
     try {
       console.log('Applying cached operations:', operations)
@@ -248,17 +249,9 @@ export function StructurePanel({
         return
       }
       
-      // Convert operations to mutation format (only insert/replace operations with content)
-      const mutationHeadings: MutationHeading[] = operations
-        .filter((op) => (op.action === 'insert' || op.action === 'replace') && op.content)
-        .map((op) => ({
-          insertNewBeforeExistingId: (op.action === 'insert' ? op.insertNewBeforeExistingId : op.targetId) || '',
-          html: `<${op.content!.tag_name}>${op.content!.content}</${op.content!.tag_name}>`
-        }))
-
-      const mutation = generateHeadingMutation({
-        headings: mutationHeadings,
-        documentId: documentId
+      const mutation = headingOperationsToMutation({
+        documentId,
+        operations
       })
       
       const result = await applyMutation(mutation)
@@ -389,33 +382,23 @@ export function StructurePanel({
         isComplete: !response.more_changes_required || response.safety_check.max_iterations_reached
       }))
       
-      // Apply the new operations to the document
-      const legacyHeadings: MutationHeading[] = response.operations
-        .filter((op) => (op.action === 'insert' || op.action === 'replace') && op.content)
-        .map((op) => ({
-          html: `<${op.content!.tag_name}>${op.content!.content}</${op.content!.tag_name}>`,
-          insertNewBeforeExistingId: (op.action === 'insert' ? op.insertNewBeforeExistingId : op.targetId) || ''
+      // Apply the new operations to the document using direct operation→mutation
+      const mutation = headingOperationsToMutation({
+        documentId,
+        operations: response.operations
+      })
+
+      const mutationResult = await applyMutation(mutation)
+
+      if (mutationResult.success) {
+        const generatedHeadings = extractHeadingsFromMutation(mutation).map(h => ({
+          ...h,
+          elementId: h.id
         }))
-      
-      if (legacyHeadings.length > 0) {
-        const mutation = generateHeadingMutation({
-          headings: legacyHeadings,
-          documentId: documentId,
-          isRegeneration: false
-        })
-        
-        const mutationResult = await applyMutation(mutation)
-        
-        if (mutationResult.success) {
-          const generatedHeadings = extractHeadingsFromMutation(mutation).map(h => ({
-            ...h,
-            elementId: h.id
-          }))
-          setHeadings(generatedHeadings)
-          setCollapsedIds(new Set())
-        } else {
-          throw new Error(mutationResult.error || 'Failed to apply mutation')
-        }
+        setHeadings(generatedHeadings)
+        setCollapsedIds(new Set())
+      } else {
+        throw new Error(mutationResult.error || 'Failed to apply mutation')
       }
       
       // Determine if we should automatically continue or show manual controls
