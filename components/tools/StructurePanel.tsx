@@ -32,6 +32,12 @@ interface StructurePanelProps {
   headingVisibility?: Map<string, 'visible' | 'not-visible'>
 }
 
+// Legacy heading format for mutation generator - must match lib/services/heading-mutation-generator.ts
+interface AIHeading {
+  insertNewBeforeExistingId: string
+  html: string
+}
+
 // Internal state for tracking the current mode
 type StructureMode = 'original' | 'ai-generated'
 
@@ -42,6 +48,32 @@ interface IterationState {
   operations: HeadingOperation[]
   summaries: string[]
   isComplete: boolean
+}
+
+// Response types for structure tool
+interface StructureGetResponse {
+  operations?: HeadingOperation[]
+  cached: boolean
+  enhancementId?: string | null
+  type: string
+}
+
+interface StructureIterateResponse {
+  operations: HeadingOperation[]
+  more_changes_required: boolean
+  iteration_summary: string
+  safety_check: {
+    current_iteration: number
+    total_operations_so_far: number
+    max_iterations_reached: boolean
+  }
+  cached?: boolean
+}
+
+interface StructureDeleteResponse {
+  success: boolean
+  deleted: boolean
+  documentId: string
 }
 
 // Tooltip granularity setting
@@ -244,6 +276,7 @@ export function StructurePanel({
     isComplete: false
   })
   const [showIterationControls, setShowIterationControls] = useState(false)
+  const [isIterationInProgress, setIsIterationInProgress] = useState(false)
 
   /**
    * Failsafe timer to ensure the UI never remains indefinitely in a
@@ -373,8 +406,9 @@ export function StructurePanel({
         action: 'get'
       })
       
-      if (result.data && result.data.cached) {
-        return result.data
+      const data = result.data as StructureGetResponse
+      if (data && data.cached) {
+        return data
       }
       return null
     } catch (error) {
@@ -402,7 +436,7 @@ export function StructurePanel({
       }
       
       // Map cached format { id_of_after, html } -> { insertNewBeforeExistingId, html }
-      const convertedHeadings = cachedHeadings.map(h => ({
+      const convertedHeadings: AIHeading[] = cachedHeadings.map(h => ({
         insertNewBeforeExistingId: h.insertNewBeforeExistingId ?? h.id_of_after ?? '',
         html: h.html
       }))
@@ -439,6 +473,15 @@ export function StructurePanel({
     const attemptId = ++attemptIdRef.current
     console.group(`[StructurePanel] generateHeadingsIteratively attempt #${attemptId}`)
     
+    // Prevent concurrent iterations
+    if (isIterationInProgress) {
+      console.warn('[StructurePanel] Iteration already in progress, skipping duplicate request')
+      console.groupEnd()
+      return
+    }
+    
+    setIsIterationInProgress(true)
+    
     // Quick fail-fast for large documents
     const MAX_ELEMENTS_FOR_HEADINGS_GEN = 8000
     const MAX_HTML_LENGTH_FOR_HEADINGS_GEN = 800_000 // ~800 KB
@@ -448,6 +491,7 @@ export function StructurePanel({
       console.error('[StructurePanel] ', msg)
       setHeadingsError(msg)
       setIsLoadingHeadings(false)
+      setIsIterationInProgress(false)
       console.groupEnd()
       return
     }
@@ -456,6 +500,7 @@ export function StructurePanel({
       console.error('[StructurePanel] ', msg)
       setHeadingsError(msg)
       setIsLoadingHeadings(false)
+      setIsIterationInProgress(false)
       console.groupEnd()
       return
     }
@@ -492,19 +537,9 @@ export function StructurePanel({
         total_operations_count: iterationState.totalOperations
       })
       
-      if (!result.data || !result.data.operations) {
+      const response = result.data as StructureIterateResponse
+      if (!response || !response.operations) {
         throw new Error('API returned no operations')
-      }
-      
-      const response = result.data as {
-        operations: HeadingOperation[]
-        more_changes_required: boolean
-        iteration_summary: string
-        safety_check: {
-          current_iteration: number
-          total_operations_so_far: number
-          max_iterations_reached: boolean
-        }
       }
       
       // Check for empty operations (perfect headings case)
@@ -519,6 +554,7 @@ export function StructurePanel({
         }))
         setIsLoadingHeadings(false)
         setShowIterationControls(false)
+        setIsIterationInProgress(false)
         return
       }
       
@@ -532,11 +568,11 @@ export function StructurePanel({
       }))
       
       // Apply the new operations to the document
-      const legacyHeadings = response.operations
+      const legacyHeadings: AIHeading[] = response.operations
         .filter((op) => (op.action === 'insert' || op.action === 'replace') && op.content)
         .map((op) => ({
           html: `<${op.content!.tag_name}>${op.content!.content}</${op.content!.tag_name}>`,
-          insertNewBeforeExistingId: op.action === 'insert' ? op.insertNewBeforeExistingId : op.targetId
+          insertNewBeforeExistingId: (op.action === 'insert' ? op.insertNewBeforeExistingId : op.targetId) || ''
         }))
       
       if (legacyHeadings.length > 0) {
@@ -564,23 +600,26 @@ export function StructurePanel({
       if (!response.more_changes_required || response.safety_check.max_iterations_reached) {
         setIsLoadingHeadings(false)
         setShowIterationControls(false)
+        setIsIterationInProgress(false)
         if (response.safety_check.max_iterations_reached) {
           setHeadingsError('Maximum iterations reached. The document structure has been improved as much as possible within safety limits.')
         }
       } else {
         setIsLoadingHeadings(false)
         setShowIterationControls(true)
+        setIsIterationInProgress(false)
       }
       
       console.groupEnd()
     } catch (error) {
       setIsLoadingHeadings(false)
+      setIsIterationInProgress(false)
       console.error('Error in generateHeadingsIteratively:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate headings iteratively'
       setHeadingsError(errorMessage)
       console.groupEnd()
     }
-  }, [content, elements, documentId, iterationState, applyMutation, executeToolWithNavigation])
+  }, [content, elements, documentId, iterationState, applyMutation, executeToolWithNavigation, isIterationInProgress])
   
   // Core headings generation logic (legacy all-at-once mode)
   // Keeping for potential future use or backward compatibility
@@ -625,13 +664,6 @@ export function StructurePanel({
         return
       }
       
-      // Timeout machinery for fetch – 60 s hard limit
-      const HEADINGS_GENERATION_TIMEOUT_MS = 60_000 // 1 minute
-      const abortController = new AbortController()
-      const timeoutId = setTimeout(() => {
-        abortController.abort()
-      }, HEADINGS_GENERATION_TIMEOUT_MS)
-
       try {
         let htmlWithIds = ''
         if (elements && elements.length > 0) {
@@ -660,25 +692,23 @@ export function StructurePanel({
         const result = await executeToolWithNavigation('structure', 'execute', {
           html_content: htmlWithIds,
           documentId: documentId
-        }, {
-          signal: abortController.signal
         })
 
-        if (!result.data || !result.data.operations) {
+        const data = result.data as StructureGetResponse
+        if (!data || !data.operations) {
           const error = new Error('API returned no operations')
           console.error('Empty operations response:', result)
           throw error
         }
         
-        const data = result.data
         console.log('Generate headings response:', data)
         
         // Convert operations to legacy headings format for generateHeadingMutation
-        const legacyHeadings = data.operations
-          .filter((op: { action: string; content?: { tag_name: string; content: string } }) => (op.action === 'insert' || op.action === 'replace') && op.content)
-          .map((op: { action: string; content: { tag_name: string; content: string }; insertNewBeforeExistingId?: string; targetId?: string }) => ({
-            html: `<${op.content.tag_name}>${op.content.content}</${op.content.tag_name}>`,
-            insertNewBeforeExistingId: op.action === 'insert' ? op.insertNewBeforeExistingId : op.targetId
+        const legacyHeadings: AIHeading[] = data.operations
+          .filter((op) => (op.action === 'insert' || op.action === 'replace') && op.content)
+          .map((op) => ({
+            html: `<${op.content!.tag_name}>${op.content!.content}</${op.content!.tag_name}>`,
+            insertNewBeforeExistingId: (op.action === 'insert' ? op.insertNewBeforeExistingId : op.targetId) || ''
           }))
         
         const mutation = generateHeadingMutation({
@@ -704,14 +734,9 @@ export function StructurePanel({
       } catch (error) {
         // CRITICAL FIX: Ensure loading state is always cleared, even on unexpected errors
         setIsLoadingHeadings(false)
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          console.error('Headings generation timed out after', HEADINGS_GENERATION_TIMEOUT_MS / 1000, 'seconds')
-          throw new Error('Timed out: AI headings generation took too long. Please try again later.')
-        }
         console.error('Error in generateHeadingsFromAPI:', error)
         throw error // Re-throw to maintain error handling in calling functions
       } finally {
-        clearTimeout(timeoutId)
         console.groupEnd()
       }
     } catch (error) {
@@ -795,7 +820,8 @@ export function StructurePanel({
           documentId
         })
         
-        if (!deleteResult.data?.success) {
+        const deleteData = deleteResult.data as StructureDeleteResponse
+        if (!deleteData?.success) {
           console.warn('Failed to delete cached headings')
         }
       }
@@ -851,10 +877,10 @@ export function StructurePanel({
           setEnhancementId(cached.enhancementId || null)
           
           // Convert operations to legacy headings format for applyCachedHeadings
-          const legacyHeadings = cached.operations
-            .filter((op: { action: string; content?: { tag_name: string; content: string } }) => (op.action === 'insert' || op.action === 'replace') && op.content)
-            .map((op: { action: string; content: { tag_name: string; content: string }; insertNewBeforeExistingId?: string; targetId?: string }) => ({
-              html: `<${op.content.tag_name}>${op.content.content}</${op.content.tag_name}>`,
+          const legacyHeadings: Array<{ id_of_after?: string; insertNewBeforeExistingId?: string; html: string }> = cached.operations
+            .filter((op: HeadingOperation) => (op.action === 'insert' || op.action === 'replace') && op.content)
+            .map((op: HeadingOperation) => ({
+              html: `<${op.content!.tag_name}>${op.content!.content}</${op.content!.tag_name}>`,
               insertNewBeforeExistingId: op.action === 'insert' ? op.insertNewBeforeExistingId : op.targetId
             }))
           
@@ -1049,7 +1075,7 @@ export function StructurePanel({
         {currentMode === 'original' && headings.length > 0 && (
           <Button
             onClick={handleGenerateHeadings}
-            disabled={isLoadingHeadings}
+            disabled={isLoadingHeadings || isIterationInProgress}
             variant="ghost"
             size="sm"
             className="text-green-600 hover:text-green-800 hover:bg-green-100 ml-auto"
@@ -1101,7 +1127,7 @@ export function StructurePanel({
         {currentMode === 'original' && (
           <Button
             onClick={handleGenerateHeadings}
-            disabled={isLoadingHeadings}
+            disabled={isLoadingHeadings || isIterationInProgress}
             variant="outline"
             size="full"
             className="mt-3 text-green-600 bg-green-50 border-green-200 hover:bg-green-100"
@@ -1146,6 +1172,7 @@ export function StructurePanel({
           />
           <Button
             onClick={handleGenerateHeadings}
+            disabled={isIterationInProgress}
             variant="outline"
             size="full"
             className="text-green-600 bg-green-50 border-green-200 hover:bg-green-100"
@@ -1183,6 +1210,11 @@ export function StructurePanel({
                 variant="default"
                 size="sm"
                 className="bg-blue-600 hover:bg-blue-700"
+                disabled={
+                  isIterationInProgress ||
+                  iterationState.currentIteration >= HEADING_ITERATION_CONFIG.MAX_ITERATIONS ||
+                  iterationState.totalOperations >= HEADING_ITERATION_CONFIG.MAX_TOTAL_OPERATIONS
+                }
               >
                 <ArrowRight size={14} className="mr-1" />
                 Continue improving
@@ -1191,6 +1223,7 @@ export function StructurePanel({
                 onClick={handleFinishIteration}
                 variant="outline"
                 size="sm"
+                disabled={isIterationInProgress}
               >
                 Finish
               </Button>
@@ -1199,6 +1232,12 @@ export function StructurePanel({
               {HEADING_ITERATION_CONFIG.MAX_ITERATIONS - iterationState.currentIteration} iterations remaining • 
               {HEADING_ITERATION_CONFIG.MAX_TOTAL_OPERATIONS - iterationState.totalOperations} operations available
             </p>
+            {(iterationState.currentIteration >= HEADING_ITERATION_CONFIG.MAX_ITERATIONS ||
+              iterationState.totalOperations >= HEADING_ITERATION_CONFIG.MAX_TOTAL_OPERATIONS) && (
+              <p className="text-xs text-amber-600 mt-1 font-medium">
+                Safety limit reached - Click &ldquo;Finish&rdquo; to complete
+              </p>
+            )}
           </div>
         </div>
       )}
