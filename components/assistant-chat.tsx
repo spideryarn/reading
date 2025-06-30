@@ -10,6 +10,7 @@ import {
   AssistantRuntimeProvider, 
   useExternalStoreRuntime,
   useMessage,
+  useAssistantRuntime,
 } from "@assistant-ui/react";
 import { User, Robot, PaperPlaneTilt, CircleNotch, Trash } from '@phosphor-icons/react';
 import { useChatStore } from '@/src/lib/hooks/useChatStore';
@@ -49,8 +50,10 @@ const UserMessage = () => {
   const msg = useMessage();
   const chatStore = useContext(ChatStoreContext);
 
-  const isPending = msg?.status?.type === 'running';
-  const isFailed = msg?.status?.type === 'incomplete';
+  const customMeta = (msg?.metadata && typeof msg.metadata === 'object' ? (msg.metadata as Record<string, any>) : {}) as Record<string, any>;
+  const customFlags = (customMeta.custom && typeof customMeta.custom === 'object' ? (customMeta.custom as Record<string, any>) : {}) as Record<string, any>;
+  const isPending = !!customFlags.pending;
+  const isFailed = !!customFlags.failed;
 
   // Extract text content (first text part)
   const textContent = Array.isArray(msg.content) && msg.content.length > 0 && msg.content[0].type === 'text'
@@ -125,41 +128,30 @@ const AssistantMessage = () => (
 
 // Composer component with loading states and voice input
 const Composer = () => {
-  // Handle voice transcription by creating a hidden suggestion that gets triggered
-  const [voicePrompt, setVoicePrompt] = useState<string | null>(null);
-  const hiddenSuggestionButtonRef = useRef<HTMLButtonElement | null>(null);
-  // A ref to remember the last transcribed string we sent. This helps avoid
-  // duplicate sends that can occur in React Strict Mode where effects may run
-  // twice in development.
+  const runtime = useAssistantRuntime();
+
+  // Remember last transcript to avoid accidental duplicates (e.g. micro reclick)
   const lastTranscribedRef = useRef<string | null>(null);
 
   // Fire when transcription arrives from voice recorder
-  const handleVoiceTranscription = useCallback((text: string) => {
-    // De-duplicate: if we just sent the exact same transcription, ignore it.
-    if (text.trim() === lastTranscribedRef.current) {
-      return;
-    }
+  const handleVoiceTranscription = useCallback(
+    (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
 
-    lastTranscribedRef.current = text.trim();
-    // 1. Store the prompt so the hidden suggestion renders with the text
-    setVoicePrompt(text);
-  }, []);
+      // De-duplicate identical consecutive transcripts
+      if (trimmed === lastTranscribedRef.current) return;
 
-  // When the hidden suggestion is on the page, programmatically click it so that
-  // the suggestion is selected (which moves the prompt into the input) AND – because
-  // we passed `autoSend` – the message is immediately dispatched.
-  useEffect(() => {
-    if (!voicePrompt) return;
+      lastTranscribedRef.current = trimmed;
 
-    // Using a timeout in the next tick guarantees the element has mounted.
-    const id = setTimeout(() => {
-      hiddenSuggestionButtonRef.current?.click();
-      // Give the click handler enough time to propagate before un-mounting the element.
-      setTimeout(() => setVoicePrompt(null), 250);
-    }, 0);
-
-    return () => clearTimeout(id);
-  }, [voicePrompt]);
+      // Programmatically dispatch the user message through the runtime API.
+      (runtime as any).onNew({
+        role: 'user',
+        content: [{ type: 'text', text: trimmed }],
+      });
+    },
+    [runtime],
+  );
 
   // Handle voice input errors
   const handleVoiceError = useCallback((error: string) => {
@@ -174,24 +166,6 @@ const Composer = () => {
 
   return (
     <ComposerPrimitive.Root className="flex items-end gap-3 p-4 border-t border-gray-200 bg-white/80 backdrop-blur-sm">
-      {/* Hidden suggestion component that triggers when voice input is received */}
-      {voicePrompt && (
-        <ThreadPrimitive.Suggestion
-          prompt={voicePrompt}
-          method="replace"
-          autoSend
-          asChild
-        >
-          {/*
-            The button is hidden from view but we keep a ref so that we can trigger
-            a programmatic click when the suggestion mounts. This reliably executes
-            the same internal logic that would run if the user had clicked a visible
-            suggestion, ensuring we reuse the library's behaviour.
-          */}
-          <button ref={hiddenSuggestionButtonRef} style={{ display: 'none' }} />
-        </ThreadPrimitive.Suggestion>
-      )}
-      
       <ComposerPrimitive.Input 
         className="flex-1 min-h-[44px] max-h-[120px] resize-none rounded-xl border border-gray-300 px-4 py-3 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         placeholder="Ask about this document..."
@@ -304,9 +278,6 @@ function ChatRuntime({ chatStore }: { chatStore: ReturnType<typeof useChatStore>
         ? (msg.extra as Record<string, unknown>)
         : {}
 
-      const isPending = !!extra.pending
-      const isFailed = !!extra.failed
-
       // Map to assistant-ui message shape
       const base: any = {
         id: msg.id,
@@ -316,14 +287,7 @@ function ChatRuntime({ chatStore }: { chatStore: ReturnType<typeof useChatStore>
         metadata: { custom: extra } as const
       }
 
-      if (isPending) {
-        return { ...base, status: { type: 'running' } } as any
-      }
-
-      if (isFailed) {
-        return { ...base, status: { type: 'incomplete', reason: 'error', error: extra.error } } as any
-      }
-
+      // assistant-ui restricts `status` to assistant messages; we rely on metadata flags instead
       return base as any
     }
   });

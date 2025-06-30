@@ -155,6 +155,11 @@ export function VoiceInputRecorder({
 
       const trimmed = data.text.trim();
 
+      // TEMP DEBUG: output the raw and trimmed transcription for debugging purposes.
+      // Remove before production deployment.
+      console.debug('[VoiceInputRecorder] Whisper raw:', data.text);
+      console.debug('[VoiceInputRecorder] Whisper trimmed:', trimmed);
+
       if (trimmed.length === 0) {
         handleError('No speech detected. Please try again.', { errorType: 'emptyTranscription' });
         setIsProcessing(false);
