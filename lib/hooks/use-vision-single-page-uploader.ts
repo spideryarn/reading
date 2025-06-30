@@ -3,7 +3,22 @@
 import { useState, useCallback, useRef } from 'react'
 import { z } from 'zod'
 import PQueue from 'p-queue'
-import { resizeImage, calculateBase64SizeBytes } from '@/lib/utils/image-resize-pica'
+// Dynamic import for browser-only image resize utilities
+let imageResizeUtils: {
+  resizeImage: typeof import('@/lib/utils/image-resize-pica').resizeImage
+  calculateBase64SizeBytes: typeof import('@/lib/utils/image-resize-pica').calculateBase64SizeBytes
+} | null = null
+
+async function getImageResizeUtils() {
+  if (!imageResizeUtils && typeof window !== 'undefined') {
+    const imageResizeModule = await import('@/lib/utils/image-resize-pica')
+    imageResizeUtils = {
+      resizeImage: imageResizeModule.resizeImage,
+      calculateBase64SizeBytes: imageResizeModule.calculateBase64SizeBytes
+    }
+  }
+  return imageResizeUtils
+}
 import { uploadImageAssetWithRetry, ClientStorageError } from '@/lib/services/storage-client'
 
 // Schema matching the API response
@@ -134,13 +149,18 @@ export function useVisionSinglePageUploader(
       updatePageState(pageNumber, { status: 'uploading', progress: 10 })
 
       // Check if image needs resizing (4MB limit with some buffer)
-      const currentSize = calculateBase64SizeBytes(pageImage)
+      const utils = await getImageResizeUtils()
+      if (!utils) {
+        throw new Error('Image resize utilities not available (not in browser environment)')
+      }
+      
+      const currentSize = utils.calculateBase64SizeBytes(pageImage)
       const maxSize = 3.8 * 1024 * 1024 // 3.8MB to leave buffer for JSON overhead
       
       let finalPageImage = pageImage
       if (currentSize > maxSize) {
         console.log(`Page ${pageNumber} image is ${(currentSize / 1024 / 1024).toFixed(2)}MB, resizing...`)
-        const resizeResult = await resizeImage(pageImage, {
+        const resizeResult = await utils.resizeImage(pageImage, {
           maxSizeBytes: maxSize,
           format: 'jpeg',
           quality: 0.85,
