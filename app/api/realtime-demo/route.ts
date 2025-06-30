@@ -13,6 +13,7 @@ import { AiCallService } from '@/lib/services/database/ai-calls'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { getModelForAICall } from '@/lib/config'
 import { requireAuth } from '@/lib/auth/server-auth'
+import type { HeadingOperation } from '@/lib/prompts/templates/headings'
 
 export async function POST(request: NextRequest) {
   try {
@@ -144,32 +145,41 @@ export async function POST(request: NextRequest) {
           input_data: { content_length: document.plaintext_content?.length || 0 }
         })
 
-        await enhancementService.storeHeadings(
-          documentId,
-          headingsCall!.id,
+        // Store heading operations directly in new native format
+        const headingOperations: HeadingOperation[] = [
           {
-            items: [
-              {
-                id: 'ai-h1',
-                text: 'Document Overview',
-                level: 1
-              },
-              {
-                id: 'ai-h2',
-                text: 'Key Concepts',
-                level: 2,
-                parentId: 'ai-h1'
-              },
-              {
-                id: 'ai-h3',
-                text: 'Technical Details',
-                level: 2,
-                parentId: 'ai-h1'
-              }
-            ],
-            metadata: { algorithm: 'semantic-analysis' }
+            action: 'insert',
+            insertNewBeforeExistingId: 'ai-h1', // In real usage this would reference an existing element ID
+            content: { tag_name: 'h1', content: 'Document Overview' }
+          },
+          {
+            action: 'insert',
+            insertNewBeforeExistingId: 'ai-h1',
+            content: { tag_name: 'h2', content: 'Key Concepts' }
+          },
+          {
+            action: 'insert',
+            insertNewBeforeExistingId: 'ai-h1',
+            content: { tag_name: 'h2', content: 'Technical Details' }
           }
-        )
+        ]
+
+        await enhancementService.upsert({
+          documentId,
+          aiCallId: headingsCall!.id,
+          type: 'headings',
+          subtype: 'default',
+          content: {
+            operations: headingOperations as unknown as import('@/lib/types/json').JsonValue,
+            iteration_metadata: {
+              iteration_count: 1,
+              total_operations: headingOperations.length,
+              last_changes: 'Initial headings',
+              more_changes_required: false,
+              last_updated: new Date().toISOString()
+            }
+          }
+        })
 
         await aiCallService.completeCall(
           headingsCall!.id,

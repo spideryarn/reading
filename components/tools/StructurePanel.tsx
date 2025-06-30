@@ -232,7 +232,7 @@ export function StructurePanel({
     }
   }, [executeToolWithNavigation])
 
-  // Helper function to apply cached operations directly without legacy conversion
+  // Helper function to apply cached operations (currently converts them to HTML fragments until heading operations are applied natively)
   const applyCachedOperations = useCallback(async (operations: HeadingOperation[]) => {
     try {
       console.log('Applying cached operations:', operations)
