@@ -276,6 +276,13 @@ export class StructureHandler extends BaseToolHandler {
   ): Promise<ToolApiResponse> {
     const logger = createRequestLogger('structure-handler:post', context.request.correlationId)
     
+    // Allow unauthenticated 'get' or 'list' requests for read-only access
+    if (action === 'get' || action === 'list') {
+      // Delegate to GET handler logic for compatibility with the unified POST executor.
+      return this.handleGet(parameters as unknown as GetRequestParams, context)
+    }
+    
+    // All other actions require authentication
     if (!context.user) {
       throw createHandlerError('Authentication required for structure operations', 'auth')
     }
@@ -458,6 +465,55 @@ export class StructureHandler extends BaseToolHandler {
       
       // Log the generated operations hierarchy to console
       logOperationsHierarchy(validatedResponse.operations)
+      
+      // Validate heading operations for structural integrity
+      const structuralValidation = validateHeadingOperations(validatedResponse.operations)
+      if (!structuralValidation.isValid) {
+        logger.warn({
+          documentId,
+          aiCallId: aiCall.id,
+          validationErrors: structuralValidation.errors,
+          operation: 'heading_validation_failed'
+        }, 'Heading operations failed validation')
+        
+        // Check for common AI errors with element IDs
+        const suspiciousIds = validatedResponse.operations
+          .map(op => op.insertNewBeforeExistingId || op.targetId)
+          .filter(id => id && (id.includes('syr-p-') || id.includes('syr-') || id.includes('element_')))
+        
+        if (suspiciousIds.length > 0) {
+          logger.error({
+            documentId,
+            aiCallId: aiCall.id,
+            suspiciousIds,
+            operation: 'ai_used_example_ids'
+          }, 'AI used example IDs from prompt instead of actual document IDs')
+          
+          structuralValidation.errors.push(
+            `AI error: Used example IDs from prompt (${suspiciousIds.join(', ')}) instead of actual document element IDs. ` +
+            `The AI must use the exact IDs found in the provided HTML content.`
+          )
+        }
+        
+        // Complete AI call with validation failure
+        await aiCallService.completeCall(aiCall.id, {
+          output_data: {
+            operations_count: validatedResponse.operations.length,
+            validation_failed: true,
+            validation_errors: structuralValidation.errors,
+            processing_notes: 'Heading operations failed structural validation'
+          },
+          usage: llmResult.usage,
+          finishReason: llmResult.finishReason
+        })
+        
+        // Return error response with validation details
+        throw createHandlerError(
+          `Heading validation failed: ${structuralValidation.errors.join('; ')}`,
+          'validation',
+          true
+        )
+      }
       
       // Count operations by type for metadata
       const operationCounts = validatedResponse.operations.reduce((acc, op) => {
@@ -815,6 +871,25 @@ export class StructureHandler extends BaseToolHandler {
           validationErrors: validation.errors,
           operation: 'heading_validation_failed'
         }, 'Heading operations failed validation')
+        
+        // Check for common AI errors with element IDs
+        const suspiciousIds = validatedResponse.operations
+          .map(op => op.insertNewBeforeExistingId || op.targetId)
+          .filter(id => id && (id.includes('syr-p-') || id.includes('syr-') || id.includes('element_')))
+        
+        if (suspiciousIds.length > 0) {
+          logger.error({
+            documentId,
+            aiCallId: aiCall.id,
+            suspiciousIds,
+            operation: 'ai_used_example_ids'
+          }, 'AI used example IDs from prompt instead of actual document IDs')
+          
+          validation.errors.push(
+            `AI error: Used example IDs from prompt (${suspiciousIds.join(', ')}) instead of actual document element IDs. ` +
+            `The AI must use the exact IDs found in the provided HTML content.`
+          )
+        }
         
         // Complete AI call with validation failure
         await aiCallService.completeCall(aiCall.id, {
