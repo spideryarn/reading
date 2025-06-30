@@ -608,8 +608,7 @@ export function StructurePanel({
                                  !autoIterationStopped &&
                                  response.more_changes_required &&
                                  !response.safety_check.max_iterations_reached &&
-                                 iterationState.currentIteration < HEADING_ITERATION_CONFIG.MAX_ITERATIONS - 1 &&
-                                 response.safety_check.total_operations_so_far < HEADING_ITERATION_CONFIG.MAX_TOTAL_OPERATIONS
+                                 iterationState.currentIteration < HEADING_ITERATION_CONFIG.MAX_ITERATIONS - 1
       
       if (!response.more_changes_required || response.safety_check.max_iterations_reached) {
         // Iteration complete - no more changes needed or limits reached
@@ -1263,8 +1262,7 @@ export function StructurePanel({
                 className="bg-blue-600 hover:bg-blue-700"
                 disabled={
                   isIterationInProgress ||
-                  iterationState.currentIteration >= HEADING_ITERATION_CONFIG.MAX_ITERATIONS ||
-                  iterationState.totalOperations >= HEADING_ITERATION_CONFIG.MAX_TOTAL_OPERATIONS
+                  iterationState.currentIteration >= HEADING_ITERATION_CONFIG.MAX_ITERATIONS
                 }
               >
                 <ArrowRight size={14} className="mr-1" />
@@ -1280,11 +1278,9 @@ export function StructurePanel({
               </Button>
             </div>
             <p className="text-xs text-blue-600 mt-2">
-              {HEADING_ITERATION_CONFIG.MAX_ITERATIONS - iterationState.currentIteration} iterations remaining • 
-              {HEADING_ITERATION_CONFIG.MAX_TOTAL_OPERATIONS - iterationState.totalOperations} operations available
+              {HEADING_ITERATION_CONFIG.MAX_ITERATIONS - iterationState.currentIteration} iterations remaining
             </p>
-            {(iterationState.currentIteration >= HEADING_ITERATION_CONFIG.MAX_ITERATIONS ||
-              iterationState.totalOperations >= HEADING_ITERATION_CONFIG.MAX_TOTAL_OPERATIONS) && (
+            {iterationState.currentIteration >= HEADING_ITERATION_CONFIG.MAX_ITERATIONS && (
               <p className="text-xs text-amber-600 mt-1 font-medium">
                 Safety limit reached - Click &ldquo;Finish&rdquo; to complete
               </p>
