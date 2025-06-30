@@ -192,7 +192,7 @@ export function HeadingSummaryTooltip({
   onLoadingStateChange,
   onContentCacheChange
 }: HeadingSummaryTooltipProps) {
-  const getTooltipContent = useCallback((): JSX.Element => {
+  function getTooltipContent(): JSX.Element {
     const isLoading = loadingStates.has(elementId)
     const cachedContent = contentCache.get(elementId)
     
@@ -251,9 +251,9 @@ export function HeadingSummaryTooltip({
         </div>
       )
     }
-  }, [elementId, contentCache, loadingStates, elements, mutatedDocument, activeMutationType])
+  }
 
-  const handleTooltipShow = useCallback(() => {
+  function handleTooltipShow() {
     if (!contentCache.has(elementId) && !loadingStates.has(elementId)) {
       if (hasSufficientContentForSummary(elementId, elements, mutatedDocument, activeMutationType)) {
         onLoadingStateChange(elementId, true)
@@ -279,17 +279,7 @@ export function HeadingSummaryTooltip({
         })
       }
     }
-  }, [
-    elementId,
-    contentCache,
-    loadingStates,
-    elements,
-    mutatedDocument,
-    activeMutationType,
-    documentId,
-    onLoadingStateChange,
-    onContentCacheChange
-  ])
+  }
 
   return {
     getTooltipContent,
