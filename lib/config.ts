@@ -259,3 +259,12 @@ export const TOOL_TIMEOUTS = {
   ANALYSIS: 300_000, // Expensive analyses (5 min)
   UPLOAD: 180_000,   // Large file uploads / processing (3 min)
 } as const
+
+// VISION PDF single-page upload configuration – controls client concurrency for Gemini calls
+export const VISION_UPLOAD_CONFIG = {
+  // Maximum number of concurrent /api/upload-pdf-single-page-image requests the
+  // browser is allowed to issue.  Keep deliberately low while we investigate
+  // Gemini rate-limit behaviour in development.  This can be overridden via the
+  // VISION_MAX_CONCURRENCY environment variable.
+  MAX_CONCURRENCY: parseInt(process.env.VISION_MAX_CONCURRENCY || '1', 10),
+} as const

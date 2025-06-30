@@ -20,6 +20,7 @@ async function getImageResizeUtils() {
   return imageResizeUtils
 }
 import { uploadImageAssetWithRetry, ClientStorageError } from '@/lib/services/storage-client'
+import { createClient } from '@/lib/supabase/client'
 
 // Schema matching the API response
 const SinglePageVisionResponseSchema = z.object({
@@ -314,6 +315,38 @@ export function useVisionSinglePageUploader(
             ...croppedImage,
             uploadUrl: uploadResult.publicUrl
           })
+
+          // NEW: record the asset in the document_assets table via RLS-protected browser client
+          try {
+            const { error: insertError } = await createClient()
+              .from('document_assets')
+              .insert({
+                document_id: documentId,
+                type: 'image',
+                filename: croppedImage.filename,
+                storage_path: uploadResult.path,
+                caption: croppedImage.caption ?? null,
+                extraction_confidence: null,
+                metadata: {
+                  bounding_box: {
+                    x1: croppedImage.boundingBox.x,
+                    y1: croppedImage.boundingBox.y,
+                    x2: croppedImage.boundingBox.x + croppedImage.boundingBox.width,
+                    y2: croppedImage.boundingBox.y + croppedImage.boundingBox.height
+                  },
+                  page_number: pageNumber,
+                  file_size: uploadResult.size,
+                  extraction_method: 'client_crop',
+                  element_id: croppedImage.elementId
+                }
+              })
+
+            if (insertError) {
+              console.error('document_assets insert failed:', insertError.message)
+            }
+          } catch (metaErr) {
+            console.error('Unexpected error inserting document_assets row:', metaErr)
+          }
         } catch (uploadError) {
           console.error(`Failed to upload image ${croppedImage.filename} after retries:`, uploadError)
           failedUploads.push(croppedImage.filename)
@@ -328,6 +361,11 @@ export function useVisionSinglePageUploader(
       
       // Update progress
       updatePageState(pageNumber, { status: 'storing', progress: 85 })
+      
+      // ADD_CHECK_ALL_UPLOADS_FAILED
+      if (result.extractedImages.length > 0 && uploadedImages.length === 0) {
+        throw new Error('All image uploads failed for this page')
+      }
       
       // Step 4: Patch HTML with final storage URLs
       let patchedHtml = result.pageHtml
@@ -363,14 +401,17 @@ export function useVisionSinglePageUploader(
       if (failedUploads.length > 0) {
         patchedHtml = `<!-- Warning: Failed to upload ${failedUploads.length} image(s): ${failedUploads.join(', ')} -->\n${patchedHtml}`
       }
-
+      
+      // NEW: Wrap the fragment in an explicit page wrapper to preserve ordering
+      const wrappedHtml = `<section data-page-number="${pageNumber}" class="pdf-page page-${pageNumber}">\n${patchedHtml}\n</section>`
+      
       updatePageState(pageNumber, { 
         status: 'completed', 
         progress: 100,
-        htmlFragment: patchedHtml
+        htmlFragment: wrappedHtml
       })
 
-      onPageComplete?.(pageNumber, patchedHtml)
+      onPageComplete?.(pageNumber, wrappedHtml)
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'

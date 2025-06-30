@@ -16,9 +16,11 @@ import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { documentAssetsService } from '@/lib/services/database/document-assets'
 import { requireAuth } from '@/lib/auth/server-auth'
-import { processHtmlToDocument, handleSanitizationError } from '@/lib/services/html-document-processor'
+import { processHtmlToDocument, handleSanitizationError, sanitizeAndExtractText } from '@/lib/services/html-document-processor'
 import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
 import { z } from 'zod'
+import { sanitizeDocumentTitle } from '@/lib/utils/document-title'
+import { generateSlug } from '@/lib/utils/slug'
 
 // Request body schema
 const FinalisationRequestSchema = z.object({
@@ -122,7 +124,9 @@ export async function POST(request: NextRequest) {
       const invalidImages = imgTags.filter(tag => {
         const srcMatch = tag.match(/src="([^"]*)"/)
         if (!srcMatch) return true
-        const src = srcMatch[1]
+        // srcMatch is defined here, assert non-null for TypeScript
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const src = srcMatch[1]!
         // Check if it's a valid Supabase Storage URL for this document
         return !src.includes('/storage/v1/object/public/') || !src.includes(`/${documentId}/assets/`)
       })
@@ -150,21 +154,91 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Step 2: Check if document already exists (prevent duplicate finalisation)
+    // Step 2: Draft handling & duplicate checks
     const documentService = new DocumentService(supabase)
     const existingDocument = await documentService.getById(documentId)
-    
-    if (existingDocument) {
+
+    if (existingDocument && existingDocument.is_draft === null) {
+      // A fully-finalised document already exists – return conflict as before
       requestLogger.warn({
         correlationId,
         documentId,
         existingCreatedAt: existingDocument.created_at
-      }, 'Document already exists - preventing duplicate finalisation')
-      
+      }, 'Document already finalised – preventing duplicate finalisation')
+
       return NextResponse.json({
         error: 'Document has already been finalised',
-        documentId: documentId
+        documentId,
+        slug: existingDocument.slug
       }, { status: 409 })
+    }
+
+    // If a draft row exists we should update it in-place instead of inserting a new row
+    const isDraftUpdate = !!existingDocument && existingDocument.is_draft !== null
+    
+    // Sanitize title early (shared with both flows)
+    const sanitizedTitle = sanitizeDocumentTitle(title)
+
+    let processedHtml = html
+    let plaintext = ''
+    let wordCount = 0
+    let slug = existingDocument?.slug ?? generateSlug(sanitizedTitle)
+
+    if (isDraftUpdate) {
+      // Re-use the sanitisation + prettification + text extraction helpers from the shared pipeline
+      const { prettifiedHtml, plaintext: extractedText } = await sanitizeAndExtractText(
+        html,
+        requestLogger,
+        correlationId
+      )
+
+      processedHtml = prettifiedHtml
+      plaintext = extractedText
+      wordCount = extractedText.trim().split(/\s+/).length
+
+      // Update the existing draft row to final content
+      const updated = await documentService.update(documentId, {
+        title: sanitizedTitle,
+        html_content: processedHtml,
+        plaintext_content: plaintext,
+        slug,
+        is_public: isPublic,
+        word_count: wordCount,
+        is_draft: null // clear draft flag
+      })
+
+      if (!updated) {
+        requestLogger.error({ correlationId, documentId }, 'Failed to update draft document during finalisation')
+        return NextResponse.json({
+          error: 'Document finalisation failed: could not update draft record',
+          documentId,
+          correlationId
+        }, { status: 500 })
+      }
+
+      requestLogger.info({ correlationId, documentId, step: 'draft-updated' }, 'Draft document updated successfully')
+
+      // Respond success immediately – skip create/insert flow below
+      return NextResponse.json({
+        success: true,
+        document: {
+          id: updated.id,
+          title: updated.title,
+          slug: updated.slug,
+          word_count: updated.word_count,
+          created_at: updated.created_at
+        },
+        assets: {
+          total: assetStats.totalAssets,
+          images: documentAssets.length,
+          totalSizeBytes: assetStats.totalStorageSize
+        },
+        processing: {
+          method: 'vision-phase2-finalisation',
+          pageCount,
+          correlationId
+        }
+      }, { status: 201 })
     }
     
     // Step 3: Process HTML through shared pipeline with explicit document ID
@@ -201,6 +275,20 @@ export async function POST(request: NextRequest) {
         processing_method: 'client-side-assembly'
       }
     )
+    
+    // Clear draft flag now that document is fully processed
+    try {
+      await supabase
+        .from('documents')
+        .update({ is_draft: null })
+        .eq('id', document.id)
+    } catch (draftClearErr) {
+      requestLogger.warn({
+        correlationId,
+        documentId,
+        error: draftClearErr instanceof Error ? draftClearErr.message : 'unknown'
+      }, 'Failed to clear draft flag')
+    }
     
     requestLogger.info({
       correlationId,

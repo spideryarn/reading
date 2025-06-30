@@ -161,14 +161,18 @@ export async function POST(request: NextRequest) {
     const pageProcessingStart = Date.now()
     
     // Build page processing input
+    // NOTE: We intentionally omit `documentId` so that server-side image extraction
+    // is **disabled** (Phase 2 architecture). The client will perform cropping &
+    // storage uploads. We still include all other context needed for accurate
+    // bounding-box detection.
     const pageInput = {
       pageImageBase64: pageImage,
       pageNumber,
       totalPages,
       fileName,
       documentContext: `Title: ${documentTitle}`,
-      previousPageSummary: undefined, // Not available in single-page processing
-      documentId // Enable image extraction
+      previousPageSummary: undefined // Not available in single-page processing
+      // documentId intentionally omitted to skip extraction
     }
 
     // Process the page

@@ -96,6 +96,10 @@ export default function AddDocumentPage() {
     const { input, processing } = uploadStateRef.current
 
     try {
+      if (htmlFragments.length === 0) {
+        throw new Error('No pages were processed successfully. Please check for errors in the upload progress list.')
+      }
+
       const fullHtml = htmlFragments.join('\n')
 
       const response = await fetch('/api/finalise-vision-document', {
@@ -110,6 +114,18 @@ export default function AddDocumentPage() {
           isPublic: processing.isPublic
         })
       })
+
+      if (response.status === 409) {
+        // Document already finalised – redirect to existing document
+        const conflictData = await response.json()
+        const slug = conflictData.slug
+        if (slug) {
+          router.push(`/read/${slug}`)
+          return
+        }
+        // Fallback: show error but stop processing state
+        throw new Error('Document already exists but cannot determine its location')
+      }
 
       if (!response.ok) {
         const errorText = await response.text()
@@ -522,6 +538,23 @@ export default function AddDocumentPage() {
                 }
               }))
               
+              // Create draft document row so asset inserts pass RLS
+              try {
+                await fetch('/api/create-draft-document', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    documentId,
+                    title: documentTitle,
+                    filename: input.file.name,
+                    isPublic: processing.isPublic
+                  })
+                })
+              } catch (draftErr) {
+                console.error('Failed to create draft document:', draftErr)
+                // Continue anyway; insert policies may fail
+              }
+
               // Start the page-by-page upload process
               const pageImages = imageResult.pages.map(page => ({
                 base64Image: page.base64Image,
