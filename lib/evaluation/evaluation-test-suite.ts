@@ -100,8 +100,8 @@ export interface ProcessingMethod {
 export const PROCESSING_METHODS: ProcessingMethod[] = [
   {
     id: 'vision-ai',
-    name: 'Vision-based AI Processing (v2)',
-    endpoint: '/api/upload-pdf-vision',
+    name: 'Vision-based AI Processing (Phase 2)',
+    endpoint: '/api/upload-pdf-single-page-image',
     requiresImages: true,
     expectedSpeed: 'slow',
     expectedQuality: 'high'
