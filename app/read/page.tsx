@@ -38,7 +38,11 @@ async function getUserDocuments(): Promise<{ documents: Document[]; isAdmin: boo
       result = await documentService.list({ limit: 1000 })
     }
     
-    const sortedDocuments = result.documents.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) // Sort by newest first
+    const sortedDocuments = result.documents.sort((a, b) => {
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
+      return dateB - dateA // Sort by newest first
+    })
     
     return { documents: sortedDocuments, isAdmin, userId }
   } catch (error) {
@@ -95,7 +99,7 @@ export default async function DocumentsPage() {
             documents={documents}
             emptyStateMessage="No documents yet. Upload your first document to get started."
             showDeleteActions={true}
-            currentUserId={userId}
+            {...(userId && { currentUserId: userId })}
           />
         </div>
       </main>

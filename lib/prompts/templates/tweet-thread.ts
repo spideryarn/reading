@@ -27,7 +27,9 @@ export const tweetSchema = z.object({
 // Schema for the tweet thread response
 export const tweetThreadResponseSchema = z.object({
   tweets: z.array(tweetSchema).min(1, 'Thread must contain at least one tweet'),
-  thread_summary: z.string().min(1, 'Thread summary is required')
+  thread_summary: z.string().min(1, 'Thread summary is required'),
+  metadata: z.record(z.any()).optional(),
+  cached: z.boolean().optional()
 })
 
 // Schema for tweet thread prompt input

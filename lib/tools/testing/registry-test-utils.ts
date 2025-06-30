@@ -72,7 +72,7 @@ export function createTestTools(count: number = 3): Tool[] {
       icon,
       tabId: `test-tool-${index + 1}` as TabValue,
       shortcuts: [`Cmd+${index + 1}`, `Ctrl+${index + 1}`],
-      keywords: [`test-${index + 1}`, `tool-${index + 1}`, category] // Unique keywords per tool
+      keywords: [`test-${index + 1}`, `tool-${index + 1}`, category ?? 'test'] // Unique keywords per tool
     })
   })
 }

@@ -36,7 +36,7 @@ export async function fetchContentType(url: string): Promise<string> {
     if (!contentType) {
       return 'application/octet-stream'
     }
-    return contentType.toLowerCase().split(';')[0].trim() // Remove charset and parameters
+    return contentType.toLowerCase().split(';')[0]?.trim() ?? contentType.toLowerCase() // Remove charset and parameters
     
   } catch (error) {
     clearTimeout(timeoutId)

@@ -62,7 +62,7 @@ interface UnifiedLeftPaneProps {
   elements: DocumentElement[]
   documentId: string
   markdownContent: string
-  headingVisibility?: Map<string, 'visible' | 'not-visible'>
+  headingVisibility?: Map<string, 'visible' | 'not-visible'> | undefined
   
   // From DocumentViewer (Tools)
   glossaryEntities: Entity[]
@@ -74,45 +74,45 @@ interface UnifiedLeftPaneProps {
   // Callbacks
   onHeadingClick: (headingText: string, headingId?: string) => void
   onLoadGlossary: () => void
-  onResetGlossary?: () => void
-  onLoadMoreGlossary?: () => void
+  onResetGlossary?: (() => void) | undefined
+  onLoadMoreGlossary?: (() => void) | undefined
   
   // Load More state
-  hasMoreEntities?: boolean
-  isLoadingMoreGlossary?: boolean
+  hasMoreEntities?: boolean | undefined
+  isLoadingMoreGlossary?: boolean | undefined
   
   // Auto-generation state
-  isAutoGenerating?: boolean
-  onCancelAutoGeneration?: () => void
+  isAutoGenerating?: boolean | undefined
+  onCancelAutoGeneration?: (() => void) | undefined
   
   // For chat context
   documentContext: string
   
   // Semantic highlighting
-  semanticHighlights?: SemanticHighlight[]
-  onSemanticHighlightsChange?: (highlights: SemanticHighlight[]) => void
+  semanticHighlights?: SemanticHighlight[] | undefined
+  onSemanticHighlightsChange?: ((highlights: SemanticHighlight[]) => void) | undefined
   
   // Active highlight element (for pulse animation)
-  activeElementId?: string | null
-  onActiveElementChange?: (elementId: string | null) => void
+  activeElementId?: string | null | undefined
+  onActiveElementChange?: ((elementId: string | null) => void) | undefined
   
   // For metadata tab
   documentTitle: string
   documentCreatedAt: string
-  documentSourceUrl?: string | null
+  documentSourceUrl?: string | null | undefined
   wordCount: number | null
-  aiHeadingsGenerated?: boolean
-  summaryGenerated?: boolean
-  glossaryGenerated?: boolean
-  ownerEmail?: string
-  isPublic?: boolean | null
+  aiHeadingsGenerated?: boolean | undefined
+  summaryGenerated?: boolean | undefined
+  glossaryGenerated?: boolean | undefined
+  ownerEmail?: string | undefined
+  isPublic?: boolean | null | undefined
   slug: string
   storagePath: string | null
-  originalFileType?: string | null
+  originalFileType?: string | null | undefined
   uploadMetadata?: {
     content_size_kb?: number
     [key: string]: unknown
-  } | null
+  } | null | undefined
 }
 
 // Get icon component for entity type
@@ -1023,7 +1023,7 @@ export function UnifiedLeftPane({
   }, [documentId, elements, semanticHighlights, onSemanticHighlightsChange, activeElementId, onActiveElementChange, state.activeTabId])
   
   const renderMetadataTab = useCallback(() => {
-    const props: React.ComponentProps<typeof MetadataPanel> = {
+    const props: Parameters<typeof MetadataPanel>[0] = {
       documentTitle,
       documentCreatedAt,
       wordCount,

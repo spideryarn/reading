@@ -120,7 +120,7 @@ export function RealtimeDemo({ documentId }: RealtimeDemoProps) {
                   {enhancement.subtype && ` (${enhancement.subtype})`}
                 </span>
                 <span className="text-sm text-gray-500">
-                  {new Date(enhancement.created_at).toLocaleTimeString()}
+                  {enhancement.created_at ? new Date(enhancement.created_at).toLocaleTimeString() : 'Unknown'}
                 </span>
               </div>
               
@@ -132,7 +132,7 @@ export function RealtimeDemo({ documentId }: RealtimeDemoProps) {
               
               {enhancement.updated_at !== enhancement.created_at && (
                 <p className="mt-2 text-xs text-gray-500">
-                  Updated: {new Date(enhancement.updated_at).toLocaleTimeString()}
+                  Updated: {enhancement.updated_at ? new Date(enhancement.updated_at).toLocaleTimeString() : 'Unknown'}
                 </p>
               )}
             </div>

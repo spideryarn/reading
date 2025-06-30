@@ -71,7 +71,7 @@ export function GlobalUrlWarnings() {
               </div>
               <div className="text-xs text-orange-700">
                 {warnings.length === 1 
-                  ? `"${warnings[0].parameter}" parameter was corrected`
+                  ? `"${warnings[0]?.parameter}" parameter was corrected`
                   : `${warnings.length} parameters were corrected`
                 }
               </div>

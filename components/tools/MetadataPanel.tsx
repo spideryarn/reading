@@ -19,33 +19,42 @@ import { DeleteDocumentButton } from '@/components/delete-document-button'
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { calculateReadingTimeFromWordCount, formatReadingTime } from '@/lib/utils/reading-time-calculation'
-import { generateReadingTimeTooltip } from '@/lib/utils/enhanced-reading-time'
+import { generateReadingTimeTooltip, type ReadingDifficultyData } from '@/lib/utils/enhanced-reading-time'
+
+// Helper function to format confidence for display
+function formatConfidence(confidence: string | number): string {
+  if (typeof confidence === 'string') {
+    return confidence
+  }
+  // Convert numeric confidence to string
+  return confidence >= 0.8 ? 'High' : confidence >= 0.6 ? 'Medium' : 'Low'
+}
 
 interface MetadataPanelProps {
   documentTitle: string
   documentCreatedAt: string
-  documentSourceUrl?: string | null
+  documentSourceUrl?: string | null | undefined
   // Word count from database for reading time calculation
   wordCount: number | null
   // Processing status flags
-  glossaryGenerated?: boolean
-  glossaryLoading?: boolean
-  aiHeadingsGenerated?: boolean
-  summaryGenerated?: boolean
+  glossaryGenerated?: boolean | undefined
+  glossaryLoading?: boolean | undefined
+  aiHeadingsGenerated?: boolean | undefined
+  summaryGenerated?: boolean | undefined
   // Owner information
-  ownerEmail?: string
+  ownerEmail?: string | undefined
   // Privacy and document ID for editing
-  isPublic?: boolean | null
+  isPublic?: boolean | null | undefined
   documentId: string
   // Document access props for View Original functionality
   slug: string
   storagePath: string | null
-  originalFileType?: string | null
+  originalFileType?: string | null | undefined
   // Upload metadata for file size info
   uploadMetadata?: {
     content_size_kb?: number
     [key: string]: unknown
-  } | null
+  } | null | undefined
 }
 
 export function MetadataPanel({
@@ -66,11 +75,7 @@ export function MetadataPanel({
   uploadMetadata
 }: MetadataPanelProps) {
   // Reading difficulty state (needs to be before documentStats calculation)
-  const [readingDifficulty, setReadingDifficulty] = useState<{
-    level: string
-    confidence: string
-    factors: string[]
-  } | null>(null)
+  const [readingDifficulty, setReadingDifficulty] = useState<ReadingDifficultyData | null>(null)
   const [isLoadingDifficulty, setIsLoadingDifficulty] = useState(false)
   const [difficultyError, setDifficultyError] = useState<string | null>(null)
   const [showAssessmentFactors, setShowAssessmentFactors] = useState(false)
@@ -148,12 +153,8 @@ export function MetadataPanel({
           )
           
           if (existingDifficulty) {
-            const content = existingDifficulty.content as { level: string; confidence: number; factors: string[] }
-            setReadingDifficulty({
-              level: content.level,
-              confidence: content.confidence >= 0.8 ? 'High' : content.confidence >= 0.6 ? 'Medium' : 'Low',
-              factors: content.factors || []
-            })
+            const content = existingDifficulty.content as unknown as ReadingDifficultyData
+            setReadingDifficulty(content)
           }
         } catch (error) {
           console.error('Failed to fetch reading difficulty:', error)
@@ -961,7 +962,7 @@ export function MetadataPanel({
                       {showAssessmentFactors && (
                         <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg p-3 animate-in slide-in-from-top-1 duration-200">
                           <div className="text-xs text-blue-700 leading-relaxed space-y-1">
-                            {readingDifficulty.factors.map((factor, index) => (
+                            {readingDifficulty.factors?.map((factor, index) => (
                               <div key={index} className="flex items-start gap-2">
                                 <span className="text-blue-500 mt-0.5">•</span>
                                 <span>{factor}</span>
@@ -996,7 +997,7 @@ export function MetadataPanel({
                         content={
                           <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 max-w-sm">
                             <div className="text-xs text-gray-700 leading-relaxed">
-                              Confidence level: {readingDifficulty.confidence}. High confidence indicates clear classification, medium suggests borderline complexity.
+                              Confidence level: {formatConfidence(readingDifficulty.confidence)}. High confidence indicates clear classification, medium suggests borderline complexity.
                             </div>
                           </div>
                         }
@@ -1007,7 +1008,7 @@ export function MetadataPanel({
                         contentClassName="p-0 bg-transparent border-0 shadow-none"
                       >
                         <span className="border-b border-dotted border-slate-400 cursor-help">
-                          Confidence: {readingDifficulty.confidence}
+                          Confidence: {formatConfidence(readingDifficulty.confidence)}
                         </span>
                       </TooltipOrPopover>
                     </div>

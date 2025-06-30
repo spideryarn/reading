@@ -7,6 +7,7 @@ import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelForAICall } from '@/lib/config'
 import { createRequestLogger, generateCorrelationId, logAIOperation } from '@/lib/services/logger'
 import { requireAuth } from '@/lib/auth/server-auth'
+import type { JsonObject } from '@/lib/types/json'
 
 export async function GET(request: NextRequest) {
   const correlationId = generateCorrelationId()
@@ -282,6 +283,12 @@ export async function POST(request: NextRequest) {
     }
     
     // Store AI call in database for tracking with usage metadata
+    // Ensure responseData is a proper JsonObject by handling undefined metadata
+    const responseDataForStorage: JsonObject = {
+      ...validatedResponse,
+      metadata: validatedResponse.metadata || {}
+    }
+    
     const aiCall = await aiCallService.createWithModelString({
       userId: user.id,
       modelString: modelString,
@@ -292,7 +299,7 @@ export async function POST(request: NextRequest) {
         content: content,
         target_length
       },
-      responseData: validatedResponse
+      responseData: responseDataForStorage
     })
     
     // Store tweet thread enhancement in database

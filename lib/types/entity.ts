@@ -8,13 +8,13 @@ export interface Entity {
            'definition' | 'other'
   aliases: string[]
   brief_explanation: string
-  long_explanation?: string
-  datetime?: string
-  url?: string
-  extra?: Record<string, unknown>
+  long_explanation?: string | undefined
+  datetime?: string | undefined
+  url?: string | undefined
+  extra?: Record<string, unknown> | undefined
   // Optional scoring fields for difficulty and centrality
-  difficulty?: number // 0-1 scale: how likely someone will know this (0=common, 1=expert knowledge)
-  centrality?: number // 0-1 scale: how important to understanding document (0=minor, 1=central)
+  difficulty?: number | undefined // 0-1 scale: how likely someone will know this (0=common, 1=expert knowledge)
+  centrality?: number | undefined // 0-1 scale: how important to understanding document (0=minor, 1=central)
 }
 
 // Entity with position information for document ordering

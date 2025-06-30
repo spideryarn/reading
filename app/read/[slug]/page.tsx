@@ -64,7 +64,7 @@ export default async function DocumentPage({ params }: PageProps) {
         slug={slug}
         storagePath={doc.storage_path}
         originalFileType={doc.original_file_type}
-        uploadMetadata={doc.upload_metadata as Record<string, unknown> | null}
+        uploadMetadata={doc.upload_metadata as Record<string, unknown> ?? null}
         documentCreatedAt={doc.created_at || ''}
         documentSourceUrl={doc.source_url}
         wordCount={doc.word_count}

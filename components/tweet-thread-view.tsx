@@ -22,6 +22,7 @@ interface TweetThreadResponse {
     truncated: boolean
     tweet_count: number
   }
+  cached?: boolean
 }
 
 interface TweetThreadViewProps {

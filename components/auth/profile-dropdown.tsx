@@ -55,7 +55,7 @@ export function ProfileDropdown({ user }: ProfileDropdownProps) {
     if (!email) return 'U'
     return email
       .split('@')[0]
-      .split('.')
+      ?.split('.')
       .map(part => part.charAt(0).toUpperCase())
       .join('')
       .slice(0, 2)

@@ -27,9 +27,9 @@ export interface ProcessingMetadata {
   isPublic: boolean
   originalFile?: File | Blob
   filename?: string
-  provider?: string
+  provider?: string | undefined
   correlationId: string
-  aiCallId?: string
+  aiCallId?: string | undefined
   documentId?: string // Optional explicit document ID for vision pipeline
 }
 
@@ -53,6 +53,9 @@ export interface AdditionalMetadata {
   model_used?: string
   processing_time_ms?: number
   page_count?: number
+  pipeline_type?: string
+  stage_timings?: Record<string, number>
+  quality_metrics?: Record<string, unknown>
   
   // URL-specific fields
   content_size_kb?: number
@@ -75,9 +78,6 @@ export interface AdditionalMetadata {
   image_assets?: number
   total_storage_bytes?: number
   pipeline_phase?: number
-  pipeline_type?: string
-  stage_timings?: Record<string, number>
-  quality_metrics?: Record<string, unknown>
 }
 
 /**

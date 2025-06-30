@@ -613,7 +613,7 @@ export type PromptType = 'extract_url' | 'convert_pdf' | 'page_to_html' | 'image
 // Enhancement-specific type aliases for convenience
 export type DocumentEnhancement = Tables<'document_enhancements'>
 export type DocumentEnhancementInsert = TablesInsert<'document_enhancements'>
-export type EnhancementType = 'summary' | 'headings' | 'glossary' | 'tweet-thread' | 'reading-difficulty' | 'semantic-search'
+export type EnhancementType = 'summary' | 'headings' | 'glossary' | 'tweet-thread' | 'reading-difficulty' | 'reading_difficulty' | 'semantic-search'
 
 // Profile-specific type aliases for convenience
 export type Profile = Tables<'profiles'>

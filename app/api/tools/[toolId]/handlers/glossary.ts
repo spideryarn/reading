@@ -13,8 +13,10 @@ import { executePromptWithUsage } from '@/lib/prompts/types'
 import { glossaryPrompt, glossaryPromptInputSchema, glossaryResponseSchema, entitySchema } from '@/lib/prompts/templates/glossary'
 import { z } from 'zod'
 
-// Type for entities
-type Entity = z.infer<typeof entitySchema>
+// Type for entities from Zod schema (for LLM response validation)
+type LLMEntity = z.infer<typeof entitySchema>
+// Import Entity type for database storage
+import type { Entity } from '@/lib/types/entity'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { storeIndividualEntities, getIndividualEntities, deleteAllIndividualEntities } from '@/lib/services/database/individual-entity-storage'
@@ -81,7 +83,21 @@ export class GlossaryHandler extends BaseToolHandler {
             legacyGlossary.content !== null &&
             'entities' in legacyGlossary.content &&
             Array.isArray(legacyGlossary.content.entities)) {
-          legacyEntities = legacyGlossary.content.entities as Entity[]
+          // Validate and convert Json[] to Entity[] with proper type checking
+          const entityArray = legacyGlossary.content.entities
+          const validatedEntities: Entity[] = []
+          
+          for (const item of entityArray) {
+            if (item && typeof item === 'object' && 
+                'name' in item && typeof item.name === 'string' &&
+                'ontology' in item && typeof item.ontology === 'string' &&
+                'aliases' in item && Array.isArray(item.aliases) &&
+                'brief_explanation' in item && typeof item.brief_explanation === 'string') {
+              // Cast through unknown to handle Json type conversion safely
+              validatedEntities.push(item as unknown as Entity)
+            }
+          }
+          legacyEntities = validatedEntities
         }
       }
       
@@ -178,7 +194,21 @@ export class GlossaryHandler extends BaseToolHandler {
             legacyGlossary.content !== null &&
             'entities' in legacyGlossary.content &&
             Array.isArray(legacyGlossary.content.entities)) {
-          existingEntitiesInDb = [...existingEntitiesInDb, ...(legacyGlossary.content.entities as Entity[])]
+          // Validate and convert Json[] to Entity[] with proper type checking
+          const entityArray = legacyGlossary.content.entities
+          const validatedEntities: Entity[] = []
+          
+          for (const item of entityArray) {
+            if (item && typeof item === 'object' && 
+                'name' in item && typeof item.name === 'string' &&
+                'ontology' in item && typeof item.ontology === 'string' &&
+                'aliases' in item && Array.isArray(item.aliases) &&
+                'brief_explanation' in item && typeof item.brief_explanation === 'string') {
+              // Cast through unknown to handle Json type conversion safely
+              validatedEntities.push(item as unknown as Entity)
+            }
+          }
+          existingEntitiesInDb = [...existingEntitiesInDb, ...validatedEntities]
         }
       }
       
@@ -296,7 +326,7 @@ export class GlossaryHandler extends BaseToolHandler {
       if (documentId) {
         // Store each entity individually with the same AI call ID
         // Clean up entities to match exact types required by the database
-        const cleanedEntities: Entity[] = validatedResponse.entities.map(entity => ({
+        const cleanedEntities: Entity[] = validatedResponse.entities.map((entity: LLMEntity): Entity => ({
           name: entity.name,
           ontology: entity.ontology,
           aliases: entity.aliases,

@@ -54,6 +54,7 @@ export function calculateBase64SizeBytes(base64String: string): number {
   
   // Base64 encoding increases size by ~33%, so reverse that
   // Also account for padding
+  if (!base64Data) return 0
   const padding = (base64Data.match(/=/g) || []).length
   return Math.floor((base64Data.length * 3) / 4) - padding
 }
@@ -249,7 +250,7 @@ export async function batchResizeImages(
   
   for (let i = 0; i < images.length; i++) {
     try {
-      const result = await resizeImage(images[i], options)
+      const result = await resizeImage(images[i] ?? '', options)
       results.push(result)
       onProgress?.(i + 1, images.length)
     } catch (error) {

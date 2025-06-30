@@ -6,6 +6,7 @@
 // See docs/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md for document mutation system
 
 import { MultiSummaryPane } from './multi-summary-pane'
+import { DocumentElement } from '@/lib/types/document'
 
 // Shared types
 interface BaseTabProps {
