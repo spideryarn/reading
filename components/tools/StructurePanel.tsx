@@ -1162,43 +1162,93 @@ export function StructurePanel({
     )
   }
 
-  // Handle loading state
+  // Handle loading state - show progress AND current headings
   if (isLoadingHeadings) {
     return (
-      <div className="p-4">
+      <div className="p-4 h-full flex flex-col overflow-y-auto">
         {renderStatusBadge()}
-        <div className="space-y-4">
-          <Loading text={
-            iterationState.currentIteration === 0 
-              ? `Improving headings (Initial analysis)...`
-              : HEADING_ITERATION_CONFIG.AUTO_ITERATE_HEADINGS
-                ? `Auto-improving headings (Iteration ${iterationState.currentIteration + 1})...`
-                : `Improving headings (Iteration ${iterationState.currentIteration + 1})...`
-          } spinnerSize={20} />
-          {iterationState.currentIteration > 0 && (
-            <div className="text-sm text-gray-600">
-              <p>Operations so far: {iterationState.totalOperations}</p>
-              {iterationState.summaries.length > 0 && (
-                <p className="mt-1">Last change: {iterationState.summaries[iterationState.summaries.length - 1]}</p>
-              )}
-              {HEADING_ITERATION_CONFIG.AUTO_ITERATE_HEADINGS && (
-                <div className="mt-1 flex items-center justify-between">
-                  <p className="text-blue-600 font-medium">Auto-iteration enabled</p>
-                  {!autoIterationStopped && (
-                    <Button
-                      onClick={handleStopAutoIteration}
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 text-xs py-1 px-2 h-6"
-                    >
-                      <Stop size={12} className="mr-1" />
-                      Stop
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+        
+        {/* Progress indicator at top - compact with tooltip for details */}
+        <div className="flex-shrink-0 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center space-x-3">
+            <TooltipOrPopover
+              content={
+                iterationState.currentIteration > 0 ? (
+                  <div className="max-w-md p-4 text-sm bg-white border border-gray-200 rounded-lg shadow-lg">
+                    <div className="space-y-2">
+                      <p className="font-medium text-gray-900">
+                        Iteration Progress
+                      </p>
+                      <p className="text-gray-700">
+                        Operations so far: {iterationState.totalOperations}
+                      </p>
+                      {iterationState.summaries.length > 0 && (
+                        <p className="text-gray-700">
+                          Last change: {iterationState.summaries[iterationState.summaries.length - 1]}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="max-w-md p-4 text-sm bg-white border border-gray-200 rounded-lg shadow-lg">
+                    <p className="text-gray-700">
+                      Analysing document structure and preparing improvements...
+                    </p>
+                  </div>
+                )
+              }
+              side="right"
+              sideOffset={8}
+              showIndicator={false}
+              contentClassName="p-0 bg-transparent border-0 shadow-none"
+            >
+              <div className="flex items-center space-x-3 cursor-help">
+                <CircleNotch size={20} className="animate-spin text-blue-500" />
+                <span className="text-blue-700 font-medium">
+                  {iterationState.currentIteration === 0 
+                    ? `Improving headings (Initial analysis)...`
+                    : HEADING_ITERATION_CONFIG.AUTO_ITERATE_HEADINGS
+                      ? `Auto-improving headings (Iteration ${iterationState.currentIteration + 1})...`
+                      : `Improving headings (Iteration ${iterationState.currentIteration + 1})...`
+                  }
+                </span>
+              </div>
+            </TooltipOrPopover>
+            
+            {/* Stop button for auto-iteration */}
+            {HEADING_ITERATION_CONFIG.AUTO_ITERATE_HEADINGS && !autoIterationStopped && (
+              <Button
+                onClick={handleStopAutoIteration}
+                variant="outline"
+                size="sm"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 text-xs py-1 px-2 h-6"
+              >
+                <Stop size={12} className="mr-1" />
+                Stop
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Show current headings while processing */}
+        <div className="flex-1 min-h-0">
+          <HeadingTree
+            headings={headings}
+            themeColors={{
+              hover: 'hover:bg-gray-50',
+              text: 'group-hover:text-gray-900',
+              levelText: 'text-gray-400 group-hover:text-gray-600',
+              levelTextHover: 'group-hover:text-gray-600'
+            }}
+            onHeadingClick={handleHeadingClick}
+            getTooltipContent={getTooltipContent}
+            handleTooltipShow={handleTooltipShow}
+            collapsedIds={collapsedIds}
+            onToggleExpanded={toggleExpanded}
+            granularityLevel={granularityLevel}
+            onGranularityChange={setGranularityLevel}
+            headingVisibility={headingVisibility || new Map()}
+          />
         </div>
       </div>
     )
