@@ -255,7 +255,9 @@ export async function GET(
       executionTime: timer.elapsed()
     })
     
-    return NextResponse.json(result)
+    const successResponse = NextResponse.json(result)
+    successResponse.headers.set('x-spideryarn-correlation-id', correlationId)
+    return successResponse
     
   } catch (error) {
     logger.error('GET request failed', { error, executionTime: timer.elapsed() })
@@ -501,7 +503,9 @@ export async function DELETE(
       executionTime: timer.elapsed()
     })
     
-    return NextResponse.json(result)
+    const successResponse = NextResponse.json(result)
+    successResponse.headers.set('x-spideryarn-correlation-id', correlationId)
+    return successResponse
     
   } catch (error) {
     logger.error('DELETE request failed', { error, executionTime: timer.elapsed() })
