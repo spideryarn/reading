@@ -925,3 +925,29 @@ Supabase Storage is S3-compatible, enabling:
 - Built-in CDN without additional configuration
 - PostgreSQL-style policies instead of IAM
 - Real-time capabilities through Supabase ecosystem
+
+## Local Development – enabling Storage RLS 💻
+
+Supabase CLI initialises the `storage.objects` table with the **`postgres`** role as owner.  Because only the table owner (or a super-user) may create Row-Level-Security policies, our storage-RLS migration silently fails in local-dev, leaving the bucket protected but with *no* policies.
+
+To align behaviour with cloud environments we run a one-time, dev-only ownership fix:
+
+```bash
+# applies supabase/migrations/local/000_fix_storage_owner_local.sql
+npm run db:fix:storage-owner
+```
+
+What it does:
+1. Detects the presence of the `supabase_admin` role (only exists in the CLI container).
+2. Executes `ALTER TABLE storage.objects OWNER TO supabase_admin;`.
+3. Prints a notice.  The script is a no-op in Cloud because that role is absent.
+
+Re-running after `supabase db reset` : simply run the same command again — it's idempotent and safe.
+
+The helper is stored in `supabase/migrations/local/000_fix_storage_owner_local.sql` and invoked via the npm script defined in `package.json`:
+
+```json
+"db:fix:storage-owner": "ts-node scripts/fix-storage-owner.ts"
+```
+
+Keep this command in your onboarding notes; it should be the first thing you do after `supabase start` when setting up a fresh worktree.

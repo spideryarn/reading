@@ -28,7 +28,8 @@
         "import-documents": "dotenv -e .env.local -- npx tsx scripts/import-static-documents.ts",
         "analyze-fidelity": "dotenv -e .env.local -- npx tsx scripts/analyze-content-fidelity.ts",
         "deploy:production": "npm run build && git push origin main",
-        "critique": "./scripts/o3-critique-as-api.ts"
+        "critique": "./scripts/o3-critique-as-api.ts",
+        "db:fix:storage-owner": "tsx scripts/fix-storage-owner.ts"
     },
     "dependencies": {
         "@ai-sdk/anthropic": "^1.2.12",
