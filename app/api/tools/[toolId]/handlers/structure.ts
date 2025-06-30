@@ -764,29 +764,6 @@ export class StructureHandler extends BaseToolHandler {
       }
     }
     
-    if (total_operations_count >= HEADING_ITERATION_CONFIG.MAX_TOTAL_OPERATIONS) {
-      logger.warn({
-        total_operations_count,
-        max_total_operations: HEADING_ITERATION_CONFIG.MAX_TOTAL_OPERATIONS,
-        operation: 'total_operations_limit_reached'
-      }, 'Maximum total operations limit reached')
-      
-      return {
-        operations: [],
-        more_changes_required: false,
-        iteration_summary: 'Maximum total operations limit reached',
-        safety_check: {
-          current_iteration: iteration_count,
-          total_operations_so_far: total_operations_count,
-          max_iterations_reached: false
-        },
-        type: 'structure',
-        ...this.createResponseMetadata({
-          executionTime: requestTimer.elapsed()
-        })
-      }
-    }
-    
     // Determine if this is initial or continuation mode
     const isInitialIteration = !existing_operations || existing_operations.length === 0
     
