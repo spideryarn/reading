@@ -617,4 +617,3 @@ export type EnhancementType = 'summary' | 'headings' | 'glossary' | 'tweet-threa
 
 // Profile-specific type aliases for convenience
 export type Profile = Tables<'profiles'>
-
