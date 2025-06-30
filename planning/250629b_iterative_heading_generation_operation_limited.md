@@ -87,7 +87,7 @@ Current system removes all existing headings and generates completely new ones. 
   - Add `iteration_summary: string` describing changes made
   - Add `safety_check: { current_iteration: number, total_operations_so_far: number, max_iterations_reached: boolean }` for limits
   - **Schema Ripple Effects**: This change affects 15+ files across the codebase (see detailed analysis below)
-  - Must maintain backwards compatibility during transition
+  - Don't worry about backwards compatibility
 
 ### Stage: API route enhancement for iteration support
 - [ ] **CORRECTED**: Extend existing unified tool handler at `/app/api/tools/[toolId]/handlers/structure.ts` (NOT a separate route):
@@ -171,26 +171,12 @@ Current system removes all existing headings and generates completely new ones. 
 - [ ] Use subagent with browser automation to test complete iterative workflows
 - [ ] Run `npm run check:health` to ensure no regressions
 
-### Stage: Anthropic prompt caching integration - simplified approach
-- [ ] This needs discussion with the user
-- [ ] Design cache strategy for finalized heading documents:
-  - Cache complete document + headings after user chooses "Finish"
-  - Simple key based on document ID + heading version
-  - Automatic integration with subsequent tool operations (glossary, summary, chat)
-- [ ] Implement cache control in LLM operations:
-  - Add Anthropic cache headers for finalized documents
-  - Cache invalidation when headings modified
-  - Track cache hit rates and cost savings
-
 ### Stage: Final testing and rollout
 - [ ] Comprehensive testing with subagent using Playwright (headless) for full iterative workflows
-- [ ] Load testing with various document sizes and iteration scenarios
-- [ ] Test integration with other tools using iteratively-generated headings
 - [ ] Final health check: `npm run build`, `npm run lint`, `npm test` (use subagent if verbose output)
 - [ ] **MISSING DOCUMENTATION CREATION**:
-  - Create `docs/reference/TOOL_HEADINGS.md` (currently doesn't exist)
   - Major rewrite of `docs/reference/TOOL_STRUCTURE_HEADINGS.md` with iterative approach
-  - Update `CLAUDE.md` with new iterative heading generation context
+  - Update `CLAUDE.md` with very brief mention of new iterative heading generation context (only if needed)
   - Update `docs/reference/DOCUMENTATION_ORGANISATION.md` to reference new docs
 - [ ] Move doc to `planning/finished/` and commit
 

@@ -139,6 +139,21 @@ export const GLOSSARY_CONFIG = {
   GLOSSARY_MAX_ENTITIES_PER_BATCH: 20,
 } as const
 
+// Heading iteration configuration for progressive heading improvement
+export const HEADING_ITERATION_CONFIG = {
+  // Maximum number of heading operations (insert/replace/remove) per iteration
+  // Constrains LLM to focused, incremental improvements
+  MAX_HEADING_OPERATIONS_PER_ITERATION: 10,
+  
+  // Maximum number of iterations allowed per document session
+  // Prevents infinite loops and ensures reasonable completion time
+  MAX_ITERATIONS: 5,
+  
+  // Maximum total operations across all iterations
+  // Additional safety bound to prevent excessive modifications
+  MAX_TOTAL_OPERATIONS: 50,
+} as const
+
 // UI configuration
 export const UI_CONFIG = {
   FORCE_LIGHT_MODE: true,
