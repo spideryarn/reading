@@ -329,7 +329,7 @@ export async function batchResizeImages(
   
   for (let i = 0; i < images.length; i++) {
     try {
-      const result = await resizeImage(images[i], options)
+      const result = await resizeImage(images[i] ?? '', options)
       results.push(result)
       onProgress?.(i + 1, images.length)
     } catch (error) {
