@@ -185,11 +185,11 @@ export { UPLOAD_LIMITS } from './config/upload-limits'
 // URL extraction configuration for webpage content processing
 // Note: These limits are separate from UPLOAD_LIMITS above (different use case - web scraping vs file upload)
 export const URL_EXTRACTION_CONFIG = {
-  MAX_HTML_SIZE_BYTES: 500 * 1024, // 500KB limit (safe for both Claude/Gemini token limits)
-  FETCH_TIMEOUT_MS: 10000, // 10 second timeout
+  MAX_HTML_SIZE_BYTES: 4 * 1024 * 1024, // 4MB limit
+  FETCH_TIMEOUT_MS: 30_000, // 30 second timeout
   DEFAULT_USER_AGENT: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
   ERROR_MESSAGES: {
-    SIZE_LIMIT: 'Webpage content too large (max 500KB). Try a more specific URL or consider PDF upload for lengthy documents.',
+    SIZE_LIMIT: 'Webpage content too large (max 4MB). Try a more specific URL or consider PDF upload for lengthy documents.',
     JAVASCRIPT_REQUIRED: 'This webpage requires JavaScript for content rendering and cannot be processed. Try using the AI Transcription method instead, or consider uploading the content as a PDF.',
     INVALID_URL: 'Please enter a valid HTTP or HTTPS URL.',
     FETCH_FAILED: 'Unable to fetch webpage content. The site may be blocking automated access or require authentication.',
