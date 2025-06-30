@@ -1324,4 +1324,52 @@ Potential improvements for future iterations:
 6. **Loading States**: Implement proper loading indicators during message processing
 7. **Accessibility**: Test with screen readers as assistant-ui has built-in ARIA support
 
+## Authentication Migration Notes (2025-06-30)
+
+### Unified Authentication Flow
+
+As part of the database-first chat architecture implementation, API routes now use consolidated authentication helpers. This ensures consistent authentication patterns and proper RLS enforcement.
+
+#### Key Changes for API Routes
+
+1. **Import consolidated auth helpers**:
+   ```typescript
+   import { requireAuth } from '@/lib/auth/server-auth'
+   import { getSupabaseServerClient } from '@/lib/supabase/server'
+   ```
+
+2. **Use pre-configured Supabase client from context**:
+   ```typescript
+   // In tool handlers (chat.ts, glossary.ts, etc.)
+   const supabase = context.supabaseClient!  // Pre-authenticated client from main route
+   ```
+
+3. **Main route provides authenticated client**:
+   ```typescript
+   // In app/api/tools/[toolId]/route.ts
+   const user = await requireAuth({ allowBearer: true, request })
+   const supabaseClient = await getSupabaseServerClient(request, { allowBearer: true })
+   
+   const context: ExecutionContext = {
+     // ... other context
+     supabaseClient,  // Pass to handlers
+     user
+   }
+   ```
+
+#### Migration Steps
+
+If creating new API routes or tool handlers:
+
+1. **Never create Supabase clients directly** - use the pre-configured client from context
+2. **Support Bearer token auth for testing** - add `{ allowBearer: true }` to auth calls
+3. **Use consistent error handling** - let `requireAuth()` handle authentication failures
+
+#### Benefits
+
+- **Zero duplicate client creation** - single authenticated client per request
+- **RLS policy enforcement** - proper user context for all database queries  
+- **Test-friendly** - Bearer token support enables comprehensive integration testing
+- **Simplified code** - no need to handle authentication in individual handlers
+
 

@@ -196,7 +196,40 @@ Historical rationale and key architectural choices that shaped the Spideryarn Re
 
 **Migration benefits**:
 - Eliminated `lib/auth/route-protection.ts` duplicate module
-- Removed overloaded `validateAuth()` function with mixed paradigms  
+- Removed overloaded `validateAuth()` function with mixed paradigms
+
+### Unified Authentication Flow (2025-06-30)
+**Decision**: Extend authentication helpers with Bearer token support for testing while maintaining cookie-based auth as primary method
+**Context**: Database-first chat architecture required reliable authentication in integration tests with RLS policies
+**Implementation**: 
+- All auth helpers (`getAuthUser`, `requireAuth`, `assertAuth`) support optional Bearer token authentication
+- Explicit opt-in via `allowBearer: true` flag prevents accidental exposure
+- Unified Supabase client creation with `getSupabaseServerClient(request, opts)`
+- No client caching to prevent JWT leakage across requests
+
+**Architecture pattern**:
+```
+Cookie Auth (Default)          Bearer Token Auth (Testing)
+    ↓                                   ↓
+getAuthUser() ←―――――――――――――→ getAuthUser({allowBearer: true})
+    ↓                                   ↓
+createClient()                  createClient + Authorization header
+    ↓                                   ↓
+Supabase RLS ←―――――――――――――→ Supabase RLS
+```
+
+**Rationale**:
+- **Testing reliability**: Real RLS testing with Bearer tokens discovered critical security vulnerabilities
+- **API consistency**: Same auth functions work in both browser and test environments
+- **Security by design**: Explicit opt-in prevents Bearer tokens in production without conscious choice
+- **Stateless operation**: No client caching eliminates cross-request contamination
+- **Incremental migration**: Cookie auth remains unchanged, Bearer support is additive
+
+**Implementation outcomes**:
+- Zero duplicate client creation across 15+ API routes
+- Comprehensive RLS testing with actual database authentication
+- Simplified test setup without complex cookie simulation
+- Consistent auth patterns across tool handlers and API routes  
 - Consolidated all authentication test utilities and mocks
 - Clearer error handling patterns across API routes and page components
 

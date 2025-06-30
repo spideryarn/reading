@@ -3,10 +3,9 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-// Helper to create a Supabase server client. `cookies()` is asynchronous, so
-// we keep this helper `async` and always `await createClient()` at call-sites.
+// Helper to create a Supabase server client.
 export async function createClient() {
-  const cookieStore = await cookies()
+  const cookieStore = cookies()
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
