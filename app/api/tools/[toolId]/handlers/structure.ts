@@ -167,8 +167,46 @@ function findFabricatedIds(operations: HeadingOperation[], html: string): string
     .map(op => op.insertNewBeforeExistingId || op.targetId)
     .filter(id => {
       if (!id) return false
-      return !html.includes(`id="${id}"`) && !html.includes(`id='${id}'`)
+      const idStr = id as string
+      return !html.includes(`id="${idStr}"`) && !html.includes(`id='${idStr}'`)
     }) as string[]
+}
+
+/**
+ * Check for dangerous insert-before operations that would place a non-H1 heading
+ * (or any element) before the existing top-level H1. This typically causes the
+ * document title to be pushed down the page.
+ */
+function detectUnsafeInsertBeforeH1(operations: HeadingOperation[], html: string): string[] {
+  const issues: string[] = []
+
+  // Build a quick lookup of IDs that belong to existing H1 elements in the source HTML
+  const h1IdRegex = /<h1[^>]*id=["']([^"']+)["']/gi
+  const h1Ids = new Set<string>()
+  let match: RegExpExecArray | null
+  while ((match = h1IdRegex.exec(html)) !== null) {
+    h1Ids.add(match[1])
+  }
+
+  if (h1Ids.size === 0) {
+    return issues
+  }
+
+  for (const op of operations) {
+    if (op.action !== 'insert') continue
+    const targetId = op.insertNewBeforeExistingId
+    if (!targetId) continue
+    if (!h1Ids.has(targetId)) continue
+    const newTag = op.content?.tag_name || 'unknown'
+    if (newTag.toLowerCase() !== 'h1') {
+      issues.push(
+        `Unsafe insertion: attempting to insert <${newTag}> before existing H1 element with id "${targetId}". ` +
+        `Only an H1 replacement or modification should target an existing H1.`
+      )
+    }
+  }
+
+  return issues
 }
 
 /**
@@ -464,6 +502,12 @@ export class StructureHandler extends BaseToolHandler {
       
       // Validate heading operations for structural integrity
       const structuralValidation = validateHeadingOperations(validatedResponse.operations)
+      // Additional safety: prevent inserting non-H1 before an existing H1
+      const unsafeH1Insertions = detectUnsafeInsertBeforeH1(validatedResponse.operations, cleanedHtml)
+      if (unsafeH1Insertions.length > 0) {
+        structuralValidation.errors.push(...unsafeH1Insertions)
+      }
+      
       if (!structuralValidation.isValid) {
         logger.warn({
           documentId,
@@ -834,6 +878,11 @@ export class StructureHandler extends BaseToolHandler {
       
       // Validate heading operations for structural integrity
       const validation = validateHeadingOperations(validatedResponse.operations)
+      const unsafeH1InsertionsIter = detectUnsafeInsertBeforeH1(validatedResponse.operations, html_content)
+      if (unsafeH1InsertionsIter.length > 0) {
+        validation.errors.push(...unsafeH1InsertionsIter)
+      }
+      
       if (!validation.isValid) {
         logger.warn({
           documentId,
