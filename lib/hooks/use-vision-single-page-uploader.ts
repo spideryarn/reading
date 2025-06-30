@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from 'react'
 import { z } from 'zod'
 import PQueue from 'p-queue'
 import { resizeImage, calculateBase64SizeBytes } from '@/lib/utils/image-resize-pica'
+import { uploadImageAssetWithRetry, ClientStorageError } from '@/lib/services/storage-client'
 
 // Schema matching the API response
 const SinglePageVisionResponseSchema = z.object({
@@ -234,7 +235,12 @@ export function useVisionSinglePageUploader(
             elementId: imageData.elementId,
             filename: imageData.filename,
             storagePath: imageData.storagePath,
-            boundingBox: imageData.boundingBox,
+            boundingBox: {
+              x: imageData.boundingBox.x,
+              y: imageData.boundingBox.y,
+              width: imageData.boundingBox.width,
+              height: imageData.boundingBox.height
+            },
             blob
           }
           if (imageData.caption !== undefined) {
@@ -253,14 +259,78 @@ export function useVisionSinglePageUploader(
       updatePageState(pageNumber, { status: 'storing', progress: 70 })
 
       // Step 3: Upload cropped images to Supabase Storage
-      // For now, we'll skip actual storage upload as it requires signed URLs
-      // This will be implemented when we add the signed URL endpoint
+      const uploadedImages: ExtractedImageWithData[] = []
+      const failedUploads: string[] = []
+      
+      for (const croppedImage of croppedImages) {
+        try {
+          const uploadResult = await uploadImageAssetWithRetry(
+            croppedImage.blob!,
+            documentId,
+            croppedImage.filename,
+            'image/png',
+            {
+              maxRetries: 3,
+              retryDelay: 1000,
+              onRetry: (attempt, error) => {
+                console.log(`Retrying upload for ${croppedImage.filename} (attempt ${attempt}/3):`, error.message)
+              }
+            }
+          )
+          
+          uploadedImages.push({
+            ...croppedImage,
+            uploadUrl: uploadResult.publicUrl
+          })
+        } catch (uploadError) {
+          console.error(`Failed to upload image ${croppedImage.filename} after retries:`, uploadError)
+          failedUploads.push(croppedImage.filename)
+          
+          // If it's a permission error, fail the entire page
+          if (uploadError instanceof ClientStorageError && uploadError.code === 'PERMISSION_DENIED') {
+            throw new Error(`Storage permission denied: ${uploadError.message}`)
+          }
+          // For other errors, continue with remaining images
+        }
+      }
+      
+      // Update progress
+      updatePageState(pageNumber, { status: 'storing', progress: 85 })
       
       // Step 4: Patch HTML with final storage URLs
       let patchedHtml = result.pageHtml
       
-      // For now, the HTML already has storage paths from the API
-      // In the full implementation, we'd update these after confirming uploads
+      // Replace placeholder image paths with actual uploaded URLs
+      for (const uploadedImage of uploadedImages) {
+        if (uploadedImage.uploadUrl) {
+          // Replace the placeholder src with the actual URL
+          // The API returns paths like "{documentId}/assets/{filename}"
+          // We need to replace with the actual public URL
+          const placeholderPattern = new RegExp(
+            `src=["']${documentId}/assets/${uploadedImage.filename}["']`,
+            'g'
+          )
+          patchedHtml = patchedHtml.replace(
+            placeholderPattern,
+            `src="${uploadedImage.uploadUrl}"`
+          )
+          
+          // Also update any data-storage-path attributes
+          const dataPathPattern = new RegExp(
+            `data-storage-path=["']${uploadedImage.storagePath}["']`,
+            'g'
+          )
+          patchedHtml = patchedHtml.replace(
+            dataPathPattern,
+            `data-storage-path="${uploadedImage.storagePath}" data-public-url="${uploadedImage.uploadUrl}"`
+          )
+        }
+      }
+      
+      // If any uploads failed, include a comment in the HTML
+      if (failedUploads.length > 0) {
+        patchedHtml = `<!-- Warning: Failed to upload ${failedUploads.length} image(s): ${failedUploads.join(', ')} -->\n${patchedHtml}`
+      }
 
       updatePageState(pageNumber, { 
         status: 'completed', 

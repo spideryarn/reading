@@ -580,16 +580,22 @@ Serverless (Vercel Node runtime)
 - **Test coverage**: Created comprehensive test suites for both utilities with proper mocking
 - **Bundle size impact**: Total addition of ~18.5KB (p-queue 4KB + Pica 14.5KB) - acceptable for quality improvements
 
-#### Stage: Direct browser uploads with RLS
-- [ ] Create client-side storage utilities for uploading images directly from browser
-  - Use existing Supabase client with anon key (RLS enforced)
-  - Upload to `{documentId}/assets/{filename}` path format
-  - Handle blob uploads with proper content types
-- [ ] Update `useVisionSinglePageUploader` to upload cropped images directly
-  - After cropping, upload each image blob to Supabase Storage
-  - Get public/signed URLs after successful upload
-  - Update HTML fragments with final storage URLs
-- [ ] Add retry logic for failed uploads (network issues, etc)
+#### Stage: Direct browser uploads with RLS ✅ **COMPLETED**
+- [x] Create client-side storage utilities for uploading images directly from browser
+  - ✅ Created `lib/services/storage-client.ts` with browser-specific storage utilities
+  - ✅ Uses existing Supabase client with anon key (RLS enforced)
+  - ✅ Uploads to `{documentId}/assets/{filename}` path format
+  - ✅ Handles blob uploads with proper content types
+- [x] Update `useVisionSinglePageUploader` to upload cropped images directly
+  - ✅ After cropping, uploads each image blob to Supabase Storage
+  - ✅ Gets public URLs after successful upload
+  - ✅ Updates HTML fragments with final storage URLs using regex replacement
+  - ✅ Handles partial failures gracefully (continues with other images)
+- [x] Add retry logic for failed uploads (network issues, etc)
+  - ✅ Implemented `uploadImageAssetWithRetry` with configurable retry options
+  - ✅ Retries network errors but not permission/file-exists errors
+  - ✅ Progressive backoff with retry delay
+  - ✅ Comprehensive test coverage (22 tests passing)
 
 #### Stage: Document finaliser
 - [ ] Create `/api/finalise-vision-document` expecting `{ documentId, html, pageCount }`.
