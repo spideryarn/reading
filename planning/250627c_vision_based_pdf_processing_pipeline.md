@@ -183,26 +183,25 @@ Replace the current direct PDF-to-HTML pipeline with a vision-based approach tha
 - [x] **Health check**: Run `npm run check:health` to validate final processing
   - **COMPLETED**: All tests pass (39/39), TypeScript compilation successful
 
-### Stage: API Integration and Pipeline Replacement (V1 End-to-End) ⚠️ NEEDS ARCHITECTURE UPDATE
-- [x] **Create new vision-based API endpoint**: Implement `app/api/upload-pdf-vision/route.ts` initially for A/B testing
-  - **COMPLETED**: Full vision-based pipeline API endpoint with all 6 processing stages
-  - **ARCHITECTURAL ISSUE DISCOVERED**: API route was incorrectly doing server-side PDF-to-image conversion
-  - **CORRECTED**: API now expects pre-converted page images from frontend (Vercel serverless constraints)
-  - **PENDING**: Frontend PDF-to-image conversion implementation required
-  - **PENDING**: Final refinement stage temporarily disabled due to 4.5MB payload limit
-  - **KEY FILES**: `app/api/upload-pdf-vision/route.ts`
+### Stage: API Integration and Pipeline Replacement (V1 End-to-End) ✅ PHASE 2 IMPLEMENTED
+- [x] **Create new vision-based API endpoints**: Implement Phase 2 architecture for handling Vercel's 4.5MB limit
+  - **COMPLETED**: `app/api/upload-pdf-single-page-image/route.ts` - Processes single page images (<4MB each)
+  - **COMPLETED**: `app/api/finalise-vision-document/route.ts` - Assembles and stores complete document
+  - **ARCHITECTURAL UPDATE**: Replaced monolithic `/api/upload-pdf-vision` with multi-request architecture
+  - **KEY IMPROVEMENT**: Browser handles image cropping and Supabase Storage uploads directly
+  - **REMOVED**: Deprecated `/api/upload-pdf-vision` endpoint (removed completely - zero users)
 - [x] **Add new processing method option to upload UI**: Update `components/upload/processing-options.tsx` to include:
   - **COMPLETED**: "Vision-based AI Processing" radio button alongside existing "AI Transcription" option
   - **COMPLETED**: Added `'vision-ai'` to processing method types in `app/upload/page.tsx`
   - **COMPLETED**: Description: "Use computer vision and AI to process PDF pages as images (best for complex academic documents with figures and tables)"
   - **COMPLETED**: Only shows for PDF input type initially
   - **COMPLETED**: Non-disruptive - existing methods ('as-is', 'readability', 'ai-transcription') remain unchanged
-- [ ] **Integrate with existing upload flow**: Route vision-based option to new API endpoint
-  - **COMPLETED**: Upload page routes vision-ai requests to `/api/upload-pdf-vision`
+- [x] **Integrate with existing upload flow**: Route vision-based option to new Phase 2 endpoints
+  - **COMPLETED**: Upload page uses `useVisionSinglePageUploader` hook for concurrent page uploads
   - **COMPLETED**: Provider selection logic updated for vision-ai workflow
   - **COMPLETED**: Processing message updates for vision-based pipeline
-  - **PENDING**: Frontend PDF-to-image conversion before API call
-  - **ARCHITECTURAL CONSTRAINT**: Must convert PDF to images in browser due to Vercel 4.5MB payload limit
+  - **COMPLETED**: Frontend PDF-to-image conversion with Pica library for high-quality resizing
+  - **COMPLETED**: Direct browser-to-Supabase Storage uploads with RLS enforcement
 - [x] **Implement comprehensive error handling**: Map all pipeline errors to user-friendly messages
   - **COMPLETED**: Vision-specific error handling for MuPDF, fragment processing, and pipeline failures
   - **COMPLETED**: Graceful fallback suggestions and clear error messaging
