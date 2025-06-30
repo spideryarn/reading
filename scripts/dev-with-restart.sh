@@ -23,6 +23,7 @@
 # - Uses npx kill-port for reliable port-based process cleanup
 # - Handles orphaned processes that aren't tracked by PID files
 # - Falls back gracefully when npx is not available
+# - Always clears .next directory for fresh builds to avoid cache issues
 
 set -e  # Exit on any error
 
@@ -143,6 +144,16 @@ kill_port_processes() {
         echo "⚠️  Failed to clear port $port using npx kill-port"
         echo "   This may indicate no processes were running on that port"
         return 1
+    fi
+}
+
+clear_next_cache() {
+    if [ -d ".next" ]; then
+        echo "🧹 Clearing Next.js build cache (.next directory)"
+        rm -rf .next
+        echo "✅ Build cache cleared"
+    else
+        echo "ℹ️  No .next directory found to clear"
     fi
 }
 
@@ -300,6 +311,9 @@ case "$MODE" in
             kill_port_processes "$PORT" "any existing processes"
         fi
         
+        # Always clear Next.js build cache for fresh start
+        clear_next_cache
+        
         # Rotate log if needed
         rotate_log_if_needed
         
@@ -336,6 +350,9 @@ case "$MODE" in
             # Use robust port-based process killing
             kill_port_processes "$PORT" "existing dev server"
         fi
+        
+        # Always clear Next.js build cache for fresh start
+        clear_next_cache
         
         # Set up trap to output timestamp when dev server exits
         trap 'echo "📅 Dev server finished at $(date)"' EXIT
