@@ -149,6 +149,7 @@ Current test coverage includes:
 - `tests/test-edge-cases.ts` - Edge case testing for mutations
 - `tests/test-heading-mutation-generator.ts` - Heading mutation generator tests
 - `tests/test-mutation-edge-cases.ts` - Additional mutation edge case tests
+- `lib/prompts/__tests__/headings-prompt-integration.real.test.ts` - **Real LLM integration test** for the headings prompt. ⚠️ Skipped by default; run with `RUN_REAL_LLM_TESTS=true npm test -- -t "Headings prompt – real LLM integration"` to exercise a live model call.
 
 **Authentication Test Suite** ✅:
 - `lib/auth/__tests__/` - Server and client authentication utilities

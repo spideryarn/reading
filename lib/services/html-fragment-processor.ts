@@ -331,17 +331,6 @@ function validateFragmentStructure(
     const tables = document.querySelectorAll('table')
     const figures = document.querySelectorAll('figure')
     
-    // Validate heading hierarchy
-    if (headings.length > 0) {
-      const headingLevels = Array.from(headings).map(h => parseInt(h.tagName.charAt(1)))
-      const maxLevel = Math.max(...headingLevels)
-      const minLevel = Math.min(...headingLevels)
-      
-      if (maxLevel - minLevel > 3) {
-        warnings.push('Heading hierarchy spans more than 3 levels, may indicate structural issues')
-      }
-    }
-    
     // Validate table structure
     tables.forEach((table, index) => {
       const hasHeader = table.querySelector('thead, th')

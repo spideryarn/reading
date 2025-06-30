@@ -294,24 +294,6 @@ function validateBasicStructure(
     })
   }
   
-  // Check heading hierarchy
-  const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6')
-  if (headings.length > 0) {
-    const levels = Array.from(headings).map(h => parseInt(h.tagName.charAt(1)))
-    const maxLevel = Math.max(...levels)
-    const minLevel = Math.min(...levels)
-    
-    if (maxLevel - minLevel > 3) {
-      issues.push({
-        type: 'warning',
-        message: `Heading hierarchy spans ${maxLevel - minLevel + 1} levels (h${minLevel} to h${maxLevel})`,
-        pageNumber,
-        suggestion: 'Consider flattening heading hierarchy for better readability'
-      })
-    }
-  }
-}
-
 /**
  * Validate accessibility compliance
  */

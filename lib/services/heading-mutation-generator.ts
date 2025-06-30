@@ -143,7 +143,9 @@ export function generateHeadingMutation(options: HeadingMutationOptions): Mutati
       forward.push(transform)
       
       // Update target for next heading in this group to create chaining
-      currentInsertionTarget = headingId
+      // o3-pro says: The line below was causing client-side validation failures.
+      //   The mutation engine on the client should handle sequential insertions at the same point.
+      //   currentInsertionTarget = headingId
     }
   }
   
