@@ -16,13 +16,8 @@ The Structure tab replaces the previous separate "Original" and "AI-Generated" h
 
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide to creating and using LLM prompt templates
 - `docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Documents the reversible document transformation system
-- `planning/250627a_consolidate_headings_tabs_into_structure_tab.md` - Implementation planning for Structure tab consolidation
-- `docs/conversations/250628b_conversation_headings_generation_full_mutation_support.md` - Implementation of full mutation support for heading operations
 - `lib/prompts/templates/headings.ts` - Schema and prompt configuration for heading generation
-- `lib/prompts/templates/headings.njk` - LLM prompt template for heading generation
-- `/api/headings/route.ts` - API endpoint for generating document headings
 - `components/tools/StructurePanel.tsx` - Unified Structure tab component
-- `components/unified-left-pane.tsx` - Main left pane that includes Structure tab
 
 ## Key Features
 
@@ -30,7 +25,6 @@ The Structure tab replaces the previous separate "Original" and "AI-Generated" h
 - **Single Structure tab** with TreeStructure icon replaces dual-tab system
 - **Status badge** clearly indicates current state (Original vs AI-enhanced)
 - **Context-aware buttons** show appropriate actions (Generate vs Remove)
-- **Seamless state transitions** between original and enhanced views
 
 ### AI Enhancement Workflow
 
@@ -42,14 +36,11 @@ The Structure tab replaces the previous separate "Original" and "AI-Generated" h
 
 #### Traditional Single-Pass Mode (Legacy)
 - **Explicit user control**: AI generation only occurs when user clicks "Generate AI headings"
-- **Visual feedback**: Loading states and progress indicators during generation
-- **Persistent state**: Generated headings are cached and survive page refreshes
 - **Reversible changes**: Trashcan button removes AI enhancements and reverts to original
 
 ### Enhanced User Experience
 - **Simplified navigation**: Single tab reduces cognitive load
-- **Clear state indication**: Badge tooltips explain current enhancement status
-- **Responsive design**: Works seamlessly across desktop, tablet, and mobile devices
+- **User control**: Manual "Finish" button allows stopping at any point
 - **Keyboard accessibility**: Cmd+1/Ctrl+1 shortcut provides quick access
 
 ## User Interface
@@ -131,8 +122,7 @@ Original State: Back to original headings with improve button
 ```
 
 #### Safety Limits
-- **Iteration limit**: Maximum 5 iterations per document
-- **Operation limit**: Maximum 50 total operations across all iterations
+- **Iteration limit**: Maximum 10 iterations per document
 - **Per-iteration limit**: Maximum 10 operations in a single iteration
 - **Concurrent prevention**: Only one iteration can run at a time
 
@@ -157,19 +147,13 @@ Original State: Back to original headings with improve button
 
 #### Single-Pass Generation (Legacy)
 1. **Content analysis**: Extract document HTML with element IDs and existing headings
-2. **LLM processing**: Send to configured AI model (Claude/Gemini) with full context
-3. **Operations generation**: LLM analyzes content and generates all heading operations at once
-4. **Mutation application**: Operations applied as reversible document transforms
-5. **UI update**: Interface updates to show AI-enhanced state
+2. **Operations generation**: LLM analyzes content and generates all heading operations at once
+3. **Mutation application**: Operations applied as reversible document transforms
 
 ### Key Features
-- **Iterative improvement**: Progressive enhancement through multiple focused iterations
-- **Operation limits**: Constrained to 10 operations per iteration for focused improvements
-- **Hierarchical priorities**: AI follows smart ordering (H1 → H2 → H3) through prompt guidance
-- **Preserves original headings**: AI sees and respects author's original structure
+- **Iterative improvement**: Progressive enhancement through multiple focused iterations (max 10)
 - **Full mutation capabilities**: Can insert new headings, replace existing ones, or remove headings
 - **Context-aware**: AI receives complete document structure including original headings
-- **Operations-based**: Uses flexible operations format for comprehensive heading modifications
 - **Iteration memory**: Each iteration knows what previous iterations accomplished
 
 ### Operations Format
@@ -178,20 +162,9 @@ The AI generates heading modifications using a flexible operations system:
 
 #### Operation Types
 
-1. **Insert Operation**
-   - Adds new headings at specific positions
-   - Uses insert-before semantics for intuitive placement
-   - Preserves document flow and hierarchy
-
-2. **Replace Operation**
-   - Updates existing headings while maintaining position
-   - Preserves original heading IDs for stability
-   - Allows refinement of author's structure
-
-3. **Remove Operation**
-   - Removes unnecessary or redundant headings
-   - Helps clean up over-structured documents
-   - Maintains document coherence
+1. **Insert Operation** - Adds new headings at specific positions
+2. **Replace Operation** - Updates existing headings while maintaining position
+3. **Remove Operation** - Removes unnecessary or redundant headings
 
 #### Operation Schema
 ```typescript
@@ -202,68 +175,36 @@ type HeadingOperation =
 ```
 
 #### Schema Validation
-- **Conditional validation**: Each operation type has specific required fields
 - **Type safety**: Zod schemas ensure operations are well-formed
-- **Error prevention**: Invalid operations rejected before application
 - **Iteration signals**: Additional fields for controlling iterative flow
-  - `more_changes_required`: Boolean indicating if another iteration would help
-  - `iteration_summary`: Description of changes made in this iteration
-  - `safety_check`: Current iteration count and operation totals
 
 ### Preserving Author Intent
 
 The system is designed to enhance, not replace, the author's original structure:
 
-- **First iteration guidance**: Special prompt instructions to respect author's original structure
 - **Original headings as context**: AI sees all existing headings during analysis
-- **Hierarchical priorities**: AI follows structured approach:
-  1. Establish clear H1 document title if missing
-  2. Create H2 major sections before subdividing
-  3. Improve existing headings following best practices
-  4. Add H3+ subdivisions where sections exceed ~400 words
+- **Hierarchical priorities**: AI follows structured approach (H1 → H2 → H3)
 - **Intelligent enhancement**: AI can choose to keep, modify, or remove headings
-- **Respectful modifications**: Changes aim to clarify and improve, not rewrite
 - **User control**: All changes can be reverted with one click
 
-### Technical Implementation Details
-
-#### Content Processing
+### Technical Implementation
 - **Full HTML context**: Document HTML sent with all original headings intact
-- **Element preservation**: Original heading IDs maintained for stability
-- **Structured extraction**: Headings extracted with hierarchy information
-- **AI visibility**: LLM receives complete document structure for informed decisions
-
-#### Mutation Engine Integration
 - **Operations to transforms**: Each operation converted to a mutation transform
-- **Transform types**: Maps to `add-element`, `replace-element`, or `remove-element`
 - **Atomic application**: All operations applied as single reversible mutation
-- **Rollback support**: Complete mutation can be reverted with one action
-
-#### Backward Compatibility
-- **Legacy format support**: Removed to simplify codebase
-- **Clean migration**: Old insert-only format no longer supported
-- **Simplified validation**: Single operations-based schema with conditional rules
 
 ### Caching and Persistence
 - **Database storage**: Generated headings stored in Supabase for reuse
 - **Automatic loading**: Cached headings applied on page load if available
-- **Performance optimization**: Avoids re-generation for previously processed documents
 - **Cache invalidation**: Remove button clears both UI and database cache
 
 ### Multi-Provider Support
-Uses the centralized provider-tier system from `lib/config.ts`:
-- **Development**: Use `google:gemini-2.0-flash:latest` or `anthropic:claude-3-5-haiku:20241022` for cost efficiency
-- **Production**: Use `anthropic:claude-sonnet-4:20250514` for quality
+- **Development**: Use Gemini Flash or Claude Haiku for cost efficiency
+- **Production**: Use Claude Sonnet 4 for quality
 - **Configuration**: Switch models using `LLM_MODEL` environment variable
 
 ## Template System
 
-The heading generation uses the standard prompt template system:
-
-- **Template files**: `.njk` files for prompt text with variable interpolation
-- **Schema validation**: Zod schemas ensure type safety for prompt parameters
-- **Content analysis**: Sophisticated prompts for understanding document structure
-- **Error handling**: Robust validation throughout the prompt pipeline
+The heading generation uses the standard prompt template system with `.njk` files and Zod schema validation.
 
 ### Heading Schema
 ```typescript
@@ -356,115 +297,37 @@ The `iterate` action adapts its behavior based on the presence of `existing_oper
 
 ## Responsive Design
 
-### Cross-Device Compatibility
-- **Desktop (1200px+)**: Full interface with all features visible
-- **Tablet (768px-1024px)**: Optimized layout with maintained functionality
-- **Mobile (320px-768px)**: Touch-friendly interface with accessible controls
-- **Adaptive layout**: UI elements reflow appropriately at all screen sizes
+The interface adapts across desktop and mobile devices with touch-friendly controls.
 
-### Touch Interface Support
-- **Button sizing**: Appropriate touch targets for mobile devices
-- **Tooltip behavior**: Optimized for touch interactions
-- **Scroll handling**: Smooth scrolling and navigation on touch devices
+## Error Handling
 
-## Error Handling and Recovery
-
-### Common Error Scenarios
 - **API failures**: Clear error messages with retry options
-- **Network issues**: Graceful degradation with offline indicators
 - **State corruption**: Automatic recovery and fallback to original state
-- **Cache mismatches**: Intelligent cache validation and repair
-
-### User Feedback
 - **Loading indicators**: Clear visual feedback during all operations
-- **Success confirmation**: Immediate UI updates on successful operations
-- **Error messages**: Descriptive error messages with actionable solutions
-- **State clarity**: Always clear what state the interface is in
 
-## Performance Considerations
+## Performance
 
-### Optimization Strategies
-- **Lazy loading**: Content loaded on demand
 - **Caching**: Aggressive caching of generated content
 - **State efficiency**: Minimal re-renders and optimized React patterns
 - **API optimization**: Efficient backend processing with correlation tracking
 
-### Monitoring and Observability
-- **Correlation IDs**: All operations tracked with unique identifiers
-- **Performance timing**: Generation and loading times monitored
-- **Error tracking**: Comprehensive error logging for debugging
-- **User analytics**: Understanding of feature usage patterns
+## Limitations
 
-## Limitations and Considerations
-
-### Current Limitations
-- **LLM processing time**: Each iteration takes 10-20 seconds (faster than single-pass 30-60s)
-- **Iteration limits**: Maximum 5 iterations and 50 total operations per document
+- **Processing time**: Each iteration takes 10-20 seconds
+- **Iteration limits**: Maximum 10 iterations per document
 - **Operation limits**: Maximum 10 operations per iteration
-- **Model dependency**: Quality depends on selected LLM model capabilities
-- **Content analysis**: Best results with structured, well-formatted documents
-- **Language support**: Optimized for English content
 - **Single mutation**: Only one heading mutation active at a time
-- **No intra-mutation dependencies**: Operations within same mutation cannot reference each other's generated IDs
-- **Concurrent iterations**: Only one iteration can run at a time (UI prevents concurrent requests)
 
-### Future Enhancements
-- **Prompt caching**: Implement Anthropic prompt caching for 90% cost reduction
-- **Adaptive iteration limits**: Adjust limits based on document size and complexity
-- **Iteration history**: View and revert to previous iteration states
-- **Batch processing**: Generate headings for multiple documents
-- **Quality scoring**: Automatic assessment of heading quality
-- **User preferences**: Customizable generation parameters (iteration limits, priorities)
-- **Real-time collaboration**: Multi-user editing of generated headings
-- **Smart suggestions**: Context-aware heading recommendations
+## Testing Status
+
+- **Functional status**: ✅ Feature is fully implemented and working in production
+- **Test alignment**: ⚠️ Some tests expect legacy behavior vs current implementation
 
 ## Troubleshooting
 
-### Common Issues
+**Generate button not responding**: Check dev tools for API errors, verify authentication
 
-**Problem**: Generate button not responding
-- **Solution**: Check dev tools for API errors, verify authentication
+**Generated headings not displaying**: Refresh page to trigger cache reload
 
-**Problem**: Generated headings not displaying
-- **Solution**: Refresh page to trigger cache reload, check for state sync issues
+**Poor heading quality**: Try different LLM model configurations
 
-**Problem**: Loading state stuck
-- **Solution**: This was fixed in recent updates; ensure component state management is working
-
-**Problem**: Headings appearing in wrong order
-- **Solution**: This was fixed with insert-before semantics and proper mutation sorting
-
-**Problem**: Multiple headings at same insertion point reversed
-- **Solution**: Fixed with non-chaining approach and precedence sorting
-
-**Problem**: Responsive layout issues
-- **Solution**: Check CSS media queries and viewport meta tag
-
-**Problem**: Poor heading quality
-- **Solution**: Try different LLM model configurations, check document structure
-
-### Development Debugging
-- **Browser dev tools**: Check console for state management issues
-- **Network tab**: Monitor API calls and response timing
-- **React dev tools**: Inspect component state and props
-- **Server logs**: Check backend processing with correlation IDs
-
-## Migration Notes
-
-### From Dual-Tab System
-Users familiar with the previous "Original" and "AI-Generated" tabs will find:
-- **Functionality preserved**: All previous features available in unified interface
-- **Clearer workflow**: Single tab reduces confusion about state
-- **Improved UX**: More discoverable AI enhancement features
-- **Better performance**: Optimized state management and rendering
-
-### Breaking Changes
-- **Component references**: `OriginalHeadingsTab` and `AIGeneratedHeadingsTab` removed
-- **URL routes**: Previous tab routes redirect to unified `structure` tab
-- **Tool registry**: Old `toc-original` and `toc-ai` tools replaced with `structure`
-- **Field names**: `afterId` replaced with explicit `insertNewBeforeExistingId` throughout
-- **Insertion semantics**: Switched from insert-after to insert-before for semantic correctness
-- **Chaining logic**: Eliminated complex chaining in favor of robust non-chaining approach
-- **Response format**: Changed from array of headings to operations-based format
-- **AI context**: Original headings now provided to AI (previously stripped)
-- **Mutation types**: Expanded from insert-only to full insert/replace/remove operations
