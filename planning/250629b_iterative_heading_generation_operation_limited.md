@@ -75,7 +75,7 @@ Current system removes all existing headings and generates completely new ones. 
 
 ## References
 
-- `docs/conversations/250628c_hierarchical_heading_generation_approach.md` - Research foundation and density analysis supporting this approach
+- `docs/conversations/250628c_conversation_hierarchical_heading_generation_approach.md` - Research foundation and density analysis supporting this approach
 - `planning/250628b_hierarchical_heading_generation_implementation.md` - Previous level-by-level approach with valuable research and technical analysis  
 - `docs/reference/TOOL_STRUCTURE_HEADINGS.md` - Current heading system architecture and mutation integration
 - `docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Mutation system supporting insert, replace, remove operations

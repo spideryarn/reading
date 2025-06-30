@@ -39,7 +39,7 @@ Successfully implemented comprehensive glossary timeout mitigation through 6 pro
 
 ## References
 
-- `docs/conversations/250620c_glossary_timeout_solutions.md` - Comprehensive conversation capturing timeout problem analysis and solution exploration
+- `docs/conversations/250620c_conversation_glossary_timeout_solutions.md` - Comprehensive conversation capturing timeout problem analysis and solution exploration
 - `app/api/glossary/route.ts` - Current glossary API endpoint requiring modification for entity capping
 - `lib/prompts/templates/glossary.ts` and `lib/prompts/templates/glossary.njk` - Existing prompt template system requiring conditional logic updates
 - `lib/services/database/enhancements.ts` - Contains `storeGlossary` method storing entities as single JSON blob requiring evaluation

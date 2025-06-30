@@ -183,8 +183,8 @@ The research revealed that the **current system is more sophisticated than most 
 
 **Internal References**:
 - `docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Current system documentation
-- `docs/conversations/250625a_o3_critiquing_mutations_json_patch.md` - Previous critique
-- `docs/conversations/250625b_claude_api_document_editing_best_practices.md` - API best practices research
+- `docs/conversations/250625a_conversation_o3_critiquing_mutations_json_patch.md` - Previous critique
+- `docs/conversations/250625b_conversation_claude_api_document_editing_best_practices.md` - API best practices research
 - `lib/services/mutation-engine.ts` - Current implementation
 - `lib/types/mutation.ts` - Type definitions
 

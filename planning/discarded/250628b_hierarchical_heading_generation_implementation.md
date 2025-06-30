@@ -48,7 +48,7 @@ The current system removes all existing headings and generates completely new on
 
 ## References
 
-- `docs/conversations/250628c_hierarchical_heading_generation_approach.md` - Decision rationale and research findings supporting level-by-level approach
+- `docs/conversations/250628c_conversation_hierarchical_heading_generation_approach.md` - Decision rationale and research findings supporting level-by-level approach
 - `docs/reference/TOOL_STRUCTURE_HEADINGS.md` - Current heading system architecture and mutation integration
 - `planning/finished/250620c_glossary_generate_more_timeout_mitigation.md` - Progressive loading pattern with `more_entities_available` signal that we'll adapt
 - `docs/reference/LLM_PROMPT_CACHING.md` - Anthropic caching capabilities (90% savings, 5-min TTL, manual setup required)

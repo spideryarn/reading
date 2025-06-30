@@ -12,7 +12,7 @@
  * - Type-safe wrapper generation from registry
  * 
  * @see planning/250614d_tool_execution_framework.md for implementation plan
- * @see docs/conversations/250627b_tool_execution_framework_architecture_decisions.md for design rationale
+ * @see docs/conversations/250627b_conversation_tool_execution_framework_architecture_decisions.md for design rationale
  */
 
 import type { Tool } from '../types'

@@ -547,7 +547,7 @@ Addressing them early will avoid re-work when you integrate with the registry, U
 
 # Addendum - O3 Critique Integration (2025-06-27)
 
-Based on additional O3 critique of the conversation document `docs/conversations/250627b_tool_execution_framework_architecture_decisions.md`, the following refinements have been integrated:
+Based on additional O3 critique of the conversation document `docs/conversations/250627b_conversation_tool_execution_framework_architecture_decisions.md`, the following refinements have been integrated:
 
 ## ✅ Incorporated (Aligned with "Fail Immediately & Keep Simple")
 

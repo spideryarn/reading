@@ -17,7 +17,7 @@ The Structure tab replaces the previous separate "Original" and "AI-Generated" h
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide to creating and using LLM prompt templates
 - `docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Documents the reversible document transformation system
 - `planning/250627a_consolidate_headings_tabs_into_structure_tab.md` - Implementation planning for Structure tab consolidation
-- `docs/conversations/250628b_headings_generation_full_mutation_support.md` - Implementation of full mutation support for heading operations
+- `docs/conversations/250628b_conversation_headings_generation_full_mutation_support.md` - Implementation of full mutation support for heading operations
 - `lib/prompts/templates/headings.ts` - Schema and prompt configuration for heading generation
 - `lib/prompts/templates/headings.njk` - LLM prompt template for heading generation
 - `/api/headings/route.ts` - API endpoint for generating document headings

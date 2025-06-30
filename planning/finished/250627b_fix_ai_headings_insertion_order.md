@@ -54,7 +54,7 @@
 **Related Documentation**:
 - `docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Core mutations system architecture
 - `docs/reference/TOOL_HEADINGS.md` - AI headings feature documentation
-- `docs/conversations/250627b_ai_headings_insertion_order_fix.md` - Problem analysis and research findings
+- `docs/conversations/250627b_conversation_ai_headings_insertion_order_fix.md` - Problem analysis and research findings
 - `planning/250527a_reversible_document_mutations.md` - Original mutation system design decisions
 - `lib/services/deterministicId.ts` - Existing deterministic ID generation utility with collision detection
 

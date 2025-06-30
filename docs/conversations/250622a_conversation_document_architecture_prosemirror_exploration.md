@@ -10,7 +10,7 @@ Related Docs:
   - docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md - Current cross-pane patterns
   - docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md - Reversible mutations system
   - docs/reference/UI_COMPONENTS.md - Component architecture
-  - docs/conversations/250620a_spideryarn_prosemirror_suitability_questions.md - Initial ProseMirror exploration
+  - docs/conversations/250620a_conversation_spideryarn_prosemirror_suitability_questions.md - Initial ProseMirror exploration
   - docs/conversations/250620b_spideryarn_prosemirror_deep_research.md - Detailed requirements analysis
   - docs/instructions/SOUNDING_BOARD_MODE.md - Discussion mode guidelines
 External Research:
