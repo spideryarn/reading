@@ -19,7 +19,7 @@
 
 import { z } from 'zod'
 import { executePromptWithUsage } from '@/lib/prompts/types'
-import { headingsPrompt, headingsResponseSchema, type HeadingOperation } from '@/lib/prompts/templates/headings'
+import { headingsPrompt, headingsResponseSchema, headingOperationSchema, type HeadingOperation } from '@/lib/prompts/templates/headings'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelForAICall, HEADING_ITERATION_CONFIG } from '@/lib/config'
@@ -64,7 +64,7 @@ const StructureIterateSchema = z.object({
   // Iteration tracking fields
   iteration_count: z.number().int().min(0).default(0),
   previous_iteration_summary: z.string().optional(),
-  existing_operations: z.array(z.any()).optional(), // Operations from previous iterations
+  existing_operations: z.array(headingOperationSchema).optional(), // Operations from previous iterations
   total_operations_count: z.number().int().min(0).default(0)
 }).passthrough()
 
@@ -910,6 +910,50 @@ export class StructureHandler extends BaseToolHandler {
         usage: llmResult.usage,
         finishReason: llmResult.finishReason
       })
+      
+      // Persist operations to database for caching and state preservation
+      if (documentId) {
+        const enhancementService = new EnhancementService(supabase)
+        
+        // Combine existing operations with new ones for complete state
+        const allOperations = [...(existing_operations || []), ...validatedResponse.operations]
+        
+        // Convert operations to legacy headings format for storage compatibility
+        const legacyHeadings = allOperations
+          .filter((op) => (op.action === 'insert' || op.action === 'replace') && op.content)
+          .map((op) => ({
+            html: `<${op.content!.tag_name}>${op.content!.content}</${op.content!.tag_name}>`,
+            insertNewBeforeExistingId: (op.action === 'insert' ? op.insertNewBeforeExistingId : op.targetId) || ''
+          }))
+        
+        // Store/update enhancement with iteration metadata
+        await enhancementService.upsert({
+          documentId,
+          type: 'headings',
+          variant: 'default',
+          content: {
+            items: legacyHeadings,
+            iteration_metadata: {
+              iteration_count: iteration_count + 1,
+              total_operations: newTotalOperations,
+              last_changes: validatedResponse.iteration_summary,
+              more_changes_required: validatedResponse.more_changes_required,
+              last_updated: new Date().toISOString()
+            }
+          },
+          userId: context.user!.id,
+          aiCallId: aiCall.id
+        })
+        
+        logger.info({
+          documentId,
+          enhancementId: null, // Will be set by upsert
+          totalOperations: allOperations.length,
+          legacyHeadingsCount: legacyHeadings.length,
+          iteration_count: iteration_count + 1,
+          operation: 'operations_persisted'
+        }, 'Operations successfully persisted to database')
+      }
       
       logAIOperation(
         'iterative_headings_generation',

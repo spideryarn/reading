@@ -29,8 +29,8 @@ interface StructurePanelProps {
   headingVisibility?: Map<string, 'visible' | 'not-visible'>
 }
 
-// Legacy heading format for mutation generator - must match lib/services/heading-mutation-generator.ts
-interface AIHeading {
+// Heading format for mutation generator - must match lib/services/heading-mutation-generator.ts
+interface MutationHeading {
   insertNewBeforeExistingId: string
   html: string
 }
@@ -284,7 +284,7 @@ export function StructurePanel({
       }
       
       // Map cached format { id_of_after, html } -> { insertNewBeforeExistingId, html }
-      const convertedHeadings: AIHeading[] = cachedHeadings.map(h => ({
+      const convertedHeadings: MutationHeading[] = cachedHeadings.map(h => ({
         insertNewBeforeExistingId: h.insertNewBeforeExistingId ?? h.id_of_after ?? '',
         html: h.html
       }))
@@ -422,7 +422,7 @@ export function StructurePanel({
       }))
       
       // Apply the new operations to the document
-      const legacyHeadings: AIHeading[] = response.operations
+      const legacyHeadings: MutationHeading[] = response.operations
         .filter((op) => (op.action === 'insert' || op.action === 'replace') && op.content)
         .map((op) => ({
           html: `<${op.content!.tag_name}>${op.content!.content}</${op.content!.tag_name}>`,
@@ -489,132 +489,6 @@ export function StructurePanel({
       console.groupEnd()
     }
   }, [content, elements, documentId, iterationState, applyMutation, executeToolWithNavigation, isIterationInProgress, autoIterationStopped])
-  
-  // Core headings generation logic (legacy all-at-once mode)
-  // Keeping for potential future use or backward compatibility
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const generateHeadingsFromAPI = useCallback(async (isRegeneration = false) => {
-    const attemptId = ++attemptIdRef.current
-    console.group(`[StructurePanel] generateHeadingsFromAPI attempt #${attemptId}`)
-    console.log('isRegeneration:', isRegeneration, 'currentMode:', currentMode)
-
-    // ---- QUICK FAIL-FAST MITIGATION FOR LARGE DOCUMENTS -------------------
-    const MAX_ELEMENTS_FOR_HEADINGS_GEN = 8000
-    const MAX_HTML_LENGTH_FOR_HEADINGS_GEN = 800_000 // ~800 KB
-
-    if (elements && elements.length > MAX_ELEMENTS_FOR_HEADINGS_GEN) {
-      console.warn(`[StructurePanel] Element count (${elements.length}) exceeds limit (${MAX_ELEMENTS_FOR_HEADINGS_GEN}). Aborting generation.`)
-      const msg = `Document has ${elements.length.toLocaleString()} elements – AI heading generation is currently limited to ${MAX_ELEMENTS_FOR_HEADINGS_GEN.toLocaleString()} elements. Please try a shorter document or split it up.`
-      console.error('[StructurePanel] ', msg)
-      setHeadingsError(msg)
-      setIsLoadingHeadings(false)
-      console.groupEnd()
-      return
-    }
-    if (content && content.length > MAX_HTML_LENGTH_FOR_HEADINGS_GEN) {
-      const msg = `Document HTML is ${Math.round(content.length / 1024)} KB – exceeds current 800 KB limit for AI heading generation.`
-      console.error('[StructurePanel] ', msg)
-      setHeadingsError(msg)
-      setIsLoadingHeadings(false)
-      console.groupEnd()
-      return
-    }
-
-    try {
-      if (mutationState.activeMutation?.type === 'insert-headings' && !isRegeneration) {
-        console.warn('AI headings mutation already active, skipping generation')
-        const existingHeadings = extractHeadingsFromMutation(mutationState.activeMutation).map(h => ({
-          ...h,
-          elementId: h.id
-        }))
-        setHeadings(existingHeadings)
-        setIsLoadingHeadings(false)
-        setHeadingsError('AI headings are already applied. Remove them first or click "Regenerate" to create a new set.')
-        return
-      }
-      
-      try {
-        let htmlWithIds = ''
-        if (elements && elements.length > 0) {
-          htmlWithIds = elements.map(el => {
-            const attrs = Object.entries(el.attributes)
-              .map(([key, value]) => `${key}="${value}"`)
-              .join(' ')
-            const attrString = attrs ? ` ${attrs}` : ''
-            
-            if (el.content) {
-              return `<${el.tag_name} id="${el.id}"${attrString}>${el.content}</${el.tag_name}>`
-            } else {
-              return `<${el.tag_name} id="${el.id}"${attrString} />`
-            }
-          }).join('\n')
-        } else if (content) {
-          htmlWithIds = content
-        } else {
-          const error = new Error('Cannot generate headings: No content or elements available')
-          console.error('generateHeadingsFromAPI error:', error)
-          throw error
-        }
-        
-        console.log('Sending POST /api/tools/structure with content length:', htmlWithIds.length)
-        
-        const result = await executeToolWithNavigation('structure', 'execute', {
-          html_content: htmlWithIds,
-          documentId: documentId
-        })
-
-        const data = result.data as StructureGetResponse
-        if (!data || !data.operations) {
-          const error = new Error('API returned no operations')
-          console.error('Empty operations response:', result)
-          throw error
-        }
-        
-        console.log('Generate headings response:', data)
-        
-        // Convert operations to legacy headings format for generateHeadingMutation
-        const legacyHeadings: AIHeading[] = data.operations
-          .filter((op) => (op.action === 'insert' || op.action === 'replace') && op.content)
-          .map((op) => ({
-            html: `<${op.content!.tag_name}>${op.content!.content}</${op.content!.tag_name}>`,
-            insertNewBeforeExistingId: (op.action === 'insert' ? op.insertNewBeforeExistingId : op.targetId) || ''
-          }))
-        
-        const mutation = generateHeadingMutation({
-          headings: legacyHeadings,
-          documentId: documentId,
-          isRegeneration: isRegeneration
-        })
-        
-        const mutationResult = await applyMutation(mutation)
-        
-        if (mutationResult.success) {
-          const generatedHeadings = extractHeadingsFromMutation(mutation).map(h => ({
-            ...h,
-            elementId: h.id
-          }))
-          setHeadings(generatedHeadings)
-          setCollapsedIds(new Set())
-          setIsLoadingHeadings(false)
-        } else {
-          setIsLoadingHeadings(false) // FIX: Ensure loading state is cleared on mutation failure
-          throw new Error(mutationResult.error || 'Failed to apply mutation')
-        }
-      } catch (error) {
-        // CRITICAL FIX: Ensure loading state is always cleared, even on unexpected errors
-        setIsLoadingHeadings(false)
-        console.error('Error in generateHeadingsFromAPI:', error)
-        throw error // Re-throw to maintain error handling in calling functions
-      } finally {
-        console.groupEnd()
-      }
-    } catch (error) {
-      // CRITICAL FIX: Ensure loading state is always cleared, even on unexpected errors
-      setIsLoadingHeadings(false)
-      console.error('Error in generateHeadingsFromAPI:', error)
-      throw error // Re-throw to maintain error handling in calling functions
-    }
-  }, [content, elements, documentId, mutationState.activeMutation, applyMutation, currentMode, executeToolWithNavigation])
 
   // Public API for manual headings generation (now uses iterative approach)
   const handleGenerateHeadings = async () => {
