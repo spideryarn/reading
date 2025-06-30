@@ -236,30 +236,36 @@ Current system removes all existing headings and generates completely new ones. 
   - Included iteration metadata including "Last changes" and iteration state
   - Combined existing operations with new ones for complete state preservation
 
+### Stage: Legacy Storage Format Removal (2025-06-30)
+- [x] **Remove legacy storage conversion** (TECHNICAL DEBT CLEANUP - IN PROGRESS):
+  - **Problem**: Current implementation converts operations to legacy `{html, insertNewBeforeExistingId}[]` format
+  - **Issues**: Loses data (remove operations filtered out), code complexity, type confusion
+  - **Solution**: Store native `HeadingOperation[]` format directly in database
+  - **Progress**:
+    1. ✅ **Removed legacy conversion logic**: Updated `app/api/tools/[toolId]/handlers/structure.ts:921-946` to store `operations` array directly
+    2. ✅ **Updated storage format**: Changed `content.items` to `content.operations` in persistence call
+    3. ⏳ **Frontend updates needed**: Need to update `StructurePanel.tsx` cached headings fetch and reading logic
+    4. ⏳ **Database schema docs**: Need to update documentation for new operations format
+    5. ⏳ **Testing**: Need to test with real data to ensure no regressions
+  - **Current Status**: Backend storage updated, frontend needs updates to handle new format
+  - **Benefits**: Complete data preservation, simplified code, single type throughout, better debugging
+
 ### Stage: Testing
-- [ ] **EXTENSIVE TEST UPDATES REQUIRED** (14-22 hour effort):
-  - **Phase 1 - Critical (8-12 hours)**: Update 3 core test files:
+- [ ] **EXTENSIVE TEST UPDATES REQUIRED**:
+  - **Phase 1**: Update 3 core test files:
     - `lib/services/__tests__/heading-mutation-generator.test.ts` (8 locations)
     - `lib/services/__tests__/headings-integration.test.ts` (9 locations)
     - `lib/services/__tests__/heading-mutation-generator-performance.test.ts` (4 locations)
-  - **Phase 2 - Medium (4-6 hours)**: Update 5 integration test files:
+  - **Phase 2**: Update 5 integration test files:
     - `mixed-insertion-precedence.test.ts`, `heading-section-detector.test.ts`
     - Various HTML processing tests
-  - **Phase 3 - Low (2-4 hours)**: Update 6+ UI/E2E test files:
+  - **Phase 3**: Update 6+ UI/E2E test files:
     - `tests/e2e/ai-headings-insertion-order.spec.ts`
     - Command generation and tool integration tests
   - **Recommended Approach**: 
     - Use subagents for each phase to handle the verbose test updates
-    - Consider focusing on critical path tests first (Phase 1)
-    - May need to evaluate if all tests require updates or if some can be deferred
-  - **Test Strategy Considerations**:
-    - Given the significant time investment (14-22 hours), recommend discussing alternative approaches
-    - Option A: Full test update - comprehensive but time-intensive
-    - Option B: Minimal viable test coverage - update only critical path tests, defer others
-    - Option C: Progressive test updates - update tests as issues arise in production
-    - **Recommendation**: Start with Phase 1 critical tests only (8-12 hours) and evaluate necessity of Phases 2-3
+    - **Recommendation**: Start with Phase 1 tests only and evaluate necessity of Phases 2-3
 - [ ] **REUSE EXISTING**: Leverage `heading-mutation-generator-performance.test.ts` infrastructure:
-  - Performance timing patterns and stress test data generation
 - [ ] Use subagent with browser automation to test complete iterative workflows
 - [ ] Run `npm run check:health` to ensure no regressions
 

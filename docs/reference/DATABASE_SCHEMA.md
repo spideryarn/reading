@@ -168,7 +168,7 @@ The database schema is defined and represented in several places:
 
 **Summary**: `{ text, keyPoints, metadata }`  
 **Glossary**: `{ entries: [{ term, definition, category, aliases }] }`  
-**Headings**: `{ items: [{ id, text, level, parentId, elementId }] }`  
+**Headings**: `{ operations: [{ action: 'insert'|'replace'|'remove', insertNewBeforeExistingId?, targetId?, content?: { tag_name: 'h1-h6', content: string } }], iteration_metadata: { iteration_count, total_operations, last_changes, more_changes_required, last_updated } }`  
 **Tweet Thread**: `{ tweets: [{ text, order }] }`
 
 **Design Notes**: 
