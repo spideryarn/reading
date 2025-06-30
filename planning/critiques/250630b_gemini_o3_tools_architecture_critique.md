@@ -3,9 +3,11 @@
 Read all the relevant code re tools, starting with:
 - `docs/reference/TOOL_EXECUTION_FRAMEWORK.md`
 - `docs/reference/TOOL_ARCHITECTURE_AND_DEVELOPMENT_GUIDE.md`
+- `docs/reference/CODING_PRINCIPLES.md`
 
 Conduct a technical audit/review with recommendations for how we might improve/simplify the design. I'm especially interested in anything that will help with AI-first coding, e.g. better compile-time checking to discover bugs earlier in development. Also mention if you spot any potential problems/bugs/gotchas.
 
+Note that we **DO NOT CARE ABOUT BACKWARDS-COMPATIBILITY**. We have zero users currently.
 
 
 # Gemini AI
@@ -244,7 +246,7 @@ Recommendation: Add a build-time script that validates the tool registry against
 handlers/[toolId].ts file exists.
 
 
-## Is there anything we could do to improve type-safety/protection? Or to make developing tools less error-prone?
+## Question from user: Is there anything we could do to improve type-safety/protection? Or to make developing tools less error-prone?
 
 ✦ Yes, absolutely. While the current architecture is strong, we can definitely enhance both type-safety and
   the overall developer experience to make creating tools less error-prone. The key is to shift as much
@@ -619,3 +621,306 @@ None of these are production-blocking today, but addressing them will make the c
 --------------------------------------------------------------------
 Let me know which of these improvements you’d like to pursue first, and I’ll draft a concrete implementation plan or code changes accordingly.
 
+
+## Question from user: What do you think about the high-level actions we've defined, e.g. execute, iterate. How is that design helping us? Is there anything you would change?
+
+Thoughts on the current “action” model (`execute`, `open`, `refresh`, recently-added `iterate`)
+===============================================================================================
+
+Why it helps today
+------------------
+
+1.  Unifies the call-site  
+    • UI code, LLM agents and tests can invoke *any* tool through one signature `executeTool(id, action, params)` without needing to know whether a tool is “interactive”, “analysis” or “navigation”.
+
+2.  Easy routing logic  
+    • `open` is always a local URL-state change; everything else defaults to server.  The executor’s branching stays simple.
+
+3.  Keeps API surface small while we’re still experimenting  
+    • Early in development you can bolt on a new tool quickly by supporting at least `execute`; you add richer actions later.
+
+Limitations emerging
+--------------------
+
+1.  Over-generic names blur intent  
+    • “execute” means “do whatever the tool normally does”; “iterate” means “continue whatever the last execute started”.  
+    • For developers (human or AI) the difference is implicit and easy to misuse (“should I call execute again or iterate?”).
+
+2.  Compile-time guarantees are impossible  
+    • We can’t express that Glossary supports `{ execute, refresh }` while Highlights supports `{ execute, iterate }`.  
+    • Every call site must accept runtime errors or duplicate strings.
+
+3.  Ambiguous semantics for caching & idempotency  
+    • `refresh` sounds like a safe, read-only operation – but nothing enforces it.  
+    • `iterate` is state‐ful and non-idempotent, yet it rides the same POST endpoint.
+
+4.  URL/state coupling is implicit  
+    • Only `open` is special-cased; other actions sometimes mutate URL too (e.g. Search might push the query into URL), but the executor cannot reflect that.
+
+Recommended evolution
+---------------------
+
+### 1.  Make Action sets explicit per tool
+
+```ts
+type ActionSet = {
+  execute?: z.ZodSchema;
+  refresh?: z.ZodSchema;
+  iterate?: z.ZodSchema;
+  open?: z.ZodSchema;
+};
+
+interface Tool<A extends ActionSet = ActionSet> {
+  id: ToolId;
+  actions: A;     // compile-time list + param schemas
+}
+```
+
+*   Wrapper generator then exposes only the actions defined in `A`:
+
+    ```ts
+    tools.glossary.execute(...)   // OK
+    tools.glossary.iterate(...)   // TS error
+    ```
+
+### 2.  Rename for clearer intention
+
+| Current | Suggested   | Rationale                               |
+|---------|-------------|-----------------------------------------|
+| execute | run         | Concrete verb, idempotency unspecified  |
+| iterate | continue    | Mirrors “continue summary”, clearer UX  |
+| refresh | reload      | Matches browser language                |
+| open    | navigate    | Describes what actually happens         |
+
+(Names are bikesheddable; the key is clarity.)
+
+### 3.  Encode idempotency & side-effect metadata
+
+```ts
+type ActionMeta = {
+  name: 'run' | 'continue' | 'reload' | 'navigate';
+  type: 'server' | 'local';
+  idempotent: boolean;
+  cacheable: boolean;
+  timeout?: number;
+};
+```
+
+Executor can now:
+
+*   automatically decide caching strategy,  
+*   pick sensible default timeouts,  
+*   warn if the caller retries a non-idempotent action.
+
+### 4.  Treat long-running / iterative flows as Jobs
+
+Instead of `iterate`, expose:
+
+1.  `run` → returns `{ jobId }`
+2.  `poll` → returns `{ state, partialResult }`
+3.  `cancel` → optional
+
+This models streaming/continuation explicitly, is language-agnostic, and opens the door for resumable background jobs.
+
+### 5.  Backwards-compatible migration path
+
+1.  Keep `execute`/`iterate` aliases that internally forward to new names so current UI/tests keep working.  
+2.  Gradually add `actions` metadata to each tool.  Once all are migrated, deprecate the aliases.
+
+Benefits for AI-first coding
+---------------------------
+
+• IntelliSense shows exactly which actions exist and what params they expect.  
+• The LLM can *generate* correct calls because the type system encodes them; compile time catches hallucinated actions immediately.  
+• Errors like “tool X doesn’t support iterate” become compile-time instead of runtime‐only.  
+• Explicit idempotency metadata lets orchestration agents (retry logic, queues) behave safely without human hints.
+
+In short, the high-level actions abstraction is a great foundation, but tightening it with per-tool typings and clearer semantics will eliminate a large class of runtime surprises and make automated coding agents (and human devs) far more productive. Let me know if you’d like a concrete code sketch for this change.
+
+
+
+
+
+# Question re different kinds of tools
+
+## User question:
+
+Read all the relevant code re tools.
+
+Conduct a technical audit/review with recommendations for how we might improve/simplify the design.
+
+Currently, the tool registry is designed to support left-hand pane tabs (as we current have, like Structure, Glossary) that interact with the Document Pane.
+
+I'm contemplating how, and indeed **whether**, we should generalise to support different kinds of activities:
+- Initiate/resume some of our existing time-intensive AI flows in the background, e.g. "Run our iterative Glossary entity-generation process until the LLM responds that it's finished"
+- Smaller 'functions', e.g. "Rename this document", "Add this message to that chat thread", "Scroll the document pane to X"
+- Open another page (perhaps in this tab, perhaps in a new tab)
+
+What do you think?
+
+## o3 Response
+
+Below is a structured technical review of the current “tool” system, followed by concrete recommendations for how we could evolve it to cover the broader set of activities you’re contemplating.
+
+──────────────────────────────────
+1. What already works well
+──────────────────────────────────
+• Strong type-safety & validation  
+  – `Tool` interface + runtime `validateTool()` catch many config errors early.  
+• Single source-of-truth registry  
+  – Makes discovery, command-palette generation, and tab navigation deterministic.  
+• Executor abstraction (local vs server)  
+  – Conceptually separates “open tab” from “POST /api/tools/*”.  
+• Command-generation pipeline  
+  – Removes almost all hard-coded commands and keeps keyboard shortcuts consistent.  
+• Rich error hierarchy & correlation-id logging  
+  – Good foundation for ops/observability.
+
+──────────────────────────────────
+2. Pain-points & limitations
+──────────────────────────────────
+A. Conflated concerns  
+   – A single `Tool` object must currently carry *all* of these facets:  
+     1. Pane UI (componentPath, tabId)  
+     2. Server workflow metadata (apiEndpoint, timeouts, server/local ops)  
+     3. Command-palette shortcuts/keywords  
+     4. Capabilities & URL-state hints  
+   – This is fine for “Structure” or “Glossary”, but forces meaningless fields for
+     things like “Rename document” or “Scroll to element” (no pane, no tab).
+
+B. Validation rigidity  
+   – `componentPath`, `tabId`, `requiresDocument` are required even when not needed.  
+   – Makes it awkward to register tiny functions or background jobs.
+
+C. Execution granularity  
+   – Executor only recognises `'open' | 'execute | refresh'`.  
+   – Long-running iterative jobs (e.g. multi-step glossary generation) need
+     progress, cancellation, resumption, and maybe idempotent “resumeIfRunning()”.
+
+D. UI dependency  
+   – Left-pane tabs are first-class; other UI surfaces (modals, toasts, full-page
+     routes) don’t fit the model.
+
+E. Background scheduling / queueing  
+   – Framework assumes synchronous HTTP fetch.  
+   – No hooks for job status polling, WebSocket push, or Supabase
+     `documents.processing_status`.
+
+──────────────────────────────────
+3. Suggested direction: split **Tool** into clearer “kinds”
+──────────────────────────────────
+Introduce a discriminated union so we can keep the ergonomic registry *and* let each
+kind carry only the fields it needs.  Sketch:
+
+```ts
+type BaseEntry = {
+  id: string
+  name: string
+  description: string
+  keywords?: string[]
+}
+
+type PaneTool = BaseEntry & {
+  kind: 'pane'
+  icon: ComponentType<IconProps>
+  tabId: TabValue
+  componentPath: string
+  shortcuts?: string[]
+  requiresDocument?: boolean
+  urlStateKeys?: string[]
+  server?: ServerSideInfo      // optional
+}
+
+type QuickAction = BaseEntry & {
+  kind: 'action'
+  parametersSchema?: ZodSchema<any>
+  perform: (params: any, ctx: ActionCtx) => Promise<void>
+  shortcuts?: string[]
+}
+
+type BackgroundJob = BaseEntry & {
+  kind: 'job'
+  start: (params: any, ctx: JobCtx) => Promise<{ jobId: string }>
+  resume?: (jobId: string, ctx: JobCtx) => Promise<JobStatus>
+  progressUI?: 'toast' | 'sidepane' | 'none'
+  defaultTimeout?: number
+}
+
+type NavigationLink = BaseEntry & {
+  kind: 'link'
+  href: string | ((params: any) => string)
+  openIn?: '_self' | '_blank'
+  shortcuts?: string[]
+}
+```
+
+Registry becomes `Map<string, PaneTool | QuickAction | BackgroundJob | NavigationLink>` with
+a tiny wrapper for each union case.
+
+Validation then keys off `kind`, so only relevant properties are required.
+
+Benefits:
+• Small functions (rename doc) become `QuickAction`s → no bogus `componentPath`.  
+• LLM pipelines become `BackgroundJob`s → can expose pause/resume APIs.  
+• Existing left-pane tabs remain `PaneTool`s → minimal migration effort.  
+• Links (“Open billing portal in new tab”) register as `NavigationLink`s.
+
+──────────────────────────────────
+4. Executor / runner changes
+──────────────────────────────────
+• Keep current dual-path executor for `PaneTool` server ops.  
+• Add `runAction(id, params, opts)` that dispatches to `QuickAction.perform`.  
+• Add lightweight job-manager wrapper: `startJob(id, params)` returns `{jobId}`;  
+  a central `JobTracker` polls Supabase or emits realtime updates.
+
+──────────────────────────────────
+5. Command palette generation
+──────────────────────────────────
+Generation stays registry-driven but becomes polymorphic:
+
+| kind         | Default command action                                  |
+|--------------|---------------------------------------------------------|
+| pane         | navigateToTab(tabId)                                    |
+| action       | runAction(id)                                           |
+| job          | startJob(id) + showProgressToast()                      |
+| link         | window.open(href, openIn)                               |
+
+Shortcut conflict logic and keyword extraction continue unchanged.
+
+──────────────────────────────────
+6. Refactoring roadmap (incremental, safe)
+──────────────────────────────────
+1. Introduce new union types & relaxed validator (no code removal yet).  
+2. Migrate *one* simple case to prove pattern: e.g. create `rename-document`
+   as a `QuickAction`.  
+3. Adjust command generation (switch on `kind`).  
+4. Update executor: add `runAction`; wire command palette to it.  
+5. Iteratively migrate long-running flows (Glossary iterative generation) to
+   `BackgroundJob` shape; keep existing `/api/tools/glossary` endpoint as
+   implementation detail behind `start` + polling queries.  
+6. Finally, relax old `Tool` required-field rules and deprecate once all pane
+   tools specify `kind: 'pane'`.
+
+──────────────────────────────────
+7. Open questions / design choices
+──────────────────────────────────
+• Should background jobs be queue-backed (e.g. Supabase Functions + RLS tables)
+  or stay in the Next.js API layer with `setTimeout` polling?  
+• How much built-in progress UI do we want?  (Toast vs dedicated “Jobs” pane.)  
+• Do we want to expose the union in LLM function-calling schemas so the
+  assistant can choose “action” vs “job”?  
+• Should quick actions be undoable via the reversible-mutation framework?
+
+──────────────────────────────────
+8. Bottom line
+──────────────────────────────────
+Generalising *is* worthwhile, but a clean separation of *UI panes*,
+*immediate actions*, *background jobs*, and *navigation links* will keep each
+concern simple while preserving the good parts of the current registry/
+command-palette/executor stack.  The migration can be incremental and will
+unlock a richer set of capabilities (automated long-running workflows,
+small UX-level affordances, and deep LLM function-calling) without bloating
+the existing pane-tool codepaths.
+
+Happy to elaborate on any of these steps or prototype the `QuickAction`
+scaffolding if you’d like.
