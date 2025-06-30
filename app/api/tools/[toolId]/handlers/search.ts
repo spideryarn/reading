@@ -99,7 +99,7 @@ export class SearchHandler extends BaseToolHandler {
       }
       
       // Extract query information from the cached data
-      const queries = (enhancements || []).map(enhancement => {
+      const queries = (enhancements || []).map((enhancement: any) => {
         const content = enhancement.content as {
           originalQuery?: string
           normalizedQuery: string

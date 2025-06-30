@@ -136,18 +136,19 @@ export class StructureHandler extends BaseToolHandler {
           throw new Error(`Malformed headings data in database for enhancement ${existingHeadings.id}: content is not an object`)
         }
         
-        if (!Array.isArray(existingHeadings.content.items)) {
-          throw new Error(`Malformed headings data in database for enhancement ${existingHeadings.id}: content.items is not an array. Found: ${typeof existingHeadings.content.items}`)
+        const content = existingHeadings.content as { items?: unknown }
+        if (!content.items || !Array.isArray(content.items)) {
+          throw new Error(`Malformed headings data in database for enhancement ${existingHeadings.id}: content.items is not an array. Found: ${typeof content.items}`)
         }
         
         logger.info({
           documentId,
           enhancementId: existingHeadings.id,
-          headingsCount: existingHeadings.content.items.length
+          headingsCount: content.items.length
         }, 'Returning cached structure/headings')
         
         // Convert legacy headings to operations format
-        const operations = existingHeadings.content.items.map((heading: { insertNewBeforeExistingId?: string; id_of_after?: string; html: string }) => ({
+        const operations = content.items.map((heading: { insertNewBeforeExistingId?: string; id_of_after?: string; html: string }) => ({
           action: 'insert' as const,
           insertNewBeforeExistingId: heading.insertNewBeforeExistingId || heading.id_of_after,
           content: {
@@ -261,19 +262,20 @@ export class StructureHandler extends BaseToolHandler {
           throw new Error(`Malformed headings data in database for enhancement ${existingHeadings.id}: content is not an object`)
         }
         
-        if (!Array.isArray(existingHeadings.content.items)) {
-          throw new Error(`Malformed headings data in database for enhancement ${existingHeadings.id}: content.items is not an array. Found: ${typeof existingHeadings.content.items}`)
+        const content = existingHeadings.content as { items?: unknown }
+        if (!content.items || !Array.isArray(content.items)) {
+          throw new Error(`Malformed headings data in database for enhancement ${existingHeadings.id}: content.items is not an array. Found: ${typeof content.items}`)
         }
         
         logger.info({
           documentId,
           enhancementId: existingHeadings.id,
-          headingsCount: existingHeadings.content.items.length,
+          headingsCount: content.items.length,
           operation: 'cache_hit'
         }, 'Returning cached structure/headings')
         
         return {
-          headings: existingHeadings.content.items,
+          headings: content.items,
           cached: true,
           enhancementId: existingHeadings.id,
           type: 'structure',

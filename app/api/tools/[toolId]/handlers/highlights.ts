@@ -121,7 +121,13 @@ export class HighlightsHandler extends BaseToolHandler {
       }
       
       // Transform enhancements into highlight query list
-      const highlights = (enhancements || []).map(enhancement => {
+      const highlights = (enhancements || []).map((enhancement: { 
+        id: string; 
+        subtype: string | null; 
+        created_at: string | null; 
+        content: any; 
+        ai_call_id: string | null 
+      }) => {
         const content = enhancement.content as {
           originalQuery?: string
           normalizedQuery: string
@@ -154,7 +160,7 @@ export class HighlightsHandler extends BaseToolHandler {
       logger.info({
         documentId,
         highlightCount: highlights.length,
-        totalMatches: highlights.reduce((sum, h) => sum + h.matchCount, 0)
+        totalMatches: highlights.reduce((sum: number, h: { matchCount: number }) => sum + h.matchCount, 0)
       }, 'Retrieved cached highlights successfully')
       
       return {
@@ -296,7 +302,7 @@ export class HighlightsHandler extends BaseToolHandler {
           textExcerpt: match.relevantText || '',
           confidence: match.confidence,
           reasoning: match.reasoning,
-          createdAt: cachedResult.created_at
+          createdAt: cachedResult.created_at || new Date().toISOString()
         }))
         
         return {

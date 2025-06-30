@@ -23,7 +23,7 @@ interface TooltipInfo {
 
 // Removed - now using centralized calculateReadingTimeFromElements
 
-function formatSourceInfo(document: { original_file_type?: string; source_url?: string }): string {
+function formatSourceInfo(document: { original_file_type?: string | null; source_url?: string | null }): string {
   const parts: string[] = []
   
   // Add file type info
@@ -116,7 +116,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     // Calculate reading time using the exact same machinery as MetadataPanel
     let readingTimeResult
     try {
-      readingTimeResult = await calculateReadingTimeFromWordCount(document.word_count, document.id, supabase)
+      readingTimeResult = await calculateReadingTimeFromWordCount(document.word_count || 0, document.id, supabase)
     } catch (error) {
       console.error(`Reading time calculation failed for document ${document.id}:`, error)
       throw new Error(`Reading time calculation failed for document ${document.id}: ${error instanceof Error ? error.message : 'Unknown reading time calculation error'}`)

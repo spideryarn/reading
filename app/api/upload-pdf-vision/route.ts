@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
     const mainAiCall = await aiCallService.startCallWithModelString({
       userId: user.id,
       modelString: 'anthropic:claude-sonnet-4:20250514', // Primary model for multi-model pipeline tracking
-      prompt_type: 'pdf-vision-pipeline',
+      prompt_type: 'pdf-to-html',
       input_data: {
         file_name: pdfFile.name,
         file_size_bytes: pdfBuffer.length,
@@ -211,6 +211,9 @@ export async function POST(request: NextRequest) {
     if (failedPages.length > 0) {
       const failedPageNumbers = failedPages.map(p => p.pageNumber)
       const firstFailure = failedPages[0]
+      if (!firstFailure) {
+        throw new Error('Vision processing failed: unknown error')
+      }
       requestLogger.error({
         correlationId,
         stage: 'page-processing',
@@ -384,7 +387,7 @@ export async function POST(request: NextRequest) {
       finalResult.htmlContent,
       {
         title,
-        sourceUrl: null, // PDF uploads don't have source URLs
+        // sourceUrl is omitted for PDF uploads
         isPublic,
         originalFile: pdfFile,
         filename: pdfFile.name,

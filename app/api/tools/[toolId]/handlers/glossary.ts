@@ -76,8 +76,12 @@ export class GlossaryHandler extends BaseToolHandler {
       if (existingEntities.length === 0) {
         const enhancementService = new EnhancementService(supabase)
         const legacyGlossary = await enhancementService.get(documentId, 'glossary', 'default')
-        if (legacyGlossary && legacyGlossary.content && Array.isArray(legacyGlossary.content.entities)) {
-          legacyEntities = legacyGlossary.content.entities
+        if (legacyGlossary && legacyGlossary.content && 
+            typeof legacyGlossary.content === 'object' && 
+            legacyGlossary.content !== null &&
+            'entities' in legacyGlossary.content &&
+            Array.isArray(legacyGlossary.content.entities)) {
+          legacyEntities = legacyGlossary.content.entities as Entity[]
         }
       }
       
@@ -169,8 +173,12 @@ export class GlossaryHandler extends BaseToolHandler {
         
         // Also check for legacy bulk storage for backwards compatibility
         const legacyGlossary = await enhancementService.get(documentId, 'glossary', 'default')
-        if (legacyGlossary && legacyGlossary.content && Array.isArray(legacyGlossary.content.entities)) {
-          existingEntitiesInDb = [...existingEntitiesInDb, ...legacyGlossary.content.entities]
+        if (legacyGlossary && legacyGlossary.content && 
+            typeof legacyGlossary.content === 'object' && 
+            legacyGlossary.content !== null &&
+            'entities' in legacyGlossary.content &&
+            Array.isArray(legacyGlossary.content.entities)) {
+          existingEntitiesInDb = [...existingEntitiesInDb, ...(legacyGlossary.content.entities as Entity[])]
         }
       }
       
@@ -287,22 +295,19 @@ export class GlossaryHandler extends BaseToolHandler {
       // Store entities individually in database (only if documentId provided)
       if (documentId) {
         // Store each entity individually with the same AI call ID
-        // Clean up entities to remove undefined optional properties for strict typing
-        const cleanedEntities = validatedResponse.entities.map(entity => {
-          const cleaned: Entity = {
-            name: entity.name,
-            ontology: entity.ontology,
-            aliases: entity.aliases,
-            brief_explanation: entity.brief_explanation
-          }
-          if (entity.long_explanation !== undefined) cleaned.long_explanation = entity.long_explanation
-          if (entity.datetime !== undefined) cleaned.datetime = entity.datetime
-          if (entity.url !== undefined) cleaned.url = entity.url
-          if (entity.extra !== undefined) cleaned.extra = entity.extra
-          if (entity.difficulty !== undefined) cleaned.difficulty = entity.difficulty
-          if (entity.centrality !== undefined) cleaned.centrality = entity.centrality
-          return cleaned
-        })
+        // Clean up entities to match exact types required by the database
+        const cleanedEntities: Entity[] = validatedResponse.entities.map(entity => ({
+          name: entity.name,
+          ontology: entity.ontology,
+          aliases: entity.aliases,
+          brief_explanation: entity.brief_explanation,
+          long_explanation: entity.long_explanation,
+          datetime: entity.datetime,
+          url: entity.url,
+          extra: entity.extra,
+          difficulty: entity.difficulty,
+          centrality: entity.centrality
+        }))
         await storeIndividualEntities(supabase, documentId, aiCall.id, cleanedEntities)
         
         logger.info({
