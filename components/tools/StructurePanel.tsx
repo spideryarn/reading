@@ -126,41 +126,6 @@ export function StructurePanel({
   const [isIterationInProgress, setIsIterationInProgress] = useState(false)
   const [autoIterationStopped, setAutoIterationStopped] = useState(false)
 
-  /**
-   * Failsafe timer to ensure the UI never remains indefinitely in a
-   * "Generating…" state without surfacing an error. If the loading flag stays
-   * stuck for more than FAILSAFE_TIMEOUT_MS the timer will automatically clear
-   * the loading state and expose an error to the user.
-   */
-  const FAILSAFE_TIMEOUT_MS = 120_000 // 2 minutes
-  const failsafeTimerRef = useRef<NodeJS.Timeout | null>(null)
-
-  useEffect(() => {
-    // Whenever loading starts, start/refresh the failsafe timer.
-    if (isLoadingHeadings) {
-      if (failsafeTimerRef.current) {
-        clearTimeout(failsafeTimerRef.current)
-      }
-      failsafeTimerRef.current = setTimeout(() => {
-        console.error('[StructurePanel] Failsafe-timeout fired – headings generation exceeded', FAILSAFE_TIMEOUT_MS, 'ms')
-        setIsLoadingHeadings(false)
-        setHeadingsError('Timed out — something prevented headings generation from completing. Please try again or check the console for details.')
-      }, FAILSAFE_TIMEOUT_MS)
-    } else {
-      // Loading cleared → cancel timer
-      if (failsafeTimerRef.current) {
-        clearTimeout(failsafeTimerRef.current)
-        failsafeTimerRef.current = null
-      }
-    }
-
-    return () => {
-      if (failsafeTimerRef.current) {
-        clearTimeout(failsafeTimerRef.current)
-      }
-    }
-  }, [isLoadingHeadings])
-
   // Debug/trace helper – incrementing attempt id for each generate call
   const attemptIdRef = useRef(0)
 
@@ -625,7 +590,7 @@ export function StructurePanel({
             .filter((op: HeadingOperation) => (op.action === 'insert' || op.action === 'replace') && op.content)
             .map((op: HeadingOperation) => ({
               html: `<${op.content!.tag_name}>${op.content!.content}</${op.content!.tag_name}>`,
-              insertNewBeforeExistingId: op.action === 'insert' ? op.insertNewBeforeExistingId : op.targetId
+              insertNewBeforeExistingId: ((op.action === 'insert' ? op.insertNewBeforeExistingId : op.targetId) || '')
             }))
           
           await applyCachedHeadings(legacyHeadings)
@@ -681,9 +646,9 @@ export function StructurePanel({
     const tooltipComponent = HeadingSummaryTooltip({
       elementId,
       documentId,
-      elements,
-      mutatedDocument,
-      activeMutationType,
+      ...(elements ? { elements: elements! } : {}),
+      ...(mutatedDocument ? { mutatedDocument: mutatedDocument! } : {}),
+      ...(activeMutationType ? { activeMutationType } : {}),
       contentCache,
       loadingStates,
       onLoadingStateChange: handleLoadingStateChange,
