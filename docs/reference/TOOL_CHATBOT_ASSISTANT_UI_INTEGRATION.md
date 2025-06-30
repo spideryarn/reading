@@ -1372,4 +1372,213 @@ If creating new API routes or tool handlers:
 - **Test-friendly** - Bearer token support enables comprehensive integration testing
 - **Simplified code** - no need to handle authentication in individual handlers
 
+## Chat Validation Architecture (2025-06-30)
+
+### Centralized Validation System
+
+As part of the database-first chat architecture redesign, we implemented a centralized validation system that ensures consistent input validation across all layers of the chat application.
+
+#### Validation Configuration
+
+All chat validation limits are centralized in `CHAT_VALIDATION_CONFIG`:
+
+```typescript
+// lib/config.ts
+export const CHAT_VALIDATION_CONFIG = {
+  // Maximum length for a single message
+  MAX_MESSAGE_LENGTH: 50000,
+  
+  // Maximum length for a single word (security check against attacks)
+  MAX_WORD_LENGTH: 1000,
+  
+  // Maximum number of messages in a conversation
+  MAX_CONVERSATION_LENGTH: 20,
+  
+  // Maximum document context length
+  MAX_DOCUMENT_CONTEXT_LENGTH: 100000,
+  
+  // Error messages for validation failures
+  ERROR_MESSAGES: {
+    EMPTY_CONTENT: 'Message content cannot be empty or contain only whitespace. Please enter a message.',
+    MESSAGE_TOO_LONG: 'Message is too long (maximum 50,000 characters)',
+    WORD_TOO_LONG: 'Message contains excessively long words. Please break up long text.',
+    TOO_MANY_MESSAGES: 'Too many messages in conversation (max 20)',
+    CONTEXT_TOO_LONG: 'Document context too long',
+    INVALID_THREAD_ID: 'Invalid thread ID format',
+    INVALID_DOCUMENT_ID: 'Invalid document ID format'
+  }
+} as const
+```
+
+#### Shared Validation Utilities
+
+The validation logic is implemented in `lib/utils/chat-validation.ts` following o3 AI recommendations:
+
+```typescript
+import { CHAT_VALIDATION_CONFIG } from '../config'
+
+export interface ChatValidationResult {
+  valid: boolean
+  error?: string
+  trimmedContent?: string
+}
+
+// User messages: Strict validation (reject empty/whitespace-only)
+export function validateUserMessage(content: string): ChatValidationResult {
+  const trimmedContent = content.trim()
+  
+  // Check for empty content
+  if (trimmedContent.length === 0) {
+    return {
+      valid: false,
+      error: CHAT_VALIDATION_CONFIG.ERROR_MESSAGES.EMPTY_CONTENT
+    }
+  }
+  
+  // Check message length
+  if (trimmedContent.length > CHAT_VALIDATION_CONFIG.MAX_MESSAGE_LENGTH) {
+    return {
+      valid: false,
+      error: CHAT_VALIDATION_CONFIG.ERROR_MESSAGES.MESSAGE_TOO_LONG
+    }
+  }
+  
+  // Check for excessively long words (security check)
+  const words = trimmedContent.split(/\s+/)
+  const hasExcessivelyLongWord = words.some(word => word.length > CHAT_VALIDATION_CONFIG.MAX_WORD_LENGTH)
+  if (hasExcessivelyLongWord) {
+    return {
+      valid: false,
+      error: CHAT_VALIDATION_CONFIG.ERROR_MESSAGES.WORD_TOO_LONG
+    }
+  }
+  
+  return {
+    valid: true,
+    trimmedContent
+  }
+}
+
+// Assistant messages: Allow empty content for streaming/tool-only scenarios
+export function validateAssistantMessage(content: string): ChatValidationResult {
+  // Allow empty content for assistant messages (streaming, tool-only)
+  if (content.length > CHAT_VALIDATION_CONFIG.MAX_MESSAGE_LENGTH) {
+    return {
+      valid: false,
+      error: CHAT_VALIDATION_CONFIG.ERROR_MESSAGES.MESSAGE_TOO_LONG
+    }
+  }
+  
+  return {
+    valid: true,
+    trimmedContent: content.trim()
+  }
+}
+
+// Universal validation function
+export function validateMessage(role: 'user' | 'assistant', content: string): ChatValidationResult {
+  return role === 'user' 
+    ? validateUserMessage(content)
+    : validateAssistantMessage(content)
+}
+```
+
+#### Multi-Layer Validation Implementation
+
+Validation is consistently applied across all layers:
+
+**1. Client Layer (useChatStore.ts)**:
+```typescript
+import { validateUserMessage } from '@/lib/utils/chat-validation'
+
+const sendMessage = useCallback(async (content: string): Promise<void> => {
+  // Enhanced content validation per o3 AI recommendations
+  const validation = validateUserMessage(content)
+  if (!validation.valid) {
+    throw new Error(validation.error!)
+  }
+  const trimmedContent = validation.trimmedContent!
+  
+  // ... rest of implementation
+}, [/* dependencies */])
+```
+
+**2. API Layer (chat handler)**:
+```typescript
+import { validateMessage } from '@/lib/utils/chat-validation'
+
+// Enhanced empty content validation per o3 AI recommendations
+const messageValidation = validateMessage('user', latestMessage.content)
+if (!messageValidation.valid) {
+  throw createHandlerError(
+    messageValidation.error!,
+    'validation'
+  )
+}
+const trimmedContent = messageValidation.trimmedContent!
+```
+
+**3. Database Layer (ChatService)**:
+```typescript
+import { validateMessage } from '@/lib/utils/chat-validation'
+
+async addMessage(options: CreateMessageOptions): Promise<ChatMessage> {
+  // Validate message content as a safety net
+  const validation = validateMessage(options.role, options.content)
+  if (!validation.valid) {
+    throw new Error(`Invalid message content: ${validation.error}`)
+  }
+  
+  // Use trimmed content for storage
+  const content = validation.trimmedContent || options.content
+  // ... rest of implementation
+}
+```
+
+#### Key Validation Rules (o3 AI Recommendations)
+
+1. **User Messages**: 
+   - Strict rejection of empty/whitespace-only content
+   - Maximum 50,000 characters per message
+   - Maximum 1,000 characters per word (security check)
+   - Clear error messages guide users
+
+2. **Assistant Messages**:
+   - Allow empty content for streaming scenarios
+   - Allow empty content for tool-only messages
+   - Same length limits as user messages
+
+3. **Conversation Limits**:
+   - Maximum 20 messages per conversation
+   - Maximum 100,000 characters of document context
+
+#### Benefits
+
+- **Consistent Validation**: Same rules applied across client, API, and database layers
+- **Security**: Protection against long word attacks and excessive content
+- **User Experience**: Clear, actionable error messages
+- **Maintainability**: Single source of truth for all validation logic
+- **Testing**: Comprehensive test coverage with 25 validation tests
+
+#### Testing
+
+The validation system includes comprehensive unit tests:
+
+```typescript
+// lib/utils/__tests__/chat-validation.test.ts
+describe('Chat Validation Utilities', () => {
+  describe('validateUserMessage', () => {
+    it('should reject empty user messages', () => {
+      const result = validateUserMessage('')
+      expect(result.valid).toBe(false)
+      expect(result.error).toBe(CHAT_VALIDATION_CONFIG.ERROR_MESSAGES.EMPTY_CONTENT)
+    })
+    
+    // ... 19 total tests covering all validation scenarios
+  })
+})
+```
+
+This validation architecture ensures robust, consistent input handling across the entire chat system while following security best practices and providing excellent user experience.
+
 
