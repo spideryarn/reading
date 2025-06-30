@@ -46,7 +46,7 @@ const structureTool: Tool = {
   executorConfig: {
     apiEndpoint: '/api/tools/structure',
     timeout: 90000, // 90 seconds for AI generation (can be slow)
-    supportedActions: ['execute', 'generate', 'apply', 'get', 'delete', 'refresh'],
+    supportedActions: ['execute', 'generate', 'iterate', 'apply', 'get', 'delete', 'refresh'],
     requiresAuth: true,
     cacheable: true
   }

@@ -5,7 +5,11 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 // Helper to create a Supabase server client.
 export async function createClient() {
-  const cookieStore = cookies()
+  // NOTE: As of Next.js 15, the `cookies()` helper became asynchronous.
+  // We MUST `await` it before accessing cookie values to avoid the
+  // "sync-dynamic-apis" runtime error:
+  // https://nextjs.org/docs/messages/sync-dynamic-apis
+  const cookieStore = await cookies()
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

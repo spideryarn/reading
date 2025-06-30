@@ -1,7 +1,7 @@
 You are helping the reader to understand this HTML text, by improving the semantic structure through better headings. The goal is to create a Table of Contents that shows clear, fine-grained semantic structure.
 
 {% if iteration_count == 0 or not iteration_count %}
-**FIRST ITERATION - ORIGINAL HEADINGS**: The current headings were created by the original author. These represent their intended structure and organisation. While you can edit, insert, or remove headings to improve clarity and navigation, please try to broadly preserve the author's original high-level intent and structural approach where reasonable.
+**FIRST ITERATION - ORIGINAL HEADINGS**: The current headings were created by the original author. These represent their intended structure and organisation. While you can edit, insert, or remove headings to improve clarity and navigation, please try to broadly preserve the author's original high-level intent and structural approach where reasonable. But you can also improve upon them - preserve good ones, modify unclear ones, and add new ones where the structure needs enhancement.
 {% endif %}
 
 **ITERATIVE IMPROVEMENT**: Make up to {{ MAX_HEADING_OPERATIONS_PER_ITERATION }} improvements to the heading structure. Prioritize in this order:
@@ -29,10 +29,8 @@ You are helping the reader to understand this HTML text, by improving the semant
    - Target approximately 200 words between headings
    - Ensure headings serve as useful navigation waypoints
 
-Current iteration: {{ (iteration_count || 0) + 1 }}
-Previous changes: {{ previous_iteration_summary || "None - this is the first iteration" }}
-
-- The HTML may contain existing headings from the original author. You should improve upon them - preserve good ones, modify unclear ones, and add new ones where the structure needs enhancement.
+Current iteration: {{ (iteration_count or 0) + 1 }}
+Previous changes: {{ previous_iteration_summary or "None - this is the first iteration" }}
 
 - The highest-level heading is H1. The lowest-level heading is H6.
 
@@ -66,6 +64,26 @@ Focus on improving the document structure comprehensively. Use insert operations
 - **Replace**: Use when existing headings are unclear, poorly written, or could be significantly improved while maintaining the same structural position.
 - **Remove**: Use sparingly, only for headings that are truly redundant, disruptive, or unnecessary for the document's structure.
 
+**🚨 CRITICAL ID RULE - THIS WILL CAUSE FAILURES IF IGNORED 🚨**
+You MUST use EXACT element IDs from the HTML provided to you. DO NOT use example IDs, fabricated IDs, or IDs from this prompt. 
+
+To find valid IDs:
+1. Look for `id="..."` attributes in the HTML content you received
+2. Copy these IDs EXACTLY as they appear (e.g., if you see `<p id="abc-123">`, use "abc-123")
+3. NEVER use IDs like "syr-p-1", "element_0", "heading123" unless they ACTUALLY appear in the provided HTML
+
+**Example of what you should do:**
+If the HTML contains: `<p id="actual-element-xyz">Some text...</p>`
+Then use: `"insertNewBeforeExistingId": "actual-element-xyz"`
+
+**The IDs in the HTML will be unique to each document - they might look like:**
+- Random strings: "abc123def456"
+- Semantic IDs: "introduction-paragraph"
+- Generated IDs: "elem-001", "para-42"
+- Or any other format
+
+**Remember: Only use IDs that you can find in the actual HTML content provided to you!**
+
 Respond with only JSON in the following form, in the order that operations should be applied:
 
 ```json
@@ -73,7 +91,7 @@ Respond with only JSON in the following form, in the order that operations shoul
   "operations": [
     {
       "action": "insert",
-      "insertNewBeforeExistingId": "element_123",
+      "insertNewBeforeExistingId": "[ACTUAL-ID-FROM-HTML]",
       "content": {
         "tag_name": "h3",
         "content": "A new heading title at level 3"
@@ -81,7 +99,7 @@ Respond with only JSON in the following form, in the order that operations shoul
     },
     {
       "action": "replace",
-      "targetId": "existing_heading_456",
+      "targetId": "[ACTUAL-ID-FROM-HTML]",
       "content": {
         "tag_name": "h2", 
         "content": "Improved heading text"
@@ -89,7 +107,7 @@ Respond with only JSON in the following form, in the order that operations shoul
     },
     {
       "action": "remove",
-      "targetId": "redundant_heading_789"
+      "targetId": "[ACTUAL-ID-FROM-HTML]"
     }
   ],
   "more_changes_required": true,

@@ -37,7 +37,9 @@ async function ensureRegistryInitialized(): Promise<void> {
 
 // Request validation schemas
 const UnifiedRequestSchema = z.object({
-  action: z.enum(['execute', 'get', 'delete', 'refresh']).default('execute'),
+  // Allowed actions: execute (default), iterate (multi-step), apply (server-side apply),
+  // get / delete / refresh for misc operations.
+  action: z.enum(['execute', 'iterate', 'apply', 'get', 'delete', 'refresh']).default('execute'),
   parameters: z.record(z.unknown()).default({}),
   metadata: z.object({
     correlationId: z.string(),

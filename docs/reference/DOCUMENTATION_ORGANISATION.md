@@ -90,8 +90,7 @@ Available evergreen documentation in `docs/` organised by category:
 - `docs/reference/TOOL_SUMMARISE.md` - AI summarise feature generating hierarchical summaries at multiple granularities
 - `docs/reference/TOOL_GLOSSARY.md` - Glossary feature extracting key entities from documents using LLM analysis
 - `docs/reference/TOOL_HIGHLIGHT.md` - Semantic highlighting system with confidence-based visual intensity and React-first architecture
-- `docs/reference/TOOL_STRUCTURE_HEADINGS.md` - Consolidated AI-generated heading system (combines Original + AI-generated views)
-- `docs/reference/TOOL_HEADINGS.md` - Legacy documentation for AI-generated heading system
+- `docs/reference/TOOL_STRUCTURE_HEADINGS.md` - Consolidated AI-generated heading system with iterative generation (combines Original + AI-generated views)
 - `docs/reference/TOOL_READING_DIFFICULTY.md` - AI-powered reading difficulty assessment using academic levels with tooltips and collapsible UI
 - `docs/reference/TOOL_TWEET_THREAD_VIEW.md` - Tweet thread generation from document content (Deprecated - removed from UI)
 - `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - @assistant-ui/react integration for chatbot interface

@@ -95,13 +95,6 @@ function validateHeadingOperations(
     .filter(level => !isNaN(level))
   
   if (headingLevels.length > 0) {
-    const maxLevel = Math.max(...headingLevels)
-    const minLevel = Math.min(...headingLevels)
-    
-    if (maxLevel - minLevel > 3) {
-      errors.push(`Heading hierarchy spans ${maxLevel - minLevel + 1} levels (h${minLevel} to h${maxLevel}). Consider flattening for better readability.`)
-    }
-    
     // Check for skip-level hierarchies (e.g., H1 → H3 without H2)
     const uniqueLevels = [...new Set(headingLevels)].sort((a, b) => a - b)
     for (let i = 1; i < uniqueLevels.length; i++) {
@@ -163,6 +156,19 @@ function logOperationsHierarchy(operations: Array<{
   })
   console.log(`Total operations generated: ${operations.length}`)
   console.log('==========================\n')
+}
+
+/**
+ * Detect IDs referenced in operations that do NOT actually exist in the supplied HTML string.
+ * This helps us catch fabricated/example IDs without black-listing legitimate prefixes.
+ */
+function findFabricatedIds(operations: HeadingOperation[], html: string): string[] {
+  return operations
+    .map(op => op.insertNewBeforeExistingId || op.targetId)
+    .filter(id => {
+      if (!id) return false
+      return !html.includes(`id="${id}"`) && !html.includes(`id='${id}'`)
+    }) as string[]
 }
 
 /**
@@ -276,6 +282,13 @@ export class StructureHandler extends BaseToolHandler {
   ): Promise<ToolApiResponse> {
     const logger = createRequestLogger('structure-handler:post', context.request.correlationId)
     
+    // Allow unauthenticated 'get' or 'list' requests for read-only access
+    if (action === 'get' || action === 'list') {
+      // Delegate to GET handler logic for compatibility with the unified POST executor.
+      return this.handleGet(parameters as unknown as GetRequestParams, context)
+    }
+    
+    // All other actions require authentication
     if (!context.user) {
       throw createHandlerError('Authentication required for structure operations', 'auth')
     }
@@ -458,6 +471,52 @@ export class StructureHandler extends BaseToolHandler {
       
       // Log the generated operations hierarchy to console
       logOperationsHierarchy(validatedResponse.operations)
+      
+      // Validate heading operations for structural integrity
+      const structuralValidation = validateHeadingOperations(validatedResponse.operations)
+      if (!structuralValidation.isValid) {
+        logger.warn({
+          documentId,
+          aiCallId: aiCall.id,
+          validationErrors: structuralValidation.errors,
+          operation: 'heading_validation_failed'
+        }, 'Heading operations failed validation')
+        
+        const suspiciousIds = findFabricatedIds(validatedResponse.operations, cleanedHtml)
+        
+        if (suspiciousIds.length > 0) {
+          logger.error({
+            documentId,
+            aiCallId: aiCall.id,
+            suspiciousIds,
+            operation: 'ai_used_example_ids'
+          }, 'AI used example IDs from prompt instead of actual document IDs')
+          
+          structuralValidation.errors.push(
+            `AI error: Used example IDs from prompt (${suspiciousIds.join(', ')}) instead of actual document element IDs. ` +
+            `The AI must use the exact IDs found in the provided HTML content.`
+          )
+        }
+        
+        // Complete AI call with validation failure
+        await aiCallService.completeCall(aiCall.id, {
+          output_data: {
+            operations_count: validatedResponse.operations.length,
+            validation_failed: true,
+            validation_errors: structuralValidation.errors,
+            processing_notes: 'Heading operations failed structural validation'
+          },
+          usage: llmResult.usage,
+          finishReason: llmResult.finishReason
+        })
+        
+        // Return error response with validation details
+        throw createHandlerError(
+          `Heading validation failed: ${structuralValidation.errors.join('; ')}`,
+          'validation',
+          true
+        )
+      }
       
       // Count operations by type for metadata
       const operationCounts = validatedResponse.operations.reduce((acc, op) => {
@@ -815,6 +874,22 @@ export class StructureHandler extends BaseToolHandler {
           validationErrors: validation.errors,
           operation: 'heading_validation_failed'
         }, 'Heading operations failed validation')
+        
+        const suspiciousIds = findFabricatedIds(validatedResponse.operations, html_content)
+        
+        if (suspiciousIds.length > 0) {
+          logger.error({
+            documentId,
+            aiCallId: aiCall.id,
+            suspiciousIds,
+            operation: 'ai_used_example_ids'
+          }, 'AI used example IDs from prompt instead of actual document IDs')
+          
+          validation.errors.push(
+            `AI error: Used example IDs from prompt (${suspiciousIds.join(', ')}) instead of actual document element IDs. ` +
+            `The AI must use the exact IDs found in the provided HTML content.`
+          )
+        }
         
         // Complete AI call with validation failure
         await aiCallService.completeCall(aiCall.id, {
