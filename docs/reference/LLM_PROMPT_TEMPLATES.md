@@ -454,7 +454,7 @@ See [CHATBOT_ASSISTANT_UI_INTEGRATION.md](CHATBOT_ASSISTANT_UI_INTEGRATION.md) f
 - **Persistence**: Thread management and message history
 - **Real-time Interactions**: @assistant-ui/react integration
 
-All new **single-use AI features** should use the Nunjucks + Zod template system. **Interactive chat features** should follow the pattern established in `/api/chat` and `usePersistentChat`.
+All new **single-use AI features** should use the Nunjucks + Zod template system. **Interactive chat features** should follow the database-first architecture pattern established in `/api/tools/chat` and `useChatStore`.
 
 ## Advanced Patterns and Best Practices
 
