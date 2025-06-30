@@ -95,7 +95,11 @@ export const executeTool: ToolExecutor = async (
     throw new ToolServerError(
       error instanceof Error ? error.message : 'Unexpected error during tool execution',
       500,
-      { toolId, correlationId, cause: error instanceof Error ? error : undefined }
+      {
+        toolId,
+        correlationId,
+        ...(error instanceof Error ? { cause: error } : {})
+      }
     )
   }
 }
@@ -319,7 +323,11 @@ async function executeServerTool(
     throw new ToolServerError(
       error instanceof Error ? error.message : 'Unexpected server error',
       500,
-      { toolId: tool.id, correlationId: context.request.correlationId, cause: error instanceof Error ? error : undefined }
+      {
+        toolId: tool.id,
+        correlationId: context.request.correlationId,
+        ...(error instanceof Error ? { cause: error } : {})
+      }
     )
   }
 }

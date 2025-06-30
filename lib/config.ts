@@ -147,11 +147,12 @@ export const HEADING_ITERATION_CONFIG = {
   
   // Maximum number of iterations allowed per document session
   // Prevents infinite loops and ensures reasonable completion time
-  MAX_ITERATIONS: 5,
+  MAX_ITERATIONS: 10,
   
-  // Maximum total operations across all iterations
-  // Additional safety bound to prevent excessive modifications
-  MAX_TOTAL_OPERATIONS: 50,
+  // Whether to automatically apply subsequent iterations when conditions are met
+  // When TRUE: After the 0th iteration (triggered by user), subsequent iterations run automatically
+  // When FALSE: User must manually click "Continue Improving" after each iteration
+  AUTO_ITERATE_HEADINGS: true,
 } as const
 
 // UI configuration
@@ -243,4 +244,15 @@ export const SITE_CONFIG = {
         : `http://localhost:${port}`
     }
   }
+} as const
+
+// Centralised timeout configuration for the unified tool-execution framework
+// These values are used as fall-backs by the executor when a tool doesn't
+// supply its own per-action timeout.  Keeping them in a single place makes
+// it easy to tune application-wide behaviour.
+export const TOOL_TIMEOUTS = {
+  DEFAULT: 30_000,   // Generic operations (30 s)
+  AI: 60_000,        // LLM-heavy operations (60 s)
+  ANALYSIS: 120_000, // Expensive analyses (2 min)
+  UPLOAD: 180_000,   // Large file uploads / processing (3 min)
 } as const

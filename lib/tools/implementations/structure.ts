@@ -11,12 +11,12 @@
 
 import { registerTool } from '../registry'
 import { TreeStructure } from '@phosphor-icons/react/dist/ssr'
-import type { Tool } from '../types'
+import type { ExecutableTool } from '../executor/types'
 
 /**
  * Structure tool definition
  */
-const structureTool: Tool = {
+const structureTool: ExecutableTool = {
   // Identity & Metadata
   id: 'structure',
   name: 'Structure',
@@ -45,10 +45,15 @@ const structureTool: Tool = {
   // Executor Configuration
   executorConfig: {
     apiEndpoint: '/api/tools/structure',
-    timeout: 90000, // 90 seconds for AI generation (can be slow)
     supportedActions: ['execute', 'generate', 'iterate', 'apply', 'get', 'delete', 'refresh'],
     requiresAuth: true,
     cacheable: true
+  },
+
+  // Per-tool timeout overrides
+  timeouts: {
+    default: 90_000,
+    ai: 90_000,
   }
 }
 

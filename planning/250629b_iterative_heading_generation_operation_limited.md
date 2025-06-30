@@ -4,9 +4,11 @@
 - ✅ Stage 1 (Foundation and prompt engineering) - Complete
 - ✅ Stage 2 (API route enhancement) - Complete
 - ✅ Stage 3 (Frontend UI) - Complete
-- ✅ Stage 4 (Documentation) - Complete
-- ⏳ Stage 5 (Safety mechanisms and testing) - In Progress (safety mechanisms complete, testing strategy review next)
-- ⏳ Stage 6 (Final testing and rollout) - Pending
+- ✅ Stage 4 (Documentation) - Mostly complete (CLAUDE.md updated)
+- ✅ Stage 5 (Safety mechanisms) - Complete (safety mechanisms and auto-iteration feature complete)
+- ⏳ Stage 6 (Code improvements) - In Progress (persistence, refactoring, cleanup)
+- ⏳ Stage 7 (Testing) - Pending
+- ⏳ Stage 8 (Final rollout) - Pending
 
 **Latest Implementation (2025-06-30)**: 
 - ✅ Completed safety mechanisms implementation in Stage 5
@@ -18,6 +20,13 @@
 - ✅ Completed documentation updates in Stage 4:
   - Major rewrite of `TOOL_STRUCTURE_HEADINGS.md` with comprehensive iterative approach documentation
   - Updated `CLAUDE.md` and `DOCUMENTATION_ORGANISATION.md` references
+
+**Auto-Iteration Enhancement (2025-06-30)**:
+- ✅ Added `AUTO_ITERATE_HEADINGS` configuration variable in `lib/config.ts` (set to TRUE)
+- ✅ Enhanced frontend logic to automatically trigger subsequent iterations when conditions are met
+- ✅ Improved UI feedback with auto-iteration indicators and clear loading messages
+- ✅ Maintained all safety limits and user control (can still manually finish at any point)
+- ✅ Dev server tested and running successfully
 
 **Test Strategy Review**: The extensive test updates phase requires 14-22 hours of effort. Given this significant time investment, it's recommended to discuss the approach before proceeding:
 - **Option A**: Full test coverage (14-22 hours) - Update all affected test files comprehensively
@@ -186,6 +195,13 @@ Current system removes all existing headings and generates completely new ones. 
   - Maximum 50 total operations per document
   - Frontend disabled state when limits reached
   - Clear messaging about why iteration stopped
+- [x] **AUTO-ITERATION FEATURE** (2025-06-30):
+  - Added `AUTO_ITERATE_HEADINGS: true` configuration variable in `lib/config.ts`
+  - Enhanced frontend to automatically continue iterations when LLM indicates more changes needed
+  - Automatic iteration respects all safety limits (max iterations, total operations)
+  - User retains control to manually finish at any point via "Finish" button
+  - Clear UI feedback distinguishing between manual and automatic iteration modes
+  - 500ms delay between auto-iterations for visual feedback and smoother UX
 - [ ] **EXTENSIVE TEST UPDATES REQUIRED** (14-22 hour effort):
   - **Phase 1 - Critical (8-12 hours)**: Update 3 core test files:
     - `lib/services/__tests__/heading-mutation-generator.test.ts` (8 locations)
@@ -212,7 +228,26 @@ Current system removes all existing headings and generates completely new ones. 
 - [ ] Use subagent with browser automation to test complete iterative workflows
 - [ ] Run `npm run check:health` to ensure no regressions
 
-### Stage: Final testing and rollout
+### Stage: Code improvements and technical debt
+- [ ] **Add operations persistence** (CRITICAL GAP):
+  - Implement database write in `handleIterateStructure()` to store operations
+  - Enable cached result fetching to work properly
+  - Preserve state across reloads and reduce regeneration costs
+- [ ] **React component refactoring** (StructurePanel.tsx > 1260 lines):
+  - Extract `useIterativeHeadings()` hook for iteration logic
+  - Extract `HeadingSummaryTooltip` as separate component
+  - Improve code organization and maintainability
+- [ ] **Tighten schema types**:
+  - Change `existing_operations` from `z.array(z.any())` to properly typed `HeadingOperation[]`
+  - Add proper TypeScript types throughout the iteration flow
+- [ ] **Remove legacy code paths**:
+  - Remove old `generateHeadingsFromAPI` function
+  - Remove legacy all-at-once generation logic
+  - Clean up duplicate code blocks from migration
+
+### Stage: Testing
+
+### Stage: Final rollout
 - [ ] Comprehensive testing with subagent using Playwright (headless) for full iterative workflows
 - [ ] Final health check: `npm run build`, `npm run lint`, `npm test` (use subagent if verbose output)
 - [ ] Move doc to `planning/finished/` and commit

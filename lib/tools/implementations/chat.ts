@@ -10,12 +10,12 @@
 
 import { registerTool } from '../registry'
 import { ChatCircle } from '@phosphor-icons/react/dist/ssr'
-import type { Tool } from '../types'
+import type { ExecutableTool } from '../executor/types'
 
 /**
  * Chat tool definition
  */
-const chatTool: Tool = {
+const chatTool: ExecutableTool = {
   // Identity & Metadata
   id: 'chat',
   name: 'Chat',
@@ -44,10 +44,14 @@ const chatTool: Tool = {
   // Execution Framework Configuration
   executorConfig: {
     apiEndpoint: '/api/tools/chat',
-    timeout: 60000, // 60 seconds for AI chat operations
     supportedActions: ['send', 'execute', 'create', 'get', 'list', 'delete'],
     requiresAuth: true,
     cacheable: false // Chat responses should not be cached
+  },
+
+  timeouts: {
+    default: 60_000,
+    ai: 60_000,
   }
 }
 

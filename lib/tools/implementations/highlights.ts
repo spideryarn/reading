@@ -10,12 +10,12 @@
 
 import { registerTool } from '../registry'
 import { HighlighterCircle } from '@phosphor-icons/react/dist/ssr'
-import type { Tool } from '../types'
+import type { ExecutableTool } from '../executor/types'
 
 /**
  * Highlights tool definition
  */
-const highlightsTool: Tool = {
+const highlightsTool: ExecutableTool = {
   // Identity & Metadata
   id: 'highlights',
   name: 'Highlights',
@@ -43,10 +43,14 @@ const highlightsTool: Tool = {
   
   // Execution Framework Configuration
   executorConfig: {
-    timeout: 60000, // 60 seconds for AI operations
     supportedActions: ['generate', 'get', 'delete'],
     requiresAuth: true,
     requiresDocument: true
+  },
+
+  timeouts: {
+    default: 60_000,
+    ai: 60_000,
   }
 }
 
