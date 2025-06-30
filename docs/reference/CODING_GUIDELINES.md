@@ -221,10 +221,12 @@ import { Warning, Info } from "@phosphor-icons/react"
 - Always include `version` parameter when using `aiCallService.startCall()` or `create()`
 - See `docs/reference/VERCEL_AI_SDK_REFERENCE.md` for detailed patterns
 
-### Chat UI
+### Chat UI & Validation
 - Use @assistant-ui/react primitives for chat interfaces
 - Follow implementation patterns in `components/assistant-chat.tsx`
-- See `docs/reference/AI_CHATBOT_ASSISTANT_UI_INTEGRATION.md` for integration guide
+- Use centralized chat validation utilities from `lib/utils/chat-validation.ts`
+- Apply validation consistently across client, API, and database layers
+- See `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` for integration guide
 
 ## Client/Server Components
 
@@ -273,8 +275,20 @@ export async function POST(request: Request) {
 
 ## Type-First Development
 
-### Zod Schemas
-Define validation schemas for all API inputs/outputs:
+### Input Validation
+
+For **chat message validation**, use the centralized utilities:
+```typescript
+import { validateUserMessage, validateMessage } from '@/lib/utils/chat-validation'
+
+// Validate user input with strict rules
+const validation = validateUserMessage(userInput)
+if (!validation.valid) {
+  return NextResponse.json({ error: validation.error }, { status: 400 })
+}
+```
+
+For **general API validation**, use Zod schemas:
 ```typescript
 export const requestSchema = z.object({
   content: z.string().min(1),

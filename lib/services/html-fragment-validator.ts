@@ -188,8 +188,8 @@ export async function validateHtmlFragment(
         infoIssues
       }
     })
-    
-  } catch (error) {
+  }
+  catch (error) {
     const validationTimeMs = Date.now() - startTime
     const errorMessage = error instanceof Error ? error.message : 'Unknown validation error'
     
@@ -631,8 +631,8 @@ export async function validateAssembledDocument(
         infoIssues
       }
     })
-    
-  } catch (error) {
+  }
+  catch (error) {
     const validationTimeMs = Date.now() - startTime
     const errorMessage = error instanceof Error ? error.message : 'Unknown validation error'
     
@@ -717,7 +717,9 @@ function validateCrossPageConsistency(
   issues: StructuralIssue[]
 ): void {
   // Check for cross-page table continuations
-  const tableContinuations = document.querySelectorAll('*:contains("TABLE_CONTINUES")')
+  const tableContinuations = Array.from(document.querySelectorAll('*')).filter(el => 
+    el.textContent?.includes('TABLE_CONTINUES')
+  )
   if (tableContinuations.length % 2 !== 0) {
     issues.push({
       type: 'warning',
@@ -726,7 +728,9 @@ function validateCrossPageConsistency(
   }
   
   // Check for cross-page paragraph continuations
-  const paragraphContinuations = document.querySelectorAll('*:contains("PARAGRAPH_CONTINUES")')
+  const paragraphContinuations = Array.from(document.querySelectorAll('*')).filter(el => 
+    el.textContent?.includes('PARAGRAPH_CONTINUES')
+  )
   if (paragraphContinuations.length % 2 !== 0) {
     issues.push({
       type: 'warning',
@@ -769,4 +773,6 @@ export async function validateFragmentsBatch(
   })
   
   return results
+}
+
 }
