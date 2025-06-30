@@ -375,7 +375,7 @@ describe('Chat Message Deduplication and Ordering', () => {
       ]
 
       let threadId: string | null = null
-      let allResponses: any[] = []
+      const allResponses: any[] = []
 
       // Send messages sequentially to build up conversation
       for (let i = 0; i < messages.length; i++) {

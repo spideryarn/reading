@@ -745,7 +745,7 @@ export function UnifiedLeftPane({
   
   // Debounced search function (300ms delay) - only for text search
   const debouncedSearch = useMemo(
-    () => debounce(performSearch, 300),
+    () => debounce(performSearch as (...args: unknown[]) => unknown, 300) as (query: string) => void,
     [performSearch]
   )
 
@@ -1026,7 +1026,6 @@ export function UnifiedLeftPane({
     const props: React.ComponentProps<typeof MetadataPanel> = {
       documentTitle,
       documentCreatedAt,
-      elements,
       wordCount,
       glossaryGenerated,
       glossaryLoading: isLoadingGlossary,
@@ -1055,9 +1054,8 @@ export function UnifiedLeftPane({
     <TweetThreadPanel
       documentId={documentId}
       slug={slug}
-      documentContent={content}
     />
-  ), [documentId, slug, content])
+  ), [documentId, slug])
 
   const renderGlossaryTab = useCallback(() => {
     if (!showGlossary) {

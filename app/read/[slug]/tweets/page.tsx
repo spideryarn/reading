@@ -10,7 +10,7 @@ interface PageProps {
   params: Promise<{ slug: string }>
 }
 
-async function getDocumentBySlug(slug: string): Promise<{ id: string; title: string; plaintext_content: string; word_count?: number } | null> {
+async function getDocumentBySlug(slug: string) {
   const supabase = await createClient()
   const documentService = new DocumentService(supabase)
   

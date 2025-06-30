@@ -257,7 +257,7 @@ export function useVisionSinglePageUploader(
       // This will be implemented when we add the signed URL endpoint
       
       // Step 4: Patch HTML with final storage URLs
-      let patchedHtml = result.pageHtml
+      const patchedHtml = result.pageHtml
       
       // For now, the HTML already has storage paths from the API
       // In the full implementation, we'd update these after confirming uploads
