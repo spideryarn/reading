@@ -60,49 +60,12 @@ export interface AuthResult {
  * ```
  */
 export async function getUser(): Promise<AuthResult> {
-  const correlationId = generateCorrelationId()
+  // Use getAuthUser without Bearer token support for backward compatibility
+  const user = await getAuthUser({ allowBearer: false })
   
-  try {
-    const supabase = await createClient()
-    const { data: { user }, error } = await supabase.auth.getUser()
-    
-    if (error) {
-      authLogger.warn({
-        error: error.message,
-        correlationId,
-        operation: 'getUser'
-      }, 'Authentication error during user retrieval')
-      
-      return {
-        user: null,
-        error: error.message
-      }
-    }
-    
-    if (user) {
-      authLogger.debug({
-        userId: user.id,
-        email: user.email,
-        correlationId,
-        operation: 'getUser'
-      }, 'User retrieved successfully')
-    }
-    
-    return {
-      user,
-      error: null
-    }
-  } catch (error) {
-    authLogger.error({
-      error: error instanceof Error ? error.message : 'Unknown error',
-      correlationId,
-      operation: 'getUser'
-    }, 'Unexpected authentication error')
-    
-    return {
-      user: null,
-      error: 'An unexpected error occurred during authentication'
-    }
+  return {
+    user,
+    error: user ? null : 'Not authenticated'
   }
 }
 

@@ -37,23 +37,26 @@ Spideryarn Reading uses Supabase Auth with Next.js App Router for secure user re
 
 ## Authentication Helper Functions
 
-The authentication system provides three core helper functions in `lib/auth/server-auth.ts`, each with a single, well-defined behavior:
+The authentication system provides three core helper functions in `lib/auth/server-auth.ts`, each with a single, well-defined behavior. All functions support both cookie-based authentication (default) and Bearer token authentication (explicit opt-in for testing).
 
-### `getAuthUser(): Promise<User | null>`
+### `getAuthUser(opts?: { allowBearer?: boolean; request?: Request }): Promise<User | null>`
 Returns the current authenticated user or `null`. Never throws errors or performs redirects.
 
 **Use when**: You need to check authentication status and handle the result yourself (e.g., showing different UI for authenticated vs unauthenticated users).
 
 ```typescript
-// In a server component
+// In a server component (cookie-based)
 const user = await getAuthUser()
 if (!user) {
   return <div>Please log in to view your documents</div>
 }
 return <DocumentList userId={user.id} />
+
+// In an API route with Bearer token support (for testing)
+const user = await getAuthUser({ allowBearer: true, request })
 ```
 
-### `requireAuth(opts?: { redirectTo?: string }): Promise<User>`
+### `requireAuth(opts?: { redirectTo?: string; allowBearer?: boolean; request?: Request }): Promise<User>`
 Guarantees authentication by either returning a User or handling failure.
 
 - **API routes** (no options): Throws `AuthError` with status 401
@@ -73,9 +76,15 @@ export default async function ProtectedPage() {
   const user = await requireAuth({ redirectTo: '/auth/login' })
   // user is guaranteed to be valid here
 }
+
+// In an API route with Bearer token support (for testing)
+export async function POST(request: Request) {
+  const user = await requireAuth({ allowBearer: true, request })
+  // user is guaranteed to be valid here
+}
 ```
 
-### `assertAuth(request: Request): Promise<{ success: boolean; user?: User; error?: string }>`
+### `assertAuth(request: Request, opts?: { allowBearer?: boolean }): Promise<{ success: boolean; user?: User; error?: string }>`
 Returns a structured result object. Never throws errors or performs redirects.
 
 **Use when**: You need explicit control over authentication failure handling, such as in middleware or edge functions.
@@ -89,7 +98,37 @@ export async function POST(request: Request) {
   }
   // Use user here
 }
+
+// In an API route with Bearer token support (for testing)
+export async function POST(request: Request) {
+  const { success, user, error } = await assertAuth(request, { allowBearer: true })
+  if (!success) {
+    return NextResponse.json({ error }, { status: 401 })
+  }
+  // Use user here
+}
 ```
+
+## Authentication Methods
+
+### Cookie-Based Authentication (Default)
+- Primary authentication method for web browsers
+- Sessions managed via HTTP-only cookies with @supabase/ssr
+- Automatic token refresh via middleware
+- Secure by default with CSRF protection
+
+### Bearer Token Authentication (Testing Only)
+- Secondary authentication method for API testing
+- Requires explicit opt-in via `allowBearer: true` flag
+- Uses `Authorization: Bearer <jwt>` header
+- No caching of Supabase clients to prevent JWT leakage
+- Designed for integration tests and automated testing scenarios
+
+### Unified Supabase Client Creation
+The system provides `getSupabaseServerClient(request, opts)` which returns a properly authenticated Supabase client based on the authentication method:
+- Cookie-based client by default
+- Bearer token client when `opts.allowBearer` is true and Authorization header is present
+- Ensures RLS policies work correctly regardless of authentication method
 
 ## Implementation Status
 
