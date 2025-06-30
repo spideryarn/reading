@@ -592,29 +592,3 @@ export const Constants = {
   },
 } as const
 
-// Chat-specific type aliases for convenience
-export type ChatThread = Tables<'chat_threads'>
-export type ChatThreadInsert = TablesInsert<'chat_threads'>
-export type ChatMessage = Tables<'chat_messages'>
-export type ChatMessageInsert = TablesInsert<'chat_messages'>
-export type MessageRole = 'user' | 'assistant'
-
-// Document-specific type aliases for convenience
-export type Document = Tables<'documents'>
-export type DocumentInsert = TablesInsert<'documents'>
-export type DocumentUpdate = TablesUpdate<'documents'>
-
-// AI Call-specific type aliases for convenience
-export type AiCall = Tables<'ai_calls'>
-export type AiCallInsert = TablesInsert<'ai_calls'>
-export type CallStatus = 'pending' | 'completed' | 'failed'
-export type PromptType = 'extract_url' | 'convert_pdf' | 'page_to_html' | 'image_caption' | 'final_refinement' | 'generate_summaries' | 'generate_headings' | 'extract_glossary' | 'reading_difficulty' | 'tweet_thread' | 'chat' | 'pdf-to-html' | 'url-to-html' | 'summarise' | 'glossary' | 'headings' | 'semantic-search'
-
-// Enhancement-specific type aliases for convenience
-export type DocumentEnhancement = Tables<'document_enhancements'>
-export type DocumentEnhancementInsert = TablesInsert<'document_enhancements'>
-export type EnhancementType = 'summary' | 'headings' | 'glossary' | 'tweet-thread' | 'reading-difficulty' | 'semantic-search'
-
-// Profile-specific type aliases for convenience
-export type Profile = Tables<'profiles'>
-
