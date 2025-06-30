@@ -1,15 +1,21 @@
-# Architecture‐Audit Mode
+Perform a technical audit/review.
 
-## Introduction
-A lightweight, repeatable process for performing quick code-base audits that focus on robustness and flexibility of foundations rather than feature delivery or production hardening.
+- If there's a relevant planning doc, check whether recent changes (e.g. recent related Git commits, and also uncommitted changes) implement the planning doc correctly.
+- Look for bugs, gotchas, potential problems
+- Zoom out to consider whether the overall strategy/approach is sound, or could be improved.
 
-This mode is intended for moments when we pause feature work to check our architectural hygiene and coding style. It guides what to look for, how to stage improvements, and how to capture the findings in planning docs.
-
-## See also
+For background, read:
+- `docs/reference/CODING_PRINCIPLES.md`
+- `docs/reference/CODING_GUIDELINES.md`
 - `docs/instructions/WRITE_EVERGREEN_DOC.md` – conventions for evergreen documentation like this file.
-- `docs/instructions/WRITE_PLANNING_DOC.md` – how to record stage-based action plans (used by the Appendix we add to planning docs).
-- `planning/250526g_ai_generated_headings.md` – example planning doc with an "Appendix – recommendations from another AI (o3) – foundations focus" section generated via this mode.
-- 
+- `docs/instructions/WRITE_PLANNING_DOC.md` – how to record stage-based action plans (used by the 
+- and any other relevant docs
+
+If a feature/area/question/file have been suggested, start by scanning & investigating that area.
+
+Start by reading relevant code & docs for the feature/area that .
+
+
 
 ## Audit Workflow
 1. **Scan** the target area (component, API route, service) for non-determinism, silent failures, and coupling.
