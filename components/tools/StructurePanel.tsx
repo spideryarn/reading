@@ -232,10 +232,10 @@ export function StructurePanel({
     }
   }, [executeToolWithNavigation])
 
-  // Helper function to apply cached headings without API call
-  const applyCachedHeadings = useCallback(async (cachedHeadings: Array<{ id_of_after?: string; insertNewBeforeExistingId?: string; html: string }>) => {
+  // Helper function to apply cached operations directly without legacy conversion
+  const applyCachedOperations = useCallback(async (operations: HeadingOperation[]) => {
     try {
-      console.log('Applying cached headings:', cachedHeadings)
+      console.log('Applying cached operations:', operations)
       
       if (mutationState.activeMutation?.type === 'insert-headings') {
         console.warn('AI headings mutation already active, extracting existing headings')
@@ -248,14 +248,16 @@ export function StructurePanel({
         return
       }
       
-      // Map cached format { id_of_after, html } -> { insertNewBeforeExistingId, html }
-      const convertedHeadings: MutationHeading[] = cachedHeadings.map(h => ({
-        insertNewBeforeExistingId: h.insertNewBeforeExistingId ?? h.id_of_after ?? '',
-        html: h.html
-      }))
+      // Convert operations to mutation format (only insert/replace operations with content)
+      const mutationHeadings: MutationHeading[] = operations
+        .filter((op) => (op.action === 'insert' || op.action === 'replace') && op.content)
+        .map((op) => ({
+          insertNewBeforeExistingId: (op.action === 'insert' ? op.insertNewBeforeExistingId : op.targetId) || '',
+          html: `<${op.content!.tag_name}>${op.content!.content}</${op.content!.tag_name}>`
+        }))
 
       const mutation = generateHeadingMutation({
-        headings: convertedHeadings,
+        headings: mutationHeadings,
         documentId: documentId
       })
       
@@ -270,16 +272,17 @@ export function StructurePanel({
         setCollapsedIds(new Set())
         setIsLoadingHeadings(false)
         
-        console.log('Successfully applied cached headings')
+        console.log('Successfully applied cached operations')
       } else {
-        throw new Error(result.error || 'Failed to apply cached headings mutation')
+        throw new Error(result.error || 'Failed to apply cached operations mutation')
       }
     } catch (error) {
-      console.error('Error applying cached headings:', error)
-      setHeadingsError(`Failed to load cached headings: ${error instanceof Error ? error.message : 'Unknown error'}`)
-      setIsLoadingHeadings(false) // FIX: Ensure loading state is cleared on error
+      console.error('Error applying cached operations:', error)
+      setHeadingsError(`Failed to load cached operations: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setIsLoadingHeadings(false)
     }
   }, [documentId, applyMutation, mutationState.activeMutation])
+
 
   // Function to stop auto-iteration
   const handleStopAutoIteration = useCallback(() => {
@@ -581,19 +584,11 @@ export function StructurePanel({
         
         if (cached && cached.operations) {
           if (process.env.NODE_ENV === 'development') {
-            console.log('Found cached operations, applying them...')
+            console.log('Found cached operations, applying them directly...')
           }
           setEnhancementId(cached.enhancementId || null)
           
-          // Convert operations to legacy headings format for applyCachedHeadings
-          const legacyHeadings: Array<{ id_of_after?: string; insertNewBeforeExistingId?: string; html: string }> = cached.operations
-            .filter((op: HeadingOperation) => (op.action === 'insert' || op.action === 'replace') && op.content)
-            .map((op: HeadingOperation) => ({
-              html: `<${op.content!.tag_name}>${op.content!.content}</${op.content!.tag_name}>`,
-              insertNewBeforeExistingId: ((op.action === 'insert' ? op.insertNewBeforeExistingId : op.targetId) || '')
-            }))
-          
-          await applyCachedHeadings(legacyHeadings)
+          await applyCachedOperations(cached.operations)
         } else if (cached && (!Array.isArray(cached.operations) || cached.operations.length === 0)) {
           console.error('[StructurePanel] Cached operations payload invalid or empty:', cached)
           setHeadingsError('Cached AI operations were invalid. Please regenerate.')
@@ -626,7 +621,7 @@ export function StructurePanel({
       }
       isCancelled = true
     }
-  }, [documentId, hasInitialized, applyCachedHeadings, content, elements, fetchCachedHeadings])
+  }, [documentId, hasInitialized, applyCachedOperations, content, elements, fetchCachedHeadings])
 
   const handleHeadingClick = (heading: Heading) => {
     if (onHeadingClick) {

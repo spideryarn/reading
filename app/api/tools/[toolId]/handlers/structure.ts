@@ -219,29 +219,19 @@ export class StructureHandler extends BaseToolHandler {
           throw new Error(`Malformed headings data in database for enhancement ${existingHeadings.id}: content is not an object`)
         }
         
-        const content = existingHeadings.content as { items?: unknown }
-        if (!content.items || !Array.isArray(content.items)) {
-          throw new Error(`Malformed headings data in database for enhancement ${existingHeadings.id}: content.items is not an array. Found: ${typeof content.items}`)
+        const content = existingHeadings.content as { operations?: unknown }
+        if (!content.operations || !Array.isArray(content.operations)) {
+          throw new Error(`Malformed headings data in database for enhancement ${existingHeadings.id}: content.operations is not an array. Found: ${typeof content.operations}`)
         }
         
         logger.info({
           documentId,
           enhancementId: existingHeadings.id,
-          headingsCount: content.items.length
+          operationsCount: content.operations.length
         }, 'Returning cached structure/headings')
         
-        // Convert legacy headings to operations format
-        const operations = content.items.map((heading: { insertNewBeforeExistingId?: string; id_of_after?: string; html: string }) => ({
-          action: 'insert' as const,
-          insertNewBeforeExistingId: heading.insertNewBeforeExistingId || heading.id_of_after,
-          content: {
-            tag_name: heading.html.match(/<(h[1-6])/)?.[1] || 'h2',
-            content: heading.html.replace(/<\/?h[1-6][^>]*>/g, '')
-          }
-        }))
-        
         return {
-          operations,
+          operations: content.operations,
           cached: true,
           enhancementId: existingHeadings.id,
           type: 'structure',
@@ -354,20 +344,20 @@ export class StructureHandler extends BaseToolHandler {
           throw new Error(`Malformed headings data in database for enhancement ${existingHeadings.id}: content is not an object`)
         }
         
-        const content = existingHeadings.content as { items?: unknown }
-        if (!content.items || !Array.isArray(content.items)) {
-          throw new Error(`Malformed headings data in database for enhancement ${existingHeadings.id}: content.items is not an array. Found: ${typeof content.items}`)
+        const content = existingHeadings.content as { operations?: unknown }
+        if (!content.operations || !Array.isArray(content.operations)) {
+          throw new Error(`Malformed headings data in database for enhancement ${existingHeadings.id}: content.operations is not an array. Found: ${typeof content.operations}`)
         }
         
         logger.info({
           documentId,
           enhancementId: existingHeadings.id,
-          headingsCount: content.items.length,
+          operationsCount: content.operations.length,
           operation: 'cache_hit'
         }, 'Returning cached structure/headings')
         
         return {
-          headings: content.items,
+          operations: content.operations,
           cached: true,
           enhancementId: existingHeadings.id,
           type: 'structure',
@@ -918,21 +908,13 @@ export class StructureHandler extends BaseToolHandler {
         // Combine existing operations with new ones for complete state
         const allOperations = [...(existing_operations || []), ...validatedResponse.operations]
         
-        // Convert operations to legacy headings format for storage compatibility
-        const legacyHeadings = allOperations
-          .filter((op) => (op.action === 'insert' || op.action === 'replace') && op.content)
-          .map((op) => ({
-            html: `<${op.content!.tag_name}>${op.content!.content}</${op.content!.tag_name}>`,
-            insertNewBeforeExistingId: (op.action === 'insert' ? op.insertNewBeforeExistingId : op.targetId) || ''
-          }))
-        
-        // Store/update enhancement with iteration metadata
+        // Store/update enhancement with iteration metadata - using native operations format
         await enhancementService.upsert({
           documentId,
           type: 'headings',
           variant: 'default',
           content: {
-            items: legacyHeadings,
+            operations: allOperations,
             iteration_metadata: {
               iteration_count: iteration_count + 1,
               total_operations: newTotalOperations,
@@ -949,7 +931,7 @@ export class StructureHandler extends BaseToolHandler {
           documentId,
           enhancementId: null, // Will be set by upsert
           totalOperations: allOperations.length,
-          legacyHeadingsCount: legacyHeadings.length,
+          newOperations: validatedResponse.operations.length,
           iteration_count: iteration_count + 1,
           operation: 'operations_persisted'
         }, 'Operations successfully persisted to database')
