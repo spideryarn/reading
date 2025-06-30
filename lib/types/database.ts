@@ -342,6 +342,7 @@ export type Database = {
           created_by: string | null
           html_content: string
           id: string
+          is_draft: string | null
           is_public: boolean | null
           language_code: string | null
           original_file_type: string | null
@@ -360,6 +361,7 @@ export type Database = {
           created_by?: string | null
           html_content: string
           id?: string
+          is_draft?: string | null
           is_public?: boolean | null
           language_code?: string | null
           original_file_type?: string | null
@@ -378,6 +380,7 @@ export type Database = {
           created_by?: string | null
           html_content?: string
           id?: string
+          is_draft?: string | null
           is_public?: boolean | null
           language_code?: string | null
           original_file_type?: string | null
