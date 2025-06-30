@@ -92,10 +92,19 @@ export function VoiceInputRecorder({
   });
 
   const isRecording = status === 'recording';
-  const isSupported = typeof navigator !== 'undefined' && 
-    navigator?.mediaDevices?.getUserMedia !== undefined && 
-    typeof window !== 'undefined' &&
-    window.isSecureContext;
+
+  // Browsers require a secure context (HTTPS) for getUserMedia().
+  // All production builds are on HTTPS, but during local development we
+  // often run on http://localhost.  Allow insecure context *only* for the
+  // special-case hostname to avoid breaking the developer experience while
+  // still blocking voice input on other insecure origins.
+  const isSecureContextAllowed = typeof window !== 'undefined' && (
+    window.isSecureContext || window.location.hostname === 'localhost'
+  );
+
+  const isSupported = typeof navigator !== 'undefined' &&
+    navigator?.mediaDevices?.getUserMedia !== undefined &&
+    isSecureContextAllowed;
 
   /**
    * Handle errors with consistent logging and user feedback
@@ -122,10 +131,11 @@ export function VoiceInputRecorder({
       const formData = new FormData();
       formData.append('audio', blob, 'recording.webm');
 
-      // Send to transcription API
+      // Send to transcription API (include cookies explicitly)
       const apiResponse = await fetch('/api/speech-to-text', {
         method: 'POST',
-        body: formData
+        body: formData,
+        credentials: 'include'
       });
 
       if (!apiResponse.ok) {
@@ -139,14 +149,22 @@ export function VoiceInputRecorder({
 
       const data: SpeechToTextResponse = await apiResponse.json();
 
-      if (!data.success || !data.text) {
+      if (!data.success || typeof data.text !== 'string') {
         throw new Error(data.error || 'Transcription failed');
+      }
+
+      const trimmed = data.text.trim();
+
+      if (trimmed.length === 0) {
+        handleError('No speech detected. Please try again.', { errorType: 'emptyTranscription' });
+        setIsProcessing(false);
+        return;
       }
 
       // Clear processing state and call success callback
       setIsProcessing(false);
       setError(null);
-      onTranscription(data.text.trim());
+      onTranscription(trimmed);
 
     } catch (error) {
       setIsProcessing(false);
