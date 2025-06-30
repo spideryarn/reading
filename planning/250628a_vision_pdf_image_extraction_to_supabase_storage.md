@@ -616,9 +616,25 @@ Serverless (Vercel Node runtime)
 - **Asset Validation**: Non-blocking validation - documents can be created even if image uploads failed
 - **Test Coverage**: Full test coverage including edge cases and error scenarios
 
-#### Stage: UI integration & progress UX
-- [ ] Show page-by-page progress, failures, retry option.
-- [ ] Warn user when browser memory or total upload size exceeds soft limits.
+#### Stage: UI integration & progress UX ✅ **COMPLETED**
+- [x] Show page-by-page progress, failures, retry option.
+  - ✅ Created `VisionUploadProgress` component with real-time page status display
+  - ✅ Shows progress bars for overall and individual page progress
+  - ✅ Color-coded status indicators (pending, processing, completed, error)
+  - ✅ Retry buttons for failed pages
+  - ✅ Pause/resume functionality for upload control
+- [x] Warn user when browser memory or total upload size exceeds soft limits.
+  - ✅ Created `MemoryUsageWarning` component with intelligent thresholds
+  - ✅ Mobile-aware warnings (lower thresholds for mobile devices)
+  - ✅ Provides actionable suggestions for high memory usage
+  - ✅ Estimates memory usage based on file size and page count
+
+**Stage Implementation Notes**:
+- **UI Components**: Created comprehensive progress tracking and memory warning components
+- **Integration**: Updated upload page to use Phase 2 vision processing with single-page uploads
+- **Progress UI**: Created `Progress` component using Radix UI primitives with Spideryarn orange theme
+- **Upload Flow**: Modified to show real-time progress during page-by-page processing
+- **TypeScript**: Fixed all type errors in new components and related API routes
 
 #### Stage: Testing & validation
 - [ ] Add Jest unit tests for new payload guard util.

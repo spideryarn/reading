@@ -52,6 +52,7 @@ export interface AdditionalMetadata {
   file_size_bytes?: number
   model_used?: string
   processing_time_ms?: number
+  page_count?: number
   
   // URL-specific fields
   content_size_kb?: number
@@ -68,6 +69,15 @@ export interface AdditionalMetadata {
   storage_mime_type?: string
   storage_base_mime_type?: string
   storage_mime_parameters?: string
+  
+  // Vision pipeline specific fields
+  assets_uploaded?: number
+  image_assets?: number
+  total_storage_bytes?: number
+  pipeline_phase?: number
+  pipeline_type?: string
+  stage_timings?: Record<string, number>
+  quality_metrics?: Record<string, unknown>
 }
 
 /**

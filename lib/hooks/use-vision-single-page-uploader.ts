@@ -29,7 +29,7 @@ const SinglePageVisionResponseSchema = z.object({
 
 type SinglePageVisionResponse = z.infer<typeof SinglePageVisionResponseSchema>
 
-interface PageUploadState {
+export interface PageUploadState {
   pageNumber: number
   status: 'pending' | 'uploading' | 'processing' | 'cropping' | 'storing' | 'completed' | 'error'
   progress: number // 0-100

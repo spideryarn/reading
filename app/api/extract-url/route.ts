@@ -162,7 +162,7 @@ async function processPdfFromUrl(
   providedTitle: string | undefined,
   isPublic: boolean,
   user: { id: string; email?: string },
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: Awaited<ReturnType<typeof getSupabaseServerClient>>,
   aiCallService: AiCallService,
   requestLogger: ReturnType<typeof createRequestLogger>,
   correlationId: string

@@ -11,6 +11,8 @@ import { FileUploadSection } from '@/components/upload/file-upload-section'
 import { ProcessingOptions } from '@/components/upload/processing-options'
 import { useVisionSinglePageUploader } from '@/lib/hooks/use-vision-single-page-uploader'
 import { generateDocumentId } from '@/lib/utils/document-id'
+import { VisionUploadProgress } from '@/components/upload/vision-upload-progress'
+import { MemoryUsageWarning } from '@/components/upload/memory-usage-warning'
 
 // Unified state types for smart upload interface
 type InputType = 'url' | 'pdf' | 'html' | null
@@ -46,7 +48,11 @@ export default function AddDocumentPage() {
     isUploading: isVisionUploading,
     overallProgress: visionProgress,
     cancel: cancelVisionUpload,
-    getCompletedHtml
+    getCompletedHtml,
+    pause: pauseVisionUpload,
+    resume: resumeVisionUpload,
+    isPaused: isVisionPaused,
+    retry: retryVisionPage
   } = useVisionSinglePageUploader({
     maxConcurrency: 3,
     onProgress: (pageNumber, progress, status) => {
@@ -62,6 +68,48 @@ export default function AddDocumentPage() {
     onAllComplete: async (htmlFragments) => {
       // All pages processed, now finalize the document
       console.log('All pages processed, finalizing document...')
+      
+      try {
+        // Join all HTML fragments
+        const fullHtml = htmlFragments.join('\n')
+        
+        // Call the finalise-vision-document API
+        const response = await fetch('/api/finalise-vision-document', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            documentId: visionUploadState.documentId,
+            html: fullHtml,
+            pageCount: visionUploadState.pageCount,
+            title: visionUploadState.documentTitle,
+            filename: uploadState.input.file?.name,
+            isPublic: uploadState.processing.isPublic
+          })
+        })
+        
+        if (!response.ok) {
+          const errorText = await response.text()
+          throw new Error(errorText || 'Failed to finalize document')
+        }
+        
+        const result = await response.json()
+        if (result.success) {
+          // Navigate to the document
+          router.push(`/read/${result.document.slug}`)
+        } else {
+          throw new Error(result.message || 'Failed to create document')
+        }
+      } catch (error) {
+        setUploadState(prev => ({
+          ...prev,
+          ui: {
+            ...prev.ui,
+            error: error instanceof Error ? error.message : 'Failed to finalize document',
+            isProcessing: false,
+            processingMessage: ''
+          }
+        }))
+      }
     }
   })
   
@@ -83,6 +131,21 @@ export default function AddDocumentPage() {
       error: '',
       isDragging: false
     }
+  })
+  
+  // Additional state for vision upload
+  const [visionUploadState, setVisionUploadState] = useState<{
+    isConverting: boolean
+    convertedImages: Array<{ pageIndex: number; base64Image: string; width: number; height: number }> | null
+    documentId: string | null
+    documentTitle: string | null
+    pageCount: number
+  }>({
+    isConverting: false,
+    convertedImages: null,
+    documentId: null,
+    documentTitle: null,
+    pageCount: 0
   })
   
   // Helper functions - defined before use
@@ -389,7 +452,7 @@ export default function AddDocumentPage() {
         
         if (input.type === 'pdf') {
           if (processing.method === 'vision-ai') {
-            // Vision-AI processing requires frontend PDF-to-image conversion
+            // Phase 2 Vision-AI processing with single-page uploads
             try {
               // Update processing message for conversion phase
               setUploadState(prev => ({
@@ -400,7 +463,7 @@ export default function AddDocumentPage() {
                 }
               }))
 
-              // Dynamic import to avoid SSR issues - only import if in browser
+              // Dynamic import to avoid SSR issues
               if (typeof window === 'undefined') {
                 throw new Error('PDF conversion must happen in browser environment')
               }
@@ -423,17 +486,45 @@ export default function AddDocumentPage() {
                 }
               })
 
-              // Update processing message for AI processing phase
+              // Generate document ID and title for the upload
+              const documentId = generateDocumentId()
+              const documentTitle = input.file.name.replace(/\.pdf$/i, '') || 'Untitled Document'
+              
+              // Update vision upload state
+              setVisionUploadState({
+                isConverting: false,
+                convertedImages: imageResult.pages,
+                documentId,
+                documentTitle,
+                pageCount: imageResult.pages.length
+              })
+              
+              // Clear processing state to show upload progress UI
               setUploadState(prev => ({
                 ...prev,
                 ui: { 
                   ...prev.ui, 
-                  processingMessage: 'Processing images with vision-based AI pipeline...'
+                  isProcessing: false,
+                  processingMessage: ''
                 }
               }))
-
-              // Add converted images to form data as JSON
-              formData.append('pageImages', JSON.stringify(imageResult.pages))
+              
+              // Start the page-by-page upload process
+              const pageImages = imageResult.pages.map(page => ({
+                base64Image: page.base64Image,
+                pageNumber: page.pageIndex + 1 // Convert to 1-based
+              }))
+              
+              await uploadPages(
+                pageImages,
+                documentId,
+                documentTitle,
+                input.file.name,
+                imageResult.pages.length
+              )
+              
+              // Return early - the onAllComplete callback will handle navigation
+              return
               
             } catch (conversionError) {
               throw new Error(
@@ -442,13 +533,14 @@ export default function AddDocumentPage() {
                   : 'PDF conversion failed with unknown error'
               )
             }
+          } else {
+            // Standard AI transcription (v1)
+            const apiEndpoint = '/api/upload-pdf'
+            response = await fetch(apiEndpoint, {
+              method: 'POST',
+              body: formData
+            })
           }
-          
-          const apiEndpoint = processing.method === 'vision-ai' ? '/api/upload-pdf-vision' : '/api/upload-pdf'
-          response = await fetch(apiEndpoint, {
-            method: 'POST',
-            body: formData
-          })
         } else if (input.type === 'html') {
           // Create new FormData for HTML upload with correct field name
           const htmlFormData = new FormData()
@@ -590,23 +682,61 @@ export default function AddDocumentPage() {
                 availableMethods={getAvailableProcessingMethods()}
               />
               
-              {/* Submit Button */}
-              <div className="flex justify-end">
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!canSubmit() || uploadState.ui.isProcessing}
-                  className="px-6 sm:px-8 py-2 w-full sm:w-auto"
-                >
-                  {uploadState.ui.isProcessing ? (
-                    <>
-                      <CircleNotch size={16} className="animate-spin mr-2" />
-                      {uploadState.ui.processingMessage || 'Processing...'}
-                    </>
-                  ) : (
-                    'Add Document'
-                  )}
-                </Button>
-              </div>
+              {/* Memory Usage Warning for Vision Processing */}
+              {uploadState.input.file && 
+               uploadState.input.type === 'pdf' && 
+               uploadState.processing.method === 'vision-ai' && (
+                <MemoryUsageWarning
+                  pageCount={visionUploadState.pageCount || 20} // Estimate if not yet known
+                  fileSize={uploadState.input.file.size}
+                  isVisible={true}
+                />
+              )}
+              
+              {/* Vision Upload Progress */}
+              {isVisionUploading && (
+                <VisionUploadProgress
+                  pageStates={pageStates}
+                  overallProgress={visionProgress}
+                  isUploading={isVisionUploading}
+                  isPaused={isVisionPaused}
+                  onRetry={retryVisionPage}
+                  onPause={pauseVisionUpload}
+                  onResume={resumeVisionUpload}
+                  onCancel={() => {
+                    cancelVisionUpload()
+                    setUploadState(prev => ({
+                      ...prev,
+                      ui: {
+                        ...prev.ui,
+                        error: 'Upload cancelled by user',
+                        isProcessing: false,
+                        processingMessage: ''
+                      }
+                    }))
+                  }}
+                />
+              )}
+              
+              {/* Submit Button - hide during vision upload */}
+              {!isVisionUploading && (
+                <div className="flex justify-end">
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={!canSubmit() || uploadState.ui.isProcessing}
+                    className="px-6 sm:px-8 py-2 w-full sm:w-auto"
+                  >
+                    {uploadState.ui.isProcessing ? (
+                      <>
+                        <CircleNotch size={16} className="animate-spin mr-2" />
+                        {uploadState.ui.processingMessage || 'Processing...'}
+                      </>
+                    ) : (
+                      'Add Document'
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>

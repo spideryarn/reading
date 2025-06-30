@@ -137,13 +137,10 @@ export async function POST(request: NextRequest) {
       html,
       {
         title,
-        sourceUrl: null, // Vision documents don't have source URLs
         isPublic,
-        originalFile: undefined, // Original PDF was already uploaded during page processing
         filename: filename || 'document',
         provider: 'vision-pipeline',
         correlationId,
-        aiCallId: undefined, // No AI call for finalisation
         documentId // Pass the explicit document ID
       },
       {
