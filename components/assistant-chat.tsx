@@ -9,15 +9,19 @@ import {
   MessagePrimitive,
   AssistantRuntimeProvider, 
   useExternalStoreRuntime,
+  useMessage,
 } from "@assistant-ui/react";
 import { User, Robot, PaperPlaneTilt, CircleNotch, Trash } from '@phosphor-icons/react';
 import { useChatStore } from '@/src/lib/hooks/useChatStore';
 import { Button } from '@/components/ui/button'
 import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 import { useChatUrlState } from '@/lib/tools/hooks/use-tool-url-state';
-import { useEffect, useCallback, useState, useRef } from 'react';
+import React, { useEffect, useCallback, useState, useRef, useContext } from 'react';
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover';
 import dynamic from 'next/dynamic';
+import type { Tables } from '@/lib/types/database';
+
+type ChatMessageDb = Tables<'chat_messages'>;
 
 // The upstream library currently doesn't publish its internal type helpers, so
 // we declare a lightweight alias locally to satisfy TypeScript while keeping
@@ -38,21 +42,57 @@ interface AssistantChatProps {
   documentContext: string;
 }
 
-// User message component
-const UserMessage = () => (
-  <MessagePrimitive.Root className="flex justify-end px-4 py-2">
-    <div className="flex items-end gap-2 max-w-[80%]">
-      <div className="bg-blue-500 text-white px-4 py-3 rounded-2xl rounded-br-md shadow-sm">
-        <div className="prose prose-sm max-w-none prose-p:text-white prose-p:leading-relaxed prose-p:mb-4 prose-p:last:mb-0 prose-strong:text-white prose-li:mb-1 prose-ul:space-y-1 prose-ol:space-y-1 [&>*]:mb-3 [&>*:last-child]:mb-0">
-          <MessagePrimitive.Content />
+const ChatStoreContext = React.createContext<ReturnType<typeof useChatStore> | null>(null);
+
+// User message component with pending/failed styling
+const UserMessage = () => {
+  const msg = useMessage();
+  const chatStore = useContext(ChatStoreContext);
+
+  const isPending = msg?.status?.type === 'running';
+  const isFailed = msg?.status?.type === 'incomplete';
+
+  // Extract text content (first text part)
+  const textContent = Array.isArray(msg.content) && msg.content.length > 0 && msg.content[0].type === 'text'
+    ? msg.content[0].text
+    : '';
+
+  const bubbleClasses = isPending || isFailed
+    ? 'bg-gray-200 text-gray-700'
+    : 'bg-blue-500 text-white';
+
+  return (
+    <MessagePrimitive.Root className="flex justify-end px-4 py-2">
+      <div className="flex items-end gap-2 max-w-[80%]">
+        <div className={`${bubbleClasses} px-4 py-3 rounded-2xl rounded-br-md shadow-sm`}>          
+          <div className="prose prose-sm max-w-none prose-p:leading-relaxed prose-p:mb-4 prose-p:last:mb-0 prose-li:mb-1 prose-ul:space-y-1 prose-ol:space-y-1 [&>*]:mb-3 [&>*:last-child]:mb-0">
+            <MessagePrimitive.Content />
+          </div>
+          {isPending && (
+            <div className="flex items-center gap-1 mt-1 text-xs text-gray-500">
+              <CircleNotch size={12} className="animate-spin" weight="bold" />
+              <span>Sending…</span>
+            </div>
+          )}
+          {isFailed && (
+            <div className="flex items-center gap-1 mt-1 text-xs text-red-600">
+              <button
+                type="button"
+                onClick={() => chatStore?.sendMessage(textContent)}
+                className="underline"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center shadow-sm mb-1">
+          <User size={12} weight="bold" className="text-white" />
         </div>
       </div>
-      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center shadow-sm mb-1">
-        <User size={12} weight="bold" className="text-white" />
-      </div>
-    </div>
-  </MessagePrimitive.Root>
-);
+    </MessagePrimitive.Root>
+  );
+};
 
 // Assistant message component with loading state
 const AssistantMessage = () => (
@@ -258,12 +298,34 @@ function ChatRuntime({ chatStore }: { chatStore: ReturnType<typeof useChatStore>
         await chatStore.sendMessage(content);
       }
     },
-    convertMessage: (msg) => ({
-      id: msg.id,
-      role: msg.role as 'user' | 'assistant',
-      content: [{ type: 'text' as const, text: msg.content }],
-      createdAt: new Date(msg.created_at || new Date().toISOString())
-    })
+    convertMessage: (msg: ChatMessageDb) => {
+      // Determine if this is a local pending or failed placeholder using the `extra` JSONB field
+      const extra = (msg.extra && typeof msg.extra === 'object' && !Array.isArray(msg.extra))
+        ? (msg.extra as Record<string, unknown>)
+        : {}
+
+      const isPending = !!extra.pending
+      const isFailed = !!extra.failed
+
+      // Map to assistant-ui message shape
+      const base: any = {
+        id: msg.id,
+        role: msg.role as 'user' | 'assistant',
+        content: [{ type: 'text' as const, text: msg.content }],
+        createdAt: new Date(msg.created_at || new Date().toISOString()),
+        metadata: { custom: extra } as const
+      }
+
+      if (isPending) {
+        return { ...base, status: { type: 'running' } } as any
+      }
+
+      if (isFailed) {
+        return { ...base, status: { type: 'incomplete', reason: 'error', error: extra.error } } as any
+      }
+
+      return base as any
+    }
   });
   
   return (
@@ -364,7 +426,9 @@ export function AssistantChat({ documentId, documentContext }: AssistantChatProp
         </div>
       </div>
       
-      <ChatRuntime chatStore={chatStore} />
+      <ChatStoreContext.Provider value={chatStore}>
+        <ChatRuntime chatStore={chatStore} />
+      </ChatStoreContext.Provider>
     </div>
   );
 }

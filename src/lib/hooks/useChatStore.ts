@@ -121,9 +121,23 @@ export function useChatStore({
     }
     const trimmedContent = validation.trimmedContent!
     
-    setIsLoading(true);
-    setError(null);
-    
+    // 1. Insert local pending placeholder so the user sees their message immediately
+    const tempId = `pending-${crypto.randomUUID()}`
+    const pendingMessage: ChatMessage = {
+      id: tempId,
+      thread_id: threadId ?? 'pending',
+      sequence_number: -1,
+      content: trimmedContent,
+      role: 'user',
+      created_at: new Date().toISOString(),
+      ai_call_id: null,
+      extra: { pending: true } as unknown as ChatMessage['extra']
+    }
+    setMessages(prev => [...prev, pendingMessage])
+
+    setIsLoading(true)
+    setError(null)
+
     try {
       // Get auth token for API call
       const supabase = createClient();
@@ -220,7 +234,25 @@ export function useChatStore({
       
     } catch (err) {
       console.error('[Chat Store] Error sending message:', err);
-      setError(err instanceof Error ? err.message : 'Failed to send message');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send message'
+      setError(errorMessage)
+
+      // Mark the pending message as failed so UI can offer retry
+      setMessages(prev => prev.map(m => {
+        if (m.id !== tempId) return m
+        const baseExtra = (m.extra && typeof m.extra === 'object' && !Array.isArray(m.extra))
+          ? (m.extra as Record<string, unknown>)
+          : {}
+        return {
+          ...m,
+          extra: {
+            ...baseExtra,
+            pending: false,
+            failed: true,
+            error: errorMessage
+          } as ChatMessage['extra']
+        } as ChatMessage
+      }))
       throw err; // Re-throw for caller handling
     } finally {
       setIsLoading(false);

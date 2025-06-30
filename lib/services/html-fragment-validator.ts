@@ -42,12 +42,14 @@ export const validationResultSchema = z.object({
     type: z.enum(['error', 'warning', 'info']),
     message: z.string(),
     element: z.string().optional(),
+    pageNumber: z.number().int().optional(),
     wcagLevel: z.enum(['A', 'AA', 'AAA']).optional()
   })),
   academicIssues: z.array(z.object({
     type: z.enum(['error', 'warning', 'info']),
     message: z.string(),
     element: z.string().optional(),
+    pageNumber: z.number().int().optional(),
     category: z.enum(['figures', 'tables', 'citations', 'equations', 'structure']).optional()
   })),
   performanceMetrics: z.object({
@@ -79,6 +81,7 @@ type AccessibilityIssue = {
   type: 'error' | 'warning' | 'info';
   message: string;
   element?: string;
+  pageNumber?: number;
   wcagLevel?: 'A' | 'AA' | 'AAA';
 }
 
@@ -86,6 +89,8 @@ type AcademicIssue = {
   type: 'error' | 'warning' | 'info';
   message: string;
   element?: string;
+  pageNumber?: number;
+  category?: 'figures' | 'tables' | 'citations' | 'equations' | 'structure';
 }
 
 // Standard academic HTML tags allowed in fragments
@@ -774,6 +779,4 @@ export async function validateFragmentsBatch(
   })
   
   return results
-}
-
 }
