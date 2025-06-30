@@ -597,9 +597,24 @@ Serverless (Vercel Node runtime)
   - ✅ Progressive backoff with retry delay
   - ✅ Comprehensive test coverage (22 tests passing)
 
-#### Stage: Document finaliser
-- [ ] Create `/api/finalise-vision-document` expecting `{ documentId, html, pageCount }`.
-- [ ] Validate pageCount vs stored assets, store HTML in DB, enqueue shared processing.
+#### Stage: Document finaliser ✅ **COMPLETED**
+- [x] Create `/api/finalise-vision-document` expecting `{ documentId, html, pageCount }`.
+  - ✅ Created comprehensive API route with request validation using Zod
+  - ✅ Validates authentication and prevents duplicate finalisation
+  - ✅ Checks document assets (non-fatal if missing)
+  - ✅ Processes through shared pipeline with explicit document ID
+- [x] Validate pageCount vs stored assets, store HTML in DB, enqueue shared processing.
+  - ✅ Asset validation implemented (warns but doesn't fail if assets missing)
+  - ✅ Modified shared pipeline to accept explicit document IDs
+  - ✅ Updated DocumentService to support explicit IDs in createWithStorage
+  - ✅ Comprehensive test suite with 10 test cases
+
+**Stage Implementation Notes**:
+- **API Design**: Clean separation of concerns - validation, asset checking, document creation
+- **Error Handling**: Proper HTTP status codes for different error scenarios
+- **Document ID**: Extended shared pipeline to accept explicit document IDs from vision pipeline
+- **Asset Validation**: Non-blocking validation - documents can be created even if image uploads failed
+- **Test Coverage**: Full test coverage including edge cases and error scenarios
 
 #### Stage: UI integration & progress UX
 - [ ] Show page-by-page progress, failures, retry option.

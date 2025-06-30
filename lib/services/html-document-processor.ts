@@ -30,6 +30,7 @@ export interface ProcessingMetadata {
   provider?: string
   correlationId: string
   aiCallId?: string
+  documentId?: string // Optional explicit document ID for vision pipeline
 }
 
 /**
@@ -133,7 +134,7 @@ export async function processHtmlToDocument(
   additionalMetadata: AdditionalMetadata = {}
 ): Promise<ProcessedDocument> {
   const { logger, userId, extractionMethod, uploadSource, supabase } = options
-  const { correlationId, sourceUrl, isPublic, originalFile, filename, aiCallId } = metadata
+  const { correlationId, sourceUrl, isPublic, originalFile, filename, aiCallId, documentId } = metadata
 
   // Sanitize the document title first
   const sanitizedTitle = sanitizeDocumentTitle(metadata.title)
@@ -198,7 +199,8 @@ export async function processHtmlToDocument(
     originalFile,
     filename || 'document',
     uploadMetadata,
-    aiCallId
+    aiCallId,
+    documentId // Pass explicit document ID if provided
   )
 
   logger.info({

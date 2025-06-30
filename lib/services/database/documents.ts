@@ -336,10 +336,11 @@ export class DocumentService {
     originalFile?: File | Blob,
     originalFilename?: string,
     uploadMetadata?: Record<string, string | number | boolean | null>,
-    uploadAiCallId?: string
+    uploadAiCallId?: string,
+    explicitDocumentId?: string // Optional explicit document ID
   ): Promise<{ document: Document; storageResult?: StorageUploadResult | null }> {
-    // Generate document ID early so we can use it for storage path
-    const documentId = crypto.randomUUID()
+    // Use provided document ID or generate a new one
+    const documentId = explicitDocumentId || crypto.randomUUID()
     
     let storageResult: StorageUploadResult | null | undefined
     let storagePath: string | null = null
