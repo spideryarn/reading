@@ -14,6 +14,8 @@ Do you feel confident about how to resolve the merge conflict?
 - Is there a risk that we might lose information/contributions, break things, or otherwise create future problems?
 If in doubt, stop & discuss immediately.
 
+Don't use subagents.
+
 Ultrathink.
 
 Make a proposal. Don't make changes yet.
