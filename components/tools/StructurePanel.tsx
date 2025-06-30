@@ -5,12 +5,12 @@
 // See planning/250627a_consolidate_headings_tabs_into_structure_tab.md for implementation details
 
 import React, { useState, useEffect, useRef, useCallback, type JSX } from 'react'
-import { CircleNotch, TreeStructure, Trash } from '@phosphor-icons/react'
+import { CircleNotch, TreeStructure, Trash, ArrowRight } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import type { GranularityKey } from '@/lib/prompts/templates/summarise'
 import { useMutation, useActiveMutationType } from '@/lib/context/mutation-context'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
-import { SUMMARY_CONFIG } from '@/lib/config'
+import { SUMMARY_CONFIG, HEADING_ITERATION_CONFIG } from '@/lib/config'
 import { generateHeadingMutation, extractHeadingsFromMutation } from '@/lib/services/heading-mutation-generator'
 import { HeadingTree, type Heading } from '../heading-tree'
 import { Button } from '@/components/ui/button'
@@ -19,6 +19,8 @@ import { AlertWithIcon } from '@/components/ui/alert'
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
+import { useToolExecutorWithNavigation } from '@/lib/tools/hooks/use-tool-executor-with-navigation'
+import type { HeadingOperation } from '@/lib/prompts/templates/headings'
 
 // Component props interface
 interface StructurePanelProps {
@@ -30,8 +32,49 @@ interface StructurePanelProps {
   headingVisibility?: Map<string, 'visible' | 'not-visible'>
 }
 
+// Legacy heading format for mutation generator - must match lib/services/heading-mutation-generator.ts
+interface AIHeading {
+  insertNewBeforeExistingId: string
+  html: string
+}
+
 // Internal state for tracking the current mode
 type StructureMode = 'original' | 'ai-generated'
+
+// State for tracking iteration progress
+interface IterationState {
+  currentIteration: number
+  totalOperations: number
+  operations: HeadingOperation[]
+  summaries: string[]
+  isComplete: boolean
+}
+
+// Response types for structure tool
+interface StructureGetResponse {
+  operations?: HeadingOperation[]
+  cached: boolean
+  enhancementId?: string | null
+  type: string
+}
+
+interface StructureIterateResponse {
+  operations: HeadingOperation[]
+  more_changes_required: boolean
+  iteration_summary: string
+  safety_check: {
+    current_iteration: number
+    total_operations_so_far: number
+    max_iterations_reached: boolean
+  }
+  cached?: boolean
+}
+
+interface StructureDeleteResponse {
+  success: boolean
+  deleted: boolean
+  documentId: string
+}
 
 // Tooltip granularity setting
 const TOOLTIP_GRANULARITY: GranularityKey = 'single short paragraph'
@@ -204,6 +247,7 @@ export function StructurePanel({
   const { applyMutation, revertMutation, mutationState, document: mutatedDocument } = useMutation()
   const activeMutationType = useActiveMutationType()
   const { state: commState } = useDocumentCommunication()
+  const executeToolWithNavigation = useToolExecutorWithNavigation()
   
   // Determine current mode based on mutation state
   const currentMode: StructureMode = activeMutationType === 'insert-headings' ? 'ai-generated' : 'original'
@@ -222,6 +266,17 @@ export function StructurePanel({
   const [enhancementId, setEnhancementId] = useState<string | null>(null)
   const [hasInitialized, setHasInitialized] = useState(false)
   const fetchInProgressRef = useRef(false)
+  
+  // Iteration state
+  const [iterationState, setIterationState] = useState<IterationState>({
+    currentIteration: 0,
+    totalOperations: 0,
+    operations: [],
+    summaries: [],
+    isComplete: false
+  })
+  const [showIterationControls, setShowIterationControls] = useState(false)
+  const [isIterationInProgress, setIsIterationInProgress] = useState(false)
 
   /**
    * Failsafe timer to ensure the UI never remains indefinitely in a
@@ -336,8 +391,8 @@ export function StructurePanel({
     }
   }, [headings, granularityLevel])
 
-  // Helper function to fetch cached headings from database
-  const fetchCachedHeadings = async (documentId: string) => {
+  // Helper function to fetch cached headings from database using tool executor
+  const fetchCachedHeadings = useCallback(async (documentId: string) => {
     if (fetchInProgressRef.current) {
       console.log('Fetch already in progress, skipping duplicate request')
       return null
@@ -346,20 +401,23 @@ export function StructurePanel({
     fetchInProgressRef.current = true
     
     try {
-      const response = await fetch(`/api/tools/structure?documentId=${documentId}`)
-      if (!response.ok) {
-        console.error('Failed to fetch cached headings:', response.status)
-        return null
+      const result = await executeToolWithNavigation('structure', 'get', {
+        documentId,
+        action: 'get'
+      })
+      
+      const data = result.data as StructureGetResponse
+      if (data && data.cached) {
+        return data
       }
-      const data = await response.json()
-      return data.cached ? data : null
+      return null
     } catch (error) {
       console.error('Error fetching cached headings:', error)
       return null
     } finally {
       fetchInProgressRef.current = false
     }
-  }
+  }, [executeToolWithNavigation])
 
   // Helper function to apply cached headings without API call
   const applyCachedHeadings = useCallback(async (cachedHeadings: Array<{ id_of_after?: string; insertNewBeforeExistingId?: string; html: string }>) => {
@@ -378,7 +436,7 @@ export function StructurePanel({
       }
       
       // Map cached format { id_of_after, html } -> { insertNewBeforeExistingId, html }
-      const convertedHeadings = cachedHeadings.map(h => ({
+      const convertedHeadings: AIHeading[] = cachedHeadings.map(h => ({
         insertNewBeforeExistingId: h.insertNewBeforeExistingId ?? h.id_of_after ?? '',
         html: h.html
       }))
@@ -410,7 +468,162 @@ export function StructurePanel({
     }
   }, [documentId, applyMutation, mutationState.activeMutation])
 
-  // Core headings generation logic
+  // New iterative heading generation function
+  const generateHeadingsIteratively = useCallback(async () => {
+    const attemptId = ++attemptIdRef.current
+    console.group(`[StructurePanel] generateHeadingsIteratively attempt #${attemptId}`)
+    
+    // Prevent concurrent iterations
+    if (isIterationInProgress) {
+      console.warn('[StructurePanel] Iteration already in progress, skipping duplicate request')
+      console.groupEnd()
+      return
+    }
+    
+    setIsIterationInProgress(true)
+    
+    // Quick fail-fast for large documents
+    const MAX_ELEMENTS_FOR_HEADINGS_GEN = 8000
+    const MAX_HTML_LENGTH_FOR_HEADINGS_GEN = 800_000 // ~800 KB
+
+    if (elements && elements.length > MAX_ELEMENTS_FOR_HEADINGS_GEN) {
+      const msg = `Document has ${elements.length.toLocaleString()} elements – AI heading generation is currently limited to ${MAX_ELEMENTS_FOR_HEADINGS_GEN.toLocaleString()} elements.`
+      console.error('[StructurePanel] ', msg)
+      setHeadingsError(msg)
+      setIsLoadingHeadings(false)
+      setIsIterationInProgress(false)
+      console.groupEnd()
+      return
+    }
+    if (content && content.length > MAX_HTML_LENGTH_FOR_HEADINGS_GEN) {
+      const msg = `Document HTML is ${Math.round(content.length / 1024)} KB – exceeds current 800 KB limit for AI heading generation.`
+      console.error('[StructurePanel] ', msg)
+      setHeadingsError(msg)
+      setIsLoadingHeadings(false)
+      setIsIterationInProgress(false)
+      console.groupEnd()
+      return
+    }
+    
+    try {
+      // Prepare HTML content
+      let htmlWithIds = ''
+      if (elements && elements.length > 0) {
+        htmlWithIds = elements.map(el => {
+          const attrs = Object.entries(el.attributes)
+            .map(([key, value]) => `${key}="${value}"`)
+            .join(' ')
+          const attrString = attrs ? ` ${attrs}` : ''
+          
+          if (el.content) {
+            return `<${el.tag_name} id="${el.id}"${attrString}>${el.content}</${el.tag_name}>`
+          } else {
+            return `<${el.tag_name} id="${el.id}"${attrString} />`
+          }
+        }).join('\n')
+      } else if (content) {
+        htmlWithIds = content
+      } else {
+        throw new Error('Cannot generate headings: No content or elements available')
+      }
+      
+      // Call iterate action for current iteration
+      const result = await executeToolWithNavigation('structure', 'iterate', {
+        html_content: htmlWithIds,
+        documentId: documentId,
+        iteration_count: iterationState.currentIteration,
+        previous_iteration_summary: iterationState.summaries[iterationState.summaries.length - 1],
+        existing_operations: iterationState.operations,
+        total_operations_count: iterationState.totalOperations
+      })
+      
+      const response = result.data as StructureIterateResponse
+      if (!response || !response.operations) {
+        throw new Error('API returned no operations')
+      }
+      
+      // Check for empty operations (perfect headings case)
+      if (response.operations.length === 0) {
+        console.log('No operations returned - document headings are already optimal')
+        setIterationState(prev => ({
+          currentIteration: prev.currentIteration + 1,
+          totalOperations: prev.totalOperations,
+          operations: prev.operations,
+          summaries: [...prev.summaries, response.iteration_summary || 'No changes needed - headings are already well-structured'],
+          isComplete: true
+        }))
+        setIsLoadingHeadings(false)
+        setShowIterationControls(false)
+        setIsIterationInProgress(false)
+        return
+      }
+      
+      // Update iteration state
+      setIterationState(prev => ({
+        currentIteration: prev.currentIteration + 1,
+        totalOperations: response.safety_check.total_operations_so_far,
+        operations: [...prev.operations, ...response.operations],
+        summaries: [...prev.summaries, response.iteration_summary],
+        isComplete: !response.more_changes_required || response.safety_check.max_iterations_reached
+      }))
+      
+      // Apply the new operations to the document
+      const legacyHeadings: AIHeading[] = response.operations
+        .filter((op) => (op.action === 'insert' || op.action === 'replace') && op.content)
+        .map((op) => ({
+          html: `<${op.content!.tag_name}>${op.content!.content}</${op.content!.tag_name}>`,
+          insertNewBeforeExistingId: (op.action === 'insert' ? op.insertNewBeforeExistingId : op.targetId) || ''
+        }))
+      
+      if (legacyHeadings.length > 0) {
+        const mutation = generateHeadingMutation({
+          headings: legacyHeadings,
+          documentId: documentId,
+          isRegeneration: false
+        })
+        
+        const mutationResult = await applyMutation(mutation)
+        
+        if (mutationResult.success) {
+          const generatedHeadings = extractHeadingsFromMutation(mutation).map(h => ({
+            ...h,
+            elementId: h.id
+          }))
+          setHeadings(generatedHeadings)
+          setCollapsedIds(new Set())
+        } else {
+          throw new Error(mutationResult.error || 'Failed to apply mutation')
+        }
+      }
+      
+      // Show iteration controls if more changes are needed
+      if (!response.more_changes_required || response.safety_check.max_iterations_reached) {
+        setIsLoadingHeadings(false)
+        setShowIterationControls(false)
+        setIsIterationInProgress(false)
+        if (response.safety_check.max_iterations_reached) {
+          setHeadingsError('Maximum iterations reached. The document structure has been improved as much as possible within safety limits.')
+        }
+      } else {
+        setIsLoadingHeadings(false)
+        setShowIterationControls(true)
+        setIsIterationInProgress(false)
+      }
+      
+      console.groupEnd()
+    } catch (error) {
+      setIsLoadingHeadings(false)
+      setIsIterationInProgress(false)
+      console.error('Error in generateHeadingsIteratively:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate headings iteratively'
+      setHeadingsError(errorMessage)
+      console.groupEnd()
+    }
+  }, [content, elements, documentId, iterationState, applyMutation, executeToolWithNavigation, isIterationInProgress])
+  
+  // Core headings generation logic (legacy all-at-once mode)
+  // Keeping for potential future use or backward compatibility
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const generateHeadingsFromAPI = useCallback(async (isRegeneration = false) => {
     const attemptId = ++attemptIdRef.current
     console.group(`[StructurePanel] generateHeadingsFromAPI attempt #${attemptId}`)
@@ -451,13 +664,6 @@ export function StructurePanel({
         return
       }
       
-      // Timeout machinery for fetch – 60 s hard limit
-      const HEADINGS_GENERATION_TIMEOUT_MS = 60_000 // 1 minute
-      const abortController = new AbortController()
-      const timeoutId = setTimeout(() => {
-        abortController.abort()
-      }, HEADINGS_GENERATION_TIMEOUT_MS)
-
       try {
         let htmlWithIds = ''
         if (elements && elements.length > 0) {
@@ -483,48 +689,26 @@ export function StructurePanel({
         
         console.log('Sending POST /api/tools/structure with content length:', htmlWithIds.length)
         
-        const response = await fetch('/api/tools/structure', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            action: 'execute',
-            parameters: {
-              html_content: htmlWithIds,
-              documentId: documentId
-            },
-            metadata: {
-              correlationId: crypto.randomUUID(),
-              source: 'direct',
-              timestamp: new Date().toISOString()
-            }
-          }),
-          signal: abortController.signal,
+        const result = await executeToolWithNavigation('structure', 'execute', {
+          html_content: htmlWithIds,
+          documentId: documentId
         })
 
-        if (!response.ok) {
-          const errorText = await response.text()
-          const error = new Error(`API failed with status ${response.status}: ${errorText}`)
-          console.error('Headings API error:', error)
+        const data = result.data as StructureGetResponse
+        if (!data || !data.operations) {
+          const error = new Error('API returned no operations')
+          console.error('Empty operations response:', result)
           throw error
         }
-
-        const data = await response.json()
+        
         console.log('Generate headings response:', data)
         
-        if (!data.operations || data.operations.length === 0) {
-          const error = new Error('API returned no operations')
-          console.error('Empty operations response:', data)
-          throw error
-        }
-        
         // Convert operations to legacy headings format for generateHeadingMutation
-        const legacyHeadings = data.operations
-          .filter((op: { action: string; content?: { tag_name: string; content: string } }) => (op.action === 'insert' || op.action === 'replace') && op.content)
-          .map((op: { action: string; content: { tag_name: string; content: string }; insertNewBeforeExistingId?: string; targetId?: string }) => ({
-            html: `<${op.content.tag_name}>${op.content.content}</${op.content.tag_name}>`,
-            insertNewBeforeExistingId: op.action === 'insert' ? op.insertNewBeforeExistingId : op.targetId
+        const legacyHeadings: AIHeading[] = data.operations
+          .filter((op) => (op.action === 'insert' || op.action === 'replace') && op.content)
+          .map((op) => ({
+            html: `<${op.content!.tag_name}>${op.content!.content}</${op.content!.tag_name}>`,
+            insertNewBeforeExistingId: (op.action === 'insert' ? op.insertNewBeforeExistingId : op.targetId) || ''
           }))
         
         const mutation = generateHeadingMutation({
@@ -533,9 +717,9 @@ export function StructurePanel({
           isRegeneration: isRegeneration
         })
         
-        const result = await applyMutation(mutation)
+        const mutationResult = await applyMutation(mutation)
         
-        if (result.success) {
+        if (mutationResult.success) {
           const generatedHeadings = extractHeadingsFromMutation(mutation).map(h => ({
             ...h,
             elementId: h.id
@@ -545,19 +729,14 @@ export function StructurePanel({
           setIsLoadingHeadings(false)
         } else {
           setIsLoadingHeadings(false) // FIX: Ensure loading state is cleared on mutation failure
-          throw new Error(result.error || 'Failed to apply mutation')
+          throw new Error(mutationResult.error || 'Failed to apply mutation')
         }
       } catch (error) {
         // CRITICAL FIX: Ensure loading state is always cleared, even on unexpected errors
         setIsLoadingHeadings(false)
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          console.error('Headings generation timed out after', HEADINGS_GENERATION_TIMEOUT_MS / 1000, 'seconds')
-          throw new Error('Timed out: AI headings generation took too long. Please try again later.')
-        }
         console.error('Error in generateHeadingsFromAPI:', error)
         throw error // Re-throw to maintain error handling in calling functions
       } finally {
-        clearTimeout(timeoutId)
         console.groupEnd()
       }
     } catch (error) {
@@ -566,16 +745,26 @@ export function StructurePanel({
       console.error('Error in generateHeadingsFromAPI:', error)
       throw error // Re-throw to maintain error handling in calling functions
     }
-  }, [content, elements, documentId, mutationState.activeMutation, applyMutation, currentMode])
+  }, [content, elements, documentId, mutationState.activeMutation, applyMutation, currentMode, executeToolWithNavigation])
 
-  // Public API for manual headings generation
+  // Public API for manual headings generation (now uses iterative approach)
   const handleGenerateHeadings = async () => {
     setIsLoadingHeadings(true)
     setHeadingsError(null)
+    setShowIterationControls(false)
+    
+    // Reset iteration state for new generation
+    setIterationState({
+      currentIteration: 0,
+      totalOperations: 0,
+      operations: [],
+      summaries: [],
+      isComplete: false
+    })
     
     try {
-      await generateHeadingsFromAPI()
-      // NOTE: setIsLoadingHeadings(false) is handled inside generateHeadingsFromAPI on success
+      await generateHeadingsIteratively()
+      // NOTE: setIsLoadingHeadings(false) is handled inside generateHeadingsIteratively
     } catch (error) {
       console.error('Error generating headings:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate headings'
@@ -583,12 +772,35 @@ export function StructurePanel({
       setIsLoadingHeadings(false)
     }
   }
+  
+  // Handle continuing iteration
+  const handleContinueIteration = async () => {
+    setIsLoadingHeadings(true)
+    setHeadingsError(null)
+    setShowIterationControls(false)
+    
+    try {
+      await generateHeadingsIteratively()
+    } catch (error) {
+      console.error('Error continuing iteration:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to continue iteration'
+      setHeadingsError(errorMessage)
+      setIsLoadingHeadings(false)
+    }
+  }
+  
+  // Handle finishing iteration early
+  const handleFinishIteration = () => {
+    setShowIterationControls(false)
+    setIterationState(prev => ({ ...prev, isComplete: true }))
+  }
 
   // Remove AI headings functionality
   const handleRemoveHeadings = async () => {
     console.log('Removing AI headings...')
     setIsLoadingHeadings(true)
     setHeadingsError(null)
+    setShowIterationControls(false)
     
     try {
       const activeMutationType = mutationState.activeMutation?.type
@@ -604,14 +816,24 @@ export function StructurePanel({
       
       if (enhancementId) {
         console.log('Deleting cached headings enhancement...')
-        const deleteResponse = await fetch(`/api/tools/structure?documentId=${documentId}`, {
-          method: 'DELETE'
+        const deleteResult = await executeToolWithNavigation('structure', 'delete', {
+          documentId
         })
         
-        if (!deleteResponse.ok) {
+        const deleteData = deleteResult.data as StructureDeleteResponse
+        if (!deleteData?.success) {
           console.warn('Failed to delete cached headings')
         }
       }
+      
+      // Reset iteration state
+      setIterationState({
+        currentIteration: 0,
+        totalOperations: 0,
+        operations: [],
+        summaries: [],
+        isComplete: false
+      })
       
       setEnhancementId(null)
       setIsLoadingHeadings(false)
@@ -655,10 +877,10 @@ export function StructurePanel({
           setEnhancementId(cached.enhancementId || null)
           
           // Convert operations to legacy headings format for applyCachedHeadings
-          const legacyHeadings = cached.operations
-            .filter((op: { action: string; content?: { tag_name: string; content: string } }) => (op.action === 'insert' || op.action === 'replace') && op.content)
-            .map((op: { action: string; content: { tag_name: string; content: string }; insertNewBeforeExistingId?: string; targetId?: string }) => ({
-              html: `<${op.content.tag_name}>${op.content.content}</${op.content.tag_name}>`,
+          const legacyHeadings: Array<{ id_of_after?: string; insertNewBeforeExistingId?: string; html: string }> = cached.operations
+            .filter((op: HeadingOperation) => (op.action === 'insert' || op.action === 'replace') && op.content)
+            .map((op: HeadingOperation) => ({
+              html: `<${op.content!.tag_name}>${op.content!.content}</${op.content!.tag_name}>`,
               insertNewBeforeExistingId: op.action === 'insert' ? op.insertNewBeforeExistingId : op.targetId
             }))
           
@@ -695,7 +917,7 @@ export function StructurePanel({
       }
       isCancelled = true
     }
-  }, [documentId, hasInitialized, applyCachedHeadings, content, elements])
+  }, [documentId, hasInitialized, applyCachedHeadings, content, elements, fetchCachedHeadings])
 
   const handleHeadingClick = (heading: Heading) => {
     if (onHeadingClick) {
@@ -853,7 +1075,7 @@ export function StructurePanel({
         {currentMode === 'original' && headings.length > 0 && (
           <Button
             onClick={handleGenerateHeadings}
-            disabled={isLoadingHeadings}
+            disabled={isLoadingHeadings || isIterationInProgress}
             variant="ghost"
             size="sm"
             className="text-green-600 hover:text-green-800 hover:bg-green-100 ml-auto"
@@ -861,10 +1083,10 @@ export function StructurePanel({
             {isLoadingHeadings ? (
               <>
                 <CircleNotch className="animate-spin" size={14} />
-                <span className="ml-1">Generating...</span>
+                <span className="ml-1">Improving...</span>
               </>
             ) : (
-              'Generate AI headings'
+              'Improve headings'
             )}
           </Button>
         )}
@@ -905,12 +1127,12 @@ export function StructurePanel({
         {currentMode === 'original' && (
           <Button
             onClick={handleGenerateHeadings}
-            disabled={isLoadingHeadings}
+            disabled={isLoadingHeadings || isIterationInProgress}
             variant="outline"
             size="full"
             className="mt-3 text-green-600 bg-green-50 border-green-200 hover:bg-green-100"
           >
-            Generate AI headings
+            Improve document structure
           </Button>
         )}
       </div>
@@ -922,7 +1144,17 @@ export function StructurePanel({
     return (
       <div className="p-4">
         {renderStatusBadge()}
-        <Loading text="Generating headings..." spinnerSize={20} />
+        <div className="space-y-4">
+          <Loading text={`Improving headings (Iteration ${iterationState.currentIteration + 1})...`} spinnerSize={20} />
+          {iterationState.currentIteration > 0 && (
+            <div className="text-sm text-gray-600">
+              <p>Operations so far: {iterationState.totalOperations}</p>
+              {iterationState.summaries.length > 0 && (
+                <p className="mt-1">Last change: {iterationState.summaries[iterationState.summaries.length - 1]}</p>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     )
   }
@@ -940,6 +1172,7 @@ export function StructurePanel({
           />
           <Button
             onClick={handleGenerateHeadings}
+            disabled={isIterationInProgress}
             variant="outline"
             size="full"
             className="text-green-600 bg-green-50 border-green-200 hover:bg-green-100"
@@ -955,6 +1188,60 @@ export function StructurePanel({
   return (
     <div className="p-4 h-full flex flex-col overflow-y-auto">
       {renderStatusBadge()}
+      
+      {/* Show iteration controls if needed */}
+      {showIterationControls && !isLoadingHeadings && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="text-sm space-y-2">
+            <p className="font-medium text-blue-900">
+              Iteration {iterationState.currentIteration} complete
+            </p>
+            <p className="text-blue-700">
+              {iterationState.operations.length} operations applied • {iterationState.totalOperations} total operations
+            </p>
+            {iterationState.summaries.length > 0 && (
+              <p className="text-blue-600 italic">
+                &ldquo;{iterationState.summaries[iterationState.summaries.length - 1]}&rdquo;
+              </p>
+            )}
+            <div className="flex gap-2 mt-3">
+              <Button
+                onClick={handleContinueIteration}
+                variant="default"
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={
+                  isIterationInProgress ||
+                  iterationState.currentIteration >= HEADING_ITERATION_CONFIG.MAX_ITERATIONS ||
+                  iterationState.totalOperations >= HEADING_ITERATION_CONFIG.MAX_TOTAL_OPERATIONS
+                }
+              >
+                <ArrowRight size={14} className="mr-1" />
+                Continue improving
+              </Button>
+              <Button
+                onClick={handleFinishIteration}
+                variant="outline"
+                size="sm"
+                disabled={isIterationInProgress}
+              >
+                Finish
+              </Button>
+            </div>
+            <p className="text-xs text-blue-600 mt-2">
+              {HEADING_ITERATION_CONFIG.MAX_ITERATIONS - iterationState.currentIteration} iterations remaining • 
+              {HEADING_ITERATION_CONFIG.MAX_TOTAL_OPERATIONS - iterationState.totalOperations} operations available
+            </p>
+            {(iterationState.currentIteration >= HEADING_ITERATION_CONFIG.MAX_ITERATIONS ||
+              iterationState.totalOperations >= HEADING_ITERATION_CONFIG.MAX_TOTAL_OPERATIONS) && (
+              <p className="text-xs text-amber-600 mt-1 font-medium">
+                Safety limit reached - Click &ldquo;Finish&rdquo; to complete
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+      
       <HeadingTree
         headings={headings}
         themeColors={{

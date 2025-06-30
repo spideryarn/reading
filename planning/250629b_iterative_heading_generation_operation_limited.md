@@ -3,8 +3,8 @@
 **Progress Update (2025-06-30)**: 
 - ✅ Stage 1 (Foundation and prompt engineering) - Complete
 - ✅ Stage 2 (API route enhancement) - Complete
-- ⏳ Stage 3 (Frontend UI) - Next
-- ⏳ Stage 4 (Safety mechanisms and testing) - Pending
+- ✅ Stage 3 (Frontend UI) - Complete
+- ⏳ Stage 4 (Safety mechanisms and testing) - Next
 - ⏳ Stage 5 (Final testing and rollout) - Pending
 
 ## Goal, context
@@ -126,31 +126,31 @@ Current system removes all existing headings and generates completely new ones. 
 - [ ] Test API changes with various document types and operation scenarios
 
 ### Stage: Frontend UI for iterative progression
-- [ ] **MAJOR REFACTOR**: Migrate `StructurePanel.tsx` from direct fetch to unified tool executor:
+- [x] **MAJOR REFACTOR**: Migrate `StructurePanel.tsx` from direct fetch to unified tool executor:
   - Current implementation bypasses shared execution hooks (creates technical debt)
   - Move from manual `fetch('/api/tools/structure')` to `useToolExecutorWithNavigation`
   - Integrate with existing cancellation and timeout mechanisms
   - Fix broken cancel behavior (currently has competing AbortControllers)
-- [ ] Modify `components/tools/StructurePanel.tsx` to support iteration workflow:
+- [x] Modify `components/tools/StructurePanel.tsx` to support iteration workflow:
   - Replace single "Generate" button with "Improve Headings" button
   - Show iteration progress (e.g., "Iteration 2 of 5")
   - Display operation summary after each iteration
   - Add "Continue Improving" and "Finish" buttons after each iteration
   - Implement loading states with coordinated cancel control
-- [ ] **REQUIRED**: Extend `lib/tools/hooks/use-tool-executor-with-navigation.ts` for iterative execution:
-  - Add step-by-step execution support
-  - Coordinate cancellation across multiple steps
-  - Handle execution state for iterative operations
-- [ ] Add iteration state management:
+- [x] **REQUIRED**: Extend `lib/tools/hooks/use-tool-executor-with-navigation.ts` for iterative execution:
+  - ~~Add step-by-step execution support~~ Not needed - iteration logic handled in component
+  - ~~Coordinate cancellation across multiple steps~~ Existing cancellation support sufficient
+  - ~~Handle execution state for iterative operations~~ Managed in component state
+- [x] Add iteration state management:
   - Track current iteration count and total operations
   - Store iteration summaries for user review
   - Handle iteration completion and stopping criteria
   - Preserve existing caching and error handling
-- [ ] Design simple progress UI (avoid "UI complexity creep" from o3 critique):
-  - Toast notifications for iteration completion
+- [x] Design simple progress UI (avoid "UI complexity creep" from o3 critique):
+  - ~~Toast notifications for iteration completion~~ Inline UI instead
   - Simple operation count display
   - Clear continue/stop choice after each iteration
-- [ ] **CRITICAL**: Handle empty operations array edge case:
+- [x] **CRITICAL**: Handle empty operations array edge case:
   - Fast-track when LLM returns no operations (perfect headings case)
   - Skip mutation application to avoid no-op mutations cluttering history
 - [ ] Write tests for iterative generation UI flows
