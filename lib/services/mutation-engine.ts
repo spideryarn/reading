@@ -43,9 +43,13 @@ export class MutationEngine {
       // Create a deep copy to work with
       const draft = document.map(el => ({ ...el }))
       
+      // Track IDs that will be inserted by this mutation so that subsequent
+      // transforms can legally reference them (enables chained insertions).
+      const plannedInsertIds = new Set<string>()
+      
       // Validate ALL transforms first (atomic operation)
       for (const transform of mutation.forward) {
-        const validation = this.validateTransform(draft, transform)
+        const validation = this.validateTransform(draft, transform, plannedInsertIds)
         if (!validation.valid) {
           const errorResult = {
             success: false,
@@ -545,7 +549,8 @@ export class MutationEngine {
    */
   private static validateTransform(
     document: DocumentElement[],
-    transform: DocumentTransform
+    transform: DocumentTransform,
+    plannedInsertIds: Set<string> = new Set()
   ): { valid: boolean; error: string } {
     switch (transform.action) {
       case 'insert':
@@ -569,7 +574,7 @@ export class MutationEngine {
         const targetId = hasAfter ? transform.insertNewAfterExistingId : transform.insertNewBeforeExistingId
         const insertionType = hasAfter ? 'after' : 'before'
         
-        if (!document.find(el => el.id === targetId)) {
+        if (!document.find(el => el.id === targetId) && !plannedInsertIds.has(targetId as string)) {
           return { valid: false, error: `Cannot insert ${insertionType} element ${targetId}: element not found` }
         }
         
@@ -578,9 +583,12 @@ export class MutationEngine {
           return { valid: false, error: 'Insert transform missing content.id' }
         }
         
-        if (document.find(el => el.id === transform.content.id)) {
+        if (document.find(el => el.id === transform.content!.id) || plannedInsertIds.has(transform.content!.id)) {
           return { valid: false, error: `Cannot insert element with duplicate ID: ${transform.content.id}` }
         }
+        
+        // The ID will be available for subsequent transforms
+        plannedInsertIds.add(transform.content!.id)
         
         return { valid: true, error: '' }
         
