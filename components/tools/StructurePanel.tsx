@@ -5,7 +5,7 @@
 // See planning/250627a_consolidate_headings_tabs_into_structure_tab.md for implementation details
 
 import React, { useState, useEffect, useRef, useCallback, type JSX } from 'react'
-import { CircleNotch, TreeStructure, Trash, ArrowRight } from '@phosphor-icons/react'
+import { CircleNotch, TreeStructure, Trash, ArrowRight, Stop } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
 import type { GranularityKey } from '@/lib/prompts/templates/summarise'
 import { useMutation, useActiveMutationType } from '@/lib/context/mutation-context'
@@ -277,6 +277,7 @@ export function StructurePanel({
   })
   const [showIterationControls, setShowIterationControls] = useState(false)
   const [isIterationInProgress, setIsIterationInProgress] = useState(false)
+  const [autoIterationStopped, setAutoIterationStopped] = useState(false)
 
   /**
    * Failsafe timer to ensure the UI never remains indefinitely in a
@@ -468,6 +469,12 @@ export function StructurePanel({
     }
   }, [documentId, applyMutation, mutationState.activeMutation])
 
+  // Function to stop auto-iteration
+  const handleStopAutoIteration = useCallback(() => {
+    console.log('[StructurePanel] User manually stopped auto-iteration')
+    setAutoIterationStopped(true)
+  }, [])
+
   // New iterative heading generation function
   const generateHeadingsIteratively = useCallback(async () => {
     const attemptId = ++attemptIdRef.current
@@ -596,15 +603,31 @@ export function StructurePanel({
         }
       }
       
-      // Show iteration controls if more changes are needed
+      // Determine if we should automatically continue or show manual controls
+      const shouldAutoContinue = HEADING_ITERATION_CONFIG.AUTO_ITERATE_HEADINGS &&
+                                 !autoIterationStopped &&
+                                 response.more_changes_required &&
+                                 !response.safety_check.max_iterations_reached &&
+                                 iterationState.currentIteration < HEADING_ITERATION_CONFIG.MAX_ITERATIONS - 1 &&
+                                 response.safety_check.total_operations_so_far < HEADING_ITERATION_CONFIG.MAX_TOTAL_OPERATIONS
+      
       if (!response.more_changes_required || response.safety_check.max_iterations_reached) {
+        // Iteration complete - no more changes needed or limits reached
         setIsLoadingHeadings(false)
         setShowIterationControls(false)
         setIsIterationInProgress(false)
         if (response.safety_check.max_iterations_reached) {
           setHeadingsError('Maximum iterations reached. The document structure has been improved as much as possible within safety limits.')
         }
+      } else if (shouldAutoContinue) {
+        // Automatically continue to next iteration
+        console.log(`[StructurePanel] Auto-continuing to iteration ${iterationState.currentIteration + 1}`)
+        // Keep loading state and trigger next iteration automatically
+        setTimeout(() => {
+          generateHeadingsIteratively()
+        }, 500) // Brief pause for UI feedback
       } else {
+        // Show manual controls for user to decide
         setIsLoadingHeadings(false)
         setShowIterationControls(true)
         setIsIterationInProgress(false)
@@ -619,7 +642,7 @@ export function StructurePanel({
       setHeadingsError(errorMessage)
       console.groupEnd()
     }
-  }, [content, elements, documentId, iterationState, applyMutation, executeToolWithNavigation, isIterationInProgress])
+  }, [content, elements, documentId, iterationState, applyMutation, executeToolWithNavigation, isIterationInProgress, autoIterationStopped])
   
   // Core headings generation logic (legacy all-at-once mode)
   // Keeping for potential future use or backward compatibility
@@ -752,6 +775,7 @@ export function StructurePanel({
     setIsLoadingHeadings(true)
     setHeadingsError(null)
     setShowIterationControls(false)
+    setAutoIterationStopped(false) // Reset stop flag when starting new generation
     
     // Reset iteration state for new generation
     setIterationState({
@@ -1145,12 +1169,34 @@ export function StructurePanel({
       <div className="p-4">
         {renderStatusBadge()}
         <div className="space-y-4">
-          <Loading text={`Improving headings (Iteration ${iterationState.currentIteration + 1})...`} spinnerSize={20} />
+          <Loading text={
+            iterationState.currentIteration === 0 
+              ? `Improving headings (Initial analysis)...`
+              : HEADING_ITERATION_CONFIG.AUTO_ITERATE_HEADINGS
+                ? `Auto-improving headings (Iteration ${iterationState.currentIteration + 1})...`
+                : `Improving headings (Iteration ${iterationState.currentIteration + 1})...`
+          } spinnerSize={20} />
           {iterationState.currentIteration > 0 && (
             <div className="text-sm text-gray-600">
               <p>Operations so far: {iterationState.totalOperations}</p>
               {iterationState.summaries.length > 0 && (
                 <p className="mt-1">Last change: {iterationState.summaries[iterationState.summaries.length - 1]}</p>
+              )}
+              {HEADING_ITERATION_CONFIG.AUTO_ITERATE_HEADINGS && (
+                <div className="mt-1 flex items-center justify-between">
+                  <p className="text-blue-600 font-medium">Auto-iteration enabled</p>
+                  {!autoIterationStopped && (
+                    <Button
+                      onClick={handleStopAutoIteration}
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 text-xs py-1 px-2 h-6"
+                    >
+                      <Stop size={12} className="mr-1" />
+                      Stop
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -1202,6 +1248,11 @@ export function StructurePanel({
             {iterationState.summaries.length > 0 && (
               <p className="text-blue-600 italic">
                 &ldquo;{iterationState.summaries[iterationState.summaries.length - 1]}&rdquo;
+              </p>
+            )}
+            {!HEADING_ITERATION_CONFIG.AUTO_ITERATE_HEADINGS && (
+              <p className="text-xs text-gray-600 mb-2">
+                Auto-iteration disabled - manual control required
               </p>
             )}
             <div className="flex gap-2 mt-3">

@@ -309,7 +309,7 @@ Available evergreen documentation in `docs/` - comprehensive signposting by doma
 - `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Comprehensive technical guide for integrating the @assistant-ui/react library into the chatbot interface within the Tools pane
 - `docs/reference/TOOL_SUMMARISE.md` - Documents the AI summarise feature that generates hierarchical summaries of document content using LLM analysis at multiple granularity levels
 - `docs/reference/TOOL_GLOSSARY.md` - Documents the glossary feature that extracts key entities from documents using LLM analysis and displays them in a dedicated pane
-- `docs/reference/TOOL_STRUCTURE_HEADINGS.md` - AI-generated heading system with iterative generation
+- `docs/reference/TOOL_STRUCTURE_HEADINGS.md` - AI-generated heading system with iterative generation (up to 10 operations per iteration, automatic continuation)
 - `docs/reference/TOOL_*.md` - Search, highlighting, metadata, reading difficulty tools
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide for creating AI/LLM calls using the Nunjucks + Zod template system with type safety and validation
 - `docs/reference/LLM_MODEL_CONFIGURATION.md` - AI model configuration and usage patterns
