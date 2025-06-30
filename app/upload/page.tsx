@@ -42,6 +42,41 @@ export default function AddDocumentPage() {
   const router = useRouter()
   
   // Vision single-page uploader hook
+  // Unified state for smart upload interface
+  const [uploadState, setUploadState] = useState<UnifiedUploadState>({
+    input: {
+      url: '',
+      file: null,
+      type: null
+    },
+    processing: {
+      method: 'readability', // Default method
+      provider: 'gemini',
+      isPublic: false
+    },
+    ui: {
+      isProcessing: false,
+      processingMessage: '',
+      error: '',
+      isDragging: false
+    }
+  })
+  
+  // Additional state for vision upload
+  const [visionUploadState, setVisionUploadState] = useState<{
+    isConverting: boolean
+    convertedImages: Array<{ pageIndex: number; base64Image: string; width: number; height: number }> | null
+    documentId: string | null
+    documentTitle: string | null
+    pageCount: number
+  }>({
+    isConverting: false,
+    convertedImages: null,
+    documentId: null,
+    documentTitle: null,
+    pageCount: 0
+  })
+
   const {
     uploadPages,
     pageStates,
@@ -111,41 +146,6 @@ export default function AddDocumentPage() {
         }))
       }
     }
-  })
-  
-  // Unified state for smart upload interface
-  const [uploadState, setUploadState] = useState<UnifiedUploadState>({
-    input: {
-      url: '',
-      file: null,
-      type: null
-    },
-    processing: {
-      method: 'readability', // Default method
-      provider: 'gemini',
-      isPublic: false
-    },
-    ui: {
-      isProcessing: false,
-      processingMessage: '',
-      error: '',
-      isDragging: false
-    }
-  })
-  
-  // Additional state for vision upload
-  const [visionUploadState, setVisionUploadState] = useState<{
-    isConverting: boolean
-    convertedImages: Array<{ pageIndex: number; base64Image: string; width: number; height: number }> | null
-    documentId: string | null
-    documentTitle: string | null
-    pageCount: number
-  }>({
-    isConverting: false,
-    convertedImages: null,
-    documentId: null,
-    documentTitle: null,
-    pageCount: 0
   })
   
   // Helper functions - defined before use
