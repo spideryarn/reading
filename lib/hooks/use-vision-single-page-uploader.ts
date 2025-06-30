@@ -511,7 +511,24 @@ export function useVisionSinglePageUploader(
         .sort((a, b) => a.pageNumber - b.pageNumber)
         .map(state => state.htmlFragment!)
         
-      onAllComplete?.(completedFragments)
+      const totalPagesExpected = documentMetadataRef.current?.totalPages ?? pageStatesRef.current.length
+
+      if (completedFragments.length === totalPagesExpected) {
+        // All pages processed successfully – trigger final callback
+        onAllComplete?.(completedFragments)
+      } else {
+        // Fail loudly – at least one page failed, surface clear error
+        const failedPages = pageStatesRef.current
+          .filter(state => state.status !== 'completed')
+          .map(state => state.pageNumber)
+
+        const errorMsg = `Document processing failed: ${failedPages.length} page(s) did not process successfully (pages: ${failedPages.join(', ')}).`;
+
+        // Call onError for global failure (pageNumber = 0 signifies global)
+        onError?.(0 as unknown as number, errorMsg)
+
+        console.error(errorMsg)
+      }
     }
   }, [processPage, onAllComplete, maxConcurrency, pageStates])
 

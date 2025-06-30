@@ -11,6 +11,8 @@ import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer
 import { processPageToHtml } from '@/lib/services/page-processor'
 import { processHtmlFragment } from '@/lib/services/html-fragment-processor'
 import { z } from 'zod'
+import { DocumentService } from '@/lib/services/database/documents'
+import { generateSlug } from '@/lib/utils/slug'
 
 // Request schema for single page upload
 const SinglePageUploadSchema = z.object({
@@ -134,6 +136,41 @@ export async function POST(request: NextRequest) {
     // Initialize Supabase client and services
     const supabase = await createClient()
     const aiCallService = new AiCallService(supabase)
+
+    // ---------------------------------------------------------------------------
+    // Ensure a draft document row exists BEFORE the client begins cropping &
+    // uploading image assets.  The document_assets RLS policy requires that a
+    // parent document row exists and is owned by the current user.  Without
+    // this, client-side inserts will silently fail and the finaliser will error
+    // with "Images were detected but none were uploaded".
+    // ---------------------------------------------------------------------------
+    try {
+      const docSvc = new DocumentService(supabase)
+      const existing = await docSvc.getById(documentId)
+
+      if (!existing) {
+        // Create a minimal draft row.  Required NOT NULL fields are populated
+        // with placeholder values.  `is_draft` acts as the flag – any non-null
+        // value indicates the row is still a draft.
+        const draftSlug = generateSlug(documentTitle) || documentId
+
+        await supabase.from('documents').insert({
+          id: documentId,
+          created_by: user.id,
+          title: documentTitle,
+          slug: draftSlug,
+          html_content: '',
+          plaintext_content: '',
+          is_draft: 'draft',
+          is_public: false
+        })
+        requestLogger.info({ correlationId, documentId }, 'Draft document row created for vision upload')
+      }
+    } catch (draftErr) {
+      // If we get a duplicate-key or RLS violation here it means another request
+      // already created the draft or the row exists – safe to continue.
+      requestLogger.debug({ correlationId, error: draftErr instanceof Error ? draftErr.message : draftErr }, 'Draft creation skipped')
+    }
 
     // Create AI call record for this page
     const startTime = Date.now()
