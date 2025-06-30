@@ -11,15 +11,12 @@ jest.unmock('ai')
 jest.unmock('fs')
 
 // Use requireActual to bypass global mocks in jest.setup.js
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { headingsPrompt, headingsResponseSchema } = jest.requireActual('../templates/headings') as typeof import('../templates/headings')
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { executePromptWithUsage } = jest.requireActual('../types') as typeof import('../types')
 
 // Real-LLM integration test. Guarded behind env flag to prevent accidental runs in CI.
 const SHOULD_RUN = process.env.RUN_REAL_LLM_TESTS === 'true'
 
-// eslint-disable-next-line jest/no-export
 export const maybeRunRealLLMTest = SHOULD_RUN ? describe : describe.skip
 
 // Patch templatePath to absolute path (stack detection fails in mocked env)

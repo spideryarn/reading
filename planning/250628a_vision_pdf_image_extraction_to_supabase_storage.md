@@ -37,7 +37,10 @@ Replace base64 image embedding in vision-based PDF processing with Supabase Stor
 - **Vision Pipeline Planning**: `planning/250627c_vision_based_pdf_processing_pipeline.md` - Current vision-based processing implementation
 - **Supabase Storage Reference**: `docs/reference/DATABASE_SUPABASE_STORAGE_REFERENCE.md` - Storage architecture and implementation patterns
 - **Database Migrations Guide**: `docs/reference/DATABASE_MIGRATIONS.md` - Schema change management with Supabase
-- **Current Vision Implementation**: `app/api/upload-pdf-vision/route.ts` - Vision-based PDF processing API endpoint
+- **Phase 2 Vision Architecture**: **NOTE: The monolithic `/api/upload-pdf-vision` endpoint was deprecated and removed in favor of Phase 2 architecture:**
+  - `app/api/upload-pdf-single-page-image/route.ts` - Processes individual page images (<4MB each)
+  - `app/api/finalise-vision-document/route.ts` - Assembles complete document from processed pages
+  - `lib/hooks/use-vision-single-page-uploader.ts` - React hook for managing concurrent page uploads
 - **Fragment Processor**: `lib/services/html-fragment-processor.ts` - Bounding box extraction and image metadata processing
 - **Page Processing**: `lib/services/page-processor.ts` - Individual page AI processing with Gemini Flash 2.5
 - **Vision Prompt Template**: `lib/prompts/templates/page-to-html-fragment.njk` - AI instructions for image bounding box identification
@@ -202,8 +205,8 @@ Replace base64 image embedding in vision-based PDF processing with Supabase Stor
   - ✅ Kept basic logging, removed migration-specific logging references
   - ✅ No health check endpoints for gradual rollout were implemented to remove
 - [x] **Update vision API to always extract images**: Modify vision processing endpoint to enable extraction by default
-  - ✅ Updated `/api/upload-pdf-vision/route.ts` to generate `documentId` early and pass to all page processing
-  - ✅ No feature flag checks existed in vision processing pipeline to remove
+  - ✅ Phase 2 architecture implements image extraction by default (no modification needed)
+  - ✅ Single-page processing endpoints already pass `documentId` for image extraction
   - ✅ All vision-based PDF uploads now automatically extract and store images
 - [x] **Clean up documentation**: Remove references to feature flags and complex migration strategy
   - ✅ Updated this planning document to reflect simplified approach

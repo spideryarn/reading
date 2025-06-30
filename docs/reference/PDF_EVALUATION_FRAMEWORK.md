@@ -116,12 +116,14 @@ The evaluation framework uses existing PDF test files:
 
 ## Processing Methods Compared
 
-### 1. Vision-based AI Processing (v2)
-- **Endpoint**: `/api/upload-pdf-vision`
-- **Requirements**: Pre-converted page images
+### 1. Vision-based AI Processing (Phase 2)
+- **Endpoints**: 
+  - `/api/upload-pdf-single-page-image` - Processes single page images
+  - `/api/finalise-vision-document` - Assembles complete document
+- **Requirements**: Pre-converted page images, browser-based image cropping
 - **Expected Speed**: Slow
 - **Expected Quality**: High
-- **Uses**: PDF.js → Images → Gemini Flash → Claude Sonnet refinement
+- **Uses**: PDF.js → Images → Browser cropping → Supabase Storage → Gemini Flash → Claude Sonnet refinement
 
 ### 2. AI Transcription (v1)
 - **Endpoint**: `/api/upload-pdf`

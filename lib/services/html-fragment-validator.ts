@@ -293,7 +293,8 @@ function validateBasicStructure(
       suggestion: 'Ensure all page content was extracted properly'
     })
   }
-  
+}
+
 /**
  * Validate accessibility compliance
  */
