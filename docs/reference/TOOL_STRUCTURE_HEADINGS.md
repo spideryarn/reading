@@ -1,15 +1,16 @@
 # Structure Tab: Document Headings and AI Enhancement
 
-The Structure tab provides a unified interface for viewing and enhancing document structure with AI-generated headings. It consolidates the original document outline with optional AI-powered enhancements in a single, intuitive interface.
+The Structure tab provides a unified interface for viewing and enhancing document structure with AI-generated headings. It consolidates the original document outline with optional AI-powered enhancements in a single, intuitive interface, now featuring an iterative approach for progressive improvement.
 
 ## Overview
 
 The Structure tab replaces the previous separate "Original" and "AI-Generated" headings tabs with a unified experience that:
 
 - **Displays document structure** in its current state (original or AI-enhanced)
-- **Provides explicit AI enhancement** through user-initiated generation
+- **Provides iterative AI enhancement** through user-initiated progressive improvements
 - **Supports seamless switching** between original and AI-enhanced views
 - **Maintains all existing functionality** including tooltips, navigation, and mutation handling
+- **Enables progressive refinement** with up to 10 heading operations per iteration
 
 ## See also
 
@@ -32,6 +33,14 @@ The Structure tab replaces the previous separate "Original" and "AI-Generated" h
 - **Seamless state transitions** between original and enhanced views
 
 ### AI Enhancement Workflow
+
+#### Iterative Generation Mode
+- **Progressive improvement**: AI enhances document structure iteratively, making up to 10 heading operations per iteration
+- **User control at each step**: After each iteration, users can choose to continue improving or stop
+- **Iteration limits**: Maximum 5 iterations and 50 total operations per document for safety
+- **Clear progress tracking**: Shows current iteration count and operations performed
+
+#### Traditional Single-Pass Mode (Legacy)
 - **Explicit user control**: AI generation only occurs when user clicks "Generate AI headings"
 - **Visual feedback**: Loading states and progress indicators during generation
 - **Persistent state**: Generated headings are cached and survive page refreshes
@@ -49,19 +58,32 @@ The Structure tab replaces the previous separate "Original" and "AI-Generated" h
 
 | Current State | Status Badge | Available Actions | Description |
 |---------------|--------------|-------------------|-------------|
-| Original headings | "Original" (blue) | "Generate AI headings" button | Showing document's original structure |
+| Original headings | "Original" (blue) | "Improve Headings" button | Showing document's original structure |
 | AI headings active | "AI-enhanced" (green) | Trashcan (remove) button | Showing AI-generated enhanced structure |
-| Generating | "Original" (blue) | Loading spinner | AI enhancement in progress |
+| Iterating | "AI-enhanced" (green) | "Generating iteration X..." spinner | Progressive improvement in progress |
+| Iteration complete | "AI-enhanced" (green) | "Continue Improving" / "Finish" buttons | User choice point after each iteration |
+| Limits reached | "AI-enhanced" (green) | "Maximum iterations reached" message | Safety limits prevent further iterations |
 | Removing | "AI-enhanced" (green) | Loading spinner | Reverting to original structure |
 
 ### Button Behaviors
 
-#### Generate AI Headings Button
+#### Improve Headings Button
 - **Appearance**: Green text, appears when in original state
-- **Function**: Initiates AI analysis and heading generation
-- **Loading state**: Shows "Generating..." with spinner during processing
-- **Success**: Transitions to AI-enhanced state with trashcan button
+- **Function**: Initiates iterative AI analysis and heading improvement
+- **Loading state**: Shows "Generating iteration X..." with spinner during processing
+- **Success**: Shows iteration summary with Continue/Finish options
 - **Error handling**: Shows error message with retry option
+
+#### Continue Improving Button
+- **Appearance**: Green text, appears after each iteration completes
+- **Function**: Triggers next iteration of heading improvements
+- **Disabled state**: When iteration or operation limits are reached
+- **Loading state**: Shows current iteration progress
+
+#### Finish Button
+- **Appearance**: Blue text, appears alongside Continue button
+- **Function**: Accepts current heading state and completes the process
+- **Result**: Transitions to AI-enhanced state with trashcan button
 
 #### Remove AI Headings Button (Trashcan)
 - **Appearance**: Red trashcan icon, appears when in AI-enhanced state
@@ -87,17 +109,32 @@ StructurePanel
 ```
 
 ### State Management Flow
+
+#### Iterative Enhancement Flow
 ```
 Initial State: Original headings displayed
-     ↓ User clicks "Generate AI headings"
-Loading State: Shows "Generating..." with spinner
-     ↓ API call completes successfully
-AI State: AI headings displayed with trashcan button
+     ↓ User clicks "Improve Headings"
+Iterating State: Shows "Generating iteration 1..." with spinner
+     ↓ First iteration completes (up to 10 operations)
+Choice State: Shows iteration summary + Continue/Finish buttons
+     ↓ User clicks "Continue Improving"
+Iterating State: Shows "Generating iteration 2..." with spinner
+     ↓ Iteration completes
+Choice State: Shows updated summary + Continue/Finish buttons
+     ... (repeats until user clicks Finish or limits reached)
+     ↓ User clicks "Finish" or limits reached
+AI State: Final AI headings displayed with trashcan button
      ↓ User clicks trashcan button
 Loading State: Shows spinner during removal
      ↓ Mutation reverted successfully
-Original State: Back to original headings with generate button
+Original State: Back to original headings with improve button
 ```
+
+#### Safety Limits
+- **Iteration limit**: Maximum 5 iterations per document
+- **Operation limit**: Maximum 50 total operations across all iterations
+- **Per-iteration limit**: Maximum 10 operations in a single iteration
+- **Concurrent prevention**: Only one iteration can run at a time
 
 ### Data Flow
 1. **Document loaded** → Extract original headings → Display in Structure tab
@@ -108,17 +145,32 @@ Original State: Back to original headings with generate button
 ## AI Heading Generation
 
 ### Generation Process
+
+#### Iterative Generation (Current)
+1. **Initial analysis**: Extract document HTML with element IDs and existing headings
+2. **First iteration**: LLM analyzes and suggests up to 10 heading improvements
+3. **User review**: Display summary of changes with option to continue or finish
+4. **Subsequent iterations**: If continuing, LLM builds on previous changes
+5. **Progressive refinement**: Each iteration improves structure incrementally
+6. **Completion**: User chooses when structure is satisfactory or limits reached
+7. **Final application**: All accumulated operations applied as single mutation
+
+#### Single-Pass Generation (Legacy)
 1. **Content analysis**: Extract document HTML with element IDs and existing headings
 2. **LLM processing**: Send to configured AI model (Claude/Gemini) with full context
-3. **Operations generation**: LLM analyzes content and generates heading operations
+3. **Operations generation**: LLM analyzes content and generates all heading operations at once
 4. **Mutation application**: Operations applied as reversible document transforms
 5. **UI update**: Interface updates to show AI-enhanced state
 
 ### Key Features
+- **Iterative improvement**: Progressive enhancement through multiple focused iterations
+- **Operation limits**: Constrained to 10 operations per iteration for focused improvements
+- **Hierarchical priorities**: AI follows smart ordering (H1 → H2 → H3) through prompt guidance
 - **Preserves original headings**: AI sees and respects author's original structure
 - **Full mutation capabilities**: Can insert new headings, replace existing ones, or remove headings
 - **Context-aware**: AI receives complete document structure including original headings
 - **Operations-based**: Uses flexible operations format for comprehensive heading modifications
+- **Iteration memory**: Each iteration knows what previous iterations accomplished
 
 ### Operations Format
 
@@ -153,12 +205,22 @@ type HeadingOperation =
 - **Conditional validation**: Each operation type has specific required fields
 - **Type safety**: Zod schemas ensure operations are well-formed
 - **Error prevention**: Invalid operations rejected before application
+- **Iteration signals**: Additional fields for controlling iterative flow
+  - `more_changes_required`: Boolean indicating if another iteration would help
+  - `iteration_summary`: Description of changes made in this iteration
+  - `safety_check`: Current iteration count and operation totals
 
 ### Preserving Author Intent
 
 The system is designed to enhance, not replace, the author's original structure:
 
+- **First iteration guidance**: Special prompt instructions to respect author's original structure
 - **Original headings as context**: AI sees all existing headings during analysis
+- **Hierarchical priorities**: AI follows structured approach:
+  1. Establish clear H1 document title if missing
+  2. Create H2 major sections before subdividing
+  3. Improve existing headings following best practices
+  4. Add H3+ subdivisions where sections exceed ~400 words
 - **Intelligent enhancement**: AI can choose to keep, modify, or remove headings
 - **Respectful modifications**: Changes aim to clarify and improve, not rewrite
 - **User control**: All changes can be reverted with one click
@@ -210,7 +272,11 @@ The heading generation uses the standard prompt template system:
   documentId: string,          // Document identifier for caching
   context?: string,            // Additional context about document
   style?: string,             // Heading style preferences
-  max_headings?: number       // Maximum number of headings to generate
+  max_headings?: number,      // Maximum number of headings to generate
+  // Iteration-specific fields:
+  iteration_count?: number,    // Current iteration (0-indexed)
+  previous_iteration_summary?: string,  // What was done in previous iterations
+  existing_operations?: HeadingOperation[]  // Operations from previous iterations
 }
 ```
 
@@ -236,7 +302,15 @@ The heading generation uses the standard prompt template system:
         type: 'remove';
         existingId: string;                 // ID of heading to remove
       }
-  >
+  >,
+  // Iteration control fields:
+  more_changes_required: boolean,    // Whether another iteration would be beneficial
+  iteration_summary: string,         // Human-readable summary of this iteration's changes
+  safety_check: {
+    current_iteration: number,       // Current iteration count (0-indexed)
+    total_operations_so_far: number, // Cumulative operations across all iterations
+    max_iterations_reached: boolean  // Whether we've hit the 5-iteration limit
+  }
 }
 ```
 
@@ -250,6 +324,30 @@ The Structure tab is integrated with the unified tool registry system:
 - **Shortcuts**: `Cmd+1`, `Ctrl+1`
 - **Keywords**: `['headings', 'toc', 'table of contents', 'structure', 'outline', 'ai', 'generate']`
 - **Requirements**: Requires document to be loaded
+
+### API Usage Note
+
+The unified tool-executor always issues **POST** requests, even for read-only operations.  For convenience, the *Structure* handler accepts multiple actions:
+
+#### Available Actions
+- `"get"` or `"list"`: Fetch cached heading operations
+- `"generate"`: Generate all headings at once (legacy single-pass mode)
+- `"iterate"`: Generate headings iteratively (adaptive based on parameters)
+- `"delete"`: Remove cached heading operations
+
+#### Iterative Mode Example
+```ts
+// First iteration (no existing_operations)
+await executeTool('structure', 'iterate', { documentId })
+
+// Subsequent iterations (with accumulated operations)
+await executeTool('structure', 'iterate', { 
+  documentId,
+  existing_operations: previousOperations 
+})
+```
+
+The `iterate` action adapts its behavior based on the presence of `existing_operations`.
 
 ### Command Palette Integration
 - **Auto-generation**: Commands automatically generated from tool registry
@@ -300,17 +398,23 @@ The Structure tab is integrated with the unified tool registry system:
 ## Limitations and Considerations
 
 ### Current Limitations
-- **LLM processing time**: Generation can take 30-60 seconds for large documents
+- **LLM processing time**: Each iteration takes 10-20 seconds (faster than single-pass 30-60s)
+- **Iteration limits**: Maximum 5 iterations and 50 total operations per document
+- **Operation limits**: Maximum 10 operations per iteration
 - **Model dependency**: Quality depends on selected LLM model capabilities
 - **Content analysis**: Best results with structured, well-formatted documents
 - **Language support**: Optimized for English content
 - **Single mutation**: Only one heading mutation active at a time
 - **No intra-mutation dependencies**: Operations within same mutation cannot reference each other's generated IDs
+- **Concurrent iterations**: Only one iteration can run at a time (UI prevents concurrent requests)
 
 ### Future Enhancements
+- **Prompt caching**: Implement Anthropic prompt caching for 90% cost reduction
+- **Adaptive iteration limits**: Adjust limits based on document size and complexity
+- **Iteration history**: View and revert to previous iteration states
 - **Batch processing**: Generate headings for multiple documents
 - **Quality scoring**: Automatic assessment of heading quality
-- **User preferences**: Customizable generation parameters
+- **User preferences**: Customizable generation parameters (iteration limits, priorities)
 - **Real-time collaboration**: Multi-user editing of generated headings
 - **Smart suggestions**: Context-aware heading recommendations
 
