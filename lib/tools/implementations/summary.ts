@@ -14,12 +14,12 @@
 import { registerTool } from '../registry'
 import { ListBullets } from '@phosphor-icons/react/dist/ssr'
 import { z } from 'zod'
-import type { Tool } from '../types'
+import type { ExecutableTool } from '../executor/types'
 
 /**
  * Summary tool definition with executor framework integration
  */
-const summaryTool: Tool = {
+const summaryTool: ExecutableTool = {
   // Identity & Metadata
   id: 'summary',
   name: 'Summary',
@@ -48,7 +48,6 @@ const summaryTool: Tool = {
   // Executor Framework Configuration
   executorConfig: {
     apiEndpoint: '/api/tools/summary',
-    timeout: 180000, // 3 minutes - summaries can be very slow, especially multi-dimensional
     supportedActions: ['execute', 'generate', 'refresh', 'multi-summarise'],
     parameterSchema: z.object({
       // Single summary parameters
@@ -74,6 +73,12 @@ const summaryTool: Tool = {
     ),
     cacheable: true,
     requiresAuth: true
+  },
+
+  timeouts: {
+    default: 180_000,
+    ai: 180_000,
+    analysis: 180_000,
   }
 }
 

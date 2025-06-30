@@ -16,6 +16,7 @@
  */
 
 import type { Tool } from '../types'
+import { TOOL_TIMEOUTS } from '../../config'
 
 /**
  * Execution context provided to tools during execution
@@ -412,12 +413,15 @@ export interface WrapperGenerationConfig {
 
 /**
  * Default timeout configuration
+ *
+ * Sourced from TOOL_TIMEOUTS in lib/config.ts so that the values are
+ * configurable from a single location.
  */
 export const DEFAULT_TIMEOUTS: ToolTimeoutConfig = {
-  default: 30000,    // 30 seconds
-  ai: 60000,         // 60 seconds  
-  analysis: 120000,  // 2 minutes
-  upload: 180000     // 3 minutes
+  default: TOOL_TIMEOUTS.DEFAULT,
+  ai: TOOL_TIMEOUTS.AI,
+  analysis: TOOL_TIMEOUTS.ANALYSIS,
+  upload: TOOL_TIMEOUTS.UPLOAD
 } as const
 
 /**

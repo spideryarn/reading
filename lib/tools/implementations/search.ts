@@ -10,12 +10,12 @@
 
 import { registerTool } from '../registry'
 import { MagnifyingGlass } from '@phosphor-icons/react/dist/ssr'
-import type { Tool } from '../types'
+import type { ExecutableTool } from '../executor/types'
 
 /**
  * Search tool definition
  */
-const searchTool: Tool = {
+const searchTool: ExecutableTool = {
   // Identity & Metadata
   id: 'search',
   name: 'Search',
@@ -43,9 +43,13 @@ const searchTool: Tool = {
   
   // Executor Framework Configuration
   executorConfig: {
-    timeout: 60000, // 60 seconds for semantic search with LLM processing
     apiEndpoint: '/api/tools/search',
     supportedOperations: ['search', 'history', 'delete']
+  },
+
+  timeouts: {
+    ai: 60_000,
+    default: 60_000,
   }
 }
 

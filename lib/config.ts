@@ -245,3 +245,14 @@ export const SITE_CONFIG = {
     }
   }
 } as const
+
+// Centralised timeout configuration for the unified tool-execution framework
+// These values are used as fall-backs by the executor when a tool doesn't
+// supply its own per-action timeout.  Keeping them in a single place makes
+// it easy to tune application-wide behaviour.
+export const TOOL_TIMEOUTS = {
+  DEFAULT: 30_000,   // Generic operations (30 s)
+  AI: 60_000,        // LLM-heavy operations (60 s)
+  ANALYSIS: 120_000, // Expensive analyses (2 min)
+  UPLOAD: 180_000,   // Large file uploads / processing (3 min)
+} as const
