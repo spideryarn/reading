@@ -209,8 +209,11 @@ export const CHAT_VALIDATION_CONFIG = {
   // Maximum length for a single word (security check against attacks)
   MAX_WORD_LENGTH: 1000,
   
-  // Maximum number of messages in a conversation
-  MAX_CONVERSATION_LENGTH: 20,
+  // Maximum number of messages the client and server will validate in a single
+  // conversation history. Set to 0 to disable the limit (i.e. include the full
+  // history).  When greater than 0, older turns will be discarded so that the
+  // array passed to the API never exceeds this value.
+  MAX_CONVERSATION_LENGTH: 0,
   
   // Maximum document context length
   MAX_DOCUMENT_CONTEXT_LENGTH: 100000,

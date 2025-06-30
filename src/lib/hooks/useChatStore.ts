@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { ChatService } from '@/lib/services/database/chat';
 import { validateUserMessage } from '@/lib/utils/chat-validation';
+import { CHAT_VALIDATION_CONFIG } from '@/lib/config';
 import type { Tables } from '@/lib/types/database';
 import type { ChatStore, SendMessageRequest, ChatApiResponse } from '@/lib/types/chat-api';
 
@@ -147,18 +148,36 @@ export function useChatStore({
         throw new Error('Authentication required');
       }
       
+      // Build conversation history to send to server.
+      // 1. Take existing persisted messages excluding local placeholders (pending/failed)
+      const completedHistory = messages.filter(m => {
+        const extra = (m.extra && typeof m.extra === 'object' && !Array.isArray(m.extra))
+          ? (m.extra as Record<string, unknown>)
+          : {}
+        return !extra.pending && !extra.failed
+      }).map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }))
+
+      // 2. Respect MAX_CONVERSATION_LENGTH unless it is 0 (unlimited)
+      let trimmedHistory = completedHistory
+      if (CHAT_VALIDATION_CONFIG.MAX_CONVERSATION_LENGTH > 0) {
+        trimmedHistory = completedHistory.slice(-CHAT_VALIDATION_CONFIG.MAX_CONVERSATION_LENGTH)
+      }
+
+      // 3. Append the new user message
+      const payloadMessages = [...trimmedHistory, { role: 'user' as const, content: trimmedContent }]
+
       // Prepare request for atomic database-first API (use trimmed content)
       const requestPayload: SendMessageRequest = {
         content: trimmedContent,
         documentContext,
         documentId,
         ...(threadId ? { threadId } : {})
-      };
-      
+      }
+
       // Call the atomic API endpoint with feature flag
       const response = await fetch('/api/tools/chat', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`
         },
@@ -166,7 +185,7 @@ export function useChatStore({
           action: 'execute',
           parameters: {
             ...requestPayload,
-            messages: [{ role: 'user' as const, content: trimmedContent }],
+            messages: payloadMessages,
             // Feature flag for database-first implementation
             databaseFirst: true,
             atomic: true

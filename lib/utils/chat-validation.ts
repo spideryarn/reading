@@ -90,7 +90,9 @@ export function validateMessage(role: 'user' | 'assistant', content: string): Ch
  * Validates conversation length
  */
 export function validateConversationLength(messageCount: number): ChatValidationResult {
-  if (messageCount > CHAT_VALIDATION_CONFIG.MAX_CONVERSATION_LENGTH) {
+  // If the configured limit is 0 treat it as "unlimited" – never invalidate.
+  if (CHAT_VALIDATION_CONFIG.MAX_CONVERSATION_LENGTH > 0 &&
+      messageCount > CHAT_VALIDATION_CONFIG.MAX_CONVERSATION_LENGTH) {
     return {
       valid: false,
       error: CHAT_VALIDATION_CONFIG.ERROR_MESSAGES.TOO_MANY_MESSAGES

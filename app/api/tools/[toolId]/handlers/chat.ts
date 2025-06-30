@@ -36,26 +36,34 @@ const ChatGetRequestSchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(50)
 }).passthrough()
 
-/**
- * Enhanced content validation per o3 AI recommendations:
- * - User messages: Reject empty content (strict validation)
- * - Assistant messages: Allow empty content for streaming/tool-only scenarios
- * - Additional comprehensive input validation for security and robustness
- */
+// Build messages array schema with conditional max() so that a limit of 0
+// is interpreted as "no limit" instead of "zero messages allowed".
+let MessagesArraySchema = z.array(z.object({
+  role: z.enum(['user', 'assistant']),
+  content: z.string(),
+  status: z.enum(['streaming', 'complete']).optional()
+}).refine((msg) => {
+  // Use shared validation logic for consistency
+  const validation = validateMessage(msg.role, msg.content)
+  return validation.valid
+}, {
+  message: "Invalid message content",
+  path: ['content']
+})).min(1)
+
+if (CHAT_VALIDATION_CONFIG.MAX_CONVERSATION_LENGTH > 0) {
+  MessagesArraySchema = MessagesArraySchema.max(
+    CHAT_VALIDATION_CONFIG.MAX_CONVERSATION_LENGTH,
+    CHAT_VALIDATION_CONFIG.ERROR_MESSAGES.TOO_MANY_MESSAGES
+  )
+}
+
 const ChatSendMessageSchema = z.object({
-  messages: z.array(z.object({
-    role: z.enum(['user', 'assistant']),
-    content: z.string(),
-    status: z.enum(['streaming', 'complete']).optional()
-  }).refine((msg) => {
-    // Use shared validation logic for consistency
-    const validation = validateMessage(msg.role, msg.content)
-    return validation.valid
-  }, {
-    message: "Invalid message content",
-    path: ['content']
-  })).min(1).max(CHAT_VALIDATION_CONFIG.MAX_CONVERSATION_LENGTH, CHAT_VALIDATION_CONFIG.ERROR_MESSAGES.TOO_MANY_MESSAGES),
-  documentContext: z.string().max(CHAT_VALIDATION_CONFIG.MAX_DOCUMENT_CONTEXT_LENGTH, CHAT_VALIDATION_CONFIG.ERROR_MESSAGES.CONTEXT_TOO_LONG).optional(),
+  messages: MessagesArraySchema,
+  documentContext: z.string().max(
+    CHAT_VALIDATION_CONFIG.MAX_DOCUMENT_CONTEXT_LENGTH,
+    CHAT_VALIDATION_CONFIG.ERROR_MESSAGES.CONTEXT_TOO_LONG
+  ).optional(),
   threadId: z.string().uuid(CHAT_VALIDATION_CONFIG.ERROR_MESSAGES.INVALID_THREAD_ID).optional(),
   documentId: z.string().uuid(CHAT_VALIDATION_CONFIG.ERROR_MESSAGES.INVALID_DOCUMENT_ID).optional()
 }).passthrough()

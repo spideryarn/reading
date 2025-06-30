@@ -140,12 +140,23 @@ describe('Chat Validation Utilities', () => {
   })
 
   describe('validateConversationLength', () => {
-    it('should accept conversations within the limit', () => {
-      const result = validateConversationLength(CHAT_VALIDATION_CONFIG.MAX_CONVERSATION_LENGTH)
+    it('should accept conversations within the configured limit (or unlimited)', () => {
+      const withinLimit = CHAT_VALIDATION_CONFIG.MAX_CONVERSATION_LENGTH === 0
+        ? 1000 // arbitrary large number for unlimited mode
+        : CHAT_VALIDATION_CONFIG.MAX_CONVERSATION_LENGTH
+
+      const result = validateConversationLength(withinLimit)
       expect(result.valid).toBe(true)
     })
 
-    it('should reject conversations exceeding the limit', () => {
+    it('should reject conversations exceeding the limit when a limit is set', () => {
+      if (CHAT_VALIDATION_CONFIG.MAX_CONVERSATION_LENGTH === 0) {
+        // Unlimited – always valid
+        const result = validateConversationLength(10_000)
+        expect(result.valid).toBe(true)
+        return
+      }
+
       const result = validateConversationLength(CHAT_VALIDATION_CONFIG.MAX_CONVERSATION_LENGTH + 1)
       expect(result.valid).toBe(false)
       expect(result.error).toBe(CHAT_VALIDATION_CONFIG.ERROR_MESSAGES.TOO_MANY_MESSAGES)
