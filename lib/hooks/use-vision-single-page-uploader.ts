@@ -119,20 +119,24 @@ export function useVisionSinglePageUploader(
 
   // Update page state
   const updatePageState = useCallback((pageNumber: number, updates: Partial<PageUploadState>) => {
-    setPageStates(prev => prev.map(state => 
-      state.pageNumber === pageNumber 
-        ? { ...state, ...updates }
-        : state
-    ))
-    
-    // Call progress callback if provided
-    if (updates.progress !== undefined || updates.status !== undefined) {
-      const state = pageStates.find(s => s.pageNumber === pageNumber)
-      if (state) {
-        onProgress?.(pageNumber, updates.progress ?? state.progress, updates.status ?? state.status)
+    setPageStates(prev => {
+      const newStates = prev.map(state => 
+        state.pageNumber === pageNumber 
+          ? { ...state, ...updates }
+          : state
+      )
+      
+      // Call progress callback if provided
+      if (updates.progress !== undefined || updates.status !== undefined) {
+        const state = newStates.find(s => s.pageNumber === pageNumber)
+        if (state) {
+          onProgress?.(pageNumber, updates.progress ?? state.progress, updates.status ?? state.status)
+        }
       }
-    }
-  }, [pageStates, onProgress])
+      
+      return newStates
+    })
+  }, [onProgress])
 
   // Process a single page
   const processPage = useCallback(async (
@@ -318,16 +322,16 @@ export function useVisionSinglePageUploader(
       updatePageState(pageNumber, { status: 'storing', progress: 85 })
       
       // Step 4: Patch HTML with final storage URLs
-      const patchedHtml = result.pageHtml
+      let patchedHtml = result.pageHtml
       
       // Replace placeholder image paths with actual uploaded URLs
       for (const uploadedImage of uploadedImages) {
         if (uploadedImage.uploadUrl) {
           // Replace the placeholder src with the actual URL
-          // The API returns paths like "{documentId}/assets/{filename}"
+          // The API returns paths like "documents/{documentId}/assets/{filename}"
           // We need to replace with the actual public URL
           const placeholderPattern = new RegExp(
-            `src=["']${documentId}/assets/${uploadedImage.filename}["']`,
+            `src=["']documents/${documentId}/assets/${uploadedImage.filename}["']`,
             'g'
           )
           patchedHtml = patchedHtml.replace(

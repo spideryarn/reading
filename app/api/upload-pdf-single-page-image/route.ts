@@ -44,23 +44,20 @@ const SinglePageVisionResponse = z.object({
 })
 
 // Payload size validation helper
+// Note: Content-Length can be spoofed or missing, so we also validate actual content size
 function validatePayloadSize(contentLength: string | null, maxSizeBytes: number = 4 * 1024 * 1024): { valid: boolean; error?: string } {
-  if (!contentLength) {
-    return { valid: false, error: 'Content-Length header missing' }
-  }
-  
-  const size = parseInt(contentLength, 10)
-  if (isNaN(size)) {
-    return { valid: false, error: 'Invalid Content-Length header' }
-  }
-  
-  if (size > maxSizeBytes) {
-    return { 
-      valid: false, 
-      error: `Payload too large: ${Math.round(size / 1024 / 1024 * 10) / 10}MB (max ${Math.round(maxSizeBytes / 1024 / 1024)}MB)` 
+  // Content-Length is optional but if provided, use it for early rejection
+  if (contentLength) {
+    const size = parseInt(contentLength, 10)
+    if (!isNaN(size) && size > maxSizeBytes) {
+      return { 
+        valid: false, 
+        error: `Payload too large: ${Math.round(size / 1024 / 1024 * 10) / 10}MB (max ${Math.round(maxSizeBytes / 1024 / 1024)}MB)` 
+      }
     }
   }
   
+  // Will perform actual content validation after parsing
   return { valid: true }
 }
 
@@ -115,11 +112,23 @@ export async function POST(request: NextRequest) {
       processingType: 'single-page-vision'
     }, 'Single page vision processing request initiated')
 
-    // Additional validation: check base64 decoded size
-    const base64Overhead = 1.37 // Base64 increases size by ~37%
-    const estimatedDecodedSize = pageImage.length / base64Overhead
-    if (estimatedDecodedSize > 4 * 1024 * 1024) {
-      return new NextResponse(`Page image too large after decoding: estimated ${Math.round(estimatedDecodedSize / 1024 / 1024 * 10) / 10}MB (max 4MB)`, { status: 400 })
+    // Additional validation: check actual base64 size
+    // Base64 encoding uses 4 characters to represent 3 bytes
+    // So the actual decoded size is (base64Length * 3/4)
+    // We also need to account for padding characters
+    const base64WithoutPrefix = pageImage.replace(/^data:image\/[a-z]+;base64,/, '')
+    const paddingCount = (base64WithoutPrefix.match(/=+$/) || [''])[0].length
+    const actualDecodedSize = (base64WithoutPrefix.length * 3 / 4) - paddingCount
+    
+    if (actualDecodedSize > 4 * 1024 * 1024) {
+      requestLogger.warn({
+        correlationId,
+        userId: user.id,
+        base64Length: pageImage.length,
+        actualDecodedSize,
+        maxSize: 4 * 1024 * 1024
+      }, 'Page image too large after decoding')
+      return new NextResponse(`Page image too large: ${Math.round(actualDecodedSize / 1024 / 1024 * 10) / 10}MB (max 4MB)`, { status: 400 })
     }
 
     // Initialize Supabase client and services
