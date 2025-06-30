@@ -1895,22 +1895,101 @@ useEffect(() => {
 }, [threadId])
 ```
 
+#### API Contract Design
+
+The database-first implementation uses a specific API contract that returns complete thread and message data:
+
+**Request Format**:
+```typescript
+{
+  action: 'execute',
+  parameters: {
+    content: string,
+    documentContext?: string,
+    threadId?: string,        // Optional - creates new thread if not provided
+    documentId: string,       // Required for new thread creation
+    databaseFirst: true,      // Feature flag for database-first implementation
+    atomic: true              // Ensures atomic operations
+  }
+}
+```
+
+**Response Format**:
+```typescript
+{
+  // Core data - authoritative database state
+  thread: {
+    id: string,
+    document_id: string,
+    model_string: string,
+    title: string,
+    created_by: string | null,
+    created_at: string,
+    updated_at: string
+  },
+  messages: Array<{
+    id: string,
+    thread_id: string,
+    sequence_number: number,
+    role: 'user' | 'assistant',
+    content: string,
+    ai_call_id: string | null,
+    created_at: string
+  }>,
+  
+  // Metadata
+  type: 'conversation',
+  tool: 'chat',
+  executionTime: number,
+  tokensUsed?: number,
+  success: true
+}
+```
+
+**Database Transaction Pattern**:
+```sql
+BEGIN TRANSACTION;
+
+-- 1. Create or verify thread exists
+INSERT INTO chat_threads (...) ON CONFLICT DO NOTHING;
+
+-- 2. Insert user message
+INSERT INTO chat_messages (thread_id, role, content, sequence_number, ...) 
+VALUES (...);
+
+-- 3. Generate AI response (external API call)
+
+-- 4. Insert AI response message  
+INSERT INTO chat_messages (thread_id, role, content, sequence_number, ai_call_id, ...)
+VALUES (...);
+
+-- 5. Return complete thread + messages from DB
+SELECT * FROM chat_threads WHERE id = ?;
+SELECT * FROM chat_messages WHERE thread_id = ? ORDER BY sequence_number;
+
+COMMIT;
+```
+
 #### Migration Benefits
 
 **Architectural Simplicity**:
 - **3 files modified**: Achieved complete migration with minimal code changes
 - **37 insertions, 49 deletions**: Net reduction in codebase complexity
 - **Zero breaking changes**: All existing UI features preserved
+- **Single Transaction Flow**: Thread creation and message persistence in atomic operations
 
 **Reliability Improvements**:
 - **Atomic operations**: Thread creation and message persistence in single transactions
 - **Consistent state**: Database as single source of truth eliminates synchronisation issues
 - **Graceful degradation**: Comprehensive error handling with clear user feedback
+- **Race Condition Elimination**: No separate save operations that can diverge
+- **Multi-session Consistency**: All clients receive same authoritative database state
 
 **Developer Experience**:
 - **Simplified debugging**: Single data flow makes issues easier to trace
 - **Clear separation**: Database operations, API layer, and UI state clearly separated
 - **Future-ready**: Architecture supports realtime sync and multi-session features
+- **Simplified Error Handling**: Either entire operation succeeds or fails
 
 **Testing & Quality**:
 - **Comprehensive test coverage**: Unit tests for validation, integration tests for atomic operations
