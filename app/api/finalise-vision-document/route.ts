@@ -95,18 +95,59 @@ export async function POST(request: NextRequest) {
       totalStorageSize: assetStats.totalStorageSize
     }, 'Asset validation results')
     
-    // We don't require exact match since some pages might not have images
-    // but we should have at least some assets if images were extracted
+    // Fatal error: If HTML contains images, we must have corresponding assets
     if (assetStats.totalAssets === 0 && html.includes('<img')) {
-      requestLogger.warn({
+      requestLogger.error({
         correlationId,
         documentId,
         htmlHasImages: true,
         storedAssets: 0
-      }, 'HTML contains images but no assets were uploaded')
+      }, 'FATAL: HTML contains images but no assets were uploaded to storage')
       
-      // This is not a fatal error - images might have failed to upload
-      // but we can still process the document
+      return NextResponse.json({
+        error: 'Document processing failed: Images were detected in the document but none were uploaded to storage',
+        details: 'This indicates a failure in the image extraction and upload pipeline. All images must be successfully uploaded before document finalisation.',
+        debugInfo: {
+          documentId,
+          expectedImages: 'detected in HTML',
+          actualAssets: 0,
+          correlationId
+        }
+      }, { status: 422 })
+    }
+    
+    // Validate that all img tags have valid Supabase Storage URLs
+    const imgTags = html.match(/<img[^>]+src="[^"]*"/g) || []
+    if (imgTags.length > 0) {
+      const invalidImages = imgTags.filter(tag => {
+        const srcMatch = tag.match(/src="([^"]*)"/)
+        if (!srcMatch) return true
+        const src = srcMatch[1]
+        // Check if it's a valid Supabase Storage URL for this document
+        return !src.includes('/storage/v1/object/public/') || !src.includes(`/${documentId}/assets/`)
+      })
+      
+      if (invalidImages.length > 0) {
+        requestLogger.error({
+          correlationId,
+          documentId,
+          totalImages: imgTags.length,
+          invalidImages: invalidImages.length,
+          sampleInvalidImage: invalidImages[0]
+        }, 'FATAL: HTML contains images with invalid storage URLs')
+        
+        return NextResponse.json({
+          error: 'Document processing failed: Images with invalid storage URLs detected',
+          details: `Found ${invalidImages.length} images that don't reference valid Supabase Storage URLs for this document. All images must be uploaded to storage before finalisation.`,
+          debugInfo: {
+            documentId,
+            totalImages: imgTags.length,
+            invalidImages: invalidImages.length,
+            expectedUrlPattern: `*/storage/v1/object/public/*/${documentId}/assets/*`,
+            correlationId
+          }
+        }, { status: 422 })
+      }
     }
     
     // Step 2: Check if document already exists (prevent duplicate finalisation)
@@ -198,39 +239,63 @@ export async function POST(request: NextRequest) {
       stack: error instanceof Error ? error.stack : undefined
     }, 'Vision document finalisation error occurred')
     
-    // Handle specific errors
+    // Handle specific errors with clear, debuggable messages
     if (error instanceof Error) {
       if (error.message.includes('Authentication failed') || error.message.includes('User not authenticated')) {
-        return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+        return NextResponse.json({ 
+          error: 'Authentication required to finalise document',
+          details: 'User session expired or invalid. Please log in again.',
+          debugInfo: { correlationId }
+        }, { status: 401 })
       }
       
       if (error.message.includes('Failed to get document assets')) {
         return NextResponse.json({ 
-          error: 'Failed to validate document assets',
-          details: error.message 
+          error: 'FATAL: Asset validation failed',
+          details: 'Unable to retrieve document assets from storage. This indicates a database or storage service issue.',
+          debugInfo: { 
+            correlationId,
+            errorMessage: error.message,
+            stack: error.stack 
+          }
         }, { status: 500 })
       }
       
       if (error.message.includes('Content sanitization failed') || error.message.includes('sanitization')) {
         const sanitizationError = handleSanitizationError(error, 'pdf')
-        return NextResponse.json({ error: sanitizationError.message }, { status: sanitizationError.status })
+        return NextResponse.json({ 
+          error: sanitizationError.message,
+          debugInfo: { correlationId }
+        }, { status: sanitizationError.status })
       }
       
       if (error.message.includes('Failed to create document')) {
         return NextResponse.json({ 
-          error: 'Failed to store document',
-          details: error.message 
+          error: 'FATAL: Document storage failed',
+          details: 'Unable to store document in database. This indicates a database service issue.',
+          debugInfo: { 
+            correlationId,
+            errorMessage: error.message,
+            stack: error.stack 
+          }
         }, { status: 500 })
       }
       
       return NextResponse.json({ 
-        error: 'Document finalisation failed',
-        details: error.message 
+        error: 'FATAL: Document finalisation failed',
+        details: 'An unexpected error occurred during document processing. Check server logs for details.',
+        debugInfo: { 
+          correlationId,
+          errorMessage: error.message,
+          stack: error.stack 
+        }
       }, { status: 500 })
     }
     
     return NextResponse.json({ 
-      error: 'Unknown error occurred during document finalisation' 
+      error: 'FATAL: Unknown error during document finalisation',
+      details: 'An unknown error occurred. Check server logs for details.',
+      debugInfo: { correlationId }
     }, { status: 500 })
   }
 }
