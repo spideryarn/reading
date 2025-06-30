@@ -2,7 +2,7 @@
 // Serves original PDF files from Supabase Storage with proper access control
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { requireAuth } from '@/lib/auth/server-auth'
 import { getCurrentUserAdminStatus } from '@/lib/auth/admin-utils'
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   
   try {
     // Validate authentication first
-    const user = await requireAuth()
+    const user = await requireAuth({ allowBearer: true, request })
     
     const { slug } = await context.params
 
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }, 'Document download request initiated')
 
     // Initialize Supabase client and document service
-    const supabase = await createClient()
+    const supabase = await getSupabaseServerClient(request, { allowBearer: true })
     const documentService = new DocumentService(supabase)
 
     // Get document by slug
@@ -167,7 +167,7 @@ export async function HEAD(request: NextRequest, context: RouteContext) {
   
   try {
     // Validate authentication first
-    const user = await requireAuth()
+    const user = await requireAuth({ allowBearer: true, request })
     
     const { slug } = await context.params
 
@@ -183,7 +183,7 @@ export async function HEAD(request: NextRequest, context: RouteContext) {
     }, 'Document HEAD request for signed URL initiated')
 
     // Initialize services
-    const supabase = await createClient()
+    const supabase = await getSupabaseServerClient(request, { allowBearer: true })
     const documentService = new DocumentService(supabase)
 
     // Get document by slug

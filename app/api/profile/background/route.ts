@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUser } from '@/lib/auth/server-auth'
-import { createClient } from '@/lib/supabase/server'
+import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { ProfileService } from '@/lib/services/database/profiles'
 import { z } from 'zod'
 
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const validatedData = updateBackgroundSchema.parse(body)
 
     // Create ProfileService instance
-    const supabase = await createClient()
+    const supabase = await getSupabaseServerClient(request)
     const profileService = new ProfileService(supabase)
 
     // Update background

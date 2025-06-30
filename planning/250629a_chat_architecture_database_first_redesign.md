@@ -162,7 +162,7 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
   - [x] Obtain the authenticated Supabase client via `const supabase = getSupabaseServerClient(request, { allowBearer: true })` and pass it through the `ExecutionContext` (`context.supabaseClient`).
   - [x] Update downstream handlers (`handlers/chat.ts`) to use `context.supabaseClient` instead of locally initialising a new client.
   - [x] **Commit and test pass** before proceeding to sub-step D.
-  - [x] **Git commit**: `efcc455` - Chat handler now uses consolidated auth flow
+  - [x] **Git commit**: `a67bdbf` - All tool handlers now use consolidated auth flow
 - [ ] **Sub-step D: Sweep codebase for duplicate client creation**  
   Use `ripgrep "createClient(.*supabase"` to identify API routes or services that still instantiate a Supabase client directly.  For each, switch to `getSupabaseServerClient()` so all server queries share the same auth path.
 - [ ] **Integration & RLS regression tests**

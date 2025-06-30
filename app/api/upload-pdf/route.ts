@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { createPdfToHtmlPrompt } from '@/lib/prompts/templates/pdf-to-html-direct'
-import { createClient } from '@/lib/supabase/server'
+import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelForAICall, UPLOAD_LIMITS } from '@/lib/config'
 import { requireAuth } from '@/lib/auth/server-auth'
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
   
   try {
     // Validate authentication first
-    const user = await requireAuth()
+    const user = await requireAuth({ allowBearer: true, request })
     
     // Parse multipart form data
     const formData = await request.formData()
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
     }, 'Starting PDF processing with storage integration')
 
     // Initialize Supabase client and services
-    const supabase = await createClient()
+    const supabase = await getSupabaseServerClient(request, { allowBearer: true })
     const aiCallService = new AiCallService(supabase)
 
     // Create provider-specific prompt template with appropriate model configuration

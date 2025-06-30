@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { executePromptWithUsage } from '@/lib/prompts/types'
 import { tweetThreadPrompt, tweetThreadPromptInputSchema, tweetThreadResponseSchema } from '@/lib/prompts/templates/tweet-thread'
-import { createClient } from '@/lib/supabase/server'
+import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelForAICall } from '@/lib/config'
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Initialize database services
-    const supabase = await createClient()
+    const supabase = await getSupabaseServerClient(request)
     const enhancementService = new EnhancementService(supabase)
     
     // Check if tweet thread already exists in database
@@ -100,7 +100,7 @@ export async function DELETE(request: NextRequest) {
     }
     
     // Initialize database services
-    const supabase = await createClient()
+    const supabase = await getSupabaseServerClient(request)
     const enhancementService = new EnhancementService(supabase)
     
     // Delete tweet thread enhancement for this document
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
   
   try {
     // Validate authentication first
-    const user = await requireAuth()
+    const user = await requireAuth({ allowBearer: true, request })
     
     const body = await request.json()
     
@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
     }, 'Starting tweet thread generation process')
     
     // Initialize database services
-    const supabase = await createClient()
+    const supabase = await getSupabaseServerClient(request)
     const enhancementService = new EnhancementService(supabase)
     const aiCallService = new AiCallService(supabase)
     

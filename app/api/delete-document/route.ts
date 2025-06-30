@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { requireAuth } from '@/lib/auth/server-auth'
 import { getCurrentUserAdminStatus } from '@/lib/auth/admin-utils'
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   
   try {
     // Validate authentication first
-    const user = await requireAuth()
+    const user = await requireAuth({ allowBearer: true, request })
     
     const { documentId } = await request.json()
     
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabase = await createClient()
+    const supabase = await getSupabaseServerClient(request, { allowBearer: true })
     const documentService = new DocumentService(supabase)
     
     // Check if user owns the document or has admin access

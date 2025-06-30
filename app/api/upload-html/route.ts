@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { createUrlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
-import { createClient } from '@/lib/supabase/server'
+import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelForAICall, UPLOAD_LIMITS } from '@/lib/config'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
   
   try {
     // Validate authentication first
-    const user = await requireAuth()
+    const user = await requireAuth({ allowBearer: true, request })
     
     // Parse multipart form data
     const formData = await request.formData()
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     }, 'Starting HTML processing with selected method')
 
     // Initialize Supabase client and services
-    const supabase = await createClient()
+    const supabase = await getSupabaseServerClient(request, { allowBearer: true })
     const aiCallService = new AiCallService(supabase)
     
     console.log(`Step 1: Processing HTML content using ${processingMethod} method...`)

@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { getOrCreateStripeCustomer } from '@/lib/services/stripe/customers'
 import { createCheckoutSession } from '@/lib/services/stripe/subscriptions'
 import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the authenticated user
-    const supabase = await createClient()
+    const supabase = await getSupabaseServerClient(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
