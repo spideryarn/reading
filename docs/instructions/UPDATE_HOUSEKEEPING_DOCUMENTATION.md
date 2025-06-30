@@ -28,9 +28,10 @@ Read all key documentation to understand the current state:
 1. `README.md` - Project overview and goals
 2. `docs/reference/DOCUMENTATION_ORGANISATION.md` - Documentation structure and navigation guide
 3. `docs/reference/*.md` and `docs/instructions/*.md` - All evergreen documentation
-4. Recent `planning/*.md` - Latest decisions and changes
-5. Key code files and API routes
-6. Configuration files and migrations
+4. `docs/diagrams/*.mermaid` - All architecture and flow diagrams
+5. Recent `planning/*.md` - Latest decisions and changes
+6. Key code files and API routes
+7. Configuration files and migrations
 
 Use subagents where appropriate to maintain context window efficiency.
 
@@ -45,6 +46,7 @@ Look for:
 - **Duplicate Information** - Same content in multiple places (consolidate to one location)
 - **Incomplete Sections** - Placeholder or stub documentation
 - **Unclear Filenames** - Documentation files with ambiguous or overly brief names that don't clearly indicate content
+- **Outdated Diagrams** - Mermaid diagrams that don't reflect current architecture or flows
 - **Not that useful** - Information that isn't very relevant or adding much. Either remove or make it more concise
 - **No longer useful** - Information that may have been useful in the past, but is out-of-date or no longer so useful. Either remove, make it more concise, or move into an Appendix as a historical record (if you think it still has some value as background)
 
@@ -139,6 +141,7 @@ Before committing, ensure:
 - [ ] "See also" sections are comprehensive
 - [ ] Examples match current code patterns
 - [ ] Technical details are accurate
+- [ ] Diagrams accurately represent current architecture and flows
 - [ ] Documentation organisation guide (`docs/reference/DOCUMENTATION_ORGANISATION.md`) reflects any structural changes
 
 ## Common Pitfalls
