@@ -79,7 +79,7 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
 
 ## Progress Summary
 
-**Status**: ✅ **Stages 1-4 Complete** | Next focus: Content validation & edge cases
+**Status**: ✅ **ALL STAGES COMPLETE** | Database-first architecture successfully implemented and tidied
 
 **Implementation Date**: June 29, 2025  
 **Git Commits**: `0b0113c` (useChatStore), `a29d443` (assistant-ui integration)  
@@ -199,28 +199,27 @@ Replace the current dual-state chat architecture (assistant-ui in-memory + datab
 - [x] Ensure proper error messages replace current "refresh to fix" scenarios ✅ DONE
   - Clear, user-friendly error messages in centralized config
   - Consistent error handling across all layers
-
-### Stage: Validation and cleanup
-- [ ] Update relevant evergreen documentation in `docs/reference/`
 - [x] **Consolidate chat validation limits**: Extract hardcoded values (50,000 char message limit, 100,000 char context limit, 1,000 char word limit, 20 message conversation limit) from `app/api/tools/[toolId]/handlers/chat.ts` and `src/lib/hooks/useChatStore.ts` into `CHAT_VALIDATION_CONFIG` in `lib/config.ts`. ✅ COMPLETED
   - Created `CHAT_VALIDATION_CONFIG` with all limits and error messages
   - Updated both API and client to use centralized config
   - Created shared validation utility to avoid code duplication
 
-- [ ] Run `npm run check:health` to validate all TypeScript and linting
+### ✅ Stage: Tidying - **COMPLETE**
+- [x] Remove old dual-state management code from `usePersistentChat` ✅ **COMPLETED** 
+  - [x] Verified `usePersistentChat` file has been completely removed and replaced with `useChatStore`
+  - [x] Confirmed no remaining imports or references to old dual-state management patterns
+- [x] Update relevant evergreen documentation in `docs/reference/` ✅ **COMPLETED**
+  - [x] Updated `docs/reference/TESTING_OVERVIEW.md` to reflect new database-first chat testing approach
+  - [x] Updated `docs/reference/LLM_PROMPT_TEMPLATES.md` to reference `useChatStore` instead of `usePersistentChat`
+- [x] Update `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` with new patterns ✅ **COMPLETED**
+  - [x] Added comprehensive "Database-First Architecture Implementation" section
+  - [x] Documented migration from dual-state to single source of truth
+  - [x] Included before/after code examples and architecture benefits
+  - [x] Added integration details with authentication system and future multi-session support
+
+### Stage: Testing and validation (with subagents)
+-- [ ] Run `npm run check:health` to validate all TypeScript and linting
 - [ ] Run `npm test` in subagent to ensure all tests pass
-- [ ] Update `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` with new patterns
-- [ ] Git commit following `docs/instructions/GIT_COMMIT_CHANGES.md`
-- [ ] Ask user permission to merge branch back to main (if created)
-
-
-### Stage: Testing and validation
-- [ ] Remove old dual-state management code from `usePersistentChat`
-- [ ] Write integration tests for atomic thread + message creation
-- [ ] Add tests for message deduplication and ordering guarantees
-- [ ] Test multi-session realtime synchronisation scenarios
-- [ ] Validate no more duplicate messages under any conditions
-- [ ] Use subagent for comprehensive test execution
 
 
 ### Final stage

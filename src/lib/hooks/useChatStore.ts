@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { ChatService } from '@/lib/services/database/chat';
 import { validateUserMessage } from '@/lib/utils/chat-validation';
-import type { ChatThread, ChatMessage } from '@/lib/types/database';
+import type { Tables } from '@/lib/types/database';
 import type { ChatStore, SendMessageRequest, ChatApiResponse } from '@/lib/types/chat-api';
 
 interface UseChatStoreProps {
@@ -20,6 +20,9 @@ interface UseChatStoreReturn extends ChatStore {
   deleteThread: () => Promise<void>;
   refreshFromDatabase: () => Promise<void>;
 }
+
+type ChatThread = Tables<'chat_threads'>;
+type ChatMessage = Tables<'chat_messages'>;
 
 /**
  * Database-first chat store with single source of truth approach:
@@ -164,9 +167,34 @@ export function useChatStore({
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        const detail = errorData.detail || errorData.message || errorData.error || 'Unknown error';
-        throw new Error(detail);
+        const contentType = response.headers.get('content-type') || ''
+        let detail = 'Unknown error'
+        if (contentType.includes('application/json')) {
+          try {
+            const errorData = await response.json()
+            detail = errorData?.detail || errorData?.message || errorData?.error || detail
+          } catch {
+            // fall through – we'll use default detail
+          }
+        } else {
+          try {
+            const text = await response.text()
+            // Strip HTML tags if this is an error page
+            const plain = text.replace(/<[^>]*>/g, '').trim()
+            if (plain) {
+              detail = plain.slice(0, 300)
+            }
+          } catch {
+            // ignore
+          }
+        }
+
+        const correlationId = response.headers.get('x-spideryarn-correlation-id')
+        if (correlationId) {
+          detail = `${detail} (id ${correlationId})`
+        }
+
+        throw new Error(detail)
       }
 
       const data: ChatApiResponse = await response.json();

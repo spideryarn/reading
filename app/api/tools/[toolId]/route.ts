@@ -129,7 +129,10 @@ function createErrorResponse(
     ...error.details
   }
   
-  return NextResponse.json(problemDetails, { status: error.status })
+  // Attach correlation id header so clients can surface it
+  const response = NextResponse.json(problemDetails, { status: error.status })
+  response.headers.set('x-spideryarn-correlation-id', correlationId)
+  return response
 }
 
 function getErrorTitle(status: number): string {
@@ -252,7 +255,9 @@ export async function GET(
       executionTime: timer.elapsed()
     })
     
-    return NextResponse.json(result)
+    const successResponse = NextResponse.json(result)
+    successResponse.headers.set('x-spideryarn-correlation-id', correlationId)
+    return successResponse
     
   } catch (error) {
     logger.error('GET request failed', { error, executionTime: timer.elapsed() })
@@ -390,7 +395,10 @@ export async function POST(
       executionTime: timer.elapsed()
     })
     
-    return NextResponse.json(result)
+    const successResponse = NextResponse.json(result)
+    // Propagate correlation id to caller for easier debugging
+    successResponse.headers.set('x-spideryarn-correlation-id', correlationId)
+    return successResponse
     
   } catch (error) {
     logger.error('POST request failed', { error, executionTime: timer.elapsed() })
@@ -495,7 +503,9 @@ export async function DELETE(
       executionTime: timer.elapsed()
     })
     
-    return NextResponse.json(result)
+    const successResponse = NextResponse.json(result)
+    successResponse.headers.set('x-spideryarn-correlation-id', correlationId)
+    return successResponse
     
   } catch (error) {
     logger.error('DELETE request failed', { error, executionTime: timer.elapsed() })
