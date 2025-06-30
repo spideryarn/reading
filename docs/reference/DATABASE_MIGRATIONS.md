@@ -55,15 +55,6 @@ npm run db:types
 3. **Apply locally**: `npx supabase db push --local` (applies new migrations only)
 4. **IMPORTANT**: Ask user for explicit permission before applying migrations
 
-## Recent Migrations
-
-- `20250531235026_comprehensive_storage_schema.sql` - Initial comprehensive database schema
-- `20250608120000_add_upload_metadata_fields.sql` - Upload metadata tracking (documents.upload_metadata JSONB, documents.upload_ai_call_id UUID)
-5. **Verify types**: Check that `lib/types/database.ts` has been updated with your changes
-5. **Test**: Verify changes work as expected in code with proper type safety
-6. **Commit**: Include both the migration file and updated types in your git commit
-7. **Deploy**: Push to production (future step)
-
 
 ## Migration File Format
 

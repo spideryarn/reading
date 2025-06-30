@@ -102,6 +102,7 @@ The database schema is defined and represented in several places:
 - `language_code`: 2-letter language code (default 'en')
 - `word_count`: Calculated word count
 - `is_public`: Privacy flag for multi-user support
+- `is_draft`: TIMESTAMPTZ, **nullable** — when a document upload starts we insert a draft row and set this to `NOW()`. When the upload is successfully finalised the column is set back to `NULL`. Any non-null value therefore marks the document as "draft / upload in progress".
 - `created_by`: Links to auth.users
 - `upload_metadata`: JSONB for upload-related metadata (extraction method, provider, processing time, file size, etc.)
 - `upload_ai_call_id`: Foreign key to ai_calls table linking to the AI call that processed this document during upload
