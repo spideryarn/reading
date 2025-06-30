@@ -7,20 +7,17 @@
 import React, { useState, useEffect, useRef, useCallback, type JSX } from 'react'
 import { CircleNotch, TreeStructure, Trash, ArrowRight, Stop } from '@phosphor-icons/react'
 import type { DocumentElement } from '@/lib/types/document'
-import type { GranularityKey } from '@/lib/prompts/templates/summarise'
 import { useMutation, useActiveMutationType } from '@/lib/context/mutation-context'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
-import { SUMMARY_CONFIG, HEADING_ITERATION_CONFIG } from '@/lib/config'
+import { HEADING_ITERATION_CONFIG } from '@/lib/config'
 import { generateHeadingMutation, extractHeadingsFromMutation } from '@/lib/services/heading-mutation-generator'
 import { HeadingTree, type Heading } from '../heading-tree'
 import { Button } from '@/components/ui/button'
-import { Loading } from '@/components/ui/loading'
 import { AlertWithIcon } from '@/components/ui/alert'
-import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 import { useToolExecutorWithNavigation } from '@/lib/tools/hooks/use-tool-executor-with-navigation'
 import type { HeadingOperation } from '@/lib/prompts/templates/headings'
+import { HeadingSummaryTooltip, useHeadingSummaryTooltip } from './heading-summary-tooltip'
 
 // Component props interface
 interface StructurePanelProps {
@@ -76,162 +73,6 @@ interface StructureDeleteResponse {
   documentId: string
 }
 
-// Tooltip granularity setting
-const TOOLTIP_GRANULARITY: GranularityKey = 'single short paragraph'
-
-/**
- * Check if a heading section has sufficient content to generate a meaningful summary.
- */
-function hasSufficientContentForSummary(
-  elementId: string,
-  elements?: DocumentElement[],
-  mutatedDocument?: DocumentElement[],
-  activeMutationType?: string | null
-): boolean {
-  const elementsToSearch = (activeMutationType === 'insert-headings' && mutatedDocument) 
-    ? mutatedDocument 
-    : elements
-
-  if (!elementsToSearch || elementsToSearch.length === 0) {
-    return false
-  }
-
-  const headingElement = elementsToSearch.find(element => element.id === elementId)
-  if (!headingElement) {
-    return false
-  }
-
-  const headingLevel = parseInt(headingElement.tag_name.substring(1))
-  const headingPosition = headingElement.position
-
-  const sectionElements: DocumentElement[] = []
-  
-  for (let i = 0; i < elementsToSearch.length; i++) {
-    const element = elementsToSearch[i]!
-    
-    if (element.position <= headingPosition) continue
-    
-    if (element.tag_name.match(/^h[1-6]$/i)) {
-      const elementLevel = parseInt(element.tag_name.substring(1))
-      if (elementLevel <= headingLevel) {
-        break
-      }
-    }
-    
-    if (element.content?.trim()) {
-      sectionElements.push(element)
-    }
-  }
-
-  const totalTextContent = sectionElements
-    .map(element => element.content)
-    .join(' ')
-    .trim()
-  
-  return totalTextContent.length >= SUMMARY_CONFIG.MIN_CONTENT_LENGTH_CHARS
-}
-
-/**
- * Generate LLM summary for a heading's hierarchical content.
- */
-async function generateHeadingSummary(
-  elementId: string,
-  documentId: string,
-  elements?: DocumentElement[],
-  mutatedDocument?: DocumentElement[],
-  activeMutationType?: string | null,
-  setContentCache?: React.Dispatch<React.SetStateAction<Map<string, string>>>
-): Promise<string> {
-  const elementsToSearch = (activeMutationType === 'insert-headings' && mutatedDocument) 
-    ? mutatedDocument 
-    : elements
-
-  if (!elementsToSearch || elementsToSearch.length === 0) {
-    return "No content available"
-  }
-
-  const headingElement = elementsToSearch.find(element => element.id === elementId)
-
-  if (!headingElement) {
-    console.warn(`Heading element not found for ID: ${elementId}`)
-    return "Heading not found in elements"
-  }
-
-  const headingLevel = parseInt(headingElement.tag_name.substring(1))
-  const headingPosition = headingElement.position
-
-  const sectionElements: DocumentElement[] = []
-  
-  for (let i = 0; i < elementsToSearch.length; i++) {
-    const element = elementsToSearch[i]!
-    
-    if (element.position <= headingPosition) continue
-    
-    if (element.tag_name.match(/^h[1-6]$/i)) {
-      const elementLevel = parseInt(element.tag_name.substring(1))
-      if (elementLevel <= headingLevel) {
-        break
-      }
-    }
-    
-    if (element.content?.trim()) {
-      sectionElements.push(element)
-    }
-  }
-
-  if (sectionElements.length === 0) {
-    return "No content found for this section"
-  }
-
-  const htmlContent = sectionElements
-    .map(element => `<${element.tag_name}>${element.content}</${element.tag_name}>`)
-    .join('')
-
-  try {
-    const response = await fetch('/api/tools/summary', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'execute',
-        parameters: {
-          content: htmlContent,
-          granularity: TOOLTIP_GRANULARITY,
-          documentId: documentId,
-          sectionId: elementId
-        },
-        metadata: {
-          correlationId: crypto.randomUUID(),
-          source: 'direct',
-          timestamp: new Date().toISOString()
-        }
-      }),
-    })
-
-    if (!response.ok) {
-      throw new Error(`Summary API failed: ${response.status}`)
-    }
-
-    const { summary } = await response.json()
-    
-    if (setContentCache) {
-      setContentCache(prev => new Map(prev).set(elementId, summary))
-    }
-    
-    return summary
-  } catch (error) {
-    console.error('Error generating summary:', error)
-    
-    const errorMessage = "⚠️ Unable to generate summary. Please try again later."
-    
-    if (setContentCache) {
-      setContentCache(prev => new Map(prev).set(elementId, errorMessage))
-    }
-    
-    return errorMessage
-  }
-}
 
 /**
  * Consolidated Structure Panel Component
@@ -254,11 +95,17 @@ export function StructurePanel({
   
   // Shared state
   const [headings, setHeadings] = useState<Heading[]>([])
-  const [loadingStates, setLoadingStates] = useState<Set<string>>(new Set())
-  const [contentCache, setContentCache] = useState<Map<string, string>>(new Map())
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
   const [granularityLevel, setGranularityLevel] = useState(3)
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Tooltip state management
+  const {
+    contentCache,
+    loadingStates,
+    handleLoadingStateChange,
+    handleContentCacheChange
+  } = useHeadingSummaryTooltip()
   
   // AI-specific state
   const [isLoadingHeadings, setIsLoadingHeadings] = useState(false)
@@ -955,82 +802,46 @@ export function StructurePanel({
     }
   }
 
-  const getTooltipContent = useCallback((elementId: string): JSX.Element => {
-    const isLoading = loadingStates.has(elementId)
-    const cachedContent = contentCache.get(elementId)
+  // Create tooltip component instance for current heading context
+  const createTooltipHandlers = useCallback((elementId: string) => {
+    const tooltipComponent = HeadingSummaryTooltip({
+      elementId,
+      documentId,
+      elements,
+      mutatedDocument,
+      activeMutationType,
+      contentCache,
+      loadingStates,
+      onLoadingStateChange: handleLoadingStateChange,
+      onContentCacheChange: handleContentCacheChange
+    })
     
-    if (isLoading) {
-      return (
-        <div className="max-w-md p-4 text-sm bg-white border border-gray-200 rounded-lg shadow-lg">
-          <div className="flex items-center space-x-3">
-            <CircleNotch size={16} className="animate-spin text-blue-500" style={{ animationDuration: '2s' }} />
-            <span className="text-gray-700 font-medium">Summarising contents of this heading...</span>
-          </div>
-        </div>
-      )
+    return {
+      getTooltipContent: () => tooltipComponent.getTooltipContent(),
+      handleTooltipShow: () => tooltipComponent.handleTooltipShow()
     }
-    
-    if (cachedContent) {
-      const isError = cachedContent.startsWith('⚠️')
-      
-      if (isError) {
-        return (
-          <div className="max-w-md p-4 text-sm bg-amber-50 border border-amber-200 rounded-lg shadow-lg">
-            <div className="flex items-center space-x-3">
-              <CircleNotch size={16} className="text-amber-600 flex-shrink-0" />
-              <span className="text-amber-800 font-medium">{cachedContent.replace('⚠️ ', '')}</span>
-            </div>
-          </div>
-        )
-      }
-      
-      return (
-        <div className="max-w-md p-4 text-sm bg-white border border-gray-200 rounded-lg shadow-lg">
-          <div className="prose prose-sm prose-gray max-w-none">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {cachedContent}
-            </ReactMarkdown>
-          </div>
-        </div>
-      )
-    }
-    
-    if (hasSufficientContentForSummary(elementId, elements, mutatedDocument, activeMutationType)) {
-      return (
-        <div className="max-w-md p-4 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg shadow-lg">
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-            <span className="font-medium">Hover to load content...</span>
-          </div>
-        </div>
-      )
-    } else {
-      return (
-        <div className="max-w-md p-4 text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-lg shadow-lg">
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-            <span className="font-medium italic">Section too short to summarise</span>
-          </div>
-        </div>
-      )
-    }
-  }, [loadingStates, contentCache, elements, mutatedDocument, activeMutationType])
+  }, [
+    documentId,
+    elements,
+    mutatedDocument,
+    activeMutationType,
+    contentCache,
+    loadingStates,
+    handleLoadingStateChange,
+    handleContentCacheChange
+  ])
 
+  // Generate tooltip content for HeadingTree
+  const getTooltipContent = useCallback((elementId: string): JSX.Element => {
+    const { getTooltipContent } = createTooltipHandlers(elementId)
+    return getTooltipContent()
+  }, [createTooltipHandlers])
+
+  // Handle tooltip show for HeadingTree
   const handleTooltipShow = useCallback((elementId: string) => {
-    if (!contentCache.has(elementId) && !loadingStates.has(elementId)) {
-      if (hasSufficientContentForSummary(elementId, elements, mutatedDocument, activeMutationType)) {
-        setLoadingStates(prev => new Set(prev).add(elementId))
-        
-        generateHeadingSummary(elementId, documentId, elements, mutatedDocument, activeMutationType, setContentCache).finally(() => {
-          setLoadingStates(prev => {
-            const newSet = new Set(prev)
-            newSet.delete(elementId)
-            return newSet
-          })
-        })
-      }
-    }
-  }, [contentCache, loadingStates, elements, mutatedDocument, activeMutationType, documentId])
+    const { handleTooltipShow } = createTooltipHandlers(elementId)
+    handleTooltipShow()
+  }, [createTooltipHandlers])
 
   const toggleExpanded = (headingId: string) => {
     setCollapsedIds(prev => {
@@ -1162,43 +973,93 @@ export function StructurePanel({
     )
   }
 
-  // Handle loading state
+  // Handle loading state - show progress AND current headings
   if (isLoadingHeadings) {
     return (
-      <div className="p-4">
+      <div className="p-4 h-full flex flex-col overflow-y-auto">
         {renderStatusBadge()}
-        <div className="space-y-4">
-          <Loading text={
-            iterationState.currentIteration === 0 
-              ? `Improving headings (Initial analysis)...`
-              : HEADING_ITERATION_CONFIG.AUTO_ITERATE_HEADINGS
-                ? `Auto-improving headings (Iteration ${iterationState.currentIteration + 1})...`
-                : `Improving headings (Iteration ${iterationState.currentIteration + 1})...`
-          } spinnerSize={20} />
-          {iterationState.currentIteration > 0 && (
-            <div className="text-sm text-gray-600">
-              <p>Operations so far: {iterationState.totalOperations}</p>
-              {iterationState.summaries.length > 0 && (
-                <p className="mt-1">Last change: {iterationState.summaries[iterationState.summaries.length - 1]}</p>
-              )}
-              {HEADING_ITERATION_CONFIG.AUTO_ITERATE_HEADINGS && (
-                <div className="mt-1 flex items-center justify-between">
-                  <p className="text-blue-600 font-medium">Auto-iteration enabled</p>
-                  {!autoIterationStopped && (
-                    <Button
-                      onClick={handleStopAutoIteration}
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 text-xs py-1 px-2 h-6"
-                    >
-                      <Stop size={12} className="mr-1" />
-                      Stop
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+        
+        {/* Progress indicator at top - compact with tooltip for details */}
+        <div className="flex-shrink-0 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center space-x-3">
+            <TooltipOrPopover
+              content={
+                iterationState.currentIteration > 0 ? (
+                  <div className="max-w-md p-4 text-sm bg-white border border-gray-200 rounded-lg shadow-lg">
+                    <div className="space-y-2">
+                      <p className="font-medium text-gray-900">
+                        Iteration Progress
+                      </p>
+                      <p className="text-gray-700">
+                        Operations so far: {iterationState.totalOperations}
+                      </p>
+                      {iterationState.summaries.length > 0 && (
+                        <p className="text-gray-700">
+                          Last change: {iterationState.summaries[iterationState.summaries.length - 1]}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="max-w-md p-4 text-sm bg-white border border-gray-200 rounded-lg shadow-lg">
+                    <p className="text-gray-700">
+                      Analysing document structure and preparing improvements...
+                    </p>
+                  </div>
+                )
+              }
+              side="right"
+              sideOffset={8}
+              showIndicator={false}
+              contentClassName="p-0 bg-transparent border-0 shadow-none"
+            >
+              <div className="flex items-center space-x-3 cursor-help">
+                <CircleNotch size={20} className="animate-spin text-blue-500" />
+                <span className="text-blue-700 font-medium">
+                  {iterationState.currentIteration === 0 
+                    ? `Improving headings (Initial analysis)...`
+                    : HEADING_ITERATION_CONFIG.AUTO_ITERATE_HEADINGS
+                      ? `Auto-improving headings (Iteration ${iterationState.currentIteration + 1})...`
+                      : `Improving headings (Iteration ${iterationState.currentIteration + 1})...`
+                  }
+                </span>
+              </div>
+            </TooltipOrPopover>
+            
+            {/* Stop button for auto-iteration */}
+            {HEADING_ITERATION_CONFIG.AUTO_ITERATE_HEADINGS && !autoIterationStopped && (
+              <Button
+                onClick={handleStopAutoIteration}
+                variant="outline"
+                size="sm"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 text-xs py-1 px-2 h-6"
+              >
+                <Stop size={12} className="mr-1" />
+                Stop
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Show current headings while processing */}
+        <div className="flex-1 min-h-0">
+          <HeadingTree
+            headings={headings}
+            themeColors={{
+              hover: 'hover:bg-gray-50',
+              text: 'group-hover:text-gray-900',
+              levelText: 'text-gray-400 group-hover:text-gray-600',
+              levelTextHover: 'group-hover:text-gray-600'
+            }}
+            onHeadingClick={handleHeadingClick}
+            getTooltipContent={getTooltipContent}
+            handleTooltipShow={handleTooltipShow}
+            collapsedIds={collapsedIds}
+            onToggleExpanded={toggleExpanded}
+            granularityLevel={granularityLevel}
+            onGranularityChange={setGranularityLevel}
+            headingVisibility={headingVisibility || new Map()}
+          />
         </div>
       </div>
     )
