@@ -10,7 +10,6 @@ import {
   AssistantRuntimeProvider, 
   useExternalStoreRuntime,
   useMessage,
-  useAssistantRuntime,
 } from "@assistant-ui/react";
 import { User, Robot, PaperPlaneTilt, CircleNotch, Trash } from '@phosphor-icons/react';
 import { useChatStore } from '@/src/lib/hooks/useChatStore';
@@ -44,6 +43,20 @@ interface AssistantChatProps {
 }
 
 const ChatStoreContext = React.createContext<ReturnType<typeof useChatStore> | null>(null);
+
+// SHARED HELPER -------------------------------------------------------------
+// A single helper that all message-sending entry points (typed composer, voice
+// input, etc.) should use.  This keeps the contract in one place so future
+// changes (analytics hooks, throttling, etc.) only need updating here.
+function sendUserMessage(
+  chatStore: ReturnType<typeof useChatStore> | null,
+  content: string,
+): Promise<void> {
+  if (!chatStore) return Promise.resolve(); // Should never happen but guards tests
+  const trimmed = content.trim();
+  if (!trimmed) return Promise.resolve();
+  return chatStore.sendMessage(trimmed);
+}
 
 // User message component with pending/failed styling
 const UserMessage = () => {
@@ -81,7 +94,7 @@ const UserMessage = () => {
             <div className="flex items-center gap-1 mt-1 text-xs text-red-600">
               <button
                 type="button"
-                onClick={() => chatStore?.sendMessage(textContent)}
+                onClick={() => sendUserMessage(chatStore, textContent)}
                 className="underline"
               >
                 Retry
@@ -128,7 +141,7 @@ const AssistantMessage = () => (
 
 // Composer component with loading states and voice input
 const Composer = () => {
-  const runtime = useAssistantRuntime();
+  const chatStore = useContext(ChatStoreContext);
 
   // Remember last transcript to avoid accidental duplicates (e.g. micro reclick)
   const lastTranscribedRef = useRef<string | null>(null);
@@ -144,13 +157,11 @@ const Composer = () => {
 
       lastTranscribedRef.current = trimmed;
 
-      // Programmatically dispatch the user message through the runtime API.
-      (runtime as any).onNew({
-        role: 'user',
-        content: [{ type: 'text', text: trimmed }],
-      });
+      // Send through shared helper (bypasses runtime since external store runtimes
+      // do not expose onNew).
+      sendUserMessage(chatStore, trimmed);
     },
-    [runtime],
+    [chatStore],
   );
 
   // Handle voice input errors
@@ -268,9 +279,7 @@ function ChatRuntime({ chatStore }: { chatStore: ReturnType<typeof useChatStore>
         ? message.content.find(part => part.type === 'text')?.text || ''
         : String(message.content || '');
       
-      if (content.trim()) {
-        await chatStore.sendMessage(content);
-      }
+      await sendUserMessage(chatStore, content);
     },
     convertMessage: (msg: ChatMessageDb) => {
       // Determine if this is a local pending or failed placeholder using the `extra` JSONB field
@@ -326,6 +335,9 @@ export function AssistantChat({ documentId, documentContext }: AssistantChatProp
 
   // Show error state if persistence failed
   if (error) {
+    // Special handling for thread not found errors
+    const isThreadNotFound = error.toLowerCase().includes('thread not found');
+    
     return (
       <div className="h-full flex flex-col bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="flex-1 flex items-center justify-center p-8">
@@ -333,15 +345,29 @@ export function AssistantChat({ documentId, documentContext }: AssistantChatProp
             <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">
               <Robot size={24} weight="bold" className="text-red-600" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900">Chat Unavailable</h3>
-            <p className="text-sm text-gray-600">{error}</p>
+            <h3 className="text-lg font-medium text-gray-900">
+              {isThreadNotFound ? 'Conversation Not Found' : 'Chat Unavailable'}
+            </h3>
+            <p className="text-sm text-gray-600">
+              {isThreadNotFound 
+                ? 'This conversation has been deleted or is no longer available.' 
+                : error}
+            </p>
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                if (isThreadNotFound) {
+                  // Clear the invalid conversation ID from the URL with a special value
+                  // 'new' indicates we want a fresh conversation, not the most recent
+                  setConversation('new');
+                } else {
+                  window.location.reload();
+                }
+              }}
               className="mt-2"
             >
-              Reload Page
+              {isThreadNotFound ? 'Start New Conversation' : 'Reload Page'}
             </Button>
           </div>
         </div>
