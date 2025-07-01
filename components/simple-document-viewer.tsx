@@ -432,9 +432,9 @@ export function SimpleDocumentViewer({
         id="document-viewer"
         className={`max-w-[65ch] ${
           leftAligned
-            ? 'ml-10 mr-0.5 sm:ml-12 md:ml-14 sm:mr-1 lg:mx-auto'
-            : 'mx-2 sm:mx-3 lg:mx-auto'
-        } p-2 sm:p-3 md:px-4 md:py-6 lg:px-8`}
+            ? 'ml-1 sm:ml-2 md:ml-2 mr-1 sm:mr-2 md:mr-auto lg:mx-auto'
+            : 'mx-1 sm:mx-2 md:mx-2 lg:mx-auto'
+        } p-2 sm:p-3 md:px-3 md:py-6 lg:px-8`}
       >
         {/* Render root elements */}
         {elements
