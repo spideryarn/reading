@@ -1,0 +1,52 @@
+graph TB
+    subgraph Browser["Browser (Client)"]
+        A[PDF File] --> B[PDF.js Convert to Images]
+        B --> C{Image < 4MB?}
+        C -->|Yes| D[Add to Upload Queue]
+        C -->|No| E[Resize with Pica]
+        E --> D
+        D --> F[Concurrent Upload<br/>3-5 pages max]
+        F --> G[POST /api/upload-pdf-single-page-image]
+        H[Response: HTML + Bounding Boxes] --> I[Canvas Crop Images]
+        I --> J[Upload to Supabase Storage]
+        J --> K[Update HTML with Storage URLs]
+        K --> L{All Pages Done?}
+        L -->|No| F
+        L -->|Yes| M[Assemble Final HTML]
+        M --> N[POST /api/finalise-vision-document]
+    end
+
+    subgraph Serverless["Vercel Serverless Functions"]
+        G --> O[Validate < 4MB]
+        O --> P[Call Gemini Flash 2.5]
+        P --> Q[Generate HTML Fragment]
+        Q --> R[Extract Bounding Boxes]
+        R --> S[Generate Descriptive Filenames]
+        S --> T[Return Metadata]
+        T --> H
+        
+        N --> U[Validate Document]
+        U --> V[Store HTML in Database]
+        V --> W[Create Document Assets Records]
+        W --> X[Trigger Shared Pipeline]
+    end
+
+    subgraph Storage["Supabase Storage"]
+        J --> Y[Store in documentId/assets/]
+        Y --> Z[Return Public URLs]
+        Z --> K
+    end
+
+    subgraph Features["Key Features"]
+        AA[✓ Each request < 4.5MB limit]
+        AB[✓ Browser-based image extraction]
+        AC[✓ AI-generated filenames]
+        AD[✓ Direct storage uploads with RLS]
+        AE[✓ Concurrent processing]
+        AF[✓ Transaction rollback on failure]
+    end
+
+    style Browser fill:#f9f9f9,stroke:#333,stroke-width:2px
+    style Serverless fill:#e6f3ff,stroke:#0066cc,stroke-width:2px
+    style Storage fill:#ffe6e6,stroke:#cc0000,stroke-width:2px
+    style Features fill:#e6ffe6,stroke:#009900,stroke-width:2px
