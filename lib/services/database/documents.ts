@@ -613,6 +613,47 @@ export class DocumentService {
       }
     }
     
+    // NEW: Clean up any asset files (cropped images) that live under `{documentId}/assets/`
+    try {
+      const { data: assetFiles, error: listError } = await this.supabase.storage
+        .from('documents')
+        .list(`${id}/assets`, { limit: 1000 })
+
+      if (listError) {
+        throw new Error(listError.message)
+      }
+
+      const assetPaths = (assetFiles || [])
+        .filter((f) => (f as any).metadata) // filter out folder prefixes
+        .map((f) => `${id}/assets/${f.name}`)
+
+      if (assetPaths.length > 0) {
+        dbLogger.info({
+          operation: 'deleteWithStorage',
+          documentId: id,
+          assetCount: assetPaths.length
+        }, 'Deleting asset files')
+
+        const { error: removeError } = await this.supabase.storage
+          .from('documents')
+          .remove(assetPaths)
+
+        if (removeError) {
+          throw new Error(removeError.message)
+        }
+      }
+    } catch (assetErr) {
+      dbLogger.warn({
+        operation: 'deleteWithStorage',
+        documentId: id,
+        error: assetErr instanceof Error ? assetErr.message : 'Unknown error',
+        action: 'asset_cleanup_failed'
+      }, 'Failed to delete one or more asset files')
+
+      console.warn(`Failed to delete asset files for document ${id}:`, assetErr)
+      // Non-fatal – continue
+    }
+    
     return true
   }
 

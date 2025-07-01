@@ -6,6 +6,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { shouldThrowStorageError, getStorageErrorMessage, detectEnvironment } from '@/lib/utils/environment'
 import { UPLOAD_LIMITS } from '@/lib/config'
 
@@ -214,7 +215,10 @@ export async function getSignedDocumentUrl(
  * @returns Public URL (no expiration)
  */
 export function getPublicDocumentUrl(storagePath: string): string {
-  const supabase = createClient()
+  const supabase = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
   
   const { data } = supabase.storage
     .from(DOCUMENTS_BUCKET)
@@ -360,7 +364,7 @@ export async function getStorageStats() {
     }
     
     const totalFiles = files.length
-    const totalSize = files.reduce((sum, file) => sum + (file.metadata?.size || 0), 0)
+    const totalSize = files.reduce((sum: number, file) => sum + (file.metadata?.size || 0), 0)
     
     return {
       totalFiles,
@@ -560,4 +564,61 @@ function formatBytes(bytes: number): string {
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
+/**
+ * Delete all files (original + assets) belonging to a document.
+ *
+ * This walks the `documents` bucket under the `{documentId}/` prefix and
+ * removes every object it finds. It is recursive so sub-folders like
+ * `original/` and `assets/` are covered automatically.
+ */
+export async function deleteAllDocumentFiles(documentId: string): Promise<void> {
+  const supabase = await createClient()
+
+  // Helper to list files recursively because `storage.list` is not recursive.
+  async function listPaths(prefix: string): Promise<string[]> {
+    const { data, error } = await supabase.storage
+      .from(DOCUMENTS_BUCKET)
+      .list(prefix, {
+        limit: 1000,
+        // empty search string lists everything; Supabase returns both files
+        // and prefixes (folders)
+      })
+
+    if (error) {
+      throw new StorageError(`Failed to list files for prefix '${prefix}': ${error.message}`)
+    }
+
+    const paths: string[] = []
+
+    for (const entry of data || []) {
+      const entryPath = prefix ? `${prefix}/${entry.name}` : entry.name
+      // A directory has no `metadata` field
+      if ((entry as any).metadata) {
+        // File
+        paths.push(entryPath)
+      } else {
+        // Directory – recurse
+        const subPaths = await listPaths(entryPath)
+        paths.push(...subPaths)
+      }
+    }
+
+    return paths
+  }
+
+  const pathsToDelete = await listPaths(documentId)
+
+  if (pathsToDelete.length === 0) {
+    return
+  }
+
+  const { error: removeError } = await supabase.storage
+    .from(DOCUMENTS_BUCKET)
+    .remove(pathsToDelete)
+
+  if (removeError) {
+    throw new StorageError(`Failed to delete document files: ${removeError.message}`)
+  }
 }
