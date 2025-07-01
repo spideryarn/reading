@@ -1,0 +1,103 @@
+%% Semantic Highlights Architecture Diagram
+%% Prompt: Create a comprehensive architecture diagram showing how semantic highlights work in Spideryarn Reading.
+%% This includes the React-first state management, data flow from page-client through components,
+%% API integration, CSS intensity system, and cross-pane communication patterns.
+%% Key files: page-client.tsx, highlight-management.tsx, simple-document-viewer.tsx, 
+%% semantic-highlighting.ts, /api/semantic-search, DocumentCommunicationContext
+%% References: docs/reference/TOOL_HIGHLIGHT.md, docs/reference/DESIGN_OVERLAPPING_TEXT_HIGHLIGHTS.md,
+%% planning/finished/250613a_semantic_highlight_persistence_fix.md
+
+graph TB
+    subgraph Browser ["🖥️ Browser Layer"]
+        User([👤 User])
+    end
+
+    subgraph ReactState ["⚛️ React State Management"]
+        PageClient["<b>page-client.tsx</b><br/><i>State Owner</i><br/>semanticHighlights: SemanticHighlight[]"]
+        
+        PropsFlow["<b>Props Threading</b><br/>↓ semanticHighlights<br/>↑ onSemanticHighlightsChange"]
+    end
+
+    subgraph UIComponents ["🎨 UI Components"]
+        ResizableLayout["<b>ResizableDocumentLayout</b><br/><i>Props passthrough</i>"]
+        
+        subgraph LeftPane ["Left Pane"]
+            UnifiedLeft["<b>UnifiedLeftPane</b><br/><i>Tab container</i>"]
+            HighlightMgmt["<b>HighlightManagement</b><br/><i>Creation UI</i><br/>• Criterion input<br/>• Query history<br/>• Results list"]
+        end
+        
+        subgraph DocView ["Document View"]
+            SimpleDoc["<b>SimpleDocumentViewer</b><br/><i>Display renderer</i><br/>• Apply CSS classes<br/>• Handle interactions"]
+        end
+    end
+
+    subgraph Backend ["☁️ Backend Services"]
+        API["<b>/api/semantic-search</b><br/><i>LLM Analysis</i><br/>• Element matching<br/>• Confidence scoring<br/>• Result caching"]
+        
+        LLM["<b>LLM Provider</b><br/><i>Semantic Analysis</i>"]
+        
+        Cache[("<b>Cache Storage</b><br/><i>Query results</i>")]
+    end
+
+    subgraph CSSSystem ["🎨 CSS Intensity System"]
+        CSS["<b>app/globals.css</b><br/><i>5 Confidence Levels</i><br/>.semantic-highlight-very-low (0-19%)<br/>.semantic-highlight-low (20-39%)<br/>.semantic-highlight-medium (40-59%)<br/>.semantic-highlight-high (60-79%)<br/>.semantic-highlight-very-high (80-100%)"]
+        
+        Utils["<b>semantic-highlighting.ts</b><br/><i>Utility Functions</i><br/>confidenceToClassName()"]
+    end
+
+    subgraph Context ["📡 Cross-Pane Communication"]
+        DocContext["<b>DocumentCommunicationContext</b><br/><i>UI Coordination</i><br/>• scrollToElement()<br/>• Temp highlight pulse"]
+    end
+
+    %% User interactions
+    User -->|"1. Enter criterion"| HighlightMgmt
+    User -->|"8. Click highlight"| HighlightMgmt
+
+    %% Highlight creation flow
+    HighlightMgmt -->|"2. Create highlights"| API
+    API -->|"3. Analyze"| LLM
+    API -->|"Check cache"| Cache
+    Cache -->|"Cache hit"| API
+    API -->|"4. Return matches"| HighlightMgmt
+    
+    %% State update flow
+    HighlightMgmt -->|"5. Update state<br/>{elementId, confidence}"| PropsFlow
+    PropsFlow -->|"Callback"| PageClient
+    PageClient -->|"6. Props flow"| ResizableLayout
+    ResizableLayout --> UnifiedLeft
+    ResizableLayout --> SimpleDoc
+    
+    %% Display flow
+    SimpleDoc -->|"7. Apply classes"| CSS
+    Utils --> SimpleDoc
+    
+    %% Navigation flow
+    HighlightMgmt -->|"9. Navigate"| DocContext
+    DocContext -->|"Scroll + pulse"| SimpleDoc
+
+    %% Data structures
+    note1["<b>Highlight (Internal)</b><br/>{<br/>  id: string<br/>  criterion: string<br/>  elementId: string<br/>  confidence: number<br/>  reasoning: string<br/>  textExcerpt: string<br/>}"]
+    
+    note2["<b>SemanticHighlight (Display)</b><br/>{<br/>  elementId: string<br/>  confidence: number<br/>}"]
+    
+    note1 -.-> HighlightMgmt
+    note2 -.-> PageClient
+
+    %% Color key
+    ColorKey["<b>Color Key:</b><br/>🖥️ Browser = Light Blue<br/>⚛️ React = Light Green<br/>🎨 UI = Light Yellow<br/>☁️ Backend = Light Purple<br/>📡 Context = Light Orange"]
+
+    %% Styling
+    classDef browser fill:#e0f2fe
+    classDef react fill:#d1fae5
+    classDef ui fill:#fef3c7
+    classDef backend fill:#e9d5ff
+    classDef context fill:#fed7aa
+    classDef data fill:#f3f4f6
+    
+    class User,Browser browser
+    class PageClient,PropsFlow,ReactState react
+    class ResizableLayout,UnifiedLeft,HighlightMgmt,SimpleDoc,UIComponents,LeftPane,DocView ui
+    class API,LLM,Cache,Backend backend
+    class DocContext,Context context
+    class CSS,Utils,CSSSystem ui
+    class note1,note2,ColorKey data

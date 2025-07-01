@@ -61,7 +61,7 @@ Process[Process Flow:<br/>• Step 1<br/>• Step 2<br/>• Step 3<br/>• Step 
 
 ### Comments
 
-Include a detailed comment in the `.mermaid` file with a prompt to describe/reproduce this diagram for future reference. If asked to update the diagram, update the prompt-comment accordingly.
+Include a detailed comment in the `.mermaid` file with a prompt to describe/reproduce this diagram for future reference, including references to relevant files/functions and any other details/intent mentioned by the user. If asked to update the diagram, update the prompt-comment accordingly.
 
 
 ### Spacing
@@ -71,7 +71,7 @@ Reduce spacing so that more information fits on the screen.
 
 ### Icons
 
-Include icons where appropriate, e.g. for different systems, actions, components.
+Include icons sparingly, e.g. for different systems, actions, components.
 
 
 ### Fonts
@@ -86,8 +86,10 @@ Use `italic` or `bold` in other ways to help aid comprehension.
 Use colour appropriately to distinguish major components.
 
 For example, you might give different colours to different systems, e.g.
+- purple for user
+- brown for browser
+- orange for mobile/device
 - blue for backend
-- brown for browser/client/device/end-user
 - yellow for database
 - purple for cloud storage (including Supabase Storage, S3, etc)
 - green for payments
@@ -95,6 +97,14 @@ For example, you might give different colours to different systems, e.g.
 Perhaps use one colour scheme for the outer boxes that group things (e.g. for systems), and another colour scheme for inner boxes based on a different typology. Use your judgment.
 
 Provide a colour key.
+
+
+### Shapes, lines, arrows, etc
+
+For database relationships, use database UML-style lines/arrows/shapes.
+
+Likewise, if there's a domain-standard visual-notational scheme that's relevant for (part of) the diagram, use it there.
+
 
 ## Quick Workflow
 

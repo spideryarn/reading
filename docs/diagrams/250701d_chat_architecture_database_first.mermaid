@@ -1,0 +1,51 @@
+%% Database-First Chat Architecture for Spideryarn Reading
+%% This diagram shows the redesigned chat system where the database is the single source of truth,
+%% eliminating duplicate messages and race conditions. The flow demonstrates atomic operations
+%% from user input through API validation to database persistence and UI updates.
+%% Key improvements: zero duplicates, no refresh button needed, atomic thread creation,
+%% consistent state management, and loading states for better UX.
+
+graph TB
+    subgraph Browser["🖥️ Client (Browser)"]
+        UI["Chat UI<br/>@assistant-ui/react"]
+        Store["useChatStore Hook<br/>messages, isLoading, threadId"]
+        ExtRuntime["useExternalStoreRuntime<br/>Database-driven State"]
+    end
+
+    subgraph API["⚙️ API Layer"]
+        ChatAPI["/api/tools/chat<br/>Atomic Operations"]
+        Auth["🔐 Unified Auth<br/>Cookie Auth + Bearer Token"]
+    end
+
+    subgraph Database["🗄️ Database (Supabase)"]
+        Threads["chat_threads table"]
+        Messages["chat_messages table<br/>Single Source of Truth"]
+        RLS["🛡️ Row Level Security<br/>User Isolation"]
+    end
+
+    UserSend["👤 User Sends Message"] --> Store
+    Store -->|1. Show pending| UI
+    Store -->|2. API call| ChatAPI
+    ChatAPI -->|3. Auth| Auth
+    ChatAPI -->|4. Atomic tx| Messages
+    Messages -->|5. User + AI msgs| Messages
+    Messages -->|6. Return data| ChatAPI
+    ChatAPI -->|7. DB rows| Store
+    Store -->|8. Replace| UI
+    
+    ExtRuntime -.->|Controls| Store
+    UI -.->|Renders| Store
+    Messages -.->|Protected| RLS
+    Threads -.->|1:Many| Messages
+
+    Features["✨ Key Features<br/>🎯 Zero Duplicates<br/>📊 Database as Truth<br/>⚡ Atomic Operations<br/>🔄 Loading States<br/>❌ No Refresh Button"]
+
+    classDef browserStyle fill:#8B4513,stroke:#333,stroke-width:2px,color:#fff
+    classDef apiStyle fill:#4169E1,stroke:#333,stroke-width:2px,color:#fff
+    classDef dbStyle fill:#FFD700,stroke:#333,stroke-width:2px,color:#000
+    classDef featureStyle fill:#90EE90,stroke:#333,stroke-width:2px,color:#000
+    
+    class Browser browserStyle
+    class API apiStyle
+    class Database dbStyle
+    class Features featureStyle
