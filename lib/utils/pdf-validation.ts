@@ -249,6 +249,5 @@ export function createPageCountErrorMessage(
   return `PDF has too many pages (${actualPages}). Maximum allowed: ${maxPages} pages. Page limits help ensure reasonable processing times for AI analysis.`
 }
 
-// Note: MuPDF.js integration functions have been moved to a separate browser-only module
-// due to WebAssembly and Node.js module compatibility issues with Next.js SSR.
-// See lib/utils/mupdf-integration.ts for MuPDF.js-based page counting functionality.
+// Note: The current implementation uses pdf-lib for page counting and validation.
+// MuPDF alternatives were evaluated but not implemented due to deployment constraints.

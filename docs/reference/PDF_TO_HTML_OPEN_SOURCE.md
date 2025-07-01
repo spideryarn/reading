@@ -92,9 +92,9 @@ python3 grobid-client.py --n 3 --input ~/papers --output ~/tei_papers processFul
 
 **Demo Available**: https://huggingface.co/spaces/kermitt2/grobid
 
-### PyMuPDF (Python-Based)
+### PyMuPDF (Python-Based - Evaluated)
 
-**🐍 High-Quality Python Library**:
+**🐍 High-Quality Python Library** (evaluated but not implemented in current codebase):
 
 ```python
 import fitz  # PyMuPDF
@@ -110,15 +110,18 @@ for page_num in range(len(doc)):
     img_data = pix.tobytes("png")
 ```
 
-**Strengths**:
+**Evaluated Strengths** (research findings, not implemented):
 - **Image Quality**: Highest quality PDF-to-image conversion available
 - **Figure Extraction**: Superior handling of academic figures and diagrams
 - **Text Extraction**: Built-in OCR and text extraction capabilities
 - **Academic Optimized**: Excellent for scientific papers with complex layouts
 
-**Limitations**:
+**Implementation Barriers**:
 - **Python Only**: Not available for Node.js/TypeScript projects
 - **Integration Complexity**: Requires Python runtime alongside Node.js
+- **Serverless Constraints**: Not compatible with Vercel deployment environment
+
+**Current Status**: Evaluated during architecture research but not implemented. Current system uses pdf2pic + pdf-lib for PDF processing.
 
 ## Traditional OCR Libraries
 
@@ -195,18 +198,25 @@ Various research projects focused on scientific literature processing:
 
 **Current Architecture (V2)**:
 - **Primary**: Direct LLM processing (Claude 4 + Gemini 2.5 Pro)
-- **Fallback**: pdf-to-png-converter + LLM transcription
-- **Academic Enhancement**: GROBID for metadata extraction
+- **Fallback**: pdf2pic + pdf-lib for image conversion + LLM transcription
+- **Future Consideration**: GROBID for academic metadata extraction (evaluated)
 
 **Recommended Open Source Stack**:
 
 ```typescript
-// Hybrid approach combining multiple open source tools
-const hybridPipeline = {
-  imageConversion: "pdf-to-png-converter", // Zero dependencies
-  textExtraction: "pdf-parse", // Cost optimization
-  layoutAnalysis: "GROBID API", // Academic structure
-  fallbackOCR: "Tesseract" // Offline processing
+// Current implementation (Spideryarn Reading)
+const currentPipeline = {
+  primary: "Direct LLM processing", // Claude 4 + Gemini 2.5 Pro
+  fallback: "pdf2pic + pdf-lib", // Image conversion for LLM processing
+  storage: "Supabase Storage" // PDF + metadata persistence
+};
+
+// Evaluated alternatives (not implemented)
+const evaluatedAlternatives = {
+  imageConversion: "pdf-to-png-converter", // Zero dependencies (evaluated)
+  textExtraction: "pdf-parse", // Cost optimization (evaluated)
+  layoutAnalysis: "GROBID API", // Academic structure (evaluated)
+  fallbackOCR: "Tesseract" // Offline processing (evaluated)
 };
 ```
 
@@ -219,12 +229,23 @@ const hybridPipeline = {
 | pdf-parse | Free | Medium | Excellent | Poor |
 | PyMuPDF | Free | Excellent | Medium | Excellent |
 | Tesseract | Free | Medium | Medium | Poor |
+| **pdf2pic + pdf-lib** | **Free** | **High** | **Good** | **Good** |
+
+**Note**: Bold row indicates current implementation. Others show evaluated alternatives.
 
 ### Integration Patterns
 
-**Pattern 1: Serverless-First**
+**Pattern 1: Current Implementation (Serverless-Compatible)**
 ```typescript
-// Zero-dependency approach for Vercel/Netlify
+// Current Spideryarn Reading approach
+import pdf2pic from 'pdf2pic';
+import { PDFDocument } from 'pdf-lib';
+// Direct LLM processing + pdf2pic/pdf-lib fallback
+```
+
+**Pattern 2: Evaluated Alternative (Zero-Dependency)**
+```typescript
+// Evaluated but not implemented
 import { pdfToPng } from 'pdf-to-png-converter';
 // No system dependencies required
 ```

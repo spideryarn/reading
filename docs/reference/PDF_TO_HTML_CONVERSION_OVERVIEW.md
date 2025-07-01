@@ -6,7 +6,7 @@ A high-level guide to PDF to HTML conversion approaches for the Spideryarn Readi
 
 This overview provides architectural guidance and decision-making frameworks. For detailed implementation information, see:
 
-- **`docs/reference/PDF_TO_HTML_OPEN_SOURCE.md`** - Open source libraries and tools (GROBID, pdf-to-png-converter, PyMuPDF)
+- **`docs/reference/PDF_TO_HTML_OPEN_SOURCE.md`** - Open source libraries and tools (GROBID, pdf-to-png-converter, PyMuPDF evaluation)
 - **`docs/reference/PDF_TO_HTML_LLM_APPROACHES.md`** - AI/LLM-based conversion methods (Claude 4, Gemini 2.5 Pro)
 - **`docs/reference/PDF_TO_HTML_PAID_SERVICES.md`** - Commercial API services (Mathpix, Azure, AWS, Google)
 
@@ -33,10 +33,11 @@ This overview provides architectural guidance and decision-making frameworks. Fo
 ### Three Main Categories
 
 **1. Open Source Libraries**
-- **Zero-dependency**: pdf-to-png-converter for serverless deployment
-- **Academic-focused**: GROBID for scholarly document structure
-- **High-quality**: PyMuPDF for superior image extraction
-- **Traditional OCR**: Tesseract for basic text extraction
+- **Current Implementation**: pdf2pic + pdf-lib for PDF processing and image conversion
+- **Zero-dependency (evaluated)**: pdf-to-png-converter for serverless deployment
+- **Academic-focused (evaluated)**: GROBID for scholarly document structure
+- **High-quality (evaluated)**: PyMuPDF for superior image extraction (Python-only, not compatible with current stack)
+- **Traditional OCR (evaluated)**: Tesseract for basic text extraction
 
 *See: `docs/reference/PDF_TO_HTML_OPEN_SOURCE.md` for detailed analysis*
 
@@ -66,16 +67,19 @@ This overview provides architectural guidance and decision-making frameworks. Fo
 |----------|-------------|-----------|------------|
 | **Cost** | Free | $0.04-0.20/page | $0.001-0.05/page |
 | **Quality** | Good-Excellent | Excellent | Good-Excellent |
-| **Setup** | Complex-Simple | Simple | Simple |
-| **Academic Focus** | GROBID: Excellent | Claude/Gemini: Excellent | Mathpix: Excellent |
-| **Serverless** | pdf-to-png: Yes | Yes | Yes |
+| **Setup** | Simple-Complex | Simple | Simple |
+| **Academic Focus** | pdf2pic: Good, GROBID: Excellent (evaluated) | Claude/Gemini: Excellent | Mathpix: Excellent (evaluated) |
+| **Serverless** | pdf2pic: Yes | Yes | Yes |
+
+**Note**: Current implementation uses pdf2pic + pdf-lib (Good quality, Simple setup, Good academic focus). Other open source options were evaluated but not implemented.
 
 **Decision Tree**:
-- **High-quality academic processing**: LLM-based (Claude 4 + Gemini 2.5 Pro)
-- **Mathematical content specialist**: Mathpix or Gemini 2.5 Pro
-- **High-volume, cost-sensitive**: AWS Textract or Azure Document Intelligence
-- **Open source, zero dependencies**: pdf-to-png-converter + LLM
-- **Academic metadata extraction**: GROBID + enhancement pipeline
+- **High-quality academic processing**: LLM-based (Claude 4 + Gemini 2.5 Pro) ✅ *Current Implementation*
+- **Fallback processing**: pdf2pic + pdf-lib + LLM ✅ *Current Implementation*
+- **Mathematical content specialist**: Mathpix or Gemini 2.5 Pro (Gemini 2.5 Pro implemented)
+- **High-volume, cost-sensitive**: AWS Textract or Azure Document Intelligence (evaluated)
+- **Open source, zero dependencies**: pdf-to-png-converter + LLM (evaluated)
+- **Academic metadata extraction**: GROBID + enhancement pipeline (evaluated)
 
 *See individual guides for detailed implementation and benchmarks*
 
@@ -88,14 +92,16 @@ This overview provides architectural guidance and decision-making frameworks. Fo
 **Active Components**:
 - **API Endpoints**: `/api/upload-pdf` and `/api/extract-url` 
 - **LLM Integration**: Claude 4 Sonnet (primary) + Gemini 2.5 Pro (cost-optimized)
+- **PDF Processing**: pdf2pic + pdf-lib for fallback image conversion
 - **Storage**: Supabase Storage for original PDFs + metadata tracking
 - **Prompt Templates**: Nunjucks + Zod templates in `/lib/prompts/templates/`
 
 **Processing Flow**:
 1. PDF uploaded via multipart form data (32MB limit)
-2. Direct transmission to LLM APIs with specialized academic prompts
-3. HTML extraction with metadata tracking via `upload_ai_call_id`
-4. Storage in database with comprehensive upload metadata
+2. **Primary**: Direct transmission to LLM APIs with specialized academic prompts
+3. **Fallback**: PDF → pdf2pic conversion → image-based LLM processing
+4. HTML extraction with metadata tracking via `upload_ai_call_id`
+5. Storage in database with comprehensive upload metadata
 
 *See: `lib/prompts/templates/pdf-to-html-direct.ts` for current implementation*
 

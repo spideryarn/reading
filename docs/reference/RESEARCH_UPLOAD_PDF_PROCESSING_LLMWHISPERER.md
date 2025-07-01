@@ -25,7 +25,7 @@ Related Documents: `docs/reference/UPLOAD_DOCUMENT_PROCESSING_PIPELINE.md`, `doc
 
 ## Executive Summary
 
-LLMWhisperer is an AI-first PDF processing service that outputs structured text (not markdown) optimized for LLM consumption, with superior layout preservation but no image extraction capabilities. ~~While technically sophisticated, it requires significant custom development for HTML conversion and must be paired with additional tools for comprehensive document processing. **PyMuPDF4LLM emerges as a potentially better fit** for Spideryarn Reading's HTML-focused pipeline due to native image extraction and direct markdown output.~~ **UPDATE**: With Vercel serverless constraints, LLMWhisperer is now the optimal choice as most local processing libraries are incompatible with the deployment environment.
+LLMWhisperer is an AI-first PDF processing service that outputs structured text (not markdown) optimized for LLM consumption, with superior layout preservation but no image extraction capabilities. ~~While technically sophisticated, it requires significant custom development for HTML conversion and must be paired with additional tools for comprehensive document processing. **PyMuPDF4LLM was considered as a potentially better fit** for Spideryarn Reading's HTML-focused pipeline due to native image extraction and direct markdown output, but was not implemented.~~ **UPDATE**: With Vercel serverless constraints, LLMWhisperer was evaluated but ultimately not implemented. The current approach uses pdf2pic + pdf-lib for PDF processing with direct LLM processing as the main pipeline.
 
 ## Current State: PDF Processing Landscape (2025)
 
@@ -41,7 +41,7 @@ LLMWhisperer is an AI-first PDF processing service that outputs structured text 
 | Solution | Primary Strength | Best For | Cost Model |
 |----------|------------------|----------|------------|
 | **LLMWhisperer** | AI-optimized layout preservation | Complex document analysis for LLMs | $0.05/page + free tier |
-| **PyMuPDF4LLM** | Speed + image extraction | General PDF-to-markdown with images | Free (open source) |
+| **PyMuPDF4LLM** | Speed + image extraction (evaluated) | General PDF-to-markdown with images | Free (open source) |
 | **pdfplumber** | Table extraction accuracy | Data-heavy structured documents | Free (open source) |
 | **Mathpix** | STEM content (99%+ accuracy) | Scientific/mathematical documents | Usage-based (simplified 2025) |
 | **Adobe PDF Extract** | Enterprise OCR | Enterprise workflows | Transaction-based |
@@ -64,7 +64,7 @@ LLMWhisperer is an AI-first PDF processing service that outputs structured text 
 
 **2. No Image Extraction Capabilities**
 - **Gap**: Cannot extract embedded images, charts, or diagrams
-- **Workaround Required**: Must integrate additional tools (PyMuPDF4LLM, Mathpix)
+- **Workaround Required**: Would require integrating additional tools (PyMuPDF4LLM, Mathpix) - evaluated but not implemented
 - **Cost Impact**: Multi-tool licensing and development overhead
 
 **3. API Design Considerations**
@@ -72,16 +72,16 @@ LLMWhisperer is an AI-first PDF processing service that outputs structured text 
 - **Single-Use Retrieval**: Results can only be fetched once (security feature)
 - **Beta Status**: API stability not guaranteed for production use
 
-### Alternative Solution: PyMuPDF4LLM
+### Alternative Solution Evaluated: PyMuPDF4LLM
 
-**Advantages for Spideryarn Reading**:
+**Potential Advantages Identified During Evaluation**:
 - **Direct Markdown Output**: Native compatibility with existing markdown-to-HTML workflows
 - **Built-in Image Extraction**: `embed_images=True` and `write_images=True` options
 - **Performance**: Local processing, no API latency
 - **Cost**: Free, open-source solution
 - **Stability**: Mature codebase, established in production environments
 
-**Implementation Example**:
+**Evaluation Example** (not implemented):
 ```python
 import pymupdf4llm
 
@@ -95,20 +95,27 @@ md_text = pymupdf4llm.to_markdown(
 )
 ```
 
+**Status**: Evaluated but not implemented. Current architecture uses pdf2pic + pdf-lib with direct LLM processing.
+
 ## Implications for Document Processing Pipeline
 
 ### Recommended Architecture Revision
 
-**Current Assumption**: PDF → LLMWhisperer → Markdown → HTML
-**Reality**: PDF → LLMWhisperer → Structured Text → Custom Parser → HTML
+**Early Consideration**: PDF → LLMWhisperer → Markdown → HTML
+**Research Finding**: PDF → LLMWhisperer → Structured Text → Custom Parser → HTML
 
-**Better Alternative**: PDF → PyMuPDF4LLM → Markdown → HTML Converter → HTML
+**Alternative Evaluated**: PDF → PyMuPDF4LLM → Markdown → HTML Converter → HTML
+
+**Current Implementation**: PDF → Direct LLM Processing (Claude 4/Gemini 2.5 Pro) → HTML
+**Fallback**: PDF → pdf2pic → Image → LLM Processing → HTML
 
 ### Hybrid Strategy for Complex Documents
 
-1. **Primary Processing**: PyMuPDF4LLM for general PDF-to-HTML with image extraction
-2. **Specialized Content**: Mathpix for scientific equations and complex diagrams
-3. **Fallback Processing**: LLMWhisperer for documents that challenge standard parsers
+1. **Primary Processing**: Direct LLM processing with Claude 4/Gemini 2.5 Pro
+2. **Fallback Processing**: pdf2pic + pdf-lib for image conversion then LLM processing
+3. **Specialized Content**: Evaluated Mathpix for scientific equations (not currently implemented)
+
+**Note**: PyMuPDF4LLM and LLMWhisperer were evaluated during architecture research but not implemented in the current system.
 
 ### Cost Analysis
 
@@ -117,10 +124,14 @@ md_text = pymupdf4llm.to_markdown(
 - Beyond free tier: $50/1000 pages (native text mode)
 - Enterprise volumes: Custom pricing required
 
-**PyMuPDF4LLM + Mathpix**:
-- PyMuPDF4LLM: Free (unlimited)
-- Mathpix: Usage-based for specialized STEM content only
-- **Total**: Significantly lower cost for high-volume processing
+**Current Implementation Cost**:
+- Direct LLM Processing: $0.04-0.20 per page (Claude 4/Gemini 2.5 Pro)
+- pdf2pic + pdf-lib: Free (fallback processing)
+- **Total**: Variable cost based on document complexity and model selection
+
+**Evaluated Alternatives** (not implemented):
+- PyMuPDF4LLM: Free (unlimited) - evaluated but not implemented
+- Mathpix: Usage-based for specialized STEM content - evaluated but not implemented
 
 ## Testing Recommendations
 
@@ -128,7 +139,16 @@ md_text = pymupdf4llm.to_markdown(
 
 **Test with**: `static/examples/2105.10461v2_cropped_longer.pdf`
 
-**1. LLMWhisperer Test** (requires API key):
+**Current Implementation Testing**:
+```bash
+# Test current PDF upload API
+curl -X POST "http://localhost:3000/api/upload-pdf" \
+  -F "file=@static/examples/2105.10461v2_cropped_longer.pdf"
+```
+
+**Research Testing Examples** (not implemented):
+
+**1. LLMWhisperer Evaluation** (evaluated but not implemented):
 ```bash
 curl -X POST "https://llmwhisperer-api.us-central.unstract.com/api/v2/whisper" \
   -H "unstract-key: YOUR_API_KEY" \
@@ -137,7 +157,7 @@ curl -X POST "https://llmwhisperer-api.us-central.unstract.com/api/v2/whisper" \
   -F "output_mode=layout_preserving"
 ```
 
-**2. PyMuPDF4LLM Comparison** (immediate testing):
+**2. PyMuPDF4LLM Evaluation** (evaluated but not implemented):
 ```python
 import pymupdf4llm
 result = pymupdf4llm.to_markdown("static/examples/2105.10461v2_cropped_longer.pdf")
@@ -165,7 +185,9 @@ result = pymupdf4llm.to_markdown("static/examples/2105.10461v2_cropped_longer.pd
 - Separate image extraction strategy required
 - API dependency vs. open-source control
 
-**~~PyMuPDF4LLM Consideration~~**: ~~Evaluate as a specialized tool for challenging documents after establishing the primary pipeline with PyMuPDF4LLM.~~ **ELIMINATED**: Not compatible with Vercel serverless constraints due to native dependencies.
+**PyMuPDF4LLM Status**: Evaluated during architecture research but not implemented. **ELIMINATED**: Not compatible with Vercel serverless constraints due to native dependencies.
+
+**Current Implementation**: Direct LLM processing via Claude 4/Gemini 2.5 Pro APIs with pdf2pic + pdf-lib fallback processing.
 
 ## Sources
 
