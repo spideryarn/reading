@@ -59,13 +59,7 @@ export async function processPDFVisionPipeline(file: File) {
   
   // Step 1: Validate PDF and get page count
   console.log('📄 Validating PDF and counting pages...')
-  const validation = await validateMuPDFPageCount(file, 100)
-  
-  if (!validation.isValid) {
-    throw new Error(validation.error || 'PDF validation failed')
-  }
-  
-  const pageCount = validation.pageCount
+  const pageCount = await validateMuPDFPageCount(file)
   console.log(`✅ PDF validated: ${pageCount} pages`)
   
   // Step 2: Convert PDF to page images

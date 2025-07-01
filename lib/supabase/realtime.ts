@@ -21,7 +21,7 @@ export function subscribeToDocumentEnhancements(
   const channel = supabase
     .channel(`document-enhancements:${documentId}`)
     .on(
-      'postgres_changes',
+      'postgres_changes' as any,
       {
         event: '*',
         schema: 'public',
@@ -52,7 +52,7 @@ export function subscribeToDocument(
   const channel = supabase
     .channel(`document:${documentId}`)
     .on(
-      'postgres_changes',
+      'postgres_changes' as any,
       {
         event: 'UPDATE',
         schema: 'public',
@@ -83,7 +83,7 @@ export function subscribeToChatMessages(
   const channel = supabase
     .channel(`chat-thread:${threadId}`)
     .on(
-      'postgres_changes',
+      'postgres_changes' as any,
       {
         event: 'INSERT',
         schema: 'public',
@@ -114,7 +114,7 @@ export function subscribeToAiCallStatus(
   const channel = supabase
     .channel(`ai-call:${aiCallId}`)
     .on(
-      'postgres_changes',
+      'postgres_changes' as any,
       {
         event: 'UPDATE',
         schema: 'public',
@@ -148,7 +148,7 @@ export function subscribeToTable<T extends keyof Database['public']['Tables']>(
   const channel = supabase
     .channel(channelName)
     .on(
-      'postgres_changes',
+      'postgres_changes' as any,
       {
         event,
         schema: 'public',
@@ -171,7 +171,7 @@ export function subscribeToTable<T extends keyof Database['public']['Tables']>(
  * Helper to check if a channel is subscribed
  */
 export function isChannelSubscribed(channel: RealtimeChannelType): boolean {
-  return channel.state === 'subscribed'
+  return (channel.state as any) === 'SUBSCRIBED'
 }
 
 /**
@@ -187,12 +187,12 @@ export async function waitForSubscription(
       return
     }
 
-    const timeout = setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       resolve(false)
-    }, timeoutMs)
+    }, timeoutMs) as NodeJS.Timeout
 
-    channel.on('subscribe', () => {
-      clearTimeout(timeout)
+    (channel as any).on('subscribe', () => {
+      clearTimeout(timeoutId)
       resolve(true)
     })
   })
