@@ -12,7 +12,7 @@ The current tool system has fundamental architectural issues identified by Gemin
 - Many validations happen at runtime that should be compile-time
 - Inconsistent patterns between tool implementations create confusion
 
-As a zero-user product, we can implement a clean-slate design that fixes these root causes rather than applying band-aids.
+As a zero-user product, we will implement an in-place rewrite in a feature branch, allowing the codebase to be temporarily broken while we migrate to the clean architecture.
 
 ## User Stories & Acceptance Criteria
 
@@ -32,8 +32,8 @@ As a zero-user product, we can implement a clean-slate design that fixes these r
 - New architecture supports all current functionality
 - Each tool type has only the fields it actually needs
 - Full type safety from tool definition through execution
-- Complete removal of old system after migration
-- No backwards compatibility debt remains
+- All old code removed during in-place migration
+- Tests pass and application builds successfully
 
 ## References
 
@@ -57,11 +57,11 @@ As a zero-user product, we can implement a clean-slate design that fixes these r
 
 ### Key Decisions
 
-**Clean Slate Architecture (Option B)**
-- Build new system with proper discriminated unions
-- Run old and new systems in parallel during migration
-- Completely remove old system once migration complete
-- This fixes root causes rather than patching symptoms
+**In-Place Rewrite Strategy**
+- Work in feature branch allowing temporary breakage
+- Delete old code as we migrate each component
+- TypeScript errors guide the migration path
+- Merge main at beginning of each stage to stay current
 
 **Tool Type Hierarchy**
 ```typescript
@@ -73,141 +73,140 @@ type ToolEntry = PaneTool | QuickAction | BackgroundJob | NavigationLink
 
 **Zod Schema-Based Definition**
 - All tool types defined via Zod schemas
-- Factory functions validate and create tools
-- Full type inference from schemas
-- No manual TypeScript interfaces to maintain
+- Simple factory functions without complex generics
+- Type inference from schemas where possible
+- Validate design with real tools before finalizing API
 
-**Parallel Migration Strategy**
-- New registry runs alongside old one
-- Tools migrated individually
-- UI components support both systems
-- Clean cutover when complete
+**BackgroundJob Implementation**
+- Use `p-queue` for in-memory job execution (already in use for PDF upload)
+- Job state ephemeral (lost on restart) - acceptable for now
+- Each job gets dedicated PQueue instance
+- Simple jobId → status map for tracking
 
 ## Stages & Actions
 
-### Stage: Initial Setup and Research
+### Stage: Initial Setup and Branch Creation
 - [x] Investigate current tool implementations and patterns
 - [x] Research web patterns for type-safe plugin systems
 - [x] Analyze migration complexity and risks
 - [x] Write initial planning document
+- [x] Get external AI critique from o3
 - [ ] Run `./scripts/sync-worktrees.ts` in subagent to sync with main
-- [ ] Create git branch `250701a_tool_clean_architecture` for this work
-- [ ] Get external AI critique following `docs/instructions/GATHER_DIVERSE_INPUTS_AND_CRITIQUES_ON_PLANNING_DOCS_FROM_OTHER_AI_MODELS.md`
-- [ ] Update planning doc with critique insights
+- [ ] Create git branch `tool-arch-rewrite` for in-place rewrite
+- [ ] Verify we're in feature branch before proceeding
+- [ ] Update planning doc with in-place rewrite approach
 
-### Stage: Design New Architecture Foundation
-- [ ] Define Zod schemas for each tool type (PaneTool, QuickAction, BackgroundJob, NavigationLink)
-- [ ] Create TypeScript types derived from schemas
-- [ ] Design new registry structure to handle discriminated unions
-- [ ] Write tests for schema validation and type inference
-- [ ] Document new architecture in temporary `docs/reference/NEW_TOOL_ARCHITECTURE.md`
-- [ ] Run `npm run check:health` to ensure no impact on existing code
-- [ ] Git commit: "feat(tools): define new tool architecture schemas and types"
+### Stage: Create New Architecture Foundation
+- [ ] Merge main into feature branch
+- [ ] Create `lib/tools/types-v2.ts` with discriminated union types
+- [ ] Define Zod schemas for PaneTool and QuickAction (start simple)
+- [ ] Implement BackgroundJob wrapper using `p-queue`
+- [ ] Create simple factory functions (avoid complex generics initially)
+- [ ] Write basic tests for schema validation
+- [ ] Git commit: "feat(tools): create new tool type definitions"
 
-### Stage: Build New Registry System
-- [ ] Create `lib/tools/v2/registry.ts` with new type-safe registry
-- [ ] Implement registration functions for each tool type
-- [ ] Add registry validation and conflict detection
-- [ ] Create factory functions using Zod schemas for tool creation
-- [ ] Write comprehensive tests for new registry
-- [ ] Run `npm run check:health`
-- [ ] Git commit: "feat(tools): implement new type-safe tool registry"
+### Stage: Migrate Glossary Tool (First Real Tool)
+- [ ] Merge main into feature branch
+- [ ] Convert glossary to PaneTool schema
+- [ ] Update glossary handler to work with new types
+- [ ] Delete old glossary implementation from registry
+- [ ] Fix TypeScript errors in components using glossary
+- [ ] Test glossary functionality manually
+- [ ] Run tests in subagent: `npm test -- --testPathPattern=glossary`
+- [ ] Git commit: "feat(tools): migrate glossary to new architecture"
 
-### Stage: Implement New Execution Framework
-- [ ] Create `lib/tools/v2/executor/` with typed execution paths
-- [ ] Implement PaneTool server/local execution with full typing
-- [ ] Implement QuickAction execution pattern
-- [ ] Design BackgroundJob execution with progress tracking
-- [ ] Add NavigationLink handling
-- [ ] Write tests for each execution path
-- [ ] Run `npm run check:health`
-- [ ] Git commit: "feat(tools): implement typed execution framework"
+### Stage: Create QuickAction Example
+- [ ] Merge main into feature branch
+- [ ] Implement "Rename Document" as QuickAction
+- [ ] Update executor to handle QuickAction execution
+- [ ] Add QuickAction support to command palette
+- [ ] Test rename functionality
+- [ ] Validate type inference works correctly
+- [ ] Git commit: "feat(tools): add QuickAction support with rename example"
 
-### Stage: Create Glossary Tool in New System
-- [ ] Define GlossaryTool using PaneTool schema with typed parameters
-- [ ] Implement typed API handler using schema validation
-- [ ] Create component with proper type imports
-- [ ] Add to new registry with full type safety
-- [ ] Test end-to-end functionality
-- [ ] Document as reference implementation
-- [ ] Run `npm run check:health`
-- [ ] Git commit: "feat(tools): implement glossary tool in new architecture"
+### Stage: Update Registry and Executor
+- [ ] Merge main into feature branch
+- [ ] Replace old registry with new discriminated union registry
+- [ ] Update executor to handle all tool types
+- [ ] Remove old Tool interface completely
+- [ ] Fix all TypeScript errors from interface removal
+- [ ] Run health check in subagent: `npm run check:health`
+- [ ] Git commit: "refactor(tools): replace registry and executor"
 
-### Stage: Build Compatibility Layer
-- [ ] Create adapter to expose new tools through old registry interface
-- [ ] Update UnifiedLeftPane to check both registries
-- [ ] Modify command palette to merge tools from both systems
-- [ ] Update executor to route to appropriate system
-- [ ] Test both old and new tools work side-by-side
-- [ ] Run `npm run check:health`
-- [ ] Git commit: "feat(tools): add compatibility layer for parallel operation"
+### Stage: UI Integration Updates
+- [ ] Merge main into feature branch
+- [ ] Update UnifiedLeftPane for new tool types
+- [ ] Update vertical-icon-nav to handle tool kinds
+- [ ] Fix command palette to support QuickActions
+- [ ] Update keyboard shortcut system for all tool types
+- [ ] Add UI for BackgroundJob progress (toast notifications)
+- [ ] Test all UI interactions thoroughly
+- [ ] Git commit: "feat(tools): update UI components for new tool types"
 
 ### Stage: Migrate Search and Structure Tools
-- [ ] Implement search tool as PaneTool with typed parameters
-- [ ] Implement structure tool with iterate action support
-- [ ] Update components to use new type imports
-- [ ] Remove old implementations from legacy registry
-- [ ] Test migrated tools thoroughly
-- [ ] Run `npm run check:health`
+- [ ] Merge main into feature branch
+- [ ] Convert search tool to PaneTool
+- [ ] Convert structure tool with iterate as BackgroundJob
+- [ ] Delete old implementations
+- [ ] Update all imports and fix TypeScript errors
+- [ ] Test both tools thoroughly
+- [ ] Run tests in subagent for these tools
 - [ ] Git commit: "feat(tools): migrate search and structure tools"
 
-### Stage: Implement QuickAction Examples
-- [ ] Create "Rename Document" as QuickAction example
-- [ ] Create "Export as PDF" QuickAction
-- [ ] Implement inline execution without UI panes
-- [ ] Add to command palette with proper shortcuts
-- [ ] Test quick actions work correctly
-- [ ] Run `npm run check:health`
-- [ ] Git commit: "feat(tools): add QuickAction tool implementations"
-
 ### Stage: Migrate Remaining Tools
-- [ ] Migrate summary tool to new system
+- [ ] Merge main into feature branch
+- [ ] Migrate summary tool
 - [ ] Migrate chat tool with streaming support
 - [ ] Migrate highlights tool
 - [ ] Migrate metadata tool
-- [ ] Migrate tweet-thread tool
-- [ ] Verify all tools work in new system
-- [ ] Run `npm run check:health --rigorous`
-- [ ] Git commit: "feat(tools): complete migration of all tools"
+- [ ] Delete all old tool implementations
+- [ ] Run full test suite in subagent
+- [ ] Git commit: "feat(tools): complete tool migration"
 
-### Stage: Remove Old System
-- [ ] Remove compatibility layer
-- [ ] Delete `lib/tools/types.ts` (old interface)
-- [ ] Delete `lib/tools/registry.ts` (old registry)
-- [ ] Delete `lib/tools/executor/` (old execution)
-- [ ] Delete old tool implementations from `lib/tools/implementations/`
-- [ ] Update all imports to use v2 paths
-- [ ] Run all tests to ensure nothing breaks
-- [ ] Run `npm run check:health --rigorous`
-- [ ] Git commit: "refactor(tools): remove legacy tool system"
+### Stage: Add Tool Creation CLI
+- [ ] Merge main into feature branch
+- [ ] Create `scripts/create-tool.ts` CLI
+- [ ] Support scaffolding for each tool type
+- [ ] Generate TypeScript, handler, and component files
+- [ ] Add validation for tool IDs and shortcuts
+- [ ] Document CLI usage
+- [ ] Git commit: "feat(tools): add tool creation CLI"
 
-### Stage: Finalize New Architecture
-- [ ] Move `lib/tools/v2/*` to `lib/tools/*`
-- [ ] Update all import paths
-- [ ] Add comprehensive JSDoc documentation
-- [ ] Create development scripts for new tool types
-- [ ] Add tool validation CLI command
-- [ ] Run `npm run check:health --rigorous`
-- [ ] Git commit: "refactor(tools): finalize new tool architecture"
+### Stage: Testing and Validation
+- [ ] Merge main into feature branch
+- [ ] Update Jest test helpers for new tool types
+- [ ] Write contract tests for tool interfaces
+- [ ] Create "tool doctor" validation script
+- [ ] Run comprehensive test suite in subagent
+- [ ] Test all tools manually in browser
+- [ ] Run `npm run check:health --rigorous` in subagent
+- [ ] Git commit: "test(tools): comprehensive test coverage"
 
-### Stage: Documentation and Polish
-- [ ] Update `docs/reference/TOOL_ARCHITECTURE_AND_DEVELOPMENT_GUIDE.md` for new system
-- [ ] Delete temporary `NEW_TOOL_ARCHITECTURE.md`
-- [ ] Create examples for each tool type
-- [ ] Document migration patterns for future tools
+### Stage: Documentation Update
+- [ ] Merge main into feature branch
+- [ ] Update `TOOL_ARCHITECTURE_AND_DEVELOPMENT_GUIDE.md`
+- [ ] Document new tool types and patterns
+- [ ] Add migration guide for future tools
 - [ ] Update CLAUDE.md with new patterns
-- [ ] Add troubleshooting guide
-- [ ] Run final test suite with subagent
-- [ ] Git commit: "docs(tools): comprehensive documentation for new architecture"
+- [ ] Create troubleshooting guide
+- [ ] Git commit: "docs(tools): update documentation for new architecture"
 
-### Stage: Cleanup and Finalization
-- [ ] Consolidate redundant tests added during development
-- [ ] Review architecture with user for any final adjustments
-- [ ] Check no legacy code or patterns remain
-- [ ] Get user permission to merge branch
-- [ ] Merge `250701a_tool_clean_architecture` to main
+### Stage: Final Cleanup and Merge Preparation
+- [ ] Merge main into feature branch
+- [ ] Review all changes for consistency
+- [ ] Ensure no old tool code remains
+- [ ] Run final build and all tests
+- [ ] Create PR description with migration summary
+- [ ] Git commit: "chore(tools): final cleanup before merge"
+
+### Stage: Merge to Main
+- [ ] Discuss merge strategy with user
+- [ ] Run final validation checks
+- [ ] Get user permission to merge
+- [ ] Merge `tool-arch-rewrite` to main
+- [ ] Delete feature branch
 - [ ] Move planning doc to `planning/finished/`
-- [ ] Final git commit
+- [ ] Final git commit on main
 
 ## Appendix
 
@@ -225,42 +224,26 @@ const BaseToolSchema = z.object({
 // PaneTool - UI components in left pane
 const PaneToolSchema = BaseToolSchema.extend({
   kind: z.literal('pane'),
-  icon: z.custom<ComponentType<IconProps>>(),
-  component: z.function().returns(z.promise(z.any())),
+  icon: z.string(), // Icon name to look up at runtime
+  componentPath: z.string(), // Path for dynamic import
   tabId: z.string(),
   shortcuts: z.array(z.string()).optional(),
   priority: z.number().default(100),
   requiresDocument: z.boolean().default(true),
-  capabilities: z.object({
-    search: z.boolean().optional(),
-    filter: z.boolean().optional(),
-  }).optional(),
-  parameters: z.record(z.string(), z.any()).optional(),
-  actions: z.object({
-    execute: z.object({
-      schema: z.any(), // Zod schema
-      handler: z.enum(['server', 'local']),
-      timeout: z.number().optional(),
-    }).optional(),
-    refresh: z.object({
-      schema: z.any(),
-      handler: z.enum(['server', 'local']),
-    }).optional(),
-    iterate: z.object({
-      schema: z.any(),
-      handler: z.literal('server'),
-      timeout: z.number().default(120000),
-    }).optional(),
-  }),
+  actions: z.record(z.string(), z.object({
+    schema: z.any(), // Zod schema for parameters
+    handler: z.enum(['server', 'local']),
+    timeout: z.number().optional(),
+  })).optional(),
 });
 
 // QuickAction - Instant actions without UI
 const QuickActionSchema = BaseToolSchema.extend({
   kind: z.literal('action'),
   shortcuts: z.array(z.string()).optional(),
-  icon: z.custom<ComponentType<IconProps>>().optional(),
+  icon: z.string().optional(), // Icon name
   parameters: z.any(), // Zod schema for action parameters
-  perform: z.function(), // (params, context) => Promise<void>
+  handler: z.enum(['server', 'local']),
   confirmRequired: z.boolean().default(false),
 });
 
@@ -269,9 +252,8 @@ const BackgroundJobSchema = BaseToolSchema.extend({
   kind: z.literal('job'),
   parameters: z.any(), // Zod schema for job parameters
   maxDuration: z.number().default(300000), // 5 minutes
-  start: z.function(), // (params, context) => Promise<{ jobId: string }>
-  getStatus: z.function(), // (jobId) => Promise<JobStatus>
-  cancel: z.function().optional(), // (jobId) => Promise<void>
+  concurrency: z.number().default(1), // PQueue concurrency
+  handler: z.literal('server'), // Always server-side
 });
 
 // NavigationLink - External or internal navigation
@@ -310,8 +292,8 @@ const glossaryTool = createPaneTool({
   id: 'glossary',
   name: 'Glossary',
   description: 'Extract and display key terms',
-  icon: BookOpen,
-  component: () => import('@/components/tools/GlossaryPanel'),
+  icon: 'book-open', // Icon name as string
+  componentPath: '@/components/tools/GlossaryPanel',
   tabId: 'glossary',
   shortcuts: ['Cmd+5', 'Ctrl+5'],
   priority: 40,
@@ -344,87 +326,108 @@ const renameDocumentAction = createQuickAction({
     documentId: z.string(),
     newTitle: z.string().min(1).max(255),
   }),
-  perform: async (params, context) => {
-    const { documentId, newTitle } = params;
-    await updateDocument(documentId, { title: newTitle });
-    context.showToast('Document renamed successfully');
-  },
+  handler: 'server',
   confirmRequired: true,
 });
 
-// BackgroundJob Example - Bulk Analysis
-const bulkAnalysisJob = createBackgroundJob({
+// BackgroundJob Example - Structure Iteration
+const structureIterateJob = createBackgroundJob({
   kind: 'job',
-  id: 'bulk-analysis',
-  name: 'Analyze Multiple Documents',
-  description: 'Run AI analysis on selected documents',
+  id: 'structure-iterate',
+  name: 'Generate AI Headings (Iterative)',
+  description: 'Iteratively generate document structure',
   parameters: z.object({
-    documentIds: z.array(z.string()).min(1),
-    analysisType: z.enum(['summary', 'entities', 'all']),
+    documentId: z.string(),
+    maxIterations: z.number().default(10),
   }),
   maxDuration: 600000, // 10 minutes
-  start: async (params, context) => {
-    const jobId = await startBulkAnalysis(params);
-    return { jobId };
-  },
-  getStatus: async (jobId) => {
-    return await checkJobStatus(jobId);
-  },
-  cancel: async (jobId) => {
-    await cancelJob(jobId);
-  },
+  concurrency: 1, // Sequential processing
+  handler: 'server',
 });
 ```
 
-### Factory Functions with Full Type Safety
+### Factory Functions (Simplified)
 
 ```typescript
-// Factory function for PaneTool
-export function createPaneTool<T extends z.ZodType>(
-  definition: Omit<PaneTool, 'parameters'> & { parameters?: T }
-): PaneTool & { _paramType: z.infer<T> } {
-  const validated = PaneToolSchema.parse(definition);
-  return validated as any;
+// Simple factory function for PaneTool
+export function createPaneTool(definition: z.input<typeof PaneToolSchema>): PaneTool {
+  return PaneToolSchema.parse(definition);
 }
 
-// Usage gets full parameter type inference
+// Usage - rely on schema validation
 const tool = createPaneTool({
-  // ... tool definition
-  parameters: z.object({
-    query: z.string(),
-    limit: z.number(),
-  }),
+  kind: 'pane',
+  id: 'glossary',
+  name: 'Glossary',
+  // ... other fields
+  actions: {
+    execute: {
+      schema: z.object({
+        documentId: z.string(),
+        type: z.enum(['entities', 'all']),
+      }),
+      handler: 'server',
+    },
+  },
 });
 
-// TypeScript knows the parameter types!
-tool.execute({ 
-  query: 'test',  // ✓ Required string
-  limit: 10,      // ✓ Required number
-  // extra: true  // ❌ Type error!
+// Parameters validated at runtime by schema
+await executeAction(tool, 'execute', { 
+  documentId: '123',
+  type: 'all',
 });
 ```
 
-### Migration Strategy Details
+### In-Place Rewrite Strategy
 
-1. **Phase 1: Parallel Systems**
-   - Old tools continue working unchanged
-   - New tools use v2 registry
-   - UI components check both registries
+1. **Branch Setup**
+   - Create `tool-arch-rewrite` feature branch
+   - Allow codebase to be temporarily broken
+   - Merge main at beginning of each stage
 
-2. **Phase 2: Incremental Migration**
-   - Migrate one tool at a time
-   - Test thoroughly after each migration
-   - Both systems remain operational
+2. **Migration Process**
+   - Delete old code as we migrate
+   - TypeScript errors guide what needs fixing
+   - Test after each tool migration
+   - Commit frequently to track progress
 
-3. **Phase 3: Cutover**
-   - Remove compatibility layer
-   - Delete all old system code
-   - Update all imports
+3. **Testing Approach**
+   - Run relevant tests in subagents
+   - Manual testing for UI changes
+   - Full suite before merge
 
-4. **Phase 4: Cleanup**
-   - No legacy patterns remain
-   - Full type safety throughout
-   - Clean, maintainable architecture
+4. **Merge Strategy**
+   - Keep branch current with main
+   - Final review with user
+   - Single merge when complete
+
+### BackgroundJob Implementation Details
+
+```typescript
+import PQueue from 'p-queue';
+
+// In-memory job tracking
+const jobQueues = new Map<string, PQueue>();
+const jobStatus = new Map<string, JobStatus>();
+const jobAbortControllers = new Map<string, AbortController>();
+
+interface JobStatus {
+  state: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+  progress?: number;
+  result?: any;
+  error?: string;
+}
+
+// Helper to get or create queue for a job type
+function getJobQueue(jobId: string, concurrency: number): PQueue {
+  if (!jobQueues.has(jobId)) {
+    jobQueues.set(jobId, new PQueue({ concurrency }));
+  }
+  return jobQueues.get(jobId)!;
+}
+```
+
+**Note**: Job state is ephemeral - lost on server restart. This is acceptable for MVP with zero users.
 
 ### Benefits for AI Development
 
@@ -433,3 +436,17 @@ tool.execute({
 3. **Self-documenting** - Types convey all necessary information
 4. **No Ambiguity** - Each tool type has only relevant fields
 5. **Parameter Safety** - Full IntelliSense and validation for all parameters
+
+### Key Risks and Mitigation
+
+**Risks:**
+- Branch divergence if migration takes too long
+- TypeScript complexity with dynamic imports
+- UI breakage during migration
+- Test failures masking real issues
+
+**Mitigation:**
+- Merge main frequently (every stage)
+- Start with simple types, validate with real tools
+- Test UI manually at each stage
+- Use subagents for test runs to understand failures
