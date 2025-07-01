@@ -3,58 +3,70 @@
  */
 
 import { ChatService } from '../chat'
-
-// Mock Supabase client
-jest.mock('@/lib/supabase/server', () => ({
-  createClient: jest.fn()
-}))
+import { getTestNamespace, createTestUser, getCleanupFunctions } from '@/lib/testing/test-isolation-utils'
+import { RealRLSTestSetup } from './rls-test-helpers'
+import { createClient } from '@/lib/supabase/server'
 
 describe('ChatService - Validation Edge Cases', () => {
+  const namespace = getTestNamespace('chat-validation-edge-cases')
+  let rlsSetup: RealRLSTestSetup
   let chatService: ChatService
-  let mockSupabase: any
-  const testId = 'test-chat-validation'
-  const testUserId = 'test-user-id'
+  let supabase: ReturnType<typeof createClient>
+  let testUser: ReturnType<typeof createTestUser>
 
-  beforeEach(() => {
-    mockSupabase = {
-      from: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      insert: jest.fn().mockReturnThis(),
-      single: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-    }
-
-    const { createClient } = require('@/lib/supabase/server') as any
-    ;(createClient as jest.Mock).mockReturnValue(mockSupabase)
-    chatService = new ChatService(mockSupabase)
+  beforeAll(async () => {
+    rlsSetup = new RealRLSTestSetup()
+    supabase = rlsSetup.getAdminClient()
+    testUser = createTestUser(namespace)
+    
+    // Ensure test user profile exists
+    await rlsSetup.createTestProfile({ 
+      user_id: testUser.id,
+      preferences: { display_name: 'Chat Test User' }
+    })
   })
 
-  afterEach(() => {
-    jest.clearAllMocks()
+  beforeEach(() => {
+    chatService = new ChatService(supabase)
+  })
+
+  afterEach(async () => {
+    const cleanup = getCleanupFunctions(namespace, supabase)
+    await cleanup.all()
+  })
+
+  afterAll(async () => {
+    await rlsSetup.cleanup()
   })
 
   describe('Empty content handling', () => {
-    const threadId = `${testId}-thread`
+    let threadId: string
+    let testDocument: any
 
-    beforeEach(() => {
-      // Mock sequence number query
-      mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'chat_messages') {
-          return {
-            ...mockSupabase,
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            order: jest.fn().mockReturnThis(),
-            limit: jest.fn().mockReturnValue({
-              data: [],
-              error: null
-            })
-          }
-        }
-        return mockSupabase
+    beforeEach(async () => {
+      // Create a real test document and chat thread
+      testDocument = await rlsSetup.createTestDocument({
+        title: 'Chat Validation Test Document',
+        created_by: testUser.id,
+        html_content: '<p>Test content for chat validation</p>',
+        plaintext_content: 'Test content for chat validation',
+        word_count: 5
       })
+
+      // Create a real chat thread
+      const { data: thread, error } = await supabase
+        .from('chat_threads')
+        .insert({
+          id: `${namespace}-thread-${Date.now()}`,
+          document_id: testDocument.id,
+          title: 'Test Chat Thread',
+          created_by: testUser.id
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+      threadId = thread.id
     })
 
     it('should reject empty user messages', async () => {
@@ -78,22 +90,6 @@ describe('ChatService - Validation Edge Cases', () => {
     })
 
     it('should allow empty assistant messages (for streaming)', async () => {
-      // Mock successful insert
-      mockSupabase.single.mockResolvedValue({
-        data: {
-          id: 'msg-1',
-          thread_id: threadId,
-          sequence_number: 1,
-          role: 'assistant',
-          content: '',
-          ai_call_id: null,
-          extra: {},
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        error: null
-      })
-
       const result = await chatService.addMessage({
         threadId,
         role: 'assistant',
@@ -102,63 +98,73 @@ describe('ChatService - Validation Edge Cases', () => {
 
       expect(result.content).toBe('')
       expect(result.role).toBe('assistant')
+      expect(result.thread_id).toBe(threadId)
+      
+      // Verify the message was actually stored in the database
+      const { data: storedMessage, error } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('id', result.id)
+        .single()
+
+      expect(error).toBeNull()
+      expect(storedMessage.content).toBe('')
+      expect(storedMessage.role).toBe('assistant')
     })
 
     it('should trim whitespace from user messages', async () => {
       const trimmedContent = 'Hello, world!'
       
-      // Mock successful insert
-      mockSupabase.single.mockResolvedValue({
-        data: {
-          id: 'msg-1',
-          thread_id: threadId,
-          sequence_number: 1,
-          role: 'user',
-          content: trimmedContent,
-          ai_call_id: null,
-          extra: {},
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        error: null
-      })
-
-      await chatService.addMessage({
+      const result = await chatService.addMessage({
         threadId,
         role: 'user',
         content: `  ${trimmedContent}  \n`
       })
 
-      // Verify the insert was called with trimmed content
-      expect(mockSupabase.insert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          content: trimmedContent,
-          role: 'user'
-        })
-      )
+      expect(result.content).toBe(trimmedContent)
+      expect(result.role).toBe('user')
+      
+      // Verify the message was stored with trimmed content in the database
+      const { data: storedMessage, error } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('id', result.id)
+        .single()
+
+      expect(error).toBeNull()
+      expect(storedMessage.content).toBe(trimmedContent)
+      expect(storedMessage.role).toBe('user')
     })
   })
 
   describe('Content length validation', () => {
-    const threadId = `${testId}-thread`
+    let threadId: string
+    let testDocument: any
 
-    beforeEach(() => {
-      // Mock sequence number query
-      mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'chat_messages') {
-          return {
-            ...mockSupabase,
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            order: jest.fn().mockReturnThis(),
-            limit: jest.fn().mockReturnValue({
-              data: [],
-              error: null
-            })
-          }
-        }
-        return mockSupabase
+    beforeEach(async () => {
+      // Create a real test document and chat thread for length validation tests
+      testDocument = await rlsSetup.createTestDocument({
+        title: 'Chat Length Validation Test Document',
+        created_by: testUser.id,
+        html_content: '<p>Test content for chat length validation</p>',
+        plaintext_content: 'Test content for chat length validation',
+        word_count: 6
       })
+
+      // Create a real chat thread
+      const { data: thread, error } = await supabase
+        .from('chat_threads')
+        .insert({
+          id: `${namespace}-length-thread-${Date.now()}`,
+          document_id: testDocument.id,
+          title: 'Test Chat Length Thread',
+          created_by: testUser.id
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+      threadId = thread.id
     })
 
     it('should reject messages exceeding length limit', async () => {
