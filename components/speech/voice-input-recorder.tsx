@@ -16,6 +16,7 @@ import { SpeechToTextInputProps, SpeechToTextResponse } from './types';
 import { useAuth } from '@/lib/context/auth-context';
 import { DEBUG_FLAGS } from '@/lib/config';
 import { createPortal } from 'react-dom';
+import { createRoot, Root } from 'react-dom/client';
 
 /**
  * Browser-specific guidance for microphone permissions
@@ -118,6 +119,11 @@ export function VoiceInputRecorder({
   const [debugAudioUrl, setDebugAudioUrl] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<{ sizeKb: number; duration: number; mime: string } | null>(null);
   const [debugRawWhisper, setDebugRawWhisper] = useState<string | null>(null);
+  const [debugMicLabel, setDebugMicLabel] = useState<string | null>(null);
+
+  // Waveform drawing reference (debug only)
+  const waveformCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const debugRootRef = useRef<Root | null>(null);
 
   /**
    * Handle errors with consistent logging and user feedback
@@ -412,6 +418,145 @@ export function VoiceInputRecorder({
 
   const isButtonDisabled = disabled || !isSupported || isProcessing || !isAuthenticated;
 
+  /**
+   * Draw a simple peak waveform once we have an audio URL
+   */
+  useEffect(() => {
+    if (!DEBUG || !debugAudioUrl) return;
+
+    let isCancelled = false;
+
+    const drawWaveform = async () => {
+      try {
+        const response = await fetch(debugAudioUrl);
+        const arrayBuffer = await response.arrayBuffer();
+
+        const AudioCtxCtor = (window.AudioContext || (window as any).webkitAudioContext);
+        if (!AudioCtxCtor) return;
+        const audioCtx = new (AudioCtxCtor as typeof AudioContext)();
+        const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+        if (isCancelled) return;
+
+        const rawData = audioBuffer.getChannelData(0); // use first channel
+        const samplePoints = 200; // horizontal resolution of waveform
+        const blockSize = Math.floor(rawData.length / samplePoints);
+        const peaks: number[] = [];
+
+        for (let i = 0; i < samplePoints; i++) {
+          let sum = 0;
+          for (let j = 0; j < blockSize; j++) {
+            sum += Math.abs(rawData[i * blockSize + j]);
+          }
+          peaks.push(sum / blockSize);
+        }
+
+        const canvas = waveformCanvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const width = canvas.width || 0;
+        const height = canvas.height || 0;
+        ctx.clearRect(0, 0, width as number, height as number);
+        ctx.fillStyle = '#4b5563'; // tailwind gray-600
+
+        peaks.forEach((p, idx) => {
+          const x = (idx / samplePoints) * width;
+          const barWidth = 1;
+          const barHeight = p * height;
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore – Type libs may require integer, actual API accepts number
+          ctx.fillRect(x, (height - barHeight) / 2, barWidth, Number.isFinite(barHeight) ? barHeight : 0);
+        });
+      } catch (err) {
+        // Silent failure – waveform is just a debugging aid
+        console.warn('[VoiceInputRecorder] Failed to draw waveform', err);
+      }
+    };
+
+    drawWaveform();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [DEBUG, debugAudioUrl]);
+
+  // Capture microphone label when recording starts (debug only)
+  useEffect(() => {
+    if (!DEBUG || !isRecording) return;
+
+    navigator.mediaDevices.enumerateDevices?.()
+      .then((devices) => {
+        const audioInputs = devices.filter((d) => d.kind === 'audioinput');
+        const defaultMic = audioInputs.find((d) => d.deviceId === 'default') || audioInputs[0];
+        setDebugMicLabel(defaultMic?.label || 'Unknown');
+      })
+      .catch(() => {
+        setDebugMicLabel('Unavailable');
+      });
+  }, [DEBUG, isRecording]);
+
+  // Effect to render persistent debug panel
+  useEffect(() => {
+    if (!DEBUG) return;
+
+    // Ensure container exists
+    let container = document.getElementById('voice-debug-root');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'voice-debug-root';
+      document.body.appendChild(container);
+    }
+
+    if (!debugRootRef.current) {
+      debugRootRef.current = createRoot(container);
+    }
+
+    const Panel = (
+      <div className="fixed bottom-4 right-4 z-[1000] w-80 max-w-[360px] rounded-md border bg-white p-3 shadow-lg">
+        <div className="mb-1 text-[10px] font-semibold text-gray-700">VOICE-DEBUG</div>
+        {isRecording && <div className="text-[10px] text-gray-600">Recording…</div>}
+        {debugInfo && (
+          <div className="text-[10px] space-y-0.5 text-gray-600">
+            <div>Size: {debugInfo.sizeKb.toFixed(1)} KB</div>
+            <div>Duration: {debugInfo.duration.toFixed(2)} s</div>
+            <div>MIME: {debugInfo.mime || 'n/a'}</div>
+            {debugMicLabel && <div>Mic: {debugMicLabel}</div>}
+          </div>
+        )}
+        {debugRawWhisper && (
+          <div className="mt-1 max-h-24 overflow-auto rounded bg-gray-50 p-1 text-[10px] font-mono text-gray-800">
+            {debugRawWhisper}
+          </div>
+        )}
+        {debugAudioUrl && (
+          <>
+            <audio
+              key={debugAudioUrl}
+              src={debugAudioUrl}
+              controls
+              autoPlay
+              className="mt-2 w-full"
+              ref={(el) => {
+                if (el) el.volume = 1.0;
+              }}
+            />
+            <canvas
+              ref={waveformCanvasRef}
+              width={320}
+              height={60}
+              className="mt-2 w-full bg-gray-100"
+            />
+          </>
+        )}
+      </div>
+    );
+
+    debugRootRef.current.render(Panel);
+  }, [DEBUG, isRecording, debugInfo, debugRawWhisper, debugAudioUrl, debugMicLabel]);
+
   return (
     <Button
       variant={error ? 'ghost-orange' : 'ghost'}
@@ -444,38 +589,7 @@ export function VoiceInputRecorder({
         {error && `Error: ${error}`}
       </span>
 
-      {/* ───────────────────────── DEBUG PANEL ───────────────────────── */}
-      {DEBUG && typeof window !== 'undefined' && createPortal(
-        <div className="fixed bottom-4 left-4 z-[1000] w-64 max-w-[280px] rounded-md border bg-white p-3 shadow-lg">
-          <div className="mb-1 text-[10px] font-semibold text-gray-700">VOICE-DEBUG</div>
-          {isRecording && (
-            <div className="text-[10px] text-gray-600">Recording…</div>
-          )}
-          {debugInfo && (
-            <div className="text-[10px] space-y-0.5 text-gray-600">
-              <div>Size: {debugInfo.sizeKb.toFixed(1)} KB</div>
-              <div>Duration: {debugInfo.duration.toFixed(2)} s</div>
-              <div>MIME: {debugInfo.mime || 'n/a'}</div>
-            </div>
-          )}
-          {debugRawWhisper && (
-            <div className="mt-1 max-h-24 overflow-auto rounded bg-gray-50 p-1 text-[10px] font-mono text-gray-800">
-              {debugRawWhisper}
-            </div>
-          )}
-          {debugAudioUrl && (
-            <audio
-              key={debugAudioUrl} // remount on every new recording so autoplay works
-              src={debugAudioUrl}
-              controls
-              autoPlay
-              className="mt-2 w-full"
-            />
-          )}
-        </div>,
-        document.body,
-      )}
-      {/* ─────────────────────────────────────────────────────────────── */}
+      {/* Debug panel now rendered via persistent root; nothing to render here */}
     </Button>
   );
 }
