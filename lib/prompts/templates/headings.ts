@@ -93,6 +93,7 @@ export const headingsResponseSchema = z.object({
   operations: z.array(headingOperationSchema),
   more_changes_required: z.boolean(),
   iteration_summary: z.string(),
+  iteration_plan: z.string().optional(),
   safety_check: safetyCheckSchema
 })
 
@@ -104,7 +105,10 @@ const headingsPromptSchema = z.object({
   documentId: z.string().uuid().optional(),
   iteration_count: z.number().int().min(0).optional(),
   previous_iteration_summary: z.string().optional(),
-  MAX_HEADING_OPERATIONS_PER_ITERATION: z.number().int().min(1).optional()
+  previous_iteration_plan: z.string().optional(),
+  total_operations_so_far: z.number().int().min(0).optional(),
+  MAX_HEADING_OPERATIONS_PER_ITERATION: z.number().int().min(1).optional(),
+  MAX_ITERATIONS: z.number().int().min(1).optional()
 })
 
 // Load the headings prompt template

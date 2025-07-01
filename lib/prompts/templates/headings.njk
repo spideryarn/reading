@@ -29,8 +29,12 @@ You are helping the reader to understand this HTML text, by improving the semant
    - Target approximately 200 words between headings
    - Ensure headings serve as useful navigation waypoints
 
-Current iteration: {{ (iteration_count or 0) + 1 }}
-Previous changes: {{ previous_iteration_summary or "None - this is the first iteration" }}
+Current iteration: {{ (iteration_count or 0) + 1 }} of {{ MAX_ITERATIONS or 'unlimited' }}
+Total mutations made so far: {{ total_operations_so_far or 0 }}
+Mutation budget remaining: {{ (MAX_ITERATIONS * MAX_HEADING_OPERATIONS_PER_ITERATION) - (total_operations_so_far or 0) if MAX_ITERATIONS else 'unlimited' }}
+
+Previous iteration summary: {{ previous_iteration_summary or "None - this is the first iteration" }}
+Previous iteration plan: {{ previous_iteration_plan or "None - this is the first iteration" }}
 
 - The highest-level heading is H1. The lowest-level heading is H6.
 
@@ -112,6 +116,7 @@ Respond with only JSON in the following form, in the order that operations shoul
   ],
   "more_changes_required": true,
   "iteration_summary": "Added H1 document title, established 3 major H2 sections, and improved 2 unclear headings. Further subdivisions needed in the methodology section.",
+  "iteration_plan": "Next iteration will focus on subdividing the lengthy methodology section with H3 headings, and reviewing the conclusion for better semantic structure.",
   "safety_check": {
     "current_iteration": 0,
     "total_operations_so_far": 6,
@@ -136,7 +141,8 @@ Where:
 
 - **Iteration fields**:
   - `more_changes_required`: Boolean indicating if additional iterations would improve the structure
-  - `iteration_summary`: Brief description of changes made in this iteration
+  - `iteration_summary`: Brief description (1-2 sentences) of the specific mutations you just made in this iteration
+  - `iteration_plan`: Rolling high-level plan (2-3 sentences) that tracks: what you just did, immediate next focus, and medium-term goals. Example: "Iteration 2: cleared redundant H3s and flagged long sections; next focus: subdivide Methods section; medium-term: finish refactoring H2s before adding granular navigation"
   - `safety_check`: Object tracking iteration progress and limits
     - `current_iteration`: Current iteration number (0-based)
     - `total_operations_so_far`: Cumulative count of operations across all iterations

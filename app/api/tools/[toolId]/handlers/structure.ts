@@ -64,6 +64,7 @@ const StructureIterateSchema = z.object({
   // Iteration tracking fields
   iteration_count: z.number().int().min(0).default(0),
   previous_iteration_summary: z.string().optional(),
+  previous_iteration_plan: z.string().optional(),
   existing_operations: z.array(headingOperationSchema).optional(), // Operations from previous iterations
   total_operations_count: z.number().int().min(0).default(0)
 }).passthrough()
@@ -185,7 +186,9 @@ function detectUnsafeInsertBeforeH1(operations: HeadingOperation[], html: string
   const h1Ids = new Set<string>()
   let match: RegExpExecArray | null
   while ((match = h1IdRegex.exec(html)) !== null) {
-    h1Ids.add(match[1])
+    if (match[1]) {
+      h1Ids.add(match[1])
+    }
   }
 
   if (h1Ids.size === 0) {
@@ -786,6 +789,7 @@ export class StructureHandler extends BaseToolHandler {
         operations: [],
         more_changes_required: false,
         iteration_summary: 'Maximum iteration limit reached',
+        iteration_plan: undefined,
         safety_check: {
           current_iteration: iteration_count,
           total_operations_so_far: total_operations_count,
@@ -850,7 +854,10 @@ export class StructureHandler extends BaseToolHandler {
         documentId,
         iteration_count,
         previous_iteration_summary,
-        MAX_HEADING_OPERATIONS_PER_ITERATION: HEADING_ITERATION_CONFIG.MAX_HEADING_OPERATIONS_PER_ITERATION
+        previous_iteration_plan: parameters.previous_iteration_plan as string | undefined,
+        total_operations_so_far: total_operations_count,
+        MAX_HEADING_OPERATIONS_PER_ITERATION: HEADING_ITERATION_CONFIG.MAX_HEADING_OPERATIONS_PER_ITERATION,
+        MAX_ITERATIONS: HEADING_ITERATION_CONFIG.MAX_ITERATIONS
       })
       llmTimer.end({
         documentId,
@@ -1015,6 +1022,7 @@ export class StructureHandler extends BaseToolHandler {
         operations: validatedResponse.operations,
         more_changes_required: validatedResponse.more_changes_required ?? false,
         iteration_summary: validatedResponse.iteration_summary ?? '',
+        iteration_plan: validatedResponse.iteration_plan,
         safety_check: validatedResponse.safety_check ?? {
           current_iteration: iteration_count,
           total_operations_so_far: newTotalOperations,
