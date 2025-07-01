@@ -85,11 +85,12 @@ export class DocumentService {
       return null
     }
 
+    const baseDocument = DocumentService.mockDocuments[index]
     const updated: Document = {
-      ...DocumentService.mockDocuments[index],
+      ...baseDocument,
       ...validUpdates,
       updated_at: new Date().toISOString()
-    }
+    } as Document
 
     DocumentService.mockDocuments[index] = updated
     return updated
@@ -261,8 +262,9 @@ export class DocumentService {
     // Mock storage result if file provided
     const storageResult: StorageUploadResult | undefined = originalFile ? {
       path: `documents/${documentId}/original`,
+      fullPath: `documents/${documentId}/original/${originalFile instanceof File ? originalFile.name : 'blob'}`,
       size: originalFile.size,
-      contentType: originalFile.type
+      mimeType: originalFile.type
     } : undefined
     
     // Create document record with explicit ID and storage path
@@ -278,7 +280,7 @@ export class DocumentService {
     
     const createdDoc = await this.create(documentToCreate)
     
-    const result: { document: Document; storageResult?: StorageUploadResult | null } = {
+    const result: { document: Document; storageResult?: StorageUploadResult } = {
       document: createdDoc
     }
     

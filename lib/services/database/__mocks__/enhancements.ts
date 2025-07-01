@@ -1,7 +1,8 @@
 // Mock for enhancements service module to use in tests
 import type { 
   DocumentEnhancement, 
-  EnhancementType
+  EnhancementType,
+  Json
 } from '@/lib/types/database'
 import type { CreateEnhancementOptions } from '../enhancements'
 
@@ -29,14 +30,14 @@ export class EnhancementService {
     )
 
     const enhancement: DocumentEnhancement = {
-      id: existingIndex >= 0 ? EnhancementService.mockEnhancements[existingIndex].id : EnhancementService.generateId(),
+      id: existingIndex >= 0 ? EnhancementService.mockEnhancements[existingIndex]?.id || EnhancementService.generateId() : EnhancementService.generateId(),
       document_id: options.documentId,
       ai_call_id: options.aiCallId,
       type: options.type,
       subtype: options.subtype,
-      content: options.content,
-      extra: options.extra || {},
-      created_at: existingIndex >= 0 ? EnhancementService.mockEnhancements[existingIndex].created_at : new Date().toISOString(),
+      content: options.content as Json,
+      extra: (options.extra || {}) as Json,
+      created_at: existingIndex >= 0 ? EnhancementService.mockEnhancements[existingIndex]?.created_at || new Date().toISOString() : new Date().toISOString(),
       updated_at: new Date().toISOString()
     }
 

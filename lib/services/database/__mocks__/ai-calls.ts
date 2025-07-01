@@ -2,7 +2,8 @@
 import type { 
   AiCall, 
   CallStatus,
-  PromptType
+  PromptType,
+  Json
 } from '@/lib/types/database'
 import type { PromptUsage } from '@/lib/prompts/types'
 import type { JsonObject } from '@/lib/types/json'
@@ -23,7 +24,6 @@ const createMockAiCall = (overrides?: Partial<AiCall>): AiCall => ({
   prompt_template: null,
   status: 'pending' as CallStatus,
   created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
   completed_at: null,
   prompt_tokens: null,
   completion_tokens: null,
@@ -32,7 +32,10 @@ const createMockAiCall = (overrides?: Partial<AiCall>): AiCall => ({
   finish_reason: null,
   error_message: null,
   error_code: null,
-  extra: {},
+  extra: {} as Json,
+  extra_usage: null,
+  latency_ms: null,
+  response_text: null,
   ...overrides
 })
 
@@ -58,7 +61,7 @@ export class AiCallService {
       model_string: options.modelString,
       prompt_type: options.prompt_type,
       prompt_input: JSON.stringify(options.input_data || {}),
-      extra: options.extra || {},
+      extra: (options.extra || {}) as Json,
       status: 'pending'
     })
     
@@ -83,7 +86,7 @@ export class AiCallService {
       ...call,
       status: 'success',
       completed_at: new Date().toISOString(),
-      extra: data.output_data || {},
+      extra: (data.output_data || {}) as Json,
       prompt_tokens: data.usage?.promptTokens || null,
       completion_tokens: data.usage?.completionTokens || null,
       total_tokens: data.usage?.totalTokens || null,
@@ -116,7 +119,7 @@ export class AiCallService {
       error_message: errorMessage,
       error_code: errorCode || null,
       completed_at: new Date().toISOString(),
-      extra: extra || {}
+      extra: (extra || {}) as Json
     }
 
     // Update in our mock storage
@@ -184,7 +187,7 @@ export class AiCallService {
       const tokens = call.total_tokens || 0
       stats.totalTokens += tokens
 
-      const promptType = call.prompt_type
+      const promptType = call.prompt_type as PromptType
       if (!stats.byPromptType[promptType]) {
         stats.byPromptType[promptType] = { calls: 0, tokens: 0 }
       }
@@ -198,7 +201,7 @@ export class AiCallService {
   // Get recent calls
   async getRecentCalls(limit: number = 10): Promise<AiCall[]> {
     return AiCallService.mockCalls
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
       .slice(0, limit)
   }
 
@@ -215,7 +218,7 @@ export class AiCallService {
       prompt_tokens: options.promptTokens || null,
       completion_tokens: options.completionTokens || null,
       total_tokens: options.totalTokens || null,
-      extra: options.responseData || {}
+      extra: (options.responseData || {}) as Json
     })
     
     AiCallService.mockCalls.push(aiCall)

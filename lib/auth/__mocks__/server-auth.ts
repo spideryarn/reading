@@ -36,18 +36,12 @@ const defaultTestUser: User = {
   role: 'authenticated',
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
-  phone: null,
   confirmed_at: new Date().toISOString(),
   email_confirmed_at: new Date().toISOString(),
-  confirmation_sent_at: null,
-  recovery_sent_at: null,
-  new_email: null,
-  invited_at: null,
-  action_link: null,
   identities: [],
   factors: [],
   is_anonymous: false
-}
+} as User
 
 // Mock implementations
 export const getUser = jest.fn<Promise<AuthResult>, []>().mockResolvedValue({
