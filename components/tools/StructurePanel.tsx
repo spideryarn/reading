@@ -630,6 +630,10 @@ export function StructurePanel({
         console.log('StructurePanel unmounting')
       }
       isCancelled = true
+      // If we unmount while a fetch is in-flight, clear the flag so that a
+      // remounted panel will retry the request instead of treating it as a
+      // permanent in-progress fetch (which left the UI stuck in "Original" mode)
+      fetchInProgressRef.current = false
     }
   }, [documentId, hasInitialized, applyCachedOperations, content, elements, fetchCachedHeadings])
 
