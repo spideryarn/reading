@@ -567,6 +567,20 @@ export function MetadataPanel({
     setTitleError(error)
   }
   
+  // ---------------------------------------------------------------------------
+  // Valid difficulty levels for UI rendering
+  // ---------------------------------------------------------------------------
+  const validDifficultyLevels = [
+    'High school or below',
+    'Undergraduate',
+    'Masters/PhD',
+    'Post-doctoral/expert'
+  ] as const
+
+  // Determine if received difficulty level is unexpected → treat as error
+  const invalidDifficulty =
+    readingDifficulty && !validDifficultyLevels.includes(readingDifficulty.level as any)
+  
   return (
     <div className="flex flex-col h-full bg-slate-50/30">
       {/* Header */}
@@ -981,10 +995,12 @@ export function MetadataPanel({
                   <CircleNotch size={24} weight="bold" className="animate-spin text-amber-600" />
                   <span className="ml-3 text-sm text-slate-600">Analyzing document difficulty...</span>
                 </div>
-              ) : difficultyError ? (
+              ) : difficultyError || invalidDifficulty ? (
                 <div className="flex items-center justify-center py-8">
                   <XCircle size={20} weight="bold" className="text-red-500" />
-                  <span className="ml-3 text-sm text-red-600">{difficultyError}</span>
+                  <span className="ml-3 text-sm text-red-600">
+                    {difficultyError || 'Difficulty assessment invalid'}
+                  </span>
                 </div>
               ) : readingDifficulty ? (
                 <>
