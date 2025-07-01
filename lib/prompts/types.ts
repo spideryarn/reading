@@ -211,7 +211,7 @@ async function executeMultimodalPromptInternal<T extends z.ZodSchema>(
   }
   
   // Check if variables contain messages (multimodal), PDF buffer, base64 image, or just need prompt rendering
-  let messages: Array<{ role: string; content: string | Array<{ type: string; text?: string; image?: string; data?: Buffer; mimeType?: string }> }> = []
+  let messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string | Array<{ type: string; text?: string; image?: string; data?: Buffer; mimeType?: string }> }> = []
   
   if ('messages' in validated && Array.isArray(validated.messages)) {
     // Use messages directly for multimodal content
@@ -222,7 +222,7 @@ async function executeMultimodalPromptInternal<T extends z.ZodSchema>(
     const prompt = env.renderString(templateContent, validated)
     
     messages = [{
-      role: 'user',
+      role: 'user' as const,
       content: [
         {
           type: 'file',
@@ -241,7 +241,7 @@ async function executeMultimodalPromptInternal<T extends z.ZodSchema>(
     const prompt = env.renderString(templateContent, validated)
     
     messages = [{
-      role: 'user',
+      role: 'user' as const,
       content: [
         {
           type: 'image',
@@ -259,7 +259,7 @@ async function executeMultimodalPromptInternal<T extends z.ZodSchema>(
     const prompt = env.renderString(templateContent, validated)
     
     messages = [{
-      role: 'user',
+      role: 'user' as const,
       content: prompt
     }]
   }
@@ -267,7 +267,7 @@ async function executeMultimodalPromptInternal<T extends z.ZodSchema>(
   // Execute with Vercel AI SDK Core using messages format
   const result = await generateText({
     model,
-    messages,
+    messages: messages as any, // Type assertion to handle complex union types with AI SDK
     maxTokens: template.modelConfig?.maxTokens || AI_CONFIG.DEFAULT_MAX_TOKENS,
     temperature: template.modelConfig?.temperature ?? AI_CONFIG.DEFAULT_TEMPERATURE,
   })

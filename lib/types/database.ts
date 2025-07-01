@@ -3,7 +3,6 @@ export type Json =
   | number
   | boolean
   | null
-  | undefined
   | { [key: string]: Json | undefined }
   | Json[]
 
