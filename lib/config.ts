@@ -23,10 +23,9 @@ export const AI_CONFIG = {
 } as const
 
 // Add centralised debug feature flags – these are compile-time evaluated during the build
-// so they can safely be tree-shaken for production when set to false.
+// so they can safely be tree-shaken for production when set to false, i.e. true=debug, false=production.
 export const DEBUG_FLAGS = {
-    // VOICE_INPUT: false,
-    VOICE_INPUT: true,
+    VOICE_INPUT: false,
 } as const;
 
 
