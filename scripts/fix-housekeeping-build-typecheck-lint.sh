@@ -27,14 +27,17 @@ echo "📋 Using instruction file: $INSTRUCTION_FILE"
 echo "🚀 Launching Claude Code..."
 echo ""
 
-# Option 1: Use --dangerously-skip-permissions (RECOMMENDED)
-# This bypasses all permission checks - use with caution!
-claude -p --dangerously-skip-permissions "Please follow the comprehensive process outlined in the attached instruction file to systematically fix build, TypeScript, and linting issues. Work through Stage 1 (Assessment), Stage 2 (Resolution), and Stage 3 (Verification) as documented. Use subagents where appropriate to avoid context pollution. Focus on production code over test code. If you encounter complex/ambiguous decisions that need discussion, then skip them." < "$INSTRUCTION_FILE"
+# Option 1: Use --dangerously-skip-permissions with verbose output (RECOMMENDED)
+# This bypasses all permission checks and shows detailed progress - use with caution!
+# --verbose: Shows full turn-by-turn output for debugging and progress tracking
+# --max-turns: Limit turns to prevent runaway processes (adjust as needed)
+# Use exec to replace the shell process and show live output
+exec claude -p --model sonnet --verbose --output-format stream-json --max-turns 50 --dangerously-skip-permissions "Please follow the comprehensive process outlined in the attached instruction file to systematically fix build, TypeScript, and linting issues. Work through Stage 1 (Assessment), Stage 2 (Resolution), and Stage 3 (Verification) as documented. Use subagents where appropriate to avoid context pollution. Focus on production code over test code. If you encounter complex/ambiguous decisions that need discussion, then skip them." < "$INSTRUCTION_FILE"
 
-# Option 2: Use specific --allowedTools (FALLBACK - uncomment if Option 1 doesn't work)
+# Option 2: Use specific --allowedTools with verbose output (FALLBACK - uncomment if Option 1 doesn't work)
 # Note: This approach has known reliability issues in non-interactive mode
-# claude -p --allowedTools "Bash(*),Edit,Read,Glob,Grep,TodoWrite,TodoRead,MultiEdit,Write,Task,WebSearch" "Please follow the comprehensive process outlined in the attached instruction file to systematically fix build, TypeScript, and linting issues. Work through Stage 1 (Assessment), Stage 2 (Resolution), and Stage 3 (Verification) as documented. Use subagents where appropriate to avoid context pollution. Focus on production code over test code, and stop if you encounter complex architectural decisions that need discussion." < "$INSTRUCTION_FILE"
+# claude -p --verbose --max-turns 50 --allowedTools "Bash(*),Edit,Read,Glob,Grep,TodoWrite,TodoRead,MultiEdit,Write,Task,WebSearch" "Please follow the comprehensive process outlined in the attached instruction file to systematically fix build, TypeScript, and linting issues. Work through Stage 1 (Assessment), Stage 2 (Resolution), and Stage 3 (Verification) as documented. Use subagents where appropriate to avoid context pollution. Focus on production code over test code, and stop if you encounter complex architectural decisions that need discussion." < "$INSTRUCTION_FILE"
 
-echo ""
-echo "✅ Housekeeping process completed!"
-echo "🔍 Check the output above for any remaining issues or required manual intervention."
+# Note: No final echo statements after exec because exec replaces the shell process
+# The Claude Code process will handle all output from this point forward
+# This ensures live output is shown during execution
