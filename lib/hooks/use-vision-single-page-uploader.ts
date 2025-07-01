@@ -91,7 +91,49 @@ interface UseVisionSinglePageUploaderReturn {
   isPaused: boolean
   retry: (pageNumber: number) => Promise<void>
   getCompletedHtml: () => string[]
+  forceCompletePage: (pageNumber: number) => void
 }
+
+// ADD_BOUNDING_BOX_UTIL_START
+// Utility to clamp bounding-box coordinates to valid ranges
+function clampBoundingBox(
+  bbox: { x: number; y: number; width: number; height: number }
+): { x: number; y: number; width: number; height: number } | null {
+  // Ensure numbers are finite
+  if (!Number.isFinite(bbox.x) || !Number.isFinite(bbox.y) ||
+      !Number.isFinite(bbox.width) || !Number.isFinite(bbox.height)) {
+    return null
+  }
+
+  let { x, y, width, height } = bbox
+
+  // Interpret negative width/height as swapped co-ordinates
+  if (width < 0) {
+    x = x + width
+    width = Math.abs(width)
+  }
+  if (height < 0) {
+    y = y + height
+    height = Math.abs(height)
+  }
+
+  // Clamp starting co-ordinates to 0-1
+  x = Math.max(0, Math.min(1, x))
+  y = Math.max(0, Math.min(1, y))
+
+  // Clamp width/height so the box stays within bounds
+  width = Math.max(0, Math.min(1 - x, width))
+  height = Math.max(0, Math.min(1 - y, height))
+
+  // Require a minimum size of 1px – prevents canvas errors
+  const MIN_NORM_SIZE = 1 / 10000 // assumes max 10k px page dimension
+  if (width < MIN_NORM_SIZE || height < MIN_NORM_SIZE) {
+    return null
+  }
+
+  return { x, y, width, height }
+}
+// ADD_BOUNDING_BOX_UTIL_END
 
 export function useVisionSinglePageUploader(
   options: UseVisionSinglePageUploaderOptions = {}
@@ -221,9 +263,17 @@ export function useVisionSinglePageUploader(
       updatePageState(pageNumber, { status: 'cropping', progress: 50 })
       
       const croppedImages: ExtractedImageWithData[] = []
+      const cropErrors: string[] = []
       
       for (const imageData of result.extractedImages) {
         try {
+          // Validate & clamp bounding box to avoid negative or out-of-range values
+          const clampedBbox = clampBoundingBox(imageData.boundingBox)
+          if (!clampedBbox) {
+            cropErrors.push(`${imageData.elementId}`)
+            continue // skip this image
+          }
+
           // Decode base64 page image for cropping (use original, not resized)
           const img = new Image()
           const loadPromise = new Promise<void>((resolve, reject) => {
@@ -239,10 +289,10 @@ export function useVisionSinglePageUploader(
           if (!ctx) throw new Error('Failed to get canvas context')
 
           // Calculate actual pixel coordinates from normalized bbox
-          const cropX = Math.floor(imageData.boundingBox.x * img.width)
-          const cropY = Math.floor(imageData.boundingBox.y * img.height)
-          const cropWidth = Math.floor(imageData.boundingBox.width * img.width)
-          const cropHeight = Math.floor(imageData.boundingBox.height * img.height)
+          const cropX = Math.floor(clampedBbox.x * img.width)
+          const cropY = Math.floor(clampedBbox.y * img.height)
+          const cropWidth = Math.floor(clampedBbox.width * img.width)
+          const cropHeight = Math.floor(clampedBbox.height * img.height)
 
           // Set canvas size and crop
           canvas.width = cropWidth
@@ -268,12 +318,7 @@ export function useVisionSinglePageUploader(
             elementId: imageData.elementId,
             filename: imageData.filename,
             storagePath: imageData.storagePath,
-            boundingBox: {
-              x: imageData.boundingBox.x,
-              y: imageData.boundingBox.y,
-              width: imageData.boundingBox.width,
-              height: imageData.boundingBox.height
-            },
+            boundingBox: clampedBbox,
             blob
           }
           if (imageData.caption !== undefined) {
@@ -285,11 +330,19 @@ export function useVisionSinglePageUploader(
           croppedImages.push(croppedImage)
         } catch (cropError) {
           console.error(`Failed to crop image ${imageData.elementId}:`, cropError)
+          cropErrors.push(imageData.elementId)
           // Continue with other images even if one fails
         }
       }
 
       updatePageState(pageNumber, { status: 'storing', progress: 70 })
+
+      // If no images could be cropped, surface a detailed fatal error
+      if (result.extractedImages.length > 0 && croppedImages.length === 0) {
+        throw new Error(
+          `CROP_FAILED: No images could be cropped on page ${pageNumber}. Invalid or zero-size bounding boxes for elements: ${cropErrors.join(', ')}.`
+        )
+      }
 
       // Step 3: Upload cropped images to Supabase Storage
       const uploadedImages: ExtractedImageWithData[] = []
@@ -364,7 +417,7 @@ export function useVisionSinglePageUploader(
       
       // ADD_CHECK_ALL_UPLOADS_FAILED
       if (result.extractedImages.length > 0 && uploadedImages.length === 0) {
-        throw new Error('All image uploads failed for this page')
+        throw new Error(`UPLOADS_FAILED: All image uploads failed on page ${pageNumber}. Files: ${failedUploads.join(', ')}`)
       }
       
       // Step 4: Patch HTML with final storage URLs
@@ -623,6 +676,15 @@ export function useVisionSinglePageUploader(
       )
     : 0
 
+  // Force a page into completed state – used when user opts to continue despite errors
+  const forceCompletePage = useCallback((pageNumber: number) => {
+    updatePageState(pageNumber, {
+      status: 'completed',
+      progress: 100,
+      htmlFragment: `<!-- Page ${pageNumber} forced complete despite errors -->`
+    })
+  }, [updatePageState])
+
   return {
     uploadPages,
     pageStates,
@@ -633,6 +695,7 @@ export function useVisionSinglePageUploader(
     resume,
     isPaused,
     retry,
-    getCompletedHtml
+    getCompletedHtml,
+    forceCompletePage
   }
 }

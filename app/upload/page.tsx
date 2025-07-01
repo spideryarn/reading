@@ -161,7 +161,8 @@ export default function AddDocumentPage() {
     pause: pauseVisionUpload,
     resume: resumeVisionUpload,
     isPaused: isVisionPaused,
-    retry: retryVisionPage
+    retry: retryVisionPage,
+    forceCompletePage
   } = useVisionSinglePageUploader({
     maxConcurrency: 3,
     onProgress: (pageNumber, progress, status) => {
@@ -173,6 +174,29 @@ export default function AddDocumentPage() {
     },
     onError: (pageNumber, error) => {
       console.error(`Page ${pageNumber} failed:`, error)
+
+      // Handle specific fatal-but-recoverable errors interactively
+      if (error.startsWith('UPLOADS_FAILED:')) {
+        const userWantsCancel = window.confirm(
+          `${error.replace('UPLOADS_FAILED:', '').trim()}` +
+          '\n\nClick "OK" to cancel the entire upload (all progress will be discarded).\n' +
+          'Click "Cancel" to continue without the failed images.'
+        )
+
+        if (userWantsCancel) {
+          cancelVisionUpload()
+          alert('Upload cancelled.')
+        } else if (pageNumber) {
+          // Mark the page as completed so the pipeline can continue
+          forceCompletePage(pageNumber)
+          alert('Continuing without the failed images on this page – they will be marked in the final document.')
+        }
+
+        return
+      }
+
+      // Generic fallback alert
+      alert(`Page ${pageNumber || 'unknown'} failed: ${error}`)
     },
     onAllComplete: handleVisionAllComplete
   })
