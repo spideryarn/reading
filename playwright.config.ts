@@ -90,7 +90,15 @@ export default defineConfig({
     // Chrome tests without authentication (for error pages, public content, etc.)
     {
       name: 'chromium-no-auth',
-      testMatch: ['**/error-page-testing.spec.ts', '**/optimized-anonymous-access-journey.spec.ts', '**/optimized-authenticated-onboarding-journey.spec.ts'],
+      testMatch: [
+        '**/error-page-testing.spec.ts', 
+        '**/optimized-anonymous-access-journey.spec.ts', 
+        '**/optimized-authenticated-onboarding-journey.spec.ts',
+        '**/optimized-document-library-journey.spec.ts',
+        '**/optimized-route-smoke-tests.spec.ts',
+        '**/optimized-mobile-experience.spec.ts',
+        '**/optimized-error-recovery.spec.ts'
+      ],
       use: { 
         ...devices['Desktop Chrome'],
         // No storageState - fresh context for each test
