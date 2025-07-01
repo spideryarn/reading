@@ -15,7 +15,7 @@ import { extractCleanText } from '@/lib/utils/html-text-extraction'
 import { prettifyAcademicHtmlSafe } from '@/lib/utils/html-prettifier'
 import { generateSlug } from '@/lib/utils/slug'
 import { sanitizeDocumentTitle } from '@/lib/utils/document-title'
-import type { Logger } from '@/lib/services/logger'
+import type { Logger } from 'pino'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 /**

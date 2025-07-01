@@ -9,7 +9,7 @@
 
 import type { Tool, ToolCategory, TabValue } from '../types'
 import { registerTool, resetRegistryForTests } from '../registry'
-import { BookOpen, MagnifyingGlass, Robot, ChatCircle } from '@phosphor-icons/react/dist/ssr'
+import { BookOpen, MagnifyingGlass, Robot, ChatCircle, type Icon } from '@phosphor-icons/react/dist/ssr'
 
 /**
  * Reset registry before each test
