@@ -340,13 +340,16 @@ case "$MODE" in
         ;;
         
     "normal")
-        # Original behavior - foreground mode for npm run dev
+        # Enhanced foreground mode for npm run dev
         PORT=$(get_port)
+        
+        echo "🚀 Starting dev server in foreground mode at $(date)"
         
         if [ -z "$PORT" ]; then
             echo "⚠️  No PORT found in .env.local - skipping process cleanup"
             echo "   To enable auto-restart, add PORT=xxxx to your .env.local file"
         else
+            echo "🔄 Port: $PORT"
             # Use robust port-based process killing
             kill_port_processes "$PORT" "existing dev server"
         fi
@@ -354,8 +357,15 @@ case "$MODE" in
         # Always clear Next.js build cache for fresh start
         clear_next_cache
         
+        # Rotate log if needed
+        rotate_log_if_needed
+        
         # Set up trap to output timestamp when dev server exits
         trap 'echo "📅 Dev server finished at $(date)"' EXIT
+        
+        echo "🎯 Use npm run dev:daemon for background mode with PID tracking"
+        echo "📋 Logs will be written to dev.log - use 'tail -f dev.log' to follow"
+        echo ""
         
         # Run the original dev command in foreground
         npm run db:types --silent && PATH="/opt/homebrew/bin:$PATH" dotenv -e .env.local -- next dev > dev.log 2>&1
