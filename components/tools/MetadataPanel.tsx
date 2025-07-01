@@ -21,6 +21,7 @@ import { EnhancementService } from '@/lib/services/database/enhancements'
 import { calculateReadingTimeFromWordCount, formatReadingTime } from '@/lib/utils/reading-time-calculation'
 import { generateReadingTimeTooltip, type ReadingDifficultyData } from '@/lib/utils/enhanced-reading-time'
 import { MissingReadingDifficultyError } from '@/lib/utils/reading-time-calculation'
+import { BOOK_PAGE_CONFIG } from '@/lib/config'
 
 // Helper function to format confidence for display
 function formatConfidence(confidence: string | number): string {
@@ -816,15 +817,15 @@ export function MetadataPanel({
               <div className="w-1 h-4 bg-gradient-to-b from-slate-400 to-slate-500 rounded-full"></div>
               Document Statistics
             </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="group bg-white rounded-xl border border-slate-200 shadow-sm p-4 hover:shadow-md transition-all duration-200 hover:border-slate-300">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center">
                     <ChartBar size={14} weight="bold" className="text-white" />
                   </div>
                   <span className="text-xs font-medium text-slate-600 uppercase tracking-wider">Words</span>
                 </div>
-                <div className="text-xl font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
+                <div className="text-xl font-bold text-slate-900">
                   {documentStats.wordCount.toLocaleString()}
                 </div>
               </div>
@@ -862,6 +863,33 @@ export function MetadataPanel({
                     {documentStats.readingTime > 0 ? formatReadingTime(documentStats.readingTime) : 'Pending…'}
                   </div>
                 </div>
+              </TooltipOrPopover>
+              
+              <TooltipOrPopover
+                content={
+                  <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 max-w-sm">
+                    <div className="text-xs text-gray-700 leading-relaxed font-mono">
+                      Estimated book pages based on {BOOK_PAGE_CONFIG.WORDS_PER_PAGE} words per page (industry standard: 250-300 words/page)
+                    </div>
+                  </div>
+                }
+                side="left"
+                align="center"
+                sideOffset={8}
+                showIndicator={false}
+                contentClassName="p-0 bg-transparent border-0 shadow-none"
+              >
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 cursor-help">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center">
+                    <BookOpen size={14} weight="bold" className="text-white" />
+                  </div>
+                  <span className="text-xs font-medium text-slate-600 uppercase tracking-wider">Book Pages</span>
+                </div>
+                <div className="text-xl font-bold text-slate-900">
+                  {Math.round(documentStats.wordCount / BOOK_PAGE_CONFIG.WORDS_PER_PAGE)}
+                </div>
+              </div>
               </TooltipOrPopover>
             </div>
           </section>

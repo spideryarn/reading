@@ -274,3 +274,11 @@ export const VISION_UPLOAD_CONFIG = {
   // VISION_MAX_CONCURRENCY environment variable.
   MAX_CONCURRENCY: parseInt(process.env.VISION_MAX_CONCURRENCY || '1', 10),
 } as const
+
+// Book page estimation configuration
+export const BOOK_PAGE_CONFIG = {
+  // Average words per page in traditional book publishing
+  // Industry standard: 250-300 words per page for published books (kindlepreneur.com, writersservices.com)
+  // Using 270 as balanced estimate between the range
+  WORDS_PER_PAGE: 270,
+} as const

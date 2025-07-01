@@ -93,8 +93,8 @@ export async function calculateReadingTimeFromWordCount(
  */
 export function formatReadingTime(readingTimeMinutes: number): string {
   if (readingTimeMinutes === 1) {
-    return '1 minute read'
+    return '1 min'
   } else {
-    return `${readingTimeMinutes} minutes read`
+    return `${readingTimeMinutes} mins`
   }
 }
