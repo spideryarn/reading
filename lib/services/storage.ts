@@ -403,7 +403,8 @@ export async function uploadImageAsset(
   let fileBlob: Blob
   if (typeof imageData === 'string') {
     // Handle base64 data URLs
-    const base64Data = imageData.includes(',') ? imageData.split(',')[1] : imageData
+    const splitData = imageData.includes(',') ? imageData.split(',') : null
+    const base64Data = splitData && splitData[1] ? splitData[1] : imageData
     const binaryString = atob(base64Data)
     const bytes = new Uint8Array(binaryString.length)
     for (let i = 0; i < binaryString.length; i++) {

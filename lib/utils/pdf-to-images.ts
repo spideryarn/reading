@@ -118,11 +118,16 @@ async function loadPDF(
     const pdf = await loadingTask.promise;
     const metadata = await pdf.getMetadata().catch(() => null);
     
-    return {
+    const result: { pdf: PDFDocumentProxy; pageCount: number; metadata?: Record<string, unknown> } = {
       pdf,
-      pageCount: pdf.numPages,
-      metadata: metadata?.info as Record<string, unknown> | undefined
+      pageCount: pdf.numPages
     };
+    
+    if (metadata?.info) {
+      result.metadata = metadata.info as Record<string, unknown>;
+    }
+    
+    return result;
   } catch (error: unknown) {
     const errorObj = error as any;
     if (errorObj?.name === 'InvalidPDFException') {

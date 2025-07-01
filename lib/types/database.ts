@@ -595,6 +595,52 @@ export const Constants = {
   },
 } as const
 
+// AI Calls
+export type AiCall = Tables<'ai_calls'>
+export type AiCallInsert = TablesInsert<'ai_calls'>
+export type AiCallUpdate = TablesUpdate<'ai_calls'>
+
+// Documents
+export type Document = Tables<'documents'>
+export type DocumentInsert = TablesInsert<'documents'>
+export type DocumentUpdate = TablesUpdate<'documents'>
+
+// Document Enhancements
+export type DocumentEnhancement = Tables<'document_enhancements'>
+export type DocumentEnhancementInsert = TablesInsert<'document_enhancements'>
+export type DocumentEnhancementUpdate = TablesUpdate<'document_enhancements'>
+
+// Chat Threads
+export type ChatThread = Tables<'chat_threads'>
+export type ChatThreadInsert = TablesInsert<'chat_threads'>
+export type ChatThreadUpdate = TablesUpdate<'chat_threads'>
+
+// Chat Messages
+export type ChatMessage = Tables<'chat_messages'>
+export type ChatMessageInsert = TablesInsert<'chat_messages'>
+export type ChatMessageUpdate = TablesUpdate<'chat_messages'>
+
+// Document Assets
+export type DocumentAsset = Tables<'document_assets'>
+export type DocumentAssetInsert = TablesInsert<'document_assets'>
+export type DocumentAssetUpdate = TablesUpdate<'document_assets'>
+
+// Document Users
+export type DocumentUser = Tables<'document_users'>
+export type DocumentUserInsert = TablesInsert<'document_users'>
+export type DocumentUserUpdate = TablesUpdate<'document_users'>
+
+// Profiles
 export type Profile = Tables<'profiles'>
 export type ProfileInsert = TablesInsert<'profiles'>
 export type ProfileUpdate = TablesUpdate<'profiles'>
+
+// String enums for AI calls (derived from schema constraints)
+export type CallStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
+export type PromptType = 'summarise' | 'glossary' | 'headings' | 'chat' | 'extract-url' | 'extract-pdf' | 'pdf-to-html' | 'url-to-html' | 'page_to_html' | 'reading_difficulty' | 'semantic-search' | 'other'
+
+// String enums for document enhancements
+export type EnhancementType = 'headings' | 'summaries' | 'summary' | 'glossary' | 'semantic-search' | 'reading_difficulty' | 'tweet-thread' | 'other'
+
+// String enums for chat messages
+export type MessageRole = 'user' | 'assistant' | 'system'
