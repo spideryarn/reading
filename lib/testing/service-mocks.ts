@@ -103,7 +103,6 @@ export function setupCommonServiceMocks() {
     prompt_type: 'chat',
     status: 'pending',
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
     completed_at: null,
     prompt_tokens: null,
     completion_tokens: null,
@@ -115,7 +114,9 @@ export function setupCommonServiceMocks() {
     extra: {},
     prompt_input: '{}',
     prompt_template: null,
-    model_id: null
+    extra_usage: null,
+    latency_ms: null,
+    response_text: null
   })
   
   jest.spyOn(aiCallService, 'completeCall').mockResolvedValue({
@@ -126,7 +127,6 @@ export function setupCommonServiceMocks() {
     prompt_type: 'chat',
     status: 'success',
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
     completed_at: new Date().toISOString(),
     prompt_tokens: 100,
     completion_tokens: 200,
@@ -138,7 +138,9 @@ export function setupCommonServiceMocks() {
     extra: {},
     prompt_input: '{}',
     prompt_template: null,
-    model_id: null
+    extra_usage: null,
+    latency_ms: null,
+    response_text: null
   })
   
   jest.spyOn(enhancementService, 'get').mockResolvedValue(null)
@@ -187,7 +189,6 @@ export function createMockAiCall(overrides?: any) {
     extra: {},
     prompt_input: '{}',
     prompt_template: null,
-    model_id: null,
     ...overrides
   }
 }
