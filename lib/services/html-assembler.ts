@@ -635,7 +635,7 @@ function validateFinalDocument(
     
     // Check for broken elements
     const allElements = document.querySelectorAll('*')
-    allElements.forEach((element, index) => {
+    allElements.forEach((element: Element, index: number) => {
       if (!element.tagName || element.tagName === '') {
         warnings.push(`Element ${index} has invalid tag name`)
       }
@@ -688,7 +688,7 @@ function validateStorageImageReferences(
     let storageImageCount = 0
     let brokenImageCount = 0
     
-    images.forEach((img, index) => {
+    images.forEach((img: Element, index: number) => {
       const src = img.getAttribute('src')
       if (!src) {
         warnings.push(`Image ${index + 1} missing src attribute`)

@@ -79,6 +79,7 @@ export function findParentHeading(
 
   for (let i = 0; i < allElements.length; i++) {
     const candidate = allElements[i]
+    if (!candidate) continue
     
     // Stop when we reach the target element
     if (candidate.position >= element.position) break

@@ -9,6 +9,7 @@
  */
 
 import { createRequestLogger } from '@/lib/services/logger'
+import { executePromptWithUsage } from '@/lib/prompts/types'
 import { 
   finalDocumentRefinementPrompt,
   type FinalDocumentRefinementInput,
@@ -140,7 +141,7 @@ export async function processFinalDocument(
         assemblyIssuesCount: assemblyIssues.length
       })
       
-      const aiResult = await finalDocumentRefinementPrompt.runWithRetry(refinementInput)
+      const aiResult = await executePromptWithUsage(finalDocumentRefinementPrompt, refinementInput)
       aiCallsUsed++
       
       if (aiResult.usage?.totalTokens) {
@@ -151,11 +152,11 @@ export async function processFinalDocument(
       let refinementOutput: FinalDocumentRefinementOutput
       try {
         // Try to parse as JSON directly
-        refinementOutput = JSON.parse(aiResult.completion)
+        refinementOutput = JSON.parse(aiResult.text)
       } catch (_parseError) {
         // Try to extract JSON from markdown code blocks
-        const jsonMatch = aiResult.completion.match(/```json\n([\s\S]*?)\n```/)
-        if (jsonMatch) {
+        const jsonMatch = aiResult.text.match(/```json\n([\s\S]*?)\n```/)
+        if (jsonMatch && jsonMatch[1]) {
           refinementOutput = JSON.parse(jsonMatch[1])
         } else {
           throw new Error('AI response is not valid JSON')

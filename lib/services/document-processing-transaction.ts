@@ -46,13 +46,16 @@ export class DocumentProcessingTransaction {
    * Record a storage upload operation for potential rollback
    */
   recordStorageUpload(filename: string, storagePath: string, metadata?: Record<string, unknown>): void {
-    this.operations.push({
+    const operation: ProcessingOperation = {
       type: 'storage_upload',
       documentId: this.documentId,
       filename,
-      storagePath,
-      metadata
-    })
+      storagePath
+    }
+    if (metadata !== undefined) {
+      operation.metadata = metadata
+    }
+    this.operations.push(operation)
     
     this.logger.info('Recorded storage upload operation', {
       documentId: this.documentId,
@@ -66,12 +69,15 @@ export class DocumentProcessingTransaction {
    * Record a database record creation for potential rollback
    */
   recordDatabaseRecord(assetId: string, metadata?: Record<string, unknown>): void {
-    this.operations.push({
+    const operation: ProcessingOperation = {
       type: 'database_record',
       documentId: this.documentId,
-      assetId,
-      metadata
-    })
+      assetId
+    }
+    if (metadata !== undefined) {
+      operation.metadata = metadata
+    }
+    this.operations.push(operation)
     
     this.logger.info('Recorded database record operation', {
       documentId: this.documentId,
@@ -84,12 +90,15 @@ export class DocumentProcessingTransaction {
    * Record a temporary file creation for potential cleanup
    */
   recordTempFile(filename: string, metadata?: Record<string, unknown>): void {
-    this.operations.push({
+    const operation: ProcessingOperation = {
       type: 'temp_file',
       documentId: this.documentId,
-      filename,
-      metadata
-    })
+      filename
+    }
+    if (metadata !== undefined) {
+      operation.metadata = metadata
+    }
+    this.operations.push(operation)
     
     this.logger.info('Recorded temp file operation', {
       documentId: this.documentId,

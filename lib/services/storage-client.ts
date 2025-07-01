@@ -93,7 +93,7 @@ export async function uploadImageAssetFromBrowser(
       throw new ClientStorageError(
         `Upload failed: ${error.message}`,
         error.name,
-        error.statusCode
+        (error as any).statusCode
       )
     }
     

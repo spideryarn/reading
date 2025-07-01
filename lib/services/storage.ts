@@ -315,7 +315,7 @@ export async function cleanupOrphanedFiles(documentIds: string[]): Promise<numbe
     for (const file of allFiles) {
       if (file.name) {
         const documentId = file.name.split('/')[0]
-        if (!validDocumentIds.has(documentId)) {
+        if (documentId && !validDocumentIds.has(documentId)) {
           orphanedPaths.push(file.name)
         }
       }
