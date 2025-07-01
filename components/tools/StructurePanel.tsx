@@ -140,6 +140,12 @@ export function StructurePanel({
   // Debug/trace helper – incrementing attempt id for each generate call
   const attemptIdRef = useRef(0)
 
+  // Ref to track the auto-iteration continuation timer so we can cancel it if
+  // the user stops or removes AI headings before it fires.  This prevents a
+  // queued callback from re-triggering iteration after the user thought it
+  // was cancelled.
+  const autoIterTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
   // Extract headings based on current mode
   useEffect(() => {
     const extractHeadings = () => {
@@ -335,6 +341,12 @@ export function StructurePanel({
   // Function to stop auto-iteration
   const handleStopAutoIteration = useCallback(() => {
     console.log('[StructurePanel] User manually stopped auto-iteration')
+    // Cancel any queued auto-continuation that hasn't fired yet
+    if (autoIterTimeoutRef.current) {
+      clearTimeout(autoIterTimeoutRef.current)
+      autoIterTimeoutRef.current = null
+    }
+
     setAutoIterationStopped(true)
     autoIterationStoppedRef.current = true // keep ref in sync immediately
   }, [])
@@ -480,8 +492,14 @@ export function StructurePanel({
         console.log(`[StructurePanel] Auto-continuing to iteration ${iterationState.currentIteration + 1}`)
         // Reset the in-progress flag so the next invocation is allowed
         setIsIterationInProgress(false)
-        // Keep loading state and trigger next iteration automatically
-        setTimeout(() => {
+        // Schedule the next iteration but keep a reference so that we can
+        // cancel it if the user hits "Stop" or "Remove AI headings" during
+        // the 500 ms grace period.
+        if (autoIterTimeoutRef.current) {
+          clearTimeout(autoIterTimeoutRef.current)
+        }
+        autoIterTimeoutRef.current = setTimeout(() => {
+          autoIterTimeoutRef.current = null // timer has fired
           generateIterRef.current()
         }, 500) // Brief pause for UI feedback
       } else {
@@ -575,7 +593,8 @@ export function StructurePanel({
         console.log('Reverting existing AI headings mutation...')
         const revertResult = await revertMutation()
         if (!revertResult.success) {
-          console.warn('Failed to revert existing mutation:', revertResult.error)
+          // Bubble up as an error so the catch block can surface it in the UI
+          throw new Error(revertResult.error || 'Failed to revert existing mutation')
         }
         
         await new Promise(resolve => setTimeout(resolve, 100))
@@ -830,7 +849,7 @@ export function StructurePanel({
               variant="ghost"
               size="icon-xs"
               className="text-red-600 hover:text-red-800 hover:bg-red-100 ml-auto"
-              disabled={isLoadingHeadings}
+              disabled={isLoadingHeadings || isIterationInProgress}
             >
               <Trash size={14} />
             </Button>
