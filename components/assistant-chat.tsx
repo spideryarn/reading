@@ -16,7 +16,7 @@ import { useChatStore } from '@/src/lib/hooks/useChatStore';
 import { Button } from '@/components/ui/button'
 import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 import { useChatUrlState } from '@/lib/tools/hooks/use-tool-url-state';
-import React, { useEffect, useCallback, useRef, useContext } from 'react';
+import React, { useEffect, useCallback, useRef, useContext, useState } from 'react';
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover';
 import dynamic from 'next/dynamic';
 import type { Tables } from '@/lib/types/database';
@@ -311,6 +311,8 @@ function ChatRuntime({ chatStore }: { chatStore: ReturnType<typeof useChatStore>
 export function AssistantChat({ documentId, documentContext }: AssistantChatProps) {
   const { conversationId, setConversation } = useChatUrlState();
   
+  const [autoloadExisting, setAutoloadExisting] = useState(true);
+
   // Handle thread deletion by clearing URL state
   const handleThreadDeleted = useCallback(() => {
     setConversation(null);
@@ -318,8 +320,8 @@ export function AssistantChat({ documentId, documentContext }: AssistantChatProp
   
   // Build props for useChatStore, omitting conversationId when undefined to satisfy exactOptionalPropertyTypes
   const chatStoreProps = conversationId
-    ? { documentId, documentContext, conversationId, onThreadDeleted: handleThreadDeleted }
-    : { documentId, documentContext, onThreadDeleted: handleThreadDeleted };
+    ? { documentId, documentContext, conversationId, onThreadDeleted: handleThreadDeleted, autoloadExisting }
+    : { documentId, documentContext, onThreadDeleted: handleThreadDeleted, autoloadExisting };
 
   const chatStore = useChatStore(chatStoreProps);
   const { threadId, error, isLoading } = chatStore;
@@ -335,8 +337,8 @@ export function AssistantChat({ documentId, documentContext }: AssistantChatProp
 
   // Show error state if persistence failed
   if (error) {
-    // Special handling for thread not found errors
-    const isThreadNotFound = error.toLowerCase().includes('thread not found');
+    // Handle known invalid thread errors (not found or belongs to another document)
+    const isInvalidThread = /thread not found|does not belong to this document/i.test(error);
     
     return (
       <div className="h-full flex flex-col bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -346,28 +348,29 @@ export function AssistantChat({ documentId, documentContext }: AssistantChatProp
               <Robot size={24} weight="bold" className="text-red-600" />
             </div>
             <h3 className="text-lg font-medium text-gray-900">
-              {isThreadNotFound ? 'Conversation Not Found' : 'Chat Unavailable'}
+              {isInvalidThread ? 'Conversation Not Found' : 'Chat Unavailable'}
             </h3>
             <p className="text-sm text-gray-600">
-              {isThreadNotFound 
-                ? 'This conversation has been deleted or is no longer available.' 
+              {isInvalidThread
+                ? 'This conversation has been deleted or is no longer available.'
                 : error}
             </p>
             <Button 
               variant="outline" 
               size="sm" 
               onClick={() => {
-                if (isThreadNotFound) {
-                  // Clear the invalid conversation ID from the URL with a special value
-                  // 'new' indicates we want a fresh conversation, not the most recent
-                  setConversation('new');
+                if (isInvalidThread) {
+                  // Clear local state, disable autoload, and remove conversation parameter via URL state helper
+                  setAutoloadExisting(false);
+                  chatStore.clearMessages();
+                  setConversation(null);
                 } else {
                   window.location.reload();
                 }
               }}
               className="mt-2"
             >
-              {isThreadNotFound ? 'Start New Conversation' : 'Reload Page'}
+              {isInvalidThread ? 'Start New Conversation' : 'Reload Page'}
             </Button>
           </div>
         </div>

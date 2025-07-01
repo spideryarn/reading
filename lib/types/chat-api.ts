@@ -5,8 +5,12 @@
  * dual-state management and race conditions in the chat system.
  */
 
-import type { ChatThread, ChatMessage } from './database'
+import type { Tables } from './database'
 import type { ToolApiResponse } from '@/lib/tools/executor/types'
+
+// Local aliases for chat table types to avoid fragile re-exports
+export type ChatThread = Tables<'chat_threads'>
+export type ChatMessage = Tables<'chat_messages'>
 
 /**
  * Request format for chat operations (unchanged from current)
@@ -54,7 +58,6 @@ export interface ChatApiResponse extends ToolApiResponse {
  * Request options for sending chat messages
  */
 export interface SendMessageRequest {
-  content: string
   threadId?: string
   documentId?: string
   documentContext?: string

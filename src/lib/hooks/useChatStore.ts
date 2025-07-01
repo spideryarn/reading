@@ -13,6 +13,7 @@ interface UseChatStoreProps {
   documentContext: string;
   conversationId?: string;
   onThreadDeleted?: () => void;
+  autoloadExisting?: boolean; // default true – when false, skip loading most recent thread on mount
 }
 
 interface UseChatStoreReturn extends ChatStore {
@@ -36,7 +37,8 @@ export function useChatStore({
   documentId, 
   documentContext,
   conversationId,
-  onThreadDeleted
+  onThreadDeleted,
+  autoloadExisting = true
 }: UseChatStoreProps): UseChatStoreReturn {
   
   // Core state - matches ChatStore interface
@@ -101,8 +103,14 @@ export function useChatStore({
       });
       
     } catch (err) {
-      console.error('[Chat Store] Error loading thread:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load thread');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load thread';
+      
+      // Only log unexpected errors - known user-facing errors are handled separately
+      if (!/(thread not found|does not belong to this document)/i.test(errorMessage)) {
+        console.error('[Chat Store] Error loading thread:', err);
+      }
+      
+      setError(errorMessage);
       setThread(null);
       setMessages([]);
       setThreadId(null);
@@ -166,9 +174,8 @@ export function useChatStore({
       // 3. Append the new user message
       const payloadMessages = [...trimmedHistory, { role: 'user' as const, content: trimmedContent }]
 
-      // Prepare request for atomic database-first API (use trimmed content)
+      // Prepare request payload for atomic database-first API (no redundant content field)
       const requestPayload: SendMessageRequest = {
-        content: trimmedContent,
         documentContext,
         documentId,
         ...(threadId ? { threadId } : {})
@@ -325,6 +332,10 @@ export function useChatStore({
    */
   const refreshFromDatabase = useCallback(async (): Promise<void> => {
     if (!threadId) {
+      if (!autoloadExisting) {
+        clearMessages();
+        return;
+      }
       // No active thread, try to load most recent for document
       try {
         const threads = await chatService.current.getThreadsForDocument(documentId);
@@ -342,7 +353,7 @@ export function useChatStore({
     }
     
     await loadThread(threadId);
-  }, [threadId, documentId, loadThread, clearMessages]);
+  }, [threadId, documentId, loadThread, clearMessages, autoloadExisting]);
 
   /**
    * Delete current thread
@@ -386,6 +397,11 @@ export function useChatStore({
       return;
     }
     
+    if (!autoloadExisting) {
+      clearMessages();
+      return;
+    }
+
     // Otherwise, try to load most recent thread for document
     const loadMostRecent = async () => {
       try {
@@ -401,9 +417,8 @@ export function useChatStore({
         clearMessages();
       }
     };
-    
     loadMostRecent();
-  }, [documentId, conversationId, loadThread, clearMessages]);
+  }, [documentId, conversationId, loadThread, clearMessages, autoloadExisting]);
 
   return {
     // ChatStore interface
