@@ -12,13 +12,15 @@
 import { z } from 'zod'
 import { extractCleanText } from '@/lib/utils/html-text-extraction'
 import { logAIOperation, createTimer } from '@/lib/services/logger'
+import { AiCallService } from '@/lib/services/database/ai-calls'
+import { EnhancementService } from '@/lib/services/database/enhancements'
+import { getModelForAICall } from '@/lib/config'
 import { BaseToolHandler, createHandlerError } from '../handler-interface'
 import type { ExecutionContext, ToolApiResponse } from '@/lib/tools/executor/types'
 import type { GetRequestParams, DeleteRequestParams } from '../handler-interface'
 
 // Validation schemas
 const ReadingDifficultyRequestSchema = z.object({
-  content: z.string().min(1, 'Content is required'),
   documentId: z.string().min(1, 'Document ID is required')
 })
 
@@ -28,15 +30,14 @@ const GetMetadataRequestSchema = z.object({
 })
 
 // Mock reading difficulty analysis (replace with actual implementation)
-async function analyzeReadingDifficulty(content: string): Promise<{
+async function analyzeReadingDifficultyFromPlainText(content: string): Promise<{
   level: string
   confidence: number
   factors: Record<string, unknown>
 }> {
   const timer = createTimer()
   
-  // Extract plain text from HTML
-  const plainText = extractCleanText(content)
+  const plainText = content
   
   // Simple analysis based on text characteristics
   const sentences = plainText.split(/[.!?]+/).filter(s => s.trim().length > 0)
@@ -173,13 +174,72 @@ export class MetadataHandler extends BaseToolHandler {
       )
     }
     
-    const { content, documentId } = validation.data
+    const { documentId } = validation.data
     const timer = createTimer()
     
     try {
-      // Perform the analysis
-      const result = await analyzeReadingDifficulty(content)
+      // -------------------------------------------------------------------
+      // Fetch HTML content for the document on the server side
+      // -------------------------------------------------------------------
+      const supabase = context.supabaseClient
+      if (!supabase) {
+        throw new Error('Supabase client unavailable in execution context')
+      }
+
+      const { data: doc, error: docError } = await supabase
+        .from('documents')
+        .select('html_content')
+        .eq('id', documentId)
+        .maybeSingle()
+
+      if (docError) {
+        throw new Error(`Failed to fetch document content: ${docError.message}`)
+      }
+
+      if (!doc?.html_content) {
+        throw new Error('Document content is empty')
+      }
+
+      // Convert HTML to plain text and run analysis
+      const plainText = extractCleanText(doc.html_content)
+      const result = await analyzeReadingDifficultyFromPlainText(plainText)
       
+      // -------------------------------------------------------------------
+      // Create AI call tracking (even though this analysis is local)
+      // -------------------------------------------------------------------
+      const { modelString } = getModelForAICall()
+      const aiCallService = new AiCallService(supabase)
+
+      const aiCall = await aiCallService.startCallWithModelString({
+        userId: context.user!.id,
+        documentId,
+        modelString,
+        prompt_type: 'reading_difficulty',
+        input_data: {
+          content_length: plainText.length,
+          analysis_method: 'local_algorithm_v1'
+        }
+      })
+
+      // Persist enhancement linked to the AI call
+      const enhancementService = new EnhancementService(supabase)
+      await enhancementService.upsert({
+        documentId,
+        aiCallId: aiCall.id,
+        type: 'reading_difficulty',
+        subtype: 'ai_assessment',
+        content: result as any // Cast to JsonObject for storage
+      })
+
+      // Mark AI call as completed successfully
+      await aiCallService.completeCall(aiCall.id, {
+        output_data: {
+          level: result.level,
+          confidence: result.confidence,
+          factors: result.factors as any
+        }
+      })
+
       // Log the operation result
       logAIOperation(
         'reading_difficulty_analysis',

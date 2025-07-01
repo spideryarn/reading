@@ -178,15 +178,56 @@ export class RealRLSTestSetup {
    * Create test document enhancement with admin privileges
    */
   async createTestEnhancement(data: Partial<Database['public']['Tables']['document_enhancements']['Insert']>) {
+    // Ensure an AI call exists and is linked for referential integrity
+    let aiCallId = data.ai_call_id
+
+    // Auto-create a basic AI call if none provided
+    if (!aiCallId) {
+      // Derive prompt_type from enhancement type or fallback to 'test_enhancement'
+      const promptType = typeof data.type === 'string' ? data.type : 'test_enhancement'
+
+      // Attempt to infer document owner for more realistic test data
+      let createdBy: string | null = null
+      if (data.document_id) {
+        const { data: doc } = await this.adminClient
+          .from('documents')
+          .select('created_by')
+          .eq('id', data.document_id)
+          .maybeSingle()
+
+        createdBy = doc?.created_by ?? null
+      }
+
+      const aiCall = await this.createTestAICall({
+        prompt_type: promptType,
+        prompt_input: `Auto-generated test AI call for ${promptType}`,
+        document_id: data.document_id || null,
+        created_by: createdBy,
+        finish_reason: 'stop',
+        status: 'success',
+        total_tokens: 0,
+        completion_tokens: 0,
+        prompt_tokens: 0,
+        response_text: 'test',
+      })
+
+      aiCallId = aiCall.id
+    }
+
+    // Build insert payload ensuring ai_call_id is set once
+    const insertPayload: Database['public']['Tables']['document_enhancements']['Insert'] = {
+      // Spread user-supplied values first so our overrides take precedence
+      ...data,
+      document_id: data.document_id!,
+      type: (data.type as string) || 'ai_headings',
+      subtype: data.subtype || 'auto',
+      content: data.content || { headings: [] },
+      ai_call_id: aiCallId,
+    }
+
     const { data: enhancement, error } = await this.adminClient
       .from('document_enhancements')
-      .insert({
-        document_id: data.document_id!,
-        type: 'ai_headings',
-        subtype: 'auto',
-        content: { headings: [] },
-        ...data
-      })
+      .insert(insertPayload)
       .select()
       .single()
 

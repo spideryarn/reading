@@ -157,12 +157,17 @@ clear_next_cache() {
     fi
 }
 
-rotate_log_if_needed() {
-    # Rotate dev.log if it gets too large (for daemon mode)
-    if [ -f "dev.log" ] && [ $(wc -c < dev.log 2>/dev/null || echo 0) -gt $MAX_LOG_SIZE ]; then
-        echo "📋 Rotating large dev.log file"
-        tail -n 1000 dev.log > dev.log.tmp && mv dev.log.tmp dev.log
-    fi
+clear_logs() {
+    # Clear both dev.log and error.log for fresh start
+    echo "🧹 Clearing log files at $(date)"
+    > dev.log
+    > error.log
+    echo "🧹 Cleared dev.log and error.log at $(date)" | tee -a dev.log
+}
+
+rotate_logs_if_needed() {
+    # Use the dual-log utility for rotation
+    ./scripts/dual-dev-error-log.sh --rotate-logs $MAX_LOG_SIZE
 }
 
 # Main logic based on mode
@@ -314,12 +319,15 @@ case "$MODE" in
         # Always clear Next.js build cache for fresh start
         clear_next_cache
         
-        # Rotate log if needed
-        rotate_log_if_needed
+        # Clear and rotate logs
+        clear_logs
+        rotate_logs_if_needed
         
-        # Start dev server in background
+        # Start dev server in background with dual logging
         echo "🚀 Starting dev server daemon on port $PORT"
-        npm run db:types --silent && PATH="/opt/homebrew/bin:$PATH" dotenv -e .env.local -- next dev > dev.log 2>&1 &
+        (
+            npm run db:types --silent && PATH="/opt/homebrew/bin:$PATH" dotenv -e .env.local -- next dev 2>&1 | ./scripts/dual-dev-error-log.sh
+        ) &
         dev_server_pid=$!
         
         # Store PID and remove lock
@@ -357,17 +365,18 @@ case "$MODE" in
         # Always clear Next.js build cache for fresh start
         clear_next_cache
         
-        # Rotate log if needed
-        rotate_log_if_needed
+        # Clear and rotate logs
+        clear_logs
+        rotate_logs_if_needed
         
         # Set up trap to output timestamp when dev server exits
         trap 'echo "📅 Dev server finished at $(date)"' EXIT
         
         echo "🎯 Use npm run dev:daemon for background mode with PID tracking"
-        echo "📋 Logs will be written to dev.log - use 'tail -f dev.log' to follow"
+        echo "📋 Logs will be written to dev.log and error.log - use 'tail -f dev.log' or 'tail -f error.log' to follow"
         echo ""
         
-        # Run the original dev command in foreground
-        npm run db:types --silent && PATH="/opt/homebrew/bin:$PATH" dotenv -e .env.local -- next dev > dev.log 2>&1
+        # Run the dev command with dual logging in foreground
+        npm run db:types --silent && PATH="/opt/homebrew/bin:$PATH" dotenv -e .env.local -- next dev 2>&1 | ./scripts/dual-dev-error-log.sh
         ;;
 esac
