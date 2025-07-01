@@ -50,20 +50,23 @@ async function analyzeReadingDifficultyFromPlainText(content: string): Promise<{
   let confidence: number
   
   if (avgWordsPerSentence < 10 && avgCharsPerWord < 5) {
-    level = 'elementary'
+    level = 'High school or below'
     confidence = 0.8
   } else if (avgWordsPerSentence < 15 && avgCharsPerWord < 6) {
-    level = 'middle_school'
+    level = 'High school or below'
     confidence = 0.75
   } else if (avgWordsPerSentence < 20 && avgCharsPerWord < 7) {
-    level = 'high_school'
+    level = 'High school or below'
     confidence = 0.7
   } else if (avgWordsPerSentence < 25 && avgCharsPerWord < 8) {
-    level = 'college'
+    level = 'Undergraduate'
     confidence = 0.65
-  } else {
-    level = 'graduate'
+  } else if (avgWordsPerSentence < 30 && avgCharsPerWord < 9) {
+    level = 'Masters/PhD'
     confidence = 0.6
+  } else {
+    level = 'Post-doctoral/expert'
+    confidence = 0.55
   }
   
   const factors = {

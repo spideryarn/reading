@@ -25,6 +25,26 @@ export class MissingReadingDifficultyError extends Error {
   }
 }
 
+// -----------------------------------------------------------------------------
+// Validation helpers
+// -----------------------------------------------------------------------------
+
+// Valid academic difficulty levels stored by the reading-difficulty tool
+export const VALID_ACADEMIC_LEVELS = [
+  'High school or below',
+  'Undergraduate',
+  'Masters/PhD',
+  'Post-doctoral/expert',
+] as const
+
+// Custom error indicating the stored assessment is present but invalid
+export class InvalidReadingDifficultyError extends Error {
+  constructor(documentId: string, details?: string) {
+    super(`Reading difficulty assessment for document ${documentId} is invalid${details ? `: ${details}` : ''}`)
+    this.name = 'InvalidReadingDifficultyError'
+  }
+}
+
 /**
  * Calculate reading time from a word count (for use with database word_count field)
  * 
@@ -54,10 +74,22 @@ export async function calculateReadingTimeFromWordCount(
     
     if (existingDifficulty) {
       // Use cached result from database (same format as MetadataPanel)
-      const content = existingDifficulty.content as { level: string; confidence: number; factors: string[] }
+      const content = existingDifficulty.content as { level: string; confidence: number; factors?: string[] }
+
+      // ---------------------------------------------------------------------
+      // Validate assessment structure – no silent fallbacks allowed
+      // ---------------------------------------------------------------------
+      if (!VALID_ACADEMIC_LEVELS.includes(content.level as (typeof VALID_ACADEMIC_LEVELS)[number])) {
+        throw new InvalidReadingDifficultyError(documentId, `unexpected academic level \"${content.level}\"`)
+      }
+
+      if (typeof content.confidence !== 'number' || content.confidence < 0 || content.confidence > 1) {
+        throw new InvalidReadingDifficultyError(documentId, `confidence must be numeric 0-1, received ${JSON.stringify(content.confidence)}`)
+      }
+
       readingDifficulty = {
         level: content.level,
-        confidence: content.confidence >= 0.8 ? 'High' : content.confidence >= 0.6 ? 'Medium' : 'Low',
+        confidence: content.confidence,
         factors: content.factors || []
       }
     } else {
@@ -66,7 +98,7 @@ export async function calculateReadingTimeFromWordCount(
     }
   } catch (error) {
     // Preserve specific error for caller to handle (e.g., to trigger generation)
-    if (error instanceof MissingReadingDifficultyError) {
+    if (error instanceof MissingReadingDifficultyError || error instanceof InvalidReadingDifficultyError) {
       throw error
     }
 
