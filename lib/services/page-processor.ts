@@ -18,6 +18,7 @@ import { generateImageCaption } from '@/lib/services/image-caption-generator'
 import { generateImageFilename } from '@/lib/utils/image-filename-generator'
 import { uploadImageAsset, getImageAssetUrl } from '@/lib/services/storage'
 import { documentAssetsService, type AssetMetadata } from '@/lib/services/database/document-assets'
+import type { Json } from '@/lib/types/database'
 import { DocumentProcessingTransaction } from '@/lib/services/document-processing-transaction'
 import { getUserErrorMessage, type ErrorContext } from '@/lib/services/user-error-messages'
 import { z } from 'zod'
@@ -175,10 +176,9 @@ export async function processPageToHtml(
               const captionResult = await generateImageCaption({
                 imageBase64: extractedImage.base64Image,
                 pageNumber: validatedInput.pageNumber,
-                documentContext: validatedInput.documentContext,
                 boundingBox: imageData.bbox,
                 extractionPurpose: 'filename',
-                existingAltText: imageData.altText
+                documentContext: imageData.altText || validatedInput.documentContext
               })
               
               // Generate filename with fallback hierarchy
@@ -187,7 +187,9 @@ export async function processPageToHtml(
                 altText: imageData.altText,
                 pageNumber: validatedInput.pageNumber,
                 boundingBox: imageData.bbox,
-                elementId: imageData.elementId
+                elementId: imageData.elementId,
+                imageFormat: 'png',
+                maxLength: 50
               }, existingFilenames)
               
               existingFilenames.add(filenameResult.filename)
@@ -255,7 +257,7 @@ export async function processPageToHtml(
                 storage_path: uploadResult.path,
                 caption: captionResult.caption,
                 extraction_confidence: captionResult.confidence,
-                metadata: assetMetadata
+                metadata: assetMetadata as unknown as Json
               })
               
               // Record database record for potential rollback
@@ -274,7 +276,7 @@ export async function processPageToHtml(
                 storagePath: uploadResult.path,
                 storageUrl,
                 caption: captionResult.caption,
-                source: filenameResult.source,
+                source: filenameResult.source === 'ai_caption' ? 'ai' : filenameResult.source,
                 extractionTimeMs
               }
               
@@ -284,7 +286,7 @@ export async function processPageToHtml(
                 pageNumber: validatedInput.pageNumber,
                 elementId: imageData.elementId,
                 filename: filenameResult.filename,
-                source: filenameResult.source,
+                source: filenameResult.source === 'ai_caption' ? 'ai' : filenameResult.source,
                 extractionTimeMs
               })
               
@@ -299,7 +301,7 @@ export async function processPageToHtml(
                 operation: 'image extraction',
                 processingStage: 'vision pipeline'
               }
-              const userErrorInfo = getUserErrorMessage(imageError, errorContext)
+              const userErrorInfo = getUserErrorMessage(imageError instanceof Error ? imageError : String(imageError), errorContext)
               
               logger.error('Image extraction failed fatally, performing rollback', {
                 pageNumber: validatedInput.pageNumber,
@@ -348,7 +350,7 @@ export async function processPageToHtml(
             operation: 'image extraction pipeline',
             processingStage: 'vision pipeline'
           }
-          const userErrorInfo = getUserErrorMessage(extractionError, errorContext)
+          const userErrorInfo = getUserErrorMessage(extractionError instanceof Error ? extractionError : String(extractionError), errorContext)
           ;(extractionError as any).userErrorInfo = userErrorInfo
         }
         
@@ -388,15 +390,17 @@ export async function processPageToHtml(
     // Generate user-friendly error message
     const errorContext: ErrorContext = {
       pageNumber: input.pageNumber,
-      documentId: input.documentId,
       operation: 'page processing',
       processingStage: 'vision pipeline'
+    }
+    if (input.documentId !== undefined) {
+      errorContext.documentId = input.documentId
     }
     
     // Check if error already has user error info from inner catch
     let userErrorInfo = (error as any)?.userErrorInfo
     if (!userErrorInfo) {
-      userErrorInfo = getUserErrorMessage(error, errorContext)
+      userErrorInfo = getUserErrorMessage(error instanceof Error ? error : String(error), errorContext)
     }
     
     logger.error('Page processing failed', {
@@ -484,7 +488,7 @@ export async function processPagesBatch(
   onProgress?: ProgressCallback,
   onError?: ErrorCallback
 ): Promise<PageProcessingResult[]> {
-  const logger = createRequestLogger()
+  const logger = createRequestLogger('page-batch-processor')
   const startTime = Date.now()
   
   logger.info('Starting batch page processing', {

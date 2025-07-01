@@ -208,7 +208,7 @@ export async function processHtmlToDocument(
     },
     originalFile,
     filename || 'document',
-    uploadMetadata,
+    uploadMetadata as Record<string, string | number | boolean | null>,
     aiCallId,
     documentId // Pass explicit document ID if provided
   )
@@ -226,7 +226,7 @@ export async function processHtmlToDocument(
   }
   
   if (storageResult !== null && storageResult !== undefined) {
-    result.storageResult = storageResult as Record<string, unknown>
+    result.storageResult = storageResult as unknown as Record<string, unknown>
   }
   
   return result
@@ -260,7 +260,7 @@ export async function sanitizeAndExtractText(
     
     // Extract content between <body> tags
     const bodyMatch = htmlContent.match(/<body[^>]*>([\s\S]*)<\/body>/i)
-    if (bodyMatch) {
+    if (bodyMatch && bodyMatch[1]) {
       contentToSanitize = bodyMatch[1]
       logger.info({
         correlationId,
@@ -378,7 +378,7 @@ export function generateUploadMetadata(
   return {
     ...baseMetadata,
     ...additionalFields
-  }
+  } as UploadMetadata
 }
 
 /**

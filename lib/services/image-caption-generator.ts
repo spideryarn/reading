@@ -8,6 +8,7 @@
  */
 
 import { createRequestLogger } from '@/lib/services/logger'
+import { executePromptWithUsage } from '@/lib/prompts/types'
 import { 
   imageCaptionPrompt, 
   imageCaptionOutputSchema,
@@ -100,22 +101,17 @@ export async function generateImageCaption(
     })
     
     // Call AI prompt template
-    const result = await imageCaptionPrompt(input)
+    const result = await executePromptWithUsage(imageCaptionPrompt, input)
     
     // Validate response structure
     let parsedOutput: ImageCaptionOutput
     try {
-      // If result is already parsed, use it directly
-      if (typeof result === 'object' && result !== null) {
-        parsedOutput = imageCaptionOutputSchema.parse(result)
-      } else {
-        // If result is a string, try to parse as JSON
-        const jsonResult = typeof result === 'string' ? JSON.parse(result) : result
-        parsedOutput = imageCaptionOutputSchema.parse(jsonResult)
-      }
+      // Parse the text result as JSON
+      const jsonResult = JSON.parse(result.text)
+      parsedOutput = imageCaptionOutputSchema.parse(jsonResult)
     } catch (parseError) {
       throw new ImageCaptionError(
-        `AI response validation failed: ${parseError instanceof Error ? parseError.message : 'Invalid JSON'}. Response: ${JSON.stringify(result)}`
+        `AI response validation failed: ${parseError instanceof Error ? parseError.message : 'Invalid JSON'}. Response: ${result.text}`
       )
     }
     
