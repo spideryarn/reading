@@ -69,6 +69,8 @@ async function fetchWebpageContent(url: string): Promise<string> {
     
     // Check actual content size
     if (new Blob([htmlContent]).size > URL_EXTRACTION_CONFIG.MAX_HTML_SIZE_BYTES) {
+      console.log('URL_EXTRACTION_CONFIG:', URL_EXTRACTION_CONFIG)
+      console.log('Content size:', new Blob([htmlContent]).size, 'Max allowed:', URL_EXTRACTION_CONFIG.MAX_HTML_SIZE_BYTES)
       throw new Error(URL_EXTRACTION_CONFIG.ERROR_MESSAGES.SIZE_LIMIT)
     }
     
