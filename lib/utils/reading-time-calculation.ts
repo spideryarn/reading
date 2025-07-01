@@ -17,6 +17,13 @@ export interface ReadingTimeResult {
   readingDifficulty: ReadingDifficultyData | null
 }
 
+// Custom error indicating that a reading‐difficulty enhancement has not yet been generated
+export class MissingReadingDifficultyError extends Error {
+  constructor(documentId: string) {
+    super(`Reading difficulty assessment is missing for document ${documentId}`)
+    this.name = 'MissingReadingDifficultyError'
+  }
+}
 
 /**
  * Calculate reading time from a word count (for use with database word_count field)
@@ -54,22 +61,30 @@ export async function calculateReadingTimeFromWordCount(
         factors: content.factors || []
       }
     } else {
-      console.warn(`Reading difficulty assessment not found for document ${documentId}. Enhanced reading time will fall back to baseline.`)
+      // No enhancement exists – signal to caller so UI can trigger generation.
+      throw new MissingReadingDifficultyError(documentId)
     }
   } catch (error) {
-    // Log the error clearly but continue with fallback calculation
+    // Preserve specific error for caller to handle (e.g., to trigger generation)
+    if (error instanceof MissingReadingDifficultyError) {
+      throw error
+    }
+
+    // Log the error clearly and rethrow a generic lookup failure for unexpected errors
     console.error(`Failed to fetch reading difficulty for document ${documentId}:`, error)
-    throw new Error(`Reading difficulty lookup failed for document ${documentId}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    throw new Error(
+      `Reading difficulty lookup failed for document ${documentId}: ${error instanceof Error ? error.message : 'Unknown error'}`
+    )
   }
 
-  // Calculate enhanced reading time using the same logic as MetadataPanel
-  const enhancedReadingTime = calculateEnhancedReadingTime(wordCount, readingDifficulty)
+  // Calculate enhanced reading time (readingDifficulty is guaranteed to exist here)
+  const enhancedReadingTime = calculateEnhancedReadingTime(wordCount, readingDifficulty as ReadingDifficultyData)
   
   return {
     readingTimeMinutes: enhancedReadingTime.readingTimeMinutes,
     enhancedReadingTime,
     wordCount,
-    readingDifficulty
+    readingDifficulty: readingDifficulty as ReadingDifficultyData
   }
 }
 
