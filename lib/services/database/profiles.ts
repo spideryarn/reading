@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import type { Database, Profile } from '@/lib/types/database'
+import type { Database, Profile, Json } from '@/lib/types/database'
 import type { JsonObject } from '@/lib/types/json'
 
 export type ProfileInsert = Database['public']['Tables']['profiles']['Insert']
@@ -86,7 +86,7 @@ export class ProfileService {
    * Update user preferences
    */
   async updatePreferences(userId: string, preferences: JsonObject): Promise<Profile> {
-    return this.updateByUserId(userId, { preferences })
+    return this.updateByUserId(userId, { preferences: preferences as Json })
   }
 
   /**

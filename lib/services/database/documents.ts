@@ -348,7 +348,7 @@ export class DocumentService {
     // Use provided document ID or generate a new one
     const documentId = explicitDocumentId || crypto.randomUUID()
     
-    let storageResult: StorageUploadResult | null | undefined
+    let storageResult: StorageUploadResult | null = null
     let storagePath: string | null = null
     
     // Upload to storage first if file provided
@@ -682,18 +682,18 @@ export class DocumentService {
     
     // Update document with new storage path
     const updatedDocument = await this.update(documentId, {
-      storage_path: storageResult.path,
+      storage_path: storageResult?.path || null,
       original_file_type: originalFile.type || null
     })
     
     // Clean up old storage file if it existed
-    if (existingDocument.storage_path && existingDocument.storage_path !== storageResult.path) {
+    if (existingDocument.storage_path && storageResult?.path && existingDocument.storage_path !== storageResult.path) {
       try {
         dbLogger.info({
           operation: 'updateStoragePath',
           documentId,
           oldStoragePath: existingDocument.storage_path,
-          newStoragePath: storageResult.path
+          newStoragePath: storageResult?.path
         }, 'Cleaning up old storage file')
         
         await deleteDocumentFile(existingDocument.storage_path)
@@ -715,7 +715,13 @@ export class DocumentService {
       }
     }
     
-    return { document: updatedDocument, storageResult }
+    const result: { document: Document | null; storageResult?: StorageUploadResult } = { 
+      document: updatedDocument 
+    }
+    if (storageResult) {
+      result.storageResult = storageResult
+    }
+    return result
   }
 
   /**

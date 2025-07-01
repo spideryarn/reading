@@ -222,6 +222,10 @@ export class EnhancementService {
     // Use the first AI call ID as the primary reference
     const primaryAiCallId = Object.values(aiCallIds)[0]
     
+    if (!primaryAiCallId) {
+      throw new Error('At least one AI call ID must be provided')
+    }
+    
     return await this.upsert({
       documentId,
       aiCallId: primaryAiCallId,
@@ -272,7 +276,23 @@ export class EnhancementService {
       throw new Error(`Malformed multi-dimensional summary data: missing summaries field`)
     }
     
-    return content.summaries
+    return content.summaries as {
+      beginner: {
+        sentence_or_two: string
+        single_short_paragraph: string
+        page: string
+      }
+      intermediate: {
+        sentence_or_two: string
+        single_short_paragraph: string
+        page: string
+      }
+      expert: {
+        sentence_or_two: string
+        single_short_paragraph: string
+        page: string
+      }
+    }
   }
 
   /**
@@ -304,7 +324,7 @@ export class EnhancementService {
       aiCallId,
       type: 'glossary',
       subtype: 'default',
-      content: glossary,
+      content: glossary as JsonObject,
     })
   }
 
@@ -386,7 +406,7 @@ export class EnhancementService {
         const type = enhancement.type as EnhancementType
         acc.byType[type] = (acc.byType[type] || 0) + 1
         
-        if (!acc.lastUpdated || enhancement.updated_at > acc.lastUpdated) {
+        if (enhancement.updated_at && (!acc.lastUpdated || enhancement.updated_at > acc.lastUpdated)) {
           acc.lastUpdated = enhancement.updated_at
         }
         

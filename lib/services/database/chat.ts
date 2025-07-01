@@ -93,9 +93,12 @@ export class ChatService {
     id: string,
     updates: { title?: string; extra?: JsonObject }
   ): Promise<ChatThread> {
-    const updateData = { ...updates }
-    if (updateData.extra) {
-      updateData.extra = updateData.extra as Json
+    const updateData: { title?: string | null; extra?: Json | null } = {}
+    if (updates.title !== undefined) {
+      updateData.title = updates.title
+    }
+    if (updates.extra !== undefined) {
+      updateData.extra = updates.extra as Json
     }
     const { data, error } = await this.supabase
       .from('chat_threads')

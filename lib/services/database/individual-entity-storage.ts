@@ -12,6 +12,7 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js'
+import type { Json } from '@/lib/types/database'
 import type { Database } from '@/lib/types/database'
 import type { Entity } from '@/lib/types/entity'
 import { generateEntitySubtype, validateEntitySubtype } from '@/lib/utils/entity-subtype-generation'
@@ -38,7 +39,7 @@ export async function storeIndividualEntity(
       ai_call_id: aiCallId,
       type: 'glossary',
       subtype: subtype,
-      content: { entity }
+      content: { entity } as unknown as Json
     }, {
       onConflict: 'document_id,type,subtype'
     })
@@ -98,7 +99,7 @@ export async function getIndividualEntities(
     
     // Extract entity from content
     if (row.content && typeof row.content === 'object' && 'entity' in row.content) {
-      const entity = row.content.entity as Entity
+      const entity = row.content.entity as unknown as Entity
       entities.push(entity)
     }
   }
@@ -134,7 +135,7 @@ export async function getEntitiesByOntology(
   
   for (const row of data) {
     if (row.content && typeof row.content === 'object' && 'entity' in row.content) {
-      const entity = row.content.entity as Entity
+      const entity = row.content.entity as unknown as Entity
       entities.push(entity)
     }
   }
