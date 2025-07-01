@@ -20,12 +20,13 @@ This document covers the comprehensive device detection and responsive design sy
 - `docs/reference/DESIGN_OVERVIEW.md` - General styling configuration and theme settings
 - `docs/reference/UI_INTERFACE.md` - Multi-pane layout architecture and responsive design patterns
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - Overall system architecture including responsive design approach
+- `docs/reference/ARCHITECTURE_MOBILE.md` - Strategic mobile architecture decisions, PWA implementation, and business rationale (complementary strategic context)
 - [CSS Media Queries Level 4](https://www.w3.org/TR/mediaqueries-4/) - Web standards for interaction media features
 - [react-responsive npm](https://www.npmjs.com/package/react-responsive) - Library documentation
 
 ## Principles and Key Decisions
 
-**Mobile-first responsive design**: The system detects device capabilities and automatically adapts the interface, prioritising touch-friendly experiences on mobile devices while maintaining full functionality on desktop.
+**Mobile-first responsive design**: The system detects device capabilities and automatically adapts the interface, prioritising touch-friendly experiences on mobile devices while maintaining full functionality on desktop. This supports the strategic PWA architecture described in `docs/reference/ARCHITECTURE_MOBILE.md`.
 
 **Progressive enhancement approach**: Server-side defaults with client-side detection to prevent layout shifts and hydration mismatches in Next.js SSR environment.
 
@@ -103,6 +104,12 @@ Comprehensive responsive styling system in `app/globals.css`:
 @media (min-width: 641px) and (max-width: 1024px) {
   /* Tablet-specific styles */
 }
+
+/* Tailwind CSS v4 breakpoint system */
+@media (min-width: 640px) { /* sm */ }
+@media (min-width: 768px) { /* md */ }
+@media (min-width: 1024px) { /* lg */ }
+@media (min-width: 1280px) { /* xl */ }
 ```
 
 ### Platform-Specific Features

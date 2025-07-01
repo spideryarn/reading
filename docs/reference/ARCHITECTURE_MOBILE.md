@@ -5,7 +5,7 @@ Spideryarn Reading provides a mobile-optimised Progressive Web App (PWA) experie
 ## See also
 
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - Complete system architecture overview
-- `docs/reference/DESIGN_MOBILE_PLATFORM_DETECTION.md` - Mobile device detection and responsive design patterns
+- `docs/reference/DESIGN_MOBILE_PLATFORM_DETECTION.md` - Technical implementation of device detection, breakpoints, and responsive patterns (complementary implementation guide)
 - `docs/reference/UI_INTERFACE.md` - Multi-pane layout and tabbed navigation interface
 - `public/site.webmanifest` - PWA manifest configuration
 - `app/layout.tsx` - iOS-specific meta tags for PWA functionality
@@ -53,7 +53,7 @@ other: {
 
 #### Device Detection and Responsive Behaviour ✓
 
-- **Platform Detection**: Uses CSS media queries and JavaScript for mobile-specific behaviour
+- **Platform Detection**: react-responsive library provides reactive device detection (see `docs/reference/DESIGN_MOBILE_PLATFORM_DETECTION.md`)
 - **Touch Interface**: Optimised touch targets and gesture-friendly interactions
 - **Viewport Configuration**: Proper viewport meta tags for consistent rendering
 - **Icon Assets**: Multiple icon sizes (192x192, 512x512) for various device densities
@@ -62,15 +62,15 @@ other: {
 
 ### Interface Adaptations
 
-#### Left Pane Navigation 📋
-- **Desktop**: Multi-pane layout with persistent navigation sidebar
-- **Mobile**: Collapsible drawer or tab-based navigation for space efficiency
-- **Tablet**: Hybrid approach balancing visibility and content space
+#### Navigation and Content Adaptations 📋
 
-#### Content Display 📋
-- **Text Rendering**: Optimised typography scales for readability on small screens
-- **Tool Panels**: Responsive tool interfaces that adapt to mobile constraints
-- **AI Features**: Chatbot and analysis tools optimised for mobile interaction patterns
+**Strategic Approach**: Unified interface that scales gracefully across device types rather than separate mobile/desktop experiences.
+
+- **Left Pane**: Auto-collapse on mobile (≤640px) with modal-style overlays for space efficiency
+- **Content Display**: Responsive typography and tool interfaces that adapt to mobile constraints
+- **AI Features**: Touch-optimised chatbot and analysis tools with device-appropriate interaction patterns
+
+**Implementation Details**: See `docs/reference/DESIGN_MOBILE_PLATFORM_DETECTION.md` for specific breakpoints and component-level responsive behaviour.
 
 ### Installation and Usage Flow
 
@@ -91,15 +91,9 @@ other: {
 
 ### Responsive Design System ✓
 
-Built on Tailwind CSS v4 with mobile-first approach:
+Built on Tailwind CSS v4 with mobile-first approach and comprehensive device detection.
 
-```css
-/* Mobile-first breakpoints */
-@media (min-width: 640px) { /* sm */ }
-@media (min-width: 768px) { /* md */ }
-@media (min-width: 1024px) { /* lg */ }
-@media (min-width: 1280px) { /* xl */ }
-```
+**Implementation**: See `docs/reference/DESIGN_MOBILE_PLATFORM_DETECTION.md` for detailed breakpoint definitions, detection logic, and component-level responsive patterns.
 
 ### Performance Optimisations 📋
 
