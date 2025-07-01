@@ -15,8 +15,11 @@ import { cn } from '@/lib/utils';
 import { SpeechToTextInputProps, SpeechToTextResponse } from './types';
 import { useAuth } from '@/lib/context/auth-context';
 import { DEBUG_FLAGS } from '@/lib/config';
-import { createPortal } from 'react-dom';
 import { createRoot, Root } from 'react-dom/client';
+
+// Module-level cache so we only create the React root once per page
+let globalDebugRoot: Root | null = null;
+let globalDebugContainer: HTMLElement | null = null;
 
 /**
  * Browser-specific guidance for microphone permissions
@@ -87,6 +90,7 @@ export function VoiceInputRecorder({
     mediaBlobUrl,
     clearBlobUrl,
     error: recorderError,
+    previewStream,
   } = useReactMediaRecorder({ 
     audio: true,
     blobPropertyBag: {
@@ -120,6 +124,9 @@ export function VoiceInputRecorder({
   const [debugInfo, setDebugInfo] = useState<{ sizeKb: number; duration: number; mime: string } | null>(null);
   const [debugRawWhisper, setDebugRawWhisper] = useState<string | null>(null);
   const [debugMicLabel, setDebugMicLabel] = useState<string | null>(null);
+  const [liveLevel, setLiveLevel] = useState<number>(0);
+  const [debugTrackSettings, setDebugTrackSettings] = useState<MediaTrackSettings | null>(null);
+  const [debugEncodedPeak, setDebugEncodedPeak] = useState<number | null>(null);
 
   // Waveform drawing reference (debug only)
   const waveformCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -462,6 +469,7 @@ export function VoiceInputRecorder({
         ctx.clearRect(0, 0, width as number, height as number);
         ctx.fillStyle = '#4b5563'; // tailwind gray-600
 
+        let maxPeak = 0;
         peaks.forEach((p, idx) => {
           const x = (idx / samplePoints) * width;
           const barWidth = 1;
@@ -469,7 +477,10 @@ export function VoiceInputRecorder({
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore – Type libs may require integer, actual API accepts number
           ctx.fillRect(x, (height - barHeight) / 2, barWidth, Number.isFinite(barHeight) ? barHeight : 0);
+          if (p > maxPeak) maxPeak = p;
         });
+
+        setDebugEncodedPeak(maxPeak);
       } catch (err) {
         // Silent failure – waveform is just a debugging aid
         console.warn('[VoiceInputRecorder] Failed to draw waveform', err);
@@ -483,35 +494,83 @@ export function VoiceInputRecorder({
     };
   }, [DEBUG, debugAudioUrl]);
 
-  // Capture microphone label when recording starts (debug only)
+  // Capture microphone label & settings from the actual stream being recorded
+  useEffect(() => {
+    if (!DEBUG) return;
+
+    if (previewStream) {
+      const track = previewStream.getAudioTracks()[0];
+      if (track) {
+        setDebugMicLabel(track.label || 'Unknown');
+        setDebugTrackSettings(track.getSettings());
+      }
+    }
+  }, [DEBUG, previewStream]);
+
+  // Live level meter & track metadata
   useEffect(() => {
     if (!DEBUG || !isRecording) return;
 
-    navigator.mediaDevices.enumerateDevices?.()
-      .then((devices) => {
-        const audioInputs = devices.filter((d) => d.kind === 'audioinput');
-        const defaultMic = audioInputs.find((d) => d.deviceId === 'default') || audioInputs[0];
-        setDebugMicLabel(defaultMic?.label || 'Unknown');
-      })
-      .catch(() => {
-        setDebugMicLabel('Unavailable');
-      });
+    let audioCtx: AudioContext | null = null;
+    let analyser: AnalyserNode | null = null;
+    let rafId: number;
+    let mediaStream: MediaStream | null = null;
+
+    const setup = async () => {
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const track = mediaStream.getAudioTracks()[0];
+        if (track) setDebugTrackSettings(track.getSettings());
+
+        const ACtor = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext | undefined;
+        if (!ACtor) return;
+        audioCtx = new ACtor();
+        const source = audioCtx.createMediaStreamSource(mediaStream);
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+
+        const data = new Uint8Array(analyser.fftSize);
+        const update = () => {
+          if (!analyser) return;
+          analyser.getByteTimeDomainData(data);
+          let sum = 0;
+          for (let i = 0; i < data.length; i++) {
+            const v = (data[i] - 128) / 128;
+            sum += v * v;
+          }
+          const rms = Math.sqrt(sum / data.length);
+          setLiveLevel(rms);
+          rafId = requestAnimationFrame(update);
+        };
+        update();
+      } catch (err) {
+        console.warn('[VoiceInputRecorder] live meter setup failed', err);
+      }
+    };
+    setup();
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      analyser?.disconnect();
+      audioCtx?.close();
+      mediaStream?.getTracks().forEach((t) => t.stop());
+    };
   }, [DEBUG, isRecording]);
 
   // Effect to render persistent debug panel
   useEffect(() => {
     if (!DEBUG) return;
 
-    // Ensure container exists
-    let container = document.getElementById('voice-debug-root');
-    if (!container) {
-      container = document.createElement('div');
-      container.id = 'voice-debug-root';
-      document.body.appendChild(container);
+    // Ensure container & global root exist only once
+    if (!globalDebugContainer) {
+      globalDebugContainer = document.createElement('div');
+      globalDebugContainer.id = 'voice-debug-root';
+      document.body.appendChild(globalDebugContainer);
     }
 
-    if (!debugRootRef.current) {
-      debugRootRef.current = createRoot(container);
+    if (!globalDebugRoot) {
+      globalDebugRoot = createRoot(globalDebugContainer);
     }
 
     const Panel = (
@@ -524,6 +583,12 @@ export function VoiceInputRecorder({
             <div>Duration: {debugInfo.duration.toFixed(2)} s</div>
             <div>MIME: {debugInfo.mime || 'n/a'}</div>
             {debugMicLabel && <div>Mic: {debugMicLabel}</div>}
+            {debugTrackSettings && (
+              <div>
+                SR: {debugTrackSettings.sampleRate ?? '–'} Hz&nbsp; /&nbsp;
+                Ch: {debugTrackSettings.channelCount ?? '–'}
+              </div>
+            )}
           </div>
         )}
         {debugRawWhisper && (
@@ -551,11 +616,17 @@ export function VoiceInputRecorder({
             />
           </>
         )}
+        {debugEncodedPeak !== null && (
+          <div className="mt-1 text-[10px] text-gray-600">Encoded peak: {debugEncodedPeak.toFixed(2)}</div>
+        )}
+        {isRecording && (
+          <div className="mt-1 h-2 w-full rounded bg-gray-200"><div className="h-full rounded bg-green-500" style={{ width: `${Math.min(liveLevel * 100, 100)}%` }} /></div>
+        )}
       </div>
     );
 
-    debugRootRef.current.render(Panel);
-  }, [DEBUG, isRecording, debugInfo, debugRawWhisper, debugAudioUrl, debugMicLabel]);
+    globalDebugRoot.render(Panel);
+  }, [DEBUG, isRecording, debugInfo, debugRawWhisper, debugAudioUrl, debugMicLabel, debugTrackSettings, liveLevel]);
 
   return (
     <Button
