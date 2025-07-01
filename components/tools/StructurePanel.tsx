@@ -126,6 +126,16 @@ export function StructurePanel({
   const [showIterationControls, setShowIterationControls] = useState(false)
   const [isIterationInProgress, setIsIterationInProgress] = useState(false)
   const [autoIterationStopped, setAutoIterationStopped] = useState(false)
+  // Keep a ref in sync with `autoIterationStopped` so that asynchronous logic
+  // (particularly the continuation decision at the end of an iteration) can
+  // always read the **latest** value even if it changes while an iteration is
+  // in-flight.  Using a ref avoids the classic stale-closure bug where the
+  // generateHeadingsIteratively callback captures the value that was current
+  // at invocation time.
+  const autoIterationStoppedRef = useRef(false)
+  useEffect(() => {
+    autoIterationStoppedRef.current = autoIterationStopped
+  }, [autoIterationStopped])
 
   // Debug/trace helper – incrementing attempt id for each generate call
   const attemptIdRef = useRef(0)
@@ -296,6 +306,7 @@ export function StructurePanel({
   const handleStopAutoIteration = useCallback(() => {
     console.log('[StructurePanel] User manually stopped auto-iteration')
     setAutoIterationStopped(true)
+    autoIterationStoppedRef.current = true // keep ref in sync immediately
   }, [])
 
   // Create ref for the generate function before defining it
@@ -421,7 +432,7 @@ export function StructurePanel({
       
       // Determine if we should automatically continue or show manual controls
       const shouldAutoContinue = HEADING_ITERATION_CONFIG.AUTO_ITERATE_HEADINGS &&
-                                 !autoIterationStopped &&
+                                 !autoIterationStoppedRef.current &&
                                  response.more_changes_required &&
                                  !response.safety_check.max_iterations_reached &&
                                  iterationState.currentIteration < HEADING_ITERATION_CONFIG.MAX_ITERATIONS - 1
@@ -459,7 +470,7 @@ export function StructurePanel({
       setHeadingsError(errorMessage)
       console.groupEnd()
     }
-  }, [content, elements, documentId, iterationState, applyMutation, executeToolWithNavigation, isIterationInProgress, autoIterationStopped])
+  }, [content, elements, documentId, iterationState, applyMutation, executeToolWithNavigation, isIterationInProgress, autoIterationStoppedRef])
 
   // ---------------------------------------------------------------------------
   // Ensure the auto-iteration timer always invokes the **latest** version of
@@ -879,7 +890,7 @@ export function StructurePanel({
             </TooltipOrPopover>
             
             {/* Stop button for auto-iteration */}
-            {HEADING_ITERATION_CONFIG.AUTO_ITERATE_HEADINGS && !autoIterationStopped && (
+            {HEADING_ITERATION_CONFIG.AUTO_ITERATE_HEADINGS && !autoIterationStoppedRef.current && (
               <Button
                 onClick={handleStopAutoIteration}
                 variant="outline"
@@ -920,9 +931,9 @@ export function StructurePanel({
   // Handle error state
   if (headingsError) {
     return (
-      <div className="p-4">
+      <div className="p-4 h-full flex flex-col overflow-y-auto">
         {renderStatusBadge()}
-        <div className="space-y-4">
+        <div className="space-y-4 flex-shrink-0">
           <AlertWithIcon 
             variant="warning"
             title="Failed to generate headings"
@@ -938,6 +949,31 @@ export function StructurePanel({
             Try again
           </Button>
         </div>
+
+        {/* Even when an error occurs we still want to show whatever headings we
+            currently have so that the user can continue reading or fall back
+            to the original structure.  */}
+        {headings.length > 0 && (
+          <div className="flex-1 min-h-0 mt-4">
+            <HeadingTree
+              headings={headings}
+              themeColors={{
+                hover: 'hover:bg-gray-50',
+                text: 'group-hover:text-gray-900',
+                levelText: 'text-gray-400 group-hover:text-gray-600',
+                levelTextHover: 'group-hover:text-gray-600'
+              }}
+              onHeadingClick={handleHeadingClick}
+              getTooltipContent={getTooltipContent}
+              handleTooltipShow={handleTooltipShow}
+              collapsedIds={collapsedIds}
+              onToggleExpanded={toggleExpanded}
+              granularityLevel={granularityLevel}
+              onGranularityChange={setGranularityLevel}
+              headingVisibility={headingVisibility || new Map()}
+            />
+          </div>
+        )}
       </div>
     )
   }
