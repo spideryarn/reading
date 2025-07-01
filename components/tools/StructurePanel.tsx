@@ -434,6 +434,8 @@ export function StructurePanel({
       } else if (shouldAutoContinue) {
         // Automatically continue to next iteration
         console.log(`[StructurePanel] Auto-continuing to iteration ${iterationState.currentIteration + 1}`)
+        // Reset the in-progress flag so the next invocation is allowed
+        setIsIterationInProgress(false)
         // Keep loading state and trigger next iteration automatically
         setTimeout(() => {
           generateIterRef.current()
