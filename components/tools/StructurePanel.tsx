@@ -298,6 +298,9 @@ export function StructurePanel({
     setAutoIterationStopped(true)
   }, [])
 
+  // Create ref for the generate function before defining it
+  const generateIterRef = useRef<() => Promise<void>>(() => Promise.resolve())
+
   // New iterative heading generation function
   const generateHeadingsIteratively = useCallback(async () => {
     const attemptId = ++attemptIdRef.current
@@ -463,7 +466,6 @@ export function StructurePanel({
   // reference, causing `iteration_count` sent to the server to freeze on an
   // older value and letting iterations exceed the configured limit.
   // ---------------------------------------------------------------------------
-  const generateIterRef = useRef<() => Promise<void>>(generateHeadingsIteratively)
   useEffect(() => {
     generateIterRef.current = generateHeadingsIteratively
   }, [generateHeadingsIteratively])

@@ -205,7 +205,7 @@ export async function POST(request: NextRequest) {
     let processedHtml = html
     let plaintext = ''
     let wordCount = 0
-    let slug = existingDocument?.slug ?? generateSlug(sanitizedTitle)
+    const slug = existingDocument?.slug ?? generateSlug(sanitizedTitle)
 
     if (isDraftUpdate) {
       // Re-use the sanitisation + prettification + text extraction helpers from the shared pipeline
