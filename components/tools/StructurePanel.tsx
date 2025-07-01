@@ -140,6 +140,12 @@ export function StructurePanel({
   // Debug/trace helper – incrementing attempt id for each generate call
   const attemptIdRef = useRef(0)
 
+  // Ref to track the auto-iteration continuation timer so we can cancel it if
+  // the user stops or removes AI headings before it fires.  This prevents a
+  // queued callback from re-triggering iteration after the user thought it
+  // was cancelled.
+  const autoIterTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
   // Extract headings based on current mode
   useEffect(() => {
     const extractHeadings = () => {
@@ -262,7 +268,37 @@ export function StructurePanel({
   const applyCachedOperations = useCallback(async (operations: HeadingOperation[]) => {
     try {
       console.log('Applying cached operations:', operations)
-      
+
+      // -------------------------------------------------------------------
+      // Fast-path: If the current document already contains AI-generated
+      // headings (identified via the `data-ai-generated` attribute), we assume
+      // the cached operations were applied in a previous session. In this
+      // case we skip re-applying the mutation to avoid duplicate ID errors
+      // and simply extract the existing headings for display.
+      // -------------------------------------------------------------------
+      const aiHeadingsAlreadyPresent = elements?.some(
+        el => el.tag_name.match(/^h[1-6]$/i) && el.attributes?.['data-ai-generated'] === 'true'
+      )
+
+      if (aiHeadingsAlreadyPresent) {
+        console.log('[StructurePanel] Detected existing AI headings – skipping mutation re-application')
+
+        const extractedHeadings = (elements || [])
+          .filter(el => el.tag_name.match(/^h[1-6]$/i) && el.attributes?.['data-ai-generated'] === 'true')
+          .map(el => ({
+            id: el.id,
+            text: el.content || '',
+            level: parseInt(el.tag_name.substring(1)),
+            elementId: el.id
+          }))
+          .filter(h => h.text.length > 0)
+
+        setHeadings(extractedHeadings)
+        setIsLoadingHeadings(false)
+        return
+      }
+
+      // If a mutation is already active in the context, just extract headings
       if (mutationState.activeMutation?.type === 'insert-headings') {
         console.warn('AI headings mutation already active, extracting existing headings')
         const existingHeadings = extractHeadingsFromMutation(mutationState.activeMutation).map(h => ({
@@ -273,14 +309,14 @@ export function StructurePanel({
         setIsLoadingHeadings(false)
         return
       }
-      
+
       const mutation = headingOperationsToMutation({
         documentId,
         operations
       })
-      
+
       const result = await applyMutation(mutation)
-      
+
       if (result.success) {
         const generatedHeadings = extractHeadingsFromMutation(mutation).map(h => ({
           ...h,
@@ -289,7 +325,7 @@ export function StructurePanel({
         setHeadings(generatedHeadings)
         setCollapsedIds(new Set())
         setIsLoadingHeadings(false)
-        
+
         console.log('Successfully applied cached operations')
       } else {
         throw new Error(result.error || 'Failed to apply cached operations mutation')
@@ -299,12 +335,18 @@ export function StructurePanel({
       setHeadingsError(`Failed to load cached operations: ${error instanceof Error ? error.message : 'Unknown error'}`)
       setIsLoadingHeadings(false)
     }
-  }, [documentId, applyMutation, mutationState.activeMutation])
+  }, [documentId, applyMutation, mutationState.activeMutation, elements])
 
 
   // Function to stop auto-iteration
   const handleStopAutoIteration = useCallback(() => {
     console.log('[StructurePanel] User manually stopped auto-iteration')
+    // Cancel any queued auto-continuation that hasn't fired yet
+    if (autoIterTimeoutRef.current) {
+      clearTimeout(autoIterTimeoutRef.current)
+      autoIterTimeoutRef.current = null
+    }
+
     setAutoIterationStopped(true)
     autoIterationStoppedRef.current = true // keep ref in sync immediately
   }, [])
@@ -450,8 +492,14 @@ export function StructurePanel({
         console.log(`[StructurePanel] Auto-continuing to iteration ${iterationState.currentIteration + 1}`)
         // Reset the in-progress flag so the next invocation is allowed
         setIsIterationInProgress(false)
-        // Keep loading state and trigger next iteration automatically
-        setTimeout(() => {
+        // Schedule the next iteration but keep a reference so that we can
+        // cancel it if the user hits "Stop" or "Remove AI headings" during
+        // the 500 ms grace period.
+        if (autoIterTimeoutRef.current) {
+          clearTimeout(autoIterTimeoutRef.current)
+        }
+        autoIterTimeoutRef.current = setTimeout(() => {
+          autoIterTimeoutRef.current = null // timer has fired
           generateIterRef.current()
         }, 500) // Brief pause for UI feedback
       } else {
@@ -545,7 +593,8 @@ export function StructurePanel({
         console.log('Reverting existing AI headings mutation...')
         const revertResult = await revertMutation()
         if (!revertResult.success) {
-          console.warn('Failed to revert existing mutation:', revertResult.error)
+          // Bubble up as an error so the catch block can surface it in the UI
+          throw new Error(revertResult.error || 'Failed to revert existing mutation')
         }
         
         await new Promise(resolve => setTimeout(resolve, 100))
@@ -800,7 +849,7 @@ export function StructurePanel({
               variant="ghost"
               size="icon-xs"
               className="text-red-600 hover:text-red-800 hover:bg-red-100 ml-auto"
-              disabled={isLoadingHeadings}
+              disabled={isLoadingHeadings || isIterationInProgress}
             >
               <Trash size={14} />
             </Button>
