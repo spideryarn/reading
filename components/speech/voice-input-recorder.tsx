@@ -446,7 +446,7 @@ export function VoiceInputRecorder({
         for (let i = 0; i < samplePoints; i++) {
           let sum = 0;
           for (let j = 0; j < blockSize; j++) {
-            sum += Math.abs(rawData[i * blockSize + j]);
+            sum += Math.abs(rawData[i * blockSize + j] || 0);
           }
           peaks.push(sum / blockSize);
         }
