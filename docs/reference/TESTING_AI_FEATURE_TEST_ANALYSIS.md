@@ -1,14 +1,46 @@
 # Testing AI Feature Test Analysis
 
-> ⚠️ **IMPORTANT**: This document contains recommendations and analysis that have NOT yet been agreed with the user. These are suggestions for discussion and potential implementation.
+> ✅ **AGREED APPROACH**: This document reflects the agreed testing strategy from the Test Reform for AI-First Development (July 2025).
 
-This document analyzes testing strategies for AI-first coding, where multiple AI agents write all the code, with human guidance through conversation/discussion/architectural input.
+This document defines the testing strategies for AI-first coding, where multiple AI agents write all the code, with human guidance through conversation/discussion/architectural input.
 
-## Areas Requiring Further Discussion
+## Agreed Testing Principles
 
-The following areas need deeper discussion to understand and implement properly:
-- **Mock granularity** - How to balance between brittle unit-level mocks and more stable service-boundary mocks
-- **Contract testing** - Formal contracts between services to ensure AI-generated components work together
+Based on the Test Reform for AI-First Development (July 2025), the following principles guide our testing approach:
+
+1. **Fewer, higher-confidence tests** - 50% coverage of critical paths beats 100% coverage with brittle tests
+2. **Real over mocked** - Use database isolation instead of mocks wherever possible  
+3. **E2E first** - Test user journeys, not implementation details
+4. **Budget-conscious LLM testing** - Use cheap models (Haiku/Gemini) within $20/month budget
+5. **Fail fast** - Surface issues early rather than masking them
+6. **Test immutability** - AI must discuss test changes with user before modifying
+
+## Testing Hierarchy (Agreed Approach)
+
+```
+1. Critical E2E Tests (5-10 tests) - 80% confidence
+   - User can sign up and access dashboard
+   - Document upload and processing works
+   - AI features generate expected outputs
+   
+2. API Contract Tests - 15% confidence  
+   - API endpoints return expected shapes
+   - Database operations respect constraints
+   - Service boundaries are maintained
+   
+3. Complex Logic Unit Tests - 5% confidence
+   - Algorithm correctness
+   - Edge case handling
+   - Performance-critical code
+```
+
+## Target Metrics
+
+- **Test suite failure rate**: Reduce from 28% to 0%
+- **Test-to-code ratio**: Under 20% (currently 27%)
+- **Test runtime**: Under 5 minutes for common workflows
+- **LLM cost budget**: $20/month for all testing
+- **Mock usage**: Very few mocks remaining (only most expensive LLM calls)
 
 ## User Context and Responses
 
@@ -30,14 +62,13 @@ The following areas need deeper discussion to understand and implement properly:
 
 ## Key Problems & Solutions
 
-### 1. **Preventing AI from Modifying Tests to Pass**
+### 1. **Test Modification Policy (Agreed)**
 
-This is the most critical concern. Here's a multi-layered approach:
+This is the most critical concern for AI-first development:
 
-**a) Test Modification Policy** (User feedback: tone this down)
-Instead of strict immutability:
+**Test Modification Guidelines**
 ```markdown
-## Test Modification Guidelines
+## Test Modification Guidelines (AGREED)
 - Don't modify existing tests without discussing and agreeing with the user
 - If a test fails, default to fixing the code, not the test
 - Valid reasons to modify tests:
