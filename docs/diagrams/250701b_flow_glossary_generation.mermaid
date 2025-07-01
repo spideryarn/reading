@@ -1,0 +1,52 @@
+graph TD
+    Start([User clicks<br/>Load Glossary]) --> CheckCache{Existing<br/>entities in<br/>database?}
+    
+    CheckCache -->|Yes| LoadCache[Load entities<br/>from database]
+    CheckCache -->|No| InitialGen[Initial generation]
+    
+    InitialGen --> PreparePrompt[Prepare LLM prompt:<br/>HTML content<br/>Entity cap = 20<br/>Ontology types]
+    
+    PreparePrompt --> CallLLM[Call LLM for<br/>entity extraction]
+    
+    CallLLM --> ParseResponse{Parse<br/>response<br/>valid?}
+    
+    ParseResponse -->|Invalid| ShowError[Show error<br/>to user]
+    ParseResponse -->|Valid| StoreEntities[(Store individual<br/>entities in DB:<br/>name, ontology,<br/>explanations)]
+    
+    StoreEntities --> ProcessEntities[Process entities:<br/>Track positions<br/>Calculate scores<br/>Sort by occurrence]
+    
+    ProcessEntities --> DisplayUI[Display in UI:<br/>Name + ontology badge<br/>Long explanation<br/>Search box]
+    
+    LoadCache --> ProcessEntities
+    
+    DisplayUI --> CheckMore{LLM indicated<br/>more entities<br/>available?}
+    
+    CheckMore -->|No| Complete[Complete:<br/>All entities shown]
+    CheckMore -->|Yes| ShowLoadMore[Show Load More<br/>button]
+    
+    ShowLoadMore --> UserLoadMore{User clicks<br/>Load More?}
+    
+    UserLoadMore -->|Yes| PrepareMorePrompt[Prepare prompt with:<br/>Skip count<br/>Additional cap = 20]
+    UserLoadMore -->|No| Complete
+    
+    PrepareMorePrompt --> CallLLM
+    
+    Complete --> UserInteract{User<br/>interaction}
+    
+    UserInteract -->|Search| FilterEntities[Filter by name<br/>and aliases]
+    UserInteract -->|Click entity| NavigateDoc[Scroll to first<br/>occurrence + highlight]
+    UserInteract -->|Hover entity| ShowTooltip[Show tooltip with<br/>explanation]
+    
+    FilterEntities --> DisplayUI
+    NavigateDoc --> HighlightText[Highlight all<br/>occurrences with<br/>orange underline]
+    
+    ShowError --> End([End])
+    Complete --> End
+    
+    style Start fill:#e8f4f8
+    style End fill:#e8f4f8
+    style CallLLM fill:#fff4e6
+    style StoreEntities fill:#f0f9ff
+    style ShowError fill:#fee2e2
+    style Complete fill:#d1fae5
+    style ShowLoadMore fill:#fef3c7

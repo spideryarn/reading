@@ -1,0 +1,46 @@
+graph TD
+    Start([User clicks<br/>Improve Headings]) --> InitCheck{First<br/>iteration?}
+    
+    InitCheck -->|Yes| FirstIter[Initialize:<br/>iteration_count = 0<br/>operations = empty<br/>No previous context]
+    InitCheck -->|No| ContinueIter[Continue:<br/>Increment iteration_count<br/>Pass previous_iteration_summary<br/>Pass previous_iteration_plan<br/>Include existing_operations]
+    
+    FirstIter --> CallLLM[Call LLM with:<br/>HTML content<br/>Iteration context<br/>Operation limit = 10<br/>Hierarchical priorities]
+    ContinueIter --> CallLLM
+    
+    CallLLM --> Validate{Validate<br/>operations?}
+    
+    Validate -->|Invalid| Error[Show error<br/>to user]
+    Validate -->|Valid| ApplyOps[Apply operations:<br/>Insert headings<br/>Replace headings<br/>Remove headings]
+    
+    ApplyOps --> SaveDB[(Save to database:<br/>Operations array<br/>Iteration metadata<br/>Enhancement record)]
+    
+    SaveDB --> UpdateUI[Update UI:<br/>Show new structure<br/>Display operation count<br/>Show iteration summary]
+    
+    UpdateUI --> CheckLimits{Safety<br/>limits<br/>reached?}
+    
+    CheckLimits -->|Yes| ForceStop[Force stop:<br/>Disable buttons<br/>Show limit message<br/>≥5 iterations OR ≥50 ops]
+    
+    CheckLimits -->|No| CheckMore{LLM says<br/>more_changes_required?}
+    
+    CheckMore -->|No| Complete[Complete:<br/>Show final structure]
+    
+    CheckMore -->|Yes| AutoMode{Auto-iterate<br/>enabled?}
+    
+    AutoMode -->|No| UserChoice[Show buttons:<br/>Continue Improving<br/>Finish]
+    AutoMode -->|Yes| AutoContinue[Auto-continue<br/>after 500ms delay]
+    
+    UserChoice -->|Continue| ContinueIter
+    UserChoice -->|Finish| Complete
+    AutoContinue --> ContinueIter
+    
+    Error --> End([End])
+    ForceStop --> End
+    Complete --> End
+    
+    style Start fill:#e8f4f8
+    style End fill:#e8f4f8
+    style CallLLM fill:#fff4e6
+    style SaveDB fill:#f0f9ff
+    style Error fill:#fee2e2
+    style ForceStop fill:#fee2e2
+    style Complete fill:#d1fae5
