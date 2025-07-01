@@ -649,3 +649,7 @@ export type DocumentEnhancement = Tables<'document_enhancements'>
 export type DocumentEnhancementInsert = TablesInsert<'document_enhancements'>
 export type DocumentEnhancementUpdate = TablesUpdate<'document_enhancements'>
 
+export type Profile = Tables<'profiles'>
+export type ProfileInsert = TablesInsert<'profiles'>
+export type ProfileUpdate = TablesUpdate<'profiles'>
+

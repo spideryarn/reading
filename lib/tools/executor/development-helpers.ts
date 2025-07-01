@@ -5,8 +5,8 @@
  * development and testing of tool execution flows.
  */
 
-import type { ToolApiResponse, ExecutionResult, ExecutionContext } from './types'
-import { generateCorrelationId } from '@/lib/utils/environment'
+import type { ToolApiResponse, ToolExecutionResult, ExecutionContext } from './types'
+import { generateCorrelationId } from '@/lib/services/logger'
 
 // Mock response configuration
 interface MockResponseConfig {
@@ -93,7 +93,7 @@ export class MockToolExecutor {
     action: string,
     parameters: Record<string, unknown>,
     _context?: Partial<ExecutionContext>
-  ): Promise<ExecutionResult> {
+  ): Promise<ToolExecutionResult> {
     const startTime = Date.now()
     const correlationId = generateCorrelationId()
     const key = `${toolId}.${action}`
@@ -303,7 +303,7 @@ export function getReplayRecords(
 /**
  * Replay a specific execution
  */
-export async function replayExecution(recordId: string): Promise<ExecutionResult | null> {
+export async function replayExecution(recordId: string): Promise<ToolExecutionResult | null> {
   const record = replayRecords.find(r => r.id === recordId)
   if (!record) {
     console.warn('[Execution Replay] Record not found:', recordId)
@@ -507,12 +507,12 @@ declare global {
     toolExecutorDev?: {
       mock: {
         configure(toolId: string, action: string, config: MockResponseConfig): void
-        execute(toolId: string, action: string, parameters: Record<string, unknown>): Promise<ExecutionResult>
+        execute(toolId: string, action: string, parameters: Record<string, unknown>): Promise<ToolExecutionResult>
         reset(): void
       }
       replay: {
         records(filters?: Parameters<typeof getReplayRecords>[0]): ReplayRecord[]
-        replay(recordId: string): Promise<ExecutionResult | null>
+        replay(recordId: string): Promise<ToolExecutionResult | null>
         clear(): void
       }
       profiling: {

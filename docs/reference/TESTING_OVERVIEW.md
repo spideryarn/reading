@@ -136,6 +136,34 @@ Following our coding principles, tests should:
 - **Simple and readable**: Clear test structure and failure messages
 - **Fast execution**: Encourage frequent testing during development
 
+## Testing Hierarchy (Test Reform July 2025)
+
+Based on the Test Reform for AI-First Development, our testing approach follows this hierarchy:
+
+**1. Critical E2E Tests (5-10 tests) - 80% confidence**
+- User can sign up and access dashboard
+- Document upload and processing works  
+- AI features generate expected outputs
+- One E2E test can replace many unit tests
+
+**2. API Contract Tests - 15% confidence**
+- API endpoints return expected shapes
+- Database operations respect constraints
+- Service boundaries are maintained
+
+**3. Complex Logic Unit Tests - 5% confidence**
+- Algorithm correctness
+- Edge case handling
+- Performance-critical code
+
+**Avoid testing**: Simple transformations, environment detection, logging, implementation details.
+
+**Key Principles**: 
+- **Fewer, higher-confidence tests** - 50% coverage of critical paths beats 100% coverage with brittle tests
+- **Real over mocked** - Use database isolation instead of mocks wherever possible
+- **E2E first** - Test user journeys, not implementation details
+- **Budget-conscious** - Use cheap models (Haiku/Gemini) within $20/month budget
+
 
 ## Existing Tests
 

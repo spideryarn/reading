@@ -136,6 +136,27 @@ Debugging resources:
 - Architecture: `docs/reference/ARCHITECTURE_OVERVIEW.md` and `docs/reference/ARCHITECTURE_DECISIONS.md`
 - Recent decisions: `planning/*.md` docs
 
+## Test Modification Policy - CRITICAL
+
+Based on the Test Reform for AI-First Development (July 2025), AI agents must follow strict guidelines when modifying tests:
+
+**Test Modification Guidelines**:
+- **Don't modify existing tests without discussing and agreeing with the user**
+- **If a test fails, default to fixing the code, not the test**
+- **Valid reasons to modify tests**:
+  - Consolidating redundant tests
+  - Changing requirements or edge case handling
+  - Fixing incorrect test assertions
+  - Improving test clarity or reducing brittleness
+
+**Enforcement**:
+- AI agents should fix code to pass tests, not vice versa
+- Stop and discuss with user if tests need modification
+- Test changes require explicit user approval
+- When in doubt, ask rather than assume
+
+**Rationale**: This prevents AI agents from "gaming" tests by modifying them to pass instead of fixing underlying code issues.
+
 ## Logging & Observability
 
 **Current Implementation**:
