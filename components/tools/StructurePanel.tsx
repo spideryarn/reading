@@ -262,7 +262,37 @@ export function StructurePanel({
   const applyCachedOperations = useCallback(async (operations: HeadingOperation[]) => {
     try {
       console.log('Applying cached operations:', operations)
-      
+
+      // -------------------------------------------------------------------
+      // Fast-path: If the current document already contains AI-generated
+      // headings (identified via the `data-ai-generated` attribute), we assume
+      // the cached operations were applied in a previous session. In this
+      // case we skip re-applying the mutation to avoid duplicate ID errors
+      // and simply extract the existing headings for display.
+      // -------------------------------------------------------------------
+      const aiHeadingsAlreadyPresent = elements?.some(
+        el => el.tag_name.match(/^h[1-6]$/i) && el.attributes?.['data-ai-generated'] === 'true'
+      )
+
+      if (aiHeadingsAlreadyPresent) {
+        console.log('[StructurePanel] Detected existing AI headings – skipping mutation re-application')
+
+        const extractedHeadings = (elements || [])
+          .filter(el => el.tag_name.match(/^h[1-6]$/i) && el.attributes?.['data-ai-generated'] === 'true')
+          .map(el => ({
+            id: el.id,
+            text: el.content || '',
+            level: parseInt(el.tag_name.substring(1)),
+            elementId: el.id
+          }))
+          .filter(h => h.text.length > 0)
+
+        setHeadings(extractedHeadings)
+        setIsLoadingHeadings(false)
+        return
+      }
+
+      // If a mutation is already active in the context, just extract headings
       if (mutationState.activeMutation?.type === 'insert-headings') {
         console.warn('AI headings mutation already active, extracting existing headings')
         const existingHeadings = extractHeadingsFromMutation(mutationState.activeMutation).map(h => ({
@@ -273,14 +303,14 @@ export function StructurePanel({
         setIsLoadingHeadings(false)
         return
       }
-      
+
       const mutation = headingOperationsToMutation({
         documentId,
         operations
       })
-      
+
       const result = await applyMutation(mutation)
-      
+
       if (result.success) {
         const generatedHeadings = extractHeadingsFromMutation(mutation).map(h => ({
           ...h,
@@ -289,7 +319,7 @@ export function StructurePanel({
         setHeadings(generatedHeadings)
         setCollapsedIds(new Set())
         setIsLoadingHeadings(false)
-        
+
         console.log('Successfully applied cached operations')
       } else {
         throw new Error(result.error || 'Failed to apply cached operations mutation')
@@ -299,7 +329,7 @@ export function StructurePanel({
       setHeadingsError(`Failed to load cached operations: ${error instanceof Error ? error.message : 'Unknown error'}`)
       setIsLoadingHeadings(false)
     }
-  }, [documentId, applyMutation, mutationState.activeMutation])
+  }, [documentId, applyMutation, mutationState.activeMutation, elements])
 
 
   // Function to stop auto-iteration

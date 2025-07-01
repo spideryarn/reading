@@ -529,9 +529,17 @@ export class MutationEngine {
   ): { valid: boolean; errors: string[] } {
     const errors: string[] = []
 
-    // Check forward transforms
+    // ---------------------------------------------------------------------
+    // Use **one shared Set** of planned insert IDs for the entire mutation so
+    // that chained insertions (where a later transform references an element
+    // inserted earlier in the same mutation) validate successfully.  Without
+    // this, each transform validates in isolation and fails when the target
+    // ID hasn't been inserted *yet*.
+    // ---------------------------------------------------------------------
+    const plannedInsertIds = new Set<string>()
+
     for (const transform of mutation.forward) {
-      const validation = this.validateTransform(document, transform)
+      const validation = this.validateTransform(document, transform, plannedInsertIds)
       if (!validation.valid) {
         errors.push(validation.error)
       }
