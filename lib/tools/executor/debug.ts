@@ -165,10 +165,18 @@ export function startExecutionTracking(
     parameters: debugConfig.logRequestBodies ? parameters : {},
     executionType,
     startTime: Date.now(),
-    success: false,
-    correlationId: options?.correlationId,
-    source: options?.source,
-    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined
+    success: false
+  }
+  
+  // Add optional properties conditionally
+  if (options?.correlationId) {
+    record.correlationId = options.correlationId
+  }
+  if (options?.source) {
+    record.source = options.source
+  }
+  if (typeof navigator !== 'undefined' && navigator.userAgent) {
+    record.userAgent = navigator.userAgent
   }
   
   // Add request body for server executions
@@ -219,7 +227,9 @@ export function completeExecutionTracking(
   record.endTime = Date.now()
   record.duration = record.endTime - record.startTime
   record.success = true
-  record.httpStatus = httpStatus
+  if (httpStatus !== undefined) {
+    record.httpStatus = httpStatus
+  }
   
   if (debugConfig.logResponseBodies && response) {
     record.responseBody = JSON.stringify(response, null, 2)
@@ -257,7 +267,9 @@ export function completeExecutionTrackingWithError(
   record.duration = record.endTime - record.startTime
   record.success = false
   record.error = error instanceof Error ? error.message : error
-  record.httpStatus = httpStatus
+  if (httpStatus !== undefined) {
+    record.httpStatus = httpStatus
+  }
   
   debugLog('error', `Failed execution tracking`, {
     executionId,

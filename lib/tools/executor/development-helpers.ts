@@ -142,7 +142,7 @@ export class MockToolExecutor {
         action,
         executionType: 'server',
         correlationId,
-        responseTime: Date.now() - startTime,
+        executionTime: Date.now() - startTime,
         httpStatus: config.httpStatus || 200
       }
     }
@@ -251,8 +251,12 @@ export function recordExecution(
     response,
     error,
     duration,
-    httpStatus,
     correlationId: generateCorrelationId()
+  }
+  
+  // Add optional httpStatus if provided
+  if (httpStatus !== undefined) {
+    record.httpStatus = httpStatus
   }
   
   replayRecords.push(record)
@@ -321,11 +325,16 @@ export async function replayExecution(recordId: string): Promise<ToolExecutionRe
   
   // Configure mock to return the original response
   if (record.response) {
-    mockExecutor.configureMock(record.toolId, record.action, {
+    const mockConfig: MockResponseConfig = {
       customResponse: record.response,
-      httpStatus: record.httpStatus,
       delay: Math.min(record.duration, 100) // Cap delay for testing
-    })
+    }
+    
+    if (record.httpStatus !== undefined) {
+      mockConfig.httpStatus = record.httpStatus
+    }
+    
+    mockExecutor.configureMock(record.toolId, record.action, mockConfig)
   } else if (record.error) {
     mockExecutor.configureMock(record.toolId, record.action, {
       shouldFail: true,

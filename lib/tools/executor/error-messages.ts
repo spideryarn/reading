@@ -135,7 +135,7 @@ function transformValidationError(error: ToolValidationError): ErrorMessage {
   
   return {
     title: 'Invalid Input',
-    description: errorCount === 1 
+    description: errorCount === 1 && firstError
       ? firstError
       : `${errorCount} validation errors occurred`,
     actionGuidance: 'Please check your input and try again',
@@ -210,7 +210,6 @@ function transformCancelledError(error: ToolCancelledError): ErrorMessage {
   return {
     title: 'Operation Cancelled',
     description: `${toolName} was cancelled`,
-    actionGuidance: undefined, // No action needed for user-initiated cancellation
     retryable: false,
     severity: 'info',
     displayMethod: 'toast',

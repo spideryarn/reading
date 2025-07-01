@@ -310,7 +310,10 @@ export function generateCommandsFromRegistry(
       category: CATEGORY_MAPPINGS[tool.category],
       icon: ({ size, className }: { size?: number; className?: string }) => {
         const IconComponent = tool.icon
-        return React.createElement(IconComponent, { size, className })
+        const iconProps: any = {}
+        if (size !== undefined) iconProps.size = size
+        if (className !== undefined) iconProps.className = className
+        return React.createElement(IconComponent, iconProps)
       },
       action: () => {
         if (!getNavigateToTab) {
