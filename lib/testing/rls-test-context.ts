@@ -241,12 +241,12 @@ export async function testDocumentOwnership(
   await testUserIsolation(
     // User A creates document
     async () => {
-      const doc = await documentService.createForUser(TEST_USERS.USER_A.id, testDocument)
+      const doc = await (documentService as any).createForUser(TEST_USERS.USER_A.id, testDocument)
       return doc
     },
     // User B tries to access document
     async (document) => {
-      const result = await documentService.getById(document.id)
+      const result = await (documentService as any).getById(document.id)
       return result
     },
     'null' // User B should see null due to RLS

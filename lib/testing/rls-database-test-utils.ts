@@ -213,14 +213,14 @@ export class RLSTestSetup {
       created_by: data.created_by,
       prompt_type: data.prompt_type,
       prompt_template: data.prompt_template || null,
-      prompt_input: JSON.stringify(data.input_data || data.prompt_input || { test: true }),
-      response_text: JSON.stringify(data.output_data || data.response_text || { result: 'test' }),
-      status: data.status || 'success',
+      prompt_input: data.prompt_input || JSON.stringify({ test: true }),
+      response_text: data.response_text || JSON.stringify({ result: 'test' }),
+      status: data.status || 'completed',
       error_message: data.error_message || null,
       error_code: data.error_code || null,
-      prompt_tokens: data.usage?.prompt_tokens || data.prompt_tokens || 10,
-      completion_tokens: data.usage?.completion_tokens || data.completion_tokens || 5,
-      total_tokens: data.usage?.total_tokens || data.total_tokens || 15,
+      prompt_tokens: data.prompt_tokens || 10,
+      completion_tokens: data.completion_tokens || 5,
+      total_tokens: data.total_tokens || 15,
       reasoning_tokens: data.reasoning_tokens || null,
       latency_ms: data.latency_ms || 1000,
       finish_reason: data.finish_reason || 'stop',
@@ -373,7 +373,7 @@ export const RLSAssertions = {
   assertOwnerAccess(result: { hasAccess: boolean; data: Record<string, unknown> | null; error: unknown }, resourceId: string) {
     expect(result.hasAccess).toBe(true)
     expect(result.data).not.toBeNull()
-    expect(result.data.id).toBe(resourceId)
+    expect(result.data?.id).toBe(resourceId)
     expect(result.error).toBeNull()
   },
 
@@ -391,7 +391,7 @@ export const RLSAssertions = {
   assertOwnership(result: { hasCorrectOwnership: boolean; data: Record<string, unknown> | null }, expectedOwnerId: string) {
     expect(result.hasCorrectOwnership).toBe(true)
     expect(result.data).not.toBeNull()
-    expect(result.data.created_by || result.data.user_id).toBe(expectedOwnerId)
+    expect((result.data?.created_by || result.data?.user_id)).toBe(expectedOwnerId)
   },
 
   /**

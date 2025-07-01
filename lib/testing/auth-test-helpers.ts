@@ -11,7 +11,7 @@ import type { User } from '@supabase/supabase-js'
 /**
  * Default test user for authenticated requests
  */
-export const defaultTestUser: User = {
+export const defaultTestUser: User = ({
   id: 'test-user-id',
   email: 'test@example.com',
   app_metadata: {},
@@ -29,7 +29,7 @@ export const defaultTestUser: User = {
   identities: [],
   is_anonymous: false,
   factors: []
-} as User
+} as unknown as User)
 
 /**
  * Mock configuration for getAuthUser

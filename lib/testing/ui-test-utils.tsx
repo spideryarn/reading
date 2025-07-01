@@ -19,7 +19,7 @@ import { MutationProvider } from '@/lib/context/mutation-context'
 export function TestWrapper({ children }: { children: ReactNode }) {
   return (
     <DocumentCommunicationProvider>
-      <MutationProvider>
+      <MutationProvider initialDocument={[]}>
         {children}
       </MutationProvider>
     </DocumentCommunicationProvider>
@@ -130,7 +130,9 @@ export class MockIntersectionObserver implements IntersectionObserver {
 
   constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
     this.callback = callback
-    if (options?.root) this.root = options.root
+    if (options?.root && options.root instanceof Element) {
+      this.root = options.root
+    }
     if (options?.rootMargin) this.rootMargin = options.rootMargin
     if (options?.threshold) {
       this.thresholds = Array.isArray(options.threshold) 
