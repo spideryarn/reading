@@ -55,15 +55,16 @@ export async function processMultiPagePdf(
     }
     
     // Process each page with context from previous page
+    const contextOptions: { fileName?: string; previousPageSummary?: string; documentContext?: string } = {}
+    if (fileName !== undefined) contextOptions.fileName = fileName
+    if (previousPageSummary !== undefined) contextOptions.previousPageSummary = previousPageSummary
+    if (documentContext !== undefined) contextOptions.documentContext = documentContext
+    
     const htmlFragment = await processPageToHtmlFragment(
       pageImageBase64,
       pageNumber,
       pageImages.length,
-      {
-        fileName,
-        previousPageSummary,
-        documentContext
-      }
+      contextOptions
     )
     
     htmlFragments.push(htmlFragment)

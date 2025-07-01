@@ -117,7 +117,6 @@ export class RealRLSTestSetup {
       .from('documents')
       .insert({
         title: 'Test Document',
-        slug: uniqueSlug,
         html_content: '<h1>Test</h1>',
         plaintext_content: 'Test',
         is_public: false,

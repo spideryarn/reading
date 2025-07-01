@@ -4,7 +4,8 @@ import type {
   AiCall, 
   AiCallInsert, 
   CallStatus,
-  PromptType
+  PromptType,
+  Json
 } from '@/lib/types/database'
 import type { PromptUsage } from '@/lib/prompts/types'
 import type { JsonObject } from '@/lib/types/json'
@@ -60,7 +61,7 @@ export class AiCallService {
       prompt_input: JSON.stringify(options.input_data || {}),
       prompt_template: null,
       status: 'pending',
-      extra: options.extra || {},
+      extra: (options.extra || {}) as Json,
     }
 
     const { data, error } = await this.supabase
@@ -99,7 +100,7 @@ export class AiCallService {
     const updateData: Partial<AiCallInsert> = {
       status: 'success',
       completed_at: completedAt,
-      extra: data.output_data || {},
+      extra: (data.output_data || {}) as Json,
     }
     
     // Add usage metadata if provided
@@ -150,7 +151,7 @@ export class AiCallService {
         error_message: errorMessage,
         error_code: errorCode || null,
         completed_at: new Date().toISOString(),
-        extra: extra || {},
+        extra: (extra || {}) as Json,
       })
       .eq('id', id)
       .select()
@@ -320,10 +321,10 @@ export class AiCallService {
       prompt_template: null,
       status: 'success', // Mark as completed immediately
       completed_at: new Date().toISOString(),
-      prompt_tokens: options.promptTokens,
-      completion_tokens: options.completionTokens,
-      total_tokens: options.totalTokens,
-      extra: options.responseData || {},
+      prompt_tokens: options.promptTokens ?? null,
+      completion_tokens: options.completionTokens ?? null,
+      total_tokens: options.totalTokens ?? null,
+      extra: (options.responseData || {}) as Json,
     }
 
     const { data, error } = await this.supabase

@@ -319,11 +319,17 @@ export class DocumentService {
   ): Promise<Document> {
     const wordCount = content.plaintext.trim().split(/\s+/).length
 
-    return await this.update(id, {
+    const updatedDocument = await this.update(id, {
       html_content: content.html,
       plaintext_content: content.plaintext,
       word_count: wordCount,
     })
+    
+    if (!updatedDocument) {
+      throw new Error(`Document with ID ${id} not found or could not be updated`)
+    }
+    
+    return updatedDocument
   }
 
   /**
