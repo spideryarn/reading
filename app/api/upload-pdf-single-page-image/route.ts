@@ -279,19 +279,16 @@ export async function POST(request: NextRequest) {
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/^-+|-+$/g, '')
           .substring(0, 50)
-        _source = 'caption'
       } else if (imageData.altText) {
         // Fallback to alt text
         baseFilename = imageData.altText.toLowerCase()
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/^-+|-+$/g, '')
           .substring(0, 50)
-        _source = 'altText'
       } else {
         // Final fallback: deterministic ID based on page + bbox
         const bboxString = `${imageData.bbox.x1}_${imageData.bbox.y1}_${imageData.bbox.x2}_${imageData.bbox.y2}`
         baseFilename = `img-page${pageNumber}-${bboxString.replace(/\./g, '')}`
-        _source = 'deterministic'
       }
       
       // Ensure unique filename

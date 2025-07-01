@@ -179,6 +179,10 @@ export function parseModelString(modelString: string): ParsedModelString {
 
   const [provider, modelName, version, thinkingFlag] = parts
   
+  if (!provider || !modelName || !version) {
+    throw new Error(`Invalid model string format: ${modelString}. Provider, model name, and version are required`)
+  }
+  
   if (!['anthropic', 'google', 'openai'].includes(provider)) {
     throw new Error(`Unknown provider: ${provider}. Expected: anthropic, google, openai`)
   }
@@ -329,7 +333,10 @@ export function getAvailableModels(): Record<string, ModelConfig[]> {
     if (!grouped[config.provider]) {
       grouped[config.provider] = []
     }
-    grouped[config.provider].push({ ...config })
+    const providerGroup = grouped[config.provider]
+    if (providerGroup) {
+      providerGroup.push({ ...config })
+    }
   }
   
   return grouped

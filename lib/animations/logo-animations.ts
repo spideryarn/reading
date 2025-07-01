@@ -116,7 +116,11 @@ export type LogoAnimationCssClass = typeof LOGO_ANIMATIONS[number]['cssClass']
  */
 export function getRandomLogoAnimation(): LogoAnimation {
   const randomIndex = Math.floor(Math.random() * LOGO_ANIMATIONS.length)
-  return LOGO_ANIMATIONS[randomIndex]
+  const animation = LOGO_ANIMATIONS[randomIndex]
+  if (!animation) {
+    throw new Error('No logo animations available')
+  }
+  return animation
 }
 
 /**

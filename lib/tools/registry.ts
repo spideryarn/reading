@@ -232,39 +232,39 @@ export function validateTool(tool: unknown): ToolValidationResult {
     errors.push('id is required and must be a string')
   }
   
-  if (!tool.name || typeof tool.name !== 'string') {
+  if (!toolRecord.name || typeof toolRecord.name !== 'string') {
     errors.push('name is required and must be a string')
   }
   
-  if (!tool.description || typeof tool.description !== 'string') {
+  if (!toolRecord.description || typeof toolRecord.description !== 'string') {
     errors.push('description is required and must be a string')
   }
   
-  if (!tool.category || typeof tool.category !== 'string') {
+  if (!toolRecord.category || typeof toolRecord.category !== 'string') {
     errors.push('category is required and must be a string')
   } else {
     const validCategories = ['navigation', 'analysis', 'generation', 'interactive']
-    if (!validCategories.includes(tool.category)) {
+    if (!validCategories.includes(toolRecord.category)) {
       errors.push(`category must be one of: ${validCategories.join(', ')}`)
     }
   }
   
-  if (!tool.componentPath || typeof tool.componentPath !== 'string') {
+  if (!toolRecord.componentPath || typeof toolRecord.componentPath !== 'string') {
     errors.push('componentPath is required and must be a string')
   }
   
-  if (!tool.tabId || typeof tool.tabId !== 'string') {
+  if (!toolRecord.tabId || typeof toolRecord.tabId !== 'string') {
     errors.push('tabId is required and must be a string')
   }
   
-  if (typeof tool.requiresDocument !== 'boolean') {
+  if (typeof toolRecord.requiresDocument !== 'boolean') {
     errors.push('requiresDocument is required and must be a boolean')
   }
   
   // Icon validation - check if it's a function (React component) or object with displayName
-  if (!tool.icon) {
+  if (!toolRecord.icon) {
     errors.push('icon is required')
-  } else if (typeof tool.icon !== 'function' && typeof tool.icon !== 'object') {
+  } else if (typeof toolRecord.icon !== 'function' && typeof toolRecord.icon !== 'object') {
     errors.push('icon must be a React component (function or component object)')
   }
   

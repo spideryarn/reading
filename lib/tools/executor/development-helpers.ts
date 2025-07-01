@@ -6,7 +6,7 @@
  */
 
 import type { ToolApiResponse, ExecutionResult, ExecutionContext } from './types'
-import { generateCorrelationId } from '../utils'
+import { generateCorrelationId } from '@/lib/utils/environment'
 
 // Mock response configuration
 interface MockResponseConfig {

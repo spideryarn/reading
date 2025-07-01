@@ -50,6 +50,10 @@ export async function processMultiPagePdf(
     const pageNumber = i + 1
     const pageImageBase64 = pageImages[i]
     
+    if (!pageImageBase64) {
+      throw new Error(`Missing page image at index ${i}`)
+    }
+    
     // Process each page with context from previous page
     const htmlFragment = await processPageToHtmlFragment(
       pageImageBase64,

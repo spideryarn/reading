@@ -52,7 +52,7 @@ export function DocumentCommunicationProvider({ children }: DocumentCommunicatio
     if (typeof window === 'undefined') return null
     const pathname = window.location.pathname
     const match = pathname.match(/\/read\/([^\/]+)/)
-    return match ? match[1] : null
+    return match && match[1] ? match[1] : null
   }
 
   // Initialize state

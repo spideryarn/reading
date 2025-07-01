@@ -184,12 +184,12 @@ async function executeMultimodalPromptInternal<T extends z.ZodSchema>(
   
   // Get the appropriate model - use template model config if specified, otherwise use environment
   let model
-  if (template.modelConfig?.model) {
+  if (template.modelConfig?.modelString) {
     // Use model specified in template
     const { parseModelString } = await import('@/lib/config/models')
     const { getProvider } = await import('@/lib/services/llm-provider')
     
-    const parsedModel = parseModelString(template.modelConfig.model)
+    const parsedModel = parseModelString(template.modelConfig.modelString)
     const providerInstance = getProvider(parsedModel.provider)
     
     // Handle Anthropic version concatenation like in llm-provider.ts

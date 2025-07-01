@@ -32,7 +32,7 @@ export function parseReadingDifficultyResponse(response: string): ReadingDifficu
   try {
     // Extract JSON from response (in case there's markdown formatting)
     const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/) || response.match(/(\{[\s\S]*\})/)
-    const jsonString = jsonMatch ? jsonMatch[1] : response.trim()
+    const jsonString = jsonMatch && jsonMatch[1] ? jsonMatch[1] : response.trim()
     
     const parsed = JSON.parse(jsonString)
     return readingDifficultyOutputSchema.parse(parsed)

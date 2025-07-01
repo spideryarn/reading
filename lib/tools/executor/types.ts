@@ -139,8 +139,8 @@ export interface ToolTimeoutConfig {
 export abstract class ToolExecutorError extends Error {
   abstract readonly code: string
   abstract readonly retryable: boolean
-  readonly correlationId?: string
-  readonly toolId?: string
+  readonly correlationId?: string | undefined
+  readonly toolId?: string | undefined
   
   constructor(
     message: string, 
@@ -222,7 +222,7 @@ export class ToolValidationError extends ToolExecutorError {
 export class ToolServerError extends ToolExecutorError {
   readonly code = 'TOOL_SERVER_ERROR'
   readonly retryable = true
-  readonly httpStatus?: number
+  readonly httpStatus?: number | undefined
   
   constructor(
     message: string, 
@@ -230,7 +230,9 @@ export class ToolServerError extends ToolExecutorError {
     options?: { correlationId?: string; toolId?: string; cause?: Error }
   ) {
     super(message, options)
-    this.httpStatus = httpStatus
+    if (httpStatus !== undefined) {
+      this.httpStatus = httpStatus
+    }
   }
 }
 

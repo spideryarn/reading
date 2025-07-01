@@ -121,17 +121,19 @@ async function loadPDF(
     return {
       pdf,
       pageCount: pdf.numPages,
-      metadata: metadata?.info
+      metadata: metadata?.info as Record<string, unknown> | undefined
     };
   } catch (error: unknown) {
-    if (error.name === 'InvalidPDFException') {
+    const errorObj = error as any;
+    if (errorObj?.name === 'InvalidPDFException') {
       throw new PDFToImagesError('Invalid PDF file format');
-    } else if (error.name === 'MissingPDFException') {
+    } else if (errorObj?.name === 'MissingPDFException') {
       throw new PDFToImagesError('PDF file not found');
-    } else if (error.name === 'UnexpectedResponseException') {
+    } else if (errorObj?.name === 'UnexpectedResponseException') {
       throw new PDFToImagesError('Network error loading PDF');
     }
-    throw new PDFToImagesError(`PDF loading failed: ${error.message}`);
+    const message = errorObj?.message || String(error);
+    throw new PDFToImagesError(`PDF loading failed: ${message}`);
   }
 }
 
@@ -186,7 +188,8 @@ async function extractImageFromCanvas(
       const dataUrl = canvas.toDataURL(mimeType, quality);
       resolve(dataUrl);
     } catch (error: unknown) {
-      reject(new PDFToImagesError(`Image extraction failed: ${error.message}`));
+      const message = (error as any)?.message || String(error);
+      reject(new PDFToImagesError(`Image extraction failed: ${message}`));
     }
   });
 }
@@ -305,7 +308,8 @@ export async function convertPDFToImages(
         
       } catch (error: unknown) {
         console.error(`Failed to process page ${pageNumber}:`, error);
-        throw new PDFToImagesError(`Page ${pageNumber} processing failed: ${error.message}`);
+        const message = (error as any)?.message || String(error);
+        throw new PDFToImagesError(`Page ${pageNumber} processing failed: ${message}`);
       }
     }
     
@@ -329,7 +333,8 @@ export async function convertPDFToImages(
     if (error instanceof PDFToImagesError) {
       throw error;
     }
-    throw new PDFToImagesError(`PDF conversion failed: ${error.message}`);
+    const message = (error as any)?.message || String(error);
+    throw new PDFToImagesError(`PDF conversion failed: ${message}`);
   }
 }
 
@@ -409,7 +414,8 @@ export async function convertPDFBufferToImages(
         
       } catch (error: unknown) {
         console.error(`Failed to process page ${pageNumber}:`, error);
-        throw new PDFToImagesError(`Page ${pageNumber} processing failed: ${error.message}`);
+        const message = (error as any)?.message || String(error);
+        throw new PDFToImagesError(`Page ${pageNumber} processing failed: ${message}`);
       }
     }
     
@@ -433,7 +439,8 @@ export async function convertPDFBufferToImages(
     if (error instanceof PDFToImagesError) {
       throw error;
     }
-    throw new PDFToImagesError(`PDF buffer conversion failed: ${error.message}`);
+    const message = (error as any)?.message || String(error);
+    throw new PDFToImagesError(`PDF buffer conversion failed: ${message}`);
   }
 }
 

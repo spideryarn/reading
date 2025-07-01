@@ -61,8 +61,8 @@ export function createTestTools(count: number = 3): Tool[] {
   const icons = [BookOpen, MagnifyingGlass, Robot, ChatCircle]
   
   return Array.from({ length: count }, (_, index) => {
-    const category = categories[index % categories.length]
-    const icon = icons[index % icons.length]
+    const category = categories[index % categories.length] as ToolCategory
+    const icon = icons[index % icons.length] as Icon
     
     return createTestTool({
       id: `test-tool-${index + 1}`,

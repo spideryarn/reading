@@ -1,7 +1,7 @@
 // Type definitions for JSON data handling
 
 // Recursive JSON type definition
-export type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
+export type JsonValue = string | number | boolean | null | undefined | JsonObject | JsonArray;
 
 export interface JsonObject {
   [key: string]: JsonValue;

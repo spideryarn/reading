@@ -32,7 +32,7 @@ echo ""
 # --verbose: Shows full turn-by-turn output for debugging and progress tracking
 # --max-turns: Limit turns to prevent runaway processes (adjust as needed)
 # Use exec to replace the shell process and show live output
-exec claude -p --model sonnet --verbose --output-format stream-json --max-turns 50 --dangerously-skip-permissions "Please follow the comprehensive process outlined in the attached instruction file to systematically fix build, TypeScript, and linting issues. Work through Stage 1 (Assessment), Stage 2 (Resolution), and Stage 3 (Verification) as documented. Use subagents where appropriate to avoid context pollution. Focus on production code over test code. If you encounter complex/ambiguous decisions that need discussion, then skip them." < "$INSTRUCTION_FILE"
+exec claude -p --model sonnet --verbose --output-format stream-json --max-turns 30 --dangerously-skip-permissions "Please follow the comprehensive process outlined in the attached instruction file to systematically fix build, TypeScript, and linting issues. Work through Stage 1 (Assessment), Stage 2 (Resolution), and Stage 3 (Verification) as documented. Use subagents where appropriate to avoid context pollution. Focus on production code over test code. If you encounter complex/ambiguous decisions that need discussion, then skip them." < "$INSTRUCTION_FILE"
 
 # Option 2: Use specific --allowedTools with verbose output (FALLBACK - uncomment if Option 1 doesn't work)
 # Note: This approach has known reliability issues in non-interactive mode
