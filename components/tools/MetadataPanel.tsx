@@ -20,6 +20,7 @@ import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { calculateReadingTimeFromWordCount, formatReadingTime } from '@/lib/utils/reading-time-calculation'
 import { generateReadingTimeTooltip, type ReadingDifficultyData } from '@/lib/utils/enhanced-reading-time'
+import { MissingReadingDifficultyError } from '@/lib/utils/reading-time-calculation'
 
 // Helper function to format confidence for display
 function formatConfidence(confidence: string | number): string {
@@ -78,6 +79,7 @@ export function MetadataPanel({
   const [readingDifficulty, setReadingDifficulty] = useState<ReadingDifficultyData | null>(null)
   const [isLoadingDifficulty, setIsLoadingDifficulty] = useState(false)
   const [difficultyError, setDifficultyError] = useState<string | null>(null)
+  const [isGeneratingDifficulty, setIsGeneratingDifficulty] = useState(false)
   const [showAssessmentFactors, setShowAssessmentFactors] = useState(false)
 
   // Reading intent state
@@ -94,6 +96,64 @@ export function MetadataPanel({
     readingTime: 0,
     readingTimeResult: null as Awaited<ReturnType<typeof calculateReadingTimeFromWordCount>> | null
   })
+  
+  // ---------------------------------------------------------------------------
+  // On-demand reading-difficulty generation (defined early so it can be used)
+  // ---------------------------------------------------------------------------
+  const generateDifficultyAssessment = async (): Promise<void> => {
+    if (isGeneratingDifficulty) return
+    setIsGeneratingDifficulty(true)
+    setIsLoadingDifficulty(true)
+    setDifficultyError(null)
+
+    try {
+      const response = await fetch('/api/tools/metadata', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          action: 'execute', // maps to analyze-reading-difficulty
+          parameters: { documentId }
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Server responded ${response.status}`)
+      }
+
+      const result = await response.json()
+      // result should contain level, confidence, factors
+      const difficulty: ReadingDifficultyData = {
+        level: result.level,
+        confidence: result.confidence,
+        factors: result.factors ? Object.values(result.factors as any) : []
+      }
+
+      setReadingDifficulty(difficulty)
+
+      // Re-calculate reading time now that difficulty exists
+      if (wordCount) {
+        try {
+          const supabase = createClient()
+          const updatedResult = await calculateReadingTimeFromWordCount(wordCount, documentId, supabase)
+          setDocumentStats({
+            wordCount: updatedResult.wordCount,
+            readingTime: updatedResult.readingTimeMinutes,
+            readingTimeResult: updatedResult
+          })
+        } catch (calcError) {
+          console.error('Re-calculation failed:', calcError)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to generate reading difficulty:', err)
+      setDifficultyError('Reading difficulty generation failed. Please try again later.')
+    } finally {
+      setIsGeneratingDifficulty(false)
+      setIsLoadingDifficulty(false)
+    }
+  }
   
   useEffect(() => {
     const calculateStats = async () => {
@@ -118,13 +178,18 @@ export function MetadataPanel({
           readingTimeResult
         })
       } catch (error) {
-        console.error('Failed to calculate reading time in MetadataPanel:', error)
-        // Fallback: show database word_count with simple reading time calculation
-        setDocumentStats({
-          wordCount: wordCount,
-          readingTime: Math.ceil(wordCount / 238), // Simple fallback calculation
-          readingTimeResult: null
-        })
+        if (error instanceof MissingReadingDifficultyError) {
+          // Trigger server-side generation on demand and wait for completion before attempting further calculations
+          await generateDifficultyAssessment()
+        } else {
+          console.error('Failed to calculate reading time in MetadataPanel:', error)
+          // Show nothing instead of incorrect fallback
+          setDocumentStats({
+            wordCount,
+            readingTime: 0,
+            readingTimeResult: null
+          })
+        }
       }
     }
     
@@ -794,7 +859,7 @@ export function MetadataPanel({
                     <span className="text-xs font-medium text-slate-600 uppercase tracking-wider border-b border-dotted border-slate-400">Read Time</span>
                   </div>
                   <div className="text-xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
-                    {formatReadingTime(documentStats.readingTime)}
+                    {documentStats.readingTime > 0 ? formatReadingTime(documentStats.readingTime) : 'Pending…'}
                   </div>
                 </div>
               </TooltipOrPopover>
