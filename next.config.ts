@@ -40,6 +40,7 @@ const nextConfig: NextConfig = {
               "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://static.hotjar.com https://script.hotjar.com https://www.googletagmanager.com", // Next.js requires unsafe-eval and unsafe-inline in dev + Hotjar analytics + Google Analytics
               "style-src 'self' 'unsafe-inline' https://*.hotjar.com", // Tailwind and academic content require inline styles + Hotjar UI
               "img-src 'self' data: https: blob:", // Allow academic images from various sources (https: covers Hotjar CDN)
+              "media-src 'self' blob:", // Permit audio/video playback from blob URLs (voice-input debug autoplay)
               "font-src 'self' data: https://script.hotjar.com", // Hotjar fonts
               "connect-src 'self' blob: http://localhost:54341 http://127.0.0.1:54341 https://blsgjlrezruxcfdyrqpk.supabase.co https://api.anthropic.com https://generativelanguage.googleapis.com https://*.hotjar.com https://*.hotjar.io wss://*.hotjar.com https://*.google-analytics.com https://analytics.google.com wss: ws:", // Allow blob URLs for audio processing + Supabase local + production + AI APIs + Hotjar analytics + Google Analytics (wildcard for regional domains)
               "worker-src 'self' blob:", // Allow Web Workers and blob URLs required by media-encoder-host-broker

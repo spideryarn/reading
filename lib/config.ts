@@ -22,6 +22,13 @@ export const AI_CONFIG = {
   DEFAULT_MAX_TOKENS: parseInt(process.env.DEFAULT_MAX_TOKENS || '4096', 10),
 } as const
 
+// Add centralised debug feature flags – these are compile-time evaluated during the build
+// so they can safely be tree-shaken for production when set to false.
+export const DEBUG_FLAGS = {
+    // VOICE_INPUT: false,
+    VOICE_INPUT: true,
+} as const;
+
 
 
 

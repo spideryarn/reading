@@ -14,6 +14,8 @@ import { Microphone, MicrophoneSlash, CircleNotch } from '@phosphor-icons/react/
 import { cn } from '@/lib/utils';
 import { SpeechToTextInputProps, SpeechToTextResponse } from './types';
 import { useAuth } from '@/lib/context/auth-context';
+import { DEBUG_FLAGS } from '@/lib/config';
+import { createPortal } from 'react-dom';
 
 /**
  * Browser-specific guidance for microphone permissions
@@ -107,6 +109,17 @@ export function VoiceInputRecorder({
     isSecureContextAllowed;
 
   /**
+   * Debug flag – enables additional diagnostics when DEBUG_VOICE_INPUT=true.
+   * Keep this outside of state so it never changes at runtime (allows tree-shaking).
+   */
+  const DEBUG = DEBUG_FLAGS.VOICE_INPUT;
+
+  // Diagnostics state (only populated when DEBUG is true)
+  const [debugAudioUrl, setDebugAudioUrl] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<{ sizeKb: number; duration: number; mime: string } | null>(null);
+  const [debugRawWhisper, setDebugRawWhisper] = useState<string | null>(null);
+
+  /**
    * Handle errors with consistent logging and user feedback
    */
   const handleError = useCallback((errorMessage: string, context?: Record<string, unknown>) => {
@@ -127,6 +140,32 @@ export function VoiceInputRecorder({
       const response = await fetch(audioUrl);
       const blob = await response.blob();
       
+      if (DEBUG) {
+        // Compute simple diagnostics before uploading
+        const sizeKb = blob.size / 1024;
+
+        // Determine duration via a temporary Audio element
+        const getDuration = (b: Blob): Promise<number> => new Promise((resolve) => {
+          const url = URL.createObjectURL(b);
+          const audio = new Audio(url);
+          audio.addEventListener('loadedmetadata', () => {
+            // Sometimes the duration is NaN for silence; normalise to 0
+            resolve(isFinite(audio.duration) ? audio.duration : 0);
+            // Clean up object URL asap
+            URL.revokeObjectURL(url);
+          });
+          audio.addEventListener('error', () => {
+            resolve(0);
+            URL.revokeObjectURL(url);
+          });
+        });
+
+        const durationSec = await getDuration(blob);
+
+        setDebugInfo({ sizeKb, duration: durationSec, mime: blob.type });
+        setDebugAudioUrl(audioUrl);
+      }
+
       // Create form data for upload
       const formData = new FormData();
       formData.append('audio', blob, 'recording.webm');
@@ -155,10 +194,9 @@ export function VoiceInputRecorder({
 
       const trimmed = data.text.trim();
 
-      // TEMP DEBUG: output the raw and trimmed transcription for debugging purposes.
-      // Remove before production deployment.
-      console.debug('[VoiceInputRecorder] Whisper raw:', data.text);
-      console.debug('[VoiceInputRecorder] Whisper trimmed:', trimmed);
+      if (DEBUG) {
+        setDebugRawWhisper(data.text);
+      }
 
       if (trimmed.length === 0) {
         handleError('No speech detected. Please try again.', { errorType: 'emptyTranscription' });
@@ -379,7 +417,7 @@ export function VoiceInputRecorder({
       variant={error ? 'ghost-orange' : 'ghost'}
       size="icon"
       className={cn(
-        'h-[44px] w-[44px] rounded-xl transition-all duration-200',
+        'relative h-[44px] w-[44px] rounded-xl transition-all duration-200',
         'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
         isRecording && 'bg-red-50 hover:bg-red-100',
         error && 'hover:bg-orange-50',
@@ -405,6 +443,39 @@ export function VoiceInputRecorder({
         {isProcessing && 'Processing voice input'}
         {error && `Error: ${error}`}
       </span>
+
+      {/* ───────────────────────── DEBUG PANEL ───────────────────────── */}
+      {DEBUG && typeof window !== 'undefined' && createPortal(
+        <div className="fixed bottom-4 left-4 z-[1000] w-64 max-w-[280px] rounded-md border bg-white p-3 shadow-lg">
+          <div className="mb-1 text-[10px] font-semibold text-gray-700">VOICE-DEBUG</div>
+          {isRecording && (
+            <div className="text-[10px] text-gray-600">Recording…</div>
+          )}
+          {debugInfo && (
+            <div className="text-[10px] space-y-0.5 text-gray-600">
+              <div>Size: {debugInfo.sizeKb.toFixed(1)} KB</div>
+              <div>Duration: {debugInfo.duration.toFixed(2)} s</div>
+              <div>MIME: {debugInfo.mime || 'n/a'}</div>
+            </div>
+          )}
+          {debugRawWhisper && (
+            <div className="mt-1 max-h-24 overflow-auto rounded bg-gray-50 p-1 text-[10px] font-mono text-gray-800">
+              {debugRawWhisper}
+            </div>
+          )}
+          {debugAudioUrl && (
+            <audio
+              key={debugAudioUrl} // remount on every new recording so autoplay works
+              src={debugAudioUrl}
+              controls
+              autoPlay
+              className="mt-2 w-full"
+            />
+          )}
+        </div>,
+        document.body,
+      )}
+      {/* ─────────────────────────────────────────────────────────────── */}
     </Button>
   );
 }
