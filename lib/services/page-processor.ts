@@ -513,7 +513,7 @@ export async function processPagesBatch(
   })
   
   // Execute with concurrency limit using Promise.all with chunks
-  const chunks: Array<Promise<PageProcessingResult>[]> = []
+  const chunks: Array<Promise<PageProcessingResult[]>> = []
   for (let i = 0; i < processingPromises.length; i += config.concurrencyLimit) {
     const chunk = processingPromises.slice(i, i + config.concurrencyLimit)
     chunks.push(Promise.all(chunk))

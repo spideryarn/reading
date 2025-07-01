@@ -184,6 +184,10 @@ export async function generateBatchCaptions(
     // Process images sequentially to avoid overwhelming the AI service
     for (let i = 0; i < validatedInput.images.length; i++) {
       const imageInput = validatedInput.images[i]
+      if (!imageInput) {
+        throw new ImageCaptionError(`Image input at index ${i} is undefined`)
+      }
+      
       const imageStartTime = Date.now()
       
       try {
