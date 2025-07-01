@@ -69,48 +69,51 @@ Success criteria:
 
 **Parallel execution opportunity**: The value analysis and proof-of-concept can be run concurrently with separate subagents, both referencing this planning doc and the current test failure patterns.
 
-### Stage: Update Testing Guidelines *(Sequential)*
-- [ ] Update `docs/reference/TESTING_AI_FEATURE_TEST_ANALYSIS.md` with agreed approach
-- [ ] Create new section in CLAUDE.md about test modification policy
-- [ ] Update `docs/reference/TESTING_OVERVIEW.md` with new testing hierarchy
+### Stage: Update Testing Guidelines ✅ COMPLETED (2025-07-01)
+- [x] Update `docs/reference/TESTING_AI_FEATURE_TEST_ANALYSIS.md` with agreed approach
+- [x] Create new section in CLAUDE.md about test modification policy
+- [x] Update `docs/reference/TESTING_OVERVIEW.md` with new testing hierarchy
 
-**Sequential requirement**: These documentation updates should be done sequentially to ensure consistency across files and prevent conflicting updates.
+**Results Summary**: All testing documentation updated to reflect agreed test reform approach, including test modification policy for AI agents and new testing hierarchy prioritizing E2E tests.
 
-### Stage: Mock Elimination Phase 1 - Database Mocks *(Parallel candidate)*
-- [ ] Identify all tests using database mocks
-- [ ] Convert to use RLSTestDatabase with real database calls
+### Stage: Mock Elimination Phase 1 - Database Mocks *(Analysis Complete)*
+- [x] Identify all tests using database mocks
+- [ ] Convert to use RLSTestDatabase with real database calls (Phase 1A in progress)
 - [ ] Remove obsolete database mock files
 - [ ] Run tests to verify no regressions
 
-**Parallel execution opportunity**: Multiple subagents can work on different test files simultaneously. Each subagent should:
-- Reference this planning doc for context and approach
-- Use `docs/reference/TESTING_DATABASE.md` for RLSTestDatabase patterns
-- Focus on specific test directories to avoid conflicts
-- Report back which files they modified for coordination
+**Analysis Results**: 26 test files identified using database mocks. Detailed conversion plan created with priorities:
+- Priority 1 (High): Core database services (5 files)
+- Priority 2 (Medium): Service layer tests (8 files) 
+- Priority 3 (Lower): API routes & tools (13 files)
+Conversion plan includes before/after code examples and implementation strategy.
 
-### Stage: Mock Elimination Phase 2 - Service Mocks *(Parallel candidate)*
-- [ ] Map all service-level mocks in the codebase
+### Stage: Mock Elimination Phase 2 - Service Mocks *(Analysis Complete)*
+- [x] Map all service-level mocks in the codebase
 - [ ] Create test doubles at service boundaries (not implementation level)
 - [ ] Convert tests to use higher-level mocks or real services
 - [ ] Document remaining essential mocks and why they're needed
 
-**Parallel execution opportunity**: After mapping is complete, conversion work can be parallelized by service area. Provide subagents with the mapping results and this planning doc for guidance.
+**Analysis Results**: Service mocks categorized by priority:
+- HIGH: LLM/AI service mocks (6 files) - Convert to real API calls with test-tier models
+- MEDIUM: Image processing & storage (5 files) - Create service boundary test doubles
+- LOW: Validation & internal services (4 files) - Keep as essential mocks
+Estimated conversion effort: 4-6 days total with $10-50/month LLM test costs.
 
-### Stage: E2E Test Suite Development *(Parallel candidate)*
-- [ ] Identify top 10 critical user journeys
+### Stage: E2E Test Suite Development *(Analysis Complete)*
+- [x] Identify top 10 critical user journeys
 - [ ] Write E2E tests for each journey using Playwright
 - [ ] Add "page loads successfully" smoke tests for all routes
 - [ ] Create E2E test running guide for AI agents
 
-**Parallel execution opportunity**: After journey identification, multiple subagents can write E2E tests for different user journeys simultaneously. Each subagent should:
-- Reference `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
-- Use headless and isolated mode for Playwright
-- Ensure dev server is running before starting tests
-- Follow the authentication patterns from existing E2E tests
+**Analysis Results**: Comprehensive plan created for optimizing from 14 existing tests to 7 critical tests:
+- Core Journey Tests (5): Anonymous access, authenticated onboarding, document library, AI features, mobile experience
+- Supporting Tests (2): Route smoke tests, error recovery
+Plan identifies consolidation opportunities and critical gaps (anonymous users, mobile responsive, document library management).
 
-### Stage: Test Culling *(Parallel candidate)*
+### Stage: Test Culling *(Analysis Complete)*
 - [ ] Fix linter failures (delegated to another agent - ignore for now)
-- [ ] Use subagent to identify tests that:
+- [x] Use subagent to identify tests that:
   - Test trivial transformations
   - Break on every refactor
   - Mock everything
@@ -118,9 +121,13 @@ Success criteria:
 - [ ] Create list for user review
 - [ ] Delete approved tests
 - [ ] Update test coverage metrics to reflect new approach
-- [ ] Aim to end up with <20% lines of code as tests (use `./scripts/count_lines.sh --exclude-tests` methodology)
+- [x] Baseline measurement: Current 27.0% test-to-code ratio (22,069 test lines / 59,753 source lines)
 
-**Parallel execution opportunity**: Different subagents can analyze different test directories for culling candidates. Each should reference this planning doc and provide detailed rationale for deletion recommendations.
+**Analysis Results**: Comprehensive culling plan created:
+- Current baseline: 27.0% test-to-code ratio (verified by script)
+- Target: <20% (need to remove 7,131 test lines, 32.3% reduction)
+- Phased approach: Phase 1 (1,000 lines), Phase 2 (3,000 lines), Phase 3 (3,000+ lines)
+- 84 test files analyzed with specific removal recommendations and risk assessments
 
 ### Stage: LLM Testing Patterns *(Parallel candidate)*
 - [ ] Implement snapshot testing for AI outputs
