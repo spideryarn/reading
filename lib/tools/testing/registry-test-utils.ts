@@ -8,8 +8,10 @@
  */
 
 import type { Tool, ToolCategory, TabValue } from '../types'
+import type { ComponentType } from 'react'
+import type { IconProps } from '@phosphor-icons/react'
 import { registerTool, resetRegistryForTests } from '../registry'
-import { BookOpen, MagnifyingGlass, Robot, ChatCircle, type Icon } from '@phosphor-icons/react/dist/ssr'
+import { BookOpen, MagnifyingGlass, Robot, ChatCircle } from '@phosphor-icons/react/dist/ssr'
 
 /**
  * Reset registry before each test
@@ -62,7 +64,7 @@ export function createTestTools(count: number = 3): Tool[] {
   
   return Array.from({ length: count }, (_, index) => {
     const category = categories[index % categories.length] as ToolCategory
-    const icon = icons[index % icons.length] as Icon
+    const icon = icons[index % icons.length] as ComponentType<IconProps>
     
     return createTestTool({
       id: `test-tool-${index + 1}`,
