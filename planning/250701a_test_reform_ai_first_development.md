@@ -29,7 +29,7 @@ Success criteria:
 - $20/month LLM cost budget is sufficient for all testing
 - Test runtime under 5 minutes for common development workflows
 - Very few mocks remaining (maybe a few of the most expensive LLM calls)
-- Less than 20% of lines of code as tests - run `./scripts/count_lines.sh --exclude-tests` with a subagent to count
+- Less than 20% of lines of code as tests - run `./scripts/count_lines.sh --exclude-tests` with a subagent to count. This script uses `cloc` to count source code lines, excluding tests by file patterns (`.*\.(test|spec)\.(ts|tsx|js|jsx)$|jest\.setup\.js$|jest\.config\.js$`) and directories (`__tests__|tests`). The final percentage is calculated as: `test_lines / (source_lines + test_lines) * 100`
 - No linter failures
 
 
@@ -58,30 +58,48 @@ Success criteria:
 - [ ] Use subagent to identify which test files provide highest value vs maintenance cost
 - [ ] Create proof-of-concept comparing testing approaches for one feature
 
-### Stage: Update Testing Guidelines
+**Parallel execution opportunity**: The value analysis and proof-of-concept can be run concurrently with separate subagents, both referencing this planning doc and the current test failure patterns.
+
+### Stage: Update Testing Guidelines *(Sequential)*
 - [ ] Update `docs/reference/TESTING_AI_FEATURE_TEST_ANALYSIS.md` with agreed approach
 - [ ] Create new section in CLAUDE.md about test modification policy
 - [ ] Update `docs/reference/TESTING_OVERVIEW.md` with new testing hierarchy
 
-### Stage: Mock Elimination Phase 1 - Database Mocks
+**Sequential requirement**: These documentation updates should be done sequentially to ensure consistency across files and prevent conflicting updates.
+
+### Stage: Mock Elimination Phase 1 - Database Mocks *(Parallel candidate)*
 - [ ] Identify all tests using database mocks
 - [ ] Convert to use RLSTestDatabase with real database calls
 - [ ] Remove obsolete database mock files
 - [ ] Run tests to verify no regressions
 
-### Stage: Mock Elimination Phase 2 - Service Mocks
+**Parallel execution opportunity**: Multiple subagents can work on different test files simultaneously. Each subagent should:
+- Reference this planning doc for context and approach
+- Use `docs/reference/TESTING_DATABASE.md` for RLSTestDatabase patterns
+- Focus on specific test directories to avoid conflicts
+- Report back which files they modified for coordination
+
+### Stage: Mock Elimination Phase 2 - Service Mocks *(Parallel candidate)*
 - [ ] Map all service-level mocks in the codebase
 - [ ] Create test doubles at service boundaries (not implementation level)
 - [ ] Convert tests to use higher-level mocks or real services
 - [ ] Document remaining essential mocks and why they're needed
 
-### Stage: E2E Test Suite Development
+**Parallel execution opportunity**: After mapping is complete, conversion work can be parallelized by service area. Provide subagents with the mapping results and this planning doc for guidance.
+
+### Stage: E2E Test Suite Development *(Parallel candidate)*
 - [ ] Identify top 10 critical user journeys
 - [ ] Write E2E tests for each journey using Playwright
 - [ ] Add "page loads successfully" smoke tests for all routes
 - [ ] Create E2E test running guide for AI agents
 
-### Stage: Test Culling
+**Parallel execution opportunity**: After journey identification, multiple subagents can write E2E tests for different user journeys simultaneously. Each subagent should:
+- Reference `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
+- Use headless and isolated mode for Playwright
+- Ensure dev server is running before starting tests
+- Follow the authentication patterns from existing E2E tests
+
+### Stage: Test Culling *(Parallel candidate)*
 - [ ] Fix linter failures
 - [ ] Use subagent to identify tests that:
   - Test trivial transformations
@@ -91,25 +109,33 @@ Success criteria:
 - [ ] Create list for user review
 - [ ] Delete approved tests
 - [ ] Update test coverage metrics to reflect new approach
-- [ ] Aim to end up with <20% lines of code as tests
+- [ ] Aim to end up with <20% lines of code as tests (use `./scripts/count_lines.sh --exclude-tests` methodology)
 
-### Stage: LLM Testing Patterns
+**Parallel execution opportunity**: Different subagents can analyze different test directories for culling candidates. Each should reference this planning doc and provide detailed rationale for deletion recommendations.
+
+### Stage: LLM Testing Patterns *(Parallel candidate)*
 - [ ] Implement snapshot testing for AI outputs
 - [ ] Create property-based tests for AI feature invariants
 - [ ] Set up response caching for expensive LLM calls in tests
 - [ ] Document patterns in testing guides
 - [ ] Determine which are probably the most expensive tests (in terms of LLM outputs), and use mocks only for those
 
-### Stage: CI/CD Integration
+**Parallel execution opportunity**: Different AI testing patterns can be implemented concurrently by separate subagents, each focusing on specific AI features (summarize, glossary, headings, etc.).
+
+### Stage: CI/CD Integration *(Sequential)*
 - [ ] Create fast smoke test suite (< 1 minute)
 - [ ] Set up parallel test execution for E2E tests (make sure we always run E2E tests with Playwright in *headless* and *isolated* mode)
 - [ ] Configure test result reporting with failure patterns
 
-### Stage: Final Cleanup and Documentation
+**Sequential requirement**: CI/CD integration needs to happen after test restructuring is complete to avoid conflicts.
+
+### Stage: Final Cleanup and Documentation *(Sequential)*
 - [ ] Run final health check: `npm run check:health --rigorous`
 - [ ] Update all testing documentation with new approach
 - [ ] Create migration guide for remaining old-style tests
 - [ ] Move planning doc to `planning/finished/`
+
+**Sequential requirement**: Final cleanup and documentation must happen last to capture the complete transformation.
 
 ## Appendix
 
