@@ -252,7 +252,7 @@ export type Database = {
       }
       document_enhancements: {
         Row: {
-          ai_call_id: string | null
+          ai_call_id: string
           content: Json
           created_at: string | null
           document_id: string
@@ -263,7 +263,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          ai_call_id?: string | null
+          ai_call_id: string
           content: Json
           created_at?: string | null
           document_id: string
@@ -274,7 +274,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          ai_call_id?: string | null
+          ai_call_id?: string
           content?: Json
           created_at?: string | null
           document_id?: string
