@@ -20,7 +20,6 @@ import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { calculateReadingTimeFromWordCount, formatReadingTime, MissingReadingDifficultyError } from '@/lib/utils/reading-time-calculation'
 import { generateReadingTimeTooltip, type ReadingDifficultyData } from '@/lib/utils/enhanced-reading-time'
-import { MissingReadingDifficultyError } from '@/lib/utils/reading-time-calculation'
 import { BOOK_PAGE_CONFIG } from '@/lib/config'
 
 // Helper function to format confidence for display
