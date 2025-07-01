@@ -70,18 +70,19 @@ export function useMultiSummary(
   // Fetch cached summaries
   const fetchCachedSummaries = useCallback(async () => {
     try {
-      const response = await fetch(`/api/tools/summary?documentId=${encodeURIComponent(documentId)}`)
+      const response = await fetch(`/api/tools/summary/handlers/summary?documentId=${encodeURIComponent(documentId)}`)
       if (!response.ok) {
-        if (response.status !== 404) {
-          console.error('Failed to fetch cached summaries:', response.status)
-        }
+        // Silently handle 404 or other errors - cached summaries are optional
         return null
       }
       
       const data = await response.json()
       return data.cached ? data : null
     } catch (err) {
-      console.error('Error fetching cached summaries:', err)
+      // Silently handle network errors - cached summaries are nice-to-have
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('Cached summaries unavailable:', err instanceof Error ? err.message : 'Unknown error')
+      }
       return null
     }
   }, [documentId])
