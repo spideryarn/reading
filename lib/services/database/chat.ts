@@ -6,7 +6,8 @@ import type {
   ChatThreadInsert,
   ChatMessage,
   ChatMessageInsert,
-  MessageRole
+  MessageRole,
+  Json
 } from '@/lib/types/database'
 import type { JsonObject } from '@/lib/types/json'
 
@@ -38,7 +39,7 @@ export class ChatService {
       model_string: options.modelString,  // Store model string directly
       title: options.title || 'New Chat',
       created_by: options.userId || null,
-      extra: options.extra || {},
+      extra: (options.extra || {}) as Json,
     }
 
     const { data, error } = await this.supabase
@@ -92,9 +93,13 @@ export class ChatService {
     id: string,
     updates: { title?: string; extra?: JsonObject }
   ): Promise<ChatThread> {
+    const updateData = { ...updates }
+    if (updateData.extra) {
+      updateData.extra = updateData.extra as Json
+    }
     const { data, error } = await this.supabase
       .from('chat_threads')
-      .update(updates)
+      .update(updateData)
       .eq('id', id)
       .select()
       .single()
@@ -133,9 +138,12 @@ export class ChatService {
   async addMessage(options: CreateMessageOptions): Promise<ChatMessage> {
     // Validate message content as a safety net
     // (Primary validation should happen at API/client layers)
-    const validation = validateMessage(options.role, options.content)
-    if (!validation.valid) {
-      throw new Error(`Invalid message content: ${validation.error}`)
+    let validation: any = null
+    if (options.role !== 'system') {
+      validation = validateMessage(options.role as 'user' | 'assistant', options.content)
+      if (!validation.valid) {
+        throw new Error(`Invalid message content: ${validation.error}`)
+      }
     }
     
     // Get current max sequence number
@@ -158,9 +166,9 @@ export class ChatService {
       thread_id: options.threadId,
       sequence_number: nextSequence,
       role: options.role,
-      content: validation.trimmedContent || options.content,
+      content: validation?.trimmedContent || options.content,
       ai_call_id: options.aiCallId || null,
-      extra: options.extra || {},
+      extra: (options.extra || {}) as Json,
     }
 
     const { data, error } = await this.supabase

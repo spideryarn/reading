@@ -3,7 +3,8 @@ import type {
   Database, 
   DocumentEnhancement, 
   DocumentEnhancementInsert,
-  EnhancementType 
+  EnhancementType,
+  Json
 } from '../../types/database'
 import type { JsonObject } from '../../types/json'
 
@@ -28,8 +29,8 @@ export class EnhancementService {
       ai_call_id: options.aiCallId,
       type: options.type,
       subtype: options.subtype,
-      content: options.content,
-      extra: options.extra || {},
+      content: options.content as Json,
+      extra: (options.extra || {}) as Json,
     }
 
     const { data, error } = await this.supabase
