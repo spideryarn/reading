@@ -461,7 +461,7 @@ function ResizableDocumentLayoutInner({
           defaultSize={100 - UI_CONFIG.DEFAULT_LEFT_PANE_WIDTH_PERCENT}
           className="h-full relative"
         >
-          <div suppressHydrationWarning className={`h-full ${isLeftPaneCollapsed ? 'pl-0' : 'pl-16'} ${isMobile ? 'mobile-compact mobile-heading-size mobile-body-text' : ''} ${isLandscape ? 'landscape-compact landscape-spacing' : ''}`}>
+          <div suppressHydrationWarning className={`h-full ${isLeftPaneCollapsed ? 'pl-0' : 'pl-4 sm:pl-6 md:pl-8 lg:pl-16'} ${isMobile ? 'mobile-compact mobile-heading-size mobile-body-text' : ''} ${isLandscape ? 'landscape-compact landscape-spacing' : ''}`}>
             <SimpleDocumentViewer
               elements={elements}
               {...(selectedElement !== undefined ? { selectedElement } : {})}

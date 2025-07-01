@@ -595,59 +595,6 @@ export const Constants = {
   },
 } as const
 
-// Interim type definitions for missing database enums
-// These resolve TypeScript errors until proper database enums are created
-export type PromptType = 
-  | 'chat'
-  | 'glossary' 
-  | 'headings'
-  | 'summarise'
-  | 'pdf-to-html'
-  | 'url-to-html'
-  | 'page_to_html'
-  | 'semantic-search'
-  | 'reading_difficulty'
-  | 'tweet-thread'
-
-export type CallStatus =
-  | 'pending'
-  | 'completed' 
-  | 'failed'
-
-export type MessageRole =
-  | 'user'
-  | 'assistant'
-  | 'system'
-
-export type EnhancementType =
-  | 'glossary'
-  | 'summary'
-  | 'headings'
-  | 'semantic-search'
-  | 'reading_difficulty'
-  | 'tweet-thread'
-
-// Convenient type aliases for database table types
-export type AiCall = Tables<'ai_calls'>
-export type AiCallInsert = TablesInsert<'ai_calls'>
-export type AiCallUpdate = TablesUpdate<'ai_calls'>
-
-export type ChatMessage = Tables<'chat_messages'>
-export type ChatMessageInsert = TablesInsert<'chat_messages'>
-export type ChatMessageUpdate = TablesUpdate<'chat_messages'>
-
-export type ChatThread = Tables<'chat_threads'>
-export type ChatThreadInsert = TablesInsert<'chat_threads'>
-export type ChatThreadUpdate = TablesUpdate<'chat_threads'>
-
-export type Document = Tables<'documents'>
-export type DocumentInsert = TablesInsert<'documents'>
-export type DocumentUpdate = TablesUpdate<'documents'>
-
-export type DocumentEnhancement = Tables<'document_enhancements'>
-export type DocumentEnhancementInsert = TablesInsert<'document_enhancements'>
-export type DocumentEnhancementUpdate = TablesUpdate<'document_enhancements'>
-
 export type Profile = Tables<'profiles'>
 export type ProfileInsert = TablesInsert<'profiles'>
 export type ProfileUpdate = TablesUpdate<'profiles'>
