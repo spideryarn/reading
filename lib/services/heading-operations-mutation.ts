@@ -36,6 +36,7 @@ export function headingOperationsToMutation(options: {
             tag_name: op.content.tag_name,
             content: op.content.content,
             attributes: {
+              'class': 'syr-ai-generated',
               'data-ai-generated': 'true'
             }
           }
@@ -57,7 +58,7 @@ export function headingOperationsToMutation(options: {
             tag_name: op.content.tag_name,
             content: op.content.content,
             attributes: {
-              'data-ai-generated': 'true'
+              'data-ai-modified': 'true'
             }
           }
         }
