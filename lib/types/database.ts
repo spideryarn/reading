@@ -3,7 +3,6 @@ export type Json =
   | number
   | boolean
   | null
-  | undefined
   | { [key: string]: Json | undefined }
   | Json[]
 
@@ -652,4 +651,3 @@ export type DocumentEnhancementUpdate = TablesUpdate<'document_enhancements'>
 export type Profile = Tables<'profiles'>
 export type ProfileInsert = TablesInsert<'profiles'>
 export type ProfileUpdate = TablesUpdate<'profiles'>
-
