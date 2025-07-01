@@ -18,7 +18,7 @@ import { sanitizeDocumentTitle, validateDocumentTitle, MAX_TITLE_LENGTH } from '
 import { DeleteDocumentButton } from '@/components/delete-document-button'
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 import { EnhancementService } from '@/lib/services/database/enhancements'
-import { calculateReadingTimeFromWordCount, formatReadingTime } from '@/lib/utils/reading-time-calculation'
+import { calculateReadingTimeFromWordCount, formatReadingTime, MissingReadingDifficultyError } from '@/lib/utils/reading-time-calculation'
 import { generateReadingTimeTooltip, type ReadingDifficultyData } from '@/lib/utils/enhanced-reading-time'
 import { MissingReadingDifficultyError } from '@/lib/utils/reading-time-calculation'
 
@@ -96,6 +96,9 @@ export function MetadataPanel({
     readingTime: 0,
     readingTimeResult: null as Awaited<ReturnType<typeof calculateReadingTimeFromWordCount>> | null
   })
+  
+  // Reading-time calculation error state
+  const [readingTimeError, setReadingTimeError] = useState<string | null>(null)
   
   // ---------------------------------------------------------------------------
   // On-demand reading-difficulty generation (defined early so it can be used)
@@ -179,17 +182,20 @@ export function MetadataPanel({
         })
       } catch (error) {
         if (error instanceof MissingReadingDifficultyError) {
-          // Trigger server-side generation on demand and wait for completion before attempting further calculations
-          await generateDifficultyAssessment()
+          // Initiate generation in the background but keep UI in loading state
+          generateDifficultyAssessment().catch(console.error)
+          setReadingTimeError(null)
         } else {
           console.error('Failed to calculate reading time in MetadataPanel:', error)
-          // Show nothing instead of incorrect fallback
-          setDocumentStats({
-            wordCount,
-            readingTime: 0,
-            readingTimeResult: null
-          })
+          setReadingTimeError('Failed to calculate reading time')
         }
+
+        // Maintain zero values so UI shows spinner or error icon
+        setDocumentStats({
+          wordCount,
+          readingTime: 0,
+          readingTimeResult: null
+        })
       }
     }
     
@@ -831,17 +837,23 @@ export function MetadataPanel({
               
               <TooltipOrPopover
                 content={
-                  documentStats.readingTimeResult?.enhancedReadingTime ? (
+                  readingTimeError ? (
+                    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                      <div className="flex items-center gap-2 text-red-600 text-xs font-medium">
+                        <XCircle size={14} weight="bold" className="text-red-500" />
+                        <span>{readingTimeError}</span>
+                      </div>
+                    </div>
+                  ) : documentStats.readingTimeResult?.enhancedReadingTime ? (
                     <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 max-w-sm">
                       <pre className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap font-mono">
                         {generateReadingTimeTooltip(documentStats.readingTimeResult.enhancedReadingTime)}
                       </pre>
                     </div>
                   ) : (
-                    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-                      <div className="text-xs text-red-600 leading-relaxed font-medium">
-                        ❌ Reading time calculation failed: Enhanced reading time data missing from documentStats.readingTimeResult
-                      </div>
+                    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs text-amber-600 flex items-center gap-2">
+                      <CircleNotch size={14} weight="bold" className="animate-spin" />
+                      <span>Calculating reading time…</span>
                     </div>
                   )
                 }
@@ -858,8 +870,22 @@ export function MetadataPanel({
                     </div>
                     <span className="text-xs font-medium text-slate-600 uppercase tracking-wider border-b border-dotted border-slate-400">Read Time</span>
                   </div>
-                  <div className="text-xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
-                    {documentStats.readingTime > 0 ? formatReadingTime(documentStats.readingTime) : 'Pending…'}
+                  <div className="text-xl font-bold transition-colors">
+                    {readingTimeError ? (
+                      <div className="flex items-center gap-1 text-red-600">
+                        <XCircle size={16} weight="bold" className="text-red-500" />
+                        <span>Error</span>
+                      </div>
+                    ) : documentStats.readingTime > 0 ? (
+                      <span className="text-slate-900 group-hover:text-emerald-700">
+                        {formatReadingTime(documentStats.readingTime)}
+                      </span>
+                    ) : (
+                      <div className="flex items-center gap-1 text-amber-600">
+                        <CircleNotch size={16} weight="bold" className="animate-spin" />
+                        <span>Calculating…</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </TooltipOrPopover>
@@ -1082,7 +1108,8 @@ export function MetadataPanel({
                 </>
               ) : (
                 <div className="flex items-center justify-center py-8">
-                  <span className="text-sm text-slate-600">No difficulty assessment available</span>
+                  <XCircle size={20} weight="bold" className="text-red-500" />
+                  <span className="ml-3 text-sm text-red-600">Difficulty assessment unavailable</span>
                 </div>
               )}
             </div>

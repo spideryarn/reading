@@ -136,18 +136,21 @@ export function HighlightManagement({
   // Fetch query history from API
   const fetchQueryHistory = useCallback(async () => {
     try {
-      const response = await fetch(`/api/tools/search?documentId=${encodeURIComponent(documentId)}`)
-      const data = await response.json()
-      
+      const response = await fetch(`/api/tools/search/handlers/search?documentId=${encodeURIComponent(documentId)}`)
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch query history')
+        // Silently handle 404 or other errors - query history is optional
+        return
       }
       
+      const data = await response.json()
       setQueryHistory(data.queries || [])
       console.log(`[HighlightHistory] Fetched ${data.queries?.length || 0} historical queries`)
     } catch (error) {
-      console.error('[HighlightHistory] Failed to fetch query history:', error)
-      // Don't show error to user - query history is nice-to-have
+      // Silently handle network errors - query history is nice-to-have
+      // Only log in development
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('[HighlightHistory] Query history unavailable:', error instanceof Error ? error.message : 'Unknown error')
+      }
       setQueryHistory([])
     }
   }, [documentId])
