@@ -4,8 +4,8 @@ import type {
   DocumentEnhancement, 
   DocumentEnhancementInsert,
   EnhancementType 
-} from '@/lib/types/database'
-import type { JsonObject } from '@/lib/types/json'
+} from '../../types/database'
+import type { JsonObject } from '../../types/json'
 
 export interface CreateEnhancementOptions {
   documentId: string

@@ -375,14 +375,16 @@ export class AiCallService {
     // Based on Vercel AI SDK structure
     const usage = response.usage || {}
     const latency = response.experimental_providerMetadata?.latency || 
-                    (response.finishTimestamp - response.startTimestamp) || 
+                    (response.finishTimestamp && response.startTimestamp 
+                      ? response.finishTimestamp - response.startTimestamp 
+                      : 0) || 
                     0
 
     return {
       promptTokens: usage.promptTokens || 0,
       completionTokens: usage.completionTokens || 0,
       totalTokens: usage.totalTokens || 0,
-      reasoningTokens: usage.reasoningTokens,
+      reasoningTokens: (usage as any).reasoningTokens,
       latencyMs: latency,
     }
   }

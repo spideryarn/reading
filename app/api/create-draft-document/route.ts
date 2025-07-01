@@ -3,7 +3,7 @@ import { requireAuth } from '@/lib/auth/server-auth'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { DocumentService } from '@/lib/services/database/documents'
-import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
+import { generateCorrelationId } from '@/lib/services/logger'
 
 const DraftSchema = z.object({
   documentId: z.string().uuid(),
@@ -13,8 +13,8 @@ const DraftSchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
-  const correlationId = generateCorrelationId()
-  const logger = createRequestLogger('/api/create-draft-document', correlationId)
+  // const _correlationId = generateCorrelationId() // Currently unused but needed for future logging
+  // const _logger = createRequestLogger('/api/create-draft-document', correlationId)
   try {
     const user = await requireAuth()
     const body = await request.json()

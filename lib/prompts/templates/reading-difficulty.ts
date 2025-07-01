@@ -21,7 +21,7 @@ export const readingDifficultyPrompt = loadPromptTemplateFromCaller(
   readingDifficultySchema,
   {
     // Use balanced model for accuracy and reliability
-    model: 'anthropic-balanced',
+    modelString: 'anthropic-balanced',
     maxTokens: 500, // Concise output expected
     temperature: 0.1, // Low temperature for consistent classification
   }

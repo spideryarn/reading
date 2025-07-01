@@ -114,7 +114,7 @@ async function executePromptInternal<T extends z.ZodSchema>(
       promptTokens: result.usage?.promptTokens || 0,
       completionTokens: result.usage?.completionTokens || 0,
       totalTokens: result.usage?.totalTokens || 0,
-      reasoningTokens: result.usage?.reasoningTokens
+      reasoningTokens: (result.usage as any)?.reasoningTokens
     },
     finishReason: result.finishReason || 'unknown'
   }
@@ -279,7 +279,7 @@ async function executeMultimodalPromptInternal<T extends z.ZodSchema>(
       promptTokens: result.usage?.promptTokens || 0,
       completionTokens: result.usage?.completionTokens || 0,
       totalTokens: result.usage?.totalTokens || 0,
-      reasoningTokens: result.usage?.reasoningTokens
+      reasoningTokens: (result.usage as any)?.reasoningTokens
     },
     finishReason: result.finishReason || 'unknown'
   }

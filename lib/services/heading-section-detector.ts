@@ -30,7 +30,7 @@ export function getHeadingSectionElements(
     const element = allElements[i]
     
     // Skip elements before this heading (including the heading itself)
-    if (element.position <= headingPosition) continue
+    if (!element || element.position <= headingPosition) continue
     
     // Stop at next heading of equal or higher level
     if (element.tag_name.match(/^h[1-6]$/i)) {

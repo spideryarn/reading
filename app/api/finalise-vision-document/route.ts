@@ -147,9 +147,8 @@ export async function POST(request: NextRequest) {
       const invalidImages = imgTags.filter(tag => {
         const srcMatch = tag.match(/src="([^"]*)"/)
         if (!srcMatch) return true
-        // srcMatch is defined here, assert non-null for TypeScript
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const src = srcMatch[1]!
+        // srcMatch is defined here - we've already checked it's not null
+        const src = srcMatch[1] as string
         // Check if it's a valid Supabase Storage URL for this document
         return !src.includes('/storage/v1/object/public/') || !src.includes(`/${documentId}/assets/`)
       })
@@ -271,7 +270,7 @@ export async function POST(request: NextRequest) {
       step: 'shared-pipeline'
     }, 'Processing through shared document pipeline')
     
-    const { document, storageResult } = await processHtmlToDocument(
+    const { document } = await processHtmlToDocument(
       html,
       {
         title,

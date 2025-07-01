@@ -345,7 +345,7 @@ export async function POST(
     if (requestedAction !== 'get' && requestedAction !== 'list') {
       try {
         await requireAuth({ allowBearer: true, request })
-      } catch (error) {
+      } catch (_error) {
         return createErrorResponse(
           {
             status: 401,
@@ -475,7 +475,7 @@ export async function DELETE(
     // DELETE operations always require authentication
     try {
       await requireAuth({ allowBearer: true, request })
-    } catch (error) {
+    } catch (_error) {
       return createErrorResponse(
         {
           status: 401,

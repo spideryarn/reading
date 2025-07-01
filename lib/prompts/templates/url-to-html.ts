@@ -18,7 +18,7 @@ export function createUrlToHtmlPrompt(provider: 'claude' | 'gemini' = 'claude') 
     'url-to-html.njk',
     urlToHtmlPromptInputSchema,
     {
-      model: modelString,
+      modelString: modelString,
       temperature: 0, // Deterministic for content extraction
       maxTokens: 64000, // High limit for complex webpages and long content
     }

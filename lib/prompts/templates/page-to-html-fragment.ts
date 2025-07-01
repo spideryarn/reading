@@ -25,7 +25,7 @@ export function createPageToHtmlFragmentPrompt(provider: 'claude' | 'gemini' = '
     'page-to-html-fragment.njk',
     pageToHtmlFragmentPromptInputSchema,
     {
-      model: modelString,
+      modelString: modelString,
       temperature: 0, // Deterministic for academic content conversion
       maxTokens: 16000, // Moderate limit for individual page processing (~8K tokens as specified)
     }

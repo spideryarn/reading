@@ -85,7 +85,7 @@ export function createFinalDocumentRefinementPrompt() {
     'final-document-refinement.njk',
     finalDocumentRefinementInputSchema,
     {
-      model: 'anthropic:claude-sonnet-4:20250514', // Use Claude Sonnet 4 for highest quality
+      modelString: 'anthropic:claude-sonnet-4:20250514', // Use Claude Sonnet 4 for highest quality
       temperature: 0.1, // Low temperature for consistent, focused editing
       maxTokens: 64000, // High limit for complex documents and detailed edit operations
     }

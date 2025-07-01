@@ -25,6 +25,7 @@ const SinglePageUploadSchema = z.object({
 })
 
 // Response schema for single page processing
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const SinglePageVisionResponse = z.object({
   pageNumber: z.number().describe('Page number processed'),
   pageHtml: z.string().describe('HTML fragment with rewritten image URLs'),
@@ -270,7 +271,7 @@ export async function POST(request: NextRequest) {
       
       // Generate filename using the same logic as Phase 1
       let baseFilename: string
-      let source: 'caption' | 'altText' | 'deterministic'
+      // let source: 'caption' | 'altText' | 'deterministic' // Currently unused but could be used for debugging
       
       if (imageData.caption) {
         // Use AI-generated caption
@@ -278,19 +279,19 @@ export async function POST(request: NextRequest) {
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/^-+|-+$/g, '')
           .substring(0, 50)
-        source = 'caption'
+        _source = 'caption'
       } else if (imageData.altText) {
         // Fallback to alt text
         baseFilename = imageData.altText.toLowerCase()
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/^-+|-+$/g, '')
           .substring(0, 50)
-        source = 'altText'
+        _source = 'altText'
       } else {
         // Final fallback: deterministic ID based on page + bbox
         const bboxString = `${imageData.bbox.x1}_${imageData.bbox.y1}_${imageData.bbox.x2}_${imageData.bbox.y2}`
         baseFilename = `img-page${pageNumber}-${bboxString.replace(/\./g, '')}`
-        source = 'deterministic'
+        _source = 'deterministic'
       }
       
       // Ensure unique filename

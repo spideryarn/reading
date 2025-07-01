@@ -21,6 +21,7 @@ const TEST_HTML = `
 `
 
 // Mock glossary entities that could cause false matches
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const MOCK_ENTITIES = [
   {
     id: '1',

@@ -224,8 +224,11 @@ export function validateTool(tool: unknown): ToolValidationResult {
     return { isValid: false, errors, warnings }
   }
   
+  // Cast to record for property access
+  const toolRecord = tool as Record<string, unknown>
+  
   // Required fields
-  if (!tool.id || typeof tool.id !== 'string') {
+  if (!toolRecord.id || typeof toolRecord.id !== 'string') {
     errors.push('id is required and must be a string')
   }
   
@@ -266,28 +269,28 @@ export function validateTool(tool: unknown): ToolValidationResult {
   }
   
   // Optional field validation
-  if (tool.shortcuts && !Array.isArray(tool.shortcuts)) {
+  if (toolRecord.shortcuts && !Array.isArray(toolRecord.shortcuts)) {
     errors.push('shortcuts must be an array of strings')
   }
   
-  if (tool.keywords && !Array.isArray(tool.keywords)) {
+  if (toolRecord.keywords && !Array.isArray(toolRecord.keywords)) {
     errors.push('keywords must be an array of strings')
   }
   
-  if (tool.autoLoad && typeof tool.autoLoad !== 'boolean') {
+  if (toolRecord.autoLoad && typeof toolRecord.autoLoad !== 'boolean') {
     errors.push('autoLoad must be a boolean')
   }
   
-  if (tool.urlStateKeys && !Array.isArray(tool.urlStateKeys)) {
+  if (toolRecord.urlStateKeys && !Array.isArray(toolRecord.urlStateKeys)) {
     errors.push('urlStateKeys must be an array of strings')
   }
   
   // Warnings for missing optional but recommended fields
-  if (!tool.shortcuts || tool.shortcuts.length === 0) {
+  if (!toolRecord.shortcuts || (Array.isArray(toolRecord.shortcuts) && toolRecord.shortcuts.length === 0)) {
     warnings.push('No keyboard shortcuts defined - tool will not be accessible via keyboard')
   }
   
-  if (!tool.keywords || tool.keywords.length === 0) {
+  if (!toolRecord.keywords || (Array.isArray(toolRecord.keywords) && toolRecord.keywords.length === 0)) {
     warnings.push('No keywords defined - tool may be harder to find in command palette')
   }
   

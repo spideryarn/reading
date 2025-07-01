@@ -490,8 +490,8 @@ export async function requireAuth(opts?: {
 }): Promise<User> {
   const correlationId = generateCorrelationId()
   const user = await getAuthUser({
-    allowBearer: opts?.allowBearer,
-    request: opts?.request
+    ...(opts?.allowBearer !== undefined && { allowBearer: opts.allowBearer }),
+    ...(opts?.request !== undefined && { request: opts.request })
   })
   
   if (!user) {
@@ -557,7 +557,7 @@ export async function assertAuth(
 ): Promise<{ success: boolean; user?: User; error?: string }> {
   const correlationId = generateCorrelationId()
   const user = await getAuthUser({
-    allowBearer: opts?.allowBearer,
+    ...(opts?.allowBearer !== undefined && { allowBearer: opts.allowBearer }),
     request
   })
   

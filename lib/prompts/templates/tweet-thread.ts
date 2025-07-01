@@ -49,7 +49,7 @@ export const tweetThreadPrompt = loadPromptTemplateFromCaller(
   {
     maxTokens: 4000, // Generous limit for thread generation
     temperature: 0.4, // Balanced creativity and consistency for engaging but accurate content
-    model: 'anthropic-balanced-thinking', // Use thinking mode for better tweet thread structure and narrative flow
+    modelString: 'anthropic-balanced-thinking', // Use thinking mode for better tweet thread structure and narrative flow
   }
 )
 // Alternative: Use all defaults (including model)

@@ -157,7 +157,7 @@ export default function AddDocumentPage() {
     isUploading: isVisionUploading,
     overallProgress: visionProgress,
     cancel: cancelVisionUpload,
-    getCompletedHtml,
+    getCompletedHtml: _getCompletedHtml,
     pause: pauseVisionUpload,
     resume: resumeVisionUpload,
     isPaused: isVisionPaused,
@@ -169,7 +169,7 @@ export default function AddDocumentPage() {
       // Update UI with page-level progress
       console.log(`Page ${pageNumber}: ${status} (${progress}%)`)
     },
-    onPageComplete: (pageNumber, htmlFragment) => {
+    onPageComplete: (pageNumber, _htmlFragment) => {
       console.log(`Page ${pageNumber} completed`)
     },
     onError: (pageNumber, error) => {

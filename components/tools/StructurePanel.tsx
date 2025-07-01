@@ -31,10 +31,11 @@ interface StructurePanelProps {
 }
 
 // Heading format for mutation generator - must match lib/services/heading-mutation-generator.ts
-interface MutationHeading {
-  insertNewBeforeExistingId: string
-  html: string
-}
+// Currently unused but kept for future mutations that may need this format
+// interface MutationHeading {
+//   insertNewBeforeExistingId: string
+//   html: string
+// }
 
 // Internal state for tracking the current mode
 type StructureMode = 'original' | 'ai-generated'

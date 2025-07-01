@@ -19,7 +19,7 @@ export function createPdfToHtmlPrompt(provider: 'claude' | 'gemini' = 'claude') 
     'pdf-to-html-direct.njk',
     pdfToHtmlDirectPromptInputSchema,
     {
-      model: modelString,
+      modelString: modelString,
       temperature: 0, // Deterministic for academic content conversion
       maxTokens: 64000, // High limit for complex PDFs and long documents
     }

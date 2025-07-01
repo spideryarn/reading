@@ -35,7 +35,7 @@ export function createImageCaptionPrompt(provider: 'claude' | 'gemini' = 'gemini
     'image-caption-generation.njk',
     imageCaptionGenerationPromptInputSchema,
     {
-      model: modelString,
+      modelString: modelString,
       temperature: 0.1, // Low temperature for consistent academic content analysis
       maxTokens: 1000, // Moderate limit for caption generation
     }

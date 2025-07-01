@@ -151,7 +151,7 @@ export function SimpleDocumentViewer({
     allTerms.sort((a, b) => b.length - a.length)
 
     // Helper to escape special RegExp characters
-    const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    // const _escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
     // Expose for quick console inspection in dev
     if (typeof window !== 'undefined') {
