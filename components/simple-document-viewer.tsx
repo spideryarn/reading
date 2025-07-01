@@ -390,7 +390,7 @@ export function SimpleDocumentViewer({
           {/* Display element ID suffix */}
           {element.id && (
             <span 
-              className="text-xs font-mono text-gray-400 flex-shrink-0 ml-2"
+              className="text-[10px] sm:text-[11px] md:text-[12px] font-mono text-gray-400 flex-shrink-0 ml-1"
               title={`${element.tag_name.toUpperCase()}: ${element.id}`}
             >
               {element.id.startsWith('syr-') ? element.id.slice(4, 8) : element.id.slice(0, 4)}
@@ -430,9 +430,11 @@ export function SimpleDocumentViewer({
     >
       <div
         id="document-viewer"
-        className={`max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl ${
-          leftAligned ? 'ml-10 mr-2 sm:ml-12 sm:mr-4 lg:ml-auto lg:mr-auto' : 'mx-auto'
-        } p-2 sm:p-4 md:p-8 lg:px-8`}
+        className={`max-w-[65ch] ${
+          leftAligned
+            ? 'ml-10 mr-0.5 sm:ml-12 md:ml-14 sm:mr-1 lg:mx-auto'
+            : 'mx-2 sm:mx-3 lg:mx-auto'
+        } p-2 sm:p-3 md:px-4 md:py-6 lg:px-8`}
       >
         {/* Render root elements */}
         {elements
