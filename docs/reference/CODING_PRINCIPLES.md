@@ -32,3 +32,5 @@ see also:
 - If you notice other things that should be changed/updated, ask/suggest to the user.
 - If things don't make sense or seem like a bad idea, ask questions or discuss rather than just going a- long with it. Be a good collaborator, and help me make good decisions, rather than just obeying blindly.
 - Eventually we'll need to be a bit more careful about security & privacy. But to begin with while prototyping, we'll want to be quick-and-dirty. Flag concerns as they come up, and let the user decide.
+- Look for 80-20 solutions, but we're optimising for long-term AI-first development speed, so that eventually we can build rich features robustly and quickly.
+
