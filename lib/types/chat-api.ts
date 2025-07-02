@@ -5,7 +5,7 @@
  * dual-state management and race conditions in the chat system.
  */
 
-import type { Tables } from './database'
+import type { Tables } from './database-extensions'
 import type { ToolApiResponse } from '@/lib/tools/executor/types'
 
 // Local aliases for chat table types to avoid fragile re-exports

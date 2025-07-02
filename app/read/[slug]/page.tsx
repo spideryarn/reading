@@ -4,7 +4,7 @@ import { MutationProvider } from '@/lib/context/mutation-context'
 import { getAuthUser } from '@/lib/auth/server-auth'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
-import type { Database } from '@/lib/types/database'
+import type { Database } from '@/lib/types/database-auto-generated'
 
 type Document = Database['public']['Tables']['documents']['Row']
 import { NotAuthorizedPage } from '@/components/not-authorized-page'

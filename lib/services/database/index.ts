@@ -9,4 +9,4 @@ export type { CreateThreadOptions, CreateMessageOptions } from './chat'
 export type { ProfileInsert, ProfileUpdate } from './profiles'
 
 // Re-export database types for convenience
-export type { Database } from '@/lib/types/database'
+export type { Database } from '@/lib/types/database-auto-generated'

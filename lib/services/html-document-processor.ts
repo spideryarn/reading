@@ -108,7 +108,7 @@ export interface ErrorContext {
  * Result of HTML processing pipeline
  */
 export interface ProcessedDocument {
-  document: import('@/lib/types/database').Database['public']['Tables']['documents']['Row'] // Database document record
+  document: import('@/lib/types/database-auto-generated').Database['public']['Tables']['documents']['Row'] // Database document record
   storageResult?: Record<string, unknown> // Storage upload result
 }
 

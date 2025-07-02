@@ -9,7 +9,7 @@ import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { FileText, Clock, Globe, Lock, CircleNotch } from '@phosphor-icons/react/dist/ssr'
-import type { Database } from '@/lib/types/database'
+import type { Database } from '@/lib/types/database-auto-generated'
 
 type Document = Database['public']['Tables']['documents']['Row']
 import { formatUserDate } from '@/lib/utils/date-formatting'

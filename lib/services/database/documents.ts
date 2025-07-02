@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import type { Database, Document, DocumentInsert, DocumentUpdate } from '@/lib/types/database'
+import type { Database, Document, DocumentInsert, DocumentUpdate } from '@/lib/types/database-extensions'
 import { 
   uploadDocumentFile, 
   downloadDocumentFile, 

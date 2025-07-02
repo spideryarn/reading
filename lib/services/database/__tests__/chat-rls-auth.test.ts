@@ -14,7 +14,7 @@ import { createClient } from '@supabase/supabase-js'
 import { RealRLSTestSetup } from './rls-test-helpers'
 import { createTestId, getTestNamespace } from '@/lib/testing/test-isolation-utils'
 import { ChatService } from '@/lib/services/database/chat'
-import type { Database } from '@/lib/types/database'
+import type { Database } from '@/lib/types/database-auto-generated'
 
 // Test configuration
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!

@@ -1,7 +1,7 @@
 // Common types for test mocks to avoid using 'any'
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/lib/types/database'
+import type { Database } from '@/lib/types/database-auto-generated'
 
 // Mock Supabase client type
 export type MockSupabaseClient = Partial<SupabaseClient<Database>>

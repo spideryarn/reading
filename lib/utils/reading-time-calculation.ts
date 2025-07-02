@@ -8,7 +8,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { calculateEnhancedReadingTime, type ReadingDifficultyData } from '@/lib/utils/enhanced-reading-time'
-import type { Database } from '@/lib/types/database'
+import type { Database } from '@/lib/types/database-auto-generated'
 
 export interface ReadingTimeResult {
   readingTimeMinutes: number

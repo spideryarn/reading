@@ -3,7 +3,7 @@ import type {
   DocumentEnhancement, 
   EnhancementType,
   Json
-} from '@/lib/types/database'
+} from '@/lib/types/database-extensions'
 import type { CreateEnhancementOptions } from '../enhancements'
 
 export class EnhancementService {

@@ -8,7 +8,7 @@ import type {
   ChatMessageInsert,
   MessageRole,
   Json
-} from '@/lib/types/database'
+} from '@/lib/types/database-extensions'
 import type { JsonObject } from '@/lib/types/json'
 
 export interface CreateThreadOptions {

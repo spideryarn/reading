@@ -36,7 +36,7 @@
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { TEST_USER_IDS, TEST_USERS, type TestUserKey } from './rls-test-context'
-import type { Database } from '@/lib/types/database'
+import type { Database } from '@/lib/types/database-auto-generated'
 
 // Create admin client for test setup (bypasses RLS)
 /** @deprecated Use RealRLSTestSetup.getAdminClient() instead */

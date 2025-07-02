@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/lib/types/database'
+import type { Database } from '@/lib/types/database-auto-generated'
 import type { RealtimeChangeHandler } from '@/lib/types/supabase-realtime'
 
 export type RealtimeChannelType = ReturnType<SupabaseClient<Database>['channel']>

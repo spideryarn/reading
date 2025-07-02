@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { subscribeToDocumentEnhancements } from '@/lib/supabase/realtime'
-import type { Database } from '@/lib/types/database'
+import type { Database } from '@/lib/types/database-auto-generated'
 
 type DocumentEnhancement = Database['public']['Tables']['document_enhancements']['Row']
 

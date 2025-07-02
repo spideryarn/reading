@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { ChatService } from '@/lib/services/database/chat';
 import { validateUserMessage } from '@/lib/utils/chat-validation';
 import { CHAT_VALIDATION_CONFIG } from '@/lib/config';
-import type { Tables } from '@/lib/types/database';
+import type { Tables } from '@/lib/types/database-auto-generated';
 import type { ChatStore, SendMessageRequest, ChatApiResponse } from '@/lib/types/chat-api';
 
 interface UseChatStoreProps {

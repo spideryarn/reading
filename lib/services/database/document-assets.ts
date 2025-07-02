@@ -6,7 +6,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
-import { Tables, TablesInsert, TablesUpdate } from '@/lib/types/database'
+import { Tables, TablesInsert, TablesUpdate } from '@/lib/types/database-auto-generated'
 import { createRequestLogger } from '@/lib/services/logger'
 
 export type DocumentAsset = Tables<'document_assets'>

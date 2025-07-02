@@ -21,7 +21,7 @@
         "test:e2e:ui": "playwright test --ui",
         "test:e2e:debug": "playwright test --debug",
         "test:e2e:setup": "playwright test --project=setup",
-        "db:types": "supabase gen types typescript --local > lib/types/database.ts",
+        "db:types": "supabase gen types typescript --local > lib/types/database-auto-generated.ts",
         "db:reset:DANGEROUS": "echo '⚠️  WARNING: This will DELETE ALL DATA and invalidate ALL worktree auth files! Type YES to continue:' && read confirm && [ \"$confirm\" = \"YES\" ] && supabase db reset && npm run db:types && npm run import-documents && rm -f playwright/.auth/*.json && echo '✅ Database reset complete. Run ./scripts/setup-auth-all-worktrees.ts to re-setup authentication in all worktrees.'",
         "db:backup": "./scripts/backup-database.ts",
         "cleanup:test-data": "tsx scripts/cleanup-test-data.ts",

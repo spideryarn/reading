@@ -598,10 +598,10 @@ CREATE POLICY "Public document access" ON documents
 
 Supabase CLI ≥ v1.58 now generates **only** a single `Database` tree and helper generics (`Tables`, `TablesInsert`, …) – it no longer emits one-line "row aliases" such as `export type Document = …`. 
 
-To avoid breaking thousands of imports while we migrate, we keep a **compatibility shim** appended to the bottom of `lib/types/database.ts`:
+To avoid breaking thousands of imports while we migrate, we keep a **compatibility shim** in `lib/types/database-extensions.ts`:
 
 ```ts
-// lib/types/database.ts  (tail of file – persists across re-generation)
+// lib/types/database-extensions.ts  (manual extensions – persists across re-generation)
 export type Document = Database["public"]["Tables"]["documents"]["Row"]
 export type ChatThread = Database["public"]["Tables"]["chat_threads"]["Row"]
 // …and a handful of other commonly-used aliases

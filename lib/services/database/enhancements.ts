@@ -5,7 +5,7 @@ import type {
   DocumentEnhancementInsert,
   EnhancementType,
   Json
-} from '../../types/database'
+} from '../../types/database-extensions'
 import type { JsonObject } from '../../types/json'
 
 export interface CreateEnhancementOptions {

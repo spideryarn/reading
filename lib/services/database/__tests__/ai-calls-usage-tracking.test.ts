@@ -6,7 +6,7 @@
 
 import { AiCallService } from '../ai-calls'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database, AiCall } from '@/lib/types/database'
+import type { Database, AiCall } from '@/lib/types/database-auto-generated'
 import type { PromptUsage } from '@/lib/prompts/types'
 
 const mockSupabaseClient = {

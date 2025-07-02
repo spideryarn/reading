@@ -16,7 +16,7 @@ import { readFile, readdir } from 'fs/promises'
 import { join } from 'path'
 import { createClient } from '@supabase/supabase-js'
 import { load } from 'cheerio'
-import type { Database } from '../lib/types/database'
+import type { Database } from '../lib/types/database-auto-generated'
 
 // Load environment variables
 import { config } from 'dotenv'

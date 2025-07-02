@@ -19,7 +19,7 @@ import { useChatUrlState } from '@/lib/tools/hooks/use-tool-url-state';
 import React, { useEffect, useCallback, useRef, useContext, useState } from 'react';
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover';
 import dynamic from 'next/dynamic';
-import type { Tables } from '@/lib/types/database';
+import type { Tables } from '@/lib/types/database-auto-generated';
 
 type ChatMessageDb = Tables<'chat_messages'>;
 

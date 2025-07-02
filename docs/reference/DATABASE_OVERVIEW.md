@@ -85,7 +85,7 @@ npm run db:types
 npm run db:reset:DANGEROUS
 ```
 
-**Type Safety**: All database queries use generated types from `lib/types/database.ts`, providing compile-time validation and autocomplete for table schemas, column types, and relationships.
+**Type Safety**: All database queries use generated types from `lib/types/database-auto-generated.ts` and extensions from `lib/types/database-extensions.ts`, providing compile-time validation and autocomplete for table schemas, column types, and relationships.
 
 ### **Useful Commands**
 
@@ -163,7 +163,7 @@ subscribeToChatMessages()
 The generated types include convenient helper types:
 
 ```typescript
-import type { Document, DocumentInsert, AiCall, EnhancementType } from '@/lib/types/database'
+import type { Document, DocumentInsert, AiCall, EnhancementType } from '@/lib/types/database-extensions'
 
 // Use for database queries, inserts, and type-safe operations
 const doc: Document = await supabase.from('documents').select('*').single()

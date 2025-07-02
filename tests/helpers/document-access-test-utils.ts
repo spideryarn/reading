@@ -9,7 +9,7 @@ import { Page, expect } from '@playwright/test';
 import { RealRLSTestSetup } from '@/lib/services/database/__tests__/rls-test-helpers';
 import { getCurrentEnvironmentTestUser } from '@/lib/testing/worktree-auth-helpers';
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from '@/lib/types/database';
+import type { Database } from '@/lib/types/database-auto-generated';
 
 // Test user configuration
 const { email: testUserEmail, password: testUserPassword } = getCurrentEnvironmentTestUser();

@@ -6,7 +6,7 @@ import type {
   CallStatus,
   PromptType,
   Json
-} from '@/lib/types/database'
+} from '@/lib/types/database-extensions'
 import type { PromptUsage } from '@/lib/prompts/types'
 import type { JsonObject } from '@/lib/types/json'
 import { getModelConfig, validateModelStringStrict } from '@/lib/config/models'

@@ -12,8 +12,8 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js'
-import type { Json } from '@/lib/types/database'
-import type { Database } from '@/lib/types/database'
+import type { Json } from '@/lib/types/database-auto-generated'
+import type { Database } from '@/lib/types/database-auto-generated'
 import type { Entity } from '@/lib/types/entity'
 import { generateEntitySubtype, validateEntitySubtype } from '@/lib/utils/entity-subtype-generation'
 

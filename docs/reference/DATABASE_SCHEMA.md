@@ -31,10 +31,10 @@ The database schema is defined and represented in several places:
    - `supabase/migrations/20250625235000_add_document_users_table.sql` - User-document relationships table
    - Contains CREATE TABLE statements, indexes, triggers, and initial data
 
-2. **TypeScript Types** (Auto-generated):
-   - `lib/types/database.ts`
-   - Generated from Supabase schema using `npm run db:types`
-   - Provides type-safe interfaces for all tables
+2. **TypeScript Types**:
+   - `lib/types/database-auto-generated.ts` - Auto-generated from Supabase schema using `npm run db:types`
+   - `lib/types/database-extensions.ts` - Manual type extensions and utilities
+   - Combined to provide complete type-safe interfaces for all tables
    - Updated to reflect model_string system (no ai_models table)
    - Includes admin support, document_users, and profile customization types
 
@@ -279,7 +279,7 @@ npm run db:types    # Generate types from current schema
 npm run db:reset:DANGEROUS    # Reset DB and regenerate types
 ```
 
-**Generated Types**: `lib/types/database.ts` provides full type safety for all tables, including helper types for inserts, updates, and enums.
+**Generated Types**: `lib/types/database-auto-generated.ts` provides auto-generated types, with `lib/types/database-extensions.ts` adding manual extensions for enhanced usability.
 
 ## Automatic Timestamps & Metadata
 

@@ -118,10 +118,10 @@ npm run db:types
 
 ### Generated Types Location
 
-- **File**: `lib/types/database.ts`
-- **Auto-generated**: This file is completely regenerated each time
-- **Git tracking**: The types file should be committed to git
-- **Helper types**: The file includes custom helper types and enums for easier usage
+- **Auto-generated file**: `lib/types/database-auto-generated.ts` - Completely regenerated each time
+- **Manual extensions**: `lib/types/database-extensions.ts` - Hand-written type utilities and aliases
+- **Git tracking**: Both files should be committed to git
+- **Usage**: Import from `database-extensions.ts` for enhanced developer experience
 
 ### When to Regenerate Types
 

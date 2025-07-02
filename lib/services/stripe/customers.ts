@@ -6,7 +6,7 @@
 import Stripe from 'stripe'
 import { stripe } from './client'
 import { createClient } from '@/lib/supabase/server'
-import type { Database } from '@/lib/types/database'
+import type { Database } from '@/lib/types/database-auto-generated'
 import { logger, generateCorrelationId, createTimer } from '../logger'
 
 // Create Stripe-specific logger

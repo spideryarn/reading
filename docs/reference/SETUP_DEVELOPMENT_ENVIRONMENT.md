@@ -73,7 +73,7 @@ https://github.com/spideryarn/reading/
    ```bash
    npm run db:types
    ```
-   This runs `supabase gen types typescript --local` and writes to `lib/types/database.ts`.
+   This runs `supabase gen types typescript --local` and writes to `lib/types/database-auto-generated.ts`.
 
    **IMPORTANT (May-2025):** The CLI now outputs *only* the `Database` tree. We append a small
    compatibility shim at the *end* of that file which re-exports a few common aliases

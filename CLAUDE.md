@@ -186,7 +186,7 @@ Based on the Test Reform for AI-First Development (July 2025), AI agents must fo
 - Implemented in PDF upload and URL extraction APIs
 - Enables debugging and processing optimization
 
-**Files**: Migration `20250608120000_add_upload_metadata_fields.sql`, types in `lib/types/database.ts`
+**Files**: Migration `20250608120000_add_upload_metadata_fields.sql`, types in `lib/types/database-auto-generated.ts` and manual extensions in `lib/types/database-extensions.ts`
 
 
 ## Authentication System

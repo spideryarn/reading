@@ -4,7 +4,7 @@ import type {
   DocumentInsert, 
   DocumentUpdate,
   Database
-} from '@/lib/types/database'
+} from '@/lib/types/database-extensions'
 import type { StorageUploadResult } from '@/lib/services/storage'
 
 export class DocumentService {
