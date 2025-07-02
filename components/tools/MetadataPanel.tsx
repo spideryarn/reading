@@ -18,7 +18,7 @@ import { sanitizeDocumentTitle, validateDocumentTitle, MAX_TITLE_LENGTH } from '
 import { DeleteDocumentButton } from '@/components/delete-document-button'
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 import { EnhancementService } from '@/lib/services/database/enhancements'
-import { calculateReadingTimeFromWordCount, formatReadingTime, MissingReadingDifficultyError } from '@/lib/utils/reading-time-calculation'
+import { calculateReadingTimeFromWordCount, formatReadingTime, MissingReadingDifficultyError, InvalidReadingDifficultyError } from '@/lib/utils/reading-time-calculation'
 import { generateReadingTimeTooltip, type ReadingDifficultyData } from '@/lib/utils/enhanced-reading-time'
 import { BOOK_PAGE_CONFIG } from '@/lib/config'
 
@@ -181,7 +181,7 @@ export function MetadataPanel({
           readingTimeResult
         })
       } catch (error) {
-        if (error instanceof MissingReadingDifficultyError) {
+        if (error instanceof MissingReadingDifficultyError || error instanceof InvalidReadingDifficultyError) {
           // Initiate generation in the background but keep UI in loading state
           generateDifficultyAssessment().catch(console.error)
           setReadingTimeError(null)
@@ -865,9 +865,8 @@ export function MetadataPanel({
                       </pre>
                     </div>
                   ) : (
-                    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs text-amber-600 flex items-center gap-2">
-                      <CircleNotch size={14} weight="bold" className="animate-spin" />
-                      <span>Calculating reading time…</span>
+                    <div className="flex items-center justify-center text-amber-600">
+                      <CircleNotch size={16} weight="bold" className="animate-spin" aria-label="Loading" />
                     </div>
                   )
                 }
@@ -895,9 +894,8 @@ export function MetadataPanel({
                         {formatReadingTime(documentStats.readingTime)}
                       </span>
                     ) : (
-                      <div className="flex items-center gap-1 text-amber-600">
-                        <CircleNotch size={16} weight="bold" className="animate-spin" />
-                        <span>Calculating…</span>
+                      <div className="flex items-center justify-center text-amber-600">
+                        <CircleNotch size={16} weight="bold" className="animate-spin" aria-label="Loading" />
                       </div>
                     )}
                   </div>
