@@ -22,6 +22,7 @@ import type { Json } from '@/lib/types/database-auto-generated'
 import { DocumentProcessingTransaction } from '@/lib/services/document-processing-transaction'
 import { getUserErrorMessage, type ErrorContext } from '@/lib/services/user-error-messages'
 import { z } from 'zod'
+import { JSDOM } from 'jsdom'
 
 // Schema for page processing input
 export const pageProcessingInputSchema = z.object({
@@ -444,23 +445,41 @@ function updateHtmlWithStorageUrls(
     storageUrlMap.set(asset.elementId, asset.storageUrl)
   })
   
-  // Parse HTML and update image sources
+  // Parse HTML and update image sources using JSDOM for reliable manipulation
   try {
-    // Simple regex-based replacement for now
-    // In a more sophisticated implementation, we could use JSDOM
+    // Create a DOM from the HTML fragment
+    const dom = new JSDOM(htmlFragment)
+    const document = dom.window.document
+    
     extractedImages.forEach(asset => {
-      // Find img elements with the matching element ID and update src
-      const imgRegex = new RegExp(`(<img[^>]*id=["']${asset.elementId}["'][^>]*src=["'])[^"']*["']`, 'gi')
-      updatedHtml = updatedHtml.replace(imgRegex, `$1${asset.storageUrl}"`)
+      // Find img element with the matching ID
+      const img = document.getElementById(asset.elementId)
+      if (img && img.tagName === 'IMG') {
+        // Update src attribute
+        img.setAttribute('src', asset.storageUrl)
+        
+        // Also update data-src if present (for lazy loading)
+        if (img.hasAttribute('data-src')) {
+          img.setAttribute('data-src', asset.storageUrl)
+        }
+      }
       
-      // Also update any data-src attributes (for lazy loading)
-      const dataSrcRegex = new RegExp(`(<img[^>]*id=["']${asset.elementId}["'][^>]*data-src=["'])[^"']*["']`, 'gi')
-      updatedHtml = updatedHtml.replace(dataSrcRegex, `$1${asset.storageUrl}"`)
-      
-      // Update figure elements if they contain the image
-      const figureRegex = new RegExp(`(<figure[^>]*id=["']${asset.elementId}["'][^>]*>.*?<img[^>]*src=["'])[^"']*["']`, 'gis')
-      updatedHtml = updatedHtml.replace(figureRegex, `$1${asset.storageUrl}"`)
+      // Handle figure elements that might have the ID
+      const figure = document.getElementById(asset.elementId)
+      if (figure && figure.tagName === 'FIGURE') {
+        // Find img elements within the figure
+        const imgInFigure = figure.querySelector('img')
+        if (imgInFigure) {
+          imgInFigure.setAttribute('src', asset.storageUrl)
+          if (imgInFigure.hasAttribute('data-src')) {
+            imgInFigure.setAttribute('data-src', asset.storageUrl)
+          }
+        }
+      }
     })
+    
+    // Serialize back to HTML
+    updatedHtml = dom.serialize()
     
     logger.info('Updated HTML with storage URLs', {
       updatedImages: extractedImages.length,
