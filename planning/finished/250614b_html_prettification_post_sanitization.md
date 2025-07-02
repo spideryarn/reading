@@ -50,7 +50,7 @@ Research shows that standardized document formats significantly improve ML model
 **✅ Stage 8: Documentation and Rollout Preparation**
 - **Completed**: Created comprehensive documentation following evergreen documentation standards
 - **New Docs**: `UPLOAD_HTML_SANITISATION_AND_PRETTIFICATION.md`, `HTML_DOCUMENT_PROCESSOR.md`
-- **Updated Docs**: `UPLOAD_DOCUMENT_PROCESSING_PIPELINE.md`, `TESTING_TROUBLESHOOTING.md`, `DOCUMENTATION_ORGANISATION.md`
+- **Updated Docs**: `UPLOAD_DOCUMENT_PROCESSING_PIPELINE.md`, `TESTING_TROUBLESHOOTING.md`, `INDEX_FOR_DOCUMENTATION.md`
 - **Coverage**: Configuration, troubleshooting, rollback procedures, before/after examples
 
 ### Implementation Quality Metrics - Final Results
@@ -204,7 +204,7 @@ Research shows that standardized document formats significantly improve ML model
 - [x] Update existing documentation for DRY refactoring and prettification
   - [x] Update `docs/reference/UPLOAD_DOCUMENT_PROCESSING_PIPELINE.md` to reflect new shared pipeline architecture
   - [x] Create `docs/reference/HTML_DOCUMENT_PROCESSOR.md` documenting the new shared service
-  - [x] Update `docs/reference/DOCUMENTATION_ORGANISATION.md` to include new documentation
+  - [x] Update `docs/reference/INDEX_FOR_DOCUMENTATION.md` to include new documentation
   - [x] Add cross-references from related documents about upload APIs and HTML processing
 
 - [x] Update testing documentation with Supabase + Jest ESM solutions

@@ -19,7 +19,7 @@
 - ✅ All TypeScript and ESLint errors resolved
 - ✅ Completed documentation updates in Stage 4:
   - Major rewrite of `TOOL_STRUCTURE_HEADINGS.md` with comprehensive iterative approach documentation
-  - Updated `CLAUDE.md` and `DOCUMENTATION_ORGANISATION.md` references
+  - Updated `CLAUDE.md` and `INDEX_FOR_DOCUMENTATION.md` references
 
 **Auto-Iteration Enhancement (2025-06-30)**:
 - ✅ Added `AUTO_ITERATE_HEADINGS` configuration variable in `lib/config.ts` (set to TRUE)
@@ -198,7 +198,7 @@ Current system removes all existing headings and generates completely new ones. 
 - [x] **MISSING DOCUMENTATION CREATION**:
   - Major rewrite of `docs/reference/TOOL_STRUCTURE_HEADINGS.md` with iterative approach
   - Update `CLAUDE.md` with very brief mention of new iterative heading generation context (only if needed)
-  - Update `docs/reference/DOCUMENTATION_ORGANISATION.md` to reference new docs
+  - Update `docs/reference/INDEX_FOR_DOCUMENTATION.md` to reference new docs
 
 ### Stage: Safety mechanisms and testing
 - [x] Implement hard safety limits (defined as variables with these defaults in `lib/config.ts`):

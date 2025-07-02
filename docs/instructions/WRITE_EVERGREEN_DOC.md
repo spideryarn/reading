@@ -2,7 +2,7 @@
 
 see also: 
 - `docs/instructions/WRITE_PLANNING_DOC.md` - for writing ephemeral decision/planning docs
-- `docs/instructions/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` - for keeping documentation current every so often
+- `docs/instructions/UPDATE_INDEX_FOR_DOCUMENTATION.md` - for keeping documentation current every so often
 
 
 # What are evergreen docs?
@@ -59,7 +59,7 @@ Add references to and from this new doc (e.g. in relevant code, planning docs in
 
 #### Cross-Reference Best Practices
 
-- **Update `docs/reference/DOCUMENTATION_ORGANISATION.md`
+- **Update `docs/reference/INDEX_FOR_DOCUMENTATION.md`
 - **Link to canonical source** (e.g. functions, files, docs, urls, etc) for detailed information rather than duplicating
 - **Provide 1-sentence context** with each link explaining its relevance
 - **Use relative paths** for internal documentation links
@@ -145,7 +145,7 @@ Regular documentation review ensures accuracy:
 - **When outdated** - Fix immediately when noticed
 - **Before milestones** - Ensure docs reflect current state
 
-see `docs/instructions/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` for the complete housekeeping process
+see `docs/instructions/UPDATE_INDEX_FOR_DOCUMENTATION.md` for the complete housekeeping process
 
 ## Common Pitfalls to Avoid
 

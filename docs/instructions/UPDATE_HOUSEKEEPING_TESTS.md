@@ -7,7 +7,7 @@ This document describes the process for maintaining test quality and organisatio
 - `docs/reference/TESTING_OVERVIEW.md` - Overall testing strategy and philosophy
 - `docs/reference/TESTING_SETUP.md` - Test configuration and setup guidelines  
 - `docs/reference/TESTING_TROUBLESHOOTING.md` - Known issues and debugging strategies  
-- `docs/instructions/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` - General housekeeping process pattern that inspired this approach
+- `docs/instructions/UPDATE_INDEX_FOR_DOCUMENTATION.md` - General housekeeping process pattern that inspired this approach
 - `docs/instructions/WRITE_PLANNING_DOC.md` - For creating one-time test cleanup planning documents
 - `docs/instructions/GIT_COMMIT_CHANGES.md` - How to commit test improvements
 - `planning/250608a_test_infrastructure_cleanup.md` - Example one-time infrastructure cleanup planning

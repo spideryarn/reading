@@ -175,7 +175,7 @@ Currently, Spideryarn Reading tools maintain state only in memory. Users cannot 
   - [x] Updated TOOL_SEARCH_TEXT.md with URL state integration section
   - [x] Updated TOOL_SUMMARISE.md with multi-dimensional URL state section
 - [x] Add cross-references to ARCHITECTURE_URL_STATE.md in key files
-  - [x] Updated DOCUMENTATION_ORGANISATION.md
+  - [x] Updated INDEX_FOR_DOCUMENTATION.md
   - [x] Added references in implementation files via subagent
 
 ### Stage: Testing and validation
@@ -545,7 +545,7 @@ With all tool states now implemented, we should:
    - TOOL_GLOSSARY.md: Added URL state persistence section
    - TOOL_SEARCH_TEXT.md: Added URL state integration section with history management details
    - TOOL_SUMMARISE.md: Added multi-dimensional URL state section
-   - DOCUMENTATION_ORGANISATION.md: Added reference to new architecture doc
+   - INDEX_FOR_DOCUMENTATION.md: Added reference to new architecture doc
 
 3. **Cross-references Added**:
    - Strategic references added to 11 key files via subagent

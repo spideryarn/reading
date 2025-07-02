@@ -146,7 +146,7 @@ Based on analysis in `docs/HTML_TEXT_SEARCH_CROSS_ELEMENT.md` and project prefer
 - [x] Update documentation
   - [x] Update `docs/UI_INTERFACE.md` to reflect new cross-element search capabilities
   - [x] Update `docs/PROJECT_STATUS.md` to include enhanced search features
-  - [x] Update `docs/DOCUMENTATION_ORGANISATION.md` and `docs/TABLE_OF_CONTENTS_PANE.md`
+  - [x] Update `docs/INDEX_FOR_DOCUMENTATION.md` and `docs/TABLE_OF_CONTENTS_PANE.md`
   - [x] Add technical implementation notes to relevant docs
 - [x] Browser compatibility testing
   - [x] Test thoroughly on Chrome desktop (working correctly)

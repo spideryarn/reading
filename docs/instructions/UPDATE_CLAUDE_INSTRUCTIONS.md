@@ -6,7 +6,7 @@ Guidelines for maintaining CLAUDE.md to help AI agents operate effectively on th
 
 - `CLAUDE.md` - The main instructions file for AI agents
 - `docs/instructions/WRITE_EVERGREEN_DOC.md` - General documentation writing guidelines
-- `docs/instructions/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` - Documentation maintenance process (includes updating CLAUDE.md)
+- `docs/instructions/UPDATE_INDEX_FOR_DOCUMENTATION.md` - Documentation maintenance process (includes updating CLAUDE.md)
 
 ## Purpose of CLAUDE.md
 

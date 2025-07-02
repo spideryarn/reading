@@ -159,7 +159,7 @@ Available evergreen documentation in `docs/` organised by category:
 Process and workflow documentation in `docs/instructions/`:
 
 ### Core Workflow Instructions
-- `docs/instructions/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` - Process for keeping project documentation up-to-date ⭐ **Run regularly**
+- `docs/instructions/UPDATE_INDEX_FOR_DOCUMENTATION.md` - Process for keeping project documentation up-to-date ⭐ **Run regularly**
 - `docs/instructions/UPDATE_DOCUMENTATION_ORGANISATION_DOC.md` - Instructions for updating this organisation guide
 - `docs/instructions/WRITE_EVERGREEN_DOC.md` - Guidelines for writing evergreen documentation ⭐ **Essential for doc writers**
 - `docs/instructions/WRITE_PLANNING_DOC.md` - Guide for writing planning documents with file naming conventions
@@ -236,7 +236,7 @@ These provide historical context for architectural decisions and implementation 
 **For tool development**: Begin with TOOL_ARCHITECTURE_AND_DEVELOPMENT_GUIDE.md → TOOL_EXECUTION_FRAMEWORK.md → LLM_PROMPT_TEMPLATES.md
 **For AI features**: Start with LLM_PROMPT_TEMPLATES.md → TOOL_SUMMARISE.md → TOOL_GLOSSARY.md → TOOL_STRUCTURE_HEADINGS.md
 **For highlighting work**: Use DESIGN_OVERLAPPING_TEXT_HIGHLIGHTS.md → TOOL_SEARCH_TEXT.md → TOOL_HIGHLIGHT.md
-**For documentation work**: Use WRITE_EVERGREEN_DOC.md → UPDATE_HOUSEKEEPING_DOCUMENTATION.md → UPDATE_DOCUMENTATION_ORGANISATION_DOC.md
+**For documentation work**: Use WRITE_EVERGREEN_DOC.md → UPDATE_INDEX_FOR_DOCUMENTATION.md → UPDATE_DOCUMENTATION_ORGANISATION_DOC.md
 **For E2E testing**: Start with TESTING_BROWSER_AUTOMATION_OVERVIEW.md → TESTING_BROWSER_AUTOMATION_IMPLEMENTATION.md → TESTING_E2E_COVERAGE.md
 **For production deployment**: See SETUP_DEPLOYMENT_PRODUCTION.md → DATABASE_PRODUCTION.md → AUTHENTICATION_SETUP.md
 

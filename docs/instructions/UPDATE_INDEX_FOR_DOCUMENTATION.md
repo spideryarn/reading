@@ -4,7 +4,7 @@ This document describes the process for keeping project documentation up-to-date
 
 ## See also
 
-- `docs/reference/DOCUMENTATION_ORGANISATION.md` - Comprehensive guide to all project documentation organisation and navigation
+- `docs/reference/INDEX_FOR_DOCUMENTATION.md` - Comprehensive guide to all project documentation organisation and navigation
 - `docs/instructions/UPDATE_DOCUMENTATION_ORGANISATION_DOC.md` - Run after this process to update documentation organisation guide
 - `docs/instructions/WRITE_EVERGREEN_DOC.md` - Guidelines for writing evergreen documentation
 - `docs/instructions/WRITE_PLANNING_DOC.md` - Guidelines for ephemeral planning documents
@@ -26,7 +26,7 @@ Perform documentation housekeeping:
 
 Read all key documentation to understand the current state:
 1. `README.md` - Project overview and goals
-2. `docs/reference/DOCUMENTATION_ORGANISATION.md` - Documentation structure and navigation guide
+2. `docs/reference/INDEX_FOR_DOCUMENTATION.md` - Documentation structure and navigation guide
 3. `docs/reference/*.md` and `docs/instructions/*.md` - All evergreen documentation
 4. `docs/diagrams/*.mermaid` - All architecture and flow diagrams
 5. Recent `planning/*.md` - Latest decisions and changes
@@ -142,7 +142,7 @@ Before committing, ensure:
 - [ ] Examples match current code patterns
 - [ ] Technical details are accurate
 - [ ] Diagrams accurately represent current architecture and flows
-- [ ] Documentation organisation guide (`docs/reference/DOCUMENTATION_ORGANISATION.md`) reflects any structural changes
+- [ ] Documentation organisation guide (`docs/reference/INDEX_FOR_DOCUMENTATION.md`) reflects any structural changes
 
 ## Common Pitfalls
 

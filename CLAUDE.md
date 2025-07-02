@@ -265,7 +265,7 @@ Use subagents where appropriate:
 
 ## Documentation Reference
 
-see `docs/reference/DOCUMENTATION_ORGANISATION.md` for a comprehensive, navigational overview of all project documentation
+see `docs/reference/INDEX_FOR_DOCUMENTATION.md` for a comprehensive, navigational overview of all project documentation
 
 Available evergreen documentation in `docs/` - comprehensive signposting by domain:
 
@@ -275,7 +275,7 @@ Available evergreen documentation in `docs/` - comprehensive signposting by doma
 - `docs/instructions/SOUNDING_BOARD_MODE.md` - Instructions for collaborative discussion mode emphasising asking questions and suggesting alternatives rather than immediate implementation
 - `docs/instructions/DETECTIVE_SCIENTIST_MODE.md` - Systematic investigation approach
 - `docs/instructions/DOCUMENT_RESEARCH.md` - Research methodology for documentation
-- `docs/instructions/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` - Process for keeping project documentation up-to-date including review steps, update patterns, and quality checklist
+- `docs/instructions/UPDATE_INDEX_FOR_DOCUMENTATION.md` - Process for keeping project documentation up-to-date including review steps, update patterns, and quality checklist
 - `docs/instructions/UPDATE_HOUSEKEEPING_TESTS.md` - Process for maintaining test quality and organisation while supporting rapid prototyping
 - `docs/instructions/UPDATE_CLAUDE_INSTRUCTIONS.md` - Guidelines for maintaining CLAUDE.md to help AI agents operate effectively on the Spideryarn Reading codebase
 - `docs/instructions/WRITE_EVERGREEN_DOC.md` - Guidelines for writing evergreen documentation including structure, cross-references, status indicators, and maintenance practices

@@ -235,7 +235,7 @@ const handleElementClick = useCallback((element: DocumentElement) => {
   - [x] Update `docs/TABLE_OF_CONTENTS_PANE.md` for unified pane integration
   - [x] Update `docs/SITE_ORGANISATION_WEBSITE_STRUCTURE.md` component hierarchy and user journey
   - [x] Update `docs/PROJECT_STATUS.md` layout description and next steps
-  - [x] Fix `docs/DOCUMENTATION_ORGANISATION.md` reference
+  - [x] Fix `docs/INDEX_FOR_DOCUMENTATION.md` reference
 - [x] Performance analysis
   - [x] Comprehensive analysis of re-render patterns and optimizations
   - [x] Documented high-priority optimization opportunities

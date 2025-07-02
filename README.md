@@ -24,7 +24,7 @@ AI-assisted document reading and analysis tool for professionals working with no
 - `docs/reference/PROJECT_STATUS.md` - Current development state and roadmap
 
 ### Technical Reference
-- `docs/reference/DOCUMENTATION_ORGANISATION.md` - Complete documentation index
+- `docs/reference/INDEX_FOR_DOCUMENTATION.md` - Complete documentation index
 - `docs/reference/TESTING_OVERVIEW.md` - Testing approach and infrastructure
 - `docs/reference/DATABASE_OVERVIEW.md` - Database schema and operations
 

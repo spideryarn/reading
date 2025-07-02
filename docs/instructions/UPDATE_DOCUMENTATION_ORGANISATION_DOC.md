@@ -1,18 +1,18 @@
 # Update Documentation Organisation Doc
 
-Creates or updates `docs/reference/DOCUMENTATION_ORGANISATION.md` - a navigational guide to all project documentation.
+Creates or updates `docs/reference/INDEX_FOR_DOCUMENTATION.md` - a navigational guide to all project documentation.
 
 ## See also
 
-- `gjdutils/docs/DOCUMENTATION_ORGANISATION.md` - Example from gjdutils project
-- `docs/instructions/UPDATE_HOUSEKEEPING_DOCUMENTATION.md` - Run this first for content review
+- `gjdutils/docs/INDEX_FOR_DOCUMENTATION.md` - Example from gjdutils project
+- `docs/instructions/UPDATE_INDEX_FOR_DOCUMENTATION.md` - Run this first for content review
 - `docs/instructions/WRITE_EVERGREEN_DOC.md` - Structure guidelines
 
 ## Task
 
 Create/update the documentation organisation guide with sensible categories and clear starting points for newcomers.
 
-**Run after housekeeping**: This should be done after `UPDATE_HOUSEKEEPING_DOCUMENTATION.md` to ensure structural changes reflect current content.
+**Run after housekeeping**: This should be done after `UPDATE_INDEX_FOR_DOCUMENTATION.md` to ensure structural changes reflect current content.
 
 ## Content Requirements
 

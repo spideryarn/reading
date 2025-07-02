@@ -5,7 +5,7 @@ Spideryarn Reading is a database-driven, user-centric AI document analysis appli
 ## See also
 
 - `README.md` - Project goals and high-level implementation approach
-- `docs/reference/DOCUMENTATION_ORGANISATION.md` - Comprehensive overview of all project documentation
+- `docs/reference/INDEX_FOR_DOCUMENTATION.md` - Comprehensive overview of all project documentation
 - `docs/reference/ARCHITECTURE_DECISIONS.md` - Key architectural decisions and data structure choices
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture implementation
 - `docs/reference/DATABASE_SCHEMA.md` - Complete database schema and data model
