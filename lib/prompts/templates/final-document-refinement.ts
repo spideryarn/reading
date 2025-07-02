@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { loadPromptTemplateFromCaller } from '@/lib/prompts/types'
+import { JSDOM } from 'jsdom'
 
 // Schema for assembly issues that need addressing
 export const assemblyIssueSchema = z.object({
@@ -103,9 +104,19 @@ export function validateEditOperations(
   const valid: EditOperation[] = []
   const invalid: { operation: EditOperation, reason: string }[] = []
   
+  // Parse HTML to search text content properly
+  let textContent: string
+  try {
+    const dom = new JSDOM(htmlDocument)
+    textContent = dom.window.document.body?.textContent || ''
+  } catch (error) {
+    // Fall back to regex if DOM parsing fails
+    textContent = htmlDocument.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+  }
+  
   for (const operation of editOperations) {
-    // Check if old_text exists in document
-    const matchCount = (htmlDocument.match(new RegExp(escapeRegExp(operation.old_text), 'g')) || []).length
+    // Check if old_text exists in the document's text content
+    const matchCount = countOccurrences(textContent, operation.old_text)
     
     if (matchCount === 0) {
       invalid.push({
@@ -125,6 +136,18 @@ export function validateEditOperations(
   return { valid, invalid }
 }
 
+// Helper function to count occurrences of a substring
+function countOccurrences(text: string, searchString: string): number {
+  if (!searchString) return 0
+  let count = 0
+  let position = 0
+  while ((position = text.indexOf(searchString, position)) !== -1) {
+    count++
+    position += searchString.length
+  }
+  return count
+}
+
 // Helper function to escape special regex characters
 function escapeRegExp(string: string): string {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -132,14 +155,54 @@ function escapeRegExp(string: string): string {
 
 // Helper function to apply validated edit operations
 export function applyEditOperations(htmlDocument: string, editOperations: EditOperation[]): string {
-  let result = htmlDocument
+  // Parse HTML to perform text replacements properly
+  let dom: JSDOM
+  try {
+    dom = new JSDOM(htmlDocument)
+  } catch (error) {
+    // If DOM parsing fails, fall back to simple string replacement
+    let result = htmlDocument
+    for (const operation of editOperations) {
+      if (operation.type === 'replace') {
+        result = result.replace(operation.old_text, operation.new_text)
+      }
+    }
+    return result
+  }
+  
+  const document = dom.window.document
   
   // Apply operations in sequence
   for (const operation of editOperations) {
     if (operation.type === 'replace') {
-      result = result.replace(operation.old_text, operation.new_text)
+      // Walk through all text nodes and replace text
+      replaceTextInDocument(document, operation.old_text, operation.new_text)
     }
   }
   
-  return result
+  return dom.serialize()
+}
+
+// Helper function to replace text in all text nodes of a document
+function replaceTextInDocument(document: Document, oldText: string, newText: string): void {
+  const walker = document.createTreeWalker(
+    document.body || document.documentElement,
+    NodeFilter.SHOW_TEXT,
+    null
+  )
+  
+  const textNodes: Text[] = []
+  let node: Node | null
+  
+  // Collect all text nodes first to avoid modifying while iterating
+  while ((node = walker.nextNode())) {
+    textNodes.push(node as Text)
+  }
+  
+  // Replace text in each text node
+  for (const textNode of textNodes) {
+    if (textNode.nodeValue && textNode.nodeValue.includes(oldText)) {
+      textNode.nodeValue = textNode.nodeValue.replace(oldText, newText)
+    }
+  }
 }

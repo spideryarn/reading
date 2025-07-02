@@ -17,6 +17,7 @@ import { generateSlug } from '@/lib/utils/slug'
 import { sanitizeDocumentTitle } from '@/lib/utils/document-title'
 import type { Logger } from 'pino'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { JSDOM } from 'jsdom'
 
 /**
  * Processing metadata required for document creation
@@ -258,16 +259,27 @@ export async function sanitizeAndExtractText(
       originalLength: htmlContent.length
     }, 'Detected complete HTML document, extracting body content for sanitization')
     
-    // Extract content between <body> tags
-    const bodyMatch = htmlContent.match(/<body[^>]*>([\s\S]*)<\/body>/i)
-    if (bodyMatch && bodyMatch[1]) {
-      contentToSanitize = bodyMatch[1]
-      logger.info({
+    // Extract content between <body> tags using JSDOM
+    try {
+      const dom = new JSDOM(htmlContent)
+      const body = dom.window.document.body
+      if (body) {
+        contentToSanitize = body.innerHTML
+        logger.info({
+          correlationId,
+          step: 'body-extraction-complete',
+          extractedLength: contentToSanitize.length,
+          reductionPercent: Math.round((1 - contentToSanitize.length / htmlContent.length) * 100)
+        }, 'Successfully extracted body content from complete HTML document')
+      }
+    } catch (domError) {
+      logger.warn({
         correlationId,
-        step: 'body-extraction-complete',
-        extractedLength: contentToSanitize.length,
-        reductionPercent: Math.round((1 - contentToSanitize.length / htmlContent.length) * 100)
-      }, 'Successfully extracted body content from complete HTML document')
+        step: 'body-extraction-failed',
+        error: domError instanceof Error ? domError.message : 'Unknown error'
+      }, 'Failed to parse HTML with JSDOM, using full content')
+      // Fall back to using the full content if DOM parsing fails
+      contentToSanitize = htmlContent
     }
   }
 
