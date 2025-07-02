@@ -8,7 +8,12 @@ import { EnhancementService } from '@/lib/services/database/enhancements'
 import { requireAuth } from '@/lib/auth/server-auth'
 import { getCurrentUserAdminStatus } from '@/lib/auth/admin-utils'
 import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
-import { calculateReadingTimeFromWordCount, formatReadingTime } from '@/lib/utils/reading-time-calculation'
+import { 
+  calculateReadingTimeFromWordCount, 
+  formatReadingTime, 
+  MissingReadingDifficultyError, 
+  InvalidReadingDifficultyError
+} from '@/lib/utils/reading-time-calculation'
 
 interface RouteContext {
   params: Promise<{ slug: string }>
@@ -114,12 +119,33 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     // Calculate reading time using the exact same machinery as MetadataPanel
-    let readingTimeResult
+    let readingTimeDisplay = 'Loading...'
     try {
-      readingTimeResult = await calculateReadingTimeFromWordCount(document.word_count || 0, document.id, supabase)
+      const readingTimeResult = await calculateReadingTimeFromWordCount(
+        document.word_count || 0,
+        document.id,
+        supabase
+      )
+      readingTimeDisplay = formatReadingTime(readingTimeResult.readingTimeMinutes)
     } catch (error) {
-      console.error(`Reading time calculation failed for document ${document.id}:`, error)
-      throw new Error(`Reading time calculation failed for document ${document.id}: ${error instanceof Error ? error.message : 'Unknown reading time calculation error'}`)
+      // If the reading difficulty assessment hasn't been generated yet (or is invalid),
+      // we fall back to a placeholder rather than estimating.
+      if (
+        error instanceof MissingReadingDifficultyError ||
+        error instanceof InvalidReadingDifficultyError
+      ) {
+        readingTimeDisplay = 'Loading...'
+      } else {
+        console.error(
+          `Reading time calculation failed for document ${document.id}:`,
+          error
+        )
+        throw new Error(
+          `Reading time calculation failed for document ${document.id}: ${
+            error instanceof Error ? error.message : 'Unknown reading time calculation error'
+          }`
+        )
+      }
     }
 
     // Check for existing multi-dimensional summary (same as metadata tab)
@@ -144,7 +170,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     // Prepare tooltip information (using exact same machinery as metadata tab)
     const tooltipInfo: TooltipInfo = {
       sourceInfo: formatSourceInfo(document),
-      readingTime: formatReadingTime(readingTimeResult.readingTimeMinutes),
+      readingTime: readingTimeDisplay,
       summary,
       hasSummary
     }
