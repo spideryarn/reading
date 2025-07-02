@@ -18,6 +18,8 @@ import { getModelForAICall } from '@/lib/config'
 import { BaseToolHandler, createHandlerError } from '../handler-interface'
 import type { ExecutionContext, ToolApiResponse } from '@/lib/tools/executor/types'
 import type { GetRequestParams, DeleteRequestParams } from '../handler-interface'
+import { executePromptWithUsage } from '@/lib/prompts/types'
+import { readingDifficultyPrompt, parseReadingDifficultyResponse } from '@/lib/prompts/templates/reading-difficulty'
 
 // Validation schemas
 const ReadingDifficultyRequestSchema = z.object({
@@ -29,55 +31,44 @@ const GetMetadataRequestSchema = z.object({
   type: z.enum(['reading-difficulty', 'summary', 'all']).default('all')
 })
 
-// Mock reading difficulty analysis (replace with actual implementation)
+// ---------------------------------------------------------------------------
+// Reading difficulty analysis via LLM prompt
+// ---------------------------------------------------------------------------
+
+/**
+ * Analyze reading difficulty using the dedicated LLM prompt.
+ * - Runs the `readingDifficultyPrompt` against the document text
+ * - Parses and validates the JSON response
+ * - Returns the level, confidence, rationale, plus token-usage metadata
+ */
 async function analyzeReadingDifficultyFromPlainText(content: string): Promise<{
   level: string
   confidence: number
+  rationale: string
   factors: Record<string, unknown>
 }> {
   const timer = createTimer()
-  
-  const plainText = content
-  
-  // Simple analysis based on text characteristics
-  const sentences = plainText.split(/[.!?]+/).filter(s => s.trim().length > 0)
-  const words = plainText.split(/\s+/).filter(w => w.length > 0)
-  const avgWordsPerSentence = words.length / Math.max(sentences.length, 1)
-  const avgCharsPerWord = words.reduce((sum, word) => sum + word.length, 0) / Math.max(words.length, 1)
-  
-  // Determine difficulty level
-  let level: string
-  let confidence: number
-  
-  if (avgWordsPerSentence < 10 && avgCharsPerWord < 5) {
-    level = 'High school or below'
-    confidence = 0.8
-  } else if (avgWordsPerSentence < 15 && avgCharsPerWord < 6) {
-    level = 'High school or below'
-    confidence = 0.75
-  } else if (avgWordsPerSentence < 20 && avgCharsPerWord < 7) {
-    level = 'High school or below'
-    confidence = 0.7
-  } else if (avgWordsPerSentence < 25 && avgCharsPerWord < 8) {
-    level = 'Undergraduate'
-    confidence = 0.65
-  } else if (avgWordsPerSentence < 30 && avgCharsPerWord < 9) {
-    level = 'Masters/PhD'
-    confidence = 0.6
-  } else {
-    level = 'Post-doctoral/expert'
-    confidence = 0.55
+
+  // Execute the prompt and capture token usage
+  const { text: rawResponse, usage } = await executePromptWithUsage(
+    readingDifficultyPrompt,
+    { content }
+  )
+
+  // Parse the JSON returned by the model
+  const parsed = parseReadingDifficultyResponse(rawResponse)
+
+  return {
+    level: parsed.level,
+    confidence: parsed.confidence,
+    rationale: parsed.rationale,
+    factors: {
+      promptTokens: usage.promptTokens,
+      completionTokens: usage.completionTokens,
+      totalTokens: usage.totalTokens,
+      analysisTime: timer.elapsed(),
+    }
   }
-  
-  const factors = {
-    wordCount: words.length,
-    sentenceCount: sentences.length,
-    avgWordsPerSentence,
-    avgCharsPerWord,
-    analysisTime: timer.elapsed()
-  }
-  
-  return { level, confidence, factors }
 }
 
 /**
