@@ -105,14 +105,12 @@ export function validateEditOperations(
   const invalid: { operation: EditOperation, reason: string }[] = []
   
   // Parse HTML to search text content properly
-  let textContent: string
-  try {
-    const dom = new JSDOM(htmlDocument)
-    textContent = dom.window.document.body?.textContent || ''
-  } catch (error) {
-    // Fall back to regex if DOM parsing fails
-    textContent = htmlDocument.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+  const dom = new JSDOM(htmlDocument)
+  const body = dom.window.document.body
+  if (!body) {
+    throw new Error('Failed to validate edit operations: No <body> element found in HTML document')
   }
+  const textContent = body.textContent || ''
   
   for (const operation of editOperations) {
     // Check if old_text exists in the document's text content
@@ -156,21 +154,12 @@ function escapeRegExp(string: string): string {
 // Helper function to apply validated edit operations
 export function applyEditOperations(htmlDocument: string, editOperations: EditOperation[]): string {
   // Parse HTML to perform text replacements properly
-  let dom: JSDOM
-  try {
-    dom = new JSDOM(htmlDocument)
-  } catch (error) {
-    // If DOM parsing fails, fall back to simple string replacement
-    let result = htmlDocument
-    for (const operation of editOperations) {
-      if (operation.type === 'replace') {
-        result = result.replace(operation.old_text, operation.new_text)
-      }
-    }
-    return result
-  }
-  
+  const dom = new JSDOM(htmlDocument)
   const document = dom.window.document
+  
+  if (!document.body && !document.documentElement) {
+    throw new Error('Failed to apply edit operations: Invalid HTML document structure')
+  }
   
   // Apply operations in sequence
   for (const operation of editOperations) {

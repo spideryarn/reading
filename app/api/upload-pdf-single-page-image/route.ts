@@ -327,33 +327,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Rewrite image URLs in HTML to point to storage paths using JSDOM
-    let updatedHtml = processedFragment.htmlFragment
-    try {
-      const dom = new JSDOM(processedFragment.htmlFragment)
-      const document = dom.window.document
-      
-      extractedImages.forEach(image => {
-        // Find img element with the matching ID
-        const img = document.getElementById(image.elementId)
-        if (img && img.tagName === 'IMG') {
-          img.setAttribute('src', image.storagePath)
-          
-          // Also update data-src if present (for lazy loading)
-          if (img.hasAttribute('data-src')) {
-            img.setAttribute('data-src', image.storagePath)
-          }
+    const dom = new JSDOM(processedFragment.htmlFragment)
+    const document = dom.window.document
+    
+    extractedImages.forEach(image => {
+      // Find img element with the matching ID
+      const img = document.getElementById(image.elementId)
+      if (img && img.tagName === 'IMG') {
+        img.setAttribute('src', image.storagePath)
+        
+        // Also update data-src if present (for lazy loading)
+        if (img.hasAttribute('data-src')) {
+          img.setAttribute('data-src', image.storagePath)
         }
-      })
-      
-      // Serialize back to HTML
-      updatedHtml = dom.serialize()
-    } catch (domError) {
-      logger.error('Failed to update HTML with JSDOM, using original', {
-        error: domError instanceof Error ? domError.message : 'Unknown error'
-      })
-      // Fall back to original HTML if DOM parsing fails
-      updatedHtml = processedFragment.htmlFragment
-    }
+      }
+    })
+    
+    // Serialize back to HTML
+    const updatedHtml = dom.serialize()
 
     const totalProcessingTime = Date.now() - startTime
 

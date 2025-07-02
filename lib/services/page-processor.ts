@@ -446,54 +446,43 @@ function updateHtmlWithStorageUrls(
   })
   
   // Parse HTML and update image sources using JSDOM for reliable manipulation
-  try {
-    // Create a DOM from the HTML fragment
-    const dom = new JSDOM(htmlFragment)
-    const document = dom.window.document
-    
-    extractedImages.forEach(asset => {
-      // Find img element with the matching ID
-      const img = document.getElementById(asset.elementId)
-      if (img && img.tagName === 'IMG') {
-        // Update src attribute
-        img.setAttribute('src', asset.storageUrl)
-        
-        // Also update data-src if present (for lazy loading)
-        if (img.hasAttribute('data-src')) {
-          img.setAttribute('data-src', asset.storageUrl)
-        }
-      }
+  const dom = new JSDOM(htmlFragment)
+  const document = dom.window.document
+  
+  extractedImages.forEach(asset => {
+    // Find img element with the matching ID
+    const img = document.getElementById(asset.elementId)
+    if (img && img.tagName === 'IMG') {
+      // Update src attribute
+      img.setAttribute('src', asset.storageUrl)
       
-      // Handle figure elements that might have the ID
-      const figure = document.getElementById(asset.elementId)
-      if (figure && figure.tagName === 'FIGURE') {
-        // Find img elements within the figure
-        const imgInFigure = figure.querySelector('img')
-        if (imgInFigure) {
-          imgInFigure.setAttribute('src', asset.storageUrl)
-          if (imgInFigure.hasAttribute('data-src')) {
-            imgInFigure.setAttribute('data-src', asset.storageUrl)
-          }
+      // Also update data-src if present (for lazy loading)
+      if (img.hasAttribute('data-src')) {
+        img.setAttribute('data-src', asset.storageUrl)
+      }
+    }
+    
+    // Handle figure elements that might have the ID
+    const figure = document.getElementById(asset.elementId)
+    if (figure && figure.tagName === 'FIGURE') {
+      // Find img elements within the figure
+      const imgInFigure = figure.querySelector('img')
+      if (imgInFigure) {
+        imgInFigure.setAttribute('src', asset.storageUrl)
+        if (imgInFigure.hasAttribute('data-src')) {
+          imgInFigure.setAttribute('data-src', asset.storageUrl)
         }
       }
-    })
-    
-    // Serialize back to HTML
-    updatedHtml = dom.serialize()
-    
-    logger.info('Updated HTML with storage URLs', {
-      updatedImages: extractedImages.length,
-      finalHtmlLength: updatedHtml.length
-    })
-    
-  } catch (error) {
-    logger.error('Failed to update HTML with storage URLs', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      extractedImagesCount: extractedImages.length
-    })
-    // Return original HTML on failure
-    return htmlFragment
-  }
+    }
+  })
+  
+  // Serialize back to HTML
+  updatedHtml = dom.serialize()
+  
+  logger.info('Updated HTML with storage URLs', {
+    updatedImages: extractedImages.length,
+    finalHtmlLength: updatedHtml.length
+  })
   
   return updatedHtml
 }
