@@ -39,16 +39,16 @@ export function useDeleteDocument(metadata: DocumentMetadata) {
     setDeleteError(null)
 
     try {
-      const supabase = createClient()
+      // Use API route for proper storage cleanup
+      const response = await fetch('/api/delete-document', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ documentId: metadata.id })
+      })
       
-      // Delete document using Supabase client - RLS handles authorization
-      const { error } = await supabase
-        .from('documents')
-        .delete()
-        .eq('id', metadata.id)
-      
-      if (error) {
-        throw new Error(error.message || 'Failed to delete document')
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Network error' }))
+        throw new Error(errorData.error || 'Failed to delete document')
       }
 
       // Close dialog and redirect
