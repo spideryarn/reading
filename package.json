@@ -25,6 +25,7 @@
         "db:reset:DANGEROUS": "echo '⚠️  WARNING: This will DELETE ALL DATA and invalidate ALL worktree auth files! Type YES to continue:' && read confirm && [ \"$confirm\" = \"YES\" ] && supabase db reset && npm run db:types && npm run import-documents && rm -f playwright/.auth/*.json && echo '✅ Database reset complete. Run ./scripts/setup-auth-all-worktrees.ts to re-setup authentication in all worktrees.'",
         "db:backup": "./scripts/backup-database.ts",
         "cleanup:test-data": "tsx scripts/cleanup-test-data.ts",
+        "cleanup:document": "tsx scripts/cleanup-document.ts",
         "import-documents": "dotenv -e .env.local -- npx tsx scripts/import-static-documents.ts",
         "analyze-fidelity": "dotenv -e .env.local -- npx tsx scripts/analyze-content-fidelity.ts",
         "deploy:production": "npm run build && git push origin main",
