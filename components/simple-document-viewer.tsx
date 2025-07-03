@@ -432,7 +432,7 @@ export function SimpleDocumentViewer({
         id="document-viewer"
         className={`max-w-[65ch] ${
           leftAligned
-            ? 'ml-1 sm:ml-2 md:ml-2 mr-1 sm:mr-2 md:mr-auto lg:mx-auto'
+            ? 'ml-12 sm:ml-12 md:ml-12 mr-1 sm:mr-2 md:mr-auto lg:mx-auto'
             : 'mx-1 sm:mx-2 md:mx-2 lg:mx-auto'
         } p-2 sm:p-3 md:px-3 md:py-6 lg:px-8`}
       >
