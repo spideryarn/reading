@@ -272,6 +272,11 @@ Sentry.init({
 - Keep current console patterns
 - Use Pino with pretty-printing
 - Sentry in development mode (errors only)
+- **Enhanced dual logging system**: All dev server output goes to `dev.log`, with automatic error extraction to `error.log`
+  - Errors are categorized (CRITICAL, ERROR, WARNING, TEST, BUILD, etc.) with timestamps
+  - Context lines (2 before each error) help understand what led to errors
+  - Multi-line errors (stack traces) are captured completely
+  - Run `source scripts/dual-dev-error-log.sh && generate_error_summary` for error statistics
 
 ### Production  
 - Pino with JSON output to Better Stack
