@@ -173,4 +173,154 @@ export class DocumentAssetsService {
     
     return asset
   }
+
+  /**
+   * Update a document asset
+   */
+  async update(id: string, updates: DocumentAssetUpdate): Promise<DocumentAsset> {
+    const supabase = await createClient()
+    
+    this.logger.info('Updating document asset', {
+      assetId: id,
+      updates
+    })
+    
+    const { data: asset, error } = await supabase
+      .from('document_assets')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+    
+    if (error) {
+      this.logger.error('Failed to update document asset', {
+        id,
+        updates,
+        error: error.message
+      })
+      throw new Error(`Failed to update document asset: ${error.message}`)
+    }
+    
+    this.logger.info('Document asset updated successfully', {
+      assetId: asset.id,
+      filename: asset.filename
+    })
+    
+    return asset
+  }
+
+  /**
+   * Delete a document asset
+   */
+  async delete(id: string): Promise<void> {
+    const supabase = await createClient()
+    
+    this.logger.info('Deleting document asset', { assetId: id })
+    
+    const { error } = await supabase
+      .from('document_assets')
+      .delete()
+      .eq('id', id)
+    
+    if (error) {
+      this.logger.error('Failed to delete document asset', {
+        id,
+        error: error.message
+      })
+      throw new Error(`Failed to delete document asset: ${error.message}`)
+    }
+    
+    this.logger.info('Document asset deleted successfully', { assetId: id })
+  }
+
+  /**
+   * Delete all assets for a specific document
+   */
+  async deleteByDocumentId(documentId: string): Promise<number> {
+    const supabase = await createClient()
+    
+    this.logger.info('Deleting all document assets', { documentId })
+    
+    const { data: deletedAssets, error } = await supabase
+      .from('document_assets')
+      .delete()
+      .eq('document_id', documentId)
+      .select('id')
+    
+    if (error) {
+      this.logger.error('Failed to delete document assets', {
+        documentId,
+        error: error.message
+      })
+      throw new Error(`Failed to delete document assets: ${error.message}`)
+    }
+    
+    const deletedCount = deletedAssets?.length || 0
+    this.logger.info('Document assets deleted successfully', {
+      documentId,
+      deletedCount
+    })
+    
+    return deletedCount
+  }
+
+  /**
+   * Get asset statistics for a document
+   */
+  async getDocumentAssetStats(documentId: string): Promise<{
+    totalAssets: number
+    assetsByType: Record<string, number>
+    totalStorageSize: number
+  }> {
+    const assets = await this.getByDocumentId(documentId)
+    
+    const stats = {
+      totalAssets: assets.length,
+      assetsByType: {} as Record<string, number>,
+      totalStorageSize: 0
+    }
+    
+    for (const asset of assets) {
+      // Count by type
+      stats.assetsByType[asset.type] = (stats.assetsByType[asset.type] || 0) + 1
+      
+      // Sum storage size from metadata
+      const metadata = asset.metadata as AssetMetadata
+      if (metadata?.file_size) {
+        stats.totalStorageSize += metadata.file_size
+      }
+    }
+    
+    return stats
+  }
+
+  /**
+   * Find orphaned assets (assets with storage paths that don't exist in storage)
+   * This is useful for cleanup operations
+   */
+  async findOrphanedAssets(): Promise<DocumentAsset[]> {
+    const supabase = await createClient()
+    
+    // For now, just return all assets - actual orphan detection would require
+    // cross-referencing with Supabase Storage which is more complex
+    const { data: assets, error } = await supabase
+      .from('document_assets')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) {
+      this.logger.error('Failed to get assets for orphan detection', {
+        error: error.message
+      })
+      throw new Error(`Failed to get assets: ${error.message}`)
+    }
+    
+    // TODO: Implement actual orphan detection by checking storage existence
+    // This would require integration with the storage service
+    
+    return assets || []
+  }
 }
+
+// Export a singleton instance
+export const documentAssetsService = new DocumentAssetsService()
