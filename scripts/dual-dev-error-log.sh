@@ -17,41 +17,64 @@ readonly RED='\033[0;31m'
 readonly YELLOW='\033[0;33m'
 readonly NC='\033[0m' # No Color
 
-# Enhanced error patterns with categorization
-declare -A ERROR_PATTERNS=(
-    # Critical errors that need immediate attention
-    ["CRITICAL"]="(FATAL|Fatal|fatal|CRITICAL|Critical|critical|PANIC|Panic|panic|EMERGENCY|Emergency|emergency)"
-    
-    # Standard errors
-    ["ERROR"]="(ERROR|Error|error:|TypeError|ReferenceError|SyntaxError|RangeError|InternalError|EvalError|URIError|AggregateError)"
-    
-    # Exceptions and stack traces
-    ["EXCEPTION"]="(Exception|exception|Traceback|stack trace|Stack trace|at .+\(.*:[0-9]+:[0-9]+\)|^\s+at\s+)"
-    
-    # Warnings that might indicate issues
-    ["WARNING"]="(WARN|Warn|warn|WARNING|Warning|warning|CAUTION|Caution|caution|DEPRECATED|Deprecated|deprecated)"
-    
-    # Failed operations
-    ["FAILED"]="(FAIL|Fail|fail|FAILED|Failed|failed|FAILURE|Failure|failure|unsuccessful|Unsuccessful)"
-    
-    # Build/compile errors
-    ["BUILD"]="(Build error|build error|Compile error|compile error|Module build failed|Failed to compile|⨯|✗)"
-    
-    # Test failures
-    ["TEST"]="(FAIL\s+\w+\.test\.|Test failed|test failed|✕|●|FAIL\s+src/|FAIL\s+tests/)"
-    
-    # Network/connection errors
-    ["NETWORK"]="(ECONNREFUSED|ETIMEDOUT|ENOTFOUND|EHOSTUNREACH|ENETUNREACH|Connection refused|connection refused|timeout|Timeout)"
-    
-    # Database errors
-    ["DATABASE"]="(database error|Database error|DB error|db error|SQL error|sql error|constraint violation|duplicate key)"
-    
-    # Authentication/permission errors
-    ["AUTH"]="(unauthorized|Unauthorized|forbidden|Forbidden|401|403|Permission denied|permission denied|Access denied|access denied)"
-)
+# --- Bash-4 associative array version (disabled for Bash 3 compatibility) ---
+# The following block requires Bash 4+ (macOS ships Bash 3.2). If you run this
+# script under a newer Bash you can uncomment it and remove the Bash-3 fallback
+# that follows to regain the associative-array implementation.
+# declare -A ERROR_PATTERNS=(
+#     # Critical errors that need immediate attention
+#     ["CRITICAL"]="(FATAL|Fatal|fatal|CRITICAL|Critical|critical|PANIC|Panic|panic|EMERGENCY|Emergency|emergency)"
+#     
+#     # Standard errors
+#     ["ERROR"]="(ERROR|Error|error:|TypeError|ReferenceError|SyntaxError|RangeError|InternalError|EvalError|URIError|AggregateError)"
+#     
+#     # Exceptions and stack traces
+#     ["EXCEPTION"]="(Exception|exception|Traceback|stack trace|Stack trace|at .+\(.*:[0-9]+:[0-9]+\)|^\s+at\s+)"
+#     
+#     # Warnings that might indicate issues
+#     ["WARNING"]="(WARN|Warn|warn|WARNING|Warning|warning|CAUTION|Caution|caution|DEPRECATED|Deprecated|deprecated)"
+#     
+#     # Failed operations
+#     ["FAILED"]="(FAIL|Fail|fail|FAILED|Failed|failed|FAILURE|Failure|failure|unsuccessful|Unsuccessful)"
+#     
+#     # Build/compile errors
+#     ["BUILD"]="(Build error|build error|Compile error|compile error|Module build failed|Failed to compile|⨯|✗)"
+#     
+#     # Test failures
+#     ["TEST"]="(FAIL\s+\w+\.test\.|Test failed|test failed|✕|●|FAIL\s+src/|FAIL\s+tests/)"
+#     
+#     # Network/connection errors
+#     ["NETWORK"]="(ECONNREFUSED|ETIMEDOUT|ENOTFOUND|EHOSTUNREACH|ENETUNREACH|Connection refused|connection refused|timeout|Timeout)"
+#     
+#     # Database errors
+#     ["DATABASE"]="(database error|Database error|DB error|db error|SQL error|sql error|constraint violation|duplicate key)"
+#     
+#     # Authentication/permission errors
+#     ["AUTH"]="(unauthorized|Unauthorized|forbidden|Forbidden|401|403|Permission denied|permission denied|Access denied|access denied)"
+# )
+# 
+# readonly COMBINED_PATTERN="(${ERROR_PATTERNS[CRITICAL]}|${ERROR_PATTERNS[ERROR]}|${ERROR_PATTERNS[EXCEPTION]}|${ERROR_PATTERNS[WARNING]}|${ERROR_PATTERNS[FAILED]}|${ERROR_PATTERNS[BUILD]}|${ERROR_PATTERNS[TEST]}|${ERROR_PATTERNS[NETWORK]}|${ERROR_PATTERNS[DATABASE]}|${ERROR_PATTERNS[AUTH]})"
+# --- End Bash-4 block ---
 
-# Combined pattern for quick matching
-readonly COMBINED_PATTERN="(${ERROR_PATTERNS[CRITICAL]}|${ERROR_PATTERNS[ERROR]}|${ERROR_PATTERNS[EXCEPTION]}|${ERROR_PATTERNS[WARNING]}|${ERROR_PATTERNS[FAILED]}|${ERROR_PATTERNS[BUILD]}|${ERROR_PATTERNS[TEST]}|${ERROR_PATTERNS[NETWORK]}|${ERROR_PATTERNS[DATABASE]}|${ERROR_PATTERNS[AUTH]})"
+# --- Bash-3 fallback implementation ---
+# Pattern variables (one per category)
+CRITICAL_PATTERN='(FATAL|Fatal|fatal|CRITICAL|Critical|critical|PANIC|Panic|panic|EMERGENCY|Emergency|emergency)'
+ERROR_PATTERN='(ERROR|Error|error:|TypeError|ReferenceError|SyntaxError|RangeError|InternalError|EvalError|URIError|AggregateError)'
+EXCEPTION_PATTERN='(Exception|exception|Traceback|stack trace|Stack trace|at .+\(.*:[0-9]+:[0-9]+\)|^\s+at\s+)'
+WARNING_PATTERN='(WARN|Warn|warn|WARNING|Warning|warning|CAUTION|Caution|caution|DEPRECATED|Deprecated|deprecated)'
+FAILED_PATTERN='(FAIL|Fail|fail|FAILED|Failed|failed|FAILURE|Failure|failure|unsuccessful|Unsuccessful)'
+BUILD_PATTERN='(Build error|build error|Compile error|compile error|Module build failed|Failed to compile|⨯|✗)'
+TEST_PATTERN='(FAIL\s+\w+\.test\.|Test failed|test failed|✕|●|FAIL\s+src/|FAIL\s+tests/)'
+NETWORK_PATTERN='(ECONNREFUSED|ETIMEDOUT|ENOTFOUND|EHOSTUNREACH|ENETUNREACH|Connection refused|connection refused|timeout|Timeout)'
+DATABASE_PATTERN='(database error|Database error|DB error|db error|SQL error|sql error|constraint violation|duplicate key)'
+AUTH_PATTERN='(unauthorized|Unauthorized|forbidden|Forbidden|401|403|Permission denied|permission denied|Access denied|access denied)'
+
+# Space-separated list of categories for iteration in Bash 3
+ERROR_CATEGORIES="CRITICAL ERROR EXCEPTION WARNING FAILED BUILD TEST NETWORK DATABASE AUTH"
+
+# Combined regex for quick matching
+COMBINED_PATTERN="(${CRITICAL_PATTERN}|${ERROR_PATTERN}|${EXCEPTION_PATTERN}|${WARNING_PATTERN}|${FAILED_PATTERN}|${BUILD_PATTERN}|${TEST_PATTERN}|${NETWORK_PATTERN}|${DATABASE_PATTERN}|${AUTH_PATTERN})"
+# --- End Bash-3 fallback ---
 
 # Function to clear both log files
 clear_logs() {
@@ -77,17 +100,18 @@ rotate_logs_if_needed() {
     fi
 }
 
-# Function to categorize error type
+# Bash-3 compatible categorize_error implementation
 categorize_error() {
     local line="$1"
-    
-    for category in "${!ERROR_PATTERNS[@]}"; do
-        if echo "$line" | grep -qE "${ERROR_PATTERNS[$category]}" 2>/dev/null; then
+    for category in $ERROR_CATEGORIES; do
+        local pattern_var="${category}_PATTERN"
+        # Indirect expansion to get the pattern stored in the variable whose name is in $pattern_var
+        local pattern="${!pattern_var}"
+        if echo "$line" | grep -qE "$pattern" 2>/dev/null; then
             echo "$category"
             return
         fi
     done
-    
     echo "UNKNOWN"
 }
 
@@ -264,7 +288,7 @@ generate_error_summary() {
     
     # Count errors by category
     echo "Error counts by category:"
-    for category in "${!ERROR_PATTERNS[@]}"; do
+    for category in $ERROR_CATEGORIES; do
         local count=$(grep -c "\[$category\]" error.log 2>/dev/null || echo 0)
         if [ $count -gt 0 ]; then
             printf "  %-12s: %d\n" "$category" "$count"
