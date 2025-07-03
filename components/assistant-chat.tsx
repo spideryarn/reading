@@ -23,10 +23,6 @@ import type { Tables } from '@/lib/types/database-auto-generated';
 
 type ChatMessageDb = Tables<'chat_messages'>;
 
-// The upstream library currently doesn't publish its internal type helpers, so
-// we declare a lightweight alias locally to satisfy TypeScript while keeping
-// the public API surface unchanged.
-type TextContentPartComponent = React.ComponentType<{ part: { type: 'text'; text: string } }>;
 
 // Dynamically import the voice recorder with SSR disabled to avoid
 // `Worker is not defined` errors during the Node.js render phase.
@@ -130,7 +126,7 @@ const AssistantMessage = () => (
         <MessagePrimitive.If hasContent>
           <div className="prose prose-sm max-w-none prose-p:text-gray-800 prose-p:leading-relaxed prose-p:mb-4 prose-p:last:mb-0 prose-headings:text-gray-900 prose-code:text-gray-700 prose-code:bg-white prose-code:px-2 prose-code:py-1 prose-code:rounded prose-strong:text-gray-900 prose-li:mb-1 prose-ul:space-y-1 prose-ol:space-y-1 [&>*]:mb-3 [&>*:last-child]:mb-0">
             {/* Use @assistant-ui/react-markdown for full markdown support in AI responses */}
-            <MessagePrimitive.Content components={{ Text: MarkdownTextPrimitive as TextContentPartComponent }} />
+            <MessagePrimitive.Content components={{ Text: MarkdownTextPrimitive }} />
           </div>
         </MessagePrimitive.If>
       </div>

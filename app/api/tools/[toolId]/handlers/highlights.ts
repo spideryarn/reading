@@ -121,28 +121,12 @@ export class HighlightsHandler extends BaseToolHandler {
       }
       
       // Transform enhancements into highlight query list
-      const highlights = (enhancements || []).map((enhancement: { 
-        id: string; 
-        subtype: string | null; 
-        created_at: string | null; 
-        content: {
-          originalQuery?: string
-          normalizedQuery: string
-          matches?: Array<{
-            elementId: string
-            confidence: number
-            reasoning: string
-            relevantText: string
-          }>
-          searchedAt?: string
-          stats?: {
-            totalElements: number
-            searchableElements: number
-            matchesFound: number
-          }
-        }; 
-        ai_call_id: string | null 
-      }) => {
+      const highlights = (enhancements || []).map((enhancement) => {
+        // Ensure content is not null and is an object
+        if (!enhancement.content || typeof enhancement.content !== 'object') {
+          throw new Error(`Enhancement ${enhancement.id} has invalid content structure`)
+        }
+        
         const content = enhancement.content as {
           originalQuery?: string
           normalizedQuery: string
@@ -162,9 +146,9 @@ export class HighlightsHandler extends BaseToolHandler {
         
         return {
           id: enhancement.id,
-          criterion: content.originalQuery || enhancement.subtype,
-          normalizedQuery: enhancement.subtype,
-          createdAt: content.searchedAt || enhancement.created_at,
+          criterion: content.originalQuery || enhancement.subtype || '',
+          normalizedQuery: enhancement.subtype || '',
+          createdAt: content.searchedAt || enhancement.created_at || new Date().toISOString(),
           matchCount: Array.isArray(content.matches) ? content.matches.length : 0,
           matches: content.matches || [],
           stats: content.stats,

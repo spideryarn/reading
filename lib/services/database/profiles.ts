@@ -1,7 +1,8 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import type { Database, Profile, Json } from '@/lib/types/database-auto-generated'
+import type { Database, Json } from '@/lib/types/database-auto-generated'
 import type { JsonObject } from '@/lib/types/json'
 
+export type Profile = Database['public']['Tables']['profiles']['Row']
 export type ProfileInsert = Database['public']['Tables']['profiles']['Insert']
 export type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
 
