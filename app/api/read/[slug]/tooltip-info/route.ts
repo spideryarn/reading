@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { EnhancementService } from '@/lib/services/database/enhancements'
-import { requireAuth } from '@/lib/auth/server-auth'
+import { requireAuth, AuthError } from '@/lib/auth/server-auth'
 import { getCurrentUserAdminStatus } from '@/lib/auth/admin-utils'
 import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
 import { 
@@ -120,31 +120,40 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     // Calculate reading time using the exact same machinery as MetadataPanel
     let readingTimeDisplay = 'Loading...'
-    try {
-      const readingTimeResult = await calculateReadingTimeFromWordCount(
-        document.word_count || 0,
-        document.id,
-        supabase
-      )
-      readingTimeDisplay = formatReadingTime(readingTimeResult.readingTimeMinutes)
-    } catch (error) {
-      // If the reading difficulty assessment hasn't been generated yet (or is invalid),
-      // we fall back to a placeholder rather than estimating.
-      if (
-        error instanceof MissingReadingDifficultyError ||
-        error instanceof InvalidReadingDifficultyError
-      ) {
-        readingTimeDisplay = 'Loading...'
-      } else {
-        console.error(
-          `Reading time calculation failed for document ${document.id}:`,
-          error
+
+    if (!document.word_count || document.word_count <= 0) {
+      // Word count is missing or zero – give a clear user-visible message and skip calc
+      readingTimeDisplay = 'Word count unavailable'
+    } else {
+      try {
+        const readingTimeResult = await calculateReadingTimeFromWordCount(
+          document.word_count,
+          document.id,
+          supabase
         )
-        throw new Error(
-          `Reading time calculation failed for document ${document.id}: ${
-            error instanceof Error ? error.message : 'Unknown reading time calculation error'
-          }`
-        )
+        readingTimeDisplay = formatReadingTime(readingTimeResult.readingTimeMinutes)
+      } catch (error) {
+        // If the reading difficulty assessment hasn't been generated yet (or is invalid),
+        // we fall back to a placeholder rather than estimating.
+        if (
+          error instanceof MissingReadingDifficultyError ||
+          error instanceof InvalidReadingDifficultyError
+        ) {
+          readingTimeDisplay = 'Loading...'
+        } else if (error instanceof Error && /Invalid word count/i.test(error.message)) {
+          // Propagate the clearer word-count message to the user but keep 200 response
+          readingTimeDisplay = 'Word count unavailable'
+        } else {
+          console.error(
+            `Reading time calculation failed for document ${document.id}:`,
+            error
+          )
+          throw new Error(
+            `Reading time calculation failed for document ${document.id}: ${
+              error instanceof Error ? error.message : 'Unknown reading time calculation error'
+            }`
+          )
+        }
       }
     }
 
@@ -163,8 +172,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
         hasSummary = !!summary
       }
     } catch (error) {
-      console.error(`Failed to fetch multi-dimensional summary for document ${document.id}:`, error)
-      throw new Error(`Summary fetch failed for document ${document.id}: ${error instanceof Error ? error.message : 'Unknown summary fetch error'}`)
+      // Log the error but do not crash the endpoint – tooltip can cope without a summary
+      console.error(
+        `Failed to fetch multi-dimensional summary for document ${document.id}:`,
+        error
+      )
+      summary = null
+      hasSummary = false
     }
 
     // Prepare tooltip information (using exact same machinery as metadata tab)
@@ -196,7 +210,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     
     if (error instanceof Error) {
       // Handle authentication errors
-      if (error.message.includes('Authentication failed') || error.message.includes('User not authenticated')) {
+      if (error instanceof AuthError || error.message.includes('Authentication required') || error.message.includes('Authentication failed') || error.message.includes('User not authenticated')) {
         return NextResponse.json(
           { error: 'Authentication required' },
           { status: 401 }
