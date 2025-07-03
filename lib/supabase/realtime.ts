@@ -27,7 +27,7 @@ export function subscribeToDocumentEnhancements(
         schema: 'public',
         table: 'document_enhancements',
         filter: `document_id=eq.${documentId}`,
-      },
+      } as const,
       onChange
     )
     .subscribe()
@@ -58,7 +58,7 @@ export function subscribeToDocument(
         schema: 'public',
         table: 'documents',
         filter: `id=eq.${documentId}`,
-      },
+      } as const,
       onChange
     )
     .subscribe()
@@ -89,7 +89,7 @@ export function subscribeToChatMessages(
         schema: 'public',
         table: 'chat_messages',
         filter: `thread_id=eq.${threadId}`,
-      },
+      } as const,
       onNewMessage
     )
     .subscribe()
@@ -120,7 +120,7 @@ export function subscribeToAiCallStatus(
         schema: 'public',
         table: 'ai_calls',
         filter: `id=eq.${aiCallId}`,
-      },
+      } as const,
       onChange
     )
     .subscribe()
@@ -171,7 +171,7 @@ export function subscribeToTable<T extends keyof Database['public']['Tables']>(
  * Helper to check if a channel is subscribed
  */
 export function isChannelSubscribed(channel: RealtimeChannelType): boolean {
-  return (channel.state as any) === 'SUBSCRIBED'
+  return channel.state === 'joined'
 }
 
 /**
@@ -179,7 +179,8 @@ export function isChannelSubscribed(channel: RealtimeChannelType): boolean {
  */
 export async function waitForSubscription(
   channel: RealtimeChannelType,
-  timeoutMs: number = 5000
+  timeoutMs: number = 5000,
+  pollIntervalMs: number = 50
 ): Promise<boolean> {
   return new Promise((resolve) => {
     if (isChannelSubscribed(channel)) {
@@ -187,13 +188,18 @@ export async function waitForSubscription(
       return
     }
 
-    const timeoutId = setTimeout(() => {
-      resolve(false)
-    }, timeoutMs) as NodeJS.Timeout
+    const start = Date.now()
 
-    (channel as any).on('subscribe', () => {
-      clearTimeout(timeoutId)
-      resolve(true)
-    })
+    const intervalId = setInterval(() => {
+      if (isChannelSubscribed(channel)) {
+        clearInterval(intervalId)
+        resolve(true)
+        return
+      }
+      if (Date.now() - start >= timeoutMs) {
+        clearInterval(intervalId)
+        resolve(false)
+      }
+    }, pollIntervalMs)
   })
 }

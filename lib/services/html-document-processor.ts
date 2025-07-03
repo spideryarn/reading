@@ -10,6 +10,7 @@
  */
 
 import { DocumentService } from '@/lib/services/database/documents'
+import type { StorageUploadResult } from '@/lib/services/storage'
 import { sanitizeAcademicContent } from '@/lib/utils/html-sanitizer'
 import { extractCleanText } from '@/lib/utils/html-text-extraction'
 import { prettifyAcademicHtmlSafe } from '@/lib/utils/html-prettifier'
@@ -110,7 +111,7 @@ export interface ErrorContext {
  */
 export interface ProcessedDocument {
   document: import('@/lib/types/database-auto-generated').Database['public']['Tables']['documents']['Row'] // Database document record
-  storageResult?: Record<string, unknown> // Storage upload result
+  storageResult?: StorageUploadResult
 }
 
 /**
@@ -178,12 +179,17 @@ export async function processHtmlToDocument(
   const wordCount = plaintext.split(/\s+/).length
 
   // Step 3: Generate upload metadata with source-specific fields
-  const uploadMetadata = generateUploadMetadata(
+  const rawUploadMetadata = generateUploadMetadata(
     uploadSource,
     extractionMethod,
     metadata.provider,
     additionalMetadata
   )
+
+  // Remove undefined values so it matches Record<string, string | number | boolean | null>
+  const uploadMetadata = Object.fromEntries(
+    Object.entries(rawUploadMetadata).filter(([, v]) => v !== undefined)
+  ) as Record<string, string | number | boolean | null>
 
   // Step 4: Create document with storage integration
   logger.info({
@@ -209,7 +215,7 @@ export async function processHtmlToDocument(
     },
     originalFile,
     filename || 'document',
-    uploadMetadata as Record<string, string | number | boolean | null>,
+    uploadMetadata,
     aiCallId,
     documentId // Pass explicit document ID if provided
   )
@@ -226,8 +232,8 @@ export async function processHtmlToDocument(
     document
   }
   
-  if (storageResult !== null && storageResult !== undefined) {
-    result.storageResult = storageResult as unknown as Record<string, unknown>
+  if (storageResult) {
+    result.storageResult = storageResult
   }
   
   return result
