@@ -188,8 +188,7 @@ function generateNotificationId(
 ): string {
   // Create a hash-like ID based on error content to enable deduplication
   const errorType = error instanceof Error ? error.constructor.name : 'UnknownError'
-  const _errorMessage = error instanceof Error ? error.message : String(error)
-  const toolId = (error as any)?.toolId || 'unknown'
+  const toolId = (error as { toolId?: string })?.toolId || 'unknown'
   
   // Use timestamp for uniqueness while allowing deduplication of rapid identical errors
   const timestamp = Date.now()
@@ -208,7 +207,7 @@ function addNotification(notification: ErrorNotification): void {
     existing.timestamp.getTime() > fiveSecondsAgo &&
     existing.message.title === notification.message.title &&
     existing.message.description === notification.message.description &&
-    (existing.originalError as any)?.toolId === (notification.originalError as any)?.toolId
+    (existing.originalError as { toolId?: string })?.toolId === (notification.originalError as { toolId?: string })?.toolId
   )
   
   if (isDuplicate) {
@@ -217,7 +216,7 @@ function addNotification(notification: ErrorNotification): void {
       existing.timestamp.getTime() > fiveSecondsAgo &&
       existing.message.title === notification.message.title &&
       existing.message.description === notification.message.description &&
-      (existing.originalError as any)?.toolId === (notification.originalError as any)?.toolId
+      (existing.originalError as { toolId?: string })?.toolId === (notification.originalError as { toolId?: string })?.toolId
         ? { ...existing, timestamp: new Date(), visible: true }
         : existing
     )
@@ -313,10 +312,10 @@ export function showServerError(message: string, httpStatus?: number, toolId?: s
  * 
  * This can be used to automatically show errors from tool execution
  */
-export function withErrorNotification<T extends (...args: any[]) => Promise<any>>(
+export function withErrorNotification<T extends (...args: unknown[]) => Promise<unknown>>(
   fn: T
 ): T {
-  return (async (...args: any[]) => {
+  return (async (...args: unknown[]) => {
     try {
       return await fn(...args)
     } catch (error) {

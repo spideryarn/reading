@@ -303,7 +303,14 @@ export async function POST(request: NextRequest) {
       
       const storagePath = `documents/${documentId}/assets/${filename}`
 
-      const imageEntry: any = {
+      const imageEntry: {
+        elementId: string
+        filename: string
+        storagePath: string
+        boundingBox: { x: number; y: number; width: number; height: number }
+        caption?: string
+        altText?: string
+      } = {
         elementId: imageData.elementId,
         filename,
         storagePath,

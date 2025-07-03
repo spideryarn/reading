@@ -3,7 +3,6 @@ import { requireAuth } from '@/lib/auth/server-auth'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { DocumentService } from '@/lib/services/database/documents'
-import { generateCorrelationId } from '@/lib/services/logger'
 
 const DraftSchema = z.object({
   documentId: z.string().uuid(),
@@ -43,7 +42,7 @@ export async function POST(request: NextRequest) {
       original_file_type: 'application/pdf',
       upload_metadata: { draft: true, filename: parsed.filename ?? null },
       is_draft: nowIso
-    } as any)
+    })
 
     return NextResponse.json({ success: true }, { status: 201 })
   } catch (error) {

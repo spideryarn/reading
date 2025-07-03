@@ -211,7 +211,7 @@ export class DocumentProcessingTransaction {
         break
 
       default:
-        throw new Error(`Unknown operation type: ${(operation as any).type}`)
+        throw new Error(`Unknown operation type: ${(operation as ProcessingOperation).type}`)
     }
   }
 

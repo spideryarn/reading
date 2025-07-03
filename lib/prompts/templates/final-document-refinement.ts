@@ -146,10 +146,6 @@ function countOccurrences(text: string, searchString: string): number {
   return count
 }
 
-// Helper function to escape special regex characters
-function escapeRegExp(string: string): string {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
 
 // Helper function to apply validated edit operations
 export function applyEditOperations(htmlDocument: string, editOperations: EditOperation[]): string {

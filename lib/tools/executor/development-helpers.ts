@@ -91,8 +91,7 @@ export class MockToolExecutor {
   async executeTool(
     toolId: string,
     action: string,
-    parameters: Record<string, unknown>,
-    _context?: Partial<ExecutionContext>
+    parameters: Record<string, unknown>
   ): Promise<ToolExecutionResult> {
     const startTime = Date.now()
     const correlationId = generateCorrelationId()

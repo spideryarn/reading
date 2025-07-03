@@ -283,7 +283,7 @@ export function useChatStore({
     } finally {
       setIsLoading(false);
     }
-  }, [documentContext, documentId, threadId, deduplicateMessages]);
+  }, [documentContext, documentId, threadId, deduplicateMessages, messages]);
 
   /**
    * Create new thread (will be called automatically by sendMessage if needed)

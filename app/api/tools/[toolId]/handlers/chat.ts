@@ -119,7 +119,7 @@ export class ChatHandler extends BaseToolHandler {
           throw createHandlerError('Thread not found or access denied', 'not_found')
         }
         
-        const messages = await chatService.getMessages(threadId, { limit })
+        const messages = await chatService.getMessages(threadId)
         
         logger.info({
           threadId,

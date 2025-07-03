@@ -583,7 +583,7 @@ export function useVisionSinglePageUploader(
         console.error(errorMsg)
       }
     }
-  }, [processPage, onAllComplete, maxConcurrency, pageStates])
+  }, [processPage, onAllComplete, maxConcurrency, onError])
 
   // Cancel all uploads
   const cancel = useCallback(() => {

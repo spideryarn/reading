@@ -62,7 +62,7 @@ export function transformErrorToMessage(error: ToolExecutorError): ErrorMessage 
   }
   
   if (error.code === 'TOOL_AUTH_FAILED') {
-    return transformAuthError(error as ToolAuthenticationError)
+    return transformAuthError()
   }
   
   if (error.code === 'TOOL_VALIDATION_FAILED') {
@@ -114,7 +114,7 @@ function transformTimeoutError(error: ToolTimeoutError): ErrorMessage {
 /**
  * Transform authentication errors into user-friendly messages
  */
-function transformAuthError(_error: ToolAuthenticationError): ErrorMessage {
+function transformAuthError(): ErrorMessage {
   return {
     title: 'Sign-in Required',
     description: 'You need to be signed in to use this feature',

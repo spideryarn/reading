@@ -660,7 +660,7 @@ export default function AddDocumentPage() {
         }
       }))
     }
-  }, [uploadState, router])
+  }, [uploadState, router, uploadPages])
 
   // Global ENTER key handling for file uploads
   useEffect(() => {

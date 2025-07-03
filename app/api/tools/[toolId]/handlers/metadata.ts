@@ -20,6 +20,7 @@ import type { ExecutionContext, ToolApiResponse } from '@/lib/tools/executor/typ
 import type { GetRequestParams, DeleteRequestParams } from '../handler-interface'
 import { executePromptWithUsage } from '@/lib/prompts/types'
 import { readingDifficultyPrompt, parseReadingDifficultyResponse } from '@/lib/prompts/templates/reading-difficulty'
+import type { Json } from '@/lib/types/database-extensions'
 
 // Validation schemas
 const ReadingDifficultyRequestSchema = z.object({
@@ -222,7 +223,7 @@ export class MetadataHandler extends BaseToolHandler {
         aiCallId: aiCall.id,
         type: 'reading_difficulty',
         subtype: 'ai_assessment',
-        content: result as any // Cast to JsonObject for storage
+        content: result as Json // Cast to Json type for storage
       })
 
       // Mark AI call as completed successfully
@@ -230,7 +231,7 @@ export class MetadataHandler extends BaseToolHandler {
         output_data: {
           level: result.level,
           confidence: result.confidence,
-          factors: result.factors as any
+          factors: result.factors as Record<string, unknown>
         }
       })
 

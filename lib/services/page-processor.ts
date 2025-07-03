@@ -316,7 +316,7 @@ export async function processPageToHtml(
               
               // Create enhanced error with user message
               const enhancedError = new Error(`Image extraction failed for page ${validatedInput.pageNumber}, element ${imageData.elementId}: ${errorMessage}`)
-              ;(enhancedError as any).userErrorInfo = userErrorInfo
+              ;(enhancedError as Error & { userErrorInfo?: typeof userErrorInfo }).userErrorInfo = userErrorInfo
               throw enhancedError
             }
           }
@@ -344,7 +344,7 @@ export async function processPageToHtml(
         const errorMessage = extractionError instanceof Error ? extractionError.message : 'Unknown extraction error'
         
         // Generate user-friendly error message if not already present
-        if (!(extractionError as any).userErrorInfo) {
+        if (!(extractionError as Error & { userErrorInfo?: unknown }).userErrorInfo) {
           const errorContext: ErrorContext = {
             pageNumber: validatedInput.pageNumber,
             documentId: validatedInput.documentId,
@@ -352,13 +352,13 @@ export async function processPageToHtml(
             processingStage: 'vision pipeline'
           }
           const userErrorInfo = getUserErrorMessage(extractionError instanceof Error ? extractionError : String(extractionError), errorContext)
-          ;(extractionError as any).userErrorInfo = userErrorInfo
+          ;(extractionError as Error & { userErrorInfo?: typeof userErrorInfo }).userErrorInfo = userErrorInfo
         }
         
         logger.error('Image extraction pipeline failed fatally', {
           pageNumber: validatedInput.pageNumber,
           error: errorMessage,
-          userError: (extractionError as any).userErrorInfo
+          userError: (extractionError as Error & { userErrorInfo?: unknown }).userErrorInfo
         })
         
         throw extractionError // Re-throw with preserved user error info
@@ -399,7 +399,7 @@ export async function processPageToHtml(
     }
     
     // Check if error already has user error info from inner catch
-    let userErrorInfo = (error as any)?.userErrorInfo
+    let userErrorInfo = (error as Error & { userErrorInfo?: unknown })?.userErrorInfo
     if (!userErrorInfo) {
       userErrorInfo = getUserErrorMessage(error instanceof Error ? error : String(error), errorContext)
     }

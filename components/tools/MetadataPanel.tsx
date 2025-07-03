@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, useState, useRef, useEffect } from 'react'
+import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import { 
   FileText, Clock, Calendar, Hash, 
   ChartBar, Robot, ListBullets, BookOpen,
@@ -103,7 +103,7 @@ export function MetadataPanel({
   // ---------------------------------------------------------------------------
   // On-demand reading-difficulty generation (defined early so it can be used)
   // ---------------------------------------------------------------------------
-  const generateDifficultyAssessment = async (): Promise<void> => {
+  const generateDifficultyAssessment = useCallback(async (): Promise<void> => {
     if (isGeneratingDifficulty) return
     setIsGeneratingDifficulty(true)
     setIsLoadingDifficulty(true)
@@ -130,7 +130,9 @@ export function MetadataPanel({
       const difficulty: ReadingDifficultyData = {
         level: result.level,
         confidence: result.confidence,
-        factors: result.factors ? Object.values(result.factors as any) : []
+        factors: result.factors
+          ? Object.values(result.factors as Record<string, unknown>).map((v) => String(v))
+          : []
       }
 
       setReadingDifficulty(difficulty)
@@ -156,7 +158,7 @@ export function MetadataPanel({
       setIsGeneratingDifficulty(false)
       setIsLoadingDifficulty(false)
     }
-  }
+  }, [isGeneratingDifficulty, documentId, wordCount])
   
   useEffect(() => {
     const calculateStats = async () => {
@@ -200,7 +202,7 @@ export function MetadataPanel({
     }
     
     calculateStats()
-  }, [wordCount, documentId])
+  }, [wordCount, documentId, generateDifficultyAssessment])
   
   // Reading difficulty is now handled by the shared calculation utility
   useEffect(() => {
@@ -579,7 +581,7 @@ export function MetadataPanel({
 
   // Determine if received difficulty level is unexpected → treat as error
   const invalidDifficulty =
-    readingDifficulty && !validDifficultyLevels.includes(readingDifficulty.level as any)
+    readingDifficulty && !validDifficultyLevels.includes(readingDifficulty.level as typeof validDifficultyLevels[number])
   
   return (
     <div className="flex flex-col h-full bg-slate-50/30">

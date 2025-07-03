@@ -376,7 +376,7 @@ export function validateCaptionEnvironment(): { supported: boolean; errors: stri
     if (typeof imageCaptionPrompt !== 'function') {
       errors.push('Image caption prompt template not available')
     }
-  } catch (error) {
+  } catch {
     errors.push('Failed to load image caption prompt template')
   }
   

@@ -83,7 +83,7 @@ export function sortEntitiesByPosition(entities: EntityWithPosition[]): EntityWi
  * @returns Array of entities without position metadata
  */
 export function stripPositionMetadata(entities: EntityWithPosition[]): Entity[] {
-  return entities.map(({ document_position: _document_position, ...entity }) => entity)
+  return entities.map(({ document_position: _position, ...entity }) => entity)
 }
 
 /**

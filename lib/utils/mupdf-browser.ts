@@ -13,7 +13,7 @@
  * @param file - PDF file to validate
  * @returns Promise resolving to page count
  */
-export async function validateMuPDFPageCount(file: File): Promise<number> {
+export async function validateMuPDFPageCount(_file: File): Promise<number> {
   // Stub implementation - replace with actual MuPDF.js logic
   throw new Error('MuPDF browser integration not yet implemented. This is a stub for TypeScript compilation.')
 }

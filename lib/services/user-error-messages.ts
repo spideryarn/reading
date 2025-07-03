@@ -83,12 +83,12 @@ export class UserErrorMessageService {
 
     // Caption generation errors (specific AI operations)
     if (this.isCaptionGenerationError(errorMessage)) {
-      return this.handleCaptionGenerationError(errorMessage, context)
+      return this.handleCaptionGenerationError(errorMessage)
     }
 
     // Database errors (specific database operations)
     if (this.isDatabaseError(errorMessage)) {
-      return this.handleDatabaseError(errorMessage, context)
+      return this.handleDatabaseError(errorMessage)
     }
 
     // Network/timeout errors (last specific check before generic)
@@ -233,7 +233,7 @@ export class UserErrorMessageService {
   /**
    * Handle AI caption generation errors
    */
-  private handleCaptionGenerationError(errorMessage: string, context: ErrorContext): UserErrorInfo {
+  private handleCaptionGenerationError(errorMessage: string): UserErrorInfo {
     // AI service timeout
     if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
       return {
@@ -273,7 +273,7 @@ export class UserErrorMessageService {
   /**
    * Handle database errors
    */
-  private handleDatabaseError(errorMessage: string, context: ErrorContext): UserErrorInfo {
+  private handleDatabaseError(errorMessage: string): UserErrorInfo {
     // Connection issues
     if (errorMessage.includes('connection') || errorMessage.includes('network')) {
       return {

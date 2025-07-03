@@ -141,7 +141,7 @@ export class ChatService {
   async addMessage(options: CreateMessageOptions): Promise<ChatMessage> {
     // Validate message content as a safety net
     // (Primary validation should happen at API/client layers)
-    let validation: any = null
+    let validation: { valid: boolean; error?: string; trimmedContent?: string } | null = null
     if (options.role !== 'system') {
       validation = validateMessage(options.role as 'user' | 'assistant', options.content)
       if (!validation.valid) {
@@ -297,7 +297,7 @@ export class ChatService {
   /**
    * Get messages with pagination (alias for getThreadMessages)
    */
-  async getMessages(threadId: string, _options?: { limit?: number }): Promise<ChatMessage[]> {
+  async getMessages(threadId: string): Promise<ChatMessage[]> {
     // For now, ignore limit and return all messages
     return await this.getThreadMessages(threadId)
   }

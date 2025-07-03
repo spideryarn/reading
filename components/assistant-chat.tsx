@@ -26,8 +26,7 @@ type ChatMessageDb = Tables<'chat_messages'>;
 // The upstream library currently doesn't publish its internal type helpers, so
 // we declare a lightweight alias locally to satisfy TypeScript while keeping
 // the public API surface unchanged.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type TextContentPartComponent = any;
+type TextContentPartComponent = React.ComponentType<{ part: { type: 'text'; text: string } }>;
 
 // Dynamically import the voice recorder with SSR disabled to avoid
 // `Worker is not defined` errors during the Node.js render phase.
@@ -63,8 +62,8 @@ const UserMessage = () => {
   const msg = useMessage();
   const chatStore = useContext(ChatStoreContext);
 
-  const customMeta = (msg?.metadata && typeof msg.metadata === 'object' ? (msg.metadata as Record<string, any>) : {}) as Record<string, any>;
-  const customFlags = (customMeta.custom && typeof customMeta.custom === 'object' ? (customMeta.custom as Record<string, any>) : {}) as Record<string, any>;
+  const customMeta = (msg?.metadata && typeof msg.metadata === 'object' ? (msg.metadata as Record<string, unknown>) : {}) as Record<string, unknown>;
+  const customFlags = (customMeta.custom && typeof customMeta.custom === 'object' ? (customMeta.custom as Record<string, unknown>) : {}) as Record<string, unknown>;
   const isPending = !!customFlags.pending;
   const isFailed = !!customFlags.failed;
 
@@ -288,7 +287,7 @@ function ChatRuntime({ chatStore }: { chatStore: ReturnType<typeof useChatStore>
         : {}
 
       // Map to assistant-ui message shape
-      const base: any = {
+      const base = {
         id: msg.id,
         role: msg.role as 'user' | 'assistant',
         content: [{ type: 'text' as const, text: msg.content }],
@@ -297,7 +296,7 @@ function ChatRuntime({ chatStore }: { chatStore: ReturnType<typeof useChatStore>
       }
 
       // assistant-ui restricts `status` to assistant messages; we rely on metadata flags instead
-      return base as any
+      return base
     }
   });
   

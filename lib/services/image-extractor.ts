@@ -280,7 +280,7 @@ export async function extractMultipleRegions(
   })
   
   // Load source image once for all extractions
-  const sourceImage = await loadImageFromBase64(pageImageBase64)
+  await loadImageFromBase64(pageImageBase64)
   
   const results: ImageExtractionResult[] = []
   
@@ -378,7 +378,7 @@ export function validateExtractionEnvironment(): { supported: boolean; errors: s
     if (!ctx) {
       errors.push('Canvas 2D context not available')
     }
-  } catch (error) {
+  } catch {
     errors.push('Canvas creation failed')
   }
   

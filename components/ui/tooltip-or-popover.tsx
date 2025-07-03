@@ -74,7 +74,7 @@ export function TooltipOrPopover({
 
   // Remove `isActive` from the handlers so React doesn't pass it to the DOM as an
   // unknown attribute (it is only used for internal state tracking).
-  const { isActive: _ignoredIsActive, ...longPressHandlers } =
+  const { isActive: _isActive, ...longPressHandlers } =
     useLongPress(() => setOpenId(tooltipId), { delay: 500 })
 
   /**

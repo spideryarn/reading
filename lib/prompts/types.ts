@@ -114,7 +114,9 @@ async function executePromptInternal<T extends z.ZodSchema>(
       promptTokens: result.usage?.promptTokens || 0,
       completionTokens: result.usage?.completionTokens || 0,
       totalTokens: result.usage?.totalTokens || 0,
-      reasoningTokens: (result.usage as any)?.reasoningTokens
+      ...(((result.usage as { reasoningTokens?: number })?.reasoningTokens !== undefined) && {
+        reasoningTokens: (result.usage as { reasoningTokens?: number })?.reasoningTokens
+      })
     },
     finishReason: result.finishReason || 'unknown'
   }
@@ -267,7 +269,7 @@ async function executeMultimodalPromptInternal<T extends z.ZodSchema>(
   // Execute with Vercel AI SDK Core using messages format
   const result = await generateText({
     model,
-    messages: messages as any, // Type assertion to handle complex union types with AI SDK
+    messages: messages as Parameters<typeof generateText>[0]['messages'], // Type assertion to handle complex union types with AI SDK
     maxTokens: template.modelConfig?.maxTokens || AI_CONFIG.DEFAULT_MAX_TOKENS,
     temperature: template.modelConfig?.temperature ?? AI_CONFIG.DEFAULT_TEMPERATURE,
   })
@@ -279,7 +281,9 @@ async function executeMultimodalPromptInternal<T extends z.ZodSchema>(
       promptTokens: result.usage?.promptTokens || 0,
       completionTokens: result.usage?.completionTokens || 0,
       totalTokens: result.usage?.totalTokens || 0,
-      reasoningTokens: (result.usage as any)?.reasoningTokens
+      ...(((result.usage as { reasoningTokens?: number })?.reasoningTokens !== undefined) && {
+        reasoningTokens: (result.usage as { reasoningTokens?: number })?.reasoningTokens
+      })
     },
     finishReason: result.finishReason || 'unknown'
   }

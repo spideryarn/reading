@@ -91,13 +91,13 @@ export function useLongPress(
 
     // Capture subsequent events so we still receive pointerup even if the user
     // moves outside the original element.
-    if ('currentTarget' in event && 'setPointerCapture' in (event.currentTarget as any) && 'pointerId' in event) {
+    if ('currentTarget' in event && 'setPointerCapture' in (event.currentTarget as Element) && 'pointerId' in event) {
       // Only capture touch/pen pointers; capturing the mouse pointer steals the subsequent
       // pointerup/click from child elements (e.g. links), breaking normal navigation.
       const ptrType = 'pointerType' in event ? (event as React.PointerEvent).pointerType : 'touch'
       if (ptrType === 'touch' || ptrType === 'pen') {
         try {
-          ;(event.currentTarget as any).setPointerCapture((event as any).pointerId)
+          ;(event.currentTarget as Element).setPointerCapture((event as React.PointerEvent).pointerId)
         } catch {
           // Not critical – best effort only.
         }
