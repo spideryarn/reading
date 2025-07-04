@@ -325,7 +325,7 @@ function validateFragmentStructure(
 ): void {
   try {
     // Check for proper semantic structure
-    const _headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6')
+    // Headings check removed as it was unused - can be added back if needed
     const tables = document.querySelectorAll('table')
     const figures = document.querySelectorAll('figure')
     

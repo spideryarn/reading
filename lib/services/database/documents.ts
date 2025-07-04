@@ -630,7 +630,7 @@ export class DocumentService {
       }
 
       const assetPaths = (assetFiles || [])
-        .filter((f) => (f as any).metadata) // filter out folder prefixes
+        .filter((f) => 'metadata' in f && f.metadata) // filter out folder prefixes
         .map((f) => `${id}/assets/${f.name}`)
 
       if (assetPaths.length > 0) {

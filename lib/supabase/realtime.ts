@@ -21,6 +21,8 @@ export function subscribeToDocumentEnhancements(
   const channel = supabase
     .channel(`document-enhancements:${documentId}`)
     .on(
+      // Type cast needed due to Supabase library type mismatch
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       'postgres_changes' as any,
       {
         event: '*',
@@ -52,6 +54,8 @@ export function subscribeToDocument(
   const channel = supabase
     .channel(`document:${documentId}`)
     .on(
+      // Type cast needed due to Supabase library type mismatch
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       'postgres_changes' as any,
       {
         event: 'UPDATE',
@@ -83,6 +87,8 @@ export function subscribeToChatMessages(
   const channel = supabase
     .channel(`chat-thread:${threadId}`)
     .on(
+      // Type cast needed due to Supabase library type mismatch
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       'postgres_changes' as any,
       {
         event: 'INSERT',
@@ -114,6 +120,8 @@ export function subscribeToAiCallStatus(
   const channel = supabase
     .channel(`ai-call:${aiCallId}`)
     .on(
+      // Type cast needed due to Supabase library type mismatch
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       'postgres_changes' as any,
       {
         event: 'UPDATE',
@@ -148,6 +156,8 @@ export function subscribeToTable<T extends keyof Database['public']['Tables']>(
   const channel = supabase
     .channel(channelName)
     .on(
+      // Type cast needed due to Supabase library type mismatch
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       'postgres_changes' as any,
       {
         event,

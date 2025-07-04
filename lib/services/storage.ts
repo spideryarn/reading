@@ -596,7 +596,7 @@ export async function deleteAllDocumentFiles(documentId: string): Promise<void> 
     for (const entry of data || []) {
       const entryPath = prefix ? `${prefix}/${entry.name}` : entry.name
       // A directory has no `metadata` field
-      if ((entry as any).metadata) {
+      if ('metadata' in entry && entry.metadata) {
         // File
         paths.push(entryPath)
       } else {

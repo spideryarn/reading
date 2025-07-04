@@ -18,7 +18,11 @@ const eslintConfig = [
     ignores: ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"],
     rules: {
       // Keep these as warnings to prevent deployment blocking while preserving diagnostic value
-      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-unused-vars": ["warn", { 
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }],
       "@typescript-eslint/no-require-imports": "warn",
       "@typescript-eslint/no-unused-expressions": "warn",
       "react/display-name": "warn",
@@ -42,7 +46,11 @@ const eslintConfig = [
     rules: {
       // Tests need flexibility for mocking complex external libraries
       "@typescript-eslint/no-explicit-any": "off", // Allow any types in tests for mocking flexibility
-      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-unused-vars": ["warn", { 
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }],
       "@typescript-eslint/no-require-imports": "warn",
       "@typescript-eslint/no-unused-expressions": "warn",
       "react-hooks/exhaustive-deps": "warn",

@@ -330,7 +330,7 @@ export class UserErrorMessageService {
   /**
    * Handle input validation errors
    */
-  private handleInputValidationError(errorMessage: string, context: ErrorContext): UserErrorInfo {
+  private handleInputValidationError(errorMessage: string, _context: ErrorContext): UserErrorInfo {
     // File size errors
     if (errorMessage.includes('size') && (errorMessage.includes('exceeds') || errorMessage.includes('too large'))) {
       return {
@@ -369,7 +369,7 @@ export class UserErrorMessageService {
   /**
    * Handle quota/rate limiting errors
    */
-  private handleQuotaError(errorMessage: string, context: ErrorContext): UserErrorInfo {
+  private handleQuotaError(errorMessage: string, _context: ErrorContext): UserErrorInfo {
     // Rate limiting errors
     if (/rate.*limit|too many requests|requests per/i.test(errorMessage)) {
       return {
@@ -396,7 +396,7 @@ export class UserErrorMessageService {
   /**
    * Handle generic errors
    */
-  private handleGenericError(errorMessage: string, context: ErrorContext, errorStack?: string): UserErrorInfo {
+  private handleGenericError(errorMessage: string, context: ErrorContext, _errorStack?: string): UserErrorInfo {
     const operation = context.operation || 'document processing'
     return {
       userMessage: `An unexpected error occurred during ${operation}. Please try again.`,

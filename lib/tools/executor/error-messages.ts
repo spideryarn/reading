@@ -17,7 +17,6 @@
 import type {
   ToolExecutorError,
   ToolTimeoutError,
-  ToolAuthenticationError,
   ToolValidationError,
   ToolNotFoundError,
   ToolCancelledError

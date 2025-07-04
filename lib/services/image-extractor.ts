@@ -385,7 +385,7 @@ export function validateExtractionEnvironment(): { supported: boolean; errors: s
   // Test Image constructor
   try {
     new Image()
-  } catch (error) {
+  } catch (_error) {
     errors.push('Image constructor not available')
   }
   

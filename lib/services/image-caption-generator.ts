@@ -389,7 +389,7 @@ export function validateCaptionEnvironment(): { supported: boolean; errors: stri
       imageType: 'other',
       academicRelevance: 'low'
     })
-  } catch (error) {
+  } catch (_error) {
     errors.push('Caption output schema validation failed')
   }
   

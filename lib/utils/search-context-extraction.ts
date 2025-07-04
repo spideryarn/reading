@@ -30,7 +30,6 @@ export function extractMatchContext(
   query: string, 
   matchIndex: number, 
   contextChars: number = 50,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _caseSensitive: boolean = false
 ): string {
   // Handle empty or invalid input

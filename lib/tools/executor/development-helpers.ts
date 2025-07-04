@@ -5,7 +5,7 @@
  * development and testing of tool execution flows.
  */
 
-import type { ToolApiResponse, ToolExecutionResult, ExecutionContext } from './types'
+import type { ToolApiResponse, ToolExecutionResult } from './types'
 import { generateCorrelationId } from '@/lib/services/logger'
 
 // Mock response configuration
