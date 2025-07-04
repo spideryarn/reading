@@ -119,14 +119,14 @@ class O3CritiqueCommand extends Command {
       - Sends structured prompt to OpenAI o3 API
       - Saves both context and raw API response for reference
       
-      Output files are saved to planning/critiques/ with timestamps.
+      Output files are saved to docs/planning/critiques/ with timestamps.
     `,
     examples: [
-      ['Critique a planning document', 'o3-critique planning/my-feature-plan.md'],
-      ['Use OpenAI o3 model', 'o3-critique --model openai:o3:latest planning/my-plan.md'],
-      ['Use Claude for critique', 'o3-critique --model anthropic:claude-opus-4:20250514 planning/my-plan.md'],
-      ['Include test files in context', 'o3-critique --include-tests planning/my-plan.md'],
-      ['Specify exact files to include', 'o3-critique --files app/api/route.ts --files lib/services/db.ts planning/my-plan.md'],
+      ['Critique a planning document', 'o3-critique docs/planning/my-feature-plan.md'],
+      ['Use OpenAI o3 model', 'o3-critique --model openai:o3:latest docs/planning/my-plan.md'],
+      ['Use Claude for critique', 'o3-critique --model anthropic:claude-opus-4:20250514 docs/planning/my-plan.md'],
+      ['Include test files in context', 'o3-critique --include-tests docs/planning/my-plan.md'],
+      ['Specify exact files to include', 'o3-critique --files app/api/route.ts --files lib/services/db.ts docs/planning/my-plan.md'],
     ],
   });
 
@@ -166,8 +166,8 @@ class O3CritiqueCommand extends Command {
       // Show output locations upfront
       const docBasename = basename(this.planningDoc, '.md');
       const timestamp = new Date().toISOString().slice(2, 16).replace(/[-:]/g, '').replace('T', '_');
-      const contextFile = `planning/critiques/CONTEXT_FOR__${docBasename}__${timestamp}.md`;
-      const outputFile = `planning/critiques/llm-api__CRITIQUE_OF__${docBasename}__${timestamp}.json`;
+      const contextFile = `docs/planning/critiques/CONTEXT_FOR__${docBasename}__${timestamp}.md`;
+      const outputFile = `docs/planning/critiques/llm-api__CRITIQUE_OF__${docBasename}__${timestamp}.json`;
       
       this.context.stdout.write('\n📁 Output files will be saved to:\n');
       this.context.stdout.write(`   Context: ${contextFile}\n`);
@@ -274,7 +274,7 @@ class O3CritiqueCommand extends Command {
 
   private async generateContext(docBasename: string, timestamp: string): Promise<string> {
     // Create critiques directory
-    const critiquesDir = 'planning/critiques';
+    const critiquesDir = 'docs/planning/critiques';
     if (!existsSync(critiquesDir)) {
       mkdirSync(critiquesDir, { recursive: true });
     }
@@ -353,7 +353,7 @@ class O3CritiqueCommand extends Command {
     // Generate output filename
     const docBasename = basename(this.planningDoc, '.md');
     const timestamp = new Date().toISOString().slice(2, 16).replace(/[-:]/g, '').replace('T', '_');
-    const outputFile = `planning/critiques/llm-api__CRITIQUE_OF__${docBasename}__${timestamp}.json`;
+    const outputFile = `docs/planning/critiques/llm-api__CRITIQUE_OF__${docBasename}__${timestamp}.json`;
 
     this.context.stdout.write(`Sending critique request to ${this.model}...\n`);
 

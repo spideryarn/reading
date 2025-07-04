@@ -134,7 +134,7 @@ Debugging resources:
 - Test files: `src/lib/*/tests/` and `components/__tests__/`
 - Database: `supabase/migrations/` and `docs/reference/DATABASE_*.md`
 - Architecture: `docs/reference/ARCHITECTURE_OVERVIEW.md` and `docs/reference/ARCHITECTURE_DECISIONS.md`
-- Recent decisions: `planning/*.md` docs
+- Recent decisions: `docs/planning/*.md` docs
 
 ## Test Modification Policy - CRITICAL
 
@@ -205,7 +205,7 @@ Based on the Test Reform for AI-First Development (July 2025), AI agents must fo
 
 **Active Development** (root directory):
 - Core implementation: `app/`, `components/`, `lib/`
-- Documentation: `docs/` (evergreen) and `planning/` (decisions)
+- Documentation: `docs/` (evergreen) and `docs/planning/` (decisions)
 - Database: `supabase/migrations/` and config
 
 **IGNORE**:
@@ -279,7 +279,7 @@ Available evergreen documentation in `docs/` - comprehensive signposting by doma
 - `docs/instructions/UPDATE_HOUSEKEEPING_TESTS.md` - Process for maintaining test quality and organisation while supporting rapid prototyping
 - `docs/instructions/UPDATE_CLAUDE_INSTRUCTIONS.md` - Guidelines for maintaining CLAUDE.md to help AI agents operate effectively on the Spideryarn Reading codebase
 - `docs/instructions/WRITE_EVERGREEN_DOC.md` - Guidelines for writing evergreen documentation including structure, cross-references, status indicators, and maintenance practices
-- `docs/instructions/WRITE_PLANNING_DOC.md` - Guide for writing planning/project management documents with file naming conventions, structure, and stage-based action plans
+- `docs/instructions/WRITE_PLANNING_DOC.md` - Guide for writing docs/planning/project management documents with file naming conventions, structure, and stage-based action plans
 - `docs/instructions/GATHER_DIVERSE_INPUTS_AND_CRITIQUES_ON_PLANNING_DOCS_FROM_OTHER_AI_MODELS.md` - Process for obtaining external AI critiques of planning documents for quality assurance
 
 **Core Development & Architecture**:
@@ -356,7 +356,7 @@ Available evergreen documentation in `docs/` - comprehensive signposting by doma
 - **See**: `docs/reference/TESTING_DATABASE.md` for comprehensive real RLS testing patterns
 - **Example**: `lib/services/database/__tests__/rls-policies-real.test.ts` for reference implementation
 
-**Recent Decisions & Planning**: `planning/*.md` for major feature progress tracking and architectural decisions
+**Recent Decisions & Planning**: `docs/planning/*.md` for major feature progress tracking and architectural decisions
 
 **Tool Management & Consolidation**:
 - **Tool creation**: Use `docs/reference/TOOL_ARCHITECTURE_AND_DEVELOPMENT_GUIDE.md` for comprehensive guidance

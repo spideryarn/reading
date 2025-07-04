@@ -14,7 +14,7 @@ class GenerateSequentialDatetimePrefixCommand extends Command {
       Scans folder for existing files and returns next letter in sequence.
     `,
     examples: [
-      ['Planning folder', 'generate-sequential-datetime-prefix planning/'],
+      ['Planning folder', 'generate-sequential-datetime-prefix docs/planning/'],
       ['Conversations', 'generate-sequential-datetime-prefix docs/conversations/'],
     ],
   });

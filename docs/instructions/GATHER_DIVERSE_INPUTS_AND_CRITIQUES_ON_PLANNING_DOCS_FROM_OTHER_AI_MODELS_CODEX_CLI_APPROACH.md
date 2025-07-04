@@ -45,17 +45,17 @@ The Codex CLI approach uses agentic, conversational interactions with AI models 
 ### Basic Command
 ```bash
 # WARNING: This approach has reliability issues
-./scripts/codex-with-env.sh planning/your-planning-doc.md
+./scripts/codex-with-env.sh docs/planning/your-planning-doc.md
 ```
 
 ### Expected Output (When Working)
 - Clean critique displayed in terminal
-- Raw output saved to `planning/critiques/o3-pro__CRITIQUE_OF__[doc-name]__YYMMDD_HHMM.jsonl`
+- Raw output saved to `docs/planning/critiques/o3-pro__CRITIQUE_OF__[doc-name]__YYMMDD_HHMM.jsonl`
 
 ### Manual Parsing (If Needed)
 If automated parsing fails:
 ```bash
-./scripts/parse-critique-output.ts planning/critiques/o3-pro__CRITIQUE_OF__[doc-name]__[timestamp].jsonl
+./scripts/parse-critique-output.ts docs/planning/critiques/o3-pro__CRITIQUE_OF__[doc-name]__[timestamp].jsonl
 ```
 
 ## Known Issues and Limitations
@@ -101,7 +101,7 @@ When functional, this approach would integrate with the core workflow:
 
 1. **Write planning document** following `docs/instructions/WRITE_PLANNING_DOC.md`
 2. **Commit planning doc** (creates pre-critique baseline)
-3. **Run agentic critique**: `./scripts/codex-with-env.sh planning/doc.md`
+3. **Run agentic critique**: `./scripts/codex-with-env.sh docs/planning/doc.md`
 4. **Process critique response** using methodology from overview
 5. **Update planning document** based on feedback
 6. **Commit revised version** with critique summary

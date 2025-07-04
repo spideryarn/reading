@@ -5,7 +5,7 @@ Date: 2025-06-28
 Duration: ~45 minutes
 Type: Decision-making, Research Review
 Status: Active
-Related Docs: `docs/reference/TOOL_STRUCTURE_HEADINGS.md`, `planning/finished/250620c_glossary_generate_more_timeout_mitigation.md`
+Related Docs: `docs/reference/TOOL_STRUCTURE_HEADINGS.md`, `docs/planning/finished/250620c_glossary_generate_more_timeout_mitigation.md`
 ---
 
 ## Context & Goals
@@ -188,7 +188,7 @@ Paragraph-per-heading concept preserved as separate "paragraph summaries" featur
 
 **Internal References:**
 - `docs/reference/TOOL_STRUCTURE_HEADINGS.md` - Current heading system documentation
-- `planning/finished/250620c_glossary_generate_more_timeout_mitigation.md` - Progressive loading pattern reference
+- `docs/planning/finished/250620c_glossary_generate_more_timeout_mitigation.md` - Progressive loading pattern reference
 - `docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Mutation system architecture
 - `lib/prompts/templates/headings.njk` - Current heading generation template
 

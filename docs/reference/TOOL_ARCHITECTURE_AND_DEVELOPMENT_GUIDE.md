@@ -13,8 +13,8 @@ This document provides comprehensive guidance for understanding tool architectur
 - `docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md` - DocumentCommunicationContext integration patterns
 - `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` - Keyboard shortcut integration and command definitions
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - AI-powered tool development with Nunjucks + Zod
-- `planning/250614b_unified_tool_registry_architecture.md` - Current unified tool architecture planning
-- `planning/250614e_llm_tool_function_calling.md` - LLM tool function calling architecture and OpenAPI schema generation
+- `docs/planning/250614b_unified_tool_registry_architecture.md` - Current unified tool architecture planning
+- `docs/planning/250614e_llm_tool_function_calling.md` - LLM tool function calling architecture and OpenAPI schema generation
 - `components/unified-left-pane.tsx` - Main pane implementation for reference
 - `components/vertical-icon-nav.tsx` - Icon navigation system integration
 - `components/command-palette.tsx` - Command registration patterns
@@ -794,7 +794,7 @@ export async function POST(request: NextRequest) {
 
 ## Future Architecture Considerations
 
-Based on `planning/250613c_unified_tool_architecture_url_state_llm_integration.md`, future tool development will evolve toward:
+Based on `docs/planning/250613c_unified_tool_architecture_url_state_llm_integration.md`, future tool development will evolve toward:
 
 ### Unified Tool Interface
 Tools will implement a standardized interface:

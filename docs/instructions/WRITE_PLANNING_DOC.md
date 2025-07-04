@@ -1,6 +1,6 @@
 # Project Management Practices
 
-This is a guide for writing planning/project management `.md` files, e.g. `planning/yyMMdda_complex_project.md`.
+This is a guide for writing docs/planning/project management `.md` files, e.g. `docs/planning/yyMMdda_complex_project.md`.
 
 These are for thinking through & documenting decisions, breaking down complex projects into multiple stages, and tracking progress.
 
@@ -22,15 +22,15 @@ see also: `docs/instructions/WRITE_EVERGREEN_DOC.md` for instructions on writing
 
 Planning docs should follow this naming format: `yyMMdd[letter]_description_in_normal_case.md`
 
-- Use `./scripts/generate-sequential-datetime-prefix.ts planning/` to get the date prefix
+- Use `./scripts/generate-sequential-datetime-prefix.ts docs/planning/` to get the date prefix
 - Description: lowercase words separated by underscores (except proper names/acronyms like `ToC`, `Vercel`)
 - Example: `250526a_ToC_hierarchical_summary_tooltips.md`
 
 ## Creating the doc
 
 ### Process for starting the doc from scratch:
-- Generate filename prefix using `./scripts/generate-sequential-datetime-prefix.ts planning/`
-- Store it in `planning/`
+- Generate filename prefix using `./scripts/generate-sequential-datetime-prefix.ts docs/planning/`
+- Store it in `docs/planning/`
 - IMPORTANT Before writing the doc, make sure you have asked the user questions about their requirements to clarify key principles & decisions, following instructions in `docs/instructions/SOUNDING_BOARD_MODE.md`.
 
 ## Reporting a summary to the user after generating the doc
@@ -63,7 +63,7 @@ Don't include a `Date` section at the top since it's implicit from the filename.
 
 ### References
 
-- Mention relevant evergreen docs (in `docs/`), other planning docs (in `planning/`), code files/functions, links, or anything else that could provide context, with a 1-sentence summary for each of what it's about/why it's relevant
+- Mention relevant evergreen docs (in `docs/`), other planning docs (in `docs/planning/`), code files/functions, links, or anything else that could provide context, with a 1-sentence summary for each of what it's about/why it's relevant
 
 
 ### Principles, key decisions
@@ -146,7 +146,7 @@ As final actions:
   - Check that errors provide descriptive, user-visible messages
 - **Improvement opportunities** - If you discovered any improvement opportunities outside the scope of the planned work during implementation, discuss these with the user before finalising
 - Ask the user's permission to merge back (if we created a branch)
-- Move the doc to `planning/finished/` and commit.
+- Move the doc to `docs/planning/finished/` and commit.
 
 Example stages & action (no need to include the words `TODO` or `DONE` explicitly, since the `[ ]` todo-checkboxes capture that):
 

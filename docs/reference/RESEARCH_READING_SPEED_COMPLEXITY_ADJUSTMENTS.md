@@ -6,7 +6,7 @@ Review Date: June 2026
 Status: Current
 Related Documents: 
 - docs/reference/TOOL_READING_DIFFICULTY.md
-- planning/250614a_document_metadata_tab_implementation.md
+- docs/planning/250614a_document_metadata_tab_implementation.md
 - docs/reference/TOOL_METADATA_TAB.md
 ---
 

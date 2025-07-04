@@ -54,21 +54,21 @@ code2prompt --version  # Should show: code2prompt 3.0.2
 
 ### Simple Critique
 ```bash
-./scripts/o3-critique-as-api.ts planning/my-feature-plan.md
+./scripts/o3-critique-as-api.ts docs/planning/my-feature-plan.md
 ```
 
 ### With Options
 ```bash
 # Include test files in context
-./scripts/o3-critique-as-api.ts --include-tests planning/my-plan.md
+./scripts/o3-critique-as-api.ts --include-tests docs/planning/my-plan.md
 
 # Use different models (multi-provider support)
-./scripts/o3-critique-as-api.ts --model openai:o3:latest planning/my-plan.md
-./scripts/o3-critique-as-api.ts --model anthropic:claude-opus-4:20250514 planning/my-plan.md
-./scripts/o3-critique-as-api.ts --model google:gemini-2.5-pro:latest planning/my-plan.md
+./scripts/o3-critique-as-api.ts --model openai:o3:latest docs/planning/my-plan.md
+./scripts/o3-critique-as-api.ts --model anthropic:claude-opus-4:20250514 docs/planning/my-plan.md
+./scripts/o3-critique-as-api.ts --model google:gemini-2.5-pro:latest docs/planning/my-plan.md
 
 # Verbose output with token counts
-./scripts/o3-critique-as-api.ts --verbose planning/my-plan.md
+./scripts/o3-critique-as-api.ts --verbose docs/planning/my-plan.md
 ```
 
 ## How It Works
@@ -108,7 +108,7 @@ The script uses the project's unified LLM system with:
 
 ## Output Files
 
-All outputs are saved to `planning/critiques/` with timestamps:
+All outputs are saved to `docs/planning/critiques/` with timestamps:
 
 ### Context File
 **Format**: `CONTEXT_FOR__[doc-name]__YYMMDD_HHMM.md`
@@ -149,7 +149,7 @@ The script uses a **comprehensive inclusion** approach rather than trying to gue
 ### Token Monitoring
 ```bash
 # Check context size before sending
-./scripts/o3-critique-as-api.ts --verbose planning/my-plan.md
+./scripts/o3-critique-as-api.ts --verbose docs/planning/my-plan.md
 ```
 
 The script displays token counts and estimated costs when using `--verbose` flag.
@@ -183,13 +183,13 @@ echo "GOOGLE_GENERATIVE_AI_API_KEY=your-google-key" >> .env.local
 ```bash
 # Check available models in lib/config/models.ts
 # Or use a known model like:
-./scripts/o3-critique-as-api.ts --model anthropic:claude-sonnet-4:20250514 planning/doc.md
+./scripts/o3-critique-as-api.ts --model anthropic:claude-sonnet-4:20250514 docs/planning/doc.md
 ```
 
 **"Planning document not found"**
 ```bash
 # Verify file path:
-ls -la planning/your-document.md
+ls -la docs/planning/your-document.md
 ```
 
 ### Recovery Guidance
@@ -204,13 +204,13 @@ The script provides specific recovery instructions for each error type, includin
 ### Custom Model Selection
 ```bash
 # Use different o3 variant
-./scripts/o3-critique-as-api.ts --model o3-2024-12-17 planning/my-plan.md
+./scripts/o3-critique-as-api.ts --model o3-2024-12-17 docs/planning/my-plan.md
 ```
 
 ### Response Length Control
 ```bash
 # Longer responses for complex documents
-./scripts/o3-critique-as-api.ts --max-tokens 6000 planning/complex-plan.md
+./scripts/o3-critique-as-api.ts --max-tokens 6000 docs/planning/complex-plan.md
 ```
 
 ### File Type Customization
@@ -233,7 +233,7 @@ This approach implements the core workflow described in the overview document:
 
 1. **Write planning document** following `docs/instructions/WRITE_PLANNING_DOC.md`
 2. **Commit planning doc** (creates pre-critique baseline)
-3. **Run automated critique**: `./scripts/o3-critique-as-api.ts planning/doc.md`
+3. **Run automated critique**: `./scripts/o3-critique-as-api.ts docs/planning/doc.md`
 4. **Process critique response** using methodology from overview
 5. **Update planning document** based on feedback
 6. **Commit revised version** with critique summary

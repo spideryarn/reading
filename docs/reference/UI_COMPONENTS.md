@@ -561,6 +561,6 @@ Visit `/design` for a live, interactive design reference page showcasing all com
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - Keyboard shortcut patterns and platform detection
 - `docs/reference/DESIGN_SHADCN_UI_REFERENCE.md` - Installation and technical reference
 - `docs/reference/DESIGN_OVERVIEW.md` - Overall styling configuration and theme
-- `planning/250530a_shadcn_ui_adoption.md` - Implementation planning and decisions
+- `docs/planning/250530a_shadcn_ui_adoption.md` - Implementation planning and decisions
 - `CLAUDE.md` - Quick reference for AI agents
 - `/design` - Live design reference and style guide

@@ -3,7 +3,7 @@ Date: 2025-06-27
 Duration: ~30 minutes
 Type: Problem-solving
 Status: Resolved
-Related Docs: docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md, planning/250627b_fix_ai_headings_insertion_order.md
+Related Docs: docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md, docs/planning/250627b_fix_ai_headings_insertion_order.md
 ---
 
 # AI Headings Insertion Order Fix - 27 June 2025
@@ -145,7 +145,7 @@ Transform logic in `lib/services/heading-mutation-generator.ts`:
 ## Related Work
 
 This conversation will result in:
-- Planning document: `planning/250627b_fix_ai_headings_insertion_order.md`
+- Planning document: `docs/planning/250627b_fix_ai_headings_insertion_order.md`
 - Implementation changes to `lib/services/heading-mutation-generator.ts`
 - Potential test updates to validate correct insertion ordering
 

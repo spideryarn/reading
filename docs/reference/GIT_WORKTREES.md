@@ -10,7 +10,7 @@ Multi-worktree development setup for parallel feature development using a hub-an
 - `docs/reference/SETUP_DEV_SERVER_AUTOMATION.md` - for multi-worktree dev webserver (re)starting
 - `docs/reference/SETUP_DEVELOPMENT_ENVIRONMENT.md` - General development environment setup
 - `docs/instructions/GIT_COMMIT_CHANGES.md` - Git commit best practices for the project
-- `planning/finished/250526c_git_worktree_sync_strategy.md` - Historical decisions about worktree synchronisation (out of date)
+- `docs/planning/finished/250526c_git_worktree_sync_strategy.md` - Historical decisions about worktree synchronisation (out of date)
 
 ## Quick Start
 

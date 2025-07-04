@@ -13,7 +13,7 @@
  * 
  * @see lib/tools/executor/types.ts for type definitions
  * @see lib/tools/executor/execution-flow-design.md for architecture details
- * @see planning/250614d_tool_execution_framework.md for implementation plan
+ * @see docs/planning/250614d_tool_execution_framework.md for implementation plan
  */
 
 import { 

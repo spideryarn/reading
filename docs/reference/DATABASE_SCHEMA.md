@@ -48,7 +48,7 @@ The database schema is defined and represented in several places:
 - [DATABASE_MIGRATIONS.md](DATABASE_MIGRATIONS.md) - Migration workflow
 - [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) - Design decisions
 - [LLM_TRACKING_TOKEN_USAGE_LOGGING.md](LLM_TRACKING_TOKEN_USAGE_LOGGING.md) - Comprehensive token usage tracking and cost management
-- [planning/250531a_database_storage_implementation.md](../planning/250531a_database_storage_implementation.md) - Implementation details
+- [docs/planning/250531a_database_storage_implementation.md](../docs/planning/250531a_database_storage_implementation.md) - Implementation details
 
 ## Table Schemas
 
@@ -239,7 +239,7 @@ The database schema is defined and represented in several places:
 - Stripe integration fields support subscription management
 - Helper function `has_active_subscription(user_uuid)` checks subscription status
 - Unique constraint on user_id ensures 1:1 relationship
-- See `planning/250612b_integrate_stripe_subscriptions.md` for subscription feature implementation planning
+- See `docs/planning/250612b_integrate_stripe_subscriptions.md` for subscription feature implementation planning
 
 ### **`document_users`** - User-Document Relationships
 

@@ -45,7 +45,7 @@
  *    - condition() checks getCurrentDocument() for document presence
  *    - Returns false if no document provider (safe default)
  * 
- * @see planning/250614c_command_palette_dynamic_generation.md
+ * @see docs/planning/250614c_command_palette_dynamic_generation.md
  */
 
 import type { 

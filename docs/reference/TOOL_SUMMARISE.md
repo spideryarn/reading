@@ -6,8 +6,8 @@ The AI summarise feature generates hierarchical summaries of document content us
 
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide to creating and using LLM prompt templates
 - `docs/reference/ARCHITECTURE_URL_STATE.md` - URL state management for shareable summary states (e.g., `?tab=summary&expertise=beginner&length=sentence_or_two`)
-- `planning/250526a_ToC_hierarchical_summary_tooltips.md` - Implementation of ToC tooltip summaries with hierarchical content extraction
-- `planning/250525b_debugging_summary.md` - Debugging and fixing the content pipeline from HTML to AI summarisation
+- `docs/planning/250526a_ToC_hierarchical_summary_tooltips.md` - Implementation of ToC tooltip summaries with hierarchical content extraction
+- `docs/planning/250525b_debugging_summary.md` - Debugging and fixing the content pipeline from HTML to AI summarisation
 - `lib/prompts/templates/summarise.ts` - Schema configuration and granularity options for summarisation prompts
 - `lib/prompts/templates/summarise.njk` - LLM prompt template for content summarisation
 - `/api/summarise/route.ts` - API endpoint for generating summaries with granularity control

@@ -219,7 +219,7 @@ Before finalizing documentation:
 
 ### Location Guidelines
 - **Evergreen references**: `docs/reference/`
-- **Time-sensitive decisions**: `planning/`
+- **Time-sensitive decisions**: `docs/planning/`
 - **Technical guides**: `docs/reference/` with appropriate prefixes
 - **Process documentation**: `docs/instructions/`
 

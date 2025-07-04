@@ -7,7 +7,7 @@
  * - Concurrent message handling without duplicates
  * - Database-first approach prevents dual-state management issues
  * 
- * @see planning/250629a_chat_architecture_database_first_redesign.md for architectural context
+ * @see docs/planning/250629a_chat_architecture_database_first_redesign.md for architectural context
  */
 
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals'

@@ -10,7 +10,7 @@ Comprehensive tracking system for monitoring AI/LLM token usage, costs, and perf
 - `docs/reference/LOGGING_BEST_PRACTICES.md` - Pino logging patterns for AI operations
 - `lib/services/database/ai-calls.ts` - AiCallService implementation with usage storage
 - `lib/prompts/types.ts` - Enhanced prompt execution functions returning usage metadata
-- `planning/finished/250530i_llm_token_usage_tracking.md` - Implementation planning and decisions
+- `docs/planning/finished/250530i_llm_token_usage_tracking.md` - Implementation planning and decisions
 
 ## Overview
 

@@ -5,7 +5,7 @@ Date: 2025-06-27
 Duration: ~2 hours (includes implementation)
 Type: Decision-making, Exploratory, Implementation
 Status: Completed
-Related Docs: `planning/250614d_tool_execution_framework.md`
+Related Docs: `docs/planning/250614d_tool_execution_framework.md`
 ---
 
 ## Context & Goals
@@ -194,7 +194,7 @@ if (action === 'open') {
 
 ## Sources & References
 
-**Planning Document**: `planning/250614d_tool_execution_framework.md` - Comprehensive implementation plan with resolved O3 critique issues
+**Planning Document**: `docs/planning/250614d_tool_execution_framework.md` - Comprehensive implementation plan with resolved O3 critique issues
 
 **Current Implementation Analysis**:
 - `lib/tools/registry.ts` - Unified tool registry with validation
@@ -204,15 +204,15 @@ if (action === 'open') {
 - `app/api/upload-pdf/route.ts` - Long-running operation example
 
 **Key Architectural Decisions**:
-- `planning/finished/250614a_tool_url_state_management.md` - URL state foundation
-- `planning/finished/250614b_unified_tool_registry_architecture.md` - Registry foundation  
-- `planning/finished/250614c_command_palette_dynamic_generation.md` - Command integration
+- `docs/planning/finished/250614a_tool_url_state_management.md` - URL state foundation
+- `docs/planning/finished/250614b_unified_tool_registry_architecture.md` - Registry foundation  
+- `docs/planning/finished/250614c_command_palette_dynamic_generation.md` - Command integration
 
 **External Review**: O3 critique identified and resolved 9 critical architectural issues, informing the sophisticated approach documented in the planning document.
 
 ## Implementation Outcomes
 
-This conversation directly informed the successful implementation of `planning/250614d_tool_execution_framework.md` (Stages 1-7 completed). The architectural decisions made during this conversation were validated through implementation:
+This conversation directly informed the successful implementation of `docs/planning/250614d_tool_execution_framework.md` (Stages 1-7 completed). The architectural decisions made during this conversation were validated through implementation:
 
 ### ✅ **Architectural Decisions Validated**
 
@@ -272,7 +272,7 @@ This conversation directly informed the successful implementation of `planning/2
 
 The framework now provides a solid foundation for:
 - **Tool migration** (Stage 8) - Converting existing tools to use executor
-- **LLM function calling** (`planning/250614e_llm_tool_function_calling.md`)
+- **LLM function calling** (`docs/planning/250614e_llm_tool_function_calling.md`)
 - **Enhanced error handling** (Stage 7) with shared UI components
 - **Advanced debugging and monitoring** tools
 

@@ -7,7 +7,7 @@ This document covers known issues, workarounds, and debugging strategies for tes
 - `docs/reference/TESTING_OVERVIEW.md` - Main testing guide with philosophy and basic usage
 - `docs/reference/TESTING_SETUP.md` - Configuration and environment setup
 - `docs/reference/TESTING_DATABASE.md` - Database-specific testing patterns
-- `planning/250608a_test_infrastructure_cleanup.md` - Detailed improvement plan for test infrastructure
+- `docs/planning/250608a_test_infrastructure_cleanup.md` - Detailed improvement plan for test infrastructure
 - `docs/instructions/UPDATE_HOUSEKEEPING_TESTS.md` - Test maintenance procedures
 
 ## Current Test Health

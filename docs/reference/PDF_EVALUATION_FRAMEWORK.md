@@ -276,4 +276,4 @@ The evaluation framework integrates with:
 
 - [`docs/reference/LLM_EVALUATION_FRAMEWORKS_FOR_CONTENT_EXTRACTION.md`](./LLM_EVALUATION_FRAMEWORKS_FOR_CONTENT_EXTRACTION.md) - Alternative evaluation approaches
 - [`docs/reference/TESTING_OVERVIEW.md`](./TESTING_OVERVIEW.md) - General testing strategy
-- [`planning/250627c_vision_based_pdf_processing_pipeline.md`](../planning/250627c_vision_based_pdf_processing_pipeline.md) - Vision-based processing implementation
+- [`docs/planning/250627c_vision_based_pdf_processing_pipeline.md`](../docs/planning/250627c_vision_based_pdf_processing_pipeline.md) - Vision-based processing implementation

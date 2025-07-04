@@ -6,11 +6,11 @@ Duration: ~45 minutes
 Type: Decision-making
 Status: Active
 Related Docs: 
-- `planning/250614b_unified_tool_registry_architecture.md`
-- `planning/250614c_command_palette_dynamic_generation.md`
-- `planning/250614d_tool_execution_framework.md`
-- `planning/250614e_llm_tool_function_calling.md`
-- `planning/critiques/o3__CRITIQUE__OF__250614b_unified_tool_registry_architecture.md`
+- `docs/planning/250614b_unified_tool_registry_architecture.md`
+- `docs/planning/250614c_command_palette_dynamic_generation.md`
+- `docs/planning/250614d_tool_execution_framework.md`
+- `docs/planning/250614e_llm_tool_function_calling.md`
+- `docs/planning/critiques/o3__CRITIQUE__OF__250614b_unified_tool_registry_architecture.md`
 ---
 
 ## Context & Goals
@@ -104,10 +104,10 @@ The conversation ended with the user requesting this documentation be captured, 
 ## Sources & References
 
 ### Planning Documents
-- **Core Registry** ([planning/250614b](../planning/250614b_unified_tool_registry_architecture.md)) - Simplified to focus on registry + complete migration
-- **Command Generation** ([planning/250614c](../planning/250614c_command_palette_dynamic_generation.md)) - Dynamic command generation from registry
-- **Execution Framework** ([planning/250614d](../planning/250614d_tool_execution_framework.md)) - Unified tool execution patterns
-- **LLM Integration** ([planning/250614e](../planning/250614e_llm_tool_function_calling.md)) - Function calling for AI assistance
+- **Core Registry** ([docs/planning/250614b](../docs/planning/250614b_unified_tool_registry_architecture.md)) - Simplified to focus on registry + complete migration
+- **Command Generation** ([docs/planning/250614c](../docs/planning/250614c_command_palette_dynamic_generation.md)) - Dynamic command generation from registry
+- **Execution Framework** ([docs/planning/250614d](../docs/planning/250614d_tool_execution_framework.md)) - Unified tool execution patterns
+- **LLM Integration** ([docs/planning/250614e](../docs/planning/250614e_llm_tool_function_calling.md)) - Function calling for AI assistance
 
 ### Key Code References
 - `components/command-palette.tsx` - Current 300+ line hardcoded implementation
@@ -115,7 +115,7 @@ The conversation ended with the user requesting this documentation be captured, 
 - `app/api/glossary/route.ts` - Example of current API patterns
 
 ### External Review
-- **o3 Critique** ([planning/critiques/o3__CRITIQUE](../planning/critiques/o3__CRITIQUE__OF__250614b_unified_tool_registry_architecture.md)) - Identified scope explosion, bundle size, test isolation, and server/client boundary concerns
+- **o3 Critique** ([docs/planning/critiques/o3__CRITIQUE](../docs/planning/critiques/o3__CRITIQUE__OF__250614b_unified_tool_registry_architecture.md)) - Identified scope explosion, bundle size, test isolation, and server/client boundary concerns
 
 ## Key Insights
 

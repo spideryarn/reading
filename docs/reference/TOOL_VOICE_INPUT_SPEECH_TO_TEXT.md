@@ -9,7 +9,7 @@ Voice input functionality for the chatbot interface using OpenAI Whisper API, al
 - `app/api/speech-to-text/route.ts` - OpenAI Whisper API integration endpoint
 - `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Chat interface integration details
 - `docs/reference/RESEARCH_ON_SPEECH_TO_TEXT.md` - Speech-to-text API research and decision rationale
-- `planning/250627b_voice_input_microphone_chatbot.md` - Complete implementation planning and debrief
+- `docs/planning/250627b_voice_input_microphone_chatbot.md` - Complete implementation planning and debrief
 - [OpenAI Whisper API documentation](https://platform.openai.com/docs/guides/speech-to-text) - API reference and capabilities
 - [react-media-recorder](https://www.npmjs.com/package/react-media-recorder) - Library used for improved browser permission handling
 

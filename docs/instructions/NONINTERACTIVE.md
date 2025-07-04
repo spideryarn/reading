@@ -8,7 +8,7 @@ Non-interactive mode (`claude -p`) allows Claude to execute tasks without human 
 - `docs/instructions/WRITE_PLANNING_DOC.md` - Creating structured task documents
 - `docs/instructions/GIT_COMMIT_CHANGES.md` - Git workflow practices
 - `docs/reference/CODING_PRINCIPLES.md` - Development principles
-- `planning/` - Example planning documents
+- `docs/planning/` - Example planning documents
 
 
 ## Tool Access Philosophy
@@ -50,7 +50,7 @@ see `scripts/claude-batch.sh`
 Non-interactive mode works best with well-structured planning documents (see `docs/instructions/WRITE_PLANNING_DOC.md`). Feed Claude the entire planning document content:
 
 ```bash
-./scripts/claude-batch.sh "$(cat planning/250529a_your_task.md)"
+./scripts/claude-batch.sh "$(cat docs/planning/250529a_your_task.md)"
 ```
 
 This approach:

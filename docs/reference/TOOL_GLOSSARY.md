@@ -7,7 +7,7 @@ The glossary feature extracts key entities from documents using LLM analysis and
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide to creating and using LLM prompt templates
 - `docs/reference/DESIGN_OVERLAPPING_TEXT_HIGHLIGHTS.md` - Comprehensive guide for implementing overlapping text highlighting to enable glossary + search highlight combinations
 - `docs/reference/ARCHITECTURE_URL_STATE.md` - URL state management for shareable glossary states (e.g., `?tab=glossary&term=quantum`)
-- `planning/finished/250620c_glossary_generate_more_timeout_mitigation.md` - Comprehensive timeout mitigation implementation
+- `docs/planning/finished/250620c_glossary_generate_more_timeout_mitigation.md` - Comprehensive timeout mitigation implementation
 - `lib/prompts/templates/glossary.ts` - Entity schema and prompt configuration  
 - `lib/prompts/templates/glossary.njk` - LLM prompt template for entity extraction
 - `app/api/glossary/route.ts` - API endpoint for generating glossaries

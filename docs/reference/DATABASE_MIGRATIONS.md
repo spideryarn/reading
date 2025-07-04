@@ -102,7 +102,7 @@ Before creating ANY new table or modifying existing tables:
 - [ ] Write comprehensive RLS tests
 - [ ] Update security documentation
 
-See `planning/finished/250618a_database_rls_security_comprehensive_review.md` for detailed RLS implementation patterns.
+See `docs/planning/finished/250618a_database_rls_security_comprehensive_review.md` for detailed RLS implementation patterns.
 
 
 ## TypeScript Type Generation
@@ -234,7 +234,7 @@ For GitHub Actions deployment troubleshooting, see `docs/reference/SETUP_DEPLOYM
 - Run tests with: `node -r dotenv/config ./node_modules/.bin/jest --testPathPattern=database-schema -- dotenv_config_path=.env.local`
 
 **References**:
-- Planning: `planning/finished/250531a_database_storage_implementation.md`
+- Planning: `docs/planning/finished/250531a_database_storage_implementation.md`
 
 ### 20250602005754_add_documents_slug_column.sql
 
@@ -313,6 +313,6 @@ For GitHub Actions deployment troubleshooting, see `docs/reference/SETUP_DEPLOYM
 - API endpoints handle upload/download with proper access control
 
 **References**:
-- Planning: `planning/finished/250606a_pdf_Supabase_Storage_integration.md`
+- Planning: `docs/planning/finished/250606a_pdf_Supabase_Storage_integration.md`
 - Storage docs: `docs/reference/DATABASE_SUPABASE_STORAGE_REFERENCE.md`
 - Security: `docs/reference/DATABASE_SECURITY.md`

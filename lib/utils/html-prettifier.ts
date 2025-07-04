@@ -16,7 +16,7 @@ import { html as beautifyHtml } from 'js-beautify'
 /**
  * Academic-focused js-beautify configuration
  * 
- * Based on research findings documented in planning/250614b_html_prettification_post_sanitization.md:
+ * Based on research findings documented in docs/planning/250614b_html_prettification_post_sanitization.md:
  * - Preserves whitespace-sensitive elements critical for academic content
  * - Avoids line wrapping that could break inline citations
  * - Protects mathematical notation from indentation changes

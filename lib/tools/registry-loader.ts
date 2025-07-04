@@ -18,7 +18,7 @@ import { lockRegistry, isRegistryLocked } from './registry'
  * registry is fully populated before any React components render and avoids
  * race conditions where navigation components read from an empty registry.
  *
- * @see planning/finished/250614d_tool_execution_framework.md
+ * @see docs/planning/finished/250614d_tool_execution_framework.md
  */
 
 // Import each implementation – the side-effect of each import is a

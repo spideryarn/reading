@@ -6,7 +6,7 @@ The command palette provides keyboard-driven navigation and actions for power us
 
 - `components/command-palette.tsx` - Core implementation with TypeScript interfaces and command definitions
 - `docs/reference/COMMAND_PALETTE_FUZZY_SEARCH_CMDK.md` - Fuzzy search configuration and tuning with cmdk library
-- `planning/finished/250608e_command_palette_implementation.md` - Complete implementation planning and decision rationale
+- `docs/planning/finished/250608e_command_palette_implementation.md` - Complete implementation planning and decision rationale
 - `docs/reference/KEYBOARD_SHORTCUTS.md` - Platform detection patterns and shortcut conventions
 - `docs/reference/UI_COMPONENTS.md` - shadcn/ui Command component integration and usage patterns
 - `docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md` - DocumentCommunicationContext integration for navigation actions
@@ -341,7 +341,7 @@ if (process.env.NODE_ENV === 'development') {
 - `docs/reference/UI_COMPONENTS.md` - shadcn/ui component usage patterns
 - `docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md` - Context-based communication system
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - Overall application architecture
-- `planning/finished/250608e_command_palette_implementation.md` - Complete implementation history and decisions
+- `docs/planning/finished/250608e_command_palette_implementation.md` - Complete implementation history and decisions
 
 ---
 

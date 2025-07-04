@@ -73,7 +73,7 @@ Tell subagents to output detailed enough evidence/logging that we can retrace th
 
 
 ### Output Format
-Deliver findings as a planning document in `planning/` following the instructions in `docs/instructions/WRITE_PLANNING_DOC.md`:
+Deliver findings as a planning document in `docs/planning/` following the instructions in `docs/instructions/WRITE_PLANNING_DOC.md`:
 
 1. **Planning document structure**:
    - Goal and context section explaining the research scope
