@@ -49,6 +49,7 @@
         "@assistant-ui/react-markdown": "^0.10.4",
         "@hookform/resolvers": "^5.0.1",
         "@mermaid-js/mermaid-cli": "^11.6.0",
+        "@modelcontextprotocol/sdk": "^1.15.0",
         "@mozilla/readability": "^0.6.0",
         "@next/third-parties": "^15.3.4",
         "@phosphor-icons/react": "^2.1.10",

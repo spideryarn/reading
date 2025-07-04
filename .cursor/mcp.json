@@ -7,6 +7,10 @@
                 "@modelcontextprotocol/server-postgres",
                 "postgresql://postgres:postgres@127.0.0.1:54342/postgres"
             ]
-        }
+        },
+      "file-lister": {
+        "command": "npx",
+        "args": ["tsx", "mcp-servers/file-lister/index.ts"]
+      }
     }
 }
