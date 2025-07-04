@@ -266,25 +266,39 @@ function ResizableDocumentLayoutInner({
       window.open(`/read/${slug}/tweets`, '_blank', 'noopener,noreferrer')
       return
     }
-    
-    // First expand the left pane if it's collapsed
+
+    // If the pane is expanded and the user clicked the currently active tool,
+    // collapse the pane (toggle behaviour)
+    if (!isLeftPaneCollapsed && tabId === state.activeTabId) {
+      handleToggleCollapse()
+      return
+    }
+
+    // Ensure the pane is expanded when switching to (or re-selecting) a tool
     if (isLeftPaneCollapsed) {
       if (leftPanelRef.current) {
-        if (typeof (leftPanelRef.current as ImperativePanelHandle & { expand?: () => void }).expand === 'function') {
-          ;(leftPanelRef.current as ImperativePanelHandle & { expand?: () => void }).expand()
+        if (
+          typeof (leftPanelRef.current as ImperativePanelHandle & { expand?: () => void })
+            .expand === 'function'
+        ) {
+          ;(
+            leftPanelRef.current as ImperativePanelHandle & { expand?: () => void }
+          ).expand()
           if (savedLeftPaneSize !== 0) {
             leftPanelRef.current.resize(savedLeftPaneSize)
           }
         } else {
-          leftPanelRef.current.resize(savedLeftPaneSize || UI_CONFIG.DEFAULT_LEFT_PANE_WIDTH_PERCENT)
+          leftPanelRef.current.resize(
+            savedLeftPaneSize || UI_CONFIG.DEFAULT_LEFT_PANE_WIDTH_PERCENT
+          )
         }
       }
       setIsLeftPaneCollapsed(false)
     }
-    
-    // Then switch to the selected tab using context action
+
+    // Finally, navigate to the requested tab
     navigateToTab(tabId as TabValue)
-  }, [isLeftPaneCollapsed, savedLeftPaneSize, navigateToTab, slug])
+  }, [isLeftPaneCollapsed, savedLeftPaneSize, navigateToTab, slug, state.activeTabId, handleToggleCollapse])
 
   // Handle document scroll to detect current heading
   const handleDocumentScroll = useCallback(() => {
@@ -353,6 +367,18 @@ function ResizableDocumentLayoutInner({
     document.addEventListener('keydown', handleKeydown)
     return () => document.removeEventListener('keydown', handleKeydown)
   }, [handleToggleCollapse])
+  
+  // ---------------------------------------------------------------------------
+  // Expand the left pane automatically when a tool is activated via mechanisms
+  // OTHER than the vertical icon rail (e.g. Command Palette or direct URL).
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (isLeftPaneCollapsed) {
+      // Re-use the same toggle logic to restore the pane size
+      handleToggleCollapse()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.activeTabId])
   
   // Extract document context for chat
   const documentContext = elements
