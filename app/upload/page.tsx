@@ -723,8 +723,8 @@ export default function AddDocumentPage() {
                 onChange={handleUrlChange}
                 onSubmit={handleSubmit}
                 isActive={!uploadState.input.file}
-                isDisabled={!!uploadState.input.file}
-                isProcessing={uploadState.ui.isProcessing}
+                isDisabled={!!uploadState.input.file || uploadState.ui.isProcessing || isVisionUploading}
+                isProcessing={uploadState.ui.isProcessing || isVisionUploading}
                 {...(uploadState.input.url && uploadState.ui.error && { error: uploadState.ui.error })}
               />
               
@@ -744,8 +744,8 @@ export default function AddDocumentPage() {
                 onChange={handleFileChange}
                 onDrop={handleFileDrop}
                 onValidationError={handleValidationError}
-                isDisabled={!!uploadState.input.url}
-                isProcessing={uploadState.ui.isProcessing}
+                isDisabled={!!uploadState.input.url || uploadState.ui.isProcessing || isVisionUploading}
+                isProcessing={uploadState.ui.isProcessing || isVisionUploading}
                 isDragging={uploadState.ui.isDragging}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
@@ -762,6 +762,7 @@ export default function AddDocumentPage() {
                 onProviderChange={handleProviderChange}
                 onPublicChange={handlePublicChange}
                 availableMethods={getAvailableProcessingMethods()}
+                isProcessing={uploadState.ui.isProcessing || isVisionUploading}
               />
               
               {/* Memory Usage Warning for Vision Processing */}
