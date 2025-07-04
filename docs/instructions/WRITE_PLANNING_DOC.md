@@ -112,6 +112,7 @@ After creating the initial planning doc:
   - Commit the revised version
 
 At the end of stage (where appropriate):
+- Run linter, type-checker and relevant tests
 - If doing UI-related changes, add an end-of-stage action to check things look ok with Puppeteer MCP (in a subagent, provided with rich description of the background/approach to take/success criteria).
 - **Add health check action**: `npm run check:health` (use subagent for >3 files with issues):
   - **Default scope**: Checks files changed in this stage (git-aware) - catches cross-file impacts from your changes
