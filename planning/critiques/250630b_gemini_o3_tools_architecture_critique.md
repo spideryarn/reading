@@ -1,16 +1,18 @@
-# Instructions
+# Initial instructions from user
 
 Read all the relevant code re tools, starting with:
 - `docs/reference/TOOL_EXECUTION_FRAMEWORK.md`
 - `docs/reference/TOOL_ARCHITECTURE_AND_DEVELOPMENT_GUIDE.md`
 - `docs/reference/CODING_PRINCIPLES.md`
 
+## Request for audit from user
+
 Conduct a technical audit/review with recommendations for how we might improve/simplify the design. I'm especially interested in anything that will help with AI-first coding, e.g. better compile-time checking to discover bugs earlier in development. Also mention if you spot any potential problems/bugs/gotchas.
 
 Note that we **DO NOT CARE ABOUT BACKWARDS-COMPATIBILITY**. We have zero users currently.
 
 
-# Gemini AI
+## Gemini AI
 
 Overall Assessment
 
@@ -46,7 +48,7 @@ Recommendation: Merge all execution-related configurations into a single, option
 Current State (Simplified):
 
 
-
+```ts
 1 // In lib/tools/types.ts
 2 export interface Tool {
 3   id: string;
@@ -61,12 +63,11 @@ Current State (Simplified):
 12   serverOperations?: string[];
 13   timeouts?: Partial<ToolTimeoutConfig>;
 14 }
-
+```
 
 Proposed Improvement:
 
-
-
+```ts
 1 // In lib/tools/types.ts
 2 export interface Tool {
 3   id: string;
@@ -87,8 +88,7 @@ Proposed Improvement:
 18     requiresAuth?: boolean;
 19   };
 20 }
-
-
+```
 
 This change would unify the configuration, remove the need for the ExecutableTool type, and make the tool definition cleaner.
 
@@ -463,15 +463,11 @@ handlers/[toolId].ts file exists.
   runtime errors.
 
 
-# o3 AI
-
-Ran tool
+## o3 AI
 
 Read file: lib/tools/registry.ts
 
 Read file: lib/tools/types.ts
-
-Ran tool
 
 Read file: lib/tools/executor/wrappers.ts
 
@@ -738,12 +734,9 @@ Benefits for AI-first coding
 In short, the high-level actions abstraction is a great foundation, but tightening it with per-tool typings and clearer semantics will eliminate a large class of runtime surprises and make automated coding agents (and human devs) far more productive. Let me know if you’d like a concrete code sketch for this change.
 
 
+# Re different kinds of tools
 
-
-
-# Question re different kinds of tools
-
-## User question:
+## User input
 
 Read all the relevant code re tools.
 
