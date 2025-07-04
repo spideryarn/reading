@@ -56,7 +56,7 @@ The user reported that their local dev server is taking ages to load pages after
 - **Resolution**: Now only regenerates when migrations are newer than generated types
 
 ### 4. ~~Not Using Turbopack~~ (DECISION: Skip)
-- **Evidence**: Main dev script doesn't use `--turbo` flag (though `dev:safe` does)
+- **Evidence**: Main dev script doesn't use `--turbo` flag (though `dev:turbo` now provides this option)
 - **Impact**: Missing out on 10x faster compilation speeds
 - **Decision**: Skip Turbopack for now - production builds still alpha, potential compatibility issues
 

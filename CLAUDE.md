@@ -8,9 +8,7 @@ see:
 - IMPORTANT: `docs/reference/CODING_PRINCIPLES.md`
 - IMPORTANT: `docs/reference/CODING_GUIDELINES.md` for code quality standards
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` for current system architecture
-- `docs/reference/ARCHITECTURE_DECISIONS.md` for key architectural decisions and rationale
-- `docs/reference/LOGGING_BEST_PRACTICES.md` for comprehensive logging and observability guidance
-- `docs/reference/LLM_MODEL_CONFIGURATION.md` for AI model configuration and usage patterns
+- `docs/reference/TESTING_OVERVIEW.md` for current system architecture
 - `docs/instructions/GIT_COMMIT_CHANGES.md` for Git commit best practices
 
 ## Project Overview
@@ -30,7 +28,7 @@ Key principles that guide all development decisions, from `docs/CODING_PRINCIPLE
 - **If you hit any nasty surprises, stop & discuss with the user.** Don't push through unexpected issues.
 - **No destructive or irreversible changes without checking with the user.** Be especially careful about any operations that are irreversible, could involve data loss, affect databases, production systems, or user data. When in doubt, ask for explicit permission first.
 - **Raise errors early, clearly & fatally.** Prefer not to wrap in try/except so that tracebacks are obvious.
-- **Fail fatally & immediately with clear, debuggable, user-visible error messages.** When errors or unforeseen situations occur, don't mask problems - expose them clearly for debugging and user understanding. Better to fail fast than fail silently.
+- **Fail fatally & immediately with clear, debuggable, user-visible error messages.** When errors or unforeseen situations occur, don't mask problems, or paper over then with defaults/bandaids/fallbacks - expose them clearly to make it easier to notice & debug them early.
 - **If things don't make sense or seem like a bad idea, ask questions or discuss rather than just going along with it.** Be a good collaborator, and help make good decisions.
 
 ## Key Architectural Decisions
@@ -46,105 +44,71 @@ Based on README.md, the following architecture decisions have been made:
 - **Data Structure**: Single-row document storage (moved away from element decomposition)
 - **Frontend State**: Virtual DOM approach - maintain document structure as React state/context
 - **Background Processing**: Frontend-driven queue initially, with API calls to backend
-- **MVP Focus**: Basic document display with hierarchical summaries as the core feature
+
 
 ## Build, testing, and debugging
 
 Next.js local dev server:
+- `npm run dev:daemon` (use this by default) - start/restart dev server in background with PID tracking, doesn't block the shell
 - `npm run dev` - Regenerates DB types then starts dev server (foreground mode)
-- `npm run dev:daemon` - **AI agent automation**: Start/restart dev server in background with PID tracking
-- `npm run dev:status` - Check if daemon is running and healthy (process + HTTP response)
-- `npm run dev:stop` - Stop background daemon gracefully
-- `npm run dev:safe` - Starts dev server without type generation (fallback if DB is unavailable)
-- Logs: `dev.log` - Use `tail dev.log` to check recent output
+- Logs: `dev.log` and `error.log` - use `tail` to check recent output
 - URL: http://localhost:$PORT/ (configurable via PORT in `.env.local`)
 
-**AI-First Development Best Practices:**
-- **Default to daemon mode**: `npm run dev:daemon` is recommended as the default for AI development workflows - it's more robust and doesn't block terminal sessions
-- **Use daemon mode for automation**: `npm run dev:daemon` allows LLM agents to manage dev server without blocking terminal
-- **Always check status first**: Run `npm run dev:status` before starting daemon to avoid conflicts
-- **Graceful cleanup**: Use `npm run dev:stop` rather than killing processes manually
-- **Worktree isolation**: Each worktree tracks its own daemon independently via `.dev-server.pid`
-- **Health verification**: Daemon mode checks both process existence AND HTTP response for true health status
-- **Improved robustness**: Both `npm run dev` and `npm run dev:daemon` now use `npx kill-port` for reliable process cleanup, making them more resilient to orphaned processes
+- **Worktree isolation**: Each worktree tracks its own daemon independently via `.dev-server.pid`, and has its own port defined in `.env.local`
 
 Production deployment:
 - **Live URL**: https://www.spideryarn.com
 - **Documentation**: `docs/reference/SETUP_DEPLOYMENT_PRODUCTION.md`
-- **Streamlined deployment**: `npm run deploy:production` (builds locally + pushes to main)
-- **Auto-deployment**: Pushes to main trigger GitHub Actions migrations + Vercel deployment
+- **Streamlined deployment**: `npm run deploy:production` (builds locally + Git pushes to main, which in turn triggers GitHub Actions migration, and Vercel deploymanet)
 - **Status**: ✅ Fully operational with custom domain, SSL, Google SSO, and database integration
 
-Database operations:
-- `npm run supabase:start` - **Recommended**: Start Supabase with minimal services for better battery life
-- `npm run supabase:start:full` - Start with all services (if you need email testing or analytics)
-- `npm run supabase:stop` - Stop Supabase containers
-- `npm run supabase:status` - Check Supabase status and connection details
-- `npm run db:types` - Regenerate TypeScript types from Supabase schema
-- ⛔ `npm run db:reset:DANGEROUS` - **DO NOT USE**: This command destroys ALL data including test and development data. Only use with explicit user permission in exceptional circumstances.
-- `npx supabase db push` - **CAUTION**: Applies migrations to database (NEVER run without explicit user permission)
+Database operations - read `docs/reference/DATABASE_SUPABASE_INTEGRATION_REFERENCE.md` and other `docs/reference/DATABASE_*.md` before working with the database
 
 ⚠️ **CRITICAL**: Always ask for explicit user permission before modifying the database, especially in major ways. When in doubt, err on the side of caution!
-
-**Performance Note**: The minimal Supabase start (default) excludes analytics, vector, and inbucket services, reducing Docker container count from 11 to ~7-8 for improved battery life and resource usage.
 
 Type checking and linting:
 - `npm run check:health` - **Orchestration**: Git-aware health check (TypeScript + ESLint + Build)
 - `npm run build` - TypeScript compilation errors
 - `npm run lint` - ESLint code quality/style issues
-- `npm test` - Jest testing (`npm run test:coverage` for coverage)
-  - Tests **require** `.env.test` (copy from `.env.local`: `cp .env.local .env.test`) - tests abort if missing
+- before testing, read `docs/reference/TESTING_TROUBLESHOOTING.md`
+  - `npm test` - Jest testing (`npm run test:coverage` for coverage), depends on `.env.test`
   - When writing tests, use our Jest testing framework with React Testing Library
-  - Prefer using a subagent for running tests to avoid filling the context window
-  - Current test health: ~81% of tests pass, ~57% of test suites pass (UI component test issues, NextRequest mocking resolved - see `docs/reference/TESTING_TROUBLESHOOTING.md`)
-- `npm run test:e2e` - Playwright E2E tests (requires auth setup first: `npm run test:e2e:setup`)
-- `npm run test:e2e:setup` - Set up Playwright authentication for current worktree
-
-**Important for Claude Code users:**
-- **IDE integration:** When using Claude Code within VS Code/Cursor/JetBrains, ESLint and TypeScript diagnostics are automatically shared
+  - **Prefer using a subagent** for **running** tests to avoid filling the context window
+- for Playwright E2E browser testing, first read `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
 - **CLI usage:** When running Claude Code from command line, you MUST explicitly run `npm run lint` and `npm run build` to get diagnostic feedback OR use `npm run check:health` for orchestration-friendly summaries
-- **New stricter rules:** We've implemented context-aware linting (stricter for production code, lenient for tests) to catch errors early in AI development
 - **Health check orchestration:** See `docs/reference/SETUP_FOR_AI_FIRST_CODING.md` for AI orchestration patterns and health checking workflows
-
-⚠️ **IMPORTANT**: If tests are failing, try and understand why. If they're failing for systemic reasons, we should discuss how to fix that. Be wary about removing/modifying the tests just to make them pass. If in doubt, stop & discuss with the user.
+- For large-scale find-and-replace: see `docs/reference/SD_STRING_DISPLACEMENT_FIND_REPLACE.md`
+- Database: `supabase/migrations/` and `docs/reference/DATABASE_*.md`
+- Architecture: `docs/reference/ARCHITECTURE_OVERVIEW.md` and `docs/reference/ARCHITECTURE_DECISIONS.md`
+- Recent decisions: `docs/planning/*.md` docs
 
 
 ## Test Database Approach - IMPORTANT
 
-⚠️ **CRITICAL**: We use a **shared database** approach for testing. Tests run against the same local development database.
-
-**Key Rules**:
-- **NEVER reset the database** - destroys development data
-- **NEVER use `npm run db:reset:DANGEROUS`** without explicit user permission
-- **Use UUID-based test isolation** - all test data must be namespaced
-- **Clean up test data** using `getCleanupFunctions()` utilities
-
-**Documentation**: See `docs/reference/TESTING_DATABASE.md` for comprehensive patterns and test isolation utilities.
+- **CRITICAL: NEVER reset the database** without user permission, because it destroys development data
+- **IMPORTANT**: We use a **shared database** approach for testing. Tests run against the same local development database.
+  - see `docs/reference/TESTING_DATABASE.md` for comprehensive patterns and test isolation utilities.
+  - **Use UUID-based test isolation** - all test data must be namespaced
+  - **Clean up test data** afterwards using `getCleanupFunctions()` utilities
 
 ## Test Writing Guidance
 
 **Before writing tests**: Use a subagent to search for existing test coverage. This avoids context pollution and duplication.
+- Test files: `src/lib/*/tests/` and `components/__tests__/`
 
 **Test hierarchy** (prefer higher on list):
 1. **E2E tests** (`e2e/*.spec.ts`) - One E2E test can replace many unit tests
 2. **Integration tests** - Test complete workflows, not individual functions
 3. **Unit tests** - Only for complex algorithms or critical business logic
 
-**Avoid testing**: Simple transformations, environment detection, logging, implementation details.
+**Aim for fewer, but more useful & robust tests**, e.g. don't test simple transformations, environment detection, logging, implementation details.
 
 Debugging resources:
-- Current logs: `tail dev.log`
+- Current logs: `tail dev.log` or `tail error.log`
 - Browser debugging: Playwright MCP (console logs, network requests, screenshots)
-- **E2E testing**: Always run `npm run dev:status || npm run dev:daemon` before E2E tests - dev server must be running
-- Codebase refactoring: sd (`sd --preview --string-mode "old" "new" .`) - see `docs/reference/SD_STRING_DISPLACEMENT_FIND_REPLACE.md`
-- Test files: `src/lib/*/tests/` and `components/__tests__/`
-- Database: `supabase/migrations/` and `docs/reference/DATABASE_*.md`
-- Architecture: `docs/reference/ARCHITECTURE_OVERVIEW.md` and `docs/reference/ARCHITECTURE_DECISIONS.md`
-- Recent decisions: `docs/planning/*.md` docs
+- **E2E testing**: Always run `npm run dev:daemon` before running E2E tests to be sure that the dev server is running
 
-## Test Modification Policy - CRITICAL
-
-Based on the Test Reform for AI-First Development (July 2025), AI agents must follow strict guidelines when modifying tests:
+⚠️ **IMPORTANT**: If tests are failing, try and understand why. If they're failing for systemic reasons, tell the user so we can discuss how to fix things. Be wary about removing/modifying the tests just to make them pass. If in doubt, stop & discuss with the user.
 
 **Test Modification Guidelines**:
 - **Don't modify existing tests without discussing and agreeing with the user**
@@ -242,7 +206,6 @@ Template: `.env.example` (may not be current - check `.env.local` for active con
 **Playwright E2E Testing (Recommended)**:
 - Use `npm run test:e2e` for comprehensive test suites
 - **Setup required**: Run `npm run test:e2e:setup` in each worktree before first use
-- **Multi-worktree isolation**: Environment-aware authentication prevents conflicts
 
 **Playwright MCP (For interactive debugging)**:
 - **⚠️ CRITICAL**: Always run headless with `--isolated` flag to avoid conflicts with other agents
@@ -389,7 +352,7 @@ Use British spelling.
 
 ## Git
 
-Follow the instructions in `docs/instructions/GIT_COMMIT_CHANGES.md`.
+Follow the instructions in `docs/instructions/GIT_COMMIT_CHANGES.md` when making commits, e.g. combine `git add` and `git commit` on one line.
 
 
 ## Date
