@@ -18,6 +18,7 @@ import { getModelForAICall } from '@/lib/config'
 import { BaseToolHandler, createHandlerError } from '../handler-interface'
 import type { ExecutionContext, ToolApiResponse } from '@/lib/tools/executor/types'
 import type { GetRequestParams, DeleteRequestParams } from '../handler-interface'
+import type { Json } from '@/lib/types/database-auto-generated'
 import { executePromptWithUsage } from '@/lib/prompts/types'
 import { readingDifficultyPrompt, parseReadingDifficultyResponse } from '@/lib/prompts/templates/reading-difficulty'
 
@@ -222,7 +223,12 @@ export class MetadataHandler extends BaseToolHandler {
         aiCallId: aiCall.id,
         type: 'reading_difficulty',
         subtype: 'ai_assessment',
-        content: result // result already satisfies JsonObject type from EnhancementService
+        content: {
+          level: result.level,
+          confidence: result.confidence,
+          rationale: result.rationale,
+          factors: result.factors as { [key: string]: Json }
+        }
       })
 
       // Mark AI call as completed successfully
@@ -230,7 +236,7 @@ export class MetadataHandler extends BaseToolHandler {
         output_data: {
           level: result.level,
           confidence: result.confidence,
-          factors: result.factors
+          factors: result.factors as { [key: string]: Json }
         }
       })
 
