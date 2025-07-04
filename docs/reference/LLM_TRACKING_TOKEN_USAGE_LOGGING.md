@@ -44,8 +44,8 @@ The system tracks every LLM call with:
   status: string                // 'pending', 'success', 'failed'
   
   // Token usage (from Vercel AI SDK)
-  prompt_tokens?: number        // Input tokens
-  completion_tokens?: number    // Output tokens  
+  prompt_tokens?: number        // Input tokens (from provider's input_tokens)
+  completion_tokens?: number    // Output tokens (from provider's output_tokens)
   total_tokens?: number         // Sum of prompt + completion
   reasoning_tokens?: number     // Claude thinking mode tokens
   
@@ -99,11 +99,14 @@ const result = await executeMultimodalPromptWithUsage(template, data)
 // Returns: { text: string, usage: PromptUsage, finishReason: string }
 
 // PromptUsage structure (from Vercel AI SDK)
+// Note: Token counts come directly from the provider's API response
+// (e.g., Anthropic's input_tokens/output_tokens) and are accurate 
+// for billing purposes using the provider's exact tokenization
 interface PromptUsage {
-  promptTokens: number
-  completionTokens: number
-  totalTokens: number
-  reasoningTokens?: number
+  promptTokens: number       // Provider's input_tokens
+  completionTokens: number   // Provider's output_tokens
+  totalTokens: number        // Calculated sum
+  reasoningTokens?: number   // Provider-specific (e.g., Claude thinking)
 }
 ```
 
