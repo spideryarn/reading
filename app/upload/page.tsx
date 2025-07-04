@@ -81,6 +81,9 @@ export default function AddDocumentPage() {
   const visionUploadStateRef = useRef(visionUploadState)
   const uploadStateRef = useRef(uploadState)
 
+  // NEW: track if user cancelled current upload to suppress subsequent abort errors
+  const userCancelledUploadRef = useRef(false)
+
   useEffect(() => {
     visionUploadStateRef.current = visionUploadState
   }, [visionUploadState])
@@ -173,6 +176,10 @@ export default function AddDocumentPage() {
       console.log(`Page ${pageNumber} completed`)
     },
     onError: (pageNumber, error) => {
+      // Suppress errors triggered after user-initiated cancellation
+      if (userCancelledUploadRef.current) {
+        return
+      }
       console.error(`Page ${pageNumber} failed:`, error)
 
       // Handle specific fatal-but-recoverable errors interactively
@@ -451,6 +458,9 @@ export default function AddDocumentPage() {
 
   // Unified submit handler
   const handleSubmit = useCallback(async () => {
+    // Reset cancellation flag at the start of a new submission
+    userCancelledUploadRef.current = false
+
     const { input, processing } = uploadState
     
     // Clear any previous errors and set processing state
@@ -774,6 +784,8 @@ export default function AddDocumentPage() {
                   onPause={pauseVisionUpload}
                   onResume={resumeVisionUpload}
                   onCancel={() => {
+                    // Mark as cancelled before aborting to avoid alert spam
+                    userCancelledUploadRef.current = true
                     cancelVisionUpload()
                     setUploadState(prev => ({
                       ...prev,
