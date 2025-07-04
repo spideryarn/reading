@@ -28,12 +28,8 @@ import {
   executeMultimodalPromptWithUsage,
   loadPromptTemplate, 
   PromptTemplate,
-  MultimodalPromptTemplate,
-  PromptUsage
+  MultimodalPromptTemplate
 } from '../types'
-import { AI_CONFIG } from '@/lib/config'
-import * as llmProvider from '@/lib/services/llm-provider'
-import { generateText } from 'ai'
 import * as fs from 'fs'
 
 // Test guard - only run real LLM tests in test environment with proper API keys

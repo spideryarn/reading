@@ -521,7 +521,7 @@ describe('Chat Message Deduplication and Ordering', () => {
         'Concurrent message 3'
       ]
 
-      const concurrentRequests = concurrentMessages.map((messageContent, index) => {
+      const concurrentRequests = concurrentMessages.map((messageContent, _index) => {
         const existingMessages = initialData.messages
         
         const requestBody = {

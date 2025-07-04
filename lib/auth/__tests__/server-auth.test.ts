@@ -1,5 +1,4 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals'
-import { redirect } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 
 // Mock Next.js redirect

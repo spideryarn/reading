@@ -60,7 +60,7 @@ maybeRunRealLLMTest('Headings prompt – real LLM integration', () => {
     let parsed
     try {
       parsed = JSON.parse(cleaned)
-    } catch (err) {
+    } catch (_err) {
       // If parsing fails, surface useful info.
       throw new Error(`Failed to parse LLM JSON. Cleaned output:\n${cleaned}`)
     }

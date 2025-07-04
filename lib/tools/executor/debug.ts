@@ -462,7 +462,16 @@ export function printExecutionSummary(): void {
  */
 export function installGlobalDebugHelpers(): void {
   if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-    ;(window as Window & { toolExecutorDebug?: any }).toolExecutorDebug = {
+    ;(window as Window & { toolExecutorDebug?: {
+      enable(): void
+      disable(): void
+      config(config: Partial<DebugConfig>): void
+      history(filters?: Parameters<typeof getExecutionHistory>[0]): ExecutionRecord[]
+      metrics(): PerformanceMetrics
+      summary(): void
+      clear(): void
+      export(): string
+    } }).toolExecutorDebug = {
       enable: () => setExecutorDebugMode(true),
       disable: () => setExecutorDebugMode(false),
       config: configureExecutorDebug,

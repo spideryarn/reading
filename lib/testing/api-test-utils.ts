@@ -13,7 +13,15 @@ import { authTestScenarios, type TestUser, createAuthHeaders } from './auth-test
  */
 export interface ApiTestConfig {
   /** API route module (import * as route from './route') - entire route module required for Next.js 15 App Router */
-  handler: any
+  handler: { 
+    GET?: (request: Request) => Response | Promise<Response>
+    POST?: (request: Request) => Response | Promise<Response>
+    PUT?: (request: Request) => Response | Promise<Response>
+    DELETE?: (request: Request) => Response | Promise<Response>
+    PATCH?: (request: Request) => Response | Promise<Response>
+    OPTIONS?: (request: Request) => Response | Promise<Response>
+    HEAD?: (request: Request) => Response | Promise<Response>
+  }
   /** API route URL path (e.g., '/api/upload-pdf') */
   url: string
   /** HTTP method (default: POST) */
@@ -124,7 +132,7 @@ export const apiTestPatterns = {
   /**
    * Test authenticated API route with valid user
    */
-  authenticated: async (routeModule: any, url: string, body?: unknown) => {
+  authenticated: async (routeModule: ApiTestConfig['handler'], url: string, body?: unknown) => {
     return await testApiRoute({
       handler: routeModule,
       url,
@@ -136,7 +144,7 @@ export const apiTestPatterns = {
   /**
    * Test unauthenticated API route (should return 401)
    */
-  unauthenticated: async (routeModule: any, url: string, body?: unknown) => {
+  unauthenticated: async (routeModule: ApiTestConfig['handler'], url: string, body?: unknown) => {
     return await testApiRoute({
       handler: routeModule,
       url,
@@ -148,7 +156,7 @@ export const apiTestPatterns = {
   /**
    * Test API route with authentication failure
    */
-  authFailure: async (routeModule: any, url: string, body?: unknown, error?: string) => {
+  authFailure: async (routeModule: ApiTestConfig['handler'], url: string, body?: unknown, error?: string) => {
     const config: ApiTestConfig = {
       handler: routeModule,
       url,
@@ -166,7 +174,7 @@ export const apiTestPatterns = {
   /**
    * Test API route with invalid JSON body (should return 400)
    */
-  invalidBody: async (routeModule: any, url: string) => {
+  invalidBody: async (routeModule: ApiTestConfig['handler'], url: string) => {
     return await testApiRoute({
       handler: routeModule,
       url,

@@ -77,7 +77,7 @@ describe('Page Processor Service', () => {
   const mockGenerateImageCaption = require('../image-caption-generator').generateImageCaption as jest.Mock
   const mockGenerateImageFilename = require('@/lib/utils/image-filename-generator').generateImageFilename as jest.Mock
   const mockUploadImageAsset = require('../storage').uploadImageAsset as jest.Mock
-  const mockGetImageAssetUrl = require('../storage').getImageAssetUrl as jest.Mock
+  const _mockGetImageAssetUrl = require('../storage').getImageAssetUrl as jest.Mock
   const mockGetUserErrorMessage = require('../user-error-messages').getUserErrorMessage as jest.Mock
 
   beforeEach(() => {
@@ -334,65 +334,6 @@ describe('Page Processor Service', () => {
     })
   })
 
-  // Helper function for setting up successful image extraction mocks
-  const setupSuccessfulImageExtraction = () => {
-    mockExecutePrompt.mockResolvedValue({
-      text: '<figure id="fig-1" data-bbox="0.1,0.2,0.6,0.8"><img src="placeholder" alt="test image"/><figcaption>Test Figure</figcaption></figure>',
-      usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 }
-    })
-
-    mockProcessHtmlFragment.mockResolvedValue({
-      success: true,
-      htmlFragment: '<figure id="fig-1" data-bbox="0.1,0.2,0.6,0.8"><img src="placeholder" alt="test image"/><figcaption>Test Figure</figcaption></figure>',
-      extractedImages: [{
-        elementId: 'fig-1',
-        bbox: { x1: 0.1, y1: 0.2, x2: 0.6, y2: 0.8 },
-        altText: 'test image',
-        caption: 'Test Figure',
-        elementType: 'figure'
-      }]
-    })
-
-    mockExtractImageFromPage.mockResolvedValue({
-      base64Image: 'data:image/png;base64,extracted',
-      format: 'png',
-      width: 400,
-      height: 300,
-      extractionTimeMs: 150
-    })
-
-    mockGenerateImageCaption.mockResolvedValue({
-      caption: 'Neural network diagram',
-      confidence: 0.85
-    })
-
-    mockGenerateImageFilename.mockReturnValue({
-      filename: 'neural-network-diagram.png',
-      source: 'ai' as const
-    })
-
-    mockUploadImageAsset.mockResolvedValue({
-      path: 'doc-123/assets/neural-network-diagram.png',
-      fullPath: 'documents/doc-123/assets/neural-network-diagram.png',
-      size: 5000,
-      mimeType: 'image/png'
-    })
-
-    mockGetImageAssetUrl.mockResolvedValue('https://supabase.example.com/storage/v1/object/sign/documents/doc-123/assets/neural-network-diagram.png?token=abc123')
-
-    mockDocumentAssetsService.create.mockResolvedValue({
-      id: 'asset-123',
-      document_id: 'doc-123',
-      type: 'image',
-      filename: 'neural-network-diagram.png',
-      storage_path: 'doc-123/assets/neural-network-diagram.png',
-      caption: 'Neural network diagram',
-      extraction_confidence: 0.85,
-      metadata: {},
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    })
-  }
 
   describe('Image Extraction Integration', () => {
 

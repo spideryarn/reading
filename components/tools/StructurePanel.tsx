@@ -511,7 +511,7 @@ export function StructurePanel({
       setHeadingsError(errorMessage)
       console.groupEnd()
     }
-  }, [content, elements, documentId, iterationState, applyMutation, executeToolWithNavigation, isIterationInProgress, autoIterationStoppedRef])
+  }, [content, elements, documentId, iterationState, applyMutation, executeToolWithNavigation, isIterationInProgress, autoIterationStoppedRef, mutatedDocument])
 
   // ---------------------------------------------------------------------------
   // Ensure the auto-iteration timer always invokes the **latest** version of
