@@ -2,359 +2,182 @@
 
 This document provides essential context for Claude instances working on the Spideryarn Reading project.
 
-see:
-- `README.md` for goals/intents/features
-- `docs/reference/VISION_PRODUCT_STRATEGY.md` for comprehensive product vision and strategic direction
-- IMPORTANT: `docs/reference/CODING_PRINCIPLES.md`
-- IMPORTANT: `docs/reference/CODING_GUIDELINES.md` for code quality standards
-- `docs/reference/ARCHITECTURE_OVERVIEW.md` for current system architecture
-- `docs/reference/TESTING_OVERVIEW.md` for current system architecture
-- `docs/instructions/GIT_COMMIT_CHANGES.md` for Git commit best practices
+**Critical References:**
+- `docs/reference/CODING_PRINCIPLES.md` - **MUST READ**: Core development philosophy
+- `docs/reference/CODING_GUIDELINES.md` - Code quality standards and TypeScript patterns
+- `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture
+- `docs/reference/TESTING_DATABASE.md` - Test isolation patterns (critical for DB operations)
+- `docs/instructions/GIT_COMMIT_CHANGES.md` - Git commit best practices
+
+For comprehensive documentation, see `docs/reference/INDEX_FOR_DOCUMENTATION.md`
 
 ## Project Overview
 
-Spideryarn Reading is an AI-assisted document reading and analysis application, currently in early development phase using AI-first development methods. The main goal is to help humans digest written non-fiction material better through AI-powered features like AI-generated granular table of contents, chatbot, summaries at multiple granularities, glossary, and intelligent navigation.
+Spideryarn Reading is an AI-assisted document reading and analysis application, currently in early development phase using AI-first development methods. The codebase is developed primarily by AI agents working in parallel, with comprehensive documentation and testing infrastructure designed to support AI productivity.
 
-The codebase is developed primarily by AI agents working in parallel, with comprehensive documentation, strict typing, and testing infrastructure designed to support AI productivity and code quality.
-
-
-## Development Philosophy
-
-Key principles that guide all development decisions, from `docs/CODING_PRINCIPLES.md`:
-
-- **This is early-stage development with AI-first methods.** We want to develop fast and experiment using AI agents, so we can figure out which features are most valuable. The comprehensive documentation, typing, and testing infrastructure exists to support AI productivity and prevent regressions.
-- **Fix the root cause rather than putting on a band-aid.** Avoid fallbacks & defaults - better to fail if input assumptions aren't being met.
-- **Stay focused on the specific task.** Make minimal, targeted changes only. Don't fix unrelated issues you notice unless they're directly blocking your current task. If you spot concerning issues, flag them for discussion rather than attempting fixes.
-- **If you hit any nasty surprises, stop & discuss with the user.** Don't push through unexpected issues.
-- **No destructive or irreversible changes without checking with the user.** Be especially careful about any operations that are irreversible, could involve data loss, affect databases, production systems, or user data. When in doubt, ask for explicit permission first.
-- **Raise errors early, clearly & fatally.** Prefer not to wrap in try/except so that tracebacks are obvious.
-- **Fail fatally & immediately with clear, debuggable, user-visible error messages.** When errors or unforeseen situations occur, don't mask problems, or paper over then with defaults/bandaids/fallbacks - expose them clearly to make it easier to notice & debug them early.
-- **If things don't make sense or seem like a bad idea, ask questions or discuss rather than just going along with it.** Be a good collaborator, and help make good decisions.
-
-## Key Architectural Decisions
-
-Based on README.md, the following architecture decisions have been made:
-
-- **Frontend Framework**: Next.js with TypeScript and Tailwind CSS (transitioning from SvelteKit)
-- **AI Integration**: Anthropic Claude Sonnet 4 for all AI-related features
-  - Vercel AI SDK Core for multi-provider support (Claude, Gemini)
-  - @assistant-ui/react for chat UI primitives
-  - All LLM calls use Nunjucks + Zod prompt templates
-- **Storage**: Supabase (Postgres with realtime capabilities) from the start
-- **Data Structure**: Single-row document storage (moved away from element decomposition)
-- **Frontend State**: Virtual DOM approach - maintain document structure as React state/context
-- **Background Processing**: Frontend-driven queue initially, with API calls to backend
+**Goal**: Help humans digest non-fiction material through AI-powered features:
+- AI-generated granular table of contents and headings
+- Chatbot assistance
+- Multi-granularity summaries
+- Entity glossary
+- Intelligent navigation
 
 
-## Build, testing, and debugging
+## Development Philosophy & Safety Guidelines
 
-Next.js local dev server:
-- `npm run dev:daemon` (use this by default) - start/restart dev server in background with PID tracking, doesn't block the shell
-- `npm run dev` - Regenerates DB types then starts dev server (foreground mode)
-- Logs: `dev.log` and `error.log` - use `tail` to check recent output
-- URL: http://localhost:$PORT/ (configurable via PORT in `.env.local`)
+Key principles from `docs/reference/CODING_PRINCIPLES.md`:
 
-- **Worktree isolation**: Each worktree tracks its own daemon independently via `.dev-server.pid`, and has its own port defined in `.env.local`
+**Core Approach:**
+- **AI-first development**: Fast experimentation with comprehensive docs/testing for AI productivity
+- **Fix root causes**: No band-aids - fail clearly when assumptions aren't met
+- **Stay focused**: Minimal, targeted changes only. Flag unrelated issues, don't fix them
+- **Raise errors early & clearly**: No masking problems - expose them for debugging
+- **Descriptive naming**: Use longer, more descriptive filenames, function names, and variable names that are easy to grep and understand
 
-Production deployment:
-- **Live URL**: https://www.spideryarn.com
-- **Documentation**: `docs/reference/SETUP_DEPLOYMENT_PRODUCTION.md`
-- **Streamlined deployment**: `npm run deploy:production` (builds locally + Git pushes to main, which in turn triggers GitHub Actions migration, and Vercel deploymanet)
-- **Status**: ✅ Fully operational with custom domain, SSL, Google SSO, and database integration
+**Safety Guidelines:**
+- **Stop and discuss**: When hitting surprises or uncertainty
+- **Ask permission for**: Database changes, irreversible operations, production systems
+- **Never modify without permission**: `.env.*` files, database schemas, test data
+- **Database operations**: Always read `docs/reference/DATABASE_*.md` first
 
-Database operations - read `docs/reference/DATABASE_SUPABASE_INTEGRATION_REFERENCE.md` and other `docs/reference/DATABASE_*.md` before working with the database
+⚠️ **CRITICAL**: Database changes destroy development data. Always ask first!
 
-⚠️ **CRITICAL**: Always ask for explicit user permission before modifying the database, especially in major ways. When in doubt, err on the side of caution!
+## Architecture & Tech Stack
 
-Type checking and linting:
-- `npm run check:health` - **Orchestration**: Git-aware health check (TypeScript + ESLint + Build)
-- `npm run build` - TypeScript compilation errors
-- `npm run lint` - ESLint code quality/style issues
-- before testing, read `docs/reference/TESTING_TROUBLESHOOTING.md`
-  - `npm test` - Jest testing (`npm run test:coverage` for coverage), depends on `.env.test`
-  - When writing tests, use our Jest testing framework with React Testing Library
-  - **Prefer using a subagent** for **running** tests to avoid filling the context window
-- for Playwright E2E browser testing, first read `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
-- **CLI usage:** When running Claude Code from command line, you MUST explicitly run `npm run lint` and `npm run build` to get diagnostic feedback OR use `npm run check:health` for orchestration-friendly summaries
-- **Health check orchestration:** See `docs/reference/SETUP_FOR_AI_FIRST_CODING.md` for AI orchestration patterns and health checking workflows
-- For large-scale find-and-replace: see `docs/reference/SD_STRING_DISPLACEMENT_FIND_REPLACE.md`
-- Database: `supabase/migrations/` and `docs/reference/DATABASE_*.md`
-- Architecture: `docs/reference/ARCHITECTURE_OVERVIEW.md` and `docs/reference/ARCHITECTURE_DECISIONS.md`
-- Recent decisions: `docs/planning/*.md` docs
+- **Frontend**: Next.js 15 App Router, TypeScript, Tailwind CSS
+- **AI Integration**: 
+  - Vercel AI SDK Core (multi-provider: Claude, Gemini)
+  - Nunjucks + Zod prompt templates (see `docs/reference/LLM_PROMPT_TEMPLATES.md`)
+  - @assistant-ui/react for chat UI
+- **Database**: Supabase (Postgres with RLS)
+- **State**: Virtual DOM approach - React state/context
+- **UI Components**: shadcn/ui + Radix UI primitives
+
+See `docs/reference/ARCHITECTURE_OVERVIEW.md` for details
 
 
-## Test Database Approach - IMPORTANT
+## Development Environment
 
-- **CRITICAL: NEVER reset the database** without user permission, because it destroys development data
-- **IMPORTANT**: We use a **shared database** approach for testing. Tests run against the same local development database.
-  - see `docs/reference/TESTING_DATABASE.md` for comprehensive patterns and test isolation utilities.
-  - **Use UUID-based test isolation** - all test data must be namespaced
-  - **Clean up test data** afterwards using `getCleanupFunctions()` utilities
+**Local Development:**
+- `npm run dev:daemon` - Default: background server with PID tracking
+- `npm run dev` - Foreground mode with DB type generation
+- Logs: `tail dev.log` or `tail error.log`
+- URL: `http://localhost:$PORT/` (see `.env.local`)
+- **Worktree isolation**: Each worktree has own daemon PID and port
 
-## Test Writing Guidance
+**Code Quality:**
+- `npm run check:health` - All-in-one health check (recommended)
+- `npm run lint` - ESLint checks
+- `npm run build` - TypeScript compilation
+- **CLI usage**: Always run health checks before completing tasks
 
-**Before writing tests**: Use a subagent to search for existing test coverage. This avoids context pollution and duplication.
-- Test files: `src/lib/*/tests/` and `components/__tests__/`
+**Production:**
+- Live: https://www.spideryarn.com
+- Deploy: `npm run deploy:production`
+- Details: `docs/reference/SETUP_DEPLOYMENT_PRODUCTION.md`
 
-**Test hierarchy** (prefer higher on list):
-1. **E2E tests** (`e2e/*.spec.ts`) - One E2E test can replace many unit tests
-2. **Integration tests** - Test complete workflows, not individual functions
-3. **Unit tests** - Only for complex algorithms or critical business logic
+## Testing
 
-**Aim for fewer, but more useful & robust tests**, e.g. don't test simple transformations, environment detection, logging, implementation details.
+**Database Approach:**
+- **Shared database** - tests use same local dev database
+- **UUID isolation** - all test data must be namespaced
+- **Cleanup required** - use `getCleanupFunctions()` utilities
+- **RLS testing**: Use `RLSTestDatabase` class (see `docs/reference/TESTING_DATABASE.md`)
 
-Debugging resources:
-- Current logs: `tail dev.log` or `tail error.log`
-- Browser debugging: Playwright MCP (console logs, network requests, screenshots)
-- **E2E testing**: Always run `npm run dev:daemon` before running E2E tests to be sure that the dev server is running
+**Test Strategy:**
+1. **E2E tests** (`e2e/*.spec.ts`) - Prefer these
+2. **Integration tests** - Complete workflows
+3. **Unit tests** - Only for complex logic
 
-⚠️ **IMPORTANT**: If tests are failing, try and understand why. If they're failing for systemic reasons, tell the user so we can discuss how to fix things. Be wary about removing/modifying the tests just to make them pass. If in doubt, stop & discuss with the user.
+**Running Tests:**
+- `npm test` - Jest suite
+- `npm run test:e2e` - Playwright E2E (run `npm run dev:daemon` first)
+- **Use subagents** for running tests to avoid context pollution
 
-**Test Modification Guidelines**:
-- **Don't modify existing tests without discussing and agreeing with the user**
-- **If a test fails, default to fixing the code, not the test**
-- **Valid reasons to modify tests**:
-  - Consolidating redundant tests
-  - Changing requirements or edge case handling
-  - Fixing incorrect test assertions
-  - Improving test clarity or reducing brittleness
+**Test Modification Policy:**
+- Fix code to pass tests, not vice versa
+- Discuss with user before modifying tests
+- Valid reasons: consolidation, requirement changes, fixing incorrect assertions
 
-**Enforcement**:
-- AI agents should fix code to pass tests, not vice versa
-- Stop and discuss with user if tests need modification
-- Test changes require explicit user approval
-- When in doubt, ask rather than assume
+See `docs/reference/TESTING_TROUBLESHOOTING.md` for issues
 
-**Rationale**: This prevents AI agents from "gaming" tests by modifying them to pass instead of fixing underlying code issues.
+## Environment Variables
 
-## Logging & Observability
+**NEVER modify `.env.*` files without permission**
 
-**Current Implementation**:
-- Pino structured logging with request correlation tracking
-- Key utilities: `createRequestLogger()`, `generateCorrelationId()`, `logAIOperation()`, `createTimer()`
-- Privacy-safe patterns (IDs only, no sensitive content)
-- Mixed approach: Pino + console.log during migration
+**Key variables** (`.env.local`):
+- `ANTHROPIC_API_KEY` - Required for AI features
+- `PORT` - Dev server port
+- `LLM_MODEL` - Model strings (e.g., `anthropic:claude-3-5-haiku:20241022`)
+- Supabase credentials (see `docs/reference/SETUP_DEVELOPMENT_ENVIRONMENT.md`)
 
-**Documentation**: See `docs/reference/LOGGING_BEST_PRACTICES.md` for comprehensive patterns and examples.
-
-
-## Error Handling
-
-**Database Services**: Propagate errors instead of silently failing
-- Methods throw descriptive errors with context
-- "Not found" cases return null (don't throw)
-- API routes should catch and map to appropriate HTTP responses
-
-**Principle**: "Raise errors early, clearly & fatally" (see `docs/reference/CODING_PRINCIPLES.md`)
-
-
-## Upload Metadata Tracking
-
-**Current Implementation**:
-- Upload metadata stored in `documents.upload_metadata` JSONB field
-- AI call traceability via `documents.upload_ai_call_id` foreign key
-- Implemented in PDF upload and URL extraction APIs
-- Enables debugging and processing optimization
-
-**Files**: Migration `20250608120000_add_upload_metadata_fields.sql`, types in `lib/types/database-auto-generated.ts` and manual extensions in `lib/types/database-extensions.ts`
-
-
-## Authentication System
-
-**Current Implementation**: Supabase Auth with Next.js App Router
-- Email/password and Google OAuth authentication
-- Route protection with server-side validation
-- Long-lasting sessions (1 week) with automatic refresh
-- Profile management with dropdown navigation
-
-**Files**: `lib/auth/`, `components/auth/`, `app/auth/`, `middleware.ts`
-**Documentation**: See `docs/reference/AUTHENTICATION_*.md` for comprehensive guides
+**Test environment** (`.env.test`):
+- Mirrors `.env.local` with cheaper LLM models
+- See `docs/reference/TESTING_SETUP.md`
 
 
 ## Project Structure
 
-**Active Development** (root directory):
-- Core implementation: `app/`, `components/`, `lib/`
-- Documentation: `docs/` (evergreen) and `docs/planning/` (decisions)
-- Database: `supabase/migrations/` and config
+**Active Development:**
+- `app/`, `components/`, `lib/` - Core implementation
+- `docs/` - Evergreen documentation
+- `docs/planning/` - Decision records
+- `supabase/migrations/` - Database schema
 
-**IGNORE**:
-- `obsolete_alternative_version/` - deprecated Python version (occasionally useful for prompts)
-- `backup/` - deprecated SvelteKit implementation
-
-
-## Environment Variables
-
-**NEVER modify, overwrite, or delete** `.env.*` files without explicit user permission
-
-Key variables in `.env.local`:
-- `ANTHROPIC_API_KEY` - Required for AI features
-- `PORT` - Dev server port
-- `LLM_MODEL` - uses model strings (`anthropic:claude-3-5-haiku:20241022`, `google:gemini-2.0-flash:latest`), defaults to Claude Sonnet 4, but we usually override to Haiku for development
-- Supabase connection details (see `docs/reference/SETUP_DEVELOPMENT_ENVIRONMENT.md`)
-
-Test environment (`.env.test`):
-- Currently mirrors `.env.local` for simplicity (shared database approach)
-- Best practice: Use cheaper LLM models (`LLM_MODEL=anthropic:claude-3-5-haiku:20241022` or `LLM_MODEL=google:gemini-2.0-flash:latest`) for cost efficiency
-- See `docs/reference/TESTING_SETUP.md` for setup instructions
-
-Template: `.env.example` (may not be current - check `.env.local` for active config)
+**IGNORE:**
+- `obsolete_alternative_version/` - Deprecated Python version
+- `backup/` - Deprecated SvelteKit implementation
 
 
 ## Browser Automation
 
-**Playwright E2E Testing (Recommended)**:
-- Use `npm run test:e2e` for comprehensive test suites
-- **Setup required**: Run `npm run test:e2e:setup` in each worktree before first use
-
-**Playwright MCP (For interactive debugging)**:
-- **⚠️ CRITICAL**: Always run headless with `--isolated` flag to avoid conflicts with other agents
-- **Authentication**: Use seeded test user `hello@spideryarn.com` / `ASDFasdf1` 
-- **Dev server dependency**: Always run `npm run dev:status || npm run dev:daemon` before E2E tests
-- **Multi-worktree isolation**: Different ports per worktree, environment-specific test users
-
-**Documentation**: See `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md` for comprehensive patterns
+- **E2E Testing**: `npm run test:e2e` (setup: `npm run test:e2e:setup`)
+- **Playwright MCP**: Use `--isolated` flag, test user `hello@spideryarn.com`
+- See `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
 
 
-## Context window, tasks, and subagents
+## Tasks & Subagents
 
-Use tasks whenever there's more than a couple of things to keep track of.
+**Use TodoWrite/TodoRead** for task tracking when handling multiple items.
 
-Use subagents where appropriate:
-- e.g. for running a battery of tests, checking lint/build, curl, Puppeteer/Playwright or other browser automation, other verbose output, Git commits, any other verbose-output, and anywhere else where you think it's a good fit
-- They are especially valuable as a way to avoid filling up your context window  
-- They are also a good fit for encapsulated & well-defined tasks, i.e. tasks that don't need the full context of the conversation so far, and/or where we only need a summary of what was done in order to proceed
-- Use subagents in parallel where possible (because this is faster), but only if there isn't a dependency between tasks (e.g. the output of this one is useful as input for the next)
-- **Give them lots of background** so that they can make good decisions, e.g. about goals, point them to relevant docs/code, what we've been changing, gotchas & things to avoid, relevant environment variables like $PORT for Puppeteer/Playwright, using Jest for testing, the current date/time from `date`, and anything else that will help them to be effective but correct/careful.
-- **Tell subagents what to be cautious of**, and to abort and provide feedback on what happened if there are problems or surprises (to avoid them going rogue and doing more harm than good)
-- **Instruct subagents to stay focused**: Tell them to make only the minimal changes needed for their specific task and to flag any unrelated issues they notice rather than attempting fixes
+**Use subagents for**:
+- Running tests, lint/build checks
+- Verbose operations (Git commits, browser automation)
+- Context window management
+- Parallel tasks without dependencies
 
-**See**: `docs/instructions/TASKS_SUBAGENTS.md` for detailed guidelines on effective subagent usage
+**Subagent guidelines**:
+- Provide comprehensive background and gotchas
+- Instruct to stay focused and flag (not fix) unrelated issues
+- Tell them to abort on surprises
 
-
-## Documentation Reference
-
-see `docs/reference/INDEX_FOR_DOCUMENTATION.md` for a comprehensive, navigational overview of all project documentation
-
-Available evergreen documentation in `docs/` - comprehensive signposting by domain:
-
-**Instructions & Modes** (workflow guidance):
-- `docs/instructions/TASKS_SUBAGENTS.md` - Detailed subagent usage guidelines for context management
-- `docs/instructions/GIT_COMMIT_CHANGES.md` - Guidelines for Git commit best practices including batching changes, message format, and handling concurrent changes
-- `docs/instructions/SOUNDING_BOARD_MODE.md` - Instructions for collaborative discussion mode emphasising asking questions and suggesting alternatives rather than immediate implementation
-- `docs/instructions/DETECTIVE_SCIENTIST_MODE.md` - Systematic investigation approach
-- `docs/instructions/DOCUMENT_RESEARCH.md` - Research methodology for documentation
-- `docs/instructions/UPDATE_INDEX_FOR_DOCUMENTATION.md` - Process for keeping project documentation up-to-date including review steps, update patterns, and quality checklist
-- `docs/instructions/UPDATE_HOUSEKEEPING_TESTS.md` - Process for maintaining test quality and organisation while supporting rapid prototyping
-- `docs/instructions/UPDATE_CLAUDE_INSTRUCTIONS.md` - Guidelines for maintaining CLAUDE.md to help AI agents operate effectively on the Spideryarn Reading codebase
-- `docs/instructions/WRITE_EVERGREEN_DOC.md` - Guidelines for writing evergreen documentation including structure, cross-references, status indicators, and maintenance practices
-- `docs/instructions/WRITE_PLANNING_DOC.md` - Guide for writing docs/planning/project management documents with file naming conventions, structure, and stage-based action plans
-- `docs/instructions/GATHER_DIVERSE_INPUTS_AND_CRITIQUES_ON_PLANNING_DOCS_FROM_OTHER_AI_MODELS.md` - Process for obtaining external AI critiques of planning documents for quality assurance
-
-**Core Development & Architecture**:
-- `docs/reference/CODING_PRINCIPLES.md` - **CRITICAL**: Core development philosophy for AI-first methods
-- `docs/reference/CODING_GUIDELINES.md` - **CRITICAL**: Code quality standards and TypeScript patterns
-- `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture and implementation
-- `docs/reference/ARCHITECTURE_DECISIONS.md` - Key architectural decisions and framework choices
-- `docs/reference/ARCHITECTURE_URL_STATE.md` - URL state management patterns
-- `docs/reference/SETUP*.md` - Development environment setup and configuration
-- `docs/reference/COMMAND_LINE_SCRIPTS.md` - Guidelines for CLI script development
-- `docs/reference/PROJECT_STATUS.md` - Current development state overview showing implemented features (AI summaries, glossary, headings) and planned enhancements
-
-**Testing** (comprehensive testing ecosystem):
-- `docs/reference/TESTING_OVERVIEW.md` - Testing approach with Jest and React Testing Library
-- `docs/reference/TESTING_DATABASE.md` - **CRITICAL**: Real RLS testing patterns (use `RLSTestDatabase`)
-- `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md` - Playwright E2E testing (recommended)
-- `docs/reference/TESTING_AUTHENTICATION.md` - Auth testing patterns and utilities
-- `docs/reference/TESTING_TROUBLESHOOTING.md` - Known issues and workarounds
-- `docs/reference/TESTING_SETUP.md` - Test environment configuration
-- `docs/reference/TESTING_*.md` - Additional testing utilities and service mocks
-
-**Database & Security**:
-- `docs/reference/DATABASE_OVERVIEW.md` - Database architecture and patterns
-- `docs/reference/DATABASE_MIGRATIONS.md` - Schema change management with Supabase
-- `docs/reference/DATABASE_SCHEMA.md` - Current schema reference (evolving)
-- `docs/reference/DATABASE_SECURITY.md` - Security patterns and RLS implementation
-- `docs/reference/DATABASE_*.md` - Local setup, production, backup, and Supabase integration
-
-**Authentication System**:
-- `docs/reference/AUTHENTICATION_OVERVIEW.md` - System architecture and flows
-- `docs/reference/AUTHENTICATION_SETUP.md` - Configuration and deployment
-- `docs/reference/AUTHENTICATION_UI.md` - UI components and forms
-- `docs/reference/AUTHENTICATION_DATABASE.md` - Database integration and RLS
-- `docs/reference/AUTHENTICATION_SECURITY.md` - Security practices and troubleshooting
-- `docs/reference/AUTHENTICATION_*.md` - Admin features and testing patterns
-
-**UI, Styling & Components**:
-- `docs/reference/UI_INTERFACE.md` - Multi-pane layout with tabbed navigation
-- `docs/reference/UI_COMPONENTS.md` - Available components and usage patterns
-- `docs/reference/DESIGN_SHADCN_UI_REFERENCE.md` - shadcn/ui integration guide
-- `docs/reference/DESIGN_OVERVIEW.md` - CSS configuration and theme settings
-- `docs/reference/DESIGN_*.md` - Colors, fonts, icons, highlighting, tooltips, mobile detection
-- `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Architecture and features of the unified left pane with tabbed interface, ToC, AI-generated headings, and tooltip summaries
-- `docs/reference/KEYBOARD_SHORTCUTS.md` - Application keyboard shortcuts
-
-**AI Features & Tools**:
-- `docs/reference/TOOL_ARCHITECTURE_AND_DEVELOPMENT_GUIDE.md` - **CRITICAL**: Comprehensive guide for tool architecture and development, including creation patterns and consolidation
-- `docs/reference/TOOL_CHATBOT_ASSISTANT_UI_INTEGRATION.md` - Comprehensive technical guide for integrating the @assistant-ui/react library into the chatbot interface within the Tools pane
-- `docs/reference/TOOL_SUMMARISE.md` - Documents the AI summarise feature that generates hierarchical summaries of document content using LLM analysis at multiple granularity levels
-- `docs/reference/TOOL_GLOSSARY.md` - Documents the glossary feature that extracts key entities from documents using LLM analysis and displays them in a dedicated pane
-- `docs/reference/TOOL_STRUCTURE_HEADINGS.md` - AI-generated heading system with iterative generation (up to 10 operations per iteration, automatic continuation)
-- `docs/reference/TOOL_*.md` - Search, highlighting, metadata, reading difficulty tools
-- `docs/reference/LLM_PROMPT_TEMPLATES.md` - Guide for creating AI/LLM calls using the Nunjucks + Zod template system with type safety and validation
-- `docs/reference/LLM_MODEL_CONFIGURATION.md` - AI model configuration and usage patterns
-- `docs/reference/LLM_*.md` - Token tracking, evaluation frameworks
-
-**Content Processing**:
-- `docs/reference/PDF_TO_HTML_*.md` - PDF conversion approaches (LLM, open source, paid services)
-- `docs/reference/HTML_*.md` - HTML content processing and sanitization
-- `docs/reference/MUTATIONS_DOCUMENT_CONTENT_REVERSIBLE_TRANSFORMS.md` - Documents the reversible document transformation system for applying/reverting changes like AI-generated headings and content filtering
-- `docs/reference/UPLOAD_DOCUMENT_PROCESSING_PIPELINE.md` - Document upload and processing
-
-**Specialized & Research**:
-- `docs/reference/VISION_PRODUCT_STRATEGY.md` - Comprehensive product vision and strategy
-- `docs/reference/LOGGING_BEST_PRACTICES.md` - Pino structured logging patterns
-- `docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md` - Inter-pane messaging architecture
-- `docs/reference/RESEARCH_*.md` - Reading difficulty metrics and text formatting research
-- `docs/reference/VERCEL_AI_SDK_REFERENCE.md` - AI SDK integration patterns
-
-**Row Level Security (RLS) Testing - IMPORTANT**:
-- **ALWAYS use real RLS testing**: Use `RLSTestDatabase` class in `lib/testing/rls-database-test-utils.ts`
-- **AVOID simulation approaches**: Old simulation-based RLS tests have been deprecated for security reasons
-- **Essential for security**: Real RLS testing discovered and fixed critical vulnerabilities
-- **See**: `docs/reference/TESTING_DATABASE.md` for comprehensive real RLS testing patterns
-- **Example**: `lib/services/database/__tests__/rls-policies-real.test.ts` for reference implementation
-
-**Recent Decisions & Planning**: `docs/planning/*.md` for major feature progress tracking and architectural decisions
-
-**Tool Management & Consolidation**:
-- **Tool creation**: Use `docs/reference/TOOL_ARCHITECTURE_AND_DEVELOPMENT_GUIDE.md` for comprehensive guidance
-- **Tool registry**: All tools must be registered in `lib/tools/implementations/[tool-name].ts`
-- **Tool consolidation**: When consolidating tools (like Original + AI-generated → Structure), remove old tool files from registry implementations to prevent duplicate icons in navigation
-- **Common consolidation issue**: If you see duplicate icons in vertical navigation rail, check for old tool files still in `lib/tools/implementations/` directory
+See `docs/instructions/TASKS_SUBAGENTS.md` for details
 
 
-## UI Components & Styling
+## Key Implementation Areas
 
-**Components**: shadcn/ui component library built on Radix UI primitives
-- **Use shadcn/ui**: For interactive components (buttons, dialogs, forms, loading states)
-- **Use raw Tailwind**: For simple layouts, spacing, basic styling
-- **Available**: Button, Dialog, Alert, Loading (all with Spideryarn orange theme)
-- **Install new**: `printf "\n" | npx shadcn@latest add [component-name]`
+**Authentication**: Supabase Auth with Google OAuth
+- See `docs/reference/AUTHENTICATION_*.md`
 
-**Icons**: Phosphor icons with SSR support - use `/dist/ssr/` imports for server components
-**Documentation**: `docs/reference/DESIGN_SHADCN_UI_REFERENCE.md` and `docs/reference/UI_COMPONENTS.md`
+**Tools & AI Features**:
+- **Tool development**: `docs/reference/TOOL_ARCHITECTURE_AND_DEVELOPMENT_GUIDE.md`
+- **Implemented**: Structure (AI headings), Glossary, Summarise, Chatbot
+- **LLM calls**: Nunjucks + Zod templates (`docs/reference/LLM_PROMPT_TEMPLATES.md`)
 
-## Style
+**Database**:
+- **RLS Testing**: Use `RLSTestDatabase` class (see `docs/reference/TESTING_DATABASE.md`)
+- **Migrations**: `supabase/migrations/` (see `docs/reference/DATABASE_MIGRATIONS.md`)
 
-Use British spelling.
+**UI Components**:
+- shadcn/ui + Phosphor icons
+- See `docs/reference/DESIGN_SHADCN_UI_REFERENCE.md`
+
+**Documentation Index**: `docs/reference/INDEX_FOR_DOCUMENTATION.md`
 
 
-## Git
+## Quick Reference
 
-Follow the instructions in `docs/instructions/GIT_COMMIT_CHANGES.md` when making commits, e.g. combine `git add` and `git commit` on one line.
-
-
-## Date
-
-It is summer 2025.
+- **Spelling**: British
+- **Git commits**: Follow `docs/instructions/GIT_COMMIT_CHANGES.md`
+- **Date**: Summer 2025
+- **Production**: https://www.spideryarn.com

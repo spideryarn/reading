@@ -8,19 +8,22 @@ This document outlines principles and practical configurations for optimizing de
 
 ## Core Principles for AI-First Development
 
-### 1. Fail Fast, Fix Early
+### Fail Fast, Fix Early
 AI agents excel at systematically fixing lint errors but struggle with runtime bugs discovered during manual testing. **Prefer compile-time errors over silent failures.** Note: When using Claude Code from the CLI (not within an IDE), explicit linting commands are essential since automatic diagnostic sharing is not available.
 
-### 2. Context-Aware Strictness
+### Context-Aware Strictness
 Different parts of the codebase have different requirements:
 - **Production code:** Strict typing and linting
 - **Test files:** More flexibility for mocking complex external libraries
 - **Development utilities:** Balance between strictness and rapid iteration
 
-### 3. Systematic Error Resolution
+### Systematic Error Resolution
 AI agents don't get "annoyed" by strict rules like humans do. They can methodically work through long lists of lint violations, making strict configurations viable.
 
-### 4. Leverage Automatic Diagnostic Sharing (IDE-Dependent)
+### Descriptive Naming for AI Productivity
+Use longer, more descriptive filenames, function names, and variable names that are easy to grep and understand. AI agents excel at working with codebases that have clear, searchable naming conventions.
+
+### Leverage Automatic Diagnostic Sharing (IDE-Dependent)
 Claude Code automatically receives diagnostic information (ESLint, TypeScript errors) **only when running within supported IDEs** (VS Code, Cursor, JetBrains). When using Claude Code from the CLI, explicit linting commands (`npm run lint`, `npm run build`) are required for diagnostic feedback.
 
 ## Research Findings

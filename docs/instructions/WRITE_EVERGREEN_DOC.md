@@ -40,6 +40,8 @@ Good examples:
 
 They might be organised into something like the following sections. Use your judgment. Probably only a few of these will be relevant for each doc, feel free to rename them, etc.
 
+**Tip**: Avoid numbered headings (e.g., "### 1. Introduction", "### 2. Overview") as they make it harder to insert, remove, or reorder sections without renumbering everything. Use descriptive headings instead.
+
 
 ### Introduction
 
