@@ -153,3 +153,18 @@ npm install -g supabase
 ```
 
 This fail-fast approach aligns with the project's principle of "Raise errors early, clearly & fatally" to prevent confusion during development setup.
+
+## Package.json Command Structure
+
+The project follows patterns for command composition and reuse in `package.json`:
+
+**Good patterns** (reuse/reference):
+- `supabase:start` → `npm run supabase:start:minimal` (references another command)
+- Dev server commands all reference `./scripts/dev-with-restart.sh` with different flags
+
+**Potential improvements** (avoid duplication):
+- Health check commands could reference a base command with flags
+- Test commands could be structured to reuse base commands
+- Supabase commands could reference base `supabase` command
+
+**Recommendation**: When adding new commands, prefer referencing existing commands with flags rather than duplicating the underlying command string.
