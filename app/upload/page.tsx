@@ -562,13 +562,15 @@ export default function AddDocumentPage() {
                 pageCount: imageResult.pages.length
               })
               
-              // Clear processing state to show upload progress UI
+              // Update processing state to reflect the upload phase and keep the spinner visible
               setUploadState(prev => ({
                 ...prev,
                 ui: { 
                   ...prev.ui, 
-                  isProcessing: false,
-                  processingMessage: ''
+                  // Keep processing true until the VisionUploadProgress UI takes over,
+                  // avoiding a confusing brief reset to the default button label.
+                  isProcessing: true,
+                  processingMessage: 'Uploading pages...'
                 }
               }))
               
