@@ -1,5 +1,12 @@
 # Tool Architecture Refinement
 
+DISCUSS WITH USER FIRST:
+- Remove the unused generated wrapper code (`lib/tools/executor/wrappers.ts`)
+- Plugin architecture considerations
+- Multi-tenant scenarios
+- Complex execution patterns
+
+
 ## Goal
 
 Refine the tools architecture to improve development speed and reduce complexity while **preserving the valuable abstractions** that enable current and planned functionality. The current architecture successfully solved real problems and enables important features - we should enhance it, not dismantle it.
