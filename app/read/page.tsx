@@ -99,6 +99,7 @@ export default async function DocumentsPage() {
             documents={documents}
             emptyStateMessage="No documents yet. Upload your first document to get started."
             showDeleteActions={true}
+            isAdmin={isAdmin}
             {...(userId && { currentUserId: userId })}
           />
         </div>
