@@ -798,6 +798,19 @@ export default function AddDocumentPage() {
                         processingMessage: ''
                       }
                     }))
+
+                    // Attempt to clean up any partially-created draft document (database rows
+                    // and storage files) by calling the existing /api/delete-document endpoint.
+                    if (visionUploadState.documentId) {
+                      // Fire-and-forget – we don't block the UI on this.
+                      fetch('/api/delete-document', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ documentId: visionUploadState.documentId })
+                      }).catch(err => {
+                        console.error('Failed to clean up cancelled document:', err)
+                      })
+                    }
                   }}
                 />
               )}
