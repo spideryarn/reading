@@ -19,6 +19,8 @@ import { sanitizeDocumentTitle } from '@/lib/utils/document-title'
 import type { Logger } from 'pino'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { JSDOM } from 'jsdom'
+import { load } from 'cheerio'
+import { assignDeterministicIds } from '@/lib/services/deterministicId'
 
 /**
  * Processing metadata required for document creation
@@ -166,11 +168,24 @@ export async function processHtmlToDocument(
     correlationId
   )
 
+  // --------------------------------------------------------------------------
+  // Step 1b: Ensure the HTML we store contains ONLY deterministic IDs.
+  // We first strip any existing id attributes (from the source or earlier
+  // processing stages) and then run the deterministic-ID assignment pass.
+  // This guarantees that every element ID is stable across page loads and
+  // aligns with the IDs used later by AI-generated mutations (headings,
+  // glossary anchors, etc.).
+  // --------------------------------------------------------------------------
+
+  const $ = load(prettifiedHtml, { xml: false })
+  $('[id]').removeAttr('id') // remove all existing ids
+  const htmlWithDeterministicIds = assignDeterministicIds($.html())
+
   // Step 2: Generate document slug and metadata
   logger.info({
     correlationId,
     step: 'document-preparation',
-    sanitizedLength: sanitizedHtml.length,
+    sanitizedLength: htmlWithDeterministicIds.length,
     plaintextLength: plaintext.length,
     wordCount: plaintext.split(/\s+/).length
   }, 'Preparing document for storage')
@@ -178,7 +193,7 @@ export async function processHtmlToDocument(
   const slug = generateSlug(sanitizedTitle)
   const wordCount = plaintext.split(/\s+/).length
 
-  // Step 3: Generate upload metadata with source-specific fields
+  // Step 5: Generate upload metadata with source-specific fields
   const rawUploadMetadata = generateUploadMetadata(
     uploadSource,
     extractionMethod,
@@ -191,7 +206,7 @@ export async function processHtmlToDocument(
     Object.entries(rawUploadMetadata).filter(([, v]) => v !== undefined)
   ) as Record<string, string | number | boolean | null>
 
-  // Step 4: Create document with storage integration
+  // Step 6: Create document with storage integration
   logger.info({
     correlationId,
     step: 'document-creation',
@@ -206,7 +221,7 @@ export async function processHtmlToDocument(
     userId,
     {
       title: sanitizedTitle,
-      html_content: prettifiedHtml,
+      html_content: htmlWithDeterministicIds,
       plaintext_content: plaintext,
       slug,
       source_url: sourceUrl || null,
@@ -336,21 +351,8 @@ export async function sanitizeAndExtractText(
     }, 'HTML prettification skipped (feature flag disabled)')
   }
 
-  // Step 3: Extract clean plaintext using proper DOM parsing (not regex)
-  logger.info({
-    correlationId,
-    step: 'text-extraction',
-    sourceLength: prettifiedHtml.length
-  }, 'Starting plaintext extraction from processed HTML')
-
+  // Extract plaintext from the (possibly prettified) HTML once
   const plaintext = extractCleanText(prettifiedHtml)
-  
-  logger.info({
-    correlationId,
-    step: 'text-extraction-complete',
-    plaintextLength: plaintext.length,
-    wordCount: plaintext.split(/\s+/).length
-  }, 'Plaintext extraction completed successfully')
 
   return {
     sanitizedHtml,

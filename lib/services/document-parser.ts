@@ -87,25 +87,32 @@ export class DocumentParser {
         return !DocumentParser.INLINE_ELEMENTS.has(child.name)
       })
 
-      if (textContent || blockChildren.length > 0) {
-        elements.push({
-          id,
-          document_id: documentId,
-          parent_id: parentId,
-          tag_name: tagName,
-          content: textContent,
-          attributes,
-          position: position++,
-          level,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
+      // -------------------------------------------------------------------
+      // Always include the current element in the output **even if** it has
+      // no text content and no block-level children.  Some elements act only
+      // as structural anchors (e.g. empty paragraphs that serve as insertion
+      // points for AI-generated headings).  Excluding them causes downstream
+      // mutations that reference their IDs to fail validation.
+      // -------------------------------------------------------------------
 
-        // Only process block-level children as separate elements
-        blockChildren.each((_, child) => {
-          processElement(child, id, level + 1)
-        })
-      }
+      elements.push({
+        id,
+        document_id: documentId,
+        parent_id: parentId,
+        tag_name: tagName,
+        content: textContent,
+        attributes,
+        position: position++,
+        level,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+
+      // Only process block-level children as separate elements so that inline
+      // descendants remain part of their parent's text content.
+      blockChildren.each((_, child) => {
+        processElement(child, id, level + 1)
+      })
     }
 
     $('body').children().each((_, element) => {
