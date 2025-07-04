@@ -64,6 +64,7 @@ Don't include a `Date` section at the top since it's implicit from the filename.
 ### References
 
 - Mention relevant evergreen docs (in `docs/`), other planning docs (in `docs/planning/`), code files/functions, links, or anything else that could provide context, with a 1-sentence summary for each of what it's about/why it's relevant
+- `docs/instructions/WRITE_PLANNING_DOC.md` - Instructions for maintaining planning docs - follow these when updating progress/decisions
 
 
 ### Principles, key decisions
