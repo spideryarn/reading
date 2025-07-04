@@ -79,7 +79,7 @@ testSuite('Glossary Template - Real LLM Integration', () => {
         const parsed = JSON.parse(jsonText)
         // Handle both direct array format and object with entities property
         entities = Array.isArray(parsed) ? parsed : parsed.entities || parsed
-      } catch (e) {
+      } catch (_e) {
         console.log('Raw LLM response:', result.text)
         throw new Error(`Response was not valid JSON: ${result.text.substring(0, 500)}...`)
       }
@@ -89,7 +89,7 @@ testSuite('Glossary Template - Real LLM Integration', () => {
       expect(entities.length).toBeLessThanOrEqual(8)
 
       // Validate entity structure
-      entities.forEach((entity: any, index: number) => {
+      entities.forEach((entity: any, _index: number) => {
         expect(entity).toHaveProperty('name')
         expect(entity).toHaveProperty('ontology')
         expect(entity).toHaveProperty('aliases')
@@ -155,7 +155,7 @@ testSuite('Glossary Template - Real LLM Integration', () => {
         const parsed = JSON.parse(jsonText)
         // Handle both direct array format and object with entities property
         entities = Array.isArray(parsed) ? parsed : parsed.entities || parsed
-      } catch (e) {
+      } catch (_e) {
         console.log('Raw LLM response:', result.text)
         throw new Error(`Response was not valid JSON: ${result.text.substring(0, 500)}...`)
       }
@@ -212,7 +212,7 @@ testSuite('Glossary Template - Real LLM Integration', () => {
         const parsed = JSON.parse(jsonText)
         // Handle both direct array format and object with entities property
         entities = Array.isArray(parsed) ? parsed : parsed.entities || parsed
-      } catch (e) {
+      } catch (_e) {
         console.log('Raw LLM response:', result.text)
         throw new Error(`Response was not valid JSON: ${result.text.substring(0, 500)}...`)
       }

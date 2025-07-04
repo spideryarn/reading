@@ -5,7 +5,7 @@
  * for document processing operations.
  */
 
-import { DocumentProcessingTransaction, withDocumentProcessingTransaction, TransactionError } from '../document-processing-transaction'
+import { DocumentProcessingTransaction, withDocumentProcessingTransaction } from '../document-processing-transaction'
 import { documentAssetsService } from '../database/document-assets'
 import { deleteImageAsset } from '../storage'
 

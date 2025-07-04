@@ -26,8 +26,7 @@ import {
 import {
   assembleDocument,
   quickAssembleFragments,
-  type AssemblyConfig,
-  type AssembledDocument
+  type AssemblyConfig
 } from '../html-assembler'
 
 // Mock the logger
@@ -423,7 +422,7 @@ describe('HTML Processing Pipeline', () => {
       expect(assembled.success).toBe(true)
 
       // Stage 4: Validate assembled document  
-      const finalValidation = await validateAssembledDocument(assembled, validationConfig)
+      await validateAssembledDocument(assembled, validationConfig)
       // Document should be assembled successfully even if validation finds minor issues
       expect(assembled.success).toBe(true)
       // Check that we have a valid assembled document with expected content

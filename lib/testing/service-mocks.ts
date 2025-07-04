@@ -168,7 +168,7 @@ export function setupCommonServiceMocks() {
 /**
  * Helper to create a mock AI call response
  */
-export function createMockAiCall(overrides?: any) {
+export function createMockAiCall(overrides?: Partial<ReturnType<AiCallService['startCallWithModelString']>>) {
   return {
     id: 'mock-ai-call-id',
     document_id: null,
@@ -196,7 +196,7 @@ export function createMockAiCall(overrides?: any) {
 /**
  * Helper to create a mock enhancement
  */
-export function createMockEnhancement(overrides?: any) {
+export function createMockEnhancement(overrides?: Partial<ReturnType<EnhancementService['upsert']>>) {
   return {
     id: 'mock-enhancement-id',
     document_id: 'mock-document-id',
@@ -214,7 +214,7 @@ export function createMockEnhancement(overrides?: any) {
 /**
  * Helper to create a mock document
  */
-export function createMockDocument(overrides?: any) {
+export function createMockDocument(overrides?: Partial<ReturnType<DocumentService['getById']>>) {
   return {
     id: 'mock-document-id',
     title: 'Mock Document',

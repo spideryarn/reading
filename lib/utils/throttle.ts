@@ -1,7 +1,7 @@
 // Throttle utility function
 // Ensures a function is called at most once per specified time period
 
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
   delay: number
 ): (...args: Parameters<T>) => void {

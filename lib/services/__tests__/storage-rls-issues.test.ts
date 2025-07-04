@@ -175,7 +175,7 @@ describe('Storage RLS Policy Violation Issue', () => {
       mockRequireAuth.mockResolvedValue(invalidUser)
 
       // Create a client without proper authentication headers
-      const unauthenticatedClient = await createClient()
+      await createClient()
 
       try {
         await uploadDocumentFile(testFile, documentId)
@@ -265,7 +265,7 @@ describe('Storage RLS Policy Violation Issue', () => {
       mockRequireAuth.mockResolvedValue(pipelineUser)
 
       // Create supabase client as it would be in the API route
-      const supabaseClient = await createClient()
+      await createClient()
 
       try {
         // This should fail with the same RLS issue as in the HTML upload pipeline

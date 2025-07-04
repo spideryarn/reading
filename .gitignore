@@ -92,4 +92,7 @@ secrets/
 .dev-server.pid
 .dev-server.lock
 
+lint-output.txt
+tsc-output.txt
+
 certificates

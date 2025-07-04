@@ -61,7 +61,7 @@ export const createMockSearchParams = (params: Record<string, string | null> = {
   entries: jest.fn(() => Object.entries(params)),
   keys: jest.fn(() => Object.keys(params)),
   values: jest.fn(() => Object.values(params)),
-  toString: jest.fn(() => new URLSearchParams(params as any).toString()),
+  toString: jest.fn(() => new URLSearchParams(params as Record<string, string>).toString()),
   forEach: jest.fn(),
   [Symbol.iterator]: jest.fn(),
 })
@@ -199,7 +199,7 @@ export class MockIntersectionObserver implements IntersectionObserver {
  */
 export function setupIntersectionObserverMock() {
   const originalIO = global.IntersectionObserver
-  global.IntersectionObserver = MockIntersectionObserver as any
+  global.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver
 
   return () => {
     global.IntersectionObserver = originalIO
@@ -264,36 +264,36 @@ export const createMockElement = (elementId: string, tagName = 'div'): HTMLEleme
  * These are simplified versions for testing that preserve essential props
  */
 export const mockShadcnComponents = {
-  Form: ({ children, ...props }: any) => 
+  Form: ({ children, ...props }: { children?: ReactNode } & React.FormHTMLAttributes<HTMLFormElement>) => 
     React.createElement('form', { 'data-testid': 'form', ...props }, children),
   
-  FormField: ({ render, name }: any) => {
+  FormField: ({ render, name }: { render: (props: { field: { value: string; onChange: jest.Mock; onBlur: jest.Mock; name: string } }) => ReactNode; name: string }) => {
     const field = { value: '', onChange: jest.fn(), onBlur: jest.fn(), name }
     return render({ field })
   },
   
-  FormControl: ({ children }: any) => 
+  FormControl: ({ children }: { children?: ReactNode }) => 
     React.createElement('div', { 'data-testid': 'form-control' }, children),
   
-  FormItem: ({ children }: any) => 
+  FormItem: ({ children }: { children?: ReactNode }) => 
     React.createElement('div', { 'data-testid': 'form-item' }, children),
   
-  FormLabel: ({ children }: any) => 
+  FormLabel: ({ children }: { children?: ReactNode }) => 
     React.createElement('label', { 'data-testid': 'form-label' }, children),
   
   FormMessage: () => 
     React.createElement('div', { 'data-testid': 'form-message' }),
   
-  Button: ({ children, ...props }: any) => 
+  Button: ({ children, ...props }: { children?: ReactNode } & React.ButtonHTMLAttributes<HTMLButtonElement>) => 
     React.createElement('button', { 'data-testid': 'button', ...props }, children),
   
-  Input: (props: any) => 
+  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => 
     React.createElement('input', { 'data-testid': 'input', ...props }),
   
-  Alert: ({ children }: any) => 
+  Alert: ({ children }: { children?: ReactNode }) => 
     React.createElement('div', { role: 'alert', 'data-testid': 'alert' }, children),
   
-  AlertDescription: ({ children }: any) => 
+  AlertDescription: ({ children }: { children?: ReactNode }) => 
     React.createElement('div', { 'data-testid': 'alert-description' }, children),
 }
 

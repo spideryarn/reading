@@ -111,7 +111,7 @@ export function registerTestTools(count: number = 3): Tool[] {
  * @param invalidField - Which field to make invalid
  * @returns Invalid tool definition
  */
-export function createInvalidTestTool(invalidField: string): any {
+export function createInvalidTestTool(invalidField: string): Partial<Tool> | Record<string, unknown> {
   const baseTool = createTestTool()
   
   switch (invalidField) {

@@ -45,7 +45,6 @@ import {
   generateBatchFilenames,
   validateFilename,
   sanitizeFilename,
-  FilenameGenerationError,
   type FilenameGenerationInput
 } from '@/lib/utils/image-filename-generator'
 
