@@ -269,7 +269,7 @@ async function executeMultimodalPromptInternal<T extends z.ZodSchema>(
   // Execute with Vercel AI SDK Core using messages format
   const result = await generateText({
     model,
-    messages,
+    messages: messages as any,
     maxTokens: template.modelConfig?.maxTokens || AI_CONFIG.DEFAULT_MAX_TOKENS,
     temperature: template.modelConfig?.temperature ?? AI_CONFIG.DEFAULT_TEMPERATURE,
   })

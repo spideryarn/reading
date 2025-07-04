@@ -21,7 +21,7 @@ import {
  * with the withErrorNotification wrapper. This automatically catches
  * and displays any ToolExecutorError instances.
  */
-export const executeToolWithErrorUI = withErrorNotification(executeTool)
+export const executeToolWithErrorUI = withErrorNotification(executeTool as any) as typeof executeTool
 
 
 /**
@@ -77,7 +77,7 @@ export function useToolWithErrorHandling() {
       action: string, 
       parameters?: Record<string, unknown>
     ) {
-      const wrappedExecutor = withErrorNotification(executeTool)
+      const wrappedExecutor = withErrorNotification(executeTool as any) as typeof executeTool
       return await wrappedExecutor(toolId, action, parameters)
     }
   }
@@ -172,7 +172,7 @@ export function integrateWithExistingErrorHandling() {
  */
 export const ERROR_UI_BEST_PRACTICES = {
   // Use automatic error handling for most cases
-  recommended: withErrorNotification(executeTool),
+  recommended: withErrorNotification(executeTool as any) as typeof executeTool,
   
   // Manual handling for special cases
   manual: showToolError,

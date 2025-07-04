@@ -165,7 +165,7 @@ export function useToolUrlState(): UseToolUrlStateReturn {
       const updateQuery = (query: string) => {
         setState(buildUpdates('q', query || undefined))
       }
-      return debounce(updateQuery, 300)
+      return debounce(updateQuery, 300) as (query: string) => void
     },
     [setState]
   )
@@ -176,7 +176,7 @@ export function useToolUrlState(): UseToolUrlStateReturn {
       const updateScroll = (elementId: string) => {
         setState(buildUpdates('scroll', elementId || undefined))
       }
-      return throttle(updateScroll, 1000)
+      return throttle(updateScroll, 1000) as (elementId: string) => void
     },
     [setState]
   )
