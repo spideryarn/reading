@@ -19,8 +19,8 @@ import { sanitizeDocumentTitle } from '@/lib/utils/document-title'
 import type { Logger } from 'pino'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { JSDOM } from 'jsdom'
-import { load as cheerioLoad } from 'cheerio'
-import { assignDeterministicIds } from './deterministicId'
+import { load } from 'cheerio'
+import { assignDeterministicIds } from '@/lib/services/deterministicId'
 
 /**
  * Processing metadata required for document creation
@@ -162,49 +162,30 @@ export async function processHtmlToDocument(
     sanitizedTitle
   }, 'Starting HTML sanitization and text extraction')
 
-  const { sanitizedHtml, prettifiedHtml } = await sanitizeAndExtractText(
+  const { sanitizedHtml, prettifiedHtml, plaintext } = await sanitizeAndExtractText(
     htmlContent, 
     logger, 
     correlationId
   )
 
-  // ------------------------------------------------------------------
-  // Step 2b: FIRST-TIME deterministic ID assignment
-  // ------------------------------------------------------------------
-  // At this point `prettifiedHtml` still contains whatever IDs existed in the
-  // source HTML.  To guarantee stable IDs for future AI operations we:
-  //   1. strip ALL existing `id` attributes,
-  //   2. run the deterministic-ID generator once.
-  // The resulting HTML (`deterministicHtml`) is what we store in the database.
+  // --------------------------------------------------------------------------
+  // Step 1b: Ensure the HTML we store contains ONLY deterministic IDs.
+  // We first strip any existing id attributes (from the source or earlier
+  // processing stages) and then run the deterministic-ID assignment pass.
+  // This guarantees that every element ID is stable across page loads and
+  // aligns with the IDs used later by AI-generated mutations (headings,
+  // glossary anchors, etc.).
+  // --------------------------------------------------------------------------
 
-  const $tmp = cheerioLoad(prettifiedHtml, { xml: false })
-  $tmp('[id]').removeAttr('id')
-  const htmlWithoutIds = $tmp.html() || ''
-  const deterministicHtml = assignDeterministicIds(htmlWithoutIds)
+  const $ = load(prettifiedHtml, { xml: false })
+  $('[id]').removeAttr('id') // remove all existing ids
+  const htmlWithDeterministicIds = assignDeterministicIds($.html())
 
-  // ------------------------------------------------------------------
-  // Step 3: Extract clean plaintext using proper DOM parsing (not regex)
-
-  logger.info({
-    correlationId,
-    step: 'text-extraction',
-    sourceLength: deterministicHtml.length
-  }, 'Starting plaintext extraction from processed HTML')
-
-  const plaintext = extractCleanText(deterministicHtml)
-  
-  logger.info({
-    correlationId,
-    step: 'text-extraction-complete',
-    plaintextLength: plaintext.length,
-    wordCount: plaintext.split(/\s+/).length
-  }, 'Plaintext extraction completed successfully')
-
-  // Step 4: Generate document slug and metadata
+  // Step 2: Generate document slug and metadata
   logger.info({
     correlationId,
     step: 'document-preparation',
-    sanitizedLength: deterministicHtml.length,
+    sanitizedLength: htmlWithDeterministicIds.length,
     plaintextLength: plaintext.length,
     wordCount: plaintext.split(/\s+/).length
   }, 'Preparing document for storage')
@@ -240,7 +221,7 @@ export async function processHtmlToDocument(
     userId,
     {
       title: sanitizedTitle,
-      html_content: deterministicHtml,
+      html_content: htmlWithDeterministicIds,
       plaintext_content: plaintext,
       slug,
       source_url: sourceUrl || null,
