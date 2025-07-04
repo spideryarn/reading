@@ -8,27 +8,27 @@ This document defines the testing strategies for AI-first coding, where multiple
 
 Based on the Test Reform for AI-First Development (July 2025), the following principles guide our testing approach:
 
-1. **Fewer, higher-confidence tests** - 50% coverage of critical paths beats 100% coverage with brittle tests
+1. **Fewer, higher-value tests** - 50% coverage of critical paths beats 100% coverage with brittle tests
 2. **Real over mocked** - Use database isolation instead of mocks wherever possible  
-3. **E2E first** - Test user journeys, not implementation details
-4. **Budget-conscious LLM testing** - Use cheap models (Haiku/Gemini) within $20/month budget
+3. **Prefer E2E** - Test user journeys, not implementation details
+4. **Budget-conscious LLM testing** - Use cheap models (Haiku/Gemini)
 5. **Fail fast** - Surface issues early rather than masking them
 6. **Test immutability** - AI must discuss test changes with user before modifying
 
 ## Testing Hierarchy (Agreed Approach)
 
 ```
-1. Critical E2E Tests (5-10 tests) - 80% confidence
+1. Critical E2E Tests (5-10 tests)
    - User can sign up and access dashboard
    - Document upload and processing works
    - AI features generate expected outputs
    
-2. API Contract Tests - 15% confidence  
+2. API Contract Tests
    - API endpoints return expected shapes
    - Database operations respect constraints
    - Service boundaries are maintained
    
-3. Complex Logic Unit Tests - 5% confidence
+3. Complex Logic Unit Tests
    - Algorithm correctness
    - Edge case handling
    - Performance-critical code
@@ -66,8 +66,6 @@ Based on the Test Reform for AI-First Development (July 2025), the following pri
 
 This is the most critical concern for AI-first development:
 
-**Test Modification Guidelines**
-```markdown
 ## Test Modification Guidelines (AGREED)
 - Don't modify existing tests without discussing and agreeing with the user
 - If a test fails, default to fixing the code, not the test
@@ -76,7 +74,6 @@ This is the most critical concern for AI-first development:
   - Changing requirements or edge case handling
   - Fixing incorrect test assertions
   - Improving test clarity or reducing brittleness
-```
 
 **b) Git Pre-commit Hooks**
 Create a pre-commit hook that detects test modifications:

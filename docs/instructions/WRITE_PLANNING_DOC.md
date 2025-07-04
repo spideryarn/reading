@@ -71,6 +71,7 @@ Don't include a `Date` section at the top since it's implicit from the filename.
 - Include any specific principles/approaches or decisions that have been explicitly agreed with the user (over and above existing Cursor rules, project examples, best practices, etc).
 - As you get new information from the user, update this doc so it's always up-to-date.
 - If there are any surprises/issues, stop immediately, and discuss with the user before proceeding.
+- If you need to temporarily store working notes, write to a separate doc in `docs/working_notes/`, named `yyMMdd[x]_ephemeral_[planning_doc_name].md`, and reference it from the planning doc.
 
 
 ### Stages & actions
@@ -111,6 +112,7 @@ After creating the initial planning doc:
   - Commit the revised version
 
 At the end of stage (where appropriate):
+- Run linter, type-checker and relevant tests
 - If doing UI-related changes, add an end-of-stage action to check things look ok with Puppeteer MCP (in a subagent, provided with rich description of the background/approach to take/success criteria).
 - **Add health check action**: `npm run check:health` (use subagent for >3 files with issues):
   - **Default scope**: Checks files changed in this stage (git-aware) - catches cross-file impacts from your changes
@@ -140,6 +142,8 @@ As final actions:
   - Identify redundant or low-level tests that will be brittle
   - Consolidate into fewer, high-coverage integration or E2E tests
   - Aim for net reduction in test count while maintaining coverage
+- **Error message verification** - Review error handling in changed code:
+  - Check that errors provide descriptive, user-visible messages
 - **Improvement opportunities** - If you discovered any improvement opportunities outside the scope of the planned work during implementation, discuss these with the user before finalising
 - Ask the user's permission to merge back (if we created a branch)
 - Move the doc to `planning/finished/` and commit.
