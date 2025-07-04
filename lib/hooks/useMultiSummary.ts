@@ -70,7 +70,7 @@ export function useMultiSummary(
   // Fetch cached summaries
   const fetchCachedSummaries = useCallback(async () => {
     try {
-      const response = await fetch(`/api/tools/summary/handlers/summary?documentId=${encodeURIComponent(documentId)}`)
+      const response = await fetch(`/api/tools/summary?documentId=${encodeURIComponent(documentId)}&type=multi-summarise`)
       if (!response.ok) {
         // Silently handle 404 or other errors - cached summaries are optional
         return null
