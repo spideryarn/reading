@@ -160,6 +160,10 @@ export function useVisionSinglePageUploader(
     totalPages: number
   } | null>(null)
   const pageStatesRef = useRef<PageUploadState[]>([])
+  // Track whether the current upload operation was cancelled by the user. When this flag is
+  // set we should suppress error logging/handling in the outer `uploadPages` promise chain so
+  // that the UI does not surface alarming console overlays for an intentional user action.
+  const isCancelledRef = useRef(false)
 
   // Initialize pageStatesRef whenever pageStates changes
   useEffect(() => {
@@ -501,6 +505,10 @@ export function useVisionSinglePageUploader(
     fileName: string,
     totalPages: number
   ) => {
+    // Fresh run – make sure we clear any previous cancellation flag so normal error handling
+    // works as expected for subsequent uploads.
+    isCancelledRef.current = false
+
     // Reset state
     abortControllerRef.current = new AbortController()
     setIsUploading(true)
@@ -554,9 +562,18 @@ export function useVisionSinglePageUploader(
     try {
       await Promise.all(promises)
     } catch (error) {
-      console.error('Error processing pages:', error)
+      // Only surface the error if the operation wasn't intentionally cancelled by the user.
+      if (!isCancelledRef.current) {
+        console.error('Error processing pages:', error)
+      }
     } finally {
       setIsUploading(false)
+      
+      // If the user cancelled the upload we bail out early – we intentionally skip any
+      // further aggregation/error handling to avoid noisy console overlays.
+      if (isCancelledRef.current) {
+        return
+      }
       
       // Get all completed HTML fragments in order
       const completedFragments = pageStatesRef.current
@@ -587,6 +604,9 @@ export function useVisionSinglePageUploader(
 
   // Cancel all uploads
   const cancel = useCallback(() => {
+    // Mark the current upload session as cancelled so downstream logic can adapt.
+    isCancelledRef.current = true
+
     abortControllerRef.current?.abort()
     queueRef.current?.clear() // Clear p-queue
     queueRef.current?.pause() // Pause queue
