@@ -160,24 +160,81 @@ kill_port_processes() {
     local port="$1"
     local description="$2"
     
-    echo "🔄 Killing all processes on port $port ($description)"
+    echo "🔄 Clearing port $port"
     
     # Use npx kill-port for robust port-based process killing
     if npx kill-port "$port" 2>/dev/null; then
-        echo "✅ Successfully cleared port $port"
+        echo "✅ Port $port cleared"
         return 0
     else
-        echo "⚠️  Failed to clear port $port using npx kill-port"
-        echo "   This may indicate no processes were running on that port"
+        echo "Could not kill process on port $port. No process running on port."
         return 1
     fi
 }
 
+smart_cleanup_existing_processes() {
+    # Smart cleanup function that tries quick PID-based kill for healthy daemons
+    # and falls back to slow npx kill-port when needed
+    # Returns: 0 if cleanup succeeded (or was skipped), 1 if failed
+    # Sets global variable: skip_port_cleanup (true if port cleanup can be skipped)
+    
+    local daemon_pid=$(get_daemon_pid)
+    local port=$(get_port)
+    skip_port_cleanup=false
+    
+    # If no port configured, we can't do port-based cleanup
+    if [ -z "$port" ]; then
+        if [ -n "$daemon_pid" ] && is_process_running "$daemon_pid"; then
+            echo "🔄 Stopping existing daemon (PID: $daemon_pid) - no port configured"
+            if kill_process_gracefully "$daemon_pid" "existing daemon"; then
+                rm -f "$SYR_DEVSERVER_PIDFILE" "$LOCKFILE"
+                return 0
+            else
+                echo "❌ Failed to stop daemon"
+                return 1
+            fi
+        fi
+        # No daemon or not running, nothing to clean up
+        return 0
+    fi
+    
+    # Port is configured - check for healthy daemon for quick restart
+    if [ -n "$daemon_pid" ] && is_process_running "$daemon_pid"; then
+        if is_port_responding "$port"; then
+            # Daemon is healthy - try quick PID-based kill
+            echo "🔄 Quick cleanup: stopping daemon (PID: $daemon_pid)"
+            if kill_process_gracefully "$daemon_pid" "existing daemon"; then
+                rm -f "$SYR_DEVSERVER_PIDFILE" "$LOCKFILE"
+                skip_port_cleanup=true
+                return 0
+            else
+                echo "⚠️  Quick cleanup failed, falling back to port-based cleanup"
+            fi
+        else
+            # Daemon exists but unhealthy - kill it but still do port cleanup
+            echo "🔄 Stopping unhealthy daemon (PID: $daemon_pid)"
+            kill_process_gracefully "$daemon_pid" "existing daemon"
+            rm -f "$SYR_DEVSERVER_PIDFILE" "$LOCKFILE"
+        fi
+    elif [ -n "$daemon_pid" ]; then
+        # Stale PID file - clean it up
+        echo "🧹 Cleaning up stale PID file (process not running: $daemon_pid)"
+        rm -f "$SYR_DEVSERVER_PIDFILE" "$LOCKFILE"
+    fi
+    
+    # Do port-based cleanup unless skipped
+    if [ "$skip_port_cleanup" != true ]; then
+        kill_port_processes "$port" "any existing processes"
+    fi
+    
+    return 0
+}
+
 clear_next_cache() {
     if [ -d ".next" ]; then
-        echo "🧹 Clearing Next.js build cache (.next directory)"
+        echo "🧹 Clearing .next cache"
         rm -rf .next
-        echo "✅ Build cache cleared"
+        echo "✅ Cache cleared"
     else
         echo "ℹ️  No .next directory found to clear"
     fi
@@ -339,15 +396,13 @@ regenerate_types_if_needed() {
             echo "❌ Failed to regenerate database types"
             return 1
         fi
-    else
-        echo "✅ Database types are up to date, skipping regeneration"
     fi
     return 0
 }
 
 clear_logs() {
     # Clear both dev.log and error.log for fresh start
-    echo "🧹 Clearing log files at $(date)"
+    echo "🧹 Clearing logs"
     > dev.log
     > error.log
     echo "🧹 Cleared dev.log and error.log at $(date)" | tee -a dev.log
@@ -459,33 +514,8 @@ case "$MODE" in
             exit 1
         fi
         
-        # Check for existing daemon
+        # Clean up stale files first
         cleanup_stale_files
-        daemon_pid=$(get_daemon_pid)
-        PORT=$(get_port)
-        
-        # Try quick restart first if daemon exists and is healthy
-        if [ -n "$daemon_pid" ] && is_process_running "$daemon_pid"; then
-            if [ -n "$PORT" ] && is_port_responding "$PORT"; then
-                echo "🔄 Quick restarting healthy daemon (PID: $daemon_pid)"
-                if kill_process_gracefully "$daemon_pid" "existing daemon"; then
-                    rm -f "$SYR_DEVSERVER_PIDFILE" "$LOCKFILE"
-                    # Skip port cleanup since daemon was healthy
-                    echo "✅ Quick restart - skipping port cleanup"
-                    skip_port_cleanup=true
-                else
-                    echo "⚠️  Quick restart failed, falling back to full cleanup"
-                    skip_port_cleanup=false
-                fi
-            else
-                echo "🔄 Restarting unhealthy daemon (PID: $daemon_pid)"
-                kill_process_gracefully "$daemon_pid" "existing daemon"
-                rm -f "$SYR_DEVSERVER_PIDFILE" "$LOCKFILE"
-                skip_port_cleanup=false
-            fi
-        else
-            skip_port_cleanup=false
-        fi
         
         # Prevent multiple daemon instances
         if [ -f "$LOCKFILE" ]; then
@@ -500,7 +530,8 @@ case "$MODE" in
         # Create lock file
         echo $$ > "$LOCKFILE"
         
-        # Get port and clear any existing processes (if needed)
+        # Get port first to check if we can proceed
+        PORT=$(get_port)
         if [ -z "$PORT" ]; then
             rm -f "$LOCKFILE"
             echo "❌ No PORT found in .env.local"
@@ -508,9 +539,11 @@ case "$MODE" in
             exit 1
         fi
         
-        # Clear port using robust npx kill-port (unless quick restart succeeded)
-        if [ "$skip_port_cleanup" != true ]; then
-            kill_port_processes "$PORT" "any existing processes"
+        # Use smart cleanup to handle existing processes
+        if ! smart_cleanup_existing_processes; then
+            rm -f "$LOCKFILE"
+            echo "❌ Failed to clean up existing processes"
+            exit 1
         fi
         
         # Clear Next.js build cache if requested or always for clean build
@@ -564,29 +597,31 @@ case "$MODE" in
             exit 1
         fi
         
+        # Clean up stale files first
+        cleanup_stale_files
+        
         # Enhanced foreground mode for npm run dev
         PORT=$(get_port)
         
-        echo "🚀 Starting dev server in foreground mode at $(date)"
+        echo "🚀 Starting dev server (port: ${PORT:-unknown}) at $(date)"
         
+        # Clean up existing processes
         if [ -z "$PORT" ]; then
-            echo "⚠️  No PORT found in .env.local - skipping process cleanup"
-            echo "   To enable auto-restart, add PORT=xxxx to your .env.local file"
+            echo "⚠️  No PORT in .env.local - skipping cleanup"
         else
-            echo "🔄 Port: $PORT"
-            # Use robust port-based process killing
-            kill_port_processes "$PORT" "existing dev server"
+            if ! smart_cleanup_existing_processes; then
+                echo "❌ Failed to clean up existing processes"
+                exit 1
+            fi
         fi
         
-        # Clear Next.js build cache if requested
+        # Clear cache and logs if requested
         if [ "$CLEAN_BUILD" = true ]; then
             clear_next_cache
+            clear_logs
         else
-            echo "ℹ️  Preserving .next directory (use --clean to clear)"
+            clear_logs
         fi
-        
-        # Clear and rotate logs
-        clear_logs
         rotate_logs_if_needed
         
         # Regenerate types if needed
@@ -597,8 +632,7 @@ case "$MODE" in
         # Set up trap to output timestamp when dev server exits
         trap 'echo "📅 Dev server finished at $(date)"' EXIT
         
-        echo "🎯 Use npm run dev:daemon for background mode with PID tracking"
-        echo "📋 Logs will be written to dev.log and error.log - use 'tail -f dev.log' or 'tail -f error.log' to follow"
+        echo "💡 Logs: tail -f dev.log | Use npm run dev:daemon for background mode"
         echo ""
         
         # Run the dev command with dual logging in foreground
