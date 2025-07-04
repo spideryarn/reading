@@ -10,7 +10,7 @@ This document describes the process for maintaining test quality and organisatio
 - `docs/instructions/UPDATE_INDEX_FOR_DOCUMENTATION.md` - General housekeeping process pattern that inspired this approach
 - `docs/instructions/WRITE_PLANNING_DOC.md` - For creating one-time test cleanup planning documents
 - `docs/instructions/GIT_COMMIT_CHANGES.md` - How to commit test improvements
-- `planning/250608a_test_infrastructure_cleanup.md` - Example one-time infrastructure cleanup planning
+- `docs/planning/250608a_test_infrastructure_cleanup.md` - Example one-time infrastructure cleanup planning
 - `jest.config.js` & `jest.setup.js` - Jest configuration and test setup
 
 ## Testing Philosophy for Rapid Prototyping

@@ -4,7 +4,7 @@ Comprehensive guide to prompt caching capabilities across major LLM providers, i
 
 ## See also
 
-- `planning/later/250608a_prompt_caching_implementation.md` - Detailed implementation plan for prompt caching in our document processing workflows
+- `docs/planning/later/250608a_prompt_caching_implementation.md` - Detailed implementation plan for prompt caching in our document processing workflows
 - `docs/reference/LLM_MODEL_CONFIGURATION.md` - AI model configuration and usage patterns in our codebase
 - `docs/reference/LLM_PROMPT_TEMPLATES.md` - Nunjucks + Zod prompt template system for consistent AI calls
 - `lib/ai/` - Implementation of AI operations that could benefit from caching

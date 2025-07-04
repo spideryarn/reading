@@ -5,7 +5,7 @@
 **Status**: ✅ Active | Last Updated: June 2025 | Version: 1.0
 
 **Related Documentation**:
-- [Vision-Based PDF Processing Pipeline](../../planning/250627c_vision_based_pdf_processing_pipeline.md) - **PRIMARY**: Active development project using this PDF.js integration
+- [Vision-Based PDF Processing Pipeline](../../docs/planning/250627c_vision_based_pdf_processing_pipeline.md) - **PRIMARY**: Active development project using this PDF.js integration
 - [LLM Prompt Templates](./LLM_PROMPT_TEMPLATES.md) - For vision-based AI processing
 - [Upload Pipeline](./UPLOAD_DOCUMENT_PROCESSING_PIPELINE.md) - Document processing architecture
 - [Testing Browser Automation](./TESTING_BROWSER_AUTOMATION_OVERVIEW.md) - E2E testing patterns

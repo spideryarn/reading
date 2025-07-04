@@ -9,7 +9,7 @@ Comprehensive guide to implementing shadcn/ui component library in the Spideryar
 - `docs/reference/UI_COMPONENTS.md`
 - `docs/reference/DESIGN_MOBILE_PLATFORM_DETECTION.md` - mobile device detection affecting responsive component behavior
 - `docs/reference/CODING_PRINCIPLES.md` - Development principles prioritising simplicity and rapid prototyping
-- `planning/250530a_shadcn_ui_adoption.md` - Planning document and implementation roadmap
+- `docs/planning/250530a_shadcn_ui_adoption.md` - Planning document and implementation roadmap
 - `components/` - Current component implementations using raw Tailwind
 - `app/globals.css` - Tailwind v4 CSS configuration and theme variables
 - [shadcn/ui Official Documentation](https://ui.shadcn.com) - Official component library documentation
@@ -534,7 +534,7 @@ test('button renders with correct variant', () => {
 ## Future Work 📋
 
 ### Planned Components
-- **Resizable** - For collapsible panes (see `planning/250530b_collapsible_resizable_panes.md`)
+- **Resizable** - For collapsible panes (see `docs/planning/250530b_collapsible_resizable_panes.md`)
 - **Collapsible** - For expand/collapse animations
 - **Table** - For data display if needed
 - **Command** ✅ - For search/command palette (see `docs/reference/COMMAND_PALETTE_FUZZY_SEARCH_CMDK.md` for implementation details)

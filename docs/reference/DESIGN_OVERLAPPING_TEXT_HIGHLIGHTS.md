@@ -7,7 +7,7 @@ Comprehensive technical guide for implementing overlapping text highlighting in 
 ### Current Implementation
 - `docs/reference/TOOL_SEARCH_TEXT.md` - Current Mark.js-based search highlighting implementation
 - `docs/reference/TOOL_GLOSSARY.md` - Glossary entity highlighting with click navigation
-- `planning/250613f_glossary_hyperlinks_implementation.md` - Glossary hyperlink implementation planning
+- `docs/planning/250613f_glossary_hyperlinks_implementation.md` - Glossary hyperlink implementation planning
 - `components/unified-left-pane.tsx` - Current search and glossary UI implementation
 - `components/simple-document-viewer.tsx` - Document rendering component where highlights are applied
 
@@ -343,7 +343,7 @@ markInstanceRef.current.mark(query, {
 });
 ```
 
-**Glossary Implementation** (`planning/250613f_glossary_hyperlinks_implementation.md`):
+**Glossary Implementation** (`docs/planning/250613f_glossary_hyperlinks_implementation.md`):
 ```typescript
 // Planned glossary highlighting with Mark.js
 markInstance.mark(glossaryTerms, {

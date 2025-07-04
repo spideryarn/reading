@@ -11,7 +11,7 @@
  * - Error recovery without duplication
  * - State consistency validation
  * 
- * @see planning/250629a_chat_architecture_database_first_redesign.md - "Zero duplicate messages" goal
+ * @see docs/planning/250629a_chat_architecture_database_first_redesign.md - "Zero duplicate messages" goal
  */
 
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals'

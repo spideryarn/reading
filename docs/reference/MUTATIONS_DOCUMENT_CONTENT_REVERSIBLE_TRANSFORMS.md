@@ -10,7 +10,7 @@ The mutations system enables reversible transformations of document content, all
 - `lib/services/mutation-engine.ts` - Implementation of mutation application logic
 - `lib/prompts/templates/headings.ts` - Headings operation schemas with conditional validation
 - `lib/prompts/templates/headings.njk` - AI prompt template showing how headings are generated
-- `planning/250527a_reversible_document_mutations.md` - Detailed design decisions and implementation plan
+- `docs/planning/250527a_reversible_document_mutations.md` - Detailed design decisions and implementation plan
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - High-level architectural overview
 - `docs/reference/TOOL_HEADINGS.md` - AI-generated heading system documentation
 - `tests/test-mutation-engine.ts` - Test suite demonstrating mutation usage patterns

@@ -5,7 +5,7 @@
  * with research-backed multipliers from comprehensive parallel research (June 2025).
  * 
  * See: docs/reference/RESEARCH_READING_SPEED_COMPLEXITY_ADJUSTMENTS.md
- * See: planning/250614a_document_metadata_tab_implementation.md (Stage 7)
+ * See: docs/planning/250614a_document_metadata_tab_implementation.md (Stage 7)
  */
 
 // Research-backed baseline from Brysbaert 2019 meta-analysis (18,573 participants)

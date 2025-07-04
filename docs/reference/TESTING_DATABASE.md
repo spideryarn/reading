@@ -13,7 +13,7 @@ This document is the **primary guide** for database testing in the Spideryarn Re
 - `docs/reference/archive/TESTING_DATABASE_SUPABASE_OPTIONS_RESEARCH.md` - Historical research on database testing approaches
 - `docs/reference/DATABASE_OVERVIEW.md` - Database architecture and schema
 - `lib/testing/test-isolation-utils.ts` - Test isolation utilities implementation
-- `planning/finished/250613b_test_database_shared_approach_migration.md` - Migration history and decisions
+- `docs/planning/finished/250613b_test_database_shared_approach_migration.md` - Migration history and decisions
 
 ## Overview
 

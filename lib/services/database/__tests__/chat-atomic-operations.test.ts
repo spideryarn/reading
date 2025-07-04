@@ -6,7 +6,7 @@
  * - Single transaction: create thread → insert user message → run AI → insert AI response
  * - Complete database state returned in single response
  * 
- * @see planning/250629a_chat_architecture_database_first_redesign.md for architectural context
+ * @see docs/planning/250629a_chat_architecture_database_first_redesign.md for architectural context
  */
 
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals'

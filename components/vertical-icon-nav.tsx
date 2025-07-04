@@ -3,7 +3,7 @@
 // Vertical icon navigation component for collapsed left pane
 // Implements VSCode-style activity bar with Phosphor icons and tooltips
 // Now dynamically generates navigation items from the tool registry
-// See planning/250608c_vertical_icon_navigation_bar.md for design decisions
+// See docs/planning/250608c_vertical_icon_navigation_bar.md for design decisions
 
 import { 
   SidebarSimple, Terminal

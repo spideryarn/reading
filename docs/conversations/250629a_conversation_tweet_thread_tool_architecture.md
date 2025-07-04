@@ -6,7 +6,7 @@ Status: Active
 Related Docs: 
   - `docs/reference/TOOL_ARCHITECTURE_AND_DEVELOPMENT_GUIDE.md`
   - `docs/reference/TOOL_EXECUTION_FRAMEWORK.md`
-  - `planning/250614e_llm_tool_function_calling.md`
+  - `docs/planning/250614e_llm_tool_function_calling.md`
   - `docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md`
 ---
 
@@ -144,7 +144,7 @@ The recommendation leaned toward Option 3 (Tool Actions Beyond Execute) as the s
 ### Documentation Referenced
 - **`docs/reference/TOOL_ARCHITECTURE_AND_DEVELOPMENT_GUIDE.md`** - Comprehensive tool development guide
 - **`docs/reference/TOOL_EXECUTION_FRAMEWORK.md`** - Execution framework with action types
-- **`planning/250614e_llm_tool_function_calling.md`** - LLM function calling vision
+- **`docs/planning/250614e_llm_tool_function_calling.md`** - LLM function calling vision
 - **`docs/reference/CROSS_PANE_COMMUNICATION_MESSAGING_ARCHITECTURE.md`** - Cross-pane coordination patterns
 
 ### Key Insights from Planning Docs

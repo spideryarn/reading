@@ -50,11 +50,11 @@ class SelectFilesCommand extends Command {
       Designed to stay within configurable token budgets for optimal LLM critique context.
     `,
     examples: [
-      ['Select files for a planning document', 'select-files planning/my-feature-plan.md'],
-      ['Use custom token budget', 'select-files --budget 20000 planning/my-plan.md'],
-      ['Include test files in selection', 'select-files --include-tests planning/my-plan.md'],
-      ['Exclude CLAUDE.md from selection', 'select-files --no-include-claude-md planning/my-plan.md'],
-      ['Output only file paths', 'select-files --quiet planning/my-plan.md'],
+      ['Select files for a planning document', 'select-files docs/planning/my-feature-plan.md'],
+      ['Use custom token budget', 'select-files --budget 20000 docs/planning/my-plan.md'],
+      ['Include test files in selection', 'select-files --include-tests docs/planning/my-plan.md'],
+      ['Exclude CLAUDE.md from selection', 'select-files --no-include-claude-md docs/planning/my-plan.md'],
+      ['Output only file paths', 'select-files --quiet docs/planning/my-plan.md'],
     ],
   });
 

@@ -6,7 +6,7 @@ Documentation Date: 2025-06-24
 Research Method: Parallel web research using Vercel docs and community sources
 Review Date: 2025-12-24
 Status: Current
-Related Documents: planning/finished/250613e_Vercel_deployment_initial_setup.md, docs/reference/SETUP_DEPLOYMENT_PRODUCTION.md
+Related Documents: docs/planning/finished/250613e_Vercel_deployment_initial_setup.md, docs/reference/SETUP_DEPLOYMENT_PRODUCTION.md
 ---
 
 This document provides comprehensive coverage of Vercel serverless platform constraints that affect library selection, architecture decisions, and deployment strategies for the Spideryarn Reading application.

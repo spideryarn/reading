@@ -8,7 +8,7 @@
  * output for routine health checking at the end of development stages.
  * 
  * See docs/reference/COMMAND_LINE_SCRIPTS.md for CLI development patterns.
- * See planning/250620c_ai_orchestration_health_checks.md for implementation details.
+ * See docs/planning/250620c_ai_orchestration_health_checks.md for implementation details.
  */
 
 import { Cli, Command, Option } from 'clipanion';

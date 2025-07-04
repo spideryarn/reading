@@ -10,7 +10,7 @@ Comprehensive guide for admin functionality in the Spideryarn Reading applicatio
 - `docs/reference/TESTING_DATABASE.md` - RLS testing patterns including admin scenarios
 - `lib/auth/admin-utils.ts` - Admin management utility functions
 - `supabase/migrations/20250612223724_add_admin_support.sql` - Database schema and RLS policy implementation
-- `planning/250608a_document_rls_security_phase1_implementation.md` - Historical context for admin system development
+- `docs/planning/250608a_document_rls_security_phase1_implementation.md` - Historical context for admin system development
 
 ## Admin Role Concept
 

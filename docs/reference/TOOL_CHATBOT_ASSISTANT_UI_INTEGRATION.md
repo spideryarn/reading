@@ -6,7 +6,7 @@ This document provides comprehensive technical guidance for integrating the @ass
 
 **⚠️ Authentication Requirement**: Chat functionality requires user authentication. Users must be logged in to use the chat feature. This ensures proper data isolation through Row Level Security (RLS) policies that tie chat threads to the authenticated user.
 
-> This document supports the implementation plan outlined in [planning/250527a_chatbot_interface_assistant_ui.md](/planning/250527a_chatbot_interface_assistant_ui.md).
+> This document supports the implementation plan outlined in [docs/planning/250527a_chatbot_interface_assistant_ui.md](/docs/planning/250527a_chatbot_interface_assistant_ui.md).
 
 **Related Documentation:**
 - [LLM_PROMPT_TEMPLATES.md](LLM_PROMPT_TEMPLATES.md) - **Required reading** for implementing any LLM functionality
@@ -19,11 +19,11 @@ This document provides comprehensive technical guidance for integrating the @ass
 - [SITE_ORGANISATION_WEBSITE_STRUCTURE.md](SITE_ORGANISATION_WEBSITE_STRUCTURE.md) - Application routes and component hierarchy
 
 **Planning and Decision Context:**
-- [planning/250527a_chatbot_interface_assistant_ui.md](../planning/250527a_chatbot_interface_assistant_ui.md) - Original implementation plan and decision context
-- [planning/250605a_chat_database_integration.md](../planning/250605a_chat_database_integration.md) - Database persistence implementation planning
-- [planning/250602a_database_integration_completion.md](../planning/250602a_database_integration_completion.md) - Overall database integration progress
-- [planning/250616a_implement_multi_chat_threads.md](../planning/250616a_implement_multi_chat_threads.md) - Multi-chat thread feature proposal for enhanced conversation management
-- [planning/250627b_voice_input_for_chatbot.md](../planning/250627b_voice_input_for_chatbot.md) - Voice input feature integration planning
+- [docs/planning/250527a_chatbot_interface_assistant_ui.md](../docs/planning/250527a_chatbot_interface_assistant_ui.md) - Original implementation plan and decision context
+- [docs/planning/250605a_chat_database_integration.md](../docs/planning/250605a_chat_database_integration.md) - Database persistence implementation planning
+- [docs/planning/250602a_database_integration_completion.md](../docs/planning/250602a_database_integration_completion.md) - Overall database integration progress
+- [docs/planning/250616a_implement_multi_chat_threads.md](../docs/planning/250616a_implement_multi_chat_threads.md) - Multi-chat thread feature proposal for enhanced conversation management
+- [docs/planning/250627b_voice_input_for_chatbot.md](../docs/planning/250627b_voice_input_for_chatbot.md) - Voice input feature integration planning
 
 ## Library Overview
 

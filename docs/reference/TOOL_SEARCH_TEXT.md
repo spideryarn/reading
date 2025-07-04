@@ -6,8 +6,8 @@ The text search feature provides intelligent full-text search with context-aware
 
 - `lib/utils/search-context-extraction.ts` - Context extraction utilities for generating meaningful search snippets
 - `lib/utils/__tests__/search-context-extraction.test.ts` - Comprehensive test suite for context extraction functions
-- `planning/250605a_cross_element_text_search_implementation.md` - Implementation planning and progress tracking
-- `planning/finished/250604b_document_search_functionality.md` - Initial element-based search implementation
+- `docs/planning/250605a_cross_element_text_search_implementation.md` - Implementation planning and progress tracking
+- `docs/planning/finished/250604b_document_search_functionality.md` - Initial element-based search implementation
 - `docs/reference/CODING_GUIDELINES.md#html-text-extraction` - HTML text extraction utility documentation
 - `docs/reference/TOOL_HIGHLIGHT.md` - semantic highlighting system for AI-powered highlighting (complementary to text search)
 - `docs/reference/DESIGN_OVERLAPPING_TEXT_HIGHLIGHTS.md` - Comprehensive guide for implementing overlapping text highlighting with Mark.js limitations and CSS Custom Highlight API solutions

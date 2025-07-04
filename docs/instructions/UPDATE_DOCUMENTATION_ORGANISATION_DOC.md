@@ -18,7 +18,7 @@ Create/update the documentation organisation guide with sensible categories and 
 
 1. **Use your judgement** to organise docs into sensible categories (don't move files, just categorise in the guide)
 2. **Highlight key starting points** for newcomers and different personas
-3. **Cover all significant docs** in `docs/reference/`, `docs/instructions/`, plus `README.md`, `CLAUDE.md`, and `planning/` structure
+3. **Cover all significant docs** in `docs/reference/`, `docs/instructions/`, plus `README.md`, `CLAUDE.md`, and `docs/planning/` structure
 
 ## Process
 

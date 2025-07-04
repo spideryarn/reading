@@ -3,7 +3,7 @@ Date: 2025-01-07
 Duration: ~30 minutes
 Type: Problem-solving, Exploratory
 Status: Resolved
-Related Docs: planning/250630a_semantic_search_to_semantic_highlights_rename.md
+Related Docs: docs/planning/250630a_semantic_search_to_semantic_highlights_rename.md
 ---
 
 # Semantic Search Tool Architecture Clarification - July 1st, 2025
@@ -98,7 +98,7 @@ The user's observation that "they have different vertical icon rail icons/tabs" 
 - `lib/tools/registry-loader.ts` - Tool registry system
 
 **Created Documentation**:
-- `planning/250630a_semantic_search_to_semantic_highlights_rename.md` - Original planning document (may need revision)
+- `docs/planning/250630a_semantic_search_to_semantic_highlights_rename.md` - Original planning document (may need revision)
 
 ## Related Work
 

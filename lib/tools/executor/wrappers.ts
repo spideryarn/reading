@@ -21,7 +21,7 @@
  * await tools.highlights.refresh()                    // Refresh data
  * ```
  * 
- * @see planning/250614d_tool_execution_framework.md - Stage 5 implementation
+ * @see docs/planning/250614d_tool_execution_framework.md - Stage 5 implementation
  * @see lib/tools/command-generation.ts - Similar auto-generation pattern
  */
 

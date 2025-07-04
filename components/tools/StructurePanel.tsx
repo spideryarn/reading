@@ -2,7 +2,7 @@
 
 // Consolidated Structure Panel component
 // Combines functionality from OriginalHeadingsTab and AIGeneratedHeadingsTab
-// See planning/250627a_consolidate_headings_tabs_into_structure_tab.md for implementation details
+// See docs/planning/250627a_consolidate_headings_tabs_into_structure_tab.md for implementation details
 
 import React, { useState, useEffect, useRef, useCallback, type JSX } from 'react'
 import { CircleNotch, TreeStructure, Trash, ArrowRight, Stop } from '@phosphor-icons/react'

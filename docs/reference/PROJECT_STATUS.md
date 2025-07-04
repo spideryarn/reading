@@ -126,7 +126,7 @@ see `docs/reference/ARCHITECTURE_OVERVIEW.md` for detailed system architecture
 
 ## Future Enhancements
 
-### Planned Features (see `planning/*.md` for details)
+### Planned Features (see `docs/planning/*.md` for details)
 1. **Fix ToC auto-scroll regression** - Restore bidirectional navigation between document and ToC
 2. **Social media integration** - Direct posting to Twitter/X and Bluesky
 3. **Persistent AI content** - Store generated summaries/headings in Supabase
@@ -153,4 +153,4 @@ see also:
 - `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Unified left pane implementation details
 - `docs/reference/TOOL_GLOSSARY.md` - Glossary feature documentation
 - `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` - Command palette implementation
-- `planning/250527a_reversible_document_mutations.md` - Upcoming mutations system
+- `docs/planning/250527a_reversible_document_mutations.md` - Upcoming mutations system

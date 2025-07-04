@@ -14,7 +14,7 @@ The Document Metadata Tab provides comprehensive information about uploaded docu
 - `docs/reference/TOOL_TEMPLATE_FOR_CREATING_NEW.md` - General tool development patterns
 - `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Tab system architecture and integration
 - `docs/reference/DATABASE_SCHEMA.md` - Document and enhancement table structures
-- `planning/250614a_document_metadata_tab_implementation.md` - Implementation planning and decisions
+- `docs/planning/250614a_document_metadata_tab_implementation.md` - Implementation planning and decisions
 
 ## Key Features
 

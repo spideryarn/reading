@@ -13,8 +13,8 @@ Comprehensive guide to tooltip styling patterns and implementations in the Spide
 - `components/ui/tooltip-or-popover.tsx` - Universal touch-friendly tooltip component
 - `lib/hooks/use-can-hover.ts` - Device hover capability detection
 - `lib/hooks/use-long-press.ts` - Touch long-press interaction hook
-- `planning/finished/250526a_ToC_hierarchical_summary_tooltips.md` - Historical decision context for ToC tooltip implementation
-- `planning/250616a_tooltip_or_popover_hybrid.md` - TooltipOrPopover implementation planning and testing
+- `docs/planning/finished/250526a_ToC_hierarchical_summary_tooltips.md` - Historical decision context for ToC tooltip implementation
+- `docs/planning/250616a_tooltip_or_popover_hybrid.md` - TooltipOrPopover implementation planning and testing
 - `components/table-of-contents-tabs.tsx` - Default tooltip pattern implementation
 - `components/unified-left-pane.tsx` - Search result tooltip implementations
 - `components/heading-tree.tsx` - Hierarchical heading tooltip usage
@@ -756,7 +756,7 @@ const getCachedContent = (key: string) => {
 
 ## 2025-06 Mobile-Tooltip Reliability Patch  ✅ NEW
 
-> Introduced in planning doc `planning/250629a_mobile_tooltips_fix.md` (shipped June 2025).
+> Introduced in planning doc `docs/planning/250629a_mobile_tooltips_fix.md` (shipped June 2025).
 
 Key upgrades:
 

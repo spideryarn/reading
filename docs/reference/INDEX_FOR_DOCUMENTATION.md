@@ -200,24 +200,24 @@ Process and workflow documentation in `docs/instructions/`:
 
 ## Planning Documentation
 
-Recent planning decisions & progress tracking in `planning/`.
+Recent planning decisions & progress tracking in `docs/planning/`.
 
 ### Active Planning
 Current feature development and planning:
-- `planning/250612b_stripe_subscription_integration.md` - Stripe subscription and payment integration planning
-- `planning/250614e_llm_tool_function_calling.md` - LLM tool function calling architecture
-- `planning/250616a_multi_chat_threads.md` - Multiple chat thread support
-- `planning/250627b_voice_input_microphone_chatbot.md` - Voice input for chatbot interface
-- `planning/250627c_vision_based_pdf_processing_pipeline.md` - Vision-based PDF processing approach
+- `docs/planning/250612b_stripe_subscription_integration.md` - Stripe subscription and payment integration planning
+- `docs/planning/250614e_llm_tool_function_calling.md` - LLM tool function calling architecture
+- `docs/planning/250616a_multi_chat_threads.md` - Multiple chat thread support
+- `docs/planning/250627b_voice_input_microphone_chatbot.md` - Voice input for chatbot interface
+- `docs/planning/250627c_vision_based_pdf_processing_pipeline.md` - Vision-based PDF processing approach
 
 ### Completed Planning
-See `planning/finished/` for historical planning documents and implementation records.
+See `docs/planning/finished/` for historical planning documents and implementation records.
 
 Recent completions:
 - Production deployment is now live at https://www.spideryarn.com with SSL, Google SSO, and full database integration
 
 ### Future Planning
-See `planning/later/` for deferred features and future enhancements.
+See `docs/planning/later/` for deferred features and future enhancements.
 
 ## Conversation Archives
 

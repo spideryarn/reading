@@ -7,7 +7,7 @@ Historical rationale and key architectural choices that shaped the Spideryarn Re
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture and implementation status
 - `docs/reference/VISION_PRODUCT_STRATEGY.md` - Strategic vision informing architectural choices
 - `docs/reference/CODING_PRINCIPLES.md` - Development philosophy guiding decisions
-- `planning/*.md` - Detailed planning documents for major features
+- `docs/planning/*.md` - Detailed planning documents for major features
 - `docs/reference/DATABASE_SCHEMA.md` - Database design evolution and migration decisions
 
 ## Platform & Framework Decisions

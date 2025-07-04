@@ -13,7 +13,7 @@ This document describes the testing approach and philosophy for the Spideryarn R
 - `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md` - Browser automation and E2E testing options for AI-assisted development
 - `lib/testing/test-isolation-utils.ts` - Test isolation utilities for shared database
 - `docs/instructions/UPDATE_HOUSEKEEPING_TESTS.md` - Process for maintaining test quality and organisation
-- `planning/250608a_test_infrastructure_cleanup.md` - Example one-time test infrastructure cleanup
+- `docs/planning/250608a_test_infrastructure_cleanup.md` - Example one-time test infrastructure cleanup
 - `src/lib/hooks/__tests__/` - Jest test files for React hooks
 - `src/lib/services/__tests__/` - Jest test files for services
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - for understanding the components being tested

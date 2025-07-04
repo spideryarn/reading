@@ -9,7 +9,7 @@ import { RobustAuthManager } from '../helpers/robust-auth';
  * 2. Multiple headings maintain correct hierarchical order (H2 → H3 → H4)
  * 3. Precedence-based insertion logic prevents reverse ordering
  * 
- * This test verifies the fixes implemented in planning/250627b_fix_ai_headings_insertion_order.md
+ * This test verifies the fixes implemented in docs/planning/250627b_fix_ai_headings_insertion_order.md
  * covering the transition from insert-after to insert-before semantics and the precedence-based
  * insertion algorithm that solves the reverse ordering problem.
  */

@@ -3,7 +3,7 @@ Date: 2025-06-29
 Duration: ~30 minutes
 Type: Decision-making
 Status: Active
-Related Docs: planning/250614e_llm_tool_function_calling.md
+Related Docs: docs/planning/250614e_llm_tool_function_calling.md
 ---
 
 # LLM Function Calling Implementation Risk Assessment - 29 June 2025
@@ -104,10 +104,10 @@ Implementation should proceed with emphasis on:
 
 ## Sources & References
 
-- **Updated Planning Document**: `planning/250614e_llm_tool_function_calling.md`
+- **Updated Planning Document**: `docs/planning/250614e_llm_tool_function_calling.md`
 - **External Critiques**: Referenced o3 and Gemini AI feedback incorporated into the plan
 - **Tool Architecture Guide**: `docs/reference/TOOL_ARCHITECTURE_AND_DEVELOPMENT_GUIDE.md`
-- **Tool Execution Framework**: `planning/finished/250614d_tool_execution_framework.md`
+- **Tool Execution Framework**: `docs/planning/finished/250614d_tool_execution_framework.md`
 
 ## Related Work
 

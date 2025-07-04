@@ -1,6 +1,6 @@
 Now work on the next stage of the planning doc (prioritising work suggested by the user).
 
-If the planning doc is currently stored in `planning/later/` or `planning/discarded/`, first move it to `planning/` (to signal that it's in progress).
+If the planning doc is currently stored in `docs/planning/later/` or `docs/docs/planning/discarded/`, first move it to `docs/planning/` (to signal that it's in progress).
 
 Start by reading relevant code & docs.
 

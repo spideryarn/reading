@@ -4,12 +4,12 @@ Comprehensive guide to implementing file storage in Spideryarn Reading using Sup
 
 ## See also
 
-- `planning/finished/250606a_pdf_Supabase_Storage_integration.md` - Complete PDF storage integration planning
-- `planning/250628a_vision_pdf_image_extraction_to_supabase_storage.md` - **NEW**: Image extraction and asset storage architecture
+- `docs/planning/finished/250606a_pdf_Supabase_Storage_integration.md` - Complete PDF storage integration planning
+- `docs/planning/250628a_vision_pdf_image_extraction_to_supabase_storage.md` - **NEW**: Image extraction and asset storage architecture
 - `supabase/migrations/20250628170150_add_document_assets_table.sql` - **NEW**: Database schema for asset tracking
 - `lib/services/database/document-assets.ts` - **NEW**: Asset database service layer
 - `lib/services/document-processing-transaction.ts` - **NEW**: Transaction-based cleanup for failed operations
-- `planning/later/250530h_pdf_to_html_conversion_implementation.md` - PDF conversion implementation context
+- `docs/planning/later/250530h_pdf_to_html_conversion_implementation.md` - PDF conversion implementation context
 - `supabase/migrations/20250531235026_comprehensive_storage_schema.sql` - Database schema with `storage_path` field
 - `lib/types/database.ts` - TypeScript definitions for documents table including storage references
 - `docs/reference/DATABASE_SCHEMA.md` - Complete database schema documentation

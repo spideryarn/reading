@@ -6,7 +6,7 @@ Duration: ~45 minutes
 Type: Problem-solving
 Status: Active
 Related Docs:
-  - planning/250620a_glossary_generate_more_timeout_mitigation.md
+  - docs/planning/250620a_glossary_generate_more_timeout_mitigation.md
   - docs/reference/TOOL_GLOSSARY.md
   - lib/prompts/templates/glossary.njk
 ---

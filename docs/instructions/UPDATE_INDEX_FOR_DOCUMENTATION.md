@@ -29,7 +29,7 @@ Read all key documentation to understand the current state:
 2. `docs/reference/INDEX_FOR_DOCUMENTATION.md` - Documentation structure and navigation guide
 3. `docs/reference/*.md` and `docs/instructions/*.md` - All evergreen documentation
 4. `docs/diagrams/*.mermaid` - All architecture and flow diagrams
-5. Recent `planning/*.md` - Latest decisions and changes
+5. Recent `docs/planning/*.md` - Latest decisions and changes
 6. Key code files and API routes
 7. Configuration files and migrations
 

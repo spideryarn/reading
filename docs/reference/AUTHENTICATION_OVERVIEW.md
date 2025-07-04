@@ -18,8 +18,8 @@ Spideryarn Reading uses Supabase Auth with Next.js App Router for secure user re
 
 **Related Documentation**:
 - `docs/reference/DESIGN_SHADCN_UI_REFERENCE.md` - UI component library patterns
-- `planning/250601a_authentication_implementation.md` - Complete implementation history
-- `planning/250612b_integrate_stripe_subscriptions.md` - Stripe subscription integration planning
+- `docs/planning/250601a_authentication_implementation.md` - Complete implementation history
+- `docs/planning/250612b_integrate_stripe_subscriptions.md` - Stripe subscription integration planning
 
 ## Key Architecture Decisions
 

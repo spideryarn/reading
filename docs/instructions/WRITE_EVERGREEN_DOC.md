@@ -52,10 +52,10 @@ Bullet-point list of other relevant docs, code, urls, or other resources that pr
 Examples of good cross-references:
 - `docs/instructions/WRITE_PLANNING_DOC.md` - for information about writing ephemeral decision/planning docs
 - `components/table-of-contents.tsx` - implementation of ToC features described here
-- `planning/250526a_ToC_hierarchical_summary_tooltips.md` - historical decision context
+- `docs/planning/250526a_ToC_hierarchical_summary_tooltips.md` - historical decision context
 - External URLs when relevant (e.g., library documentation)
 
-Add references to and from this new doc (e.g. in relevant code, planning docs in `planning/*.md`, etc) - use a subagent for this
+Add references to and from this new doc (e.g. in relevant code, planning docs in `docs/planning/*.md`, etc) - use a subagent for this
 
 #### Cross-Reference Best Practices
 

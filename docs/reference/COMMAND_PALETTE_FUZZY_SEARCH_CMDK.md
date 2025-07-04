@@ -236,7 +236,7 @@ console.log('Filter score:', score)
 - `docs/reference/COMMAND_PALETTE_KEYBOARD_INTERFACE.md` - Complete interface documentation including categories and shortcuts
 - `docs/reference/UI_COMPONENTS.md` - shadcn/ui Command component integration patterns
 - `lib/tools/command-generation.ts` - Dynamic command generation and keyword extraction logic
-- `planning/250614c_command_palette_dynamic_generation.md` - Implementation history and architectural decisions
+- `docs/planning/250614c_command_palette_dynamic_generation.md` - Implementation history and architectural decisions
 
 ---
 

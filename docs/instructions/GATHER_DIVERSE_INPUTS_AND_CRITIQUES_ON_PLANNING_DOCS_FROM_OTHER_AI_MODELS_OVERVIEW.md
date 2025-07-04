@@ -39,7 +39,7 @@ Choose one of the available approaches:
 
 **API Approach (Recommended)**:
 ```bash
-./scripts/o3-critique-as-api.ts planning/your-planning-doc.md
+./scripts/o3-critique-as-api.ts docs/planning/your-planning-doc.md
 ```
 - Single comprehensive API call
 - Reliable execution
@@ -48,7 +48,7 @@ Choose one of the available approaches:
 
 **Codex CLI Approach (Experimental)**:
 ```bash
-./scripts/codex-with-env.sh planning/your-planning-doc.md
+./scripts/codex-with-env.sh docs/planning/your-planning-doc.md
 ```
 - Agentic conversation-based critique
 - More interactive but less reliable
@@ -79,7 +79,7 @@ Add this section to planning documents after critique:
 **Critique Date**: [Date]
 **Model**: [Model used, e.g. OpenAI o3-pro, Claude Opus]  
 **Approach**: [API/Codex CLI]
-**Raw Output**: `planning/critiques/[model]__CRITIQUE_OF__[doc-name]__[timestamp].[json|jsonl]`
+**Raw Output**: `docs/planning/critiques/[model]__CRITIQUE_OF__[doc-name]__[timestamp].[json|jsonl]`
 **Feedback Focus**: [What type of feedback was requested]
 **Key Insights**: [Summary of useful feedback points]
 **Changes Made**: [What was incorporated and rationale]
