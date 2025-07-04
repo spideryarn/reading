@@ -11,6 +11,7 @@ import { useMutation, useActiveMutationType } from '@/lib/context/mutation-conte
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
 import { HEADING_ITERATION_CONFIG } from '@/lib/config'
 import { headingOperationsToMutation } from '@/lib/services/heading-operations-mutation'
+import { documentElementsToHtml } from '@/lib/utils/document-elements-to-html'
 import { extractHeadingsFromMutation } from '@/lib/services/heading-mutation-generator'
 import { HeadingTree, type Heading } from '../heading-tree'
 import { Button } from '@/components/ui/button'
@@ -395,19 +396,10 @@ export function StructurePanel({
     try {
       // Prepare HTML content
       let htmlWithIds = ''
-      if (elements && elements.length > 0) {
-        htmlWithIds = elements.map(el => {
-          const attrs = Object.entries(el.attributes)
-            .map(([key, value]) => `${key}="${value}"`)
-            .join(' ')
-          const attrString = attrs ? ` ${attrs}` : ''
-          
-          if (el.content) {
-            return `<${el.tag_name} id="${el.id}"${attrString}>${el.content}</${el.tag_name}>`
-          } else {
-            return `<${el.tag_name} id="${el.id}"${attrString} />`
-          }
-        }).join('\n')
+      if (mutatedDocument && mutatedDocument.length > 0) {
+        htmlWithIds = documentElementsToHtml(mutatedDocument)
+      } else if (elements && elements.length > 0) {
+        htmlWithIds = documentElementsToHtml(elements)
       } else if (content) {
         htmlWithIds = content
       } else {
@@ -929,11 +921,13 @@ export function StructurePanel({
               <div className="flex items-center space-x-3 cursor-help">
                 <CircleNotch size={20} className="animate-spin text-blue-500" />
                 <span className="text-blue-700 font-medium">
-                  {iterationState.currentIteration === 0 
-                    ? `Improving headings (Initial analysis)...`
-                    : HEADING_ITERATION_CONFIG.AUTO_ITERATE_HEADINGS
-                      ? `Auto-improving headings (Iteration ${iterationState.currentIteration + 1})...`
-                      : `Improving headings (Iteration ${iterationState.currentIteration + 1})...`
+                  {autoIterationStoppedRef.current
+                    ? 'Finishing current pass…'
+                    : iterationState.currentIteration === 0
+                      ? 'Improving headings (Initial analysis)…'
+                      : HEADING_ITERATION_CONFIG.AUTO_ITERATE_HEADINGS
+                        ? `Auto-improving headings (Iteration ${iterationState.currentIteration + 1})…`
+                        : `Improving headings (Iteration ${iterationState.currentIteration + 1})…`
                   }
                 </span>
               </div>
