@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env npx tsx
 
 /**
  * Cleanup script for test data in shared database

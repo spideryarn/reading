@@ -1,4 +1,4 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env npx tsx
 
 /**
  * Simple tool registry validation

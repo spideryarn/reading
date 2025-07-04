@@ -1,4 +1,4 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env npx tsx
 
 /**
  * Script to generate database types with a warning banner

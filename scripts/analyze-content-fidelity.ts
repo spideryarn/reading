@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env npx tsx
 /**
  * Content Fidelity Analysis Tool
  * 

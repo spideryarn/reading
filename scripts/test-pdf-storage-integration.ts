@@ -1,4 +1,4 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env npx tsx
 
 /**
  * PDF Storage Integration Test Script

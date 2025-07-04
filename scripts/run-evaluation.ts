@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env npx tsx
 /**
  * PDF Processing Evaluation Script
  * 

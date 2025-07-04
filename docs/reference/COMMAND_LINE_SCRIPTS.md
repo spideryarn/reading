@@ -88,6 +88,9 @@ Clipanion is included as a dev dependency:
 ```
 
 ### 2. Script Structure
+
+**Important**: Always use `#!/usr/bin/env npx tsx` as the shebang line for TypeScript scripts. This ensures the script can be executed directly without prefixing with `npx tsx`.
+
 ```typescript
 #!/usr/bin/env npx tsx
 
