@@ -9,7 +9,6 @@
  */
 
 // Load test environment with cheaper model
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config({ path: '.env.test' })
 
 // Unmock everything needed for real LLM calls
