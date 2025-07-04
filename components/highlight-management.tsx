@@ -136,7 +136,7 @@ export function HighlightManagement({
   // Fetch query history from API
   const fetchQueryHistory = useCallback(async () => {
     try {
-      const response = await fetch(`/api/tools/search/handlers/search?documentId=${encodeURIComponent(documentId)}`)
+      const response = await fetch(`/api/tools/search?documentId=${encodeURIComponent(documentId)}`)
       if (!response.ok) {
         // Silently handle 404 or other errors - query history is optional
         return
