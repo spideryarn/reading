@@ -6,6 +6,26 @@ see:
 - docs/reference/DATABASE_MIGRATIONS.md
 - docs/reference/DATABASE_PRODUCTION.md
 
+## Starting Supabase
+
+Use the optimized npm scripts for better performance and battery life:
+
+```bash
+# Start with minimal services (recommended)
+npm run supabase:start
+
+# Start with all services (if you need email/analytics)
+npm run supabase:start:full
+
+# Check status
+npm run supabase:status
+
+# Stop when done
+npm run supabase:stop
+```
+
+**Performance Note**: The minimal start excludes analytics (Logflare), vector (logging aggregator), and inbucket (email testing), reducing container count from 11 to ~7-8 for improved battery life.
+
 
 ## Primary Access Method
 

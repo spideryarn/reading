@@ -52,22 +52,28 @@ https://github.com/spideryarn/reading/
 
 4. **Start Supabase locally:**
    ```bash
-   npx supabase start
+   npm run supabase:start
    ```
    
    This will:
-   - Download and start Docker containers for all Supabase services
+   - Download and start Docker containers with minimal services (excludes analytics, vector, inbucket)
    - Apply database migrations from `supabase/migrations/`
    - Show connection details including API keys
+   - **Performance benefit**: Reduces container count from 11 to ~7-8 for better battery life
+   
+   **Start options**:
+   - `npm run supabase:start` - Minimal mode (recommended for development)
+   - `npm run supabase:start:minimal` - Explicit minimal mode (same as above)
+   - `npm run supabase:start:full` - All services including analytics, vector, and email testing
    
    **Note:** This project uses custom ports (configured in `supabase/config.toml`):
    - API: http://localhost:54341
    - Database: localhost:54342
    - Studio: http://localhost:54343
-   - Inbucket: http://localhost:54344
-   - Analytics: http://localhost:54347
+   - Inbucket: http://localhost:54344 (only in full mode)
+   - Analytics: http://localhost:54347 (only in full mode)
    
-   To see the actual running URLs and keys: `npx supabase status`
+   To see the actual running URLs and keys: `npm run supabase:status`
 
 5. **Generate TypeScript types:**
    ```bash
@@ -274,7 +280,7 @@ For file uploads (PDFs, documents):
 1. **Create Storage Bucket:**
    ```bash
    # Start Supabase first
-   npx supabase start
+   npm run supabase:start
    
    # Create storage bucket (if not already created by migrations)
    npx supabase storage create documents --public
@@ -284,6 +290,8 @@ For file uploads (PDFs, documents):
    - Visit Supabase Studio: http://localhost:54343
    - Go to Storage → Buckets
    - Confirm 'documents' bucket exists with public access
+   
+   **Note**: Storage features require Supabase to be running. Use `npm run supabase:start` first.
 
 3. **Storage Configuration:**
    - Maximum file size: 50MB (configurable in bucket settings)
@@ -327,11 +335,14 @@ For complete keyboard shortcut reference, see `docs/reference/KEYBOARD_SHORTCUTS
 ## Common Supabase Commands
 
 ```bash
-# Start Supabase
-npx supabase start
+# Start Supabase (minimal mode - recommended)
+npm run supabase:start
+
+# Start with all services (if you need email testing or analytics)
+npm run supabase:start:full
 
 # Stop Supabase
-npx supabase stop
+npm run supabase:stop
 
 # Reset database (reapplies migrations and seeds)
 # ⚠️ DESTRUCTIVE: This deletes all data!
@@ -345,7 +356,7 @@ npm run db:reset:DANGEROUS
 npm run db:types
 
 # Check status (shows actual ports and connection URLs)
-npx supabase status
+npm run supabase:status
 
 # Access database directly (use port from supabase status)
 psql postgres://postgres:postgres@localhost:54342/postgres
@@ -360,7 +371,7 @@ If port conflicts occur:
 1. Check if another Supabase instance is running: `docker ps`
 2. Stop all Supabase containers: `npx supabase stop --no-backup`
 3. Ensure Docker Desktop is running
-4. Try starting again: `npx supabase start`
+4. Try starting again: `npm run supabase:start`
 
 ## Development Notes
 

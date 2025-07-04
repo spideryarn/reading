@@ -31,7 +31,12 @@
         "analyze-fidelity": "dotenv -e .env.local -- npx tsx scripts/analyze-content-fidelity.ts",
         "deploy:production": "npm run build && git push origin main",
         "critique": "./scripts/o3-critique-as-api.ts",
-        "db:fix:storage-owner": "tsx scripts/fix-storage-owner.ts"
+        "db:fix:storage-owner": "tsx scripts/fix-storage-owner.ts",
+        "supabase:start": "npm run supabase:start:minimal",
+        "supabase:start:minimal": "supabase start --exclude analytics,vector,inbucket",
+        "supabase:start:full": "supabase start",
+        "supabase:stop": "supabase stop",
+        "supabase:status": "supabase status"
     },
     "dependencies": {
         "@ai-sdk/anthropic": "^1.2.12",

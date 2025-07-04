@@ -76,11 +76,17 @@ Production deployment:
 - **Status**: ✅ Fully operational with custom domain, SSL, Google SSO, and database integration
 
 Database operations:
+- `npm run supabase:start` - **Recommended**: Start Supabase with minimal services for better battery life
+- `npm run supabase:start:full` - Start with all services (if you need email testing or analytics)
+- `npm run supabase:stop` - Stop Supabase containers
+- `npm run supabase:status` - Check Supabase status and connection details
 - `npm run db:types` - Regenerate TypeScript types from Supabase schema
 - ⛔ `npm run db:reset:DANGEROUS` - **DO NOT USE**: This command destroys ALL data including test and development data. Only use with explicit user permission in exceptional circumstances.
 - `npx supabase db push` - **CAUTION**: Applies migrations to database (NEVER run without explicit user permission)
 
 ⚠️ **CRITICAL**: Always ask for explicit user permission before modifying the database, especially in major ways. When in doubt, err on the side of caution!
+
+**Performance Note**: The minimal Supabase start (default) excludes analytics, vector, and inbucket services, reducing Docker container count from 11 to ~7-8 for improved battery life and resource usage.
 
 Type checking and linting:
 - `npm run check:health` - **Orchestration**: Git-aware health check (TypeScript + ESLint + Build)

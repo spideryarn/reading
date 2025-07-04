@@ -24,6 +24,9 @@ supabase/
 ## Migration Commands
 
 ```bash
+# Start Supabase first (required for migrations)
+npm run supabase:start
+
 # Create new migration (generates timestamped file)
 npx supabase migration new add_user_preferences
 
@@ -39,7 +42,7 @@ npx supabase db push --local --dry-run
 # DO NOT RUN `npx supabase db reset` or `npm run db:reset:DANGEROUS` (resets entire database)
 
 # Check current migration status
-npx supabase status
+npm run supabase:status
 
 # Generate migration from schema diff (if making changes via Studio)
 npx supabase db diff -f my_schema_changes
@@ -50,10 +53,11 @@ npm run db:types
 
 ## Migration Workflow
 
-1. **Create migration**: `npx supabase migration new feature_name`
-2. **Edit SQL file**: Add your schema changes in `supabase/migrations/[timestamp]_feature_name.sql`
-3. **Apply locally**: `npx supabase db push --local` (applies new migrations only)
-4. **IMPORTANT**: Ask user for explicit permission before applying migrations
+1. **Start Supabase**: `npm run supabase:start` (if not already running)
+2. **Create migration**: `npx supabase migration new feature_name`
+3. **Edit SQL file**: Add your schema changes in `supabase/migrations/[timestamp]_feature_name.sql`
+4. **Apply locally**: `npx supabase db push --local` (applies new migrations only)
+5. **IMPORTANT**: Ask user for explicit permission before applying migrations
 
 
 ## Migration File Format

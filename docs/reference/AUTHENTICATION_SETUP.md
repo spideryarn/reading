@@ -233,7 +233,7 @@ open http://127.0.0.1:54344            # Email testing
 - Database table inspection
 - Real-time subscription monitoring
 
-**Inbucket Email Testing**: http://127.0.0.1:54344
+**Inbucket Email Testing**: http://127.0.0.1:54344 (only available with `npm run supabase:start:full`)
 - View all outgoing emails locally
 - Test password reset and notification emails
 - Debug email template rendering
@@ -257,9 +257,9 @@ npx supabase logs --follow
 **Supabase won't start**:
 ```bash
 # Reset Docker containers
-npx supabase stop
+npm run supabase:stop
 docker system prune -f
-npx supabase start
+npm run supabase:start
 ```
 
 **Port conflicts**:

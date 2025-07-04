@@ -68,7 +68,7 @@ npx supabase migration new # Creates new migration files
 
 # SAFE READ-ONLY COMMANDS - can be run as needed:
 npm run db:types     # Only regenerates TypeScript types
-npx supabase status  # Read-only status check
+npm run supabase:status  # Read-only status check
 ```
 
 ⚠️ **ALWAYS ERR ON THE SIDE OF CAUTION**: When working with databases, production systems, or any operations that could affect data or functionality, always ask for explicit user permission first. If unsure whether something requires permission, ask!

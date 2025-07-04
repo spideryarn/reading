@@ -25,10 +25,16 @@ npm run dev:safe        # Without DB type generation
 ## AI Agent Workflow
 
 ```bash
+# Start Supabase first (if not already running)
+npm run supabase:status || npm run supabase:start
+
+# Then start dev server
 npm run dev:status      # Check current status
 npm run dev:daemon      # Start/restart daemon
 npm run dev:status      # Verify healthy startup
 ```
+
+**Supabase Integration**: The dev server requires Supabase to be running for database type generation. Use the minimal start mode (`npm run supabase:start`) for better battery life and resource usage.
 
 ## Features
 
@@ -64,6 +70,15 @@ npm run dev:status      # Verify healthy startup
 ```bash
 rm -f .dev-server.pid .dev-server.lock
 npx kill-port $PORT  # More reliable than lsof + kill
+npm run dev:daemon
+```
+
+**"Database type generation failed"**: Ensure Supabase is running:
+```bash
+npm run supabase:status
+# If not running:
+npm run supabase:start
+# Then retry dev server
 npm run dev:daemon
 ```
 

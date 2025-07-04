@@ -88,15 +88,16 @@ The user reported that their local dev server is taking ages to load pages after
 ### Stage: ~~Enable Turbopack~~ (SKIPPED)
 - Decision: Skip Turbopack integration for now due to alpha status for production builds
 
-### Stage: Docker optimization
-- [ ] Audit Docker container usage
-  - [ ] Identify which containers are actively needed
-  - [ ] Document purpose of each container
-- [ ] Create Docker management scripts
-  - [ ] `docker-pause.sh` - Pause non-essential containers
-  - [ ] `docker-resume.sh` - Resume paused containers
-  - [ ] Add to npm scripts for easy access
-- [ ] Consider Docker resource limits if needed
+### Stage: ~~Docker optimization~~ (COMPLETED)
+- [x] Audit Docker container usage
+  - [x] Identified non-essential services: analytics (Logflare), vector (logging aggregator), inbucket (email testing)
+  - [x] Core services needed: postgres, auth, storage, realtime, imgproxy, functions
+- [x] Create optimized Supabase management scripts
+  - [x] `npm run supabase:start` - Minimal mode (excludes non-essential services)
+  - [x] `npm run supabase:start:full` - Full mode (all services)
+  - [x] `npm run supabase:stop` - Stop containers
+  - [x] `npm run supabase:status` - Check status
+- [x] Reduced container count from 11 to ~7-8 for better battery life
 
 ### Stage: Additional optimizations
 - [ ] Investigate Next.js onDemandEntries configuration
@@ -129,6 +130,10 @@ The user reported that their local dev server is taking ages to load pages after
    - `npm run dev` - Fast startup (default)
    - `npm run dev:clean` - Full clean (clears cache + regenerates types)
    - Supports `--force-types` flag for manual type regeneration
+4. **Optimized Supabase container management**:
+   - `npm run supabase:start` - Minimal mode (7-8 containers instead of 11)
+   - `npm run supabase:start:full` - Full mode when email/analytics needed
+   - Reduces Docker resource usage and improves battery life
 
 ### Visual Indicators Discussion
 Considered implementing warnings when cache/types are stale, but decided to fail fast instead:

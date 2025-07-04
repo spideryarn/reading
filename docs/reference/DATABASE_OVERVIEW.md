@@ -63,8 +63,8 @@ Spideryarn Reading uses PostgreSQL via Supabase for persistent storage. The data
 ### **Connect to Local Database**
 
 ```bash
-# Start Supabase first
-npx supabase start
+# Start Supabase first (minimal mode recommended)
+npm run supabase:start
 
 # Connect via psql (custom port 54342)
 psql postgres://postgres:postgres@localhost:54342/postgres

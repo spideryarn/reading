@@ -171,7 +171,7 @@ The system provides `getSupabaseServerClient(request, opts)` which returns a pro
 
 ## Development Workflow
 
-**Local Development**: `npx supabase start` → `npm run dev`
+**Local Development**: `npm run supabase:start` → `npm run dev`
 
 **Testing**: Email auth at `/auth/login`, OAuth flow, protected routes at `/read/[slug]`, profile at `/auth/profile`
 
