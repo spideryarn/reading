@@ -75,7 +75,8 @@ const StructureIterateSchema = z.object({
  * Ensures no multiple H1s and reasonable hierarchy depth
  */
 function validateHeadingOperations(
-  operations: HeadingOperation[]
+  operations: HeadingOperation[],
+  existingHtml: string
 ): { isValid: boolean; errors: string[] } {
   const errors: string[] = []
   
@@ -90,10 +91,24 @@ function validateHeadingOperations(
   }
   
   // Check for reasonable hierarchy depth
-  const headingLevels = operations
+  const operationHeadingLevels = operations
     .filter(op => (op.action === 'insert' || op.action === 'replace') && op.content)
     .map(op => parseInt(op.content!.tag_name.substring(1)))
     .filter(level => !isNaN(level))
+  
+  // Extract heading levels already present in the supplied HTML so that we
+  // don't raise false positives when the missing intermediate level is already
+  // part of the document and therefore doesn't need to appear in the current
+  // batch of operations.
+  const htmlHeadingLevels: number[] = []
+  const headingRegex = /<h([1-6])[^>]*>/gi
+  let match: RegExpExecArray | null
+  while ((match = headingRegex.exec(existingHtml)) !== null) {
+    const lvl = parseInt(match[1], 10)
+    if (!isNaN(lvl)) htmlHeadingLevels.push(lvl)
+  }
+  
+  const headingLevels = [...operationHeadingLevels, ...htmlHeadingLevels]
   
   if (headingLevels.length > 0) {
     // Check for skip-level hierarchies (e.g., H1 → H3 without H2)
@@ -504,7 +519,7 @@ export class StructureHandler extends BaseToolHandler {
       logOperationsHierarchy(validatedResponse.operations)
       
       // Validate heading operations for structural integrity
-      const structuralValidation = validateHeadingOperations(validatedResponse.operations)
+      const structuralValidation = validateHeadingOperations(validatedResponse.operations, cleanedHtml)
       // Additional safety: prevent inserting non-H1 before an existing H1
       const unsafeH1Insertions = detectUnsafeInsertBeforeH1(validatedResponse.operations, cleanedHtml)
       if (unsafeH1Insertions.length > 0) {
@@ -516,8 +531,9 @@ export class StructureHandler extends BaseToolHandler {
           documentId,
           aiCallId: aiCall.id,
           validationErrors: structuralValidation.errors,
+          operations: validatedResponse.operations,
           operation: 'heading_validation_failed'
-        }, 'Heading operations failed validation')
+        }, 'Heading operations failed validation – full operations logged for debugging')
         
         const suspiciousIds = findFabricatedIds(validatedResponse.operations, cleanedHtml)
         
@@ -533,6 +549,13 @@ export class StructureHandler extends BaseToolHandler {
             `AI error: Used example IDs from prompt (${suspiciousIds.join(', ')}) instead of actual document element IDs. ` +
             `The AI must use the exact IDs found in the provided HTML content.`
           )
+        }
+        
+        // If we have a skip-level hierarchy error, append an explicit hint so it shows up in the
+        // client-side toast without the user needing to open the server logs.
+        const skipLevelError = structuralValidation.errors.find(e => e.includes('Skip-level hierarchy'))
+        if (skipLevelError) {
+          structuralValidation.errors.push('Tip: Check the order of heading operations – an H4 must appear before adding an H5 under the same section.')
         }
         
         // Complete AI call with validation failure
@@ -884,7 +907,7 @@ export class StructureHandler extends BaseToolHandler {
       logOperationsHierarchy(validatedResponse.operations)
       
       // Validate heading operations for structural integrity
-      const validation = validateHeadingOperations(validatedResponse.operations)
+      const validation = validateHeadingOperations(validatedResponse.operations, html_content)
       const unsafeH1InsertionsIter = detectUnsafeInsertBeforeH1(validatedResponse.operations, html_content)
       if (unsafeH1InsertionsIter.length > 0) {
         validation.errors.push(...unsafeH1InsertionsIter)
@@ -895,8 +918,9 @@ export class StructureHandler extends BaseToolHandler {
           documentId,
           aiCallId: aiCall.id,
           validationErrors: validation.errors,
+          operations: validatedResponse.operations,
           operation: 'heading_validation_failed'
-        }, 'Heading operations failed validation')
+        }, 'Heading operations failed validation – full operations logged for debugging')
         
         const suspiciousIds = findFabricatedIds(validatedResponse.operations, html_content)
         
@@ -912,6 +936,13 @@ export class StructureHandler extends BaseToolHandler {
             `AI error: Used example IDs from prompt (${suspiciousIds.join(', ')}) instead of actual document element IDs. ` +
             `The AI must use the exact IDs found in the provided HTML content.`
           )
+        }
+        
+        // If we have a skip-level hierarchy error, append an explicit hint so it shows up in the
+        // client-side toast without the user needing to open the server logs.
+        const skipLevelError = validation.errors.find(e => e.includes('Skip-level hierarchy'))
+        if (skipLevelError) {
+          validation.errors.push('Tip: Check the order of heading operations – an H4 must appear before adding an H5 under the same section.')
         }
         
         // Complete AI call with validation failure
