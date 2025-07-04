@@ -52,8 +52,8 @@ const structureTool: ExecutableTool = {
 
   // Per-tool timeout overrides
   timeouts: {
-    default: 90_000,
-    ai: 90_000,
+    default: 300_000,
+    ai: 300_000,
   }
 }
 
