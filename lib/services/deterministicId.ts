@@ -89,14 +89,31 @@ function processElement(
   children.forEach((child: Element, index: number) => {
     if (child.type !== 'tag') return;
     
-    const id = generatePositionBasedId(child, $, index, parentPath);
-    const fullId = `syr-${id}`;
-    
-    // Validate uniqueness
-    const elementPath = `${parentPath}/${child.name.toLowerCase()}[${index}]`;
-    validateIdUniqueness(fullId, existingIds, `Element: <${child.name}> at path "${elementPath}"`);
-    
-    $(child).attr('id', fullId);
+    // -------------------------------------------------------------
+    // Preserve existing IDs if present.  We must NEVER overwrite a
+    // pre-existing id attribute because other application features –
+    // such as AI-generated heading operations – rely on stable IDs
+    // remaining unchanged between page loads.  Overwriting them here
+    // breaks cached mutations that reference those IDs and results in
+    // lost enhancements on page refresh (see issue: headings vanish
+    // after reload).
+    // -------------------------------------------------------------
+    const elementPath = `${parentPath}/${child.name.toLowerCase()}[${index}]`
+
+    let fullId: string
+    const existingIdAttr = $(child).attr('id')
+
+    if (existingIdAttr && existingIdAttr.trim() !== '') {
+      // Validate the existing id for uniqueness and keep it as-is.
+      fullId = existingIdAttr.trim()
+      validateIdUniqueness(fullId, existingIds, `Element (pre-existing id): <${child.name}> at path "${elementPath}"`)
+    } else {
+      // No id present – generate a deterministic one and assign it.
+      const id = generatePositionBasedId(child, $, index, parentPath)
+      fullId = `syr-${id}`
+      validateIdUniqueness(fullId, existingIds, `Element (generated id): <${child.name}> at path "${elementPath}"`)
+      $(child).attr('id', fullId)
+    }
     
     // Recurse into children
     processElement(child, $, elementPath, existingIds);

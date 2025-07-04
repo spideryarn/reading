@@ -19,6 +19,8 @@ import { sanitizeDocumentTitle } from '@/lib/utils/document-title'
 import type { Logger } from 'pino'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { JSDOM } from 'jsdom'
+import { load as cheerioLoad } from 'cheerio'
+import { assignDeterministicIds } from './deterministicId'
 
 /**
  * Processing metadata required for document creation
@@ -160,17 +162,49 @@ export async function processHtmlToDocument(
     sanitizedTitle
   }, 'Starting HTML sanitization and text extraction')
 
-  const { sanitizedHtml, prettifiedHtml, plaintext } = await sanitizeAndExtractText(
+  const { sanitizedHtml, prettifiedHtml } = await sanitizeAndExtractText(
     htmlContent, 
     logger, 
     correlationId
   )
 
-  // Step 2: Generate document slug and metadata
+  // ------------------------------------------------------------------
+  // Step 2b: FIRST-TIME deterministic ID assignment
+  // ------------------------------------------------------------------
+  // At this point `prettifiedHtml` still contains whatever IDs existed in the
+  // source HTML.  To guarantee stable IDs for future AI operations we:
+  //   1. strip ALL existing `id` attributes,
+  //   2. run the deterministic-ID generator once.
+  // The resulting HTML (`deterministicHtml`) is what we store in the database.
+
+  const $tmp = cheerioLoad(prettifiedHtml, { xml: false })
+  $tmp('[id]').removeAttr('id')
+  const htmlWithoutIds = $tmp.html() || ''
+  const deterministicHtml = assignDeterministicIds(htmlWithoutIds)
+
+  // ------------------------------------------------------------------
+  // Step 3: Extract clean plaintext using proper DOM parsing (not regex)
+
+  logger.info({
+    correlationId,
+    step: 'text-extraction',
+    sourceLength: deterministicHtml.length
+  }, 'Starting plaintext extraction from processed HTML')
+
+  const plaintext = extractCleanText(deterministicHtml)
+  
+  logger.info({
+    correlationId,
+    step: 'text-extraction-complete',
+    plaintextLength: plaintext.length,
+    wordCount: plaintext.split(/\s+/).length
+  }, 'Plaintext extraction completed successfully')
+
+  // Step 4: Generate document slug and metadata
   logger.info({
     correlationId,
     step: 'document-preparation',
-    sanitizedLength: sanitizedHtml.length,
+    sanitizedLength: deterministicHtml.length,
     plaintextLength: plaintext.length,
     wordCount: plaintext.split(/\s+/).length
   }, 'Preparing document for storage')
@@ -178,7 +212,7 @@ export async function processHtmlToDocument(
   const slug = generateSlug(sanitizedTitle)
   const wordCount = plaintext.split(/\s+/).length
 
-  // Step 3: Generate upload metadata with source-specific fields
+  // Step 5: Generate upload metadata with source-specific fields
   const rawUploadMetadata = generateUploadMetadata(
     uploadSource,
     extractionMethod,
@@ -191,7 +225,7 @@ export async function processHtmlToDocument(
     Object.entries(rawUploadMetadata).filter(([, v]) => v !== undefined)
   ) as Record<string, string | number | boolean | null>
 
-  // Step 4: Create document with storage integration
+  // Step 6: Create document with storage integration
   logger.info({
     correlationId,
     step: 'document-creation',
@@ -206,7 +240,7 @@ export async function processHtmlToDocument(
     userId,
     {
       title: sanitizedTitle,
-      html_content: prettifiedHtml,
+      html_content: deterministicHtml,
       plaintext_content: plaintext,
       slug,
       source_url: sourceUrl || null,
@@ -336,21 +370,8 @@ export async function sanitizeAndExtractText(
     }, 'HTML prettification skipped (feature flag disabled)')
   }
 
-  // Step 3: Extract clean plaintext using proper DOM parsing (not regex)
-  logger.info({
-    correlationId,
-    step: 'text-extraction',
-    sourceLength: prettifiedHtml.length
-  }, 'Starting plaintext extraction from processed HTML')
-
+  // Extract plaintext from the (possibly prettified) HTML once
   const plaintext = extractCleanText(prettifiedHtml)
-  
-  logger.info({
-    correlationId,
-    step: 'text-extraction-complete',
-    plaintextLength: plaintext.length,
-    wordCount: plaintext.split(/\s+/).length
-  }, 'Plaintext extraction completed successfully')
 
   return {
     sanitizedHtml,
