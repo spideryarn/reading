@@ -119,7 +119,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     // Calculate reading time using the exact same machinery as MetadataPanel
-    let readingTimeDisplay = 'Loading...'
+    let readingTimeDisplay = 'Not generated yet'
 
     if (!document.word_count || document.word_count <= 0) {
       // Word count is missing or zero – give a clear user-visible message and skip calc
@@ -139,7 +139,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
           error instanceof MissingReadingDifficultyError ||
           error instanceof InvalidReadingDifficultyError
         ) {
-          readingTimeDisplay = 'Loading...'
+          readingTimeDisplay = 'Not generated yet'
         } else if (error instanceof Error && /Invalid word count/i.test(error.message)) {
           // Propagate the clearer word-count message to the user but keep 200 response
           readingTimeDisplay = 'Word count unavailable'
