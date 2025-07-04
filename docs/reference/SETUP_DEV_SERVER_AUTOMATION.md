@@ -19,7 +19,8 @@ npm run dev:stop        # Stop daemon gracefully
 # Standard mode (unchanged)
 npm run dev             # Foreground mode (preserves .next, conditional db:types)
 npm run dev:clean       # Clean build (clears .next, forces db:types)
-npm run dev:safe        # Without DB type generation
+npm run dev:simple      # Direct Next.js without wrapper script or DB operations
+npm run dev:turbo       # Direct Next.js with Turbopack (experimental)
 ```
 
 ## AI Agent Workflow
