@@ -91,12 +91,15 @@ export function useDeleteDocument(metadata: DocumentMetadata) {
 
   const DeleteDialog = () => (
     <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-      <DialogContent onKeyDown={(e) => {
-        if (e.key === 'Enter' && !isDeleting) {
-          e.preventDefault()
-          handleDeleteConfirm()
-        }
-      }}>
+      <DialogContent
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !isDeleting) {
+            e.preventDefault()
+            handleDeleteConfirm()
+          }
+        }}
+        className={isDeleting ? 'data-[state=open]:animate-none data-[state=open]:slide-in-from-0 data-[state=open]:zoom-in-0' : undefined}
+      >
         <DialogHeader>
           <DialogTitle>Delete Document</DialogTitle>
           <DialogDescription className="whitespace-pre-line">
