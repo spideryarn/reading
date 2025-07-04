@@ -42,7 +42,7 @@ const eslintConfig = [
   
   // Lenient rules for test files
   {
-    files: ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"],
+    files: ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx", "**/__mocks__/**"],
     rules: {
       // Tests need flexibility for mocking complex external libraries
       "@typescript-eslint/no-explicit-any": "off", // Allow any types in tests for mocking flexibility
@@ -51,10 +51,10 @@ const eslintConfig = [
         "varsIgnorePattern": "^_",
         "caughtErrorsIgnorePattern": "^_"
       }],
-      "@typescript-eslint/no-require-imports": "warn",
-      "@typescript-eslint/no-unused-expressions": "warn",
-      "react-hooks/exhaustive-deps": "warn",
-      "react/display-name": "warn"
+      "@typescript-eslint/no-require-imports": "off", // Allow require() for dynamic imports in tests
+      "@typescript-eslint/no-unused-expressions": "off", // Allow chai-style assertions
+      "react-hooks/exhaustive-deps": "off", // Test components often intentionally have incomplete deps
+      "react/display-name": "off" // Test components don't need display names
     }
   }
 ];

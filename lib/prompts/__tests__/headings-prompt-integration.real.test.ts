@@ -1,7 +1,6 @@
 import path from 'path'
 
 // Load env variables
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config({ path: '.env.local' })
 
 // Ensure real AI SDK implementation
