@@ -80,6 +80,9 @@ https://github.com/spideryarn/reading/
    (`Document`, `AiCall`, etc.).  Regenerating types does **not** touch the shim, so simply rerun the
    command whenever you change the schema; GitHub also runs a nightly job that opens a PR
    if the generated section drifts.
+   
+   **Note**: This command requires the Supabase CLI to be installed. If you see an error about
+   'supabase: command not found', install it with `npm install -g supabase` first.
 
 6. **Start development server:**
    ```bash
@@ -91,6 +94,8 @@ https://github.com/spideryarn/reading/
    By default, runs on port 3000, but if you define `PORT=3001` in `.env.local`, it'll use that instead. The `dotenv-cli` package is used to load environment variables from `.env.local` before starting the Next.js development server.
 
    Navigate to e.g. http://localhost:3001/ (or your configured port)
+
+   **Performance optimization**: The dev server now conditionally regenerates database types only when migrations have changed, significantly improving startup time. Use `npm run dev:clean` to force a full clean build with type regeneration.
 
    **Hot Reload**: The dev server uses standard Next.js Webpack compiler (not Turbopack) for improved Fast Refresh reliability. This provides more stable hot reloading of component changes during development.
 

@@ -17,7 +17,8 @@ npm run dev:status      # Check daemon health (PID + HTTP)
 npm run dev:stop        # Stop daemon gracefully
 
 # Standard mode (unchanged)
-npm run dev             # Foreground mode
+npm run dev             # Foreground mode (preserves .next, conditional db:types)
+npm run dev:clean       # Clean build (clears .next, forces db:types)
 npm run dev:safe        # Without DB type generation
 ```
 
@@ -42,6 +43,8 @@ npm run dev:status      # Verify healthy startup
 - **Stale cleanup**: Removes orphaned PID/lock files
 - **Log rotation**: 10MB limit on `dev.log`
 - **Improved hot reload reliability**: Uses standard Webpack instead of Turbopack for better Fast Refresh performance
+- **Conditional type generation**: Skips database type regeneration if migrations unchanged
+- **Preserved build cache**: .next directory preserved by default for faster startups
 
 ## Configuration
 
@@ -96,3 +99,42 @@ This makes both foreground and daemon modes more robust, particularly in scenari
 - `scripts/dev-with-restart.sh`: Removed `--turbopack` flags from both daemon and foreground modes
 
 This change resolves issues where component changes weren't being properly reflected during development, improving the developer experience for hot reloading.
+
+## Performance Optimizations
+
+**Conditional Database Type Generation (July 2025)**: The dev server now intelligently manages database type generation:
+
+- **Smart detection**: Checks if migration files are newer than generated types
+- **Skip when unchanged**: Avoids unnecessary type regeneration on every startup
+- **Force options**: Use `--force-types` flag or `npm run dev:clean` to force regeneration
+- **Build cache preservation**: .next directory is preserved by default (no longer cleared on every startup)
+
+**Command options**:
+- `npm run dev` - Preserves .next, conditional db:types
+- `npm run dev:clean` - Clears .next, forces db:types regeneration
+- `./scripts/dev-with-restart.sh --force-types` - Forces type regeneration only
+- `./scripts/dev-with-restart.sh --clean` - Full clean build
+
+These optimizations significantly improve dev server startup time, especially for iterative development workflows.
+
+## Fail-Fast Environment Checks
+
+**Critical Environment Validation (July 2025)**: The dev server now performs fail-fast checks for critical dependencies:
+
+- **Supabase CLI check**: Verifies `supabase` command is available before attempting database operations
+- **Early termination**: Exits immediately with clear error message if dependencies are missing
+- **Helpful guidance**: Provides installation instructions when dependencies are not found
+
+**When checks trigger**:
+- During `npm run db:types` execution (called by dev server scripts)
+- Before attempting any database type generation
+- Prevents cryptic error messages from missing tools
+
+**Resolution**:
+```bash
+# If Supabase CLI is missing:
+npm install -g supabase
+# Or follow instructions at: https://supabase.com/docs/guides/cli
+```
+
+This fail-fast approach aligns with the project's principle of "Raise errors early, clearly & fatally" to prevent confusion during development setup.

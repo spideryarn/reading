@@ -3,10 +3,12 @@
 # Enhanced dev server script with daemon mode support for AI-first development
 # 
 # USAGE:
-#   ./scripts/dev-with-restart.sh           # Normal mode (foreground, used by npm run dev)
-#   ./scripts/dev-with-restart.sh --daemon  # Daemon mode (background with PID tracking)
-#   ./scripts/dev-with-restart.sh --stop    # Stop daemon
-#   ./scripts/dev-with-restart.sh --status  # Check daemon status
+#   ./scripts/dev-with-restart.sh                    # Normal mode (foreground, used by npm run dev)
+#   ./scripts/dev-with-restart.sh --daemon           # Daemon mode (background with PID tracking)
+#   ./scripts/dev-with-restart.sh --stop             # Stop daemon
+#   ./scripts/dev-with-restart.sh --status           # Check daemon status
+#   ./scripts/dev-with-restart.sh --clean            # Clean build (clear .next + force db:types)
+#   ./scripts/dev-with-restart.sh --force-types      # Force database type regeneration only
 #
 # DAEMON MODE:
 # - Starts dev server in background for LLM agent automation
@@ -23,7 +25,8 @@
 # - Uses npx kill-port for reliable port-based process cleanup
 # - Handles orphaned processes that aren't tracked by PID files
 # - Falls back gracefully when npx is not available
-# - Always clears .next directory for fresh builds to avoid cache issues
+# - Preserves .next directory by default (use --clean to clear)
+# - Conditionally regenerates database types based on migration changes
 
 set -e  # Exit on any error
 
@@ -34,25 +37,48 @@ MAX_LOG_SIZE=10485760  # 10MB
 
 # Parse command line arguments
 MODE="normal"
-case "${1:-}" in
-    --daemon)
-        MODE="daemon"
-        ;;
-    --stop)
-        MODE="stop"
-        ;;
-    --status)
-        MODE="status"
-        ;;
-    "")
-        MODE="normal"
-        ;;
-    *)
-        echo "❌ Unknown argument: $1"
-        echo "Usage: $0 [--daemon|--stop|--status]"
-        exit 1
-        ;;
-esac
+FORCE_TYPES=false
+CLEAN_BUILD=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --daemon)
+            MODE="daemon"
+            shift
+            ;;
+        --stop)
+            MODE="stop"
+            shift
+            ;;
+        --status)
+            MODE="status"
+            shift
+            ;;
+        --force-types)
+            FORCE_TYPES=true
+            shift
+            ;;
+        --clean)
+            CLEAN_BUILD=true
+            shift
+            ;;
+        *)
+            echo "❌ Unknown argument: $1"
+            echo "Usage: $0 [--daemon|--stop|--status] [--force-types] [--clean]"
+            echo "  --daemon      Start dev server in background mode"
+            echo "  --stop        Stop background daemon"
+            echo "  --status      Check daemon status"
+            echo "  --force-types Force regeneration of database types"
+            echo "  --clean       Clear .next cache and regenerate database types"
+            exit 1
+            ;;
+    esac
+done
+
+# Handle empty arguments case
+if [ -z "$MODE" ]; then
+    MODE="normal"
+fi
 
 # Helper functions
 get_port() {
@@ -155,6 +181,168 @@ clear_next_cache() {
     else
         echo "ℹ️  No .next directory found to clear"
     fi
+}
+
+should_regenerate_types() {
+    # Check if we should regenerate database types
+    # Returns 0 (true) if regeneration needed, 1 (false) otherwise
+    
+    local types_file="lib/types/database-auto-generated.ts"
+    local migrations_dir="supabase/migrations"
+    
+    # Force regeneration if requested or clean build
+    if [ "$FORCE_TYPES" = true ] || [ "$CLEAN_BUILD" = true ]; then
+        return 0
+    fi
+    
+    # If types file doesn't exist, regenerate
+    if [ ! -f "$types_file" ]; then
+        echo "ℹ️  Database types file not found, will regenerate"
+        return 0
+    fi
+    
+    # Check if any migration files are newer than the types file
+    if [ -d "$migrations_dir" ]; then
+        # Find any migration files newer than the types file
+        local newer_files=$(find "$migrations_dir" -type f -name "*.sql" -newer "$types_file" 2>/dev/null | head -n 1)
+        
+        if [ -n "$newer_files" ]; then
+            echo "ℹ️  Found newer migration files, will regenerate types"
+            return 0
+        fi
+    fi
+    
+    # No regeneration needed
+    return 1
+}
+
+check_stale_types() {
+    # Check for stale database types and fail fast if found
+    # Skip this check if --clean is used since it regenerates anyway
+    if [ "$CLEAN_BUILD" = true ]; then
+        return 0
+    fi
+    
+    local types_file="lib/types/database-auto-generated.ts"
+    local migrations_dir="supabase/migrations"
+    
+    # If types file doesn't exist, that's a problem
+    if [ ! -f "$types_file" ]; then
+        echo "❌ ERROR: Database types file not found!"
+        echo ""
+        echo "   Missing file: $types_file"
+        echo ""
+        echo "   This will cause TypeScript compilation errors."
+        echo ""
+        echo "   To fix this, run one of:"
+        echo "     npm run dev:clean    # Regenerate types and clear cache"
+        echo "     npm run db:types     # Just regenerate types"
+        echo ""
+        return 1
+    fi
+    
+    # Check if any migration files are newer than the types file
+    if [ -d "$migrations_dir" ]; then
+        local newer_files=$(find "$migrations_dir" -type f -name "*.sql" -newer "$types_file" 2>/dev/null)
+        
+        if [ -n "$newer_files" ]; then
+            echo "❌ ERROR: Database types are stale!"
+            echo ""
+            echo "   Generated types: $types_file"
+            echo "   Last updated:    $(stat -f '%Sm' -t '%Y-%m-%d %H:%M:%S' "$types_file" 2>/dev/null || date -r "$types_file" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo 'unknown')"
+            echo ""
+            echo "   Newer migration files found:"
+            echo "$newer_files" | while read -r file; do
+                echo "     - $file ($(stat -f '%Sm' -t '%Y-%m-%d %H:%M:%S' "$file" 2>/dev/null || date -r "$file" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo 'unknown'))"
+            done
+            echo ""
+            echo "   This will cause type mismatches and compilation errors."
+            echo ""
+            echo "   To fix this, run one of:"
+            echo "     npm run dev:clean    # Regenerate types and clear cache"
+            echo "     npm run db:types     # Just regenerate types"
+            echo ""
+            return 1
+        fi
+    fi
+    
+    return 0
+}
+
+check_stale_cache() {
+    # Check for potentially stale .next cache and fail fast if found
+    # Skip this check if --clean is used since it clears cache anyway
+    if [ "$CLEAN_BUILD" = true ]; then
+        return 0
+    fi
+    
+    # Only check if .next directory exists
+    if [ ! -d ".next" ]; then
+        return 0
+    fi
+    
+    local package_json="package.json"
+    local package_lock="package-lock.json"
+    local next_cache=".next"
+    
+    # Check if package.json or package-lock.json are newer than .next directory
+    local cache_stale=false
+    local stale_reason=""
+    
+    if [ -f "$package_json" ] && [ "$package_json" -nt "$next_cache" ]; then
+        cache_stale=true
+        stale_reason="package.json has been modified"
+        local package_time=$(stat -f '%Sm' -t '%Y-%m-%d %H:%M:%S' "$package_json" 2>/dev/null || date -r "$package_json" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo 'unknown')
+    fi
+    
+    if [ -f "$package_lock" ] && [ "$package_lock" -nt "$next_cache" ]; then
+        cache_stale=true
+        if [ -n "$stale_reason" ]; then
+            stale_reason="$stale_reason and package-lock.json has been modified"
+        else
+            stale_reason="package-lock.json has been modified"
+        fi
+        local lock_time=$(stat -f '%Sm' -t '%Y-%m-%d %H:%M:%S' "$package_lock" 2>/dev/null || date -r "$package_lock" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo 'unknown')
+    fi
+    
+    if [ "$cache_stale" = true ]; then
+        echo "❌ ERROR: Next.js cache is potentially stale!"
+        echo ""
+        echo "   Cache directory: $next_cache"
+        echo "   Last updated:    $(stat -f '%Sm' -t '%Y-%m-%d %H:%M:%S' "$next_cache" 2>/dev/null || date -r "$next_cache" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo 'unknown')"
+        echo ""
+        echo "   Problem: $stale_reason"
+        if [ -n "$package_time" ]; then
+            echo "   package.json:    $package_time"
+        fi
+        if [ -n "$lock_time" ]; then
+            echo "   package-lock.json: $lock_time"
+        fi
+        echo ""
+        echo "   This can cause 'module not found' errors and other issues."
+        echo ""
+        echo "   To fix this, run:"
+        echo "     npm run dev:clean    # Clear cache and regenerate types"
+        echo ""
+        return 1
+    fi
+    
+    return 0
+}
+
+regenerate_types_if_needed() {
+    if should_regenerate_types; then
+        echo "🔄 Regenerating database types"
+        if npm run db:types --silent; then
+            echo "✅ Database types regenerated successfully"
+        else
+            echo "❌ Failed to regenerate database types"
+            return 1
+        fi
+    else
+        echo "✅ Database types are up to date, skipping regeneration"
+    fi
+    return 0
 }
 
 clear_logs() {
@@ -262,6 +450,15 @@ case "$MODE" in
         ;;
         
     "daemon")
+        # Perform fail-fast checks before starting daemon
+        if ! check_stale_types; then
+            exit 1
+        fi
+        
+        if ! check_stale_cache; then
+            exit 1
+        fi
+        
         # Check for existing daemon
         cleanup_stale_files
         daemon_pid=$(get_daemon_pid)
@@ -316,17 +513,27 @@ case "$MODE" in
             kill_port_processes "$PORT" "any existing processes"
         fi
         
-        # Always clear Next.js build cache for fresh start
-        clear_next_cache
+        # Clear Next.js build cache if requested or always for clean build
+        if [ "$CLEAN_BUILD" = true ]; then
+            clear_next_cache
+        else
+            echo "ℹ️  Preserving .next directory (use --clean to clear)"
+        fi
         
         # Clear and rotate logs
         clear_logs
         rotate_logs_if_needed
         
+        # Regenerate types if needed
+        if ! regenerate_types_if_needed; then
+            rm -f "$LOCKFILE" "$SYR_DEVSERVER_PIDFILE"
+            exit 1
+        fi
+        
         # Start dev server in background with dual logging
         echo "🚀 Starting dev server daemon on port $PORT"
         (
-            npm run db:types --silent && PATH="/opt/homebrew/bin:$PATH" dotenv -e .env.local -- next dev 2>&1 | ./scripts/dual-dev-error-log.sh
+            PATH="/opt/homebrew/bin:$PATH" dotenv -e .env.local -- next dev 2>&1 | ./scripts/dual-dev-error-log.sh
         ) &
         dev_server_pid=$!
         
@@ -348,6 +555,15 @@ case "$MODE" in
         ;;
         
     "normal")
+        # Perform fail-fast checks before starting dev server
+        if ! check_stale_types; then
+            exit 1
+        fi
+        
+        if ! check_stale_cache; then
+            exit 1
+        fi
+        
         # Enhanced foreground mode for npm run dev
         PORT=$(get_port)
         
@@ -362,12 +578,21 @@ case "$MODE" in
             kill_port_processes "$PORT" "existing dev server"
         fi
         
-        # Always clear Next.js build cache for fresh start
-        clear_next_cache
+        # Clear Next.js build cache if requested
+        if [ "$CLEAN_BUILD" = true ]; then
+            clear_next_cache
+        else
+            echo "ℹ️  Preserving .next directory (use --clean to clear)"
+        fi
         
         # Clear and rotate logs
         clear_logs
         rotate_logs_if_needed
+        
+        # Regenerate types if needed
+        if ! regenerate_types_if_needed; then
+            exit 1
+        fi
         
         # Set up trap to output timestamp when dev server exits
         trap 'echo "📅 Dev server finished at $(date)"' EXIT
@@ -377,6 +602,6 @@ case "$MODE" in
         echo ""
         
         # Run the dev command with dual logging in foreground
-        npm run db:types --silent && PATH="/opt/homebrew/bin:$PATH" dotenv -e .env.local -- next dev 2>&1 | ./scripts/dual-dev-error-log.sh
+        PATH="/opt/homebrew/bin:$PATH" dotenv -e .env.local -- next dev 2>&1 | ./scripts/dual-dev-error-log.sh
         ;;
 esac
