@@ -160,14 +160,14 @@ kill_port_processes() {
     local port="$1"
     local description="$2"
     
-    echo "🔄 Clearing port $port"
+    # echo "🔄 Clearing port $port"
     
     # Use npx kill-port for robust port-based process killing
     if npx kill-port "$port" 2>/dev/null; then
-        echo "✅ Port $port cleared"
+        # echo "✅ Port $port cleared"
         return 0
     else
-        echo "Could not kill process on port $port. No process running on port."
+        # echo "Could not kill process on port $port. No process running on port."
         return 1
     fi
 }
@@ -402,10 +402,10 @@ regenerate_types_if_needed() {
 
 clear_logs() {
     # Clear both dev.log and error.log for fresh start
-    echo "🧹 Clearing logs"
+    # echo "🧹 Clearing logs"
     > dev.log
     > error.log
-    echo "🧹 Cleared dev.log and error.log at $(date)" | tee -a dev.log
+    # echo "🧹 Cleared dev.log and error.log" | tee -a dev.log
 }
 
 rotate_logs_if_needed() {
@@ -564,7 +564,8 @@ case "$MODE" in
         fi
         
         # Start dev server in background with dual logging
-        echo "🚀 Starting dev server daemon on port $PORT"
+        echo "🚀 Starting dev server daemon on port $PORT at $(date +'%y%m%d_%H%M')..."
+        echo "🏃 Running! at $(date +'%y%m%d_%H%M')"
         (
             PATH="/opt/homebrew/bin:$PATH" dotenv -e .env.local -- next dev 2>&1 | ./scripts/dual-dev-error-log.sh
         ) &
@@ -577,11 +578,11 @@ case "$MODE" in
         # Wait a moment and verify it started
         sleep 2
         if is_process_running "$dev_server_pid"; then
-            echo "✅ Daemon started successfully (PID: $dev_server_pid) at $(date)"
+            echo "✅ Daemon started successfully (PID: $dev_server_pid) at $(date +'%y%m%d_%H%M')"
             echo "   Use --status to check health, --stop to stop"
             exit 0
         else
-            echo "❌ Daemon failed to start at $(date)"
+            echo "❌ Daemon failed to start at $(date +'%y%m%d_%H%M')"
             rm -f "$SYR_DEVSERVER_PIDFILE"
             exit 1
         fi
@@ -603,7 +604,7 @@ case "$MODE" in
         # Enhanced foreground mode for npm run dev
         PORT=$(get_port)
         
-        echo "🚀 Starting dev server (port: ${PORT:-unknown}) at $(date)"
+        echo "🚀 Starting dev server (port: ${PORT:-unknown}) at $(date +'%y%m%d_%H%M')..."
         
         # Clean up existing processes
         if [ -z "$PORT" ]; then
@@ -630,10 +631,12 @@ case "$MODE" in
         fi
         
         # Set up trap to output timestamp when dev server exits
-        trap 'echo "📅 Dev server finished at $(date)"' EXIT
+        trap 'echo "📅 Dev server finished at $(date +'"'"'%y%m%d_%H%M'"'"')"' EXIT
         
-        echo "💡 Logs: tail -f dev.log | Use npm run dev:daemon for background mode"
-        echo ""
+        # echo "💡 Logs: tail -f dev.log | Use npm run dev:daemon for background mode"
+        # echo ""
+        
+        echo "🏃 Running! at $(date +'%y%m%d_%H%M')"
         
         # Run the dev command with dual logging in foreground
         PATH="/opt/homebrew/bin:$PATH" dotenv -e .env.local -- next dev 2>&1 | ./scripts/dual-dev-error-log.sh
