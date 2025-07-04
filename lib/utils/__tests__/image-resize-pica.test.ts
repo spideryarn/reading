@@ -54,7 +54,7 @@ describe('image-resize-pica', () => {
   })
 
   // Create a small test image
-  const createTestImage = (width: number, height: number): string => {
+  const createTestImage = (_width: number, _height: number): string => {
     // Return a minimal valid data URL
     return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
   }
@@ -103,7 +103,7 @@ describe('image-resize-pica', () => {
     } as any
 
     // Mock canvas.toBlob
-    HTMLCanvasElement.prototype.toBlob = jest.fn(function(callback, type, quality) {
+    HTMLCanvasElement.prototype.toBlob = jest.fn(function(callback, type, _quality) {
       callback(new Blob(['mock'], { type: type || 'image/png' }))
     })
   })
