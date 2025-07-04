@@ -27,15 +27,19 @@ interface DocumentListProps {
   showDeleteActions?: boolean
   currentUserId?: string
   className?: string
+  /** Whether the current viewer has admin permissions allowing deletion of any document */
+  isAdmin?: boolean
 }
 
 interface DocumentItemProps {
   document: Document
   showDeleteActions: boolean
   currentUserId?: string
+  /** Admin users can delete any document regardless of ownership */
+  isAdmin?: boolean
 }
 
-function DocumentItem({ document, showDeleteActions, currentUserId }: DocumentItemProps) {
+function DocumentItem({ document, showDeleteActions, currentUserId, isAdmin = false }: DocumentItemProps) {
   const [tooltipData, setTooltipData] = useState<TooltipInfo | null>(null)
   const [isLoadingTooltip, setIsLoadingTooltip] = useState(false)
   const [tooltipError, setTooltipError] = useState(false)
@@ -122,7 +126,7 @@ function DocumentItem({ document, showDeleteActions, currentUserId }: DocumentIt
     )
   }
 
-  const canDelete = showDeleteActions && currentUserId && document.created_by === currentUserId
+  const canDelete = showDeleteActions && (isAdmin || (currentUserId && document.created_by === currentUserId))
 
   return (
     <Card 
@@ -260,6 +264,7 @@ export function DocumentList({
   showDeleteActions = false,
   currentUserId,
   className = '',
+  isAdmin = false,
 }: DocumentListProps) {
   if (documents.length === 0) {
     return (
@@ -278,13 +283,10 @@ export function DocumentList({
       {documents.map((document) => {
         const itemProps: DocumentItemProps = {
           document,
-          showDeleteActions
+          showDeleteActions,
+          ...(currentUserId !== undefined ? { currentUserId } : {}),
+          ...(isAdmin !== undefined ? { isAdmin } : {})
         }
-        
-        if (currentUserId !== undefined) {
-          itemProps.currentUserId = currentUserId
-        }
-        
         return <DocumentItem key={document.id} {...itemProps} />
       })}
     </div>
