@@ -93,22 +93,6 @@ type AcademicIssue = {
   category?: 'figures' | 'tables' | 'citations' | 'equations' | 'structure';
 }
 
-// Standard academic HTML tags allowed in fragments
-const ACADEMIC_ALLOWED_TAGS = [
-  'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-  'ul', 'ol', 'li', 'dl', 'dt', 'dd',
-  'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption',
-  'figure', 'figcaption', 'img',
-  'blockquote', 'cite', 'q',
-  'strong', 'em', 'b', 'i', 'u', 'small', 'mark',
-  'sup', 'sub', 'code', 'pre', 'kbd', 'samp', 'var',
-  'abbr', 'acronym', 'dfn',
-  'div', 'span', 'section', 'article', 'aside', 'header', 'footer', 'main',
-  'a', 'br', 'hr',
-  'math', 'mi', 'mo', 'mn', 'mrow', 'msup', 'msub', 'mfrac', 'msqrt', 'mroot',
-  'svg', 'path', 'circle', 'rect', 'line', 'polygon', 'text'
-]
-
 /**
  * Validate a single HTML fragment
  */
@@ -140,7 +124,7 @@ export async function validateHtmlFragment(
     
     // Accessibility validation
     if (validatedConfig.validateAccessibility) {
-      validateAccessibility(document, fragment.pageNumber, accessibilityIssues, validatedConfig)
+      validateAccessibility(document, fragment.pageNumber, accessibilityIssues)
     }
     
     // Academic structure validation
@@ -306,8 +290,7 @@ function validateBasicStructure(
 function validateAccessibility(
   document: Document,
   pageNumber: number,
-  issues: AccessibilityIssue[],
-  _config: ValidationConfig
+  issues: AccessibilityIssue[]
 ): void {
   // Check images for alt text
   const images = document.querySelectorAll('img')
@@ -591,7 +574,7 @@ export async function validateAssembledDocument(
     validateBasicStructure(document, 0, structuralIssues, validatedConfig)
     
     if (validatedConfig.validateAccessibility) {
-      validateAccessibility(document, 0, accessibilityIssues, validatedConfig)
+      validateAccessibility(document, 0, accessibilityIssues)
     }
     
     if (validatedConfig.validateAcademicStructure) {

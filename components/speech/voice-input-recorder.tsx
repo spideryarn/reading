@@ -130,7 +130,6 @@ export function VoiceInputRecorder({
 
   // Waveform drawing reference (debug only)
   const waveformCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const debugRootRef = useRef<Root | null>(null);
 
   /**
    * Handle errors with consistent logging and user feedback
@@ -260,7 +259,7 @@ export function VoiceInputRecorder({
       // Clear the blob URL to reset for next recording
       clearBlobUrl();
     }
-  }, [handleError, onTranscription, clearBlobUrl]);
+  }, [handleError, onTranscription, clearBlobUrl, DEBUG]);
 
   /**
    * Handle recorder errors
@@ -438,7 +437,7 @@ export function VoiceInputRecorder({
         const response = await fetch(debugAudioUrl);
         const arrayBuffer = await response.arrayBuffer();
 
-        const AudioCtxCtor = (window.AudioContext || (window as any).webkitAudioContext);
+        const AudioCtxCtor = (window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext);
         if (!AudioCtxCtor) return;
         const audioCtx = new (AudioCtxCtor as typeof AudioContext)();
         const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
@@ -522,7 +521,7 @@ export function VoiceInputRecorder({
         const track = mediaStream.getAudioTracks()[0];
         if (track) setDebugTrackSettings(track.getSettings());
 
-        const ACtor = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext | undefined;
+        const ACtor = (window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext) as typeof AudioContext | undefined;
         if (!ACtor) return;
         audioCtx = new ACtor();
         const source = audioCtx.createMediaStreamSource(mediaStream);
@@ -628,7 +627,7 @@ export function VoiceInputRecorder({
     );
 
     globalDebugRoot.render(Panel);
-  }, [DEBUG, isRecording, debugInfo, debugRawWhisper, debugAudioUrl, debugMicLabel, debugTrackSettings, liveLevel]);
+  }, [DEBUG, isRecording, debugInfo, debugRawWhisper, debugAudioUrl, debugMicLabel, debugTrackSettings, liveLevel, debugEncodedPeak]);
 
   return (
     <Button

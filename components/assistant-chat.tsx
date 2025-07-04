@@ -23,11 +23,6 @@ import type { Tables } from '@/lib/types/database-auto-generated';
 
 type ChatMessageDb = Tables<'chat_messages'>;
 
-// The upstream library currently doesn't publish its internal type helpers, so
-// we declare a lightweight alias locally to satisfy TypeScript while keeping
-// the public API surface unchanged.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type TextContentPartComponent = any;
 
 // Dynamically import the voice recorder with SSR disabled to avoid
 // `Worker is not defined` errors during the Node.js render phase.
@@ -63,8 +58,8 @@ const UserMessage = () => {
   const msg = useMessage();
   const chatStore = useContext(ChatStoreContext);
 
-  const customMeta = (msg?.metadata && typeof msg.metadata === 'object' ? (msg.metadata as Record<string, any>) : {}) as Record<string, any>;
-  const customFlags = (customMeta.custom && typeof customMeta.custom === 'object' ? (customMeta.custom as Record<string, any>) : {}) as Record<string, any>;
+  const customMeta = (msg?.metadata && typeof msg.metadata === 'object' ? (msg.metadata as Record<string, unknown>) : {}) as Record<string, unknown>;
+  const customFlags = (customMeta.custom && typeof customMeta.custom === 'object' ? (customMeta.custom as Record<string, unknown>) : {}) as Record<string, unknown>;
   const isPending = !!customFlags.pending;
   const isFailed = !!customFlags.failed;
 
@@ -131,7 +126,7 @@ const AssistantMessage = () => (
         <MessagePrimitive.If hasContent>
           <div className="prose prose-sm max-w-none prose-p:text-gray-800 prose-p:leading-relaxed prose-p:mb-4 prose-p:last:mb-0 prose-headings:text-gray-900 prose-code:text-gray-700 prose-code:bg-white prose-code:px-2 prose-code:py-1 prose-code:rounded prose-strong:text-gray-900 prose-li:mb-1 prose-ul:space-y-1 prose-ol:space-y-1 [&>*]:mb-3 [&>*:last-child]:mb-0">
             {/* Use @assistant-ui/react-markdown for full markdown support in AI responses */}
-            <MessagePrimitive.Content components={{ Text: MarkdownTextPrimitive as TextContentPartComponent }} />
+            <MessagePrimitive.Content components={{ Text: MarkdownTextPrimitive }} />
           </div>
         </MessagePrimitive.If>
       </div>
@@ -288,7 +283,7 @@ function ChatRuntime({ chatStore }: { chatStore: ReturnType<typeof useChatStore>
         : {}
 
       // Map to assistant-ui message shape
-      const base: any = {
+      const base = {
         id: msg.id,
         role: msg.role as 'user' | 'assistant',
         content: [{ type: 'text' as const, text: msg.content }],
@@ -297,7 +292,7 @@ function ChatRuntime({ chatStore }: { chatStore: ReturnType<typeof useChatStore>
       }
 
       // assistant-ui restricts `status` to assistant messages; we rely on metadata flags instead
-      return base as any
+      return base
     }
   });
   

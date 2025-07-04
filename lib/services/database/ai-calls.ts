@@ -385,7 +385,9 @@ export class AiCallService {
       promptTokens: usage.promptTokens || 0,
       completionTokens: usage.completionTokens || 0,
       totalTokens: usage.totalTokens || 0,
-      reasoningTokens: (usage as any).reasoningTokens,
+      ...((usage as { reasoningTokens?: number }).reasoningTokens !== undefined && {
+        reasoningTokens: (usage as { reasoningTokens?: number }).reasoningTokens
+      }),
       latencyMs: latency,
     }
   }

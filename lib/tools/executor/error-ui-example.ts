@@ -23,19 +23,6 @@ import {
  */
 export const executeToolWithErrorUI = withErrorNotification(executeTool)
 
-// Usage:
-async function _exampleUsage() {
-  try {
-    const result = await executeToolWithErrorUI('glossary', 'generate', {
-      documentId: 'doc-123'
-    })
-    console.log('Tool executed successfully:', result)
-  } catch (error) {
-    // Error will be automatically shown to user via UI
-    // You can still handle it programmatically if needed
-    console.error('Tool execution failed:', error)
-  }
-}
 
 /**
  * Example 2: Manual error handling
@@ -43,24 +30,6 @@ async function _exampleUsage() {
  * For more control, you can manually catch errors and show them
  * using the showToolError function.
  */
-async function _manualErrorHandling() {
-  try {
-    const result = await executeTool('summarise', 'generate', {
-      documentId: 'doc-123',
-      level: 'detailed'
-    })
-    return result
-  } catch (error) {
-    // Check if it's a ToolExecutorError
-    if (error instanceof Error && 'code' in error) {
-      showToolError(error as any)
-    } else {
-      // Handle other error types
-      console.error('Unexpected error:', error)
-    }
-    throw error
-  }
-}
 
 /**
  * Example 3: Programmatic error creation and display

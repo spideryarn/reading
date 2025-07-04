@@ -1048,7 +1048,7 @@ export function UnifiedLeftPane({
     }
     
     return <MetadataPanel {...props} />
-  }, [documentTitle, documentCreatedAt, documentSourceUrl, elements, wordCount, glossaryGenerated, isLoadingGlossary, aiHeadingsGenerated, summaryGenerated, ownerEmail, isPublic, documentId, slug, storagePath, originalFileType, uploadMetadata])
+  }, [documentTitle, documentCreatedAt, documentSourceUrl, wordCount, glossaryGenerated, isLoadingGlossary, aiHeadingsGenerated, summaryGenerated, ownerEmail, isPublic, documentId, slug, storagePath, originalFileType, uploadMetadata])
 
   const renderTweetThreadTab = useCallback(() => (
     <TweetThreadPanel

@@ -90,13 +90,13 @@ export function validateAllRegisteredTools(): void {
     const validation = validateTool(tool)
     
     if (!validation.isValid) {
-      console.error(`❌ Tool validation failed for "${(tool as any)?.id || 'unknown'}":`)
+      console.error(`❌ Tool validation failed for "${(tool as { id?: string })?.id || 'unknown'}":`)
       validation.errors.forEach((error: string) => console.error(`   - ${error}`))
       hasErrors = true
     }
     
     if (validation.warnings.length > 0) {
-      console.warn(`⚠️  Tool validation warnings for "${(tool as any)?.id || 'unknown'}":`)
+      console.warn(`⚠️  Tool validation warnings for "${(tool as { id?: string })?.id || 'unknown'}":`)
       validation.warnings.forEach((warning: string) => console.warn(`   - ${warning}`))
       hasWarnings = true
     }
@@ -196,7 +196,7 @@ export function getProductionReadyTools() {
   // In the future, this could check for additional flags or validation
   return tools.filter((tool: unknown) => {
     // Basic readiness checks
-    const t = tool as any
+    const t = tool as { componentPath?: string; shortcuts?: string[]; description?: string }
     return (
       t.componentPath && 
       t.shortcuts && 

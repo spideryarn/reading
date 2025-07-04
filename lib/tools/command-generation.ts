@@ -310,7 +310,7 @@ export function generateCommandsFromRegistry(
       category: CATEGORY_MAPPINGS[tool.category],
       icon: ({ size, className }: { size?: number; className?: string }) => {
         const IconComponent = tool.icon
-        const iconProps: any = {}
+        const iconProps: { size?: number; className?: string } = {}
         if (size !== undefined) iconProps.size = size
         if (className !== undefined) iconProps.className = className
         return React.createElement(IconComponent, iconProps)

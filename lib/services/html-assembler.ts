@@ -213,11 +213,11 @@ export async function assembleDocument(
       let fragmentContent = fragment.htmlFragment
       
       if (validatedConfig.mergeTableRows) {
-        fragmentContent = mergeTableElements(fragmentContent, fragment, crossPageMerges, warnings)
+        fragmentContent = mergeTableElements(fragmentContent, fragment, crossPageMerges)
       }
       
       if (validatedConfig.unifyParagraphs) {
-        fragmentContent = mergeParagraphElements(fragmentContent, fragment, crossPageMerges, warnings)
+        fragmentContent = mergeParagraphElements(fragmentContent, fragment, crossPageMerges)
       }
       
       assembledContent += fragmentContent
@@ -442,8 +442,7 @@ function identifyCrossPageElements(
 function mergeTableElements(
   fragmentContent: string,
   fragment: ProcessedFragment,
-  crossPageMerges: CrossPageElement[],
-  _warnings: string[]
+  crossPageMerges: CrossPageElement[]
 ): string {
   const tableMerges = crossPageMerges.filter(
     merge => merge.elementType === 'table' && 
@@ -483,8 +482,7 @@ function mergeTableElements(
 function mergeParagraphElements(
   fragmentContent: string,
   fragment: ProcessedFragment,
-  crossPageMerges: CrossPageElement[],
-  _warnings: string[]
+  crossPageMerges: CrossPageElement[]
 ): string {
   const paragraphMerges = crossPageMerges.filter(
     merge => merge.elementType === 'paragraph' && 
@@ -545,7 +543,7 @@ function extractDocumentTitle(firstPageContent: string): string | null {
     }
     
     return null
-  } catch (_error) {
+  } catch {
     return null
   }
 }

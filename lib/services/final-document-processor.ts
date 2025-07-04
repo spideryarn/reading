@@ -153,7 +153,7 @@ export async function processFinalDocument(
       try {
         // Try to parse as JSON directly
         refinementOutput = JSON.parse(aiResult.text)
-      } catch (_parseError) {
+      } catch {
         // Try to extract JSON from markdown code blocks
         const jsonMatch = aiResult.text.match(/```json\n([\s\S]*?)\n```/)
         if (jsonMatch && jsonMatch[1]) {

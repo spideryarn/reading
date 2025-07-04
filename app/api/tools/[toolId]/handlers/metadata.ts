@@ -222,7 +222,7 @@ export class MetadataHandler extends BaseToolHandler {
         aiCallId: aiCall.id,
         type: 'reading_difficulty',
         subtype: 'ai_assessment',
-        content: result as any // Cast to JsonObject for storage
+        content: result // result already satisfies JsonObject type from EnhancementService
       })
 
       // Mark AI call as completed successfully
@@ -230,7 +230,7 @@ export class MetadataHandler extends BaseToolHandler {
         output_data: {
           level: result.level,
           confidence: result.confidence,
-          factors: result.factors as any
+          factors: result.factors
         }
       })
 

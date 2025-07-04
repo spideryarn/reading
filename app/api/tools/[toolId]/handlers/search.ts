@@ -99,7 +99,18 @@ export class SearchHandler extends BaseToolHandler {
       }
       
       // Extract query information from the cached data
-      const queries = (enhancements || []).map((enhancement: any) => {
+      const queries = (enhancements || []).map((enhancement) => {
+        // Ensure content is not null and is an object
+        if (!enhancement.content || typeof enhancement.content !== 'object') {
+          // Return a default query object for malformed data
+          return {
+            query: enhancement.subtype || 'Unknown query',
+            normalizedQuery: enhancement.subtype || '',
+            searchedAt: enhancement.created_at || new Date().toISOString(),
+            resultCount: 0
+          }
+        }
+        
         const content = enhancement.content as {
           originalQuery?: string
           normalizedQuery: string
@@ -113,9 +124,9 @@ export class SearchHandler extends BaseToolHandler {
         }
         
         return {
-          query: content.originalQuery || enhancement.subtype, // Fallback to subtype if originalQuery not available
-          normalizedQuery: enhancement.subtype,
-          searchedAt: content.searchedAt || enhancement.created_at,
+          query: content.originalQuery || enhancement.subtype || 'Unknown query',
+          normalizedQuery: enhancement.subtype || '',
+          searchedAt: content.searchedAt || enhancement.created_at || new Date().toISOString(),
           resultCount: Array.isArray(content.matches) ? content.matches.length : 0
         }
       })

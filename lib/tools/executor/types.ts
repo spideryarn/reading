@@ -17,6 +17,8 @@
 
 import type { Tool } from '../types'
 import { TOOL_TIMEOUTS } from '../../config'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/types/database-extensions'
 
 /**
  * Execution context provided to tools during execution
@@ -49,7 +51,7 @@ export interface ExecutionContext {
   urlState?: Record<string, unknown>
   
   /** Authenticated Supabase client (server execution only, test environment) */
-  supabaseClient?: any
+  supabaseClient?: SupabaseClient<Database>
 }
 
 /**

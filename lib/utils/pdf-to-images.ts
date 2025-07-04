@@ -129,7 +129,7 @@ async function loadPDF(
     
     return result;
   } catch (error: unknown) {
-    const errorObj = error as any;
+    const errorObj = error as { name?: string; message?: string };
     if (errorObj?.name === 'InvalidPDFException') {
       throw new PDFToImagesError('Invalid PDF file format');
     } else if (errorObj?.name === 'MissingPDFException') {
@@ -193,7 +193,7 @@ async function extractImageFromCanvas(
       const dataUrl = canvas.toDataURL(mimeType, quality);
       resolve(dataUrl);
     } catch (error: unknown) {
-      const message = (error as any)?.message || String(error);
+      const message = (error as { message?: string })?.message || String(error);
       reject(new PDFToImagesError(`Image extraction failed: ${message}`));
     }
   });
@@ -313,7 +313,7 @@ export async function convertPDFToImages(
         
       } catch (error: unknown) {
         console.error(`Failed to process page ${pageNumber}:`, error);
-        const message = (error as any)?.message || String(error);
+        const message = (error as { message?: string })?.message || String(error);
         throw new PDFToImagesError(`Page ${pageNumber} processing failed: ${message}`);
       }
     }
@@ -338,7 +338,7 @@ export async function convertPDFToImages(
     if (error instanceof PDFToImagesError) {
       throw error;
     }
-    const message = (error as any)?.message || String(error);
+    const message = (error as { message?: string })?.message || String(error);
     throw new PDFToImagesError(`PDF conversion failed: ${message}`);
   }
 }
@@ -419,7 +419,7 @@ export async function convertPDFBufferToImages(
         
       } catch (error: unknown) {
         console.error(`Failed to process page ${pageNumber}:`, error);
-        const message = (error as any)?.message || String(error);
+        const message = (error as { message?: string })?.message || String(error);
         throw new PDFToImagesError(`Page ${pageNumber} processing failed: ${message}`);
       }
     }
@@ -444,7 +444,7 @@ export async function convertPDFBufferToImages(
     if (error instanceof PDFToImagesError) {
       throw error;
     }
-    const message = (error as any)?.message || String(error);
+    const message = (error as { message?: string })?.message || String(error);
     throw new PDFToImagesError(`PDF buffer conversion failed: ${message}`);
   }
 }
