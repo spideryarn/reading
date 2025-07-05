@@ -106,7 +106,7 @@ Type checking and linting:
 Debugging resources:
 - Current logs: `tail dev.log` or `tail error.log`
 - Browser debugging: Playwright MCP (console logs, network requests, screenshots)
-- **E2E testing**: Always run `npm run dev:daemon` before running E2E tests to be sure that the dev server is running
+- **E2E testing**: Always run `npm run dev:status || npm run dev:daemon` before running E2E tests to ensure the dev server is running
 
 ⚠️ **IMPORTANT**: If tests are failing, try and understand why. If they're failing for systemic reasons, tell the user so we can discuss how to fix things. Be wary about removing/modifying the tests just to make them pass. If in doubt, stop & discuss with the user.
 
