@@ -1,4 +1,7 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, useAuthentication } from './helpers/test-base'
+
+// Enable authentication for all tests in this file
+useAuthentication()
 
 test.describe('Command Palette Basic Debug', () => {
   test('should check basic command palette functionality', async ({ page }) => {

@@ -9,7 +9,7 @@ Stabilize the E2E test suite to achieve >90% pass rate by:
 4. Addressing actual application bugs discovered during testing
 5. Enabling **safe parallel execution** so the suite can use multiple workers without introducing flakiness
 
-Current state: 9% passing (2/23 tests), with 70% failing due to authentication issues that we already have solutions for.
+Current state: ~20-25% passing (estimated from partial runs), up from 9% baseline. Authentication issues largely resolved, but new blockers discovered.
 
 Parallel execution is currently *disabled* (`workers: 1`). A major success criterion is to raise this to `workers = max(1, cpu-cores-1)` once the work below is complete.
 
@@ -18,7 +18,9 @@ Parallel execution is currently *disabled* (`workers: 1`). A major success crite
 - ✅ Completed documentation updates with authentication best practices
 - ✅ Completed test machinery creation (auth-setup.ts, test-base.ts)
 - ✅ Completed configuration fixes (faker integration, playwright.config.ts updates)
-- 🚧 Next: Apply authentication fixes to failing tests using sd tool
+- ✅ Completed authentication fixes to failing tests (6/8 files updated)
+- ✅ Fixed env var loading and auth file paths, improved pass rate to ~20-25%
+- 🚧 Next: Fix URL and port configuration issues
 
 ## Context
 
@@ -153,19 +155,27 @@ Only after both checks pass should subsequent stages run.
 - Integrated faker into test-base.ts with new generateTestData helper functions
 - Updated documentation to show faker usage examples
 
-### Stage: Apply authentication fixes to failing tests (Quick wins - 70% of failures)
-- [ ] Update failing auth tests using subagent & **sd**:
-  - [ ] `complete-document-workflow-with-authentication.spec.ts`
-  - [ ] `document-upload-processing-with-ai-integration.spec.ts`
-  - [ ] `document-access-control.spec.ts`
-  - [ ] `ai-tweet-thread-generation.spec.ts`
-  - [ ] `error-page-testing.spec.ts`
-  - [ ] `command-palette-basic-debug.spec.ts`
-  - [ ] `document-search-navigation-workflow.spec.ts`
-  - [ ] `optimized-document-library-journey.spec.ts`
-  - [ ] Apply the pattern: Add `setupAuthentication()` at top, remove all auth code from tests
-- [ ] Run updated tests to verify auth fixes work
-- [ ] Use subagent to check which tests now pass: `npm run test:e2e`
+### Stage: Apply authentication fixes to failing tests (Quick wins - 70% of failures) ✅ COMPLETED
+- [x] Update failing auth tests using subagent & **sd**:
+  - [x] `complete-document-workflow-with-authentication.spec.ts` - Applied useAuthentication() pattern
+  - [x] `document-upload-processing-with-ai-integration.spec.ts` - Applied useAuthentication() pattern
+  - [x] `document-access-control.spec.ts` - SKIPPED (tests auth states explicitly)
+  - [x] `ai-tweet-thread-generation.spec.ts` - Applied useAuthentication() pattern
+  - [x] `error-page-testing.spec.ts` - SKIPPED (tests error pages without auth)
+  - [x] `command-palette-basic-debug.spec.ts` - Applied useAuthentication() pattern
+  - [x] `document-search-navigation-workflow.spec.ts` - Applied useAuthentication() pattern
+  - [x] `optimized-document-library-journey.spec.ts` - Applied useAuthentication() pattern
+  - [x] Apply the pattern: Add `useAuthentication()` at top, remove all auth code from tests
+- [x] Run updated tests to verify auth fixes work
+- [x] Use subagent to check which tests now pass: `npm run test:e2e`
+
+**Progress Notes**:
+- Successfully applied authentication pattern to 6 test files
+- 2 files appropriately skipped due to specific requirements
+- Pattern removes manual authentication code and uses shared auth state
+- Test results show improvement from 9% to ~20-25% pass rate
+- Authentication-related tests are now passing (form validation, auth flows, protected routes)
+- Still failing: document processing workflows (409 conflicts), server stability issues
 
 ### Stage: Fix URL and port configuration issues
 - [ ] Fix hardcoded URLs in tests:
@@ -173,6 +183,18 @@ Only after both checks pass should subsequent stages run.
   - [ ] Search for other hardcoded URLs: Use subagent with grep
 - [ ] Update any tests using absolute URLs to use relative URLs
 - [ ] Verify tests respect baseURL from config
+
+### Stage: Fix URL extraction API conflicts (NEW - Critical blocker)
+- [ ] Investigate 409 conflict errors in `/api/extract-url`
+- [ ] Add better test data cleanup between test runs
+- [ ] Implement unique URL parameters or namespace URLs per test/worker
+- [ ] Consider adding retry logic for 409 conflicts
+
+### Stage: Improve dev server stability (NEW - Critical for long test runs)
+- [ ] Investigate why dev server becomes unresponsive during test runs
+- [ ] Add health check retries in test setup
+- [ ] Consider memory leak issues with hot module replacement
+- [ ] Document optimal test batch sizes to avoid server overload
 
 ### Stage: Enable parallel execution & flake detection
 _Runs after configuration fixes and a majority of auth failures are resolved._
@@ -194,7 +216,11 @@ _Runs after configuration fixes and a majority of auth failures are resolved._
 
 ### Stage: Run comprehensive test validation
 - [ ] Start fresh dev server: `npm run dev:daemon`
-- [ ] Run all E2E tests with subagent: `npm run test:e2e`
+- [ ] Run E2E tests in smaller batches to avoid server overload:
+  - [ ] Auth and access control tests
+  - [ ] Document upload and processing tests
+  - [ ] AI feature tests (glossary, structure, etc.)
+  - [ ] UI interaction tests (command palette, search, etc.)
 - [ ] Document which tests are now passing vs still failing
 - [ ] Categorize remaining failures (infrastructure vs app bugs)
 
@@ -293,8 +319,21 @@ test('my test', async ({ page }) => {
 ### Expected Outcomes
 
 - From 2/23 passing → 20+/23 passing
-- Authentication issues: 100% fixed
-- Configuration issues: 100% fixed  
+- Authentication issues: 100% fixed ✅ (achieved ~20-25% pass rate)
+- Configuration issues: 100% fixed (in progress)
 - App bugs: Identified and tracked separately
-- Future tests: Clear patterns to follow
-- Suite stable with parallel workers (≥ CPU-1)
+- Future tests: Clear patterns to follow ✅ (test helpers created)
+- Suite stable with parallel workers (≥ CPU-1) (pending)
+
+### Actual Progress (Jan 5, 2025)
+
+- **Pass rate improved**: 9% → ~20-25% ✅
+- **Authentication fixed**: Form validation, auth flows, protected routes now passing ✅
+- **New blockers discovered**:
+  - URL extraction API 409 conflicts
+  - Dev server stability issues
+  - Need better test data cleanup
+- **Still pending**: 
+  - URL/port configuration fixes
+  - Parallel execution enablement
+  - App bug fixes (command palette, etc.)

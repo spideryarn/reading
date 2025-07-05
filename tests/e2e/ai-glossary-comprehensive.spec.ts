@@ -1,9 +1,11 @@
 import { test, expect, Page } from '@playwright/test';
 import { withDatabaseResetRecovery } from '../helpers/robust-auth';
+import { getCurrentEnvironmentPaths } from '../../lib/testing/worktree-auth-helpers';
 
 // Use pre-authenticated state for faster test execution (worktree-specific)
+const { authFile } = getCurrentEnvironmentPaths();
 test.use({ 
-  storageState: 'playwright/.auth/worktree2-user.json' 
+  storageState: authFile 
 });
 
 /**

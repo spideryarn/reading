@@ -99,14 +99,11 @@ test.describe('Document Search & Navigation Workflow', () => {
     console.log('🔄 Starting Document Search & Navigation Workflow Test');
     
     // =================================================================
-    // PHASE 1: AUTHENTICATION & DOCUMENT SETUP
+    // PHASE 1: DOCUMENT SETUP
     // =================================================================
-    console.log('Phase 1: Authentication and document setup');
+    console.log('Phase 1: Document setup');
     
-    // Use robust auth manager for authentication
-    const auth = new RobustAuthManager(page);
-    await auth.loginAs('user');
-    console.log('✅ Authentication successful');
+    // Already authenticated via useAuthentication()
     
     // Navigate to the read page (should show existing documents)
     await page.goto('/read');
@@ -172,9 +169,9 @@ test.describe('Document Search & Navigation Workflow', () => {
     console.log(`✅ Document loaded successfully (ID: ${documentId})`);
     
     // =================================================================
-    // PHASE 2: BASIC TEXT SEARCH
+    // PHASE 1: BASIC TEXT SEARCH
     // =================================================================
-    console.log('Phase 2: Testing basic text search functionality');
+    console.log('Phase 1: Testing basic text search functionality');
     
     // Find and click the search button/icon to open search
     const searchButton = page.locator('button[aria-label*="search"], button:has-text("Search"), [data-testid="search-button"]').first();
@@ -217,9 +214,9 @@ test.describe('Document Search & Navigation Workflow', () => {
     }
     
     // =================================================================
-    // PHASE 3: SEMANTIC AI SEARCH
+    // PHASE 2: SEMANTIC AI SEARCH
     // =================================================================
-    console.log('Phase 3: Testing semantic AI search');
+    console.log('Phase 2: Testing semantic AI search');
     
     // Look for search type selector
     const semanticSearchToggle = page.locator('button:has-text("Semantic"), select option:has-text("Semantic"), input[type="radio"][value="semantic"]').first();
@@ -259,9 +256,9 @@ test.describe('Document Search & Navigation Workflow', () => {
     }
     
     // =================================================================
-    // PHASE 4: NAVIGATION & STATE MANAGEMENT
+    // PHASE 3: NAVIGATION & STATE MANAGEMENT
     // =================================================================
-    console.log('Phase 4: Testing navigation and state management');
+    console.log('Phase 3: Testing navigation and state management');
     
     // Check that URL has been updated with search parameters
     const currentUrl = page.url();
@@ -313,9 +310,9 @@ test.describe('Document Search & Navigation Workflow', () => {
     }
     
     // =================================================================
-    // PHASE 5: ADVANCED FEATURES & ERROR HANDLING
+    // PHASE 4: ADVANCED FEATURES & ERROR HANDLING
     // =================================================================
-    console.log('Phase 5: Testing advanced features and error handling');
+    console.log('Phase 4: Testing advanced features and error handling');
     
     // Test clear search functionality
     const clearButton = page.locator('button:has-text("Clear"), button[aria-label*="clear"]').first();
@@ -379,9 +376,7 @@ test.describe('Document Search & Navigation Workflow', () => {
   test('search error handling and edge cases', async ({ page }) => {
     console.log('🔄 Starting Search Error Handling Test');
     
-    // Authenticate and navigate to document
-    const auth = new RobustAuthManager(page);
-    await auth.loginAs('user');
+    // Already authenticated via useAuthentication()
     
     await page.goto('/read');
     
