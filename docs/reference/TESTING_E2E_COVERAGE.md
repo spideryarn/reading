@@ -7,53 +7,41 @@ see: `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
 
 ## Current E2E Test Coverage
 
-### 1. `auth.spec.ts` - Authentication Flows
-- ✅ Email login flow
-- ✅ Email signup flow  
-- ✅ Google OAuth login
-- ✅ Logout functionality
-- ✅ Protected route access
-- ✅ Session persistence
+### Core Workflow Tests
 
-### 2. `document-creation.spec.ts` - Document Creation
-- ✅ URL extraction and document creation
-- ✅ Form validation (empty URL, invalid URL)
-- ✅ Success redirect to document view
-- ✅ Error handling display
+#### 1. `complete-document-workflow-with-authentication.spec.ts`
+- ✅ Complete user workflow from authentication through document processing to AI interactions
+- ✅ Comprehensive integration test replacing 50+ unit tests
+- ✅ Document upload, processing, and AI feature integration
+- ✅ Authentication flows and protected route access
 
-### 3. `document-search.spec.ts` - Search Functionality
-- ✅ Basic text search within document
-- ✅ Search result highlighting
-- ✅ Multiple match navigation
-- ✅ Search persistence across reloads
-- ✅ Clear search functionality
-- ✅ Case-insensitive search
+#### 2. `document-upload-processing-with-ai-integration.spec.ts`
+- ✅ Complete document upload and processing pipeline
+- ✅ AI integration workflow (chat, headings, glossary, summary)
+- ✅ Authentication through document processing journey
+- ✅ Real LLM calls and AI feature validation
 
-### 4. `document-upload.spec.ts` - File Upload
-- ✅ PDF file upload flow
-- ✅ Upload progress indication
-- ✅ Document processing status
-- ✅ Redirect to processed document
+### Search & Navigation Tests
 
-### 5. `navigation.spec.ts` - App Navigation
-- ✅ Homepage to documents list
-- ✅ Document selection and viewing
-- ✅ Tab switching (Doc/ToC/Headings/Tools)
-- ✅ Public document access (unauthenticated)
+#### 3. `search-with-document-creation.spec.ts`
+- ✅ Document creation and search functionality integration
+- ✅ End-to-end search workflow
+- ✅ Search result navigation and highlighting
 
-### 6. `semantic-search.spec.ts` - Advanced Search
-- ✅ Semantic search query execution
-- ✅ Search results display
-- ✅ Result navigation
-- ✅ Context preview in results
+#### 4. `search-with-highlight-validation.spec.ts`
+- ✅ Search highlight accuracy validation
+- ✅ Case-insensitive search testing
+- ✅ Precise highlight positioning and appearance
 
-### 7. `document-viewing.spec.ts` - Document Display
-- ✅ Document content rendering
-- ✅ Document metadata display
-- ✅ Public/private document access
-- ✅ Document not found handling
+#### 5. `document-search-navigation-workflow.spec.ts`
+- ✅ Comprehensive search and navigation user experience
+- ✅ Semantic AI search integration
+- ✅ Context extraction and navigation workflows
+- ✅ URL state management during search
 
-### 8. `document-access-control.spec.ts` - Access Control & Security
+### Access Control & Security Tests
+
+#### 6. `document-access-control.spec.ts`
 - ✅ Anonymous user access to public documents
 - ✅ Anonymous user blocked from private documents (404)
 - ✅ Authenticated user access to owned documents
@@ -63,7 +51,9 @@ see: `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
 - ✅ HTTP status code consistency
 - ✅ Cross-document navigation access control
 
-### 9. `ai-tweet-thread-generation.spec.ts` - AI Tweet Thread Generation
+### AI Feature Tests
+
+#### 7. `ai-tweet-thread-generation.spec.ts`
 - ✅ Complete tweet thread generation workflow
 - ✅ Document upload and AI processing pipeline
 - ✅ Tweet thread generation with real LLM calls
@@ -71,22 +61,50 @@ see: `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
 - ✅ Copy/share functionality testing
 - ✅ Different content types (HTML upload, URL extraction)
 
-## Coverage Gaps (Not Yet Tested)
+#### 8. `ai-glossary-comprehensive.spec.ts`
+- ✅ Complete glossary functionality with real AI integration
+- ✅ Glossary generation and Load More features
+- ✅ Position tracking (Stage 3) and error handling
+- ✅ Glossary UI interaction and display
 
-### High Priority
-- ❌ Document deletion flow
-- ❌ AI heading generation
-- ❌ Glossary generation and display
-- ❌ Summary generation (multiple levels)
+#### 9. `glossary-reset-highlight-removal.spec.ts`
+- ✅ Glossary reset workflow validation
+- ✅ Document pane highlight removal verification
+- ✅ Complete reset functionality testing
 
-### Medium Priority
-- ❌ Keyboard shortcuts (Cmd+K, etc.)
-- ❌ Cross-document navigation
-- ❌ Settings management
-- ❌ Reading difficulty metrics
-- ❌ Highlight management
+#### 10. `ai-headings-insertion-order.spec.ts`
+- ✅ AI headings insertion order fixes
+- ✅ Headings appear before content they introduce
+- ✅ Correct hierarchical order (H2 → H3 → H4)
+- ✅ Heading positioning validation
 
-### 10. `error-states.spec.ts` - Error Handling
+#### 11. `ai-headings-persistence-refresh.spec.ts`
+- ✅ AI-generated headings persist after page refresh
+- ✅ Headings saved to database and restored on reload
+- ✅ UI state (AI-enhanced/Original) persists correctly
+- ✅ Heading removal persistence after refresh
+- ✅ Complete persistence workflow validation
+
+### User Interface & Interaction Tests
+
+#### 12. `command-palette-basic-debug.spec.ts`
+- ✅ Basic command palette functionality
+- ✅ Console error checking
+- ✅ Opening/closing behaviour validation
+
+#### 13. `command-palette-dynamic-generation.spec.ts`
+- ✅ Command palette with Ctrl+K shortcut
+- ✅ Dynamically generated tool commands
+- ✅ Command palette interaction workflow
+
+#### 14. `tool-keyboard-shortcuts.spec.ts`
+- ✅ All tool keyboard shortcuts (Cmd+1 through Cmd+9)
+- ✅ Tool access via keyboard navigation
+- ✅ URL changes validation during tool switching
+
+### Error Handling & Recovery Tests
+
+#### 15. `error-page-testing.spec.ts`
 - ✅ Custom 404 page display and functionality
 - ✅ Custom 500 error page display and functionality  
 - ✅ Error page navigation (Go Home, Go Back buttons)
@@ -94,11 +112,67 @@ see: `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
 - ✅ Development error details display
 - ✅ Error page styling and layout consistency
 
+### Regression Tests
+
+#### 16. `left-margin-regression.spec.ts`
+- ✅ Document text visibility with collapsed left pane
+- ✅ Vertical icon navigation bar positioning
+- ✅ Narrow screen layout (638px width) testing
+
+### Optimized Test Suite (Comprehensive Journey Tests)
+
+#### 17. `optimized-authenticated-onboarding-journey.spec.ts`
+- ✅ Complete user authentication and onboarding experience
+- ✅ User registration, login, and initial setup
+- ✅ Protected route access and session management
+
+#### 18. `optimized-ai-features-journey.spec.ts`
+- ✅ Complete AI-powered feature experience
+- ✅ Document reading with AI enhancements
+- ✅ AI tool integration and interaction workflow
+
+#### 19. `optimized-anonymous-access-journey.spec.ts`
+- ✅ Comprehensive anonymous user journey
+- ✅ Public document access and limitations
+- ✅ Anonymous user experience validation
+
+#### 20. `optimized-document-library-journey.spec.ts`
+- ✅ Complete document library management experience
+- ✅ Document creation, organization, and navigation
+- ✅ Library search and filtering functionality
+
+#### 21. `optimized-error-recovery.spec.ts`
+- ✅ Error handling and recovery mechanisms
+- ✅ Graceful degradation testing
+- ✅ Error scenario comprehensive coverage
+
+#### 22. `optimized-mobile-experience.spec.ts`
+- ✅ Mobile responsiveness testing
+- ✅ Touch interaction validation
+- ✅ Mobile-specific UI behaviour
+
+#### 23. `optimized-route-smoke-tests.spec.ts`
+- ✅ Comprehensive route accessibility validation
+- ✅ Public, protected, API, and error routes
+- ✅ Basic functionality across all routes
+
+## Coverage Gaps (Not Yet Tested)
+
+### High Priority
+- ❌ Document deletion flow
+- ❌ Summary generation (multiple levels)
+- ❌ Settings management
+
+### Medium Priority
+- ❌ Reading difficulty metrics
+- ❌ Cross-document navigation (beyond access control)
+- ❌ Document sharing and collaboration features
+
 ### Low Priority
 - ❌ Export functionality
 - ❌ Print styling
-- ❌ Mobile responsive behavior
-- ❌ Error recovery flows (beyond basic error boundary)
+- ❌ Advanced mobile gestures
+- ❌ Offline functionality
 
 ## Quick Coverage Check
 
@@ -114,7 +188,7 @@ When adding a new E2E test:
 tests/e2e/
 ├── auth.spec.ts              # Authentication flows
 ├── document-*.spec.ts        # Document operations
-├── ai-*.spec.ts             # AI features (TODO)
+├── ai-*.spec.ts             # AI features
 ├── navigation.spec.ts        # General navigation
 ├── search-*.spec.ts         # Search variants
 └── error-states.spec.ts     # Error handling and recovery
