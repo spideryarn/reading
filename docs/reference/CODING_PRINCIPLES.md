@@ -7,7 +7,7 @@ see also:
 
 - Prioritise code that's simple, easy-to-understand, clean, debuggable, and readable.
 - This is early-stage development with AI-first methods. We want to develop fast and experiment using AI agents, so we can figure out which features are most valuable. The comprehensive documentation, typing, and testing infrastructure exists to support AI productivity and prevent regressions.
-- Fix the root cause rather than putting on a bandaid. Avoid fallbacks & defaults - better to fail if input assumptions aren't being met.
+- Fix the root cause rather than putting on a bandaid. Avoid fallbacks & defaults - better to fail if input assumptions aren't being met. In general, look for minimal, clean, general, robust, minimal-gotchas, root-cause fixes.
 - **Never implement silent data modifications**: No truncation, silent filtering, or quiet data transformations without explicit user consent. If data doesn't fit constraints, fail clearly with a descriptive error rather than modifying it silently.
 - **Always err on the side of caution**: Be especially careful about any operations that could affect databases, production systems, or user data. When in doubt, ask for explicit permission first.
 - Be cautious about irreversible changes, e.g. deleting files, dropping/truncating tables, throwing away data, running database migrations, etc.

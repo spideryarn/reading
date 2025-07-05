@@ -268,9 +268,106 @@ tests/e2e/
 
 **Justification**: E2E tests provide comprehensive coverage of search user experience including text search, semantic AI search, highlighting, navigation, and URL state management. Preserved tests cover pure algorithmic logic and utility functions that cannot be effectively tested through user interface interactions.
 
+## Current Test Status (2025-07-05)
+
+### Test Execution Results
+
+#### Passing (2/23 - 9%)
+- ✅ `search-with-document-creation.spec.ts`
+- ✅ `search-with-highlight-validation.spec.ts`
+
+#### Failing (8/23 - 35%)
+- ❌ `complete-document-workflow-with-authentication.spec.ts` - Authentication timeout
+- ❌ `document-upload-processing-with-ai-integration.spec.ts` - Auth setup failure
+- ❌ `document-access-control.spec.ts` - Network errors during auth
+- ❌ `ai-tweet-thread-generation.spec.ts` - Auth page unreachable
+- ❌ `error-page-testing.spec.ts` - Auth setup timeout
+- ❌ `command-palette-basic-debug.spec.ts` - Dialog not appearing
+- ❌ `document-search-navigation-workflow.spec.ts` - Document loading fails
+- ❌ `optimized-document-library-journey.spec.ts` - Page timeout on /read
+
+#### Broken (13/23 - 56%)
+- 🔴 `command-palette-dynamic-generation.spec.ts` - Auth redirect stuck
+- 🔴 `tool-keyboard-shortcuts.spec.ts` - Wrong port (3004 vs 3005)
+- 🔴 `ai-glossary-comprehensive.spec.ts` - Auth timeout
+- 🔴 `glossary-reset-highlight-removal.spec.ts` - Auth timeout
+- 🔴 `left-margin-regression.spec.ts` - Server unresponsive
+- 🔴 `ai-headings-insertion-order.spec.ts` - Server unresponsive
+- 🔴 `ai-headings-persistence-refresh.spec.ts` - Not tested
+- 🔴 `optimized-authenticated-onboarding-journey.spec.ts` - Network abort
+- 🔴 `optimized-ai-features-journey.spec.ts` - Port conflict
+- 🔴 `optimized-anonymous-access-journey.spec.ts` - Cannot reach server
+- 🔴 `optimized-error-recovery.spec.ts` - Frame detachment
+- 🔴 `optimized-mobile-experience.spec.ts` - Server slow/unresponsive
+- 🔴 `optimized-route-smoke-tests.spec.ts` - Server not responding
+
+### Issue Categories
+
+#### 1. Dev Server Issues (Primary Problem)
+- Server becomes unresponsive during test runs
+- Port conflicts and slow response times
+- Server running but not serving HTTP responses
+- Resource exhaustion or process hanging
+
+#### 2. Authentication Infrastructure (70% of failures)
+- Auth setup project timing out consistently
+- Login page redirect failures
+- Auth state not persisting between tests
+- Network errors when accessing /auth/login
+
+#### 3. Configuration Problems
+- Port mismatch in tool-keyboard-shortcuts (hardcoded 3004)
+- Timeout values too short (30s) for complex operations
+- Frame detachment errors suggesting browser context issues
+
+#### 4. Functional Issues
+- Command palette UI not appearing
+- Document loading failures after auth
+- Element selectors failing to find expected UI
+
+### Test Overlap Analysis
+
+#### Redundant Coverage
+1. **Authentication Testing**
+   - `complete-document-workflow-with-authentication.spec.ts`
+   - `document-upload-processing-with-ai-integration.spec.ts`
+   - `optimized-authenticated-onboarding-journey.spec.ts`
+   - All test similar auth flows with slight variations
+
+2. **Search Functionality**
+   - `search-with-document-creation.spec.ts` ✅
+   - `search-with-highlight-validation.spec.ts` ✅
+   - `document-search-navigation-workflow.spec.ts`
+   - Significant overlap in basic search testing
+
+3. **AI Features**
+   - `complete-document-workflow-with-authentication.spec.ts`
+   - `document-upload-processing-with-ai-integration.spec.ts`
+   - `optimized-ai-features-journey.spec.ts`
+   - Multiple tests covering same AI workflows
+
+4. **Error Handling**
+   - `error-page-testing.spec.ts`
+   - `optimized-error-recovery.spec.ts`
+   - Both test error scenarios with different approaches
+
+#### Recommended Consolidation
+- Merge the three authentication workflow tests into one comprehensive test
+- Keep search tests separate as they test different aspects
+- Consolidate AI feature tests into the optimized journey test
+- Combine error handling tests into single comprehensive suite
+
+### Critical Next Steps
+1. Fix dev server stability issues
+2. Resolve authentication setup reliability
+3. Update port configuration in tests
+4. Increase timeout values for complex operations
+5. Consider test isolation improvements
+
 ## Maintenance
 
 - Update this file when adding new E2E tests
 - Mark items with ✅ when covered
 - Remove from gaps when implemented
 - Keep descriptions concise (one line per feature)
+- Run full test suite monthly to track status changes
