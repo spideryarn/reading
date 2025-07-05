@@ -15,7 +15,7 @@ For comprehensive documentation, see `docs/reference/INDEX_FOR_DOCUMENTATION.md`
 
 Spideryarn Reading is an AI-assisted document reading and analysis application, currently in early development phase using AI-first development methods. The codebase is developed primarily by AI agents working in parallel, with comprehensive documentation and testing infrastructure designed to support AI productivity.
 
-**Goal**: Help humans digest non-fiction material through AI-powered features:
+**Goal of the product**: Help humans digest non-fiction material through AI-powered features:
 - AI-generated granular table of contents and headings
 - Chatbot assistance
 - Multi-granularity summaries
@@ -28,19 +28,23 @@ Spideryarn Reading is an AI-assisted document reading and analysis application, 
 Key principles from `docs/reference/CODING_PRINCIPLES.md`:
 
 **Core Approach:**
+- **Help the user make good decisions and build a product that helps people**: if you're skeptical, or have questions, or concerns, or see a better way, **you must speak up**.
 - **AI-first development**: Fast experimentation with comprehensive docs/testing for AI productivity
-- **Fix root causes**: No band-aids - fail clearly when assumptions aren't met
-- **Stay focused**: Minimal, targeted changes only. Flag unrelated issues, don't fix them
-- **Raise errors early & clearly**: No masking problems - expose them for debugging
+- **Fix root causes**: No bandaids. If you're not sure, gather more clues, generate hypotheses, try and confirm/disconfirm them, flag uncertainty explicitly to the user.
+- **Stay focused**: Minimal, targeted changes only. Flag unrelated issues explicitly, but don't fix them
+- **Raise errors early & clearly**: No masking problems, no fallbacks/bandaids/defaults - fail fatally and immediately, with a user-visible, debuggable message.
 - **Descriptive naming**: Use longer, more descriptive filenames, function names, and variable names that are easy to grep and understand
+- **Never implement silent data modifications**: No truncation or quiet transformations
+- **Get working end-to-end first**: Simple version before layering complexity
+- **Prefer functional over OO**: Easier to test and reason about
 
 **Safety Guidelines:**
-- **Stop and discuss**: When hitting surprises or uncertainty
+- **When hitting surprises or uncertainty**, stop and discuss.
 - **Ask permission for**: Database changes, irreversible operations, production systems
 - **Never modify without permission**: `.env.*` files, database schemas, test data
 - **Database operations**: Always read `docs/reference/DATABASE_*.md` first
 
-⚠️ **CRITICAL**: Database changes destroy development data. Always ask first!
+⚠️ **CRITICAL**: For database changes that could destroy data, always ask first!
 
 ## Architecture & Tech Stack
 
@@ -76,18 +80,43 @@ See `docs/reference/ARCHITECTURE_OVERVIEW.md` for details
 - Deploy: `npm run deploy:production`
 - Details: `docs/reference/SETUP_DEPLOYMENT_PRODUCTION.md`
 
+## Development Workflow
+
+**Stage-based approach** (from planning docs):
+1. Get simple version working end-to-end first
+2. Layer in complexity gradually
+3. Each stage should end with passing tests and working code
+4. Clarify edge cases with user early
+
+**Pre-commit verification** (CRITICAL):
+```bash
+# Always run before committing:
+npm run check:health      # Git-aware health check
+npm test                  # Ensure tests pass
+
+# For E2E tests:
+npm run dev:status || npm run dev:daemon  # Ensure server running
+npm run test:e2e                          # Run E2E tests
+```
+
+**Health check usage**:
+- `npm run check:health` - Checks changed files (git-aware)
+- `npm run check:health --rigorous` - All files for major refactors
+- `npm run check:health --quick` - Skip build for quick iterations
+- Use subagent if >3 files have issues
+
 ## Testing
+
+**Test Reform hierarchy** (prefer higher):
+1. **E2E tests** (80% confidence) - Real user journeys
+2. **Integration tests** (15%) - API contracts
+3. **Unit tests** (5%) - Complex algorithms only
 
 **Database Approach:**
 - **Shared database** - tests use same local dev database
 - **UUID isolation** - all test data must be namespaced
 - **Cleanup required** - use `getCleanupFunctions()` utilities
 - **RLS testing**: Use `RLSTestDatabase` class (see `docs/reference/TESTING_DATABASE.md`)
-
-**Test Strategy:**
-1. **E2E tests** (`e2e/*.spec.ts`) - Prefer these
-2. **Integration tests** - Complete workflows
-3. **Unit tests** - Only for complex logic
 
 **Running Tests:**
 - `npm test` - Jest suite
@@ -123,10 +152,6 @@ See `docs/reference/TESTING_TROUBLESHOOTING.md` for issues
 - `docs/` - Evergreen documentation
 - `docs/planning/` - Decision records
 - `supabase/migrations/` - Database schema
-
-**IGNORE:**
-- `obsolete_alternative_version/` - Deprecated Python version
-- `backup/` - Deprecated SvelteKit implementation
 
 
 ## Browser Automation
@@ -165,14 +190,19 @@ See `docs/instructions/TASKS_SUBAGENTS.md` for details
 - **LLM calls**: Nunjucks + Zod templates (`docs/reference/LLM_PROMPT_TEMPLATES.md`)
 
 **Database**:
-- **RLS Testing**: Use `RLSTestDatabase` class (see `docs/reference/TESTING_DATABASE.md`)
+- **RLS Testing**: Use `RLSTestDatabase` class (critical for security)
 - **Migrations**: `supabase/migrations/` (see `docs/reference/DATABASE_MIGRATIONS.md`)
 
-**UI Components**:
-- shadcn/ui + Phosphor icons
-- See `docs/reference/DESIGN_SHADCN_UI_REFERENCE.md`
+**UI Architecture**:
+- `docs/reference/UI_INTERFACE.md` - 2-pane resizable layout with tabbed navigation
+- `docs/reference/UI_COMPONENTS.md` - shadcn/ui component system and available components
+- `docs/reference/SITE_ORGANISATION_WEBSITE_STRUCTURE.md` - Database-driven application routes and structure
+- `docs/reference/UNIFIED_LEFT_PANE_TABBED_NAVIGATION.md` - Left pane with 7 tabs (ToC, Chat, etc.)
 
-**Documentation Index**: `docs/reference/INDEX_FOR_DOCUMENTATION.md`
+**Key References**:
+- `docs/reference/SETUP_FOR_AI_FIRST_CODING.md` - AI development optimization patterns
+- `docs/instructions/SOUNDING_BOARD_MODE.md` - When to ask questions vs implement
+- `docs/reference/INDEX_FOR_DOCUMENTATION.md` - Complete documentation overview
 
 
 ## Quick Reference
