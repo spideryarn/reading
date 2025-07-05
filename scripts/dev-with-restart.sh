@@ -96,7 +96,7 @@ is_process_running() {
 
 is_port_responding() {
     local port="$1"
-    [ -n "$port" ] && curl -f "http://localhost:$port/" >/dev/null 2>&1
+    [ -n "$port" ] && curl -f --max-time 5 --connect-timeout 3 "http://localhost:$port/" >/dev/null 2>&1
 }
 
 get_daemon_pid() {
@@ -419,23 +419,42 @@ case "$MODE" in
         PORT=$(get_port)
         daemon_pid=$(get_daemon_pid)
         
+        # Check 1: PID file existence
         if [ -z "$daemon_pid" ]; then
             echo "❌ No daemon running (no PID file)"
             exit 1
         fi
         
+        # Check 2: Process existence
         if ! is_process_running "$daemon_pid"; then
             echo "❌ Daemon not running (stale PID: $daemon_pid)"
             rm -f "$SYR_DEVSERVER_PIDFILE"
             exit 1
         fi
         
-        if [ -n "$PORT" ] && is_port_responding "$PORT"; then
-            echo "✅ Daemon running and healthy (PID: $daemon_pid, Port: $PORT)"
+        # Check 3: Port configuration
+        if [ -z "$PORT" ]; then
+            echo "⚠️  Daemon running but no PORT configured (PID: $daemon_pid)"
+            echo "   Cannot verify server health without PORT in .env.local"
+            exit 0  # Process exists, so technically "running"
+        fi
+        
+        # Check 4: Port responsiveness (with timeout)
+        echo -n "🔍 Checking server health on port $PORT..."
+        if is_port_responding "$PORT"; then
+            echo -e "\r✅ Daemon running and healthy (PID: $daemon_pid, Port: $PORT)"
             exit 0
         else
-            echo "⚠️  Daemon running but not responding (PID: $daemon_pid, Port: ${PORT:-unknown})"
-            exit 1
+            # Check if port is at least open (server might be starting/compiling)
+            if lsof -i :$PORT >/dev/null 2>&1; then
+                echo -e "\r⚠️  Daemon running but slow/unresponsive (PID: $daemon_pid, Port: $PORT)"
+                echo "   Server may be starting up or compiling. Check 'tail dev.log' for details."
+                exit 2  # Different exit code for "running but not healthy"
+            else
+                echo -e "\r❌ Daemon running but port not open (PID: $daemon_pid, Port: $PORT)"
+                echo "   Process exists but not listening on expected port. Check 'tail error.log' for issues."
+                exit 1
+            fi
         fi
         ;;
         
