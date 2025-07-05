@@ -15,8 +15,20 @@ This document provides instructions for periodically reviewing and improving err
 - Familiarity with `docs/reference/CODING_PRINCIPLES.md` (especially "Raise errors early, clearly & fatally")
 - Understanding of `docs/reference/ERROR_HANDLING_PATTERNS.md` (once created)
 - Access to the Tool Error Notification system (`lib/tools/executor/error-ui.ts`)
+- Knowledge of the new **Problem Detail** helpers in `lib/api/error-utils.ts` (especially `createProblemDetail` and the `ApplicationError` hierarchy)
+- Ability to run the specialised ESLint task `npm run lint:errors` (checks empty catch blocks, generic messages, and raw `NextResponse.json({ error:` patterns)
 
 ## Investigation Process
+
+### Step 0: Run Lint Checks
+
+Before manual investigation, execute the automated lint task:
+
+```bash
+npm run lint:errors
+```
+
+Fix or document any findings before moving on. The goal is zero lint violations.
 
 ### Step 1: Search for Masked Errors
 
@@ -30,6 +42,7 @@ Use subagents to search for patterns that indicate errors being silently handled
 - error conditions returning empty arrays/objects
 - "|| []", "|| {}", "|| ''" in error contexts
 - console.error without re-throwing or user notification
+- `NextResponse.json({ error:` (raw error envelopes instead of Problem Details)
 ```
 
 **Example task for subagent:**
@@ -94,6 +107,7 @@ Verify errors are using appropriate display methods:
 - Must include correlation IDs
 - Should have appropriate HTTP status codes
 - Must distinguish between client errors (4xx) and server errors (5xx)
+- Verify the `x-spideryarn-correlation-id` header is present on every response
 
 ### Step 4: Validate Error Flows
 
