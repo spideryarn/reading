@@ -1,0 +1,112 @@
+%% LLM v1 PDF Upload Pipeline
+%% This diagram shows the complete flow of PDF processing in the LLM v1 implementation
+%% Key files: app/api/upload-pdf/route.ts, lib/services/process.ts, lib/prompts/templates/pdf-to-html-direct.njk
+%% Shows API calls, data structures, validation steps, AI processing, and storage
+%% Created to understand current implementation before v2 improvements
+
+graph TB
+    %% Color scheme
+    %% Purple: User/Browser
+    %% Blue: Backend API
+    %% Yellow: Database
+    %% Purple: Cloud Storage
+    %% Green: AI Services
+    %% Orange: Validation/Processing
+
+    %% User interaction
+    User["👤 User<br/><i>uploads PDF</i>"]:::purple
+    
+    %% API endpoint
+    API["/api/upload-pdf<br/><code>route.ts</code>"]:::blue
+    
+    %% Request validation
+    Auth{Authentication<br/>Check}:::orange
+    FileValid{"File Validation<br/><code>PDF header<br/>Size < 50MB<br/>Pages < 100</code>"}:::orange
+    
+    %% AI processing
+    AIPrompt["Create AI Prompt<br/><code>createPdfToHtmlPrompt()</code><br/><i>Claude: 32MB max<br/>Gemini: 20MB max</i>"]:::green
+    AICall["AI Call Tracking<br/><code>AiCallService</code><br/><i>Record metadata<br/>Track tokens</i>"]:::green
+    AIProcess["AI Processing<br/><code>executeMultimodalPromptWithUsage()</code><br/><i>Send PDF buffer<br/>Multi-page enabled</i>"]:::green
+    
+    %% AI models
+    Claude["Claude Sonnet 4<br/><code>64K tokens<br/>Temperature: 0</code>"]:::green
+    Gemini["Gemini 2.5 Pro<br/><code>64K tokens<br/>Temperature: 0</code>"]:::green
+    
+    %% HTML processing pipeline
+    HTMLPipeline["processHtmlToDocument()<br/><code>Shared pipeline</code>"]:::blue
+    Sanitize["Sanitize HTML<br/><code>sanitizeAcademicContent()</code>"]:::orange
+    ExtractText["Extract Text<br/><code>DOM-based extraction</code>"]:::orange
+    AssignIDs["Assign IDs<br/><code>Deterministic UUID v5</code>"]:::orange
+    Prettify["Prettify HTML<br/><code>Optional formatting</code>"]:::orange
+    
+    %% Storage
+    Storage["Supabase Storage<br/><code>uploadDocumentFile()</code><br/><i>Original PDF</i>"]:::purpleStorage
+    
+    %% Database
+    DBCreate["Create Document<br/><code>DocumentService</code><br/><i>Title, slug, content<br/>Metadata, AI call ID<br/>User ownership</i>"]:::yellow
+    
+    %% Response
+    Response["JSON Response<br/><code>Document ID<br/>Storage path<br/>Processing metadata</code>"]:::blue
+    
+    %% Error states
+    Error401[401 Unauthorized]:::red
+    Error429[429 Rate Limited]:::red
+    Error503[503 Service Error]:::red
+    Error504[504 Timeout]:::red
+    Error409[409 Duplicate Slug]:::red
+    
+    %% Flow
+    User -->|"FormData<br/>pdf, provider,<br/>title, isPublic"| API
+    API --> Auth
+    Auth -->|No| Error401
+    Auth -->|Yes| FileValid
+    FileValid -->|Invalid| Error503
+    FileValid -->|Valid| AIPrompt
+    
+    AIPrompt --> AICall
+    AICall --> AIProcess
+    AIProcess -->|Claude| Claude
+    AIProcess -->|Gemini| Gemini
+    
+    Claude -->|HTML| HTMLPipeline
+    Gemini -->|HTML| HTMLPipeline
+    
+    HTMLPipeline --> Sanitize
+    Sanitize --> ExtractText
+    ExtractText --> AssignIDs
+    AssignIDs --> Prettify
+    Prettify --> Storage
+    
+    Storage -->|Success/Fail| DBCreate
+    DBCreate -->|Success| Response
+    DBCreate -->|Duplicate| Error409
+    
+    AIProcess -->|Timeout| Error504
+    AIProcess -->|API Error| Error503
+    API -->|Rate Limit| Error429
+    
+    %% Key/Legend
+    subgraph Legend["Color Key"]
+        LUser["👤 User/Browser"]:::purple
+        LBackend["Backend API"]:::blue
+        LDatabase["Database"]:::yellow
+        LStorage["Cloud Storage"]:::purpleStorage
+        LAI["AI Services"]:::green
+        LProcess["Processing/Validation"]:::orange
+        LError["Error States"]:::red
+    end
+    
+    %% Styling
+    classDef purple fill:#9370DB,stroke:#333,stroke-width:2px,color:#fff
+    classDef blue fill:#4169E1,stroke:#333,stroke-width:2px,color:#fff
+    classDef yellow fill:#FFD700,stroke:#333,stroke-width:2px,color:#000
+    classDef purpleStorage fill:#8B008B,stroke:#333,stroke-width:2px,color:#fff
+    classDef green fill:#228B22,stroke:#333,stroke-width:2px,color:#fff
+    classDef orange fill:#FF8C00,stroke:#333,stroke-width:2px,color:#fff
+    classDef red fill:#DC143C,stroke:#333,stroke-width:2px,color:#fff
+
+%% Data structures shown:
+%% - FormData: { pdf: File, provider: string, title: string, isPublic: boolean }
+%% - AI Metadata: { file_name, file_size, page_count, provider, model }
+%% - Upload Metadata: { extraction_method, upload_source, processing_time_ms, file_size_bytes, page_count, model_used }
+%% - Document: { id, title, slug, html_content, plaintext_content, word_count, storage_path, upload_metadata, upload_ai_call_id }

@@ -74,6 +74,7 @@ jest-html-reporters-attach/
 backup/
 obsolete_alternative_version/
 screenshots/
+static/examples/extra/
 
 # Claude AI specific
 # Claude Code local settings
