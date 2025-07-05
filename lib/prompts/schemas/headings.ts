@@ -6,6 +6,10 @@ const headingContentSchema = z.object({
     errorMap: () => ({ message: 'tag_name must be h1, h2, h3, h4, h5, or h6' }),
   }),
   content: z.string().min(1, 'Heading content cannot be empty'),
+  // Optional deterministic ID assigned by the server when persisting the operation
+  // or by the generation pipeline. Clients can rely on this to replay operations
+  // faithfully without regenerating IDs.
+  id: z.string().optional(),
 })
 
 // Base operation schema with action field

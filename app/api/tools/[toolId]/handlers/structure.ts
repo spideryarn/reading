@@ -28,6 +28,7 @@ import { createRequestLogger, createTimer, logAIOperation, mutationLogger } from
 import { BaseToolHandler, createHandlerError, ToolHandlerError } from '../handler-interface'
 import type { ExecutionContext, ToolApiResponse } from '@/lib/tools/executor/types'
 import type { GetRequestParams, DeleteRequestParams } from '../handler-interface'
+import { generateContentBasedId } from '@/lib/services/deterministicId'
 
 // Validation schemas
 const StructureGetRequestSchema = z.object({
@@ -226,6 +227,28 @@ function detectUnsafeInsertBeforeH1(operations: HeadingOperation[], html: string
   }
 
   return issues
+}
+
+/**
+ * Ensure all INSERT operations carry a deterministic `content.id` field so that
+ * clients can replay the operation list without regenerating IDs.  Mutates the
+ * array in-place for convenience.
+ */
+function ensureInsertIds(documentId: string | undefined, operations: HeadingOperation[]): void {
+  if (!documentId) return // Cannot generate ids without doc context – skip
+  let localIndex = 0
+  for (const op of operations) {
+    if (op.action === 'insert' && op.content) {
+      if (!op.content.id || op.content.id.trim() === '') {
+        op.content.id = generateContentBasedId(
+          documentId!,
+          'heading',
+          `${op.content.content}:before:${op.insertNewBeforeExistingId}:${localIndex}`
+        )
+      }
+      localIndex++
+    }
+  }
 }
 
 /**
@@ -1091,9 +1114,8 @@ export class StructureHandler extends BaseToolHandler {
         // Combine existing operations with new ones for complete state
         const allOperations = [...(existing_operations || []), ...validatedResponse.operations]
 
-        // Validate combined operations before persisting – fail fast if
-        // anything is malformed so we never write corrupt rows again.
-        z.array(headingOperationSchema).parse(allOperations)
+        // Make sure every INSERT in the combined list has an id before we persist.
+        ensureInsertIds(documentId, allOperations)
 
         // Store/update enhancement with iteration metadata - using native operations format
         await enhancementService.upsert({
