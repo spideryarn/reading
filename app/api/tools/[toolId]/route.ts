@@ -16,6 +16,7 @@ import { requireAuth, getAuthUser } from '@/lib/auth/server-auth'
 import { createRequestLogger, generateCorrelationId, createTimer } from '@/lib/services/logger'
 import { getTool, isRegistryLocked } from '@/lib/tools/registry'
 import { initializeToolRegistry } from '@/lib/tools/registry-loader'
+import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import type { 
   ToolApiErrorResponse,
@@ -64,7 +65,6 @@ async function createExecutionContext(
   
   // Get user context if authenticated (supports both cookie and Bearer token auth)
   let user
-  let authenticatedSupabaseClient
   const authUser = await getAuthUser({ allowBearer: true, request })
   if (authUser) {
     user = {
@@ -72,11 +72,10 @@ async function createExecutionContext(
       email: authUser.email || '',
       preferences: {} // Could be expanded later
     }
-    
-    // Get authenticated Supabase client using consolidated factory
-    const { getSupabaseServerClient } = await import('@/lib/supabase/server')
-    authenticatedSupabaseClient = await getSupabaseServerClient(request, { allowBearer: true })
   }
+  
+  // Always create a Supabase client (authenticated if possible, otherwise anonymous)
+  const supabaseClient = await getSupabaseServerClient(request, { allowBearer: true })
   
   // For now, document context would need to be passed in parameters
   // In a full implementation, we might extract documentId from parameters
@@ -95,9 +94,7 @@ async function createExecutionContext(
     context.user = user
   }
   
-  if (authenticatedSupabaseClient) {
-    context.supabaseClient = authenticatedSupabaseClient
-  }
+  context.supabaseClient = supabaseClient
   
   return context
 }

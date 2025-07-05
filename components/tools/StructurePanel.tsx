@@ -20,6 +20,7 @@ import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 import { useToolExecutorWithNavigation } from '@/lib/tools/hooks/use-tool-executor-with-navigation'
 import type { HeadingOperation } from '@/lib/prompts/templates/headings'
 import { HeadingSummaryTooltip, useHeadingSummaryTooltip } from './heading-summary-tooltip'
+import { getErrorMessage } from '@/lib/tools/executor/executor'
 
 // Component props interface
 interface StructurePanelProps {
@@ -260,7 +261,7 @@ export function StructurePanel({
       return null
     } catch (error) {
       console.error('Error fetching cached headings:', error)
-      return null
+      throw error
     } finally {
       fetchInProgressRef.current = false
     }
@@ -668,7 +669,13 @@ export function StructurePanel({
       } catch (error) {
         console.error('Error in loadHeadings:', error)
         if (!isCancelled) {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+          // Use executor helper to translate error codes where possible
+          const errorMessage =
+            error && typeof error === 'object' && 'code' in (error as any)
+              ? getErrorMessage(error as any)
+              : error instanceof Error
+                ? error.message
+                : 'Unknown error'
           setHeadingsError(`Failed to load headings: ${errorMessage}`)
           setIsLoadingHeadings(false)
         }
