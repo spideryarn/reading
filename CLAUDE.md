@@ -27,108 +27,166 @@ Spideryarn Reading is an AI-assisted document reading and analysis application, 
 
 Key principles from `docs/reference/CODING_PRINCIPLES.md`:
 
-**Core Approach:**
-- **Help the user make good decisions and build a product that helps people**: if you're skeptical, or have questions, or concerns, or see a better way, **you must speak up**.
-- **AI-first development**: Fast experimentation with comprehensive docs/testing for AI productivity
-- **Fix root causes**: No bandaids. If you're not sure, gather more clues, generate hypotheses, try and confirm/disconfirm them, flag uncertainty explicitly to the user.
-- **Stay focused**: Minimal, targeted changes only. Flag unrelated issues explicitly, but don't fix them
-- **Raise errors early & clearly**: No masking problems, no fallbacks/bandaids/defaults - fail fatally and immediately, with a user-visible, debuggable message.
-- **Descriptive naming**: Use longer, more descriptive filenames, function names, and variable names that are easy to grep and understand
-- **Never implement silent data modifications**: No truncation or quiet transformations
-- **Get working end-to-end first**: Simple version before layering complexity
-- **Prefer functional over OO**: Easier to test and reason about
+- **This is early-stage development with AI-first methods.** We want to develop fast and experiment using AI agents, so we can figure out which features are most valuable. The comprehensive documentation, typing, and testing infrastructure exists to support AI productivity and prevent regressions.
+- **Fix the root cause rather than putting on a band-aid.** Avoid fallbacks & defaults - better to fail if input assumptions aren't being met.
+- **Stay focused on the specific task.** Make minimal, targeted changes only. Don't fix unrelated issues you notice unless they're directly blocking your current task. If you spot concerning issues, flag them for discussion rather than attempting fixes.
+- **If you hit any nasty surprises, stop & discuss with the user.** Don't push through unexpected issues.
+- **No destructive or irreversible changes without checking with the user.** Be especially careful about any operations that are irreversible, could involve data loss, affect databases, production systems, or user data. When in doubt, ask for explicit permission first.
+- **Raise errors early, clearly & fatally.** Prefer not to wrap in try/except so that tracebacks are obvious.
+- **Fail fatally & immediately with clear, debuggable, user-visible error messages.** When errors or unforeseen situations occur, don't mask problems, or paper over then with defaults/bandaids/fallbacks - expose them clearly to make it easier to notice & debug them early.
+- **If things don't make sense or seem like a bad idea, ask questions or discuss rather than just going along with it.** Be a good collaborator, and help make good decisions.
 
-**Safety Guidelines:**
-- **When hitting surprises or uncertainty**, stop and discuss.
-- **Ask permission for**: Database changes, irreversible operations, production systems
-- **Never modify without permission**: `.env.*` files, database schemas, test data
-- **Database operations**: Always read `docs/reference/DATABASE_*.md` first
+## Key Architectural Decisions
 
-⚠️ **CRITICAL**: For database changes that could destroy data, always ask first!
+Based on README.md, the following architecture decisions have been made:
 
-## Architecture & Tech Stack
-
-- **Frontend**: Next.js 15 App Router, TypeScript, Tailwind CSS
-- **AI Integration**: 
-  - Vercel AI SDK Core (multi-provider: Claude, Gemini)
-  - Nunjucks + Zod prompt templates (see `docs/reference/LLM_PROMPT_TEMPLATES.md`)
-  - @assistant-ui/react for chat UI
-- **Database**: Supabase (Postgres with RLS)
-- **State**: Virtual DOM approach - React state/context
-- **UI Components**: shadcn/ui + Radix UI primitives
-
-See `docs/reference/ARCHITECTURE_OVERVIEW.md` for details
+- **Frontend Framework**: Next.js with TypeScript and Tailwind CSS (transitioning from SvelteKit)
+- **AI Integration**: Anthropic Claude Sonnet 4 for all AI-related features
+  - Vercel AI SDK Core for multi-provider support (Claude, Gemini)
+  - @assistant-ui/react for chat UI primitives
+  - All LLM calls use Nunjucks + Zod prompt templates
+- **Storage**: Supabase (Postgres with realtime capabilities) from the start
+- **Data Structure**: Single-row document storage (moved away from element decomposition)
+- **Frontend State**: Virtual DOM approach - maintain document structure as React state/context
+- **Background Processing**: Frontend-driven queue initially, with API calls to backend
 
 
-## Development Environment
+## Build, testing, and debugging
 
-**Local Development:**
-- `npm run dev:daemon` - Default: background server with PID tracking
-- `npm run dev` - Foreground mode with DB type generation
-- Logs: `tail dev.log` or `tail error.log`
-- URL: `http://localhost:$PORT/` (see `.env.local`)
-- **Worktree isolation**: Each worktree has own daemon PID and port
+Next.js local dev server:
+- `npm run dev:daemon` (use this by default) - start/restart dev server in background with PID tracking, doesn't block the shell
+- `npm run dev` - Regenerates DB types then starts dev server (foreground mode)
+- Logs: `dev.log` and `error.log` - use `tail` to check recent output
+- URL: http://localhost:$PORT/ (configurable via PORT in `.env.local`)
 
-**Code Quality:**
-- `npm run check:health` - All-in-one health check (recommended)
-- `npm run lint` - ESLint checks
-- `npm run build` - TypeScript compilation
-- **CLI usage**: Always run health checks before completing tasks
+- **Worktree isolation**: Each worktree tracks its own daemon independently via `.dev-server.pid`, and has its own port defined in `.env.local`
 
-**Production:**
-- Live: https://www.spideryarn.com
-- Deploy: `npm run deploy:production`
-- Details: `docs/reference/SETUP_DEPLOYMENT_PRODUCTION.md`
+Production deployment:
+- **Live URL**: https://www.spideryarn.com
+- **Documentation**: `docs/reference/SETUP_DEPLOYMENT_PRODUCTION.md`
+- **Streamlined deployment**: `npm run deploy:production` (builds locally + Git pushes to main, which in turn triggers GitHub Actions migration, and Vercel deploymanet)
+- **Status**: ✅ Fully operational with custom domain, SSL, Google SSO, and database integration
 
-## Development Workflow
+Database operations - read `docs/reference/DATABASE_SUPABASE_INTEGRATION_REFERENCE.md` and other `docs/reference/DATABASE_*.md` before working with the database
 
-**Stage-based approach** (from planning docs):
-1. Get simple version working end-to-end first
-2. Layer in complexity gradually
-3. Each stage should end with passing tests and working code
-4. Clarify edge cases with user early
+⚠️ **CRITICAL**: Always ask for explicit user permission before modifying the database, especially in major ways. When in doubt, err on the side of caution!
 
-**Pre-commit verification** (CRITICAL):
-```bash
-# Always run before committing:
-npm run check:health      # Git-aware health check
-npm test                  # Ensure tests pass
+Type checking and linting:
+- `npm run check:health` - **Orchestration**: Git-aware health check (TypeScript + ESLint + Build)
+- `npm run build` - TypeScript compilation errors
+- `npm run lint` - ESLint code quality/style issues
+- before testing, read `docs/reference/TESTING_TROUBLESHOOTING.md`
+  - `npm test` - Jest testing (`npm run test:coverage` for coverage), depends on `.env.test`
+  - When writing tests, use our Jest testing framework with React Testing Library
+  - **Prefer using a subagent** for **running** tests to avoid filling the context window
+- for Playwright E2E browser testing, first read `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
+- **CLI usage:** When running Claude Code from command line, you MUST explicitly run `npm run lint` and `npm run build` to get diagnostic feedback OR use `npm run check:health` for orchestration-friendly summaries
+- **Health check orchestration:** See `docs/reference/SETUP_FOR_AI_FIRST_CODING.md` for AI orchestration patterns and health checking workflows
+- For large-scale find-and-replace: see `docs/reference/SD_STRING_DISPLACEMENT_FIND_REPLACE.md`
+- Database: `supabase/migrations/` and `docs/reference/DATABASE_*.md`
+- Architecture: `docs/reference/ARCHITECTURE_OVERVIEW.md` and `docs/reference/ARCHITECTURE_DECISIONS.md`
+- Recent decisions: `docs/planning/*.md` docs
 
-# For E2E tests:
-npm run dev:status || npm run dev:daemon  # Ensure server running
-npm run test:e2e                          # Run E2E tests
-```
 
-**Health check usage**:
-- `npm run check:health` - Checks changed files (git-aware)
-- `npm run check:health --rigorous` - All files for major refactors
-- `npm run check:health --quick` - Skip build for quick iterations
-- Use subagent if >3 files have issues
+## Test Database Approach - IMPORTANT
 
-## Testing
+- **CRITICAL: NEVER reset the database** without user permission, because it destroys development data
+- **IMPORTANT**: We use a **shared database** approach for testing. Tests run against the same local development database.
+  - see `docs/reference/TESTING_DATABASE.md` for comprehensive patterns and test isolation utilities.
+  - **Use UUID-based test isolation** - all test data must be namespaced
+  - **Clean up test data** afterwards using `getCleanupFunctions()` utilities
 
-**Test Reform hierarchy** (prefer higher):
-1. **E2E tests** (80% confidence) - Real user journeys
-2. **Integration tests** (15%) - API contracts
-3. **Unit tests** (5%) - Complex algorithms only
+## Test Writing Guidance
 
-**Database Approach:**
-- **Shared database** - tests use same local dev database
-- **UUID isolation** - all test data must be namespaced
-- **Cleanup required** - use `getCleanupFunctions()` utilities
-- **RLS testing**: Use `RLSTestDatabase` class (see `docs/reference/TESTING_DATABASE.md`)
+**Before writing tests**: Use a subagent to search for existing test coverage. This avoids context pollution and duplication.
+- Test files: `src/lib/*/tests/` and `components/__tests__/`
 
-**Running Tests:**
-- `npm test` - Jest suite
-- `npm run test:e2e` - Playwright E2E (run `npm run dev:daemon` first)
-- **Use subagents** for running tests to avoid context pollution
+**Test hierarchy** (prefer higher on list):
+1. **E2E tests** (`e2e/*.spec.ts`) - One E2E test can replace many unit tests
+2. **Integration tests** - Test complete workflows, not individual functions
+3. **Unit tests** - Only for complex algorithms or critical business logic
 
-**Test Modification Policy:**
-- Fix code to pass tests, not vice versa
-- Discuss with user before modifying tests
-- Valid reasons: consolidation, requirement changes, fixing incorrect assertions
+**Aim for fewer, but more useful & robust tests**, e.g. don't test simple transformations, environment detection, logging, implementation details.
 
-See `docs/reference/TESTING_TROUBLESHOOTING.md` for issues
+Debugging resources:
+- Current logs: `tail dev.log` or `tail error.log`
+- Browser debugging: Playwright MCP (console logs, network requests, screenshots)
+- **E2E testing**: Always run `npm run dev:status || npm run dev:daemon` before running E2E tests to ensure the dev server is running
+
+⚠️ **IMPORTANT**: If tests are failing, try and understand why. If they're failing for systemic reasons, tell the user so we can discuss how to fix things. Be wary about removing/modifying the tests just to make them pass. If in doubt, stop & discuss with the user.
+
+**Test Modification Guidelines**:
+- **Don't modify existing tests without discussing and agreeing with the user**
+- **If a test fails, default to fixing the code, not the test**
+- **Valid reasons to modify tests**:
+  - Consolidating redundant tests
+  - Changing requirements or edge case handling
+  - Fixing incorrect test assertions
+  - Improving test clarity or reducing brittleness
+
+**Enforcement**:
+- AI agents should fix code to pass tests, not vice versa
+- Stop and discuss with user if tests need modification
+- Test changes require explicit user approval
+- When in doubt, ask rather than assume
+
+**Rationale**: This prevents AI agents from "gaming" tests by modifying them to pass instead of fixing underlying code issues.
+
+## Logging & Observability
+
+**Current Implementation**:
+- Pino structured logging with request correlation tracking
+- Key utilities: `createRequestLogger()`, `generateCorrelationId()`, `logAIOperation()`, `createTimer()`
+- Privacy-safe patterns (IDs only, no sensitive content)
+- Mixed approach: Pino + console.log during migration
+
+**Documentation**: See `docs/reference/LOGGING_BEST_PRACTICES.md` for comprehensive patterns and examples.
+
+
+## Error Handling
+
+**Database Services**: Propagate errors instead of silently failing
+- Methods throw descriptive errors with context
+- "Not found" cases return null (don't throw)
+- API routes should catch and map to appropriate HTTP responses
+
+**Principle**: "Raise errors early, clearly & fatally" (see `docs/reference/CODING_PRINCIPLES.md`)
+
+
+## Upload Metadata Tracking
+
+**Current Implementation**:
+- Upload metadata stored in `documents.upload_metadata` JSONB field
+- AI call traceability via `documents.upload_ai_call_id` foreign key
+- Implemented in PDF upload and URL extraction APIs
+- Enables debugging and processing optimization
+
+**Files**: Migration `20250608120000_add_upload_metadata_fields.sql`, types in `lib/types/database-auto-generated.ts` and manual extensions in `lib/types/database-extensions.ts`
+
+
+## Authentication System
+
+**Current Implementation**: Supabase Auth with Next.js App Router
+- Email/password and Google OAuth authentication
+- Route protection with server-side validation
+- Long-lasting sessions (1 week) with automatic refresh
+- Profile management with dropdown navigation
+
+**Files**: `lib/auth/`, `components/auth/`, `app/auth/`, `middleware.ts`
+**Documentation**: See `docs/reference/AUTHENTICATION_*.md` for comprehensive guides
+
+
+## Project Structure
+
+**Active Development** (root directory):
+- Core implementation: `app/`, `components/`, `lib/`
+- Documentation: `docs/` (evergreen) and `docs/planning/` (decisions)
+- Database: `supabase/migrations/` and config
+
+**IGNORE**:
+- `obsolete_alternative_version/` - deprecated Python version (occasionally useful for prompts)
+- `backup/` - deprecated SvelteKit implementation
+
 
 ## Environment Variables
 
