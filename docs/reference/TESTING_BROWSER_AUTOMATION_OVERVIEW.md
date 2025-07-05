@@ -28,23 +28,34 @@ Quick reference for AI agents and developers using browser automation testing in
 
 ### ⚠️ Prerequisites: Dev Server Must Be Running
 
-**CRITICAL**: E2E tests require a running development server. Always verify before running tests:
+**CRITICAL**: E2E tests require a running development server. The dev server MUST be started externally before running tests. Do NOT rely on Playwright's webServer configuration to start it.
 
 ```bash
-# 1. Check dev server status
+# 1. Pre-flight checks (recommended)
+npm run e2e:preflight  # Verifies test user exists & dev server is healthy
+
+# OR manually:
+
+# 2. Check dev server status
 npm run dev:status
 
-# 2. If not running, start dev server daemon
+# 3. If not running, start dev server daemon
 npm run dev:daemon
 
-# 3. Verify server is healthy and responding
+# 4. Verify server is healthy and responding
 npm run dev:status
 
-# 4. Only then run E2E tests
+# 5. Only then run E2E tests
 npx playwright test
 ```
 
-**Why This Matters**: E2E tests interact with the actual application at `http://localhost:PORT`. Without a running dev server, tests will timeout waiting for pages to load.
+**Why External Dev Server?**: 
+- Playwright's webServer config conflicts with our daemon-based dev server management
+- External daemon allows multiple test runs without server restarts
+- Provides better control over server lifecycle and logs
+- Enables concurrent development and testing in different terminals
+
+**Port Configuration**: Each worktree uses a different port (3000-3006) configured in `.env.local`
 
 ### Essential Commands
 ```bash
@@ -63,9 +74,13 @@ npx playwright test --debug
 
 ### AI Agent Workflow for E2E Testing
 ```bash
-# Complete E2E testing workflow for AI agents
+# Recommended workflow with pre-flight checks
+npm run e2e:preflight       # Verify test user & dev server
+npx playwright test         # Run tests
+
+# OR manual workflow:
 npm run dev:status || npm run dev:daemon  # Ensure dev server running
-npm run dev:status                        # Verify health
+npm run e2e:verify-user                    # Verify test user exists
 npm run test:e2e:setup                    # Setup authentication (if needed)
 npx playwright test                       # Run tests
 ```
@@ -170,6 +185,52 @@ npm run dev:status
 ```
 
 **For AI Agents**: Always run `npm run dev:status || npm run dev:daemon` before E2E tests to ensure server availability.
+
+### Port Conflicts
+
+**Symptoms**:
+- Server fails to start with "address already in use" error
+- Tests connect to wrong application instance
+- Authentication failures due to different database
+
+**Diagnosis**:
+```bash
+# Check what's running on your port
+lsof -ti:$PORT  # Shows PID if port is in use
+```
+
+**Solution**:
+```bash
+# Clean up stale processes and restart
+npm run dev:clean  # Removes stale PID files
+npm run dev:daemon # Start fresh daemon
+```
+
+**Prevention**: Each worktree should use a unique port (3000-3006) configured in `.env.local`
+
+### Authentication Failures
+
+**Symptoms**:
+- Tests fail with "user not found" or authentication errors
+- Login form submission doesn't redirect
+
+**Root Causes**:
+1. Test user missing from database (run `npm run e2e:verify-user`)
+2. Using wrong test user for worktree
+3. Auth state file corrupted
+
+**Solution**:
+```bash
+# Verify test user exists
+npm run e2e:verify-user
+
+# If missing, reseed database
+supabase db reset
+
+# Clear auth cache and retry
+rm -f playwright/.auth/*.json
+npm run test:e2e:setup
+```
 
 ### Database Reset Recovery
 Tests include automatic recovery from database resets using `withDatabaseResetRecovery()` helper.
