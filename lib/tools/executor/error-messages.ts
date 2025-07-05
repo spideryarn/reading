@@ -80,6 +80,19 @@ export function transformErrorToMessage(error: ToolExecutorError): ErrorMessage 
     return transformCancelledError(error as ToolCancelledError)
   }
   
+  // Custom: malformed headings cache – surfaced as clear toast with correlation ID
+  if (error.code === 'MALFORMED_HEADINGS_CACHE') {
+    return {
+      title: 'Document headings cache is corrupted',
+      description: 'We found a problem loading saved AI-generated headings for this document. Please try regenerating them.',
+      actionGuidance: 'Click "Improve headings" again to regenerate. If the problem persists, contact support with the correlation ID shown.',
+      retryable: false,
+      severity: 'error',
+      displayMethod: 'toast',
+      autoHideTimeout: 8000
+    }
+  }
+  
   // Fallback for unknown error types
   return {
     title: 'Unexpected Error',

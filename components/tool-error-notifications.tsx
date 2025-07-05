@@ -151,6 +151,12 @@ function ToastNotification({ notification }: { notification: ErrorNotification }
   }
 
   const { severity, title, description, actionGuidance } = notification.message
+  // Surface backend correlation ID for easier bug reports (Task 7)
+  const correlationId =
+    (notification.originalError as { correlationId?: string } | undefined)?.correlationId ??
+    (typeof (notification.originalError as any)?.correlationId === 'string'
+      ? (notification.originalError as any).correlationId
+      : undefined)
   const Icon = getErrorIcon(severity)
   const styles = getErrorStyles(severity)
 
@@ -176,6 +182,10 @@ function ToastNotification({ notification }: { notification: ErrorNotification }
               <div className={cn("text-xs mt-1 font-medium", styles.action)}>
                 {actionGuidance}
               </div>
+            )}
+            {/* Debug correlation ID for easier error reporting */}
+            {correlationId && (
+              <div className="text-[10px] mt-0.5 text-gray-500">(debug ID: {correlationId})</div>
             )}
           </div>
           <button

@@ -1,4 +1,4 @@
-import type { HeadingOperation } from '@/lib/prompts/templates/headings'
+import type { HeadingOperation } from '@/lib/prompts/schemas/headings'
 import type { Mutation, DocumentTransform } from '@/lib/types/mutation'
 import { generateContentBasedId } from './deterministicId'
 

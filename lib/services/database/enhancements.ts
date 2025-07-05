@@ -7,6 +7,8 @@ import type {
   Json
 } from '../../types/database-extensions'
 import type { JsonObject } from '../../types/json'
+import { z } from 'zod'
+import { headingOperationSchema } from '@/lib/prompts/schemas/headings'
 
 export interface CreateEnhancementOptions {
   documentId: string
@@ -24,6 +26,31 @@ export class EnhancementService {
    * Create or update an enhancement
    */
   async upsert(options: CreateEnhancementOptions): Promise<DocumentEnhancement> {
+    // ------------------------------------------------------------------
+    // Fail-fast validation for headings enhancements so we never write a
+    // malformed row that breaks clients.  We validate *before* touching the
+    // database so any issue surfaces immediately during the request that
+    // triggered it.
+    // ------------------------------------------------------------------
+    if (options.type === 'headings') {
+      const opsRaw = (options.content as Record<string, unknown>).operations
+      if (!opsRaw) {
+        throw new Error('Heading enhancement must include content.operations')
+      }
+      // Accept either already-parsed array or JSON string – parse if needed.
+      let opsParsed: unknown = opsRaw
+      if (typeof opsRaw === 'string') {
+        opsParsed = JSON.parse(opsRaw as string)
+      }
+      // Will throw if invalid – that's what we want (fail fatally).
+      z.array(headingOperationSchema).parse(opsParsed)
+      // If it was a string and parsed successfully, rewrite content to be
+      // canonical array so we don't store text blobs again.
+      if (typeof opsRaw === 'string') {
+        ;(options.content as any).operations = opsParsed
+      }
+    }
+
     const enhancement: Omit<DocumentEnhancementInsert, 'id' | 'created_at' | 'updated_at'> = {
       document_id: options.documentId,
       ai_call_id: options.aiCallId,

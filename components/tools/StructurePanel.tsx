@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button'
 import { AlertWithIcon } from '@/components/ui/alert'
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 import { useToolExecutorWithNavigation } from '@/lib/tools/hooks/use-tool-executor-with-navigation'
-import type { HeadingOperation } from '@/lib/prompts/templates/headings'
+import type { HeadingOperation } from '@/lib/prompts/schemas/headings'
 import { HeadingSummaryTooltip, useHeadingSummaryTooltip } from './heading-summary-tooltip'
 import { getErrorMessage } from '@/lib/tools/executor/executor'
 
@@ -794,6 +794,24 @@ export function StructurePanel({
       }
     }
   }, [commState.currentPosition, commState.activeTabId])
+
+  // ---------------------------------------------------------------------------
+  // Surface errors loudly: bring up a blocking alert and log to console so
+  // developers (and Playwright) cannot miss the issue.  This runs only when
+  // the error message is first set.
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (headingsError) {
+      // Extra safety: wrap in setTimeout so that it doesn't block React state
+      // batching (especially during render).
+      setTimeout(() => {
+        console.error('[StructurePanel] Failed to load AI headings:', headingsError)
+        if (typeof window !== 'undefined' && window.alert) {
+          window.alert(`Failed to load AI headings: ${headingsError}`)
+        }
+      }, 0)
+    }
+  }, [headingsError])
 
   // Render status badge
   const renderStatusBadge = () => {

@@ -27,6 +27,9 @@ const testResultsDir = `playwright/test-results/${envName}/`;
 export default defineConfig({
   testDir: './tests/e2e',
   
+  /* Global per-test timeout (dev build compile can exceed 2 min). */
+  timeout: 300 * 1000,
+  
   /* Run tests in files in parallel but start with sequential execution */
   fullyParallel: false, // Conservative approach per planning doc
   
@@ -59,9 +62,9 @@ export default defineConfig({
     /* Headless by default for efficiency */
     headless: true,
     
-    /* Extended timeouts for AI operations (30-45 seconds) */
-    actionTimeout: 30 * 1000,
-    navigationTimeout: 45 * 1000,
+    /* Extended timeouts for AI operations and slow first-page load (120 seconds) */
+    actionTimeout: 300 * 1000,
+    navigationTimeout: 300 * 1000,
     
     /* Larger viewport for better page layout */
     viewport: { width: 1200, height: 800 },
