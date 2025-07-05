@@ -85,6 +85,19 @@ export class RobustAuthManager {
   }
   
   private async clearAuthState() {
+    // Ensure we are on a same-origin page before touching Web Storage APIs.
+    // about:blank or data: URLs throw SecurityError when accessing
+    // localStorage/sessionStorage.
+    if (this.page.url().startsWith('about:') || this.page.url().startsWith('data:')) {
+      try {
+        await this.page.goto('/', { waitUntil: 'load' })
+      } catch {
+        // If navigating fails we silently continue; worst-case the storage
+        // clear below will be skipped by browser security and we fall back to
+        // starting a fresh context next time.
+      }
+    }
+
     await this.page.context().clearCookies();
     await this.page.evaluate(() => {
       localStorage.clear();
