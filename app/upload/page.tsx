@@ -618,9 +618,14 @@ export default function AddDocumentPage() {
           } else {
             // Standard AI transcription (v1)
             const apiEndpoint = '/api/upload-pdf'
+            // Create PDF-specific FormData with correct field name
+            const pdfFormData = new FormData()
+            pdfFormData.append('pdf', input.file)  // API expects 'pdf' field name
+            pdfFormData.append('provider', processing.provider)
+            pdfFormData.append('isPublic', processing.isPublic.toString())
             response = await fetch(apiEndpoint, {
               method: 'POST',
-              body: formData
+              body: pdfFormData
             })
           }
         } else if (input.type === 'html') {
