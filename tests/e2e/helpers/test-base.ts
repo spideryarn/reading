@@ -1,6 +1,7 @@
 import { test as authTest, expect, setupWorkerAuthentication, createWorkerTestNamespace, verifyAuthentication } from './auth-setup'
 import { getCurrentEnvironmentPaths } from '../../../lib/testing/worktree-auth-helpers'
 import type { Page } from '@playwright/test'
+import { faker } from '@faker-js/faker'
 
 /**
  * Base test configuration for E2E tests
@@ -89,14 +90,16 @@ export const testHelpers = {
    * 
    * This helper creates a document that's suitable for testing various
    * AI features like heading generation, summaries, etc.
+   * Uses faker to generate unique content to prevent collisions.
    */
   async createTestDocument(page: Page, options: { 
     title?: string,
     namespace?: string,
-    workerIndex?: number 
+    workerIndex?: number,
+    useRichContent?: boolean 
   } = {}) {
     const namespace = options.namespace || createWorkerTestNamespace('doc', options.workerIndex || 0)
-    const title = options.title || `Test Document ${namespace}`
+    const title = options.title || `${faker.lorem.words(3)} ${namespace}`
     
     // Navigate to upload page
     await page.goto('/upload')
@@ -108,8 +111,35 @@ export const testHelpers = {
       await htmlTab.click()
     }
     
-    // Create test HTML content
-    const testHtml = `
+    // Create test HTML content with faker-generated unique text
+    const generateSection = () => faker.lorem.paragraphs(2, '\n\n')
+    
+    const testHtml = options.useRichContent ? `
+      <html>
+        <head><title>${title}</title></head>
+        <body>
+          <h1>${title}</h1>
+          <p>Document ID: ${namespace} - ${faker.datatype.uuid()}</p>
+          
+          <p>${faker.lorem.paragraph()}</p>
+          
+          <h2>${faker.lorem.words(3)}</h2>
+          <p>${generateSection()}</p>
+          
+          <h2>${faker.lorem.words(2)}</h2>
+          <p>${generateSection()}</p>
+          
+          <h3>${faker.lorem.words(4)}</h3>
+          <p>${faker.lorem.paragraphs(3, '\n\n')}</p>
+          
+          <h2>${faker.lorem.words(3)}</h2>
+          <p>${generateSection()}</p>
+          
+          <h2>Conclusion</h2>
+          <p>${faker.lorem.paragraphs(2, '\n\n')}</p>
+        </body>
+      </html>
+    ` : `
       <html>
         <head><title>${title}</title></head>
         <body>
@@ -219,6 +249,52 @@ export const testHelpers = {
     // Should be able to access protected routes
     const currentUrl = page.url()
     expect(currentUrl).not.toContain('/auth/')
+  },
+
+  /**
+   * Generate unique test data using faker
+   * 
+   * Provides commonly needed test data patterns.
+   */
+  generateTestData: {
+    /**
+     * Generate a unique document title
+     */
+    documentTitle: (prefix?: string) => {
+      const words = faker.lorem.words(3)
+      return prefix ? `${prefix} - ${words}` : words
+    },
+
+    /**
+     * Generate a test URL that won't conflict
+     */
+    documentUrl: () => {
+      return `https://example.com/test/${faker.string.alphanumeric(10)}/${faker.string.uuid()}`
+    },
+
+    /**
+     * Generate test user data
+     */
+    user: () => ({
+      email: faker.internet.email(),
+      firstName: faker.person.firstName(),
+      lastName: faker.person.lastName(),
+      bio: faker.lorem.sentence()
+    }),
+
+    /**
+     * Generate lorem ipsum content of specified length
+     */
+    content: (paragraphs: number = 3) => {
+      return faker.lorem.paragraphs(paragraphs, '\n\n')
+    },
+
+    /**
+     * Generate a unique test identifier
+     */
+    testId: (prefix: string = 'test') => {
+      return `${prefix}-${faker.string.uuid().slice(0, 8)}`
+    }
   }
 }
 

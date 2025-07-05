@@ -16,7 +16,9 @@ Parallel execution is currently *disabled* (`workers: 1`). A major success crite
 **Progress Update (Jan 5, 2025)**:
 - ✅ Completed pre-flight sanity checks (database & dev server verification)
 - ✅ Completed documentation updates with authentication best practices
-- 🚧 Next: Create test machinery and apply fixes to failing tests
+- ✅ Completed test machinery creation (auth-setup.ts, test-base.ts)
+- ✅ Completed configuration fixes (faker integration, playwright.config.ts updates)
+- 🚧 Next: Apply authentication fixes to failing tests using sd tool
 
 ## Context
 
@@ -121,12 +123,12 @@ Only after both checks pass should subsequent stages run.
 2. Update test helpers to use faker for data generation
 3. Configure Playwright for optimal stability (retries, traces, parallel execution)
 
-### Stage: Fix configuration issues
-- [ ] Install `@faker-js/faker` dependency: `npm install -D @faker-js/faker`
-- [ ] Update `playwright.config.ts`
-  - [ ] **Keep** the `webServer` block but change `command` to `"npm run dev:daemon -- --once"` so Playwright *starts* the server only if one is not already running.
-  - [ ] Ensure `reuseExistingServer: true` (already set) so an existing daemon isn't duplicated.
-  - [ ] Add stability configurations:
+### Stage: Fix configuration issues ✅ COMPLETED
+- [x] Install `@faker-js/faker` dependency: `npm install -D @faker-js/faker`
+- [x] Update `playwright.config.ts`
+  - [x] **Keep** the `webServer` block but change `command` to `"npm run dev:daemon -- --once"` so Playwright *starts* the server only if one is not already running.
+  - [x] Ensure `reuseExistingServer: true` (already set) so an existing daemon isn't duplicated.
+  - [x] Add stability configurations:
     ```typescript
     retries: 3, // Retry failed tests for flake detection
     use: {
@@ -135,13 +137,21 @@ Only after both checks pass should subsequent stages run.
       screenshot: 'only-on-failure', // Screenshot failures
     }
     ```
-  - [ ] After stability proven, set `workers = Math.max(1, os.cpus().length - 1)` (import `os` at top).
-  - [ ] Fix test project assignments (move auth-required tests out of `chromium-no-auth`).
-  - [ ] Add explanatory comments so future maintainers understand the dev-server workflow.
-- [ ] Update test helpers to integrate faker:
-  - [ ] Add faker imports to `test-base.ts`
-  - [ ] Update `createTestDocument()` to use faker for content generation
-  - [ ] Add faker-based data generation helpers
+  - [ ] After stability proven, set `workers = Math.max(1, os.cpus().length - 1)` (import `os` at top). *(Deferred to parallel execution stage)*
+  - [x] Fix test project assignments (move auth-required tests out of `chromium-no-auth`).
+  - [x] Add explanatory comments so future maintainers understand the dev-server workflow.
+- [x] Update test helpers to integrate faker:
+  - [x] Add faker imports to `test-base.ts`
+  - [x] Update `createTestDocument()` to use faker for content generation
+  - [x] Add faker-based data generation helpers
+
+**Progress Notes**:
+- Installed @faker-js/faker as dev dependency
+- Updated playwright.config.ts with retry settings and video recording on retry
+- Changed webServer command to use dev:daemon with --once flag
+- Removed auth-required tests from chromium-no-auth project
+- Integrated faker into test-base.ts with new generateTestData helper functions
+- Updated documentation to show faker usage examples
 
 ### Stage: Apply authentication fixes to failing tests (Quick wins - 70% of failures)
 - [ ] Update failing auth tests using subagent & **sd**:

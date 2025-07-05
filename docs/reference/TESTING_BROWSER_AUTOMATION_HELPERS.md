@@ -53,9 +53,10 @@ test('parallel-safe test', async ({ page }) => {
 import { test, expect, testHelpers } from '../helpers/test-base'
 
 test('test with AI operations', async ({ page }) => {
-  // Create a test document
+  // Create a test document with faker-generated content
   const { documentId, url } = await testHelpers.createTestDocument(page, {
-    title: 'My Test Doc'
+    title: testHelpers.generateTestData.documentTitle('AI Test'),
+    useRichContent: true // Use faker to generate unique content
   })
   
   // Navigate to Structure tab
@@ -70,6 +71,27 @@ test('test with AI operations', async ({ page }) => {
   // Verify enhancements
   const hasEnhancements = await testHelpers.hasAIEnhancements(page)
   expect(hasEnhancements).toBe(true)
+})
+```
+
+### Using Faker for Test Data
+
+```typescript
+import { test, expect, testHelpers } from '../helpers/test-base'
+
+test('test with unique data', async ({ page }) => {
+  // Generate unique test data
+  const testData = {
+    title: testHelpers.generateTestData.documentTitle(),
+    url: testHelpers.generateTestData.documentUrl(),
+    content: testHelpers.generateTestData.content(5), // 5 paragraphs
+    testId: testHelpers.generateTestData.testId('doc')
+  }
+  
+  // Use the unique data in your test
+  await page.goto('/upload')
+  await page.fill('input[name="url"]', testData.url)
+  // ... rest of test
 })
 ```
 
