@@ -8,6 +8,13 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["@phosphor-icons/react"],
   },
+  // Optimize dev server performance
+  onDemandEntries: {
+    // Keep compiled pages in memory for 5 minutes (default is 60 seconds)
+    maxInactiveAge: 5 * 60 * 1000,
+    // Keep up to 20 pages in dev memory cache (default is 5)
+    pagesBufferLength: 20,
+  },
   // External packages for pino and pino-pretty to fix worker thread issues
   // nunjucks added to fix fsevents binary module webpack error
   serverExternalPackages: ['pino', 'pino-pretty', 'nunjucks'],
@@ -22,6 +29,23 @@ const nextConfig: NextConfig = {
         crypto: false,
       };
     }
+    
+    // Optimize file watching for better dev server performance
+    config.watchOptions = {
+      ...config.watchOptions,
+      // Ignore these paths to reduce file system load
+      ignored: [
+        '**/node_modules/**',
+        '**/.git/**',
+        '**/.next/**',
+        '**/playwright/**',
+        '**/tests/test-results/**',
+        '**/*.log',
+        '**/backup/**',
+        '**/obsolete_alternative_version/**',
+      ],
+    };
+    
     return config;
   },
   // turbopack: {

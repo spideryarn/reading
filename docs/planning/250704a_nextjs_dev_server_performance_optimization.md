@@ -99,14 +99,14 @@ The user reported that their local dev server is taking ages to load pages after
   - [x] `npm run supabase:status` - Check status
 - [x] Reduced container count from 11 to ~7-8 for better battery life
 
-### Stage: Additional optimizations
-- [ ] Investigate Next.js onDemandEntries configuration
-  - [ ] Increase `maxInactiveAge` to keep compiled pages in memory longer
-  - [ ] Adjust `pagesBufferLength` for better caching
-- [ ] Review and optimize file watcher configuration
-  - [ ] Exclude unnecessary directories from watching
-  - [ ] Optimize polling intervals if needed
-- [ ] Consider moving development outside Dropbox entirely (discuss with user first)
+### Stage: Additional optimizations ✅ COMPLETED
+- [x] Investigate Next.js onDemandEntries configuration
+  - [x] Increase `maxInactiveAge` to keep compiled pages in memory longer (5 minutes instead of 60 seconds)
+  - [x] Adjust `pagesBufferLength` for better caching (20 pages instead of 5)
+- [x] Review and optimize file watcher configuration
+  - [x] Exclude unnecessary directories from watching (node_modules, .git, .next, playwright, logs, backup)
+  - [x] Webpack watchOptions configured to reduce file system load
+- [x] Consider moving development outside Dropbox entirely (already resolved by moving worktrees)
 
 ### Stage: ~~Monitoring and documentation~~ (COMPLETED)
 - [x] Document all changes in evergreen docs
@@ -114,9 +114,9 @@ The user reported that their local dev server is taking ages to load pages after
   - [x] Update `docs/reference/SETUP_DEV_SERVER_AUTOMATION.md`
 - Performance tips already included in updated documentation
 
-### Stage: Verification and cleanup
-- [ ] Run comprehensive health check: `npm run check:health`
-- [ ] Verify all development workflows still function correctly
+### Stage: Verification and cleanup (IN PROGRESS)
+- [x] Run comprehensive health check: `npm run check:health` (7 TypeScript issues unrelated to performance)
+- [x] Verify all development workflows still function correctly (dev server restarted successfully with new config)
 - [ ] Get user feedback on performance improvements
 - [ ] Move this planning doc to `planning/finished/`
 - [ ] Git commit all changes with clear documentation
@@ -134,6 +134,13 @@ The user reported that their local dev server is taking ages to load pages after
    - `npm run supabase:start` - Minimal mode (7-8 containers instead of 11)
    - `npm run supabase:start:full` - Full mode when email/analytics needed
    - Reduces Docker resource usage and improves battery life
+5. **Next.js onDemandEntries optimization**:
+   - Pages stay in memory for 5 minutes (vs 60 seconds default)
+   - Dev cache holds 20 pages (vs 5 default)
+   - Reduces recompilation on navigation
+6. **File watcher optimization**:
+   - Excludes non-essential paths from monitoring
+   - Reduces file system load and CPU usage
 
 ### Visual Indicators Discussion
 Considered implementing warnings when cache/types are stale, but decided to fail fast instead:
