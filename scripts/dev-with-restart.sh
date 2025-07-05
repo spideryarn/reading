@@ -565,7 +565,6 @@ case "$MODE" in
         
         # Start dev server in background with dual logging
         echo "🚀 Starting dev server daemon on port $PORT at $(date +'%y%m%d_%H%M')..."
-        echo "🏃 Running! at $(date +'%y%m%d_%H%M')"
         (
             PATH="/opt/homebrew/bin:$PATH" dotenv -e .env.local -- next dev 2>&1 | ./scripts/dual-dev-error-log.sh
         ) &
@@ -574,6 +573,8 @@ case "$MODE" in
         # Store PID and remove lock
         echo "$dev_server_pid" > "$SYR_DEVSERVER_PIDFILE"
         rm -f "$LOCKFILE"
+        
+        echo "🏃 Running! PID: $dev_server_pid at $(date +'%y%m%d_%H%M')"
         
         # Wait a moment and verify it started
         sleep 2
@@ -636,9 +637,13 @@ case "$MODE" in
         # echo "💡 Logs: tail -f dev.log | Use npm run dev:daemon for background mode"
         # echo ""
         
-        echo "🏃 Running! at $(date +'%y%m%d_%H%M')"
-        
         # Run the dev command with dual logging in foreground
-        PATH="/opt/homebrew/bin:$PATH" dotenv -e .env.local -- next dev 2>&1 | ./scripts/dual-dev-error-log.sh
+        PATH="/opt/homebrew/bin:$PATH" dotenv -e .env.local -- next dev 2>&1 | ./scripts/dual-dev-error-log.sh &
+        dev_server_pid=$!
+        
+        echo "🏃 Running! PID: $dev_server_pid at $(date +'%y%m%d_%H%M')"
+        
+        # Wait for the background process to complete
+        wait $dev_server_pid
         ;;
 esac
