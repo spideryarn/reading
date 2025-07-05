@@ -24,7 +24,9 @@ AI agents don't get "annoyed" by strict rules like humans do. They can methodica
 Use longer, more descriptive filenames, function names, and variable names that are easy to grep and understand. AI agents excel at working with codebases that have clear, searchable naming conventions.
 
 ### Leverage Automatic Diagnostic Sharing (IDE-Dependent)
-Claude Code automatically receives diagnostic information (ESLint, TypeScript errors) **only when running within supported IDEs** (VS Code, Cursor, JetBrains). When using Claude Code from the CLI, explicit linting commands (`npm run lint`, `npm run build`) are required for diagnostic feedback.
+Claude Code automatically receives diagnostic information (ESLint, TypeScript errors) **only when running within supported IDEs** (VS Code, Cursor, JetBrains).
+
+When using Claude Code from the CLI, explicit linting commands (`npm run lint`, `npm run build`) are required for diagnostic feedback.
 
 ## Research Findings
 
@@ -40,25 +42,6 @@ Claude Code automatically receives diagnostic information (ESLint, TypeScript er
 - [Claude Code IDE Integrations](https://docs.anthropic.com/en/docs/claude-code/ide-integrations)
 - [Claude Code Best Practices](https://www.anthropic.com/engineering/claude-code-best-practices)
 
-### Common AI Coding Issues
-
-Based on research across developer communities, AI assistants frequently introduce:
-
-1. **Temporal Dead Zone (TDZ) violations:** Using variables before declaration in block scope
-2. **Type safety issues:** Implicit `any` types, missing imports, undefined references
-3. **Code quality issues:** Unnecessary `let` usage, unused variables, missing dependencies
-4. **Cross-file context problems:** Undefined variable references, missing imports
-
-### Current Codebase Analysis
-
-**Linting Status (as of 2025-06-15):**
-- **Total Issues:** 162 (161 warnings, 1 error)
-- **Primary Issues:** 
-  - `@typescript-eslint/no-explicit-any`: 127 warnings (78%)
-  - `@typescript-eslint/no-unused-vars`: 17 warnings (10%)
-  - `react-hooks/exhaustive-deps`: 8 warnings (5%)
-
-**Assessment:** Current configuration is deliberately lenient to support rapid development but may be allowing preventable issues.
 
 ## Recommended Configuration Changes
 
