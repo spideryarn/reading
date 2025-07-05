@@ -13,6 +13,11 @@ Current state: 9% passing (2/23 tests), with 70% failing due to authentication i
 
 Parallel execution is currently *disabled* (`workers: 1`). A major success criterion is to raise this to `workers = max(1, cpu-cores-1)` once the work below is complete.
 
+**Progress Update (Jan 5, 2025)**:
+- ✅ Completed pre-flight sanity checks (database & dev server verification)
+- ✅ Completed documentation updates with authentication best practices
+- 🚧 Next: Create test machinery and apply fixes to failing tests
+
 ## Context
 
 Recent E2E test analysis revealed that while we have excellent patterns and documentation for browser automation testing, these aren't being consistently applied. The uncommitted changes to `ai-headings-persistence-refresh.spec.ts` demonstrate a superior authentication pattern that would fix most failures, but this pattern hasn't been propagated to other tests.
@@ -53,30 +58,37 @@ Recent E2E test analysis revealed that while we have excellent patterns and docu
 
 ## Stages & Actions
 
-### Stage: Pre-flight sanity checks (database & dev server)
+### Stage: Pre-flight sanity checks (database & dev server) ✅ COMPLETED
 _Run **before any other stage** so the remaining work isn't built on a broken foundation._
 
-- [ ] **Database sanity check**
-  - [ ] Add script `npm run e2e:verify-user` that calls `/api/debug/user-exists?email=<envTestUser>` (or queries Supabase directly).
-  - [ ] If the seeded user is missing, **stop** and re-run `supabase/seed.sql` or investigate local DB health before proceeding.
-- [ ] **Dev-server health check**
-  - [ ] If port `$PORT` is not responding, run `npm run dev:daemon`.
-  - [ ] If daemon PID exists but server unhealthy, restart with `npm run dev:daemon -- --restart`.
+- [x] **Database sanity check**
+  - [x] Add script `npm run e2e:verify-user` that calls `/api/debug/user-exists?email=<envTestUser>` (or queries Supabase directly).
+    - Created `scripts/e2e-verify-user.ts` that queries Supabase auth.users directly
+    - Automatically detects worktree-specific test user (e.g., `test-user2@spideryarn.com` for worktree2)
+  - [x] If the seeded user is missing, **stop** and re-run `supabase/seed.sql` or investigate local DB health before proceeding.
+- [x] **Dev-server health check**
+  - [x] If port `$PORT` is not responding, run `npm run dev:daemon`.
+    - Created `scripts/e2e-verify-server.ts` that checks server health
+    - Automatically starts daemon if not running, restarts if unhealthy
+  - [x] If daemon PID exists but server unhealthy, restart with `npm run dev:daemon -- --restart`.
+- [x] Added `npm run e2e:preflight` that combines both checks
 
 Only after both checks pass should subsequent stages run.
 
-### Stage: Update documentation with consolidated best practices
-- [ ] Update `docs/reference/TESTING_BROWSER_AUTOMATION_IMPLEMENTATION.md` with the superior auth pattern from uncommitted changes
-  - [ ] Add "Authentication Best Practice" section showing the `test.use({ storageState })` pattern
-  - [ ] Include complete working example from ai-headings-persistence-refresh.spec.ts
-  - [ ] Add "Common Anti-patterns" section showing what NOT to do
-- [ ] Update `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md` 
-  - [ ] Clarify that dev server MUST be running externally (not via webServer config)
-  - [ ] Add troubleshooting section for port conflicts
-  - [ ] Update quick start commands to emphasize `npm run dev:daemon` first
-- [ ] Add minimal updates to `CLAUDE.md`
-  - [ ] Add E2E testing best practices reference under testing section
-  - [ ] Emphasize using `test.use({ storageState })` for auth in E2E tests
+### Stage: Update documentation with consolidated best practices ✅ COMPLETED
+- [x] Update `docs/reference/TESTING_BROWSER_AUTOMATION_IMPLEMENTATION.md` with the superior auth pattern from uncommitted changes
+  - [x] Add "Authentication Best Practice" section showing the `test.use({ storageState })` pattern
+  - [x] Include complete working example from ai-headings-persistence-refresh.spec.ts
+  - [x] Add "Common Anti-patterns" section showing what NOT to do
+- [x] Update `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md` 
+  - [x] Clarify that dev server MUST be running externally (not via webServer config)
+  - [x] Add troubleshooting section for port conflicts
+  - [x] Update quick start commands to emphasize `npm run dev:daemon` first
+- [x] Add minimal updates to `CLAUDE.md`
+  - [x] Add E2E testing best practices reference under testing section
+  - [x] Emphasize using `test.use({ storageState })` for auth in E2E tests
+
+**Commit**: 1f58269 - "feat(e2e): add pre-flight checks and document authentication best practices"
 
 ### Stage: Create general-purpose E2E testing machinery
 - [ ] Create `tests/e2e/helpers/auth-setup.ts` with the superior pattern
