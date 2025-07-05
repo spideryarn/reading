@@ -6,6 +6,7 @@ Quick reference for AI agents and developers using browser automation testing in
 
 - `docs/reference/RESEARCH_ON_TESTING_BROWSER_AUTOMATION.md` - Detailed tool comparison and research
 - `docs/reference/TESTING_BROWSER_AUTOMATION_IMPLEMENTATION.md` - Detailed implementation patterns
+- `docs/reference/TESTING_BROWSER_AUTOMATION_HELPERS.md` - Reusable test helpers and patterns
 - `docs/reference/TESTING_OVERVIEW.md` - Current testing infrastructure using Jest and React Testing Library
 - `docs/reference/GIT_WORKTREES.md` - Multi-worktree browser automation isolation
 - [Playwright Documentation](https://playwright.dev/) - Official Playwright documentation

@@ -90,9 +90,9 @@ Only after both checks pass should subsequent stages run.
 
 **Commit**: 1f58269 - "feat(e2e): add pre-flight checks and document authentication best practices"
 
-### Stage: Create general-purpose E2E testing machinery
-- [ ] Create `tests/e2e/helpers/auth-setup.ts` with the superior pattern
-  - [ ] Generate one **storageState file per worker** to avoid write-contention:
+### Stage: Create general-purpose E2E testing machinery ✅ COMPLETED
+- [x] Create `tests/e2e/helpers/auth-setup.ts` with the superior pattern
+  - [x] Generate one **storageState file per worker** to avoid write-contention:
     ```typescript
     import { test as base, expect, type TestInfo } from '@playwright/test'
     // ...existing imports...
@@ -105,18 +105,43 @@ Only after both checks pass should subsequent stages run.
       },
     })
     ```
-  - [ ] Inside `beforeAll`, write to `storageStateFile` instead of a shared one.
-- [ ] Create `tests/e2e/helpers/test-base.ts` with common test configuration
-  - [ ] Export `test` & `expect` re-exporting from above so all specs can simply `import { test, expect } from '../helpers/test-base'`
-  - [ ] Provide `createWorktreeTestNamespace(testInfo.title)` helper so per-worker uploads don't collide in DB.
+  - [x] Inside `beforeAll`, write to `storageStateFile` instead of a shared one.
+- [x] Create `tests/e2e/helpers/test-base.ts` with common test configuration
+  - [x] Export `test` & `expect` re-exporting from above so all specs can simply `import { test, expect } from '../helpers/test-base'`
+  - [x] Provide `createWorktreeTestNamespace(testInfo.title)` helper so per-worker uploads don't collide in DB.
+- [x] Document helpers in `docs/reference/TESTING_BROWSER_AUTOMATION_HELPERS.md`
+
+**Research Findings**:
+- Playwright's built-in features are comprehensive - no need for extensive external libraries
+- Only recommended addition: `@faker-js/faker` for generating unique test data
+- Focus should be on proper configuration and test architecture, not adding tools
+
+**Next Steps**:
+1. Add `@faker-js/faker` dependency
+2. Update test helpers to use faker for data generation
+3. Configure Playwright for optimal stability (retries, traces, parallel execution)
 
 ### Stage: Fix configuration issues
+- [ ] Install `@faker-js/faker` dependency: `npm install -D @faker-js/faker`
 - [ ] Update `playwright.config.ts`
   - [ ] **Keep** the `webServer` block but change `command` to `"npm run dev:daemon -- --once"` so Playwright *starts* the server only if one is not already running.
   - [ ] Ensure `reuseExistingServer: true` (already set) so an existing daemon isn't duplicated.
+  - [ ] Add stability configurations:
+    ```typescript
+    retries: 3, // Retry failed tests for flake detection
+    use: {
+      trace: 'on-first-retry', // Capture detailed diagnostics
+      video: 'on-first-retry', // Record video on retry
+      screenshot: 'only-on-failure', // Screenshot failures
+    }
+    ```
   - [ ] After stability proven, set `workers = Math.max(1, os.cpus().length - 1)` (import `os` at top).
   - [ ] Fix test project assignments (move auth-required tests out of `chromium-no-auth`).
   - [ ] Add explanatory comments so future maintainers understand the dev-server workflow.
+- [ ] Update test helpers to integrate faker:
+  - [ ] Add faker imports to `test-base.ts`
+  - [ ] Update `createTestDocument()` to use faker for content generation
+  - [ ] Add faker-based data generation helpers
 
 ### Stage: Apply authentication fixes to failing tests (Quick wins - 70% of failures)
 - [ ] Update failing auth tests using subagent & **sd**:
@@ -190,6 +215,39 @@ _Runs after configuration fixes and a majority of auth failures are resolved._
 - [ ] Move this doc to `docs/planning/finished/`
 
 ## Appendix
+
+### Research Findings on E2E Test Utilities
+
+Based on comprehensive research, the key findings are:
+
+1. **Playwright's built-in features are sufficient** - No need for extensive external libraries
+   - Auto-waiting eliminates timing issues (primary cause of flakes)
+   - Web-first assertions automatically retry
+   - Built-in retry mechanism with flake detection
+   - Trace recording on retry for debugging
+
+2. **Only one library strongly recommended: @faker-js/faker**
+   - Generates unique test data to prevent collisions
+   - Creates realistic test scenarios
+   - Actively maintained with TypeScript support
+   - Example usage:
+     ```typescript
+     import { faker } from '@faker-js/faker'
+     const title = faker.lorem.sentence()
+     const content = faker.lorem.paragraphs(5)
+     ```
+
+3. **Focus on configuration over libraries**
+   - Proper retry configuration: `retries: 3`
+   - Trace on first retry: `trace: 'on-first-retry'`
+   - Video on retry for debugging
+   - Worker configuration for parallel execution
+
+4. **Test architecture is more important than tools**
+   - Complete test isolation
+   - UUID-based namespacing (already implemented)
+   - Per-worker auth state files (already implemented)
+   - Proper cleanup utilities (already implemented)
 
 ### Superior Authentication Pattern (from uncommitted changes)
 

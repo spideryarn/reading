@@ -9,6 +9,7 @@ This document provides detailed implementation patterns, authentication helpers,
 ## See Also
 
 - `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md` - Quick reference and best practices
+- `docs/reference/TESTING_BROWSER_AUTOMATION_HELPERS.md` - Reusable test helpers and patterns
 - `docs/reference/RESEARCH_ON_TESTING_BROWSER_AUTOMATION.md` - Tool comparison and selection rationale
 - `docs/reference/TESTING_OVERVIEW.md` - Overall testing philosophy and Jest integration
 - `docs/reference/GIT_WORKTREES.md` - Multi-worktree development environment setup
