@@ -386,17 +386,12 @@ export class StructureHandler extends BaseToolHandler {
         }
       }
       
-      // No cached headings found
+      // No cached headings found – return 404 so clients can distinguish
       logger.info({
         documentId
-      }, 'No cached structure found')
-      
-      return {
-        cached: false,
-        operations: [],
-        type: 'structure',
-        ...this.createResponseMetadata()
-      }
+      }, 'No cached structure found – returning 404')
+
+      throw new ToolHandlerError('No cached structure found', 404, 'STRUCTURE_CACHE_NOT_FOUND', false)
       
     } catch (error) {
       if (error instanceof ToolHandlerError) {
