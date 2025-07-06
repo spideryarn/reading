@@ -293,24 +293,27 @@ export function StructurePanel({
         return
       }
 
-      // Re-apply operations **one by one** in original order so that remove/
-      // replace steps can reference IDs introduced by earlier inserts.
-      for (const [idx, op] of operations.entries()) {
-        const singleMutation = headingOperationsToMutation({
-          documentId,
-          operations: [op]
-        })
+      // -------------------------------------------------------------------
+      // NEW: Apply all cached operations in **one batched mutation**.  This
+      // avoids validation failures that arose when sequentially applying ops
+      // that depend on results of earlier transforms within the same tick.
+      // -------------------------------------------------------------------
 
-        const result = await applyMutation(singleMutation)
-        if (!result.success) {
-          throw new Error(result.error || `Failed at cached operation #${idx + 1}`)
-        }
+      const batchedMutation = headingOperationsToMutation({
+        documentId,
+        operations
+      })
+
+      const result = await applyMutation(batchedMutation)
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to apply cached heading operations')
       }
 
       // Headings extraction will run via the effect that watches mutatedDocument.
       setCollapsedIds(new Set())
       setIsLoadingHeadings(false)
-      console.log('[StructurePanel] Successfully reapplied all cached operations')
+      console.log('[StructurePanel] Successfully reapplied all cached operations (batched)')
     } catch (error) {
       console.error('Error applying cached operations:', error)
       setHeadingsError(`Failed to load cached operations: ${error instanceof Error ? error.message : 'Unknown error'}`)
