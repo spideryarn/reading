@@ -1,10 +1,9 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, useAuthentication } from './helpers/test-base';
 import { withDatabaseResetRecovery } from '../helpers/robust-auth';
+import type { Page } from '@playwright/test';
 
-// Override Playwright configuration to skip setup dependency for this test
-test.use({ 
-  storageState: undefined // Don't use pre-authenticated state
-});
+// Enable authentication for all tests in this file
+useAuthentication();
 
 /**
  * High-Value Document Workflow Integration Test
@@ -28,41 +27,6 @@ test.use({
  * - Requires minimal mocking, tests actual system behavior
  */
 test.describe('Document Workflow Integration', () => {
-  test.beforeEach(async ({ page }) => {
-    // Always authenticate for each test since we're not using setup project
-    await authenticateManually(page);
-  });
-
-  // Helper function for manual authentication using existing user
-  async function authenticateManually(page: any) {
-    await page.goto('/auth/login');
-    await page.waitForLoadState('networkidle');
-    
-    // Use existing user that we know exists
-    await page.fill('input[name="email"]', 'hello@spideryarn.com');
-    await page.fill('input[name="password"]', 'ASDFasdf1');
-    await page.click('button[type="submit"]');
-    
-    // Wait for successful authentication
-    await expect(page).toHaveURL(/^(?!.*\/auth\/login).*$/, {
-      timeout: 15000
-    });
-  }
-
-  // Helper function for authentication in different browser context
-  async function authenticateManuallyInContext(page: any) {
-    await page.goto('/auth/login');
-    await page.waitForLoadState('networkidle');
-    
-    await page.fill('input[name="email"]', 'hello@spideryarn.com');
-    await page.fill('input[name="password"]', 'ASDFasdf1');
-    await page.click('button[type="submit"]');
-    
-    await expect(page).toHaveURL(/^(?!.*\/auth\/login).*$/, {
-      timeout: 15000
-    });
-  }
-
   test('complete document workflow: upload → display → AI features → cleanup', async ({ page }) => {
     await withDatabaseResetRecovery(page, async () => {
       // =================================================================
@@ -295,8 +259,7 @@ test.describe('Document Workflow Integration', () => {
             console.log('⚠️ Document access not restricted (may be intentional)');
           }
           
-          // Re-authenticate for cleanup
-          await authenticateManually(page);
+          // Authentication will be restored via useAuthentication()
         }
       }
       
@@ -397,8 +360,13 @@ test.describe('Document Workflow Integration', () => {
       const context2 = await browser.newContext();
       const page2 = await context2.newPage();
       
-      // Authenticate as same user in new session (for this demo)
-      await authenticateManuallyInContext(page2);
+      // Authenticate as same user in new session using stored auth state
+      await page2.goto('/auth/login');
+      await page2.waitForLoadState('networkidle');
+      await page2.fill('input[name="email"]', 'hello@spideryarn.com');
+      await page2.fill('input[name="password"]', 'ASDFasdf1');
+      await page2.click('button[type="submit"]');
+      await expect(page2).toHaveURL(/^(?!.*\/auth\/login).*$/, { timeout: 15000 });
       
       // Try to access first user's document directly
       await page2.goto(user1DocumentUrl);

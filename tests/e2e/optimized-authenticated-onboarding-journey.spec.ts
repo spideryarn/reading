@@ -218,7 +218,7 @@ test.describe('Authenticated Onboarding Journey', () => {
       if (routeUrl.includes('/auth/login')) {
         console.log(`❌ ${route.path} unexpectedly redirected to login`);
         expect(false).toBeTruthy(); // Fail the test
-      } else if (routeUrl === `http://localhost:3002${route.path}` || routeUrl.endsWith(route.path)) {
+      } else if (routeUrl === `${new URL(page.url()).origin}${route.path}` || routeUrl.endsWith(route.path)) {
         console.log(`✅ ${route.path} accessible to authenticated user`);
         
         // Verify page has content
@@ -384,7 +384,7 @@ test.describe('Authenticated Onboarding Journey', () => {
       
       if (url.includes('/auth/login')) {
         console.log(`✅ ${route} properly protected after logout`);
-      } else if (url === `http://localhost:3002${route}`) {
+      } else if (url === `${new URL(page.url()).origin}${route}`) {
         console.log(`⚠️ ${route} still accessible after logout (verify if intentional)`);
       } else {
         console.log(`✅ ${route} redirected to: ${url} (likely protected)`);

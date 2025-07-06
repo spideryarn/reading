@@ -14,17 +14,24 @@ import type { Database } from '@/lib/types/database-auto-generated';
 // Test user configuration
 const { email: testUserEmail, password: testUserPassword } = getCurrentEnvironmentTestUser();
 
-// Admin client for test setup
-const adminClient = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
+// Admin client for test setup - lazy initialization to avoid module-level env var access
+let adminClient: ReturnType<typeof createClient<Database>> | null = null;
+
+function getAdminClient() {
+  if (!adminClient) {
+    adminClient = createClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
   }
-);
+  return adminClient;
+}
 
 /**
  * Document test setup and management class
@@ -96,7 +103,7 @@ export class DocumentAccessTestHelper {
   async cleanup(): Promise<void> {
     for (const docId of this.createdDocuments) {
       try {
-        await adminClient
+        await getAdminClient()
           .from('documents')
           .delete()
           .eq('id', docId);

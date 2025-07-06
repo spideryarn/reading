@@ -1,9 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, useAuthentication } from './helpers/test-base';
 
-// Override to skip authentication dependency
-test.use({ 
-  storageState: undefined 
-});
+// Enable authentication for all tests in this file
+useAuthentication();
 
 /**
  * Standalone Document Workflow Integration Test
@@ -100,16 +98,9 @@ test.describe('Standalone Document Workflow', () => {
     console.log('🔄 Starting E2E Document Workflow Test');
     
     // =================================================================
-    // PHASE 1: AUTHENTICATION
+    // PHASE 1: DOCUMENT UPLOAD
     // =================================================================
-    console.log('Phase 1: Authentication');
-    await authenticate(page);
-    console.log('✅ Authentication successful');
-    
-    // =================================================================
-    // PHASE 2: DOCUMENT UPLOAD
-    // =================================================================
-    console.log('Phase 2: Document Upload');
+    console.log('Phase 1: Document Upload');
     
     await page.goto('/upload');
     await expect(page.locator('h2:has-text("Add Document")')).toBeVisible();
@@ -131,9 +122,9 @@ test.describe('Standalone Document Workflow', () => {
     await expect(page.locator('text=Mozilla Readability').first()).toBeVisible();
     
     // =================================================================
-    // PHASE 3: DOCUMENT PROCESSING (Event-Driven Waiting)
+    // PHASE 2: DOCUMENT PROCESSING (Event-Driven Waiting)
     // =================================================================
-    console.log('Phase 3: Document Processing');
+    console.log('Phase 2: Document Processing');
     
     // Check if there are any error messages before submitting
     const errorMessage = page.locator('.error, .text-red-500, [class*="error"]').first();
@@ -201,9 +192,9 @@ test.describe('Standalone Document Workflow', () => {
     console.log(`✅ Document created: ${documentId}`);
     
     // =================================================================
-    // PHASE 4: DOCUMENT DISPLAY
+    // PHASE 3: DOCUMENT DISPLAY
     // =================================================================
-    console.log('Phase 4: Document Display');
+    console.log('Phase 3: Document Display');
     
     // Wait for main content to load
     await expect(page.locator('h1, h2, p, article, main').first()).toBeVisible({
@@ -217,9 +208,9 @@ test.describe('Standalone Document Workflow', () => {
     console.log(`✅ Document displayed with ${headingCount} headings`);
     
     // =================================================================
-    // PHASE 5: NAVIGATION TESTING
+    // PHASE 4: NAVIGATION TESTING
     // =================================================================
-    console.log('Phase 5: Navigation Testing');
+    console.log('Phase 4: Navigation Testing');
     
     // Test navigation back to documents list
     const backLink = page.locator('a:has-text("Documents"), a[href="/read"]');
@@ -236,9 +227,9 @@ test.describe('Standalone Document Workflow', () => {
     }
     
     // =================================================================
-    // PHASE 6: DIRECT ACCESS TESTING
+    // PHASE 5: DIRECT ACCESS TESTING
     // =================================================================
-    console.log('Phase 6: Direct Access Testing');
+    console.log('Phase 5: Direct Access Testing');
     
     // Test direct document access
     await page.goto(documentUrl);
@@ -272,7 +263,7 @@ test.describe('Standalone Document Workflow', () => {
   test('upload validation and error handling', async ({ page }) => {
     console.log('🔄 Testing Upload Validation and Error Handling');
     
-    await authenticate(page);
+    // Already authenticated via useAuthentication()
     await page.goto('/upload');
     
     const submitButton = page.locator('button:has-text("Add Document")');
@@ -314,25 +305,22 @@ test.describe('Standalone Document Workflow', () => {
     console.log('- ✅ UI state management (button enable/disable)');
   });
 
-  test('authentication flow and security', async ({ page }) => {
-    console.log('🔄 Testing Authentication Flow and Security');
+  test('authenticated access and security', async ({ page }) => {
+    console.log('🔄 Testing Authenticated Access and Security');
     
-    // Test 1: Unauthenticated access redirects to login
-    await page.goto('/upload');
-    if (page.url().includes('/auth/login')) {
-      console.log('✅ Unauthenticated access properly redirected to login');
-    }
+    // Already authenticated via useAuthentication()
     
-    // Test 2: Successful authentication
-    await authenticate(page);
-    console.log('✅ Authentication flow completed successfully');
-    
-    // Test 3: Can access protected routes after auth
+    // Test 1: Can access protected routes
     await page.goto('/upload');
     await expect(page.locator('h2:has-text("Add Document")')).toBeVisible();
-    console.log('✅ Protected routes accessible after authentication');
+    console.log('✅ Protected routes accessible when authenticated');
     
-    // Test 4: Check for auth indicators
+    // Test 2: No login prompts shown when authenticated
+    await expect(page.locator('text=Sign in')).not.toBeVisible();
+    await expect(page.locator('text=Log in')).not.toBeVisible();
+    console.log('✅ No login prompts shown for authenticated user');
+    
+    // Test 3: Check for auth indicators
     const authIndicators = [
       page.locator('text=Log out'),
       page.locator('[class*="orange"]'),
@@ -368,7 +356,7 @@ test.describe('Standalone Document Workflow', () => {
     console.log('🔄 Testing Logout Flow and Session Cleanup');
     
     // Authenticate first
-    await authenticate(page);
+    // Already authenticated via useAuthentication()
     
     // Navigate to a protected route to confirm we're authenticated
     await page.goto('/upload');

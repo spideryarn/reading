@@ -23,6 +23,9 @@
         "test:e2e:ui": "npm run test:e2e -- --ui",
         "test:e2e:debug": "npm run test:e2e -- --debug",
         "test:e2e:setup": "npm run test:e2e -- --project=setup",
+        "e2e:verify-user": "./scripts/e2e-verify-user.ts",
+        "e2e:verify-server": "./scripts/e2e-verify-server.ts",
+        "e2e:preflight": "npm run e2e:verify-user && npm run e2e:verify-server",
         "db:types": "./scripts/generate-database-types.ts",
         "db:reset:DANGEROUS": "echo '⚠️  WARNING: This will DELETE ALL DATA and invalidate ALL worktree auth files! Type YES to continue:' && read confirm && [ \"$confirm\" = \"YES\" ] && supabase db reset && npm run db:types && npm run import-documents && rm -f playwright/.auth/*.json && echo '✅ Database reset complete. Run ./scripts/setup-auth-all-worktrees.ts to re-setup authentication in all worktrees.'",
         "db:backup": "./scripts/backup-database.ts",
@@ -118,6 +121,7 @@
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3",
+        "@faker-js/faker": "^9.9.0",
         "@playwright/test": "^1.53.0",
         "@tailwindcss/postcss": "^4",
         "@tailwindcss/typography": "^0.5.16",

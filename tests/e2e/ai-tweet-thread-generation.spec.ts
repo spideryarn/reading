@@ -1,10 +1,8 @@
-import { test, expect } from '@playwright/test';
-import { RobustAuthManager, withDatabaseResetRecovery } from '../helpers/robust-auth';
+import { test, expect, useAuthentication } from './helpers/test-base';
+import { withDatabaseResetRecovery } from '../helpers/robust-auth';
 
-// Override default authentication
-test.use({ 
-  storageState: undefined 
-});
+// Enable authentication for all tests in this file
+useAuthentication();
 
 /**
  * AI Tweet Thread Generation E2E Test
@@ -24,19 +22,13 @@ test.describe('AI Tweet Thread Generation', () => {
   test('complete tweet thread generation workflow', async ({ page }) => {
     console.log('🔄 Starting Tweet Thread Generation Test');
     
-    // =================================================================
-    // PHASE 1: AUTHENTICATION
-    // =================================================================
-    console.log('Phase 1: Authentication');
-    const auth = new RobustAuthManager(page);
-    await auth.loginAs('user');
-    console.log('✅ Authentication successful');
+    // Already authenticated via useAuthentication()
     
     await withDatabaseResetRecovery(page, async () => {
       // =================================================================
-      // PHASE 2: CREATE TEST DOCUMENT
+      // PHASE 1: CREATE TEST DOCUMENT
       // =================================================================
-      console.log('Phase 2: Creating test document for tweet thread generation');
+      console.log('Phase 1: Creating test document for tweet thread generation');
       
       await page.goto('/upload');
       await page.waitForLoadState('networkidle');
@@ -103,9 +95,9 @@ test.describe('AI Tweet Thread Generation', () => {
       console.log('✅ Document created and loaded');
       
       // =================================================================
-      // PHASE 3: ACCESS TWEET THREAD GENERATION
+      // PHASE 2: ACCESS TWEET THREAD GENERATION
       // =================================================================
-      console.log('Phase 3: Testing tweet thread generation');
+      console.log('Phase 2: Testing tweet thread generation');
       
       // Wait for document content to load
       await expect(page.locator('h1').first()).toBeVisible({ timeout: 10000 });

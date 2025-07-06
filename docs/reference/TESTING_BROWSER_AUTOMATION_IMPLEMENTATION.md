@@ -9,6 +9,7 @@ This document provides detailed implementation patterns, authentication helpers,
 ## See Also
 
 - `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md` - Quick reference and best practices
+- `docs/reference/TESTING_BROWSER_AUTOMATION_HELPERS.md` - Reusable test helpers and patterns
 - `docs/reference/RESEARCH_ON_TESTING_BROWSER_AUTOMATION.md` - Tool comparison and selection rationale
 - `docs/reference/TESTING_OVERVIEW.md` - Overall testing philosophy and Jest integration
 - `docs/reference/GIT_WORKTREES.md` - Multi-worktree development environment setup
@@ -93,9 +94,54 @@ export class RobustAuthManager {
 }
 ```
 
-### Simple Authentication Helper Pattern
+### Authentication Best Practice - File-Level State Injection
 
-For straightforward tests, use this minimal authentication pattern:
+**This is the recommended pattern for all E2E tests that require authentication.** It provides automatic authentication injection without per-test login code:
+
+```typescript
+// At file level - automatic auth injection for all tests in the file
+import { test, expect } from '@playwright/test'
+import { RobustAuthManager } from '../helpers/robust-auth'
+import { getCurrentEnvironmentPaths } from '../../lib/testing/worktree-auth-helpers'
+
+// Get the auth file for the current environment (worktree-aware)
+const { authFile } = getCurrentEnvironmentPaths()
+
+// Configure Playwright to automatically inject auth state into every test context
+test.use({ storageState: authFile })
+
+// One-time setup creates/updates the auth file
+test.beforeAll(async ({ browser }) => {
+  // Create a temporary context solely for authentication
+  const context = await browser.newContext()
+  const page = await context.newPage()
+  const authManager = new RobustAuthManager(page)
+  await authManager.loginAs('user', { forceReauth: true })
+  await context.close()
+})
+
+// Tests are automatically authenticated - no login code needed!
+test('my feature test', async ({ page }) => {
+  await page.goto('/protected-route')  // Already authenticated!
+  // ... rest of test
+})
+
+test('another test', async ({ page }) => {
+  await page.goto('/documents')  // Still authenticated!
+  // ... no auth code needed
+})
+```
+
+**Key Benefits:**
+- **DRY**: Authentication logic appears only once per file
+- **Fast**: Auth state is reused across all tests in the file
+- **Reliable**: Uses RobustAuthManager for database reset recovery
+- **Worktree-safe**: Automatically uses correct test user for the environment
+- **Clean tests**: No authentication boilerplate in individual tests
+
+### Simple Authentication Helper Pattern (Legacy)
+
+For one-off tests or special cases, you can use this minimal pattern:
 
 ```typescript
 // Helper function for authentication
@@ -103,9 +149,10 @@ async function authenticate(page: any) {
   await page.goto('/auth/login');
   await page.waitForLoadState('networkidle');
   
-  // Use existing user that we verified exists
-  await page.fill('input[name="email"]', 'hello@spideryarn.com');
-  await page.fill('input[name="password"]', 'ASDFasdf1');
+  // Use environment-specific test user
+  const { email, password } = getCurrentEnvironmentTestUser();
+  await page.fill('input[name="email"]', email);
+  await page.fill('input[name="password"]', password);
   await page.click('button[type="submit"]');
   
   // Wait for successful authentication
@@ -120,6 +167,60 @@ test('my feature test', async ({ page }) => {
   // ... rest of test
 });
 ```
+
+**Note:** The file-level state injection pattern is strongly preferred over per-test authentication.
+
+### Common Authentication Anti-patterns to Avoid
+
+**❌ DON'T: Authenticate in every test**
+```typescript
+// BAD: Wastes time, causes timeouts, makes tests fragile
+test('test 1', async ({ page }) => {
+  await page.goto('/auth/login');
+  await page.fill('input[name="email"]', 'test@example.com');
+  // ... login logic repeated
+});
+
+test('test 2', async ({ page }) => {
+  await page.goto('/auth/login');
+  await page.fill('input[name="email"]', 'test@example.com');
+  // ... same login logic again!
+});
+```
+
+**❌ DON'T: Use auth.setup.ts project for individual test files**
+```typescript
+// BAD: The auth.setup.ts project is for global setup, not individual tests
+test.describe('my feature', () => {
+  test('needs auth', async ({ page }) => {
+    // This test won't be authenticated if you're relying on auth.setup.ts
+    await page.goto('/protected');  // Will redirect to login!
+  });
+});
+```
+
+**❌ DON'T: Mix authentication approaches in the same file**
+```typescript
+// BAD: Inconsistent and confusing
+test.use({ storageState: authFile });  // File-level auth
+
+test('test 1', async ({ page }) => {
+  // Already authenticated via storageState
+});
+
+test('test 2', async ({ page }) => {
+  await authenticate(page);  // Why authenticate again?
+});
+```
+
+**❌ DON'T: Hardcode credentials**
+```typescript
+// BAD: Not worktree-aware, maintenance nightmare
+await page.fill('input[name="email"]', 'hello@spideryarn.com');
+await page.fill('input[name="password"]', 'ASDFasdf1');
+```
+
+**✅ DO: Use the file-level state injection pattern shown above**
 
 ### Database Reset Recovery Implementation
 

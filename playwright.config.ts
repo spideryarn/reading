@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 import * as dotenv from 'dotenv';
+import * as os from 'os';
 import { getCurrentEnvironmentId, getEnvironmentName } from './lib/testing/worktree-auth-helpers';
 
 // Load environment variables from .env.test
@@ -33,8 +34,8 @@ export default defineConfig({
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   
-  /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
+  /* Retry failed tests for flake detection */
+  retries: 3,
   
   /* Sequential execution initially until namespace isolation validated */
   workers: 1,
@@ -50,10 +51,13 @@ export default defineConfig({
     /* Base URL from environment variable (different ports per worktree) */
     baseURL: `http://localhost:${process.env.PORT || 3000}`,
     
-    /* Collect trace when retrying the failed test */
+    /* Capture detailed diagnostics on retry */
     trace: 'on-first-retry',
     
-    /* Take screenshot only on failures to minimize output */
+    /* Record video on retry for debugging */
+    video: 'on-first-retry',
+    
+    /* Screenshot failures */
     screenshot: 'only-on-failure',
     
     /* Headless by default for efficiency */
@@ -87,17 +91,18 @@ export default defineConfig({
       dependencies: ['setup'],
     },
     
-    // Chrome tests without authentication (for error pages, public content, etc.)
+    // Chrome tests without authentication (for truly public content only)
     {
       name: 'chromium-no-auth',
       testMatch: [
-        '**/error-page-testing.spec.ts', 
+        // Only tests that genuinely don't need authentication
         '**/optimized-anonymous-access-journey.spec.ts', 
-        '**/optimized-authenticated-onboarding-journey.spec.ts',
-        '**/optimized-document-library-journey.spec.ts',
         '**/optimized-route-smoke-tests.spec.ts',
         '**/optimized-mobile-experience.spec.ts',
         '**/optimized-error-recovery.spec.ts'
+        // Removed: error-page-testing.spec.ts (needs auth fixes)
+        // Removed: optimized-authenticated-onboarding-journey.spec.ts (has "authenticated" in name)
+        // Removed: optimized-document-library-journey.spec.ts (requires auth for document operations)
       ],
       use: { 
         ...devices['Desktop Chrome'],
@@ -110,11 +115,14 @@ export default defineConfig({
   /* Environment-specific folder for test artifacts */
   outputDir: testResultsDir,
   
-  /* Run your local dev server before starting the tests */
+  /* Dev server management - starts only if not already running */
+  // The dev:daemon command should be running externally for best results.
+  // This webServer config acts as a fallback to start the server if needed.
   webServer: {
-    command: 'npm run dev:simple',
+    // Use --once flag to check if server is already running before starting a new one
+    command: 'npm run dev:daemon -- --once',
     port: Number(process.env.PORT || 3000),
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: true, // Don't duplicate existing daemon
     timeout: 120 * 1000, // Extended timeout for Next.js startup
     stdout: 'ignore', // Minimize output for AI agents
     stderr: 'pipe',

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, useAuthentication } from './helpers/test-base';
 
 /**
  * Optimized Document Library Journey Test
@@ -27,10 +27,8 @@ import { test, expect } from '@playwright/test';
  * - Document actions are accessible and functional
  */
 
-// Skip authentication for now to test basic functionality
-test.use({ 
-  storageState: { cookies: [], origins: [] }
-});
+// Enable authentication for all tests in this file
+useAuthentication();
 
 test.describe('Document Library Journey', () => {
   
@@ -72,31 +70,10 @@ test.describe('Document Library Journey', () => {
   test('complete document library journey', async ({ page }) => {
     console.log('🔄 Starting Document Library Journey Test');
     
-    // =================================================================
-    // PHASE 1: AUTHENTICATION VERIFICATION
-    // =================================================================
-    console.log('Phase 1: Authentication Verification');
-    
-    // Navigate to a protected route to ensure authentication works
-    await page.goto('/read');
-    await page.waitForLoadState('networkidle');
-    
-    const currentUrl = page.url();
-    console.log(`Current URL: ${currentUrl}`);
-    
-    // Verify we're not redirected to login
-    if (currentUrl.includes('/auth/login')) {
-      console.log('❌ Authentication failed - redirected to login');
-      console.log('⚠️ This test requires authentication setup. Run: npm run test:e2e:setup');
-      
-      // Still test what we can as anonymous user
-      console.log('🔄 Continuing with anonymous document library testing...');
-    } else {
-      console.log('✅ Authentication successful - accessing protected area');
-    }
+    // Already authenticated via useAuthentication()
     
     // =================================================================
-    // PHASE 2: DOCUMENT LIBRARY ACCESS
+    // PHASE 1: DOCUMENT LIBRARY ACCESS
     // =================================================================
     console.log('Phase 2: Document Library Access');
     
@@ -135,9 +112,9 @@ test.describe('Document Library Journey', () => {
     }
     
     // =================================================================
-    // PHASE 3: DOCUMENT INVENTORY & DISPLAY
+    // PHASE 2: DOCUMENT INVENTORY & DISPLAY
     // =================================================================
-    console.log('Phase 3: Document Inventory & Display');
+    console.log('Phase 2: Document Inventory & Display');
     
     const documentCheck = await checkDocumentPresence(page);
     
@@ -210,9 +187,9 @@ test.describe('Document Library Journey', () => {
     }
     
     // =================================================================
-    // PHASE 4: SEARCH & NAVIGATION FUNCTIONALITY
+    // PHASE 3: SEARCH & NAVIGATION FUNCTIONALITY
     // =================================================================
-    console.log('Phase 4: Search & Navigation Functionality');
+    console.log('Phase 3: Search & Navigation Functionality');
     
     // Look for search functionality
     const searchSelectors = [
@@ -277,9 +254,9 @@ test.describe('Document Library Journey', () => {
     }
     
     // =================================================================
-    // PHASE 5: DOCUMENT ACCESS & CONTENT VERIFICATION
+    // PHASE 4: DOCUMENT ACCESS & CONTENT VERIFICATION
     // =================================================================
-    console.log('Phase 5: Document Access & Content Verification');
+    console.log('Phase 4: Document Access & Content Verification');
     
     if (documentCheck.hasDocuments) {
       // Try to access the first document
@@ -364,9 +341,9 @@ test.describe('Document Library Journey', () => {
     }
     
     // =================================================================
-    // PHASE 6: DOCUMENT ORGANIZATION & ACTIONS
+    // PHASE 5: DOCUMENT ORGANIZATION & ACTIONS
     // =================================================================
-    console.log('Phase 6: Document Organization & Actions');
+    console.log('Phase 5: Document Organization & Actions');
     
     // Test sorting/filtering options
     const organizationElements = [
@@ -419,9 +396,9 @@ test.describe('Document Library Journey', () => {
     }
     
     // =================================================================
-    // PHASE 7: UPLOAD/ADD DOCUMENT INTEGRATION
+    // PHASE 6: UPLOAD/ADD DOCUMENT INTEGRATION
     // =================================================================
-    console.log('Phase 7: Upload/Add Document Integration');
+    console.log('Phase 6: Upload/Add Document Integration');
     
     // Look for upload/add document functionality
     const uploadElements = [
@@ -448,9 +425,9 @@ test.describe('Document Library Journey', () => {
     }
     
     // =================================================================
-    // PHASE 8: RESPONSIVE DESIGN VERIFICATION
+    // PHASE 7: RESPONSIVE DESIGN VERIFICATION
     // =================================================================
-    console.log('Phase 8: Responsive Design Verification');
+    console.log('Phase 7: Responsive Design Verification');
     
     // Test mobile viewport
     await page.setViewportSize({ width: 375, height: 667 }); // iPhone-like

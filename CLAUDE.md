@@ -80,6 +80,8 @@ Type checking and linting:
   - When writing tests, use our Jest testing framework with React Testing Library
   - **Prefer using a subagent** for **running** tests to avoid filling the context window
 - for Playwright E2E browser testing, first read `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
+  - **E2E Authentication Best Practice**: Use `test.use({ storageState })` pattern for file-level auth injection (see `docs/reference/TESTING_BROWSER_AUTOMATION_IMPLEMENTATION.md`)
+  - **Pre-flight checks**: Run `npm run e2e:preflight` before E2E tests to verify test user exists and dev server is healthy
 - **CLI usage:** When running Claude Code from command line, you MUST explicitly run `npm run lint` and `npm run build` to get diagnostic feedback OR use `npm run check:health` for orchestration-friendly summaries
 - **Health check orchestration:** See `docs/reference/SETUP_FOR_AI_FIRST_CODING.md` for AI orchestration patterns and health checking workflows
 - For large-scale find-and-replace: see `docs/reference/SD_STRING_DISPLACEMENT_FIND_REPLACE.md`
@@ -111,7 +113,10 @@ Type checking and linting:
 Debugging resources:
 - Current logs: `tail dev.log` or `tail error.log`
 - Browser debugging: Playwright MCP (console logs, network requests, screenshots)
-- **E2E testing**: Always run `npm run dev:status || npm run dev:daemon` before running E2E tests to ensure the dev server is running
+- **E2E testing**: 
+  - Always run `npm run e2e:preflight` before E2E tests (verifies test user & dev server)
+  - Use file-level `test.use({ storageState })` for authentication, not per-test login
+  - Dev server MUST be running externally - do NOT rely on Playwright's webServer config
 
 ⚠️ **IMPORTANT**: If tests are failing, try and understand why. If they're failing for systemic reasons, tell the user so we can discuss how to fix things. Be wary about removing/modifying the tests just to make them pass. If in doubt, stop & discuss with the user.
 
