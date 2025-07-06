@@ -213,22 +213,39 @@ Only after both checks pass should subsequent stages run.
 
 **Result**: All E2E tests now use unique URLs with timestamp+random suffixes, preventing 409 conflicts
 
-### Stage: Improve dev server stability (NEW - Critical for long test runs)
-- [ ] Investigate why dev server becomes unresponsive during test runs
-- [ ] Add health check retries in test setup
-- [ ] Consider memory leak issues with hot module replacement
-- [ ] Document optimal test batch sizes to avoid server overload
-
-### Stage: Add stability improvements
-- [ ] Add page stability checks to test helpers:
+### Stage: Add stability improvements ✅ COMPLETED
+- [x] Add page stability checks to test helpers:
   ```typescript
   export async function waitForPageStability(page: Page) {
     await page.waitForLoadState('domcontentloaded')
     await page.waitForLoadState('networkidle')
   }
   ```
-- [ ] Add frame stability checks for tests with detachment errors
-- [ ] Increase timeouts in auth.setup.ts if needed
+  - Already existed in test-base.ts and is being used throughout tests
+- [x] Add frame stability checks for tests with detachment errors
+  - Added `waitForFrameStability` helper to test-base.ts
+  - Handles frame detachment gracefully during waiting
+  - Ensures all frames (including iframes) are stable before proceeding
+- [x] Increase timeouts in auth.setup.ts if needed
+  - Current timeout of 120 seconds is appropriate for initial compilation
+  - Auth processing timeout of 15 seconds is reasonable
+  - No increase needed at this time
+
+### Stage: Improve dev server stability (NEW - Critical for long test runs) ✅ COMPLETED
+- [x] Investigate why dev server becomes unresponsive during test runs
+  - Identified memory pressure from hot module replacement as likely cause
+  - Long test runs can accumulate memory usage leading to unresponsiveness
+- [x] Add health check retries in test setup
+  - Created `server-stability.ts` with comprehensive health monitoring
+  - Includes `checkServerHealth`, `waitForServerHealth`, and `restartServerIfUnhealthy` functions
+  - Graceful restart with fallback to force restart if needed
+- [x] Consider memory leak issues with hot module replacement
+  - Added memory usage monitoring in health checks
+  - Implemented memory-aware batch sizing to prevent overload
+- [x] Document optimal test batch sizes to avoid server overload
+  - Created `calculateOptimalBatchSize()` function that adjusts based on memory pressure
+  - Batch sizes: 1 test (>80% memory), 2 tests (>60%), 3 tests (>40%), 5 tests max
+  - Implemented `runTestsInBatches()` helper for automated batch execution
 
 ### Stage: Run comprehensive test validation
 - [ ] Start fresh dev server: `npm run dev:daemon`
