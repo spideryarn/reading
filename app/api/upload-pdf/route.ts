@@ -15,6 +15,7 @@ import { processHtmlToDocument, handleSanitizationError } from '@/lib/services/h
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 import { validatePdfPageCountFromBuffer } from '@/lib/utils/pdf-validation'
 import { processWithGeminiNative, canProcessWithGeminiNative } from '@/lib/services/gemini-native-pdf-processor'
+import { processWithMistralOcr, canProcessWithMistralOcr } from '@/lib/services/mistral-ocr-pdf-processor'
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
@@ -48,8 +49,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate provider selection
-    if (!['claude', 'gemini'].includes(provider)) {
-      return new NextResponse('Invalid provider. Must be "claude" or "gemini"', { status: 400 })
+    if (!['claude', 'gemini', 'mistral'].includes(provider)) {
+      return new NextResponse('Invalid provider. Must be "claude", "gemini", or "mistral"', { status: 400 })
     }
 
     // Convert file to buffer
@@ -112,7 +113,9 @@ export async function POST(request: NextRequest) {
 
     // Determine which processing path to use
     const canGeminiResult = canProcessWithGeminiNative(pdfBuffer)
+    const canMistralResult = canProcessWithMistralOcr(pdfBuffer)
     const useGeminiNative = provider === 'gemini' && canGeminiResult.canProcess
+    const useMistralOcr = provider === 'mistral' && canMistralResult.canProcess
 
     // Fail fast if user explicitly requested Gemini but the PDF cannot be handled natively
     if (provider === 'gemini' && !canGeminiResult.canProcess) {
@@ -122,10 +125,19 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    // Fail fast if user explicitly requested Mistral but the PDF cannot be processed
+    if (provider === 'mistral' && !canMistralResult.canProcess) {
+      return new NextResponse(
+        canMistralResult.reason || 'PDF cannot be processed with Mistral OCR.',
+        { status: 413 }
+      )
+    }
+    
     let htmlResult: {
       text: string
       usage: { promptTokens: number; completionTokens: number; totalTokens: number }
       finishReason: string
+      rawResponse?: Record<string, unknown>
     }
     let processingTime: number
     let providerDisplayName: string
@@ -180,6 +192,9 @@ export async function POST(request: NextRequest) {
           usage: geminiResult.usage,
           finishReason: geminiResult.finishReason
         }
+        if (geminiResult.rawResponse) {
+          htmlResult.rawResponse = geminiResult.rawResponse
+        }
         
         // Store extracted images metadata for later use
         extractedImagesMetadata = geminiResult.extractedImages
@@ -194,7 +209,10 @@ export async function POST(request: NextRequest) {
         // Complete the AI call record with comprehensive response logging
         await aiResponseLogger.completeAICall({
           aiCallId: aiCall.id,
-          response: geminiResult.rawResponse || {
+          response: geminiResult.rawResponse ? {
+            ...geminiResult.rawResponse,
+            text: htmlResult.text
+          } : {
             text: htmlResult.text,
             usage: htmlResult.usage,
             finishReason: htmlResult.finishReason
@@ -215,6 +233,99 @@ export async function POST(request: NextRequest) {
           aiCall.id,
           error instanceof Error ? error.message : 'Unknown error',
           'GEMINI_NATIVE_PROCESSING_ERROR',
+          {
+            processing_time_ms: Date.now() - startTime,
+            provider_used: providerDisplayName
+          }
+        )
+        throw error
+      }
+      
+    } else if (useMistralOcr) {
+      // Use v3 Mistral OCR processor with image bounding box extraction
+      providerDisplayName = 'Mistral OCR (Latest)'
+      modelString = 'mistral:ocr-latest'
+      
+      const aiCall = await aiCallService.startCallWithModelString({
+        userId: user.id,
+        modelString: modelString,
+        prompt_type: 'pdf-to-html',
+        input_data: {
+          file_name: pdfFile.name,
+          file_size_bytes: pdfBuffer.length,
+          page_count: pageValidationResult.pageCount,
+          provider_requested: provider,
+          model_used: modelString,
+          pipeline_version: 'v3-mistral-ocr'
+        }
+      })
+      
+      aiCallId = aiCall.id
+      
+      requestLogger.info({
+        correlationId,
+        step: 'pdf-to-html-conversion',
+        provider: providerDisplayName,
+        modelString: modelString,
+        aiCallId: aiCall.id,
+        pipelineVersion: 'v3-mistral-ocr'
+      }, 'Starting PDF to HTML conversion using Mistral OCR')
+      
+      try {
+        const mistralResult = await processWithMistralOcr({
+          pdfBuffer,
+          fileName: pdfFile.name,
+          correlationId,
+          singlePageOnly: false
+        })
+        
+        processingTime = mistralResult.processingTimeMs
+        htmlResult = {
+          text: mistralResult.html,
+          usage: mistralResult.usage,
+          finishReason: mistralResult.finishReason
+        }
+        if (mistralResult.rawResponse) {
+          htmlResult.rawResponse = mistralResult.rawResponse
+        }
+        
+        // Store extracted images metadata for later use
+        extractedImagesMetadata = mistralResult.extractedImages
+        
+        if (mistralResult.warnings.length > 0) {
+          requestLogger.warn({
+            correlationId,
+            warnings: mistralResult.warnings
+          }, 'Mistral OCR processing completed with warnings')
+        }
+        
+        // Complete the AI call record with comprehensive response logging
+        await aiResponseLogger.completeAICall({
+          aiCallId: aiCall.id,
+          response: mistralResult.rawResponse ? {
+            ...mistralResult.rawResponse,
+            text: htmlResult.text
+          } : {
+            text: htmlResult.text,
+            usage: htmlResult.usage,
+            finishReason: htmlResult.finishReason
+          },
+          outputData: {
+            html_length: htmlResult.text.length,
+            processing_time_ms: processingTime,
+            provider_used: providerDisplayName,
+            extracted_images_count: extractedImagesMetadata.length,
+            warnings: mistralResult.warnings
+          },
+          correlationId
+        })
+        
+      } catch (error) {
+        // Complete the AI call with failure metadata
+        await aiCallService.failCall(
+          aiCall.id,
+          error instanceof Error ? error.message : 'Unknown error',
+          'MISTRAL_OCR_PROCESSING_ERROR',
           {
             processing_time_ms: Date.now() - startTime,
             provider_used: providerDisplayName
@@ -289,7 +400,10 @@ export async function POST(request: NextRequest) {
         // Complete the AI call with comprehensive response logging (even on failure)
         await aiResponseLogger.completeAICall({
           aiCallId: aiCall.id,
-          response: htmlResult.rawResponse || {
+          response: htmlResult.rawResponse ? {
+            ...htmlResult.rawResponse,
+            text: htmlResult.text
+          } : {
             text: htmlResult.text,
             usage: htmlResult.usage,
             finishReason: htmlResult.finishReason
@@ -320,7 +434,10 @@ export async function POST(request: NextRequest) {
       // Complete the AI call record with comprehensive response logging
       await aiResponseLogger.completeAICall({
         aiCallId: aiCall.id,
-        response: htmlResult.rawResponse || {
+        response: htmlResult.rawResponse ? {
+          ...htmlResult.rawResponse,
+          text: htmlResult.text
+        } : {
           text: htmlResult.text,
           usage: htmlResult.usage,
           finishReason: htmlResult.finishReason

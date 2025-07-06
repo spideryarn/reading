@@ -17,7 +17,7 @@ import { MemoryUsageWarning } from '@/components/upload/memory-usage-warning'
 // Unified state types for smart upload interface
 type InputType = 'url' | 'pdf' | 'html' | null
 type ProcessingMethod = 'as-is' | 'readability' | 'ai-transcription' | 'vision-ai'
-type Provider = 'claude' | 'gemini'
+type Provider = 'claude' | 'gemini' | 'mistral'
 
 interface UnifiedUploadState {
   input: {
