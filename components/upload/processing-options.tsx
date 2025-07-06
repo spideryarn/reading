@@ -35,7 +35,7 @@ export function ProcessingOptions({
       case 'readability':
         return 'Mozilla Readability'
       case 'ai-transcription':
-        return 'LLM transcription (v3)'
+        return 'LLM transcription (v3 - recommended)'
       case 'vision-ai':
         return 'LLM vision-based transcription (v2)'
       default:
@@ -50,9 +50,9 @@ export function ProcessingOptions({
       case 'readability':
         return 'Extract main content using Mozilla Readability (fast, reliable for articles)'
       case 'ai-transcription':
-        return 'Use AI to transcribe and structure the content (stable, handles complex layouts)'
+        return 'Direct PDF processing with native bounding box extraction (fast, reliable, includes metadata for future image extraction)'
       case 'vision-ai':
-        return 'Use computer vision and AI to process PDF pages as images (experimental, best for complex academic documents with figures and tables)'
+        return 'Convert PDF to images first, then process each page (slower, higher cost, but extracts actual images and figures)'
       default:
         return ''
     }
@@ -136,7 +136,7 @@ export function ProcessingOptions({
                 <div className="text-xs sm:text-sm text-gray-500 mt-1">
                   {selectedMethod === 'vision-ai' 
                     ? 'Multi-model pipeline: Gemini for page processing, Claude for final refinement'
-                    : 'Fast processing with excellent quality and large context window'
+                    : 'Native PDF processing with bounding box extraction - fast and reliable'
                   }
                 </div>
               </div>

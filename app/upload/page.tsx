@@ -50,7 +50,7 @@ export default function AddDocumentPage() {
       type: null
     },
     processing: {
-      method: 'readability', // Default method
+      method: 'ai-transcription', // Default to v3
       provider: 'gemini',
       isPublic: false
     },
@@ -349,9 +349,9 @@ export default function AddDocumentPage() {
       case 'html':
         return ['as-is', 'readability', 'ai-transcription']
       case 'pdf':
-        return ['vision-ai', 'ai-transcription']
+        return ['ai-transcription', 'vision-ai'] // v3 first, then v2
       default:
-        return ['readability', 'ai-transcription'] // Default options
+        return ['ai-transcription', 'readability'] // Default to v3 first
     }
   }, [uploadState.input])
 
