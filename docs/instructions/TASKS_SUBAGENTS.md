@@ -9,3 +9,4 @@ Use subagents where appropriate:
 - Use subagents in parallel where possible (because this is faster), but only if there isn't a dependency between tasks (e.g. the output of this one is useful as input for the next)
 - Give them lots of background so that they can make good decisions, e.g. about goals, point them to relevant docs/code, what we've been changing, gotchas & things to avoid, relevant environment variables like $PORT for Puppeteer/Playwright, using Jest for testing, the current date/time from `date`, and anything else that will help them to be effective but correct/careful.
 - Tell subagents what to be cautious of, and to abort and provide feedback on what happened if there are problems or surprises (to avoid them going rogue and doing more harm than good)
+- Remind them to use Playwright in headless & isolated mode.

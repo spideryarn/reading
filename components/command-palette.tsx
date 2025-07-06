@@ -562,6 +562,32 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
     return () => document.removeEventListener('keydown', handleKeydown)
   }, [isMac, setOpen, open])
 
+  // Global shortcut handlers for tool commands
+  useEffect(() => {
+    const handleToolShortcuts = (event: KeyboardEvent) => {
+      const correctModifier = isMac ? event.metaKey : event.ctrlKey
+      
+      if (!correctModifier) return
+
+      // Handle tool shortcuts by finding matching commands
+      const matchingCommand = enhancedCommands.find(cmd => {
+        if (!cmd.shortcut || cmd.shortcut.length === 0) return false
+        
+        // Check if the shortcut matches the pressed key combination
+        const shortcutKey = cmd.shortcut[cmd.shortcut.length - 1]?.toLowerCase()
+        return shortcutKey === event.key.toLowerCase()
+      })
+
+      if (matchingCommand && (!matchingCommand.condition || matchingCommand.condition())) {
+        event.preventDefault()
+        executeCommand(matchingCommand)
+      }
+    }
+
+    document.addEventListener('keydown', handleToolShortcuts)
+    return () => document.removeEventListener('keydown', handleToolShortcuts)
+  }, [enhancedCommands, executeCommand, isMac])
+
   // Global shortcut handlers for non-tool commands
   useEffect(() => {
     const handleGlobalShortcuts = (event: KeyboardEvent) => {
@@ -569,7 +595,7 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
       
       if (!correctModifier) return
 
-      // Handle non-tool shortcuts only (tool shortcuts are handled by command generation)
+      // Handle non-tool shortcuts only
       switch (event.key.toLowerCase()) {
         case 'd':
           event.preventDefault()
