@@ -44,10 +44,12 @@ Currently, the `ai_calls` table has a `response_text` field that is never popula
 ## Principles & Key Decisions
 
 ### 1. Field Naming Decision
-**Decision**: Rename `response_text` to `raw_api_response` and change type to JSONB
-- More accurate name reflecting that we're storing the complete API response
+**Decision**: Replace `response_text` with `raw_api_response` JSONB field
+- Remove redundant `response_text` field entirely
+- `raw_api_response` stores the complete API response including text content
 - JSONB allows storing structured data including metadata
 - Enables querying specific response fields if needed
+- Text content accessible via `raw_api_response->>'text'`
 
 ### 2. Storage Approach
 **Decision**: Store the complete Vercel AI SDK result object
@@ -68,45 +70,55 @@ Currently, the `ai_calls` table has a `response_text` field that is never popula
 - Type-safe interface prevents missing data
 
 ### 5. Migration Approach
-**Decision**: Safe migration with data preservation
-- Add new `raw_api_response` JSONB field alongside existing `response_text`
-- Migrate existing rows where possible
-- Eventually deprecate `response_text` field
+**Decision**: Clean migration removing redundancy
+- Add new `raw_api_response` JSONB field
+- Remove unused `response_text` field in same migration
+- No data loss since `response_text` was never populated
+- Simplifies schema and reduces confusion
+
+### 6. Error Handling Approach (Added 2025-07-06)
+**Decision**: Fail fast and fatal with clear error messages
+- No graceful fallbacks or silent failures
+- All errors throw immediately with detailed context
+- Error messages include debugging information (AI call ID, response size, object keys)
+- Follows project principle: "Fail fatally & immediately with clear, debuggable, user-visible error messages"
+- Ensures AI usage and cost tracking never fails silently
 
 ## Stages & Actions
 
-### Stage: Initial setup and preparation
-- [x] Run `./scripts/sync-worktrees.ts` in a subagent to sync with main
-- [ ] Create new Git branch `250706a_comprehensive_ai_response_logging`
-- [ ] Review current `ai_calls` table schema and usage patterns
-
 ### Stage: Database schema migration
-- [ ] Create migration to add `raw_api_response` JSONB field to `ai_calls` table
-- [ ] Add check constraint to ensure `raw_api_response` is not null for new rows
-- [ ] Update database type definitions
-- [ ] Test migration locally with rollback plan
+- [x] Review current `ai_calls` table schema and usage patterns
+- [x] Create migration to add `raw_api_response` JSONB field to `ai_calls` table
+- [x] Update migration to also remove `response_text` field
+- [ ] Add check constraint to ensure `raw_api_response` is not null for new rows (deferred)
+- [x] Update database type definitions
+- [x] Test updated migration locally with rollback plan
 - [x] Migration review approved (2025-07-06)
+- [x] Committed database migration changes (2025-07-06)
 
 ### Stage: Core AI response capture service
-- [ ] Create `lib/services/ai-response-logger.ts` with standardized interface
-- [ ] Implement response serialization with provider-specific handling
-- [ ] Add comprehensive error handling with clear messages
-- [ ] Write unit tests for all 3 providers (Anthropic, Google, OpenAI)
-  - Test should verify JSON serialization works without errors
-  - Test should handle edge cases (large responses, special characters)
-  - Test should verify all expected fields are captured
+- [x] Create `lib/services/ai-response-logger.ts` with standardized interface
+- [x] Implement response serialization with provider-specific handling
+- [x] Add fatal error handling with clear, debuggable messages (no graceful fallbacks)
+- [x] Write unit tests for all 3 providers (Anthropic, Google, OpenAI)
+  - [x] Test verifies JSON serialization with proper error handling
+  - [x] Test handles edge cases (large responses, special characters)
+  - [x] Test verifies all expected fields are captured
+  - [x] Test ensures circular references fail fatally
+  - [x] Test ensures serialization errors fail fatally
   - [ ] Add custom ESLint rule (and optional codemod) that forbids direct calls to `AiCallService.completeCall` outside the new logger, encouraging consistent usage
 
 ### Stage: Update AiCallService
-- [ ] Modify `completeCall` method to accept optional `rawApiResponse` parameter
-- [ ] Update `extractMetricsFromAiResponse` to handle full response objects
-- [ ] Ensure backward compatibility for existing code
-- [ ] Add latency calculation from timestamps
-- [ ] Write tests for updated service methods
+- [x] Modify `completeCall` method to accept optional `rawApiResponse` parameter
+- [x] Update `extractMetricsFromAiResponse` to handle full response objects
+- [x] Ensure backward compatibility for existing code
+- [x] Add latency calculation from timestamps with proper priority order
+- [x] Tests updated for new error handling approach
 
 ### Stage: Integrate with prompt execution
-- [ ] Update `executePromptWithUsage` to return full Vercel AI SDK response
-- [ ] Ensure all metadata is preserved through the execution chain
+- [x] Update `executePromptWithUsage` to return full Vercel AI SDK response
+- [x] Ensure all metadata is preserved through the execution chain
+- [x] Added `rawResponse` field to `PromptExecutionResult` interface
 - [ ] Test with real API calls to verify data capture
 
 ### Stage: Update all tool handlers
@@ -205,7 +217,7 @@ To ensure safe migration:
 1. New field is nullable initially to not break existing code
 2. Gradual rollout - update handlers one at a time
 3. Monitor serialization performance and storage usage
-4. Keep existing `response_text` field during transition
+4. Verify no code references `response_text` before removal
 5. Add alerts for serialization failures
 
 ### Storage Considerations

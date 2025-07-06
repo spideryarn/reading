@@ -116,7 +116,7 @@ export function setupCommonServiceMocks() {
     prompt_template: null,
     extra_usage: null,
     latency_ms: null,
-    response_text: null
+    raw_api_response: null,
   })
   
   jest.spyOn(aiCallService, 'completeCall').mockResolvedValue({
@@ -140,7 +140,7 @@ export function setupCommonServiceMocks() {
     prompt_template: null,
     extra_usage: null,
     latency_ms: null,
-    response_text: null
+    raw_api_response: null,
   })
   
   jest.spyOn(enhancementService, 'get').mockResolvedValue(null)

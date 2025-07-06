@@ -35,7 +35,7 @@ const createMockAiCall = (overrides?: Partial<AiCall>): AiCall => ({
   extra: {} as Json,
   extra_usage: null,
   latency_ms: null,
-  response_text: null,
+  raw_api_response: null,
   ...overrides
 })
 

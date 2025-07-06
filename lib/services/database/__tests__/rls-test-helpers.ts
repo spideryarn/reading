@@ -161,7 +161,6 @@ export class RealRLSTestSetup {
         prompt_tokens: 10,
         completion_tokens: 5,
         total_tokens: 15,
-        response_text: 'test response',
         ...data
       })
       .select()
@@ -208,7 +207,6 @@ export class RealRLSTestSetup {
         total_tokens: 0,
         completion_tokens: 0,
         prompt_tokens: 0,
-        response_text: 'test',
       })
 
       aiCallId = aiCall.id
