@@ -32,7 +32,7 @@ import Mark from 'mark.js'
 import { extractCleanText } from '@/lib/utils/html-text-extraction'
 import { extractAllMatchContexts, generateTooltipContent } from '@/lib/utils/search-context-extraction'
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
-import { useGlossaryUrlState, useSearchUrlState } from '@/lib/tools/hooks/use-tool-url-state'
+import { useGlossaryUrlState, useSearchUrlState, useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
 import type { TabValue } from '@/lib/tools/url-state-types'
 import type { Entity } from '@/lib/types/entity'
 import { findFirstOccurrence } from '@/lib/utils/entity-position-tracking'
@@ -989,7 +989,8 @@ export function UnifiedLeftPane({
       content,
       elements,
       onHeadingClick,
-      documentId
+      documentId,
+      aiHeadingsGenerated
     }
     
     if (headingVisibility !== undefined) {
@@ -997,7 +998,7 @@ export function UnifiedLeftPane({
     }
     
     return <StructurePanel {...props} />
-  }, [content, elements, onHeadingClick, documentId, headingVisibility])
+  }, [content, elements, onHeadingClick, documentId, headingVisibility, aiHeadingsGenerated])
 
   const renderSummaryTab = useCallback(() => (
     <DocumentSummaryTab
