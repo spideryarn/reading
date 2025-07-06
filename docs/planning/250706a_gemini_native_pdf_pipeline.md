@@ -2,7 +2,7 @@
 
 ## Goal
 
-Upgrade the existing v1 PDF upload pipeline to leverage Gemini's unique native PDF processing capabilities with built-in bounding box detection. This upgrade will transform v1 into v3, providing a middle ground between the current simple v1 pipeline (no image extraction) and the complex v2 vision pipeline (full page-by-page image processing).
+Upgrade the existing v1 PDF upload pipeline to leverage Gemini's unique native PDF processing capabilities with built-in bounding box detection for image extraction. This upgrade will transform v1 into v3, providing a middle ground between the current simple v1 pipeline (no image extraction) and the complex v2 vision pipeline (full page-by-page image processing).
 
 **Key Decision**: Rather than creating a separate pipeline, we will progressively enhance v1 with new capabilities and rename it to v3, maintaining API compatibility while adding significant new features.
 
@@ -226,6 +226,30 @@ From our investigation:
 - [x] Update logging per `docs/reference/LOGGING_BEST_PRACTICES.md`
   - ✅ Replaced console.log with structured logging in upload-pdf route
 
+### Stage: Mistral OCR ✅ COMPLETED
+- [x] Search the web with a subagent re Mistral Document AI & OCR, how to use the API, annotations for bounding boxes, environment variables for API key, etc
+- [x] Then write a doc (as per `WRITE_EVERGREEN_DOC.md`) - Created `docs/reference/MISTRAL_OCR_CAPABILITIES.md`
+- [x] **KEY FINDING**: Mistral OCR provides image bounding boxes (which is what we need for figures)
+  - Text extraction quality is excellent (94.89% accuracy)
+  - Outputs clean Markdown format
+  - See `docs/reference/MISTRAL_OCR_CAPABILITIES.md` for full analysis
+- [x] Ask the user to add their API key to `.env.local` (tell them what to call it, based on search the web above)
+  - API key name: `MISTRAL_API_KEY`
+- [x] Implement Mistral Document AI & OCR as an alternative model alongside Google Flash for LLM upload pipeline v3 (re-enable the radio boxes in `/upload` to choose model), without annotations (for now)
+  - Created `lib/services/mistral-ocr-pdf-processor.ts` with full implementation
+  - Updated upload-pdf route to support Mistral provider
+  - Re-enabled provider selection in upload UI for v3 pipeline
+  - Added Mistral as option with appropriate descriptions
+  - All TypeScript errors resolved, health checks passing
+
+**Implementation Details**:
+- Mistral processes PDFs directly and returns Markdown with image bounding boxes in pixel coordinates
+- Coordinates are normalized from pixels to 0-1 scale for consistency with Gemini
+- Markdown is converted to HTML using the `marked` library
+- Cost-effective at $0.001/page (much cheaper than token-based pricing)
+- Maximum file size of 50MB (higher than our 20MB limit)
+- Processing time expected < 1s per page
+
 ### Stage: Error-handling
 - [ ] Read `docs/planning/250705a_error-handling-improvements.md` and implement the most easy/valuable recommendations from that
 
@@ -441,6 +465,19 @@ Converted to normalized coordinates (0-1):
 
 ## Recent Updates (2025-07-06)
 
+### Mistral OCR Integration
+The v3 pipeline now supports three providers:
+1. **Claude Sonnet** - Most accurate but slower, better for shorter documents
+2. **Gemini 2.5 Flash** - Native PDF processing with text and image bounding boxes
+3. **Mistral OCR** - Superior text extraction (94.89% accuracy) with image bounding boxes
+
+Key achievements:
+- Successfully integrated Mistral OCR as a third provider option
+- Re-enabled provider selection in the upload UI for v3 pipeline
+- Maintained consistent bounding box format (0-1 scale) across all providers
+- Achieved significant cost savings with Mistral's per-page pricing ($0.001/page)
+
+### Previous v3 Improvements
 The following improvements were merged after initial v3 launch:
 
 - **Model switch to Gemini 2.5 Flash** for native PDF processing (cheaper & faster than Pro).
