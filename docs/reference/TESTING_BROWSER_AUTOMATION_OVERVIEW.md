@@ -75,11 +75,14 @@ npm run test:e2e:debug
 
 ### AI Agent Workflow for E2E Testing
 ```bash
-# Recommended workflow with pre-flight checks
-npm run e2e:preflight       # Verify test user & dev server
-npm run test:e2e            # Run tests
+# Recommended: Single command with automatic preflight
+npm run test:e2e:with-preflight   # Runs preflight checks then tests
 
-# OR manual workflow:
+# Alternative: Manual control
+npm run e2e:preflight       # Verify test user & dev server (fast if already running)
+npm run test:e2e            # Run tests only
+
+# OR fully manual workflow:
 npm run dev:status || npm run dev:daemon  # Ensure dev server running
 npm run e2e:verify-user                    # Verify test user exists
 npm run test:e2e:setup                    # Setup authentication (if needed)

@@ -2,6 +2,8 @@
 
 This document defines code quality standards and patterns to maintain consistency and prevent common issues across the Spideryarn Reading codebase.
 
+**Note**: This document provides a comprehensive overview of coding standards. Each section includes references to more detailed documentation where you can find in-depth explanations, examples, and implementation details.
+
 ## See also
 
 - `docs/reference/CODING_PRINCIPLES.md` - High-level development principles and philosophy
@@ -55,6 +57,15 @@ npm test        # Run test suite
   - IDE integration and real-time feedback
   - Specific tool configuration or debugging
 
+## Error Handling & Messaging
+
+**Best Practices**:
+- **Structured error responses** - Use ApplicationError class hierarchy (see `docs/planning/250705a_error-handling-improvements.md`)
+- **User-friendly patterns** - "What happened + Why + What to do" format
+- **No silent failures** - Propagate errors, don't mask them
+- **Correlation IDs** - Use `generateCorrelationId()` for request tracing
+- **Clear error messages** - Make them actionable and informative
+
 ## Database Operations Safety
 
 **CRITICAL**: Never run ANY database commands without explicit user permission:
@@ -72,6 +83,42 @@ npm run supabase:status  # Read-only status check
 ```
 
 ⚠️ **ALWAYS ERR ON THE SIDE OF CAUTION**: When working with databases, production systems, or any operations that could affect data or functionality, always ask for explicit user permission first. If unsure whether something requires permission, ask!
+
+## Development Philosophy
+
+**Core Principles** (from `docs/reference/CODING_PRINCIPLES.md`):
+- **Fix root cause, not symptoms** - No bandaids or workarounds
+- **Fail fast and clearly** - No silent failures or data modifications
+- **Stay focused** - Make minimal, targeted changes only
+- **Stop on surprises** - Discuss unexpected issues with user
+- **Never implement silent data modifications** - Fail with clear errors instead
+
+## Testing Patterns
+
+**Test Hierarchy** (prefer higher on list):
+1. **E2E tests** - One E2E test can replace many unit tests
+2. **Integration tests** - Test complete workflows
+3. **Unit tests** - Only for complex algorithms or critical business logic
+
+**Shared Database Approach**:
+- **NEVER reset the database** without permission
+- **Use UUID-based test isolation** - All test data must be namespaced
+- **Clean up test data** - Use `getCleanupFunctions()` utilities
+- **Real RLS testing** - Use `RLSTestDatabase` class (see `docs/reference/TESTING_DATABASE.md`)
+
+## AI-First Development
+
+**Health Check Orchestration**:
+- `npm run check:health` - Git-aware checking of changed files
+- `npm run check:health --rigorous` - All files including tests
+- `npm run check:health --quick` - Skip build verification
+- See `docs/reference/SETUP_FOR_AI_FIRST_CODING.md` for patterns
+
+**Subagent Usage**:
+- Running tests, lint/build checks
+- Git commits and verbose operations
+- Browser automation
+- See `docs/instructions/TASKS_SUBAGENTS.md` for guidelines
 
 ## Import Standards
 
@@ -380,14 +427,43 @@ jest.mock('next/link', () => ({
 
 ## Logging Patterns
 
+**Structured Logging** (see `docs/reference/LOGGING_BEST_PRACTICES.md`):
 ```typescript
+// Use Pino structured logging with correlation IDs
+import { createRequestLogger, generateCorrelationId, logAIOperation } from '@/lib/services/logger'
+
+const correlationId = generateCorrelationId()
+const requestLogger = createRequestLogger('/api/route', correlationId)
+
 // API/Service logs with context
-console.log('[ComponentName] Action:', { data, timestamp: new Date().toISOString() })
-console.error('[ComponentName] Error:', error)
+requestLogger.info({ userId, documentId }, 'Operation description')
 
 // Remove debug logs before committing
 // console.log('DEBUG:', temporaryValue)  // ❌ Don't commit
 ```
+
+## Git Workflow
+
+**Multi-worktree Development**:
+- Sync before starting: `./scripts/sync-worktrees.ts`
+- Each worktree has own port in `.env.local`
+- See `docs/reference/GIT_WORKTREES.md` for setup
+
+**Commit Guidelines**:
+- Follow `docs/instructions/GIT_COMMIT_CHANGES.md`
+- Use subagent for commits to avoid context pollution
+
+## Planning & Documentation
+
+**Planning Documents**:
+- Use `./scripts/generate-sequential-datetime-prefix.ts` for naming
+- Follow stage-based development approach
+- See `docs/instructions/WRITE_PLANNING_DOC.md`
+
+**Date Formatting**:
+- User-facing: Human-readable relative dates
+- Internal: YYMMDD format for sortability
+- See `docs/reference/DATE_FORMATTING_POLICY.md`
 
 ## Async Patterns
 
@@ -643,6 +719,37 @@ const tooltipText = generateTooltipContent(fullText, query, 500, caseSensitive)
 ```
 
 **Location**: `@/lib/utils/search-context-extraction.ts`
+
+## Security Patterns
+
+**Database Security**:
+- **Always enable RLS** on new tables
+- **Plan RLS policies before creating tables**
+- **Use `public.is_admin()` function** to avoid RLS recursion
+- **Index RLS lookup columns** for performance
+- See `docs/reference/DATABASE_SECURITY.md`
+
+**Authentication**:
+- Server-side validation with `requireAuth()`
+- Long-lasting sessions (1 week) with auto-refresh
+- See `docs/reference/AUTHENTICATION_*.md`
+
+## Database Migrations
+
+**Migration Workflow**:
+1. Create migration: `npx supabase migration new feature_name`
+2. Apply locally: `npx supabase db push --local`
+3. **Ask permission** before applying to any database
+4. Regenerate types: `npm run db:types`
+5. See `docs/reference/DATABASE_MIGRATIONS.md`
+
+**RLS Checklist for New Tables**:
+- [ ] Enable RLS: `ALTER TABLE table_name ENABLE ROW LEVEL SECURITY;`
+- [ ] Define policies for SELECT, INSERT, UPDATE, DELETE
+- [ ] Include admin bypass where appropriate
+- [ ] Add indexes for RLS policy columns
+- [ ] Write RLS tests
+- [ ] Update security documentation
 
 ## Appendix: Future Considerations
 

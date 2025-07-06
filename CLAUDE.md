@@ -4,7 +4,7 @@ This document provides essential context for Claude instances working on the Spi
 
 **Critical References:**
 - `docs/reference/CODING_PRINCIPLES.md` - **MUST READ**: Core development philosophy
-- `docs/reference/CODING_GUIDELINES.md` - Code quality standards and TypeScript patterns
+- `docs/reference/CODING_GUIDELINES.md` - **MUST READ**: Comprehensive code standards (error handling, testing, security, etc.)
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture
 - `docs/reference/TESTING_DATABASE.md` - Test isolation patterns (critical for DB operations)
 - `docs/instructions/GIT_COMMIT_CHANGES.md` - Git commit best practices
@@ -25,16 +25,14 @@ Spideryarn Reading is an AI-assisted document reading and analysis application, 
 
 ## Development Philosophy & Safety Guidelines
 
-Key principles from `docs/reference/CODING_PRINCIPLES.md`:
+Key principles (see `docs/reference/CODING_PRINCIPLES.md` for full details):
 
-- **This is early-stage development with AI-first methods.** We want to develop fast and experiment using AI agents, so we can figure out which features are most valuable. The comprehensive documentation, typing, and testing infrastructure exists to support AI productivity and prevent regressions.
 - **Fix the root cause rather than putting on a band-aid.** Avoid fallbacks & defaults - better to fail if input assumptions aren't being met.
-- **Stay focused on the specific task.** Make minimal, targeted changes only. Don't fix unrelated issues you notice unless they're directly blocking your current task. If you spot concerning issues, flag them for discussion rather than attempting fixes.
+- **Stay focused on the specific task.** Make minimal, targeted changes only. Don't fix unrelated issues unless directly blocking.
 - **If you hit any nasty surprises, stop & discuss with the user.** Don't push through unexpected issues.
-- **No destructive or irreversible changes without checking with the user.** Be especially careful about any operations that are irreversible, could involve data loss, affect databases, production systems, or user data. When in doubt, ask for explicit permission first.
-- **Raise errors early, clearly & fatally.** Prefer not to wrap in try/except so that tracebacks are obvious.
-- **Fail fatally & immediately with clear, debuggable, user-visible error messages.** When errors or unforeseen situations occur, don't mask problems, or paper over then with defaults/bandaids/fallbacks - expose them clearly to make it easier to notice & debug them early.
-- **If things don't make sense or seem like a bad idea, ask questions or discuss rather than just going along with it.** Be a good collaborator, and help make good decisions.
+- **No destructive or irreversible changes without explicit permission.** Be especially careful about databases, production systems, or user data.
+- **Raise errors early, clearly & fatally.** Don't mask problems with defaults/bandaids/fallbacks.
+- **If things don't make sense or seem like a bad idea, ask questions.** Be a good collaborator.
 
 ## Key Architectural Decisions
 
@@ -80,9 +78,8 @@ Type checking and linting:
   - When writing tests, use our Jest testing framework with React Testing Library
   - **Prefer using a subagent** for **running** tests to avoid filling the context window
 - for Playwright E2E browser testing, first read `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
-  - **ALWAYS use `npm run test:e2e`** instead of `npx playwright test` - includes headless and isolated flags by default
+  - **ALWAYS use `npm run test:e2e:with-preflight`** for E2E tests - includes preflight checks, headless and isolated flags
   - **E2E Authentication Best Practice**: Use `test.use({ storageState })` pattern for file-level auth injection (see `docs/reference/TESTING_BROWSER_AUTOMATION_IMPLEMENTATION.md`)
-  - **Pre-flight checks**: Run `npm run e2e:preflight` before E2E tests to verify test user exists and dev server is healthy
 - **CLI usage:** When running Claude Code from command line, you MUST explicitly run `npm run lint` and `npm run build` to get diagnostic feedback OR use `npm run check:health` for orchestration-friendly summaries
 - **Health check orchestration:** See `docs/reference/SETUP_FOR_AI_FIRST_CODING.md` for AI orchestration patterns and health checking workflows
 - For large-scale find-and-replace: see `docs/reference/SD_STRING_DISPLACEMENT_FIND_REPLACE.md`
@@ -115,7 +112,7 @@ Debugging resources:
 - Current logs: `tail dev.log` or `tail error.log`
 - Browser debugging: Playwright MCP (console logs, network requests, screenshots)
 - **E2E testing**: 
-  - Always run `npm run e2e:preflight` before E2E tests (verifies test user & dev server)
+  - Always use `npm run test:e2e:with-preflight` (combines preflight + tests in one command)
   - Use file-level `test.use({ storageState })` for authentication, not per-test login
   - Dev server MUST be running externally - do NOT rely on Playwright's webServer config
 
@@ -151,12 +148,11 @@ Debugging resources:
 
 ## Error Handling
 
-**Database Services**: Propagate errors instead of silently failing
-- Methods throw descriptive errors with context
+**Best Practices**: See `docs/reference/CODING_GUIDELINES.md` for comprehensive error handling patterns
+- Propagate errors instead of silently failing
 - "Not found" cases return null (don't throw)
-- API routes should catch and map to appropriate HTTP responses
-
-**Principle**: "Raise errors early, clearly & fatally" (see `docs/reference/CODING_PRINCIPLES.md`)
+- Use structured error responses with correlation IDs
+- User-friendly error messages: "What happened + Why + What to do"
 
 
 ## Upload Metadata Tracking
@@ -220,8 +216,9 @@ Debugging resources:
 
 ## Browser Automation
 
-- **E2E Testing**: `npm run test:e2e` (setup: `npm run test:e2e:setup`)
-- **Playwright MCP**: Use `--isolated` flag, test user `hello@spideryarn.com`
+- **E2E Testing**: Always use `npm run test:e2e` (includes headless and isolated flags)
+- **Setup**: `npm run test:e2e:setup` for authentication
+- **Pre-flight**: `npm run e2e:preflight` to verify test environment
 - See `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
 
 

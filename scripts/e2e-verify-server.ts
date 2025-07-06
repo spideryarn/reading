@@ -23,13 +23,13 @@ dotenv.config({ path: '.env.local' })
 
 const PORT = process.env.PORT || '3000'
 const BASE_URL = `http://localhost:${PORT}`
-const MAX_RETRIES = 30 // 30 seconds total
-const RETRY_DELAY = 1000 // 1 second
+const HEALTH_ENDPOINT = `${BASE_URL}/api/healthz`
+const MAX_RETRIES = 10 // 5 seconds total (0.5s delay)
+const RETRY_DELAY = 500 // 0.5 second
 
 async function checkServerHealth(): Promise<boolean> {
   try {
-    // Check the root page since we don't have a dedicated health endpoint
-    const response = await fetch(BASE_URL)
+    const response = await fetch(HEALTH_ENDPOINT)
     // Accept any 2xx or 3xx status as healthy (redirects are OK)
     return response.status >= 200 && response.status < 400
   } catch {
@@ -53,10 +53,13 @@ async function waitForServer(): Promise<boolean> {
 async function verifyDevServer() {
   console.log(`🔍 Checking dev server health on port ${PORT}`)
 
-  // First check if server is already healthy
-  if (await checkServerHealth()) {
+  // Fast path: rely on consolidated dev:status helper
+  try {
+    execSync('npm run dev:status', { stdio: 'pipe' })
     console.log(`✅ Dev server is healthy on port ${PORT}`)
     process.exit(0)
+  } catch {
+    // dev:status returned non-zero -> server not healthy/running
   }
 
   // Check if a daemon PID exists
@@ -92,12 +95,12 @@ async function verifyDevServer() {
     }
   }
 
-  // Wait for server to become healthy
+  // Wait for server to become healthy (new shorter loop)
   if (await waitForServer()) {
     console.log(`✅ Dev server is now healthy on port ${PORT}`)
     process.exit(0)
   } else {
-    console.error(`❌ Dev server failed to become healthy after ${MAX_RETRIES} seconds`)
+    console.error(`❌ Dev server failed to become healthy after ${(MAX_RETRIES * RETRY_DELAY) / 1000} seconds`)
     console.error('   Check dev.log and error.log for details')
     process.exit(1)
   }

@@ -32,6 +32,7 @@ Planning docs should follow this naming format: `yyMMdd[letter]_description_in_n
 - Generate filename prefix using `./scripts/generate-sequential-datetime-prefix.ts docs/planning/`
 - Store it in `docs/planning/`
 - IMPORTANT Before writing the doc, make sure you have asked the user questions about their requirements to clarify key principles & decisions, following instructions in `docs/instructions/SOUNDING_BOARD_MODE.md`.
+- Read `docs/reference/CODING_GUIDELINES.md` to ensure the plan follows established code quality standards and patterns
 
 ## Reporting a summary to the user after generating the doc
 

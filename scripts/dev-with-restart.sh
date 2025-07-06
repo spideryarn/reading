@@ -96,7 +96,8 @@ is_process_running() {
 
 is_port_responding() {
     local port="$1"
-    [ -n "$port" ] && curl -f --max-time 5 --connect-timeout 3 "http://localhost:$port/" >/dev/null 2>&1
+    # Use lightweight health endpoint for faster readiness detection
+    [ -n "$port" ] && curl -f --max-time 5 --connect-timeout 3 "http://localhost:$port/api/healthz" >/dev/null 2>&1
 }
 
 get_daemon_pid() {

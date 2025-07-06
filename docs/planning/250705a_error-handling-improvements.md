@@ -155,6 +155,7 @@ Goal: expose hidden problems and improve obviously vague messages without touchi
 2. Run masked-error & vague-message audit to refresh Stage 1 table.
 3. Implement global correlation-ID middleware.
 4. Proceed with Stage 1 fixes, then Stage 1.5 infrastructure.
+5. Add a brief note to `docs/reference/CODING_GUIDELINES.md` about error handling and messaging best practices.
 
 ## Appendix – Error Class Catalogue
 
