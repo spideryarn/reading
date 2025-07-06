@@ -9,6 +9,7 @@ import { createUrlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
 import { createPdfToHtmlPrompt } from '@/lib/prompts/templates/pdf-to-html-direct'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
+import { createAIResponseLogger } from '@/lib/services/ai-response-logger'
 import { getModelForAICall, UPLOAD_LIMITS } from '@/lib/config'
 import { generateHtmlFilename } from '@/lib/utils/slug'
 import { URL_EXTRACTION_CONFIG } from '@/lib/config'
@@ -169,6 +170,7 @@ async function processPdfFromUrl(
   requestLogger: ReturnType<typeof createRequestLogger>,
   correlationId: string
 ): Promise<NextResponse> {
+  const aiResponseLogger = createAIResponseLogger(aiCallService)
   const urlObject = new URL(sourceUrl)
   const defaultTitle = providedTitle || `Document from ${urlObject.hostname}`
   
@@ -219,16 +221,21 @@ async function processPdfFromUrl(
     correlationId
   }, 'success')
   
-  // Complete the AI call record with usage metadata
-  await aiCallService.completeCall(aiCall.id, {
-    output_data: {
+  // Complete the AI call record with comprehensive response logging
+  await aiResponseLogger.completeAICall({
+    aiCallId: aiCall.id,
+    response: htmlResult.rawResponse || {
+      text: htmlResult.text,
+      usage: htmlResult.usage,
+      finishReason: htmlResult.finishReason
+    },
+    outputData: {
       html_length: htmlResult.text.length,
       processing_time_ms: processingTime,
       provider_used: providerDisplayName,
       source_url: sourceUrl
     },
-    usage: htmlResult.usage,
-    finishReason: htmlResult.finishReason
+    correlationId
   })
 
   console.log('Step 4: HTML conversion completed, sanitizing content...')

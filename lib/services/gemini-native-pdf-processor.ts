@@ -49,7 +49,8 @@ export const geminiNativePdfProcessorResultSchema = z.object({
   }),
   finishReason: z.string(),
   processingTimeMs: z.number(),
-  warnings: z.array(z.string()).default([])
+  warnings: z.array(z.string()).default([]),
+  rawResponse: z.record(z.unknown()).optional().describe('Raw API response for comprehensive logging')
 })
 
 export type GeminiNativePdfProcessorResult = z.infer<typeof geminiNativePdfProcessorResultSchema>
@@ -132,7 +133,8 @@ export async function processWithGeminiNative(
       usage: result.usage,
       finishReason: result.finishReason,
       processingTimeMs,
-      warnings
+      warnings,
+      rawResponse: result.rawResponse
     })
     
   } catch (error) {

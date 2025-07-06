@@ -268,7 +268,7 @@ describe('AIResponseLogger', () => {
       expect(callArgs.rawApiResponse.text).toBe(mockResponse.text)
     })
 
-    it('should fail fatally on circular references in response objects', async () => {
+    it('should handle circular references gracefully by replacing with placeholder', async () => {
       const circularObj: any = { name: 'test' }
       circularObj.self = circularObj // Create circular reference
       
@@ -283,10 +283,27 @@ describe('AIResponseLogger', () => {
         customData: circularObj
       }
 
-      await expect(logger.completeAICall({
+      // Spy on console.warn to verify warning is logged
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation()
+
+      await logger.completeAICall({
         aiCallId: 'test-ai-call-id',
         response: mockResponse
-      })).rejects.toThrow(/Circular reference detected in AI response object/)
+      })
+
+      // Should log warning about circular reference
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Circular reference removed during AI response serialisation')
+      )
+
+      // Verify the circular reference was replaced with placeholder
+      const callArgs = mockAiCallService.completeCall.mock.calls[0][1]
+      expect(callArgs.rawApiResponse.customData).toEqual({
+        name: 'test',
+        self: '[Circular]'
+      })
+
+      warnSpy.mockRestore()
     })
 
     it('should fail fatally on AiCallService errors', async () => {
