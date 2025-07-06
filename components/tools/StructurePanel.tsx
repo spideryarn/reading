@@ -20,7 +20,6 @@ import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 import { useToolExecutorWithNavigation } from '@/lib/tools/hooks/use-tool-executor-with-navigation'
 import type { HeadingOperation } from '@/lib/prompts/schemas/headings'
 import { HeadingSummaryTooltip, useHeadingSummaryTooltip } from './heading-summary-tooltip'
-import { getErrorMessage } from '@/lib/tools/executor/executor'
 
 // Component props interface
 interface StructurePanelProps {
@@ -37,7 +36,7 @@ interface StructurePanelProps {
    * original structure.  This prop comes from the server-side
    * `getEnhancementFlags()` helper.
    */
-  aiHeadingsGenerated?: boolean
+  aiHeadingsGenerated: boolean
 }
 
 // Heading format for mutation generator - must match lib/services/heading-mutation-generator.ts
@@ -96,7 +95,7 @@ export function StructurePanel({
   onHeadingClick, 
   documentId,
   headingVisibility,
-  aiHeadingsGenerated = false 
+  aiHeadingsGenerated: _aiHeadingsGenerated 
 }: StructurePanelProps) {
   const { applyMutation, revertMutation, mutationState, document: mutatedDocument } = useMutation()
   const activeMutationType = useActiveMutationType()
@@ -126,7 +125,6 @@ export function StructurePanel({
   const [isLoadingHeadings, setIsLoadingHeadings] = useState(false)
   const [headingsError, setHeadingsError] = useState<string | null>(null)
   const [enhancementId, setEnhancementId] = useState<string | null>(null)
-  const [hasInitialized, setHasInitialized] = useState(false)
   const fetchInProgressRef = useRef(false)
   
   // Iteration state
@@ -364,6 +362,26 @@ export function StructurePanel({
     }
   }, [documentId, applyMutation, mutationState.activeMutation, elements])
 
+  // Manual loader for cached headings
+  const handleLoadCachedHeadings = useCallback(async () => {
+    try {
+      setIsLoadingHeadings(true)
+      setHeadingsError(null)
+
+      const cached = await fetchCachedHeadings(documentId)
+      if (!cached || !cached.operations || cached.operations.length === 0) {
+        throw new Error('No cached AI-generated headings were found for this document.')
+      }
+
+      setEnhancementId(cached.enhancementId || null)
+      await applyCachedOperations(cached.operations)
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : 'Unknown error'
+      setHeadingsError(`Failed to load pre-generated headings: ${errMsg}`)
+    } finally {
+      setIsLoadingHeadings(false)
+    }
+  }, [documentId, fetchCachedHeadings, applyCachedOperations])
 
   // Function to stop auto-iteration
   const handleStopAutoIteration = useCallback(() => {
@@ -648,90 +666,12 @@ export function StructurePanel({
     }
   }
 
-  // Auto-initialize AI headings if available
+  // Automatic cache loading removed – users must click "Load pre-generated headings".
   useEffect(() => {
-    console.log('StructurePanel mounted, documentId:', documentId)
-    
-    let isCancelled = false
-    
-    const loadHeadings = async () => {
-      if (hasInitialized) {
-        return
-      }
-      // CRITICAL FIX: Remove currentMode === 'original' check that was preventing 
-      // cached headings from loading on page refresh
-      
-      setHasInitialized(true)
-      setHeadingsError(null)
-      
-      try {
-        const cached = await fetchCachedHeadings(documentId)
-        
-        if (isCancelled) {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('AI headings load cancelled (component unmounted)')
-          }
-          return
-        }
-        
-        if (cached && cached.operations) {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Found cached operations, applying them directly...')
-          }
-          setEnhancementId(cached.enhancementId || null)
-          
-          await applyCachedOperations(cached.operations)
-        } else if (cached && (!Array.isArray(cached.operations) || cached.operations.length === 0)) {
-          console.error('[StructurePanel] Cached operations payload invalid or empty:', cached)
-          setHeadingsError('Cached AI operations were invalid. Please regenerate.')
-          setIsLoadingHeadings(false)
-          return
-        } else {
-          // No cached headings returned.  If the server previously told us
-          // headings exist, treat this as a hard error instead of silently
-          // ignoring the cache miss so that the issue is surfaced in the UI
-          // and developer logs.
-          if (aiHeadingsGenerated) {
-            console.error('[StructurePanel] Expected cached AI headings but none were returned')
-            setHeadingsError('AI-generated headings were expected but could not be loaded from the server. Please try regenerating or check server logs.')
-          }
-          // In any case, stop the loading indicator.
-          setIsLoadingHeadings(false)
-        }
-      } catch (error) {
-        console.error('Error in loadHeadings:', error)
-        if (!isCancelled) {
-          // Use executor helper to translate error codes where possible
-          const errorMessage =
-            error && typeof error === 'object' && 'code' in (error as any)
-              ? getErrorMessage(error as any)
-              : error instanceof Error
-                ? error.message
-                : 'Unknown error'
-          setHeadingsError(`Failed to load headings: ${errorMessage}`)
-          setIsLoadingHeadings(false)
-        }
-      }
-    }
-    
-    if ((elements && elements.length > 0) || content) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Content/elements available, checking for cached headings')
-      }
-      loadHeadings()
-    }
-    
     return () => {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('StructurePanel unmounting')
-      }
-      isCancelled = true
-      // If we unmount while a fetch is in-flight, clear the flag so that a
-      // remounted panel will retry the request instead of treating it as a
-      // permanent in-progress fetch (which left the UI stuck in "Original" mode)
       fetchInProgressRef.current = false
     }
-  }, [documentId, hasInitialized, applyCachedOperations, content, elements, fetchCachedHeadings, aiHeadingsGenerated])
+  }, [])
 
   const handleHeadingClick = (heading: Heading) => {
     if (onHeadingClick) {
@@ -888,6 +828,25 @@ export function StructurePanel({
               </>
             ) : (
               'Improve headings'
+            )}
+          </Button>
+        )}
+        
+        {currentMode === 'original' && (
+          <Button
+            onClick={handleLoadCachedHeadings}
+            disabled={isLoadingHeadings || isIterationInProgress}
+            variant="ghost"
+            size="sm"
+            className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+          >
+            {isLoadingHeadings ? (
+              <>
+                <CircleNotch className="animate-spin" size={14} />
+                <span className="ml-1">Loading…</span>
+              </>
+            ) : (
+              'Load pre-generated headings'
             )}
           </Button>
         )}
