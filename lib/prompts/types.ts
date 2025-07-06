@@ -111,6 +111,12 @@ async function executePromptInternal<T extends z.ZodSchema>(
   template: PromptTemplate<T>,
   variables: z.infer<T>
 ): Promise<PromptExecutionResult> {
+  // -------------------------------------------------------------------
+  // Manual latency tracking – record start time before the LLM call so
+  // we always have timestamps even if the provider / SDK does not supply
+  // them (observed in production).
+  // -------------------------------------------------------------------
+  const manualStartTimestamp = Date.now()
   // Validate variables against schema
   const validated = template.schema.parse(variables)
   
@@ -129,6 +135,8 @@ async function executePromptInternal<T extends z.ZodSchema>(
     temperature: template.modelConfig?.temperature ?? AI_CONFIG.DEFAULT_TEMPERATURE,
   })
   
+  const manualFinishTimestamp = Date.now()
+  
   // Extract all available fields from the SDK result for comprehensive logging
   const rawResponse: NonNullable<PromptExecutionResult['rawResponse']> = {
     // Spread result first to capture all fields
@@ -143,7 +151,10 @@ async function executePromptInternal<T extends z.ZodSchema>(
       ...(('reasoningTokens' in result.usage && result.usage.reasoningTokens !== undefined) && {
         reasoningTokens: result.usage.reasoningTokens
       })
-    } : undefined
+    } : undefined,
+    // Ensure timing information is always present
+    startTimestamp: (result as any).startTimestamp ?? manualStartTimestamp,
+    finishTimestamp: (result as any).finishTimestamp ?? manualFinishTimestamp,
   }
   
   // Return enhanced result with usage metadata and raw response
@@ -221,6 +232,11 @@ async function executeMultimodalPromptInternal<T extends z.ZodSchema>(
   template: MultimodalPromptTemplate<T>,
   variables: z.infer<T>
 ): Promise<PromptExecutionResult> {
+  // -------------------------------------------------------------------
+  // Manual latency tracking – capture start time before generateText to
+  // guarantee we have timestamps regardless of provider support.
+  // -------------------------------------------------------------------
+  const manualStartTimestamp = Date.now()
   // Validate variables against schema
   const validated = template.schema.parse(variables)
   
@@ -316,6 +332,8 @@ async function executeMultimodalPromptInternal<T extends z.ZodSchema>(
     temperature: template.modelConfig?.temperature ?? AI_CONFIG.DEFAULT_TEMPERATURE,
   })
   
+  const manualFinishTimestamp = Date.now()
+  
   // Extract all available fields from the SDK result for comprehensive logging
   const rawResponse: NonNullable<PromptExecutionResult['rawResponse']> = {
     // Spread result first to capture all fields
@@ -330,7 +348,10 @@ async function executeMultimodalPromptInternal<T extends z.ZodSchema>(
       ...(('reasoningTokens' in result.usage && result.usage.reasoningTokens !== undefined) && {
         reasoningTokens: result.usage.reasoningTokens
       })
-    } : undefined
+    } : undefined,
+    // Ensure timing information is always present
+    startTimestamp: (result as any).startTimestamp ?? manualStartTimestamp,
+    finishTimestamp: (result as any).finishTimestamp ?? manualFinishTimestamp,
   }
   
   // Return enhanced result with usage metadata and raw response
