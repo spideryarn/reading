@@ -120,22 +120,29 @@ Goal: expose hidden problems and improve obviously vague messages without touchi
 2. **`npm run lint:errors`** script wired into pre-commit hook.
 3. VS Code snippet pack for `createProblemDetail` and common error subclasses.
 
-### Stage 5 – Future Considerations (Post-overhaul)
+### ✅ Stage: Circular Reference Handling (Completed July 2025)
+- ✅ Created `lib/utils/safe-json.ts` utility for safe JSON serialisation
+- ✅ Updated `AIResponseLogger` to use safeJsonValue helper
+- ✅ Implemented placeholder `"[Circular]"` for circular references with warning logs
+- [ ] Update unit tests to expect circular reference placeholders
+- [ ] Refactor other AI tools to use `safeJsonValue` helper (use subagent):
+  - [ ] Structure tool
+  - [ ] Summary tool  
+  - [ ] Search tool
+  - [ ] Metadata tool
+- [ ] Add regression test with real Anthropic payload
+- [ ] Update `docs/reference/AI_RESPONSE_LOGGING.md` with sanitisation strategy
+- [ ] Run `npm run check:health` and fix any issues
 
-- Extend Tool Error Notification UI to wrap non-tool errors.
-- Integrate external error-tracking (e.g. Sentry) keyed by correlation ID.
-
----
-+### Immediate Actions *(July 2025)*
-+
-+1. **Update unit tests** – adjust AI-response serialisation tests to expect circular references to be replaced with the placeholder string `"[Circular]"`; assert that a warning is logged instead of an exception.
-+2. **Refactor other AI tools** (Structure, Summary, Search, Metadata, etc.) to depend on the new `safeJsonValue` helper instead of bespoke sanitisers.
-+3. **Global integration check** – verify every call-site of `AIResponseLogger` uses the updated serialisation logic; delete now-redundant code branches.
-+4. **Regression guard** – add a dedicated test with a real Anthropic sample payload to ensure `AIResponseLogger` no longer throws for legitimate circular references.
-+5. **Documentation update** – extend `docs/reference/AI_RESPONSE_LOGGING.md` with the new sanitisation strategy and placeholder behaviour.
-+6. **Health check** – run `npm run check:health` and fix any lint or type errors produced by the refactor.
-+
-+---
+### Stage: Final Validation and Cleanup
+- [ ] Run comprehensive test suite: `npm run build && npm run lint && npm test`
+- [ ] Use subagent to verify all API routes return Problem Details format
+- [ ] Use subagent to search for and consolidate redundant error handling tests
+- [ ] Review all changed code for descriptive error messages
+- [ ] Create housekeeping script to detect masked errors going forward
+- [ ] Update team on improvement opportunities discovered during implementation
+- [ ] Get user permission to merge branch to main
+- [ ] Move this doc to `docs/planning/finished/` and commit
 ## Success Metrics
 
 - ✅ 100 % of API routes emit RFC 9457 Problem Details.
