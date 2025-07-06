@@ -56,10 +56,10 @@ Currently, the `ai_calls` table has a `response_text` field that is never popula
 - Future-proof as SDK adds new fields
 
 ### 3. Latency Measurement
-**Decision**: Use both SDK timestamps and custom timers
-- Primary: Use SDK's `finishTimestamp - startTimestamp` when available
-- Fallback: Use provider's `experimental_providerMetadata.latency`
-- Additional: Keep custom timer measurements for comparison
+**Decision**: Use SDK timestamps as the single source of truth when available
+- Primary: Calculate latency using `finishTimestamp - startTimestamp` from the SDK response.
+- Fallback: If timestamps are missing, fall back to `experimental_providerMetadata.latency`; as a last resort, use a custom high-resolution timer started before the request and stopped on the final token.
+- Record **one** latency value per call (first available in the order above) to avoid confusion and duplication.
 
 ### 4. Standardization Strategy
 **Decision**: Create a standardized AI response logger service
@@ -85,6 +85,7 @@ Currently, the `ai_calls` table has a `response_text` field that is never popula
 - [ ] Add check constraint to ensure `raw_api_response` is not null for new rows
 - [ ] Update database type definitions
 - [ ] Test migration locally with rollback plan
+- [x] Migration review approved (2025-07-06)
 
 ### Stage: Core AI response capture service
 - [ ] Create `lib/services/ai-response-logger.ts` with standardized interface
@@ -94,6 +95,7 @@ Currently, the `ai_calls` table has a `response_text` field that is never popula
   - Test should verify JSON serialization works without errors
   - Test should handle edge cases (large responses, special characters)
   - Test should verify all expected fields are captured
+  - [ ] Add custom ESLint rule (and optional codemod) that forbids direct calls to `AiCallService.completeCall` outside the new logger, encouraging consistent usage
 
 ### Stage: Update AiCallService
 - [ ] Modify `completeCall` method to accept optional `rawApiResponse` parameter
@@ -126,6 +128,7 @@ Currently, the `ai_calls` table has a `response_text` field that is never popula
 - [ ] Check serialization with various response sizes
 - [ ] Test error scenarios and edge cases
 - [ ] Use subagent to run full test suite
+- [ ] Write an **integration test** that executes a real prompt end-to-end and asserts that `raw_api_response` and latency are correctly persisted in the `ai_calls` table
 
 ### Stage: Monitoring and debugging tools
 - [ ] Create utility functions to query and analyze stored responses
@@ -138,6 +141,7 @@ Currently, the `ai_calls` table has a `response_text` field that is never popula
 - [ ] Update relevant code comments
 - [ ] Remove any temporary debugging code
 - [ ] Run final health check: `npm run check:health`
+- [ ] Create evergreen documentation `docs/reference/DATABASE_AI_RESPONSE_LOGGING.md` describing schema, logging approach, and querying patterns (see `docs/instructions/WRITE_EVERGREEN_DOC.md`)
 
 ### Stage: Final review and merge
 - [ ] Review all changes with user
@@ -209,4 +213,4 @@ To ensure safe migration:
 - Average response size: 1-10 KB (JSON)
 - With compression: 20-30% of original size
 - Retention policy: Consider 30-90 day retention
-- Indexing: Add GIN index on JSONB for queryability
+- (Indexing strategy to be revisited once real-world query patterns emerge; GIN index deferred)
