@@ -38,7 +38,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   
   /* Retry failed tests for flake detection */
-  retries: 3,
+  retries: 2,
   
   /* Sequential execution initially until namespace isolation validated */
   workers: 1,

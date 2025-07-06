@@ -10,6 +10,7 @@ import { RealRLSTestSetup } from '@/lib/services/database/__tests__/rls-test-hel
 import { getCurrentEnvironmentTestUser } from '@/lib/testing/worktree-auth-helpers';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/types/database-auto-generated';
+import { createUniqueTestSlug } from '@/lib/testing/slug-test-utils';
 
 // Test user configuration
 const { email: testUserEmail, password: testUserPassword } = getCurrentEnvironmentTestUser();
@@ -63,9 +64,7 @@ export class DocumentAccessTestHelper {
     slugSuffix?: string;
     content?: string;
   }): Promise<{ id: string; slug: string; title: string; isPublic: boolean }> {
-    const timestamp = Date.now();
-    const randomSuffix = Math.random().toString(36).substring(7);
-    const uniqueSlug = `test-doc-${options.slugSuffix || 'default'}-${timestamp}-${randomSuffix}`;
+    const uniqueSlug = createUniqueTestSlug(`test-doc-${options.slugSuffix || 'default'}`);
     
     const title = options.title || `Test Document (${options.isPublic ? 'Public' : 'Private'})`;
     const content = options.content || `
