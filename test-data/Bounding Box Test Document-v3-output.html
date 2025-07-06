@@ -1,0 +1,91 @@
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Bounding Box Test Document.pdf</title>
+</head>
+<body>
+<!-- Page 1 -->
+<h1>Bounding Box Test Document</h1>
+
+<h2>Page 1: Figure Position Tests</h2>
+
+<p>This page contains test figures and tables with known positions to validate Gemini's bounding box extraction accuracy.</p>
+
+<figure data-bbox="93,197,465,463" class="page-1-figure" id="figure-1">
+  <div class="figure-content">
+    <h3>FIGURE 1</h3>
+    <p>Top-left position test</p>
+    <p>(Scientific diagram placeholder)</p>
+  </div>
+  <figcaption>Figure 1: Top-left position test</figcaption>
+</figure>
+
+<figure data-bbox="231,590,697,930" class="page-1-figure" id="figure-2">
+  <div class="figure-content">
+    <h3>FIGURE 2</h3>
+    <p>Center position test</p>
+    <p>(Chart/graph placeholder)</p>
+  </div>
+  <figcaption>Figure 2: Center position test</figcaption>
+</figure>
+
+<table data-bbox="47,982,853,1180" class="page-1-table" id="table-1">
+  <thead>
+    <tr>
+      <th>Header 1</th>
+      <th>Header 2</th>
+      <th>Header 3</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Data 1.1</td>
+      <td>Data 1.2</td>
+      <td>Data 1.3</td>
+    </tr>
+    <tr>
+      <td>Data 2.1</td>
+      <td>Data 2.2</td>
+      <td>Data 2.3</td>
+    </tr>
+  </tbody>
+  <caption>Table 1: Full-width table test</caption>
+</table>
+
+<!-- Page 2 -->
+<h2>Page 2: Complex Layout Test</h2>
+
+<div class="two-column-layout">
+  <div class="column-1">
+    <p>This is column 1 text that simulates a two-column academic paper layout. The text flows naturally between columns and should not be detected as a figure.</p>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+  </div>
+  
+  <div class="column-2">
+    <p>This is column 2 text continuing the flow. Academic papers often use this layout for better readability and space efficiency.</p>
+    
+    <figure data-bbox="556,147,883,330" class="page-2-figure" id="figure-3">
+      <div class="figure-content">
+        <h3>FIGURE 3</h3>
+        <p>Small figure</p>
+        <p>(Diagram)</p>
+      </div>
+      <figcaption>Figure 3: Small figure in top-right</figcaption>
+    </figure>
+  </div>
+</div>
+
+<figure data-bbox="47,654,853,1049" class="page-2-figure" id="figure-4">
+  <div class="figure-content">
+    <h3>FIGURE 4</h3>
+    <p>Full-width figure spanning columns</p>
+    <p>(Large visualization placeholder)</p>
+  </div>
+  <figcaption>Figure 4: Full-width figure spanning columns</figcaption>
+</figure>
+
+</body>
+</html>
+```

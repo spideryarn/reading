@@ -161,16 +161,16 @@ From our investigation:
 - [x] Update documentation to explain v3 is the upgraded v1
 - [x] Add migration notes explaining the upgrade
 
-### Stage: Create Enhanced Prompt Template
-- [ ] Create new prompt template `pdf-to-html-v3-gemini-native.njk` based on v1
-- [ ] Incorporate key improvements from v2 vision prompt:
+### Stage: Create Enhanced Prompt Template ✅ COMPLETED
+- [x] Create new prompt template `pdf-to-html-v3-gemini-native.njk` based on v1
+- [x] Incorporate key improvements from v2 vision prompt:
   - Explicit verbatim transcription instructions
   - Bounding box format specifications
   - Continuation markers for cross-page content
   - Mathematical notation preservation
-- [ ] Add Gemini-specific coordinate instructions (0-1000 scale)
-- [ ] **Write a Jest unit test that loads the template and asserts that the string "0-1000" is present** – protects against accidental removal
-- [ ] Test prompt with sample PDFs to verify bounding box output
+- [x] Add Gemini-specific coordinate instructions (0-1000 scale)
+- [x] **Write a Jest unit test that loads the template and asserts that the string "0-1000" is present** – protects against accidental removal
+- [x] Test prompt with sample PDFs to verify bounding box output
 
 ### Stage: Implement Core Gemini Native Pipeline
 - [ ] Update existing `/api/upload-pdf` route to use new processor when appropriate

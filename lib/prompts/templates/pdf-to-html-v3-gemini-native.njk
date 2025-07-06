@@ -1,0 +1,139 @@
+Convert this academic PDF document to clean, semantic HTML with precise bounding box coordinates for all visual elements. This PDF will be processed using Gemini's native PDF capabilities.
+
+{% if fileName %}
+**Document**: {{ fileName }}{% endif %}
+{% if singlePageOnly %}
+**Important**: Process ONLY the first page of this document to control costs during testing.
+{% endif %}
+
+## Core Requirements
+
+**Primary Goals**:
+1. Preserve the exact academic content with verbatim transcription (no summarization)
+2. Extract accurate bounding box coordinates for EVERY visual element for automated image extraction
+3. Maintain document structure and semantic relationships
+
+## Bounding Box Format (Critical for v3)
+
+For EVERY visual element (figures, images, tables, charts, diagrams), include bounding box coordinates as a data attribute:
+- **Format**: `data-bbox="x1,y1,x2,y2"`
+- **Coordinate system**: 0-1000 scale where:
+  - (0,0) = top-left corner of the page
+  - (1000,1000) = bottom-right corner of the page
+- **Example**: `<figure data-bbox="125,200,875,600">` represents a figure that:
+  - Starts at 12.5% from left, 20% from top
+  - Ends at 87.5% from left, 60% from top
+
+## Structural Preservation
+
+### Reading Order and Layout
+- Preserve the logical reading order (left-to-right, top-to-bottom for multi-column layouts)
+- Maintain hierarchical structure with proper heading levels (h1, h2, h3, etc.)
+- Keep paragraph boundaries and section breaks intact
+- Handle multi-column layouts by preserving column flow
+
+### Visual Elements with Bounding Boxes
+```html
+<figure data-bbox="x1,y1,x2,y2" class="page-N-figure" id="figure-N">
+  <figcaption>Figure N: Caption text</figcaption>
+</figure>
+
+<table data-bbox="x1,y1,x2,y2" class="page-N-table" id="table-N">
+  <caption>Table N: Caption text</caption>
+  <!-- table content with full structure -->
+</table>
+
+<img data-bbox="x1,y1,x2,y2" class="page-N-image" alt="Description" />
+
+<div data-bbox="x1,y1,x2,y2" class="page-N-diagram">
+  <!-- diagram placeholder or description -->
+</div>
+```
+
+### Table Handling
+- Convert ALL tables to proper HTML table markup using `<table>`, `<thead>`, `<tbody>`, `<th>`, and `<td>`
+- Preserve column alignment and spanning where visible
+- Include table captions using `<caption>` if present
+- Maintain data relationships and structure across page breaks
+- For tables spanning pages, add: `<!-- table-continues-on-next-page -->`
+
+### Mathematical Content
+- Convert mathematical equations to HTML using:
+  - HTML entities for symbols (×, ÷, ±, ≤, ≥, ∞, α, β, γ, δ, π, σ, μ, etc.)
+  - `<sup>` and `<sub>` for superscripts and subscripts
+  - MathML for complex equations when possible
+  - Plain text with clear formatting as fallback
+- Preserve equation numbering: `<span class="equation-number">(1.2)</span>`
+- Maintain equation references in text
+
+### Academic Elements
+- Mark abstracts with `<section class="abstract">`
+- Use semantic classes: `class="introduction"`, `class="methodology"`, `class="results"`, etc.
+- Convert citations to `<cite>` elements or spans with `class="citation"`
+- Preserve author names, affiliations, and publication details
+- Handle footnotes with `<span class="footnote">`
+- Maintain bibliography formatting with `<section class="bibliography">`
+
+### Cross-Page Content (Multi-Page Documents)
+{% if not singlePageOnly %}
+- Add HTML comments for elements continuing across pages:
+  - `<!-- continues-from-previous-page: paragraph -->`
+  - `<!-- continues-on-next-page: section -->`
+  - `<!-- table-continues-from-previous-page -->`
+- Maintain figure and table numbering across all pages
+- Preserve section continuity with appropriate comments
+{% endif %}
+
+## Content to Ignore
+- Page numbers, headers, and footers
+- Watermarks or background elements
+- Navigation elements not part of the main content
+- Publisher logos or branding
+- Margin notes that are clearly editorial
+
+## Critical v3 Instructions
+
+1. **Verbatim Transcription**: Transcribe ALL text content exactly as it appears - do not summarize or paraphrase
+2. **Include ALL visual elements**: Do not skip any figures, images, tables, charts, or diagrams
+3. **Be precise with coordinates**: Measure the exact boundaries of each visual element
+4. **Use the 0-1000 scale consistently**: All bounding box coordinates must be in this range
+5. **Include placeholder figures**: Even if image content cannot be extracted, include the bounding box
+6. **Page tracking**: Add `page-N-elementtype` classes to track which page elements appear on
+
+## Quality Standards
+
+**Accuracy**: 
+- Preserve exact wording and academic terminology
+- No content summarization or simplification
+- Include all substantive content visible in the PDF
+
+**Completeness**: 
+- Every visual element must have a data-bbox attribute
+- All coordinates must be between 0 and 1000
+- Sequential figure/table numbering maintained
+
+**Structure**: 
+- Logical reading order preserved
+- Hierarchical relationships maintained
+- Cross-references preserved
+
+## Output Requirements
+
+Return ONLY the HTML content - no markdown code blocks, no explanations, no additional text.
+
+Structure as a complete HTML document:
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>{{ fileName or 'Academic Document' }}</title>
+</head>
+<body>
+  {% if not singlePageOnly %}<!-- Page 1 -->{% endif %}
+  <!-- Document content with bounding boxes -->
+</body>
+</html>
+```
+
+Focus on accuracy and completeness - this conversion will be used for serious academic document analysis. The precision of bounding box coordinates is critical for the v3 pipeline's image extraction capabilities.
