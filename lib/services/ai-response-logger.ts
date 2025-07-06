@@ -12,6 +12,7 @@ import type { AiCallService } from './database/ai-calls'
 import type { PromptUsage } from '@/lib/prompts/types'
 import type { JsonObject, JsonValue } from '@/lib/types/json'
 import { createRequestLogger } from './logger'
+import { safeJsonValue } from '@/lib/utils/safe-json'
 
 /**
  * Complete AI response structure from Vercel AI SDK
@@ -332,66 +333,21 @@ export class AIResponseLogger {
    * Handles circular references, functions, and other non-serializable types
    */
   private sanitizeValue(value: unknown): unknown {
-    if (value === null || value === undefined) {
-      return null
-    }
-    
-    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-      return value
-    }
-    
-    if (value instanceof Date) {
-      return value.toISOString()
-    }
-    
-    if (Array.isArray(value)) {
-      return value.map(item => this.sanitizeValue(item))
-    }
-    
-    if (typeof value === 'object') {
-      // Use a single seen set for the entire sanitization process
-      // This is passed through the closure to handle nested objects
-      const seen = new WeakSet()
-      
-      const sanitizeObjectWithSeen = (obj: Record<string, unknown>, seenSet: WeakSet<object>): JsonObject => {
-        if (seenSet.has(obj)) {
-          throw new Error(
-            `Circular reference detected in AI response object. ` +
-            `This indicates a malformed response structure that cannot be safely stored. ` +
-            `Object keys: ${Object.keys(obj).join(', ')}`
-          )
-        }
-        seenSet.add(obj)
-        
-        const result: JsonObject = {}
-        for (const [key, val] of Object.entries(obj)) {
-          // Skip functions and symbols
-          if (typeof val === 'function' || typeof val === 'symbol') {
-            continue
-          }
-          // For nested objects, pass the same seen set
-          if (val && typeof val === 'object') {
-            if (Array.isArray(val)) {
-              result[key] = val.map(item => 
-                item && typeof item === 'object' 
-                  ? sanitizeObjectWithSeen(item as Record<string, unknown>, seenSet)
-                  : this.sanitizeValue(item)
-              ) as JsonValue
-            } else {
-              result[key] = sanitizeObjectWithSeen(val as Record<string, unknown>, seenSet)
-            }
-          } else {
-            result[key] = this.sanitizeValue(val) as JsonValue
-          }
-        }
-        return result
+    // Use shared utility that removes circular references by inserting a
+    // placeholder string instead of throwing.  This preserves as much of the
+    // provider payload as possible while keeping the data JSON-serialisable.
+    return safeJsonValue(value, {
+      placeholder: '[Circular]',
+      onCircular: ({ path, keys }) => {
+        // Log a warning so we notice potentially problematic provider payloads
+        // We avoid using the structured logger here to keep this util generic –
+        // higher-level callers can intercept console warnings if needed.
+        console.warn(
+          `Circular reference removed during AI response serialisation. ` +
+          `Path: ${path.join('.') || '<root>'}. Keys at cycle root: ${keys.join(', ')}`
+        )
       }
-      
-      return sanitizeObjectWithSeen(value as Record<string, unknown>, seen)
-    }
-    
-    // For any other type, convert to string
-    return String(value)
+    })
   }
 }
 
