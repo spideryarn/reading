@@ -562,17 +562,12 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
+    // Single consolidated error log
     requestLogger.error({
       correlationId,
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     }, 'PDF upload API error')
-    
-    requestLogger.error({
-      correlationId,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
-    }, 'PDF upload API error occurred')
     
     // Handle authentication errors first
     if (error instanceof Error) {

@@ -388,8 +388,14 @@ export default function AddDocumentPage() {
       switch (method) {
         case 'readability':
           return 'Extracting content with Mozilla Readability...'
-        case 'ai-transcription':
-          return 'Processing with LLM transcription (v3) using Gemini + Claude...'
+        case 'ai-transcription': {
+          const providerLabel = provider === 'gemini'
+            ? 'Gemini 2.5 Flash'
+            : provider === 'mistral'
+              ? 'Mistral OCR'
+              : 'Claude Sonnet'
+          return `Processing with LLM transcription (v3) using ${providerLabel}...`
+        }
         default:
           return 'Processing URL...'
       }
@@ -398,7 +404,13 @@ export default function AddDocumentPage() {
         if (method === 'vision-ai') {
           return 'Processing PDF with LLM vision-based transcription (v2)...'
         } else {
-          return 'Processing PDF with LLM transcription (v3) using Gemini + Claude...'
+          // Dynamically describe the chosen provider so the user sees accurate status text
+          const providerLabel = provider === 'gemini'
+            ? 'Gemini 2.5 Flash'
+            : provider === 'mistral'
+              ? 'Mistral OCR'
+              : 'Claude Sonnet'
+          return `Processing PDF with LLM transcription (v3) using ${providerLabel}...`
         }
       } else if (type === 'html') {
         switch (method) {
@@ -406,8 +418,14 @@ export default function AddDocumentPage() {
             return 'Processing HTML file...'
           case 'readability':
             return 'Extracting content with Mozilla Readability...'
-          case 'ai-transcription':
-            return 'Processing HTML with LLM transcription (v3) using Gemini + Claude...'
+          case 'ai-transcription': {
+            const providerLabel = provider === 'gemini'
+              ? 'Gemini 2.5 Flash'
+              : provider === 'mistral'
+                ? 'Mistral OCR'
+                : 'Claude Sonnet'
+            return `Processing HTML with LLM transcription (v3) using ${providerLabel}...`
+          }
           default:
             return 'Processing HTML file...'
         }
@@ -621,7 +639,7 @@ export default function AddDocumentPage() {
             // Create PDF-specific FormData with correct field name
             const pdfFormData = new FormData()
             pdfFormData.append('pdf', input.file)  // API expects 'pdf' field name
-            pdfFormData.append('provider', 'gemini') // v3 always uses Gemini (backend handles two-stage processing)
+            pdfFormData.append('provider', processing.provider)
             pdfFormData.append('isPublic', processing.isPublic.toString())
             response = await fetch(apiEndpoint, {
               method: 'POST',
