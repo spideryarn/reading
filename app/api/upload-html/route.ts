@@ -8,6 +8,7 @@ import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { createUrlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
+import { createAIResponseLogger } from '@/lib/services/ai-response-logger'
 import { getModelForAICall, UPLOAD_LIMITS } from '@/lib/config'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
 import { requireAuth } from '@/lib/auth/server-auth'
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest) {
     // Initialize Supabase client and services
     const supabase = await getSupabaseServerClient(request, { allowBearer: true })
     const aiCallService = new AiCallService(supabase)
+    const aiResponseLogger = createAIResponseLogger(aiCallService)
     
     console.log(`Step 1: Processing HTML content using ${processingMethod} method...`)
     requestLogger.info({
@@ -193,16 +195,21 @@ export async function POST(request: NextRequest) {
         
         const processingTime = Date.now() - startTime
         
-        // Complete the AI call record with usage metadata
-        await aiCallService.completeCall(aiCall!.id, {
-          output_data: {
+        // Complete the AI call record with comprehensive response logging
+        await aiResponseLogger.completeAICall({
+          aiCallId: aiCall!.id,
+          response: extractResult.rawResponse || {
+            text: extractResult.text,
+            usage: extractResult.usage,
+            finishReason: extractResult.finishReason
+          },
+          outputData: {
             html_length: extractResult.text.length,
             processing_time_ms: processingTime,
             provider_used: providerDisplayName,
             source_file: htmlFile.name
           },
-          usage: extractResult.usage,
-          finishReason: extractResult.finishReason
+          correlationId
         })
         
         // Log successful AI operation

@@ -8,6 +8,7 @@ import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { createPdfToHtmlPrompt } from '@/lib/prompts/templates/pdf-to-html-direct'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
+import { createAIResponseLogger } from '@/lib/services/ai-response-logger'
 import { getModelForAICall, UPLOAD_LIMITS } from '@/lib/config'
 import { requireAuth } from '@/lib/auth/server-auth'
 import { processHtmlToDocument, handleSanitizationError } from '@/lib/services/html-document-processor'
@@ -107,6 +108,7 @@ export async function POST(request: NextRequest) {
     // Initialize Supabase client and services
     const supabase = await getSupabaseServerClient(request, { allowBearer: true })
     const aiCallService = new AiCallService(supabase)
+    const aiResponseLogger = createAIResponseLogger(aiCallService)
 
     // Determine which processing path to use
     const canGeminiResult = canProcessWithGeminiNative(pdfBuffer)
@@ -189,17 +191,22 @@ export async function POST(request: NextRequest) {
           }, 'Gemini Native processing completed with warnings')
         }
         
-        // Complete the AI call record with usage metadata
-        await aiCallService.completeCall(aiCall.id, {
-          output_data: {
+        // Complete the AI call record with comprehensive response logging
+        await aiResponseLogger.completeAICall({
+          aiCallId: aiCall.id,
+          response: geminiResult.rawResponse || {
+            text: htmlResult.text,
+            usage: htmlResult.usage,
+            finishReason: htmlResult.finishReason
+          },
+          outputData: {
             html_length: htmlResult.text.length,
             processing_time_ms: processingTime,
             provider_used: providerDisplayName,
             extracted_images_count: extractedImagesMetadata.length,
             warnings: geminiResult.warnings
           },
-          usage: htmlResult.usage,
-          finishReason: htmlResult.finishReason
+          correlationId
         })
         
       } catch (error) {
@@ -279,16 +286,21 @@ export async function POST(request: NextRequest) {
           aiCallId: aiCall.id
         }, 'PDF processing failed due to token limit exhaustion')
         
-        // Complete the AI call with failure metadata
-        await aiCallService.completeCall(aiCall.id, {
-          output_data: {
+        // Complete the AI call with comprehensive response logging (even on failure)
+        await aiResponseLogger.completeAICall({
+          aiCallId: aiCall.id,
+          response: htmlResult.rawResponse || {
+            text: htmlResult.text,
+            usage: htmlResult.usage,
+            finishReason: htmlResult.finishReason
+          },
+          outputData: {
             html_length: htmlResult.text.length,
             processing_time_ms: processingTime,
             provider_used: providerDisplayName,
             error: 'Token limit exhausted'
           },
-          usage: htmlResult.usage,
-          finishReason: htmlResult.finishReason
+          correlationId
         })
         
         throw new Error(
@@ -305,15 +317,20 @@ export async function POST(request: NextRequest) {
         correlationId
       }, 'success')
       
-      // Complete the AI call record with usage metadata
-      await aiCallService.completeCall(aiCall.id, {
-        output_data: {
+      // Complete the AI call record with comprehensive response logging
+      await aiResponseLogger.completeAICall({
+        aiCallId: aiCall.id,
+        response: htmlResult.rawResponse || {
+          text: htmlResult.text,
+          usage: htmlResult.usage,
+          finishReason: htmlResult.finishReason
+        },
+        outputData: {
           html_length: htmlResult.text.length,
           processing_time_ms: processingTime,
           provider_used: providerDisplayName
         },
-        usage: htmlResult.usage,
-        finishReason: htmlResult.finishReason
+        correlationId
       })
     }
 
