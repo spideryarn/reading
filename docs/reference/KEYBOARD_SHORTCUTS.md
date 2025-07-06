@@ -198,8 +198,3 @@ The implemented command palette follows these established patterns:
 - Platform detection uses `navigator.platform` for broad compatibility
 - All shortcuts include `preventDefault()` to avoid browser conflicts
 - Tooltip text uses `font-mono` class for consistent shortcut key display
-
----
-
-*Last updated: 28 June 2025*  
-*Shortcut count: 14 (Command Palette + 11 global shortcuts + Sidebar Toggle + Upload Submit)*
