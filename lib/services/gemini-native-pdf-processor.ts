@@ -154,6 +154,10 @@ function normalizeGeminiBoundingBoxes(
   html: string,
   logger: ReturnType<typeof createRequestLogger>
 ): { normalizedHtml: string; extractedImages: ExtractedImage[]; warnings: string[] } {
+  // --- NEW CONSTANTS & HELPERS ---
+  const MIN_EDGE_NORMALISED = 0.02 // ~2% of page – ignore tiny artefacts
+  const round = (n: number) => Number(n.toFixed(4))
+  // ---------------------------------
   const warnings: string[] = []
   const extractedImages: ExtractedImage[] = []
   
@@ -173,33 +177,61 @@ function normalizeGeminiBoundingBoxes(
         const bboxData = element.getAttribute('data-bbox')
         if (!bboxData) return
         
-        // Parse coordinates (expecting format: "x1,y1,x2,y2")
-        const coords = bboxData.split(',').map((coord: string) => parseFloat(coord.trim()))
-        if (coords.length !== 4 || coords.some(isNaN)) {
+        // Parse coordinates (expecting four comma-separated numbers)
+        const rawCoords = bboxData.split(',').map((coord: string) => parseFloat(coord.trim()))
+        if (rawCoords.length !== 4 || rawCoords.some(isNaN)) {
           warnings.push(`Invalid bounding box format at element ${index}: ${bboxData}`)
           return
         }
         
-        // Normalize from 0-1000 to 0-1 scale
-        const normalizedCoords = coords.map((coord: number) => coord / 1000)
+        // Helper: map possible coordinate orders
+        const mapCoords = (coords: number[], order: 'xy' | 'yx'): [number, number, number, number] =>
+          order === 'xy'
+            ? [coords[0]!, coords[1]!, coords[2]!, coords[3]!] // x1,y1,x2,y2 (prompt spec)
+            : [coords[1]!, coords[0]!, coords[3]!, coords[2]!] // y,x order → convert to x,y
         
-        // Validate normalized coordinates
-        if (normalizedCoords.some((coord: number) => coord < 0 || coord > 1)) {
-          warnings.push(`Bounding box coordinates out of range at element ${index}: ${bboxData}`)
+        // Try prompt-specified order first; if invalid geometry fall back to y,x order
+        const tryOrders: ('xy' | 'yx')[] = ['xy', 'yx'] // Prioritise x,y,x,y order; YX used as fallback
+        let mapped: [number, number, number, number] | null = null
+        // We validated rawCoords length === 4 above, so mapped will always have 4 numeric entries.
+        // eslint-disable-next-line @typescript-eslint/prefer-for-of
+        for (const ord of tryOrders) {
+          const [tX1, tY1, tX2, tY2] = mapCoords(rawCoords, ord)
+          if (tX1 < tX2 && tY1 < tY2) {
+            mapped = [tX1, tY1, tX2, tY2]
+            break
+          }
+        }
+        if (!mapped) {
+          warnings.push(`Unable to resolve coordinate order at element ${index}: ${bboxData}`)
           return
         }
         
-        // Update the element with normalized coordinates
-        const normalizedBbox = normalizedCoords.join(',')
-        element.setAttribute('data-bbox', normalizedBbox)
+        // Normalise from 0-1000 → 0-1, round to 4dp
+        // mapped is non-null here because earlier branch returns when null.
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const [rawA, rawB, rawC, rawD] = mapped! as [number, number, number, number]
+        const nx1 = round(rawA / 1000)
+        const ny1 = round(rawB / 1000)
+        const nx2 = round(rawC / 1000)
+        const ny2 = round(rawD / 1000)
         
-        // Extract image information
-        const bbox = boundingBoxSchema.parse({
-          x1: normalizedCoords[0],
-          y1: normalizedCoords[1],
-          x2: normalizedCoords[2],
-          y2: normalizedCoords[3]
-        })
+        // Validate range and minimum size
+        if ([nx1, ny1, nx2, ny2].some((v: number) => v < 0 || v > 1)) {
+          warnings.push(`Bounding box coordinates out of range at element ${index}: ${bboxData}`)
+          return
+        }
+        if ((nx2 - nx1) < MIN_EDGE_NORMALISED || (ny2 - ny1) < MIN_EDGE_NORMALISED) {
+          warnings.push(`Bounding box too small at element ${index}: width ${(nx2 - nx1).toFixed(4)}, height ${(ny2 - ny1).toFixed(4)}`)
+          return
+        }
+        
+        // Update element attribute with normalised coords (x1,y1,x2,y2)
+        const normalisedBboxAttr = [nx1, ny1, nx2, ny2].join(',')
+        element.setAttribute('data-bbox', normalisedBboxAttr)
+        
+        // Build bbox object for downstream
+        const bbox = boundingBoxSchema.parse({ x1: nx1, y1: ny1, x2: nx2, y2: ny2 })
         
         // Determine element type and extract metadata
         let elementType: 'figure' | 'image' | 'diagram' | 'chart' = 'image'

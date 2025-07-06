@@ -12,19 +12,19 @@ describe('pdf-to-html-v3-gemini-native template', () => {
       const prompt = createPdfToHtmlV3GeminiNativePrompt()
       expect(prompt).toBeDefined()
       expect(prompt.name).toBe('pdf-to-html-v3-gemini-native')
-      expect(prompt.modelConfig?.modelString).toBe('google:gemini-2.5-pro:latest')
+      expect(prompt.modelConfig?.modelString).toBe('google:gemini-2.5-flash:latest')
       expect(prompt.modelConfig?.temperature).toBe(0)
       expect(prompt.modelConfig?.maxTokens).toBe(64000)
     })
 
     it('should have correct default export', () => {
       expect(pdfToHtmlV3GeminiNativePrompt).toBeDefined()
-      expect(pdfToHtmlV3GeminiNativePrompt.modelConfig?.modelString).toBe('google:gemini-2.5-pro:latest')
+      expect(pdfToHtmlV3GeminiNativePrompt.modelConfig?.modelString).toBe('google:gemini-2.5-flash:latest')
     })
 
     it('should use Gemini 2.5 Pro for native PDF processing', () => {
       const prompt = createPdfToHtmlV3GeminiNativePrompt()
-      expect(prompt.modelConfig?.modelString).toBe('google:gemini-2.5-pro:latest')
+      expect(prompt.modelConfig?.modelString).toBe('google:gemini-2.5-flash:latest')
     })
 
     it('should have deterministic temperature for coordinate precision', () => {

@@ -197,7 +197,7 @@ From our investigation:
   - ✅ Successfully tested with "Bounding Box Test Document.pdf"
   - ✅ Processing completed in ~52 seconds for 2-page PDF
 - [x] Verify Gemini Native processing works for various PDFs
-  - ✅ Gemini 2.5 Pro processes PDFs correctly with native capabilities
+  - ✅ Gemini 2.5 Flash processes PDFs correctly with native capabilities
 - [x] Confirm bounding boxes are present in HTML (even if not used yet)
   - ✅ Bounding boxes successfully extracted as `data-bbox` attributes
   - ✅ Format: normalized coordinates (0-1 range) as "x1,y1,x2,y2"
@@ -231,7 +231,7 @@ From our investigation:
   - Image extraction quality
   - Error scenarios
   - Performance benchmarks
-  - **Oversized PDF upload returns 413 with clear error**
+  - ~~**Oversized PDF upload returns 413 with clear error**~~ ✅ Implemented via fail-fast in upload route
 - [ ] Use subagent to run full test suite
 - [ ] Document quality metrics in Appendix B
 
@@ -424,7 +424,7 @@ npx tsx scripts/tests/test-gemini-bounding-boxes.ts path/to/your.pdf
 
 #### Recommended Next Steps
 - Implement 1000→1 scale normalization
-- Add minimum size validation (skip tiny elements)
+- ~~Add minimum size validation (skip tiny elements)~~ ✅ Implemented 2025-07-06
 - Test with PDFs containing actual images (not just placeholders)
 
 ### C. Example Bounding Box Output
@@ -504,3 +504,17 @@ Estimated costs per 20-page academic paper:
 
 4. **Risk**: Users confused by multiple pipeline options
    - **Mitigation**: Clear UI guidance, automatic recommendation
+
+## Recent Updates (2025-07-06)
+
+The following improvements were merged after initial v3 launch:
+
+- **Model switch to Gemini 2.5 Flash** for native PDF processing (cheaper & faster than Pro).
+- **Fail-fast behaviour** – the `/api/upload-pdf` route now returns **HTTP 413** when a PDF exceeds Gemini native limits instead of silently falling back to the direct pipeline.
+- **Bounding-box hardening**
+  - Accepts both `x1,y1,x2,y2` and `y1,x1,y2,x2` orders returned by Gemini.
+  - Normalises to 0-1 range, rounds to 4 dp.
+  - Rejects boxes below 2 % of page width/height (skipped with warning).
+- **Expanded test-suite** – new Jest cases cover alternate coord order and minimum-size filtering.
+
+These changes bring the implementation fully in line with Principles #5 (Provider choice) & #8 (Fail fast), and complete previously-open checklist items.

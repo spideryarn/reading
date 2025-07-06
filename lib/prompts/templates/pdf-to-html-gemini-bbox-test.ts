@@ -13,7 +13,7 @@ export function createGeminiBboxTestPrompt() {
     'pdf-to-html-gemini-bbox-test.njk',
     geminiBboxTestInputSchema,
     {
-      modelString: 'google:gemini-2.5-pro:latest',
+      modelString: 'google:gemini-2.5-flash:latest',
       temperature: 0, // Deterministic for accurate bbox extraction
       maxTokens: 32000, // Sufficient for test
     }

@@ -13,7 +13,7 @@ export const pdfToHtmlDirectOutputSchema = z.string().min(1).describe('Clean sem
 
 // Create PDF to HTML prompt template with configurable provider
 export function createPdfToHtmlPrompt(provider: 'claude' | 'gemini' = 'claude') {
-  const modelString = provider === 'gemini' ? 'google:gemini-2.5-pro:latest' : 'anthropic:claude-sonnet-4:20250514'
+  const modelString = provider === 'gemini' ? 'google:gemini-2.5-flash:latest' : 'anthropic:claude-sonnet-4:20250514'
   
   return loadMultimodalPromptTemplateFromCaller(
     'pdf-to-html-direct.njk',
