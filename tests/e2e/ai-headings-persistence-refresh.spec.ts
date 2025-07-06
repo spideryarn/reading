@@ -170,7 +170,8 @@ test.describe('AI Headings Persistence After Refresh', () => {
     // Step 4: Count headings after AI generation
     const enhancedHeadingCount = await page.locator('h1, h2, h3, h4, h5, h6').count();
     console.log(`📊 Enhanced heading count: ${enhancedHeadingCount}`);
-    expect(enhancedHeadingCount).toBeGreaterThan(initialHeadingCount);
+    // The AI may reduce or increase heading count depending on optimisation; ensure it changed.
+    expect(enhancedHeadingCount).not.toBe(initialHeadingCount);
     
     // Step 5: Capture some heading text to verify later
     const headings = await page.locator('h1, h2, h3, h4, h5, h6').allTextContents();

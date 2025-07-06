@@ -22,6 +22,7 @@ import type {
   ToolApiErrorResponse,
   ExecutionContext 
 } from '@/lib/tools/executor/types'
+import { ToolHandlerError } from './handler-interface'
 
 // Cache the registry initialization to avoid repeated initialization
 let registryInitialized = false
@@ -257,6 +258,20 @@ export async function GET(
     return successResponse
     
   } catch (error) {
+    if (error instanceof ToolHandlerError) {
+      logger.error('GET request failed (handler error)', { error, executionTime: timer.elapsed() })
+      return createErrorResponse(
+        {
+          status: error.status,
+          code: error.code,
+          message: error.message,
+          retryable: error.retryable
+        },
+        toolId,
+        correlationId,
+        pathname
+      )
+    }
     logger.error('GET request failed', { error, executionTime: timer.elapsed() })
     
     return createErrorResponse(
@@ -416,6 +431,20 @@ export async function POST(
     return successResponse
     
   } catch (error) {
+    if (error instanceof ToolHandlerError) {
+      logger.error('POST request failed (handler error)', { error, executionTime: timer.elapsed() })
+      return createErrorResponse(
+        {
+          status: error.status,
+          code: error.code,
+          message: error.message,
+          retryable: error.retryable
+        },
+        toolId,
+        correlationId,
+        pathname
+      )
+    }
     logger.error('POST request failed', { error, executionTime: timer.elapsed() })
     
     return createErrorResponse(

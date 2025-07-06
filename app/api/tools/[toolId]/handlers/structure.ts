@@ -19,14 +19,16 @@
 
 import { z } from 'zod'
 import { executePromptWithUsage } from '@/lib/prompts/types'
-import { headingsPrompt, headingsResponseSchema, headingOperationSchema, type HeadingOperation } from '@/lib/prompts/templates/headings'
+import { headingsPrompt, headingsResponseSchema, headingOperationSchema } from '@/lib/prompts/templates/headings.server'
+import type { HeadingOperation } from '@/lib/prompts/schemas/headings'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelForAICall, HEADING_ITERATION_CONFIG } from '@/lib/config'
 import { createRequestLogger, createTimer, logAIOperation, mutationLogger } from '@/lib/services/logger'
-import { BaseToolHandler, createHandlerError } from '../handler-interface'
+import { BaseToolHandler, createHandlerError, ToolHandlerError } from '../handler-interface'
 import type { ExecutionContext, ToolApiResponse } from '@/lib/tools/executor/types'
 import type { GetRequestParams, DeleteRequestParams } from '../handler-interface'
+import { generateContentBasedId } from '@/lib/services/deterministicId'
 
 // Validation schemas
 const StructureGetRequestSchema = z.object({
@@ -228,6 +230,28 @@ function detectUnsafeInsertBeforeH1(operations: HeadingOperation[], html: string
 }
 
 /**
+ * Ensure all INSERT operations carry a deterministic `content.id` field so that
+ * clients can replay the operation list without regenerating IDs.  Mutates the
+ * array in-place for convenience.
+ */
+function ensureInsertIds(documentId: string | undefined, operations: HeadingOperation[]): void {
+  if (!documentId) return // Cannot generate ids without doc context – skip
+  let localIndex = 0
+  for (const op of operations) {
+    if (op.action === 'insert' && op.content) {
+      if (!op.content.id || op.content.id.trim() === '') {
+        op.content.id = generateContentBasedId(
+          documentId!,
+          'heading',
+          `${op.content.content}:before:${op.insertNewBeforeExistingId}:${localIndex}`
+        )
+      }
+      localIndex++
+    }
+  }
+}
+
+/**
  * Structure tool handler with AI-powered heading generation
  */
 export class StructureHandler extends BaseToolHandler {
@@ -270,14 +294,104 @@ export class StructureHandler extends BaseToolHandler {
       )
       
       if (existingHeadings) {
-        // Validate cached data structure - fail fast if malformed
+        // ------------------------------------------------------------------
+        // Robust validation of cached data – fail fatally (422) if malformed.
+        // Also auto-migrate rows where operations was stored as a JSON string.
+        // ------------------------------------------------------------------
         if (!existingHeadings.content || typeof existingHeadings.content !== 'object') {
-          throw new Error(`Malformed headings data in database for enhancement ${existingHeadings.id}: content is not an object`)
+          logger.error({
+            documentId,
+            enhancementId: existingHeadings.id,
+            error_type: 'headings_cache_validation',
+            foundType: typeof existingHeadings.content
+          }, 'Malformed headings cache – content is not an object')
+          throw new ToolHandlerError(
+            'Malformed headings cache – expected object',
+            422,
+            'MALFORMED_HEADINGS_CACHE',
+            false
+          )
         }
-        
+
         const content = existingHeadings.content as { operations?: unknown }
-        if (!content.operations || !Array.isArray(content.operations)) {
-          throw new Error(`Malformed headings data in database for enhancement ${existingHeadings.id}: content.operations is not an array. Found: ${typeof content.operations}`)
+
+        // Attempt to auto-fix legacy string storage (JSON string)
+        if (typeof content.operations === 'string') {
+          try {
+            const parsedOps = JSON.parse(content.operations)
+            // Validate structure
+            z.array(headingOperationSchema).parse(parsedOps)
+
+            // Overwrite row with corrected canonical array format
+            const enhancementService = new EnhancementService(supabase)
+            await enhancementService.upsert({
+              documentId,
+              type: 'headings',
+              subtype: 'default',
+              aiCallId: (existingHeadings.ai_call_id ?? 'unknown') as string,
+              content: {
+                operations: parsedOps as any
+              }
+            })
+
+            logger.info({
+              documentId,
+              enhancementId: existingHeadings.id,
+              error_type: 'headings_cache_validation',
+              action: 'auto_migrated_string_to_array'
+            }, 'Auto-migrated headings cache from string to array format')
+
+            content.operations = parsedOps
+          } catch (parseErr) {
+            logger.error({
+              documentId,
+              enhancementId: existingHeadings.id,
+              error_type: 'headings_cache_validation',
+              parseErr: parseErr instanceof Error ? parseErr.message : parseErr
+            }, 'Failed to parse operations JSON string in headings cache')
+
+            throw new ToolHandlerError(
+              'Malformed headings cache – operations JSON is invalid',
+              422,
+              'MALFORMED_HEADINGS_CACHE',
+              false
+            )
+          }
+        }
+
+        // Now expect array
+        if (!Array.isArray(content.operations)) {
+          logger.error({
+            documentId,
+            enhancementId: existingHeadings.id,
+            error_type: 'headings_cache_validation',
+            foundType: typeof content.operations
+          }, 'Malformed headings cache – operations is not array')
+          throw new ToolHandlerError(
+            'Malformed headings cache – operations not array',
+            422,
+            'MALFORMED_HEADINGS_CACHE',
+            false
+          )
+        }
+
+        // Validate operations with schema
+        try {
+          z.array(headingOperationSchema).parse(content.operations)
+        } catch (schemaErr) {
+          logger.error({
+            documentId,
+            enhancementId: existingHeadings.id,
+            error_type: 'headings_cache_validation',
+            schemaErr: schemaErr instanceof Error ? schemaErr.message : schemaErr
+          }, 'Headings cache failed schema validation')
+
+          throw new ToolHandlerError(
+            'Malformed headings cache – operations schema invalid',
+            422,
+            'MALFORMED_HEADINGS_CACHE',
+            false
+          )
         }
         
         logger.info({
@@ -308,6 +422,11 @@ export class StructureHandler extends BaseToolHandler {
       }
       
     } catch (error) {
+      if (error instanceof ToolHandlerError) {
+        // Already a well-formed handler error – just propagate upward so the
+        // unified route can convert it into a proper Problem Details response.
+        throw error
+      }
       logger.error({
         documentId,
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -994,7 +1113,10 @@ export class StructureHandler extends BaseToolHandler {
         
         // Combine existing operations with new ones for complete state
         const allOperations = [...(existing_operations || []), ...validatedResponse.operations]
-        
+
+        // Make sure every INSERT in the combined list has an id before we persist.
+        ensureInsertIds(documentId, allOperations)
+
         // Store/update enhancement with iteration metadata - using native operations format
         await enhancementService.upsert({
           documentId,

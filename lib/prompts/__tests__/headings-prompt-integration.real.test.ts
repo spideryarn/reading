@@ -10,7 +10,7 @@ jest.unmock('ai')
 jest.unmock('fs')
 
 // Use requireActual to bypass global mocks in jest.setup.js
-const { headingsPrompt, headingsResponseSchema } = jest.requireActual('../templates/headings') as typeof import('../templates/headings')
+const { headingsPrompt, headingsResponseSchema } = jest.requireActual('../templates/headings.server') as typeof import('../templates/headings.server')
 const { executePromptWithUsage } = jest.requireActual('../types') as typeof import('../types')
 
 // Real-LLM integration test. Guarded behind env flag to prevent accidental runs in CI.

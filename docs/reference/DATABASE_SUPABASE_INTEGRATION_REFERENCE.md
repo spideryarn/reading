@@ -620,3 +620,13 @@ const doc: Tables<'documents'> = …
 3. During refactors we can gradually replace old alias imports; once the codebase is clean the shim can be deleted in one commit.
 
 4. The update script & Action live in `package.json` and `.github/workflows/update-types.yml` respectively – see the Setup guide for details.
+
+### Headings cache integrity (Summer 2025)
+
+The `headings` enhancement now stores `content.operations` as a **jsonb array** of `HeadingOperation`.  The API validates this on read *and* write.
+
+• Any malformed row triggers HTTP 422 with code `MALFORMED_HEADINGS_CACHE`.
+• Rows that still contain a JSON *string* are automatically migrated to an array once parsed successfully.
+• Never manually update `document_enhancements` – always use `EnhancementService.upsert()` which runs Zod validation.
+
+If you circumvent this (psql, CSV import, etc.) expect fatal errors on first access.

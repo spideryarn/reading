@@ -13,7 +13,7 @@ import { AiCallService } from '@/lib/services/database/ai-calls'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { getModelForAICall } from '@/lib/config'
 import { requireAuth } from '@/lib/auth/server-auth'
-import type { HeadingOperation } from '@/lib/prompts/templates/headings'
+import type { HeadingOperation } from '@/lib/prompts/schemas/headings'
 
 export async function POST(request: NextRequest) {
   try {

@@ -1,4 +1,4 @@
-import type { HeadingOperation } from '@/lib/prompts/templates/headings'
+import type { HeadingOperation } from '@/lib/prompts/schemas/headings'
 import type { Mutation, DocumentTransform } from '@/lib/types/mutation'
 import { generateContentBasedId } from './deterministicId'
 
@@ -22,11 +22,17 @@ export function headingOperationsToMutation(options: {
     switch (op.action) {
       case 'insert': {
         if (!op.content || !op.insertNewBeforeExistingId) return
-        const headingId = generateContentBasedId(
-          documentId,
-          'heading',
-          `${op.content.content}:before:${op.insertNewBeforeExistingId}:${index}`
-        )
+        // If the operation already carries a deterministic id (persisted in the
+        // database) we *must* reuse it so that later remove/replace operations
+        // target the correct element when we replay a cached history.  Only
+        // fall back to content-based generation for legacy rows that have no id.
+        const headingId = op.content.id
+          ? op.content.id
+          : generateContentBasedId(
+              documentId,
+              'heading',
+              `${op.content.content}:before:${op.insertNewBeforeExistingId}:${index}`
+            )
 
         const insertTransform: DocumentTransform = {
           action: 'insert',

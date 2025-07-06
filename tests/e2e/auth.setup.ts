@@ -1,6 +1,9 @@
 import { test as setup, expect } from '@playwright/test';
 import { getCurrentEnvironmentTestUser, getEnvironmentName, getCurrentEnvironmentId, validateEnvironmentSetup } from '../../lib/testing/worktree-auth-helpers';
 
+// Increase timeout – first page load can take up to a minute while Next.js compiles.
+setup.setTimeout(120_000);
+
 // Strict environment validation - fail fast if misconfigured
 const validation = validateEnvironmentSetup();
 if (!validation.isValid) {
@@ -27,11 +30,11 @@ setup('authenticate', async ({ page }) => {
   console.log(`Using test user: ${email}`);
   console.log(`Auth file: ${authFile}`);
   
-  // Navigate to login page
-  await page.goto('/auth/login');
+  // Navigate to login page (wait only for DOMContentLoaded to shorten compile wait)
+  await page.goto('/auth/login', { waitUntil: 'domcontentloaded' });
   
-  // Wait for form to load
-  await page.waitForLoadState('networkidle');
+  // Wait for the login form elements to be present (max 60 s)
+  await page.waitForSelector('input[name="email"]', { timeout: 60_000 });
   
   // Fill login form with environment-specific credentials
   await page.fill('input[name="email"]', email);

@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button'
 import { AlertWithIcon } from '@/components/ui/alert'
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
 import { useToolExecutorWithNavigation } from '@/lib/tools/hooks/use-tool-executor-with-navigation'
-import type { HeadingOperation } from '@/lib/prompts/templates/headings'
+import type { HeadingOperation } from '@/lib/prompts/schemas/headings'
 import { HeadingSummaryTooltip, useHeadingSummaryTooltip } from './heading-summary-tooltip'
 import { getErrorMessage } from '@/lib/tools/executor/executor'
 
@@ -270,14 +270,11 @@ export function StructurePanel({
   // Helper function to apply cached operations (currently converts them to HTML fragments until heading operations are applied natively)
   const applyCachedOperations = useCallback(async (operations: HeadingOperation[]) => {
     try {
-      console.log('Applying cached operations:', operations)
+      console.log('Applying cached operations sequentially:', operations.length)
 
       // -------------------------------------------------------------------
-      // Fast-path: If the current document already contains AI-generated
-      // headings (identified via the `data-ai-generated` attribute), we assume
-      // the cached operations were applied in a previous session. In this
-      // case we skip re-applying the mutation to avoid duplicate ID errors
-      // and simply extract the existing headings for display.
+      // Fast-path: If AI headings already exist in current elements (page did
+      // not refresh), we can skip re-applying to avoid duplicate IDs.
       // -------------------------------------------------------------------
       const aiHeadingsAlreadyPresent = elements?.some(
         el => el.tag_name.match(/^h[1-6]$/i) && el.attributes?.['data-ai-generated'] === 'true'
@@ -285,54 +282,38 @@ export function StructurePanel({
 
       if (aiHeadingsAlreadyPresent) {
         console.log('[StructurePanel] Detected existing AI headings – skipping mutation re-application')
-
-        const extractedHeadings = (elements || [])
-          .filter(el => el.tag_name.match(/^h[1-6]$/i) && el.attributes?.['data-ai-generated'] === 'true')
-          .map(el => ({
-            id: el.id,
-            text: el.content || '',
-            level: parseInt(el.tag_name.substring(1)),
-            elementId: el.id
-          }))
-          .filter(h => h.text.length > 0)
-
-        setHeadings(extractedHeadings)
         setIsLoadingHeadings(false)
         return
       }
 
-      // If a mutation is already active in the context, just extract headings
+      // Also short-circuit if a mutation is already active (Hot reload cases)
       if (mutationState.activeMutation?.type === 'insert-headings') {
-        console.warn('AI headings mutation already active, extracting existing headings')
-        const existingHeadings = extractHeadingsFromMutation(mutationState.activeMutation).map(h => ({
-          ...h,
-          elementId: h.id
-        }))
-        setHeadings(existingHeadings)
+        console.warn('[StructurePanel] AI headings mutation already active – using it as-is')
         setIsLoadingHeadings(false)
         return
       }
 
-      const mutation = headingOperationsToMutation({
+      // -------------------------------------------------------------------
+      // NEW: Apply all cached operations in **one batched mutation**.  This
+      // avoids validation failures that arose when sequentially applying ops
+      // that depend on results of earlier transforms within the same tick.
+      // -------------------------------------------------------------------
+
+      const batchedMutation = headingOperationsToMutation({
         documentId,
         operations
       })
 
-      const result = await applyMutation(mutation)
+      const result = await applyMutation(batchedMutation)
 
-      if (result.success) {
-        const generatedHeadings = extractHeadingsFromMutation(mutation).map(h => ({
-          ...h,
-          elementId: h.id
-        }))
-        setHeadings(generatedHeadings)
-        setCollapsedIds(new Set())
-        setIsLoadingHeadings(false)
-
-        console.log('Successfully applied cached operations')
-      } else {
-        throw new Error(result.error || 'Failed to apply cached operations mutation')
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to apply cached heading operations')
       }
+
+      // Headings extraction will run via the effect that watches mutatedDocument.
+      setCollapsedIds(new Set())
+      setIsLoadingHeadings(false)
+      console.log('[StructurePanel] Successfully reapplied all cached operations (batched)')
     } catch (error) {
       console.error('Error applying cached operations:', error)
       setHeadingsError(`Failed to load cached operations: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -794,6 +775,24 @@ export function StructurePanel({
       }
     }
   }, [commState.currentPosition, commState.activeTabId])
+
+  // ---------------------------------------------------------------------------
+  // Surface errors loudly: bring up a blocking alert and log to console so
+  // developers (and Playwright) cannot miss the issue.  This runs only when
+  // the error message is first set.
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (headingsError) {
+      // Extra safety: wrap in setTimeout so that it doesn't block React state
+      // batching (especially during render).
+      setTimeout(() => {
+        console.error('[StructurePanel] Failed to load AI headings:', headingsError)
+        if (typeof window !== 'undefined' && window.alert) {
+          window.alert(`Failed to load AI headings: ${headingsError}`)
+        }
+      }, 0)
+    }
+  }, [headingsError])
 
   // Render status badge
   const renderStatusBadge = () => {
