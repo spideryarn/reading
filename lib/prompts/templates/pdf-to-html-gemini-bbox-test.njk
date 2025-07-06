@@ -1,0 +1,82 @@
+Convert this PDF document to semantic HTML with precise bounding box coordinates for all visual elements.
+
+{% if fileName %}
+**Document**: {{ fileName }}{% endif %}
+
+## Core Requirements
+
+**Primary Goal**: Extract accurate bounding box coordinates for every visual element (figures, images, tables, charts, diagrams) in the document. These coordinates will be used for automated image extraction, so precision is critical.
+
+## Bounding Box Format
+
+For EVERY visual element, include bounding box coordinates as a data attribute:
+- Format: `data-bbox="x1,y1,x2,y2"`
+- Coordinate system: 0-1000 scale where:
+  - (0,0) = top-left corner of the page
+  - (1000,1000) = bottom-right corner of the page
+- Example: `<figure data-bbox="125,200,875,600">` represents a figure that:
+  - Starts at 12.5% from left, 20% from top
+  - Ends at 87.5% from left, 60% from top
+
+## HTML Structure Requirements
+
+### Visual Elements
+```html
+<figure data-bbox="x1,y1,x2,y2" class="page-N-figure" id="figure-N">
+  <figcaption>Figure N: Caption text</figcaption>
+</figure>
+
+<table data-bbox="x1,y1,x2,y2" class="page-N-table" id="table-N">
+  <caption>Table N: Caption text</caption>
+  <!-- table content -->
+</table>
+
+<img data-bbox="x1,y1,x2,y2" class="page-N-image" alt="Description" />
+
+<div data-bbox="x1,y1,x2,y2" class="page-N-diagram">
+  <!-- diagram content -->
+</div>
+```
+
+### Text Content
+- Convert all text content to appropriate semantic HTML
+- Preserve document structure with proper heading hierarchy
+- Handle mathematical equations appropriately
+- Maintain reading order for multi-column layouts
+
+## Critical Instructions
+
+1. **Include ALL visual elements** - Do not skip any figures, images, tables, charts, or diagrams
+2. **Be precise with coordinates** - Measure the exact boundaries of each visual element
+3. **Use the 0-1000 scale consistently** - All coordinates must be in this range
+4. **Include empty figures** - Even if you cannot extract the image content, include the bounding box
+5. **Page-specific classes** - Add `page-N-elementtype` classes to track which page elements appear on
+
+## Multi-Page Handling
+- Process all pages in the document
+- Maintain element numbering across pages
+- Add page markers: `<!-- Page N -->` before each page's content
+
+## Quality Checks
+Before returning the HTML, verify:
+- Every visual element has a data-bbox attribute
+- All coordinates are between 0 and 1000
+- Bounding boxes don't overlap incorrectly
+- Figure/table numbers are sequential
+
+## Output Format
+Return ONLY the HTML content - no explanations, no markdown code blocks. The output should be a complete HTML document with:
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>{{ fileName or 'Converted Document' }}</title>
+</head>
+<body>
+  <!-- Document content with bounding boxes -->
+</body>
+</html>
+```
+
+Remember: The accuracy of the bounding box coordinates is the most important aspect of this conversion. Every visual element must have precise coordinates for successful image extraction.

@@ -1,0 +1,53 @@
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Bounding Box Test Document.pdf</title>
+</head>
+<body>
+  <!-- Page 1 -->
+  <h1>Bounding Box Test Document</h1>
+  <h2>Page 1: Figure Position Tests</h2>
+  <p>This page contains figures in different positions to validate Gemini's bounding box extraction capabilities.</p>
+  <figure data-bbox="99,149,505,353" class="page-1-figure" id="figure-1">
+    <figcaption>Figure 1: Top-left position test</figcaption>
+  </figure>
+  <figure data-bbox="248,449,752,703" class="page-1-figure" id="figure-2">
+    <figcaption>Figure 2: Center position test</figcaption>
+  </figure>
+  <table data-bbox="49,750,951,903" class="page-1-table" id="table-1">
+    <caption>Table 1: Full-width table test</caption>
+    <thead>
+      <tr>
+        <th>Header 1</th>
+        <th>Header 2</th>
+        <th>Header 3</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Data 1.1</td>
+        <td>Data 1.2</td>
+        <td>Data 1.3</td>
+      </tr>
+      <tr>
+        <td>Data 2.1</td>
+        <td>Data 2.2</td>
+        <td>Data 2.3</td>
+      </tr>
+    </tbody>
+  </table>
+  <!-- Page 2 -->
+  <h2>Page 2: Complex Layout Test</h2>
+  <p>This is column 1 text that simulates a two-column academic paper layout. The text flows naturally between columns and should not be detected as a figure.</p>
+  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. This is column 2 text. In academic papers often figures are placed within the text flow and space is made for them.</p>
+  <figure data-bbox="599,150,951,253" class="page-2-figure" id="figure-3">
+    <figcaption>Figure 3: Small figure in top-right</figcaption>
+  </figure>
+  <figure data-bbox="49,500,951,804" class="page-2-figure" id="figure-4">
+    <figcaption>Figure 4: Full-width figure spanning columns</figcaption>
+  </figure>
+</body>
+</html>
+```

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Bounding Box Test Document</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            width: 210mm;
+            min-height: 297mm;
+        }
+        
+        .page {
+            width: 100%;
+            min-height: 297mm;
+            position: relative;
+            page-break-after: always;
+            border: 1px solid #ccc;
+            padding: 20px;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+        
+        .figure {
+            border: 2px solid #333;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            text-align: center;
+        }
+        
+        .table {
+            border: 2px solid #333;
+            position: absolute;
+            background: white;
+        }
+        
+        .table table {
+            width: 100%;
+            height: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table td {
+            border: 1px solid #666;
+            padding: 5px;
+            text-align: center;
+        }
+        
+        figcaption, .table-caption {
+            position: absolute;
+            bottom: -25px;
+            left: 0;
+            font-size: 12px;
+            font-style: italic;
+        }
+        
+        /* Known positions for testing */
+        #figure1 {
+            /* Top-left: 10%, 15% from top-left, 40% width, 20% height */
+            left: 10%;
+            top: 15%;
+            width: 40%;
+            height: 20%;
+        }
+        
+        #figure2 {
+            /* Center: 25%, 45% from top-left, 50% width, 25% height */
+            left: 25%;
+            top: 45%;
+            width: 50%;
+            height: 25%;
+        }
+        
+        #table1 {
+            /* Bottom: 5%, 75% from top-left, 90% width, 15% height */
+            left: 5%;
+            top: 75%;
+            width: 90%;
+            height: 15%;
+        }
+        
+        #figure3 {
+            /* Top-right on page 2: 60%, 10% from top-left, 35% width, 15% height */
+            left: 60%;
+            top: 10%;
+            width: 35%;
+            height: 15%;
+        }
+        
+        #figure4 {
+            /* Full width on page 2: 5%, 50% from top-left, 90% width, 30% height */
+            left: 5%;
+            top: 50%;
+            width: 90%;
+            height: 30%;
+        }
+        
+        .expected-coords {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 10px;
+            color: #666;
+            background: white;
+            padding: 5px;
+            border: 1px solid #ccc;
+        }
+        
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            .page {
+                border: none;
+                margin: 0;
+                padding: 20px;
+            }
+            .expected-coords {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <h1>Bounding Box Test Document</h1>
+        <h2>Page 1: Figure Position Tests</h2>
+        
+        <p style="margin-top: 50px;">This page contains test figures and tables with known positions to validate Gemini's bounding box extraction accuracy.</p>
+        
+        <div id="figure1" class="figure">
+            <div>
+                <strong>FIGURE 1</strong><br>
+                Top-left position test<br>
+                (Scientific diagram placeholder)
+            </div>
+            <figcaption>Figure 1: Top-left position test</figcaption>
+        </div>
+        
+        <div id="figure2" class="figure">
+            <div>
+                <strong>FIGURE 2</strong><br>
+                Center position test<br>
+                (Chart/graph placeholder)
+            </div>
+            <figcaption>Figure 2: Center position test</figcaption>
+        </div>
+        
+        <div id="table1" class="table">
+            <table>
+                <caption class="table-caption">Table 1: Full-width table test</caption>
+                <tr>
+                    <td>Header 1</td>
+                    <td>Header 2</td>
+                    <td>Header 3</td>
+                </tr>
+                <tr>
+                    <td>Data 1.1</td>
+                    <td>Data 1.2</td>
+                    <td>Data 1.3</td>
+                </tr>
+                <tr>
+                    <td>Data 2.1</td>
+                    <td>Data 2.2</td>
+                    <td>Data 2.3</td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="expected-coords">
+            <strong>Expected Coordinates (0-1000 scale):</strong><br>
+            Figure 1: 100,150,500,350<br>
+            Figure 2: 250,450,750,700<br>
+            Table 1: 50,750,950,900
+        </div>
+    </div>
+    
+    <div class="page">
+        <h2>Page 2: Complex Layout Test</h2>
+        
+        <div style="margin-top: 30px; column-count: 2; column-gap: 20px;">
+            <p>This is column 1 text that simulates a two-column academic paper layout. The text flows naturally between columns and should not be detected as a figure.</p>
+            
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+            
+            <p>This is column 2 text continuing the flow. Academic papers often use this layout for better readability and space efficiency.</p>
+        </div>
+        
+        <div id="figure3" class="figure">
+            <div>
+                <strong>FIGURE 3</strong><br>
+                Small figure<br>
+                (Diagram)
+            </div>
+            <figcaption>Figure 3: Small figure in top-right</figcaption>
+        </div>
+        
+        <div id="figure4" class="figure">
+            <div>
+                <strong>FIGURE 4</strong><br>
+                Full-width figure spanning columns<br>
+                (Large visualization placeholder)
+            </div>
+            <figcaption>Figure 4: Full-width figure spanning columns</figcaption>
+        </div>
+        
+        <div class="expected-coords">
+            <strong>Expected Coordinates (0-1000 scale):</strong><br>
+            Figure 3: 600,100,950,250<br>
+            Figure 4: 50,500,950,800
+        </div>
+    </div>
+    
+    <script>
+        // Print instructions
+        console.log('To create PDF from this HTML:');
+        console.log('1. Open this file in Chrome/Edge');
+        console.log('2. Press Ctrl+P (or Cmd+P on Mac)');
+        console.log('3. Set "Margins" to "None"');
+        console.log('4. Ensure "Background graphics" is checked');
+        console.log('5. Save as PDF to test-data/bbox-test.pdf');
+    </script>
+</body>
+</html>

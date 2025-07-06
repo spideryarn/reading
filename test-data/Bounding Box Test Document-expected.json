@@ -1,0 +1,77 @@
+{
+  "description": "Expected bounding box coordinates for test PDF elements",
+  "coordinateSystem": "0-1000 scale (0,0 = top-left, 1000,1000 = bottom-right)",
+  "elements": [
+    {
+      "page": 1,
+      "type": "figure",
+      "id": "figure1",
+      "description": "Figure 1: Top-left position test",
+      "expectedCoords": {
+        "x1": 100,
+        "y1": 150,
+        "x2": 500,
+        "y2": 350
+      },
+      "cssPosition": "left: 10%, top: 15%, width: 40%, height: 20%"
+    },
+    {
+      "page": 1,
+      "type": "figure",
+      "id": "figure2",
+      "description": "Figure 2: Center position test",
+      "expectedCoords": {
+        "x1": 250,
+        "y1": 450,
+        "x2": 750,
+        "y2": 700
+      },
+      "cssPosition": "left: 25%, top: 45%, width: 50%, height: 25%"
+    },
+    {
+      "page": 1,
+      "type": "table",
+      "id": "table1",
+      "description": "Table 1: Full-width table test",
+      "expectedCoords": {
+        "x1": 50,
+        "y1": 750,
+        "x2": 950,
+        "y2": 900
+      },
+      "cssPosition": "left: 5%, top: 75%, width: 90%, height: 15%"
+    },
+    {
+      "page": 2,
+      "type": "figure",
+      "id": "figure3",
+      "description": "Figure 3: Small figure in top-right",
+      "expectedCoords": {
+        "x1": 600,
+        "y1": 100,
+        "x2": 950,
+        "y2": 250
+      },
+      "cssPosition": "left: 60%, top: 10%, width: 35%, height: 15%"
+    },
+    {
+      "page": 2,
+      "type": "figure",
+      "id": "figure4",
+      "description": "Figure 4: Full-width figure spanning columns",
+      "expectedCoords": {
+        "x1": 50,
+        "y1": 500,
+        "x2": 950,
+        "y2": 800
+      },
+      "cssPosition": "left: 5%, top: 50%, width: 90%, height: 30%"
+    }
+  ],
+  "tolerances": {
+    "description": "Acceptable error margins for coordinate matching",
+    "absolute": 50,
+    "relative": 0.05,
+    "notes": "Coordinates within ±50 units or ±5% are considered accurate"
+  }
+}

@@ -129,14 +129,14 @@ From our investigation:
 
 ## Stages & Actions
 
-### Stage: Immediate v1 Token Limit Fix (Critical)
-- [ ] Add finish reason checking to existing v1 pipeline
+### Stage: Immediate v1 Token Limit Fix (Critical) ✅ COMPLETED
+- [x] Add finish reason checking to existing v1 pipeline
   - Check for `finishReason === 'length'` after AI calls
   - Throw descriptive error instead of processing truncated content
   - Add test case for token exhaustion scenario
-- [ ] Remove legacy fallback logic – token/size failures must surface directly to the user
-- [ ] Run tests to ensure no regressions
-- [ ] Commit this critical fix separately for easy deployment
+- [x] Remove legacy fallback logic – token/size failures must surface directly to the user
+- [x] Run tests to ensure no regressions
+- [x] Commit this critical fix separately for easy deployment (commit: c77a18e)
 - [ ] Deploy fix immediately to prevent silent data corruption
 
 ### Stage: Research & Validation
@@ -278,14 +278,51 @@ From our investigation:
 
 ### A. Gemini PDF Capabilities Research
 
-*To be populated after research stage*
+**Research completed via subagent - key findings:**
 
-Expected findings:
-- Maximum PDF file size for native input
-- Token counting methodology for PDFs
-- Coordinate system details (0-1000 normalization)
-- Rate limits and quotas
-- Quality comparison with other models
+#### File Size Limits
+- **Gemini 2.0 Flash**: 2 GB maximum file size (far exceeds our 20MB config limit)
+- **General document limit**: 15 MB when sent via certain methods
+- **Current config (20MB)**: Appropriate and within all known limits
+
+#### Token Counting for PDFs
+- **Expected**: ~258 tokens per PDF page (documentation claim)
+- **Reality**: Significant discrepancies - 700-800 tokens in Google AI Studio vs 1800-2000 via API for same PDF
+- **⚠️ Critical**: Use CountTokens API before processing (free, 3000 req/min limit)
+- **Impact**: May affect cost estimates and context window planning
+
+#### Coordinate System
+- **✅ Confirmed**: Gemini uses 0-1000 scale for bounding boxes
+- **Format**: [y_min, x_min, y_max, x_max] with top-left origin
+- **Required**: Convert to our 0-1 scale before downstream processing
+
+#### Gemini 2.0 Flash Status
+- **No breaking changes** found for PDF processing as of December 2024
+- **Note**: Gemini 1.5 models restricted for new projects from April 2025 (doesn't affect 2.0)
+
+#### Bounding Box Support
+- **✅ Verified**: Gemini is indeed the only major LLM with native bounding box support
+- **Unique advantage**: GPT-4o and Claude 3/3.5 lack this capability
+- **⚠️ Accuracy concerns**: Multiple reports of coordinates being "always off" for forms
+- **Workaround**: Better accuracy when PDFs converted to images first (contradicts "native" goal)
+
+#### Rate Limits & Quotas
+- **Token limits**: Varies by model (e.g., 4M tokens/minute for Flash)
+- **Page limit discrepancy**: Docs say 3600 pages max, users report 1000-page limit
+- **Cost optimization**: Context caching offers 75% discount on cached tokens
+
+#### Critical Concerns Discovered
+1. **Accuracy Issues**: Systematic translation errors in bounding boxes, especially for forms
+2. **Token Count Uncertainty**: 2-3x discrepancy between expected and actual tokens
+3. **PDF vs Image Trade-off**: Native PDF has accuracy issues; image conversion more reliable
+4. **Spatial Reasoning**: Gemini struggles with precise spatial reasoning in PDFs
+
+#### Recommendations Based on Research
+1. Implement coordinate validation/adjustment logic for bounding box errors
+2. Always use CountTokens API before processing to avoid surprises
+3. Consider hybrid approach: test both native PDF and image conversion
+4. Extensive testing with academic PDFs before full commitment
+5. Build in fallback mechanisms for accuracy issues
 
 ### B. Quality Metrics & Benchmarks
 
