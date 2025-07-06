@@ -249,13 +249,16 @@ export async function POST(request: NextRequest) {
           error instanceof Error ? error : new Error('Unknown error')
         )
         
-        // Mark AI call as failed
-        await aiCallService.completeCall(aiCall!.id, {
-          output_data: {
-            error_type: 'llm_extraction_failed',
-            error_message: error instanceof Error ? error.message : 'Unknown error'
+        // Fail fatally – ensure the AI call is marked as failed with debugging info
+        await aiCallService.failCall(
+          aiCall!.id,
+          error instanceof Error ? error.message : 'Unknown error',
+          'llm_extraction_failed',
+          {
+            provider,
+            processing_method: 'ai-transcription'
           }
-        })
+        )
         
         throw error
       }

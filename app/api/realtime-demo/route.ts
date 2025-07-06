@@ -14,6 +14,7 @@ import { EnhancementService } from '@/lib/services/database/enhancements'
 import { getModelForAICall } from '@/lib/config'
 import { requireAuth } from '@/lib/auth/server-auth'
 import type { HeadingOperation } from '@/lib/prompts/schemas/headings'
+import { createAIResponseLogger } from '@/lib/services/ai-response-logger'
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,6 +31,7 @@ export async function POST(request: NextRequest) {
     const documentService = new DocumentService(supabase)
     const aiCallService = new AiCallService(supabase)
     const enhancementService = new EnhancementService(supabase)
+    const aiResponseLogger = createAIResponseLogger(aiCallService)
 
     // Get document
     const document = await documentService.getById(documentId)
@@ -122,17 +124,15 @@ export async function POST(request: NextRequest) {
           }
         )
 
-        await aiCallService.completeCall(
-          glossaryCall!.id,
-          {
-            output_data: { message: 'Glossary extracted successfully' },
-            usage: {
-              promptTokens: 100,
-              completionTokens: 50,
-              totalTokens: 150
-            }
-          }
-        )
+        await aiResponseLogger.completeAICall({
+          aiCallId: glossaryCall!.id,
+          response: {
+            text: '',
+            usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 },
+            finishReason: 'simulated'
+          },
+          outputData: { message: 'Glossary extracted successfully' }
+        })
       }, 4000)
 
       // 4. Generate headings after 6 seconds
@@ -181,17 +181,15 @@ export async function POST(request: NextRequest) {
           }
         })
 
-        await aiCallService.completeCall(
-          headingsCall!.id,
-          {
-            output_data: { message: 'Headings generated' },
-            usage: {
-              promptTokens: 80,
-              completionTokens: 40,
-              totalTokens: 120
-            }
-          }
-        )
+        await aiResponseLogger.completeAICall({
+          aiCallId: headingsCall!.id,
+          response: {
+            text: '',
+            usage: { promptTokens: 80, completionTokens: 40, totalTokens: 120 },
+            finishReason: 'simulated'
+          },
+          outputData: { message: 'Headings generated' }
+        })
       }, 6000)
     }
 

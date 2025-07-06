@@ -12,6 +12,7 @@ import { AiCallService } from '@/lib/services/database/ai-calls'
 import { ChatService } from '@/lib/services/database/chat'
 import { createRequestLogger, createTimer, logAIOperation, generateCorrelationId } from '@/lib/services/logger'
 import { requireAuth } from '@/lib/auth/server-auth'
+import { createAIResponseLogger } from '@/lib/services/ai-response-logger'
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
@@ -166,22 +167,37 @@ export async function POST(request: NextRequest) {
       try {
         const supabase = await getSupabaseServerClient(request, { allowBearer: true })
         const aiCallService = new AiCallService(supabase)
+        const aiResponseLogger = createAIResponseLogger(aiCallService)
         
-        const aiCall = await aiCallService.createWithModelString({
+        // Start AI call tracking (pending)
+        const pendingCall = await aiCallService.startCallWithModelString({
           userId: user.id,
           modelString: modelString,
-          promptTokens: result.usage?.promptTokens || null,
-          completionTokens: result.usage?.completionTokens || null,
-          totalTokens: result.usage?.totalTokens || null,
-          requestData: {
+          prompt_type: 'chat',
+          input_data: {
             messages: messages.map(m => ({ role: m.role, content: m.content })),
             documentContext: documentContext ? documentContext.substring(0, 1000) + '...' : null,
             threadId: finalThreadId
-          },
-          responseData: { response }
+          }
         })
         
-        aiCallId = aiCall.id
+        // Complete AI call with comprehensive logging
+        await aiResponseLogger.completeAICall({
+          aiCallId: pendingCall.id,
+          response: {
+            text: result.text,
+            usage: result.usage,
+            finishReason: result.finishReason
+          },
+          outputData: {
+            response,
+            threadId: finalThreadId,
+            duration: chatDuration
+          },
+          correlationId
+        })
+        
+        aiCallId = pendingCall.id
         
         console.log('[Chat API] AI call tracked:', {
           aiCallId,
