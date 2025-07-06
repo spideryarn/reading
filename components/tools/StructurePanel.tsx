@@ -355,8 +355,11 @@ export function StructurePanel({
       setIsLoadingHeadings(false)
       console.log('[StructurePanel] Successfully reapplied all cached operations (batched)')
     } catch (error) {
-      console.error('Error applying cached operations:', error)
-      setHeadingsError(`Failed to load cached operations: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      const errMessage = error instanceof Error ? error.message : 'Unknown error'
+      console.error('[StructurePanel] Error applying cached operations:', errMessage)
+      // Set state so the render phase can throw and trigger the ErrorBoundary
+      setHeadingsError(`AI headings cache replay failed: ${errMessage}`)
+      // Ensure we're not stuck in a loading spinner
       setIsLoadingHeadings(false)
     }
   }, [documentId, applyMutation, mutationState.activeMutation, elements])
@@ -841,6 +844,11 @@ export function StructurePanel({
       }, 0)
     }
   }, [headingsError])
+
+  // Immediately surface any fatal headings error to the global error boundary so it cannot be missed.
+  if (headingsError) {
+    throw new Error(headingsError)
+  }
 
   // Render status badge
   const renderStatusBadge = () => {
