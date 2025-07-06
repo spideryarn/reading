@@ -18,6 +18,28 @@ export interface PromptExecutionResult {
   text: string
   usage: PromptUsage
   finishReason: string
+  // Full raw response from Vercel AI SDK for comprehensive logging
+  rawResponse?: {
+    text: string
+    usage?: PromptUsage
+    finishReason?: string
+    startTimestamp?: number
+    finishTimestamp?: number
+    experimental_providerMetadata?: Record<string, unknown>
+    response?: {
+      id?: string
+      modelId?: string
+      headers?: Record<string, string>
+      timestamp?: Date
+    }
+    toolCalls?: Array<{
+      toolCallId: string
+      toolName: string
+      args: unknown
+      result?: unknown
+    }>
+    [key: string]: unknown
+  }
 }
 
 // Configure Nunjucks with strict mode
@@ -107,7 +129,24 @@ async function executePromptInternal<T extends z.ZodSchema>(
     temperature: template.modelConfig?.temperature ?? AI_CONFIG.DEFAULT_TEMPERATURE,
   })
   
-  // Return enhanced result with usage metadata
+  // Extract all available fields from the SDK result for comprehensive logging
+  const rawResponse: NonNullable<PromptExecutionResult['rawResponse']> = {
+    // Spread result first to capture all fields
+    ...(result as any),
+    // Then override with our normalized values
+    text: result.text,
+    finishReason: result.finishReason || 'unknown',
+    usage: result.usage ? {
+      promptTokens: result.usage.promptTokens || 0,
+      completionTokens: result.usage.completionTokens || 0,
+      totalTokens: result.usage.totalTokens || 0,
+      ...(('reasoningTokens' in result.usage && result.usage.reasoningTokens !== undefined) && {
+        reasoningTokens: result.usage.reasoningTokens
+      })
+    } : undefined
+  }
+  
+  // Return enhanced result with usage metadata and raw response
   return {
     text: result.text,
     usage: {
@@ -118,7 +157,8 @@ async function executePromptInternal<T extends z.ZodSchema>(
         reasoningTokens: (result.usage as { reasoningTokens?: number })?.reasoningTokens
       })
     },
-    finishReason: result.finishReason || 'unknown'
+    finishReason: result.finishReason || 'unknown',
+    rawResponse
   }
 }
 
@@ -276,7 +316,24 @@ async function executeMultimodalPromptInternal<T extends z.ZodSchema>(
     temperature: template.modelConfig?.temperature ?? AI_CONFIG.DEFAULT_TEMPERATURE,
   })
   
-  // Return enhanced result with usage metadata
+  // Extract all available fields from the SDK result for comprehensive logging
+  const rawResponse: NonNullable<PromptExecutionResult['rawResponse']> = {
+    // Spread result first to capture all fields
+    ...(result as any),
+    // Then override with our normalized values
+    text: result.text,
+    finishReason: result.finishReason || 'unknown',
+    usage: result.usage ? {
+      promptTokens: result.usage.promptTokens || 0,
+      completionTokens: result.usage.completionTokens || 0,
+      totalTokens: result.usage.totalTokens || 0,
+      ...(('reasoningTokens' in result.usage && result.usage.reasoningTokens !== undefined) && {
+        reasoningTokens: result.usage.reasoningTokens
+      })
+    } : undefined
+  }
+  
+  // Return enhanced result with usage metadata and raw response
   return {
     text: result.text,
     usage: {
@@ -287,7 +344,8 @@ async function executeMultimodalPromptInternal<T extends z.ZodSchema>(
         reasoningTokens: (result.usage as { reasoningTokens?: number })?.reasoningTokens
       })
     },
-    finishReason: result.finishReason || 'unknown'
+    finishReason: result.finishReason || 'unknown',
+    rawResponse
   }
 }
 

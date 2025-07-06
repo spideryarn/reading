@@ -86,6 +86,8 @@ export class AiCallService {
       output_data?: JsonObject
       usage?: PromptUsage
       finishReason?: string
+      rawApiResponse?: JsonObject
+      latencyMs?: number
     }
   ): Promise<AiCall | null> {
     // Validate UUID format
@@ -116,6 +118,16 @@ export class AiCallService {
     // Add finish reason if provided
     if (data.finishReason) {
       updateData.finish_reason = data.finishReason
+    }
+    
+    // Add raw API response if provided
+    if (data.rawApiResponse) {
+      updateData.raw_api_response = data.rawApiResponse as Json
+    }
+    
+    // Add latency if provided
+    if (data.latencyMs !== undefined) {
+      updateData.latency_ms = data.latencyMs
     }
     
     const { data: result, error } = await this.supabase
@@ -365,8 +377,14 @@ export class AiCallService {
       promptTokens?: number
       completionTokens?: number
       totalTokens?: number
+      reasoningTokens?: number
     }
     experimental_providerMetadata?: {
+      [provider: string]: {
+        latency?: number
+        [key: string]: unknown
+      }
+    } | {
       latency?: number
     }
     finishTimestamp?: number
@@ -375,20 +393,41 @@ export class AiCallService {
   }): AiCallMetrics {
     // Based on Vercel AI SDK structure
     const usage = response.usage || {}
-    const latency = response.experimental_providerMetadata?.latency || 
-                    (response.finishTimestamp && response.startTimestamp 
-                      ? response.finishTimestamp - response.startTimestamp 
-                      : 0) || 
-                    0
+    
+    // Calculate latency using priority order from planning doc
+    let latency = 0
+    
+    // Priority 1: SDK timestamps
+    if (response.finishTimestamp && response.startTimestamp) {
+      latency = response.finishTimestamp - response.startTimestamp
+    }
+    // Priority 2: Provider metadata latency
+    else if (response.experimental_providerMetadata) {
+      // Handle both direct latency property and nested provider objects
+      if ('latency' in response.experimental_providerMetadata) {
+        latency = (response.experimental_providerMetadata as { latency?: number }).latency || 0
+      } else {
+        // Check each provider's metadata for latency
+        for (const providerData of Object.values(response.experimental_providerMetadata)) {
+          if (typeof providerData === 'object' && providerData && 'latency' in providerData) {
+            latency = providerData.latency as number
+            break
+          }
+        }
+      }
+    }
 
-    return {
+    const metrics: AiCallMetrics = {
       promptTokens: usage.promptTokens || 0,
       completionTokens: usage.completionTokens || 0,
       totalTokens: usage.totalTokens || 0,
-      ...((usage as { reasoningTokens?: number }).reasoningTokens !== undefined && {
-        reasoningTokens: (usage as { reasoningTokens?: number }).reasoningTokens
-      }),
       latencyMs: latency,
     }
+    
+    if (usage.reasoningTokens !== undefined) {
+      metrics.reasoningTokens = usage.reasoningTokens
+    }
+    
+    return metrics
   }
 }

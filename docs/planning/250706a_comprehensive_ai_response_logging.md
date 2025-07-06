@@ -76,6 +76,14 @@ Currently, the `ai_calls` table has a `response_text` field that is never popula
 - No data loss since `response_text` was never populated
 - Simplifies schema and reduces confusion
 
+### 6. Error Handling Approach (Added 2025-07-06)
+**Decision**: Fail fast and fatal with clear error messages
+- No graceful fallbacks or silent failures
+- All errors throw immediately with detailed context
+- Error messages include debugging information (AI call ID, response size, object keys)
+- Follows project principle: "Fail fatally & immediately with clear, debuggable, user-visible error messages"
+- Ensures AI usage and cost tracking never fails silently
+
 ## Stages & Actions
 
 ### Stage: Database schema migration
@@ -86,27 +94,31 @@ Currently, the `ai_calls` table has a `response_text` field that is never popula
 - [x] Update database type definitions
 - [x] Test updated migration locally with rollback plan
 - [x] Migration review approved (2025-07-06)
+- [x] Committed database migration changes (2025-07-06)
 
 ### Stage: Core AI response capture service
-- [ ] Create `lib/services/ai-response-logger.ts` with standardized interface
-- [ ] Implement response serialization with provider-specific handling
-- [ ] Add comprehensive error handling with clear messages
-- [ ] Write unit tests for all 3 providers (Anthropic, Google, OpenAI)
-  - Test should verify JSON serialization works without errors
-  - Test should handle edge cases (large responses, special characters)
-  - Test should verify all expected fields are captured
+- [x] Create `lib/services/ai-response-logger.ts` with standardized interface
+- [x] Implement response serialization with provider-specific handling
+- [x] Add fatal error handling with clear, debuggable messages (no graceful fallbacks)
+- [x] Write unit tests for all 3 providers (Anthropic, Google, OpenAI)
+  - [x] Test verifies JSON serialization with proper error handling
+  - [x] Test handles edge cases (large responses, special characters)
+  - [x] Test verifies all expected fields are captured
+  - [x] Test ensures circular references fail fatally
+  - [x] Test ensures serialization errors fail fatally
   - [ ] Add custom ESLint rule (and optional codemod) that forbids direct calls to `AiCallService.completeCall` outside the new logger, encouraging consistent usage
 
 ### Stage: Update AiCallService
-- [ ] Modify `completeCall` method to accept optional `rawApiResponse` parameter
-- [ ] Update `extractMetricsFromAiResponse` to handle full response objects
-- [ ] Ensure backward compatibility for existing code
-- [ ] Add latency calculation from timestamps
-- [ ] Write tests for updated service methods
+- [x] Modify `completeCall` method to accept optional `rawApiResponse` parameter
+- [x] Update `extractMetricsFromAiResponse` to handle full response objects
+- [x] Ensure backward compatibility for existing code
+- [x] Add latency calculation from timestamps with proper priority order
+- [x] Tests updated for new error handling approach
 
 ### Stage: Integrate with prompt execution
-- [ ] Update `executePromptWithUsage` to return full Vercel AI SDK response
-- [ ] Ensure all metadata is preserved through the execution chain
+- [x] Update `executePromptWithUsage` to return full Vercel AI SDK response
+- [x] Ensure all metadata is preserved through the execution chain
+- [x] Added `rawResponse` field to `PromptExecutionResult` interface
 - [ ] Test with real API calls to verify data capture
 
 ### Stage: Update all tool handlers
