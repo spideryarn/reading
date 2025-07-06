@@ -30,6 +30,14 @@ interface StructurePanelProps {
   documentId: string
   markdownContent?: string
   headingVisibility?: Map<string, 'visible' | 'not-visible'>
+  /**
+   * Indicates that the backend reports AI-generated headings already exist for
+   * this document (via `document_enhancements`).  We can then fail loudly if we
+   * cannot retrieve them on page load instead of silently falling back to the
+   * original structure.  This prop comes from the server-side
+   * `getEnhancementFlags()` helper.
+   */
+  aiHeadingsGenerated?: boolean
 }
 
 // Heading format for mutation generator - must match lib/services/heading-mutation-generator.ts
@@ -87,7 +95,8 @@ export function StructurePanel({
   elements, 
   onHeadingClick, 
   documentId,
-  headingVisibility 
+  headingVisibility,
+  aiHeadingsGenerated = false 
 }: StructurePanelProps) {
   const { applyMutation, revertMutation, mutationState, document: mutatedDocument } = useMutation()
   const activeMutationType = useActiveMutationType()
@@ -644,7 +653,15 @@ export function StructurePanel({
           setIsLoadingHeadings(false)
           return
         } else {
-          // Don't auto-generate - user must explicitly request
+          // No cached headings returned.  If the server previously told us
+          // headings exist, treat this as a hard error instead of silently
+          // ignoring the cache miss so that the issue is surfaced in the UI
+          // and developer logs.
+          if (aiHeadingsGenerated) {
+            console.error('[StructurePanel] Expected cached AI headings but none were returned')
+            setHeadingsError('AI-generated headings were expected but could not be loaded from the server. Please try regenerating or check server logs.')
+          }
+          // In any case, stop the loading indicator.
           setIsLoadingHeadings(false)
         }
       } catch (error) {
@@ -680,7 +697,7 @@ export function StructurePanel({
       // permanent in-progress fetch (which left the UI stuck in "Original" mode)
       fetchInProgressRef.current = false
     }
-  }, [documentId, hasInitialized, applyCachedOperations, content, elements, fetchCachedHeadings])
+  }, [documentId, hasInitialized, applyCachedOperations, content, elements, fetchCachedHeadings, aiHeadingsGenerated])
 
   const handleHeadingClick = (heading: Heading) => {
     if (onHeadingClick) {

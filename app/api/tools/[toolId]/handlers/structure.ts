@@ -298,10 +298,12 @@ export class StructureHandler extends BaseToolHandler {
         // Robust validation of cached data – fail fatally (422) if malformed.
         // Also auto-migrate rows where operations was stored as a JSON string.
         // ------------------------------------------------------------------
+        const enhancementIdStr = existingHeadings.id ?? 'unknown'
+
         if (!existingHeadings.content || typeof existingHeadings.content !== 'object') {
           logger.error({
             documentId,
-            enhancementId: existingHeadings.id,
+            enhancementId: enhancementIdStr,
             error_type: 'headings_cache_validation',
             foundType: typeof existingHeadings.content
           }, 'Malformed headings cache – content is not an object')
@@ -315,48 +317,23 @@ export class StructureHandler extends BaseToolHandler {
 
         const content = existingHeadings.content as { operations?: unknown }
 
-        // Attempt to auto-fix legacy string storage (JSON string)
+        // Legacy format handling removed – operations must be stored as a JSON array.
+        // If we detect a legacy string blob, fail fast so the problem is surfaced
+        // to the user rather than silently attempting to mutate the row.
         if (typeof content.operations === 'string') {
-          try {
-            const parsedOps = JSON.parse(content.operations)
-            // Validate structure
-            z.array(headingOperationSchema).parse(parsedOps)
+          logger.error({
+            documentId,
+            enhancementId: existingHeadings.id,
+            error_type: 'headings_cache_validation',
+            foundType: 'string'
+          }, 'Malformed headings cache – operations stored as legacy JSON string')
 
-            // Overwrite row with corrected canonical array format
-            const enhancementService = new EnhancementService(supabase)
-            await enhancementService.upsert({
-              documentId,
-              type: 'headings',
-              subtype: 'default',
-              aiCallId: (existingHeadings.ai_call_id ?? 'unknown') as string,
-              content: {
-                operations: parsedOps as any
-              }
-            })
-
-            logger.info({
-              documentId,
-              enhancementId: existingHeadings.id,
-              error_type: 'headings_cache_validation',
-              action: 'auto_migrated_string_to_array'
-            }, 'Auto-migrated headings cache from string to array format')
-
-            content.operations = parsedOps
-          } catch (parseErr) {
-            logger.error({
-              documentId,
-              enhancementId: existingHeadings.id,
-              error_type: 'headings_cache_validation',
-              parseErr: parseErr instanceof Error ? parseErr.message : parseErr
-            }, 'Failed to parse operations JSON string in headings cache')
-
-            throw new ToolHandlerError(
-              'Malformed headings cache – operations JSON is invalid',
-              422,
-              'MALFORMED_HEADINGS_CACHE',
-              false
-            )
-          }
+          throw new ToolHandlerError(
+            'Malformed headings cache – operations stored in legacy string format',
+            422,
+            'MALFORMED_HEADINGS_CACHE',
+            false
+          )
         }
 
         // Now expect array
@@ -396,14 +373,14 @@ export class StructureHandler extends BaseToolHandler {
         
         logger.info({
           documentId,
-          enhancementId: existingHeadings.id,
+          enhancementId: enhancementIdStr,
           operationsCount: content.operations.length
         }, 'Returning cached structure/headings')
         
         return {
           operations: content.operations,
           cached: true,
-          enhancementId: existingHeadings.id,
+          enhancementId: enhancementIdStr,
           type: 'structure',
           ...this.createResponseMetadata()
         }
@@ -519,6 +496,7 @@ export class StructureHandler extends BaseToolHandler {
           throw new Error(`Malformed headings data in database for enhancement ${existingHeadings.id}: content is not an object`)
         }
         
+        const enhancementIdStr = existingHeadings.id ?? 'unknown'
         const content = existingHeadings.content as { operations?: unknown }
         if (!content.operations || !Array.isArray(content.operations)) {
           throw new Error(`Malformed headings data in database for enhancement ${existingHeadings.id}: content.operations is not an array. Found: ${typeof content.operations}`)
@@ -526,7 +504,7 @@ export class StructureHandler extends BaseToolHandler {
         
         logger.info({
           documentId,
-          enhancementId: existingHeadings.id,
+          enhancementId: enhancementIdStr,
           operationsCount: content.operations.length,
           operation: 'cache_hit'
         }, 'Returning cached structure/headings')
@@ -534,7 +512,7 @@ export class StructureHandler extends BaseToolHandler {
         return {
           operations: content.operations,
           cached: true,
-          enhancementId: existingHeadings.id,
+          enhancementId: enhancementIdStr,
           type: 'structure',
           ...this.createResponseMetadata({
             executionTime: requestTimer.elapsed()
