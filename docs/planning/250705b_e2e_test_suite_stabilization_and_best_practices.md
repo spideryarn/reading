@@ -608,3 +608,34 @@ The test might be checking the URL before the navigation completes, or there's a
 - Current: At least 4.4% (4/91 tests confirmed)
 - Expected: >50% (with 77 tests unblocked)
 - Target: >90% (after fixing API auth issues)
+
+## Progress Update (Jan 6, 2025 - Documentation Completed)
+
+### Documentation Achievements:
+1. **Created E2E Troubleshooting Guide** ✅
+   - `docs/reference/TESTING_E2E_TROUBLESHOOTING.md`
+   - Comprehensive guide for diagnosing common E2E test failures
+   - Quick diagnostics checklist and solutions for each issue type
+   - Advanced debugging techniques and performance optimization tips
+
+2. **Updated Test Coverage Status** ✅
+   - `docs/reference/TESTING_E2E_COVERAGE.md`
+   - Reflected auth fix achievements (4.4% confirmed pass rate)
+   - Documented 77 tests unblocked by auth fix
+   - Updated issue categories with API auth context as primary blocker
+
+3. **Test Runner Configuration Fixed** ✅
+   - Removed invalid `--headed=false` and `--isolated` flags from package.json
+   - Tests now run properly with built-in Playwright isolation
+   - `npm run test:e2e` command works correctly
+
+### Key Findings from Recent Work:
+- **Playwright provides isolation by default** - No need for custom --isolated flag
+- **Built-in features are comprehensive** - Browser contexts, parallel execution, worker isolation
+- **Configuration is key** - Proper test architecture more important than additional tools
+
+### Documentation References Added:
+- Troubleshooting guide cross-references all E2E documentation
+- Quick reference commands for common fixes
+- Environment-specific considerations for worktrees
+- Performance optimization strategies

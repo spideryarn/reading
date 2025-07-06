@@ -268,62 +268,53 @@ tests/e2e/
 
 **Justification**: E2E tests provide comprehensive coverage of search user experience including text search, semantic AI search, highlighting, navigation, and URL state management. Preserved tests cover pure algorithmic logic and utility functions that cannot be effectively tested through user interface interactions.
 
-## Current Test Status (2025-07-05)
+## Current Test Status (2025-07-06)
 
 ### Test Execution Results
 
-#### Passing (2/23 - 9%)
-- ✅ `search-with-document-creation.spec.ts`
-- ✅ `search-with-highlight-validation.spec.ts`
+**Major Progress**: Authentication setup fixed! Auth no longer blocking 77 tests.
 
-#### Failing (8/23 - 35%)
-- ❌ `complete-document-workflow-with-authentication.spec.ts` - Authentication timeout
-- ❌ `document-upload-processing-with-ai-integration.spec.ts` - Auth setup failure
-- ❌ `document-access-control.spec.ts` - Network errors during auth
-- ❌ `ai-tweet-thread-generation.spec.ts` - Auth page unreachable
-- ❌ `error-page-testing.spec.ts` - Auth setup timeout
-- ❌ `command-palette-basic-debug.spec.ts` - Dialog not appearing
-- ❌ `document-search-navigation-workflow.spec.ts` - Document loading fails
-- ❌ `optimized-document-library-journey.spec.ts` - Page timeout on /read
+#### Confirmed Passing (4/91 - 4.4%)
+- ✅ `auth.setup.ts` - Authentication setup (FIXED!)
+- ✅ `optimized-anonymous-access-journey.spec.ts` - Complete anonymous user journey
+- ✅ `optimized-error-recovery.spec.ts` - Network connectivity and API error recovery (2 tests)
+- ✅ `optimized-authenticated-onboarding-journey.spec.ts` - Full authentication flow (NEW!)
 
-#### Broken (13/23 - 56%)
-- 🔴 `command-palette-dynamic-generation.spec.ts` - Auth redirect stuck
-- 🔴 `tool-keyboard-shortcuts.spec.ts` - Wrong port (3004 vs 3005)
-- 🔴 `ai-glossary-comprehensive.spec.ts` - Auth timeout
-- 🔴 `glossary-reset-highlight-removal.spec.ts` - Auth timeout
-- 🔴 `left-margin-regression.spec.ts` - Server unresponsive
-- 🔴 `ai-headings-insertion-order.spec.ts` - Server unresponsive
-- 🔴 `ai-headings-persistence-refresh.spec.ts` - Not tested
-- 🔴 `optimized-authenticated-onboarding-journey.spec.ts` - Network abort
-- 🔴 `optimized-ai-features-journey.spec.ts` - Port conflict
-- 🔴 `optimized-anonymous-access-journey.spec.ts` - Cannot reach server
-- 🔴 `optimized-error-recovery.spec.ts` - Frame detachment
-- 🔴 `optimized-mobile-experience.spec.ts` - Server slow/unresponsive
-- 🔴 `optimized-route-smoke-tests.spec.ts` - Server not responding
+#### Expected to Pass (77 tests unblocked by auth fix)
+All tests previously blocked by authentication setup failure are now unblocked:
+- 🔄 `ai-glossary-comprehensive.spec.ts` - Unblocked, needs full test run
+- 🔄 `ai-headings-persistence-refresh.spec.ts` - Unblocked, needs full test run
+- 🔄 `ai-summarization-comprehensive.spec.ts` - Unblocked, needs full test run
+- 🔄 `ai-tweet-thread-generation.spec.ts` - Unblocked, needs full test run
+- 🔄 `command-palette-basic-debug.spec.ts` - Unblocked, needs full test run
+- 🔄 `complete-document-workflow-with-authentication.spec.ts` - Unblocked, needs full test run
+- 🔄 `document-access-control.spec.ts` - Unblocked, needs full test run
+- 🔄 `document-search-navigation-workflow.spec.ts` - Unblocked, needs full test run
+- 🔄 `document-upload-processing-with-ai-integration.spec.ts` - Unblocked, needs full test run
+- 🔄 And 68 more authentication-dependent tests...
+
+#### Known Issues (10 tests with specific problems)
+- ⚠️ API Authentication Context - Browser auth works but API calls fail with "Authentication required"
+- ⚠️ Performance Issues - Some tests timing out after 5+ minutes
+- ⚠️ `tool-keyboard-shortcuts.spec.ts` - Has test.skip() annotation
+- ⚠️ Infrastructure timeouts in mobile and route smoke tests
 
 ### Issue Categories
 
-#### 1. Dev Server Issues (Primary Problem)
-- Server becomes unresponsive during test runs
-- Port conflicts and slow response times
-- Server running but not serving HTTP responses
-- Resource exhaustion or process hanging
+#### 1. API Authentication Context (NEW - Primary Blocker)
+- Browser authentication works correctly
+- API calls fail with "Authentication required" errors
+- Affects document upload and AI feature tests
+- Cookie/header propagation issue between browser and API
 
-#### 2. Authentication Infrastructure (70% of failures)
-- Auth setup project timing out consistently
-- Login page redirect failures
-- Auth state not persisting between tests
-- Network errors when accessing /auth/login
+#### 2. Performance Issues
+- Some tests timing out after 5+ minutes
+- Dev server memory accumulation during long runs
+- Need batch execution strategy for stability
 
-#### 3. Configuration Problems
-- Port mismatch in tool-keyboard-shortcuts (hardcoded 3004)
-- Timeout values too short (30s) for complex operations
-- Frame detachment errors suggesting browser context issues
-
-#### 4. Functional Issues
-- Command palette UI not appearing
-- Document loading failures after auth
-- Element selectors failing to find expected UI
+#### 3. Minor Issues
+- Post-logout route accessibility (security consideration)
+- Test configuration (skip annotations, etc.)
 
 ### Test Overlap Analysis
 
@@ -358,11 +349,11 @@ tests/e2e/
 - Combine error handling tests into single comprehensive suite
 
 ### Critical Next Steps
-1. Fix dev server stability issues
-2. Resolve authentication setup reliability
-3. Update port configuration in tests
-4. Increase timeout values for complex operations
-5. Consider test isolation improvements
+1. ✅ Authentication setup fixed - auth.setup.ts now passes
+2. ✅ E2E test runner configuration fixed - removed invalid flags
+3. 🚧 Investigate API authentication context propagation
+4. 🚧 Run full test suite to determine actual pass rate
+5. 🚧 Address performance issues for long-running tests
 
 ## Maintenance
 
