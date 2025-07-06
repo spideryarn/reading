@@ -35,9 +35,9 @@ export function ProcessingOptions({
       case 'readability':
         return 'Mozilla Readability'
       case 'ai-transcription':
-        return 'LLM transcription (v3 - recommended)'
+        return 'Gemini + Claude (v3 - recommended)'
       case 'vision-ai':
-        return 'LLM vision-based transcription (v2)'
+        return 'Gemini + Claude vision pipeline (v2)'
       default:
         return method
     }
@@ -50,7 +50,7 @@ export function ProcessingOptions({
       case 'readability':
         return 'Extract main content using Mozilla Readability (fast, reliable for articles)'
       case 'ai-transcription':
-        return 'Direct PDF processing with native bounding box extraction (fast, reliable, includes metadata for future image extraction)'
+        return 'Two-stage processing: Gemini extracts content with bounding boxes, Claude refines for highest quality'
       case 'vision-ai':
         return 'Convert PDF to images first, then process each page (slower, higher cost, but extracts actual images and figures)'
       default:
@@ -58,7 +58,8 @@ export function ProcessingOptions({
     }
   }
 
-  const needsProvider = selectedMethod === 'ai-transcription' || selectedMethod === 'vision-ai'
+  // v3 (ai-transcription) always uses both Gemini + Claude, v2 (vision-ai) uses the multi-model pipeline
+  const needsProvider = false // No provider selection needed for v3 or v2
 
   return (
     <div className={`space-y-6 animate-in fade-in duration-500 ${isProcessing ? 'opacity-70 pointer-events-none' : ''}`}>
@@ -93,7 +94,7 @@ export function ProcessingOptions({
         </div>
       )}
 
-      {/* AI Provider Selection (only show for AI transcription and vision-ai) */}
+      {/* AI Provider Selection - not shown anymore as both v3 and v2 use fixed multi-model pipelines */}
       {!isProcessing && needsProvider && (
         <div className="animate-in slide-in-from-top-2 duration-300">
           <label className="block text-sm font-medium text-gray-700 mb-3">

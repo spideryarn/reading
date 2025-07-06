@@ -389,7 +389,7 @@ export default function AddDocumentPage() {
         case 'readability':
           return 'Extracting content with Mozilla Readability...'
         case 'ai-transcription':
-          return `Processing with LLM transcription (v3) using ${provider === 'claude' ? 'Claude' : 'Gemini'}...`
+          return 'Processing with LLM transcription (v3) using Gemini + Claude...'
         default:
           return 'Processing URL...'
       }
@@ -398,7 +398,7 @@ export default function AddDocumentPage() {
         if (method === 'vision-ai') {
           return 'Processing PDF with LLM vision-based transcription (v2)...'
         } else {
-          return `Processing PDF with LLM transcription (v3) using ${provider === 'claude' ? 'Claude' : 'Gemini'}...`
+          return 'Processing PDF with LLM transcription (v3) using Gemini + Claude...'
         }
       } else if (type === 'html') {
         switch (method) {
@@ -407,7 +407,7 @@ export default function AddDocumentPage() {
           case 'readability':
             return 'Extracting content with Mozilla Readability...'
           case 'ai-transcription':
-            return `Processing HTML with LLM transcription (v3) using ${provider === 'claude' ? 'Claude' : 'Gemini'}...`
+            return 'Processing HTML with LLM transcription (v3) using Gemini + Claude...'
           default:
             return 'Processing HTML file...'
         }
@@ -502,7 +502,7 @@ export default function AddDocumentPage() {
           body: JSON.stringify({
             url: input.url.trim(),
             extractionMethod: processing.method,
-            provider: processing.provider,
+            provider: processing.method === 'ai-transcription' ? 'gemini' : processing.provider, // v3 always uses Gemini (backend handles two-stage)
             isPublic: processing.isPublic
           })
         })
@@ -621,7 +621,7 @@ export default function AddDocumentPage() {
             // Create PDF-specific FormData with correct field name
             const pdfFormData = new FormData()
             pdfFormData.append('pdf', input.file)  // API expects 'pdf' field name
-            pdfFormData.append('provider', processing.provider)
+            pdfFormData.append('provider', 'gemini') // v3 always uses Gemini (backend handles two-stage processing)
             pdfFormData.append('isPublic', processing.isPublic.toString())
             response = await fetch(apiEndpoint, {
               method: 'POST',
@@ -633,7 +633,7 @@ export default function AddDocumentPage() {
           const htmlFormData = new FormData()
           htmlFormData.append('html', input.file)  // API expects 'html' field, not 'file'
           htmlFormData.append('processingMethod', processing.method)
-          htmlFormData.append('provider', processing.provider)
+          htmlFormData.append('provider', processing.method === 'ai-transcription' ? 'gemini' : processing.provider) // v3 always uses Gemini
           htmlFormData.append('isPublic', processing.isPublic.toString())
           response = await fetch('/api/upload-html', {
             method: 'POST',
