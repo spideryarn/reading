@@ -270,7 +270,26 @@ export function StructurePanel({
       return null
     } catch (error) {
       console.error('Error fetching cached headings:', error)
-      throw error
+
+      // Enhance error reporting: include correlationId if available (from ToolExecutorError)
+      let errorMessage = 'Unknown error'
+      let correlationId = ''
+
+      if (error && typeof error === 'object') {
+        if ('message' in (error as any) && typeof (error as any).message === 'string') {
+          errorMessage = (error as any).message as string
+        }
+        if ('correlationId' in (error as any) && typeof (error as any).correlationId === 'string') {
+          correlationId = (error as any).correlationId as string
+        }
+      }
+
+      // Re-throw with enriched message so upstream handlers surface it in the UI
+      const decoratedMessage = correlationId
+        ? `${errorMessage} (correlation id: ${correlationId})`
+        : errorMessage
+
+      throw new Error(decoratedMessage)
     } finally {
       fetchInProgressRef.current = false
     }
