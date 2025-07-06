@@ -149,6 +149,36 @@ export async function POST(request: NextRequest) {
     
     const processingTime = Date.now() - startTime
     
+    // Check for output truncation due to token limits
+    if (htmlResult.finishReason === 'length') {
+      // Log the failure before throwing
+      requestLogger.error({
+        correlationId,
+        finishReason: htmlResult.finishReason,
+        tokensUsed: htmlResult.usage.totalTokens,
+        pageCount: pageValidationResult.pageCount,
+        provider: provider,
+        aiCallId: aiCall.id
+      }, 'PDF processing failed due to token limit exhaustion')
+      
+      // Complete the AI call with failure metadata
+      await aiCallService.completeCall(aiCall.id, {
+        output_data: {
+          html_length: htmlResult.text.length,
+          processing_time_ms: processingTime,
+          provider_used: providerDisplayName,
+          error: 'Token limit exhausted'
+        },
+        usage: htmlResult.usage,
+        finishReason: htmlResult.finishReason
+      })
+      
+      throw new Error(
+        `Document too large for processing. The AI model reached its token limit while processing your ${pageValidationResult.pageCount}-page PDF. ` +
+        `Please try with a shorter document or use the vision pipeline for page-by-page processing.`
+      )
+    }
+    
     // Log AI operation completion
     logAIOperation('pdf-to-html-conversion', {
       modelProvider: modelConfig.provider,
@@ -284,6 +314,11 @@ export async function POST(request: NextRequest) {
 
       if (error.message.includes('storage') || error.message.includes('bucket')) {
         return new NextResponse('Storage service error. Please try again later.', { status: 503 })
+      }
+
+      // Handle token limit exhaustion error explicitly
+      if (error.message.includes('Document too large for processing')) {
+        return new NextResponse(error.message, { status: 413 })
       }
 
       // Handle specific database constraint violations with user-friendly messages
