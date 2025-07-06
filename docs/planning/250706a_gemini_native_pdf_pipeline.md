@@ -85,8 +85,7 @@ From our investigation:
    - Multi-column layouts are handled correctly
 
 2. **Error handling**:
-   - Clear error message if document exceeds token limits
-   - Fallback to image/vision-based pipeline for unsupported documents?
+   - Clear, descriptive error if document exceeds token limits or other hard limits – fail fast, do NOT attempt fallback to v2
    - No silent failures or partial content
 
 3. **Performance targets**:
@@ -126,7 +125,7 @@ From our investigation:
 
 7. **Verbatim transcription** - Adopt v2's explicit anti-summarization prompting
 
-8. **Graceful degradation** - Clear fallback path to v2 for documents that exceed limits
+8. **Fail fast philosophy** - If limits are exceeded, abort with clear error (no automatic fallback)
 
 ## Stages & Actions
 
@@ -135,7 +134,7 @@ From our investigation:
   - Check for `finishReason === 'length'` after AI calls
   - Throw descriptive error instead of processing truncated content
   - Add test case for token exhaustion scenario
-- [ ] Update error handling to suggest v2 pipeline for large documents
+- [ ] Remove legacy fallback logic – token/size failures must surface directly to the user
 - [ ] Run tests to ensure no regressions
 - [ ] Commit this critical fix separately for easy deployment
 - [ ] Deploy fix immediately to prevent silent data corruption
@@ -145,7 +144,7 @@ From our investigation:
 - [ ] Use subagent to research Gemini's latest PDF capabilities and limits. Stop & discuss questions/concerns with the user immediately if they arise.
   - Max file size for native PDF input
   - Token counting for PDF content
-  - Coordinate system specifications
+  - **Coordinate system scale (0-1000) vs our 0-1 expectation**
   - Any breaking changes in Gemini 2.0 Flash
 - [ ] Create test PDF with known bounding boxes to validate coordinate extraction
 - [ ] Test Gemini's response with explicit bounding box prompting
@@ -165,23 +164,27 @@ From our investigation:
   - Continuation markers for cross-page content
   - Mathematical notation preservation
 - [ ] Add Gemini-specific coordinate instructions (0-1000 scale)
+- [ ] **Write a Jest unit test that loads the template and asserts that the string "0-1000" is present** – protects against accidental removal
 - [ ] Test prompt with sample PDFs to verify bounding box output
 
 ### Stage: Implement Core Gemini Native Pipeline
 - [ ] Update existing `/api/upload-pdf` route to use new processor when appropriate
 - [ ] Implement `GeminiNativePdfProcessor` service class:
   - PDF validation (size, format)
+  - **Provider-specific size limits** (introduce `PDF_GEMINI_API_PROCESSING_LIMIT` in `lib/config/upload-limits.ts`)
   - Token estimation before processing
   - Gemini API call with native PDF
   - Response parsing and validation
+  - **Normalise bounding boxes from 0-1000 to 0-1 before downstream processing**
   - Finish reason checking
 - [ ] Adapt v2's `HtmlFragmentProcessor` for single-document processing
 - [ ] Integrate bounding box parsing from parsed HTML
 - [ ] Add comprehensive error handling and logging
+- [ ] **Extend `AiCallService.completeCall` payload to ensure `finish_reason` is indexed for analytics**
 - [ ] Write unit tests for processor class
 
 ### Stage: Image Extraction Integration
-- [ ] Reuse v2's `ImageExtractor` class for local image extraction
+- [ ] Reuse v2's `ImageExtractor` class for **browser-side** image extraction (client-side Canvas)
 - [ ] Create `PdfImageExtractor` wrapper that:
   - Loads PDF into canvas/pdf.js
   - Converts normalized coordinates to pixel coordinates
@@ -218,6 +221,7 @@ From our investigation:
   - Image extraction quality
   - Error scenarios
   - Performance benchmarks
+  - **Oversized PDF upload returns 413 with clear error**
 - [ ] Use subagent to run full test suite
 - [ ] Document quality metrics in Appendix B
 
@@ -248,6 +252,8 @@ From our investigation:
   - Cost analysis
   - When to use each pipeline - the intention is that v3 becomes the default and eventually only pipeline
   - Performance characteristics
+  - **Coordinate normalisation rationale**
+  - **Provider-specific limits table**
 - [ ] Update `docs/reference/PDF_UPLOAD_PIPELINES_COMPARISON.md`
 - [ ] Add monitoring for:
   - Token usage statistics
@@ -347,13 +353,22 @@ Estimated costs per 20-page academic paper:
    - Image extraction requires complete HTML
    - Complexity outweighs benefits for this use case
 
+6. **Why keep the `/api/upload-pdf` endpoint unchanged?**
+   - Preserves backwards compatibility with clients and tests
+   - Avoids additional routing or query-param complexity while still enabling new functionality
+
+7. **Why perform image extraction in the browser?**
+   - Reuses existing, tested `ImageExtractor` that relies on the Canvas API
+   - Avoids introducing heavyweight Node canvas/sharp dependencies server-side
+   - Keeps server responsibilities simple and stateless; only coordinates are transferred
+
 ### F. Risk Mitigation
 
 1. **Risk**: Gemini API changes break coordinate format
    - **Mitigation**: Version lock API, comprehensive tests
 
 2. **Risk**: Token limits still hit for very large documents  
-   - **Mitigation**: Clear fallback to v2, upfront validation
+   - **Mitigation**: Fail fast with a descriptive error; user can choose an alternative workflow manually
 
 3. **Risk**: Image extraction quality inferior to vision API
    - **Mitigation**: Optional Claude refinement stage
