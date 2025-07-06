@@ -45,6 +45,42 @@ export const testHelpers = {
   },
 
   /**
+   * Wait for frame stability to prevent detachment errors
+   * 
+   * This helper ensures that all frames in the page are stable and loaded.
+   * Useful for preventing "frame was detached" errors when interacting with
+   * elements inside iframes or when the page dynamically loads content.
+   */
+  async waitForFrameStability(page: Page, options: { timeout?: number } = {}) {
+    const timeout = options.timeout || 10000
+    
+    // Wait for all frames to be attached and stable
+    const frames = page.frames()
+    for (const frame of frames) {
+      try {
+        // Check if frame is still attached
+        if (frame.isDetached()) continue
+        
+        // Wait for frame to be loaded
+        await frame.waitForLoadState('domcontentloaded', { timeout })
+        
+        // For main frame, also wait for network idle
+        if (frame === page.mainFrame()) {
+          await frame.waitForLoadState('networkidle', { timeout })
+        }
+      } catch (error) {
+        // Frame might have been detached during waiting, which is ok
+        if (!error.message?.includes('detached')) {
+          throw error
+        }
+      }
+    }
+    
+    // Brief pause to ensure any dynamic frame operations complete
+    await page.waitForTimeout(100)
+  },
+
+  /**
    * Wait for AI operation to complete
    * 
    * Many operations in the app involve AI processing which can take

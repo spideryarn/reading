@@ -247,7 +247,9 @@ test.describe('AI Tweet Thread Generation', () => {
       await page.waitForLoadState('networkidle');
       
       // Use a reliable URL with substantial content
-      const testUrl = 'https://httpd.apache.org/docs/2.4/getting-started.html';
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(7);
+      const testUrl = `https://httpd.apache.org/docs/2.4/getting-started.html?test=${timestamp}-${random}`;
       
       await page.fill('input[type="url"]', testUrl);
       await page.waitForTimeout(2000);

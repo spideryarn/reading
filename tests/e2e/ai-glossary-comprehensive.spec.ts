@@ -34,7 +34,9 @@ test.describe('Glossary Comprehensive Testing', () => {
       
       // Use a URL with complex terminology but within size limits for comprehensive glossary testing
       // Use unique Wikipedia page to avoid conflicts with previous test runs - smaller page
-      const testUrl = `https://en.wikipedia.org/wiki/Binary_tree`;
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(7);
+      const testUrl = `https://en.wikipedia.org/wiki/Binary_tree?test=${timestamp}-${random}`;
       await page.fill('input[type="url"]', testUrl);
       
       // Submit and wait for document creation
@@ -183,7 +185,9 @@ test.describe('Glossary Comprehensive Testing', () => {
       await page.waitForLoadState('networkidle');
       
       // Use a minimal URL that might not generate many entities
-      const minimalUrl = 'https://example.com';
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(7);
+      const minimalUrl = `https://example.com?test=${timestamp}-${random}`;
       await page.fill('input[type="url"]', minimalUrl);
       
       try {
@@ -241,7 +245,9 @@ test.describe('Glossary Comprehensive Testing', () => {
       await page.goto('/upload');
       await page.waitForLoadState('networkidle');
       
-      const testUrl = `https://en.wikipedia.org/wiki/Physics`;
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(7);
+      const testUrl = `https://en.wikipedia.org/wiki/Physics?test=${timestamp}-${random}`;
       await page.fill('input[type="url"]', testUrl);
       
       const [documentResponse] = await Promise.all([

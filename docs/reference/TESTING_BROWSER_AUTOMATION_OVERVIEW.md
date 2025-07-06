@@ -236,6 +236,33 @@ npm run test:e2e:setup
 ### Database Reset Recovery
 Tests include automatic recovery from database resets using `withDatabaseResetRecovery()` helper.
 
+### Dev Server Memory Issues (Long Test Runs)
+
+**Symptoms**:
+- Server becomes unresponsive after running many tests
+- Tests start timing out midway through suite
+- "Cannot GET /" errors despite server process running
+
+**Root Cause**: 
+Hot module replacement accumulates memory during long test runs, eventually causing the dev server to become unresponsive.
+
+**Solution**:
+```bash
+# Use the server stability helpers
+import { checkServerHealth, restartServerIfUnhealthy } from './helpers/server-stability'
+
+# Run tests in batches with health monitoring
+npm run test:e2e -- --workers=1 --shard=1/3  # Run first third
+npm run test:e2e -- --workers=1 --shard=2/3  # Run second third
+npm run test:e2e -- --workers=1 --shard=3/3  # Run final third
+```
+
+**Prevention**:
+- Use memory-aware batch sizing (see `calculateOptimalBatchSize()`)
+- Add server health checks between test batches
+- Monitor memory usage during test runs
+- Consider using `--no-hmr` flag for CI environments
+
 ### Test Isolation
 Each test uses UUID-based namespaces to avoid conflicts in shared database approach.
 

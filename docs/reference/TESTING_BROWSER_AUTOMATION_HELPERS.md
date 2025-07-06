@@ -10,6 +10,7 @@ This document describes the reusable test helpers and patterns available in `tes
 
 - **auth-setup.ts** - Enhanced authentication setup with per-worker storage state files
 - **test-base.ts** - Common test configuration and helper functions
+- **server-stability.ts** - Dev server health monitoring and recovery utilities
 
 ## Usage
 
@@ -71,6 +72,25 @@ test('test with AI operations', async ({ page }) => {
   // Verify enhancements
   const hasEnhancements = await testHelpers.hasAIEnhancements(page)
   expect(hasEnhancements).toBe(true)
+})
+```
+
+### Page and Frame Stability
+
+```typescript
+import { test, expect, testHelpers } from '../helpers/test-base'
+
+test('test with dynamic content', async ({ page }) => {
+  await page.goto('/dynamic-page')
+  
+  // Wait for page to be fully stable
+  await testHelpers.waitForPageStability(page)
+  
+  // For pages with iframes or dynamic frame content
+  await testHelpers.waitForFrameStability(page)
+  
+  // Now safe to interact with content
+  await page.click('button.in-iframe')
 })
 ```
 
@@ -217,3 +237,62 @@ await page.route('**/api/flaky-endpoint', route => {
   route.fulfill({ status: 200, body: 'stable response' })
 })
 ```
+
+## Dev Server Stability
+
+For long-running test suites, the dev server can become unresponsive due to memory pressure from hot module replacement. Use the server stability helpers to monitor and recover:
+
+### Server Health Monitoring
+
+```typescript
+import { checkServerHealth, waitForServerHealth, restartServerIfUnhealthy } from '../helpers/server-stability'
+
+test.beforeAll(async () => {
+  // Ensure server is healthy before starting tests
+  if (!await checkServerHealth()) {
+    await restartServerIfUnhealthy()
+  }
+})
+
+test.beforeEach(async () => {
+  // Optional: Monitor server health between tests
+  const monitor = createServerMonitor()
+  await monitor.checkHealth()
+})
+```
+
+### Running Tests in Batches
+
+For large test suites, run tests in memory-aware batches:
+
+```typescript
+import { runTestsInBatches, calculateOptimalBatchSize } from '../helpers/server-stability'
+
+// Automatically determine batch size based on available memory
+const batchSize = calculateOptimalBatchSize()
+
+// Run tests with health checks between batches
+await runTestsInBatches(testFiles, {
+  batchSize,
+  onBatchComplete: (index, total) => {
+    console.log(`Completed batch ${index + 1}/${total}`)
+  }
+})
+```
+
+### Server Recovery Strategies
+
+The server stability helpers provide multiple recovery strategies:
+
+1. **Graceful Restart** - Attempts to restart the dev server daemon cleanly
+2. **Force Restart** - Stops all processes on the port and starts fresh
+3. **Memory Monitoring** - Tracks memory usage to prevent crashes
+4. **Health Check Retries** - Waits for server to become responsive with configurable timeouts
+
+### Best Practices for Server Stability
+
+1. **Run tests in batches** - Don't run all tests at once for large suites
+2. **Monitor memory usage** - Use smaller batch sizes when memory is constrained
+3. **Add health checks** - Verify server health before critical test sections
+4. **Clean up test data** - Prevent database/filesystem bloat during test runs
+5. **Use `npm run e2e:preflight`** - Always run pre-flight checks before E2E tests
