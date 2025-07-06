@@ -111,7 +111,7 @@ export async function cleanupAllTestDocuments(): Promise<number> {
  */
 export function extractDocumentIdFromUrl(url: string): string | null {
   const match = url.match(/\/read\/([a-zA-Z0-9\-]+)/)
-  return match ? match[1] : null
+  return match?.[1] ?? null
 }
 
 /**

@@ -11,7 +11,9 @@ import {
   ToolTimeoutError, 
   ToolAuthenticationError, 
   ToolValidationError,
-  ToolServerError 
+  ToolServerError,
+  ToolExecutor,
+  ExecutionOptions
 } from './types'
 
 /**
@@ -21,7 +23,17 @@ import {
  * with the withErrorNotification wrapper. This automatically catches
  * and displays any ToolExecutorError instances.
  */
-export const executeToolWithErrorUI = withErrorNotification(executeTool as (...args: unknown[]) => unknown) as typeof executeTool
+export const executeToolWithErrorUI: ToolExecutor = async (
+  toolId: string,
+  action: string,
+  parameters?: Record<string, unknown>,
+  options?: ExecutionOptions
+) => {
+  const wrappedFn = withErrorNotification(
+    async () => executeTool(toolId, action, parameters, options)
+  )
+  return await wrappedFn()
+}
 
 
 /**
@@ -77,8 +89,10 @@ export function useToolWithErrorHandling() {
       action: string, 
       parameters?: Record<string, unknown>
     ) {
-      const wrappedExecutor = withErrorNotification(executeTool as (...args: unknown[]) => unknown) as typeof executeTool
-      return await wrappedExecutor(toolId, action, parameters)
+      const wrappedFn = withErrorNotification(
+        async () => executeTool(toolId, action, parameters)
+      )
+      return await wrappedFn()
     }
   }
 }
@@ -172,7 +186,7 @@ export function integrateWithExistingErrorHandling() {
  */
 export const ERROR_UI_BEST_PRACTICES = {
   // Use automatic error handling for most cases
-  recommended: withErrorNotification(executeTool as (...args: unknown[]) => unknown) as typeof executeTool,
+  recommended: executeToolWithErrorUI,
   
   // Manual handling for special cases
   manual: showToolError,

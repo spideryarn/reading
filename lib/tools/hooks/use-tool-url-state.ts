@@ -160,24 +160,18 @@ export function useToolUrlState(): UseToolUrlStateReturn {
   ])
   
   // Debounced search update (300ms)
-  const debouncedSetSearch = useMemo<(q: string) => void>(
-    () => {
-      const updateQuery = (query: string) => {
-        setState(buildUpdates('q', query || undefined))
-      }
-      return debounce(updateQuery, 300) as (query: string) => void
-    },
+  const debouncedSetSearch = useMemo(
+    () => debounce((query: string) => {
+      setState(buildUpdates('q', query || undefined))
+    }, 300),
     [setState]
   )
   
   // Throttled scroll update (1000ms)
   const throttledSetScroll = useMemo(
-    () => {
-      const updateScroll = (elementId: string) => {
-        setState(buildUpdates('scroll', elementId || undefined))
-      }
-      return throttle(updateScroll, 1000) as (elementId: string) => void
-    },
+    () => throttle((elementId: string) => {
+      setState(buildUpdates('scroll', elementId || undefined))
+    }, 1000),
     [setState]
   )
   

@@ -24,9 +24,12 @@ import type { Tables } from '@/lib/types/database-auto-generated';
 
 type ChatMessageDb = Tables<'chat_messages'>;
 
+// Import the MarkdownText component
+import { MarkdownText } from './chat-markdown';
+
 // Wrapper component to properly type MarkdownTextPrimitive for MessagePrimitive.Content
-const MarkdownTextWrapper: TextContentPartComponent = ({ text }) => (
-  <MarkdownTextPrimitive>{text}</MarkdownTextPrimitive>
+const MarkdownTextWrapper: TextContentPartComponent = () => (
+  <MarkdownText />
 );
 
 // Dynamically import the voice recorder with SSR disabled to avoid
