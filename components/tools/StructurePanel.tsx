@@ -9,7 +9,7 @@ import { CircleNotch, TreeStructure, Trash, ArrowRight, Stop } from '@phosphor-i
 import type { DocumentElement } from '@/lib/types/document'
 import { useMutation, useActiveMutationType } from '@/lib/context/mutation-context'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
-import { HEADING_ITERATION_CONFIG } from '@/lib/config'
+import { HEADING_ITERATION_CONFIG, HEADING_GRANULARITY_CONFIG } from '@/lib/config'
 import { headingOperationsToMutation } from '@/lib/services/heading-operations-mutation'
 import { documentElementsToHtml } from '@/lib/utils/document-elements-to-html'
 import { extractHeadingsFromMutation } from '@/lib/services/heading-mutation-generator'
@@ -109,7 +109,9 @@ export function StructurePanel({
   // Shared state
   const [headings, setHeadings] = useState<Heading[]>([])
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
-  const [granularityLevel, setGranularityLevel] = useState(3)
+  const [granularityLevel, setGranularityLevel] = useState<number>(
+    HEADING_GRANULARITY_CONFIG.DEFAULT_LEVEL
+  )
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Tooltip state management
@@ -157,6 +159,12 @@ export function StructurePanel({
   // queued callback from re-triggering iteration after the user thought it
   // was cancelled.
   const autoIterTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Wrapper to conform to HeadingTreeProps signature – avoids passing the
+  // SetStateAction dispatcher directly (which also accepts functions).
+  const handleGranularityChange = useCallback((level: number) => {
+    setGranularityLevel(level)
+  }, [])
 
   // Extract headings based on current mode
   useEffect(() => {
@@ -228,14 +236,18 @@ export function StructurePanel({
   useEffect(() => {
     if (headings.length === 0) return
 
-    // slider can show at most the deepest heading level available but not less
-    // than MIN_LEVEL (2 – we always show H1 and at least H2).
-    const MIN_LEVEL = 2
+    // Slider can show at most the deepest heading level available but not less
+    // than MIN_LEVEL (configured in HEADING_GRANULARITY_CONFIG).
+    const MIN_LEVEL = HEADING_GRANULARITY_CONFIG.MIN_LEVEL
     const maxDepth = Math.max(...headings.map(h => h.level))
 
     setGranularityLevel((prev) => {
       // Clamp prev into the valid range [MIN_LEVEL, maxDepth]
-      if (prev < MIN_LEVEL) return Math.min(3, Math.max(MIN_LEVEL, maxDepth))
+      if (prev < MIN_LEVEL)
+        return Math.min(
+          HEADING_GRANULARITY_CONFIG.DEFAULT_LEVEL,
+          Math.max(MIN_LEVEL, maxDepth)
+        )
       if (prev > maxDepth) return maxDepth
       return prev // keep user selection
     })
@@ -1006,7 +1018,7 @@ export function StructurePanel({
             collapsedIds={collapsedIds}
             onToggleExpanded={toggleExpanded}
             granularityLevel={granularityLevel}
-            onGranularityChange={setGranularityLevel}
+            onGranularityChange={handleGranularityChange}
             headingVisibility={headingVisibility || new Map()}
           />
         </div>
@@ -1055,7 +1067,7 @@ export function StructurePanel({
               collapsedIds={collapsedIds}
               onToggleExpanded={toggleExpanded}
               granularityLevel={granularityLevel}
-              onGranularityChange={setGranularityLevel}
+              onGranularityChange={handleGranularityChange}
               headingVisibility={headingVisibility || new Map()}
             />
           </div>
@@ -1138,7 +1150,7 @@ export function StructurePanel({
         collapsedIds={collapsedIds}
         onToggleExpanded={toggleExpanded}
         granularityLevel={granularityLevel}
-        onGranularityChange={setGranularityLevel}
+        onGranularityChange={handleGranularityChange}
         headingVisibility={headingVisibility || new Map()}
       />
     </div>

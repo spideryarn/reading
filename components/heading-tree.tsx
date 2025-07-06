@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { CaretRight, CaretDown, CaretUp } from '@phosphor-icons/react'
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
+import { HEADING_GRANULARITY_CONFIG } from '@/lib/config'
 
 // Types
 export interface Heading {
@@ -333,14 +334,14 @@ export function HeadingTree({
               <div className="relative">
                 <input
                   type="range"
-                  min="2"
+                  min={HEADING_GRANULARITY_CONFIG.MIN_LEVEL}
                   max={maxDepth}
                   value={Math.min(granularityLevel, maxDepth)}
                   onChange={(e) => onGranularityChange(parseInt(e.target.value))}
                   className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-modern"
                   style={{
                     background: (() => {
-                      const min = 2
+                      const min = HEADING_GRANULARITY_CONFIG.MIN_LEVEL
                       const max = maxDepth
                       if (max === min) {
                         return '#3B82F6'
@@ -378,7 +379,7 @@ export function HeadingTree({
                 `}</style>
               </div>
               <div className="flex justify-between mt-1.5">
-                <span className="text-xs text-gray-500 font-medium">2</span>
+                <span className="text-xs text-gray-500 font-medium">{HEADING_GRANULARITY_CONFIG.MIN_LEVEL}</span>
                 <span className="text-xs text-gray-500 font-medium">{maxDepth}</span>
               </div>
             </div>
