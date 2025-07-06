@@ -32,11 +32,22 @@ export default function Error({ error, reset }: ErrorProps) {
     }
   }
 
+  // Customise UI for AI-generated headings failures so users know what happened
+  const isHeadingError = error.message?.toLowerCase().includes('ai headings')
+
+  const dynamicTitle = isHeadingError
+    ? 'Failed to load AI-generated headings'
+    : 'Something went wrong'
+
+  const dynamicDescription = isHeadingError
+    ? 'The AI-generated table of contents for this document could not be applied. You can still read the document with its original structure or try regenerating the headings.'
+    : 'An unexpected error occurred. Please try again or contact support if the problem persists.'
+
   return (
     <ErrorLayout
       errorCode="500"
-      title="Something went wrong"
-      description="An unexpected error occurred. Please try again or contact support if the problem persists."
+      title={dynamicTitle}
+      description={dynamicDescription}
     >
       {/* Additional error actions */}
       <div className="mb-6">
@@ -48,6 +59,15 @@ export default function Error({ error, reset }: ErrorProps) {
           <Warning size={16} className="mr-2" />
           Try Again
         </Button>
+        {isHeadingError && (
+          <Button
+            variant="orange"
+            onClick={() => window.location.reload()}
+            className="ml-2 mb-4"
+          >
+            Regenerate Headings
+          </Button>
+        )}
         
         {/* Show error details in development */}
         {process.env.NODE_ENV === 'development' && (

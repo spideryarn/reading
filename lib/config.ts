@@ -282,3 +282,13 @@ export const BOOK_PAGE_CONFIG = {
   // Using 270 as balanced estimate between the range
   WORDS_PER_PAGE: 270,
 } as const
+
+// Centralised heading granularity configuration – controls the minimum
+// heading level visible in the Structure tab slider and the default
+// granularity level chosen on initial load.  Setting MIN_LEVEL to 1 allows
+// users to view top-level (H1) headings only, while DEFAULT_LEVEL defines
+// the initial slider position when the Structure panel first renders.
+export const HEADING_GRANULARITY_CONFIG = {
+  MIN_LEVEL: 1,   // Lowest heading level the slider can select (H1)
+  DEFAULT_LEVEL: 2, // Initial slider value (show H1–H2 by default)
+} as const

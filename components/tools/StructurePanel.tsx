@@ -9,7 +9,7 @@ import { CircleNotch, TreeStructure, Trash, ArrowRight, Stop } from '@phosphor-i
 import type { DocumentElement } from '@/lib/types/document'
 import { useMutation, useActiveMutationType } from '@/lib/context/mutation-context'
 import { useDocumentCommunication } from '@/lib/context/document-communication-context'
-import { HEADING_ITERATION_CONFIG } from '@/lib/config'
+import { HEADING_ITERATION_CONFIG, HEADING_GRANULARITY_CONFIG } from '@/lib/config'
 import { headingOperationsToMutation } from '@/lib/services/heading-operations-mutation'
 import { documentElementsToHtml } from '@/lib/utils/document-elements-to-html'
 import { extractHeadingsFromMutation } from '@/lib/services/heading-mutation-generator'
@@ -109,7 +109,9 @@ export function StructurePanel({
   // Shared state
   const [headings, setHeadings] = useState<Heading[]>([])
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
-  const [granularityLevel, setGranularityLevel] = useState(3)
+  const [granularityLevel, setGranularityLevel] = useState<number>(
+    HEADING_GRANULARITY_CONFIG.DEFAULT_LEVEL
+  )
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Tooltip state management
@@ -157,6 +159,12 @@ export function StructurePanel({
   // queued callback from re-triggering iteration after the user thought it
   // was cancelled.
   const autoIterTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Wrapper to conform to HeadingTreeProps signature – avoids passing the
+  // SetStateAction dispatcher directly (which also accepts functions).
+  const handleGranularityChange = useCallback((level: number) => {
+    setGranularityLevel(level)
+  }, [])
 
   // Extract headings based on current mode
   useEffect(() => {
@@ -228,14 +236,18 @@ export function StructurePanel({
   useEffect(() => {
     if (headings.length === 0) return
 
-    // slider can show at most the deepest heading level available but not less
-    // than MIN_LEVEL (2 – we always show H1 and at least H2).
-    const MIN_LEVEL = 2
+    // Slider can show at most the deepest heading level available but not less
+    // than MIN_LEVEL (configured in HEADING_GRANULARITY_CONFIG).
+    const MIN_LEVEL = HEADING_GRANULARITY_CONFIG.MIN_LEVEL
     const maxDepth = Math.max(...headings.map(h => h.level))
 
     setGranularityLevel((prev) => {
       // Clamp prev into the valid range [MIN_LEVEL, maxDepth]
-      if (prev < MIN_LEVEL) return Math.min(3, Math.max(MIN_LEVEL, maxDepth))
+      if (prev < MIN_LEVEL)
+        return Math.min(
+          HEADING_GRANULARITY_CONFIG.DEFAULT_LEVEL,
+          Math.max(MIN_LEVEL, maxDepth)
+        )
       if (prev > maxDepth) return maxDepth
       return prev // keep user selection
     })
@@ -270,7 +282,26 @@ export function StructurePanel({
       return null
     } catch (error) {
       console.error('Error fetching cached headings:', error)
-      throw error
+
+      // Enhance error reporting: include correlationId if available (from ToolExecutorError)
+      let errorMessage = 'Unknown error'
+      let correlationId = ''
+
+      if (error && typeof error === 'object') {
+        if ('message' in (error as any) && typeof (error as any).message === 'string') {
+          errorMessage = (error as any).message as string
+        }
+        if ('correlationId' in (error as any) && typeof (error as any).correlationId === 'string') {
+          correlationId = (error as any).correlationId as string
+        }
+      }
+
+      // Re-throw with enriched message so upstream handlers surface it in the UI
+      const decoratedMessage = correlationId
+        ? `${errorMessage} (correlation id: ${correlationId})`
+        : errorMessage
+
+      throw new Error(decoratedMessage)
     } finally {
       fetchInProgressRef.current = false
     }
@@ -324,8 +355,11 @@ export function StructurePanel({
       setIsLoadingHeadings(false)
       console.log('[StructurePanel] Successfully reapplied all cached operations (batched)')
     } catch (error) {
-      console.error('Error applying cached operations:', error)
-      setHeadingsError(`Failed to load cached operations: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      const errMessage = error instanceof Error ? error.message : 'Unknown error'
+      console.error('[StructurePanel] Error applying cached operations:', errMessage)
+      // Set state so the render phase can throw and trigger the ErrorBoundary
+      setHeadingsError(`AI headings cache replay failed: ${errMessage}`)
+      // Ensure we're not stuck in a loading spinner
       setIsLoadingHeadings(false)
     }
   }, [documentId, applyMutation, mutationState.activeMutation, elements])
@@ -811,6 +845,11 @@ export function StructurePanel({
     }
   }, [headingsError])
 
+  // Immediately surface any fatal headings error to the global error boundary so it cannot be missed.
+  if (headingsError) {
+    throw new Error(headingsError)
+  }
+
   // Render status badge
   const renderStatusBadge = () => {
     return (
@@ -987,7 +1026,7 @@ export function StructurePanel({
             collapsedIds={collapsedIds}
             onToggleExpanded={toggleExpanded}
             granularityLevel={granularityLevel}
-            onGranularityChange={setGranularityLevel}
+            onGranularityChange={handleGranularityChange}
             headingVisibility={headingVisibility || new Map()}
           />
         </div>
@@ -1036,7 +1075,7 @@ export function StructurePanel({
               collapsedIds={collapsedIds}
               onToggleExpanded={toggleExpanded}
               granularityLevel={granularityLevel}
-              onGranularityChange={setGranularityLevel}
+              onGranularityChange={handleGranularityChange}
               headingVisibility={headingVisibility || new Map()}
             />
           </div>
@@ -1119,7 +1158,7 @@ export function StructurePanel({
         collapsedIds={collapsedIds}
         onToggleExpanded={toggleExpanded}
         granularityLevel={granularityLevel}
-        onGranularityChange={setGranularityLevel}
+        onGranularityChange={handleGranularityChange}
         headingVisibility={headingVisibility || new Map()}
       />
     </div>
