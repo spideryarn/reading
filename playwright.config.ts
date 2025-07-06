@@ -102,7 +102,8 @@ export default defineConfig({
         '**/optimized-anonymous-access-journey.spec.ts', 
         '**/optimized-route-smoke-tests.spec.ts',
         '**/optimized-mobile-experience.spec.ts',
-        '**/optimized-error-recovery.spec.ts'
+        '**/optimized-error-recovery.spec.ts',
+        '**/auth-infrastructure-verification.spec.ts'
         // Removed: error-page-testing.spec.ts (needs auth fixes)
         // Removed: optimized-authenticated-onboarding-journey.spec.ts (has "authenticated" in name)
         // Removed: optimized-document-library-journey.spec.ts (requires auth for document operations)
