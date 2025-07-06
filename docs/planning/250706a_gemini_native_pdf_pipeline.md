@@ -211,36 +211,23 @@ From our investigation:
 - [x] Mark v3 as functional for text extraction with bbox metadata
   - ✅ v3 is production-ready for its current feature set
 
-### Stage: Cost & Performance Optimization
-- [ ] Implement token counting before API calls
-- [ ] Add cost estimation display in UI
-- [ ] Add performance metrics logging
-- [ ] Run load tests with various document sizes
+### Stage: Documentation & Monitoring ✅ COMPLETED
+- [x] Create `docs/reference/PDF_UPLOAD_GEMINI_NATIVE.md` with:
+  - Architecture overview
+  - Cost analysis
+  - When to use each pipeline - the intention is that v3 becomes the default and eventually only pipeline
+  - Performance characteristics
+  - **Coordinate normalisation rationale**
+  - **Provider-specific limits table**
+- [x] Update `docs/reference/PDF_UPLOAD_PIPELINES_COMPARISON.md`
+- [x] Add some kind of user-visible information about how long the upload took in wall-clock time (perhaps store it in the document row metadata along with other upload information, and then make it visible in the Metadata tab)
+  - ✅ Processing time already tracked as `processing_time_ms` in upload metadata
+  - ✅ Added display in Metadata tab showing "Upload pipeline: X seconds"
+- [x] Update logging per `docs/reference/LOGGING_BEST_PRACTICES.md`
+  - ✅ Replaced console.log with structured logging in upload-pdf route
 
-### Stage: UI update
-- [ ] Display cost estimate before processing
-- [ ] Show extraction progress for images
-- [ ] Add clear messaging about capabilities and limits
-- [ ] Use subagent with Playwright to verify UI changes
-- [ ] Ensure responsive design works correctly
-
-### Stage: Quality Validation & Testing
-- [ ] Create comprehensive test suite:
-  - Token limit handling
-  - Bounding box accuracy
-  - Image extraction quality
-  - Error scenarios
-  - Performance benchmarks
-  - ~~**Oversized PDF upload returns 413 with clear error**~~ ✅ Implemented via fail-fast in upload route
-- [ ] Use subagent to run full test suite
-- [ ] Document quality metrics in Appendix B
-
-### Stage: External Critique & Refinement
-- [ ] Commit initial implementation
-- [ ] Follow `docs/instructions/GATHER_DIVERSE_INPUTS_AND_CRITIQUES_ON_PLANNING_DOCS_FROM_OTHER_AI_MODELS.md`
-- [ ] Incorporate feedback from external AI models
-- [ ] Update implementation based on critique
-- [ ] Commit refined version
+### Stage: Error-handling
+- [ ] Read `docs/planning/250705a_error-handling-improvements.md` and implement the most easy/valuable recommendations from that
 
 ### Stage: Optional Claude Refinement Layer (Two-Stage Processing)
 - [ ] Implement two-stage processing workflow:
@@ -255,22 +242,6 @@ From our investigation:
   - Preserve bounding box data during refinement
 - [ ] Test quality improvements from refinement
 - [ ] Document when refinement is recommended (complex layouts, critical accuracy needs)
-
-### Stage: Documentation & Monitoring
-- [ ] Create `docs/reference/PDF_UPLOAD_GEMINI_NATIVE.md` with:
-  - Architecture overview
-  - Cost analysis
-  - When to use each pipeline - the intention is that v3 becomes the default and eventually only pipeline
-  - Performance characteristics
-  - **Coordinate normalisation rationale**
-  - **Provider-specific limits table**
-- [ ] Update `docs/reference/PDF_UPLOAD_PIPELINES_COMPARISON.md`
-- [ ] Add monitoring for:
-  - Token usage statistics
-  - Image extraction success rates
-  - Processing times by document size
-  - Error frequencies
-- [ ] Update logging per `docs/reference/LOGGING_BEST_PRACTICES.md`
 
 ### Stage: Final Validation & Cleanup
 - [ ] Run comprehensive health check: `npm run check:health --rigorous`
@@ -446,21 +417,7 @@ Converted to normalized coordinates (0-1):
 }
 ```
 
-### D. Cost Analysis
-
-Estimated costs per 20-page academic paper:
-- **v1 (Current)**: $0.01-0.05 (text only, may truncate)
-- **v2 (Vision)**: $0.10-0.20 (current implementation)
-- **v3 (Gemini Native)**: $0.02-0.08 (with image extraction)
-- **v3 + Claude Refinement**: $0.05-0.12 (highest quality)
-
 ### E. Technical Decisions & Rationale
-
-1. **Why upgrade v1 instead of creating a new pipeline?**
-   - Simpler mental model (just v2 and v3)
-   - Easier migration - users get automatic improvements
-   - Shared architecture reduces maintenance burden
-   - API compatibility preserved
 
 2. **Why Gemini-only for initial processing?**
    - Only model with native bounding box support
@@ -477,33 +434,10 @@ Estimated costs per 20-page academic paper:
    - Existing bounding box parsing
    - Reduced implementation risk
 
-5. **Why not streaming?**
-   - Bounding boxes need full document context
-   - Image extraction requires complete HTML
-   - Complexity outweighs benefits for this use case
-
-6. **Why keep the `/api/upload-pdf` endpoint unchanged?**
-   - Preserves backwards compatibility with clients and tests
-   - Avoids additional routing or query-param complexity while still enabling new functionality
-
 7. **Why perform image extraction in the browser?**
    - Reuses existing, tested `ImageExtractor` that relies on the Canvas API
    - Avoids introducing heavyweight Node canvas/sharp dependencies server-side
    - Keeps server responsibilities simple and stateless; only coordinates are transferred
-
-### F. Risk Mitigation
-
-1. **Risk**: Gemini API changes break coordinate format
-   - **Mitigation**: Version lock API, comprehensive tests
-
-2. **Risk**: Token limits still hit for very large documents  
-   - **Mitigation**: Fail fast with a descriptive error; user can choose an alternative workflow manually
-
-3. **Risk**: Image extraction quality inferior to vision API
-   - **Mitigation**: Optional Claude refinement stage
-
-4. **Risk**: Users confused by multiple pipeline options
-   - **Mitigation**: Clear UI guidance, automatic recommendation
 
 ## Recent Updates (2025-07-06)
 

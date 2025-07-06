@@ -365,6 +365,19 @@ export function MetadataPanel({
     return null
   }, [uploadMetadata])
   
+  // Extract processing time from upload metadata
+  const processingTime = useMemo(() => {
+    if (uploadMetadata?.processing_time_ms) {
+      const timeMs = uploadMetadata.processing_time_ms as number
+      if (timeMs < 1000) {
+        return `${timeMs} ms`
+      } else {
+        return `${(timeMs / 1000).toFixed(1)} seconds`
+      }
+    }
+    return null
+  }, [uploadMetadata])
+  
   // Determine if document title should be a hyperlink
   const titleHref = useMemo(() => {
     // Only make title a hyperlink if document was extracted from a URL
@@ -699,9 +712,10 @@ export function MetadataPanel({
                             {formattedDate.relative}
                           </TooltipOrPopover>
                         )}
-                        {fileSize && (
-                          <div className="text-xs text-slate-600">
-                            {fileSize}
+                        {(fileSize || processingTime) && (
+                          <div className="text-xs text-slate-600 space-y-0.5">
+                            {fileSize && <div>{fileSize}</div>}
+                            {processingTime && <div>Upload pipeline: {processingTime}</div>}
                           </div>
                         )}
                       </div>

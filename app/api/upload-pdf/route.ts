@@ -95,12 +95,11 @@ export async function POST(request: NextRequest) {
       userId: user.id
     }, `PDF page count validation passed: ${pageValidationResult.pageCount} pages`)
 
-    console.log(`Processing PDF with storage integration: ${pdfFile.name} (${(pdfBuffer.length / 1024).toFixed(1)} KB, ${pageValidationResult.pageCount} pages) using ${provider}`)
-    
     requestLogger.info({
       correlationId,
       fileName: pdfFile.name,
       fileSizeKB: Math.round(pdfBuffer.length / 1024),
+      pageCount: pageValidationResult.pageCount,
       provider,
       userId: user.id
     }, 'Starting PDF processing with storage integration')
@@ -156,8 +155,6 @@ export async function POST(request: NextRequest) {
       
       aiCallId = aiCall.id
       
-      console.log(`Step 1: Converting PDF to HTML using ${providerDisplayName} with bounding box extraction...`)
-      
       requestLogger.info({
         correlationId,
         step: 'pdf-to-html-conversion',
@@ -165,7 +162,7 @@ export async function POST(request: NextRequest) {
         modelString: modelString,
         aiCallId: aiCall.id,
         pipelineVersion: 'v3-gemini-native'
-      }, 'Starting PDF to HTML conversion using Gemini Native')
+      }, 'Starting PDF to HTML conversion using Gemini Native with bounding box extraction')
       
       try {
         const geminiResult = await processWithGeminiNative({
@@ -244,7 +241,13 @@ export async function POST(request: NextRequest) {
       
       aiCallId = aiCall.id
       
-      console.log(`Step 1: Converting PDF to HTML using ${providerDisplayName}...`)
+      requestLogger.info({
+        correlationId,
+        step: 'pdf-to-html-conversion',
+        provider: providerDisplayName,
+        modelString: modelString,
+        aiCallId: aiCall.id
+      }, `Starting PDF to HTML conversion using ${providerDisplayName}`)
       
       requestLogger.info({
         correlationId,
@@ -314,7 +317,12 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    console.log('Step 2: HTML conversion completed, processing through shared pipeline...')
+    requestLogger.info({
+      correlationId,
+      step: 'html-processing',
+      htmlLength: htmlResult.text.length,
+      extractedImagesCount: extractedImagesMetadata.length
+    }, 'HTML conversion completed, processing through shared pipeline')
     
     requestLogger.info({
       correlationId,
@@ -356,12 +364,27 @@ export async function POST(request: NextRequest) {
       }
     )
 
-    console.log(`Step 3: Document created successfully with ID: ${document.id}`)
+    requestLogger.info({
+      correlationId,
+      step: 'document-creation-complete',
+      documentId: document.id,
+      storageSuccessful: !!storageResult,
+      userId: user.id
+    }, 'Document created successfully')
     
     if (storageResult) {
-      console.log(`Step 3: Original PDF stored at: ${storageResult.path}`)
+      requestLogger.info({
+        correlationId,
+        step: 'storage-complete',
+        storagePath: storageResult.path,
+        documentId: document.id
+      }, 'Original PDF stored successfully')
     } else {
-      console.warn('Step 3: Storage upload failed, but document was created without original file')
+      requestLogger.warn({
+        correlationId,
+        step: 'storage-warning',
+        documentId: document.id
+      }, 'Storage upload failed, but document was created without original file')
     }
 
     // Complete request timing
@@ -405,7 +428,11 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('PDF upload API error:', error)
+    requestLogger.error({
+      correlationId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    }, 'PDF upload API error')
     
     requestLogger.error({
       correlationId,
