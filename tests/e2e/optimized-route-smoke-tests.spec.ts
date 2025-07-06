@@ -280,10 +280,10 @@ test.describe('Route Smoke Tests', () => {
       
       if (finalUrl.includes('/auth/login') || finalUrl.includes('/auth/signup')) {
         console.log(`✅ ${route.path} properly redirects to authentication`);
-      } else if (finalUrl === `http://localhost:3002${route.path}` || finalUrl.endsWith(route.path)) {
+      } else if (finalUrl === `${new URL(page.url()).origin}${route.path}` || finalUrl.endsWith(route.path)) {
         console.log(`⚠️ ${route.path} accessible without authentication (verify if intentional)`);
       } else {
-        console.log(`✅ ${route.path} redirected to: ${finalUrl.replace('http://localhost:3002', '')} (likely protected)`);
+        console.log(`✅ ${route.path} redirected to: ${finalUrl.replace(new URL(page.url()).origin, '')} (likely protected)`);
       }
     }
     

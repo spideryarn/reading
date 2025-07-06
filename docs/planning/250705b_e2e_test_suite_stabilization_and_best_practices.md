@@ -177,12 +177,25 @@ Only after both checks pass should subsequent stages run.
 - Authentication-related tests are now passing (form validation, auth flows, protected routes)
 - Still failing: document processing workflows (409 conflicts), server stability issues
 
-### Stage: Fix URL and port configuration issues
-- [ ] Fix hardcoded URLs in tests:
-  - [ ] `tool-keyboard-shortcuts.spec.ts` - Change `http://localhost:3004/` to `/`
-  - [ ] Search for other hardcoded URLs: Use subagent with grep
-- [ ] Update any tests using absolute URLs to use relative URLs
-- [ ] Verify tests respect baseURL from config
+### Stage: Fix URL and port configuration issues ✅ COMPLETED
+- [x] Fix hardcoded URLs in tests:
+  - [x] `tool-keyboard-shortcuts.spec.ts` - Changed `http://localhost:3004/` to `/` (both occurrences)
+  - [x] Search for other hardcoded URLs: Found and fixed several instances
+- [x] Update any tests using absolute URLs to use relative URLs
+  - [x] Fixed dynamic URL comparisons in `optimized-authenticated-onboarding-journey.spec.ts`
+  - [x] Fixed dynamic URL comparisons in `optimized-route-smoke-tests.spec.ts`
+  - [x] Fixed port-agnostic check in `optimized-anonymous-access-journey.spec.ts`
+- [x] Verify tests respect baseURL from config
+  - [x] Confirmed baseURL uses `process.env.PORT` from `.env.test` (3002 for worktree2)
+  - [x] Tests now use relative URLs or dynamic origin extraction
+
+**Key Changes**:
+- Replaced hardcoded `http://localhost:3004` with relative URLs
+- Changed URL comparisons from `http://localhost:3002${path}` to `${new URL(page.url()).origin}${path}`
+- Preserved intentional localhost rejection tests (port 3000)
+- All tests now work correctly with worktree-specific ports from `.env.local`
+
+**Discovery**: Keyboard shortcuts test revealed an application bug - shortcuts don't update URL with tab parameters
 
 ### Stage: Fix URL extraction API conflicts (NEW - Critical blocker)
 - [ ] Investigate 409 conflict errors in `/api/extract-url`

@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 test.describe('Tool Keyboard Shortcuts Testing', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the public document
-    await page.goto('http://localhost:3004/read/public-document-1750612994147-gqy7vv')
+    await page.goto('/read/public-document-1750612994147-gqy7vv')
     await page.waitForLoadState('networkidle')
   })
 
@@ -103,7 +103,7 @@ test.describe('Tool Keyboard Shortcuts Testing', () => {
     expect(page.url()).toMatch(/tab=glossary/)
     
     // Navigate to documents list (no document context)
-    await page.goto('http://localhost:3004/read')
+    await page.goto('/read')
     await page.waitForTimeout(1000)
     
     // Try document-requiring shortcuts - they should either not work or fallback gracefully

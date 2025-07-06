@@ -54,7 +54,7 @@ test.describe('Anonymous Access Journey', () => {
     // Verify page loads - be flexible with title
     if (pageTitle.includes('Spideryarn') || pageTitle.length > 0) {
       console.log('✅ Page has a valid title');
-    } else if (pageUrl.includes('localhost:3002')) {
+    } else if (pageUrl.includes('localhost') || pageUrl.includes('127.0.0.1')) {
       console.log('⚠️ Page loaded but title is empty (may be loading)');
       // Wait a bit more for potential late title updates
       await page.waitForTimeout(2000);
