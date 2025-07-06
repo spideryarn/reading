@@ -336,12 +336,6 @@ _API calls fail with "Authentication required" despite valid browser auth_
   - [ ] Verify CORS/credential settings for API calls
 - [ ] Test with a simple API call to verify auth propagation
 
-### Stage: Enable parallel execution & flake detection
-_Runs after configuration fixes and a majority of auth failures are resolved._
-- [ ] Temporarily set `workers = 2` and run the full suite three times: `npx playwright test --repeat-each 3`.
-- [ ] If no new failures, raise to `workers = Math.max(1, os.cpus().length - 1)`.
-- [ ] Monitor CI logs for race-condition indicators (console 401, DB unique-constraint violations).
-
 ### Stage: Test consolidation and cleanup
 - [ ] Use subagent to identify redundant test coverage:
   - [ ] Find tests with >80% overlap in functionality
@@ -578,6 +572,18 @@ The test might be checking the URL before the navigation completes, or there's a
    - Previously blocked by auth setup failure
    - Now able to run and identify actual issues
 
+4. **Fixed E2E test runner configuration** ✅
+   - Removed invalid `--headed=false` and `--isolated` flags
+   - Tests now run properly in headless mode
+   - Playwright provides built-in isolation by default
+
+### Test Results Update:
+- **optimized-authenticated-onboarding-journey.spec.ts** now passes! ✅
+  - Full authentication flow works correctly
+  - Session persistence verified
+  - Protected route access confirmed
+  - Minor warnings about UI indicators and post-logout security to investigate
+
 ### Remaining Blockers:
 1. **API Authentication Context** (NEW)
    - Browser auth works but API calls fail
@@ -587,12 +593,18 @@ The test might be checking the URL before the navigation completes, or there's a
    - Some tests timing out after 5+ minutes
    - Dev server stability concerns
 
+3. **Minor Security Concerns**
+   - Some routes remain accessible after logout
+   - Need to verify if this is intentional
+
 ### Next Immediate Actions:
 1. Run full test suite to get accurate new pass rate
 2. Debug API authentication context propagation
 3. Address performance bottlenecks
+4. Investigate post-logout route accessibility
 
 ### Expected Pass Rate:
 - Previous: 3.3% (3/91 tests)
+- Current: At least 4.4% (4/91 tests confirmed)
 - Expected: >50% (with 77 tests unblocked)
 - Target: >90% (after fixing API auth issues)
