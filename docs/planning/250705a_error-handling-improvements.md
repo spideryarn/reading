@@ -126,6 +126,16 @@ Goal: expose hidden problems and improve obviously vague messages without touchi
 - Integrate external error-tracking (e.g. Sentry) keyed by correlation ID.
 
 ---
++### Immediate Actions *(July 2025)*
++
++1. **Update unit tests** – adjust AI-response serialisation tests to expect circular references to be replaced with the placeholder string `"[Circular]"`; assert that a warning is logged instead of an exception.
++2. **Refactor other AI tools** (Structure, Summary, Search, Metadata, etc.) to depend on the new `safeJsonValue` helper instead of bespoke sanitisers.
++3. **Global integration check** – verify every call-site of `AIResponseLogger` uses the updated serialisation logic; delete now-redundant code branches.
++4. **Regression guard** – add a dedicated test with a real Anthropic sample payload to ensure `AIResponseLogger` no longer throws for legitimate circular references.
++5. **Documentation update** – extend `docs/reference/AI_RESPONSE_LOGGING.md` with the new sanitisation strategy and placeholder behaviour.
++6. **Health check** – run `npm run check:health` and fix any lint or type errors produced by the refactor.
++
++---
 ## Success Metrics
 
 - ✅ 100 % of API routes emit RFC 9457 Problem Details.
