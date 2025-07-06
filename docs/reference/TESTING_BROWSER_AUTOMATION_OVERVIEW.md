@@ -61,29 +61,29 @@ npx playwright test
 ### Essential Commands
 ```bash
 # Run all E2E tests (dev server must be running first)
-npx playwright test
+npm run test:e2e
 
 # Run specific test file  
-npx playwright test tests/e2e/complete-document-workflow-with-authentication.spec.ts
+npm run test:e2e tests/e2e/complete-document-workflow-with-authentication.spec.ts
 
 # Run tests matching pattern
-npx playwright test --grep "authentication"
+npm run test:e2e -- --grep "authentication"
 
 # Debug mode (only when needed)
-npx playwright test --debug
+npm run test:e2e:debug
 ```
 
 ### AI Agent Workflow for E2E Testing
 ```bash
 # Recommended workflow with pre-flight checks
 npm run e2e:preflight       # Verify test user & dev server
-npx playwright test         # Run tests
+npm run test:e2e            # Run tests
 
 # OR manual workflow:
 npm run dev:status || npm run dev:daemon  # Ensure dev server running
 npm run e2e:verify-user                    # Verify test user exists
 npm run test:e2e:setup                    # Setup authentication (if needed)
-npx playwright test                       # Run tests
+npm run test:e2e                          # Run tests
 ```
 
 ### Current Implementation Status ✅
@@ -185,7 +185,7 @@ npm run dev:status
 # Should show: "✅ Daemon running and healthy (PID: XXXX, Port: YYYY)"
 ```
 
-**For AI Agents**: Always run `npm run dev:status || npm run dev:daemon` before E2E tests to ensure server availability.
+**For AI Agents**: Always run `npm run dev:status || npm run dev:daemon` before E2E tests to ensure server availability. Use `npm run test:e2e` instead of `npx playwright test` for consistent headless and isolated execution.
 
 ### Port Conflicts
 

@@ -80,6 +80,7 @@ Type checking and linting:
   - When writing tests, use our Jest testing framework with React Testing Library
   - **Prefer using a subagent** for **running** tests to avoid filling the context window
 - for Playwright E2E browser testing, first read `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
+  - **ALWAYS use `npm run test:e2e`** instead of `npx playwright test` - includes headless and isolated flags by default
   - **E2E Authentication Best Practice**: Use `test.use({ storageState })` pattern for file-level auth injection (see `docs/reference/TESTING_BROWSER_AUTOMATION_IMPLEMENTATION.md`)
   - **Pre-flight checks**: Run `npm run e2e:preflight` before E2E tests to verify test user exists and dev server is healthy
 - **CLI usage:** When running Claude Code from command line, you MUST explicitly run `npm run lint` and `npm run build` to get diagnostic feedback OR use `npm run check:health` for orchestration-friendly summaries
