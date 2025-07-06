@@ -19,6 +19,7 @@ type LLMEntity = z.infer<typeof entitySchema>
 import type { Entity } from '@/lib/types/entity'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
+import { createAIResponseLogger } from '@/lib/services/ai-response-logger'
 import { storeIndividualEntities, getIndividualEntities, deleteAllIndividualEntities } from '@/lib/services/database/individual-entity-storage'
 import { getModelForAICall, GLOSSARY_CONFIG } from '@/lib/config'
 import { createRequestLogger, logAIOperation, createTimer } from '@/lib/services/logger'
@@ -241,6 +242,7 @@ export class GlossaryHandler extends BaseToolHandler {
       
       // Create AI call record for tracking
       const aiCallService = new AiCallService(supabase)
+      const aiResponseLogger = createAIResponseLogger(aiCallService)
       const aiCallOptions: Parameters<typeof aiCallService.startCallWithModelString>[0] = {
         userId: context.user.id,
         modelString: modelString,
@@ -313,13 +315,18 @@ export class GlossaryHandler extends BaseToolHandler {
       const validatedResponse = glossaryResponseSchema.parse(parsedResponse)
       
       // Complete the AI call record with usage metadata
-      await aiCallService.completeCall(aiCall.id, {
-        output_data: {
+      await aiResponseLogger.completeAICall({
+        aiCallId: aiCall.id,
+        response: llmResult.rawResponse || {
+          text: llmResult.text,
+          usage: llmResult.usage,
+          finishReason: llmResult.finishReason
+        },
+        outputData: {
           entities_count: validatedResponse.entities.length,
           processing_notes: 'Glossary generation completed successfully'
         },
-        usage: llmResult.usage,
-        finishReason: llmResult.finishReason
+        correlationId: context.request.correlationId
       })
       
       // Store entities individually in database (only if documentId provided)

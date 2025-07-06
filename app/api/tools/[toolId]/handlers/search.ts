@@ -18,6 +18,7 @@ import {
 } from '@/lib/prompts/templates/semantic-search'
 import { DocumentService } from '@/lib/services/database/documents'
 import { AiCallService } from '@/lib/services/database/ai-calls'
+import { createAIResponseLogger } from '@/lib/services/ai-response-logger'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { DocumentParser } from '@/lib/services/document-parser'
 import { getModelForAICall } from '@/lib/config'
@@ -204,6 +205,7 @@ export class SearchHandler extends BaseToolHandler {
       const supabase = context.supabaseClient!
       const documentService = new DocumentService(supabase)
       const aiCallService = new AiCallService(supabase)
+      const aiResponseLogger = createAIResponseLogger(aiCallService)
       const enhancementService = new EnhancementService(supabase)
       const documentParser = new DocumentParser()
       
@@ -481,15 +483,20 @@ export class SearchHandler extends BaseToolHandler {
       }
       
       // Complete the AI call record with usage metadata
-      await aiCallService.completeCall(aiCall.id, {
-        output_data: {
+      await aiResponseLogger.completeAICall({
+        aiCallId: aiCall.id,
+        response: llmResult.rawResponse || {
+          text: llmResult.text,
+          usage: llmResult.usage,
+          finishReason: llmResult.finishReason
+        },
+        outputData: {
           matches_found: validMatches.length,
           total_matches_returned: validatedResponse.matches.length,
           invalid_ids_filtered: validatedResponse.matches.length - validMatches.length,
           processing_notes: 'Semantic search completed successfully'
         },
-        usage: llmResult.usage,
-        finishReason: llmResult.finishReason
+        correlationId: context.request.correlationId
       })
       
       logger.info({

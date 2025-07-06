@@ -30,6 +30,7 @@ import {
 } from '@/lib/prompts/templates/multi-summarise'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
+import { createAIResponseLogger } from '@/lib/services/ai-response-logger'
 import { getModelForAICall } from '@/lib/config'
 import { createRequestLogger, logAIOperation, createTimer } from '@/lib/services/logger'
 import { BaseToolHandler, createHandlerError } from '../handler-interface'
@@ -248,6 +249,7 @@ export class SummaryHandler extends BaseToolHandler {
       const supabase = context.supabaseClient!
       const enhancementService = new EnhancementService(supabase)
       const aiCallService = new AiCallService(supabase)
+      const aiResponseLogger = createAIResponseLogger(aiCallService)
       
       // Check if summary already exists in database
       // Use sectionId for section-specific caching, or granularity for document-level caching
@@ -333,13 +335,18 @@ export class SummaryHandler extends BaseToolHandler {
         })
         
         // Complete AI call tracking with success and usage metadata
-        await aiCallService.completeCall(aiCall.id, {
-          output_data: {
+        await aiResponseLogger.completeAICall({
+          aiCallId: aiCall.id,
+          response: summaryResult.rawResponse || {
+            text: summaryResult.text,
+            usage: summaryResult.usage,
+            finishReason: summaryResult.finishReason
+          },
+          outputData: {
             text_length: summaryResult.text.length,
             processing_notes: 'Summary generation completed successfully'
           },
-          usage: summaryResult.usage,
-          finishReason: summaryResult.finishReason
+          correlationId: context.request.correlationId
         })
         
         // Log successful AI operation
@@ -468,6 +475,7 @@ export class SummaryHandler extends BaseToolHandler {
       const supabase = context.supabaseClient!
       const enhancementService = new EnhancementService(supabase)
       const aiCallService = new AiCallService(supabase)
+      const aiResponseLogger = createAIResponseLogger(aiCallService)
       
       // Check if multi-dimensional summary already exists
       logger.info({ documentId }, 'Checking for existing multi-dimensional summary')
@@ -622,15 +630,20 @@ export class SummaryHandler extends BaseToolHandler {
       
       // Complete AI call tracking with success
       try {
-        await aiCallService.completeCall(aiCall.id, {
-          output_data: {
+        await aiResponseLogger.completeAICall({
+          aiCallId: aiCall.id,
+          response: summaryResult.rawResponse || {
+            text: summaryResult.text,
+            usage: summaryResult.usage,
+            finishReason: summaryResult.finishReason
+          },
+          outputData: {
             text_length: summaryResult.text.length,
             combinations_generated: 9,
             json_structure_valid: true,
             processing_notes: 'Multi-dimensional summary generation completed successfully using single structured prompt'
           },
-          usage: summaryResult.usage,
-          finishReason: summaryResult.finishReason
+          correlationId: context.request.correlationId
         })
       } catch (trackingError) {
         logger.warn({

@@ -208,7 +208,7 @@ describe('AIResponseLogger', () => {
         ]
       }
 
-      const result = await logger.completeAICall({
+      await logger.completeAICall({
         aiCallId: 'test-ai-call-id',
         response: mockResponse
       })
@@ -237,7 +237,7 @@ describe('AIResponseLogger', () => {
         finishReason: 'length'
       }
 
-      const result = await logger.completeAICall({
+      await logger.completeAICall({
         aiCallId: 'test-ai-call-id',
         response: mockResponse
       })
@@ -258,7 +258,7 @@ describe('AIResponseLogger', () => {
         finishReason: 'stop'
       }
 
-      const result = await logger.completeAICall({
+      await logger.completeAICall({
         aiCallId: 'test-ai-call-id',
         response: mockResponse
       })
@@ -385,7 +385,7 @@ describe('AIResponseLogger', () => {
         finishReason: 'stop'
       }
 
-      const result = await logger.completeAICall({
+      await logger.completeAICall({
         aiCallId: 'test-ai-call-id',
         response: mockResponse
       })
@@ -413,7 +413,7 @@ describe('AIResponseLogger', () => {
         customField3: ['array', 'values']
       }
 
-      const result = await logger.completeAICall({
+      await logger.completeAICall({
         aiCallId: 'test-ai-call-id',
         response: mockResponse
       })
