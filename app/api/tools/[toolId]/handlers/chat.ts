@@ -22,6 +22,7 @@ import { AI_CONFIG, getModelForAICall, CHAT_VALIDATION_CONFIG } from '@/lib/conf
 import { validateMessage } from '@/lib/utils/chat-validation'
 import { renderChatSystemPrompt } from '@/lib/prompts/templates/chat-system'
 import { AiCallService } from '@/lib/services/database/ai-calls'
+import { createAIResponseLogger } from '@/lib/services/ai-response-logger'
 import { ChatService } from '@/lib/services/database/chat'
 import { createRequestLogger, createTimer, logAIOperation } from '@/lib/services/logger'
 import { BaseToolHandler, createHandlerError } from '../handler-interface'
@@ -252,6 +253,7 @@ export class ChatHandler extends BaseToolHandler {
     const supabase = context.supabaseClient!
     const chatService = new ChatService(supabase)
     const aiCallService = new AiCallService(supabase)
+    const aiResponseLogger = createAIResponseLogger(aiCallService)
     const { modelString, config: modelConfig } = getModelForAICall()
     
     try {
@@ -300,6 +302,19 @@ export class ChatHandler extends BaseToolHandler {
         content: trimmedContent
       })
       
+      // Start AI call tracking
+      const aiCall = await aiCallService.startCallWithModelString({
+        userId: context.user!.id,
+        ...(documentId && { documentId }),
+        modelString: modelString,
+        prompt_type: 'chat',
+        input_data: {
+          messages: messages.map(m => ({ role: m.role, content: m.content })),
+          documentContext: documentContext ? documentContext.substring(0, 1000) + '...' : null,
+          threadId: effectiveThreadId
+        }
+      })
+      
       // Generate AI response
       const chatTimer = createTimer(logger, 'chat-generation')
       
@@ -309,7 +324,8 @@ export class ChatHandler extends BaseToolHandler {
         messageCount: aiMessages.length,
         maxTokens: AI_CONFIG.DEFAULT_MAX_TOKENS,
         correlationId: context.request.correlationId,
-        threadId: effectiveThreadId
+        threadId: effectiveThreadId,
+        aiCallId: aiCall.id
       }, 'Starting AI chat generation')
       
       const model = getModel()
@@ -325,19 +341,28 @@ export class ChatHandler extends BaseToolHandler {
         responseLength: aiResult.text.length
       })
       
-      // Create AI call tracking record
-      const aiCall = await aiCallService.createWithModelString({
-        userId: context.user!.id,
-        modelString: modelString,
-        promptTokens: aiResult.usage?.promptTokens || null,
-        completionTokens: aiResult.usage?.completionTokens || null,
-        totalTokens: aiResult.usage?.totalTokens || null,
-        requestData: {
-          messages: messages.map(m => ({ role: m.role, content: m.content })),
-          documentContext: documentContext ? documentContext.substring(0, 1000) + '...' : null,
-          threadId: effectiveThreadId
+      // Complete AI call tracking with comprehensive response logging
+      await aiResponseLogger.completeAICall({
+        aiCallId: aiCall.id,
+        response: {
+          text: aiResult.text,
+          usage: aiResult.usage ? {
+            promptTokens: aiResult.usage.promptTokens || 0,
+            completionTokens: aiResult.usage.completionTokens || 0,
+            totalTokens: aiResult.usage.totalTokens || 0
+          } : {
+            promptTokens: 0,
+            completionTokens: 0,
+            totalTokens: 0
+          },
+          finishReason: aiResult.finishReason || 'unknown'
         },
-        responseData: { response: aiResult.text }
+        outputData: {
+          response: aiResult.text,
+          threadId: effectiveThreadId,
+          duration: chatDuration
+        },
+        correlationId: context.request.correlationId
       })
       
       // Save AI response message to database

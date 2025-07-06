@@ -33,15 +33,7 @@ export interface VercelAIResponse {
   finishTimestamp?: number
   
   // Provider-specific metadata
-  experimental_providerMetadata?: {
-    [provider: string]: {
-      id?: string
-      modelId?: string
-      latency?: number
-      // Provider-specific fields
-      [key: string]: unknown
-    }
-  }
+  experimental_providerMetadata?: Record<string, unknown>
   
   // Response metadata
   response?: {
@@ -120,12 +112,15 @@ export class AIResponseLogger {
         latencyMs = response.finishTimestamp - response.startTimestamp
       }
       // Priority 2: Provider metadata latency
-      else if (response.experimental_providerMetadata) {
+      else if (response.experimental_providerMetadata && typeof response.experimental_providerMetadata === 'object') {
         // Check each provider's metadata for latency
-        for (const providerData of Object.values(response.experimental_providerMetadata)) {
+        for (const [_key, providerData] of Object.entries(response.experimental_providerMetadata)) {
           if (typeof providerData === 'object' && providerData && 'latency' in providerData) {
-            latencyMs = providerData.latency as number
-            break
+            const providerObj = providerData as Record<string, unknown>
+            if (typeof providerObj.latency === 'number') {
+              latencyMs = providerObj.latency
+              break
+            }
           }
         }
       }
@@ -293,8 +288,12 @@ export class AIResponseLogger {
     const sanitized: JsonObject = {}
     
     for (const [provider, data] of Object.entries(metadata)) {
-      if (typeof data === 'object' && data !== null) {
-        sanitized[provider] = this.sanitizeValue(data) as JsonObject
+      if (data === null) {
+        sanitized[provider] = null
+      } else if (typeof data === 'object') {
+        sanitized[provider] = this.sanitizeValue(data) as JsonValue
+      } else {
+        sanitized[provider] = data as JsonValue
       }
     }
     
