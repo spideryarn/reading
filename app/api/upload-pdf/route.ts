@@ -110,7 +110,16 @@ export async function POST(request: NextRequest) {
     const aiCallService = new AiCallService(supabase)
 
     // Determine which processing path to use
-    const useGeminiNative = provider === 'gemini' && canProcessWithGeminiNative(pdfBuffer).canProcess
+    const canGeminiResult = canProcessWithGeminiNative(pdfBuffer)
+    const useGeminiNative = provider === 'gemini' && canGeminiResult.canProcess
+
+    // Fail fast if user explicitly requested Gemini but the PDF cannot be handled natively
+    if (provider === 'gemini' && !canGeminiResult.canProcess) {
+      return new NextResponse(
+        canGeminiResult.reason || 'PDF cannot be processed with Gemini Native due to provider limits.',
+        { status: 413 }
+      )
+    }
     
     let htmlResult: {
       text: string
@@ -128,8 +137,8 @@ export async function POST(request: NextRequest) {
     
     if (useGeminiNative) {
       // Use v3 Gemini Native processor with bounding box extraction
-      providerDisplayName = 'Gemini 2.5 Pro (Native PDF)'
-      modelString = 'google:gemini-2.5-pro:latest'
+      providerDisplayName = 'Gemini 2.5 Flash (Native PDF)'
+      modelString = 'google:gemini-2.5-flash:latest'
       
       const aiCall = await aiCallService.startCallWithModelString({
         userId: user.id,

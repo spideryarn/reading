@@ -27,7 +27,7 @@ describe('PDF to HTML Direct Prompt Template', () => {
       const geminiPrompt = createPdfToHtmlPrompt('gemini')
       
       expect(claudePrompt.modelConfig?.model).toBe('anthropic:claude-sonnet-4:20250514')
-      expect(geminiPrompt.modelConfig?.model).toBe('google:gemini-2.5-pro:latest')
+      expect(geminiPrompt.modelConfig?.model).toBe('google:gemini-2.5-flash:latest')
     })
 
     it('should have valid schema for direct PDF input', () => {

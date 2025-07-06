@@ -14,7 +14,7 @@ export const pdfToHtmlV3GeminiNativeOutputSchema = z.string().min(1).describe('C
 // Create v3 PDF to HTML prompt template specifically for Gemini
 export function createPdfToHtmlV3GeminiNativePrompt() {
   // Always use Gemini for v3 as it's the only model with native bounding box support
-  const modelString = 'google:gemini-2.5-pro:latest'
+  const modelString = 'google:gemini-2.5-flash:latest'
   
   return loadMultimodalPromptTemplateFromCaller(
     'pdf-to-html-v3-gemini-native.njk',

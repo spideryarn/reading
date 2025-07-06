@@ -2,8 +2,13 @@
  * Tests for Gemini Native PDF Processor
  */
 
+// eslint-disable-next-line import/no-unresolved -- path aliases are resolved via ts-jest config in test env
 import { processWithGeminiNative, canProcessWithGeminiNative } from '../gemini-native-pdf-processor'
+// eslint-disable-next-line import/no-unresolved -- path aliases are resolved via ts-jest config in test env
+// @ts-ignore
 import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
+// eslint-disable-next-line import/no-unresolved -- path aliases are resolved via ts-jest config in test env
+// @ts-ignore
 import { UPLOAD_LIMITS } from '@/lib/config/upload-limits'
 
 // Mock dependencies
@@ -287,6 +292,44 @@ describe('GeminiNativePdfProcessor', () => {
       )
       
       expect(result.html).toBe('<html><head></head><body>Single page content</body></html>')
+    })
+
+    it('should correctly interpret y,x coordinate order from Gemini', async () => {
+      const mockHtml = `
+        <html>
+          <body>
+            <!-- Gemini sometimes returns y,x,y,x -->
+            <figure data-bbox="200,100,800,900" id="figYX">
+              <figcaption>Figure 7: YX order</figcaption>
+            </figure>
+          </body>
+        </html>
+      `
+      mockExecuteMultimodalPromptWithUsage.mockResolvedValue({
+        text: mockHtml,
+        usage: { promptTokens: 10, completionTokens: 5, totalTokens: 15 },
+        finishReason: 'stop'
+      })
+      const result = await processWithGeminiNative(mockOptions)
+      // Expect coords normalised and swapped
+      expect(result.html).toContain('data-bbox="0.2,0.1,0.8,0.9"')
+      expect(result.extractedImages[0].bbox).toEqual({ x1: 0.2, y1: 0.1, x2: 0.8, y2: 0.9 })
+    })
+
+    it('should skip bounding boxes below minimum size', async () => {
+      const mockHtml = `
+        <html><body>
+          <figure data-bbox="10,10,20,20">Tiny Box</figure>
+        </body></html>
+      `
+      mockExecuteMultimodalPromptWithUsage.mockResolvedValue({
+        text: mockHtml,
+        usage: { promptTokens: 10, completionTokens: 5, totalTokens: 15 },
+        finishReason: 'stop'
+      })
+      const result = await processWithGeminiNative(mockOptions)
+      expect(result.extractedImages).toHaveLength(0)
+      expect(result.warnings.some(w => w.includes('too small'))).toBe(true)
     })
   })
 })
