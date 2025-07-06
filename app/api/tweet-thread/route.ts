@@ -8,6 +8,7 @@ import { getModelForAICall } from '@/lib/config'
 import { createRequestLogger, generateCorrelationId, logAIOperation } from '@/lib/services/logger'
 import { requireAuth } from '@/lib/auth/server-auth'
 import type { JsonObject } from '@/lib/types/json'
+import { createAIResponseLogger } from '@/lib/services/ai-response-logger'
 
 export async function GET(request: NextRequest) {
   const correlationId = generateCorrelationId()
@@ -289,23 +290,36 @@ export async function POST(request: NextRequest) {
       metadata: validatedResponse.metadata || {}
     }
     
-    const aiCall = await aiCallService.createWithModelString({
+    const aiResponseLogger = createAIResponseLogger(aiCallService)
+
+    // Start AI call tracking
+    const pendingCall = await aiCallService.startCallWithModelString({
       userId: user.id,
       modelString: modelString,
-      promptTokens: llmResult.usage.promptTokens,
-      completionTokens: llmResult.usage.completionTokens,
-      totalTokens: llmResult.usage.totalTokens,
-      requestData: {
-        content: content,
-        target_length
-      },
-      responseData: responseDataForStorage
+      prompt_type: 'chat',
+      input_data: {
+        content,
+        target_length,
+        documentId
+      }
     })
-    
+
+    // Complete AI call with full response logging
+    await aiResponseLogger.completeAICall({
+      aiCallId: pendingCall.id,
+      response: {
+        text: llmResult.text,
+        usage: llmResult.usage,
+        finishReason: llmResult.finishReason
+      },
+      outputData: responseDataForStorage,
+      correlationId
+    })
+
     // Store tweet thread enhancement in database
     await enhancementService.storeTweetThread(
       documentId,
-      aiCall.id,
+      pendingCall.id,
       {
         tweets: validatedResponse.tweets.map(tweet => ({
           id: `tweet-${tweet.number}`,
@@ -321,7 +335,7 @@ export async function POST(request: NextRequest) {
     requestLogger.info({
       correlationId,
       documentId,
-      aiCallId: aiCall.id,
+      aiCallId: pendingCall.id,
       tweetCount: validatedResponse.tweets.length,
       tokensUsed: llmResult.usage.totalTokens
     }, 'Tweet thread generated and stored successfully')

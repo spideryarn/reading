@@ -622,22 +622,35 @@ export class ChatHandler extends BaseToolHandler {
         try {
           const supabase = context.supabaseClient!
           const aiCallService = new AiCallService(supabase)
+          const aiResponseLogger = createAIResponseLogger(aiCallService)
           
-          const aiCall = await aiCallService.createWithModelString({
+          const pendingCall = await aiCallService.startCallWithModelString({
             userId: context.user!.id,
             modelString: modelString,
-            promptTokens: result.usage?.promptTokens || null,
-            completionTokens: result.usage?.completionTokens || null,
-            totalTokens: result.usage?.totalTokens || null,
-            requestData: {
+            prompt_type: 'chat',
+            input_data: {
               messages: messages.map(m => ({ role: m.role, content: m.content })),
               documentContext: documentContext ? documentContext.substring(0, 1000) + '...' : null,
               threadId: finalThreadId
-            },
-            responseData: { response }
+            }
           })
           
-          aiCallId = aiCall.id
+          await aiResponseLogger.completeAICall({
+            aiCallId: pendingCall.id,
+            response: {
+              text: result.text,
+              usage: result.usage,
+              finishReason: result.finishReason
+            },
+            outputData: {
+              response,
+              threadId: finalThreadId,
+              duration: chatDuration
+            },
+            correlationId: context.request.correlationId
+          })
+          
+          aiCallId = pendingCall.id
           
           logger.info({
             aiCallId,

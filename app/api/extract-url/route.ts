@@ -424,6 +424,7 @@ export async function POST(request: NextRequest) {
     // Initialize Supabase client and services (needed for both PDF and HTML paths)
     const supabase = await getSupabaseServerClient(request, { allowBearer: true })
     const aiCallService = new AiCallService(supabase)
+    const aiResponseLogger = createAIResponseLogger(aiCallService)
     
     // Route based on detected content type
     if (contentDetection.isPdf) {
@@ -613,15 +614,20 @@ export async function POST(request: NextRequest) {
         
         const processingTime = Date.now() - startTime
         
-        // Complete the AI call record with usage metadata
-        await aiCallService.completeCall(aiCall!.id, {
-          output_data: {
+        // Complete the AI call record with comprehensive logging
+        await aiResponseLogger.completeAICall({
+          aiCallId: aiCall!.id,
+          response: extractResult.rawResponse || {
+            text: extractResult.text,
+            usage: extractResult.usage,
+            finishReason: extractResult.finishReason
+          },
+          outputData: {
             html_length: extractResult.text.length,
             processing_time_ms: processingTime,
             provider_used: providerDisplayName
           },
-          usage: extractResult.usage,
-          finishReason: extractResult.finishReason
+          correlationId
         })
         
         // Log successful AI operation
@@ -661,13 +667,13 @@ export async function POST(request: NextRequest) {
           error instanceof Error ? error : new Error('Unknown error')
         )
         
-        // Mark AI call as failed
-        await aiCallService.completeCall(aiCall!.id, {
-          output_data: {
-            error_type: 'llm_extraction_failed',
-            error_message: error instanceof Error ? error.message : 'Unknown error'
-          }
-        })
+        // Mark AI call as failed (fatal error metadata)
+        await aiCallService.failCall(
+          aiCall!.id,
+          error instanceof Error ? error.message : 'Unknown error',
+          'llm_extraction_failed',
+          { provider }
+        )
         
         // Check for JavaScript detection error
         if (error instanceof Error && error.message.includes('JavaScript')) {

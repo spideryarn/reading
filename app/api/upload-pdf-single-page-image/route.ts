@@ -14,6 +14,7 @@ import { z } from 'zod'
 import { DocumentService } from '@/lib/services/database/documents'
 import { generateSlug } from '@/lib/utils/slug'
 import { JSDOM } from 'jsdom'
+import { createAIResponseLogger } from '@/lib/services/ai-response-logger'
 
 // Request schema for single page upload
 const SinglePageUploadSchema = z.object({
@@ -138,6 +139,7 @@ export async function POST(request: NextRequest) {
     // Initialize Supabase client and services
     const supabase = await createClient()
     const aiCallService = new AiCallService(supabase)
+    const aiResponseLogger = createAIResponseLogger(aiCallService)
 
     // ---------------------------------------------------------------------------
     // Ensure a draft document row exists BEFORE the client begins cropping &
@@ -355,27 +357,28 @@ export async function POST(request: NextRequest) {
 
     const totalProcessingTime = Date.now() - startTime
 
-    // Complete the AI call record
-    await aiCallService.completeCall(aiCall.id, {
-      output_data: {
+    // Complete the AI call record with comprehensive logging
+    await aiResponseLogger.completeAICall({
+      aiCallId: aiCall.id,
+      response: {
+        text: updatedHtml.substring(0, 100) + '...', // store sample text only
+        usage: pageResult.tokenUsage ? {
+          promptTokens: pageResult.tokenUsage.promptTokens,
+          completionTokens: pageResult.tokenUsage.completionTokens,
+          totalTokens: pageResult.tokenUsage.totalTokens,
+          ...(pageResult.tokenUsage.reasoningTokens !== undefined && {
+            reasoningTokens: pageResult.tokenUsage.reasoningTokens
+          })
+        } : { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+        finishReason: 'stop'
+      },
+      outputData: {
         page_number: pageNumber,
         html_length: updatedHtml.length,
         images_extracted: extractedImages.length,
         processing_time_ms: totalProcessingTime
       },
-      usage: pageResult.tokenUsage ? {
-        totalTokens: pageResult.tokenUsage.totalTokens,
-        promptTokens: pageResult.tokenUsage.promptTokens,
-        completionTokens: pageResult.tokenUsage.completionTokens,
-        ...(pageResult.tokenUsage.reasoningTokens !== undefined && {
-          reasoningTokens: pageResult.tokenUsage.reasoningTokens
-        })
-      } : {
-        totalTokens: 0,
-        promptTokens: 0,
-        completionTokens: 0
-      },
-      finishReason: 'stop'
+      correlationId
     })
 
     // Complete request timing
