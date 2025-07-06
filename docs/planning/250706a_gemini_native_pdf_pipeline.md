@@ -147,7 +147,12 @@ From our investigation:
   - **Coordinate system: Confirmed 0-1000 scale**
   - No breaking changes in Gemini 2.0 Flash
 - [x] Create test PDF with known bounding boxes to validate coordinate extraction
+  - Test infrastructure in `scripts/tests/test-gemini-bounding-boxes.ts`
+  - Test data in `test-data/bbox-test.html` and PDF version
+  - Documentation in `scripts/tests/README-gemini-bbox-tests.md`
 - [x] Test Gemini's response with explicit bounding box prompting
+  - 100% detection rate, 99%+ accuracy on coordinates
+  - Results contradict research concerns about accuracy
 - [x] Document findings in Appendices A & B - **Results much better than research suggested!**
 
 ### Stage: Rename v1 to v3
@@ -328,6 +333,11 @@ From our investigation:
 
 **Test Results - Bounding Box Accuracy (commit: f02c584)**
 
+Test infrastructure permanently located at:
+- **Test Script**: `scripts/tests/test-gemini-bounding-boxes.ts`
+- **Test Data**: `test-data/bbox-test.html` → `test-data/Bounding Box Test Document.pdf`
+- **Documentation**: `scripts/tests/README-gemini-bbox-tests.md`
+
 #### Test Setup
 - Created 2-page PDF with 5 visual elements at known positions
 - Figures: Top-left, center, top-right, full-width
@@ -363,6 +373,18 @@ From our investigation:
 - The 99%+ accuracy is sufficient for automated image extraction
 - No need for complex coordinate adjustment algorithms
 - V3 approach is validated as technically feasible
+
+#### How to Re-run Tests
+```bash
+# Run bbox extraction test on the test PDF
+npx tsx scripts/tests/test-gemini-bounding-boxes.ts "test-data/Bounding Box Test Document.pdf"
+
+# Test on any other PDF
+npx tsx scripts/tests/test-gemini-bounding-boxes.ts path/to/your.pdf
+
+# Create expected coordinates file for comparison (optional)
+# Name it: your.pdf → your-expected.json
+```
 
 #### Recommended Next Steps
 1. Test with real academic PDFs (multi-column, equations, complex figures)
