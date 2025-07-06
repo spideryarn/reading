@@ -73,7 +73,7 @@ export function MemoryUsageWarning({ pageCount, fileSize, isVisible }: MemoryUsa
               <ul className="list-disc list-inside mt-1 ml-2">
                 <li>Using a desktop computer instead of mobile device</li>
                 <li>Closing other browser tabs to free memory</li>
-                <li>Using AI Transcription (v1) instead of Vision AI</li>
+                <li>Using AI Transcription (v3) instead of Vision AI</li>
                 <li>Splitting the PDF into smaller sections</li>
               </ul>
             </p>

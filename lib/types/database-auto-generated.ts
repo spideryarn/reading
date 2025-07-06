@@ -63,8 +63,8 @@ export type Database = {
           prompt_template: string | null
           prompt_tokens: number | null
           prompt_type: string
+          raw_api_response: Json | null
           reasoning_tokens: number | null
-          response_text: string | null
           status: string
           total_tokens: number | null
         }
@@ -86,8 +86,8 @@ export type Database = {
           prompt_template?: string | null
           prompt_tokens?: number | null
           prompt_type: string
+          raw_api_response?: Json | null
           reasoning_tokens?: number | null
-          response_text?: string | null
           status: string
           total_tokens?: number | null
         }
@@ -109,8 +109,8 @@ export type Database = {
           prompt_template?: string | null
           prompt_tokens?: number | null
           prompt_type?: string
+          raw_api_response?: Json | null
           reasoning_tokens?: number | null
-          response_text?: string | null
           status?: string
           total_tokens?: number | null
         }

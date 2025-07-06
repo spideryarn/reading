@@ -35,7 +35,7 @@ export function ProcessingOptions({
       case 'readability':
         return 'Mozilla Readability'
       case 'ai-transcription':
-        return 'LLM transcription (v1)'
+        return 'LLM transcription (v3)'
       case 'vision-ai':
         return 'LLM vision-based transcription (v2)'
       default:

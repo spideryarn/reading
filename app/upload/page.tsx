@@ -389,7 +389,7 @@ export default function AddDocumentPage() {
         case 'readability':
           return 'Extracting content with Mozilla Readability...'
         case 'ai-transcription':
-          return `Processing with LLM transcription (v1) using ${provider === 'claude' ? 'Claude' : 'Gemini'}...`
+          return `Processing with LLM transcription (v3) using ${provider === 'claude' ? 'Claude' : 'Gemini'}...`
         default:
           return 'Processing URL...'
       }
@@ -398,7 +398,7 @@ export default function AddDocumentPage() {
         if (method === 'vision-ai') {
           return 'Processing PDF with LLM vision-based transcription (v2)...'
         } else {
-          return `Processing PDF with LLM transcription (v1) using ${provider === 'claude' ? 'Claude' : 'Gemini'}...`
+          return `Processing PDF with LLM transcription (v3) using ${provider === 'claude' ? 'Claude' : 'Gemini'}...`
         }
       } else if (type === 'html') {
         switch (method) {
@@ -407,7 +407,7 @@ export default function AddDocumentPage() {
           case 'readability':
             return 'Extracting content with Mozilla Readability...'
           case 'ai-transcription':
-            return `Processing HTML with LLM transcription (v1) using ${provider === 'claude' ? 'Claude' : 'Gemini'}...`
+            return `Processing HTML with LLM transcription (v3) using ${provider === 'claude' ? 'Claude' : 'Gemini'}...`
           default:
             return 'Processing HTML file...'
         }
@@ -616,7 +616,7 @@ export default function AddDocumentPage() {
               )
             }
           } else {
-            // Standard AI transcription (v1)
+            // Standard AI transcription (v3)
             const apiEndpoint = '/api/upload-pdf'
             // Create PDF-specific FormData with correct field name
             const pdfFormData = new FormData()

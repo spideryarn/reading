@@ -102,8 +102,8 @@ From our investigation:
 
 - `docs/planning/250628a_vision_pdf_image_extraction_to_supabase_storage.md` - Original v2 vision pipeline design with image extraction architecture
 - `docs/reference/PDF_TO_HTML_LLM_APPROACHES.md` - Comprehensive analysis of token limit challenges and parallel processing strategies
-- `docs/diagrams/250705a_llm_v1_pdf_upload_pipeline.mermaid` - Current v1 pipeline flow showing limitations
-- `lib/prompts/templates/pdf-to-html-direct.njk` - Current v1 prompt template to be enhanced
+- `docs/diagrams/250705a_llm_v3_pdf_upload_pipeline.mermaid` - Current v3 pipeline flow showing limitations
+- `lib/prompts/templates/pdf-to-html-direct.njk` - Current v3 prompt template to be enhanced
 - `lib/prompts/templates/page-to-html-fragment.njk` - v2 vision prompt with bounding box instructions
 - `lib/utils/html-fragment-processor.ts` - Bounding box parsing logic from v2
 - `lib/utils/image-extractor.ts` - Canvas-based image extraction from v2
@@ -155,11 +155,11 @@ From our investigation:
   - Results contradict research concerns about accuracy
 - [x] Document findings in Appendices A & B - **Results much better than research suggested!**
 
-### Stage: Rename v1 to v3
-- [ ] Update all references from v1 to v3 in codebase
-- [ ] Update UI text to reflect new version
-- [ ] Update documentation to explain v3 is the upgraded v1
-- [ ] Add migration notes explaining the upgrade
+### Stage: Rename v1 to v3 ✅ COMPLETED
+- [x] Update all references from v1 to v3 in codebase
+- [x] Update UI text to reflect new version
+- [x] Update documentation to explain v3 is the upgraded v1
+- [x] Add migration notes explaining the upgrade
 
 ### Stage: Create Enhanced Prompt Template
 - [ ] Create new prompt template `pdf-to-html-v3-gemini-native.njk` based on v1
@@ -387,10 +387,9 @@ npx tsx scripts/tests/test-gemini-bounding-boxes.ts path/to/your.pdf
 ```
 
 #### Recommended Next Steps
-1. Test with real academic PDFs (multi-column, equations, complex figures)
-2. Implement 1000→1 scale normalization
-3. Add minimum size validation (skip tiny elements)
-4. Test with PDFs containing actual images (not just placeholders)
+- Implement 1000→1 scale normalization
+- Add minimum size validation (skip tiny elements)
+- Test with PDFs containing actual images (not just placeholders)
 
 ### C. Example Bounding Box Output
 
