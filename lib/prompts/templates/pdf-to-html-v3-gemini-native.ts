@@ -20,7 +20,7 @@ export function createPdfToHtmlV3GeminiNativePrompt() {
     'pdf-to-html-v3-gemini-native.njk',
     pdfToHtmlV3GeminiNativePromptInputSchema,
     {
-      model: modelString,
+      modelString: modelString,
       temperature: 0, // Deterministic for accurate coordinate extraction
       maxTokens: 64000, // High limit for complex PDFs with many visual elements
     }

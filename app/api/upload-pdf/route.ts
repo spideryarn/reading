@@ -13,6 +13,7 @@ import { requireAuth } from '@/lib/auth/server-auth'
 import { processHtmlToDocument, handleSanitizationError } from '@/lib/services/html-document-processor'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
 import { validatePdfPageCountFromBuffer } from '@/lib/utils/pdf-validation'
+import { processWithGeminiNative, canProcessWithGeminiNative } from '@/lib/services/gemini-native-pdf-processor'
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
@@ -108,95 +109,201 @@ export async function POST(request: NextRequest) {
     const supabase = await getSupabaseServerClient(request, { allowBearer: true })
     const aiCallService = new AiCallService(supabase)
 
-    // Create provider-specific prompt template with appropriate model configuration
-    const promptTemplate = createPdfToHtmlPrompt(provider as 'claude' | 'gemini' | undefined)
-    const providerDisplayName = provider === 'gemini' ? 'Gemini 1.5 Pro' : 'Claude 4 Sonnet'
+    // Determine which processing path to use
+    const useGeminiNative = provider === 'gemini' && canProcessWithGeminiNative(pdfBuffer).canProcess
     
-    // Get model configuration for AI call tracking
-    const { modelString, config: modelConfig } = getModelForAICall()
+    let htmlResult: {
+      text: string
+      usage: { promptTokens: number; completionTokens: number; totalTokens: number }
+      finishReason: string
+    }
+    let processingTime: number
+    let providerDisplayName: string
+    let modelString: string
+    let extractedImagesMetadata: any[] = []
+    let aiCallId: string
     
     // Create AI call record for tracking (before LLM processing)
     const startTime = Date.now()
-    const aiCall = await aiCallService.startCallWithModelString({
-      userId: user.id,  // Pass user ID for RLS
-      modelString: modelString,
-      prompt_type: 'pdf-to-html',
-      input_data: {
-        file_name: pdfFile.name,
-        file_size_bytes: pdfBuffer.length,
-        page_count: pageValidationResult.pageCount,
-        provider_requested: provider,
-        model_used: modelString
-      }
-    })
     
-    console.log(`Step 1: Converting PDF to HTML using ${providerDisplayName}...`)
-    
-    requestLogger.info({
-      correlationId,
-      step: 'pdf-to-html-conversion',
-      provider: providerDisplayName,
-      modelString: modelString,
-      aiCallId: aiCall.id
-    }, 'Starting PDF to HTML conversion using AI')
-
-    // Execute the direct PDF prompt (multi-page support enabled)
-    const htmlResult = await executeMultimodalPromptWithUsage(promptTemplate, {
-      pdfBuffer,
-      fileName: pdfFile.name,
-      singlePageOnly: false // Multi-page processing enabled
-    })
-    
-    const processingTime = Date.now() - startTime
-    
-    // Check for output truncation due to token limits
-    if (htmlResult.finishReason === 'length') {
-      // Log the failure before throwing
-      requestLogger.error({
-        correlationId,
-        finishReason: htmlResult.finishReason,
-        tokensUsed: htmlResult.usage.totalTokens,
-        pageCount: pageValidationResult.pageCount,
-        provider: provider,
-        aiCallId: aiCall.id
-      }, 'PDF processing failed due to token limit exhaustion')
+    if (useGeminiNative) {
+      // Use v3 Gemini Native processor with bounding box extraction
+      providerDisplayName = 'Gemini 2.5 Pro (Native PDF)'
+      modelString = 'google:gemini-2.5-pro:latest'
       
-      // Complete the AI call with failure metadata
+      const aiCall = await aiCallService.startCallWithModelString({
+        userId: user.id,
+        modelString: modelString,
+        prompt_type: 'pdf-to-html',
+        input_data: {
+          file_name: pdfFile.name,
+          file_size_bytes: pdfBuffer.length,
+          page_count: pageValidationResult.pageCount,
+          provider_requested: provider,
+          model_used: modelString,
+          pipeline_version: 'v3-gemini-native'
+        }
+      })
+      
+      aiCallId = aiCall.id
+      
+      console.log(`Step 1: Converting PDF to HTML using ${providerDisplayName} with bounding box extraction...`)
+      
+      requestLogger.info({
+        correlationId,
+        step: 'pdf-to-html-conversion',
+        provider: providerDisplayName,
+        modelString: modelString,
+        aiCallId: aiCall.id,
+        pipelineVersion: 'v3-gemini-native'
+      }, 'Starting PDF to HTML conversion using Gemini Native')
+      
+      try {
+        const geminiResult = await processWithGeminiNative({
+          pdfBuffer,
+          fileName: pdfFile.name,
+          correlationId,
+          singlePageOnly: false
+        })
+        
+        processingTime = geminiResult.processingTimeMs
+        htmlResult = {
+          text: geminiResult.html,
+          usage: geminiResult.usage,
+          finishReason: geminiResult.finishReason
+        }
+        
+        // Store extracted images metadata for later use
+        extractedImagesMetadata = geminiResult.extractedImages
+        
+        if (geminiResult.warnings.length > 0) {
+          requestLogger.warn({
+            correlationId,
+            warnings: geminiResult.warnings
+          }, 'Gemini Native processing completed with warnings')
+        }
+        
+        // Complete the AI call record with usage metadata
+        await aiCallService.completeCall(aiCall.id, {
+          output_data: {
+            html_length: htmlResult.text.length,
+            processing_time_ms: processingTime,
+            provider_used: providerDisplayName,
+            extracted_images_count: extractedImagesMetadata.length,
+            warnings: geminiResult.warnings
+          },
+          usage: htmlResult.usage,
+          finishReason: htmlResult.finishReason
+        })
+        
+      } catch (error) {
+        // Complete the AI call with failure metadata
+        await aiCallService.failCall(
+          aiCall.id,
+          error instanceof Error ? error.message : 'Unknown error',
+          'GEMINI_NATIVE_PROCESSING_ERROR',
+          {
+            processing_time_ms: Date.now() - startTime,
+            provider_used: providerDisplayName
+          }
+        )
+        throw error
+      }
+      
+    } else {
+      // Use existing direct PDF processor (v3 for both Claude and non-native Gemini)
+      const promptTemplate = createPdfToHtmlPrompt(provider as 'claude' | 'gemini' | undefined)
+      providerDisplayName = provider === 'gemini' ? 'Gemini 1.5 Pro' : 'Claude 4 Sonnet'
+      
+      // Get model configuration for AI call tracking
+      const modelConfig = getModelForAICall()
+      modelString = modelConfig.modelString
+      
+      const aiCall = await aiCallService.startCallWithModelString({
+        userId: user.id,
+        modelString: modelString,
+        prompt_type: 'pdf-to-html',
+        input_data: {
+          file_name: pdfFile.name,
+          file_size_bytes: pdfBuffer.length,
+          page_count: pageValidationResult.pageCount,
+          provider_requested: provider,
+          model_used: modelString,
+          pipeline_version: 'v3-direct'
+        }
+      })
+      
+      aiCallId = aiCall.id
+      
+      console.log(`Step 1: Converting PDF to HTML using ${providerDisplayName}...`)
+      
+      requestLogger.info({
+        correlationId,
+        step: 'pdf-to-html-conversion',
+        provider: providerDisplayName,
+        modelString: modelString,
+        aiCallId: aiCall.id,
+        pipelineVersion: 'v3-direct'
+      }, 'Starting PDF to HTML conversion using AI')
+
+      // Execute the direct PDF prompt (multi-page support enabled)
+      htmlResult = await executeMultimodalPromptWithUsage(promptTemplate, {
+        pdfBuffer,
+        fileName: pdfFile.name,
+        singlePageOnly: false // Multi-page processing enabled
+      })
+      
+      processingTime = Date.now() - startTime
+      
+      // Check for output truncation due to token limits
+      if (htmlResult.finishReason === 'length') {
+        // Log the failure before throwing
+        requestLogger.error({
+          correlationId,
+          finishReason: htmlResult.finishReason,
+          tokensUsed: htmlResult.usage.totalTokens,
+          pageCount: pageValidationResult.pageCount,
+          provider: provider,
+          aiCallId: aiCall.id
+        }, 'PDF processing failed due to token limit exhaustion')
+        
+        // Complete the AI call with failure metadata
+        await aiCallService.completeCall(aiCall.id, {
+          output_data: {
+            html_length: htmlResult.text.length,
+            processing_time_ms: processingTime,
+            provider_used: providerDisplayName,
+            error: 'Token limit exhausted'
+          },
+          usage: htmlResult.usage,
+          finishReason: htmlResult.finishReason
+        })
+        
+        throw new Error(
+          `Document too large for processing. The AI model reached its token limit while processing your ${pageValidationResult.pageCount}-page PDF. ` +
+          `Please try with a shorter document or use the vision pipeline for page-by-page processing.`
+        )
+      }
+      
+      // Log AI operation completion
+      logAIOperation('pdf-to-html-conversion', {
+        modelProvider: modelConfig.config.provider,
+        tokensUsed: htmlResult.usage.totalTokens,
+        userId: user.id,
+        correlationId
+      }, 'success')
+      
+      // Complete the AI call record with usage metadata
       await aiCallService.completeCall(aiCall.id, {
         output_data: {
           html_length: htmlResult.text.length,
           processing_time_ms: processingTime,
-          provider_used: providerDisplayName,
-          error: 'Token limit exhausted'
+          provider_used: providerDisplayName
         },
         usage: htmlResult.usage,
         finishReason: htmlResult.finishReason
       })
-      
-      throw new Error(
-        `Document too large for processing. The AI model reached its token limit while processing your ${pageValidationResult.pageCount}-page PDF. ` +
-        `Please try with a shorter document or use the vision pipeline for page-by-page processing.`
-      )
     }
-    
-    // Log AI operation completion
-    logAIOperation('pdf-to-html-conversion', {
-      modelProvider: modelConfig.provider,
-      tokensUsed: htmlResult.usage.totalTokens,
-      userId: user.id,
-      correlationId
-    }, 'success')
-    
-    // Complete the AI call record with usage metadata
-    await aiCallService.completeCall(aiCall.id, {
-      output_data: {
-        html_length: htmlResult.text.length,
-        processing_time_ms: processingTime,
-        provider_used: providerDisplayName
-      },
-      usage: htmlResult.usage,
-      finishReason: htmlResult.finishReason
-    })
 
     console.log('Step 2: HTML conversion completed, processing through shared pipeline...')
     
@@ -205,7 +312,8 @@ export async function POST(request: NextRequest) {
       step: 'html-conversion-complete',
       processingTimeMs: processingTime,
       htmlLength: htmlResult.text.length,
-      tokensUsed: htmlResult.usage.totalTokens
+      tokensUsed: htmlResult.usage.totalTokens,
+      extractedImagesCount: extractedImagesMetadata.length
     }, 'PDF to HTML conversion completed successfully')
 
     // Process HTML through shared pipeline (sanitization, text extraction, document creation)
@@ -219,7 +327,7 @@ export async function POST(request: NextRequest) {
         filename: pdfFile.name,
         provider,
         correlationId,
-        aiCallId: aiCall.id
+        aiCallId: aiCallId // Pass AI call ID for tracking
       },
       {
         extractionMethod: 'ai-transcription',
@@ -233,7 +341,9 @@ export async function POST(request: NextRequest) {
         processing_time_ms: processingTime,
         file_size_bytes: pdfBuffer.length,
         page_count: pageValidationResult.pageCount,
-        model_used: modelString
+        model_used: modelString,
+        // Additional metadata can be included here but must match expected types
+        // pipeline_version and extracted_images would need to be handled differently
       }
     )
 
