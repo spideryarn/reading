@@ -2,6 +2,7 @@
 // Uses Vercel AI SDK Core for multi-provider support
 
 import { NextRequest, NextResponse } from 'next/server'
+import { createProblemDetail } from '@/lib/api/error-utils'
 import { generateText } from 'ai'
 import { getModel } from '@/lib/services/llm-provider'
 import { AI_CONFIG, getModelForAICall } from '@/lib/config'
@@ -57,14 +58,15 @@ export async function POST(request: NextRequest) {
         bodyKeys: Object.keys(body)
       }, 'Chat request validation failed')
       
-      return NextResponse.json(
-        { 
-          error: 'Invalid request format', 
-          details: errorDetails,
-          code: 'VALIDATION_ERROR'
-        },
-        { status: 400 }
-      )
+      return createProblemDetail({
+        type: '/errors/validation',
+        title: 'Invalid request',
+        status: 400,
+        detail: 'Request validation failed',
+        issues: errorDetails.issues,
+        instance: request.nextUrl?.pathname ?? '/api/chat',
+        correlationId
+      })
     }
     
     const { messages, documentContext, threadId, documentId } = validationResult.data
@@ -275,65 +277,63 @@ export async function POST(request: NextRequest) {
       correlationId
     }, 'Chat request failed')
     
-    // Provide detailed error information to the client
+    // Provide detailed error information to the client as Problem Details
     if (error instanceof Error) {
       // API key errors
       if (error.message.includes('API key') || error.message.includes('401')) {
-        return NextResponse.json(
-          { 
-            error: 'API configuration error',
-            details: 'The Anthropic API key is missing or invalid. Please check server configuration.',
-            code: 'API_KEY_ERROR'
-          },
-          { status: 500 }
-        )
+        return createProblemDetail({
+          type: '/errors/api-config',
+          title: 'API configuration error',
+          status: 500,
+          detail: 'The Anthropic API key is missing or invalid. Please check server configuration.',
+          correlationId,
+          retryable: false
+        })
       }
-      
+
       // Rate limit errors
       if (error.message.includes('rate limit') || error.message.includes('429')) {
-        return NextResponse.json(
-          { 
-            error: 'Rate limit exceeded',
-            details: 'Too many requests to the AI service. Please wait a moment before trying again.',
-            code: 'RATE_LIMIT_ERROR'
-          },
-          { status: 429 }
-        )
+        return createProblemDetail({
+          type: '/errors/rate-limit',
+          title: 'Rate limit exceeded',
+          status: 429,
+          detail: 'Too many requests to the AI service. Please wait a moment before trying again.',
+          correlationId,
+          retryable: true
+        })
       }
-      
+
       // Model errors
       if (error.message.includes('model') || error.message.includes('claude')) {
-        return NextResponse.json(
-          { 
-            error: 'Model configuration error',
-            details: `AI model issue: ${error.message}`,
-            code: 'MODEL_ERROR'
-          },
-          { status: 500 }
-        )
+        return createProblemDetail({
+          type: '/errors/model',
+          title: 'Model configuration error',
+          status: 500,
+          detail: `AI model issue: ${error.message}`,
+          correlationId
+        })
       }
-      
+
       // Network errors
       if (error.message.includes('fetch') || error.message.includes('network')) {
-        return NextResponse.json(
-          { 
-            error: 'Network error',
-            details: 'Failed to connect to AI service. Please check your internet connection.',
-            code: 'NETWORK_ERROR'
-          },
-          { status: 503 }
-        )
+        return createProblemDetail({
+          type: '/errors/network',
+          title: 'Network error',
+          status: 503,
+          detail: 'Failed to connect to AI service. Please check your internet connection.',
+          correlationId,
+          retryable: true
+        })
       }
     }
-    
+
     // Generic error fallback with details
-    return NextResponse.json(
-      { 
-        error: 'Failed to process chat message',
-        details: error instanceof Error ? error.message : 'An unexpected error occurred',
-        code: 'UNKNOWN_ERROR'
-      },
-      { status: 500 }
-    )
+    return createProblemDetail({
+      type: '/errors/internal',
+      title: 'Failed to process chat message',
+      status: 500,
+      detail: error instanceof Error ? error.message : 'An unexpected error occurred',
+      correlationId
+    })
   }
 }

@@ -74,12 +74,14 @@ export async function GET(
     // Get HTML content from database
     const html = doc.html_content
     
-    return new Response(html, {
+    const response = new Response(html, {
       headers: {
         'Content-Type': 'text/html',
         'Cache-Control': 'private, max-age=3600', // Cache for 1 hour
       },
     })
+    response.headers.set('x-spideryarn-correlation-id', correlationId)
+    return response
   } catch (error) {
     const correlationId = generateCorrelationId()
     console.error('Original document API error:', error)

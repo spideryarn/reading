@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createProblemDetail } from '@/lib/api/error-utils'
+import { generateCorrelationId } from '@/lib/services/logger'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth/server-auth'
 import { AIResponseInspectionService } from '@/lib/services/ai-response-inspection'
 
 export async function GET(request: NextRequest) {
+  const correlationId = generateCorrelationId()
+
   // Allow only authenticated users – further restrict to admin if needed
   const user = await requireAuth({ request, allowBearer: true })
 
@@ -16,7 +20,13 @@ export async function GET(request: NextRequest) {
     .single()
 
   if (!profile || !profile.is_admin) {
-    return NextResponse.json({ error: 'Forbidden – admin only' }, { status: 403 })
+    return createProblemDetail({
+      type: 'https://www.spideryarn.com/probs/forbidden',
+      title: 'Forbidden',
+      status: 403,
+      detail: 'Admin access required',
+      correlationId,
+    })
   }
 
   const url = new URL(request.url)
@@ -26,5 +36,7 @@ export async function GET(request: NextRequest) {
   const inspectionService = new AIResponseInspectionService(supabase)
   const summary = await inspectionService.getRecentSummary(hours)
 
-  return NextResponse.json(summary, { status: 200 })
+  const successResponse = NextResponse.json(summary, { status: 200 })
+  successResponse.headers.set('x-spideryarn-correlation-id', correlationId)
+  return successResponse
 } 
