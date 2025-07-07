@@ -276,18 +276,18 @@ Implementation notes:
 
 Next stage → Error-handling and tidying.
 
-### Stage: Bypass Vercel 4.5 MB Upload Limit
-- [ ] Direct-to-storage browser upload
-  - [ ] Reuse existing Supabase **anon** client in the browser to `upload()` the PDF directly to the `documents` bucket (authenticated users only – RLS enforces path constraints)
-  - [ ] No signed PUT URL required at this stage
-- [ ] Adapt `/api/upload-pdf` route
-  - [ ] Accept small JSON body `{ bucket, path, size, mime }` (validate with Zod)
-  - [ ] Use **service-role** Supabase client inside the function to stream-download the PDF and pipe it to Mistral (memory–efficient)
-  - [ ] Return normal JSON payload with OCR HTML + metadata (< 4.5 MB).  Streaming response is deferred to a later stage
-- [ ] Configuration & docs
-  - [ ] Add `export const maxDuration = 300` to the route with comment; consider raising later if needed
-  - [ ] Document the new upload flow & security rationale in `docs/reference/PDF_UPLOAD_GEMINI_NATIVE.md`
-- [ ] Tests / health-check
+### Stage: Bypass Vercel 4.5 MB Upload Limit *(in progress)*
+- [x] Direct-to-storage browser upload
+  - [x] Reuse existing Supabase **anon** client in the browser to `upload()` the PDF directly to the `documents` bucket (authenticated users only – RLS enforces path constraints)
+  - [x] No signed PUT URL required at this stage (simple upload API for v1)
+- [x] Adapt `/api/upload-pdf` route
+  - [x] Accept small JSON body `{ bucket, path, size, mime, provider, title, isPublic, documentId }` (validated with Zod)
+  - [x] Use **service-role** Supabase client inside the function to stream-download the PDF and pipe it to standard v3 processing (memory–efficient)
+  - [x] Return normal JSON payload with OCR HTML + metadata (< 4.5 MB).  Streaming response remains deferred
+- [x] Configuration & docs
+  - [x] Added `export const maxDuration = 300` to `/api/upload-pdf` route
+  - [ ] Document the new upload flow & security rationale in `docs/reference/PDF_UPLOAD_GEMINI_NATIVE.md` *(next commit)*
+- [ ] Tests / health-check *(remaining)*
   - [ ] Jest: mock download stream → ensure piping logic works without buffering
   - [ ] Playwright E2E: happy-path 8 MB PDF upload through the UI
   - [ ] Run `npm run check:health` on changed files
