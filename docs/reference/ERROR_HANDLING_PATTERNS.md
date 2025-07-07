@@ -47,7 +47,7 @@ flowchart TD
 | `status === 429 \| 503 \| 504` **and** `retryable` | Toast (info) + auto-retry w/ back-off | Temporary outage. |
 | `status >= 500` | Toast (danger) + “Report” link with correlation-ID | Unexpected server failure. |
 
-Implementation resides in `lib/hooks/use-api-error-handler.ts` (auto-selected component per table above).
+Implementation resides in `lib/context/error-context.tsx` (decision tree logic) and `lib/hooks/use-api-error-handler.ts`.
 
 ## Example Problem Details
 

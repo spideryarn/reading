@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog'
 import { CircleNotch } from '@phosphor-icons/react/dist/ssr/CircleNotch'
 import { formatDistanceToNow } from 'date-fns'
+import { useApiErrorHandler } from '@/lib/hooks/use-api-error-handler'
 
 export interface DocumentMetadata {
   id: string
@@ -26,6 +27,7 @@ export function useDeleteDocument(metadata: DocumentMetadata) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const { fetchJson } = useApiErrorHandler()
   const router = useRouter()
 
   const triggerDelete = () => {
@@ -38,19 +40,11 @@ export function useDeleteDocument(metadata: DocumentMetadata) {
     setDeleteError(null)
 
     try {
-      // Use API route for proper storage cleanup
-      const response = await fetch('/api/delete-document', {
+      await fetchJson('/api/delete-document', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ documentId: metadata.id })
+        body: JSON.stringify({ documentId: metadata.id }),
       })
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Network error' }))
-        throw new Error(errorData.error || 'Failed to delete document')
-      }
 
-      // Close dialog and redirect
       setDeleteDialogOpen(false)
       router.push('/read')
       

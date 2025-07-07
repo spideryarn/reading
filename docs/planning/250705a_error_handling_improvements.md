@@ -110,7 +110,7 @@ Spideryarn Reading currently suffers from inconsistent error responses, occasion
 
 ### Stage: Documentation & Frontend Patterns
 - [x] Create `docs/reference/ERROR_HANDLING_PATTERNS.md` (following instructions in `docs/instructions/WRITE_EVERGREEN_DOC.md`) with:
-  - [ ] Notification decision tree
+  - [x] Notification decision tree
   - [ ] Example Problem Details for common scenarios
   - [ ] Component patterns and hooks usage
   - [ ] Checklist for writing user-friendly messages
