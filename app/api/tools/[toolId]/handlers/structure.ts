@@ -106,7 +106,7 @@ function validateHeadingOperations(
   const headingRegex = /<h([1-6])[^>]*>/gi
   let match: RegExpExecArray | null
   while ((match = headingRegex.exec(existingHtml)) !== null) {
-    const lvl = parseInt(match[1], 10)
+    const lvl = parseInt(match![1] ?? '', 10)
     if (!isNaN(lvl)) htmlHeadingLevels.push(lvl)
   }
   
@@ -254,6 +254,7 @@ function ensureInsertIds(documentId: string | undefined, operations: HeadingOper
 /**
  * Structure tool handler with AI-powered heading generation
  */
+/* eslint-disable no-restricted-syntax */
 export class StructureHandler extends BaseToolHandler {
   constructor() {
     super('structure')

@@ -18,12 +18,30 @@ import { processWithGeminiNative, canProcessWithGeminiNative } from '@/lib/servi
 import { processWithMistralOcr, canProcessWithMistralOcr } from '@/lib/services/mistral-ocr-pdf-processor'
 import type { VercelAIResponse } from '@/lib/services/ai-response-logger'
 import { randomUUID } from 'crypto'
+import { createProblemDetail } from '@/lib/api/error-utils'
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
   const requestLogger = createRequestLogger('/api/upload-pdf', correlationId)
   const requestTimer = createTimer(requestLogger, 'upload-pdf-request')
-  
+
+  // Helper to build RFC 9457 Problem Details consistently throughout this route
+  const problem = (
+    status: number,
+    code: string,
+    title: string,
+    detail?: string,
+    retryable?: boolean
+  ) =>
+    createProblemDetail({
+      type: `https://spideryarn.com/problems/${code}`,
+      title,
+      status,
+      detail,
+      correlationId,
+      retryable,
+    })
+
   try {
     // Validate authentication first
     const user = await requireAuth({ allowBearer: true, request })
@@ -47,12 +65,18 @@ export async function POST(request: NextRequest) {
     }, 'PDF upload request initiated')
 
     if (!pdfFile) {
-      return new NextResponse('No PDF file provided', { status: 400 })
+      return problem(400, 'NO_PDF_PROVIDED', 'No PDF file provided',
+        'Please include a PDF file in the "pdf" form field.')
     }
 
     // Validate provider selection
     if (!['claude', 'gemini', 'mistral'].includes(provider)) {
-      return new NextResponse('Invalid provider. Must be "claude", "gemini", or "mistral"', { status: 400 })
+      return problem(
+        400,
+        'INVALID_PROVIDER',
+        'Invalid provider',
+        'Provider must be one of "claude", "gemini", or "mistral".'
+      )
     }
 
     // Convert file to buffer
@@ -60,22 +84,36 @@ export async function POST(request: NextRequest) {
     
     // Basic PDF validation
     if (pdfBuffer.length === 0) {
-      return new NextResponse('PDF file is empty', { status: 400 })
+      return problem(400, 'EMPTY_PDF', 'PDF file is empty')
     }
 
     // Check file size using centralized limits
     if (pdfBuffer.length > UPLOAD_LIMITS.PDF_MAX_SIZE_BYTES) {
-      return new NextResponse(`PDF file too large (max ${Math.round(UPLOAD_LIMITS.PDF_MAX_SIZE_BYTES / 1024 / 1024)}MB)`, { status: 400 })
+      return problem(
+        400,
+        'PDF_TOO_LARGE',
+        'PDF file too large',
+        `Maximum allowed size is ${Math.round(
+          UPLOAD_LIMITS.PDF_MAX_SIZE_BYTES / 1024 / 1024
+        )} MB.`
+      )
     }
-    
+
     if (pdfBuffer.length > UPLOAD_LIMITS.PDF_CLAUDE_API_PROCESSING_LIMIT) {
-      return new NextResponse(`PDF file too large for AI processing (max ${Math.round(UPLOAD_LIMITS.PDF_CLAUDE_API_PROCESSING_LIMIT / 1024 / 1024)}MB for Claude direct processing)`, { status: 400 })
+      return problem(
+        400,
+        'PDF_TOO_LARGE_FOR_AI',
+        'PDF file exceeds AI processing limit',
+        `Maximum size for direct processing is ${Math.round(
+          UPLOAD_LIMITS.PDF_CLAUDE_API_PROCESSING_LIMIT / 1024 / 1024
+        )} MB.`
+      )
     }
 
     // Check if it's actually a PDF by looking at the header
     const pdfHeader = pdfBuffer.subarray(0, 4).toString()
     if (pdfHeader !== '%PDF') {
-      return new NextResponse('File is not a valid PDF', { status: 400 })
+      return problem(400, 'INVALID_PDF', 'File is not a valid PDF')
     }
 
     // Validate PDF page count
@@ -89,7 +127,7 @@ export async function POST(request: NextRequest) {
         userId: user.id
       }, 'PDF page count validation failed')
       
-      return new NextResponse(pageValidationResult.error, { status: 400 })
+      return problem(400, 'PDF_PAGE_LIMIT', 'PDF exceeds page limit', pageValidationResult.error)
     }
 
     requestLogger.info({
@@ -125,17 +163,21 @@ export async function POST(request: NextRequest) {
 
     // Fail fast if user explicitly requested Gemini but the PDF cannot be handled natively
     if (provider === 'gemini' && !canGeminiResult.canProcess) {
-      return new NextResponse(
-        canGeminiResult.reason || 'PDF cannot be processed with Gemini Native due to provider limits.',
-        { status: 413 }
+      return problem(
+        413,
+        'GEMINI_LIMIT',
+        'PDF cannot be processed with Gemini Native',
+        canGeminiResult.reason || 'Provider limits exceeded.'
       )
     }
     
     // Fail fast if user explicitly requested Mistral but the PDF cannot be processed
     if (provider === 'mistral' && !canMistralResult.canProcess) {
-      return new NextResponse(
-        canMistralResult.reason || 'PDF cannot be processed with Mistral OCR.',
-        { status: 413 }
+      return problem(
+        413,
+        'MISTRAL_LIMIT',
+        'PDF cannot be processed with Mistral OCR',
+        canMistralResult.reason || 'Provider limits exceeded.'
       )
     }
     
@@ -578,49 +620,54 @@ export async function POST(request: NextRequest) {
     // Handle authentication errors first
     if (error instanceof Error) {
       if (error.message.includes('Authentication failed') || error.message.includes('User not authenticated')) {
-        return new NextResponse('Authentication required', { status: 401 })
+        return problem(401, 'AUTH_REQUIRED', 'Authentication required')
       }
       
       if (error.message.includes('rate limit') || error.message.includes('quota')) {
-        return new NextResponse('AI service rate limit exceeded. Please try again later.', { status: 429 })
+        return problem(429, 'AI_RATE_LIMIT', 'AI service rate limit exceeded', 'Please try again later.', true)
       }
       
       if (error.message.includes('API key') || error.message.includes('authentication')) {
-        return new NextResponse('AI service configuration error. Please check API keys.', { status: 503 })
+        return problem(503, 'AI_CONFIG', 'AI service configuration error', 'Please check API keys.')
       }
       
       if (error.message.includes('timeout')) {
-        return new NextResponse('Request timeout. The PDF may be too complex or the service is busy.', { status: 504 })
+        return problem(504, 'TIMEOUT', 'Request timeout', 'The PDF may be too complex or the service is busy.', true)
       }
 
       if (error.message.includes('storage') || error.message.includes('bucket')) {
-        return new NextResponse('Storage service error. Please try again later.', { status: 503 })
+        return problem(503, 'STORAGE_ERROR', 'Storage service error', 'Please try again later.', true)
       }
 
       // Handle token limit exhaustion error explicitly
       if (error.message.includes('Document too large for processing')) {
-        return new NextResponse(error.message, { status: 413 })
+        return problem(413, 'DOCUMENT_TOO_LARGE', 'Document too large for processing', error.message)
       }
 
       // Handle specific database constraint violations with user-friendly messages
       if (error.message.includes('duplicate key value violates unique constraint "documents_slug_unique"')) {
-        return new NextResponse('A document with that name already exists. Please choose a different name.', { status: 409 })
+        return problem(409, 'DUPLICATE_SLUG', 'Document slug already exists', 'Please choose a different name.')
       }
       
       if (error.message.includes('database') || error.message.includes('Failed to create document')) {
-        return new NextResponse('Database error. Please try again later.', { status: 503 })
+        return problem(503, 'DATABASE_ERROR', 'Database error', 'Please try again later.')
       }
 
       if (error.message.includes('Content sanitization failed') || error.message.includes('sanitization')) {
         // Use shared error handling for sanitization failures
         const sanitizationError = handleSanitizationError(error, 'pdf')
-        return new NextResponse(sanitizationError.message, { status: sanitizationError.status })
+        return problem(
+          sanitizationError.status,
+          'SANITIZATION_ERROR',
+          'Content sanitization failed',
+          sanitizationError.message
+        )
       }
       
-      return new NextResponse(`Processing error: ${error.message}`, { status: 500 })
+      return problem(500, 'PROCESSING_ERROR', 'Processing error', error.message)
     }
     
-    return new NextResponse('Unknown processing error occurred', { status: 500 })
+    return problem(500, 'UNKNOWN_PROCESSING_ERROR', 'Unknown processing error occurred')
   }
 }
 
