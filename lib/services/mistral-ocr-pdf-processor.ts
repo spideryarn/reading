@@ -41,14 +41,16 @@ const mistralImageSchema = z.object({
   image_base64: z.string().optional()
 })
 
-// Schema for Mistral page data
+// Schema for Mistral page data (clean, no legacy fields)
 const mistralPageSchema = z.object({
   index: z.number(),
-  content: z.string(),
-  dpi: z.number().optional(),
-  height: z.number(),
-  width: z.number(),
-  images: z.array(mistralImageSchema)
+  markdown: z.string(),
+  dimensions: z.object({
+    width: z.number(),
+    height: z.number(),
+    dpi: z.number().optional(),
+  }),
+  images: z.array(mistralImageSchema),
 })
 
 // Schema for processing result
@@ -160,70 +162,75 @@ export async function processWithMistralOcr(
     const extractedImages: ExtractedImage[] = []
     const warnings: string[] = []
     
-    if (ocrResponse.pages) {
-      for (const page of ocrResponse.pages) {
-        try {
-          // Validate page data
-          const validatedPage = mistralPageSchema.parse(page)
-          
-          // Add page content
-          if (validatedOptions.singlePageOnly && validatedPage.index > 0) {
-            break
-          }
-          
-          combinedMarkdown += validatedPage.content + '\n\n'
-          
-          // Process images with bounding boxes
-          validatedPage.images.forEach((image, imgIndex) => {
-            try {
-              // Normalize coordinates from pixel to 0-1 scale
-              const x1 = image.top_left_x / validatedPage.width
-              const y1 = image.top_left_y / validatedPage.height
-              const x2 = image.bottom_right_x / validatedPage.width
-              const y2 = image.bottom_right_y / validatedPage.height
-              
-              // Validate normalized coordinates
-              if ([x1, y1, x2, y2].some(v => v < 0 || v > 1)) {
-                warnings.push(`Image ${image.id} has coordinates out of range`)
-                return
-              }
-              
-              // Check minimum size (2% of page)
-              const MIN_SIZE = 0.02
-              if ((x2 - x1) < MIN_SIZE || (y2 - y1) < MIN_SIZE) {
-                warnings.push(`Image ${image.id} too small, skipping`)
-                return
-              }
-              
-              // Create bounding box
-              const bbox = boundingBoxSchema.parse({
-                x1: Number(x1.toFixed(4)),
-                y1: Number(y1.toFixed(4)),
-                x2: Number(x2.toFixed(4)),
-                y2: Number(y2.toFixed(4))
-              })
-              
-              // Generate element ID
-              const elementId = `figure-${validatedPage.index}-${imgIndex + 1}`
-              
-              extractedImages.push({
-                elementId,
-                bbox,
-                elementType: 'figure', // Default to figure, could be enhanced with classification
-                figureNumber: undefined, // Could extract from surrounding text
-                caption: undefined, // Could extract from surrounding text
-                altText: undefined
-              })
-              
-            } catch (error) {
-              warnings.push(`Failed to process image ${image.id}: ${error instanceof Error ? error.message : 'Unknown error'}`)
-            }
-          })
-          
-        } catch (error) {
-          warnings.push(`Failed to process page ${page.index}: ${error instanceof Error ? error.message : 'Unknown error'}`)
-        }
+    if (!ocrResponse.pages || ocrResponse.pages.length === 0) {
+      throw new Error('Mistral OCR returned no pages; cannot extract content')
+    }
+
+    for (const page of ocrResponse.pages) {
+      // Validate page structure (throws on failure)
+      const validatedPage = mistralPageSchema.parse(page)
+
+      // Respect single-page mode
+      if (validatedOptions.singlePageOnly && validatedPage.index > 0) {
+        break
       }
+
+      // --- Extract markdown text ---
+      const pageText = validatedPage.markdown
+      combinedMarkdown += pageText + '\n\n'
+
+      // --- Page dimensions ---
+      const dims = validatedPage.dimensions
+
+      // --- Process images with bounding boxes ---
+      validatedPage.images.forEach((image, imgIndex) => {
+        try {
+          const x1 = image.top_left_x / dims.width
+          const y1 = image.top_left_y / dims.height
+          const x2 = image.bottom_right_x / dims.width
+          const y2 = image.bottom_right_y / dims.height
+
+          // Validate normalized coordinates
+          if ([x1, y1, x2, y2].some((v) => v < 0 || v > 1)) {
+            warnings.push(`Image ${image.id} has coordinates out of range`)
+            return
+          }
+
+          // Minimum size threshold (2% of page)
+          const MIN_SIZE = 0.02
+          if (x2 - x1 < MIN_SIZE || y2 - y1 < MIN_SIZE) {
+            warnings.push(`Image ${image.id} too small, skipping`)
+            return
+          }
+
+          const bbox = boundingBoxSchema.parse({
+            x1: Number(x1.toFixed(4)),
+            y1: Number(y1.toFixed(4)),
+            x2: Number(x2.toFixed(4)),
+            y2: Number(y2.toFixed(4)),
+          })
+
+          const elementId = `figure-${validatedPage.index}-${imgIndex + 1}`
+
+          extractedImages.push({
+            elementId,
+            bbox,
+            elementType: 'figure',
+            figureNumber: undefined,
+            caption: undefined,
+            altText: undefined,
+          })
+        } catch (err) {
+          warnings.push(
+            `Failed to process image ${image.id}: ${err instanceof Error ? err.message : 'Unknown error'}`,
+          )
+        }
+      })
+    }
+
+    // Fail fast if we received no text
+    if (combinedMarkdown.trim().length === 0) {
+      throw new Error('Mistral OCR returned no markdown content for the supplied PDF')
     }
     
     // Convert Markdown to HTML
