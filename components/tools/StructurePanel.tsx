@@ -36,7 +36,7 @@ interface StructurePanelProps {
    * original structure.  This prop comes from the server-side
    * `getEnhancementFlags()` helper.
    */
-  aiHeadingsGenerated: boolean
+  aiHeadingsGenerated?: boolean
 }
 
 // Heading format for mutation generator - must match lib/services/heading-mutation-generator.ts
@@ -125,6 +125,7 @@ export function StructurePanel({
   const [isLoadingHeadings, setIsLoadingHeadings] = useState(false)
   const [headingsError, setHeadingsError] = useState<string | null>(null)
   const [enhancementId, setEnhancementId] = useState<string | null>(null)
+  const [cacheAvailable, setCacheAvailable] = useState<boolean | null>(null)
   const fetchInProgressRef = useRef(false)
   
   // Iteration state
@@ -281,7 +282,15 @@ export function StructurePanel({
     } catch (error) {
       console.error('Error fetching cached headings:', error)
 
-      // Enhance error reporting: include correlationId if available (from ToolExecutorError)
+      // 404 => no cached headings
+      if (error && typeof error === 'object' && (
+          ('status' in (error as any) && (error as any).status === 404) ||
+          ('code' in (error as any) && (error as any).code === 'TOOL_CACHE_NOT_FOUND')
+        )) {
+        return null
+      }
+
+      // Enhance error reporting: include correlationId if available
       let errorMessage = 'Unknown error'
       let correlationId = ''
 
@@ -294,11 +303,7 @@ export function StructurePanel({
         }
       }
 
-      // Re-throw with enriched message so upstream handlers surface it in the UI
-      const decoratedMessage = correlationId
-        ? `${errorMessage} (correlation id: ${correlationId})`
-        : errorMessage
-
+      const decoratedMessage = correlationId ? `${errorMessage} (correlation id: ${correlationId})` : errorMessage
       throw new Error(decoratedMessage)
     } finally {
       fetchInProgressRef.current = false
@@ -369,8 +374,14 @@ export function StructurePanel({
       setHeadingsError(null)
 
       const cached = await fetchCachedHeadings(documentId)
-      if (!cached || !cached.operations || cached.operations.length === 0) {
-        throw new Error('No cached AI-generated headings were found for this document.')
+      if (!cached) {
+        setHeadingsError('No pre-generated headings exist in the database to load.')
+        return
+      }
+
+      if (!cached.operations || cached.operations.length === 0) {
+        setHeadingsError('Cached headings payload was empty.')
+        return
       }
 
       setEnhancementId(cached.enhancementId || null)
@@ -673,6 +684,15 @@ export function StructurePanel({
     }
   }, [])
 
+  // Check once if cached headings exist so we can disable load button if absent
+  useEffect(() => {
+    (async () => {
+      const result = await fetchCachedHeadings(documentId)
+      setCacheAvailable(!!result)
+    })().catch(() => setCacheAvailable(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [documentId])
+
   const handleHeadingClick = (heading: Heading) => {
     if (onHeadingClick) {
       onHeadingClick(heading.text, heading.id)
@@ -835,7 +855,7 @@ export function StructurePanel({
         {currentMode === 'original' && (
           <Button
             onClick={handleLoadCachedHeadings}
-            disabled={isLoadingHeadings || isIterationInProgress}
+            disabled={isLoadingHeadings || isIterationInProgress || cacheAvailable === false}
             variant="ghost"
             size="sm"
             className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
@@ -846,7 +866,7 @@ export function StructurePanel({
                 <span className="ml-1">Loading…</span>
               </>
             ) : (
-              'Load pre-generated headings'
+              cacheAvailable === false ? 'No cached headings' : 'Load pre-generated headings'
             )}
           </Button>
         )}

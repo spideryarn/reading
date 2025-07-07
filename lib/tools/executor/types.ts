@@ -254,6 +254,21 @@ export class ToolNotFoundError extends ToolExecutorError {
 }
 
 /**
+ * Requested cached data for tool was not found (404 but tool itself exists)
+ */
+export class ToolCacheNotFoundError extends ToolExecutorError {
+  readonly code = 'TOOL_CACHE_NOT_FOUND'
+  readonly retryable = false
+  
+  constructor(
+    message: string,
+    options?: { correlationId?: string; toolId?: string }
+  ) {
+    super(message, options)
+  }
+}
+
+/**
  * Operation was cancelled by user or system
  */
 export class ToolCancelledError extends ToolExecutorError {
