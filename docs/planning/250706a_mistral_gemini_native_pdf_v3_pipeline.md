@@ -287,13 +287,10 @@ Next stage → Error-handling and tidying.
 - [x] Configuration & docs
   - [x] Added `export const maxDuration = 300` to `/api/upload-pdf` route
   - [ ] Document the new upload flow & security rationale in `docs/reference/PDF_UPLOAD_GEMINI_NATIVE.md` *(next commit)*
-- [ ] Tests / health-check *(remaining)*
-  - [ ] Jest: mock download stream → ensure piping logic works without buffering
-  - [ ] Playwright E2E: happy-path 8 MB PDF upload through the UI
-  - [ ] Run `npm run check:health` on changed files
-
-### Stage: Streaming Response Upgrade (Deferred)
-- [ ] Once the basic flow is stable, switch `/api/upload-pdf` to stream the HTML back to the client to remove the 4.5 MB response cap.
+- [ ] Tests / health-check *(partially complete)*
+  - [x] Jest: mock download stream → ensure piping logic works without buffering
+  - [ ] Playwright E2E: happy-path 8 MB PDF upload through the UI *(next)*
+  - [x] Run `npm run check:health` on changed files
 
 ### Stage: Error-handling and tidying
 - [x] Implement key quick-win recommendations from `250705a_error_handling_improvements.md`
