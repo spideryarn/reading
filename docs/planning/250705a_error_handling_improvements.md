@@ -90,30 +90,32 @@ Spideryarn Reading currently suffers from inconsistent error responses, occasion
   - ~~`app/api/delete-document/route.ts`~~ ✅ converted
   - ~~`app/api/extract-url/route.ts`~~ ✅ converted
   - ~~`app/api/fake_error/route.ts`~~ ✅ converted
-  - `app/api/fake_success_delay/route.ts`
+  - ~~`app/api/fake_success_delay/route.ts`~~ ✅ converted
   - ~~`app/api/finalise-vision-document/route.ts`~~ ✅ converted
   - ~~`app/api/profile/background/route.ts`~~ ✅ converted
   - ~~`app/api/read/[slug]/download/route.ts`~~ ✅ converted
-  - `app/api/read/[slug]/original/route.ts`
-  - `app/api/read/[slug]/tooltip-info/route.ts`
+  - ~~`app/api/read/[slug]/original/route.ts`~~ ✅ converted
+  - ~~`app/api/read/[slug]/tooltip-info/route.ts`~~ ✅ converted
   - ~~`app/api/speech-to-text/route.ts`~~ ✅ converted
   - ~~`app/api/stripe/create-checkout-session/route.ts`~~ ✅ converted
   - ~~`app/api/stripe/create-customer/route.ts`~~ ✅ converted
   - ~~`app/api/stripe/create-portal-session/route.ts`~~ ✅ converted
+  - ~~`app/api/stripe/webhook/route.ts`~~ ✅ converted
   - `app/api/stripe/webhook/route.ts`
   - `app/api/tools/[toolId]/route.ts`
   - `app/api/tweet-thread/route.ts`
-  - `app/api/upload-html/route.ts`
+  - `app/api/upload-html/route.ts` (✅ validation + error paths converted; success/OPTIONS unchanged – acceptable)
   - `app/api/upload-pdf/route.ts`
   - `app/api/read/[slug]/tooltip-info/route.ts` (partial successes handled; error branches need migration)
   - *(Quick-win routes already converted: create-draft-document, realtime-demo, upload-pdf-single-page-image)*
 
 ### Stage: Documentation & Frontend Patterns
-- [ ] Create `docs/reference/ERROR_HANDLING_PATTERNS.md` (following instructions in `docs/instructions/WRITE_EVERGREEN_DOC.md`) with:
+- [x] Create `docs/reference/ERROR_HANDLING_PATTERNS.md` (following instructions in `docs/instructions/WRITE_EVERGREEN_DOC.md`) with:
   - [ ] Notification decision tree
   - [ ] Example Problem Details for common scenarios
   - [ ] Component patterns and hooks usage
   - [ ] Checklist for writing user-friendly messages
+  > Completed in initial draft – needs frontend review alignment
 - [ ] Update design system with error display variants
 - [ ] Document correlation ID usage for debugging
 - [ ] Review with user for feedback
