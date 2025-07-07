@@ -86,14 +86,14 @@ Spideryarn Reading currently suffers from inconsistent error responses, occasion
 - [x] Create list of all API routes needing conversion (initial inventory below)
 
   **Initial conversion inventory (to be updated as work proceeds):**
-  - `app/api/chat/route.ts`
+  - ~~`app/api/chat/route.ts`~~ ✅ converted
   - ~~`app/api/delete-document/route.ts`~~ ✅ converted
-  - `app/api/extract-url/route.ts`
+  - ~~`app/api/extract-url/route.ts`~~ ✅ converted
   - ~~`app/api/fake_error/route.ts`~~ ✅ converted
   - `app/api/fake_success_delay/route.ts`
-  - `app/api/finalise-vision-document/route.ts`
+  - ~~`app/api/finalise-vision-document/route.ts`~~ ✅ converted
   - ~~`app/api/profile/background/route.ts`~~ ✅ converted
-  - `app/api/read/[slug]/download/route.ts`
+  - ~~`app/api/read/[slug]/download/route.ts`~~ ✅ converted
   - `app/api/read/[slug]/original/route.ts`
   - `app/api/read/[slug]/tooltip-info/route.ts`
   - ~~`app/api/speech-to-text/route.ts`~~ ✅ converted

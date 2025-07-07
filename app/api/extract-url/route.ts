@@ -4,6 +4,7 @@
 // Uses fetch-then-LLM approach since LLMs cannot fetch URLs directly
 
 import { NextRequest, NextResponse } from 'next/server'
+import { createProblemDetail } from '@/lib/api/error-utils'
 import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { createUrlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
 import { createPdfToHtmlPrompt } from '@/lib/prompts/templates/pdf-to-html-direct'
@@ -347,27 +348,59 @@ export async function POST(request: NextRequest) {
     const { url, title: providedTitle, provider = 'claude', extractionMethod = 'ai-transcription', isPublic = false } = body
     
     if (!url) {
-      return new NextResponse(URL_EXTRACTION_CONFIG.ERROR_MESSAGES.INVALID_URL, { status: 400 })
+      return createProblemDetail({
+        type: '/errors/validation',
+        title: 'Invalid URL',
+        status: 400,
+        detail: URL_EXTRACTION_CONFIG.ERROR_MESSAGES.INVALID_URL,
+        correlationId,
+        instance: request.nextUrl?.pathname ?? '/api/extract-url'
+      })
     }
     
     // Validate URL format
     if (!isValidUrl(url)) {
-      return new NextResponse(URL_EXTRACTION_CONFIG.ERROR_MESSAGES.INVALID_URL, { status: 400 })
+      return createProblemDetail({
+        type: '/errors/validation',
+        title: 'Invalid URL',
+        status: 400,
+        detail: URL_EXTRACTION_CONFIG.ERROR_MESSAGES.INVALID_URL,
+        correlationId
+      })
     }
     
     // Validate provider selection
     if (!['claude', 'gemini'].includes(provider)) {
-      return new NextResponse('Invalid provider. Must be "claude" or "gemini"', { status: 400 })
+      return createProblemDetail({
+        type: '/errors/validation',
+        title: 'Invalid provider',
+        status: 400,
+        detail: 'Provider must be "claude" or "gemini"',
+        correlationId
+      })
     }
     
     // Validate extraction method
     if (!['as-is', 'readability', 'ai-transcription', 'ai-dom'].includes(extractionMethod)) {
-      return new NextResponse('Invalid extraction method', { status: 400 })
+      return createProblemDetail({
+        type: '/errors/validation',
+        title: 'Invalid extraction method',
+        status: 400,
+        detail: 'Extraction method must be one of "as-is", "readability", "ai-transcription", or "ai-dom"',
+        correlationId
+      })
     }
     
     // Check if AI DOM Manipulation is selected (not implemented)
     if (extractionMethod === 'ai-dom') {
-      return new NextResponse('AI DOM Manipulation is an experimental feature that is not yet implemented.', { status: 501 })
+      return createProblemDetail({
+        type: '/errors/not-implemented',
+        title: 'AI DOM manipulation not implemented',
+        status: 501,
+        detail: 'AI DOM Manipulation is an experimental feature that is not yet implemented.',
+        correlationId,
+        retryable: false
+      })
     }
     
     console.log(`Processing URL with extraction: ${url} using ${extractionMethod} method`)
@@ -404,9 +437,21 @@ export async function POST(request: NextRequest) {
         error: error instanceof Error ? error.message : 'Unknown error'
       }, 'Failed to detect content type')
       if (error instanceof Error) {
-        return new NextResponse(error.message, { status: 400 })
+        return createProblemDetail({
+          type: '/errors/content-detection',
+          title: 'Content detection failed',
+          status: 400,
+          detail: error.message,
+          correlationId
+        })
       }
-      return new NextResponse('Failed to detect content type', { status: 400 })
+      return createProblemDetail({
+        type: '/errors/content-detection',
+        title: 'Content detection failed',
+        status: 400,
+        detail: 'Failed to detect content type',
+        correlationId
+      })
     }
     
     // Check if content type is supported
@@ -418,7 +463,13 @@ export async function POST(request: NextRequest) {
         contentType: contentDetection.contentType,
         suggestedAction: contentDetection.suggestedAction
       }, 'Unsupported content type detected')
-      return new NextResponse(contentDetection.errorMessage || 'Unsupported content type', { status: 400 })
+      return createProblemDetail({
+        type: '/errors/unsupported-content',
+        title: 'Unsupported content type',
+        status: 400,
+        detail: contentDetection.errorMessage || 'Unsupported content type',
+        correlationId
+      })
     }
     
     // Initialize Supabase client and services (needed for both PDF and HTML paths)
@@ -450,9 +501,21 @@ export async function POST(request: NextRequest) {
           error: error instanceof Error ? error.message : 'Unknown error'
         }, 'Failed to download PDF content')
         if (error instanceof Error) {
-          return new NextResponse(error.message, { status: 400 })
+          return createProblemDetail({
+            type: '/errors/fetch',
+            title: 'Failed to download PDF',
+            status: 400,
+            detail: error.message,
+            correlationId
+          })
         }
-        return new NextResponse('Failed to download PDF content', { status: 400 })
+        return createProblemDetail({
+          type: '/errors/fetch',
+          title: 'Failed to download PDF',
+          status: 400,
+          detail: 'Failed to download PDF content',
+          correlationId
+        })
       }
       
       // Process PDF using the same logic as upload-pdf route
@@ -473,9 +536,21 @@ export async function POST(request: NextRequest) {
           error: error instanceof Error ? error.message : 'Unknown error'
         }, 'Failed to fetch webpage content')
         if (error instanceof Error) {
-          return new NextResponse(error.message, { status: 400 })
+          return createProblemDetail({
+            type: '/errors/fetch',
+            title: 'Failed to fetch webpage',
+            status: 400,
+            detail: error.message,
+            correlationId
+          })
         }
-        return new NextResponse(URL_EXTRACTION_CONFIG.ERROR_MESSAGES.FETCH_FAILED, { status: 400 })
+        return createProblemDetail({
+          type: '/errors/fetch',
+          title: 'Failed to fetch webpage',
+          status: 400,
+          detail: URL_EXTRACTION_CONFIG.ERROR_MESSAGES.FETCH_FAILED,
+          correlationId
+        })
       }
     
     console.log(`Step 3: Fetched ${(htmlContent.length / 1024).toFixed(1)} KB of HTML content`)
@@ -540,17 +615,14 @@ export async function POST(request: NextRequest) {
           contentSizeKb: Math.round(htmlContent.length / 1024)
         }, 'Readability extraction failed')
         
-        return NextResponse.json({
-          success: false,
-          error: 'readability_failed',
-          message: URL_EXTRACTION_CONFIG.ERROR_MESSAGES.READABILITY_FAILED,
-          suggested_method: 'ai-transcription',
-          details: {
-            url: url,
-            extraction_method: 'readability',
-            content_size_kb: Math.round(htmlContent.length / 1024)
-          }
-        }, { status: 422 }) // 422 Unprocessable Entity - method failed but input was valid
+        return createProblemDetail({
+          type: '/errors/readability-failed',
+          title: 'Readability extraction failed',
+          status: 422,
+          detail: URL_EXTRACTION_CONFIG.ERROR_MESSAGES.READABILITY_FAILED,
+          correlationId,
+          suggested_method: 'ai-transcription'
+        })
       } else {
         // Readability succeeded
         const extractionTime = Date.now() - startTime
@@ -677,7 +749,13 @@ export async function POST(request: NextRequest) {
         
         // Check for JavaScript detection error
         if (error instanceof Error && error.message.includes('JavaScript')) {
-          return new NextResponse(URL_EXTRACTION_CONFIG.ERROR_MESSAGES.JAVASCRIPT_REQUIRED, { status: 400 })
+          return createProblemDetail({
+            type: '/errors/javascript-required',
+            title: 'JavaScript required',
+            status: 400,
+            detail: URL_EXTRACTION_CONFIG.ERROR_MESSAGES.JAVASCRIPT_REQUIRED,
+            correlationId
+          })
         }
         
         throw error
@@ -686,7 +764,13 @@ export async function POST(request: NextRequest) {
     
     // Check if LLM detected JavaScript requirement
     if (extractedHtml.includes('This webpage requires JavaScript for content rendering')) {
-      return new NextResponse(URL_EXTRACTION_CONFIG.ERROR_MESSAGES.JAVASCRIPT_REQUIRED, { status: 400 })
+      return createProblemDetail({
+        type: '/errors/javascript-required',
+        title: 'JavaScript required',
+        status: 400,
+        detail: URL_EXTRACTION_CONFIG.ERROR_MESSAGES.JAVASCRIPT_REQUIRED,
+        correlationId
+      })
     }
     
     console.log('Step 5: Content extraction completed, sanitizing content...')
@@ -835,40 +919,96 @@ export async function POST(request: NextRequest) {
     // Handle authentication errors first
     if (error instanceof Error) {
       if (error.message.includes('Authentication failed') || error.message.includes('User not authenticated')) {
-        return new NextResponse('Authentication required', { status: 401 })
+        return createProblemDetail({
+          type: '/errors/auth',
+          title: 'Authentication required',
+          status: 401,
+          detail: 'Authentication required',
+          correlationId
+        })
       }
       
       if (error.message.includes('rate limit') || error.message.includes('quota')) {
-        return new NextResponse('AI service rate limit exceeded. Please try again later.', { status: 429 })
+        return createProblemDetail({
+          type: '/errors/rate-limit',
+          title: 'Rate limit exceeded',
+          status: 429,
+          detail: 'AI service rate limit exceeded. Please try again later.',
+          correlationId,
+          retryable: true
+        })
       }
       
       if (error.message.includes('API key') || error.message.includes('authentication')) {
-        return new NextResponse('AI service configuration error. Please check API keys.', { status: 503 })
+        return createProblemDetail({
+          type: '/errors/api-config',
+          title: 'AI service configuration error',
+          status: 503,
+          detail: 'AI service configuration error. Please check API keys.',
+          correlationId
+        })
       }
       
       if (error.message.includes('timeout')) {
-        return new NextResponse('Request timeout. The webpage may be too complex or the service is busy.', { status: 504 })
+        return createProblemDetail({
+          type: '/errors/timeout',
+          title: 'Request timeout',
+          status: 504,
+          detail: 'Request timeout. The webpage may be too complex or the service is busy.',
+          correlationId,
+          retryable: true
+        })
       }
       
       // Handle specific database constraint violations with user-friendly messages
       if (error.message.includes('duplicate key value violates unique constraint "documents_slug_unique"')) {
-        return new NextResponse('A document with that name already exists. Please choose a different name.', { status: 409 })
+        return createProblemDetail({
+          type: '/errors/conflict',
+          title: 'Duplicate document',
+          status: 409,
+          detail: 'A document with that name already exists. Please choose a different name.',
+          correlationId
+        })
       }
       
       if (error.message.includes('database') || error.message.includes('Failed to create document')) {
-        return new NextResponse('Database error. Please try again later.', { status: 503 })
+        return createProblemDetail({
+          type: '/errors/database',
+          title: 'Database error',
+          status: 503,
+          detail: 'Database error. Please try again later.',
+          correlationId
+        })
       }
 
       if (error.message.includes('Content sanitization failed') || error.message.includes('sanitization')) {
         // Use shared error handling for sanitization failures
         const sanitizationError = handleSanitizationError(error, 'url')
-        return new NextResponse(sanitizationError.message, { status: sanitizationError.status })
+        return createProblemDetail({
+          type: '/errors/sanitization',
+          title: 'Sanitization error',
+          status: sanitizationError.status,
+          detail: sanitizationError.message,
+          correlationId
+        })
       }
       
-      return new NextResponse(`Processing error: ${error.message}`, { status: 500 })
+      return createProblemDetail({
+        type: '/errors/processing',
+        title: 'Processing error',
+        status: 500,
+        detail: `Processing error: ${error.message}`,
+        correlationId
+      })
     }
     
-    return new NextResponse('Unknown processing error occurred', { status: 500 })
+    return createProblemDetail({
+      type: '/errors/internal',
+      title: 'Unknown processing error',
+      status: 500,
+      detail: 'Unknown processing error occurred',
+      correlationId
+    })
   }
 }
 

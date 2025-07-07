@@ -12,6 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { createProblemDetail } from '@/lib/api/error-utils'
 import { createClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { documentAssetsService } from '@/lib/services/database/document-assets'
@@ -57,10 +58,14 @@ export async function POST(request: NextRequest) {
         userId: user.id
       }, 'Request validation failed')
       
-      return NextResponse.json({
-        error: 'Invalid request data',
-        details: validationResult.error.errors
-      }, { status: 400 })
+      return createProblemDetail({
+        type: '/errors/validation',
+        title: 'Invalid request data',
+        status: 400,
+        detail: 'Request validation failed',
+        issues: validationResult.error.errors,
+        correlationId
+      })
     }
     
     const { documentId, html, pageCount, title, filename, isPublic } = validationResult.data
@@ -93,11 +98,16 @@ export async function POST(request: NextRequest) {
           pageCount,
         }, 'FATAL: Mismatch between reported pageCount and number of page sections in HTML')
 
-        return NextResponse.json({
-          error: 'Document processing failed: page count mismatch',
-          details: `Expected ${pageCount} pages but received ${detectedPageCount}. At least one page failed to process.`,
-          debugInfo: { correlationId, documentId, detectedPageCount, expectedPageCount: pageCount }
-        }, { status: 422 })
+        return createProblemDetail({
+          type: '/errors/page-count-mismatch',
+          title: 'Page count mismatch',
+          status: 422,
+          detail: `Expected ${pageCount} pages but received ${detectedPageCount}. At least one page failed to process.`,
+          correlationId,
+          documentId,
+          detectedPageCount,
+          expectedPageCount: pageCount
+        })
       }
     }
     
@@ -129,16 +139,16 @@ export async function POST(request: NextRequest) {
         storedAssets: 0
       }, 'FATAL: HTML contains images but no assets were uploaded to storage')
       
-      return NextResponse.json({
-        error: 'Document processing failed: Images were detected in the document but none were uploaded to storage',
-        details: 'This indicates a failure in the image extraction and upload pipeline. All images must be successfully uploaded before document finalisation.',
-        debugInfo: {
-          documentId,
-          expectedImages: 'detected in HTML',
-          actualAssets: 0,
-          correlationId
-        }
-      }, { status: 422 })
+      return createProblemDetail({
+        type: '/errors/missing-assets',
+        title: 'Missing image assets',
+        status: 422,
+        detail: 'Images were detected in the document but none were uploaded to storage',
+        correlationId,
+        documentId,
+        expectedImages: 'detected in HTML',
+        actualAssets: 0
+      })
     }
     
     // Validate that all img tags have valid Supabase Storage URLs
@@ -162,17 +172,16 @@ export async function POST(request: NextRequest) {
           sampleInvalidImage: invalidImages[0]
         }, 'FATAL: HTML contains images with invalid storage URLs')
         
-        return NextResponse.json({
-          error: 'Document processing failed: Images with invalid storage URLs detected',
-          details: `Found ${invalidImages.length} images that don't reference valid Supabase Storage URLs for this document. All images must be uploaded to storage before finalisation.`,
-          debugInfo: {
-            documentId,
-            totalImages: imgTags.length,
-            invalidImages: invalidImages.length,
-            expectedUrlPattern: `*/storage/v1/object/public/*/${documentId}/assets/*`,
-            correlationId
-          }
-        }, { status: 422 })
+        return createProblemDetail({
+          type: '/errors/invalid-image-urls',
+          title: 'Invalid image URLs',
+          status: 422,
+          detail: `Found ${invalidImages.length} images with invalid storage URLs`,
+          correlationId,
+          documentId,
+          totalImages: imgTags.length,
+          invalidImages: invalidImages.length
+        })
       }
     }
     
@@ -188,11 +197,15 @@ export async function POST(request: NextRequest) {
         existingCreatedAt: existingDocument.created_at
       }, 'Document already finalised – preventing duplicate finalisation')
 
-      return NextResponse.json({
-        error: 'Document has already been finalised',
+      return createProblemDetail({
+        type: '/errors/conflict',
+        title: 'Document already finalised',
+        status: 409,
+        detail: 'Document has already been finalised',
+        correlationId,
         documentId,
         slug: existingDocument.slug
-      }, { status: 409 })
+      })
     }
 
     // If a draft row exists we should update it in-place instead of inserting a new row
@@ -231,11 +244,14 @@ export async function POST(request: NextRequest) {
 
       if (!updated) {
         requestLogger.error({ correlationId, documentId }, 'Failed to update draft document during finalisation')
-        return NextResponse.json({
-          error: 'Document finalisation failed: could not update draft record',
-          documentId,
-          correlationId
-        }, { status: 500 })
+        return createProblemDetail({
+          type: '/errors/database',
+          title: 'Failed to update draft record',
+          status: 500,
+          detail: 'Document finalisation failed: could not update draft record',
+          correlationId,
+          documentId
+        })
       }
 
       requestLogger.info({ correlationId, documentId, step: 'draft-updated' }, 'Draft document updated successfully')
@@ -352,61 +368,62 @@ export async function POST(request: NextRequest) {
     // Handle specific errors with clear, debuggable messages
     if (error instanceof Error) {
       if (error.message.includes('Authentication failed') || error.message.includes('User not authenticated')) {
-        return NextResponse.json({ 
-          error: 'Authentication required to finalise document',
-          details: 'User session expired or invalid. Please log in again.',
-          debugInfo: { correlationId }
-        }, { status: 401 })
+        return createProblemDetail({
+          type: '/errors/auth',
+          title: 'Authentication required',
+          status: 401,
+          detail: 'User session expired or invalid. Please log in again.',
+          correlationId
+        })
       }
       
       if (error.message.includes('Failed to get document assets')) {
-        return NextResponse.json({ 
-          error: 'FATAL: Asset validation failed',
-          details: 'Unable to retrieve document assets from storage. This indicates a database or storage service issue.',
-          debugInfo: { 
-            correlationId,
-            errorMessage: error.message,
-            stack: error.stack 
-          }
-        }, { status: 500 })
+        return createProblemDetail({
+          type: '/errors/database',
+          title: 'Asset validation failed',
+          status: 500,
+          detail: 'Unable to retrieve document assets from storage. This indicates a database or storage service issue.',
+          correlationId
+        })
       }
       
       if (error.message.includes('Content sanitization failed') || error.message.includes('sanitization')) {
         const sanitizationError = handleSanitizationError(error, 'pdf')
-        return NextResponse.json({ 
-          error: sanitizationError.message,
-          debugInfo: { correlationId }
-        }, { status: sanitizationError.status })
+        return createProblemDetail({
+          type: '/errors/sanitization',
+          title: 'Sanitization error',
+          status: sanitizationError.status,
+          detail: sanitizationError.message,
+          correlationId
+        })
       }
       
       if (error.message.includes('Failed to create document')) {
-        return NextResponse.json({ 
-          error: 'FATAL: Document storage failed',
-          details: 'Unable to store document in database. This indicates a database service issue.',
-          debugInfo: { 
-            correlationId,
-            errorMessage: error.message,
-            stack: error.stack 
-          }
-        }, { status: 500 })
+        return createProblemDetail({
+          type: '/errors/database',
+          title: 'Document storage failed',
+          status: 500,
+          detail: 'Unable to store document in database. This indicates a database service issue.',
+          correlationId
+        })
       }
       
-      return NextResponse.json({ 
-        error: 'FATAL: Document finalisation failed',
-        details: 'An unexpected error occurred during document processing. Check server logs for details.',
-        debugInfo: { 
-          correlationId,
-          errorMessage: error.message,
-          stack: error.stack 
-        }
-      }, { status: 500 })
+      return createProblemDetail({
+        type: '/errors/internal',
+        title: 'Document finalisation failed',
+        status: 500,
+        detail: 'An unexpected error occurred during document processing.',
+        correlationId
+      })
     }
     
-    return NextResponse.json({ 
-      error: 'FATAL: Unknown error during document finalisation',
-      details: 'An unknown error occurred. Check server logs for details.',
-      debugInfo: { correlationId }
-    }, { status: 500 })
+    return createProblemDetail({
+      type: '/errors/internal',
+      title: 'Unknown error',
+      status: 500,
+      detail: 'An unknown error occurred during document finalisation',
+      correlationId
+    })
   }
 }
 
