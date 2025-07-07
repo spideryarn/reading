@@ -128,7 +128,7 @@ The database schema is defined and represented in several places:
 - `prompt_type`: Operation type (chat, summarise, glossary, headings, tweet-thread, other)
 - `prompt_template`: Template name (e.g., 'summarise')
 - `prompt_input`: Full input text sent to AI
-- `response_text`: AI response content
+- `raw_api_response`: Full raw API response object (JSONB) including provider metadata
 - `status`: Call status (pending, success, failed, timeout)
 
 **Token Tracking** (based on Vercel AI SDK):
@@ -146,7 +146,7 @@ The database schema is defined and represented in several places:
 **Indexes**: Optimised for document lookups, model analysis, and time-series queries
 
 **Design Notes**: 
-- Stores extracted fields rather than raw API response (avoids serialisation issues)
+- Stores the complete raw API response in `raw_api_response` (JSONB), enabling detailed debugging, latency derivation, and provider-specific metadata access
 - Token fields align with Vercel AI SDK structure
 - Real-time updates for call status tracking
 - Model strings provide direct identification without database joins

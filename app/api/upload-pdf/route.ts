@@ -298,9 +298,17 @@ export async function POST(request: NextRequest) {
     let processingTime: number
     let providerDisplayName: string
     let modelString: string
-    // We don’t rely on strong typing for extracted image metadata in this route.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let extractedImagesMetadata: any[] = []
+    let extractedImagesMetadata: Array<{
+      elementId: string
+      bbox: { x1: number; y1: number; x2: number; y2: number }
+      figureNumber?: string | undefined
+      caption?: string | undefined
+      altText?: string | undefined
+      elementType: 'figure' | 'image' | 'diagram' | 'chart'
+      storagePath?: string | undefined
+      signedUrl?: string | undefined
+      fileSize?: number | undefined
+    }> = []
     let aiCallId: string
     
     // Create AI call record for tracking (before LLM processing)

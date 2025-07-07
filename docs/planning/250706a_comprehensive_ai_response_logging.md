@@ -180,18 +180,15 @@ FROM ai_calls
 WHERE created_at > NOW() - INTERVAL '24 hours';
 ```
 
-### Stage: Monitoring and debugging tools
-- [ ] Create utility functions to query and analyze stored responses
-- [ ] Add logging for response sizes and serialization performance
-- [ ] Document how to access and use the stored data
-
 ### Stage: Documentation and cleanup
-- [ ] Update `docs/reference/DATABASE_SCHEMA.md` with new field
-- [ ] Create `docs/reference/AI_RESPONSE_LOGGING.md` guide
-- [ ] Update relevant code comments
-- [ ] Remove any temporary debugging code
-- [ ] Run final health check: `npm run check:health`
-- [ ] Create evergreen documentation `docs/reference/DATABASE_AI_RESPONSE_LOGGING.md` describing schema, logging approach, and querying patterns (see `docs/instructions/WRITE_EVERGREEN_DOC.md`)
+- [x] Update `docs/reference/DATABASE_SCHEMA.md` with new field
+- [x] Create `docs/reference/AI_RESPONSE_LOGGING.md` guide
+- [x] Update relevant code comments
+- [x] Remove any temporary debugging code
+- [x] Run final health check: `npm run check:health`
+- [x] Create evergreen documentation `docs/reference/DATABASE_AI_RESPONSE_LOGGING.md` describing schema, logging approach, and querying patterns (see `docs/instructions/WRITE_EVERGREEN_DOC.md`)
+
+_2025-07-07 update_: Fixed TypeScript type mismatches in `app/api/upload-pdf/route.ts` (bounding-box fields) and verified that `npm run check:health` now passes with **zero** issues._
 
 ### Stage: Final review and merge
 - [ ] Review all changes with user
