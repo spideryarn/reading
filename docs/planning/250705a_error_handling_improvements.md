@@ -96,7 +96,7 @@ Spideryarn Reading currently suffers from inconsistent error responses, occasion
   - `app/api/read/[slug]/download/route.ts`
   - `app/api/read/[slug]/original/route.ts`
   - `app/api/read/[slug]/tooltip-info/route.ts`
-  - `app/api/speech-to-text/route.ts`
+  - ~~`app/api/speech-to-text/route.ts`~~ ✅ converted
   - ~~`app/api/stripe/create-checkout-session/route.ts`~~ ✅ converted
   - ~~`app/api/stripe/create-customer/route.ts`~~ ✅ converted
   - ~~`app/api/stripe/create-portal-session/route.ts`~~ ✅ converted
