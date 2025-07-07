@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { requireAuth } from '@/lib/auth/server-auth'
 import { createRequestLogger, generateCorrelationId, createTimer } from '@/lib/services/logger'
+import { createProblemDetail } from '@/lib/api/error-utils'
 
 // Supported audio formats as per OpenAI Whisper API documentation
 const SUPPORTED_FORMATS = ['audio/webm', 'audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/m4a', 'audio/mp4']
@@ -41,10 +42,13 @@ export async function POST(request: NextRequest) {
     
     if (!process.env.OPENAI_API_KEY) {
       logger.error('OpenAI API key not configured')
-      return NextResponse.json({
-        success: false,
-        error: 'Speech-to-text service not configured'
-      }, { status: 500 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/speech-to-text-not-configured',
+        title: 'Speech-to-text service unavailable',
+        status: 500,
+        detail: 'The speech-to-text service is not configured on the server. Please contact support.',
+        correlationId
+      })
     }
     
     // Parse FormData
@@ -53,19 +57,25 @@ export async function POST(request: NextRequest) {
       formData = await request.formData()
     } catch {
       logger.warn('Failed to parse FormData')
-      return NextResponse.json({
-        success: false,
-        error: 'Invalid request format - expected multipart/form-data'
-      }, { status: 400 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/invalid-input',
+        title: 'Invalid request format',
+        status: 400,
+        detail: 'Expected multipart/form-data with audio file.',
+        correlationId
+      })
     }
     
     // Extract audio file
     const audioFile = formData.get('audio') as File
     if (!audioFile) {
-      return NextResponse.json({
-        success: false,
-        error: 'No audio file provided - include audio file in "audio" field'
-      }, { status: 400 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/invalid-input',
+        title: 'Audio file required',
+        status: 400,
+        detail: 'Include an audio file in the "audio" form field.',
+        correlationId
+      })
     }
     
     // Validate file size
@@ -76,10 +86,14 @@ export async function POST(request: NextRequest) {
         fileName: audioFile.name
       }, 'Audio file too large')
       
-      return NextResponse.json({
-        success: false,
-        error: `Audio file too large - maximum size is ${Math.round(MAX_FILE_SIZE / 1024 / 1024)}MB`
-      }, { status: 413 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/file-too-large',
+        title: 'Audio file too large',
+        status: 413,
+        detail: `Maximum allowed size is ${Math.round(MAX_FILE_SIZE / 1024 / 1024)} MB.`,
+        correlationId,
+        retryable: false
+      })
     }
     
     // Validate file format
@@ -90,10 +104,13 @@ export async function POST(request: NextRequest) {
         supportedFormats: SUPPORTED_FORMATS
       }, 'Unsupported audio format')
       
-      return NextResponse.json({
-        success: false,
-        error: `Unsupported audio format - supported formats: WebM, MP3, WAV, M4A`
-      }, { status: 400 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/unsupported-media-type',
+        title: 'Unsupported audio format',
+        status: 400,
+        detail: 'Supported formats: WebM, MP3, WAV, M4A',
+        correlationId
+      })
     }
     
     logger.info({
@@ -144,42 +161,59 @@ export async function POST(request: NextRequest) {
       if (error instanceof Error) {
         // API key errors
         if (error.message.includes('API key') || error.message.includes('401')) {
-          return NextResponse.json({
-            success: false,
-            error: 'Speech-to-text service authentication failed'
-          }, { status: 500 })
+          return createProblemDetail({
+            type: 'https://www.spideryarn.com/probs/api-auth-error',
+            title: 'Speech-to-text authentication failed',
+            status: 500,
+            detail: 'Unable to authenticate with speech-to-text provider.',
+            correlationId
+          })
         }
         
         // Rate limit errors
         if (error.message.includes('rate limit') || error.message.includes('429')) {
-          return NextResponse.json({
-            success: false,
-            error: 'Rate limit exceeded - please try again later'
-          }, { status: 429 })
+          return createProblemDetail({
+            type: 'https://www.spideryarn.com/probs/rate-limit',
+            title: 'Rate limit exceeded',
+            status: 429,
+            detail: 'Too many speech-to-text requests. Please wait and try again.',
+            correlationId,
+            retryable: true
+          })
         }
         
         // File format errors
         if (error.message.includes('format') || error.message.includes('invalid')) {
-          return NextResponse.json({
-            success: false,
-            error: 'Invalid audio file format or corrupted file'
-          }, { status: 400 })
+          return createProblemDetail({
+            type: 'https://www.spideryarn.com/probs/invalid-input',
+            title: 'Invalid audio file',
+            status: 400,
+            detail: 'Audio format is invalid or file is corrupted.',
+            correlationId
+          })
         }
         
         // Model or service errors
         if (error.message.includes('model') || error.message.includes('whisper')) {
-          return NextResponse.json({
-            success: false,
-            error: 'Speech-to-text service temporarily unavailable'
-          }, { status: 503 })
+          return createProblemDetail({
+            type: 'https://www.spideryarn.com/probs/service-unavailable',
+            title: 'Speech-to-text unavailable',
+            status: 503,
+            detail: 'The speech-to-text provider is temporarily unavailable. Please try again later.',
+            correlationId,
+            retryable: true
+          })
         }
       }
       
       // Generic API error
-      return NextResponse.json({
-        success: false,
-        error: 'Failed to transcribe audio - please try again'
-      }, { status: 500 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/transcription-failed',
+        title: 'Audio transcription failed',
+        status: 500,
+        detail: 'An unexpected error occurred while transcribing the audio.',
+        correlationId
+      })
     }
     
   } catch (error) {
@@ -193,17 +227,22 @@ export async function POST(request: NextRequest) {
     if (error instanceof Error && 
         (error.message.includes('Authentication failed') || 
          error.message.includes('User not authenticated'))) {
-      return NextResponse.json({
-        success: false,
-        error: 'Authentication required'
-      }, { status: 401 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/auth-required',
+        title: 'Authentication required',
+        status: 401,
+        detail: 'Please sign in to use the speech-to-text service.'
+      })
     }
     
     // Generic server error
-    return NextResponse.json({
-      success: false,
-      error: 'Internal server error'
-    }, { status: 500 })
+    return createProblemDetail({
+      type: 'https://www.spideryarn.com/probs/internal-server-error',
+      title: 'Internal server error',
+      status: 500,
+      detail: 'An unexpected error occurred while processing the request.',
+      correlationId
+    })
   }
 }
 
