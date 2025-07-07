@@ -5,6 +5,19 @@
 
 see: `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
 
+> **🚧 2025-07-07 Consolidation in progress**
+>
+> The E2E suite is being aggressively consolidated to "fewer tests, richer journeys".  The tables below are **out of date**.  New super-specs already merged:
+> • `ai-features-comprehensive.spec.ts` – Headings, Glossary, Summary, Tweet Thread
+> • `search-and-command-palette.spec.ts` – In-doc search plus command-palette
+>
+> Removed legacy specs:
+> • ai-headings-*, ai-glossary-*, ai-tweet-thread-generation.spec.ts
+> • search-with-*, command-palette-*, document-search-navigation-workflow.spec.ts
+> • optimized-ai-features-journey.spec.ts
+>
+> A full rewrite of this coverage table will land after the next full-suite run.
+
 ## Current E2E Test Coverage
 
 ### Core Workflow Tests
