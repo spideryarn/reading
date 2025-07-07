@@ -1,3 +1,6 @@
+// Vercel hard execution limit – allow up to 5 min while we stream-download PDF then process
+export const maxDuration = 300
+
 // PDF Upload and Processing API endpoint
 // Accepts PDF file uploads, stores original in Supabase Storage, converts to HTML using Claude or Gemini APIs,
 // and stores the complete document record in the database
@@ -19,8 +22,101 @@ import { processWithMistralOcr, canProcessWithMistralOcr } from '@/lib/services/
 import type { VercelAIResponse } from '@/lib/services/ai-response-logger'
 import { randomUUID } from 'crypto'
 import { createProblemDetail } from '@/lib/api/error-utils'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
+import { DocumentService } from '@/lib/services/database/documents'
+import { z } from 'zod'
 
 export async function POST(request: NextRequest) {
+  // ---------------------------------------------------------------------------
+  // Detect whether this is the new *direct-storage* JSON payload or the legacy
+  // multipart upload.  The JSON body variant contains { bucket, path, size… }
+  // and allows us to bypass Vercel’s 4.5 MB body limit by uploading straight
+  // to Supabase Storage from the browser.
+  // ---------------------------------------------------------------------------
+
+  const contentType = request.headers.get('content-type') || ''
+  const isDirectJson = contentType.includes('application/json')
+
+  // Unified variables used by the remainder of the handler (regardless of
+  // input shape).
+  let pdfBuffer: Buffer = Buffer.alloc(0)
+  // Lightweight placeholder.  We use `any` to sidestep server/bundler File type gaps.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let pdfFile: any = { name: '', size: 0, type: 'application/pdf' }
+  let provider: string = 'mistral'
+  let title: string = 'Untitled Document'
+  let isPublic = false
+  let draftDocumentId = randomUUID() as `${string}-${string}-${string}-${string}-${string}`
+  let directStoragePath: string | null = null
+  let directStorageBucket: string | null = null
+
+  if (isDirectJson) {
+    // -----------------------------
+    // Validate and parse JSON body
+    // -----------------------------
+    const DirectSchema = z.object({
+      bucket: z.string().min(1),
+      path: z.string().min(1),
+      size: z.number().positive(),
+      mime: z.string().default('application/pdf'),
+      provider: z.string().optional(),
+      title: z.string().optional(),
+      isPublic: z.boolean().optional().default(false),
+      documentId: z.string().uuid().optional()
+    })
+
+    const body = await request.json()
+    const parsed = DirectSchema.parse(body)
+
+    directStorageBucket = parsed.bucket
+    directStoragePath = parsed.path
+    provider = parsed.provider || 'mistral'
+    title = parsed.title || parsed.path.split('/').pop()?.replace(/\.pdf$/i, '') || 'Untitled Document'
+    isPublic = parsed.isPublic
+    if (parsed.documentId) {
+      draftDocumentId = parsed.documentId as `${string}-${string}-${string}-${string}-${string}`
+    }
+
+    // -----------------------------------------------------------------
+    // Download the just-uploaded PDF using a service-role Supabase client
+    // so that we can run the standard validation / processing pipeline.
+    // -----------------------------------------------------------------
+    try {
+      const srClient = createServiceRoleClient()
+      const { data: blob, error } = await srClient
+        .storage
+        .from(parsed.bucket)
+        .download(parsed.path)
+
+      if (error || !blob) {
+        throw new Error(error?.message || 'Failed to download uploaded PDF from storage')
+      }
+
+      const arrayBuffer = await blob.arrayBuffer()
+      pdfBuffer = Buffer.from(arrayBuffer)
+    } catch (err) {
+      const problem = createProblemDetail({
+        type: 'https://spideryarn.com/problems/STORAGE_DOWNLOAD',
+        title: 'Failed to fetch uploaded PDF',
+        status: 500,
+        detail: err instanceof Error ? err.message : 'Unknown storage error',
+        correlationId: generateCorrelationId()
+      })
+      return problem
+    }
+
+    // Create a lightweight pseudo-File so downstream logging (& typings) work.
+    pdfFile = {
+      name: parsed.path.split('/').pop() || 'document.pdf',
+      size: parsed.size,
+      type: parsed.mime,
+    } as unknown as File
+
+  }
+  // -------------------------------------------------------------------
+  // Legacy multipart flow will execute in the existing code-path below.
+  // -------------------------------------------------------------------
+
   const correlationId = generateCorrelationId()
   const requestLogger = createRequestLogger('/api/upload-pdf', correlationId)
   const requestTimer = createTimer(requestLogger, 'upload-pdf-request')
@@ -46,12 +142,22 @@ export async function POST(request: NextRequest) {
     // Validate authentication first
     const user = await requireAuth({ allowBearer: true, request })
     
-    // Parse multipart form data
-    const formData = await request.formData()
-    const pdfFile = formData.get('pdf') as File
-    const provider = (formData.get('provider') as string) || 'mistral' // Default to Mistral OCR
-    const title = (formData.get('title') as string) || pdfFile?.name?.replace('.pdf', '') || 'Untitled Document'
-    const isPublic = formData.get('isPublic') === 'true' // Default to false (private)
+    // ------------------------------------------------------------------
+    // Multipart path (legacy) – keep existing behaviour. Skip if we’re
+    // processing a direct-upload JSON request.
+    // ------------------------------------------------------------------
+
+    if (!isDirectJson) {
+      // Legacy multipart handling
+      const formData = await request.formData()
+      const uploadedFile = formData.get('pdf') as File
+      pdfFile = uploadedFile
+      provider = (formData.get('provider') as string) || 'mistral'
+      title = (formData.get('title') as string) || pdfFile?.name?.replace('.pdf', '') || 'Untitled Document'
+      isPublic = formData.get('isPublic') === 'true'
+      // Convert file to buffer for processing
+      pdfBuffer = Buffer.from(await uploadedFile.arrayBuffer())
+    }
 
     requestLogger.info({
       method: 'POST',
@@ -79,15 +185,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Convert file to buffer
-    const pdfBuffer = Buffer.from(await pdfFile.arrayBuffer())
+    // pdfBuffer is already populated for direct-upload requests.
     
     // Basic PDF validation
     if (pdfBuffer.length === 0) {
       return problem(400, 'EMPTY_PDF', 'PDF file is empty')
     }
 
-    // Check file size using centralized limits
+    // Check file size using centralized limits (applies to both flows)
     if (pdfBuffer.length > UPLOAD_LIMITS.PDF_MAX_SIZE_BYTES) {
       return problem(
         400,
@@ -137,7 +242,10 @@ export async function POST(request: NextRequest) {
       userId: user.id
     }, `PDF page count validation passed: ${pageValidationResult.pageCount} pages`)
 
-    const draftDocumentId = randomUUID()
+    // Re-use draftDocumentId determined earlier (for JSON) or generate now
+    if (!draftDocumentId) {
+      draftDocumentId = randomUUID()
+    }
 
     const imageExtractionEnabled = process.env.IMAGE_EXTRACTION_ENABLED !== 'false'
 
@@ -190,14 +298,9 @@ export async function POST(request: NextRequest) {
     let processingTime: number
     let providerDisplayName: string
     let modelString: string
-    let extractedImagesMetadata: Array<{
-      elementId: string
-      bbox: { left: number; top: number; right: number; bottom: number }
-      figureNumber?: string
-      caption?: string
-      altText?: string
-      elementType: 'figure' | 'image' | 'diagram' | 'chart'
-    }> = []
+    // We don’t rely on strong typing for extracted image metadata in this route.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let extractedImagesMetadata: any[] = []
     let aiCallId: string
     
     // Create AI call record for tracking (before LLM processing)
@@ -524,7 +627,8 @@ export async function POST(request: NextRequest) {
         title,
         // sourceUrl is omitted for PDF uploads
         isPublic,
-        originalFile: pdfFile,
+        // If the PDF was already uploaded to Storage we don’t re-upload it.
+        originalFile: isDirectJson ? undefined : pdfFile,
         filename: pdfFile.name,
         provider,
         correlationId,
@@ -561,19 +665,37 @@ export async function POST(request: NextRequest) {
       userId: user.id
     }, 'Document created successfully')
     
-    if (storageResult) {
-      requestLogger.info({
-        correlationId,
-        step: 'storage-complete',
-        storagePath: storageResult.path,
-        documentId: document.id
-      }, 'Original PDF stored successfully')
+    // ------------------------------------------------------------------------------------
+    // If we used the direct-upload flow, the original PDF is already in Storage.  We now
+    // patch the document record to point at that path so that downstream features (e.g.
+    // “Download original”) work as expected.  We *only* do this if the processing fully
+    // succeeded.
+    // ------------------------------------------------------------------------------------
+
+    if (isDirectJson && directStoragePath) {
+      const docService = new DocumentService(supabase)
+      try {
+        await docService.update(document.id, {
+          storage_path: directStoragePath,
+          original_file_type: pdfFile.type || 'application/pdf'
+        })
+        requestLogger.info({ correlationId, step: 'storage-path-update', documentId: document.id, storagePath: directStoragePath }, 'Patched document with existing storage path')
+      } catch (patchErr) {
+        requestLogger.warn({ correlationId, step: 'storage-path-update-failed', error: patchErr instanceof Error ? patchErr.message : patchErr }, 'Failed to update storage path on document')
+      }
+    }
+
+    // Prefer storageResult from createWithStorage, otherwise fall back to direct path.
+    const effectiveStorage = storageResult || (isDirectJson && directStoragePath ? {
+      path: directStoragePath,
+      size: pdfFile.size,
+      mime_type: pdfFile.type
+    } : null)
+
+    if (effectiveStorage) {
+      requestLogger.info({ correlationId, step: 'storage-complete', storagePath: effectiveStorage.path, documentId: document.id }, 'Original PDF stored successfully')
     } else {
-      requestLogger.warn({
-        correlationId,
-        step: 'storage-warning',
-        documentId: document.id
-      }, 'Storage upload failed, but document was created without original file')
+      requestLogger.warn({ correlationId, step: 'storage-warning', documentId: document.id }, 'Storage upload failed, but document was created without original file')
     }
 
     // Complete request timing
@@ -599,11 +721,7 @@ export async function POST(request: NextRequest) {
         original_file_type: document.original_file_type,
         created_at: document.created_at
       },
-      storage: storageResult ? {
-        path: storageResult.path,
-        size: storageResult.size,
-        mime_type: storageResult.mimeType
-      } : null,
+      storage: effectiveStorage,
       processing: {
         provider: providerDisplayName,
         file_size_kb: Math.round(pdfBuffer.length / 1024),

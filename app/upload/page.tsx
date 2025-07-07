@@ -637,17 +637,47 @@ export default function AddDocumentPage() {
               )
             }
           } else {
-            // Standard AI transcription (v3)
-            const apiEndpoint = '/api/upload-pdf'
-            // Create PDF-specific FormData with correct field name
-            const pdfFormData = new FormData()
-            pdfFormData.append('pdf', input.file)  // API expects 'pdf' field name
-            pdfFormData.append('provider', processing.provider)
-            pdfFormData.append('isPublic', processing.isPublic.toString())
-            response = await fetch(apiEndpoint, {
+            // ----------------------------------------------
+            // NEW: Direct-to-Storage upload followed by JSON
+            //       request so we avoid Vercel’s 4.5 MB limit.
+            // ----------------------------------------------
+
+            const documentId = generateDocumentId()
+
+            // Step 1: upload the PDF to Supabase Storage (anon client)
+            const { createClient: createSupabaseBrowserClient } = await import('@/lib/supabase/client')
+            const supabase = createSupabaseBrowserClient()
+
+            const storagePath = `${documentId}/original/${input.file.name}`
+
+            const { error: uploadErr } = await supabase.storage
+              .from('documents')
+              .upload(storagePath, input.file, {
+                cacheControl: '3600', // 1h
+                upsert: false
+              })
+
+            if (uploadErr) {
+              throw new Error(uploadErr.message || 'Failed to upload PDF to storage')
+            }
+
+            // Step 2: create server-side draft *iff* desired later (skipped for now)
+
+            // Step 3: notify the server to process the stored PDF
+            response = await fetch('/api/upload-pdf', {
               method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
               credentials: 'include',
-              body: pdfFormData
+              body: JSON.stringify({
+                bucket: 'documents',
+                path: storagePath,
+                size: input.file.size,
+                mime: input.file.type || 'application/pdf',
+                provider: processing.provider,
+                title: input.file.name.replace(/\.pdf$/i, ''),
+                isPublic: processing.isPublic,
+                documentId
+              })
             })
           }
         } else if (input.type === 'html') {

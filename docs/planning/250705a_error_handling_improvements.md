@@ -104,7 +104,7 @@ Spideryarn Reading currently suffers from inconsistent error responses, occasion
   - `app/api/tools/[toolId]/route.ts`
   - `app/api/tweet-thread/route.ts`
   - `app/api/upload-html/route.ts`
-  - `app/api/upload-pdf/route.ts`
+  - ~~`app/api/upload-pdf/route.ts`~~ ✅ converted
   - `app/api/read/[slug]/tooltip-info/route.ts` (partial successes handled; error branches need migration)
   - *(Quick-win routes already converted: create-draft-document, realtime-demo, upload-pdf-single-page-image)*
 
