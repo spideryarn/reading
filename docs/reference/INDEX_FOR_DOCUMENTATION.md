@@ -184,7 +184,7 @@ Process and workflow documentation in `docs/instructions/`:
 
 ### Research & Documentation
 - `docs/instructions/DOCUMENT_RESEARCH.md` - Research methodology for documentation analysis
-- `docs/instructions/DOCUMENT_THIS_RESEARCH.md` - Process for documenting research findings
+- `docs/instructions/WRITE_RESEARCH_DOC.md` - Process for documenting research findings
 - `docs/instructions/RESEARCH_THIS_TOPIC.md` - General research methodology and approach
 - `docs/instructions/CAPTURE_SOUNDING_BOARD_CONVERSATION.md` - Capturing collaborative discussion outcomes
 

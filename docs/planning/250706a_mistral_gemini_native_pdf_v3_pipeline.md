@@ -2,7 +2,7 @@
 
 ## Goal
 
-Upgrade the existing v1 PDF upload pipeline to leverage Gemini's unique native PDF processing capabilities with built-in bounding box detection for image extraction. This upgrade will transform v1 into v3, providing a middle ground between the current simple v1 pipeline (no image extraction) and the complex v2 vision pipeline (full page-by-page image processing).
+Upgrade the existing v1 PDF upload pipeline to leverage either Gemini or Mistral's native PDF processing capabilities with built-in bounding box detection for image extraction. This upgrade will rename & upgrade v1 into v3, providing a middle ground & step forward between the current simple v1 pipeline (no image extraction) and the complex, brittle v2 vision pipeline (full page-by-page image processing).
 
 **Key Decision**: Rather than creating a separate pipeline, we will progressively enhance v1 with new capabilities and rename it to v3, maintaining API compatibility while adding significant new features.
 
@@ -21,13 +21,13 @@ The v2 vision pipeline attempts to solve these issues but at significant cost an
 
 ### Solution Overview
 
-A "Gemini Native" pipeline that:
-1. Sends the full PDF directly to Gemini Flash 2.5
+A "Gemini/Mistral Native" pipeline that:
+1. Sends the full PDF directly to Gemini Flash 2.5 or Mistral Document OCR
 2. Receives HTML with normalized bounding box coordinates for all visual elements
-3. ~~Extracts images locally using the coordinates (no vision API calls needed)~~ **[Deferred to future enhancement]**
+3. Extracts images using the coordinates (no vision API calls needed)
 4. Optionally refines output with Claude for highest quality **[Future stage]**
 
-**Current Implementation Status**: v3 is functional for text extraction with bounding box metadata. Image extraction is deferred to maintain architectural simplicity while proving the core concept.
+**Current Implementation Status**: v3 is functional for text extraction. Bounding box image extraction is coming up soon.
 
 This approach provides immediate benefits (better text extraction, bbox metadata) with a path to full image support.
 
@@ -56,21 +56,21 @@ This approach provides immediate benefits (better text extraction, bbox metadata
 - ✅ Cost-effective: Text API pricing
 - ✅ Better text extraction with v2-inspired prompting
 - ✅ Token exhaustion detection (no silent failures)
-- ⏸️ Image extraction via bounding boxes (deferred)
+- ⏸️ Image extraction via bounding boxes
 - ❌ Still subject to context limits (but 1M tokens)
-- ❌ Gemini-only (no Claude option for initial processing)
+- ❌ Gemini/Mistral-only (no Claude option for initial processing)
 
 ### Key Technical Discoveries
 
 From our investigation:
 
-1. **Gemini is the only major LLM with native bounding box support** - Returns normalized coordinates (0-1000 scale) without any fine-tuning or special prompting
+1. **Gemini/Mistral provide native-PDF bounding box support** - Returns normalized coordinates (0-1000 scale) without any fine-tuning or special prompting
 
 2. **Current v1 never checks for output truncation** - The `finishReason` field is stored but ignored, leading to silent failures
 
 3. **The v2 vision prompts are significantly more sophisticated** - Explicit instructions about verbatim transcription, continuation markers, and mathematical formatting
 
-4. **Gemini Flash 2.0 pricing makes this viable** - At $0.075/M input tokens, processing a full PDF is cost-effective
+4. **Gemini Flash 2.5/Mistral pricing makes this viable**
 
 ## User Stories & Acceptance Criteria
 
@@ -250,22 +250,42 @@ From our investigation:
 - Maximum file size of 50MB (higher than our 20MB limit)
 - Processing time expected < 1s per page
 
+
+### Stage: Mistral Bounding Box/Annotations Image Extraction Integration (Future Enhancement)
+
+- [ ] Let's try server-side for image extraction (maintains single API call).
+  - [ ] Read the v2 pipeline code to see the approach we've taken there.
+    - We probably won't be able to directly reuse much of that code, because there we opted to do things browser-side, but it shows the overall approach (including Supabase Storage filename patterns, etc):
+      - LLM call returns the bounding boxes, 
+      - normalise/convert coordinates as appropriate, 
+      - use 3rd-party PDF library to turn some of the PDF pages into images, and 
+      - 3rd-party image library to extract the figures from those single-page images
+      - upload those images to Supabase Storage (see action below)
+      - programmatically manipulate the HTML to replace/insert the new `<img src>` elements pointing to the Supabase Storage image filenames
+  - [ ] Note the constraints in `docs/reference/VERCEL_SERVERLESS_CONSTRAINTS.md`
+  - [ ] If this proves tricky, discuss with user, and we can consider browser-side extraction (reusing v2 infrastructure) instead
+- Add PDF processing library (pdfjs-dist or pdf-lib)
+  - Implement server-side image extraction using normalized bounding boxes
+  - Upload to Supabase Storage during processing
+
+### Stage: Storage Integration (Future Enhancement)
+**Note**: Only needed if image extraction is implemented.
+
+- [ ] Update document creation to store extracted images
+- [ ] Modify HTML to reference extracted images in Supabase storage
+- [ ] Ensure proper RLS permissions for image assets
+- [ ] Add rollback handling for failed uploads
+- [ ] Test end-to-end with real PDFs
+
 ### Stage: Error-handling
 - [ ] Read `docs/planning/250705a_error-handling-improvements.md` and implement the most easy/valuable recommendations from that
 
-### Stage: Optional Claude Refinement Layer (Two-Stage Processing)
-- [ ] Implement two-stage processing workflow:
-  - Stage 1: Always use Gemini Native for initial extraction + bounding boxes (required)
-  - Stage 2: Optionally send Gemini's HTML output to Claude for quality refinement
-- [ ] Add refinement option to existing provider selection in UI
-  - When user selects Claude, explain it's a two-stage process
-  - Show cost breakdown: Gemini extraction + Claude refinement
-- [ ] Implement refinement pipeline:
-  - Take Gemini's HTML output with bounding boxes
-  - Send to Claude with refinement prompt
-  - Preserve bounding box data during refinement
-- [ ] Test quality improvements from refinement
-- [ ] Document when refinement is recommended (complex layouts, critical accuracy needs)
+### Stage: 2nd-stage Refinement Layer
+- [ ] Add this as a later stage for quality refinement from Claude Sonnet 4 or Gemini 2.5 Pro, after getting the HTML from Gemini/Mistral
+- [ ] Add refinement option to existing provider selection in UI, with choice of 2nd-stage model
+- [ ] Implement refinement pipeline: send original PDF plus 1st-stage HTML output to 2nd-stage model with refinement prompt
+- [ ] Discuss with user what should go in that refinement prompt
+  - [ ] Deal with footnotes better
 
 ### Stage: Final Validation & Cleanup
 - [ ] Run comprehensive health check: `npm run check:health --rigorous`
@@ -279,18 +299,12 @@ From our investigation:
 - [ ] Merge branch to main
 - [ ] Move planning doc to `docs/planning/finished/`
 
-### Stage: Image Extraction Integration (Future Enhancement)
-**Note**: This stage is deferred until after v3 is proven working for text extraction with bbox metadata.
 
-- [ ] Decide on extraction approach:
-  - Option A: Server-side extraction (maintains single API call)
-  - Option B: Browser-side extraction (reuses v2 infrastructure)
-  - Option C: Skip extraction (position v3 as text-only with bbox metadata)
-- [ ] If server-side:
-  - Add PDF processing library (pdfjs-dist or pdf-lib)
-  - Implement server-side image extraction using normalized bounding boxes
-  - Upload to Supabase Storage during processing
-- [ ] If browser-side:
+## Appendix
+
+### Falling back on browser-side for image extraction
+
+- If we do have to fall back on browser-side:
   - Reuse v2's `ImageExtractor` class for **browser-side** image extraction
   - Create `PdfImageExtractor` wrapper that:
     - Loads PDF into canvas/pdf.js
@@ -299,18 +313,7 @@ From our investigation:
     - Handles multi-page PDFs
   - Implement parallel image extraction for performance
   - Add progress tracking for large documents
-- [ ] Test with various PDF types (single/multi-column, figures, charts)
-
-### Stage: Storage Integration (Future Enhancement)
-**Note**: Only needed if image extraction is implemented.
-
-- [ ] Update document creation to store extracted images
-- [ ] Modify HTML to reference extracted images in Supabase storage
-- [ ] Ensure proper RLS permissions for image assets
-- [ ] Add rollback handling for failed uploads
-- [ ] Test end-to-end with real PDFs
-
-## Appendix
+- Test with various PDF types (single/multi-column, figures, charts)
 
 ### A. Gemini PDF Capabilities Research
 
