@@ -263,7 +263,7 @@ export const TOOL_TIMEOUTS = {
   DEFAULT: 30_000,   // Generic operations (30 s)
   AI: 60_000,        // LLM-heavy operations (60 s)
   ANALYSIS: 300_000, // Expensive analyses (5 min)
-  UPLOAD: 180_000,   // Large file uploads / processing (3 min)
+  UPLOAD: 300_000,   // Large file uploads / processing (5 min)
 } as const
 
 // VISION PDF single-page upload configuration – controls client concurrency for Gemini calls
