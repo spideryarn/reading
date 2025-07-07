@@ -192,11 +192,14 @@ export async function POST(request: NextRequest) {
     let modelString: string
     let extractedImagesMetadata: Array<{
       elementId: string
-      bbox: { left: number; top: number; right: number; bottom: number }
-      figureNumber?: string
-      caption?: string
-      altText?: string
+      bbox: { x1: number; y1: number; x2: number; y2: number }
+      figureNumber?: string | undefined
+      caption?: string | undefined
+      altText?: string | undefined
       elementType: 'figure' | 'image' | 'diagram' | 'chart'
+      storagePath?: string | undefined
+      signedUrl?: string | undefined
+      fileSize?: number | undefined
     }> = []
     let aiCallId: string
     

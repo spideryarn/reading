@@ -48,3 +48,7 @@ ORDER BY hr DESC;
 ## Future Work
 * ESLint rule + codemod to forbid direct `AiCallService.completeCall()` usage.
 * Build Grafana panels for p50/p95 latency per provider & prompt type. 
+
+## See Also
+
+* [DATABASE_AI_RESPONSE_LOGGING.md](DATABASE_AI_RESPONSE_LOGGING.md) – Database schema & querying guide for response logging 
