@@ -205,6 +205,9 @@ export class AIResponseLogger {
    * @returns Serialized response safe for JSONB storage
    */
   private serializeResponse(response: VercelAIResponse): JsonObject {
+    // Performance telemetry – measure serialization time and payload size
+    const logger = createRequestLogger('ai-response-serializer')
+    const startTime = Date.now()
     try {
       // Create a clean object for serialization
       const serialized: JsonObject = {
@@ -260,6 +263,11 @@ export class AIResponseLogger {
           serialized[key] = this.sanitizeValue(value) as JsonValue
         }
       }
+
+      // Emit debug-level telemetry after successful serialisation
+      const serializationDurationMs = Date.now() - startTime
+      const responseSizeBytes = JSON.stringify(serialized).length
+      logger.debug({ serializationDurationMs, responseSizeBytes }, 'AI response serialised')
 
       return serialized
 

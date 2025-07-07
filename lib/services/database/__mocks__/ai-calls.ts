@@ -35,7 +35,7 @@ const createMockAiCall = (overrides?: Partial<AiCall>): AiCall => ({
   extra: {} as Json,
   extra_usage: null,
   latency_ms: null,
-  raw_api_response: null,
+  raw_api_response: {},
   ...overrides
 })
 
@@ -62,7 +62,8 @@ export class AiCallService {
       prompt_type: options.prompt_type,
       prompt_input: JSON.stringify(options.input_data || {}),
       extra: (options.extra || {}) as Json,
-      status: 'pending'
+      status: 'pending',
+      raw_api_response: {}
     })
     
     AiCallService.mockCalls.push(aiCall)
@@ -218,7 +219,8 @@ export class AiCallService {
       prompt_tokens: options.promptTokens || null,
       completion_tokens: options.completionTokens || null,
       total_tokens: options.totalTokens || null,
-      extra: (options.responseData || {}) as Json
+      extra: (options.responseData || {}) as Json,
+      raw_api_response: (options.responseData || {}) as Json
     })
     
     AiCallService.mockCalls.push(aiCall)
