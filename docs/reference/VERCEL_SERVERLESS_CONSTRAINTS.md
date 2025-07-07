@@ -52,9 +52,12 @@ Vercel's serverless platform imposes specific technical constraints that develop
 ### Payload and Request Limits
 
 #### **Request/Response Body Size**
-- **Standard limit**: 4.5MB maximum payload size
-- **Workaround**: Use streaming functions (no payload limit) or external storage
-- **Impact**: Large file uploads require multipart or streaming approaches
+- **Standard limit**: 4.5MB maximum payload size **per request body coming _into_ the Function _or_ response body sent _back_ to the client**
+- **Important distinction**: the limit is enforced **only on the HTTP boundary between the client and the Vercel Function**.  Once inside the function you can `fetch()` or stream much larger files (e.g. from Supabase Storage) with no size restriction.
+- **Workarounds**:
+  - **Large _uploads_**: cannot be bypassed by streaming; upload the file directly to a storage provider (Supabase Storage, Vercel Blob, S3, etc.) and pass lightweight metadata to the Function.
+  - **Large _responses_**: can be bypassed by returning a streaming response (`ReadableStream`) which removes the 4.5 MB cap.
+- **Impact**: API routes that proxy file uploads must adopt a direct-to-storage pattern; heavy server-side processing (e.g. downloading a 20 MB PDF and forwarding it to an external ML API) is safe as long as the payload back to the browser stays under the limit or is streamed.
 
 #### **Environment Variables**
 - **Total limit**: 64KB for all environment variables combined per deployment
