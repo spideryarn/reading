@@ -225,7 +225,9 @@ export async function POST(request: NextRequest) {
     }
     
     return NextResponse.json(
-      { error: 'Failed to start realtime demo' },
+      {
+        error: 'Unable to start real-time enhancement simulation. Check server logs for details and try again later.'
+      },
       { status: 500 }
     )
   }

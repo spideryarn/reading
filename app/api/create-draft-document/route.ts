@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/auth/server-auth'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { DocumentService } from '@/lib/services/database/documents'
+import { generateCorrelationId } from '@/lib/services/logger'
 
 const DraftSchema = z.object({
   documentId: z.string().uuid(),
@@ -47,6 +48,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true }, { status: 201 })
   } catch (error) {
     console.error('Draft creation error', error)
-    return NextResponse.json({ error: 'Failed to create draft' }, { status: 500 })
+    return NextResponse.json({
+      error: 'Draft creation failed. Please try again later or contact support if the problem persists.'
+    }, {
+      status: 500,
+      headers: {
+        'x-spideryarn-correlation-id': generateCorrelationId()
+      }
+    })
   }
 } 

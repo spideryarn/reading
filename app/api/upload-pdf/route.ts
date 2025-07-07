@@ -16,6 +16,7 @@ import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer
 import { validatePdfPageCountFromBuffer } from '@/lib/utils/pdf-validation'
 import { processWithGeminiNative, canProcessWithGeminiNative } from '@/lib/services/gemini-native-pdf-processor'
 import { processWithMistralOcr, canProcessWithMistralOcr } from '@/lib/services/mistral-ocr-pdf-processor'
+import type { VercelAIResponse } from '@/lib/services/ai-response-logger'
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
@@ -137,7 +138,7 @@ export async function POST(request: NextRequest) {
       text: string
       usage: { promptTokens: number; completionTokens: number; totalTokens: number }
       finishReason: string
-      rawResponse?: Record<string, unknown>
+      rawResponse?: VercelAIResponse
     }
     let processingTime: number
     let providerDisplayName: string
@@ -193,7 +194,7 @@ export async function POST(request: NextRequest) {
           finishReason: geminiResult.finishReason
         }
         if (geminiResult.rawResponse) {
-          htmlResult.rawResponse = geminiResult.rawResponse
+          htmlResult.rawResponse = geminiResult.rawResponse as VercelAIResponse
         }
         
         // Store extracted images metadata for later use
@@ -209,10 +210,7 @@ export async function POST(request: NextRequest) {
         // Complete the AI call record with comprehensive response logging
         await aiResponseLogger.completeAICall({
           aiCallId: aiCall.id,
-          response: geminiResult.rawResponse ? {
-            ...geminiResult.rawResponse,
-            text: htmlResult.text
-          } : {
+          response: (geminiResult.rawResponse as VercelAIResponse | undefined) || {
             text: htmlResult.text,
             usage: htmlResult.usage,
             finishReason: htmlResult.finishReason
@@ -286,7 +284,7 @@ export async function POST(request: NextRequest) {
           finishReason: mistralResult.finishReason
         }
         if (mistralResult.rawResponse) {
-          htmlResult.rawResponse = mistralResult.rawResponse
+          htmlResult.rawResponse = mistralResult.rawResponse as VercelAIResponse
         }
         
         // Store extracted images metadata for later use
@@ -302,10 +300,7 @@ export async function POST(request: NextRequest) {
         // Complete the AI call record with comprehensive response logging
         await aiResponseLogger.completeAICall({
           aiCallId: aiCall.id,
-          response: mistralResult.rawResponse ? {
-            ...mistralResult.rawResponse,
-            text: htmlResult.text
-          } : {
+          response: (mistralResult.rawResponse as VercelAIResponse | undefined) || {
             text: htmlResult.text,
             usage: htmlResult.usage,
             finishReason: htmlResult.finishReason
@@ -400,10 +395,7 @@ export async function POST(request: NextRequest) {
         // Complete the AI call with comprehensive response logging (even on failure)
         await aiResponseLogger.completeAICall({
           aiCallId: aiCall.id,
-          response: htmlResult.rawResponse ? {
-            ...htmlResult.rawResponse,
-            text: htmlResult.text
-          } : {
+          response: (htmlResult.rawResponse as VercelAIResponse | undefined) || {
             text: htmlResult.text,
             usage: htmlResult.usage,
             finishReason: htmlResult.finishReason
@@ -434,10 +426,7 @@ export async function POST(request: NextRequest) {
       // Complete the AI call record with comprehensive response logging
       await aiResponseLogger.completeAICall({
         aiCallId: aiCall.id,
-        response: htmlResult.rawResponse ? {
-          ...htmlResult.rawResponse,
-          text: htmlResult.text
-        } : {
+        response: (htmlResult.rawResponse as VercelAIResponse | undefined) || {
           text: htmlResult.text,
           usage: htmlResult.usage,
           finishReason: htmlResult.finishReason
