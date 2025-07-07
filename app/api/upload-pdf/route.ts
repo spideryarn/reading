@@ -244,7 +244,7 @@ export async function POST(request: NextRequest) {
     } else if (useMistralOcr) {
       // Use v3 Mistral OCR processor with image bounding box extraction
       providerDisplayName = 'Mistral OCR (Latest)'
-      modelString = 'mistral:ocr-latest'
+      modelString = 'mistral:ocr:latest'
       
       const aiCall = await aiCallService.startCallWithModelString({
         userId: user.id,

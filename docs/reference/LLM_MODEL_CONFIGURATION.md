@@ -48,7 +48,7 @@ openai:gpt-4-turbo:preview
 
 # Other providers (future support)
 groq:llama-3.3-70b:latest
-mistral:mistral-large:latest
+mistral:ocr:latest
 ```
 
 **Validation:**
@@ -300,7 +300,7 @@ The system currently supports the following AI providers through the Vercel AI S
 | Google | ✅ Active | `google:` | `@ai-sdk/google` | `GOOGLE_GENERATIVE_AI_API_KEY` |
 | OpenAI | ✅ Active | `openai:` | `@ai-sdk/openai` | `OPENAI_API_KEY` |
 | Groq | 🚧 Future | `groq:` | `@ai-sdk/groq` | N/A |
-| Mistral | 🚧 Future | `mistral:` | `@ai-sdk/mistral` | N/A |
+| Mistral | ✅ OCR | `mistral:` | `@mistralai/mistralai` | `MISTRAL_API_KEY` |
 
 ## Adding New Models
 

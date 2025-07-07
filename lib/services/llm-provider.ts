@@ -30,10 +30,13 @@ const providers = {
     }
     return openaiProvider
   },
+  mistral: () => {
+    throw new Error('Mistral chat/completions provider not yet implemented. Use OCR pipeline instead.')
+  },
 }
 
 // Get the provider instance based on provider name
-export function getProvider(providerName: 'anthropic' | 'google' | 'openai') {
+export function getProvider(providerName: 'anthropic' | 'google' | 'openai' | 'mistral') {
   const providerFactory = providers[providerName]
   if (!providerFactory) {
     throw new Error(`Unknown provider: ${providerName}. Supported providers: ${Object.keys(providers).join(', ')}`)

@@ -6,7 +6,7 @@
 // OpenAI model pricing reference: https://openai.com/api/pricing/
 
 export interface ModelConfig {
-  provider: 'anthropic' | 'google' | 'openai'
+  provider: 'anthropic' | 'google' | 'openai' | 'mistral'
   modelName: string  // e.g., 'claude-3-5-haiku', 'gemini-2.0-flash'
   version: string    // e.g., '20241022', 'latest'
   thinking: boolean
@@ -158,12 +158,22 @@ export const MODEL_DEFINITIONS: Record<string, ModelConfig> = {
       outputPer1M: 80.00,
     },
   },
+  // Mistral models
+  'mistral:ocr:latest': {
+    provider: 'mistral',
+    modelName: 'ocr',
+    version: 'latest',
+    thinking: false,
+    description: 'Mistral Document OCR – PDF to Markdown with bounding boxes',
+    contextWindow: 100_000,
+    outputTokens: 0,
+  },
 }
 
 
 // Parse model string into components
 export interface ParsedModelString {
-  provider: 'anthropic' | 'google' | 'openai'
+  provider: 'anthropic' | 'google' | 'openai' | 'mistral'
   modelName: string
   version: string
   thinking: boolean
@@ -183,8 +193,8 @@ export function parseModelString(modelString: string): ParsedModelString {
     throw new Error(`Invalid model string format: ${modelString}. Provider, model name, and version are required`)
   }
   
-  if (!['anthropic', 'google', 'openai'].includes(provider)) {
-    throw new Error(`Unknown provider: ${provider}. Expected: anthropic, google, openai`)
+  if (!['anthropic', 'google', 'openai', 'mistral'].includes(provider)) {
+    throw new Error(`Unknown provider: ${provider}. Expected: anthropic, google, openai, mistral`)
   }
 
   const thinking = thinkingFlag === 'thinking'
@@ -193,7 +203,7 @@ export function parseModelString(modelString: string): ParsedModelString {
   }
 
   return {
-    provider: provider as 'anthropic' | 'google' | 'openai',
+    provider: provider as 'anthropic' | 'google' | 'openai' | 'mistral',
     modelName,
     version,
     thinking,
