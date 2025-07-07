@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { renderPageAsImage } from 'unpdf'
 import { Image } from 'imagescript'
 import { boundingBoxSchema, BoundingBox } from '@/lib/services/html-fragment-processor'
-import { uploadImageAsset, getPublicDocumentUrl } from '@/lib/services/storage'
+import { uploadImageAsset, getSignedDocumentUrl } from '@/lib/services/storage'
 import { createRequestLogger } from '@/lib/services/logger'
 import { Blob } from 'buffer'
 
@@ -24,9 +24,10 @@ export type PdfRegionExtractionOptions = z.infer<typeof pdfRegionExtractionOptio
 
 export interface PdfRegionExtractionResult {
   storagePath: string // Supabase path (documents bucket)
-  publicUrl: string   // Public/Signed URL that can be injected into HTML
+  signedUrl: string   // Signed URL that can be injected into HTML
   width: number
   height: number
+  size: number        // File size in bytes
 }
 
 /**
@@ -83,15 +84,18 @@ export async function extractPdfRegionAndUpload (
     throw new Error('Upload to Supabase Storage failed (null result)')
   }
 
-  const publicUrl = getPublicDocumentUrl(uploadRes.path)
+  // Generate a signed URL (1 year expiry)
+  const ONE_YEAR_SECONDS = 365 * 24 * 60 * 60
+  const signedUrl = await getSignedDocumentUrl(uploadRes.path, ONE_YEAR_SECONDS)
 
   logger.info('PDF region extraction done', { storagePath: uploadRes.path, width: w, height: h })
 
   return {
     storagePath: uploadRes.path,
-    publicUrl,
+    signedUrl,
     width: w,
-    height: h
+    height: h,
+    size: uploadRes.size
   }
 }
 

@@ -465,7 +465,10 @@ export async function POST(request: NextRequest) {
       extractedImagesCount: extractedImagesMetadata.length
     }, 'PDF to HTML conversion completed successfully')
 
-    // Process HTML through shared pipeline (sanitization, text extraction, document creation)
+    // Build additional metadata including image info
+    const imageCount = extractedImagesMetadata.length
+    const totalImageBytes = extractedImagesMetadata.reduce((sum: number, img: any) => sum + (img.fileSize || 0), 0)
+
     const { document, storageResult } = await processHtmlToDocument(
       htmlResult.text,
       {
@@ -492,8 +495,12 @@ export async function POST(request: NextRequest) {
         file_size_bytes: pdfBuffer.length,
         page_count: pageValidationResult.pageCount,
         model_used: modelString,
-        // Additional metadata can be included here but must match expected types
-        // pipeline_version and extracted_images would need to be handled differently
+
+        // Image extraction metadata
+        extracted_images: extractedImagesMetadata,
+        assets_uploaded: imageCount,
+        image_assets: imageCount,
+        total_storage_bytes: totalImageBytes
       }
     )
 

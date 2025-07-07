@@ -82,6 +82,9 @@ export interface AdditionalMetadata {
   image_assets?: number
   total_storage_bytes?: number
   pipeline_phase?: number
+  
+  // New: array of extracted image metadata or any other complex nested data
+  extracted_images?: unknown
 }
 
 /**
@@ -92,7 +95,7 @@ export interface UploadMetadata {
   provider_used: string | null
   upload_source: 'pdf' | 'url' | 'url-pdf' | 'html-upload'
   // Allow additional fields from AdditionalMetadata
-  [key: string]: string | number | boolean | null | undefined
+  [key: string]: unknown
 }
 
 /**

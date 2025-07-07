@@ -260,20 +260,27 @@ From our investigation:
 - [x] Feature-flag `IMAGE_EXTRACTION_ENABLED`
 - [x] Jest unit test `pdf-image-extractor-server.test.ts` verifies crop→upload flow
 
+### Stage: Storage Integration ✅ COMPLETED (2025-07-07)
+- [x] Update document creation – `upload-pdf` route now passes `extracted_images`, `assets_uploaded`, `image_assets`, and `total_storage_bytes` into `documents.upload_metadata` JSONB.
+- [x] Server-side extractor now returns signed URLs (1-year expiry) and file sizes.
+- [x] Mistral OCR processor injects signed URLs, records `storagePath`, `signedUrl`, `fileSize` per image, aggregates total bytes.
+- [x] Types widened (`UploadMetadata`, `AdditionalMetadata`) to allow nested JSON arrays/objects.
+- [x] Fail-fast behaviour: any extraction/storage error surfaces immediately with user-visible message.
+
+Implementation notes:
+1. Supabase Storage URLs are now signed (one-year expiry) to honour private-by-default policy.
+2. All image metadata is stored verbatim in `documents.upload_metadata.extracted_images` for later analytics and cleanup.
+3. `pdf-image-extractor-server` switched from `getPublicDocumentUrl` → `getSignedDocumentUrl`, returns `{signedUrl, size}`.
+4. Updated unit types; routes recompile with no TS errors.
+5. Gemini integration deferred; focus remains on Mistral path as agreed.
+
+Next stage → Error-handling and tidying.
+
+### Stage: Error-handling and tidying
+- [ ] Read `docs/planning/250705a_error-handling-improvements.md` and implement the most easy/valuable recommendations from that
 Remaining (minor):
 - [ ] (Optional) Optimise memory usage for very large pages
 
-### Stage: Storage Integration (Future Enhancement)
-**Note**: Only needed if image extraction is implemented.
-
-- [ ] Update document creation to store extracted images
-- [ ] Modify HTML to reference extracted images in Supabase storage
-- [ ] Ensure proper RLS permissions for image assets
-- [ ] Add rollback handling for failed uploads
-- [ ] Test end-to-end with real PDFs
-
-### Stage: Error-handling
-- [ ] Read `docs/planning/250705a_error-handling-improvements.md` and implement the most easy/valuable recommendations from that
 
 ### Stage: 2nd-stage Refinement Layer
 - [ ] Add this as a later stage for quality refinement from Claude Sonnet 4 or Gemini 2.5 Pro, after getting the HTML from Gemini/Mistral

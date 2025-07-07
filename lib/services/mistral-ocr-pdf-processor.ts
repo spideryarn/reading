@@ -65,7 +65,10 @@ export const mistralOcrProcessorResultSchema = z.object({
     figureNumber: z.string().optional(),
     caption: z.string().optional(),
     altText: z.string().optional(),
-    elementType: z.enum(['figure', 'image', 'diagram', 'chart'])
+    elementType: z.enum(['figure', 'image', 'diagram', 'chart']),
+    storagePath: z.string().optional(),
+    signedUrl: z.string().optional(),
+    fileSize: z.number().optional()
   })).describe('Images with normalized bounding boxes'),
   usage: z.object({
     promptTokens: z.number(),
@@ -165,6 +168,7 @@ export async function processWithMistralOcr(
     const extractedImages: ExtractedImage[] = []
     const warnings: string[] = []
     const elementUrlMap: Record<string, string> = {}
+    let totalStorageBytes = 0
     
     if (!ocrResponse.pages || ocrResponse.pages.length === 0) {
       throw new Error('Mistral OCR returned no pages; cannot extract content')
@@ -216,14 +220,14 @@ export async function processWithMistralOcr(
 
           const elementId = `figure-${validatedPage.index}-${image.id}`
 
-          extractedImages.push({
+          const imageMeta: any = {
             elementId,
             bbox,
             elementType: 'figure',
             figureNumber: undefined,
             caption: undefined,
-            altText: undefined,
-          })
+            altText: undefined
+          }
 
           if (validatedOptions.imageExtractionEnabled) {
             try {
@@ -237,11 +241,18 @@ export async function processWithMistralOcr(
                 quality: 0.95,
                 scale: 2
               } as PdfRegionExtractionOptions)
-              elementUrlMap[elementId] = regionRes.publicUrl
+
+              elementUrlMap[elementId] = regionRes.signedUrl
+              imageMeta.storagePath = regionRes.storagePath
+              imageMeta.signedUrl = regionRes.signedUrl
+              imageMeta.fileSize = regionRes.size
+              totalStorageBytes += regionRes.size
             } catch (cropErr) {
               warnings.push(`Image extraction failed for ${elementId}: ${cropErr instanceof Error ? cropErr.message : 'Unknown error'}`)
             }
           }
+
+          extractedImages.push(imageMeta)
         } catch (err) {
           warnings.push(
             `Failed to process image ${image.id}: ${err instanceof Error ? err.message : 'Unknown error'}`,
