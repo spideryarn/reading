@@ -178,6 +178,7 @@ export async function POST(request: NextRequest) {
     const supabase = await getSupabaseServerClient(request)
     const enhancementService = new EnhancementService(supabase)
     const aiCallService = new AiCallService(supabase)
+    const aiResponseLogger = createAIResponseLogger(aiCallService)
     
     // Check if tweet thread already exists in database
     const existingTweetThread = await enhancementService.get(
@@ -290,24 +291,24 @@ export async function POST(request: NextRequest) {
       metadata: validatedResponse.metadata || {}
     }
     
-    const aiResponseLogger = createAIResponseLogger(aiCallService)
-
-    // Start AI call tracking
-    const pendingCall = await aiCallService.startCallWithModelString({
+    /*
+     * Migrate to new AI call tracking workflow: begin with startCallWithModelString
+     * then finalise with AIResponseLogger.completeAICall so we capture raw response
+     * and latency consistently.
+     */
+    const startedCall = await aiCallService.startCallWithModelString({
       userId: user.id,
       modelString: modelString,
       prompt_type: 'chat',
       input_data: {
-        content,
-        target_length,
-        documentId
+        content_length: content.length,
+        target_length
       }
     })
 
-    // Complete AI call with full response logging
     await aiResponseLogger.completeAICall({
-      aiCallId: pendingCall.id,
-      response: {
+      aiCallId: startedCall.id,
+      response: llmResult.rawResponse || {
         text: llmResult.text,
         usage: llmResult.usage,
         finishReason: llmResult.finishReason
@@ -316,10 +317,12 @@ export async function POST(request: NextRequest) {
       correlationId
     })
 
+    const aiCall = { id: startedCall.id }
+
     // Store tweet thread enhancement in database
     await enhancementService.storeTweetThread(
       documentId,
-      pendingCall.id,
+      aiCall.id,
       {
         tweets: validatedResponse.tweets.map(tweet => ({
           id: `tweet-${tweet.number}`,
@@ -335,7 +338,7 @@ export async function POST(request: NextRequest) {
     requestLogger.info({
       correlationId,
       documentId,
-      aiCallId: pendingCall.id,
+      aiCallId: aiCall.id,
       tweetCount: validatedResponse.tweets.length,
       tokensUsed: llmResult.usage.totalTokens
     }, 'Tweet thread generated and stored successfully')

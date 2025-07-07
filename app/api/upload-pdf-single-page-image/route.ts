@@ -377,19 +377,26 @@ export async function POST(request: NextRequest) {
     const totalProcessingTime = Date.now() - startTime
 
     // Complete the AI call record with comprehensive logging
+    const finishTimestamp = Date.now()
     await aiResponseLogger.completeAICall({
       aiCallId: aiCall.id,
       response: {
-        text: updatedHtml.substring(0, 100) + '...', // store sample text only
+        text: '',
         usage: pageResult.tokenUsage ? {
+          totalTokens: pageResult.tokenUsage.totalTokens,
           promptTokens: pageResult.tokenUsage.promptTokens,
           completionTokens: pageResult.tokenUsage.completionTokens,
-          totalTokens: pageResult.tokenUsage.totalTokens,
           ...(pageResult.tokenUsage.reasoningTokens !== undefined && {
             reasoningTokens: pageResult.tokenUsage.reasoningTokens
           })
-        } : { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
-        finishReason: 'stop'
+        } : {
+          totalTokens: 0,
+          promptTokens: 0,
+          completionTokens: 0
+        },
+        finishReason: 'stop',
+        startTimestamp: startTime,
+        finishTimestamp
       },
       outputData: {
         page_number: pageNumber,

@@ -249,14 +249,17 @@ export async function POST(request: NextRequest) {
           error instanceof Error ? error : new Error('Unknown error')
         )
         
-        // Fail fatally – ensure the AI call is marked as failed with debugging info
+        // Mark AI call as failed using the dedicated method so the row status
+        // is correctly set to "failed" and the monitoring dashboard reflects
+        // the error.  We store structured extra data for debugging.
         await aiCallService.failCall(
           aiCall!.id,
           error instanceof Error ? error.message : 'Unknown error',
           'llm_extraction_failed',
           {
             provider,
-            processing_method: 'ai-transcription'
+            processing_method: 'ai-transcription',
+            correlation_id: correlationId
           }
         )
         
