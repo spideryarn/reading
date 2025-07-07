@@ -19,8 +19,10 @@ Spideryarn Reading is an AI-assisted document reading and analysis application, 
 - AI-generated granular table of contents and headings
 - Chatbot assistance
 - Multi-granularity summaries
-- Entity glossary
-- Intelligent navigation
+- Glossary
+- Intelligent navigation & LLM-powered search
+- LLM-powered PDF transcription at import
+- and various other expert-reader assistance tools.
 
 
 ## Development Philosophy & Safety Guidelines
@@ -44,8 +46,6 @@ Based on README.md, the following architecture decisions have been made:
   - @assistant-ui/react for chat UI primitives
   - All LLM calls use Nunjucks + Zod prompt templates
 - **Storage**: Supabase (Postgres with realtime capabilities) from the start
-- **Data Structure**: Single-row document storage (moved away from element decomposition)
-- **Frontend State**: Virtual DOM approach - maintain document structure as React state/context
 - **Background Processing**: Frontend-driven queue initially, with API calls to backend
 
 
@@ -85,7 +85,6 @@ Type checking and linting:
 - For large-scale find-and-replace: see `docs/reference/SD_STRING_DISPLACEMENT_FIND_REPLACE.md`
 - Database: `supabase/migrations/` and `docs/reference/DATABASE_*.md`
 - Architecture: `docs/reference/ARCHITECTURE_OVERVIEW.md` and `docs/reference/ARCHITECTURE_DECISIONS.md`
-- Recent decisions: `docs/planning/*.md` docs
 
 
 ## Test Database Approach - IMPORTANT
@@ -155,17 +154,6 @@ Debugging resources:
 - User-friendly error messages: "What happened + Why + What to do"
 
 
-## Upload Metadata Tracking
-
-**Current Implementation**:
-- Upload metadata stored in `documents.upload_metadata` JSONB field
-- AI call traceability via `documents.upload_ai_call_id` foreign key
-- Implemented in PDF upload and URL extraction APIs
-- Enables debugging and processing optimization
-
-**Files**: Migration `20250608120000_add_upload_metadata_fields.sql`, types in `lib/types/database-auto-generated.ts` and manual extensions in `lib/types/database-extensions.ts`
-
-
 ## Authentication System
 
 **Current Implementation**: Supabase Auth with Next.js App Router
@@ -176,18 +164,6 @@ Debugging resources:
 
 **Files**: `lib/auth/`, `components/auth/`, `app/auth/`, `middleware.ts`
 **Documentation**: See `docs/reference/AUTHENTICATION_*.md` for comprehensive guides
-
-
-## Project Structure
-
-**Active Development** (root directory):
-- Core implementation: `app/`, `components/`, `lib/`
-- Documentation: `docs/` (evergreen) and `docs/planning/` (decisions)
-- Database: `supabase/migrations/` and config
-
-**IGNORE**:
-- `obsolete_alternative_version/` - deprecated Python version (occasionally useful for prompts)
-- `backup/` - deprecated SvelteKit implementation
 
 
 ## Environment Variables
@@ -224,7 +200,7 @@ Debugging resources:
 
 ## Tasks & Subagents
 
-**Use TodoWrite/TodoRead** for task tracking when handling multiple items.
+For Claude Code: **Use TodoWrite/TodoRead** for task tracking when handling multiple items.
 
 **Use subagents for**:
 - Running tests, lint/build checks
@@ -271,4 +247,4 @@ See `docs/instructions/TASKS_SUBAGENTS.md` for details
 - **Spelling**: British
 - **Git commits**: Follow `docs/instructions/GIT_COMMIT_CHANGES.md`
 - **Date**: Summer 2025
-- **Production**: https://www.spideryarn.com
+- 
