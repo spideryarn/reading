@@ -1,16 +1,5 @@
 # Error Handling Overhaul Plan
 
-**Status**: In Progress  
-**Created**: 2025-01-05  
-**Last Updated**: 2025-01-06  
-**Stage**: Implementation (Stage 1 Complete)
-
-## History
-
-- **2025-01-05** – Initial planning document created
-- **2025-07-05** – Merged and superseded `250703b_descriptive_error_message_propagation.md`
-- **2025-01-06** – Completed circular reference handling, updated to standard format
-
 ## Goal, Context
 
 Spideryarn Reading currently suffers from inconsistent error responses, occasional silent failures, and vague user-facing messages. We need a comprehensive error handling overhaul to ensure reliability and maintainability.
@@ -74,34 +63,53 @@ Spideryarn Reading currently suffers from inconsistent error responses, occasion
   - 📔 Previous implementation was throwing errors, breaking AI tool functionality
   - 📔 New approach logs warnings but continues processing successfully
 
-### Stage: Quick Wins - Expose Hidden Errors
-- [ ] Re-audit masked/silent errors across codebase (use subagent with Grep/Glob tools)
-  - [ ] Search for `catch` blocks returning empty values
-  - [ ] Find components with perpetual loading states
-  - [ ] Identify vague error messages
-- [ ] Replace vague messages with specific, actionable ones (see Appendix A for examples)
-- [ ] Introduce global correlation-ID middleware for all requests
-- [ ] Run `npm run check:health` and fix any issues (use subagent if >3 files)
+### ✅ Stage: Quick Wins - Expose Hidden Errors (COMPLETE – 2025-07-07)
+- [x] Re-audited masked/silent errors across codebase
+  - [x] Searched for empty `catch` blocks (none found)
+  - [x] Reviewed loading-state components and ensured error branches exist
+  - [x] Grepped for vague messages (`"Something went wrong"`, `"Unknown error"`) and replaced or contextualised where appropriate
+- [x] Replaced vague messages in API routes (`create-draft-document`, `realtime-demo`, `upload-pdf-single-page-image`) with actionable Problem-Detail-style responses
+- [x] Implemented **global correlation-ID middleware** in `middleware.ts` (automatically injects and returns `x-spideryarn-correlation-id` on every request)
+- [x] Ran `npm run check:health` – resolved TypeScript and lint issues; all checks pass
 
-### Stage: Core Infrastructure
-- [ ] Create `lib/api/error-utils.ts` with ProblemDetail interface and ApplicationError class (see Appendix B)
-- [ ] Add domain-specific error subclasses (DocumentError, StorageError, AIServiceError, ValidationError)
-- [ ] Implement `createProblemDetail()` helper function
-- [ ] Write Jest unit tests for serialisation and header presence
-- [ ] Refactor existing tool error helpers to use new infrastructure
-- [ ] Run tests and verify all pass
+> Outcome: Silent failures surface clearly, correlation tracing is universal, and codebase compiles & lints cleanly.
+
+### ✅ Stage: Core Infrastructure (COMPLETE – 2025-07-07)
+- [x] Create `lib/api/error-utils.ts` with ProblemDetail interface and ApplicationError class (see Appendix B)
+- [x] Add domain-specific error subclasses (DocumentError, StorageError, AIServiceError, ValidationError)
+- [x] Implement `createProblemDetail()` helper function
+- [x] Write Jest unit tests for serialisation and header presence
+- [ ] Refactor existing tool error helpers to use new infrastructure *(in progress – started with `create-draft-document`, `realtime-demo`; remaining routes & helpers to be migrated in next stage)*
+- [x] Run tests and verify all pass (`npm test`, `npx tsc --noEmit`)
 
 ### Stage: API Route Standardisation
-- [ ] Create list of all API routes needing conversion (use subagent)
-- [ ] Replace all `NextResponse.json({ error:` patterns with `createProblemDetail()`
-- [ ] Map existing status codes to structured Problem Details
-- [ ] Update API route tests to assert Problem Details shape
-- [ ] Create `useProblemDetailError()` frontend hook
-- [ ] Add integration tests for end-to-end error flow
-- [ ] Run `npm run check:health --rigorous` for comprehensive validation
+- [x] Create list of all API routes needing conversion (initial inventory below)
+
+  **Initial conversion inventory (to be updated as work proceeds):**
+  - `app/api/chat/route.ts`
+  - `app/api/delete-document/route.ts`
+  - `app/api/extract-url/route.ts`
+  - `app/api/fake_error/route.ts`
+  - `app/api/fake_success_delay/route.ts`
+  - `app/api/finalise-vision-document/route.ts`
+  - `app/api/profile/background/route.ts`
+  - `app/api/read/[slug]/download/route.ts`
+  - `app/api/read/[slug]/original/route.ts`
+  - `app/api/read/[slug]/tooltip-info/route.ts`
+  - `app/api/speech-to-text/route.ts`
+  - `app/api/stripe/create-checkout-session/route.ts`
+  - `app/api/stripe/create-customer/route.ts`
+  - `app/api/stripe/create-portal-session/route.ts`
+  - `app/api/stripe/webhook/route.ts`
+  - `app/api/tools/[toolId]/route.ts`
+  - `app/api/tweet-thread/route.ts`
+  - `app/api/upload-html/route.ts`
+  - `app/api/upload-pdf/route.ts`
+  - `app/api/read/[slug]/tooltip-info/route.ts` (partial successes handled; error branches need migration)
+  - *(Quick-win routes already converted: create-draft-document, realtime-demo, upload-pdf-single-page-image)*
 
 ### Stage: Documentation & Frontend Patterns
-- [ ] Create `docs/reference/ERROR_HANDLING_PATTERNS.md` with:
+- [ ] Create `docs/reference/ERROR_HANDLING_PATTERNS.md` (following instructions in `docs/instructions/WRITE_EVERGREEN_DOC.md`) with:
   - [ ] Notification decision tree
   - [ ] Example Problem Details for common scenarios
   - [ ] Component patterns and hooks usage

@@ -15,6 +15,8 @@ import { getModelForAICall } from '@/lib/config'
 import { requireAuth } from '@/lib/auth/server-auth'
 import type { HeadingOperation } from '@/lib/prompts/schemas/headings'
 import { createAIResponseLogger } from '@/lib/services/ai-response-logger'
+import { createProblemDetail } from '@/lib/api/error-utils'
+import { generateCorrelationId } from '@/lib/services/logger'
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,7 +26,12 @@ export async function POST(request: NextRequest) {
     const { documentId } = await request.json()
     
     if (!documentId) {
-      return NextResponse.json({ error: 'Document ID required' }, { status: 400 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/missing-document-id',
+        title: 'Document ID required',
+        status: 400,
+        detail: 'Please include a valid documentId in the request body.'
+      })
     }
 
     const supabase = await getSupabaseServerClient(request, { allowBearer: true })
@@ -36,7 +43,12 @@ export async function POST(request: NextRequest) {
     // Get document
     const document = await documentService.getById(documentId)
     if (!document) {
-      return NextResponse.json({ error: 'Document not found' }, { status: 404 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/document-not-found',
+        title: 'Document not found',
+        status: 404,
+        detail: 'The specified document does not exist or you do not have permission to access it.'
+      })
     }
 
     // Get model configuration for AI call tracking
@@ -221,14 +233,20 @@ export async function POST(request: NextRequest) {
     
     // Handle authentication errors
     if (error instanceof Error && (error.message.includes('Authentication failed') || error.message.includes('User not authenticated'))) {
-      return new NextResponse('Authentication required', { status: 401 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/auth-required',
+        title: 'Authentication required',
+        status: 401,
+        detail: 'Please sign in to access real-time enhancements.'
+      })
     }
     
-    return NextResponse.json(
-      {
-        error: 'Unable to start real-time enhancement simulation. Check server logs for details and try again later.'
-      },
-      { status: 500 }
-    )
+    return createProblemDetail({
+      type: 'https://www.spideryarn.com/probs/realtime-simulation-failed',
+      title: 'Unable to start real-time simulation',
+      status: 500,
+      detail: 'An unexpected error occurred while starting the simulation. Please try again later.',
+      correlationId: generateCorrelationId()
+    })
   }
 }
