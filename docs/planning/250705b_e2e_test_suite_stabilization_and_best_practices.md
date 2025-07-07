@@ -349,7 +349,8 @@ unblocked.
   - [x] Deleted 9 legacy specs (AI headings, glossary, search, command palette, etc.)
 - [x] Updated helpers and linter clean
 - [x] Updated coverage doc with consolidation note
-- [ ] Consolidate remaining navigation/mobile/error specs *(next batch)*
+- [x] Consolidate navigation, mobile and error specs (batch #2) – created `navigation-library-mobile.spec.ts` and `error-recovery-offline.spec.ts`, deleted 5 legacy specs
+- [ ] Final tidy-up of any residual duplicates
 
 ### Stage: Final validation and documentation
 - [ ] Run final health check: `npm run check:health`
