@@ -10,13 +10,9 @@ see: `docs/reference/TESTING_BROWSER_AUTOMATION_OVERVIEW.md`
 > The E2E suite is being aggressively consolidated to "fewer tests, richer journeys".  The tables below are **out of date**.  New super-specs already merged:
 > • `ai-features-comprehensive.spec.ts` – Headings, Glossary, Summary, Tweet Thread
 > • `search-and-command-palette.spec.ts` – In-doc search plus command-palette
->
-> Removed legacy specs:
-> • ai-headings-*, ai-glossary-*, ai-tweet-thread-generation.spec.ts
-> • search-with-*, command-palette-*, document-search-navigation-workflow.spec.ts
-> • optimized-ai-features-journey.spec.ts
->
-> A full rewrite of this coverage table will land after the next full-suite run.
+> • `navigation-library-mobile.spec.ts` – Desktop + mobile library & nav
+> • `error-recovery-offline.spec.ts` – Error page + offline recovery
+> • Removed: optimized-document-library-journey, optimized-mobile-experience, optimized-error-recovery, error-page-testing, optimized-anonymous-access-journey
 
 ## Current E2E Test Coverage
 
