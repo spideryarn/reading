@@ -131,7 +131,7 @@ export function ProcessingOptions({
               />
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-gray-900 text-sm sm:text-base">
-                  Gemini 2.5 Flash (recommended)
+                  Gemini 2.5 Flash
                 </div>
                 <div className="text-xs sm:text-sm text-gray-500 mt-1">
                   Native PDF processing with bounding box extraction - fast and reliable
@@ -149,7 +149,7 @@ export function ProcessingOptions({
               />
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-gray-900 text-sm sm:text-base">
-                  Mistral OCR
+                  Mistral OCR (recommended)
                 </div>
                 <div className="text-xs sm:text-sm text-gray-500 mt-1">
                   Superior text extraction with image bounding boxes - fast and cost-effective

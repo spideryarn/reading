@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     // Parse multipart form data
     const formData = await request.formData()
     const pdfFile = formData.get('pdf') as File
-    const provider = (formData.get('provider') as string) || 'claude' // Default to Claude
+    const provider = (formData.get('provider') as string) || 'mistral' // Default to Mistral OCR
     const title = (formData.get('title') as string) || pdfFile?.name?.replace('.pdf', '') || 'Untitled Document'
     const isPublic = formData.get('isPublic') === 'true' // Default to false (private)
 

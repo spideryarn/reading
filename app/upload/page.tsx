@@ -51,7 +51,7 @@ export default function AddDocumentPage() {
     },
     processing: {
       method: 'ai-transcription', // Default to v3
-      provider: 'gemini',
+      provider: 'mistral',
       isPublic: false
     },
     ui: {
