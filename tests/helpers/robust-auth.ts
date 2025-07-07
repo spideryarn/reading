@@ -1,6 +1,17 @@
 import { Page, expect } from '@playwright/test';
 import { getCurrentEnvironmentTestUser, getCurrentEnvironmentPaths } from '../../lib/testing/worktree-auth-helpers';
 
+/**
+ * RobustAuthManager (Playwright helper)
+ * -------------------------------------
+ * Programmatic Supabase login used by worker-specific setup helpers.
+ * Mirrors the logic in `auth.setup.ts` but runs per-worker.
+ * 
+ * Rationale & history in docs/reference/TESTING_BROWSER_AUTOMATION_IMPLEMENTATION.md
+ * (see "Supabase Client Bundle for Reliable Test Authentication").
+ * The key idea is to inject the local `/vendor/supabase.min.js` UMD bundle
+ * to avoid flaky CDN imports and UI-driven logins.
+ */
 export type UserRole = 'admin' | 'user';
 
 export interface AuthOptions {
@@ -36,6 +47,17 @@ export class RobustAuthManager {
     // Perform login with environment-specific credentials
     await this.performLogin(userRole);
     
+    // Wait until Supabase finishes writing its auth cookies before persisting state
+    await expect.poll(async () => {
+      const cookies = await this.page.context().cookies();
+      if (cookies.some(c => c.name.startsWith('sb-'))) return true;
+
+      const hasLocalStorageToken = await this.page.evaluate(() => {
+        return Object.keys(localStorage).some(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+      });
+      return hasLocalStorageToken;
+    }, { timeout: 15000 }).toBeTruthy();
+    
     // Save authentication state with IndexedDB for Supabase
     await this.page.context().storageState({ 
       path: authFile,
@@ -48,21 +70,36 @@ export class RobustAuthManager {
   
   private async performLogin(userRole: UserRole) {
     const credentials = this.getCredentials(userRole);
-    
-    await this.page.goto('/auth/login');
-    
-    // Wait for form to load
-    await this.page.waitForLoadState('networkidle');
-    
-    // Fill login form using form field names (since no data-testid yet)
-    await this.page.fill('input[name="email"]', credentials.email);
-    await this.page.fill('input[name="password"]', credentials.password);
-    await this.page.click('button[type="submit"]');
-    
-    // Wait for successful authentication (redirect to home)
-    await expect(this.page).toHaveURL(/^(?!.*\/auth\/login).*$/, {
-      timeout: 15000 // Extended timeout for auth processing
-    });
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Supabase environment variables are missing.');
+    }
+
+    // Ensure we are on same-origin page before injecting script
+    await this.page.goto('/', { waitUntil: 'domcontentloaded' });
+
+    // Inject Supabase UMD bundle (copied into public/vendor by postinstall)
+    await this.page.addScriptTag({ url: '/vendor/supabase.min.js' });
+
+    // Perform password login inside the browser so Supabase sets cookies/IndexedDB
+    const loginResult = await this.page.evaluate(({ email, password, supabaseUrl, supabaseKey }) => {
+      // @ts-ignore – global injected by UMD bundle
+      const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+      return client.auth.signInWithPassword({ email, password }).then(({ error }) => ({
+        success: !error,
+        message: error?.message,
+      }));
+    }, { email: credentials.email, password: credentials.password, supabaseUrl, supabaseKey });
+
+    if (!loginResult.success) {
+      throw new Error(`Programmatic Supabase login failed: ${loginResult.message}`);
+    }
+
+    // Give Supabase a moment to persist auth state
+    await this.page.waitForTimeout(1000);
   }
   
   private getCredentials(userRole: UserRole) {

@@ -846,3 +846,34 @@ test.afterEach(async ({ page }) => {
 ```
 
 This comprehensive implementation guide provides the technical foundation for creating robust, maintainable browser automation tests using Playwright in the Spideryarn Reading project.
+
+## Supabase Client Bundle for Reliable Test Authentication
+
+> **New (Jan 2025)** – To remove flaky external CDN imports and CORS issues during programmatic authentication, we now serve the pre-built UMD bundle of `@supabase/supabase-js` from our own application under `/vendor/supabase.min.js`.
+
+### How it works
+
+1. A post-install script copies the bundle:
+   ```jsonc
+   // package.json
+   "postinstall": "node ./scripts/copy-supabase-bundle.js"
+   ```
+   The script copies `node_modules/@supabase/supabase-js/dist/supabase.min.js` → `public/vendor/`.
+2. Test helpers (`auth.setup.ts`, `helpers/robust-auth.ts`) inject the script:
+   ```ts
+   await page.addScriptTag({ url: '/vendor/supabase.min.js' })
+   // global window.supabase now exists (UMD)
+   const client = window.supabase.createClient(url, anonKey)
+   await client.auth.signInWithPassword({ email, password })
+   ```
+3. After a short wait, cookies + IndexedDB are flushed; helpers poll for an
+   `sb-*` cookie / localStorage token before saving `storageState()`.
+
+### Benefits
+
+– **Deterministic CI**: no reliance on jsDelivr / esm.sh connectivity.  
+– **No CORS headaches**: same-origin script avoids `TypeError: Failed to fetch dynamically imported module`.  
+– **Version-aligned**: bundle comes from the exact `@supabase/supabase-js` version in `package.json`.  
+– **Zero production impact**: the file lives in `public/vendor/`, but nothing in the runtime app references it; it is only loaded by Playwright tests.
+
+If you update `@supabase/supabase-js`, the bundle is refreshed automatically on next `npm install`.

@@ -115,6 +115,7 @@ export function MetadataPanel({
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           action: 'execute', // maps to analyze-reading-difficulty
           parameters: { documentId }

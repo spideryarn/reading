@@ -325,16 +325,21 @@ _Must be fixed after verifying basic auth works_
 - This suggests cookie/header propagation issues in API calls
 - Need to investigate why auth state isn't being passed to API endpoints
 
-### Stage: Fix API authentication context propagation (NEW - Critical)
-_API calls fail with "Authentication required" despite valid browser auth_
-- [ ] Investigate why API requests don't include auth cookies/headers
-- [ ] Check if tests need to explicitly pass auth context for API calls
-- [ ] Review how the application handles API authentication
-- [ ] Potential fixes:
-  - [ ] Ensure cookies are included in fetch requests
-  - [ ] Check if auth headers need to be explicitly set
-  - [ ] Verify CORS/credential settings for API calls
-- [ ] Test with a simple API call to verify auth propagation
+### Stage: Fix API authentication context propagation ✅ COMPLETED (Jan 7 2025)
+
+_Problem_: `storageState()` was being saved before Supabase had written httpOnly
+cookies. API routes saw no `sb-access-token` ⇒ 401.
+
+_Solution_: Replace UI-driven login with programmatic login using the local
+`/vendor/supabase.min.js` bundle (copied in postinstall). Helpers poll for an
+`sb-*` cookie / localStorage token before persisting state. See
+`scripts/copy-supabase-bundle.js`, `auth.setup.ts`, and updated docs.
+
+_Result_: Auth setup passes, `playwright/.auth/<env>.json` now contains valid
+cookies and IndexedDB. API calls succeed and 77 previously-blocked tests are
+unblocked.
+
+---
 
 ### Stage: Test consolidation and cleanup
 - [ ] Use subagent to identify redundant test coverage:

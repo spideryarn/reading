@@ -108,6 +108,7 @@ export default function AddDocumentPage() {
       const response = await fetch('/api/finalise-vision-document', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           documentId,
           html: fullHtml,
@@ -517,6 +518,7 @@ export default function AddDocumentPage() {
         response = await fetch('/api/extract-url', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             url: input.url.trim(),
             extractionMethod: processing.method,
@@ -597,6 +599,7 @@ export default function AddDocumentPage() {
                 await fetch('/api/create-draft-document', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
+                  credentials: 'include',
                   body: JSON.stringify({
                     documentId,
                     title: documentTitle,
@@ -643,6 +646,7 @@ export default function AddDocumentPage() {
             pdfFormData.append('isPublic', processing.isPublic.toString())
             response = await fetch(apiEndpoint, {
               method: 'POST',
+              credentials: 'include',
               body: pdfFormData
             })
           }
@@ -655,6 +659,7 @@ export default function AddDocumentPage() {
           htmlFormData.append('isPublic', processing.isPublic.toString())
           response = await fetch('/api/upload-html', {
             method: 'POST',
+            credentials: 'include',
             body: htmlFormData
           })
         } else {
@@ -830,6 +835,7 @@ export default function AddDocumentPage() {
                       fetch('/api/delete-document', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
                         body: JSON.stringify({ documentId: visionUploadState.documentId })
                       }).catch(err => {
                         console.error('Failed to clean up cancelled document:', err)

@@ -20,7 +20,7 @@
         "test": "jest",
         "test:watch": "npm run test -- --watch",
         "test:coverage": "npm run test -- --coverage",
-        "test:e2e": "playwright test --isolated",
+        "test:e2e": "playwright test",
         "test:e2e:with-preflight": "npm run e2e:preflight && npm run test:e2e",
         "test:e2e:ui": "npm run test:e2e -- --ui",
         "test:e2e:debug": "npm run test:e2e -- --debug",
@@ -45,6 +45,7 @@
         "supabase:stop": "npm run supabase -- stop",
         "supabase:status": "npm run supabase -- status"
     },
+    "postinstall": "node ./scripts/copy-supabase-bundle.js",
     "dependencies": {
         "@ai-sdk/anthropic": "^1.2.12",
         "@ai-sdk/google": "^1.2.18",
