@@ -285,3 +285,50 @@ npx tsx scripts/tests/test-gemini-bounding-boxes.ts path/to/your.pdf
 - Pipeline Comparison: `docs/reference/PDF_UPLOAD_PIPELINES_COMPARISON.md`
 - LLM Approaches: `docs/reference/PDF_TO_HTML_LLM_APPROACHES.md`
 - Token Usage Tracking: `docs/reference/LLM_TRACKING_TOKEN_USAGE_LOGGING.md`
+
+## Direct-to-Storage Upload Flow (2025-07-07)
+
+> Introduced in commit `7c34e5f` as part of the *Bypass Vercel 4.5 MB Limit* stage.
+
+### Why
+Vercel Functions hard-limit request bodies to ≈4.5 MB.  Academic PDFs routinely exceed this, so multipart uploads failed before they even reached our API.
+
+### How it works
+1. **Browser**
+   1. Generate `documentId` (UUID v4) client-side.
+   2. Upload the PDF directly to Supabase Storage using the *anon* client:
+      ```ts
+      supabase.storage.from('documents').upload(`${documentId}/original/${file.name}`, file)
+      ```
+   3. POST a **small JSON payload** to `/api/upload-pdf`:
+      ```json
+      {
+        "bucket": "documents",
+        "path": "<documentId>/original/<filename>",
+        "size": 8234567,
+        "mime": "application/pdf",
+        "provider": "mistral",
+        "title": "My Paper",
+        "isPublic": false,
+        "documentId": "<uuid>"
+      }
+      ```
+2. **API `/api/upload-pdf`**
+   1. Detects `content-type: application/json` and validates via **Zod**.
+   2. Creates a **service-role** Supabase client (`lib/supabase/service-role.ts`).
+   3. Streams the PDF down (`storage.download`) into a Buffer (size already checked).
+   4. Runs the existing v3 processing paths (Gemini Native, Mistral OCR, etc.).
+   5. **Patches** the newly-created document with `storage_path` instead of re-uploading.
+   6. Responds with the same 201 payload as before.
+
+### Limits & Security
+- RLS is enforced because the browser creates a **draft document** (optional) and uploads into `documents/<uuid>/original/…` which is restricted to owners.
+- Service-role key is **never exposed** to the browser; only the function uses it.
+- Existing multipart flow still works for small PDFs (< 4 MB).
+
+### Route metadata
+- `export const maxDuration = 300` — gives the function 5 min to stream large PDFs.
+
+### Future work
+- Signed PUT URLs for larger files / resumable uploads.
+- Streaming HTML response to avoid the 4.5 MB response cap.
