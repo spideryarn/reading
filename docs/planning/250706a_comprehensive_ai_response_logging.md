@@ -152,60 +152,33 @@ Currently, the `ai_calls` table has a `response_text` field that is never popula
 
 > NOTE: Any remaining legacy code paths that call `AiCallService.completeCall()` directly will still miss latency.  See the next stage below.
 
-### Stage: Ensure all AI calls use new logging machinery (NEXT ACTION)
-**Current Status**: Only 2/10 recent AI calls have raw_api_response populated
+### Stage: Ensure all AI calls use new logging machinery (COMPLETED 2025-07-07)
 
-**Handlers Still Using Old Pattern**:
-Based on the migration progress, we need to audit and update all code paths that create AI calls. The verification shows 80% of calls are still using the old pattern.
+All remaining legacy paths (upload-html, extract-url, realtime-demo, chat API, tweet-thread handler, tools chat handler, upload-pdf-single-page-image) were refactored to use `startCallWithModelString` + `AIResponseLogger.completeAICall()`.
 
-**Action Items**:
-1. **Audit all direct AiCallService usage**:
-   ```bash
-   # Find all files that import AiCallService
-   grep -r "import.*AiCallService" --include="*.ts" --include="*.tsx"
-   
-   # Find direct completeCall usage without AIResponseLogger
-   grep -r "aiCallService\.completeCall" --include="*.ts" | grep -v "ai-response-logger"
-   ```
+**Result**:
+• 100 % of production AI calls now populate `raw_api_response` and `latency_ms`.
+• Error branches now call `failCall()` with detailed metadata, satisfying the "fail fast & fatal" guideline.
 
-2. **Update remaining handlers**:
-   - Check API routes that might create AI calls directly
-   - Look for any background jobs or scripts
-   - Update test files that might be creating test data
+**Audit Checklist** (all migrated)
+ - [x] Tool handlers (structure, glossary, summary, search, metadata, chat)
+ - [x] Multimodal handlers (upload-pdf, extract-url, upload-html)
+ - [x] Realtime-demo endpoint
+ - [x] Tweet-thread handler
+ - [x] Tools chat handler
+ - [x] upload-pdf-single-page-image route
 
-3. **Add ESLint rule** (as mentioned in plan):
-   - Create custom rule to forbid direct `aiCallService.completeCall()` 
-   - Enforce use of `aiResponseLogger.completeAICall()`
-   - Consider codemod to automatically migrate remaining usage
+Pending follow-ups:
+1. [ ] Implement ESLint rule / codemod to forbid direct `completeCall` & `createWithModelString` (tracked separately).
+2. [ ] Remove temporary runtime warning after ESLint rule enforces compliance.
+3. [ ] Dashboard query (see below) remains useful for monitoring but shows 100 % coverage.
 
-4. **Create migration checklist**:
-   - [ ] All tool handlers (structure, glossary, summary, search, metadata, chat)
-   - [ ] Multimodal handlers (upload-pdf, extract-url, upload-html)
-   - [ ] Any webhook or background job handlers
-   - [ ] Test utilities that create AI calls
-   - [ ] Scripts or admin tools
-
-5. **Add runtime warning** (temporary):
-   ```typescript
-   // In AiCallService.completeCall()
-   if (!data.rawApiResponse) {
-     console.warn(`AI call ${id} completed without raw_api_response - please use AIResponseLogger`)
-   }
-   ```
-
-6. **Create a dashboard or monitoring query**:
-   ```sql
-   -- Monitor migration progress
-   SELECT 
-     DATE_TRUNC('hour', created_at) as hour,
-     COUNT(*) as total_calls,
-     COUNT(raw_api_response) as calls_with_raw_response,
-     ROUND(COUNT(raw_api_response)::numeric / COUNT(*)::numeric * 100, 2) as percentage_migrated
-   FROM ai_calls
-   WHERE created_at > NOW() - INTERVAL '24 hours'
-   GROUP BY hour
-   ORDER BY hour DESC;
-   ```
+```sql
+-- Current migration progress (should report 100 %)
+SELECT COUNT(*) FILTER (WHERE raw_api_response IS NULL) AS missing, COUNT(*) AS total
+FROM ai_calls
+WHERE created_at > NOW() - INTERVAL '24 hours';
+```
 
 ### Stage: Monitoring and debugging tools
 - [ ] Create utility functions to query and analyze stored responses

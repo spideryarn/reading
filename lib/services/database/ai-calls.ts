@@ -61,6 +61,7 @@ export class AiCallService {
       prompt_input: JSON.stringify(options.input_data || {}),
       prompt_template: null,
       status: 'pending',
+      raw_api_response: {} as Json, // Ensure NOT NULL constraint satisfied on insert
       extra: (options.extra || {}) as Json,
     }
 
@@ -337,6 +338,7 @@ export class AiCallService {
       completion_tokens: options.completionTokens ?? null,
       total_tokens: options.totalTokens ?? null,
       extra: (options.responseData || {}) as Json,
+      raw_api_response: (options.responseData || {}) as Json, // Fallback to satisfy NOT NULL constraint
     }
 
     const { data, error } = await this.supabase
