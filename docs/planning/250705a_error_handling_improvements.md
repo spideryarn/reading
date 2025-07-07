@@ -101,12 +101,11 @@ Spideryarn Reading currently suffers from inconsistent error responses, occasion
   - ~~`app/api/stripe/create-customer/route.ts`~~ ✅ converted
   - ~~`app/api/stripe/create-portal-session/route.ts`~~ ✅ converted
   - ~~`app/api/stripe/webhook/route.ts`~~ ✅ converted
-  - `app/api/stripe/webhook/route.ts`
-  - `app/api/tools/[toolId]/route.ts`
-  - `app/api/tweet-thread/route.ts`
+  - ~~`app/api/tools/[toolId]/route.ts`~~ ✅ converted
+  - ~~`app/api/tweet-thread/route.ts`~~ ✅ converted
   - ~~`app/api/upload-html/route.ts`~~ ✅ converted (validation + error paths converted; success/OPTIONS unchanged – acceptable)
   - ~~`app/api/upload-pdf/route.ts`~~ ✅ converted
-  - `app/api/read/[slug]/tooltip-info/route.ts` (partial successes handled; error branches need migration)
+  - ~~`app/api/read/[slug]/tooltip-info/route.ts`~~ ✅ converted
   - *(Quick-win routes already converted: create-draft-document, realtime-demo, upload-pdf-single-page-image)*
 
 ### Stage: Documentation & Frontend Patterns
