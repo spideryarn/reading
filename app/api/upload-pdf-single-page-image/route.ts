@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { requireAuth } from '@/lib/auth/server-auth'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
+import { createProblemDetail } from '@/lib/api/error-utils'
 import { processPageToHtml } from '@/lib/services/page-processor'
 import { processHtmlFragment } from '@/lib/services/html-fragment-processor'
 import { z } from 'zod'
@@ -85,7 +86,13 @@ export async function POST(request: NextRequest) {
         error: sizeValidation.error,
         contentLength
       }, 'Payload size validation failed')
-      return new NextResponse(sizeValidation.error, { status: 400 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/payload-too-large',
+        title: 'Payload too large',
+        status: 400,
+        detail: sizeValidation.error,
+        correlationId
+      })
     }
 
     // Parse JSON body
@@ -99,7 +106,13 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         errors: validationResult.error.errors
       }, 'Request validation failed')
-      return new NextResponse(`Invalid request: ${validationResult.error.errors.map(e => e.message).join(', ')}`, { status: 400 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/invalid-request',
+        title: 'Invalid request',
+        status: 400,
+        detail: validationResult.error.errors.map(e => e.message).join(', '),
+        correlationId
+      })
     }
 
     const { pageImage, pageNumber, totalPages, documentId, documentTitle, fileName } = validationResult.data
@@ -133,7 +146,13 @@ export async function POST(request: NextRequest) {
         actualDecodedSize,
         maxSize: 4 * 1024 * 1024
       }, 'Page image too large after decoding')
-      return new NextResponse(`Page image too large: ${Math.round(actualDecodedSize / 1024 / 1024 * 10) / 10}MB (max 4MB)`, { status: 400 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/page-image-too-large',
+        title: 'Page image too large',
+        status: 400,
+        detail: `Image size ${Math.round(actualDecodedSize / 1024 / 1024 * 10) / 10}MB exceeds 4MB limit.`,
+        correlationId
+      })
     }
 
     // Initialize Supabase client and services
@@ -426,43 +445,63 @@ export async function POST(request: NextRequest) {
     // Handle authentication errors
     if (error instanceof Error) {
       if (error.message.includes('Authentication failed') || error.message.includes('User not authenticated')) {
-        return new NextResponse('Authentication required', { status: 401 })
+        return createProblemDetail({
+          type: 'https://www.spideryarn.com/probs/auth-required',
+          title: 'Authentication required',
+          status: 401,
+          detail: 'Please sign in to upload vision-based pages.',
+          correlationId
+        })
       }
       
       if (error.message.includes('rate limit') || error.message.includes('quota')) {
-        return new NextResponse('AI service rate limit exceeded. Please try again later.', { status: 429 })
+        return createProblemDetail({
+          type: 'https://www.spideryarn.com/probs/ai-rate-limit',
+          title: 'AI service rate limit',
+          status: 429,
+          detail: 'AI service rate limit exceeded. Please try again later.',
+          correlationId
+        })
       }
       
       if (error.message.includes('API key') || error.message.includes('authentication')) {
-        return new NextResponse('AI service configuration error', { status: 503 })
+        return createProblemDetail({
+          type: 'https://www.spideryarn.com/probs/ai-config-error',
+          title: 'AI service configuration error',
+          status: 503,
+          detail: 'AI service configuration error. Please contact support.',
+          correlationId
+        })
       }
       
       if (error.message.includes('timeout')) {
-        return new NextResponse('Request timeout processing page', { status: 504 })
+        return createProblemDetail({
+          type: 'https://www.spideryarn.com/probs/request-timeout',
+          title: 'Request timed out',
+          status: 504,
+          detail: 'The request timed out while processing the page. Please try again.',
+          correlationId
+        })
       }
 
       // Return error response conforming to schema
-      const errorResponse: z.infer<typeof SinglePageVisionResponse> = {
-        pageNumber: 0,
-        pageHtml: '',
-        extractedImages: [],
-        success: false,
-        error: error.message
-      }
-      
-      return NextResponse.json(errorResponse, { status: 500 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/single-page-processing-failed',
+        title: 'Single page processing failed',
+        status: 500,
+        detail: error.message,
+        correlationId
+      })
     }
     
     // Generic error response
-    const errorResponse: z.infer<typeof SinglePageVisionResponse> = {
-      pageNumber: 0,
-      pageHtml: '',
-      extractedImages: [],
-      success: false,
-      error: 'Unknown error occurred'
-    }
-    
-    return NextResponse.json(errorResponse, { status: 500 })
+    return createProblemDetail({
+      type: 'https://www.spideryarn.com/probs/unknown-error',
+      title: 'Unknown error',
+      status: 500,
+      detail: 'An unknown error occurred.',
+      correlationId
+    })
   }
 }
 
