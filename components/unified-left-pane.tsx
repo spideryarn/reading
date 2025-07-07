@@ -32,13 +32,11 @@ import Mark from 'mark.js'
 import { extractCleanText } from '@/lib/utils/html-text-extraction'
 import { extractAllMatchContexts, generateTooltipContent } from '@/lib/utils/search-context-extraction'
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover'
-import { useGlossaryUrlState, useSearchUrlState, useNavigateToTab } from '@/lib/tools/hooks/use-tool-url-state'
-import type { TabValue } from '@/lib/tools/url-state-types'
+import { useGlossaryUrlState, useSearchUrlState } from '@/lib/tools/hooks/use-tool-url-state'
 import type { Entity } from '@/lib/types/entity'
 import { findFirstOccurrence } from '@/lib/utils/entity-position-tracking'
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import { getAllTools } from '@/lib/tools/registry'
 
 // Semantic highlight interface
 interface SemanticHighlight {
@@ -570,24 +568,9 @@ export function UnifiedLeftPane({
   uploadMetadata
 }: UnifiedLeftPaneProps) {
   const { actions, state } = useDocumentCommunication()
-  const navigateToTab = useNavigateToTab()
   
   // Ref for search input to enable auto-focus
   const searchInputRef = useRef<HTMLInputElement>(null)
-  
-  // Tool order for keyboard shortcuts
-  const TOOL_ORDER = useMemo(() => [
-    'structure',
-    'summary',
-    'chat',
-    'glossary',
-    'search',
-    'highlights',
-    'metadata'
-  ], [])
-  
-  // Get registered tools for validation
-  const tools = useMemo(() => getAllTools(), [])
   
   // Auto-load glossary when glossary tab is activated
   useEffect(() => {

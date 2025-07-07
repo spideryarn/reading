@@ -2,12 +2,9 @@
  * Tests for Gemini Native PDF Processor
  */
 
-// eslint-disable-next-line import/no-unresolved -- path aliases are resolved via ts-jest config in test env
 import { processWithGeminiNative, canProcessWithGeminiNative } from '../gemini-native-pdf-processor'
-// eslint-disable-next-line import/no-unresolved -- path aliases are resolved via ts-jest config in test env
 // @ts-expect-error -- path aliases are resolved via ts-jest config in test env
 import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
-// eslint-disable-next-line import/no-unresolved -- path aliases are resolved via ts-jest config in test env
 // @ts-expect-error -- path aliases are resolved via ts-jest config in test env
 import { UPLOAD_LIMITS } from '@/lib/config/upload-limits'
 

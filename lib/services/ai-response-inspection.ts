@@ -1,7 +1,5 @@
-// @ts-nocheck
-/* eslint-disable */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { SupabaseClient } from '@supabase/supabase-js'
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
 import type { Database } from '@/lib/types/database-auto-generated'
 import { createRequestLogger } from './logger'
 

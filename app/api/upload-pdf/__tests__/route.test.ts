@@ -55,7 +55,7 @@ jest.mock('@/lib/services/database/ai-calls', () => ({
   AiCallService: jest.fn(() => mockAiCallService)
 }))
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { POST } from '../route'
 import { requireAuth } from '@/lib/auth/server-auth'
 import { getSupabaseServerClient } from '@/lib/supabase/server'

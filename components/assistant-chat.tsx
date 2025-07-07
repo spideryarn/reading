@@ -15,7 +15,6 @@ import {
 import { User, Robot, PaperPlaneTilt, CircleNotch, Trash } from '@phosphor-icons/react';
 import { useChatStore } from '@/src/lib/hooks/useChatStore';
 import { Button } from '@/components/ui/button'
-import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 import { useChatUrlState } from '@/lib/tools/hooks/use-tool-url-state';
 import React, { useEffect, useCallback, useRef, useContext, useState } from 'react';
 import { TooltipOrPopover } from '@/components/ui/tooltip-or-popover';

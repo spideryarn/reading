@@ -198,7 +198,6 @@ function normalizeGeminiBoundingBoxes(
         const tryOrders: ('xy' | 'yx')[] = ['xy', 'yx'] // Prioritise x,y,x,y order; YX used as fallback
         let mapped: [number, number, number, number] | null = null
         // We validated rawCoords length === 4 above, so mapped will always have 4 numeric entries.
-        // eslint-disable-next-line @typescript-eslint/prefer-for-of
         for (const ord of tryOrders) {
           const [tX1, tY1, tX2, tY2] = mapCoords(rawCoords, ord)
           if (tX1 < tX2 && tY1 < tY2) {
@@ -213,8 +212,7 @@ function normalizeGeminiBoundingBoxes(
         
         // Normalise from 0-1000 → 0-1, round to 4dp
         // mapped is non-null here because earlier branch returns when null.
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const [rawA, rawB, rawC, rawD] = mapped! as [number, number, number, number]
+        const [rawA, rawB, rawC, rawD] = mapped as [number, number, number, number]
         const nx1 = round(rawA / 1000)
         const ny1 = round(rawB / 1000)
         const nx2 = round(rawC / 1000)

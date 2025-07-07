@@ -190,7 +190,14 @@ export async function POST(request: NextRequest) {
     let processingTime: number
     let providerDisplayName: string
     let modelString: string
-    let extractedImagesMetadata: any[] = []
+    let extractedImagesMetadata: Array<{
+      elementId: string
+      bbox: { left: number; top: number; right: number; bottom: number }
+      figureNumber?: string
+      caption?: string
+      altText?: string
+      elementType: 'figure' | 'image' | 'diagram' | 'chart'
+    }> = []
     let aiCallId: string
     
     // Create AI call record for tracking (before LLM processing)
@@ -509,7 +516,7 @@ export async function POST(request: NextRequest) {
 
     // Build additional metadata including image info
     const imageCount = extractedImagesMetadata.length
-    const totalImageBytes = extractedImagesMetadata.reduce((sum: number, img: any) => sum + (img.fileSize || 0), 0)
+    const totalImageBytes = 0 // fileSize not available in extractedImages metadata
 
     const { document, storageResult } = await processHtmlToDocument(
       htmlResult.text,
