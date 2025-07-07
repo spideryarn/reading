@@ -92,7 +92,7 @@ if (typeof global.Response === 'undefined') {
             this.statusText = init.statusText || 'OK';
             this.headers = new Map();
             this.ok = this.status >= 200 && this.status < 300;
-            
+
             // Set headers from init
             if (init.headers) {
                 if (init.headers instanceof Map) {
@@ -184,14 +184,14 @@ if (typeof fetch === 'undefined') {
     if (typeof globalThis.fetch === 'function') {
         global.fetch = globalThis.fetch;
         global.Request = globalThis.Request;
-        global.Response = globalThis.Response; 
+        global.Response = globalThis.Response;
         global.Headers = globalThis.Headers;
         console.log('[jest.setup.js] Using Node.js built-in fetch for tests');
     } else {
         try {
             const { fetch, Request, Response, Headers } = require('undici');
             global.fetch = fetch;
-            global.Request = Request; 
+            global.Request = Request;
             global.Response = Response;
             global.Headers = Headers;
             console.log('[jest.setup.js] Using undici fetch for tests');
@@ -200,7 +200,7 @@ if (typeof fetch === 'undefined') {
             // This should rarely be used in modern Node.js environments
             global.fetch = async (url, options = {}) => {
                 console.warn(`[jest.setup.js] Fallback fetch mock called for: ${url}`);
-                
+
                 // Default mock response for requests
                 return new Response(JSON.stringify({ success: true }), {
                     status: 200,
@@ -290,4 +290,42 @@ beforeEach(() => {
     } catch (error) {
         // Registry module may not be loaded in all tests - this is fine
     }
+});
+
+// Polyfill Undici browser-only hooks removed in Undici v6 so that jsdom tests don’t crash.
+if (typeof global.markResourceTiming === 'undefined') {
+    global.markResourceTiming = () => { };
+}
+
+// Ensure all Timer objects returned by setTimeout / setInterval have unref() & refresh() no-ops –
+// jsdom’s fake timers sometimes omit them which Undici expects.
+(function patchTimerUnref() {
+    const realSetTimeout = global.setTimeout;
+    global.setTimeout = (...args) => {
+        const t = realSetTimeout(...args);
+        if (t && typeof t === 'object') {
+            if (typeof t.unref !== 'function') t.unref = () => { };
+            if (typeof t.ref !== 'function') t.ref = () => { };
+            if (typeof t.refresh !== 'function') t.refresh = () => t;
+        }
+        return t;
+    };
+})();
+
+// Mock TooltipManager context so component tests don’t need to wrap everything in the provider.
+jest.mock('@/lib/context/tooltip-manager', () => {
+    const React = require('react');
+    const defaultCtx = {
+        register: () => { },
+        unregister: () => { },
+        show: () => { },
+        hide: () => { },
+        isVisible: () => false
+    };
+    const TooltipManagerContext = React.createContext(defaultCtx);
+    return {
+        TooltipManagerContext,
+        TooltipManagerProvider: ({ children }) => React.createElement(React.Fragment, null, children),
+        useTooltipManager: () => defaultCtx
+    };
 });
