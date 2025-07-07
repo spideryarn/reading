@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["@phosphor-icons/react"],
   },
+  output: 'standalone',
   // Optimize dev server performance
   onDemandEntries: {
     // Keep compiled pages in memory for 5 minutes (default is 60 seconds)
@@ -17,7 +18,7 @@ const nextConfig: NextConfig = {
   },
   // External packages for pino and pino-pretty to fix worker thread issues
   // nunjucks added to fix fsevents binary module webpack error
-  serverExternalPackages: ['pino', 'pino-pretty', 'nunjucks'],
+  serverExternalPackages: ['pino', 'pino-pretty', 'nunjucks', 'imagescript'],
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Client-side fallbacks for Node.js modules (PDF.js compatibility)
@@ -45,7 +46,13 @@ const nextConfig: NextConfig = {
         '**/obsolete_alternative_version/**',
       ],
     };
-    
+
+    // Handle native .node binaries (e.g., imagescript) at runtime instead of bundling
+    config.module.rules.push({
+      test: /\.node$/,
+      loader: 'node-loader',
+    });
+
     return config;
   },
   // turbopack: {

@@ -179,6 +179,7 @@ GitHub Actions automatically handles database schema changes:
 - ESLint rules downgraded to warnings (non-blocking)
 - TypeScript build errors bypassed with `typescript.ignoreBuildErrors: true`
 - Auth pages configured with `export const dynamic = 'force-dynamic'`
+- Native binaries: `next.config.ts` sets `output: 'standalone'` **and** lists `imagescript` under `serverExternalPackages`, so Vercel automatically bundles the correct `.node` binary for the PDF image-extraction feature. Make sure any API routes that rely on ImageScript stay on the default Node runtime (not edge functions).
 
 **Planned improvements:**
 - Restore strict ESLint rules after cleanup

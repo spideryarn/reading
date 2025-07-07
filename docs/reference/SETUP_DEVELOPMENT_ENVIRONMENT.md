@@ -396,3 +396,17 @@ If port conflicts occur:
 - [CODING_GUIDELINES.md](CODING_GUIDELINES.md) - Code quality standards and best practices
 - [TESTING_OVERVIEW.md](TESTING_OVERVIEW.md) - Testing approach and current test coverage
 - [GIT_WORKTREES.md](GIT_WORKTREES.md) - Advanced Git worktree development setup
+
+## Native modules (ImageScript)
+
+The PDF image-extraction feature uses the `imagescript` library, which ships with a pre-built native `.node` binary.
+
+Local development already handles this automatically – `next.config.ts` lists `imagescript` under `serverExternalPackages`, and Webpack is instructed to defer loading of `.node` files to Node at runtime via `node-loader`.  If you ever update branches and hit a build error that looks like:
+
+```
+Module parse failed: Unexpected character '' (1:0) .node
+```
+
+make sure your branch includes the latest `next.config.ts` changes **and** that `node-loader` is installed (`npm install --save-dev node-loader`).
+
+No additional steps are required for Apple-silicon Macs or standard Linux hosts – the correct binary is chosen automatically.
