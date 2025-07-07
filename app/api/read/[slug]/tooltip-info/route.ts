@@ -8,6 +8,7 @@ import { EnhancementService } from '@/lib/services/database/enhancements'
 import { requireAuth, AuthError } from '@/lib/auth/server-auth'
 import { getCurrentUserAdminStatus } from '@/lib/auth/admin-utils'
 import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
+import { createProblemDetail } from '@/lib/api/error-utils'
 import { 
   calculateReadingTimeFromWordCount, 
   formatReadingTime, 
@@ -70,10 +71,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const { slug } = await context.params
 
     if (!slug) {
-      return NextResponse.json(
-        { error: 'Document slug is required' },
-        { status: 400 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/invalid-input',
+        title: 'Document slug required',
+        status: 400,
+        detail: 'Document slug is required.',
+        correlationId
+      })
     }
 
     requestLogger.info({
@@ -92,10 +96,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const document = await documentService.getBySlug(slug)
     
     if (!document) {
-      return NextResponse.json(
-        { error: 'Document not found' },
-        { status: 404 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/document-not-found',
+        title: 'Document not found',
+        status: 404,
+        detail: 'Document not found.',
+        correlationId
+      })
     }
 
     // Document parsing is not needed for tooltip info since we use word_count from database
@@ -112,10 +119,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
         userId: user.id
       }, 'Access denied - user cannot access private document')
       
-      return NextResponse.json(
-        { error: 'Document not found' },
-        { status: 404 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/document-not-found',
+        title: 'Document not found',
+        status: 404,
+        detail: 'Document not found.',
+        correlationId
+      })
     }
 
     // Calculate reading time using the exact same machinery as MetadataPanel
@@ -211,28 +221,40 @@ export async function GET(request: NextRequest, context: RouteContext) {
     if (error instanceof Error) {
       // Handle authentication errors
       if (error instanceof AuthError || error.message.includes('Authentication required') || error.message.includes('Authentication failed') || error.message.includes('User not authenticated')) {
-        return NextResponse.json(
-          { error: 'Authentication required' },
-          { status: 401 }
-        )
+        return createProblemDetail({
+          type: 'https://www.spideryarn.com/probs/auth-required',
+          title: 'Authentication required',
+          status: 401,
+          detail: 'Authentication required.',
+          correlationId
+        })
       }
       
       if (error.message.includes('not found')) {
-        return NextResponse.json(
-          { error: 'Document not found' },
-          { status: 404 }
-        )
+        return createProblemDetail({
+          type: 'https://www.spideryarn.com/probs/document-not-found',
+          title: 'Document not found',
+          status: 404,
+          detail: 'Document not found.',
+          correlationId
+        })
       }
       
-      return NextResponse.json(
-        { error: `Tooltip info error: ${error.message}` },
-        { status: 500 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/internal-server-error',
+        title: 'Tooltip info error',
+        status: 500,
+        detail: `Tooltip info error: ${error.message}`,
+        correlationId
+      })
     }
     
-    return NextResponse.json(
-      { error: 'Unknown tooltip info error occurred' },
-      { status: 500 }
-    )
+    return createProblemDetail({
+      type: 'https://www.spideryarn.com/probs/internal-server-error',
+      title: 'Unknown tooltip info error',
+      status: 500,
+      detail: 'Unknown tooltip info error occurred',
+      correlationId
+    })
   }
 }

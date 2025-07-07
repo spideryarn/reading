@@ -93,7 +93,7 @@ export async function authenticatedJsonFetch<T = any>(
       'Content-Type': 'application/json',
       ...options.headers
     },
-    body: options.body ? JSON.stringify(options.body) : null
+    ...(options.body !== undefined && { body: JSON.stringify(options.body) })
   })
   
   if (!response.ok) {

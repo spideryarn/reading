@@ -3,6 +3,8 @@ import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { DocumentService } from '@/lib/services/database/documents'
 import { requireAuth } from '@/lib/auth/server-auth'
 import { getCurrentUserAdminStatus } from '@/lib/auth/admin-utils'
+import { createProblemDetail } from '@/lib/api/error-utils'
+import { generateCorrelationId } from '@/lib/services/logger'
 import type { Database } from '@/lib/types/database-auto-generated'
 
 type Document = Database['public']['Tables']['documents']['Row']
@@ -36,6 +38,7 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const correlationId = generateCorrelationId()
     // Validate authentication first
     const user = await requireAuth({ allowBearer: true, request })
     
@@ -43,7 +46,13 @@ export async function GET(
     const doc = await getDocumentBySlug(slug, request)
     
     if (!doc) {
-      return new Response('Document not found', { status: 404 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/document-not-found',
+        title: 'Document not found',
+        status: 404,
+        detail: 'Document not found.',
+        correlationId
+      })
     }
 
     // Check if user owns the document or has admin access
@@ -53,7 +62,13 @@ export async function GET(
     const adminStatus = await getCurrentUserAdminStatus()
     
     if (!isOwned && !adminStatus.isAdmin) {
-      return new Response('Document not found', { status: 404 }) // Use 404 to prevent information leakage
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/document-not-found',
+        title: 'Document not found',
+        status: 404,
+        detail: 'Document not found.',
+        correlationId
+      }) // Use 404 to prevent information leakage
     }
 
     // Get HTML content from database
@@ -66,13 +81,26 @@ export async function GET(
       },
     })
   } catch (error) {
+    const correlationId = generateCorrelationId()
     console.error('Original document API error:', error)
     
     // Handle authentication errors
     if (error instanceof Error && (error.message.includes('Authentication failed') || error.message.includes('User not authenticated'))) {
-      return new Response('Authentication required', { status: 401 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/auth-required',
+        title: 'Authentication required',
+        status: 401,
+        detail: 'Authentication required.',
+        correlationId
+      })
     }
     
-    return new Response('Internal server error', { status: 500 })
+    return createProblemDetail({
+      type: 'https://www.spideryarn.com/probs/internal-server-error',
+      title: 'Internal server error',
+      status: 500,
+      detail: 'Internal server error.',
+      correlationId
+    })
   }
 }

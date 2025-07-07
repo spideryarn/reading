@@ -3,6 +3,7 @@ import { executePromptWithUsage } from '@/lib/prompts/types'
 import { tweetThreadPrompt, tweetThreadPromptInputSchema, tweetThreadResponseSchema } from '@/lib/prompts/templates/tweet-thread'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { EnhancementService } from '@/lib/services/database/enhancements'
+import { createProblemDetail } from '@/lib/api/error-utils'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { getModelForAICall } from '@/lib/config'
 import { createRequestLogger, generateCorrelationId, logAIOperation } from '@/lib/services/logger'
@@ -25,10 +26,13 @@ export async function GET(request: NextRequest) {
     }, 'Tweet thread GET request initiated')
     
     if (!documentId) {
-      return NextResponse.json(
-        { error: 'documentId is required' },
-        { status: 400 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/invalid-input',
+        title: 'documentId required',
+        status: 400,
+        detail: 'documentId is required.',
+        correlationId
+      })
     }
     
     // Initialize database services
@@ -62,10 +66,13 @@ export async function GET(request: NextRequest) {
     }
     
     // No cached tweet thread found
-    return NextResponse.json(
-      { error: 'No cached tweet thread found' },
-      { status: 404 }
-    )
+    return createProblemDetail({
+      type: 'https://www.spideryarn.com/probs/enhancement-not-found',
+      title: 'Tweet thread not found',
+      status: 404,
+      detail: 'No cached tweet thread found.',
+      correlationId
+    })
   } catch (error) {
     console.error('Error fetching cached tweet thread:', error)
     
@@ -74,10 +81,13 @@ export async function GET(request: NextRequest) {
       error: error instanceof Error ? error.message : 'Unknown error'
     }, 'Error fetching cached tweet thread')
     
-    return NextResponse.json(
-      { error: 'Failed to fetch cached tweet thread' },
-      { status: 500 }
-    )
+    return createProblemDetail({
+      type: 'https://www.spideryarn.com/probs/internal-server-error',
+      title: 'Failed to fetch cached tweet thread',
+      status: 500,
+      detail: 'Failed to fetch cached tweet thread.',
+      correlationId
+    })
   }
 }
 
@@ -96,10 +106,13 @@ export async function DELETE(request: NextRequest) {
     }, 'Tweet thread DELETE request initiated')
     
     if (!documentId) {
-      return NextResponse.json(
-        { error: 'documentId is required' },
-        { status: 400 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/invalid-input',
+        title: 'documentId required',
+        status: 400,
+        detail: 'documentId is required.',
+        correlationId
+      })
     }
     
     // Initialize database services
@@ -126,10 +139,13 @@ export async function DELETE(request: NextRequest) {
       error: error instanceof Error ? error.message : 'Unknown error'
     }, 'Error deleting tweet thread enhancement')
     
-    return NextResponse.json(
-      { error: 'Failed to delete tweet thread enhancement' },
-      { status: 500 }
-    )
+    return createProblemDetail({
+      type: 'https://www.spideryarn.com/probs/internal-server-error',
+      title: 'Failed to delete tweet thread enhancement',
+      status: 500,
+      detail: 'Failed to delete tweet thread enhancement.',
+      correlationId
+    })
   }
 }
 
@@ -152,19 +168,25 @@ export async function POST(request: NextRequest) {
     // Validate input using Zod schema
     const validationResult = tweetThreadPromptInputSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { error: 'Invalid request body', details: validationResult.error },
-        { status: 400 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/invalid-input',
+        title: 'Invalid request body',
+        status: 400,
+        detail: 'Invalid request body',
+        correlationId
+      })
     }
 
     const { content, target_length, documentId } = validationResult.data
     
     if (!documentId) {
-      return NextResponse.json(
-        { error: 'documentId is required' },
-        { status: 400 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/invalid-input',
+        title: 'documentId required',
+        status: 400,
+        detail: 'documentId is required.',
+        correlationId
+      })
     }
     
     requestLogger.info({
@@ -263,10 +285,13 @@ export async function POST(request: NextRequest) {
         llmResponseLength: jsonString.length
       }, 'Failed to parse LLM response as JSON')
       
-      return NextResponse.json(
-        { error: 'Invalid response format from AI model' },
-        { status: 500 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/internal-server-error',
+        title: 'Invalid response format from AI model',
+        status: 500,
+        detail: 'Invalid response format from AI model',
+        correlationId
+      })
     }
 
     // Validate response structure - fail fast if invalid
@@ -350,7 +375,13 @@ export async function POST(request: NextRequest) {
     
     // Handle authentication errors
     if (error instanceof Error && (error.message.includes('Authentication failed') || error.message.includes('User not authenticated'))) {
-      return new NextResponse('Authentication required', { status: 401 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/auth-required',
+        title: 'Authentication required',
+        status: 401,
+        detail: 'Authentication required.',
+        correlationId
+      })
     }
     
     requestLogger.error({
@@ -359,9 +390,12 @@ export async function POST(request: NextRequest) {
       stack: error instanceof Error ? error.stack : undefined
     }, 'Error generating tweet thread')
     
-    return NextResponse.json(
-      { error: 'Failed to generate tweet thread' },
-      { status: 500 }
-    )
+    return createProblemDetail({
+      type: 'https://www.spideryarn.com/probs/internal-server-error',
+      title: 'Failed to generate tweet thread',
+      status: 500,
+      detail: 'Failed to generate tweet thread',
+      correlationId
+    })
   }
 }

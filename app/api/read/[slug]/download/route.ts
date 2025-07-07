@@ -7,6 +7,7 @@ import { DocumentService } from '@/lib/services/database/documents'
 import { requireAuth } from '@/lib/auth/server-auth'
 import { getCurrentUserAdminStatus } from '@/lib/auth/admin-utils'
 import { createRequestLogger, generateCorrelationId, createTimer } from '@/lib/services/logger'
+import { createProblemDetail } from '@/lib/api/error-utils'
 
 interface RouteContext {
   params: Promise<{ slug: string }>
@@ -23,7 +24,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const { slug } = await context.params
 
     if (!slug) {
-      return new NextResponse('Document slug is required', { status: 400 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/invalid-input',
+        title: 'Document slug required',
+        status: 400,
+        detail: 'Document slug is required.',
+        correlationId
+      })
     }
 
     console.log(`Downloading original file for document: ${slug}`)
@@ -44,7 +51,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const document = await documentService.getBySlug(slug)
     
     if (!document) {
-      return new NextResponse('Document not found', { status: 404 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/document-not-found',
+        title: 'Document not found',
+        status: 404,
+        detail: 'Document not found.',
+        correlationId
+      })
     }
 
     // Check if user owns the document or has admin access
@@ -65,12 +78,24 @@ export async function GET(request: NextRequest, context: RouteContext) {
         userId: user.id
       }, 'Access denied - user does not own document and is not admin')
       
-      return new NextResponse('Document not found', { status: 404 }) // Use 404 to prevent information leakage
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/permission-denied',
+        title: 'Access denied',
+        status: 403,
+        detail: 'Access denied.',
+        correlationId
+      })
     }
 
     // Check if document has an original file
     if (!document.storage_path) {
-      return new NextResponse('Original file not available for this document', { status: 404 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/file-not-found',
+        title: 'Original file unavailable',
+        status: 404,
+        detail: 'Original file not available for this document.',
+        correlationId
+      })
     }
 
     console.log(`Retrieving original file from storage: ${document.storage_path}`)
@@ -87,7 +112,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const originalFile = await documentService.getOriginalFile(document.id)
     
     if (!originalFile) {
-      return new NextResponse('Original file could not be retrieved from storage', { status: 500 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/file-not-found',
+        title: 'File retrieval failed',
+        status: 500,
+        detail: 'Original file could not be retrieved from storage.',
+        correlationId
+      })
     }
 
     // Determine filename for download
@@ -138,25 +169,62 @@ export async function GET(request: NextRequest, context: RouteContext) {
     if (error instanceof Error) {
       // Handle authentication errors first
       if (error.message.includes('Authentication failed') || error.message.includes('User not authenticated')) {
-        return new NextResponse('Authentication required', { status: 401 })
+        return createProblemDetail({
+          type: 'https://www.spideryarn.com/probs/auth-required',
+          title: 'Authentication required',
+          status: 401,
+          detail: 'Authentication required.',
+          correlationId
+        })
       }
       
       if (error.message.includes('not found') || error.message.includes('PGRST116')) {
-        return new NextResponse('Document or file not found', { status: 404 })
+        return createProblemDetail({
+          type: 'https://www.spideryarn.com/probs/document-not-found',
+          title: 'Document or file not found',
+          status: 404,
+          detail: 'Document or file not found.',
+          correlationId
+        })
       }
       
       if (error.message.includes('storage') || error.message.includes('bucket')) {
-        return new NextResponse('Storage service error. Please try again later.', { status: 503 })
+        return createProblemDetail({
+          type: 'https://www.spideryarn.com/probs/storage-service-error',
+          title: 'Storage service error',
+          status: 503,
+          detail: 'Storage service error. Please try again later.',
+          correlationId,
+          retryable: true
+        })
       }
 
       if (error.message.includes('permission') || error.message.includes('access')) {
-        return new NextResponse('Access denied', { status: 403 })
+        return createProblemDetail({
+          type: 'https://www.spideryarn.com/probs/permission-denied',
+          title: 'Access denied',
+          status: 403,
+          detail: 'Access denied.',
+          correlationId
+        })
       }
       
-      return new NextResponse(`Download error: ${error.message}`, { status: 500 })
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/internal-server-error',
+        title: 'Download error',
+        status: 500,
+        detail: `Download error: ${error.message}`,
+        correlationId
+      })
     }
     
-    return new NextResponse('Unknown download error occurred', { status: 500 })
+    return createProblemDetail({
+      type: 'https://www.spideryarn.com/probs/internal-server-error',
+      title: 'Unknown download error',
+      status: 500,
+      detail: 'Unknown download error occurred',
+      correlationId
+    })
   }
 }
 
