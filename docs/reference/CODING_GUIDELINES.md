@@ -60,11 +60,11 @@ npm test        # Run test suite
 ## Error Handling & Messaging
 
 **Best Practices**:
-- **Structured error responses** - Use ApplicationError class hierarchy (see `docs/planning/250705a_error-handling-improvements.md`)
-- **User-friendly patterns** - "What happened + Why + What to do" format
-- **No silent failures** - Propagate errors, don't mask them
-- **Correlation IDs** - Use `generateCorrelationId()` for request tracing
-- **Clear error messages** - Make them actionable and informative
+- **Structured error responses** – Use `ProblemDetail` schema via helpers in `lib/api/error-utils.ts` (see `docs/reference/ERROR_HANDLING_PATTERNS.md`)
+- **User-friendly patterns** – "What happened + Why + What to do" format
+- **No silent failures** – Propagate errors, don't mask them
+- **Correlation IDs** – Use `generateCorrelationId()` and always return the `x-spideryarn-correlation-id` header
+- **Clear error messages** – Make them actionable and informative
 
 ## Database Operations Safety
 

@@ -8,6 +8,7 @@ This document provides essential context for Claude instances working on the Spi
 - `docs/reference/ARCHITECTURE_OVERVIEW.md` - Current system architecture
 - `docs/reference/TESTING_DATABASE.md` - Test isolation patterns (critical for DB operations)
 - `docs/instructions/GIT_COMMIT_CHANGES.md` - Git commit best practices
+- `docs/reference/ERROR_HANDLING_PATTERNS.md` - **NEW**: End-to-end error handling patterns & ProblemDetail schema
 
 For comprehensive documentation, see `docs/reference/INDEX_FOR_DOCUMENTATION.md`
 
@@ -147,7 +148,7 @@ Debugging resources:
 
 ## Error Handling
 
-**Best Practices**: See `docs/reference/CODING_GUIDELINES.md` for comprehensive error handling patterns
+**Best Practices**: See `docs/reference/ERROR_HANDLING_PATTERNS.md` (and the quick bullet summary in `docs/reference/CODING_GUIDELINES.md`) for full patterns.
 - Propagate errors instead of silently failing
 - "Not found" cases return null (don't throw)
 - Use structured error responses with correlation IDs
@@ -247,4 +248,3 @@ See `docs/instructions/TASKS_SUBAGENTS.md` for details
 - **Spelling**: British
 - **Git commits**: Follow `docs/instructions/GIT_COMMIT_CHANGES.md`
 - **Date**: Summer 2025
-- 
