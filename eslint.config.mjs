@@ -38,6 +38,8 @@ const eslintConfig = [
             "@typescript-eslint/no-explicit-any": "warn",
             "react-hooks/exhaustive-deps": "warn",
 
+            // Error handling lint rules -------------------------------
+            "no-empty": ["error", { "allowEmptyCatch": false }],
             // -----------------------------------------------------------------
             // 🚫 Disallow legacy AI call completion helpers in production code.
             // Enforce use of AIResponseLogger.completeAICall() for consistency
@@ -45,6 +47,7 @@ const eslintConfig = [
             // -----------------------------------------------------------------
             "no-restricted-syntax": [
                 "error",
+                // Legacy AI call helpers
                 {
                     selector: "CallExpression[callee.property.name='completeCall']",
                     message: "Use AIResponseLogger.completeAICall instead of AiCallService.completeCall (legacy)."
@@ -52,6 +55,24 @@ const eslintConfig = [
                 {
                     selector: "CallExpression[callee.name='createWithModelString']",
                     message: "createWithModelString is deprecated – use startCallWithModelString + AIResponseLogger.completeAICall."
+                },
+                // Vague error message literals
+                {
+                    selector: "Literal[value='Something went wrong']",
+                    message: "Avoid vague error messages – provide actionable details."
+                },
+                {
+                    selector: "Literal[value='Unknown error']",
+                    message: "Avoid vague error messages – provide actionable details."
+                },
+                {
+                    selector: "Literal[value='Unexpected Error']",
+                    message: "Avoid vague error messages – provide actionable details."
+                },
+                // Raw NextResponse json error field
+                {
+                    selector: "CallExpression[callee.object.name='NextResponse'][callee.property.name='json'] > ObjectExpression > Property[key.value='error']",
+                    message: "Use RFC 9457 ProblemDetail instead of raw error field in NextResponse.json()."
                 }
             ]
         }

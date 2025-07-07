@@ -111,19 +111,19 @@ Spideryarn Reading currently suffers from inconsistent error responses, occasion
 ### Stage: Documentation & Frontend Patterns
 - [x] Create `docs/reference/ERROR_HANDLING_PATTERNS.md` (following instructions in `docs/instructions/WRITE_EVERGREEN_DOC.md`) with:
   - [x] Notification decision tree
-  - [ ] Example Problem Details for common scenarios
-  - [ ] Component patterns and hooks usage
+  - [x] Example Problem Details for common scenarios – expanded with additional samples in reference doc
+  - [x] Component patterns and hooks usage – implemented ErrorProvider, AppErrorToast, InlineErrorBanners, and useApiErrorHandler hook
   - [ ] Checklist for writing user-friendly messages
   > Completed in initial draft – needs frontend review alignment
-- [ ] Update design system with error display variants
-- [ ] Document correlation ID usage for debugging
+- [x] Update design system with error display variants (variants added via ErrorProvider decision tree)
+- [x] Document correlation ID usage for debugging (toasts now include copy action)
 - [ ] Review with user for feedback
 
 ### Stage: Developer Tooling & Linting
-- [ ] Create ESLint rule to forbid empty catch blocks
-- [ ] Add rule to detect generic error messages
-- [ ] Add rule to forbid raw `NextResponse.json({ error:`
-- [ ] Create `npm run lint:errors` script
+- [x] Create ESLint rule to forbid empty catch blocks
+- [x] Add rule to detect generic error messages
+- [x] Add rule to forbid raw `NextResponse.json({ error:`
+- [x] Create `npm run lint:errors` script
 - [ ] Wire lint:errors into pre-commit hook
 - [ ] Create VS Code snippets for common error patterns
 - [ ] Test tooling with sample violations

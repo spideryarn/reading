@@ -114,3 +114,22 @@ Error body automatically surfaces according to Tree above.
 | `STORAGE_ERROR` | 503 | `StorageError` | Supabase/storage outage |
 
 Full list lives in `lib/api/error-utils.ts`. 
+
+## Correlation-ID Debugging
+
+Every ProblemDetail includes `correlationId` and responses mirror it in the `x-spideryarn-correlation-id` header.  In development builds the toast UI renders the ID and offers a one-click copy button (hover "ID").  Locate the same ID in server logs to trace the request lifecycle end-to-end.
+
+## Variant mapping
+
+The ErrorProvider decision tree maps HTTP status codes to `Alert` variants:
+
+| HTTP status | Variant |
+|-------------|---------|
+| <400 | info |
+| 401-403 | destructive |
+| 404 | warning (inline) |
+| 422 | warning |
+| 429/503/504 + retryable | info |
+| ≥500 | destructive |
+
+The mapping lives in `lib/context/error-context.tsx#decideDisplayAndVariant`. 
