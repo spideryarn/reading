@@ -4,6 +4,7 @@ import { DocumentService } from '@/lib/services/database/documents'
 import { requireAuth } from '@/lib/auth/server-auth'
 import { getCurrentUserAdminStatus } from '@/lib/auth/admin-utils'
 import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
+import { createProblemDetail } from '@/lib/api/error-utils'
 
 /**
  * POST /api/delete-document
@@ -28,10 +29,13 @@ export async function POST(request: NextRequest) {
     
     if (!documentId) {
       requestLogger.warn({ userId: user.id }, 'Document deletion failed - missing document ID')
-      return NextResponse.json(
-        { error: 'Document ID is required' },
-        { status: 400 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/invalid-input',
+        title: 'Document ID required',
+        status: 400,
+        detail: 'Please provide a valid documentId.',
+        correlationId
+      })
     }
 
     const supabase = await getSupabaseServerClient(request, { allowBearer: true })
@@ -49,10 +53,13 @@ export async function POST(request: NextRequest) {
         isAdmin: adminStatus.isAdmin
       }, 'Unauthorized document deletion attempt - access denied')
       
-      return NextResponse.json(
-        { error: 'Document not found' }, // Use 404 to prevent information leakage
-        { status: 404 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/document-not-found',
+        title: 'Document not found',
+        status: 404,
+        detail: 'The specified document does not exist or you do not have permission to access it.',
+        correlationId
+      })
     }
     
     // Delete document and associated storage files
@@ -64,10 +71,13 @@ export async function POST(request: NextRequest) {
         documentId
       }, 'Document deletion failed - document not found or could not be deleted')
       
-      return NextResponse.json(
-        { error: 'Document not found or could not be deleted' },
-        { status: 404 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/document-deletion-failed',
+        title: 'Document not found or could not be deleted',
+        status: 404,
+        detail: 'The specified document may have already been removed.',
+        correlationId
+      })
     }
 
     requestLogger.info({
@@ -89,19 +99,24 @@ export async function POST(request: NextRequest) {
         error: error.message
       }, 'Document deletion failed - authentication required')
       
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/auth-required',
+        title: 'Authentication required',
+        status: 401,
+        detail: 'Please sign in to delete documents.'
+      })
     }
     
     const errorMessage = error instanceof Error 
       ? error.message 
       : 'An unexpected error occurred while deleting the document'
       
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    )
+    return createProblemDetail({
+      type: 'https://www.spideryarn.com/probs/document-deletion-failed',
+      title: 'Document deletion failed',
+      status: 500,
+      detail: errorMessage,
+      correlationId
+    })
   }
 }

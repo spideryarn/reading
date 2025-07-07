@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { createPortalSession } from '@/lib/services/stripe/subscriptions'
 import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
+import { createProblemDetail } from '@/lib/api/error-utils'
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
@@ -25,10 +26,12 @@ export async function POST(request: NextRequest) {
         correlationId
       }, 'Stripe not configured for portal session')
       
-      return NextResponse.json(
-        { error: 'Stripe not configured - using placeholder keys' },
-        { status: 503 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/stripe-not-configured',
+        title: 'Stripe not configured',
+        status: 503,
+        detail: 'Stripe keys are missing or placeholder. Please configure Stripe.'
+      })
     }
 
     // Get the authenticated user
@@ -36,10 +39,12 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/auth-required',
+        title: 'Authentication required',
+        status: 401,
+        detail: 'Please sign in to access the customer portal.'
+      })
     }
 
     // Get user's Stripe customer ID
@@ -56,10 +61,12 @@ export async function POST(request: NextRequest) {
         profileError: profileError?.message
       }, 'No subscription found for portal session')
       
-      return NextResponse.json(
-        { error: 'No subscription found' },
-        { status: 404 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/subscription-not-found',
+        title: 'No subscription found',
+        status: 404,
+        detail: 'No subscription associated with this account.'
+      })
     }
     
     requestLogger.info({
@@ -86,10 +93,13 @@ export async function POST(request: NextRequest) {
         portalError
       }, 'Failed to create portal session')
       
-      return NextResponse.json(
-        { error: 'Failed to create portal session' },
-        { status: 500 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/stripe-portal-failed',
+        title: 'Failed to create portal session',
+        status: 500,
+        detail: 'Unable to create Stripe customer portal session.',
+        correlationId
+      })
     }
     
     requestLogger.info({
@@ -108,9 +118,12 @@ export async function POST(request: NextRequest) {
       stack: error instanceof Error ? error.stack : undefined
     }, 'Error in create-portal-session')
     
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return createProblemDetail({
+      type: 'https://www.spideryarn.com/probs/internal-server-error',
+      title: 'Internal server error',
+      status: 500,
+      detail: 'An unexpected error occurred while accessing the customer portal.',
+      correlationId
+    })
   }
 }

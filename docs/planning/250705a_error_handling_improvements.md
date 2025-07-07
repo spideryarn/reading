@@ -87,19 +87,19 @@ Spideryarn Reading currently suffers from inconsistent error responses, occasion
 
   **Initial conversion inventory (to be updated as work proceeds):**
   - `app/api/chat/route.ts`
-  - `app/api/delete-document/route.ts`
+  - ~~`app/api/delete-document/route.ts`~~ ✅ converted
   - `app/api/extract-url/route.ts`
-  - `app/api/fake_error/route.ts`
+  - ~~`app/api/fake_error/route.ts`~~ ✅ converted
   - `app/api/fake_success_delay/route.ts`
   - `app/api/finalise-vision-document/route.ts`
-  - `app/api/profile/background/route.ts`
+  - ~~`app/api/profile/background/route.ts`~~ ✅ converted
   - `app/api/read/[slug]/download/route.ts`
   - `app/api/read/[slug]/original/route.ts`
   - `app/api/read/[slug]/tooltip-info/route.ts`
   - `app/api/speech-to-text/route.ts`
-  - `app/api/stripe/create-checkout-session/route.ts`
-  - `app/api/stripe/create-customer/route.ts`
-  - `app/api/stripe/create-portal-session/route.ts`
+  - ~~`app/api/stripe/create-checkout-session/route.ts`~~ ✅ converted
+  - ~~`app/api/stripe/create-customer/route.ts`~~ ✅ converted
+  - ~~`app/api/stripe/create-portal-session/route.ts`~~ ✅ converted
   - `app/api/stripe/webhook/route.ts`
   - `app/api/tools/[toolId]/route.ts`
   - `app/api/tweet-thread/route.ts`

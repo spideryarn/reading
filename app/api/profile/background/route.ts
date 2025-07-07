@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createProblemDetail } from '@/lib/api/error-utils'
 import { getUser } from '@/lib/auth/server-auth'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { ProfileService } from '@/lib/services/database/profiles'
@@ -14,10 +15,12 @@ export async function POST(request: NextRequest) {
     const { user } = await getUser()
     
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/auth-required',
+        title: 'Authentication required',
+        status: 401,
+        detail: 'Please sign in to update your background.'
+      })
     }
 
     // Parse request body
@@ -44,16 +47,20 @@ export async function POST(request: NextRequest) {
 
     // Handle validation errors
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: error.errors[0]?.message || 'Invalid input' },
-        { status: 400 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/invalid-input',
+        title: 'Invalid input',
+        status: 400,
+        detail: error.errors[0]?.message || 'Invalid input'
+      })
     }
 
     // Handle other errors
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to update background' },
-      { status: 500 }
-    )
+    return createProblemDetail({
+      type: 'https://www.spideryarn.com/probs/background-update-failed',
+      title: 'Background update failed',
+      status: 500,
+      detail: error instanceof Error ? error.message : 'Failed to update background'
+    })
   }
 }
