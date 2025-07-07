@@ -1,5 +1,4 @@
 #!/usr/bin/env npx tsx
-// @ts-nocheck
 /*
   Reproduce and debug the AI-headings cache re-apply path for a single document.
 
