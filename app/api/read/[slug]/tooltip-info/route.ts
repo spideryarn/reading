@@ -207,7 +207,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
       hasSummary: tooltipInfo.hasSummary
     }, 'Tooltip info generated successfully')
 
-    return NextResponse.json(tooltipInfo)
+    const successResponse = NextResponse.json(tooltipInfo)
+    successResponse.headers.set('x-spideryarn-correlation-id', correlationId)
+    return successResponse
 
   } catch (error) {
     console.error('Tooltip info API error:', error)
