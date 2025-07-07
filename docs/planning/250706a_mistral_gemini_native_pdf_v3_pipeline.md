@@ -277,10 +277,11 @@ Implementation notes:
 Next stage → Error-handling and tidying.
 
 ### Stage: Error-handling and tidying
-- [ ] Read `docs/planning/250705a_error-handling-improvements.md` and implement the most easy/valuable recommendations from that
-Remaining (minor):
+- [x] Implement key quick-win recommendations from `250705a_error_handling_improvements.md`
+  - `/api/upload-pdf` now returns RFC 9457 Problem-Detail JSON for **all** failure paths (commit db9823e)
+  - Correlation-ID header guaranteed on every error response, aiding debugging
+  - TypeScript health restored (`npm run check:health` passes) after refactor
 - [ ] (Optional) Optimise memory usage for very large pages
-
 
 ### Stage: 2nd-stage Refinement Layer
 - [ ] Add this as a later stage for quality refinement from Claude Sonnet 4 or Gemini 2.5 Pro, after getting the HTML from Gemini/Mistral
