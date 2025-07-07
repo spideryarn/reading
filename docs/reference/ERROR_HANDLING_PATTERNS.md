@@ -8,6 +8,8 @@ This document explains _how Spideryarn Reading handles errors end-to-end_.  It c
 
 - `docs/reference/CODING_GUIDELINES.md` – overarching coding guidelines (error section summarised here)
 - `lib/api/error-utils.ts` – canonical TypeScript definitions for `ProblemDetail` and helper utilities
+  * `getErrorTitle(status)` – central map of HTTP status → short title
+  * `createToolProblemDetail()` – typed helper used by Unified Tool API endpoints (always includes `toolId`)
 - `middleware.ts` – global correlation-ID injection middleware
 - `components/ui/alert.tsx` – base alert component used by error toasts/banners
 - `lib/context/mutation-context.tsx` – provides `showError()` helper consumed by hooks

@@ -92,4 +92,45 @@ export function createProblemDetail(opts: Omit<ProblemDetail, 'correlationId'> &
   const res = NextResponse.json(body, { status: body.status })
   res.headers.set('x-spideryarn-correlation-id', correlationId)
   return res
+}
+
+// ---------------------------------------------------------------------------
+// Convenience helpers for common Problem Detail variants
+// ---------------------------------------------------------------------------
+
+/** Map HTTP status → short human-readable title. Centralised so all routes stay consistent. */
+export function getErrorTitle(status: number): string {
+  switch (status) {
+    case 400: return 'Bad Request'
+    case 401: return 'Unauthorized'
+    case 403: return 'Forbidden'
+    case 404: return 'Not Found'
+    case 408: return 'Request Timeout'
+    case 409: return 'Conflict'
+    case 413: return 'Payload Too Large'
+    case 422: return 'Unprocessable Entity'
+    case 429: return 'Too Many Requests'
+    case 500: return 'Internal Server Error'
+    case 502: return 'Bad Gateway'
+    case 503: return 'Service Unavailable'
+    case 504: return 'Gateway Timeout'
+    default: return 'Unknown Error'
+  }
+}
+
+// ---------------------- Tool-specific wrapper ------------------------------
+
+/** RFC 9457 Problem Detail that always includes a `toolId` extension member. */
+export interface ToolProblemDetail extends ProblemDetail {
+  toolId: string
+}
+
+/** Create a typed Problem Detail for the unified Tool API routes. */
+export function createToolProblemDetail(
+  opts: Omit<ToolProblemDetail, 'correlationId'> & { correlationId?: string }
+): NextResponse {
+  // If caller omitted `title`, derive it from status code for convenience.
+  const title = opts.title ?? getErrorTitle(opts.status)
+
+  return createProblemDetail({ ...opts, title })
 } 

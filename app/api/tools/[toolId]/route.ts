@@ -17,11 +17,9 @@ import { createRequestLogger, generateCorrelationId, createTimer } from '@/lib/s
 import { getTool, isRegistryLocked } from '@/lib/tools/registry'
 import { initializeToolRegistry } from '@/lib/tools/registry-loader'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
+import { createToolProblemDetail, getErrorTitle } from '@/lib/api/error-utils'
 import { z } from 'zod'
-import type { 
-  ToolApiErrorResponse,
-  ExecutionContext 
-} from '@/lib/tools/executor/types'
+import type { ExecutionContext } from '@/lib/tools/executor/types'
 import { ToolHandlerError } from './handler-interface'
 
 // Cache the registry initialization to avoid repeated initialization
@@ -114,8 +112,8 @@ function createErrorResponse(
   toolId: string,
   correlationId: string,
   instance: string
-): NextResponse<ToolApiErrorResponse> {
-  const problemDetails: ToolApiErrorResponse = {
+): NextResponse {
+  return createToolProblemDetail({
     type: `https://spideryarn.com/problems/${error.code.toLowerCase()}`,
     title: getErrorTitle(error.status),
     status: error.status,
@@ -124,31 +122,10 @@ function createErrorResponse(
     toolId,
     correlationId,
     retryable: error.retryable ?? false,
-    ...error.details
-  }
-  
-  // Attach correlation id header so clients can surface it
-  const response = NextResponse.json(problemDetails, { status: error.status })
-  response.headers.set('x-spideryarn-correlation-id', correlationId)
-  return response
+    ...error.details,
+  })
 }
-
-function getErrorTitle(status: number): string {
-  switch (status) {
-    case 400: return 'Bad Request'
-    case 401: return 'Unauthorized'
-    case 403: return 'Forbidden'
-    case 404: return 'Not Found'
-    case 408: return 'Request Timeout'
-    case 422: return 'Unprocessable Entity'
-    case 429: return 'Too Many Requests'
-    case 500: return 'Internal Server Error'
-    case 502: return 'Bad Gateway'
-    case 503: return 'Service Unavailable'
-    case 504: return 'Gateway Timeout'
-    default: return 'Unknown Error'
-  }
-}
+// Removed local getErrorTitle – now centralised in error-utils
 
 /**
  * Route implementations by tool ID
