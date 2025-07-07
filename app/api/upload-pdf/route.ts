@@ -17,6 +17,7 @@ import { validatePdfPageCountFromBuffer } from '@/lib/utils/pdf-validation'
 import { processWithGeminiNative, canProcessWithGeminiNative } from '@/lib/services/gemini-native-pdf-processor'
 import { processWithMistralOcr, canProcessWithMistralOcr } from '@/lib/services/mistral-ocr-pdf-processor'
 import type { VercelAIResponse } from '@/lib/services/ai-response-logger'
+import { randomUUID } from 'crypto'
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
@@ -97,6 +98,10 @@ export async function POST(request: NextRequest) {
       pageCount: pageValidationResult.pageCount,
       userId: user.id
     }, `PDF page count validation passed: ${pageValidationResult.pageCount} pages`)
+
+    const draftDocumentId = randomUUID()
+
+    const imageExtractionEnabled = process.env.IMAGE_EXTRACTION_ENABLED !== 'false'
 
     requestLogger.info({
       correlationId,
@@ -184,7 +189,9 @@ export async function POST(request: NextRequest) {
           pdfBuffer,
           fileName: pdfFile.name,
           correlationId,
-          singlePageOnly: false
+          singlePageOnly: false,
+          documentId: draftDocumentId,
+          imageExtractionEnabled
         })
         
         processingTime = geminiResult.processingTimeMs
@@ -274,7 +281,9 @@ export async function POST(request: NextRequest) {
           pdfBuffer,
           fileName: pdfFile.name,
           correlationId,
-          singlePageOnly: false
+          singlePageOnly: false,
+          documentId: draftDocumentId,
+          imageExtractionEnabled
         })
         
         processingTime = mistralResult.processingTimeMs
@@ -467,7 +476,8 @@ export async function POST(request: NextRequest) {
         filename: pdfFile.name,
         provider,
         correlationId,
-        aiCallId: aiCallId // Pass AI call ID for tracking
+        aiCallId: aiCallId, // Pass AI call ID for tracking
+        documentId: draftDocumentId
       },
       {
         extractionMethod: 'ai-transcription',

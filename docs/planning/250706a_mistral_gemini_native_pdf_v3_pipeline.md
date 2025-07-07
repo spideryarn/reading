@@ -250,23 +250,18 @@ From our investigation:
 - Maximum file size of 50MB (higher than our 20MB limit)
 - Processing time expected < 1s per page
 
-
 ### Stage: Mistral Bounding Box/Annotations Image Extraction Integration (Future Enhancement)
 
-- [ ] Let's try server-side for image extraction (maintains single API call).
-  - [ ] Read the v2 pipeline code to see the approach we've taken there.
-    - We probably won't be able to directly reuse much of that code, because there we opted to do things browser-side, but it shows the overall approach (including Supabase Storage filename patterns, etc):
-      - LLM call returns the bounding boxes, 
-      - normalise/convert coordinates as appropriate, 
-      - use 3rd-party PDF library to turn some of the PDF pages into images, and 
-      - 3rd-party image library to extract the figures from those single-page images
-      - upload those images to Supabase Storage (see action below)
-      - programmatically manipulate the HTML to replace/insert the new `<img src>` elements pointing to the Supabase Storage image filenames
-  - [ ] Note the constraints in `docs/reference/VERCEL_SERVERLESS_CONSTRAINTS.md`
-  - [ ] If this proves tricky, discuss with user, and we can consider browser-side extraction (reusing v2 infrastructure) instead
-- Add PDF processing library (pdfjs-dist or pdf-lib)
-  - Implement server-side image extraction using normalized bounding boxes
-  - Upload to Supabase Storage during processing
+**✅ COMPLETED 2025-07-07 – Server-side extractor in production, integrated and covered by tests.**
+
+- [x] Implement server-side extraction using `unpdf` + `imagescript` (no native deps)
+- [x] Upload figures to Supabase Storage with deterministic filenames
+- [x] Inject `<img src>` URLs into HTML during upload-pdf route
+- [x] Feature-flag `IMAGE_EXTRACTION_ENABLED`
+- [x] Jest unit test `pdf-image-extractor-server.test.ts` verifies crop→upload flow
+
+Remaining (minor):
+- [ ] (Optional) Optimise memory usage for very large pages
 
 ### Stage: Storage Integration (Future Enhancement)
 **Note**: Only needed if image extraction is implemented.
@@ -299,6 +294,13 @@ From our investigation:
 - [ ] Merge branch to main
 - [ ] Move planning doc to `docs/planning/finished/`
 
+### Stage: Gemini Bounding Box/Annotations Image Extraction (Future Enhancement)
+
+- [ ] Reuse `PdfImageExtractorServer` for Gemini Native pipeline
+  - [ ] Ensure page-number mapping aligns (Gemini returns page index in HTML?)
+  - [ ] Inject extracted image URLs into HTML identical to Mistral workflow
+  - [ ] Increment storage path counter with same naming rules
+  - [ ] Feature flag tie-in (IMAGE_EXTRACTION_ENABLED)
 
 ## Appendix
 

@@ -20,13 +20,16 @@ import { createRequestLogger, createTimer } from '@/lib/services/logger'
 import { boundingBoxSchema, ExtractedImage } from '@/lib/services/html-fragment-processor'
 import { marked } from 'marked'
 import { JSDOM } from 'jsdom'
+import { extractPdfRegionAndUpload, PdfRegionExtractionOptions } from '@/lib/services/pdf-image-extractor-server'
 
 // Schema for processing options
 export const mistralOcrProcessorOptionsSchema = z.object({
   pdfBuffer: z.instanceof(Buffer).describe('PDF file buffer'),
   fileName: z.string().describe('Original PDF filename'),
   correlationId: z.string().describe('Request correlation ID for logging'),
-  singlePageOnly: z.boolean().default(false).describe('Process only first page for cost control')
+  singlePageOnly: z.boolean().default(false).describe('Process only first page for cost control'),
+  documentId: z.string().describe('Document ID'),
+  imageExtractionEnabled: z.boolean().default(true).describe('Enable image extraction')
 })
 
 export type MistralOcrProcessorOptions = z.infer<typeof mistralOcrProcessorOptionsSchema>
@@ -161,6 +164,7 @@ export async function processWithMistralOcr(
     let combinedMarkdown = ''
     const extractedImages: ExtractedImage[] = []
     const warnings: string[] = []
+    const elementUrlMap: Record<string, string> = {}
     
     if (!ocrResponse.pages || ocrResponse.pages.length === 0) {
       throw new Error('Mistral OCR returned no pages; cannot extract content')
@@ -183,7 +187,7 @@ export async function processWithMistralOcr(
       const dims = validatedPage.dimensions
 
       // --- Process images with bounding boxes ---
-      validatedPage.images.forEach((image, imgIndex) => {
+      for (const image of validatedPage.images) {
         try {
           const x1 = image.top_left_x / dims.width
           const y1 = image.top_left_y / dims.height
@@ -193,14 +197,14 @@ export async function processWithMistralOcr(
           // Validate normalized coordinates
           if ([x1, y1, x2, y2].some((v) => v < 0 || v > 1)) {
             warnings.push(`Image ${image.id} has coordinates out of range`)
-            return
+            continue
           }
 
           // Minimum size threshold (2% of page)
           const MIN_SIZE = 0.02
           if (x2 - x1 < MIN_SIZE || y2 - y1 < MIN_SIZE) {
             warnings.push(`Image ${image.id} too small, skipping`)
-            return
+            continue
           }
 
           const bbox = boundingBoxSchema.parse({
@@ -210,7 +214,7 @@ export async function processWithMistralOcr(
             y2: Number(y2.toFixed(4)),
           })
 
-          const elementId = `figure-${validatedPage.index}-${imgIndex + 1}`
+          const elementId = `figure-${validatedPage.index}-${image.id}`
 
           extractedImages.push({
             elementId,
@@ -220,12 +224,30 @@ export async function processWithMistralOcr(
             caption: undefined,
             altText: undefined,
           })
+
+          if (validatedOptions.imageExtractionEnabled) {
+            try {
+              const regionRes = await extractPdfRegionAndUpload({
+                pdfBuffer: validatedOptions.pdfBuffer,
+                documentId: validatedOptions.documentId,
+                pageNumber: validatedPage.index + 1,
+                elementId,
+                bbox,
+                outputFormat: 'png',
+                quality: 0.95,
+                scale: 2
+              } as PdfRegionExtractionOptions)
+              elementUrlMap[elementId] = regionRes.publicUrl
+            } catch (cropErr) {
+              warnings.push(`Image extraction failed for ${elementId}: ${cropErr instanceof Error ? cropErr.message : 'Unknown error'}`)
+            }
+          }
         } catch (err) {
           warnings.push(
             `Failed to process image ${image.id}: ${err instanceof Error ? err.message : 'Unknown error'}`,
           )
         }
-      })
+      }
     }
 
     // Fail fast if we received no text
@@ -237,7 +259,12 @@ export async function processWithMistralOcr(
     const html = markdownToHtml(combinedMarkdown)
     
     // Add bounding box data attributes to HTML
-    const htmlWithBboxes = addBoundingBoxesToHtml(html, extractedImages, logger)
+    let htmlWithBboxes = addBoundingBoxesToHtml(html, extractedImages, logger)
+    
+    // Inject src URLs for extracted images
+    if (validatedOptions.imageExtractionEnabled && Object.keys(elementUrlMap).length > 0) {
+      htmlWithBboxes = injectImageUrls(htmlWithBboxes, elementUrlMap, logger)
+    }
     
     // Calculate token usage estimate (Mistral charges per page, but we'll estimate tokens for consistency)
     const pageCount = validatedOptions.singlePageOnly ? 1 : (ocrResponse.pages?.length || 0)
@@ -370,4 +397,24 @@ export function canProcessWithMistralOcr(pdfBuffer: Buffer): {
   }
   
   return { canProcess: true }
+}
+
+function injectImageUrls(html: string, urlMap: Record<string, string>, logger: ReturnType<typeof createRequestLogger>): string {
+  try {
+    const dom = new JSDOM(html)
+    const document = dom.window.document
+
+    Object.entries(urlMap).forEach(([elementId, url]) => {
+      const figure = document.getElementById(elementId)
+      const img = figure?.querySelector('img')
+      if (img) {
+        img.setAttribute('src', url)
+      }
+    })
+
+    return dom.serialize()
+  } catch (e) {
+    logger.error('Failed to inject image URLs', { error: e instanceof Error ? e.message : 'unknown' })
+    return html
+  }
 }

@@ -26,7 +26,9 @@ export const geminiNativePdfProcessorOptionsSchema = z.object({
   pdfBuffer: z.instanceof(Buffer).describe('PDF file buffer'),
   fileName: z.string().describe('Original PDF filename'),
   correlationId: z.string().describe('Request correlation ID for logging'),
-  singlePageOnly: z.boolean().default(false).describe('Process only first page for cost control')
+  singlePageOnly: z.boolean().default(false).describe('Process only first page for cost control'),
+  documentId: z.string().optional().describe('Document ID for future image extraction'),
+  imageExtractionEnabled: z.boolean().default(true).describe('Enable image extraction (not yet implemented)')
 })
 
 export type GeminiNativePdfProcessorOptions = z.infer<typeof geminiNativePdfProcessorOptionsSchema>
