@@ -36,7 +36,32 @@ const eslintConfig = [
 
             // Keep these as warnings for gradual adoption
             "@typescript-eslint/no-explicit-any": "warn",
-            "react-hooks/exhaustive-deps": "warn"
+            "react-hooks/exhaustive-deps": "warn",
+
+            // -----------------------------------------------------------------
+            // 🚫 Disallow legacy AI call completion helpers in production code.
+            // Enforce use of AIResponseLogger.completeAICall() for consistency
+            // so we always capture raw_api_response and latency_ms.
+            // -----------------------------------------------------------------
+            "no-restricted-syntax": [
+                "error",
+                {
+                    selector: "CallExpression[callee.property.name='completeCall']",
+                    message: "Use AIResponseLogger.completeAICall instead of AiCallService.completeCall (legacy)."
+                },
+                {
+                    selector: "CallExpression[callee.name='createWithModelString']",
+                    message: "createWithModelString is deprecated – use startCallWithModelString + AIResponseLogger.completeAICall."
+                }
+            ]
+        }
+    },
+
+    // Allow internal use of completeCall inside the logger implementation itself
+    {
+        files: ["lib/services/ai-response-logger.ts"],
+        rules: {
+            "no-restricted-syntax": "off"
         }
     },
 
