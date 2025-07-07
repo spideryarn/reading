@@ -4,6 +4,7 @@
 // Supports multiple processing methods: as-is, readability, and AI transcription
 
 import { NextRequest, NextResponse } from 'next/server'
+import { createProblemDetail } from '@/lib/api/error-utils'
 import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { createUrlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
@@ -17,6 +18,22 @@ import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
+  // Helper for consistent RFC 9457 Problem Detail responses
+  const problem = (
+    status: number,
+    code: string,
+    title: string,
+    detail?: string,
+    retryable?: boolean
+  ) =>
+    createProblemDetail({
+      type: `https://www.spideryarn.com/probs/${code.toLowerCase()}`,
+      title,
+      status,
+      detail,
+      correlationId,
+      retryable,
+    })
   const requestLogger = createRequestLogger('/api/upload-html', correlationId)
   const requestTimer = createTimer(requestLogger, 'upload-html-request')
   
@@ -45,17 +62,17 @@ export async function POST(request: NextRequest) {
     }, 'HTML upload request initiated')
 
     if (!htmlFile) {
-      return new NextResponse('No HTML file provided', { status: 400 })
+      return problem(400, 'HTML_FILE_REQUIRED', 'No HTML file provided')
     }
 
     // Validate processing method
     if (!['as-is', 'readability', 'ai-transcription'].includes(processingMethod)) {
-      return new NextResponse('Invalid processing method. Must be "as-is", "readability", or "ai-transcription"', { status: 400 })
+      return problem(400, 'INVALID_PROCESSING_METHOD', 'Invalid processing method', 'Must be "as-is", "readability", or "ai-transcription"')
     }
 
     // Validate provider selection (only for AI transcription)
     if (processingMethod === 'ai-transcription' && !['claude', 'gemini'].includes(provider)) {
-      return new NextResponse('Invalid provider. Must be "claude" or "gemini"', { status: 400 })
+      return problem(400, 'INVALID_PROVIDER', 'Invalid provider', 'Must be "claude" or "gemini"')
     }
 
     // Convert file to text content
@@ -63,17 +80,17 @@ export async function POST(request: NextRequest) {
     
     // Basic HTML file validation
     if (htmlContent.length === 0) {
-      return new NextResponse('HTML file is empty', { status: 400 })
+      return problem(400, 'HTML_EMPTY', 'HTML file is empty')
     }
 
     // Check file size using centralized limits
     if (htmlContent.length > UPLOAD_LIMITS.HTML_FILE_UPLOAD_MAX_SIZE_BYTES) {
-      return new NextResponse(`HTML file too large (max ${Math.round(UPLOAD_LIMITS.HTML_FILE_UPLOAD_MAX_SIZE_BYTES / 1024 / 1024)}MB)`, { status: 400 })
+      return problem(413, 'HTML_TOO_LARGE', 'HTML file too large', `Max ${Math.round(UPLOAD_LIMITS.HTML_FILE_UPLOAD_MAX_SIZE_BYTES / 1024 / 1024)}MB`)
     }
 
     // Basic HTML validation - check if it contains HTML tags
     if (!htmlContent.includes('<') || !htmlContent.includes('>')) {
-      return new NextResponse('File does not appear to contain valid HTML content', { status: 400 })
+      return problem(400, 'INVALID_HTML', 'Invalid HTML content', 'File does not appear to contain valid HTML content')
     }
 
     console.log(`Processing HTML file with ${processingMethod} method: ${htmlFile.name} (${(htmlContent.length / 1024).toFixed(1)} KB)`)
@@ -130,17 +147,7 @@ export async function POST(request: NextRequest) {
           contentSizeKb: Math.round(htmlContent.length / 1024)
         }, 'Readability extraction failed on HTML file')
         
-        return NextResponse.json({
-          success: false,
-          error: 'readability_failed',
-          message: 'Mozilla Readability could not extract content from this HTML file. Try using "AI Content Extraction" instead.',
-          suggested_method: 'ai-transcription',
-          details: {
-            file_name: htmlFile.name,
-            processing_method: 'readability',
-            content_size_kb: Math.round(htmlContent.length / 1024)
-          }
-        }, { status: 422 }) // 422 Unprocessable Entity - method failed but input was valid
+        return problem(422, 'READABILITY_FAILED', 'HTML content extraction failed', 'Mozilla Readability could not extract content from this HTML file. Try using "AI Content Extraction" instead.')
       } else {
         // Readability succeeded
         const extractionTime = Date.now() - startTime
@@ -362,7 +369,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Return comprehensive response with document details
-    return NextResponse.json({
+    const successResponse = NextResponse.json({
       success: true,
       document: {
         id: document.id,
@@ -392,6 +399,8 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json'
       }
     })
+    successResponse.headers.set('x-spideryarn-correlation-id', correlationId)
+    return successResponse
 
   } catch (error) {
     console.error('HTML upload API error:', error)
@@ -405,44 +414,44 @@ export async function POST(request: NextRequest) {
     // Handle authentication errors first
     if (error instanceof Error) {
       if (error.message.includes('Authentication failed') || error.message.includes('User not authenticated')) {
-        return new NextResponse('Authentication required', { status: 401 })
+        return problem(401, 'AUTH_REQUIRED', 'Authentication required')
       }
       
       if (error.message.includes('rate limit') || error.message.includes('quota')) {
-        return new NextResponse('AI service rate limit exceeded. Please try again later.', { status: 429 })
+        return problem(429, 'AI_RATE_LIMIT', 'AI service rate limit exceeded', 'Please try again later.', true)
       }
       
       if (error.message.includes('API key') || error.message.includes('authentication')) {
-        return new NextResponse('AI service configuration error. Please check API keys.', { status: 503 })
+        return problem(503, 'AI_CONFIG', 'AI service configuration error', 'Please check API keys.')
       }
       
       if (error.message.includes('timeout')) {
-        return new NextResponse('Request timeout. The file may be too complex or the service is busy.', { status: 504 })
+        return problem(504, 'TIMEOUT', 'Request timeout', 'The file may be too complex or the service is busy.', true)
       }
 
       if (error.message.includes('storage') || error.message.includes('bucket')) {
-        return new NextResponse('Storage service error. Please try again later.', { status: 503 })
+        return problem(503, 'STORAGE_ERROR', 'Storage service error', 'Please try again later.', true)
       }
 
       // Handle specific database constraint violations with user-friendly messages
       if (error.message.includes('duplicate key value violates unique constraint "documents_slug_unique"')) {
-        return new NextResponse('A document with that name already exists. Please choose a different name.', { status: 409 })
+        return problem(409, 'DUPLICATE_SLUG', 'Document slug already exists', 'Please choose a different name.')
       }
       
       if (error.message.includes('database') || error.message.includes('Failed to create document')) {
-        return new NextResponse('Database error. Please try again later.', { status: 503 })
+        return problem(503, 'DATABASE_ERROR', 'Database error', 'Please try again later.')
       }
 
       if (error.message.includes('Content sanitization failed') || error.message.includes('sanitization')) {
         // Use shared error handling for sanitization failures
         const sanitizationError = handleSanitizationError(error, 'html-upload')
-        return new NextResponse(sanitizationError.message, { status: sanitizationError.status })
+        return problem(sanitizationError.status, 'SANITIZATION_ERROR', 'Content sanitization failed', sanitizationError.message)
       }
       
-      return new NextResponse(`Processing error: ${error.message}`, { status: 500 })
+      return problem(500, 'PROCESSING_ERROR', 'Processing error', error.message)
     }
     
-    return new NextResponse('Unknown processing error occurred', { status: 500 })
+    return problem(500, 'UNKNOWN_PROCESSING_ERROR', 'Unknown processing error occurred')
   }
 }
 

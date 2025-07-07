@@ -9,6 +9,7 @@ import Stripe from 'stripe'
 import { stripe } from '@/lib/services/stripe/client'
 import { processSubscriptionWebhook } from '@/lib/services/stripe/subscriptions'
 import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
+import { createProblemDetail } from '@/lib/api/error-utils'
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
@@ -31,10 +32,14 @@ export async function POST(request: NextRequest) {
       error: 'STRIPE_WEBHOOK_SECRET not configured'
     }, 'Webhook secret not configured')
     
-    return NextResponse.json(
-      { error: 'Webhook secret not configured' },
-      { status: 503 }
-    )
+    return createProblemDetail({
+      type: 'https://www.spideryarn.com/probs/webhook-secret-missing',
+      title: 'Webhook configuration error',
+      status: 503,
+      detail: 'Stripe webhook secret not configured',
+      correlationId,
+      retryable: false,
+    })
   }
 
   if (!signature) {
@@ -45,10 +50,14 @@ export async function POST(request: NextRequest) {
       error: 'Missing Stripe signature'
     }, 'Webhook signature validation failed - missing signature header')
     
-    return NextResponse.json(
-      { error: 'Missing Stripe signature' },
-      { status: 400 }
-    )
+    return createProblemDetail({
+      type: 'https://www.spideryarn.com/probs/signature-missing',
+      title: 'Missing Stripe signature',
+      status: 400,
+      detail: 'Stripe signature header is missing',
+      correlationId,
+      retryable: false,
+    })
   }
 
   let event
@@ -75,10 +84,14 @@ export async function POST(request: NextRequest) {
       errorType: error instanceof Error ? error.constructor.name : 'Unknown'
     }, 'Webhook signature verification failed')
     
-    return NextResponse.json(
-      { error: 'Invalid signature' },
-      { status: 400 }
-    )
+    return createProblemDetail({
+      type: 'https://www.spideryarn.com/probs/invalid-signature',
+      title: 'Invalid signature',
+      status: 400,
+      detail: 'Stripe signature verification failed',
+      correlationId,
+      retryable: false,
+    })
   }
 
   // Legacy console.log for transition period
@@ -119,10 +132,14 @@ export async function POST(request: NextRequest) {
             error: result.error
           }, 'Failed to process subscription webhook')
           
-          return NextResponse.json(
-            { error: 'Failed to process webhook' },
-            { status: 500 }
-          )
+          return createProblemDetail({
+            type: 'https://www.spideryarn.com/probs/processing-failed',
+            title: 'Webhook processing failed',
+            status: 500,
+            detail: 'Failed to process subscription webhook',
+            correlationId,
+            retryable: true,
+          })
         }
         
         requestLogger.info({
@@ -210,7 +227,9 @@ export async function POST(request: NextRequest) {
       eventId: event.id
     }, 'Webhook processed successfully')
     
-    return NextResponse.json({ received: true })
+    const successResponse = NextResponse.json({ received: true })
+    successResponse.headers.set('x-spideryarn-correlation-id', correlationId)
+    return successResponse
   } catch (error) {
     // Legacy console.error for transition period
     console.error('Error processing webhook:', error)
@@ -223,9 +242,13 @@ export async function POST(request: NextRequest) {
       stack: error instanceof Error ? error.stack : undefined
     }, 'Critical error processing webhook')
     
-    return NextResponse.json(
-      { error: 'Webhook processing failed' },
-      { status: 500 }
-    )
+    return createProblemDetail({
+      type: 'https://www.spideryarn.com/probs/webhook-processing-failed',
+      title: 'Webhook processing error',
+      status: 500,
+      detail: error instanceof Error ? error.message : 'Unknown error',
+      correlationId,
+      retryable: true,
+    })
   }
 }
