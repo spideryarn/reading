@@ -28,6 +28,7 @@ import {
   ToolValidationError,
   ToolServerError,
   ToolNotFoundError,
+  ToolCacheNotFoundError,
   DEFAULT_TIMEOUTS
 } from './types'
 import type {
@@ -415,6 +416,9 @@ function mapApiErrorToExecutorError(problemDetails: ToolApiErrorResponse): ToolE
       return new ToolValidationError([detail], commonOptions)
       
     case 404:
+      if (problemDetails.code === 'STRUCTURE_CACHE_NOT_FOUND') {
+        return new ToolCacheNotFoundError(detail, { toolId, correlationId })
+      }
       return new ToolNotFoundError(toolId, { correlationId })
       
     case 408:
