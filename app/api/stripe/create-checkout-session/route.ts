@@ -8,6 +8,7 @@ import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { getOrCreateStripeCustomer } from '@/lib/services/stripe/customers'
 import { createCheckoutSession } from '@/lib/services/stripe/subscriptions'
 import { createRequestLogger, generateCorrelationId } from '@/lib/services/logger'
+import { createProblemDetail } from '@/lib/api/error-utils'
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId()
@@ -26,10 +27,12 @@ export async function POST(request: NextRequest) {
         correlationId
       }, 'Stripe not configured - using placeholder keys')
       
-      return NextResponse.json(
-        { error: 'Stripe not configured - using placeholder keys' },
-        { status: 503 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/stripe-not-configured',
+        title: 'Stripe not configured',
+        status: 503,
+        detail: 'Stripe keys are missing or placeholder. Please configure Stripe.'
+      })
     }
 
     // Get the authenticated user
@@ -42,10 +45,12 @@ export async function POST(request: NextRequest) {
         authError: authError?.message
       }, 'Authentication failed for checkout session')
       
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/auth-required',
+        title: 'Authentication required',
+        status: 401,
+        detail: 'Please sign in to create a checkout session.'
+      })
     }
     
     requestLogger.info({
@@ -72,10 +77,13 @@ export async function POST(request: NextRequest) {
         customerError
       }, 'Failed to create/retrieve Stripe customer')
       
-      return NextResponse.json(
-        { error: 'Failed to create customer' },
-        { status: 500 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/stripe-customer-failed',
+        title: 'Failed to create customer',
+        status: 500,
+        detail: 'Unable to create or retrieve Stripe customer.',
+        correlationId
+      })
     }
     
     requestLogger.info({
@@ -100,10 +108,13 @@ export async function POST(request: NextRequest) {
         sessionError
       }, 'Failed to create checkout session')
       
-      return NextResponse.json(
-        { error: 'Failed to create checkout session' },
-        { status: 500 }
-      )
+      return createProblemDetail({
+        type: 'https://www.spideryarn.com/probs/stripe-checkout-failed',
+        title: 'Failed to create checkout session',
+        status: 500,
+        detail: 'Stripe checkout session creation failed.',
+        correlationId
+      })
     }
 
     requestLogger.info({
@@ -127,9 +138,12 @@ export async function POST(request: NextRequest) {
       stack: error instanceof Error ? error.stack : undefined
     }, 'Error in create-checkout-session')
     
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return createProblemDetail({
+      type: 'https://www.spideryarn.com/probs/internal-server-error',
+      title: 'Internal server error',
+      status: 500,
+      detail: 'An unexpected error occurred while creating the checkout session.',
+      correlationId
+    })
   }
 }
