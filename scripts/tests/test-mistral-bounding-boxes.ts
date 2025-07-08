@@ -52,10 +52,10 @@ async function testMistralBoundingBoxes(pdfPath: string) {
   ;(pages as any[]).forEach((page: any) => {
     page.images?.forEach((img: any) => {
       // Accept snake_case, camelCase, or annotation.bbox object
-      const tlx = img.top_left_x ?? img.topLeftX ?? img.annotation?.bbox?.x1 ?? img.annotation?.bbox?.topLeftX
-      const tly = img.top_left_y ?? img.topLeftY ?? img.annotation?.bbox?.y1 ?? img.annotation?.bbox?.topLeftY
-      const brx = img.bottom_right_x ?? img.bottomRightX ?? img.annotation?.bbox?.x2 ?? img.annotation?.bbox?.bottomRightX
-      const bry = img.bottom_right_y ?? img.annotation?.bbox?.y2 ?? img.annotation?.bbox?.bottomRightY ?? img.bottomRightY
+      const tlx = img.topLeftX
+      const tly = img.topLeftY
+      const brx = img.bottomRightX
+      const bry = img.bottomRightY
 
       const hasAll = [tlx, tly, brx, bry].every(c => c != null)
       images.push({
