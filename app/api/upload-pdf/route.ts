@@ -12,7 +12,7 @@ import { createPdfToHtmlPrompt } from '@/lib/prompts/templates/pdf-to-html-direc
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { AiCallService } from '@/lib/services/database/ai-calls'
 import { createAIResponseLogger } from '@/lib/services/ai-response-logger'
-import { getModelForAICall, UPLOAD_LIMITS } from '@/lib/config'
+import { getModelForAICall, UPLOAD_LIMITS, FEATURE_FLAGS } from '@/lib/config'
 import { requireAuth } from '@/lib/auth/server-auth'
 import { processHtmlToDocument, handleSanitizationError } from '@/lib/services/html-document-processor'
 import { createRequestLogger, generateCorrelationId, logAIOperation, createTimer } from '@/lib/services/logger'
@@ -247,7 +247,7 @@ export async function POST(request: NextRequest) {
       draftDocumentId = randomUUID()
     }
 
-    const imageExtractionEnabled = process.env.IMAGE_EXTRACTION_ENABLED !== 'false'
+    const imageExtractionEnabled = FEATURE_FLAGS.IMAGE_EXTRACTION_ENABLED
 
     requestLogger.info({
       correlationId,

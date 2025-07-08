@@ -16,7 +16,6 @@
 import { z } from 'zod'
 import { Mistral } from '@mistralai/mistralai'
 import { responseFormatFromZodObject } from '@mistralai/mistralai/extra/structChat.js'
-import { UPLOAD_LIMITS } from '@/lib/config/upload-limits'
 import { createRequestLogger, createTimer } from '@/lib/services/logger'
 import { boundingBoxSchema, ExtractedImage } from '@/lib/services/html-fragment-processor'
 import { marked } from 'marked'
@@ -49,11 +48,6 @@ const imageAnnotationSchema = z.object({
 // without throwing and then skip such images during processing.
 const mistralImageSchema = z.object({
   id: z.string(),
-  top_left_x: z.number().optional(), // original snake_case
-  top_left_y: z.number().optional(),
-  bottom_right_x: z.number().optional(),
-  bottom_right_y: z.number().optional(),
-  // camelCase keys returned when using bboxAnnotationFormat
   topLeftX: z.number().optional(),
   topLeftY: z.number().optional(),
   bottomRightX: z.number().optional(),
@@ -214,10 +208,10 @@ export async function processWithMistralOcr(
 
       // --- Log page-level image statistics ---
       const imagesWithBBox = validatedPage.images.filter(img =>
-        img.top_left_x != null &&
-        img.top_left_y != null &&
-        img.bottom_right_x != null &&
-        img.bottom_right_y != null
+        img.topLeftX != null &&
+        img.topLeftY != null &&
+        img.bottomRightX != null &&
+        img.bottomRightY != null
       )
       const imagesMissingBBox = validatedPage.images.length - imagesWithBBox.length
 
@@ -234,20 +228,20 @@ export async function processWithMistralOcr(
       // --- Process images with bounding boxes ---
       for (const image of validatedPage.images) {
         // Pick coordinate names in either snake_case or camelCase
-        const tlx = image.top_left_x ?? image.topLeftX
-        const tly = image.top_left_y ?? image.topLeftY
-        const brx = image.bottom_right_x ?? image.bottomRightX
-        const bry = image.bottom_right_y ?? image.bottomRightY
+        const tlx = image.topLeftX
+        const tly = image.topLeftY
+        const brx = image.bottomRightX
+        const bry = image.bottomRightY
 
         if (tlx == null || tly == null || brx == null || bry == null) {
           warnings.push(`Image ${image.id} missing bounding box coordinates, skipping`)
           logger.warn('Skipping image without bounding box', {
             pageIndex: validatedPage.index,
             imageId: image.id,
-            has_top_left_x: tlx != null,
-            has_top_left_y: tly != null,
-            has_bottom_right_x: brx != null,
-            has_bottom_right_y: bry != null
+            has_topLeftX: tlx != null,
+            has_topLeftY: tly != null,
+            has_bottomRightX: brx != null,
+            has_bottomRightY: bry != null
           })
           imagesSkipped += 1
           continue
@@ -291,34 +285,34 @@ export async function processWithMistralOcr(
           }
 
           if (validatedOptions.imageExtractionEnabled) {
-            try {
-              const regionRes = await extractPdfRegionAndUpload({
-                pdfBuffer: validatedOptions.pdfBuffer,
-                documentId: validatedOptions.documentId,
-                pageNumber: validatedPage.index + 1,
-                elementId,
-                bbox,
-                outputFormat: 'png',
-                quality: 0.95,
-                scale: 2
-              } as PdfRegionExtractionOptions)
+            // NOTE: Image extraction is a critical part of the v3 pipeline.  If it fails we want
+            // the entire request to fail so the user can see and report the error, rather than
+            // silently falling back to a broken <img src="img-x.jpeg"> placeholder that renders
+            // as a 404.  Therefore we *do not* swallow errors here.
+            const regionRes = await extractPdfRegionAndUpload({
+              pdfBuffer: validatedOptions.pdfBuffer,
+              documentId: validatedOptions.documentId,
+              pageNumber: validatedPage.index + 1,
+              elementId,
+              bbox,
+              outputFormat: 'png',
+              quality: 0.95,
+              scale: 2
+            } as PdfRegionExtractionOptions)
 
-              elementUrlMap[elementId] = regionRes.signedUrl
-              imageMeta.storagePath = regionRes.storagePath
-              imageMeta.signedUrl = regionRes.signedUrl
-              imageMeta.fileSize = regionRes.size
-              totalStorageBytes += regionRes.size
-            } catch (cropErr) {
-              warnings.push(`Image extraction failed for ${elementId}: ${cropErr instanceof Error ? cropErr.message : 'Unknown error'}`)
-            }
+            elementUrlMap[elementId] = regionRes.signedUrl
+            imageMeta.storagePath = regionRes.storagePath
+            imageMeta.signedUrl = regionRes.signedUrl
+            imageMeta.fileSize = regionRes.size
+            totalStorageBytes += regionRes.size
           }
 
           extractedImages.push(imageMeta)
           imagesProcessed += 1
         } catch (err) {
-          warnings.push(
-            `Failed to process image ${image.id}: ${err instanceof Error ? err.message : 'Unknown error'}`,
-          )
+          // Fail fast – escalate the error so that the entire upload fails and the user is
+          // immediately aware that image extraction is broken.
+          throw err
         }
       }
     }

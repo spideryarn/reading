@@ -28,8 +28,15 @@ export const DEBUG_FLAGS = {
     VOICE_INPUT: false,
 } as const;
 
-
-
+// Feature flags – centralised switches enabling/disabling optional functionality at runtime.
+// These should *not* rely on environment variables for critical features so that behaviour is
+// deterministic across environments unless explicitly overridden in code.
+export const FEATURE_FLAGS = {
+  // Enable server-side PDF image extraction (bounding-box cropping + upload).
+  // Set to `false` in tests only when you need to bypass the heavy ImageScript / PDF.js
+  // processing – **always TRUE** in production builds.
+  IMAGE_EXTRACTION_ENABLED: true,
+} as const
 
 
 // Get model string from environment variable or default
