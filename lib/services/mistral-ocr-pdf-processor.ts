@@ -49,10 +49,15 @@ const imageAnnotationSchema = z.object({
 // without throwing and then skip such images during processing.
 const mistralImageSchema = z.object({
   id: z.string(),
-  top_left_x: z.number().optional(),
+  top_left_x: z.number().optional(), // original snake_case
   top_left_y: z.number().optional(),
   bottom_right_x: z.number().optional(),
   bottom_right_y: z.number().optional(),
+  // camelCase keys returned when using bboxAnnotationFormat
+  topLeftX: z.number().optional(),
+  topLeftY: z.number().optional(),
+  bottomRightX: z.number().optional(),
+  bottomRightY: z.number().optional(),
   image_base64: z.string().optional()
 })
 
@@ -228,31 +233,31 @@ export async function processWithMistralOcr(
 
       // --- Process images with bounding boxes ---
       for (const image of validatedPage.images) {
-        // Skip images that do not have full bounding box information
-        if (
-          image.top_left_x == null ||
-          image.top_left_y == null ||
-          image.bottom_right_x == null ||
-          image.bottom_right_y == null
-        ) {
+        // Pick coordinate names in either snake_case or camelCase
+        const tlx = image.top_left_x ?? image.topLeftX
+        const tly = image.top_left_y ?? image.topLeftY
+        const brx = image.bottom_right_x ?? image.bottomRightX
+        const bry = image.bottom_right_y ?? image.bottomRightY
+
+        if (tlx == null || tly == null || brx == null || bry == null) {
           warnings.push(`Image ${image.id} missing bounding box coordinates, skipping`)
           logger.warn('Skipping image without bounding box', {
             pageIndex: validatedPage.index,
             imageId: image.id,
-            has_top_left_x: image.top_left_x != null,
-            has_top_left_y: image.top_left_y != null,
-            has_bottom_right_x: image.bottom_right_x != null,
-            has_bottom_right_y: image.bottom_right_y != null
+            has_top_left_x: tlx != null,
+            has_top_left_y: tly != null,
+            has_bottom_right_x: brx != null,
+            has_bottom_right_y: bry != null
           })
           imagesSkipped += 1
           continue
         }
 
         try {
-          const x1 = image.top_left_x / dims.width
-          const y1 = image.top_left_y / dims.height
-          const x2 = image.bottom_right_x / dims.width
-          const y2 = image.bottom_right_y / dims.height
+          const x1 = tlx / dims.width
+          const y1 = tly / dims.height
+          const x2 = brx / dims.width
+          const y2 = bry / dims.height
 
           // Validate normalized coordinates
           if ([x1, y1, x2, y2].some((v) => v < 0 || v > 1)) {
