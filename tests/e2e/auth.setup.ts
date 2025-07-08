@@ -55,7 +55,11 @@ setup('authenticate', async ({ page }) => {
   console.log(`Auth file: ${authFile}`);
   
   // Programmatic Supabase login avoids flaky UI interaction timing
-  await page.goto('/', { waitUntil: 'networkidle' });
+  try {
+    await page.goto('/', { waitUntil: 'networkidle', timeout: 30_000 });
+  } catch (err) {
+    throw new Error(`Dev server not responding at http://localhost:${process.env.PORT || 3002}/ – unable to start auth setup. ${(err as Error).message}`)
+  }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
