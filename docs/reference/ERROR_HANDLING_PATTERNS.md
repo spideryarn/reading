@@ -97,12 +97,38 @@ Error body automatically surfaces according to Tree above.
 
 ## Checklist – Writing User-Friendly Messages
 
-- [ ] _What happened_ – one-sentence summary (`title`).
-- [ ] _Why it happened_ – brief context (`detail`).
-- [ ] _What to do next_ – include guidance or link (`detail`).
-- [ ] Provide `retryable` when transient.
-- [ ] Map to correct HTTP status (see RFC 9110).
-- [ ] Include specific `type` URI (kebab-case).  Keep catalogue in Appendix A below.
+### Author-Friendly Checklist – Crafting Clear Error Messages
+
+✅ _What happened?_
+  • Provide a concise, human-readable **`title`** (≈ 60 chars) that can stand alone in a toast/banner.  
+  • Avoid jargon – prefer “Document not found” over “DB_ERR_404”.
+
+✅ _Why did it happen?_
+  • Offer 1-2 short sentences in **`detail`** that explain the root cause in plain language.  
+  • If the user is at fault, be polite: “The file exceeds the 10 MB limit.”  
+  • If the system failed, acknowledge: “Our AI service is temporarily overloaded.”
+
+✅ _What can the user do now?_
+  • End the **`detail`** with actionable guidance (link or next step).  
+    e.g. “Please reduce the file size or split it into smaller documents.”
+
+✅ _Is it retryable?_
+  • Set **`retryable: true`** for transient issues (429/503/504 etc.).  
+  • Omit or set to `false` for permanent errors (validation, permission).
+
+✅ _Pick the right HTTP status_
+  • 4xx → user can likely fix; 5xx → server fault.  
+  • Use 422 for “semantically correct but unprocessable” inputs.
+
+✅ _Use a stable `type` URI_
+  • Format: `https://spideryarn.com/problems/<kebab-case-code>`  
+  • Add the code to the catalogue (Appendix A) when introducing a new one.
+
+✅ _Keep sensitive data out_
+  • Never leak internal IDs, stack traces, or provider secrets.  
+  • Log full details server-side; surface only what’s helpful to the user.
+
+See `docs/reference/CODING_GUIDELINES.md#errors` for the complete style-guide.
 
 ## Appendix A – Standard Error Catalogue (excerpt)
 

@@ -15,6 +15,7 @@
         "start": "next start",
         "lint": "next lint",
         "lint:errors": "npm run lint -- --max-warnings=0",
+        "prepare": "husky install",
         "check:health": "./scripts/check-health.ts",
         "check:health:quick": "npm run check:health -- --quick",
         "check:health:rigorous": "npm run check:health -- --rigorous",
@@ -157,6 +158,13 @@
         "tailwindcss": "^4",
         "ts-node": "^10.9.2",
         "tsx": "^4.19.4",
-        "typescript": "^5"
+        "typescript": "^5",
+        "husky": "^9.0.0",
+        "lint-staged": "^15.2.0"
+    },
+    "lint-staged": {
+        "*.{js,jsx,ts,tsx}": [
+            "npm run lint:errors"
+        ]
     }
 }
