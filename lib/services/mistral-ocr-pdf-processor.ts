@@ -15,6 +15,7 @@
 
 import { z } from 'zod'
 import { Mistral } from '@mistralai/mistralai'
+import { responseFormatFromZodObject } from '@mistralai/mistralai/extra/structChat.js'
 import { UPLOAD_LIMITS } from '@/lib/config/upload-limits'
 import { createRequestLogger, createTimer } from '@/lib/services/logger'
 import { boundingBoxSchema, ExtractedImage } from '@/lib/services/html-fragment-processor'
@@ -34,13 +35,24 @@ export const mistralOcrProcessorOptionsSchema = z.object({
 
 export type MistralOcrProcessorOptions = z.infer<typeof mistralOcrProcessorOptionsSchema>
 
+// Annotation schema for bbox annotations (minimal for now)
+const imageAnnotationSchema = z.object({
+  image_type: z.enum(['figure', 'chart', 'diagram', 'table', 'photo']).optional(),
+  short_description: z.string().optional(),
+  caption: z.string().optional(),
+  contains_text: z.boolean().optional()
+})
+
 // Schema for Mistral image data
+// Mistral sometimes omits bounding box coordinates for decorative images.
+// Make the coordinate fields optional so that we can validate the page object
+// without throwing and then skip such images during processing.
 const mistralImageSchema = z.object({
   id: z.string(),
-  top_left_x: z.number(),
-  top_left_y: z.number(),
-  bottom_right_x: z.number(),
-  bottom_right_y: z.number(),
+  top_left_x: z.number().optional(),
+  top_left_y: z.number().optional(),
+  bottom_right_x: z.number().optional(),
+  bottom_right_y: z.number().optional(),
   image_base64: z.string().optional()
 })
 
@@ -144,7 +156,7 @@ export async function processWithMistralOcr(
     const base64Pdf = validatedOptions.pdfBuffer.toString('base64')
     const dataUri = `data:application/pdf;base64,${base64Pdf}`
     
-    logger.info('Sending PDF to Mistral OCR API')
+    logger.info('Sending PDF to Mistral OCR API (with bbox annotations)')
     
     // Call Mistral OCR API
     const ocrResponse = await client.ocr.process({
@@ -153,7 +165,8 @@ export async function processWithMistralOcr(
         type: 'document_url',
         documentUrl: dataUri
       },
-      includeImageBase64: false // We don't need the base64 images for now
+      includeImageBase64: false, // Avoid large payload – bbox coords come with annotations
+      bboxAnnotationFormat: responseFormatFromZodObject(imageAnnotationSchema)
     })
     
     const processingTimeMs = Date.now() - startTime
@@ -167,6 +180,10 @@ export async function processWithMistralOcr(
     let combinedMarkdown = ''
     const extractedImages: ExtractedImage[] = []
     const warnings: string[] = []
+    // Totals for final summary
+    let totalImages = 0
+    let imagesProcessed = 0
+    let imagesSkipped = 0
     const elementUrlMap: Record<string, string> = {}
     let totalStorageBytes = 0
     
@@ -190,8 +207,47 @@ export async function processWithMistralOcr(
       // --- Page dimensions ---
       const dims = validatedPage.dimensions
 
+      // --- Log page-level image statistics ---
+      const imagesWithBBox = validatedPage.images.filter(img =>
+        img.top_left_x != null &&
+        img.top_left_y != null &&
+        img.bottom_right_x != null &&
+        img.bottom_right_y != null
+      )
+      const imagesMissingBBox = validatedPage.images.length - imagesWithBBox.length
+
+      logger.info('Page image summary', {
+        pageIndex: validatedPage.index,
+        imageCount: validatedPage.images.length,
+        imagesWithBBox: imagesWithBBox.length,
+        imagesMissingBBox
+      })
+
+      // Update global counters
+      totalImages += validatedPage.images.length
+
       // --- Process images with bounding boxes ---
       for (const image of validatedPage.images) {
+        // Skip images that do not have full bounding box information
+        if (
+          image.top_left_x == null ||
+          image.top_left_y == null ||
+          image.bottom_right_x == null ||
+          image.bottom_right_y == null
+        ) {
+          warnings.push(`Image ${image.id} missing bounding box coordinates, skipping`)
+          logger.warn('Skipping image without bounding box', {
+            pageIndex: validatedPage.index,
+            imageId: image.id,
+            has_top_left_x: image.top_left_x != null,
+            has_top_left_y: image.top_left_y != null,
+            has_bottom_right_x: image.bottom_right_x != null,
+            has_bottom_right_y: image.bottom_right_y != null
+          })
+          imagesSkipped += 1
+          continue
+        }
+
         try {
           const x1 = image.top_left_x / dims.width
           const y1 = image.top_left_y / dims.height
@@ -253,6 +309,7 @@ export async function processWithMistralOcr(
           }
 
           extractedImages.push(imageMeta)
+          imagesProcessed += 1
         } catch (err) {
           warnings.push(
             `Failed to process image ${image.id}: ${err instanceof Error ? err.message : 'Unknown error'}`,
@@ -266,6 +323,14 @@ export async function processWithMistralOcr(
       throw new Error('Mistral OCR returned no markdown content for the supplied PDF')
     }
     
+    // Log final summary before HTML conversion
+    logger.info('Mistral OCR image processing summary', {
+      totalImages,
+      imagesProcessed,
+      imagesSkipped,
+      warningsCount: warnings.length
+    })
+
     // Convert Markdown to HTML
     const html = markdownToHtml(combinedMarkdown)
     
