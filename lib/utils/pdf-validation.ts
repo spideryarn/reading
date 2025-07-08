@@ -61,12 +61,23 @@ export class PdfValidationError extends Error {
 export async function getPdfPageCountFromFile(file: File): Promise<number> {
   try {
     // Dynamic import to avoid loading pdf-lib on non-upload pages
-    const { PDFDocument } = await import('pdf-lib')
+    let PDFDocument
+    try {
+      ;({ PDFDocument } = await import('pdf-lib'))
+    } catch (importErr) {
+      // In Next.js dev or certain test environments the code-split chunk for
+      // pdf-lib can fail to load (e.g. Playwright navigates before the script
+      // is ready).  Rather than blocking the entire upload, fall back to
+      // returning pageCount = 0 so that server-side validation can handle it.
+      console.warn('[pdf-validation] pdf-lib dynamic import failed, skipping client-side page count validation:', importErr)
+      return 0
+    }
     
     // Convert File to ArrayBuffer
     const arrayBuffer = await file.arrayBuffer()
     
-    // Load and parse PDF document
+    // If PDFDocument failed to import, we would have early-returned.
+    // Now load and parse PDF document.
     const pdfDoc = await PDFDocument.load(arrayBuffer)
     
     // Return page count
