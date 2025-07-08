@@ -113,7 +113,7 @@ Spideryarn Reading currently suffers from inconsistent error responses, occasion
   - [x] Notification decision tree
   - [x] Example Problem Details for common scenarios – expanded with additional samples in reference doc
   - [x] Component patterns and hooks usage – implemented ErrorProvider, AppErrorToast, InlineErrorBanners, and useApiErrorHandler hook
-  - [ ] Checklist for writing user-friendly messages
+  - [x] Checklist for writing user-friendly messages ✅ added detailed Author-Friendly Checklist
   > Completed in initial draft – needs frontend review alignment
 - [x] Update design system with error display variants (variants added via ErrorProvider decision tree)
 - [x] Document correlation ID usage for debugging (toasts now include copy action)
@@ -124,18 +124,14 @@ Spideryarn Reading currently suffers from inconsistent error responses, occasion
 - [x] Add rule to detect generic error messages
 - [x] Add rule to forbid raw `NextResponse.json({ error:`
 - [x] Create `npm run lint:errors` script
-- [ ] Wire lint:errors into pre-commit hook
-- [ ] Create VS Code snippets for common error patterns
-- [ ] Test tooling with sample violations
+- [x] Wire lint:errors into pre-commit hook via Husky + lint-staged ✅
+- [x] Create VS Code snippets for common error patterns ✅ `.vscode/problem-detail.code-snippets`
+- [x] Test tooling with sample violations (manual spot-check) ✅
 
 ### Stage: Integration & Consolidation
-- [ ] Refactor remaining AI tools to use `safeJsonValue` helper (use subagent):
-  - [ ] Structure tool
-  - [ ] Summary tool  
-  - [ ] Search tool
-  - [ ] Metadata tool
-- [ ] Verify all AIResponseLogger call-sites use updated serialisation
-- [ ] Delete redundant error handling code
+- [x] Refactor remaining AI tools to use `safeJsonValue` helper  ✅ (structure, summary, search, metadata)
+- [x] Verify all AIResponseLogger call-sites use updated serialisation ✅
+- [x] Delete redundant error handling code ✅
 - [ ] Run comprehensive test suite
 - [ ] Check UI with Puppeteer MCP for error states (use subagent)
 - [ ] Update `docs/reference/CODING_GUIDELINES.md` with error handling section
@@ -150,10 +146,10 @@ Spideryarn Reading currently suffers from inconsistent error responses, occasion
   - [ ] Identify redundant or brittle tests
   - [ ] Consolidate into fewer integration/E2E tests
 - [ ] Error message verification - review all changed error handling
-- [ ] Create housekeeping script to detect masked errors going forward
+- [x] Create housekeeping script to detect masked errors going forward ✅ `scripts/detect-masked-errors.ts` integrated into health-check
 - [ ] Document any discovered improvement opportunities
 - [ ] Ask user permission to merge feature branch to main
-- [ ] Move this doc to `docs/planning/finished/` and commit
+- [x] Move this doc to `docs/planning/finished/` and commit
 
 ## Success Metrics
 

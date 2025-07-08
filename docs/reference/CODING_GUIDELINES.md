@@ -66,6 +66,12 @@ npm test        # Run test suite
 - **Correlation IDs** – Use `generateCorrelationId()` and always return the `x-spideryarn-correlation-id` header
 - **Clear error messages** – Make them actionable and informative
 
+**Checklist for crafting errors** – see _Author-Friendly Checklist_ in `docs/reference/ERROR_HANDLING_PATTERNS.md` for step-by-step guidance on writing `ProblemDetail` messages.
+
+**Tooling**:  
+• Husky pre-commit hook automatically runs `npm run lint:errors` on staged files – see `.husky/pre-commit`.  
+• CI health-check also invokes `scripts/detect-masked-errors.ts` to block commits with empty `catch` blocks or vague messages like “Unknown error”.
+
 ## Database Operations Safety
 
 **CRITICAL**: Never run ANY database commands without explicit user permission:

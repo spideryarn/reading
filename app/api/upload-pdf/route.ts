@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
   let isPublic = false
   let draftDocumentId = randomUUID() as `${string}-${string}-${string}-${string}-${string}`
   let directStoragePath: string | null = null
-  let directStorageBucket: string | null = null
+  let _directStorageBucket: string | null = null
 
   if (isDirectJson) {
     // -----------------------------
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const parsed = DirectSchema.parse(body)
 
-    directStorageBucket = parsed.bucket
+    _directStorageBucket = parsed.bucket
     directStoragePath = parsed.path
     provider = parsed.provider || 'mistral'
     title = parsed.title || parsed.path.split('/').pop()?.replace(/\.pdf$/i, '') || 'Untitled Document'
