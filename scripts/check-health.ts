@@ -94,6 +94,11 @@ class HealthCheckCommand extends Command {
       
       if (!this.noEslint) {
         results.push(await this.runESLintCheck(targetFiles));
+
+        // Additional masked error detection (only when ESLint is enabled)
+        if (!this.quick) {
+          results.push(await this.runMaskedErrorsCheck())
+        }
       }
       
       if (!this.noBuild && !this.quick) {
@@ -222,6 +227,39 @@ class HealthCheckCommand extends Command {
         success: false,
         errorMessage: errorOutput
       };
+    }
+  }
+
+  private async runMaskedErrorsCheck(): Promise<HealthCheckResult> {
+    this.context.stdout.write('🕵️  Masked error check (detect-masked-errors)...\n')
+    try {
+      execSync('npx tsx scripts/detect-masked-errors.ts --json', {
+        encoding: 'utf8',
+        cwd: process.cwd(),
+        stdio: 'pipe',
+      })
+      return {
+        tool: 'MaskedErrors',
+        files: [],
+        totalIssues: 0,
+        success: true,
+      }
+    } catch (error) {
+      // Script exits with code 1 when findings exist; capture JSON from stdout
+      const output = (error.stdout || '').toString()
+      let parsed
+      try {
+        parsed = JSON.parse(output)
+      } catch {
+        parsed = { count: 1, findings: [] }
+      }
+      return {
+        tool: 'MaskedErrors',
+        files: [],
+        totalIssues: parsed.count || 1,
+        success: false,
+        errorMessage: output,
+      }
     }
   }
 
