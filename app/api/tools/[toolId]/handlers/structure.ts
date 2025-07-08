@@ -23,6 +23,7 @@ import { headingsPrompt, headingsResponseSchema, headingOperationSchema } from '
 import type { HeadingOperation } from '@/lib/prompts/schemas/headings'
 import { EnhancementService } from '@/lib/services/database/enhancements'
 import { AiCallService } from '@/lib/services/database/ai-calls'
+import { createAIResponseLogger } from '@/lib/services/ai-response-logger'
 import { getModelForAICall, HEADING_ITERATION_CONFIG } from '@/lib/config'
 import { createRequestLogger, createTimer, logAIOperation, mutationLogger } from '@/lib/services/logger'
 import { BaseToolHandler, createHandlerError, ToolHandlerError } from '../handler-interface'
@@ -254,7 +255,6 @@ function ensureInsertIds(documentId: string | undefined, operations: HeadingOper
 /**
  * Structure tool handler with AI-powered heading generation
  */
-/* eslint-disable no-restricted-syntax */
 export class StructureHandler extends BaseToolHandler {
   constructor() {
     super('structure')
@@ -657,15 +657,16 @@ export class StructureHandler extends BaseToolHandler {
         }
         
         // Complete AI call with validation failure
-        await aiCallService.completeCall(aiCall.id, {
-          output_data: {
+        await createAIResponseLogger(aiCallService).completeAICall({
+          aiCallId: aiCall.id,
+          response: llmResult.rawResponse!,
+          outputData: {
             operations_count: validatedResponse.operations.length,
             validation_failed: true,
             validation_errors: structuralValidation.errors,
             processing_notes: 'Heading operations failed structural validation'
           },
-          usage: llmResult.usage,
-          finishReason: llmResult.finishReason
+          correlationId: context.request.correlationId
         })
         
         // Return error response with validation details
@@ -683,14 +684,15 @@ export class StructureHandler extends BaseToolHandler {
       }, {} as Record<string, number>)
       
       // Complete the AI call record with usage metadata
-      await aiCallService.completeCall(aiCall.id, {
-        output_data: {
+      await createAIResponseLogger(aiCallService).completeAICall({
+        aiCallId: aiCall.id,
+        response: llmResult.rawResponse!,
+        outputData: {
           operations_count: validatedResponse.operations.length,
           operations_breakdown: operationCounts,
           processing_notes: 'Structure operations generation completed successfully (insert/replace/remove operations)'
         },
-        usage: llmResult.usage,
-        finishReason: llmResult.finishReason
+        correlationId: context.request.correlationId
       })
       
       logAIOperation(
@@ -1044,15 +1046,16 @@ export class StructureHandler extends BaseToolHandler {
         }
         
         // Complete AI call with validation failure
-        await aiCallService.completeCall(aiCall.id, {
-          output_data: {
+        await createAIResponseLogger(aiCallService).completeAICall({
+          aiCallId: aiCall.id,
+          response: llmResult.rawResponse!,
+          outputData: {
             operations_count: validatedResponse.operations.length,
             validation_failed: true,
             validation_errors: validation.errors,
             processing_notes: 'Heading operations failed structural validation'
           },
-          usage: llmResult.usage,
-          finishReason: llmResult.finishReason
+          correlationId: context.request.correlationId
         })
         
         // Return error response with validation details
@@ -1073,8 +1076,10 @@ export class StructureHandler extends BaseToolHandler {
       const newTotalOperations = total_operations_count + validatedResponse.operations.length
       
       // Complete the AI call record
-      await aiCallService.completeCall(aiCall.id, {
-        output_data: {
+      await createAIResponseLogger(aiCallService).completeAICall({
+        aiCallId: aiCall.id,
+        response: llmResult.rawResponse!,
+        outputData: {
           operations_count: validatedResponse.operations.length,
           operations_breakdown: operationCounts,
           iteration_count,
@@ -1082,8 +1087,7 @@ export class StructureHandler extends BaseToolHandler {
           iteration_summary: validatedResponse.iteration_summary,
           processing_notes: `Iterative structure generation - iteration ${iteration_count + 1}`
         },
-        usage: llmResult.usage,
-        finishReason: llmResult.finishReason
+        correlationId: context.request.correlationId
       })
       
       // Persist operations to database for caching and state preservation

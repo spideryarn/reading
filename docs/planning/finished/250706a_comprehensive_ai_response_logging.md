@@ -106,7 +106,7 @@ Currently, the `ai_calls` table has a `response_text` field that is never popula
   - [x] Test verifies all expected fields are captured
   - [x] Test ensures circular references fail fatally
   - [x] Test ensures serialization errors fail fatally
-  - [ ] Add custom ESLint rule (and optional codemod) that forbids direct calls to `AiCallService.completeCall` outside the new logger, encouraging consistent usage
+  - [x] Add custom ESLint rule that forbids direct calls to `AiCallService.completeCall` or `createWithModelString` outside the new logger, encouraging consistent usage (implemented in eslint.config.mjs on 2025-07-07)
 
 ### Stage: Update AiCallService
 - [x] Modify `completeCall` method to accept optional `rawApiResponse` parameter
@@ -169,9 +169,10 @@ All remaining legacy paths (upload-html, extract-url, realtime-demo, chat API, t
  - [x] upload-pdf-single-page-image route
 
 Pending follow-ups:
-1. [ ] Implement ESLint rule / codemod to forbid direct `completeCall` & `createWithModelString` (tracked separately).
-2. [ ] Remove temporary runtime warning after ESLint rule enforces compliance.
-3. [ ] Dashboard query (see below) remains useful for monitoring but shows 100 % coverage.
+1. [x] Implement ESLint rule to forbid direct `completeCall` & `createWithModelString` (DONE).
+2. [x] Migrate remaining legacy call-sites (structure handler, realtime-demo) to `AIResponseLogger.completeAICall()` (DONE).
+3. [ ] Remove temporary runtime warning after ESLint rule enforces compliance.
+4. [ ] Dashboard query (see below) remains useful for monitoring but shows 100 % coverage.
 
 ```sql
 -- Current migration progress (should report 100 %)
@@ -194,7 +195,7 @@ _2025-07-07 update 2_: Culled redundant unit/performance test suites and mocks; 
 
 ### Stage: Final review and merge
 - [ ] Review all changes with user
-- [ ] Ensure all tests pass
+- [x] Ensure all tests pass (2025-07-07 – all Jest integration suites green after test consolidation)
 - [ ] Check that existing functionality isn't broken
 - [ ] Get permission to merge to main
 - [ ] Move planning doc to `docs/planning/finished/`
