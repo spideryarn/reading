@@ -141,10 +141,12 @@ export const testHelpers = {
     await page.goto('/upload')
     await expect(page.locator('h2:has-text("Add Document")')).toBeVisible()
     
-    // Switch to HTML upload
-    const htmlTab = page.locator('text=HTML').or(page.locator('[data-tab="html"]'))
-    if (await htmlTab.isVisible({ timeout: 3000 })) {
-      await htmlTab.click()
+    // Switch to HTML upload – use a unique selector to avoid strict-mode violation
+    // Prefer role="tab" or data attribute over generic text to ensure a single match
+    const htmlTab = page.getByRole('tab', { name: /html/i }).first().or(page.locator('[data-tab="html"]'))
+    // Switch to HTML upload if the tab exists and is clickable; ignore if already on HTML tab
+    if (await htmlTab.count().then(c => c > 0).catch(() => false)) {
+      await htmlTab.click({ timeout: 3000 }).catch(() => {/* ignore if already selected */})
     }
     
     // Create test HTML content with faker-generated unique text
@@ -155,7 +157,7 @@ export const testHelpers = {
         <head><title>${title}</title></head>
         <body>
           <h1>${title}</h1>
-          <p>Document ID: ${namespace} - ${faker.datatype.uuid()}</p>
+          <p>Document ID: ${namespace} - ${faker.string.uuid()}</p>
           
           <p>${faker.lorem.paragraph()}</p>
           

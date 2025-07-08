@@ -30,6 +30,11 @@ function Toast({ notification, onDismiss }: { notification: AppErrorNotification
     return () => clearTimeout(timer)
   }, [])
 
+  const handleClose = () => {
+    setVisible(false)
+    setTimeout(() => onDismiss(), 300)
+  }
+
   // Auto hide after 6s unless retryable
   useEffect(() => {
     if (!notification.retryable) {
@@ -39,11 +44,6 @@ function Toast({ notification, onDismiss }: { notification: AppErrorNotification
       return () => clearTimeout(t)
     }
   }, [notification.retryable])
-
-  const handleClose = () => {
-    setVisible(false)
-    setTimeout(() => onDismiss(), 300)
-  }
 
   const handleCopyId = () => {
     if (notification.correlationId) {
