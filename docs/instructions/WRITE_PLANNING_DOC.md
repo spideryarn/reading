@@ -125,9 +125,9 @@ At the end of stage (where appropriate):
   - **Orchestration**: File-based output with issue counts enables targeted subagent dispatch to address problems efficiently
   - **Testing**: Re-run affected tests in subagent when changing logic with test coverage - see `docs/reference/TESTING_OVERVIEW.md` and `docs/reference/TESTING_SETUP.md`
 - Follow instructions in `docs/instructions/DEBRIEF_PROGRESS.md` to output a summary of where things stand
-- Update this planning doc with progress so far, log useful learnings/surprises/changes of plan/etc.
+- **Update planning doc**: Update this planning doc with progress so far, log useful learnings/surprises/changes of plan/etc.
 - Add an action to stop & review with user where appropriate, e.g. when we get to a good stopping point, to manually check changes to the user interface, etc.
-- Git commit (following instructions in `docs/instructions/GIT_COMMIT_CHANGES.md`, including use a subagent).
+- **Git commit**: Commit changes following instructions in `docs/instructions/GIT_COMMIT_CHANGES.md` (use a subagent).
 
 In later stages:
 - Add actions to update relevant `docs/reference/*.md` evergreen docs (see `docs/instructions/WRITE_EVERGREEN_DOC.md`). If you think we need a new evergreen-doc, ask the user
