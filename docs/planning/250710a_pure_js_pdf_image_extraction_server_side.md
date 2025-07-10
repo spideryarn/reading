@@ -24,6 +24,9 @@ Replace the native `skia-canvas` dependency in the Mistral OCR PDF processing pi
 - HTML fragments have img src URLs updated to reference stored images
 - Performance is acceptable (within 2x of current native module approach)
 - No quality degradation that would impact readability of academic figures/charts
+- Memory usage stays under 512MB per page (Vercel limit is 1024MB)
+- Cold start time remains under 3 seconds
+- Processing completes within Vercel's timeout limits
 
 ### Secondary User Story
 **As a developer**, I want a pure-JS solution that:
@@ -50,47 +53,46 @@ Replace the native `skia-canvas` dependency in the Mistral OCR PDF processing pi
 - **Progressive approach**: Try multiple solutions systematically, gathering data before moving on
 - **Acceptable trade-offs**: 2x performance hit is acceptable for compatibility
 - **Browser fallback**: Only if server-side approaches fail completely
+- **Feature flag strategy**: Implement `PURE_JS_PDF` environment variable for quick rollback
+- **Resource constraints**: Enforce max page dimensions, processing timeouts, memory limits
 
 ## Stages & Actions
 
-### Stage: Initial Setup and Context Gathering
-- [ ] **Subagent: Inspect uncommitted changes** - Review any uncommitted files related to canvas/image processing to identify useful code or previous attempts
-  - Look for files in `scripts/tests/repro-*.ts` 
-  - Check `app/api/test-canvas/` 
-  - Identify what's been tried and what might be salvageable
-  - Write findings to `docs/working_notes/250710a_ephemeral_canvas_attempts.md`
-- [ ] **Subagent: Web research on pure-JS PDF rendering** 
-  - Follow `docs/instructions/RESEARCH_THIS_TOPIC.md` and `docs/instructions/WRITE_RESEARCH_DOC.md`
-  - Research topics:
-    - PDF.js server-side usage (without DOM/Canvas)
-    - WebAssembly PDF renderers that work on Vercel
-    - Pure-JS image manipulation libraries
-    - Alternative PDF-to-image approaches
-  - Focus on Vercel compatibility and Node.js constraints
-  - Document findings in `docs/reference/PURE_JS_PDF_PROCESSING_OPTIONS.md`
-- [ ] **Subagent: Analyze existing Phase 2 implementation** - Study how Phase 2 avoids native modules
-  - Review `app/api/upload-pdf-single-page-image/route.ts`
-  - Understand client-side PDF rendering approach
-  - Identify reusable patterns for server-side
-  - Document architecture insights
-- [ ] **Subagent: Create Playwright test for current upload flow**
-  - Use Playwright MCP to test upload with `static/examples/2009_Book_TheElementsOfStatisticalLearning_single_page_image.pdf`
-  - Capture exact error messages and stack traces
-  - Write test to `e2e/mistral-ocr-upload-error.spec.ts`
-  - This becomes our baseline for knowing when we've fixed the issue
-- [ ] **Subagent: Build focused command-line reproduction script**
-  - Create `scripts/tests/repro-pdf-extraction-minimal.ts`
-  - Isolate the exact failing operation (PDF render + image crop)
-  - Remove all unnecessary complexity
-  - Make it easy to test different approaches quickly
-- [ ] Update planning doc with testing results
+### Stage: Research and Feasibility Assessment
+- [ ] **Subagent: Comprehensive research and testing setup**
+  - Inspect uncommitted changes in `scripts/tests/repro-*.ts` and `app/api/test-canvas/`
+  - Research pure-JS PDF processing options with focus on:
+    - Direct image extraction from PDF streams (pdf-lib, pdfjs-extract-images) 
+    - PDF.js operator list → custom rasterizer (no Canvas)
+    - WebAssembly renderers (pdfium-wasm, mupdf-wasm)
+  - Analyze Phase 2 implementation for reusable patterns
+  - Create minimal reproduction script at `scripts/tests/repro-pdf-extraction-minimal.ts`
+  - Write Playwright test to capture current errors
+  - Document all findings in `docs/reference/PURE_JS_PDF_PROCESSING_OPTIONS.md`
+- [ ] **Decision checkpoint**: Based on research, choose primary approach
+  - If direct image extraction can handle 80% of cases, prioritize that
+  - Otherwise proceed with PDF.js operator list or WASM
+  - Document decision rationale
+- [ ] Update planning doc with research findings and chosen direction
+- [ ] Git commit
+
+### Stage: Direct Image Extraction Experiment (NEW - Recommended First)
+- [ ] **Subagent: Implement direct PDF image extraction**
+  - Create `lib/services/pdf-image-direct-extractor.ts`
+  - Use pdf-lib or pdfjs-dist to extract embedded images directly
+  - Map extracted images to Mistral bounding boxes
+  - Test with academic PDFs containing embedded figures
+- [ ] **Evaluate coverage**: What percentage of use cases does this solve?
+  - Test with various figure types (photos, diagrams, charts)
+  - Document which types work vs need rasterization
+- [ ] Update planning doc with findings
 - [ ] Git commit
 
 ### Stage: Pure-JS PDF.js Server-Side Experiment
-- [ ] **Subagent: Implement PDF.js server-side renderer**
+- [ ] **Subagent: Implement PDF.js operator list approach**
   - Create `lib/services/pdf-renderer-pdfjs-pure.ts`
-  - Use PDF.js with node-canvas polyfills or virtual canvas
-  - Handle Path2D requirements that PDF.js needs
+  - Use PDF.js operator list → custom rasterizer (no Canvas dependency)
+  - Reference `examples/node/getoplist.js` from pdf.js
   - Test with reproduction script
 - [ ] **Subagent: Performance and quality testing**
   - Compare render quality with current skia-canvas approach
@@ -103,29 +105,21 @@ Replace the native `skia-canvas` dependency in the Mistral OCR PDF processing pi
 
 ### Stage: WebAssembly PDF Renderer Experiment
 - [ ] **Subagent: Research and implement WASM PDF renderer**
-  - Investigate options like pdf-wasm, pdfium-wasm
+  - Investigate options like pdf-wasm, pdfium-wasm, mupdf-wasm
   - Create `lib/services/pdf-renderer-wasm.ts`
-  - Ensure Vercel compatibility (WASM file serving)
+  - Implement lazy loading to avoid cold start penalties
+  - Prune unused WASM variants (x86, simd, threads) from bundle
   - Test with reproduction script
 - [ ] **Subagent: Vercel deployment test**
   - Deploy minimal test endpoint to Vercel
   - Verify WASM loading and execution
+  - Profile cold start time and bundle size
+  - Test lazy loading with `WebAssembly.instantiateStreaming`
   - Document any Vercel-specific issues
 - [ ] Health check: `npm run check:health`
 - [ ] Update planning doc with WASM findings
 - [ ] Git commit
 
-### Stage: Alternative Server-Side Approaches
-- [ ] **Subagent: Investigate PDF-to-SVG conversion**
-  - Research pure-JS PDF to SVG libraries
-  - Test SVG rendering and image extraction
-  - Evaluate quality and performance
-- [ ] **Subagent: Explore pre-rendered image extraction**
-  - Can we extract embedded images directly from PDF?
-  - Would this work for figures/charts?
-  - Test with Mistral bounding boxes
-- [ ] Update planning doc with alternative approach results
-- [ ] Git commit
 
 ### Stage: Hybrid Approach Design (if pure server-side fails)
 - [ ] **Design hybrid architecture**
@@ -142,13 +136,21 @@ Replace the native `skia-canvas` dependency in the Mistral OCR PDF processing pi
 - [ ] Git commit (if moving forward with hybrid)
 
 ### Stage: Implementation of Chosen Solution
+- [ ] **Implement feature flag infrastructure**
+  - Add `PURE_JS_PDF` environment variable
+  - Create abstraction layer to switch between implementations
+  - Default to existing skia-canvas until new solution is proven
 - [ ] **Implement selected approach** based on experiment results
   - Replace `skia-canvas` implementation in `pdf-image-extractor-server.ts`
   - Maintain same API interface for backward compatibility
+  - Add security constraints: max dimensions, timeouts, memory limits
   - Add appropriate error handling
 - [ ] **Subagent: Comprehensive testing**
   - Run Playwright test to verify fix
   - Test with multiple PDFs of varying complexity
+  - Add Jest/Vitest cold-start benchmark test
+  - Test multi-page PDFs (50+ pages) for memory scaling
+  - Monitor memory usage throughout processing
   - Verify Supabase Storage integration still works
   - Check image quality meets requirements
 - [ ] Health check: `npm run check:health --rigorous`
@@ -167,8 +169,24 @@ Replace the native `skia-canvas` dependency in the Mistral OCR PDF processing pi
 - [ ] Update planning doc with optimization results
 - [ ] Git commit
 
+### Stage: Dependency Cleanup and Optimization
+- [ ] **Evaluate imagescript dependency**
+  - Check if `imagescript` still needed (contains native binary)
+  - Consider alternatives: @jsquash/png (WASM) for pure-JS encoding
+- [ ] **Update build configuration**
+  - Remove `skia-canvas` from `serverExternalPackages` in next.config.ts
+  - Add webpack rules to exclude WASM browser variants from server bundle
+  - Ensure tree-shaking removes unused dependencies
+- [ ] Update planning doc with dependency changes
+- [ ] Git commit
+
 ### Stage: Documentation and Deployment
 - [ ] Update `docs/reference/PDF_IMAGE_EXTRACTION_ARCHITECTURE.md` with new approach
+- [ ] Update `docs/reference/ERROR_HANDLING_PATTERNS.md` with new failure modes
+  - WASM instantiation errors
+  - Memory limit exceeded errors
+  - Processing timeout errors
+- [ ] Update `next.config.ts` to remove `skia-canvas` from `serverExternalPackages`
 - [ ] Update deployment documentation if any special configuration needed
 - [ ] **Subagent: Test on Vercel preview deployment**
   - Deploy to preview environment
@@ -222,6 +240,40 @@ These are traditionally handled by native libraries for performance reasons.
 
 - 50MB max function size (including dependencies)
 - 10s default timeout (configurable to 5 min)
+- 1024MB memory limit
+- 125ms cold start init budget
 - Node.js 18.x or 20.x runtime
 - No native module compilation
 - WebAssembly is supported
+
+### E. Technical Challenges Identified (from o3 critique)
+
+**Canvas dependency issue**: PDF.js and unpdf both require Canvas implementation. All maintained Canvas polyfills are native modules. Potential solutions:
+1. PDF.js operator list → custom rasterizer (examples/node/getoplist.js)
+2. Direct image extraction without rasterization
+3. WebAssembly-based rendering
+
+**Memory constraints**: Rendering at 2x scale can exceed 512MB for detailed pages. Need to:
+- Define memory budget per page
+- Implement streaming/tiling for large pages
+- Consider lower scale factors
+
+**WASM considerations**:
+- Bundle size with multiple variants can exceed 50MB
+- Cold start loading can exceed 125ms budget
+- Need lazy loading and variant pruning
+
+**Security concerns**: Processing arbitrary PDFs requires:
+- Max page dimension limits
+- Processing timeouts
+- Memory usage caps
+- Sandboxing malicious content
+
+### F. Alternative: Direct Image Extraction
+
+For embedded images in PDFs, we can extract without rasterization:
+- `pdf-lib` and `pdfjs-dist` expose XObject image streams
+- `pdfjs-extract-images` does this in pure JS
+- Advantages: No rasterization, native resolution, smaller memory
+- Limitation: Won't work for vector+text figures (charts)
+- Could solve 80% of use cases with much less complexity
