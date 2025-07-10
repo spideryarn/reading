@@ -46,8 +46,12 @@ export async function extractPdfRegionAndUpload (
     new Uint8Array(options.pdfBuffer),
     options.pageNumber,
     {
-      scale: options.scale
-      // NOTE: We use default serverless PDF.js bundle from unpdf so no canvas import is required.
+      scale: options.scale,
+      // Use skia-canvas which has better cross-platform support
+      // and includes Path2D implementation needed by pdfjs
+      canvasImport: async () => {
+        return await import('skia-canvas')
+      }
     }
   )
 

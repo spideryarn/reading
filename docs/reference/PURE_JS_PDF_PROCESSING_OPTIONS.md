@@ -81,6 +81,37 @@ async function extractEmbeddedImages(pdfBuffer: Buffer): Promise<ExtractedImage[
   
   return images
 }
+
+// Alternative approach: Iterate through all indirect objects
+async function extractEmbeddedImagesViaIndirectObjects(pdfBuffer: Buffer) {
+  const pdfDoc = await PDFDocument.load(pdfBuffer)
+  const images: Array<{ data: Uint8Array; type: string }> = []
+  
+  // Iterate through all indirect objects
+  pdfDoc.context.indirectObjects.forEach((pdfObject) => {
+    if (pdfObject instanceof PDFRawStream) {
+      const dict = pdfObject.dict
+      const subtype = dict.get(PDFName.of('Subtype'))
+      
+      if (subtype === PDFName.of('Image')) {
+        const filter = dict.get(PDFName.of('Filter'))
+        let imageData = pdfObject.contents
+        let imageType = 'unknown'
+        
+        if (filter === PDFName.of('DCTDecode')) {
+          imageType = 'jpeg'
+        } else if (filter === PDFName.of('FlateDecode')) {
+          // PNG or other format, needs more processing
+          imageType = 'png'
+        }
+        
+        images.push({ data: imageData, type: imageType })
+      }
+    }
+  })
+  
+  return images
+}
 ```
 
 ### 2. WebAssembly PDF Renderers (Recommended Fallback)
@@ -202,6 +233,16 @@ async function extractWithOperatorList(
 }
 ```
 
+### 4. Phase 2 Implementation Analysis
+
+The current Phase 2 (client-side) approach provides a proven pattern:
+- Browser-side PDF rendering with PDF.js
+- Sends page images to API for OCR
+- Client-side cropping based on returned bounding boxes
+- Direct upload to Supabase from browser
+
+**Key insight**: This pattern could be adapted for server-side use with a headless browser or by using PDF.js in a Node.js-compatible way. The Phase 2 approach validates that the overall architecture works well and provides a fallback option if server-side processing encounters issues.
+
 ## Recommended Implementation Strategy
 
 ### Hybrid Approach Architecture
@@ -315,6 +356,23 @@ export class PureJsPdfImageExtractor {
   }
 }
 ```
+
+### Implementation Timeline
+
+1. **Phase 1: Direct Extraction** (1-2 days)
+   - Implement pdf-lib based direct image extraction
+   - Add position detection for embedded images
+   - Match with Mistral OCR bounding boxes
+
+2. **Phase 2: WASM Integration** (2-3 days)
+   - Integrate pdfium-wasm with lazy loading
+   - Implement render-and-crop pipeline
+   - Add caching for rendered pages
+
+3. **Phase 3: Optimization** (1 day)
+   - Add detection logic to choose optimal method
+   - Implement caching strategy
+   - Performance testing and tuning
 
 ### Migration Path
 

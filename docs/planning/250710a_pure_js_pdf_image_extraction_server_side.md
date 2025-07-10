@@ -44,8 +44,7 @@ Replace the native `skia-canvas` dependency in the Mistral OCR PDF processing pi
 - `docs/instructions/RESEARCH_THIS_TOPIC.md` - Instructions for research subagents
 - `docs/instructions/DETECTIVE_SCIENTIST_MODE.md` - Systematic debugging approach
 - `app/api/upload-pdf-single-page-image/route.ts` - Phase 2 implementation that avoids native modules
-- `docs/reference/PURE_JS_PDF_PROCESSING_OPTIONS.md` - **NEW**: Comprehensive pure-JS implementation guide
-- `docs/research/PDF_PROCESSING_WITHOUT_NATIVE_MODULES.md` - Research findings and prototypes
+- `docs/reference/PURE_JS_PDF_PROCESSING_OPTIONS.md` - **NEW**: Comprehensive pure-JS implementation guide (includes all research findings)
 
 ## Principles and Key Decisions
 

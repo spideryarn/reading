@@ -6,6 +6,8 @@ declare module 'unpdf' {
       scale?: number
       width?: number
       height?: number
+      /** Lazy import that returns a Canvas implementation when running in Node.js */
+      canvasImport?: () => Promise<any> | any
       // Additional internal options are currently untyped
     }
   ): Promise<ArrayBuffer>
