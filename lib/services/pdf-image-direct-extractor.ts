@@ -233,18 +233,19 @@ export class PdfImageDirectExtractor {
     const filter = stream.dict.lookup(PDFName.of('Filter'))
     let format: EmbeddedImage['format'] = 'unknown'
     
-    // Determine image format from filter
+    // We only reliably support DCT-encoded (JPEG) XObjects.  Flate-encoded
+    // images require reconstructing a full PNG wrapper, which is outside the
+    // scope of the "direct" extractor.  When we encounter anything other than
+    // DCTDecode we return `null` so that the hybrid pipeline can fall back to
+    // the rasterisation-based extractors.
+
     if (filter === PDFName.of('DCTDecode')) {
       format = 'jpeg'
-    } else if (filter === PDFName.of('FlateDecode')) {
-      // Could be PNG or other format - check ColorSpace and BitsPerComponent
-      const colorSpace = stream.dict.lookup(PDFName.of('ColorSpace'))
-      const bitsPerComponent = stream.dict.lookup(PDFName.of('BitsPerComponent'))
-      
-      // Simple heuristic: if it looks like it could be PNG-compatible
-      if (colorSpace && bitsPerComponent) {
-        format = 'png'
-      }
+    } else {
+      // Unsupported filter – skip this XObject so that fallback extractor can
+      // handle it.  This prevents us from uploading raw zlib streams that the
+      // browser can’t render (seen in FlateDecode → broken PNG case).
+      return null
     }
 
     // Get dimensions if available

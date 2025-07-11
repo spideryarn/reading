@@ -48,14 +48,21 @@ const imageAnnotationSchema = z.object({
 // Mistral sometimes omits bounding box coordinates for decorative images.
 // Make the coordinate fields optional so that we can validate the page object
 // without throwing and then skip such images during processing.
-const mistralImageSchema = z.object({
-  id: z.string(),
-  topLeftX: z.number().optional(),
-  topLeftY: z.number().optional(),
-  bottomRightX: z.number().optional(),
-  bottomRightY: z.number().optional(),
-  image_base64: z.string().optional()
-})
+// The Mistral OCR examples sometimes use snake_case keys (top_left_x, etc.) while
+// production responses currently ship camelCase (topLeftX).  To stay forward-
+// compatible we allow **any** extra keys via `.passthrough()` and handle both
+// naming styles when we read the values later.
+// Ref: https://docs.mistral.ai/document-ai#image-bounding-boxes
+const mistralImageSchema = z
+  .object({
+    id: z.string(),
+    topLeftX: z.number().optional(),
+    topLeftY: z.number().optional(),
+    bottomRightX: z.number().optional(),
+    bottomRightY: z.number().optional(),
+    image_base64: z.string().optional(),
+  })
+  .passthrough()
 
 // Schema for Mistral page data (clean, no legacy fields)
 const mistralPageSchema = z.object({
@@ -271,12 +278,18 @@ export async function processWithMistralOcr(
       const dims = validatedPage.dimensions
 
       // --- Log page-level image statistics ---
-      const imagesWithBBox = validatedPage.images.filter(img =>
-        img.topLeftX != null &&
-        img.topLeftY != null &&
-        img.bottomRightX != null &&
-        img.bottomRightY != null
-      )
+      // Mistral documentation and early examples use snake-case keys
+      // (top_left_x etc.), but the SDK’s TypeScript typings currently use
+      // camel-case.  In practice either can appear depending on internal
+      // versioning.  Support both styles so image extraction never misses
+      // a bounding box just because of key casing.
+      const imagesWithBBox = validatedPage.images.filter(img => {
+        const tlx = img.topLeftX ?? (img as any).top_left_x
+        const tly = img.topLeftY ?? (img as any).top_left_y
+        const brx = img.bottomRightX ?? (img as any).bottom_right_x
+        const bry = img.bottomRightY ?? (img as any).bottom_right_y
+        return tlx != null && tly != null && brx != null && bry != null
+      })
       const imagesMissingBBox = validatedPage.images.length - imagesWithBBox.length
 
       logger.info('Page image summary', {
@@ -291,11 +304,19 @@ export async function processWithMistralOcr(
 
       // --- Process images with bounding boxes ---
       for (const image of validatedPage.images) {
-        // Pick coordinate names in either snake_case or camelCase
-        const tlx = image.topLeftX
-        const tly = image.topLeftY
-        const brx = image.bottomRightX
-        const bry = image.bottomRightY
+        // --- Coordinate retrieval -------------------------------------------------
+        // Mistral may return either camelCase (current) or snake_case (older docs)
+        // for the bbox fields.  Support both to avoid silent skips when the API
+        // changes format.
+        //
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const getCoord = (obj: any, camel: string, snake: string): number | undefined =>
+          obj[camel] ?? obj[snake]
+
+        const tlx = getCoord(image, 'topLeftX', 'top_left_x')
+        const tly = getCoord(image, 'topLeftY', 'top_left_y')
+        const brx = getCoord(image, 'bottomRightX', 'bottom_right_x')
+        const bry = getCoord(image, 'bottomRightY', 'bottom_right_y')
 
         if (tlx == null || tly == null || brx == null || bry == null) {
           warnings.push(`Image ${image.id} missing bounding box coordinates, skipping`)
