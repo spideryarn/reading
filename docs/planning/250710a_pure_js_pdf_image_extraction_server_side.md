@@ -309,17 +309,18 @@ Replace the native `skia-canvas` dependency in the Mistral OCR PDF processing pi
 - [x] Final health check - all checks passing
 - [ ] Git commit following `docs/instructions/GIT_COMMIT_CHANGES.md`
 
-### Stage: Build Fix and Test Cleanup 🆕
-- [ ] **Remove obsolete test files** that reference old canvas module
-  - Delete `/app/api/test-canvas/route.ts` - no longer needed
-  - Clean up test scripts that import 'canvas' module
-- [ ] **Verify no remaining canvas imports**
-  - Grep codebase for any remaining 'canvas' imports
-  - Ensure only '@napi-rs/canvas' is used
-- [ ] **Test build locally**
-  - Run `npm run build` to verify build succeeds
-  - Check bundle size and optimization
-- [ ] Health check and git commit
+### Stage: Build Fix and Test Cleanup ✅ COMPLETE
+- [x] **Remove obsolete test files** that reference old canvas module
+  - Deleted `/app/api/test-canvas/route.ts` - no longer needed
+  - Test scripts in `/scripts/tests/` kept for development but not affecting build
+- [x] **Verify no remaining canvas imports**
+  - Grepped codebase - no production code imports 'canvas'
+  - Only test scripts reference it, which don't affect build
+- [x] **Test build locally**
+  - Build succeeds with warnings only (no errors)
+  - Bundle sizes reasonable, WASM optimization working
+- [x] **TypeScript fix**: Added type annotations to webpack externals callback
+- [x] Health check and git commit
 - [ ] Deploy to Vercel preview and verify
 - [ ] Move planning doc to `docs/planning/finished/`
 
@@ -357,8 +358,8 @@ Replace the native `skia-canvas` dependency in the Mistral OCR PDF processing pi
   - TypeScript build checking re-enabled
 - ✅ **Documentation complete**: Architecture, error patterns, and deployment guides created
 - ✅ **WASM optimization**: Bundle optimization rules added
-- 🚧 **Build fix needed**: Remove test files importing old 'canvas' module
-- 🔄 **Deployment pending**: Awaiting Vercel preview testing after cleanup
+- ✅ **Build fix complete**: Removed test-canvas route causing build failure
+- 🔄 **Deployment pending**: Ready for Vercel preview testing
 
 ## Appendix
 
