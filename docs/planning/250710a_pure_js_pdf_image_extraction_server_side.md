@@ -480,3 +480,17 @@ For embedded images in PDFs, we can extract without rasterization:
 - WASM integration examples with lazy loading
 - Hybrid orchestration pattern defined
 - Ready to proceed with implementation stage
+
+## 2025-07-11 – Extraction robustness update
+
+During testing we found a class of “200 OK but broken PNG” images in the hybrid pipeline. Root cause:
+
+* Direct extractor was uploading raw `/Filter /FlateDecode` XObject streams as **.png** files. Bytes were valid z-lib but not a PNG wrapper → browser showed broken-image icon even though Storage returned 200.
+* Mistral OCR occasionally emits snake_case bbox keys (`top_left_x` etc.) which were ignored by our camelCase-only accessor, leading to silent extraction skips.
+
+Fixes implemented (see commit 6e483bf9):
+
+1. Direct extractor now processes **DCTDecode (JPEG)** only. Any other filter returns `null` so the hybrid extractor falls back to the rasteriser path (@napi-rs/canvas / WASM) which always produces a proper PNG.
+2. Hybrid extractor accepts both camelCase and snake_case bbox field names; Zod schema switched to `.passthrough()` for forward-compatibility.
+
+This eliminates the broken-PNG symptom and makes the pipeline resilient to future API field-name changes.
