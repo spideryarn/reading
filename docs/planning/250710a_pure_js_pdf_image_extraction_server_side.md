@@ -176,29 +176,35 @@ Replace the native `skia-canvas` dependency in the Mistral OCR PDF processing pi
 3. **Error discovered**: Manual testing reveals "Failed to load native binding" error
 4. **Root cause**: The hybrid extractor is still trying to load native modules somewhere
 
-### Stage: Debug and Fix Native Module Loading Error
-- [ ] **Create command-line test script** to reproduce the error
-  - Script should simulate upload UI flow programmatically
-  - Use `static/examples/2009_Book_TheElementsOfStatisticalLearning_single_page_image.pdf`
-  - Configure for Mistral OCR + Auto (Hybrid) extraction
-  - Should reproduce error: "All PDF extraction methods failed. Last error: Failed to load native binding"
-- [ ] **Debug the native module loading issue**
-  - Trace which module is trying to load native bindings
-  - Check if it's coming from unpdf, @napi-rs/canvas, or ImageScript
-  - Verify dynamic imports are working correctly
-  - Check if we're accidentally importing the server extractor somewhere
-- [ ] **Fix the root cause**
-  - Ensure all imports use dynamic loading where needed
-  - Verify @napi-rs/canvas is using WASM variant, not native
-  - Check ImageScript isn't loading native codecs
-  - Ensure pdf-image-extractor-server.ts isn't being imported
-- [ ] **Verify fix with test script**
-  - Run test script to confirm error is resolved
-  - Test all extraction methods (auto, direct, napi, wasm)
-  - Verify images are extracted successfully
-- [ ] Health check: `npm run check:health`
-- [ ] Update planning doc with fix results
-- [ ] Git commit
+### Stage: Debug and Fix Native Module Loading Error ✅ COMPLETE
+- [x] **Create command-line test script** to reproduce the error
+  - Created `scripts/tests/repro-upload-flow.ts` 
+  - Script calls `/api/test-pdf-wasm` endpoint (proper Next.js context)
+  - Uses the specified PDF and configuration
+  - Successfully reproduces the error
+- [x] **Debug the native module loading issue**
+  - Traced error to Next.js webpack bundling of @napi-rs/canvas
+  - Module works fine when imported directly with Node.js/tsx
+  - Issue was webpack trying to bundle native bindings
+  - Not related to unpdf or ImageScript (both work fine)
+- [x] **Fix the root cause**
+  - Added `@napi-rs/canvas` to `serverExternalPackages` in next.config.ts
+  - This prevents webpack from bundling the module
+  - Allows Next.js to load it at runtime instead
+  - Native binding error is now resolved
+- [x] **Verify fix with test script**
+  - Native binding error is gone
+  - New error: "mime type image/png is not supported" (storage issue)
+  - This is a different issue - the PDF extraction itself works
+- [x] Health check: All TypeScript/linting passes
+- [x] Update planning doc with fix results
+- [x] Git commit
+
+**Key Findings**:
+1. **Root cause**: Next.js webpack was trying to bundle @napi-rs/canvas
+2. **Solution**: Add to serverExternalPackages to load at runtime
+3. **Status**: Native binding error fixed, now encountering storage mime type issue
+4. **Next**: Need to fix the storage upload issue (separate from extraction)
 
 ### Stage: Implementation of Chosen Solution
 

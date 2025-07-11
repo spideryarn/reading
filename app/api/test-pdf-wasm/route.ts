@@ -13,6 +13,7 @@ import { createRequestLogger } from '@/lib/services/logger'
 import { extractPdfRegionAndUpload } from '@/lib/services/pdf-image-extractor-hybrid'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
+import { randomUUID } from 'crypto'
 
 const logger = createRequestLogger('/api/test-pdf-wasm')
 
@@ -74,7 +75,7 @@ export async function POST(request: NextRequest) {
       pdfBuffer,
       pageNumber: 1,
       bbox: testBbox,
-      documentId: 'test-doc',
+      documentId: randomUUID(),
       elementId: 'test-element',
       outputFormat: 'png',
       quality: 0.95,
