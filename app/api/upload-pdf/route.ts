@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
   let draftDocumentId = randomUUID() as `${string}-${string}-${string}-${string}-${string}`
   let directStoragePath: string | null = null
   let _directStorageBucket: string | null = null
+  let extractionMethod: 'auto' | 'direct' | 'napi' | 'wasm' | 'legacy' = 'legacy'
 
   if (isDirectJson) {
     // -----------------------------
@@ -62,7 +63,8 @@ export async function POST(request: NextRequest) {
       provider: z.string().optional(),
       title: z.string().optional(),
       isPublic: z.boolean().optional().default(false),
-      documentId: z.string().uuid().optional()
+      documentId: z.string().uuid().optional(),
+      extractionMethod: z.enum(['auto', 'direct', 'napi', 'wasm', 'legacy']).optional().default('legacy')
     })
 
     const body = await request.json()
@@ -73,6 +75,7 @@ export async function POST(request: NextRequest) {
     provider = parsed.provider || 'mistral'
     title = parsed.title || parsed.path.split('/').pop()?.replace(/\.pdf$/i, '') || 'Untitled Document'
     isPublic = parsed.isPublic
+    extractionMethod = parsed.extractionMethod || 'legacy'
     if (parsed.documentId) {
       draftDocumentId = parsed.documentId as `${string}-${string}-${string}-${string}-${string}`
     }
@@ -443,7 +446,8 @@ export async function POST(request: NextRequest) {
           correlationId,
           singlePageOnly: false,
           documentId: draftDocumentId,
-          imageExtractionEnabled
+          imageExtractionEnabled,
+          extractionMethod
         })
         
         processingTime = mistralResult.processingTimeMs

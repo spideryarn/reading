@@ -75,7 +75,10 @@ export async function POST(request: NextRequest) {
       pageNumber: 1,
       bbox: testBbox,
       documentId: 'test-doc',
-      elementId: 'test-element'
+      elementId: 'test-element',
+      outputFormat: 'png',
+      quality: 0.95,
+      scale: 2
     })
     const extractDuration = Date.now() - extractStart
     

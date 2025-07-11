@@ -12,6 +12,11 @@ interface ProcessingOptionsProps {
   isProcessing?: boolean
 }
 
+interface ExtendedProcessingOptionsProps extends ProcessingOptionsProps {
+  extractionMethod?: 'auto' | 'direct' | 'napi' | 'wasm' | 'legacy'
+  onExtractionMethodChange?: (method: 'auto' | 'direct' | 'napi' | 'wasm' | 'legacy') => void
+}
+
 export function ProcessingOptions({
   inputType,
   selectedMethod,
@@ -21,8 +26,10 @@ export function ProcessingOptions({
   onProviderChange,
   onPublicChange,
   availableMethods,
-  isProcessing = false
-}: ProcessingOptionsProps) {
+  isProcessing = false,
+  extractionMethod = 'legacy',
+  onExtractionMethodChange
+}: ExtendedProcessingOptionsProps) {
   // Don't show options if no input type is detected
   if (!inputType) {
     return null
@@ -153,6 +160,107 @@ export function ProcessingOptions({
                 </div>
                 <div className="text-xs sm:text-sm text-gray-500 mt-1">
                   Superior text extraction with image bounding boxes - fast and cost-effective
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+      )}
+      
+      {/* PDF Image Extraction Method - Only show for Mistral + PDF */}
+      {!isProcessing && needsProvider && selectedProvider === 'mistral' && inputType === 'pdf' && onExtractionMethodChange && (
+        <div className="animate-in slide-in-from-top-2 duration-300">
+          <label className="block text-sm font-medium text-gray-700 mb-3">
+            Image Extraction Method (Testing)
+          </label>
+          <div className="space-y-3">
+            <label className="flex items-start space-x-3 cursor-pointer group hover:bg-gray-50 p-2 rounded-lg transition-colors duration-200">
+              <input
+                type="radio"
+                name="extraction-method"
+                value="auto"
+                checked={extractionMethod === 'auto'}
+                onChange={() => onExtractionMethodChange('auto')}
+                className="mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 transition-all duration-200"
+              />
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-gray-900 text-sm sm:text-base">
+                  Auto (Hybrid)
+                </div>
+                <div className="text-xs sm:text-sm text-gray-500 mt-1">
+                  Tries direct extraction first, falls back to WASM rendering if needed
+                </div>
+              </div>
+            </label>
+            <label className="flex items-start space-x-3 cursor-pointer group hover:bg-gray-50 p-2 rounded-lg transition-colors duration-200">
+              <input
+                type="radio"
+                name="extraction-method"
+                value="direct"
+                checked={extractionMethod === 'direct'}
+                onChange={() => onExtractionMethodChange('direct')}
+                className="mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 transition-all duration-200"
+              />
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-gray-900 text-sm sm:text-base">
+                  Direct Only
+                </div>
+                <div className="text-xs sm:text-sm text-gray-500 mt-1">
+                  Extract embedded images without rendering (fastest, ~40-60% of PDFs)
+                </div>
+              </div>
+            </label>
+            <label className="flex items-start space-x-3 cursor-pointer group hover:bg-gray-50 p-2 rounded-lg transition-colors duration-200">
+              <input
+                type="radio"
+                name="extraction-method"
+                value="napi"
+                checked={extractionMethod === 'napi'}
+                onChange={() => onExtractionMethodChange('napi')}
+                className="mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 transition-all duration-200"
+              />
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-gray-900 text-sm sm:text-base">
+                  WASM Canvas
+                </div>
+                <div className="text-xs sm:text-sm text-gray-500 mt-1">
+                  Use @napi-rs/canvas WASM renderer (Vercel-compatible)
+                </div>
+              </div>
+            </label>
+            <label className="flex items-start space-x-3 cursor-pointer group hover:bg-gray-50 p-2 rounded-lg transition-colors duration-200">
+              <input
+                type="radio"
+                name="extraction-method"
+                value="wasm"
+                checked={extractionMethod === 'wasm'}
+                onChange={() => onExtractionMethodChange('wasm')}
+                className="mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 transition-all duration-200"
+              />
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-gray-900 text-sm sm:text-base">
+                  Pure WASM
+                </div>
+                <div className="text-xs sm:text-sm text-gray-500 mt-1">
+                  Universal fallback using unpdf + ImageScript
+                </div>
+              </div>
+            </label>
+            <label className="flex items-start space-x-3 cursor-pointer group hover:bg-gray-50 p-2 rounded-lg transition-colors duration-200">
+              <input
+                type="radio"
+                name="extraction-method"
+                value="legacy"
+                checked={extractionMethod === 'legacy'}
+                onChange={() => onExtractionMethodChange('legacy')}
+                className="mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 transition-all duration-200"
+              />
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-gray-900 text-sm sm:text-base">
+                  Legacy (skia-canvas)
+                </div>
+                <div className="text-xs sm:text-sm text-gray-500 mt-1">
+                  Current implementation - causes NODE_MODULE_VERSION errors on Vercel
                 </div>
               </div>
             </label>

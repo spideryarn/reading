@@ -20,7 +20,8 @@ import { createRequestLogger, createTimer } from '@/lib/services/logger'
 import { boundingBoxSchema, ExtractedImage } from '@/lib/services/html-fragment-processor'
 import { marked } from 'marked'
 import { JSDOM } from 'jsdom'
-import { extractPdfRegionAndUpload, PdfRegionExtractionOptions } from '@/lib/services/pdf-image-extractor-server'
+import { extractPdfRegionAndUpload as extractPdfRegionAndUploadLegacy, PdfRegionExtractionOptions } from '@/lib/services/pdf-image-extractor-server'
+import { extractPdfRegionAndUpload as extractPdfRegionAndUploadHybrid } from '@/lib/services/pdf-image-extractor-hybrid'
 
 // Schema for processing options
 export const mistralOcrProcessorOptionsSchema = z.object({
@@ -29,7 +30,8 @@ export const mistralOcrProcessorOptionsSchema = z.object({
   correlationId: z.string().describe('Request correlation ID for logging'),
   singlePageOnly: z.boolean().default(false).describe('Process only first page for cost control'),
   documentId: z.string().describe('Document ID'),
-  imageExtractionEnabled: z.boolean().default(true).describe('Enable image extraction')
+  imageExtractionEnabled: z.boolean().default(true).describe('Enable image extraction'),
+  extractionMethod: z.enum(['auto', 'direct', 'napi', 'wasm', 'legacy']).default('legacy').describe('PDF image extraction method')
 })
 
 export type MistralOcrProcessorOptions = z.infer<typeof mistralOcrProcessorOptionsSchema>
@@ -117,6 +119,9 @@ export async function processWithMistralOcr(
   const logger = createRequestLogger('/services/mistral-ocr-pdf-processor', options.correlationId)
   const timer = createTimer(logger, 'mistral-ocr-pdf-processing')
   
+  // Declare savedEnv in outer scope for error handling
+  let savedEnv: Record<string, string | undefined> = {}
+  
   try {
     // Validate input
     const validatedOptions = mistralOcrProcessorOptionsSchema.parse(options)
@@ -124,7 +129,9 @@ export async function processWithMistralOcr(
     logger.info('Starting Mistral OCR PDF processing', {
       fileName: validatedOptions.fileName,
       bufferSize: validatedOptions.pdfBuffer.length,
-      singlePageOnly: validatedOptions.singlePageOnly
+      singlePageOnly: validatedOptions.singlePageOnly,
+      extractionMethod: validatedOptions.extractionMethod,
+      imageExtractionEnabled: validatedOptions.imageExtractionEnabled
     })
     
     // Check PDF size against Mistral limit (50MB)
@@ -188,6 +195,46 @@ export async function processWithMistralOcr(
     
     if (!ocrResponse.pages || ocrResponse.pages.length === 0) {
       throw new Error('Mistral OCR returned no pages; cannot extract content')
+    }
+    
+    // Configure extraction method once, outside the loops
+    savedEnv = {
+      PDF_DIRECT_EXTRACTION: process.env.PDF_DIRECT_EXTRACTION,
+      PDF_USE_NAPI_CANVAS: process.env.PDF_USE_NAPI_CANVAS,
+      PDF_USE_WASM_FALLBACK: process.env.PDF_USE_WASM_FALLBACK
+    }
+    
+    // Choose extractor based on extraction method
+    const extractPdfRegionAndUpload = validatedOptions.extractionMethod === 'legacy' 
+      ? extractPdfRegionAndUploadLegacy 
+      : extractPdfRegionAndUploadHybrid
+    
+    // Configure environment variables for hybrid extractor if not using legacy
+    if (validatedOptions.extractionMethod !== 'legacy') {
+      // Set env vars based on extraction method
+      process.env.PDF_DIRECT_EXTRACTION = 'true'
+      process.env.PDF_USE_NAPI_CANVAS = 'true'
+      process.env.PDF_USE_WASM_FALLBACK = 'true'
+      
+      if (validatedOptions.extractionMethod === 'direct') {
+        process.env.PDF_USE_NAPI_CANVAS = 'false'
+        process.env.PDF_USE_WASM_FALLBACK = 'false'
+      } else if (validatedOptions.extractionMethod === 'napi') {
+        process.env.PDF_DIRECT_EXTRACTION = 'false'
+        process.env.PDF_USE_WASM_FALLBACK = 'false'
+      } else if (validatedOptions.extractionMethod === 'wasm') {
+        process.env.PDF_DIRECT_EXTRACTION = 'false'
+        process.env.PDF_USE_NAPI_CANVAS = 'false'
+      }
+      // 'auto' keeps all methods enabled
+      
+      // Log the extraction method being used
+      logger.info('PDF extraction method configured', {
+        extractionMethod: validatedOptions.extractionMethod,
+        directEnabled: process.env.PDF_DIRECT_EXTRACTION,
+        napiEnabled: process.env.PDF_USE_NAPI_CANVAS,  
+        wasmEnabled: process.env.PDF_USE_WASM_FALLBACK
+      })
     }
 
     for (const page of ocrResponse.pages) {
@@ -289,6 +336,7 @@ export async function processWithMistralOcr(
             // the entire request to fail so the user can see and report the error, rather than
             // silently falling back to a broken <img src="img-x.jpeg"> placeholder that renders
             // as a 404.  Therefore we *do not* swallow errors here.
+            
             const regionRes = await extractPdfRegionAndUpload({
               pdfBuffer: validatedOptions.pdfBuffer,
               documentId: validatedOptions.documentId,
@@ -315,6 +363,17 @@ export async function processWithMistralOcr(
           throw err
         }
       }
+    }
+    
+    // Restore original env vars after all extraction is complete
+    if (validatedOptions.extractionMethod !== 'legacy') {
+      Object.entries(savedEnv).forEach(([key, value]) => {
+        if (value === undefined) {
+          delete process.env[key]
+        } else {
+          process.env[key] = value
+        }
+      })
     }
 
     // Fail fast if we received no text
@@ -370,6 +429,17 @@ export async function processWithMistralOcr(
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     })
+    
+    // Restore env vars on error as well
+    if (Object.keys(savedEnv).length > 0) {
+      Object.entries(savedEnv).forEach(([key, value]) => {
+        if (value === undefined) {
+          delete process.env[key]
+        } else {
+          process.env[key] = value
+        }
+      })
+    }
     
     timer.end({ error: true })
     

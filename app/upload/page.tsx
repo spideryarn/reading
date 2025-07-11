@@ -19,6 +19,8 @@ type InputType = 'url' | 'pdf' | 'html' | null
 type ProcessingMethod = 'as-is' | 'readability' | 'ai-transcription' | 'vision-ai'
 type Provider = 'claude' | 'gemini' | 'mistral'
 
+type ExtractionMethod = 'auto' | 'direct' | 'napi' | 'wasm' | 'legacy'
+
 interface UnifiedUploadState {
   input: {
     url: string
@@ -29,6 +31,7 @@ interface UnifiedUploadState {
     method: ProcessingMethod
     provider: Provider
     isPublic: boolean
+    extractionMethod: ExtractionMethod
   }
   ui: {
     isProcessing: boolean
@@ -52,7 +55,8 @@ export default function AddDocumentPage() {
     processing: {
       method: 'ai-transcription', // Default to v3
       provider: 'mistral',
-      isPublic: false
+      isPublic: false,
+      extractionMethod: 'auto' // Default to auto/hybrid for best compatibility
     },
     ui: {
       isProcessing: false,
@@ -335,6 +339,16 @@ export default function AddDocumentPage() {
       processing: {
         ...prev.processing,
         isPublic
+      }
+    }))
+  }
+
+  const handleExtractionMethodChange = (extractionMethod: ExtractionMethod) => {
+    setUploadState(prev => ({
+      ...prev,
+      processing: {
+        ...prev.processing,
+        extractionMethod
       }
     }))
   }
@@ -676,7 +690,8 @@ export default function AddDocumentPage() {
                 provider: processing.provider,
                 title: input.file.name.replace(/\.pdf$/i, ''),
                 isPublic: processing.isPublic,
-                documentId
+                documentId,
+                extractionMethod: processing.extractionMethod
               })
             })
           }
@@ -821,6 +836,8 @@ export default function AddDocumentPage() {
                 onPublicChange={handlePublicChange}
                 availableMethods={getAvailableProcessingMethods()}
                 isProcessing={uploadState.ui.isProcessing || isVisionUploading}
+                extractionMethod={uploadState.processing.extractionMethod}
+                onExtractionMethodChange={handleExtractionMethodChange}
               />
               
               {/* Memory Usage Warning for Vision Processing */}

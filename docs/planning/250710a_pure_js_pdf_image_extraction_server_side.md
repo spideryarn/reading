@@ -156,27 +156,51 @@ Replace the native `skia-canvas` dependency in the Mistral OCR PDF processing pi
 - [ ] Update planning doc with hybrid approach findings
 - [ ] Git commit (if moving forward with hybrid)
 
-### Stage: Implementation of Chosen Solution
-- [ ] **Implement feature flag infrastructure**
-  - Add `PURE_JS_PDF` environment variable
-  - Create abstraction layer to switch between implementations
-  - Default to existing skia-canvas until new solution is proven
-- [ ] **Implement selected approach** based on experiment results
-  - Replace `skia-canvas` implementation in `pdf-image-extractor-server.ts`
-  - Maintain same API interface for backward compatibility
-  - Add security constraints: max dimensions, timeouts, memory limits
-  - Add appropriate error handling
-- [ ] **Subagent: Comprehensive testing**
-  - Run Playwright test to verify fix
-  - Test with multiple PDFs of varying complexity
-  - Add Jest/Vitest cold-start benchmark test
-  - Test multi-page PDFs (50+ pages) for memory scaling
-  - Monitor memory usage throughout processing
-  - Verify Supabase Storage integration still works
-  - Check image quality meets requirements
-- [ ] Health check: `npm run check:health --rigorous`
-- [ ] Update planning doc with implementation results
+### Stage: UI Integration and Manual Testing ✅ COMPLETE
+- [x] **Wire hybrid extractor into Mistral OCR processor**
+  - Modified imports to use hybrid extractor when not using legacy mode
+  - Improved environment variable handling (save/restore to avoid side effects)
+  - Added logging for extraction method selection
+  - Moved configuration outside loops for efficiency
+- [x] **Verify UI extraction method selector**
+  - Confirmed UI already has radio buttons for extraction methods
+  - Only shows for Mistral + PDF combination
+  - Default set to 'auto' for best compatibility
+- [x] **Health check passed**: All TypeScript and linting checks pass
+- [x] **Ready for manual testing** at http://localhost:3001/upload
+- [x] Git commit
+
+**Key Findings**:
+1. **Integration complete**: Hybrid extractor fully wired into the pipeline
+2. **UI ready**: Extraction method selector already implemented and working
+3. **Error discovered**: Manual testing reveals "Failed to load native binding" error
+4. **Root cause**: The hybrid extractor is still trying to load native modules somewhere
+
+### Stage: Debug and Fix Native Module Loading Error
+- [ ] **Create command-line test script** to reproduce the error
+  - Script should simulate upload UI flow programmatically
+  - Use `static/examples/2009_Book_TheElementsOfStatisticalLearning_single_page_image.pdf`
+  - Configure for Mistral OCR + Auto (Hybrid) extraction
+  - Should reproduce error: "All PDF extraction methods failed. Last error: Failed to load native binding"
+- [ ] **Debug the native module loading issue**
+  - Trace which module is trying to load native bindings
+  - Check if it's coming from unpdf, @napi-rs/canvas, or ImageScript
+  - Verify dynamic imports are working correctly
+  - Check if we're accidentally importing the server extractor somewhere
+- [ ] **Fix the root cause**
+  - Ensure all imports use dynamic loading where needed
+  - Verify @napi-rs/canvas is using WASM variant, not native
+  - Check ImageScript isn't loading native codecs
+  - Ensure pdf-image-extractor-server.ts isn't being imported
+- [ ] **Verify fix with test script**
+  - Run test script to confirm error is resolved
+  - Test all extraction methods (auto, direct, napi, wasm)
+  - Verify images are extracted successfully
+- [ ] Health check: `npm run check:health`
+- [ ] Update planning doc with fix results
 - [ ] Git commit
+
+### Stage: Implementation of Chosen Solution
 
 ### Stage: Performance Optimization
 - [ ] **Profile and optimize** the chosen solution
