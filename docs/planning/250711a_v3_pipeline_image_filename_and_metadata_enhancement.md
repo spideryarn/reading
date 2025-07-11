@@ -55,7 +55,6 @@ Implement improved image filename generation and alt tag support for the v3 PDF 
 ## Stages & Actions
 
 ### Stage: Initial Setup and Research
-- [ ] Run `./scripts/sync-worktrees.ts` in a subagent to pull latest changes
 - [ ] **Subagent: Analyze current v3 implementation**
   - Review `mistral-ocr-pdf-processor.ts` to understand OCR data structure
   - Examine `pdf-image-extractor-hybrid.ts` integration points
@@ -247,3 +246,57 @@ Common patterns to detect in OCR:
 - `Equation \(\d+\)` - Equation labels
 - `Chart \d+:` - Chart labels
 - `Exhibit [A-Z]:` - Legal/business documents
+
+### F. o3 AI Model Critique (2025-01-11)
+
+**Executive Summary**: The proposal is directionally sound but has several technical and organizational risks that need addressing. Key gaps include lack of evidence that Mistral OCR provides location-anchored caption text, duplication with existing utilities, missing database/frontend integration plans, and incomplete edge case coverage.
+
+**Key Issues Identified**:
+
+1. **Mistral OCR Payload Assumptions**
+   - Current Mistral /ocr.process returns markdown text per page and image bboxes, but NOT bbox-level text or caption anchoring
+   - Without text coordinates, proximity search will be unreliable for multi-column layouts
+   - **Action**: Add feasibility spike to verify payload contains structural hints before building utilities
+
+2. **Duplication with Existing Services**
+   - `image-filename-generator.ts` already handles slugification, conflicts, and fallbacks
+   - `image-caption-generator.ts` already provides AI caption generation
+   - **Action**: Reuse existing utilities; add thin OCR context extraction layer
+
+3. **Missing End-to-End Flow**
+   - No plan for database schema changes or frontend integration
+   - Unclear whether files are physically renamed or use Content-Disposition headers
+   - **Action**: Add "Database & Frontend Wiring" stage
+
+4. **Configuration Management**
+   - New config interface should follow existing pattern in `lib/config.ts`
+   - Cost tracking should use existing `ai_calls` service
+   - **Action**: Centralize configuration in established locations
+
+5. **Edge Cases Not Addressed**
+   - Multi-image figures with shared captions ("(a)... (b)...")
+   - Captions on different pages
+   - Non-English content (regex won't match "Figura 5" or "图 3")
+   - **Action**: Expand test coverage and fallback strategies
+
+**Recommended Plan Amendments**:
+
+1. **New Stage**: "Payload Verification Spike" before building utilities
+   - Create `scripts/tests/repro-mistral-bboxes.ts` to verify caption locality
+   - Consider PDF text layer parsing if OCR lacks position data
+
+2. **Merge Stages**: Combine filename and alt tag generation using existing services
+
+3. **Configuration**: Move all config to `lib/config.ts` following established patterns
+
+4. **Database Integration**: Add explicit stage for schema updates and frontend wiring
+
+5. **Testing**: Add fixture PDFs covering edge cases (side-by-side captions, no captions, multi-language)
+
+**Positive Aspects**:
+- Clear cost-saving motivation aligned with OCR-first principle
+- Staged incremental delivery approach
+- Good attention to fallback paths and logging
+- Strong awareness of existing codebase
+
+**Conclusion**: The goal is valuable and attainable, but needs validation of core assumptions and closer alignment with existing services to avoid reinventing wheels and shipping fragile heuristics. Incorporating the suggested changes will reduce risk and ensure metadata actually reaches users while keeping costs low.
