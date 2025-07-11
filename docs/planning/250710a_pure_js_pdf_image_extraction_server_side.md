@@ -227,21 +227,29 @@ Replace the native `skia-canvas` dependency in the Mistral OCR PDF processing pi
 3. **Solution**: Created dedicated server-side storage functions that bypass RLS
 4. **Status**: PDF extraction and image upload now fully functional
 
-### Stage: Address o3 AI Critiques
-- [ ] **Improve direct extractor bbox accuracy**
-  - Add confidence scoring to heuristic matching
-  - Log warnings when confidence is low
-  - Implement bbox-overlap test using XObject placement data
-- [ ] **Refactor test endpoint**
-  - Remove process.env mutations
-  - Pass extraction method via function parameters
-- [ ] **Clean up dependencies**
-  - Remove skia-canvas from serverExternalPackages
-  - Evaluate if imagescript is still needed
-  - Consider @jsquash/png as pure-JS alternative
+### Stage: Address o3 AI Critiques ✅ COMPLETE
+- [x] **Improve direct extractor bbox accuracy**
+  - Added confidence scoring to heuristic matching
+  - Logs warnings when confidence is low (< 0.5 for multiple images, < 0.4 for single)
+  - Implemented dimension-based scoring with aspect ratio and area similarity
+- [x] **Refactor test endpoint**
+  - Removed process.env mutations
+  - Pass extraction method via constructor configuration
+  - Updated PdfImageExtractorHybrid to accept config object
+- [x] **Clean up dependencies**
+  - Removed skia-canvas from serverExternalPackages
+  - Created separate types file to avoid importing skia-canvas code
+  - Removed legacy extractor mode from Mistral OCR processor
+  - Kept imagescript as it works well with serverExternalPackages
 - [ ] **Re-enable TypeScript build checking**
   - Remove `ignoreBuildErrors: true` from next.config.ts
 - [ ] Health check and commit
+
+**Key Changes**:
+1. **Confidence scoring**: Direct extractor now calculates confidence based on dimension similarity
+2. **Clean architecture**: Extraction config passed as parameters, not environment mutations
+3. **Dependency isolation**: Moved shared types to prevent accidental skia-canvas imports
+4. **Legacy removal**: Mistral OCR now only uses hybrid extractor
 
 ### Stage: Implementation of Chosen Solution
 

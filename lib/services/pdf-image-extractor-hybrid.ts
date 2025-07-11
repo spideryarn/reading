@@ -14,7 +14,7 @@ import {
   pdfRegionExtractionOptionsSchema, 
   PdfRegionExtractionOptions,
   PdfRegionExtractionResult 
-} from '@/lib/services/pdf-image-extractor-server'
+} from '@/lib/services/pdf-image-extractor-types'
 import { PdfImageDirectExtractor } from '@/lib/services/pdf-image-direct-extractor'
 import { PdfRendererWasm } from '@/lib/services/pdf-renderer-wasm'
 import { extractPdfRegionAndUploadVercel } from '@/lib/services/pdf-image-extractor-vercel'
@@ -33,6 +33,15 @@ export interface HybridExtractionResult extends PdfRegionExtractionResult {
 }
 
 /**
+ * Configuration for extraction methods
+ */
+export interface ExtractionConfig {
+  useDirectExtraction?: boolean
+  useNapiCanvas?: boolean
+  useWasmFallback?: boolean
+}
+
+/**
  * Hybrid PDF image extractor that tries multiple methods
  */
 export class PdfImageExtractorHybrid {
@@ -41,9 +50,16 @@ export class PdfImageExtractorHybrid {
   private wasmRenderer = new PdfRendererWasm()
   
   // Feature flags for method selection
-  private useDirectExtraction = process.env.PDF_DIRECT_EXTRACTION !== 'false'
-  private useNapiCanvas = process.env.PDF_USE_NAPI_CANVAS === 'true'
-  private useWasmFallback = process.env.PDF_USE_WASM_FALLBACK !== 'false'
+  private useDirectExtraction: boolean
+  private useNapiCanvas: boolean
+  private useWasmFallback: boolean
+  
+  constructor(config?: ExtractionConfig) {
+    // Use configuration if provided, otherwise fall back to environment variables
+    this.useDirectExtraction = config?.useDirectExtraction ?? process.env.PDF_DIRECT_EXTRACTION !== 'false'
+    this.useNapiCanvas = config?.useNapiCanvas ?? process.env.PDF_USE_NAPI_CANVAS === 'true'
+    this.useWasmFallback = config?.useWasmFallback ?? process.env.PDF_USE_WASM_FALLBACK !== 'false'
+  }
 
   /**
    * Extract a PDF region using the best available method

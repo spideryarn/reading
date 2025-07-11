@@ -20,8 +20,8 @@ import { createRequestLogger, createTimer } from '@/lib/services/logger'
 import { boundingBoxSchema, ExtractedImage } from '@/lib/services/html-fragment-processor'
 import { marked } from 'marked'
 import { JSDOM } from 'jsdom'
-import { extractPdfRegionAndUpload as extractPdfRegionAndUploadLegacy, PdfRegionExtractionOptions } from '@/lib/services/pdf-image-extractor-server'
-import { extractPdfRegionAndUpload as extractPdfRegionAndUploadHybrid } from '@/lib/services/pdf-image-extractor-hybrid'
+import { PdfRegionExtractionOptions } from '@/lib/services/pdf-image-extractor-types'
+import { extractPdfRegionAndUpload } from '@/lib/services/pdf-image-extractor-hybrid'
 
 // Schema for processing options
 export const mistralOcrProcessorOptionsSchema = z.object({
@@ -204,10 +204,8 @@ export async function processWithMistralOcr(
       PDF_USE_WASM_FALLBACK: process.env.PDF_USE_WASM_FALLBACK
     }
     
-    // Choose extractor based on extraction method
-    const extractPdfRegionAndUpload = validatedOptions.extractionMethod === 'legacy' 
-      ? extractPdfRegionAndUploadLegacy 
-      : extractPdfRegionAndUploadHybrid
+    // Always use hybrid extractor (legacy mode removed to eliminate skia-canvas dependency)
+    // If legacy behavior is needed, the hybrid extractor can be configured via environment variables
     
     // Configure environment variables for hybrid extractor if not using legacy
     if (validatedOptions.extractionMethod !== 'legacy') {

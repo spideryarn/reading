@@ -20,7 +20,7 @@ import {
   pdfRegionExtractionOptionsSchema, 
   PdfRegionExtractionOptions,
   PdfRegionExtractionResult 
-} from '@/lib/services/pdf-image-extractor-server'
+} from '@/lib/services/pdf-image-extractor-types'
 
 /**
  * PDF renderer using WebAssembly-based canvas

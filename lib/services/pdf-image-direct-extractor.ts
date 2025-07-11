@@ -15,7 +15,7 @@ import {
   pdfRegionExtractionOptionsSchema, 
   PdfRegionExtractionOptions,
   PdfRegionExtractionResult 
-} from '@/lib/services/pdf-image-extractor-server'
+} from '@/lib/services/pdf-image-extractor-types'
 
 /**
  * Embedded image data with metadata
@@ -27,6 +27,15 @@ interface EmbeddedImage {
   objectName: string
   width?: number
   height?: number
+}
+
+/**
+ * Image match result with confidence score
+ */
+interface ImageMatchResult {
+  image: EmbeddedImage
+  confidence: number
+  reason: string
 }
 
 /**
@@ -78,22 +87,26 @@ export class PdfImageDirectExtractor {
       this.logger.info(`Found ${embeddedImages.length} embedded images`, { pageNumber: options.pageNumber })
 
       // Find the best matching image for the bounding box
-      const matchedImage = this.findBestImageMatch(
+      const matchResult = this.findBestImageMatch(
         embeddedImages,
         options.bbox,
         { width: pageWidth, height: pageHeight }
       )
 
-      if (!matchedImage) {
+      if (!matchResult) {
         throw new Error(
           `No embedded image matches the bounding box ${JSON.stringify(options.bbox)} on page ${options.pageNumber}. ` +
           `Found ${embeddedImages.length} images but none within the target region.`
         )
       }
 
+      const matchedImage = matchResult.image
+
       this.logger.info('Found matching embedded image', { 
         format: matchedImage.format,
-        size: matchedImage.data.length 
+        size: matchedImage.data.length,
+        confidence: matchResult.confidence,
+        matchReason: matchResult.reason
       })
 
       // Create blob for upload
@@ -238,26 +251,95 @@ export class PdfImageDirectExtractor {
     images: EmbeddedImage[],
     targetBbox: BoundingBox,
     pageSize: { width: number; height: number }
-  ): EmbeddedImage | null {
-    // For now, use simple heuristics since we don't have content stream positions
+  ): ImageMatchResult | null {
+    // Calculate expected dimensions from bounding box
+    const expectedWidth = (targetBbox.x2 - targetBbox.x1) * pageSize.width
+    const expectedHeight = (targetBbox.y2 - targetBbox.y1) * pageSize.height
+    const expectedArea = expectedWidth * expectedHeight
     
-    // If there's only one image, assume it's the target
+    // If there's only one image, check if it could plausibly match
     if (images.length === 1) {
-      this.logger.info('Using single embedded image (heuristic match)')
-      return images[0] || null
+      const image = images[0]!
+      let confidence = 0.5 // Base confidence for single image
+      
+      if (image.width && image.height) {
+        // Calculate dimension similarity
+        const actualArea = image.width * image.height
+        const areaRatio = Math.min(actualArea, expectedArea) / Math.max(actualArea, expectedArea)
+        confidence = 0.3 + (areaRatio * 0.7) // 30% base + up to 70% for size match
+      }
+      
+      this.logger.info('Single embedded image match', { 
+        confidence,
+        expectedDimensions: { width: expectedWidth, height: expectedHeight },
+        actualDimensions: { width: image.width, height: image.height }
+      })
+      
+      if (confidence < 0.4) {
+        this.logger.warn('Low confidence match for single image', { confidence })
+      }
+      
+      return { 
+        image, 
+        confidence, 
+        reason: 'Single image on page' 
+      }
     }
     
-    // If multiple images, try to use dimensions to guess
+    // If multiple images, score each one
     if (images.length > 1) {
-      // Sort by size (larger images more likely to be figures)
-      const sortedImages = [...images].sort((a, b) => {
-        const sizeA = (a.width || 0) * (a.height || 0)
-        const sizeB = (b.width || 0) * (b.height || 0)
-        return sizeB - sizeA
+      const scoredImages = images.map(image => {
+        let confidence = 0
+        let reason = 'Multiple images'
+        
+        if (image.width && image.height) {
+          // Aspect ratio similarity (0-1)
+          const expectedAspect = expectedWidth / expectedHeight
+          const actualAspect = image.width / image.height
+          const aspectRatio = Math.min(expectedAspect, actualAspect) / Math.max(expectedAspect, actualAspect)
+          
+          // Area similarity (0-1)
+          const actualArea = image.width * image.height
+          const areaRatio = Math.min(actualArea, expectedArea) / Math.max(actualArea, expectedArea)
+          
+          // Combined confidence (weighted average)
+          confidence = (aspectRatio * 0.6) + (areaRatio * 0.4)
+          
+          // Boost confidence for very close matches
+          if (aspectRatio > 0.95 && areaRatio > 0.9) {
+            confidence = Math.min(confidence * 1.2, 0.95)
+            reason = 'Close dimension match'
+          }
+        } else {
+          // No dimensions available - use size heuristic
+          confidence = 0.3 // Low confidence
+          reason = 'No dimensions available'
+        }
+        
+        return { image, confidence, reason }
       })
-
-      this.logger.warn(`Multiple images found (${images.length}), using largest as heuristic`)
-      return sortedImages[0] || null
+      
+      // Sort by confidence
+      scoredImages.sort((a, b) => b.confidence - a.confidence)
+      const best = scoredImages[0]
+      
+      if (best) {
+        this.logger.info(`Selected from ${images.length} images`, {
+          confidence: best.confidence,
+          reason: best.reason,
+          expectedDimensions: { width: expectedWidth, height: expectedHeight },
+          actualDimensions: { width: best.image.width, height: best.image.height }
+        })
+        
+        if (best.confidence < 0.5) {
+          this.logger.warn('Low confidence match for best image', { 
+            confidence: best.confidence,
+            totalImages: images.length 
+          })
+        }
+        
+        return best
+      }
     }
 
     return null

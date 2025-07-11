@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createRequestLogger } from '@/lib/services/logger'
-import { extractPdfRegionAndUpload } from '@/lib/services/pdf-image-extractor-hybrid'
+import { PdfImageExtractorHybrid } from '@/lib/services/pdf-image-extractor-hybrid'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 import { randomUUID } from 'crypto'
@@ -36,25 +36,15 @@ export async function POST(request: NextRequest) {
       documentId = randomUUID() // Allow passing a documentId for testing
     } = body
     
-    // Set environment variables to control which method is used
-    if (method === 'direct') {
-      process.env.PDF_DIRECT_EXTRACTION = 'true'
-      process.env.PDF_USE_NAPI_CANVAS = 'false'
-      process.env.PDF_USE_WASM_FALLBACK = 'false'
-    } else if (method === 'napi') {
-      process.env.PDF_DIRECT_EXTRACTION = 'false'
-      process.env.PDF_USE_NAPI_CANVAS = 'true'
-      process.env.PDF_USE_WASM_FALLBACK = 'false'
-    } else if (method === 'wasm') {
-      process.env.PDF_DIRECT_EXTRACTION = 'false'
-      process.env.PDF_USE_NAPI_CANVAS = 'false'
-      process.env.PDF_USE_WASM_FALLBACK = 'true'
-    } else {
-      // Auto mode - try all methods in order
-      process.env.PDF_DIRECT_EXTRACTION = 'true'
-      process.env.PDF_USE_NAPI_CANVAS = 'true'
-      process.env.PDF_USE_WASM_FALLBACK = 'true'
+    // Configure extraction methods without mutating process.env
+    const extractionConfig = {
+      useDirectExtraction: method === 'direct' || method === 'auto',
+      useNapiCanvas: method === 'napi' || method === 'auto',
+      useWasmFallback: method === 'wasm' || method === 'auto'
     }
+    
+    // Create extractor with specific configuration
+    const extractor = new PdfImageExtractorHybrid(extractionConfig)
     
     // Load test PDF
     const testPdfPath = join(process.cwd(), 'test-data/Bounding Box Test Document.pdf')
@@ -76,7 +66,7 @@ export async function POST(request: NextRequest) {
     
     // Extract region
     const extractStart = Date.now()
-    const result = await extractPdfRegionAndUpload({
+    const result = await extractor.extractPdfRegionAndUpload({
       pdfBuffer,
       pageNumber: 1,
       bbox: testBbox,
@@ -110,7 +100,9 @@ export async function POST(request: NextRequest) {
         storagePath: result.storagePath,
         width: result.width,
         height: result.height,
-        size: result.size
+        size: result.size,
+        method: result.method,
+        fallbackReason: result.fallbackReason
       },
       performance: {
         totalDuration,

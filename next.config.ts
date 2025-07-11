@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
   },
   // External packages for pino and pino-pretty to fix worker thread issues
   // nunjucks added to fix fsevents binary module webpack error
-  serverExternalPackages: ['pino', 'pino-pretty', 'nunjucks', 'imagescript', 'skia-canvas', '@napi-rs/canvas'],
+  serverExternalPackages: ['pino', 'pino-pretty', 'nunjucks', 'imagescript', '@napi-rs/canvas'],
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Client-side fallbacks for Node.js modules (PDF.js compatibility)

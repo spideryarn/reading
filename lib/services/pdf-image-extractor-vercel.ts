@@ -17,7 +17,7 @@ import {
   pdfRegionExtractionOptionsSchema, 
   PdfRegionExtractionOptions,
   PdfRegionExtractionResult 
-} from '@/lib/services/pdf-image-extractor-server'
+} from '@/lib/services/pdf-image-extractor-types'
 
 /**
  * Extract a single bounding-box region from a PDF page using @napi-rs/canvas.
