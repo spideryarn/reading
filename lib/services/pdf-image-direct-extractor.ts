@@ -9,7 +9,7 @@
 import { z } from 'zod'
 import { PDFDocument, PDFName, PDFRawStream, PDFPage, PDFDict } from 'pdf-lib'
 import { boundingBoxSchema, BoundingBox } from '@/lib/services/html-fragment-processor'
-import { uploadImageAsset, getSignedDocumentUrl } from '@/lib/services/storage'
+import { uploadImageAssetServerSide, getSignedUrlServerSide } from '@/lib/services/storage-server'
 import { createRequestLogger } from '@/lib/services/logger'
 import { 
   pdfRegionExtractionOptionsSchema, 
@@ -105,20 +105,16 @@ export class PdfImageDirectExtractor {
 
       // Upload to Supabase Storage
       const filename = `${String(options.pageNumber).padStart(3, '0')}_${options.elementId}.${matchedImage.format === 'unknown' ? 'bin' : matchedImage.format}`
-      const uploadRes = await uploadImageAsset(
+      const uploadRes = await uploadImageAssetServerSide(
         blob,
         options.documentId,
         filename,
         mimeType
       )
 
-      if (!uploadRes) {
-        throw new Error('Upload to Supabase Storage failed (null result)')
-      }
-
       // Generate signed URL (1 year expiry)
       const ONE_YEAR_SECONDS = 365 * 24 * 60 * 60
-      const signedUrl = await getSignedDocumentUrl(uploadRes.path, ONE_YEAR_SECONDS)
+      const signedUrl = await getSignedUrlServerSide(uploadRes.path, ONE_YEAR_SECONDS)
 
       // Calculate extracted region dimensions
       const extractedWidth = Math.floor((options.bbox.x2 - options.bbox.x1) * pageWidth)

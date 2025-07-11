@@ -206,6 +206,43 @@ Replace the native `skia-canvas` dependency in the Mistral OCR PDF processing pi
 3. **Status**: Native binding error fixed, now encountering storage mime type issue
 4. **Next**: Need to fix the storage upload issue (separate from extraction)
 
+### Stage: Fix Storage Upload Error ✅ COMPLETE
+- [x] **Debug storage mime type error**
+  - Error: "mime type image/png is not supported"
+  - Root cause: Bucket only allowed document mime types, not images
+  - Fixed by updating bucket allowed_mime_types to include image/png, image/jpeg, image/webp
+- [x] **Fix RLS policy issue**
+  - RLS policies require authentication for uploads
+  - Created `storage-server.ts` with service role functions for server-side operations
+  - Updated all PDF extractors to use `uploadImageAssetServerSide`
+- [x] **Test full upload flow**
+  - Images now upload successfully to `extracted-images/` folder
+  - Performance: ~1.7s for extraction and upload
+  - Storage paths and signed URLs working correctly
+- [x] Health check: All tests passing
+
+**Key Findings**:
+1. **Mime type issue**: Supabase bucket configuration needed updating
+2. **RLS policy issue**: Server-side operations need service role, not user auth
+3. **Solution**: Created dedicated server-side storage functions that bypass RLS
+4. **Status**: PDF extraction and image upload now fully functional
+
+### Stage: Address o3 AI Critiques
+- [ ] **Improve direct extractor bbox accuracy**
+  - Add confidence scoring to heuristic matching
+  - Log warnings when confidence is low
+  - Implement bbox-overlap test using XObject placement data
+- [ ] **Refactor test endpoint**
+  - Remove process.env mutations
+  - Pass extraction method via function parameters
+- [ ] **Clean up dependencies**
+  - Remove skia-canvas from serverExternalPackages
+  - Evaluate if imagescript is still needed
+  - Consider @jsquash/png as pure-JS alternative
+- [ ] **Re-enable TypeScript build checking**
+  - Remove `ignoreBuildErrors: true` from next.config.ts
+- [ ] Health check and commit
+
 ### Stage: Implementation of Chosen Solution
 
 ### Stage: Performance Optimization

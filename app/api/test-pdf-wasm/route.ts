@@ -14,6 +14,7 @@ import { extractPdfRegionAndUpload } from '@/lib/services/pdf-image-extractor-hy
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 import { randomUUID } from 'crypto'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 
 const logger = createRequestLogger('/api/test-pdf-wasm')
 
@@ -24,11 +25,15 @@ export async function POST(request: NextRequest) {
   logger.info('Starting WASM PDF test', { correlationId })
   
   try {
+    // For testing, we need to ensure a document exists that we can upload assets to
+    // In a real scenario, this would be handled by the upload flow creating the document first
+    
     // Get test configuration from request
     const body = await request.json()
     const { 
       testType = 'simple', // 'simple' | 'bbox' | 'performance'
-      method = 'auto' // 'direct' | 'napi' | 'wasm' | 'auto'
+      method = 'auto', // 'direct' | 'napi' | 'wasm' | 'auto'
+      documentId = randomUUID() // Allow passing a documentId for testing
     } = body
     
     // Set environment variables to control which method is used
@@ -75,7 +80,7 @@ export async function POST(request: NextRequest) {
       pdfBuffer,
       pageNumber: 1,
       bbox: testBbox,
-      documentId: randomUUID(),
+      documentId,
       elementId: 'test-element',
       outputFormat: 'png',
       quality: 0.95,

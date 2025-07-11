@@ -13,7 +13,7 @@ import { z } from 'zod'
 import { renderPageAsImage } from 'unpdf'
 import { Image } from 'imagescript'
 import { boundingBoxSchema, BoundingBox } from '@/lib/services/html-fragment-processor'
-import { uploadImageAsset, getSignedDocumentUrl } from '@/lib/services/storage'
+import { uploadImageAssetServerSide, getSignedUrlServerSide } from '@/lib/services/storage-server'
 import { createRequestLogger } from '@/lib/services/logger'
 import { Blob } from 'buffer'
 import { 
@@ -90,20 +90,16 @@ export class PdfRendererWasm {
 
       // Upload to Supabase Storage
       const filename = `${String(options.pageNumber).padStart(3, '0')}_${options.elementId}.${options.outputFormat}`
-      const uploadRes = await uploadImageAsset(
-        blob,
+      const uploadRes = await uploadImageAssetServerSide(
+        Buffer.from(encoded),
         options.documentId,
         filename,
         mimeType
       )
 
-      if (!uploadRes) {
-        throw new Error('Upload to Supabase Storage failed (null result)')
-      }
-
       // Generate signed URL (1 year expiry)
       const ONE_YEAR_SECONDS = 365 * 24 * 60 * 60
-      const signedUrl = await getSignedDocumentUrl(uploadRes.path, ONE_YEAR_SECONDS)
+      const signedUrl = await getSignedUrlServerSide(uploadRes.path, ONE_YEAR_SECONDS)
 
       this.logger.info('WASM PDF rendering successful', { 
         storagePath: uploadRes.path,
