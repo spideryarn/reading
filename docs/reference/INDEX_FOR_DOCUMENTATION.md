@@ -169,6 +169,7 @@ Process and workflow documentation in `docs/instructions/`:
 ### Development Process Instructions
 - `docs/instructions/GIT_COMMIT_CHANGES.md` - Git commit best practices including batching changes and message format
 - `docs/instructions/GIT_CREATE_BRANCH.md` - Branch creation and worktree management procedures
+- `docs/instructions/GITHUB_ACTIONS_LOGS_ACCESS.md` - How to share GitHub Actions logs with Claude Code for debugging CI/CD issues
 - `docs/instructions/FIX_HOUSEKEEPING_BUILD_TYPECHECK_LINT.md` - Process for resolving build, type checking, and linting issues
 - `docs/instructions/UPDATE_HOUSEKEEPING_TESTS.md` - Maintaining test quality and organisation
 - `docs/instructions/WRITE_UPDATE_CODING_GUIDELINES.md` - Process for updating coding standards
