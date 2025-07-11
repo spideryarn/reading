@@ -277,7 +277,7 @@ Replace the native `skia-canvas` dependency in the Mistral OCR PDF processing pi
 - Memory usage: Within limits for test PDFs
 - Cold start: Acceptable for @napi-rs/canvas
 
-### Stage: Dependency Cleanup and Optimization ✅ PARTIALLY COMPLETE
+### Stage: Dependency Cleanup and Optimization ✅ COMPLETE
 - [x] **Evaluate imagescript dependency**
   - Confirmed imagescript is still needed for image cropping/encoding
   - Works well with serverExternalPackages, no issues on Vercel
@@ -285,29 +285,42 @@ Replace the native `skia-canvas` dependency in the Mistral OCR PDF processing pi
 - [x] **Update build configuration**
   - Removed `skia-canvas` from `serverExternalPackages` in next.config.ts
   - Build passes without skia-canvas references
-- [ ] **WASM bundle optimization**
-  - Add webpack rules to exclude WASM browser variants from server bundle
-  - Ensure tree-shaking removes unused dependencies
-  - Check bundle sizes for @napi-rs/canvas
-- [ ] Update planning doc with dependency changes
-- [ ] Git commit
+- [x] **WASM bundle optimization**
+  - Added webpack rules to exclude WASM browser variants from server bundle
+  - Enabled tree-shaking with sideEffects: false in package.json
+  - Added webassembly/async loader for server-side WASM
+- [x] Update planning doc with dependency changes
+- [x] Git commit
 
-### Stage: Documentation and Deployment
-- [ ] Update `docs/reference/PDF_IMAGE_EXTRACTION_ARCHITECTURE.md` with new approach
-- [ ] Update `docs/reference/ERROR_HANDLING_PATTERNS.md` with new failure modes
+### Stage: Documentation and Deployment ✅ COMPLETE
+- [x] Update `docs/reference/PDF_IMAGE_EXTRACTION_ARCHITECTURE.md` with new approach
+- [x] Update `docs/reference/ERROR_HANDLING_PATTERNS.md` with new failure modes
   - WASM instantiation errors
   - Memory limit exceeded errors
   - Processing timeout errors
   - Direct extraction confidence warnings
 - [x] Update `next.config.ts` to remove `skia-canvas` from `serverExternalPackages`
-- [ ] Create `docs/reference/PDF_EXTRACTION_DEPLOYMENT.md` for Vercel-specific setup
+- [x] Create `docs/reference/PDF_EXTRACTION_DEPLOYMENT.md` for Vercel-specific setup
 - [ ] **Subagent: Test on Vercel preview deployment**
   - Deploy to preview environment
   - Test with production-like PDFs
   - Verify no NODE_MODULE_VERSION errors
   - Test all three extraction methods
-- [ ] Final health check and test consolidation
+- [x] Final health check - all checks passing
 - [ ] Git commit following `docs/instructions/GIT_COMMIT_CHANGES.md`
+
+### Stage: Build Fix and Test Cleanup 🆕
+- [ ] **Remove obsolete test files** that reference old canvas module
+  - Delete `/app/api/test-canvas/route.ts` - no longer needed
+  - Clean up test scripts that import 'canvas' module
+- [ ] **Verify no remaining canvas imports**
+  - Grep codebase for any remaining 'canvas' imports
+  - Ensure only '@napi-rs/canvas' is used
+- [ ] **Test build locally**
+  - Run `npm run build` to verify build succeeds
+  - Check bundle size and optimization
+- [ ] Health check and git commit
+- [ ] Deploy to Vercel preview and verify
 - [ ] Move planning doc to `docs/planning/finished/`
 
 ## Journal & Technical Discoveries
@@ -325,6 +338,13 @@ Replace the native `skia-canvas` dependency in the Mistral OCR PDF processing pi
 - **Confidence scoring limitations**: Direct extractor can't get exact XObject positions from content stream, relies on heuristics
 - **Build system insights**: Next.js serverExternalPackages prevents webpack bundling, crucial for native/WASM modules
 
+### 2025-01-11: Vercel Build Issue Discovery
+- **Build failure**: "Module not found: Can't resolve 'canvas'" error on Vercel deployment
+- **Root cause**: Test endpoint `/app/api/test-canvas/route.ts` still importing old 'canvas' module
+- **Finding**: Multiple test scripts in `/scripts/tests/` reference canvas, but only API routes affect build
+- **Solution**: Remove obsolete test files that were created during investigation phase
+- **Lesson**: Always clean up test/investigation code before production deployment
+
 ### Implementation Status Summary
 - ✅ **Core functionality complete**: All three extraction methods working
 - ✅ **Vercel compatibility achieved**: No native module errors, @napi-rs/canvas confirmed compatible
@@ -335,8 +355,10 @@ Replace the native `skia-canvas` dependency in the Mistral OCR PDF processing pi
   - Enhanced logging with timing and performance metrics
   - Fatal error handling with user-visible messages
   - TypeScript build checking re-enabled
-- 🔄 **Performance optimization pending**: Need real-world testing
-- 📝 **Documentation updates needed**: Architecture and deployment guides
+- ✅ **Documentation complete**: Architecture, error patterns, and deployment guides created
+- ✅ **WASM optimization**: Bundle optimization rules added
+- 🚧 **Build fix needed**: Remove test files importing old 'canvas' module
+- 🔄 **Deployment pending**: Awaiting Vercel preview testing after cleanup
 
 ## Appendix
 

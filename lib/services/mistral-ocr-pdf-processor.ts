@@ -21,7 +21,7 @@ import { boundingBoxSchema, ExtractedImage, BoundingBox } from '@/lib/services/h
 import { marked } from 'marked'
 import { JSDOM } from 'jsdom'
 import { PdfRegionExtractionOptions } from '@/lib/services/pdf-image-extractor-types'
-import { extractPdfRegionAndUpload, HybridExtractionResult } from '@/lib/services/pdf-image-extractor-hybrid'
+import { PdfImageExtractorHybrid, HybridExtractionResult } from '@/lib/services/pdf-image-extractor-hybrid'
 
 // Schema for processing options
 export const mistralOcrProcessorOptionsSchema = z.object({
@@ -136,8 +136,33 @@ export async function processWithMistralOcr(
   const logger = createRequestLogger('/services/mistral-ocr-pdf-processor', options.correlationId)
   const timer = createTimer(logger, 'mistral-ocr-pdf-processing')
   
-  // Declare savedEnv in outer scope for error handling
-  let savedEnv: Record<string, string | undefined> = {}
+  // Initialise extractor according to requested method (avoids global env mutating)
+  const extractionConfig = (() => {
+    // Default: enable all
+    const cfg = {
+      useDirectExtraction: true,
+      useNapiCanvas: true,
+      useWasmFallback: true,
+    }
+    switch (options.extractionMethod) {
+      case 'direct':
+        cfg.useNapiCanvas = false;
+        cfg.useWasmFallback = false;
+        break;
+      case 'napi':
+        cfg.useDirectExtraction = false;
+        cfg.useWasmFallback = false;
+        break;
+      case 'wasm':
+        cfg.useDirectExtraction = false;
+        cfg.useNapiCanvas = false;
+        break;
+      // 'auto' (default) keeps all three enabled. 'legacy' treated as auto for now.
+    }
+    return cfg
+  })()
+
+  const hybridExtractor = new PdfImageExtractorHybrid(extractionConfig)
   
   try {
     // Validate input
@@ -223,43 +248,11 @@ export async function processWithMistralOcr(
       throw new Error('Mistral OCR returned no pages; cannot extract content')
     }
     
-    // Configure extraction method once, outside the loops
-    savedEnv = {
-      PDF_DIRECT_EXTRACTION: process.env.PDF_DIRECT_EXTRACTION,
-      PDF_USE_NAPI_CANVAS: process.env.PDF_USE_NAPI_CANVAS,
-      PDF_USE_WASM_FALLBACK: process.env.PDF_USE_WASM_FALLBACK
-    }
-    
-    // Always use hybrid extractor (legacy mode removed to eliminate skia-canvas dependency)
-    // If legacy behavior is needed, the hybrid extractor can be configured via environment variables
-    
-    // Configure environment variables for hybrid extractor if not using legacy
-    if (validatedOptions.extractionMethod !== 'legacy') {
-      // Set env vars based on extraction method
-      process.env.PDF_DIRECT_EXTRACTION = 'true'
-      process.env.PDF_USE_NAPI_CANVAS = 'true'
-      process.env.PDF_USE_WASM_FALLBACK = 'true'
-      
-      if (validatedOptions.extractionMethod === 'direct') {
-        process.env.PDF_USE_NAPI_CANVAS = 'false'
-        process.env.PDF_USE_WASM_FALLBACK = 'false'
-      } else if (validatedOptions.extractionMethod === 'napi') {
-        process.env.PDF_DIRECT_EXTRACTION = 'false'
-        process.env.PDF_USE_WASM_FALLBACK = 'false'
-      } else if (validatedOptions.extractionMethod === 'wasm') {
-        process.env.PDF_DIRECT_EXTRACTION = 'false'
-        process.env.PDF_USE_NAPI_CANVAS = 'false'
-      }
-      // 'auto' keeps all methods enabled
-      
-      // Log the extraction method being used
-      logger.info('PDF extraction method configured', {
-        extractionMethod: validatedOptions.extractionMethod,
-        directEnabled: process.env.PDF_DIRECT_EXTRACTION,
-        napiEnabled: process.env.PDF_USE_NAPI_CANVAS,  
-        wasmEnabled: process.env.PDF_USE_WASM_FALLBACK
-      })
-    }
+    // Log chosen extraction config
+    logger.info('PDF extraction method configuration', {
+      extractionMethod: validatedOptions.extractionMethod,
+      config: extractionConfig,
+    })
 
     for (const page of ocrResponse.pages) {
       // Validate page structure (throws on failure)
@@ -363,7 +356,7 @@ export async function processWithMistralOcr(
             // silently falling back to a broken <img src="img-x.jpeg"> placeholder that renders
             // as a 404.  Therefore we *do not* swallow errors here.
             
-            const regionRes = await extractPdfRegionAndUpload({
+            const regionRes = await hybridExtractor.extractPdfRegionAndUpload({
               pdfBuffer: validatedOptions.pdfBuffer,
               documentId: validatedOptions.documentId,
               pageNumber: validatedPage.index + 1,
@@ -432,16 +425,7 @@ export async function processWithMistralOcr(
       }
     }
     
-    // Restore original env vars after all extraction is complete
-    if (validatedOptions.extractionMethod !== 'legacy') {
-      Object.entries(savedEnv).forEach(([key, value]) => {
-        if (value === undefined) {
-          delete process.env[key]
-        } else {
-          process.env[key] = value
-        }
-      })
-    }
+    // No env var mutations - nothing to restore
 
     // Fail fast if we received no text
     if (combinedMarkdown.trim().length === 0) {
@@ -516,16 +500,7 @@ export async function processWithMistralOcr(
       stack: error instanceof Error ? error.stack : undefined
     })
     
-    // Restore env vars on error as well
-    if (Object.keys(savedEnv).length > 0) {
-      Object.entries(savedEnv).forEach(([key, value]) => {
-        if (value === undefined) {
-          delete process.env[key]
-        } else {
-          process.env[key] = value
-        }
-      })
-    }
+    // No env var mutations to restore
     
     timer.end({ error: true })
     

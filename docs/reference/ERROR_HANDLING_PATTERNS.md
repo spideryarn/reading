@@ -130,6 +130,59 @@ Error body automatically surfaces according to Tree above.
 
 See `docs/reference/CODING_GUIDELINES.md#errors` for the complete style-guide.
 
+## PDF Extraction Error Modes
+
+The PDF image extraction system introduces specific error patterns that require careful handling:
+
+### WASM Instantiation Errors
+- **When**: WebAssembly module fails to load or initialize
+- **HTTP Status**: 500
+- **User Message**: "PDF processing system initialization failed. Please try again."
+- **Technical Details**: Log WASM module name, error message, and environment info
+- **Retryable**: true (may succeed after cold start)
+
+### Memory Limit Exceeded
+- **When**: PDF rendering exceeds available memory (1024MB on Vercel)
+- **HTTP Status**: 413
+- **User Message**: "This PDF is too complex to process. Try splitting it into smaller sections."
+- **Technical Details**: Log page dimensions, scale factor, memory usage estimate
+- **Retryable**: false
+
+### Processing Timeout
+- **When**: Extraction takes longer than timeout limit (5 min on Vercel)
+- **HTTP Status**: 504
+- **User Message**: "PDF processing timed out. This usually happens with very large or complex documents."
+- **Technical Details**: Log elapsed time, page count, extraction method
+- **Retryable**: true (with same or different method)
+
+### Direct Extraction Confidence Warning
+- **When**: Direct extraction succeeds but with low confidence (<0.4)
+- **HTTP Status**: 200 (not an error, but logged as warning)
+- **User Message**: N/A (internal logging only)
+- **Technical Details**: Log confidence score, bbox dimensions, heuristic details
+- **Action**: System automatically falls back to rendering methods
+
+### Storage Configuration Error
+- **When**: Supabase bucket rejects image uploads (mime type, RLS policy)
+- **HTTP Status**: 503
+- **User Message**: "The system cannot store extracted images. Please contact support."
+- **Technical Details**: Log bucket name, mime type, RLS policy details
+- **Retryable**: false (requires configuration fix)
+
+### Module Loading Error
+- **When**: Required PDF processing module fails to load
+- **HTTP Status**: 500
+- **User Message**: "PDF processing module error. The system may be updating."
+- **Technical Details**: Log module name, NODE_MODULE_VERSION if applicable
+- **Retryable**: true (may work after deployment completes)
+
+### All Extraction Methods Failed
+- **When**: Direct, @napi-rs/canvas, and WASM methods all fail
+- **HTTP Status**: 500
+- **User Message**: "Unable to extract images from this PDF. The document may use an unsupported format."
+- **Technical Details**: Log each method's failure reason, PDF metadata
+- **Retryable**: false (fundamental incompatibility)
+
 ## Appendix A – Standard Error Catalogue (excerpt)
 
 | Code | HTTP | Class | Description |
@@ -138,6 +191,12 @@ See `docs/reference/CODING_GUIDELINES.md#errors` for the complete style-guide.
 | `DOCUMENT_NOT_FOUND` | 404 | `DocumentError` | DB miss |
 | `AI_RATE_LIMIT` | 429 | `AIServiceError` | Upstream 429 |
 | `STORAGE_ERROR` | 503 | `StorageError` | Supabase/storage outage |
+| `STORAGE_CONFIG_ERROR` | 503 | `StorageError` | Storage configuration prevents upload |
+| `IMAGE_EXTRACTION_FAILED` | 500 | `ProcessingError` | All PDF extraction methods failed |
+| `EXTRACTION_MODULE_ERROR` | 500 | `ProcessingError` | PDF processing module load error |
+| `PDF_MEMORY_LIMIT` | 413 | `ProcessingError` | PDF too complex, exceeds memory |
+| `PDF_TIMEOUT` | 504 | `ProcessingError` | PDF processing timed out |
+| `WASM_INIT_ERROR` | 500 | `ProcessingError` | WebAssembly initialization failed |
 
 Full list lives in `lib/api/error-utils.ts`. 
 

@@ -2,6 +2,7 @@
     "name": "syr",
     "version": "0.1.0",
     "private": true,
+    "sideEffects": false,
     "scripts": {
         "dev": "./scripts/dev-with-restart.sh",
         "dev:daemon": "./scripts/dev-with-restart.sh --daemon",

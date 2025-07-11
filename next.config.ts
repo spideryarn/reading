@@ -53,6 +53,34 @@ const nextConfig: NextConfig = {
       loader: 'node-loader',
     });
 
+    // WASM optimization rules
+    if (isServer) {
+      // Optimize WASM module handling for server-side
+      config.module.rules.push({
+        test: /\.wasm$/,
+        type: 'webassembly/async',
+      });
+
+      // Exclude browser-specific WASM variants from server bundle
+      config.externals = [
+        ...(config.externals || []),
+        ({ request }: { request?: string }, callback: (err?: Error | null, result?: string) => void) => {
+          // Exclude browser-specific WASM modules
+          if (request?.includes('wasm') && request?.includes('browser')) {
+            return callback(null, 'commonjs ' + request);
+          }
+          callback();
+        },
+      ];
+
+      // Enable tree-shaking for WASM modules
+      config.optimization = {
+        ...config.optimization,
+        usedExports: true,
+        sideEffects: false,
+      };
+    }
+
     return config;
   },
   // turbopack: {
