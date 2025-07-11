@@ -17,11 +17,11 @@ import { z } from 'zod'
 import { Mistral } from '@mistralai/mistralai'
 import { responseFormatFromZodObject } from '@mistralai/mistralai/extra/structChat.js'
 import { createRequestLogger, createTimer } from '@/lib/services/logger'
-import { boundingBoxSchema, ExtractedImage } from '@/lib/services/html-fragment-processor'
+import { boundingBoxSchema, ExtractedImage, BoundingBox } from '@/lib/services/html-fragment-processor'
 import { marked } from 'marked'
 import { JSDOM } from 'jsdom'
 import { PdfRegionExtractionOptions } from '@/lib/services/pdf-image-extractor-types'
-import { extractPdfRegionAndUpload } from '@/lib/services/pdf-image-extractor-hybrid'
+import { extractPdfRegionAndUpload, HybridExtractionResult } from '@/lib/services/pdf-image-extractor-hybrid'
 
 // Schema for processing options
 export const mistralOcrProcessorOptionsSchema = z.object({
@@ -91,7 +91,24 @@ export const mistralOcrProcessorResultSchema = z.object({
   finishReason: z.string(),
   processingTimeMs: z.number(),
   warnings: z.array(z.string()).default([]),
-  rawResponse: z.record(z.unknown()).optional().describe('Raw API response for comprehensive logging')
+  rawResponse: z.record(z.unknown()).optional().describe('Raw API response for comprehensive logging'),
+  extractionStats: z.object({
+    totalImages: z.number(),
+    imagesProcessed: z.number(),
+    imagesSkipped: z.number(),
+    extractionMethods: z.object({
+      direct: z.number(),
+      napiCanvas: z.number(),
+      wasm: z.number(),
+      failed: z.number()
+    }),
+    extractionMethodDetails: z.array(z.object({
+      pageIndex: z.number(),
+      imageId: z.string(),
+      method: z.string(),
+      fallbackReason: z.string().optional()
+    }))
+  }).optional().describe('Detailed extraction statistics')
 })
 
 export type MistralOcrProcessorResult = z.infer<typeof mistralOcrProcessorResultSchema>
@@ -193,6 +210,15 @@ export async function processWithMistralOcr(
     const elementUrlMap: Record<string, string> = {}
     let totalStorageBytes = 0
     
+    // Track extraction method usage
+    const extractionStats = {
+      directCount: 0,
+      napiCanvasCount: 0,
+      wasmCount: 0,
+      failedCount: 0,
+      methods: [] as Array<{pageIndex: number, imageId: string, method: string, fallbackReason?: string}>
+    }
+    
     if (!ocrResponse.pages || ocrResponse.pages.length === 0) {
       throw new Error('Mistral OCR returned no pages; cannot extract content')
     }
@@ -291,6 +317,10 @@ export async function processWithMistralOcr(
           imagesSkipped += 1
           continue
         }
+        
+        // Declare these outside try block for error handling access
+        const elementId = `figure-${validatedPage.index}-${image.id}`
+        let bbox: BoundingBox | undefined
 
         try {
           const x1 = tlx / dims.width
@@ -311,14 +341,12 @@ export async function processWithMistralOcr(
             continue
           }
 
-          const bbox = boundingBoxSchema.parse({
+          bbox = boundingBoxSchema.parse({
             x1: Number(x1.toFixed(4)),
             y1: Number(y1.toFixed(4)),
             x2: Number(x2.toFixed(4)),
             y2: Number(y2.toFixed(4)),
           })
-
-          const elementId = `figure-${validatedPage.index}-${image.id}`
 
           const imageMeta: any = {
             elementId,
@@ -344,7 +372,29 @@ export async function processWithMistralOcr(
               outputFormat: 'png',
               quality: 0.95,
               scale: 2
-            } as PdfRegionExtractionOptions)
+            } as PdfRegionExtractionOptions) as HybridExtractionResult
+            
+            // Track extraction method used
+            if (regionRes.method === 'direct') extractionStats.directCount++
+            else if (regionRes.method === 'napi-canvas') extractionStats.napiCanvasCount++
+            else if (regionRes.method === 'wasm') extractionStats.wasmCount++
+            
+            const methodInfo: {
+              pageIndex: number
+              imageId: string
+              method: string
+              fallbackReason?: string
+            } = {
+              pageIndex: validatedPage.index,
+              imageId: image.id,
+              method: regionRes.method
+            }
+            
+            if (regionRes.fallbackReason !== undefined) {
+              methodInfo.fallbackReason = regionRes.fallbackReason
+            }
+            
+            extractionStats.methods.push(methodInfo)
 
             elementUrlMap[elementId] = regionRes.signedUrl
             imageMeta.storagePath = regionRes.storagePath
@@ -356,9 +406,28 @@ export async function processWithMistralOcr(
           extractedImages.push(imageMeta)
           imagesProcessed += 1
         } catch (err) {
+          extractionStats.failedCount++
+          logger.error('Image extraction failed - failing fast', {
+            pageIndex: validatedPage.index,
+            imageId: image.id,
+            elementId,
+            bbox: bbox || { x1: 0, y1: 0, x2: 0, y2: 0 },
+            error: err instanceof Error ? err.message : String(err)
+          })
+          
+          // Enhance error message for better user visibility
+          const errorMessage = err instanceof Error ? err.message : String(err)
+          const enhancedError = new Error(
+            `Failed to extract image ${image.id} on page ${validatedPage.index + 1}: ${errorMessage}`
+          )
+          // Preserve original error stack if available
+          if (err instanceof Error && err.stack) {
+            enhancedError.stack = err.stack
+          }
+          
           // Fail fast – escalate the error so that the entire upload fails and the user is
           // immediately aware that image extraction is broken.
-          throw err
+          throw enhancedError
         }
       }
     }
@@ -384,7 +453,14 @@ export async function processWithMistralOcr(
       totalImages,
       imagesProcessed,
       imagesSkipped,
-      warningsCount: warnings.length
+      warningsCount: warnings.length,
+      extractionMethods: {
+        direct: extractionStats.directCount,
+        napiCanvas: extractionStats.napiCanvasCount,
+        wasm: extractionStats.wasmCount,
+        failed: extractionStats.failedCount
+      },
+      extractionMethodUsage: validatedOptions.imageExtractionEnabled ? extractionStats.methods : undefined
     })
 
     // Convert Markdown to HTML
@@ -419,7 +495,19 @@ export async function processWithMistralOcr(
       finishReason: 'complete',
       processingTimeMs,
       warnings,
-      rawResponse: ocrResponse as Record<string, unknown>
+      rawResponse: ocrResponse as Record<string, unknown>,
+      extractionStats: validatedOptions.imageExtractionEnabled ? {
+        totalImages,
+        imagesProcessed,
+        imagesSkipped,
+        extractionMethods: {
+          direct: extractionStats.directCount,
+          napiCanvas: extractionStats.napiCanvasCount,
+          wasm: extractionStats.wasmCount,
+          failed: extractionStats.failedCount
+        },
+        extractionMethodDetails: extractionStats.methods
+      } : undefined
     })
     
   } catch (error) {

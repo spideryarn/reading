@@ -313,6 +313,7 @@ export async function POST(request: NextRequest) {
       fileSize?: number | undefined
     }> = []
     let aiCallId: string
+    let extractionStatsMetadata: Record<string, any> = {}
     
     // Create AI call record for tracking (before LLM processing)
     const startTime = Date.now()
@@ -462,6 +463,19 @@ export async function POST(request: NextRequest) {
         
         // Store extracted images metadata for later use
         extractedImagesMetadata = mistralResult.extractedImages
+        
+        // Store extraction statistics if available
+        if (mistralResult.extractionStats) {
+          extractionStatsMetadata = {
+            extraction_stats: mistralResult.extractionStats,
+            extraction_method_configured: extractionMethod,
+            extraction_methods_used: {
+              direct: mistralResult.extractionStats.extractionMethods.direct,
+              napi_canvas: mistralResult.extractionStats.extractionMethods.napiCanvas,
+              wasm: mistralResult.extractionStats.extractionMethods.wasm
+            }
+          }
+        }
         
         if (mistralResult.warnings.length > 0) {
           requestLogger.warn({
@@ -665,7 +679,10 @@ export async function POST(request: NextRequest) {
         extracted_images: extractedImagesMetadata,
         assets_uploaded: imageCount,
         image_assets: imageCount,
-        total_storage_bytes: totalImageBytes
+        total_storage_bytes: totalImageBytes,
+        
+        // Extraction method statistics
+        ...extractionStatsMetadata
       }
     )
 
@@ -774,6 +791,22 @@ export async function POST(request: NextRequest) {
 
       if (error.message.includes('storage') || error.message.includes('bucket')) {
         return problem(503, 'STORAGE_ERROR', 'Storage service error', 'Please try again later.', true)
+      }
+      
+      // Handle PDF image extraction errors explicitly
+      if (error.message.includes('mime type') && error.message.includes('not supported')) {
+        return problem(503, 'STORAGE_CONFIG_ERROR', 'Storage configuration error', 
+          'The system cannot store extracted images. Please contact support.')
+      }
+      
+      if (error.message.includes('extraction failed') || error.message.includes('All PDF extraction methods failed')) {
+        return problem(500, 'IMAGE_EXTRACTION_FAILED', 'PDF image extraction failed', 
+          'Unable to extract images from the PDF. The document may use an unsupported format.')
+      }
+      
+      if (error.message.includes('native binding') || error.message.includes('NODE_MODULE_VERSION')) {
+        return problem(500, 'EXTRACTION_MODULE_ERROR', 'PDF processing module error', 
+          'The PDF processing system encountered an error. Please contact support.')
       }
 
       // Handle token limit exhaustion error explicitly

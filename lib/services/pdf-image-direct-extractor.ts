@@ -56,10 +56,12 @@ export class PdfImageDirectExtractor {
     const options = pdfRegionExtractionOptionsSchema.parse(opts)
     const correlationId = `${options.documentId}-page${options.pageNumber}-${options.elementId}`
     
+    const startTime = Date.now()
     this.logger.info('Starting direct PDF image extraction', { 
       pageNumber: options.pageNumber, 
       elementId: options.elementId,
-      bbox: options.bbox 
+      bbox: options.bbox,
+      bufferSize: options.pdfBuffer.length 
     })
 
     try {
@@ -67,7 +69,9 @@ export class PdfImageDirectExtractor {
       const pdfBytes = options.pdfBuffer instanceof Buffer 
         ? new Uint8Array(options.pdfBuffer) 
         : options.pdfBuffer
+      const loadStartTime = Date.now()
       const pdfDoc = await PDFDocument.load(pdfBytes)
+      this.logger.info('PDF loaded', { loadTimeMs: Date.now() - loadStartTime })
       const pages = pdfDoc.getPages()
       
       if (options.pageNumber > pages.length || options.pageNumber < 1) {
@@ -78,20 +82,31 @@ export class PdfImageDirectExtractor {
       const { width: pageWidth, height: pageHeight } = page.getSize()
 
       // Extract all embedded images from the page
+      const extractStartTime = Date.now()
       const embeddedImages = await this.extractEmbeddedImages(page, options.pageNumber - 1)
+      
+      this.logger.info('Embedded image extraction complete', { 
+        pageNumber: options.pageNumber,
+        imageCount: embeddedImages.length,
+        extractionTimeMs: Date.now() - extractStartTime
+      })
       
       if (embeddedImages.length === 0) {
         throw new Error(`No embedded images found on page ${options.pageNumber}. Direct extraction not possible.`)
       }
 
-      this.logger.info(`Found ${embeddedImages.length} embedded images`, { pageNumber: options.pageNumber })
-
       // Find the best matching image for the bounding box
+      const matchStartTime = Date.now()
       const matchResult = this.findBestImageMatch(
         embeddedImages,
         options.bbox,
         { width: pageWidth, height: pageHeight }
       )
+      
+      this.logger.info('Image matching complete', {
+        matchTimeMs: Date.now() - matchStartTime,
+        foundMatch: !!matchResult
+      })
 
       if (!matchResult) {
         throw new Error(
@@ -106,7 +121,8 @@ export class PdfImageDirectExtractor {
         format: matchedImage.format,
         size: matchedImage.data.length,
         confidence: matchResult.confidence,
-        matchReason: matchResult.reason
+        matchReason: matchResult.reason,
+        dimensions: { width: matchedImage.width, height: matchedImage.height }
       })
 
       // Create blob for upload
@@ -117,6 +133,7 @@ export class PdfImageDirectExtractor {
       const blob = new Blob([matchedImage.data], { type: mimeType })
 
       // Upload to Supabase Storage
+      const uploadStartTime = Date.now()
       const filename = `${String(options.pageNumber).padStart(3, '0')}_${options.elementId}.${matchedImage.format === 'unknown' ? 'bin' : matchedImage.format}`
       const uploadRes = await uploadImageAssetServerSide(
         blob,
@@ -124,6 +141,12 @@ export class PdfImageDirectExtractor {
         filename,
         mimeType
       )
+      
+      this.logger.info('Upload complete', {
+        uploadTimeMs: Date.now() - uploadStartTime,
+        uploadSize: uploadRes.size,
+        storagePath: uploadRes.path
+      })
 
       // Generate signed URL (1 year expiry)
       const ONE_YEAR_SECONDS = 365 * 24 * 60 * 60
@@ -135,7 +158,9 @@ export class PdfImageDirectExtractor {
 
       this.logger.info('Direct PDF image extraction successful', { 
         storagePath: uploadRes.path,
-        method: 'direct'
+        method: 'direct',
+        totalTimeMs: Date.now() - startTime,
+        confidence: matchResult.confidence
       })
 
       return {

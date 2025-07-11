@@ -2,8 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   typescript: {
-    // Temporarily ignore TypeScript build errors for deployment
-    ignoreBuildErrors: true,
+    // TypeScript build errors are now enforced
+    ignoreBuildErrors: false,
   },
   experimental: {
     optimizePackageImports: ["@phosphor-icons/react"],

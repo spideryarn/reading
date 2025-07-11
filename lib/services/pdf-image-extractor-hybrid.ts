@@ -59,6 +59,17 @@ export class PdfImageExtractorHybrid {
     this.useDirectExtraction = config?.useDirectExtraction ?? process.env.PDF_DIRECT_EXTRACTION !== 'false'
     this.useNapiCanvas = config?.useNapiCanvas ?? process.env.PDF_USE_NAPI_CANVAS === 'true'
     this.useWasmFallback = config?.useWasmFallback ?? process.env.PDF_USE_WASM_FALLBACK !== 'false'
+    
+    this.logger.info('Hybrid PDF extractor initialized', {
+      directEnabled: this.useDirectExtraction,
+      napiCanvasEnabled: this.useNapiCanvas,
+      wasmEnabled: this.useWasmFallback,
+      environment: {
+        isVercel: process.env.VERCEL === '1',
+        nodeVersion: process.version,
+        platform: process.platform
+      }
+    })
   }
 
   /**
@@ -82,6 +93,7 @@ export class PdfImageExtractorHybrid {
 
     // Method 1: Try direct extraction first (fastest)
     if (this.useDirectExtraction) {
+      const directStartTime = Date.now()
       try {
         this.logger.info('Attempting direct image extraction', { correlationId })
         const result = await this.directExtractor.extractPdfRegionAndUpload(options)
@@ -89,7 +101,8 @@ export class PdfImageExtractorHybrid {
         this.logger.info('Direct extraction successful', { 
           correlationId,
           size: result.size,
-          dimensions: `${result.width}x${result.height}`
+          dimensions: `${result.width}x${result.height}`,
+          processingTimeMs: Date.now() - directStartTime
         })
         
         return {
@@ -112,6 +125,7 @@ export class PdfImageExtractorHybrid {
 
     // Method 2: Try @napi-rs/canvas (Vercel-compatible, good performance)
     if (this.useNapiCanvas) {
+      const napiStartTime = Date.now()
       try {
         this.logger.info('Attempting @napi-rs/canvas extraction', { correlationId })
         const result = await extractPdfRegionAndUploadVercel(options)
@@ -119,7 +133,8 @@ export class PdfImageExtractorHybrid {
         this.logger.info('@napi-rs/canvas extraction successful', { 
           correlationId,
           size: result.size,
-          dimensions: `${result.width}x${result.height}`
+          dimensions: `${result.width}x${result.height}`,
+          processingTimeMs: Date.now() - napiStartTime
         })
         
         const hybridResult: HybridExtractionResult = {
@@ -145,6 +160,7 @@ export class PdfImageExtractorHybrid {
 
     // Method 3: WASM renderer fallback (slowest but most compatible)
     if (this.useWasmFallback) {
+      const wasmStartTime = Date.now()
       try {
         this.logger.info('Using WASM renderer fallback', { correlationId })
         const result = await this.wasmRenderer.extractPdfRegionAndUpload(options)
@@ -167,12 +183,22 @@ export class PdfImageExtractorHybrid {
           error: errorMessage
         })
         
-        throw new Error(`All PDF extraction methods failed. Last error: ${errorMessage}`)
+        const detailedError = new Error(
+          `All PDF extraction methods failed for page ${options.pageNumber}, element ${options.elementId}.\n` +
+          `Methods tried: direct=${this.useDirectExtraction}, napi-canvas=${this.useNapiCanvas}, wasm=${this.useWasmFallback}.\n` +
+          `Last error: ${errorMessage}\n` +
+          `This may indicate the PDF uses an unsupported format or the image is not extractable.`
+        )
+        throw detailedError
       }
     }
 
     // Should not reach here
-    throw new Error('No PDF extraction methods enabled')
+    throw new Error(
+      `No PDF extraction methods enabled. Configuration: ` +
+      `direct=${this.useDirectExtraction}, napi-canvas=${this.useNapiCanvas}, wasm=${this.useWasmFallback}. ` +
+      `Check environment variables or extraction method configuration.`
+    )
   }
 
   /**
