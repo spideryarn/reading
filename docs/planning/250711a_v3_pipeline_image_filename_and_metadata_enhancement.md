@@ -6,7 +6,9 @@ Implement improved image filename generation and alt tag support for the v3 PDF 
 
 **Current Problem**: The v3 pipeline extracts images successfully but uses basic filenames and lacks alt tag support. We want to leverage the Mistral OCR data already being processed to enhance image metadata without significant additional cost.
 
-**Desired Solution**: A cost-effective approach that uses Mistral OCR context first, with optional AI enhancement only when needed, maintaining the quality benefits of v2 while keeping costs low.
+**Technical Constraint**: Research confirms that Mistral OCR returns markdown text per page with image bounding boxes, but does NOT provide text coordinates or caption anchoring. This limits our ability to spatially associate captions with images.
+
+**Desired Solution**: A pragmatic approach that extracts captions from markdown using pattern matching, reuses existing services, and provides graceful fallbacks when caption association is uncertain.
 
 ## User Stories & Acceptance Criteria
 
@@ -60,75 +62,86 @@ Implement improved image filename generation and alt tag support for the v3 PDF 
   - Examine `pdf-image-extractor-hybrid.ts` integration points
   - Document what OCR context is available for each image
   - Identify where to inject metadata enhancement
-- [ ] Create simple test PDF with figures and captions for development
+- [ ] Create test PDFs with various caption patterns:
+  - Standard academic figures with captions
+  - Multi-column layouts
+  - Tables and equations
+  - Non-English content
 - [ ] Update planning doc with research findings
 
-### Stage: Basic OCR Context Extraction
-- [ ] Create `lib/utils/ocr-context-extractor.ts` for parsing Mistral output
-  - Extract figure captions (e.g., "Figure 3.2: Neural network architecture")
-  - Find surrounding text near image bounding boxes
-  - Detect table titles and equation labels
-- [ ] Add unit tests for OCR context extraction
-  - Test figure caption detection patterns
-  - Test proximity-based text association
-  - Test edge cases (no caption, multiple captions)
-- [ ] Health check: `npm run check:health`
+### Stage: Payload Verification Spike
+- [ ] Create `scripts/tests/repro-mistral-caption-extraction.ts`
+  - Process test PDFs through Mistral OCR
+  - Log markdown output and image bounding boxes
+  - Test caption extraction patterns
+  - Verify what structural hints are available
+- [ ] Analyze results to determine:
+  - Success rate of regex-based caption matching
+  - Common failure patterns
+  - Whether marked's walkTokens provides enough structure
+- [ ] Document findings and update approach if needed
 - [ ] Git commit
 
-### Stage: Simple Filename Generation from OCR
-- [ ] Create `lib/utils/ocr-based-filename-generator.ts`
-  - Parse figure/table numbers from OCR text
-  - Generate academic-style filenames (e.g., `fig-3-2-description.png`)
-  - Implement fallback to position-based naming
-- [ ] Integrate with `pdf-image-extractor-hybrid.ts`
-  - Pass OCR context to extraction functions
-  - Update `extractPdfRegionAndUpload` signature
-  - Maintain backward compatibility
-- [ ] Test with sample PDFs
-- [ ] Health check: `npm run check:health`
-- [ ] Update planning doc with progress
-- [ ] Git commit
-
-### Stage: Alt Tag Generation from OCR
-- [ ] Extend OCR context extractor to generate alt text
-  - Use detected figure captions as primary source
-  - Include surrounding descriptive text
-  - Format for accessibility standards
-- [ ] Update image upload metadata structure
-  - Add alt text field to upload metadata
-  - Track metadata source (OCR vs AI vs fallback)
-- [ ] Write tests for alt tag generation
+### Stage: OCR Caption Extraction Using Existing Services
+- [ ] Enhance `mistral-ocr-pdf-processor.ts` with caption extraction:
+  - Use marked's walkTokens to traverse markdown structure
+  - Identify caption patterns (Figure X:, Table Y:, etc.)
+  - Associate captions with nearest image tokens
+  - Track confidence scores for associations
+- [ ] Integrate with existing `image-filename-generator.ts`:
+  - Pass extracted captions as `aiCaption` parameter
+  - Let existing service handle slugification and conflicts
+  - Use existing fallback mechanisms
+- [ ] Add comprehensive tests:
+  - Standard caption formats
+  - Edge cases (no caption, multiple images, page breaks)
+  - Multi-language patterns
 - [ ] Health check: `npm run check:health`
 - [ ] Git commit
 
 ### Stage: Configuration and Control
-- [ ] Add configuration options to Mistral OCR processor
+- [ ] Add configuration to `lib/config.ts` following existing patterns:
   ```typescript
-  interface ImageMetadataOptions {
-    enableOCRMetadata: boolean
-    enableAIEnhancement: boolean
-    aiConfidenceThreshold: number
-    maxFilenameLength: number
-  }
+  export const IMAGE_METADATA_CONFIG = {
+    ENABLE_OCR_METADATA: process.env.PDF_IMAGE_OCR_METADATA !== 'false',
+    ENABLE_AI_ENHANCEMENT: process.env.PDF_IMAGE_AI_ENHANCEMENT === 'true',
+    AI_CONFIDENCE_THRESHOLD: Number(process.env.PDF_IMAGE_AI_THRESHOLD || 0.3),
+    MAX_FILENAME_LENGTH: Number(process.env.PDF_IMAGE_MAX_FILENAME_LEN || 50)
+  } as const
   ```
-- [ ] Implement environment variable controls
-  - `PDF_IMAGE_OCR_METADATA` - Enable OCR-based metadata
-  - `PDF_IMAGE_AI_ENHANCEMENT` - Enable AI fallback
+- [ ] Update Mistral OCR processor to use centralized config
 - [ ] Update UI to show metadata enhancement options
 - [ ] Test configuration combinations
 - [ ] Health check: `npm run check:health`
 - [ ] Git commit
 
+### Stage: Database and Frontend Integration
+- [ ] Review current `document_assets` table schema
+- [ ] Update metadata storage:
+  - Store OCR-extracted captions in existing `caption` field
+  - Use `extraction_confidence` for caption association confidence
+  - Add source tracking to `metadata` JSONB field
+- [ ] Verify frontend image rendering:
+  - Confirm images use descriptive filenames in URLs
+  - Ensure alt text is included in rendered HTML
+  - Test accessibility with screen readers
+- [ ] Document Content-Disposition header approach for downloads
+- [ ] Health check: `npm run check:health`
+- [ ] Git commit
+
 ### Stage: Optional AI Enhancement (Cost-Conscious)
-- [ ] Create `lib/services/image-metadata-enhancer.ts`
-  - Determine when AI enhancement is needed (low OCR confidence)
-  - Use cheaper models (Haiku or Gemini Flash)
-  - Batch process images per page for efficiency
-- [ ] Implement confidence scoring
-  - OCR confidence based on caption match quality
-  - Threshold for triggering AI enhancement
-  - Track enhancement statistics
-- [ ] Add cost tracking and limits
+- [ ] Enhance existing `image-caption-generator.ts`:
+  - Add support for cheaper models via environment config
+  - Use existing batch processing capabilities
+  - Leverage existing confidence scoring system
+- [ ] Integrate AI fallback into Mistral processor:
+  - Trigger when OCR confidence < threshold
+  - Use existing `AiCallService` for cost tracking
+  - Pass `extractionPurpose: 'filename'` for cost optimization
+- [ ] Configure selective AI enhancement:
+  - Only process images without clear captions
+  - Batch process per page for efficiency
+  - Track usage via existing analytics
 - [ ] Test AI enhancement fallback scenarios
 - [ ] Health check: `npm run check:health`
 - [ ] Update planning doc with cost analysis
@@ -240,63 +253,46 @@ Key files to modify:
 
 ### E. Academic Content Patterns
 
-Common patterns to detect in OCR:
+Common patterns to detect in OCR (English):
 - `Figure \d+\.?\d*:` - Figure captions
 - `Table \d+\.?\d*:` - Table titles  
 - `Equation \(\d+\)` - Equation labels
 - `Chart \d+:` - Chart labels
 - `Exhibit [A-Z]:` - Legal/business documents
 
-### F. o3 AI Model Critique (2025-01-11)
+Multi-language patterns to support:
+- Spanish: `Figura \d+:`, `Tabla \d+:`
+- French: `Figure \d+:`, `Tableau \d+:`
+- German: `Abbildung \d+:`, `Tabelle \d+:`
+- Chinese: `图 \d+:`, `表 \d+:`
+- Japanese: `図 \d+:`, `表 \d+:`
 
-**Executive Summary**: The proposal is directionally sound but has several technical and organizational risks that need addressing. Key gaps include lack of evidence that Mistral OCR provides location-anchored caption text, duplication with existing utilities, missing database/frontend integration plans, and incomplete edge case coverage.
+### F. Edge Cases and Fallback Strategies
 
-**Key Issues Identified**:
+**Challenging scenarios to handle**:
+1. **Multi-image figures** - Single caption for subfigures (a), (b), (c)
+   - Strategy: Associate same caption with multiple images, append subfigure labels
+2. **Captions on different pages** - Image at bottom of page, caption on next
+   - Strategy: Low confidence score, trigger AI enhancement
+3. **No clear caption** - Decorative images, logos, or unlabeled charts
+   - Strategy: Use position-based naming (e.g., `page-5-top-image.png`)
+4. **Complex layouts** - Multi-column with captions in different column
+   - Strategy: Use token proximity in markdown, not spatial proximity
+5. **Equations as images** - Mathematical formulas rendered as graphics
+   - Strategy: Detect "Equation" pattern, use equation numbering
 
-1. **Mistral OCR Payload Assumptions**
-   - Current Mistral /ocr.process returns markdown text per page and image bboxes, but NOT bbox-level text or caption anchoring
-   - Without text coordinates, proximity search will be unreliable for multi-column layouts
-   - **Action**: Add feasibility spike to verify payload contains structural hints before building utilities
+### G. Implementation Notes
 
-2. **Duplication with Existing Services**
-   - `image-filename-generator.ts` already handles slugification, conflicts, and fallbacks
-   - `image-caption-generator.ts` already provides AI caption generation
-   - **Action**: Reuse existing utilities; add thin OCR context extraction layer
+**Caption extraction approach**:
+- Use marked's `walkTokens` to traverse markdown structure
+- Build caption registry before processing images
+- Associate captions with images based on token order
+- Track confidence scores for each association
+- Fall back to AI when confidence < threshold
 
-3. **Missing End-to-End Flow**
-   - No plan for database schema changes or frontend integration
-   - Unclear whether files are physically renamed or use Content-Disposition headers
-   - **Action**: Add "Database & Frontend Wiring" stage
+**Confidence scoring factors**:
+- Token distance between caption and image (closer = higher confidence)
+- Caption format match quality (standard pattern = higher confidence)
+- Multiple images near single caption (lower confidence)
+- Page boundaries crossed (lower confidence)
 
-4. **Configuration Management**
-   - New config interface should follow existing pattern in `lib/config.ts`
-   - Cost tracking should use existing `ai_calls` service
-   - **Action**: Centralize configuration in established locations
-
-5. **Edge Cases Not Addressed**
-   - Multi-image figures with shared captions ("(a)... (b)...")
-   - Captions on different pages
-   - Non-English content (regex won't match "Figura 5" or "图 3")
-   - **Action**: Expand test coverage and fallback strategies
-
-**Recommended Plan Amendments**:
-
-1. **New Stage**: "Payload Verification Spike" before building utilities
-   - Create `scripts/tests/repro-mistral-bboxes.ts` to verify caption locality
-   - Consider PDF text layer parsing if OCR lacks position data
-
-2. **Merge Stages**: Combine filename and alt tag generation using existing services
-
-3. **Configuration**: Move all config to `lib/config.ts` following established patterns
-
-4. **Database Integration**: Add explicit stage for schema updates and frontend wiring
-
-5. **Testing**: Add fixture PDFs covering edge cases (side-by-side captions, no captions, multi-language)
-
-**Positive Aspects**:
-- Clear cost-saving motivation aligned with OCR-first principle
-- Staged incremental delivery approach
-- Good attention to fallback paths and logging
-- Strong awareness of existing codebase
-
-**Conclusion**: The goal is valuable and attainable, but needs validation of core assumptions and closer alignment with existing services to avoid reinventing wheels and shipping fragile heuristics. Incorporating the suggested changes will reduce risk and ensure metadata actually reaches users while keeping costs low.
