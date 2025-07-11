@@ -76,7 +76,7 @@ const nextConfig: NextConfig = {
       // Enable tree-shaking for WASM modules
       config.optimization = {
         ...config.optimization,
-        usedExports: true,
+        // usedExports: true, // Commented out - conflicts with Next.js caching
         sideEffects: false,
       };
     }
