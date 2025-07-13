@@ -4,6 +4,10 @@
 // Uses fetch-then-LLM approach since LLMs cannot fetch URLs directly
 
 import { NextRequest, NextResponse } from 'next/server'
+// Patch Node's HTTPS CA bundle with ssl-root-cas so that sites with missing
+// intermediate certificates (e.g. some university servers) can still be
+// verified securely.
+import '@/lib/server/setup-ssl-root-cas'
 import { createProblemDetail } from '@/lib/api/error-utils'
 import { executeMultimodalPromptWithUsage } from '@/lib/prompts/types'
 import { createUrlToHtmlPrompt } from '@/lib/prompts/templates/url-to-html'
@@ -93,12 +97,12 @@ async function fetchWebpageContent(url: string): Promise<string> {
 }
 
 // Fetch PDF content from URL for processing
-async function fetchPdfContent(url: string): Promise<Buffer> {
+async function fetchPdfContent(url: string, allowInsecureTls: boolean = false): Promise<Buffer> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), URL_EXTRACTION_CONFIG.FETCH_TIMEOUT_MS)
   
-  try {
-    const response = await fetch(url, {
+  const fetchWithOptions = async (extraInit: Record<string, unknown> = {}): Promise<Response> => {
+    return fetch(url, {
       signal: controller.signal,
       headers: {
         'User-Agent': URL_EXTRACTION_CONFIG.DEFAULT_USER_AGENT,
@@ -107,15 +111,18 @@ async function fetchPdfContent(url: string): Promise<Buffer> {
         'Accept-Encoding': 'gzip, deflate, br',
         'DNT': '1',
         'Connection': 'keep-alive',
-      }
+      },
+      ...extraInit
     })
-    
-    clearTimeout(timeoutId)
-    
+  }
+
+  const attemptFetch = async (init: Record<string, unknown> = {}): Promise<Buffer> => {
+    const response = await fetchWithOptions(init)
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     }
-    
+
     // Verify content type is PDF
     const contentType = response.headers.get('content-type') || ''
     if (!isPdfContentType(contentType)) {
@@ -143,17 +150,54 @@ async function fetchPdfContent(url: string): Promise<Buffer> {
     }
     
     return pdfBuffer
-    
+  }
+  
+  try {
+    clearTimeout(timeoutId)
+    return await attemptFetch()
+   
   } catch (error) {
     clearTimeout(timeoutId)
     
     if (error instanceof Error) {
+      // Timeout propagated as-is
       if (error.name === 'AbortError') {
         throw new Error('Request timeout while downloading PDF')
       }
+
+      // Handle missing-intermediate TLS chain (common on older servers)
+      const tlsChainError = (
+        error.message?.includes('unable to verify the first certificate') ||
+        error.message?.includes('UNABLE_TO_VERIFY_LEAF_SIGNATURE') ||
+        // Undici wraps the underlying Node error. Look at cause.code when message is generic 'fetch failed'
+        // @ts-expect-error -- cause is non-standard
+        error?.cause?.code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' ||
+        // Older OpenSSL wording
+        // @ts-expect-error -- cause is non-standard
+        error?.cause?.message?.includes?.('unable to verify the first certificate') ||
+        error.message === 'fetch failed' ||
+        error.message === 'Failed to download PDF content'
+      )
+
+      if (tlsChainError && allowInsecureTls) {
+        // Retry with an insecure agent (rejectUnauthorized: false)
+        try {
+          const { Agent } = await import('undici')
+          const insecureAgent = new Agent({ connect: { rejectUnauthorized: false } })
+          return await attemptFetch({ dispatcher: insecureAgent })
+        } catch (retryError) {
+          // If retry fails, fall through to original error handling below
+          console.warn('Insecure TLS fallback failed:', retryError)
+        }
+      }
+
+      if (tlsChainError) {
+        throw new Error('Incomplete TLS certificate chain (unable to verify remote certificate)')
+      }
+
       throw error
     }
-    
+
     throw new Error('Failed to download PDF content')
   }
 }
@@ -345,7 +389,7 @@ export async function POST(request: NextRequest) {
     
     // Parse JSON request body
     const body = await request.json()
-    const { url, title: providedTitle, provider = 'claude', extractionMethod = 'ai-transcription', isPublic = false } = body
+    const { url, title: providedTitle, provider = 'claude', extractionMethod = 'ai-transcription', isPublic = false, allowInsecureTls = false } = body
     
     if (!url) {
       return createProblemDetail({
@@ -485,7 +529,7 @@ export async function POST(request: NextRequest) {
       
       let pdfBuffer: Buffer
       try {
-        pdfBuffer = await fetchPdfContent(url)
+        pdfBuffer = await fetchPdfContent(url, allowInsecureTls)
         console.log(`Downloaded PDF: ${(pdfBuffer.length / 1024).toFixed(1)} KB`)
         requestLogger.info({
           step: 2,
@@ -501,6 +545,16 @@ export async function POST(request: NextRequest) {
           error: error instanceof Error ? error.message : 'Unknown error'
         }, 'Failed to download PDF content')
         if (error instanceof Error) {
+          // Provide clearer message when the remote site serves an incomplete TLS chain
+          if (error.message.includes('Incomplete TLS certificate chain') || error.message.includes('Failed to download PDF content')) {
+            return createProblemDetail({
+              type: '/errors/invalid-certificate-chain',
+              title: 'Remote certificate chain incomplete',
+              status: 502,
+              detail: 'The remote site did not supply the full certificate chain. Try downloading the file manually or contact the site administrator.',
+              correlationId
+            })
+          }
           return createProblemDetail({
             type: '/errors/fetch',
             title: 'Failed to download PDF',

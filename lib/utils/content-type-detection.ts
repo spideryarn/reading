@@ -170,11 +170,28 @@ export async function detectAndAnalyzeContent(url: string): Promise<ContentDetec
     
     return result
   } catch (error) {
+    // Fallback: infer content type from file extension when HEAD request fails (e.g. some
+    // servers block HEAD or require authentication). This allows common cases like
+    // direct links to .pdf files to continue through the PDF processing pipeline even
+    // when the explicit header lookup fails.
+
+    // `url` is provided as function argument, but TS may think it's undefined in catch scope
+    // @ts-expect-error – url is defined but TS control flow is confused in catch
+    const urlWithoutQuery = url.split('?')[0].toLowerCase()
+    const hasPdfExtension = urlWithoutQuery.endsWith('.pdf')
+    const hasHtmlExtension = urlWithoutQuery.endsWith('.html') || urlWithoutQuery.endsWith('.htm')
+
+    const inferredContentType = hasPdfExtension
+      ? 'application/pdf'
+      : hasHtmlExtension
+        ? 'text/html'
+        : 'unknown'
+
     return {
-      contentType: 'unknown',
-      isPdf: false,
-      isHtml: false,
-      isSupported: false,
+      contentType: inferredContentType,
+      isPdf: hasPdfExtension,
+      isHtml: hasHtmlExtension,
+      isSupported: hasPdfExtension || hasHtmlExtension,
       errorMessage: error instanceof Error ? error.message : 'Failed to detect content type'
     }
   }
