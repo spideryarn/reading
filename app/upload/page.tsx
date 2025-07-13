@@ -714,6 +714,39 @@ export default function AddDocumentPage() {
         throw new Error('No input provided')
       }
 
+      const maybeHandleInvalidCert = async (resp: Response): Promise<Response> => {
+        if (resp.ok) return resp
+
+        const bodyText = await resp.text()
+        let parsed: any = null
+        try { parsed = JSON.parse(bodyText) } catch (e) {/* ignore JSON parse errors */}
+
+        if (parsed?.type === '/errors/invalid-certificate-chain') {
+          const proceed = window.confirm(`${parsed.title}\n\n${parsed.detail}\n\nThe site’s certificates are incomplete. This may be insecure. Continue anyway?`)
+          if (proceed) {
+            // Re-issue request with allowInsecureTls flag
+            const retryResp = await fetch('/api/extract-url', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({
+                url: input.url?.trim(),
+                extractionMethod: processing.method,
+                provider: processing.method === 'ai-transcription' ? 'gemini' : processing.provider,
+                isPublic: processing.isPublic,
+                allowInsecureTls: true
+              })
+            })
+            return retryResp
+          }
+        }
+        // No special handling – return original response for normal error flow
+        // Reconstruct Response with original bodyText consumed
+        return new Response(bodyText, { status: resp.status, headers: resp.headers })
+      }
+
+      response = await maybeHandleInvalidCert(response)
+
       if (!response.ok) {
         const responseText = await response.text()
         try {
