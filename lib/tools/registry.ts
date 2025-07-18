@@ -423,6 +423,23 @@ export function __getInternalRegistry(): ToolRegistry {
   return toolRegistry
 }
 
+// ---------------------------------------------------------------------------
+// Auto-initialisation
+// ---------------------------------------------------------------------------
+// Ensure that the default tool implementations are registered *immediately*
+// whenever the registry module is imported.  Doing this here eliminates the
+// need for every consumer to import `registry-loader` manually and removes
+// ordering problems that caused hydration mismatches when some components
+// accessed the registry before the loader had executed.
+//
+// Using `require` keeps the import synchronous in both the Node (SSR) and
+// Webpack (client) environments while remaining safe in the presence of the
+// circular dependency (`registry-loader` re-imports `registerTool`).  At the
+// point this line runs, `registerTool` is already defined, so the circular
+// reference is fully resolved.
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+require('@/lib/tools/registry-loader')
+
 // Re-export key types for external use
 export type { 
   Tool,

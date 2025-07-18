@@ -23,6 +23,5 @@ const tweetThreadTool: Tool = {
 }
 
 // Register the tool on module load
-registerTool(tweetThreadTool)
 
 export default tweetThreadTool
