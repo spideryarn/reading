@@ -17,6 +17,7 @@ import { AiCallService } from '@/lib/services/database/ai-calls'
 import { createAIResponseLogger } from '@/lib/services/ai-response-logger'
 import { getModelForAICall, UPLOAD_LIMITS } from '@/lib/config'
 import { generateHtmlFilename } from '@/lib/utils/slug'
+import { deriveTitleFromUrl } from '@/lib/utils/title-derivation'
 import { URL_EXTRACTION_CONFIG } from '@/lib/config'
 import { extractWithReadability, formatReadabilityHtml } from '@/lib/utils/readability-extractor'
 import { requireAuth } from '@/lib/auth/server-auth'
@@ -217,7 +218,7 @@ async function processPdfFromUrl(
 ): Promise<NextResponse> {
   const aiResponseLogger = createAIResponseLogger(aiCallService)
   const urlObject = new URL(sourceUrl)
-  const defaultTitle = providedTitle || `Document from ${urlObject.hostname}`
+  const finalTitle = deriveTitleFromUrl(sourceUrl, providedTitle ? { providedTitle } : {})
   
   // Create provider-specific prompt template with appropriate model configuration
   const promptTemplate = createPdfToHtmlPrompt(provider as 'claude' | 'gemini')
@@ -299,7 +300,7 @@ async function processPdfFromUrl(
   const { document, storageResult } = await processHtmlToDocument(
     htmlResult.text,
     {
-      title: defaultTitle,
+      title: finalTitle,
       sourceUrl: sourceUrl,
       isPublic,
       originalFile: pdfBlob,
@@ -615,9 +616,8 @@ export async function POST(request: NextRequest) {
       contentSizeBytes: htmlContent.length
     }, 'Webpage content fetched successfully')
     
-    // Extract title from URL or use provided title
+    // Extract title from URL or use provided title utilities
     const urlObject = new URL(url)
-    const defaultTitle = providedTitle || `Document from ${urlObject.hostname}`
     
     const providerDisplayName = provider === 'gemini' ? 'Gemini 1.5 Pro' : 'Claude 4 Sonnet'
     
@@ -835,9 +835,7 @@ export async function POST(request: NextRequest) {
     }, 'Content extraction completed, starting sanitization')
 
     // Extract title from extracted HTML if not provided
-    const titleMatch = extractedHtml.match(/<title>(.*?)<\/title>/i) || extractedHtml.match(/<h1[^>]*>(.*?)<\/h1>/i)
-    const extractedTitle = titleMatch?.[1] ? titleMatch[1].replace(/<[^>]*>/g, '').trim() : null
-    const finalTitle = providedTitle || extractedTitle || defaultTitle
+    const finalTitle = deriveTitleFromUrl(url, providedTitle ? { providedTitle, htmlContent: extractedHtml } : { htmlContent: extractedHtml })
     
     console.log('Step 6: Processing HTML through shared pipeline...')
     

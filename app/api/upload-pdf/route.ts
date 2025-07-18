@@ -21,6 +21,7 @@ import { processWithGeminiNative, canProcessWithGeminiNative } from '@/lib/servi
 import { processWithMistralOcr, canProcessWithMistralOcr } from '@/lib/services/mistral-ocr-pdf-processor'
 import type { VercelAIResponse } from '@/lib/services/ai-response-logger'
 import { randomUUID } from 'crypto'
+import { deriveTitleFromFilename } from '@/lib/utils/title-derivation'
 import { createProblemDetail } from '@/lib/api/error-utils'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { DocumentService } from '@/lib/services/database/documents'
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest) {
     _directStorageBucket = parsed.bucket
     directStoragePath = parsed.path
     provider = parsed.provider || 'mistral'
-    title = parsed.title || parsed.path.split('/').pop()?.replace(/\.pdf$/i, '') || 'Untitled Document'
+    title = deriveTitleFromFilename(parsed.path.split('/').pop() || 'document.pdf', parsed.title)
     isPublic = parsed.isPublic
     extractionMethod = parsed.extractionMethod || 'legacy'
     if (parsed.documentId) {
@@ -156,7 +157,7 @@ export async function POST(request: NextRequest) {
       const uploadedFile = formData.get('pdf') as File
       pdfFile = uploadedFile
       provider = (formData.get('provider') as string) || 'mistral'
-      title = (formData.get('title') as string) || pdfFile?.name?.replace('.pdf', '') || 'Untitled Document'
+      title = deriveTitleFromFilename(pdfFile?.name || 'document.pdf', formData.get('title') as string | undefined)
       isPublic = formData.get('isPublic') === 'true'
       // Convert file to buffer for processing
       pdfBuffer = Buffer.from(await uploadedFile.arrayBuffer())
