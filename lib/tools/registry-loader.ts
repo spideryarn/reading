@@ -8,7 +8,7 @@
  * @see docs/reference/ARCHITECTURE_FOR_TOOLS.md for documentation
  */
 
-import { lockRegistry, isRegistryLocked } from './registry'
+import { lockRegistry, isRegistryLocked, registerTool } from '@/lib/tools/registry'
 
 /**
  * Synchronous tool registration
@@ -23,14 +23,24 @@ import { lockRegistry, isRegistryLocked } from './registry'
 
 // Import each implementation – the side-effect of each import is a
 // registerTool() call, so no additional work is required.
-import './implementations/structure'
-import './implementations/summary'
-import './implementations/chat'
-import './implementations/glossary'
-import './implementations/search'
-import './implementations/highlights'
-import './implementations/tweet-thread'
-import './implementations/metadata'
+import structureTool from './implementations/structure'
+import summaryTool from './implementations/summary'
+import chatTool from './implementations/chat'
+import glossaryTool from './implementations/glossary'
+import searchTool from './implementations/search'
+import highlightsTool from './implementations/highlights'
+import tweetThreadTool from './implementations/tweet-thread'
+import metadataTool from './implementations/metadata'
+
+// Manually register each tool
+registerTool(structureTool)
+registerTool(summaryTool)
+registerTool(chatTool)
+registerTool(glossaryTool)
+registerTool(searchTool)
+registerTool(highlightsTool)
+registerTool(tweetThreadTool)
+registerTool(metadataTool)
 
 // Once all tools are imported, lock the registry (only if not locked yet – this
 // file can be imported in both client and server bundles).
@@ -44,10 +54,6 @@ if (!isRegistryLocked()) {
  * import time, this function simply resolves immediately.  Retaining it avoids
  * refactors in API routes and tests.
  */
-export async function initializeToolRegistry(): Promise<void> {
-  // No-op – registry is already initialized.
-  return
-}
 
 /**
  * Manual tool registration function for development
@@ -80,7 +86,7 @@ export async function registerToolFromPath(toolPath: string): Promise<void> {
  */
 export function validateAllRegisteredTools(): void {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { getAllTools, validateTool } = require('./registry')
+  const { getAllTools, validateTool } = require('@/lib/tools/registry')
   const tools = getAllTools()
   
   let hasErrors = false
@@ -119,7 +125,7 @@ export function validateAllRegisteredTools(): void {
  */
 export function checkForToolConflicts(): void {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { detectConflicts } = require('./registry')
+  const { detectConflicts } = require('@/lib/tools/registry')
   const conflicts = detectConflicts()
   
   let hasConflicts = false
@@ -171,14 +177,24 @@ export async function reloadToolsForDevelopment(): Promise<void> {
   }
   
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { resetRegistryForTests } = require('./registry')
+  const { resetRegistryForTests } = require('@/lib/tools/registry')
   
   // Reset registry
   resetRegistryForTests()
   console.log('🔄 Registry reset for development reload')
   
   // Reload all tools
-  await initializeToolRegistry()
+  // Manually register each tool
+  registerTool(structureTool)
+  registerTool(summaryTool)
+  registerTool(chatTool)
+  registerTool(glossaryTool)
+  registerTool(searchTool)
+  registerTool(highlightsTool)
+  registerTool(tweetThreadTool)
+  registerTool(metadataTool)
+  // After all registrations, lock registry again
+  lockRegistry()
 }
 
 /**
@@ -189,7 +205,7 @@ export async function reloadToolsForDevelopment(): Promise<void> {
  */
 export function getProductionReadyTools() {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { getAllTools } = require('./registry')
+  const { getAllTools } = require('@/lib/tools/registry')
   const tools = getAllTools()
   
   // For now, all registered tools are considered production ready

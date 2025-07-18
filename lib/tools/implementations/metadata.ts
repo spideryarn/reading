@@ -8,7 +8,7 @@
  * @see docs/reference/ARCHITECTURE_FOR_TOOLS.md for technical documentation
  */
 
-import { registerTool } from '../registry'
+import { registerTool } from '@/lib/tools/registry'
 import { Tag } from '@phosphor-icons/react/dist/ssr'
 import type { ExecutableTool } from '../executor/types'
 
@@ -65,6 +65,4 @@ const metadataTool: ExecutableTool = {
 }
 
 // Register the tool on module load
-registerTool(metadataTool)
-
 export default metadataTool

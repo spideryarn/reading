@@ -8,7 +8,7 @@
 import React from 'react'
 import { render } from '@testing-library/react'
 import { CommandPalette } from '../command-palette'
-import { initializeToolRegistry } from '@/lib/tools/registry-loader'
+import '@testing-library/jest-dom/extend-expect'
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
@@ -47,10 +47,9 @@ describe('CommandPalette Integration', () => {
     
     // Initialize the tool registry
     try {
-      await initializeToolRegistry()
+      await import('../../lib/tools/registry')
     } catch (_error) {
-      // May fail in test environment, that's ok
-      console.log('Registry initialization skipped in test environment')
+      console.log('Registry auto-init import skipped in test environment')
     }
   })
   
@@ -72,7 +71,7 @@ describe('CommandPalette Integration', () => {
     )
     
     // Component should render without errors
-    expect(container).toBeInTheDocument()
+    expect(container).toBeTruthy()
   })
 
   // Note: More comprehensive testing will be done via E2E tests

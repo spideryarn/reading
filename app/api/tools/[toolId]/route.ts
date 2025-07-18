@@ -14,25 +14,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, getAuthUser } from '@/lib/auth/server-auth'
 import { createRequestLogger, generateCorrelationId, createTimer } from '@/lib/services/logger'
-import { getTool, isRegistryLocked } from '@/lib/tools/registry'
-import { initializeToolRegistry } from '@/lib/tools/registry-loader'
+import { getTool } from '@/lib/tools/registry'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { createToolProblemDetail, getErrorTitle } from '@/lib/api/error-utils'
 import { z } from 'zod'
 import type { ExecutionContext } from '@/lib/tools/executor/types'
 import { ToolHandlerError } from './handler-interface'
 
-// Cache the registry initialization to avoid repeated initialization
-let registryInitialized = false
-
-/**
- * Ensure the tool registry is initialized
- */
-async function ensureRegistryInitialized(): Promise<void> {
-  if (!registryInitialized || !isRegistryLocked()) {
-    await initializeToolRegistry()
-    registryInitialized = true
-  }
+// Registry auto-initialises on first import; nothing to do.
+function ensureRegistryInitialized(): void {
+  return
 }
 
 // Request validation schemas
@@ -160,7 +151,7 @@ export async function GET(
     logger.info('Processing GET request', { toolId })
     
     // Ensure tool registry is initialized
-    await ensureRegistryInitialized()
+    ensureRegistryInitialized()
     
     // Validate tool exists
     const tool = getTool(toolId)
@@ -284,7 +275,7 @@ export async function POST(
     logger.info('Processing POST request', { toolId })
     
     // Ensure tool registry is initialized
-    await ensureRegistryInitialized()
+    ensureRegistryInitialized()
     
     // Validate tool exists
     const tool = getTool(toolId)
@@ -457,7 +448,7 @@ export async function DELETE(
     logger.info('Processing DELETE request', { toolId })
     
     // Ensure tool registry is initialized
-    await ensureRegistryInitialized()
+    ensureRegistryInitialized()
     
     // Validate tool exists
     const tool = getTool(toolId)

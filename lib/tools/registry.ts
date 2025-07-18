@@ -18,15 +18,47 @@ import type {
 } from './types'
 import { TOOL_REGISTRY_CONFIG } from '../config'
 
-/**
- * Internal registry storage
- */
-const toolRegistry: ToolRegistry = new Map()
+// ---------------------------------------------------------------------------
+// Hot-reload-safe singleton state
+// ---------------------------------------------------------------------------
+// Using a symbol-like string key avoids clashes with other globals while
+// remaining serialisable for the browser devtools console.
+const __SY_TOOL_REGISTRY_SINGLETON__ = '__SY_TOOL_REGISTRY_SINGLETON__' as const
 
-/**
- * Registry lock to prevent late registrations after initialization
- */
-let registryLocked = false
+// Retrieve any existing singleton (created by a previous evaluation of this
+// module).  Next.js Fast Refresh / Webpack HMR can execute module factories
+// multiple times in the same runtime, so we must ensure all copies share the
+// SAME underlying Map instance – otherwise `getTool()` may read from a
+// different registry than the one that received the `registerTool()` calls
+// inside `registry-loader`.
+//
+// We store a small object on `globalThis` so it works in both the browser and
+// Node runtimes.
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+const globalState: {
+  toolRegistry?: ToolRegistry
+  registryLocked?: boolean
+  registeredTools?: Array<{ id: string; name: string }>
+} = (globalThis as any)[__SY_TOOL_REGISTRY_SINGLETON__] || {}
+
+// ---------------------------------------------------------------------------
+// Core singleton fields
+// ---------------------------------------------------------------------------
+const toolRegistry: ToolRegistry = globalState.toolRegistry ?? new Map();
+let registryLocked = globalState.registryLocked ?? false;
+const registeredTools: Array<{ id: string; name: string }> = globalState.registeredTools ?? [];
+
+// Persist any newly created fields back on the global object so that future
+// evaluations of this module pick them up instead of creating fresh ones.
+(globalThis as any)[__SY_TOOL_REGISTRY_SINGLETON__] = {
+  toolRegistry,
+  registryLocked,
+  registeredTools
+};
+
+// ---------------------------------------------------------------------------
+// Existing implementation (registerTool, getTool, etc.) continues below
+// ---------------------------------------------------------------------------
 
 /**
  * Development mode guard for unregistered tool access
@@ -37,11 +69,6 @@ const UNREGISTERED_TOOL_GUARD_ENABLED = process.env.NODE_ENV === 'development'
  * Tool registry logging level configuration
  */
 const TOOL_REGISTRY_LOG_LEVEL = TOOL_REGISTRY_CONFIG.LOG_LEVEL
-
-/**
- * Track registered tools for batch logging
- */
-const registeredTools: Array<{ id: string; name: string }> = []
 
 /**
  * Register a tool in the registry
@@ -358,6 +385,7 @@ export function detectConflicts(): ConflictReport {
  */
 export function lockRegistry(): void {
   registryLocked = true
+  globalState.registryLocked = true
   
   if (UNREGISTERED_TOOL_GUARD_ENABLED) {
     // Batch summary of registered tools
@@ -404,6 +432,7 @@ export function resetRegistryForTests(): void {
   
   toolRegistry.clear()
   registryLocked = false
+  globalState.registryLocked = false
   
   if (UNREGISTERED_TOOL_GUARD_ENABLED) {
     console.log('🧪 Tool registry reset for testing')
@@ -422,6 +451,23 @@ export function __getInternalRegistry(): ToolRegistry {
   
   return toolRegistry
 }
+
+// ---------------------------------------------------------------------------
+// Auto-initialisation
+// ---------------------------------------------------------------------------
+// Ensure that the default tool implementations are registered *immediately*
+// whenever the registry module is imported.  Doing this here eliminates the
+// need for every consumer to import `registry-loader` manually and removes
+// ordering problems that caused hydration mismatches when some components
+// accessed the registry before the loader had executed.
+//
+// Using `require` keeps the import synchronous in both the Node (SSR) and
+// Webpack (client) environments while remaining safe in the presence of the
+// circular dependency (`registry-loader` re-imports `registerTool`).  At the
+// point this line runs, `registerTool` is already defined, so the circular
+// reference is fully resolved.
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+require('@/lib/tools/registry-loader')
 
 // Re-export key types for external use
 export type { 

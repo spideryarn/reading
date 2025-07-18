@@ -11,7 +11,7 @@
  * @see docs/reference/ARCHITECTURE_FOR_TOOLS.md for technical documentation
  */
 
-import { registerTool } from '../registry'
+import { registerTool } from '@/lib/tools/registry'
 import { ListBullets } from '@phosphor-icons/react/dist/ssr'
 import { z } from 'zod'
 import type { ExecutableTool } from '../executor/types'
@@ -83,6 +83,4 @@ const summaryTool: ExecutableTool = {
 }
 
 // Register the tool on module load
-registerTool(summaryTool)
-
 export default summaryTool

@@ -8,7 +8,7 @@
  * @see docs/reference/ARCHITECTURE_FOR_TOOLS.md for technical documentation
  */
 
-import { registerTool } from '../registry'
+import { registerTool } from '@/lib/tools/registry'
 import { HighlighterCircle } from '@phosphor-icons/react/dist/ssr'
 import type { ExecutableTool } from '../executor/types'
 
@@ -55,6 +55,4 @@ const highlightsTool: ExecutableTool = {
 }
 
 // Register the tool on module load
-registerTool(highlightsTool)
-
 export default highlightsTool

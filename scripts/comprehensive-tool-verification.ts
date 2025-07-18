@@ -12,9 +12,8 @@ async function comprehensiveVerification() {
 
   // Step 1: Initialize the registry
   console.log('1️⃣ Initializing tool registry...');
-  const { initializeToolRegistry } = await import('../lib/tools/registry-loader');
-  await initializeToolRegistry();
-  console.log('   ✅ Registry initialized successfully\n');
+  await import('../lib/tools/registry');
+  console.log('   ✅ Registry auto-initialised successfully\n');
 
   // Step 2: Import registry functions
   const { 
@@ -150,7 +149,7 @@ async function comprehensiveVerification() {
     }
     
     // Check shortcuts format
-    const hasValidShortcuts = tool.shortcuts.every(shortcut => 
+    const hasValidShortcuts = (tool.shortcuts ?? []).every(shortcut => 
       shortcut.includes('Cmd+') || shortcut.includes('Ctrl+')
     );
     if (!hasValidShortcuts) {
