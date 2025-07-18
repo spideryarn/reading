@@ -112,7 +112,14 @@ export function VerticalIconNav({
   const [commandShortcutText, setCommandShortcutText] = useState('Ctrl+K') // Default to non-Mac
   
   // Generate navigation items from tool registry
-  const navigationItems = useMemo(() => generateNavigationFromRegistry(), [])
+  // Use state instead of useMemo to handle SSR/hydration correctly
+  const [navigationItems, setNavigationItems] = useState<NavigationItem[]>([])
+  
+  useEffect(() => {
+    // Generate navigation items after mount to ensure consistent SSR/client rendering
+    const items = generateNavigationFromRegistry()
+    setNavigationItems(items)
+  }, [])
   
   // URL building utility for clean tab URLs (Option A: clean state)
   const buildTabUrl = useCallback((tabId: string) => {
