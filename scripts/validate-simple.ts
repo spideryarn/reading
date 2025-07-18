@@ -9,8 +9,8 @@ async function validate() {
 
   // Step 1: Initialize registry
   console.log('1️⃣ Initializing registry...');
-  const { initializeToolRegistry } = await import('../lib/tools/registry-loader');
-  await initializeToolRegistry();
+  // Registry auto-initialises on first import
+  await import('../lib/tools/registry');
   
   // Step 2: Get tools and stats
   console.log('2️⃣ Getting registry stats...');
