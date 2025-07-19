@@ -33,14 +33,14 @@ import tweetThreadTool from './implementations/tweet-thread'
 import metadataTool from './implementations/metadata'
 
 // Manually register each tool
-registerTool(structureTool)
-registerTool(summaryTool)
-registerTool(chatTool)
-registerTool(glossaryTool)
-registerTool(searchTool)
-registerTool(highlightsTool)
-registerTool(tweetThreadTool)
-registerTool(metadataTool)
+registerTool(structureTool, { allowOverwrite: true })
+registerTool(summaryTool, { allowOverwrite: true })
+registerTool(chatTool, { allowOverwrite: true })
+registerTool(glossaryTool, { allowOverwrite: true })
+registerTool(searchTool, { allowOverwrite: true })
+registerTool(highlightsTool, { allowOverwrite: true })
+registerTool(tweetThreadTool, { allowOverwrite: true })
+registerTool(metadataTool, { allowOverwrite: true })
 
 // Once all tools are imported, lock the registry (only if not locked yet – this
 // file can be imported in both client and server bundles).
