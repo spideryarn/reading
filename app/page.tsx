@@ -1,7 +1,17 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { getAuthUser } from '@/lib/auth/server-auth'
+import { redirect } from 'next/navigation'
 
-export default function Home() {
+export default async function Home() {
+  // Check if user is authenticated
+  const user = await getAuthUser()
+  
+  // Redirect to /read if user is logged in
+  if (user) {
+    redirect('/read')
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
