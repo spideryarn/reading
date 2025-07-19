@@ -414,17 +414,6 @@ export async function POST(request: NextRequest) {
       })
     }
     
-    // Validate provider selection
-    if (!['claude', 'gemini'].includes(provider)) {
-      return createProblemDetail({
-        type: '/errors/validation',
-        title: 'Invalid provider',
-        status: 400,
-        detail: 'Provider must be "claude" or "gemini"',
-        correlationId
-      })
-    }
-    
     // Validate extraction method
     if (!['as-is', 'readability', 'ai-transcription', 'ai-dom'].includes(extractionMethod)) {
       return createProblemDetail({
