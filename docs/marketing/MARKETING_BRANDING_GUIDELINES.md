@@ -14,3 +14,5 @@ Be changed by what you read.
 "Computers are useless. They can only give you answers."
 
 A tool for reading enriched documents with AI assistance—designed to help you navigate, digest, and interrogate complex documents like papers, essays, and books.
+
+"Your tireless/junior science assistant is ready"
