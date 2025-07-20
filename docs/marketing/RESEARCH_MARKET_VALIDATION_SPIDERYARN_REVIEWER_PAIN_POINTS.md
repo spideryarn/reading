@@ -1,5 +1,8 @@
 # Spideryarn Market Validation Report
 
+reallygood - see:
+- Messaging strategy focuses on augmentation and control
+
 ## Prompt
 
 ```
