@@ -34,9 +34,14 @@ The ultimate goal is to **enable humans to make better decisions through better 
 
 The AI should do absolutely everything possible to empower and augment the human, enabling better understanding and potentially faster/more efficient processing. **However, the AI must never replace human judgment or critical thinking.**
 
-**Key principle**: Think of having "a bunch of smart postdocs who you could give any instructions to" - what would you ask them to do to enable you to be the most effective version of yourself?
+**Key principle**: Think of having "a bunch of smart postdocs who you could give any instructions to" - what would you ask them to do to enable you to be the most effective version of yourself when reading?
 
-**Critical risk to avoid**: The AI doing too much work, causing humans to become lazy or atrophy by not doing the intellectual work themselves, thus failing to internalise knowledge effectively.
+Risks to avoid:
+
+- **Critical risk to avoid**: The AI doing too much work, causing humans to become lazy or atrophy by not doing the intellectual work themselves, thus failing to internalise knowledge effectively.
+- Too hard to use
+- Not that helpful
+- Doesn't solve a problem they think they have
 
 ## Target Users & Market
 
@@ -120,7 +125,8 @@ The goal is for this to be about better decisions, that certainly fits with the 
 ## Long-term Strategic Vision
 
 ### 5-Year Outlook
-Probably a professional tool for academics and people like that. It'll be paid. Maybe eventually this will be something that universities, journals, or research companies pay for, for their employees.
+
+Probably a professional tool for academics and people like that. It'll be paid. Maybe eventually this will be something that universities, journals, or research companies pay for, for their employees/researchers.
 
 
 ## Appendix
