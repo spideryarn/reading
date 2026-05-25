@@ -39,7 +39,7 @@ type DocRow = Database['public']['Tables']['documents']['Row']
   const supabase = createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '',
     // use service-role if available for guaranteed read access
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
   )
 
   console.log(`🔍 Looking up document with slug '${slug}'`)
