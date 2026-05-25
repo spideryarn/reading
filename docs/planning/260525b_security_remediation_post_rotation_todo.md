@@ -3,6 +3,30 @@
 Things discovered during the rotation that need handling *after* legacy keys are revoked.
 Add to this file as we go.
 
+## Critical — second leaked credential discovered mid-rotation
+
+### Leaked GitHub PAT in `origin` remote — already revoked, residual cleanup
+
+The `origin` remote URL had a GitHub Personal Access Token embedded directly:
+`https://ghp_<TOKEN>@github.com/spideryarn/reading.git`. Discovered when a
+`git push` failed and printed the full URL.
+
+- **Token status**: ✓ Already revoked (verified 2026-05-25 via
+  `api.github.com/user` — returned `401 Bad credentials`). Either you
+  rotated it previously, or GitHub auto-expired it.
+- **Origin URL**: ✓ Switched to SSH during rotation
+  (`git remote set-url origin git@github.com:spideryarn/reading.git`).
+
+Residual cleanup still worth doing:
+1. **Confirm no automation depended on it** — search for any local scripts /
+   git-credential helpers that referenced this token; nothing in `.github/`
+   or the project relies on it (verified during rotation).
+2. **Clear shell history** if the URL was ever pasted as a literal:
+   `grep -n 'ghp_Ic2' ~/.zsh_history` and if any match looks like the full
+   token, delete that history line. (Full token literal intentionally omitted
+   from this file to avoid re-triggering secret scanners; recover it from the
+   2026-05-25 rotation session transcript if needed.)
+
 ## Critical (will cause failures after Phase 4.3 — legacy HS256 revoke)
 
 ### RLS test files that forge HS256 JWTs
@@ -36,6 +60,33 @@ Recommendation: start with option 2. The test-isolation primitives in this repo
 already use UUID namespacing, so adding ephemeral user creation/teardown fits.
 
 ## Hygiene / nice-to-haves
+
+### Install trufflehog locally and re-scan periodically
+
+Trufflehog was used by the previous agent to scan this repo's history; results
+live at `~/security-investigations/260503-supabase-vercel/trufflehog_reading_all.jsonl`.
+That scan caught the Anthropic, Gemini, NPM token, and Postgres findings —
+none of which were on the runbook before the scan ran. **Without trufflehog
+locally we can only re-scan via the agent or by running it elsewhere.**
+
+Install (macOS Homebrew):
+```bash
+brew install trufflehog
+```
+
+Suggested usage patterns once installed:
+- Pre-commit hook (or pre-push) that scans the staged diff for secrets, blocks
+  the commit on findings.
+- Periodic full-history rescan: `trufflehog git file:///Users/greg/dev/spideryarn/reading --json > scan.jsonl` then `jq` over the results.
+- After every credential rotation: spot-check that the new value didn't end up
+  somewhere accidental.
+
+Why it matters specifically here: this rotation surfaced *two* credentials that
+weren't on either runbook (the GitHub PAT in `.git/config`, the NPM token in a
+docs file). Trufflehog's previous scan caught the latter but nothing automated
+caught the former because it lived in `.git/config`, not the working tree.
+Consider whether a periodic scan should also include `.git/config` / shell
+history / `.zsh_history`.
 
 ### Consider re-resetting DB password
 
